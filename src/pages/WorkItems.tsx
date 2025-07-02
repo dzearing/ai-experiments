@@ -1,0 +1,271 @@
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useApp } from '../contexts/AppContext';
+import { useTheme } from '../contexts/ThemeContextV2';
+import type { WorkItem } from '../types';
+
+export function WorkItems() {
+  const { workItems, projects, personas } = useApp();
+  const { currentStyles } = useTheme();
+  const styles = currentStyles;
+  const [filter, setFilter] = useState<'all' | WorkItem['status']>('all');
+  const [sortBy, setSortBy] = useState<'priority' | 'dueDate' | 'created'>('priority');
+  
+  const getStatusColor = (status: WorkItem['status']) => {
+    switch (status) {
+      case 'active': return 'text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-900/50';
+      case 'completed': return 'text-neutral-600 bg-neutral-100 dark:text-neutral-400 dark:bg-neutral-900/50';
+      case 'blocked': return 'text-red-600 bg-red-100 dark:text-red-400 dark:bg-red-900/50';
+      case 'review': return 'text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/50';
+      default: return 'text-yellow-600 bg-yellow-100 dark:text-yellow-400 dark:bg-yellow-900/50';
+    }
+  };
+  
+  const getPriorityIcon = (priority: WorkItem['priority']) => {
+    switch (priority) {
+      case 'critical': return '🔴';
+      case 'high': return '🟠';
+      case 'medium': return '🟡';
+      case 'low': return '🟢';
+      default: return '⚪';
+    }
+  };
+  
+  const filteredItems = workItems.filter(item => 
+    filter === 'all' || item.status === filter
+  );
+  
+  const sortedItems = [...filteredItems].sort((a, b) => {
+    switch (sortBy) {
+      case 'priority':
+        const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+        return priorityOrder[a.priority] - priorityOrder[b.priority];
+      case 'dueDate':
+        return (a.dueDate || '').localeCompare(b.dueDate || '');
+      case 'created':
+        return b.createdAt.localeCompare(a.createdAt);
+      default:
+        return 0;
+    }
+  });
+  
+  return (
+    <div>
+      <div className="flex justify-between items-start mb-6">
+        <div>
+          <h1 className={`text-2xl font-bold ${styles.headingColor}`}>Work Items</h1>
+          <p className={`mt-1 ${styles.mutedText}`}>
+            Track and manage all your tasks across projects.
+          </p>
+        </div>
+        <Link
+          to="/work-items/new"
+          className={`
+            px-4 py-2 ${styles.buttonRadius}
+            ${styles.primaryButton} ${styles.primaryButtonText}
+            ${styles.primaryButtonHover} transition-colors
+          `}
+        >
+          Create work item
+        </Link>
+      </div>
+      
+      {/* Filters and Sorting */}
+      <div className={`
+        ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius}
+        ${styles.cardShadow} p-4 mb-6
+      `}>
+        <div className="flex flex-wrap gap-4 items-center">
+          <div className="flex items-center gap-2">
+            <span className={`text-sm font-medium ${styles.textColor}`}>Status:</span>
+            <div className="flex gap-1">
+              {(['all', 'planned', 'active', 'review', 'blocked', 'completed'] as const).map(status => (
+                <button
+                  key={status}
+                  onClick={() => setFilter(status)}
+                  className={`
+                    px-3 py-1 text-xs ${styles.buttonRadius} transition-colors
+                    ${filter === status 
+                      ? `${styles.primaryButton} ${styles.primaryButtonText}`
+                      : `${styles.contentBg} ${styles.contentBorder} border ${styles.textColor} hover:opacity-80`
+                    }
+                  `}
+                >
+                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2 ml-auto">
+            <span className={`text-sm font-medium ${styles.textColor}`}>Sort by:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+              className={`
+                px-3 py-1 text-sm ${styles.buttonRadius}
+                ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
+                focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500
+              `}
+            >
+              <option value="priority">Priority</option>
+              <option value="dueDate">Due Date</option>
+              <option value="created">Created</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      {/* Work Items List */}
+      {sortedItems.length === 0 ? (
+        <div className={`
+          ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius}
+          ${styles.cardShadow} p-12 text-center
+        `}>
+          <svg className={`mx-auto h-12 w-12 ${styles.mutedText}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          <h3 className={`mt-4 text-lg font-medium ${styles.headingColor}`}>No work items found</h3>
+          <p className={`mt-2 ${styles.mutedText}`}>
+            {filter === 'all' ? 'Get started by creating your first work item.' : `No ${filter} work items.`}
+          </p>
+          {filter === 'all' && (
+            <div className="mt-6">
+              <Link
+                to="/work-items/new"
+                className={`
+                  inline-flex items-center px-4 py-2 ${styles.buttonRadius}
+                  ${styles.primaryButton} ${styles.primaryButtonText}
+                  ${styles.primaryButtonHover} transition-colors
+                `}
+              >
+                Create work item
+              </Link>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {sortedItems.map(item => {
+            const project = projects.find(p => p.id === item.projectId);
+            const assignee = personas.find(p => p.id === item.assigneeId);
+            
+            return (
+              <div
+                key={item.id}
+                className={`
+                  ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius}
+                  ${styles.cardShadow} p-6 hover:opacity-95 transition-opacity
+                `}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="text-lg">{getPriorityIcon(item.priority)}</span>
+                      <h3 className={`text-lg font-semibold ${styles.headingColor}`}>
+                        {item.title}
+                      </h3>
+                      <span className={`
+                        px-2 py-1 text-xs rounded-full font-medium
+                        ${getStatusColor(item.status)}
+                      `}>
+                        {item.status}
+                      </span>
+                    </div>
+                    
+                    <p className={`${styles.textColor} mb-3`}>{item.description}</p>
+                    
+                    {item.checklist && item.checklist.length > 0 && (
+                      <div className={`mb-3 p-3 ${styles.contentBg} ${styles.borderRadius}`}>
+                        <div className={`text-sm font-medium ${styles.textColor} mb-2`}>
+                          Progress: {item.checklist.filter(c => c.completed).length} / {item.checklist.length}
+                        </div>
+                        <div className={`w-full bg-neutral-200 dark:bg-neutral-700 rounded-full h-2`}>
+                          <div
+                            className={`${styles.primaryButton} h-2 rounded-full transition-all`}
+                            style={{ 
+                              width: `${(item.checklist.filter(c => c.completed).length / item.checklist.length) * 100}%` 
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                    
+                    {item.tags && item.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {item.tags.map(tag => (
+                          <span
+                            key={tag}
+                            className={`
+                              px-2 py-1 text-xs ${styles.buttonRadius}
+                              ${styles.contentBg} ${styles.contentBorder} border ${styles.mutedText}
+                            `}
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center gap-4 text-sm">
+                      {project && (
+                        <div className={`flex items-center gap-2 ${styles.mutedText}`}>
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                          </svg>
+                          <span>{project.name}</span>
+                        </div>
+                      )}
+                      
+                      {assignee && (
+                        <div className={`flex items-center gap-2 ${styles.mutedText}`}>
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          <span>{assignee.name}</span>
+                        </div>
+                      )}
+                      
+                      {item.dueDate && (
+                        <div className={`flex items-center gap-2 ${
+                          new Date(item.dueDate) < new Date() ? 'text-red-600 dark:text-red-400' : styles.mutedText
+                        }`}>
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <span>{new Date(item.dueDate).toLocaleDateString()}</span>
+                        </div>
+                      )}
+                      
+                      {item.estimatedEffort && (
+                        <div className={`flex items-center gap-2 ${styles.mutedText}`}>
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span>{item.estimatedEffort}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 ml-4">
+                    <button className={`p-2 ${styles.contentBg} ${styles.buttonRadius} ${styles.textColor} hover:opacity-80`}>
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
+                    </button>
+                    <button className={`p-2 ${styles.contentBg} ${styles.buttonRadius} ${styles.textColor} hover:opacity-80`}>
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
