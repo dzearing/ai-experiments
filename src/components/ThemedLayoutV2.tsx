@@ -21,7 +21,7 @@ export function ThemedLayoutV2() {
   const currentLabel = navItems.find(item => item.path === location.pathname)?.label || 'Page';
   
   return (
-    <div className={`min-h-screen flex ${backgroundEffectEnabled ? '' : styles.mainBg} ${styles.fontFamily} relative`}>
+    <div className={`h-screen flex ${backgroundEffectEnabled ? '' : styles.mainBg} ${styles.fontFamily} relative overflow-hidden`}>
       {/* Background pattern when enabled */}
       {backgroundEffectEnabled && <BackgroundPattern />}
       {/* Sidebar */}
@@ -66,8 +66,8 @@ export function ThemedLayoutV2() {
       </aside>
       
       {/* Main Content */}
-      <div className="flex-1 flex flex-col relative z-10">
-        <header className={`${styles.contentBg} ${styles.contentBorder} border-b px-8 py-4 relative`}>
+      <div className="flex-1 flex flex-col relative z-10 overflow-hidden">
+        <header className={`${styles.contentBg} ${styles.contentBorder} border-b px-8 py-4 relative flex-shrink-0`}>
           <AnimatedTransition 
             transitionKey={location.pathname}
             className="h-8"
@@ -79,7 +79,7 @@ export function ThemedLayoutV2() {
           </AnimatedTransition>
         </header>
         
-        <main className={`flex-1 p-8 ${styles.contentBg} relative`}>
+        <main className={`flex-1 p-8 ${styles.contentBg} relative overflow-y-auto`}>
           <AnimatedOutletWrapper
             className="max-w-6xl mx-auto h-full"
             delay={200}
