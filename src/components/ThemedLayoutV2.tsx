@@ -3,11 +3,13 @@ import { useTheme } from '../contexts/ThemeContextV2';
 import { BackgroundPattern } from './BackgroundPatternOptimized';
 import { AnimatedTransition } from './AnimatedTransition';
 import { AnimatedOutletWrapper } from './AnimatedOutletWrapper';
+import { useNavigationDirection } from '../hooks/useNavigationDirection';
 
 export function ThemedLayoutV2() {
   const location = useLocation();
   const { currentStyles, backgroundEffectEnabled } = useTheme();
   const styles = currentStyles;
+  const direction = useNavigationDirection();
   
   const navItems = [
     { path: '/', label: 'Dashboard' },
@@ -72,6 +74,7 @@ export function ThemedLayoutV2() {
             transitionKey={location.pathname}
             className="h-8"
             delay={100}
+            reverse={direction === 'backward'}
           >
             <h2 className={`text-xl font-semibold ${styles.headingColor}`}>
               {currentLabel}

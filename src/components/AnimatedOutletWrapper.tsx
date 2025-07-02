@@ -1,5 +1,6 @@
 import { useLocation, useOutlet } from 'react-router-dom';
 import { AnimatedTransition } from './AnimatedTransition';
+import { useNavigationDirection } from '../hooks/useNavigationDirection';
 
 interface AnimatedOutletWrapperProps {
   className?: string;
@@ -14,6 +15,7 @@ export function AnimatedOutletWrapper({
 }: AnimatedOutletWrapperProps) {
   const location = useLocation();
   const outlet = useOutlet();
+  const direction = useNavigationDirection();
   
   return (
     <AnimatedTransition
@@ -21,6 +23,7 @@ export function AnimatedOutletWrapper({
       className={className}
       delay={delay}
       distance={distance}
+      reverse={direction === 'backward'}
     >
       {outlet}
     </AnimatedTransition>
