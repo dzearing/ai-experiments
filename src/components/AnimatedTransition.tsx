@@ -1,4 +1,5 @@
-import { useEffect, useState, useRef, ReactNode } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import type { ReactNode } from 'react';
 
 interface AnimatedTransitionProps {
   children: ReactNode;
@@ -20,7 +21,6 @@ export function AnimatedTransition({
   transitionKey, 
   className = '',
   delay = 150,
-  distance = 20,
   reverse = false
 }: AnimatedTransitionProps) {
   const [state, setState] = useState<TransitionState>({
@@ -30,7 +30,7 @@ export function AnimatedTransition({
   });
   
   const prevKeyRef = useRef(transitionKey);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
     // Clean up on unmount

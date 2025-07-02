@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import { themesV2 } from '../config/themesV2';
 import type { Theme, ThemeStyles } from '../config/themesV2';
 

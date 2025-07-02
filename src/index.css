@@ -111,11 +111,11 @@ html {
 }
 
 .animate-float-slow {
-  animation: float-slow 20s infinite ease-in-out;
+  animation: float-slow 12s infinite ease-in-out;
 }
 
 .animate-float-reverse {
-  animation: float-reverse 25s infinite ease-in-out;
+  animation: float-reverse 15s infinite ease-in-out;
 }
 
 /* Old animations kept for compatibility */

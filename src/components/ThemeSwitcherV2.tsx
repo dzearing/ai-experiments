@@ -1,10 +1,18 @@
 import { useTheme } from '../contexts/ThemeContextV2';
 import { themesV2 } from '../config/themesV2';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export function ThemeSwitcherV2() {
   const { currentTheme, isDarkMode, setTheme, nextTheme, previousTheme, toggleDarkMode, backgroundEffectEnabled, toggleBackgroundEffect } = useTheme();
   const currentIndex = themesV2.findIndex(t => t.id === currentTheme.id);
+  const [isMinimized, setIsMinimized] = useState(() => {
+    const saved = localStorage.getItem('themeSwitcherMinimized');
+    return saved === 'true';
+  });
+  
+  useEffect(() => {
+    localStorage.setItem('themeSwitcherMinimized', isMinimized.toString());
+  }, [isMinimized]);
   
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
@@ -31,11 +39,33 @@ export function ThemeSwitcherV2() {
   
   return (
     <div className="fixed bottom-4 right-4 z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-4 w-80">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Theme Switcher</h3>
-          <span className="text-xs text-gray-500 dark:text-gray-400">{currentIndex + 1} / {themesV2.length}</span>
-        </div>
+      {isMinimized ? (
+        <button
+          onClick={() => setIsMinimized(false)}
+          className="bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          title="Expand theme switcher"
+        >
+          <svg className="h-5 w-5 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+          </svg>
+        </button>
+      ) : (
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-4 w-80">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Theme Switcher</h3>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500 dark:text-gray-400">{currentIndex + 1} / {themesV2.length}</span>
+              <button
+                onClick={() => setIsMinimized(true)}
+                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                title="Minimize"
+              >
+                <svg className="h-4 w-4 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                </svg>
+              </button>
+            </div>
+          </div>
         
         {/* Dark Mode Toggle */}
         <div className="mb-3 flex items-center justify-between">
@@ -116,7 +146,8 @@ export function ThemeSwitcherV2() {
           <div>Use Ctrl/Cmd + D to toggle dark mode</div>
           <div>Use Ctrl/Cmd + B to toggle background effect</div>
         </div>
-      </div>
+        </div>
+      )}
     </div>
   );
 }

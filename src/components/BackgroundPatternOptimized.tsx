@@ -13,7 +13,7 @@ export function BackgroundPattern() {
         {/* Blue swirl - top left */}
         <div
           className={`absolute -top-96 -left-96 w-[100rem] h-[100rem] ${
-            isDarkMode ? 'bg-blue-600/35' : 'bg-blue-500/45'
+            isDarkMode ? 'bg-blue-600/45' : 'bg-blue-500/60'
           } rounded-full filter blur-3xl animate-float-slow`}
           style={{ 
             willChange: 'transform',
@@ -24,7 +24,7 @@ export function BackgroundPattern() {
         {/* Vibrant orange swirl - bottom right */}
         <div
           className={`absolute -bottom-96 -right-96 w-[110rem] h-[110rem] ${
-            isDarkMode ? 'bg-orange-500/40' : 'bg-orange-400/50'
+            isDarkMode ? 'bg-orange-500/50' : 'bg-orange-400/65'
           } rounded-full filter blur-3xl animate-float-reverse`}
           style={{ 
             willChange: 'transform',
@@ -36,7 +36,7 @@ export function BackgroundPattern() {
         {/* Sky blue swirl - center */}
         <div
           className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90rem] h-[90rem] ${
-            isDarkMode ? 'bg-sky-600/30' : 'bg-sky-500/40'
+            isDarkMode ? 'bg-sky-600/40' : 'bg-sky-500/55'
           } rounded-full filter blur-3xl animate-float-slow`}
           style={{ 
             willChange: 'transform',
@@ -47,7 +47,7 @@ export function BackgroundPattern() {
         {/* Vibrant pink swirl - top right */}
         <div
           className={`absolute -top-64 -right-64 w-[80rem] h-[80rem] ${
-            isDarkMode ? 'bg-pink-500/35' : 'bg-pink-400/45'
+            isDarkMode ? 'bg-pink-500/45' : 'bg-pink-400/60'
           } rounded-full filter blur-3xl animate-float-reverse`}
           style={{ 
             willChange: 'transform',
@@ -58,7 +58,7 @@ export function BackgroundPattern() {
         {/* Deep blue swirl - bottom left */}
         <div
           className={`absolute -bottom-80 -left-80 w-[95rem] h-[95rem] ${
-            isDarkMode ? 'bg-indigo-600/30' : 'bg-indigo-500/40'
+            isDarkMode ? 'bg-indigo-600/40' : 'bg-indigo-500/55'
           } rounded-full filter blur-3xl animate-float-slow`}
           style={{ 
             willChange: 'transform',

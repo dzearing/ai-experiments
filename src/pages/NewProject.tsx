@@ -8,22 +8,13 @@ import type { Project } from '../types';
 export function NewProject() {
   const navigate = useNavigate();
   const { currentStyles } = useTheme();
-  const { addProject, personas } = useApp();
+  const { createProject, personas } = useApp();
   const styles = currentStyles;
   
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    repository: '',
-    leadPersonaId: '',
-    teamPersonaIds: [] as string[],
-    priority: 'medium' as Project['priority'],
-    category: '' as Project['category'] | '',
-    tags: '',
-    estimatedEffort: '',
-    deadline: '',
-    techStack: [] as string[],
-    dependencies: ''
+    status: 'active' as Project['status']
   });
   
   const techStackOptions = [
@@ -42,26 +33,12 @@ export function NewProject() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const newProject: Project = {
-      id: uuidv4(),
+    createProject({
       name: formData.name,
       description: formData.description,
-      repository: formData.repository,
-      status: 'planned',
-      progress: 0,
-      leadPersonaId: formData.leadPersonaId || undefined,
-      teamPersonaIds: formData.teamPersonaIds,
-      priority: formData.priority,
-      category: formData.category as Project['category'],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
-      estimatedEffort: formData.estimatedEffort || undefined,
-      deadline: formData.deadline || undefined,
-      techStack: formData.techStack
-    };
+      status: formData.status
+    });
     
-    addProject(newProject);
     navigate('/projects');
   };
   

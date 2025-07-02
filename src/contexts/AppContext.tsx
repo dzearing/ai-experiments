@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import type { Persona, Project, WorkItem, JamSession, DailyReport, JamMessage } from '../types';
+import type { Persona, Project, WorkItem, JamSession, DailyReport } from '../types';
 
 interface AppContextType {
   personas: Persona[];

@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 
 export function ThemedDashboard() {
   const { projects, workItems, personas, jamSessions } = useApp();
-  const { currentStyles, currentTheme, isDarkMode } = useTheme();
+  const { currentStyles } = useTheme();
   const styles = currentStyles;
   
   const activeProjects = projects.filter(p => p.status === 'active').length;

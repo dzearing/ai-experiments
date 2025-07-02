@@ -10,6 +10,7 @@ import { JamSessions } from './pages/JamSessions';
 import { ThemedNewPersona } from './pages/ThemedNewPersona';
 import { NewProject } from './pages/NewProject';
 import { NewWorkItem } from './pages/NewWorkItem';
+import { NewWorkItemMultiStep } from './pages/NewWorkItemMultiStep';
 import { Projects } from './pages/Projects';
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
               <Route path="projects/new" element={<NewProject />} />
               <Route path="work-items" element={<WorkItems />} />
               <Route path="work-items/new" element={<NewWorkItem />} />
+              <Route path="work-items/new-ai" element={<NewWorkItemMultiStep />} />
               <Route path="personas" element={<ThemedPersonas />} />
               <Route path="personas/new" element={<ThemedNewPersona />} />
               <Route path="jam-sessions" element={<JamSessions />} />

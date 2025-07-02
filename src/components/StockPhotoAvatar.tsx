@@ -44,11 +44,6 @@ const femaleNames = [
   'Ella', 'Avery', 'Sofia', 'Scarlett', 'Grace', 'Victoria', 'Aria', 'Luna'
 ];
 
-const neutralNames = [
-  'Alex', 'Blake', 'Casey', 'Drew', 'Emery', 'Finley', 'Gray', 'Harper',
-  'Indigo', 'Jamie', 'Kai', 'Logan', 'Morgan', 'Nova', 'Oakley', 'Phoenix',
-  'Quinn', 'River', 'Sage', 'Taylor', 'Unity', 'Vale', 'Winter', 'Zion'
-];
 
 // Simple hash function to get consistent random values from seed
 function hashCode(str: string): number {

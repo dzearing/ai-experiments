@@ -16,7 +16,7 @@ export function WorkItems() {
       case 'active': return 'text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-900/50';
       case 'completed': return 'text-neutral-600 bg-neutral-100 dark:text-neutral-400 dark:bg-neutral-900/50';
       case 'blocked': return 'text-red-600 bg-red-100 dark:text-red-400 dark:bg-red-900/50';
-      case 'review': return 'text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/50';
+      case 'in-review': return 'text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/50';
       default: return 'text-yellow-600 bg-yellow-100 dark:text-yellow-400 dark:bg-yellow-900/50';
     }
   };
@@ -41,9 +41,9 @@ export function WorkItems() {
         const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
         return priorityOrder[a.priority] - priorityOrder[b.priority];
       case 'dueDate':
-        return (a.dueDate || '').localeCompare(b.dueDate || '');
+        return 0; // dueDate not implemented yet
       case 'created':
-        return b.createdAt.localeCompare(a.createdAt);
+        return b.createdAt.getTime() - a.createdAt.getTime();
       default:
         return 0;
     }
@@ -58,16 +58,32 @@ export function WorkItems() {
             Track and manage all your tasks across projects.
           </p>
         </div>
-        <Link
-          to="/work-items/new"
-          className={`
-            px-4 py-2 ${styles.buttonRadius}
-            ${styles.primaryButton} ${styles.primaryButtonText}
-            ${styles.primaryButtonHover} transition-colors
-          `}
-        >
-          Create work item
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            to="/work-items/new-ai"
+            className={`
+              px-4 py-2 ${styles.buttonRadius}
+              ${styles.primaryButton} ${styles.primaryButtonText}
+              ${styles.primaryButtonHover} transition-colors
+              flex items-center gap-2
+            `}
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            Create with AI
+          </Link>
+          <Link
+            to="/work-items/new"
+            className={`
+              px-4 py-2 ${styles.buttonRadius}
+              ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
+              hover:opacity-80 transition-opacity
+            `}
+          >
+            Create manually
+          </Link>
+        </div>
       </div>
       
       {/* Filters and Sorting */}
@@ -79,7 +95,7 @@ export function WorkItems() {
           <div className="flex items-center gap-2">
             <span className={`text-sm font-medium ${styles.textColor}`}>Status:</span>
             <div className="flex gap-1">
-              {(['all', 'planned', 'active', 'review', 'blocked', 'completed'] as const).map(status => (
+              {(['all', 'planned', 'active', 'in-review', 'blocked', 'completed'] as const).map(status => (
                 <button
                   key={status}
                   onClick={() => setFilter(status)}
@@ -148,7 +164,7 @@ export function WorkItems() {
         <div className="space-y-4">
           {sortedItems.map(item => {
             const project = projects.find(p => p.id === item.projectId);
-            const assignee = personas.find(p => p.id === item.assigneeId);
+            const assignee = item.assignedPersonaIds.length > 0 ? personas.find(p => p.id === item.assignedPersonaIds[0]) : undefined;
             
             return (
               <div
@@ -175,37 +191,9 @@ export function WorkItems() {
                     
                     <p className={`${styles.textColor} mb-3`}>{item.description}</p>
                     
-                    {item.checklist && item.checklist.length > 0 && (
-                      <div className={`mb-3 p-3 ${styles.contentBg} ${styles.borderRadius}`}>
-                        <div className={`text-sm font-medium ${styles.textColor} mb-2`}>
-                          Progress: {item.checklist.filter(c => c.completed).length} / {item.checklist.length}
-                        </div>
-                        <div className={`w-full bg-neutral-200 dark:bg-neutral-700 rounded-full h-2`}>
-                          <div
-                            className={`${styles.primaryButton} h-2 rounded-full transition-all`}
-                            style={{ 
-                              width: `${(item.checklist.filter(c => c.completed).length / item.checklist.length) * 100}%` 
-                            }}
-                          />
-                        </div>
-                      </div>
-                    )}
+                    {/* Checklist progress - not implemented yet */}
                     
-                    {item.tags && item.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {item.tags.map(tag => (
-                          <span
-                            key={tag}
-                            className={`
-                              px-2 py-1 text-xs ${styles.buttonRadius}
-                              ${styles.contentBg} ${styles.contentBorder} border ${styles.mutedText}
-                            `}
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                    {/* Tags - not implemented yet */}
                     
                     <div className="flex items-center gap-4 text-sm">
                       {project && (
@@ -226,25 +214,9 @@ export function WorkItems() {
                         </div>
                       )}
                       
-                      {item.dueDate && (
-                        <div className={`flex items-center gap-2 ${
-                          new Date(item.dueDate) < new Date() ? 'text-red-600 dark:text-red-400' : styles.mutedText
-                        }`}>
-                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          <span>{new Date(item.dueDate).toLocaleDateString()}</span>
-                        </div>
-                      )}
+                      {/* Due date - not implemented yet */}
                       
-                      {item.estimatedEffort && (
-                        <div className={`flex items-center gap-2 ${styles.mutedText}`}>
-                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <span>{item.estimatedEffort}</span>
-                        </div>
-                      )}
+                      {/* Estimated effort - not implemented yet */}
                     </div>
                   </div>
                   

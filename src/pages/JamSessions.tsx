@@ -4,31 +4,50 @@ import { useTheme } from '../contexts/ThemeContextV2';
 import type { JamSession } from '../types';
 
 export function JamSessions() {
-  const { jamSessions, personas, projects } = useApp();
+  const { jamSessions, personas, workItems, startJamSession } = useApp();
   const { currentStyles } = useTheme();
   const styles = currentStyles;
   const [showNewSessionForm, setShowNewSessionForm] = useState(false);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
+  const [newSessionData, setNewSessionData] = useState({
+    title: '',
+    workItemId: '',
+    participantIds: [] as string[]
+  });
   
   const activeSessions = jamSessions.filter(s => s.status === 'active');
-  const plannedSessions = jamSessions.filter(s => s.status === 'planned');
+  // No planned status for jam sessions - they are either active or completed
   const completedSessions = jamSessions.filter(s => s.status === 'completed');
   
-  const getSessionTypeIcon = (type: JamSession['type']) => {
-    switch (type) {
-      case 'brainstorming': return '💡';
-      case 'problemSolving': return '🔧';
-      case 'planning': return '📋';
-      case 'review': return '👀';
-      case 'retrospective': return '🔄';
-      default: return '💬';
+  const getSessionIcon = () => {
+    return '💬'; // Default chat icon for all sessions
+  };
+
+  const handleCreateSession = () => {
+    if (newSessionData.title && newSessionData.workItemId && newSessionData.participantIds.length > 0) {
+      startJamSession(
+        newSessionData.workItemId,
+        newSessionData.participantIds,
+        newSessionData.title
+      );
+      setShowNewSessionForm(false);
+      setNewSessionData({ title: '', workItemId: '', participantIds: [] });
     }
+  };
+
+  const toggleParticipant = (personaId: string) => {
+    setNewSessionData(prev => ({
+      ...prev,
+      participantIds: prev.participantIds.includes(personaId)
+        ? prev.participantIds.filter(id => id !== personaId)
+        : [...prev.participantIds, personaId]
+    }));
   };
   
   const SessionCard = ({ session }: { session: JamSession }) => {
     const isSelected = selectedSession === session.id;
     const participants = personas.filter(p => session.participantIds.includes(p.id));
-    const relatedProject = projects.find(p => p.id === session.projectId);
+    const relatedWorkItem = session.workItemId ? { id: session.workItemId } : null;
     
     return (
       <div
@@ -41,13 +60,13 @@ export function JamSessions() {
       >
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">{getSessionTypeIcon(session.type)}</span>
+            <span className="text-2xl">{getSessionIcon()}</span>
             <div>
               <h3 className={`text-lg font-semibold ${styles.headingColor}`}>
                 {session.title}
               </h3>
               <p className={`text-sm ${styles.mutedText}`}>
-                {session.type.replace(/([A-Z])/g, ' $1').trim()}
+                Jam Session
               </p>
             </div>
           </div>
@@ -59,11 +78,13 @@ export function JamSessions() {
           )}
         </div>
         
-        <p className={`${styles.textColor} mb-4`}>{session.topic}</p>
+        {session.summary && (
+          <p className={`${styles.textColor} mb-4`}>{session.summary}</p>
+        )}
         
-        {relatedProject && (
+        {relatedWorkItem && (
           <div className={`text-sm ${styles.mutedText} mb-3`}>
-            Project: {relatedProject.name}
+            Work Item ID: {relatedWorkItem.id}
           </div>
         )}
         
@@ -75,23 +96,9 @@ export function JamSessions() {
             <span>{participants.length} participants</span>
           </div>
           
-          {session.scheduledFor && (
-            <div className={`flex items-center gap-2 ${styles.mutedText}`}>
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>{new Date(session.scheduledFor).toLocaleString()}</span>
-            </div>
-          )}
+          {/* Scheduled time - not implemented */}
           
-          {session.duration && (
-            <div className={`flex items-center gap-2 ${styles.mutedText}`}>
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>{session.duration}</span>
-            </div>
-          )}
+          {/* Duration - not implemented */}
         </div>
         
         {isSelected && (
@@ -115,33 +122,9 @@ export function JamSessions() {
                 </div>
               </div>
               
-              {session.notes && session.notes.length > 0 && (
-                <div>
-                  <h4 className={`text-sm font-medium ${styles.headingColor} mb-2`}>Notes</h4>
-                  <ul className={`text-sm ${styles.textColor} space-y-1`}>
-                    {session.notes.map((note, idx) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <span className={styles.mutedText}>•</span>
-                        <span>{note}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              {/* Notes - not implemented */}
               
-              {session.actionItems && session.actionItems.length > 0 && (
-                <div>
-                  <h4 className={`text-sm font-medium ${styles.headingColor} mb-2`}>Action Items</h4>
-                  <ul className={`text-sm ${styles.textColor} space-y-1`}>
-                    {session.actionItems.map((item, idx) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <input type="checkbox" className="mt-1" />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              {/* Action items - not implemented */}
             </div>
           </div>
         )}
@@ -170,8 +153,106 @@ export function JamSessions() {
         </button>
       </div>
       
+      {/* New Session Form */}
+      {showNewSessionForm && (
+        <div className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-6 mb-6`}>
+          <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4`}>Start new jam session</h2>
+          
+          <div className="space-y-4">
+            <div>
+              <label className={`block text-sm font-medium ${styles.textColor} mb-1`}>
+                Session title
+              </label>
+              <input
+                type="text"
+                value={newSessionData.title}
+                onChange={(e) => setNewSessionData(prev => ({ ...prev, title: e.target.value }))}
+                className={`
+                  w-full px-3 py-2 ${styles.buttonRadius}
+                  ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
+                  focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500
+                `}
+                placeholder="e.g., Review authentication flow"
+              />
+            </div>
+            
+            <div>
+              <label className={`block text-sm font-medium ${styles.textColor} mb-1`}>
+                Related work item
+              </label>
+              <select
+                value={newSessionData.workItemId}
+                onChange={(e) => setNewSessionData(prev => ({ ...prev, workItemId: e.target.value }))}
+                className={`
+                  w-full px-3 py-2 ${styles.buttonRadius}
+                  ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
+                  focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500
+                `}
+              >
+                <option value="">Select a work item</option>
+                {workItems.filter(w => w.status === 'active').map(item => (
+                  <option key={item.id} value={item.id}>{item.title}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div>
+              <label className={`block text-sm font-medium ${styles.textColor} mb-2`}>
+                Participants
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {personas.map(persona => (
+                  <button
+                    key={persona.id}
+                    type="button"
+                    onClick={() => toggleParticipant(persona.id)}
+                    className={`
+                      p-2 text-sm ${styles.buttonRadius} border transition-colors
+                      ${newSessionData.participantIds.includes(persona.id)
+                        ? `${styles.primaryButton} ${styles.primaryButtonText}`
+                        : `${styles.contentBg} ${styles.contentBorder} ${styles.textColor} hover:opacity-80`
+                      }
+                    `}
+                  >
+                    {persona.name} ({persona.type})
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div className="flex gap-2 pt-2">
+              <button
+                onClick={handleCreateSession}
+                disabled={!newSessionData.title || !newSessionData.workItemId || newSessionData.participantIds.length === 0}
+                className={`
+                  px-4 py-2 ${styles.buttonRadius}
+                  ${styles.primaryButton} ${styles.primaryButtonText}
+                  ${styles.primaryButtonHover} transition-colors
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                `}
+              >
+                Start session
+              </button>
+              <button
+                onClick={() => {
+                  setShowNewSessionForm(false);
+                  setNewSessionData({ title: '', workItemId: '', participantIds: [] });
+                }}
+                className={`
+                  px-4 py-2 ${styles.buttonRadius}
+                  ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
+                  hover:opacity-80 transition-opacity
+                `}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
         <div className={`
           ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius}
           ${styles.cardShadow} p-4 text-center
@@ -180,15 +261,6 @@ export function JamSessions() {
             {activeSessions.length}
           </div>
           <div className={`text-sm ${styles.mutedText}`}>Active Sessions</div>
-        </div>
-        <div className={`
-          ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius}
-          ${styles.cardShadow} p-4 text-center
-        `}>
-          <div className={`text-3xl font-bold ${styles.headingColor}`}>
-            {plannedSessions.length}
-          </div>
-          <div className={`text-sm ${styles.mutedText}`}>Planned Sessions</div>
         </div>
         <div className={`
           ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius}
@@ -215,19 +287,7 @@ export function JamSessions() {
         </div>
       )}
       
-      {/* Planned Sessions */}
-      {plannedSessions.length > 0 && (
-        <div className="mb-8">
-          <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4`}>
-            Upcoming Sessions
-          </h2>
-          <div className="grid gap-4">
-            {plannedSessions.map(session => (
-              <SessionCard key={session.id} session={session} />
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Planned Sessions - not implemented */}
       
       {/* Completed Sessions */}
       {completedSessions.length > 0 && (
