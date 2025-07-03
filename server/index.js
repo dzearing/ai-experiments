@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const { query } = require('@anthropic-ai/claude-code');
+const claudeService = require('./claude-service');
 
 dotenv.config();
 
@@ -13,65 +13,132 @@ app.use(express.json());
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', claudeAvailable: !!process.env.ANTHROPIC_API_KEY });
+  res.json({ status: 'ok', claudeAvailable: true });
+});
+
+// Debug endpoint for testing Claude SDK
+app.post('/api/claude/debug', async (req, res) => {
+  try {
+    const { query, model, tools, mockMode } = req.body;
+    
+    if (!query) {
+      return res.status(400).json({ error: 'Query is required' });
+    }
+
+    // If mock mode is enabled, return mock data
+    if (mockMode) {
+      // Simulate processing delay
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      // Generate mock response
+      const mockResponse = {
+        text: `Mock response for query: "${query}"\n\nThis is a simulated response from the Claude API using model ${model || 'claude-3-5-sonnet-20241022'}.${tools && tools.length > 0 ? `\n\nTools enabled: ${tools.join(', ')}` : ''}\n\nIn a real scenario, this would contain Claude's actual response to your query.`,
+        json: query.toLowerCase().includes('json') ? {
+          mock: true,
+          query: query,
+          model: model || 'claude-3-5-sonnet-20241022',
+          timestamp: new Date().toISOString(),
+          data: {
+            example: "This is mock JSON data",
+            items: ["item1", "item2", "item3"]
+          }
+        } : null,
+        toolExecutions: tools && tools.length > 0 ? tools.map(tool => ({
+          tool: tool,
+          executed: true,
+          mockResult: `Mock result for ${tool} tool`
+        })) : null,
+        tokenUsage: {
+          inputTokens: Math.floor(Math.random() * 500) + 100,
+          outputTokens: Math.floor(Math.random() * 1000) + 200,
+          totalTokens: 0
+        },
+        error: null
+      };
+
+      // Calculate total tokens
+      mockResponse.tokenUsage.totalTokens = mockResponse.tokenUsage.inputTokens + mockResponse.tokenUsage.outputTokens;
+      
+      return res.json(mockResponse);
+    }
+
+    // Otherwise, use the real Claude service
+    console.log('Processing live request with Claude SDK...');
+    const response = await claudeService.processDebugQuery(
+      query, 
+      model || 'claude-3-5-sonnet-20241022',
+      tools || []
+    );
+    
+    res.json(response);
+  } catch (error) {
+    console.error('Debug endpoint error:', error);
+    console.error('Stack trace:', error.stack);
+    
+    // Return a more detailed error response
+    res.status(500).json({ 
+      error: 'Failed to process debug query',
+      text: `Error: ${error.message}\n\nThis may be due to:\n1. Claude CLI not being logged in (run: claude login)\n2. Missing Claude Code installation\n3. API connectivity issues`,
+      details: error.message 
+    });
+  }
 });
 
 // Process idea endpoint
 app.post('/api/claude/process-idea', async (req, res) => {
   try {
-    const { idea } = req.body;
+    const { idea, mockMode, model } = req.body;
     
     if (!idea) {
       return res.status(400).json({ error: 'Idea text is required' });
     }
 
-    const prompt = `You are a project management assistant. A user has provided the following idea for a work item:
+    // If mock mode is enabled, return mock data
+    if (mockMode) {
+      // Simulate processing delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
-"${idea}"
+      // Generate mock tasks based on the idea
+      const mockTasks = [
+        {
+          id: Math.random().toString(36).substring(2, 9),
+          title: "Design and Architecture",
+          description: "Define the technical architecture and design patterns for the feature",
+          goals: [
+            "Create a scalable and maintainable architecture",
+            "Define clear interfaces and data flow",
+            "Document technical decisions"
+          ],
+          workDescription: "Research best practices, create architectural diagrams, define component interfaces, and document the technical approach including data models and API contracts.",
+          validationCriteria: [
+            "Architecture diagram is complete and reviewed",
+            "All interfaces are clearly defined with TypeScript types",
+            "Technical documentation is comprehensive"
+          ]
+        },
+        {
+          id: Math.random().toString(36).substring(2, 9),
+          title: "Core Implementation",
+          description: "Build the main functionality based on the design",
+          goals: [
+            "Implement all required features",
+            "Write clean, maintainable code",
+            "Follow established patterns"
+          ],
+          workDescription: "Develop the core features following the architectural design, ensuring code quality and proper testing coverage.",
+          validationCriteria: [
+            "All features work as specified",
+            "Code passes linting and type checks",
+            "Unit tests provide adequate coverage"
+          ]
+        }
+      ];
 
-Please break this down into specific, actionable tasks. For each task, provide:
-1. A clear, concise title
-2. A detailed description
-3. 2-3 specific goals
-4. A work description explaining what needs to be done
-5. 2-3 validation criteria to verify the task is complete
-
-Respond with a JSON array of tasks in this exact format:
-{
-  "tasks": [
-    {
-      "id": "unique-id",
-      "title": "Task Title",
-      "description": "Detailed description",
-      "goals": ["Goal 1", "Goal 2"],
-      "workDescription": "What needs to be done",
-      "validationCriteria": ["Criteria 1", "Criteria 2"]
+      return res.json({ tasks: mockTasks });
     }
-  ]
-}`;
 
-    let responseText = '';
-    
-    for await (const message of query({
-      prompt,
-      options: { 
-        maxTurns: 1,
-        systemPrompt: 'You are a helpful project management assistant that breaks down ideas into actionable tasks. Always respond with valid JSON.'
-      }
-    })) {
-      if (message.text) {
-        responseText += message.text;
-      }
-    }
-
-    // Extract JSON from the response
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      const parsedResponse = JSON.parse(jsonMatch[0]);
-      res.json(parsedResponse);
-    } else {
-      throw new Error('Could not parse Claude response as JSON');
-    }
+    const response = await claudeService.processIdea(idea, model);
+    res.json(response);
 
   } catch (error) {
     console.error('Error processing idea:', error);
@@ -85,49 +152,31 @@ Respond with a JSON array of tasks in this exact format:
 // Refine tasks endpoint
 app.post('/api/claude/refine-tasks', async (req, res) => {
   try {
-    const { refinement, currentTasks } = req.body;
+    const { refinement, currentTasks, model, mockMode } = req.body;
     
     if (!refinement || !currentTasks) {
       return res.status(400).json({ error: 'Refinement text and current tasks are required' });
     }
 
-    const prompt = `You are a project management assistant. Here are the current tasks:
+    // If mock mode is enabled, return mock refinement
+    if (mockMode) {
+      // Simulate processing delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-${JSON.stringify(currentTasks, null, 2)}
+      // Mock refined tasks - modify the existing ones slightly
+      const refinedTasks = currentTasks.tasks.map((task, index) => ({
+        ...task,
+        title: task.title + " (Refined)",
+        description: task.description + " - Updated based on refinement: " + refinement.substring(0, 50) + "...",
+        goals: [...task.goals, "Address refinement feedback"],
+        validationCriteria: [...task.validationCriteria, "Refinement requirements are met"]
+      }));
 
-The user has provided this refinement:
-"${refinement}"
-
-Please update the tasks based on this refinement. You may:
-- Modify existing tasks
-- Add new tasks
-- Remove tasks that are no longer relevant
-- Adjust goals, descriptions, or validation criteria
-
-Respond with the updated JSON array of tasks in the same format as before.`;
-
-    let responseText = '';
-    
-    for await (const message of query({
-      prompt,
-      options: { 
-        maxTurns: 1,
-        systemPrompt: 'You are a helpful project management assistant that refines task breakdowns based on user feedback. Always respond with valid JSON.'
-      }
-    })) {
-      if (message.text) {
-        responseText += message.text;
-      }
+      return res.json({ tasks: refinedTasks });
     }
 
-    // Extract JSON from the response
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      const parsedResponse = JSON.parse(jsonMatch[0]);
-      res.json(parsedResponse);
-    } else {
-      throw new Error('Could not parse Claude response as JSON');
-    }
+    const response = await claudeService.refineTasks(refinement, currentTasks, model);
+    res.json(response);
 
   } catch (error) {
     console.error('Error refining tasks:', error);
@@ -140,5 +189,5 @@ Respond with the updated JSON array of tasks in the same format as before.`;
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
-  console.log(`Claude Code API key configured: ${!!process.env.ANTHROPIC_API_KEY}`);
+  console.log(`Claude Code SDK integrated and ready`);
 });

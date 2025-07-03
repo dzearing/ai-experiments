@@ -15,6 +15,57 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', mode: 'mock' });
 });
 
+// Mock debug endpoint
+app.post('/api/claude/debug', async (req, res) => {
+  try {
+    const { query, model, tools } = req.body;
+    
+    if (!query) {
+      return res.status(400).json({ error: 'Query is required' });
+    }
+
+    // Simulate processing delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+
+    // Generate mock response
+    const mockResponse = {
+      text: `Mock response for query: "${query}"\n\nThis is a simulated response from the Claude API using model ${model || 'claude-3-5-sonnet-20241022'}.${tools && tools.length > 0 ? `\n\nTools enabled: ${tools.join(', ')}` : ''}\n\nIn a real scenario, this would contain Claude's actual response to your query.`,
+      json: query.toLowerCase().includes('json') ? {
+        mock: true,
+        query: query,
+        model: model || 'claude-3-5-sonnet-20241022',
+        timestamp: new Date().toISOString(),
+        data: {
+          example: "This is mock JSON data",
+          items: ["item1", "item2", "item3"]
+        }
+      } : null,
+      toolExecutions: tools && tools.length > 0 ? tools.map(tool => ({
+        tool: tool,
+        executed: true,
+        mockResult: `Mock result for ${tool} tool`
+      })) : null,
+      tokenUsage: {
+        inputTokens: Math.floor(Math.random() * 500) + 100,
+        outputTokens: Math.floor(Math.random() * 1000) + 200,
+        totalTokens: 0
+      },
+      error: null
+    };
+
+    // Calculate total tokens
+    mockResponse.tokenUsage.totalTokens = mockResponse.tokenUsage.inputTokens + mockResponse.tokenUsage.outputTokens;
+    
+    res.json(mockResponse);
+  } catch (error) {
+    console.error('Mock debug endpoint error:', error);
+    res.status(500).json({ 
+      error: 'Failed to process debug query',
+      details: error.message 
+    });
+  }
+});
+
 // Mock process idea endpoint
 app.post('/api/claude/process-idea', async (req, res) => {
   try {

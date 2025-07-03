@@ -14,7 +14,13 @@ export function NewProject() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    status: 'active' as Project['status']
+    status: 'active' as Project['status'],
+    techStack: [] as string[],
+    teamPersonaIds: [] as string[],
+    category: 'fullstack' as Project['category'],
+    estimatedEffort: '',
+    deadline: '',
+    dependencies: ''
   });
   
   const techStackOptions = [
@@ -36,7 +42,10 @@ export function NewProject() {
     createProject({
       name: formData.name,
       description: formData.description,
-      status: formData.status
+      status: formData.status,
+      techStack: formData.techStack,
+      teamPersonaIds: formData.teamPersonaIds,
+      category: formData.category
     });
     
     navigate('/projects');

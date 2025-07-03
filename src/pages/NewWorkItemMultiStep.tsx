@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContextV2';
 import { useApp } from '../contexts/AppContext';
+import MDEditor from '@uiw/react-md-editor';
+import '@uiw/react-md-editor/markdown-editor.css';
+import '@uiw/react-markdown-preview/markdown.css';
 
 interface Task {
   id: string;
@@ -14,7 +17,7 @@ interface Task {
 
 export function NewWorkItemMultiStep() {
   const navigate = useNavigate();
-  const { currentStyles } = useTheme();
+  const { currentStyles, isDarkMode } = useTheme();
   const { createWorkItem } = useApp();
   const styles = currentStyles;
 
@@ -24,8 +27,45 @@ export function NewWorkItemMultiStep() {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mockMode, setMockMode] = useState(() => {
+    const saved = localStorage.getItem('mockMode');
+    return saved ? JSON.parse(saved) : true;
+  });
+
+  // Listen for mock mode changes
+  useEffect(() => {
+    const handleMockModeChange = (event: CustomEvent) => {
+      setMockMode(event.detail);
+    };
+
+    window.addEventListener('mockModeChanged', handleMockModeChange as EventListener);
+    return () => {
+      window.removeEventListener('mockModeChanged', handleMockModeChange as EventListener);
+    };
+  }, []);
 
   const selectedTask = tasks.find(t => t.id === selectedTaskId);
+  const [editedContent, setEditedContent] = useState<string>('');
+
+  // Update edited content when task selection changes
+  useEffect(() => {
+    if (selectedTask) {
+      // Format the task as markdown
+      const markdown = `## Description
+${selectedTask.description}
+
+## Goals
+${selectedTask.goals.map(goal => `- ${goal}`).join('\n')}
+
+## Work Description
+${selectedTask.workDescription}
+
+## Validation Criteria
+${selectedTask.validationCriteria.map(criteria => `- ${criteria}`).join('\n')}`;
+      
+      setEditedContent(markdown);
+    }
+  }, [selectedTaskId, selectedTask]);
 
   const processIdea = async () => {
     if (!ideaText.trim()) return;
@@ -39,7 +79,7 @@ export function NewWorkItemMultiStep() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ idea: ideaText }),
+        body: JSON.stringify({ idea: ideaText, mockMode }),
       });
 
       if (!response.ok) {
@@ -76,7 +116,8 @@ export function NewWorkItemMultiStep() {
         },
         body: JSON.stringify({ 
           refinement: ideaText,
-          currentTasks: tasks 
+          currentTasks: { tasks },  // Wrap in object to match expected format
+          mockMode
         }),
       });
 
@@ -101,9 +142,13 @@ export function NewWorkItemMultiStep() {
   const createWorkItems = () => {
     // Convert tasks to work items and add them
     tasks.forEach(task => {
+      // If this is the selected task, use the edited content
+      const isSelectedTask = task.id === selectedTaskId;
+      const taskContent = isSelectedTask ? editedContent : `## Description\n${task.description}\n\n## Goals\n${task.goals.map(goal => `- ${goal}`).join('\n')}\n\n## Work Description\n${task.workDescription}\n\n## Validation Criteria\n${task.validationCriteria.map(criteria => `- ${criteria}`).join('\n')}`;
+
       createWorkItem({
         title: task.title,
-        description: task.description,
+        description: taskContent,
         priority: 'medium',
         status: 'planned',
         projectId: '', // User can assign to project later
@@ -276,34 +321,15 @@ export function NewWorkItemMultiStep() {
                   {selectedTask.title}
                 </h2>
                 
-                <div className="space-y-6">
-                  <div>
-                    <h3 className={`font-medium ${styles.headingColor} mb-2`}>Description</h3>
-                    <p className={styles.textColor}>{selectedTask.description}</p>
-                  </div>
-
-                  <div>
-                    <h3 className={`font-medium ${styles.headingColor} mb-2`}>Goals</h3>
-                    <ul className="list-disc list-inside space-y-1">
-                      {selectedTask.goals.map((goal, index) => (
-                        <li key={index} className={styles.textColor}>{goal}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h3 className={`font-medium ${styles.headingColor} mb-2`}>Work Description</h3>
-                    <p className={styles.textColor}>{selectedTask.workDescription}</p>
-                  </div>
-
-                  <div>
-                    <h3 className={`font-medium ${styles.headingColor} mb-2`}>Validation Criteria</h3>
-                    <ul className="list-disc list-inside space-y-1">
-                      {selectedTask.validationCriteria.map((criteria, index) => (
-                        <li key={index} className={styles.textColor}>{criteria}</li>
-                      ))}
-                    </ul>
-                  </div>
+                <div className="h-[calc(100vh-16rem)]" data-color-mode={isDarkMode ? 'dark' : 'light'}>
+                  <MDEditor
+                    value={editedContent}
+                    onChange={(value) => setEditedContent(value || '')}
+                    height="100%"
+                    preview="edit"
+                    hideToolbar={false}
+                    visibleDragbar={false}
+                  />
                 </div>
               </>
             ) : (

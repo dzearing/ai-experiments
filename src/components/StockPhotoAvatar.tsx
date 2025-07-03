@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { CrossFade } from './ui/CrossFade';
 
 interface StockPhotoAvatarProps {
   seed: string;
@@ -46,7 +47,7 @@ const femaleNames = [
 
 
 // Simple hash function to get consistent random values from seed
-function hashCode(str: string): number {
+export function hashCode(str: string): number {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
@@ -90,7 +91,7 @@ export function StockPhotoAvatar({ seed, size = 80, gender = 'any' }: StockPhoto
   
   return (
     <div 
-      className="rounded-full"
+      className="rounded-full relative"
       style={{ 
         width: size, 
         height: size,
@@ -105,15 +106,12 @@ export function StockPhotoAvatar({ seed, size = 80, gender = 'any' }: StockPhoto
           height: '100%'
         }}
       >
-        <img
+        <CrossFade
           src={avatarUrl}
           alt="Avatar"
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            // Fallback to UI Avatars if image fails to load
-            const name = getRandomName(seed, actualGender);
-            e.currentTarget.src = `https://ui-avatars.com/api/?name=${name}&size=${size}&background=6B7280&color=fff`;
-          }}
+          className="w-full h-full"
+          duration={400}
+          fallbackSrc={`https://ui-avatars.com/api/?name=${getRandomName(seed, actualGender)}&size=${size}&background=6B7280&color=fff`}
         />
       </div>
     </div>

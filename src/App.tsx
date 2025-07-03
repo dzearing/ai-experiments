@@ -12,6 +12,7 @@ import { NewProject } from './pages/NewProject';
 import { NewWorkItem } from './pages/NewWorkItem';
 import { NewWorkItemMultiStep } from './pages/NewWorkItemMultiStep';
 import { Projects } from './pages/Projects';
+import { DebugClaude } from './pages/DebugClaude';
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
               <Route path="personas/new" element={<ThemedNewPersona />} />
               <Route path="jam-sessions" element={<JamSessions />} />
               <Route path="daily-report" element={<div>Daily Report Page (TODO)</div>} />
+              <Route path="debug-claude" element={<DebugClaude />} />
             </Route>
           </Routes>
           <ThemeSwitcherV2 />
