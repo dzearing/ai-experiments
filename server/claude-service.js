@@ -67,14 +67,14 @@ class ClaudeService {
         // JSON parsing failed
       }
 
-      // Get token usage if available
-      if (result && result.usage) {
-        response.tokenUsage = {
-          inputTokens: result.usage.input_tokens,
-          outputTokens: result.usage.output_tokens,
-          totalTokens: result.usage.total_tokens
-        };
-      }
+      // Token usage is not available with the current SDK implementation
+      // We'll just provide mock values for now
+      response.tokenUsage = {
+        inputTokens: query.length / 4, // rough estimate
+        outputTokens: response.text ? response.text.length / 4 : 0,
+        totalTokens: 0
+      };
+      response.tokenUsage.totalTokens = response.tokenUsage.inputTokens + response.tokenUsage.outputTokens;
 
       return response;
     } catch (error) {

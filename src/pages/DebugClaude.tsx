@@ -333,7 +333,7 @@ export function DebugClaude() {
                       )}
                       {activeTab === 'response' && (
                         <pre className={`text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap font-mono`}>
-                          {response.response.text || 'No text response'}
+                          {JSON.stringify(response.response, null, 2)}
                         </pre>
                       )}
                       {activeTab === 'json' && response.response.json && (
