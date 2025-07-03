@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContextV2';
 import { useApp } from '../contexts/AppContext';
+import { Button } from '../components/ui/Button';
+import { IconButton } from '../components/ui/IconButton';
 import type { WorkItem } from '../types';
 
 export function NewWorkItem() {
@@ -276,29 +278,28 @@ export function NewWorkItem() {
                   placeholder={`Problem ${index + 1}`}
                 />
                 {formData.problems.length > 1 && (
-                  <button
+                  <IconButton
                     type="button"
                     onClick={() => removeArrayItem('problems', index)}
-                    className={`p-2 ${styles.contentBg} ${styles.buttonRadius} ${styles.textColor} hover:opacity-80`}
+                    variant="secondary"
+                    size="sm"
+                    aria-label="Remove problem"
                   >
                     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                  </button>
+                  </IconButton>
                 )}
               </div>
             ))}
-            <button
+            <Button
               type="button"
               onClick={() => addArrayItem('problems')}
-              className={`
-                px-3 py-1 text-sm ${styles.buttonRadius}
-                ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
-                hover:opacity-80 transition-opacity
-              `}
+              variant="secondary"
+              size="sm"
             >
               Add problem
-            </button>
+            </Button>
           </div>
         </div>
         
@@ -322,29 +323,28 @@ export function NewWorkItem() {
                   placeholder={`Goal ${index + 1}`}
                 />
                 {formData.goals.length > 1 && (
-                  <button
+                  <IconButton
                     type="button"
                     onClick={() => removeArrayItem('goals', index)}
-                    className={`p-2 ${styles.contentBg} ${styles.buttonRadius} ${styles.textColor} hover:opacity-80`}
+                    variant="secondary"
+                    size="sm"
+                    aria-label="Remove goal"
                   >
                     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                  </button>
+                  </IconButton>
                 )}
               </div>
             ))}
-            <button
+            <Button
               type="button"
               onClick={() => addArrayItem('goals')}
-              className={`
-                px-3 py-1 text-sm ${styles.buttonRadius}
-                ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
-                hover:opacity-80 transition-opacity
-              `}
+              variant="secondary"
+              size="sm"
             >
               Add goal
-            </button>
+            </Button>
           </div>
         </div>
         
@@ -390,29 +390,28 @@ export function NewWorkItem() {
                       placeholder="Dependency or prerequisite"
                     />
                     {formData.dependencies.length > 1 && (
-                      <button
+                      <IconButton
                         type="button"
                         onClick={() => removeArrayItem('dependencies', index)}
-                        className={`p-2 ${styles.contentBg} ${styles.buttonRadius} ${styles.textColor} hover:opacity-80`}
+                        variant="secondary"
+                        size="sm"
+                        aria-label="Remove dependency"
                       >
                         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
-                      </button>
+                      </IconButton>
                     )}
                   </div>
                 ))}
-                <button
+                <Button
                   type="button"
                   onClick={() => addArrayItem('dependencies')}
-                  className={`
-                    px-3 py-1 text-sm ${styles.buttonRadius}
-                    ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
-                    hover:opacity-80 transition-opacity
-                  `}
+                  variant="secondary"
+                  size="sm"
                 >
                   Add dependency
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -437,29 +436,28 @@ export function NewWorkItem() {
                   placeholder="Success criterion"
                 />
                 {formData.acceptanceCriteria.length > 1 && (
-                  <button
+                  <IconButton
                     type="button"
                     onClick={() => removeArrayItem('acceptanceCriteria', index)}
-                    className={`p-2 ${styles.contentBg} ${styles.buttonRadius} ${styles.textColor} hover:opacity-80`}
+                    variant="secondary"
+                    size="sm"
+                    aria-label="Remove criterion"
                   >
                     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                  </button>
+                  </IconButton>
                 )}
               </div>
             ))}
-            <button
+            <Button
               type="button"
               onClick={() => addArrayItem('acceptanceCriteria')}
-              className={`
-                px-3 py-1 text-sm ${styles.buttonRadius}
-                ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
-                hover:opacity-80 transition-opacity
-              `}
+              variant="secondary"
+              size="sm"
             >
               Add criterion
-            </button>
+            </Button>
           </div>
         </div>
         
@@ -483,29 +481,28 @@ export function NewWorkItem() {
                   placeholder="Metric description and expected values"
                 />
                 {formData.healthMetrics.length > 1 && (
-                  <button
+                  <IconButton
                     type="button"
                     onClick={() => removeArrayItem('healthMetrics', index)}
-                    className={`p-2 ${styles.contentBg} ${styles.buttonRadius} ${styles.textColor} hover:opacity-80`}
+                    variant="secondary"
+                    size="sm"
+                    aria-label="Remove metric"
                   >
                     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                  </button>
+                  </IconButton>
                 )}
               </div>
             ))}
-            <button
+            <Button
               type="button"
               onClick={() => addArrayItem('healthMetrics')}
-              className={`
-                px-3 py-1 text-sm ${styles.buttonRadius}
-                ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
-                hover:opacity-80 transition-opacity
-              `}
+              variant="secondary"
+              size="sm"
             >
               Add metric
-            </button>
+            </Button>
           </div>
         </div>
         
@@ -531,17 +528,13 @@ export function NewWorkItem() {
                   `}
                   placeholder="Add a tag"
                 />
-                <button
+                <Button
                   type="button"
                   onClick={addTag}
-                  className={`
-                    px-3 py-2 ${styles.buttonRadius}
-                    ${styles.primaryButton} ${styles.primaryButtonText}
-                    ${styles.primaryButtonHover} transition-colors
-                  `}
+                  variant="primary"
                 >
                   Add
-                </button>
+                </Button>
               </div>
               {formData.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2">
@@ -554,15 +547,18 @@ export function NewWorkItem() {
                       `}
                     >
                       {tag}
-                      <button
+                      <IconButton
                         type="button"
                         onClick={() => removeTag(tag)}
-                        className="hover:opacity-80"
+                        variant="ghost"
+                        size="sm"
+                        aria-label={`Remove tag ${tag}`}
+                        className="ml-1"
                       >
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
-                      </button>
+                      </IconButton>
                     </span>
                   ))}
                 </div>
@@ -591,27 +587,19 @@ export function NewWorkItem() {
         
         {/* Form Actions */}
         <div className="flex justify-end gap-3">
-          <button
+          <Button
             type="button"
             onClick={() => navigate('/work-items')}
-            className={`
-              px-4 py-2 ${styles.buttonRadius}
-              ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
-              hover:opacity-80 transition-opacity
-            `}
+            variant="secondary"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
-            className={`
-              px-4 py-2 ${styles.buttonRadius}
-              ${styles.primaryButton} ${styles.primaryButtonText}
-              ${styles.primaryButtonHover} transition-colors
-            `}
+            variant="primary"
           >
             Create work item
-          </button>
+          </Button>
         </div>
       </form>
     </div>

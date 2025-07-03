@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContextV2';
 import { useApp } from '../contexts/AppContext';
+import { Button } from '../components/ui/Button';
 import MDEditor from '@uiw/react-md-editor';
 import '@uiw/react-md-editor/markdown-editor.css';
 import '@uiw/react-markdown-preview/markdown.css';
@@ -140,27 +141,57 @@ ${selectedTask.validationCriteria.map(criteria => `- ${criteria}`).join('\n')}`;
   };
 
   const createWorkItems = () => {
-    // Convert tasks to work items and add them
-    tasks.forEach(task => {
-      // If this is the selected task, use the edited content
-      const isSelectedTask = task.id === selectedTaskId;
-      const taskContent = isSelectedTask ? editedContent : `## Description\n${task.description}\n\n## Goals\n${task.goals.map(goal => `- ${goal}`).join('\n')}\n\n## Work Description\n${task.workDescription}\n\n## Validation Criteria\n${task.validationCriteria.map(criteria => `- ${criteria}`).join('\n')}`;
+    // Create a single work item with all tasks as sub-tasks
+    const overallTitle = tasks.length > 0 ? `${tasks[0].title} (${tasks.length} tasks)` : 'Work Item';
+    
+    // Create a comprehensive description that includes all sub-tasks
+    const overallDescription = `# Overview
+This work item contains ${tasks.length} sub-tasks that need to be completed in sequence.
 
-      createWorkItem({
-        title: task.title,
-        description: taskContent,
-        priority: 'medium',
-        status: 'planned',
-        projectId: '', // User can assign to project later
-        assignedPersonaIds: [],
-        workflow: [
-          { name: 'Planning', status: 'completed' },
-          { name: 'Development', status: 'pending' },
-          { name: 'Testing', status: 'pending' },
-          { name: 'Review', status: 'pending' }
-        ],
-        currentWorkflowStep: 0
-      });
+## Sub-tasks:
+${tasks.map((task, index) => `${index + 1}. **${task.title}**`).join('\n')}
+
+---
+
+${tasks.map((task, index) => {
+      const isSelectedTask = task.id === selectedTaskId;
+      const taskContent = isSelectedTask ? editedContent : `## ${index + 1}. ${task.title}
+
+### Description
+${task.description}
+
+### Goals
+${task.goals.map(goal => `- ${goal}`).join('\n')}
+
+### Work Description
+${task.workDescription}
+
+### Validation Criteria
+${task.validationCriteria.map(criteria => `- ${criteria}`).join('\n')}`;
+      
+      return taskContent;
+    }).join('\n\n---\n\n')}`;
+
+    // Store tasks as JSON in a special field (we'll need to add this to the WorkItem type)
+    const workItem = createWorkItem({
+      title: overallTitle,
+      description: overallDescription,
+      priority: 'high',
+      status: 'planned',
+      projectId: '', // User can assign to project later
+      assignedPersonaIds: [],
+      workflow: [
+        { name: 'Planning', status: 'completed' },
+        { name: 'Development', status: 'pending' },
+        { name: 'Testing', status: 'pending' },
+        { name: 'Review', status: 'pending' }
+      ],
+      currentWorkflowStep: 0,
+      // Store the tasks data for the work items UI to display
+      metadata: {
+        tasks: tasks,
+        currentTaskIndex: 0
+      }
     });
 
     navigate('/work-items');
@@ -204,26 +235,17 @@ ${selectedTask.validationCriteria.map(criteria => `- ${criteria}`).join('\n')}`;
             )}
 
             <div className="mt-6 flex justify-end gap-3">
-              <button
+              <Button
                 onClick={() => navigate('/work-items')}
-                className={`
-                  px-4 py-2 ${styles.buttonRadius}
-                  ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
-                  hover:opacity-80 transition-opacity
-                `}
+                variant="secondary"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={processIdea}
                 disabled={!ideaText.trim() || isProcessing}
-                className={`
-                  px-6 py-2 ${styles.buttonRadius}
-                  ${styles.primaryButton} ${styles.primaryButtonText}
-                  ${styles.primaryButtonHover} transition-colors
-                  disabled:opacity-50 disabled:cursor-not-allowed
-                  flex items-center gap-2
-                `}
+                variant="primary"
+                className="min-w-[180px]"
               >
                 {isProcessing ? (
                   <>
@@ -248,7 +270,7 @@ ${selectedTask.validationCriteria.map(criteria => `- ${criteria}`).join('\n')}`;
                 ) : (
                   'Process with Claude'
                 )}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -298,18 +320,16 @@ ${selectedTask.validationCriteria.map(criteria => `- ${criteria}`).join('\n')}`;
                 rows={3}
                 placeholder="Add more details or adjustments..."
               />
-              <button
+              <Button
                 onClick={refineIdea}
                 disabled={!ideaText.trim() || isProcessing}
-                className={`
-                  mt-2 w-full px-3 py-1.5 text-sm ${styles.buttonRadius}
-                  ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
-                  hover:opacity-80 transition-opacity
-                  disabled:opacity-50 disabled:cursor-not-allowed
-                `}
+                variant="secondary"
+                size="sm"
+                fullWidth
+                className="mt-2"
               >
                 {isProcessing ? 'Refining...' : 'Refine with Claude'}
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -344,26 +364,18 @@ ${selectedTask.validationCriteria.map(criteria => `- ${criteria}`).join('\n')}`;
       {/* Action Buttons */}
       {step === 'review' && (
         <div className="mt-6 flex justify-end gap-3">
-          <button
+          <Button
             onClick={() => setStep('input')}
-            className={`
-              px-4 py-2 ${styles.buttonRadius}
-              ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
-              hover:opacity-80 transition-opacity
-            `}
+            variant="secondary"
           >
             Start Over
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={createWorkItems}
-            className={`
-              px-6 py-2 ${styles.buttonRadius}
-              ${styles.primaryButton} ${styles.primaryButtonText}
-              ${styles.primaryButtonHover} transition-colors
-            `}
+            variant="primary"
           >
             Create {tasks.length} Work Item{tasks.length !== 1 ? 's' : ''}
-          </button>
+          </Button>
         </div>
       )}
     </div>

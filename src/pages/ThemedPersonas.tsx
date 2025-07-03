@@ -1,5 +1,6 @@
 import { useApp } from '../contexts/AppContext';
 import { useTheme } from '../contexts/ThemeContextV2';
+import { Button } from '../components/ui/Button';
 import type { PersonaType } from '../types';
 import { Link } from 'react-router-dom';
 
@@ -39,16 +40,15 @@ export function ThemedPersonas() {
             Manage your Claude agent personas and their assignments.
           </p>
         </div>
-        <Link
-          to="/personas/new"
-          className={`
-            px-4 py-2 ${styles.buttonRadius}
-            ${styles.primaryButton} ${styles.primaryButtonText}
-            ${styles.primaryButtonHover} transition-colors
-          `}
-        >
-          Spawn new agent
-        </Link>
+        {personas.length > 0 && (
+          <Button
+            as={Link}
+            to="/personas/new"
+            variant="primary"
+          >
+            Spawn new agent
+          </Button>
+        )}
       </div>
       
       {/* Personas Table */}
@@ -86,16 +86,13 @@ export function ThemedPersonas() {
                   <h3 className={`mt-4 text-lg font-medium ${styles.headingColor}`}>No personas yet</h3>
                   <p className={`mt-2 ${styles.mutedText}`}>Get started by spawning your first agent.</p>
                   <div className="mt-6">
-                    <Link
+                    <Button
+                      as={Link}
                       to="/personas/new"
-                      className={`
-                        inline-flex items-center px-4 py-2 ${styles.buttonRadius}
-                        ${styles.primaryButton} ${styles.primaryButtonText}
-                        ${styles.primaryButtonHover} transition-colors
-                      `}
+                      variant="primary"
                     >
                       Spawn new agent
-                    </Link>
+                    </Button>
                   </div>
                 </td>
               </tr>
@@ -141,9 +138,12 @@ export function ThemedPersonas() {
                       )}
                     </td>
                     <td className="relative whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                      <button className={`${styles.textColor} hover:opacity-80`}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                      >
                         Edit
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 );

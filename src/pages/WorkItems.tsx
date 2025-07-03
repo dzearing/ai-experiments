@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import { useTheme } from '../contexts/ThemeContextV2';
+import { Button } from '../components/ui/Button';
+import { IconButton } from '../components/ui/IconButton';
 import type { WorkItem } from '../types';
 
 export function WorkItems() {
@@ -58,32 +60,15 @@ export function WorkItems() {
             Track and manage all your tasks across projects.
           </p>
         </div>
-        <div className="flex gap-2">
-          <Link
+        {workItems.length > 0 && (
+          <Button
+            as={Link}
             to="/work-items/new-ai"
-            className={`
-              px-4 py-2 ${styles.buttonRadius}
-              ${styles.primaryButton} ${styles.primaryButtonText}
-              ${styles.primaryButtonHover} transition-colors
-              flex items-center gap-2
-            `}
+            variant="primary"
           >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-            Create with AI
-          </Link>
-          <Link
-            to="/work-items/new"
-            className={`
-              px-4 py-2 ${styles.buttonRadius}
-              ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
-              hover:opacity-80 transition-opacity
-            `}
-          >
-            Create manually
-          </Link>
-        </div>
+            Create work item
+          </Button>
+        )}
       </div>
       
       {/* Filters and Sorting */}
@@ -96,19 +81,14 @@ export function WorkItems() {
             <span className={`text-sm font-medium ${styles.textColor}`}>Status:</span>
             <div className="flex gap-1">
               {(['all', 'planned', 'active', 'in-review', 'blocked', 'completed'] as const).map(status => (
-                <button
+                <Button
                   key={status}
                   onClick={() => setFilter(status)}
-                  className={`
-                    px-3 py-1 text-xs ${styles.buttonRadius} transition-colors
-                    ${filter === status 
-                      ? `${styles.primaryButton} ${styles.primaryButtonText}`
-                      : `${styles.contentBg} ${styles.contentBorder} border ${styles.textColor} hover:opacity-80`
-                    }
-                  `}
+                  variant={filter === status ? 'primary' : 'secondary'}
+                  size="sm"
                 >
                   {status.charAt(0).toUpperCase() + status.slice(1)}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
@@ -147,16 +127,13 @@ export function WorkItems() {
           </p>
           {filter === 'all' && (
             <div className="mt-6">
-              <Link
-                to="/work-items/new"
-                className={`
-                  inline-flex items-center px-4 py-2 ${styles.buttonRadius}
-                  ${styles.primaryButton} ${styles.primaryButtonText}
-                  ${styles.primaryButtonHover} transition-colors
-                `}
+              <Button
+                as={Link}
+                to="/work-items/new-ai"
+                variant="primary"
               >
                 Create work item
-              </Link>
+              </Button>
             </div>
           )}
         </div>
@@ -189,7 +166,29 @@ export function WorkItems() {
                       </span>
                     </div>
                     
-                    <p className={`${styles.textColor} mb-3`}>{item.description}</p>
+                    {/* Show sub-tasks if they exist */}
+                    {item.metadata?.tasks && item.metadata.tasks.length > 0 ? (
+                      <div className="mb-3">
+                        <p className={`${styles.textColor} mb-2`}>Contains {item.metadata.tasks.length} sub-tasks:</p>
+                        <div className="space-y-1">
+                          {item.metadata.tasks.map((task, index) => (
+                            <div key={task.id} className={`flex items-center gap-2 ${styles.mutedText} text-sm`}>
+                              <input
+                                type="checkbox"
+                                checked={task.completed || false}
+                                readOnly
+                                className="h-4 w-4"
+                              />
+                              <span className={task.completed ? 'line-through' : ''}>
+                                {index + 1}. {task.title}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <p className={`${styles.textColor} mb-3`}>{item.description}</p>
+                    )}
                     
                     {/* Checklist progress - not implemented yet */}
                     
@@ -221,16 +220,16 @@ export function WorkItems() {
                   </div>
                   
                   <div className="flex items-center gap-2 ml-4">
-                    <button className={`p-2 ${styles.contentBg} ${styles.buttonRadius} ${styles.textColor} hover:opacity-80`}>
+                    <IconButton aria-label="Edit work item" variant="secondary">
                       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                       </svg>
-                    </button>
-                    <button className={`p-2 ${styles.contentBg} ${styles.buttonRadius} ${styles.textColor} hover:opacity-80`}>
+                    </IconButton>
+                    <IconButton aria-label="Delete work item" variant="secondary">
                       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
-                    </button>
+                    </IconButton>
                   </div>
                 </div>
               </div>

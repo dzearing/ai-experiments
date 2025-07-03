@@ -1,9 +1,12 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import { useTheme } from '../contexts/ThemeContextV2';
+import { Button } from '../components/ui/Button';
 import type { JamSession } from '../types';
 
 export function JamSessions() {
+  const navigate = useNavigate();
   const { jamSessions, personas, workItems, startJamSession } = useApp();
   const { currentStyles } = useTheme();
   const styles = currentStyles;
@@ -25,13 +28,16 @@ export function JamSessions() {
 
   const handleCreateSession = () => {
     if (newSessionData.title && newSessionData.workItemId && newSessionData.participantIds.length > 0) {
-      startJamSession(
+      const sessionId = startJamSession(
         newSessionData.workItemId,
         newSessionData.participantIds,
         newSessionData.title
       );
       setShowNewSessionForm(false);
       setNewSessionData({ title: '', workItemId: '', participantIds: [] });
+      
+      // Navigate to the new session
+      navigate(`/jam-sessions/${sessionId}`);
     }
   };
 
@@ -125,6 +131,20 @@ export function JamSessions() {
               {/* Notes - not implemented */}
               
               {/* Action items - not implemented */}
+              
+              {session.status === 'active' && (
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/jam-sessions/${session.id}`);
+                  }}
+                  variant="primary"
+                  fullWidth
+                  className="mt-3"
+                >
+                  Enter Session
+                </Button>
+              )}
             </div>
           </div>
         )}
@@ -136,21 +156,19 @@ export function JamSessions() {
     <div>
       <div className="flex justify-between items-start mb-6">
         <div>
-          <h1 className={`text-2xl font-bold ${styles.headingColor}`}>Jam Sessions</h1>
+          <h1 className={`text-2xl font-bold ${styles.headingColor}`}>Jam sessions</h1>
           <p className={`mt-1 ${styles.mutedText}`}>
             Collaborative sessions for brainstorming, problem-solving, and planning.
           </p>
         </div>
-        <button
-          onClick={() => setShowNewSessionForm(!showNewSessionForm)}
-          className={`
-            px-4 py-2 ${styles.buttonRadius}
-            ${styles.primaryButton} ${styles.primaryButtonText}
-            ${styles.primaryButtonHover} transition-colors
-          `}
-        >
-          Start new session
-        </button>
+        {jamSessions.length > 0 && (
+          <Button
+            onClick={() => setShowNewSessionForm(!showNewSessionForm)}
+            variant="primary"
+          >
+            Start new session
+          </Button>
+        )}
       </div>
       
       {/* New Session Form */}
@@ -190,7 +208,7 @@ export function JamSessions() {
                 `}
               >
                 <option value="">Select a work item</option>
-                {workItems.filter(w => w.status === 'active').map(item => (
+                {workItems.filter(w => w.status === 'active' || w.status === 'planned').map(item => (
                   <option key={item.id} value={item.id}>{item.title}</option>
                 ))}
               </select>
@@ -202,50 +220,37 @@ export function JamSessions() {
               </label>
               <div className="grid grid-cols-2 gap-2">
                 {personas.map(persona => (
-                  <button
+                  <Button
                     key={persona.id}
                     type="button"
                     onClick={() => toggleParticipant(persona.id)}
-                    className={`
-                      p-2 text-sm ${styles.buttonRadius} border transition-colors
-                      ${newSessionData.participantIds.includes(persona.id)
-                        ? `${styles.primaryButton} ${styles.primaryButtonText}`
-                        : `${styles.contentBg} ${styles.contentBorder} ${styles.textColor} hover:opacity-80`
-                      }
-                    `}
+                    variant={newSessionData.participantIds.includes(persona.id) ? "primary" : "secondary"}
+                    size="sm"
+                    className="text-sm"
                   >
                     {persona.name} ({persona.type})
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
             
             <div className="flex gap-2 pt-2">
-              <button
+              <Button
                 onClick={handleCreateSession}
                 disabled={!newSessionData.title || !newSessionData.workItemId || newSessionData.participantIds.length === 0}
-                className={`
-                  px-4 py-2 ${styles.buttonRadius}
-                  ${styles.primaryButton} ${styles.primaryButtonText}
-                  ${styles.primaryButtonHover} transition-colors
-                  disabled:opacity-50 disabled:cursor-not-allowed
-                `}
+                variant="primary"
               >
                 Start session
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => {
                   setShowNewSessionForm(false);
                   setNewSessionData({ title: '', workItemId: '', participantIds: [] });
                 }}
-                className={`
-                  px-4 py-2 ${styles.buttonRadius}
-                  ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
-                  hover:opacity-80 transition-opacity
-                `}
+                variant="secondary"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -314,16 +319,12 @@ export function JamSessions() {
             Start your first collaborative session to brainstorm ideas and solve problems together.
           </p>
           <div className="mt-6">
-            <button
+            <Button
               onClick={() => setShowNewSessionForm(true)}
-              className={`
-                inline-flex items-center px-4 py-2 ${styles.buttonRadius}
-                ${styles.primaryButton} ${styles.primaryButtonText}
-                ${styles.primaryButtonHover} transition-colors
-              `}
+              variant="primary"
             >
               Start new session
-            </button>
+            </Button>
           </div>
         </div>
       )}

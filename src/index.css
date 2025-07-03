@@ -1,12 +1,21 @@
+@import './styles/patterns.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import './styles/patterns.css';
-
 /* Global styles */
 html {
   scrollbar-gutter: stable;
+}
+
+/* Dark mode body background */
+body {
+  @apply bg-white;
+}
+
+.dark body {
+  @apply bg-gray-900;
 }
 
 /* Animation keyframes */

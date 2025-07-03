@@ -24,6 +24,7 @@ export function AnimatedOutletWrapper({
       delay={delay}
       distance={distance}
       reverse={direction === 'backward'}
+      centered={false}
     >
       {outlet}
     </AnimatedTransition>

@@ -1,15 +1,18 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { useTheme } from '../contexts/ThemeContextV2';
+import { useWorkspace } from '../contexts/WorkspaceContext';
 import { BackgroundPattern } from './BackgroundPatternOptimized';
 import { AnimatedTransition } from './AnimatedTransition';
 import { AnimatedOutletWrapper } from './AnimatedOutletWrapper';
 import { useNavigationDirection } from '../hooks/useNavigationDirection';
 import { Toggle } from './ui/Toggle';
+import { SettingsMenu } from './SettingsMenu';
 
 export function ThemedLayoutV2() {
   const location = useLocation();
   const { currentStyles, backgroundEffectEnabled } = useTheme();
+  const { workspace } = useWorkspace();
   const styles = currentStyles;
   const direction = useNavigationDirection();
   const [mockMode, setMockMode] = useState(() => {
@@ -21,9 +24,9 @@ export function ThemedLayoutV2() {
   const navItems = [
     { path: '/', label: 'Dashboard' },
     { path: '/projects', label: 'Projects' },
-    { path: '/work-items', label: 'Work Items' },
+    { path: '/work-items', label: 'Work items' },
     { path: '/personas', label: 'Personas' },
-    { path: '/jam-sessions', label: 'Jam Sessions' },
+    { path: '/jam-sessions', label: 'Jam sessions' },
   ];
   
   const isActive = (path: string) => location.pathname === path;
@@ -37,7 +40,7 @@ export function ThemedLayoutV2() {
       <aside className={`w-64 ${styles.sidebarBg} ${styles.sidebarBorder} border-r relative z-10`}>
         <div className="p-6">
           <h1 className={`text-2xl font-bold ${styles.sidebarText}`}>
-            Project Mgmt
+            Claude Flow
           </h1>
         </div>
         
@@ -68,7 +71,7 @@ export function ThemedLayoutV2() {
                 transition-colors duration-200
               `}
             >
-              Daily Report
+              Daily report
             </Link>
           </div>
           
@@ -96,7 +99,7 @@ export function ThemedLayoutV2() {
                   localStorage.setItem('mockMode', JSON.stringify(newValue));
                   window.dispatchEvent(new CustomEvent('mockModeChanged', { detail: newValue }));
                 }}
-                label="Mock Mode"
+                label="Mock mode"
                 className="justify-between w-full"
               />
               {mockMode && (
@@ -111,17 +114,26 @@ export function ThemedLayoutV2() {
       
       {/* Main Content */}
       <div className="flex-1 flex flex-col relative z-10 overflow-hidden">
-        <header className={`${styles.contentBg} ${styles.contentBorder} border-b px-8 py-4 relative flex-shrink-0`}>
+        <header className={`${styles.contentBg} ${styles.contentBorder} border-b px-8 py-4 relative flex-shrink-0 flex items-center justify-between`}>
           <AnimatedTransition 
             transitionKey={location.pathname}
-            className="h-8"
+            className="h-8 flex-1"
             delay={100}
             reverse={direction === 'backward'}
+            centered={false}
           >
             <h2 className={`text-xl font-semibold ${styles.headingColor}`}>
               {currentLabel}
             </h2>
           </AnimatedTransition>
+          <div className="flex items-center gap-4">
+            {workspace.config && (
+              <div className={`text-sm ${styles.mutedText}`}>
+                {workspace.config.path}
+              </div>
+            )}
+            <SettingsMenu />
+          </div>
         </header>
         
         <main className={`flex-1 p-8 ${styles.contentBg} relative overflow-y-auto`}>

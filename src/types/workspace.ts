@@ -1,0 +1,39 @@
+export interface WorkspaceConfig {
+  path: string;
+  name: string;
+}
+
+export interface WorkspaceState {
+  config: WorkspaceConfig | null;
+  isLoading: boolean;
+  error: string | null;
+}
+
+export interface WorkspaceProject {
+  name: string;
+  path: string;
+  repos: WorkspaceRepo[];
+  plans: {
+    ideas: WorkspacePlan[];
+    planned: WorkspacePlan[];
+    active: WorkspacePlan[];
+    completed: WorkspacePlan[];
+  };
+  readme?: string;
+}
+
+export interface WorkspaceRepo {
+  name: string;
+  number: number;
+  path: string;
+  isAvailable: boolean;
+  activeWorkItem?: string;
+  branch?: string;
+}
+
+export interface WorkspacePlan {
+  name: string;
+  path: string;
+  status: 'idea' | 'planned' | 'active' | 'completed';
+  content?: string;
+}

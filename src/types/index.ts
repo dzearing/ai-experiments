@@ -41,6 +41,18 @@ export interface WorkItem {
   workflow: WorkflowStep[];
   currentWorkflowStep?: number;
   jamSessionIds: string[];
+  metadata?: {
+    tasks?: Array<{
+      id: string;
+      title: string;
+      description: string;
+      goals: string[];
+      workDescription: string;
+      validationCriteria: string[];
+      completed?: boolean;
+    }>;
+    currentTaskIndex?: number;
+  };
 }
 
 export type WorkItemStatus = 

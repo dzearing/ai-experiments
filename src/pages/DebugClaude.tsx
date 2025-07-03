@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContextV2';
+import { Button } from '../components/ui/Button';
+import { IconButton } from '../components/ui/IconButton';
 import { ToggleButton } from '../components/ui/ToggleButton';
 
 interface DebugResponse {
@@ -204,13 +206,15 @@ export function DebugClaude() {
             </div>
           </div>
 
-          <button
+          <Button
             type="submit"
             disabled={loading || !query.trim()}
-            className={`w-full py-3 px-4 ${styles.primaryButton} ${styles.primaryButtonText} ${styles.primaryButtonHover} ${styles.buttonRadius} font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
+            variant="primary"
+            fullWidth
+            size="lg"
           >
             {loading ? 'Sending...' : 'Send Query'}
-          </button>
+          </Button>
         </form>
       </div>
 
@@ -226,15 +230,17 @@ export function DebugClaude() {
                 className={`${styles.sidebarBg} ${styles.borderRadius} p-4 border ${styles.sidebarBorder} relative`}
               >
                 {/* Remove button */}
-                <button
+                <IconButton
                   onClick={() => setResponses(responses.filter((_, i) => i !== index))}
-                  className="absolute top-2 right-2 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  variant="ghost"
+                  size="sm"
                   aria-label="Remove response"
+                  className="absolute top-2 right-2"
                 >
-                  <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
-                </button>
+                </IconButton>
 
                 <div className="flex justify-between items-center mb-3 pr-8">
                   <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -259,8 +265,10 @@ export function DebugClaude() {
                 {/* Response Tabs */}
                 <div className="border-b border-gray-200 dark:border-gray-700 mb-3">
                   <div className="flex gap-4">
-                    <button
+                    <Button
                       onClick={() => setActiveTab('request')}
+                      variant="ghost"
+                      size="sm"
                       className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors ${
                         activeTab === 'request'
                           ? 'border-blue-500 text-blue-600 dark:text-blue-400'
@@ -268,9 +276,11 @@ export function DebugClaude() {
                       }`}
                     >
                       Request
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       onClick={() => setActiveTab('response')}
+                      variant="ghost"
+                      size="sm"
                       className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors ${
                         activeTab === 'response'
                           ? 'border-blue-500 text-blue-600 dark:text-blue-400'
@@ -278,10 +288,12 @@ export function DebugClaude() {
                       }`}
                     >
                       Response
-                    </button>
+                    </Button>
                     {response.response.json && (
-                      <button
+                      <Button
                         onClick={() => setActiveTab('json')}
+                        variant="ghost"
+                        size="sm"
                         className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors ${
                           activeTab === 'json'
                             ? 'border-blue-500 text-blue-600 dark:text-blue-400'
@@ -289,11 +301,13 @@ export function DebugClaude() {
                         }`}
                       >
                         JSON
-                      </button>
+                      </Button>
                     )}
                     {response.response.toolExecutions && (
-                      <button
+                      <Button
                         onClick={() => setActiveTab('tools')}
+                        variant="ghost"
+                        size="sm"
                         className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors ${
                           activeTab === 'tools'
                             ? 'border-blue-500 text-blue-600 dark:text-blue-400'
@@ -301,7 +315,7 @@ export function DebugClaude() {
                         }`}
                       >
                         Tools
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>

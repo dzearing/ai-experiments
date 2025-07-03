@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContextV2';
 import { useApp } from '../contexts/AppContext';
+import { Button } from '../components/ui/Button';
 import { v4 as uuidv4 } from 'uuid';
 import type { Project } from '../types';
 
@@ -20,7 +21,8 @@ export function NewProject() {
     category: 'fullstack' as Project['category'],
     estimatedEffort: '',
     deadline: '',
-    dependencies: ''
+    dependencies: '',
+    tags: ''
   });
   
   const techStackOptions = [
@@ -232,20 +234,15 @@ export function NewProject() {
               </label>
               <div className="flex flex-wrap gap-2">
                 {techStackOptions.map(tech => (
-                  <button
+                  <Button
                     key={tech}
                     type="button"
                     onClick={() => toggleTechStack(tech)}
-                    className={`
-                      px-3 py-1 ${styles.buttonRadius} border transition-colors
-                      ${formData.techStack.includes(tech)
-                        ? `${styles.primaryButton} ${styles.primaryButtonText}`
-                        : `${styles.cardBg} ${styles.cardBorder} ${styles.textColor} hover:opacity-80`
-                      }
-                    `}
+                    variant={formData.techStack.includes(tech) ? "primary" : "secondary"}
+                    size="sm"
                   >
                     {tech}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -312,27 +309,19 @@ export function NewProject() {
         
         {/* Form Actions */}
         <div className="flex justify-end gap-4">
-          <button
+          <Button
             type="button"
             onClick={() => navigate('/projects')}
-            className={`
-              px-6 py-2 ${styles.buttonRadius} ${styles.cardBg} 
-              ${styles.cardBorder} border ${styles.textColor}
-              hover:opacity-80 transition-opacity
-            `}
+            variant="secondary"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
-            className={`
-              px-6 py-2 ${styles.buttonRadius} 
-              ${styles.primaryButton} ${styles.primaryButtonText}
-              ${styles.primaryButtonHover} transition-colors
-            `}
+            variant="primary"
           >
             Create project
-          </button>
+          </Button>
         </div>
       </form>
     </div>

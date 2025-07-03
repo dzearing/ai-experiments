@@ -8,6 +8,7 @@ interface AnimatedTransitionProps {
   delay?: number;
   distance?: number;
   reverse?: boolean;
+  centered?: boolean;
 }
 
 interface TransitionState {
@@ -20,8 +21,9 @@ export function AnimatedTransition({
   children, 
   transitionKey, 
   className = '',
-  delay = 150,
-  reverse = false
+  delay = 100,
+  reverse = false,
+  centered = true
 }: AnimatedTransitionProps) {
   const [state, setState] = useState<TransitionState>({
     current: children,
@@ -44,10 +46,13 @@ export function AnimatedTransition({
   useEffect(() => {
     // Update current content if key hasn't changed
     if (prevKeyRef.current === transitionKey) {
-      setState(prev => ({
-        ...prev,
-        current: children
-      }));
+      // Don't update children during transition
+      if (!state.isTransitioning) {
+        setState(prev => ({
+          ...prev,
+          current: children
+        }));
+      }
       return;
     }
 
@@ -58,12 +63,20 @@ export function AnimatedTransition({
 
     prevKeyRef.current = transitionKey;
 
-    // Start transition
+    // Start transition - keep old content as current until transition completes
     setState(prev => ({
-      current: children,
-      prev: prev.current,
+      current: prev.current,  // Keep displaying old content
+      prev: prev.current,     // Also animate it out
       isTransitioning: true
     }));
+
+    // After a short delay, bring in the new content
+    setTimeout(() => {
+      setState(prev => ({
+        ...prev,
+        current: children  // Now update to new content
+      }));
+    }, 50);
 
     // Clean up after animations complete
     timeoutRef.current = setTimeout(() => {
@@ -72,22 +85,30 @@ export function AnimatedTransition({
         prev: null,
         isTransitioning: false
       }));
-    }, 300 + delay);
+    }, 200 + delay);
 
   }, [transitionKey, children, delay]);
 
   const { current, prev, isTransitioning } = state;
 
+  const containerClasses = centered 
+    ? `relative flex items-center justify-center ${className}`
+    : `relative ${className}`;
+    
+  const contentClasses = centered
+    ? "absolute inset-0 flex items-center justify-center"
+    : "absolute inset-0";
+
   return (
-    <div className={`relative ${className}`}>
+    <div className={containerClasses}>
       {/* Previous content (exiting) */}
       {prev && isTransitioning && (
         <div
-          className="absolute inset-0"
+          className={contentClasses}
           style={{
             animation: reverse 
-              ? 'slideOutToRight 300ms ease-out forwards'
-              : 'slideOutToLeft 300ms ease-out forwards',
+              ? 'slideOutToRight 200ms cubic-bezier(0, 0, 0.2, 1) forwards'
+              : 'slideOutToLeft 200ms cubic-bezier(0, 0, 0.2, 1) forwards',
             pointerEvents: 'none',
             zIndex: 1
           }}
@@ -98,12 +119,12 @@ export function AnimatedTransition({
       
       {/* Current content (entering or static) */}
       <div
-        className={isTransitioning ? "absolute inset-0" : ""}
+        className={isTransitioning ? contentClasses : centered ? "w-full" : "static"}
         style={{
           animation: isTransitioning
             ? reverse
-              ? `slideInFromLeft 300ms ease-out ${delay}ms forwards`
-              : `slideInFromRight 300ms ease-out ${delay}ms forwards`
+              ? `slideInFromLeft 200ms cubic-bezier(0, 0, 0.2, 1) ${delay}ms forwards`
+              : `slideInFromRight 200ms cubic-bezier(0, 0, 0.2, 1) ${delay}ms forwards`
             : undefined,
           opacity: isTransitioning ? 0 : 1,
           pointerEvents: isTransitioning ? 'none' : 'auto',
