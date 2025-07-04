@@ -1,25 +1,41 @@
 import { Link, useLocation } from 'react-router-dom';
-import { useState } from 'react';
 import { useTheme } from '../contexts/ThemeContextV2';
 import { useWorkspace } from '../contexts/WorkspaceContext';
+import { useApp } from '../contexts/AppContext';
+import { useLayout } from '../contexts/LayoutContext';
 import { BackgroundPattern } from './BackgroundPatternOptimized';
 import { AnimatedTransition } from './AnimatedTransition';
 import { AnimatedOutletWrapper } from './AnimatedOutletWrapper';
 import { useNavigationDirection } from '../hooks/useNavigationDirection';
-import { Toggle } from './ui/Toggle';
 import { SettingsMenu } from './SettingsMenu';
 
 export function ThemedLayoutV2() {
   const location = useLocation();
   const { currentStyles, backgroundEffectEnabled } = useTheme();
   const { workspace } = useWorkspace();
+  const { projects, workItems } = useApp();
+  const { headerTitle } = useLayout();
   const styles = currentStyles;
   const direction = useNavigationDirection();
-  const [mockMode, setMockMode] = useState(() => {
-    const saved = localStorage.getItem('mockMode');
-    return saved ? JSON.parse(saved) : true;
-  });
 
+  // Extract projectId from various routes
+  const getProjectIdFromPath = () => {
+    // Match /projects/:projectId/workitems/new
+    const projectMatch = location.pathname.match(/^\/projects\/([^\/]+)\/workitems\/new$/);
+    if (projectMatch) return projectMatch[1];
+    
+    // Match /work-items/:workItemId/edit
+    const editMatch = location.pathname.match(/^\/work-items\/([^\/]+)\/edit$/);
+    if (editMatch) {
+      const workItem = workItems.find(w => w.id === editMatch[1]);
+      return workItem?.projectId;
+    }
+    
+    return null;
+  };
+  
+  const projectId = getProjectIdFromPath();
+  const project = projectId ? projects.find(p => p.id === projectId) : null;
   
   const navItems = [
     { path: '/', label: 'Dashboard' },
@@ -31,6 +47,23 @@ export function ThemedLayoutV2() {
   
   const isActive = (path: string) => location.pathname === path;
   const currentLabel = navItems.find(item => item.path === location.pathname)?.label || 'Page';
+  
+  // Determine what to show in the header
+  const getHeaderContent = () => {
+    // If headerTitle is set by a page component, use it
+    if (headerTitle) {
+      return headerTitle;
+    }
+    
+    // Otherwise, use the default logic
+    if (project && (location.pathname.includes('/workitems/new') || location.pathname.includes('/work-items/') && location.pathname.includes('/edit'))) {
+      return project.name;
+    }
+    if (location.pathname === '/work-items/new') {
+      return 'Create work item';
+    }
+    return currentLabel;
+  };
   
   return (
     <div className={`h-screen flex ${backgroundEffectEnabled ? '' : styles.mainBg} ${styles.fontFamily} relative overflow-hidden`}>
@@ -89,26 +122,6 @@ export function ThemedLayoutV2() {
               Debug Claude
             </Link>
           </div>
-          
-          <div className={`mt-4 pt-4 ${styles.sidebarBorder} border-t`}>
-            <div className="px-4">
-              <Toggle
-                checked={mockMode}
-                onChange={(newValue) => {
-                  setMockMode(newValue);
-                  localStorage.setItem('mockMode', JSON.stringify(newValue));
-                  window.dispatchEvent(new CustomEvent('mockModeChanged', { detail: newValue }));
-                }}
-                label="Mock mode"
-                className="justify-between w-full"
-              />
-              {mockMode && (
-                <div className="mt-2">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">Using mock responses</span>
-                </div>
-              )}
-            </div>
-          </div>
         </nav>
       </aside>
       
@@ -123,7 +136,7 @@ export function ThemedLayoutV2() {
             centered={false}
           >
             <h2 className={`text-xl font-semibold ${styles.headingColor}`}>
-              {currentLabel}
+              {getHeaderContent()}
             </h2>
           </AnimatedTransition>
           <div className="flex items-center gap-4">

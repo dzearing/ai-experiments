@@ -18,14 +18,33 @@ export type PersonaType =
   | 'designer'
   | 'motion-designer';
 
+export type ProjectStatus = 'active' | 'paused' | 'completed';
+
+export interface Repository {
+  url: string;
+  type: 'github' | 'ado';
+  visibility: 'public' | 'private';
+  isPrimary?: boolean;
+  importantFolders?: {
+    path: string;
+    description: string;
+  }[];
+  description?: string;
+}
+
 export interface Project {
   id: string;
   name: string;
   description: string;
+  purpose?: string;
   status: 'active' | 'paused' | 'completed';
   createdAt: Date;
   updatedAt: Date;
   workItems: string[]; // WorkItem IDs
+  path?: string;
+  repositories?: Repository[];
+  primaryRepoUrl?: string;
+  readme?: string;
 }
 
 export interface WorkItem {
@@ -49,9 +68,14 @@ export interface WorkItem {
       goals: string[];
       workDescription: string;
       validationCriteria: string[];
+      taskNumber?: string;
       completed?: boolean;
+      status?: 'pending' | 'in-progress' | 'completed';
     }>;
     currentTaskIndex?: number;
+    goals?: string[];
+    acceptanceCriteria?: string[];
+    workItemId?: string;
   };
 }
 

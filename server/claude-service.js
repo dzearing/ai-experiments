@@ -1,6 +1,22 @@
 const claude = require('@instantlyeasy/claude-code-sdk-ts').claude;
+const { execSync } = require('child_process');
 
 class ClaudeService {
+  constructor() {
+    this.isClaudeAvailable = this.checkClaudeAvailability();
+  }
+
+  checkClaudeAvailability() {
+    try {
+      // Try to check if claude CLI is available
+      const result = execSync('which claude', { encoding: 'utf8' }).trim();
+      console.log('Claude CLI found at:', result);
+      return true;
+    } catch (error) {
+      console.log('Claude CLI not found in PATH');
+      return false;
+    }
+  }
   async processDebugQuery(query, model, tools = []) {
     try {
       // Build the claude query with correct API
@@ -90,6 +106,17 @@ class ClaudeService {
   }
 
   async processIdea(idea, model = 'claude-3-5-sonnet-20241022') {
+    // Check if Claude is available first
+    if (!this.isClaudeAvailable) {
+      throw new Error(
+        'Claude CLI is not installed or not in PATH.\n' +
+        'Please install Claude Code CLI and authenticate:\n' +
+        '1. Install: npm install -g claude-code\n' +
+        '2. Login: claude login\n' +
+        'Or enable mock mode in settings for testing.'
+      );
+    }
+
     const prompt = `You are a project management assistant. A user has provided the following idea for a work item:
 
 "${idea}"
@@ -116,11 +143,14 @@ Respond with a JSON array of tasks in this exact format:
 }`;
 
     try {
+      console.log('Processing idea with Claude SDK...');
       const response = await claude()
         .withModel(model)
         .query(prompt)
         .asText();
 
+      console.log('Claude SDK response received');
+      
       // Extract JSON from response
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
@@ -129,11 +159,32 @@ Respond with a JSON array of tasks in this exact format:
       throw new Error('Could not parse response as JSON');
     } catch (error) {
       console.error('Error processing idea:', error);
+      
+      // If it's a CLI execution error, provide a helpful message
+      if (error.message && error.message.includes('exited with code 1')) {
+        throw new Error(
+          'Claude CLI authentication error. Please ensure:\n' +
+          '1. You are logged in: claude login\n' +
+          '2. Or enable mock mode in settings for testing'
+        );
+      }
+      
       throw error;
     }
   }
 
   async refineTasks(refinement, currentTasks, model = 'claude-3-5-sonnet-20241022') {
+    // Check if Claude is available first
+    if (!this.isClaudeAvailable) {
+      throw new Error(
+        'Claude CLI is not installed or not in PATH.\n' +
+        'Please install Claude Code CLI and authenticate:\n' +
+        '1. Install: npm install -g claude-code\n' +
+        '2. Login: claude login\n' +
+        'Or enable mock mode in settings for testing.'
+      );
+    }
+
     const prompt = `You are a project management assistant. Here are the current tasks:
 
 ${JSON.stringify(currentTasks, null, 2)}
@@ -150,11 +201,14 @@ Please update the tasks based on this refinement. You may:
 Respond with the updated JSON array of tasks in the same format as before.`;
 
     try {
+      console.log('Attempting to refine tasks with Claude SDK...');
       const response = await claude()
         .withModel(model)
         .query(prompt)
         .asText();
 
+      console.log('Claude SDK response received for refine tasks');
+      
       // Extract JSON from response
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
@@ -163,6 +217,18 @@ Respond with the updated JSON array of tasks in the same format as before.`;
       throw new Error('Could not parse response as JSON');
     } catch (error) {
       console.error('Error refining tasks:', error);
+      console.error('Error details:', error.stack);
+      
+      // If it's a CLI authentication error, provide a helpful message
+      if (error.message && error.message.includes('exited with code 1')) {
+        throw new Error(
+          'Claude CLI authentication error. Please ensure:\n' +
+          '1. Claude Code is installed: npm install -g claude-code\n' +
+          '2. You are logged in: claude login\n' +
+          '3. Try using mock mode for testing without authentication'
+        );
+      }
+      
       throw error;
     }
   }

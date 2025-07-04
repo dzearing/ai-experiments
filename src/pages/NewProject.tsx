@@ -2,73 +2,112 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContextV2';
 import { useApp } from '../contexts/AppContext';
+import { useWorkspace } from '../contexts/WorkspaceContext';
 import { Button } from '../components/ui/Button';
 import { v4 as uuidv4 } from 'uuid';
-import type { Project } from '../types';
+import type { Project, Repository } from '../types';
 
 export function NewProject() {
   const navigate = useNavigate();
   const { currentStyles } = useTheme();
   const { createProject, personas } = useApp();
+  const { workspace } = useWorkspace();
   const styles = currentStyles;
   
   const [formData, setFormData] = useState({
     name: '',
     description: '',
+    purpose: '',
     status: 'active' as Project['status'],
-    techStack: [] as string[],
-    teamPersonaIds: [] as string[],
-    category: 'fullstack' as Project['category'],
-    estimatedEffort: '',
-    deadline: '',
-    dependencies: '',
-    tags: ''
+    repositories: [{
+      url: '',
+      type: 'github' as 'github' | 'ado',
+      visibility: 'private' as 'public' | 'private',
+      isPrimary: true
+    }]
   });
   
-  const techStackOptions = [
-    'React', 'TypeScript', 'Node.js', 'Python', 'Go', 
-    'PostgreSQL', 'MongoDB', 'Redis', 'Docker', 'Kubernetes',
-    'AWS', 'Azure', 'GraphQL', 'REST API', 'WebSockets'
+  const repoTypeOptions = [
+    { value: 'github', label: 'GitHub' },
+    { value: 'ado', label: 'Azure DevOps' }
   ];
   
-  const categoryOptions: Project['category'][] = [
-    'frontend', 'backend', 'fullstack', 'mobile', 
-    'devops', 'data', 'research', 'prototype'
+  const visibilityOptions = [
+    { value: 'public', label: 'Public' },
+    { value: 'private', label: 'Private' }
   ];
   
-  const availablePersonas = personas.filter(p => p.status === 'available');
-  
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Create project folder in workspace if workspace is configured
+    let projectPath = '';
+    if (workspace.config) {
+      try {
+        const response = await fetch('http://localhost:3000/api/workspace/create-project', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            workspacePath: workspace.config.path,
+            projectName: formData.name
+          })
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          projectPath = result.path;
+          console.log('Project folder created at:', projectPath);
+        } else {
+          console.error('Failed to create project folder');
+        }
+      } catch (error) {
+        console.error('Error creating project folder:', error);
+      }
+    }
     
     createProject({
       name: formData.name,
       description: formData.description,
+      purpose: formData.purpose,
       status: formData.status,
-      techStack: formData.techStack,
-      teamPersonaIds: formData.teamPersonaIds,
-      category: formData.category
+      repositories: formData.repositories,
+      primaryRepoUrl: formData.repositories[0]?.url || '',
+      path: projectPath // Add the path to the project
     });
     
     navigate('/projects');
   };
   
-  const toggleTechStack = (tech: string) => {
+  const updateRepository = (index: number, field: string, value: any) => {
     setFormData(prev => ({
       ...prev,
-      techStack: prev.techStack.includes(tech)
-        ? prev.techStack.filter(t => t !== tech)
-        : [...prev.techStack, tech]
+      repositories: prev.repositories.map((repo, i) => 
+        i === index ? { ...repo, [field]: value } : repo
+      )
     }));
   };
   
-  const toggleTeamMember = (personaId: string) => {
+  const addRepository = () => {
     setFormData(prev => ({
       ...prev,
-      teamPersonaIds: prev.teamPersonaIds.includes(personaId)
-        ? prev.teamPersonaIds.filter(id => id !== personaId)
-        : [...prev.teamPersonaIds, personaId]
+      repositories: [...prev.repositories, {
+        url: '',
+        type: 'github' as 'github' | 'ado',
+        visibility: 'private' as 'public' | 'private',
+        isPrimary: false
+      }]
     }));
+  };
+  
+  const removeRepository = (index: number) => {
+    if (formData.repositories.length > 1) {
+      setFormData(prev => ({
+        ...prev,
+        repositories: prev.repositories.filter((_, i) => i !== index)
+      }));
+    }
   };
   
   return (
@@ -76,7 +115,7 @@ export function NewProject() {
       <div className="mb-8">
         <h1 className={`text-3xl font-bold ${styles.headingColor}`}>Create new project</h1>
         <p className={`mt-2 ${styles.mutedText}`}>
-          Define a new project with its team, technology stack, and timeline.
+          Define a new project with its purpose and repository information.
         </p>
       </div>
       
@@ -108,202 +147,134 @@ export function NewProject() {
                 required
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={4}
+                rows={3}
                 className={`w-full px-3 py-2 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.textColor} focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
-                placeholder="Describe the project goals, scope, and expected outcomes..."
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className={`block text-sm font-medium ${styles.textColor} mb-1`}>
-                  Category *
-                </label>
-                <select
-                  required
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className={`w-full px-3 py-2 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.textColor} focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
-                >
-                  <option value="">Select category</option>
-                  {categoryOptions.map(cat => (
-                    <option key={cat} value={cat}>
-                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-              <div>
-                <label className={`block text-sm font-medium ${styles.textColor} mb-1`}>
-                  Priority
-                </label>
-                <select
-                  value={formData.priority}
-                  onChange={(e) => setFormData({ ...formData, priority: e.target.value as Project['priority'] })}
-                  className={`w-full px-3 py-2 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.textColor} focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
-                >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                  <option value="critical">Critical</option>
-                </select>
-              </div>
-            </div>
-            
-            <div>
-              <label className={`block text-sm font-medium ${styles.textColor} mb-1`}>
-                Repository URL
-              </label>
-              <input
-                type="url"
-                value={formData.repository}
-                onChange={(e) => setFormData({ ...formData, repository: e.target.value })}
-                className={`w-full px-3 py-2 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.textColor} focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
-                placeholder="https://github.com/org/repo"
-              />
-            </div>
-          </div>
-        </div>
-        
-        {/* Team Assignment */}
-        <div className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-6`}>
-          <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4`}>Team Assignment</h2>
-          
-          <div className="space-y-4">
-            <div>
-              <label className={`block text-sm font-medium ${styles.textColor} mb-1`}>
-                Project Lead
-              </label>
-              <select
-                value={formData.leadPersonaId}
-                onChange={(e) => setFormData({ ...formData, leadPersonaId: e.target.value })}
-                className={`w-full px-3 py-2 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.textColor} focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
-              >
-                <option value="">Select lead persona</option>
-                {availablePersonas.map(persona => (
-                  <option key={persona.id} value={persona.id}>
-                    {persona.name} - {persona.expertise.join(', ')}
-                  </option>
-                ))}
-              </select>
-            </div>
-            
-            <div>
-              <label className={`block text-sm font-medium ${styles.textColor} mb-2`}>
-                Team Members
-              </label>
-              <div className="space-y-2 max-h-48 overflow-y-auto">
-                {availablePersonas.map(persona => (
-                  <label
-                    key={persona.id}
-                    className={`flex items-center p-3 ${styles.contentBg} ${styles.contentBorder} border ${styles.borderRadius} cursor-pointer hover:opacity-80`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={formData.teamPersonaIds.includes(persona.id)}
-                      onChange={() => toggleTeamMember(persona.id)}
-                      className="mr-3"
-                    />
-                    <div className="flex-1">
-                      <div className={`font-medium ${styles.textColor}`}>{persona.name}</div>
-                      <div className={`text-sm ${styles.mutedText}`}>
-                        {persona.expertise.join(', ')}
-                      </div>
-                    </div>
-                  </label>
-                ))}
-                {availablePersonas.length === 0 && (
-                  <p className={`text-sm ${styles.mutedText} text-center py-4`}>
-                    No available personas. Create some personas first.
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Technical Details */}
-        <div className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-6`}>
-          <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4`}>Technical Details</h2>
-          
-          <div className="space-y-4">
-            <div>
-              <label className={`block text-sm font-medium ${styles.textColor} mb-2`}>
-                Technology Stack
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {techStackOptions.map(tech => (
-                  <Button
-                    key={tech}
-                    type="button"
-                    onClick={() => toggleTechStack(tech)}
-                    variant={formData.techStack.includes(tech) ? "primary" : "secondary"}
-                    size="sm"
-                  >
-                    {tech}
-                  </Button>
-                ))}
-              </div>
-            </div>
-            
-            <div>
-              <label className={`block text-sm font-medium ${styles.textColor} mb-1`}>
-                Tags (comma-separated)
-              </label>
-              <input
-                type="text"
-                value={formData.tags}
-                onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                className={`w-full px-3 py-2 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.textColor} focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
-                placeholder="api, microservices, cloud"
+                placeholder="Brief description of the project..."
               />
             </div>
             
             <div>
               <label className={`block text-sm font-medium ${styles.textColor} mb-1`}>
-                Dependencies
+                Purpose
               </label>
               <textarea
-                value={formData.dependencies}
-                onChange={(e) => setFormData({ ...formData, dependencies: e.target.value })}
-                rows={2}
+                value={formData.purpose}
+                onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
+                rows={3}
                 className={`w-full px-3 py-2 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.textColor} focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
-                placeholder="List any project dependencies or prerequisites..."
-              />
-            </div>
-          </div>
-        </div>
-        
-        {/* Timeline & Effort */}
-        <div className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-6`}>
-          <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4`}>Timeline & Effort</h2>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={`block text-sm font-medium ${styles.textColor} mb-1`}>
-                Estimated Effort
-              </label>
-              <input
-                type="text"
-                value={formData.estimatedEffort}
-                onChange={(e) => setFormData({ ...formData, estimatedEffort: e.target.value })}
-                className={`w-full px-3 py-2 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.textColor} focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
-                placeholder="e.g., 2 weeks, 40 hours"
+                placeholder="What is the main purpose or goal of this project?"
               />
             </div>
             
-            <div>
-              <label className={`block text-sm font-medium ${styles.textColor} mb-1`}>
-                Deadline
-              </label>
-              <input
-                type="date"
-                value={formData.deadline}
-                onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
-                className={`w-full px-3 py-2 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.textColor} focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
-              />
-            </div>
+          </div>
+        </div>
+        
+        {/* Repository Information */}
+        <div className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-6`}>
+          <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4`}>Repository Information</h2>
+          
+          <div className="space-y-4">
+            {formData.repositories.map((repo, index) => (
+              <div key={index} className={`p-4 ${styles.contentBg} ${styles.contentBorder} border ${styles.borderRadius}`}>
+                <div className="space-y-4">
+                  <div>
+                    <label className={`block text-sm font-medium ${styles.textColor} mb-1`}>
+                      Repository URL {index === 0 && '*'}
+                    </label>
+                    <input
+                      type="url"
+                      required={index === 0}
+                      value={repo.url}
+                      onChange={(e) => updateRepository(index, 'url', e.target.value)}
+                      className={`w-full px-3 py-2 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.textColor} focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
+                      placeholder="https://github.com/org/repo"
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label className={`block text-sm font-medium ${styles.textColor} mb-1`}>
+                        Type
+                      </label>
+                      <select
+                        value={repo.type}
+                        onChange={(e) => updateRepository(index, 'type', e.target.value)}
+                        className={`w-full px-3 py-2 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.textColor} focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
+                      >
+                        {repoTypeOptions.map(option => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className={`block text-sm font-medium ${styles.textColor} mb-1`}>
+                        Visibility
+                      </label>
+                      <select
+                        value={repo.visibility}
+                        onChange={(e) => updateRepository(index, 'visibility', e.target.value)}
+                        className={`w-full px-3 py-2 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.textColor} focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
+                      >
+                        {visibilityOptions.map(option => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    <div className="flex items-end">
+                      <label className={`flex items-center ${styles.textColor}`}>
+                        <input
+                          type="checkbox"
+                          checked={repo.isPrimary}
+                          onChange={(e) => {
+                            // If setting as primary, unset others
+                            if (e.target.checked) {
+                              setFormData(prev => ({
+                                ...prev,
+                                repositories: prev.repositories.map((r, i) => ({
+                                  ...r,
+                                  isPrimary: i === index
+                                }))
+                              }));
+                            } else {
+                              updateRepository(index, 'isPrimary', false);
+                            }
+                          }}
+                          className="mr-2"
+                        />
+                        Primary repo
+                      </label>
+                      
+                      {formData.repositories.length > 1 && (
+                        <Button
+                          type="button"
+                          onClick={() => removeRepository(index)}
+                          variant="ghost"
+                          size="sm"
+                          className="ml-auto"
+                        >
+                          Remove
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+            
+            <Button
+              type="button"
+              onClick={addRepository}
+              variant="secondary"
+              size="sm"
+            >
+              Add repository
+            </Button>
           </div>
         </div>
         

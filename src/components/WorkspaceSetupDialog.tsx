@@ -7,7 +7,7 @@ import { FolderBrowserDialog } from './FolderBrowserDialog';
 
 interface WorkspaceSetupDialogProps {
   isOpen: boolean;
-  onComplete: (path: string) => void;
+  onComplete: (path: string, hasExistingContent?: boolean) => void;
   onBrowseFolder?: () => void;
   externalPath?: string;
 }
@@ -33,6 +33,8 @@ export function WorkspaceSetupDialog({ isOpen, onComplete, onBrowseFolder, exter
     const trimmedPath = workspacePath.trim();
     if (!trimmedPath) return;
 
+    console.log('Checking workspace:', trimmedPath);
+
     // Check if the folder exists
     try {
       const response = await fetch('http://localhost:3000/api/workspace/exists', {
@@ -45,27 +47,31 @@ export function WorkspaceSetupDialog({ isOpen, onComplete, onBrowseFolder, exter
 
       if (response.ok) {
         const data = await response.json();
+        console.log('Workspace check response:', data);
         if (data.exists) {
-          onComplete(trimmedPath);
+          // Workspace exists, pass along whether it has content
+          onComplete(trimmedPath, data.hasContent);
         } else {
           setPendingPath(trimmedPath);
           setShowConfirmDialog(true);
         }
       } else {
+        console.error('Failed to check workspace:', response.status);
         // If we can't check, assume it doesn't exist and show confirm dialog
         setPendingPath(trimmedPath);
         setShowConfirmDialog(true);
       }
     } catch (error) {
-      // If server is not running, show confirm dialog
-      setPendingPath(trimmedPath);
-      setShowConfirmDialog(true);
+      console.error('Error checking workspace:', error);
+      // If server is not running, we can't check for content
+      // For now, just complete without content check
+      onComplete(trimmedPath, false);
     }
   };
 
   const handleConfirmCreate = () => {
     setShowConfirmDialog(false);
-    onComplete(pendingPath);
+    onComplete(pendingPath, false); // New workspace has no content
   };
 
   const handleCancelCreate = () => {

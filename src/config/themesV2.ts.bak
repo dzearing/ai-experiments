@@ -206,7 +206,6 @@ export const themesV2: Theme[] = [
       mainBg: 'bg-black',
       contentBg: 'bg-gray-900',
       contentBorder: 'border-gray-800',
-      contentHover: 'hover:bg-gray-800',
       headingColor: 'text-gray-100',
       textColor: 'text-gray-300',
       mutedText: 'text-gray-500',

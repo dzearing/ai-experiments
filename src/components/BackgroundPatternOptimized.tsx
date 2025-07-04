@@ -8,24 +8,24 @@ export function BackgroundPattern() {
       {/* Static gradient base - no performance cost */}
       <div className="absolute inset-0 bg-gradient-to-br from-neutral-500 via-neutral-300 to-neutral-400 dark:from-black dark:via-neutral-900 dark:to-neutral-950" />
       
-      {/* Animated gradient swirls - blues with orange/pink accents */}
+      {/* Animated gradient circles - blues with orange/pink accents */}
       <div className="absolute inset-0">
-        {/* Blue swirl - top left */}
+        {/* Blue circle - top left */}
         <div
           className={`absolute -top-96 -left-96 w-[100rem] h-[100rem] ${
-            isDarkMode ? 'bg-blue-600/45' : 'bg-blue-500/60'
-          } rounded-full filter blur-3xl animate-float-slow`}
+            isDarkMode ? 'bg-gradient-radial from-blue-600/30 to-transparent' : 'bg-gradient-radial from-blue-500/40 to-transparent'
+          } rounded-full animate-float-slow`}
           style={{ 
             willChange: 'transform',
             transform: 'translate3d(0, 0, 0)'
           }}
         />
         
-        {/* Vibrant orange swirl - bottom right */}
+        {/* Vibrant orange circle - bottom right */}
         <div
           className={`absolute -bottom-96 -right-96 w-[110rem] h-[110rem] ${
-            isDarkMode ? 'bg-orange-500/50' : 'bg-orange-400/65'
-          } rounded-full filter blur-3xl animate-float-reverse`}
+            isDarkMode ? 'bg-gradient-radial from-orange-500/25 to-transparent' : 'bg-gradient-radial from-orange-400/35 to-transparent'
+          } rounded-full animate-float-reverse`}
           style={{ 
             willChange: 'transform',
             transform: 'translate3d(0, 0, 0)',
@@ -33,33 +33,33 @@ export function BackgroundPattern() {
           }}
         />
         
-        {/* Sky blue swirl - center */}
+        {/* Sky blue circle - center */}
         <div
           className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90rem] h-[90rem] ${
-            isDarkMode ? 'bg-sky-600/40' : 'bg-sky-500/55'
-          } rounded-full filter blur-3xl animate-float-slow`}
+            isDarkMode ? 'bg-gradient-radial from-sky-600/20 to-transparent' : 'bg-gradient-radial from-sky-500/30 to-transparent'
+          } rounded-full animate-float-slow`}
           style={{ 
             willChange: 'transform',
             animationDelay: '5s'
           }}
         />
         
-        {/* Vibrant pink swirl - top right */}
+        {/* Vibrant pink circle - top right */}
         <div
           className={`absolute -top-64 -right-64 w-[80rem] h-[80rem] ${
-            isDarkMode ? 'bg-pink-500/45' : 'bg-pink-400/60'
-          } rounded-full filter blur-3xl animate-float-reverse`}
+            isDarkMode ? 'bg-gradient-radial from-pink-500/25 to-transparent' : 'bg-gradient-radial from-pink-400/35 to-transparent'
+          } rounded-full animate-float-reverse`}
           style={{ 
             willChange: 'transform',
             animationDelay: '15s'
           }}
         />
         
-        {/* Deep blue swirl - bottom left */}
+        {/* Deep blue circle - bottom left */}
         <div
           className={`absolute -bottom-80 -left-80 w-[95rem] h-[95rem] ${
-            isDarkMode ? 'bg-indigo-600/40' : 'bg-indigo-500/55'
-          } rounded-full filter blur-3xl animate-float-slow`}
+            isDarkMode ? 'bg-gradient-radial from-indigo-600/20 to-transparent' : 'bg-gradient-radial from-indigo-500/30 to-transparent'
+          } rounded-full animate-float-slow`}
           style={{ 
             willChange: 'transform',
             animationDelay: '20s'

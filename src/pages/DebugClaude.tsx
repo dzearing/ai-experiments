@@ -42,7 +42,7 @@ export function DebugClaude() {
   const [activeTab, setActiveTab] = useState<'request' | 'response' | 'json' | 'tools'>('request');
   const [mockMode, setMockMode] = useState(() => {
     const saved = localStorage.getItem('mockMode');
-    return saved ? JSON.parse(saved) : true;
+    return saved ? JSON.parse(saved) : false;
   });
 
   // Listen for mock mode changes

@@ -4,6 +4,7 @@ import { useWorkspace } from '../contexts/WorkspaceContext';
 import { Toggle } from './ui/Toggle';
 import { Button } from './ui/Button';
 import { IconButton } from './ui/IconButton';
+import { DropdownTransition } from './DropdownTransition';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -11,13 +12,13 @@ interface SettingsModalProps {
 }
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
-  const { currentStyles, isDarkMode, toggleDarkMode, backgroundEffectEnabled, toggleBackgroundEffect } = useTheme();
+  const { currentStyles, isDarkMode, toggleDarkMode, backgroundEffectEnabled, toggleBackgroundEffect, animationsEnabled, toggleAnimations } = useTheme();
   const { workspace, setWorkspacePath } = useWorkspace();
   const styles = currentStyles;
   const [activeTab, setActiveTab] = useState<'workspace' | 'appearance' | 'features'>('workspace');
   const [mockMode, setMockMode] = useState(() => {
     const saved = localStorage.getItem('mockMode');
-    return saved ? JSON.parse(saved) : true;
+    return saved ? JSON.parse(saved) : false;
   });
   const [tempWorkspacePath, setTempWorkspacePath] = useState(workspace.config?.path || '');
 
@@ -39,7 +40,6 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     }
   }, [isOpen, workspace.config?.path]);
 
-  if (!isOpen) return null;
 
   const handleMockModeChange = (newValue: boolean) => {
     setMockMode(newValue);
@@ -48,17 +48,17 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
+    <DropdownTransition isOpen={isOpen} className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        className={`fixed inset-0 bg-black transition-opacity ${isOpen ? 'bg-opacity-50' : 'bg-opacity-0'}`}
         onClick={onClose}
       />
       
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
         <div className={`
-          relative w-full max-w-3xl
+          relative w-full max-w-3xl h-[600px] flex flex-col
           ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius}
           ${styles.cardShadow} 
         `}>
@@ -101,7 +101,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           </div>
 
           {/* Content */}
-          <div className="p-6">
+          <div className="flex-1 overflow-y-auto p-6">
             {activeTab === 'workspace' && (
               <div className="space-y-6">
                 <div>
@@ -193,6 +193,13 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       checked={backgroundEffectEnabled}
                       onChange={toggleBackgroundEffect}
                       label="Animated background"
+                      className="justify-between"
+                    />
+
+                    <Toggle
+                      checked={animationsEnabled}
+                      onChange={toggleAnimations}
+                      label="UI animations"
                       className="justify-between"
                     />
 
@@ -338,6 +345,6 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           </div>
         </div>
       </div>
-    </div>
+    </DropdownTransition>
   );
 }

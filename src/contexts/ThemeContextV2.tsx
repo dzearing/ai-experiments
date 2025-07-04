@@ -13,6 +13,8 @@ interface ThemeContextType {
   toggleDarkMode: () => void;
   backgroundEffectEnabled: boolean;
   toggleBackgroundEffect: () => void;
+  animationsEnabled: boolean;
+  toggleAnimations: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -21,15 +23,18 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [currentThemeIndex, setCurrentThemeIndex] = useState(0);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [backgroundEffectEnabled, setBackgroundEffectEnabled] = useState(false);
+  const [animationsEnabled, setAnimationsEnabled] = useState(true);
   
   useEffect(() => {
     // Load saved preferences
     const savedThemeId = localStorage.getItem('selectedTheme');
     const savedDarkMode = localStorage.getItem('darkMode') === 'true';
     const savedBackgroundEffect = localStorage.getItem('backgroundEffect') === 'true';
+    const savedAnimations = localStorage.getItem('animationsEnabled') !== 'false';
     
     setIsDarkMode(savedDarkMode);
     setBackgroundEffectEnabled(savedBackgroundEffect);
+    setAnimationsEnabled(savedAnimations);
     
     if (savedThemeId) {
       const index = themesV2.findIndex(t => t.id === savedThemeId);
@@ -87,6 +92,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('backgroundEffect', String(newValue));
   };
   
+  const toggleAnimations = () => {
+    const newValue = !animationsEnabled;
+    setAnimationsEnabled(newValue);
+    localStorage.setItem('animationsEnabled', String(newValue));
+  };
+  
   return (
     <ThemeContext.Provider value={{ 
       currentTheme, 
@@ -97,7 +108,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       previousTheme,
       toggleDarkMode,
       backgroundEffectEnabled,
-      toggleBackgroundEffect
+      toggleBackgroundEffect,
+      animationsEnabled,
+      toggleAnimations
     }}>
       {children}
     </ThemeContext.Provider>

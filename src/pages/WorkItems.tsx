@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import { useTheme } from '../contexts/ThemeContextV2';
 import { Button } from '../components/ui/Button';
@@ -9,6 +9,7 @@ import type { WorkItem } from '../types';
 export function WorkItems() {
   const { workItems, projects, personas } = useApp();
   const { currentStyles } = useTheme();
+  const navigate = useNavigate();
   const styles = currentStyles;
   const [filter, setFilter] = useState<'all' | WorkItem['status']>('all');
   const [sortBy, setSortBy] = useState<'priority' | 'dueDate' | 'created'>('priority');
@@ -63,7 +64,7 @@ export function WorkItems() {
         {workItems.length > 0 && (
           <Button
             as={Link}
-            to="/work-items/new-ai"
+            to="/work-items/new"
             variant="primary"
           >
             Create work item
@@ -129,7 +130,7 @@ export function WorkItems() {
             <div className="mt-6">
               <Button
                 as={Link}
-                to="/work-items/new-ai"
+                to="/work-items/new"
                 variant="primary"
               >
                 Create work item
@@ -172,15 +173,27 @@ export function WorkItems() {
                         <p className={`${styles.textColor} mb-2`}>Contains {item.metadata.tasks.length} sub-tasks:</p>
                         <div className="space-y-1">
                           {item.metadata.tasks.map((task, index) => (
-                            <div key={task.id} className={`flex items-center gap-2 ${styles.mutedText} text-sm`}>
-                              <input
-                                type="checkbox"
-                                checked={task.completed || false}
-                                readOnly
-                                className="h-4 w-4"
-                              />
-                              <span className={task.completed ? 'line-through' : ''}>
-                                {index + 1}. {task.title}
+                            <div key={task.id || `task-${index}`} className={`flex items-center gap-2 ${styles.mutedText} text-sm`}>
+                              {/* Task status indicator */}
+                              {task.status === 'in-progress' ? (
+                                // Pulsating green circle for in-progress
+                                <div className="relative w-4 h-4 flex items-center justify-center">
+                                  <div className="absolute inset-0 bg-green-500 rounded-full animate-ping opacity-75"></div>
+                                  <div className="relative w-2 h-2 bg-green-500 rounded-full"></div>
+                                </div>
+                              ) : task.completed ? (
+                                // Green checkmark for completed
+                                <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                              ) : (
+                                // Simple bullet for pending
+                                <div className="w-4 h-4 flex items-center justify-center">
+                                  <div className="w-1.5 h-1.5 bg-current rounded-full opacity-60"></div>
+                                </div>
+                              )}
+                              <span className={task.completed ? 'line-through opacity-60' : ''}>
+                                {task.taskNumber || index + 1}. {task.title}
                               </span>
                             </div>
                           ))}
@@ -220,7 +233,11 @@ export function WorkItems() {
                   </div>
                   
                   <div className="flex items-center gap-2 ml-4">
-                    <IconButton aria-label="Edit work item" variant="secondary">
+                    <IconButton 
+                      aria-label="Edit work item" 
+                      variant="secondary"
+                      onClick={() => navigate(`/work-items/${item.id}/edit`)}
+                    >
                       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                       </svg>

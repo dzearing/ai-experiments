@@ -147,7 +147,10 @@ app.post('/api/claude/process-idea', async (req, res) => {
     console.error('Error processing idea:', error);
     res.status(500).json({ 
       error: 'Failed to process idea',
-      details: error.message 
+      details: error.message,
+      suggestion: error.message.includes('CLI') || error.message.includes('authentication')
+        ? 'Enable mock mode in settings to test without Claude authentication' 
+        : null
     });
   }
 });
@@ -183,9 +186,15 @@ app.post('/api/claude/refine-tasks', async (req, res) => {
 
   } catch (error) {
     console.error('Error refining tasks:', error);
+    console.error('Stack trace:', error.stack);
+    
+    // Return a user-friendly error message
     res.status(500).json({ 
       error: 'Failed to refine tasks',
-      details: error.message 
+      details: error.message,
+      suggestion: error.message.includes('authentication') 
+        ? 'Enable mock mode in settings to test without Claude authentication' 
+        : null
     });
   }
 });
@@ -194,6 +203,282 @@ app.post('/api/claude/refine-tasks', async (req, res) => {
 const fs = require('fs').promises;
 const path = require('path');
 const os = require('os');
+
+// Parse work item markdown to extract details
+function parseWorkItemMarkdown(content) {
+  const workItem = {
+    title: '',
+    status: '',
+    description: '',
+    priority: 'medium', // Default priority
+    goals: [],
+    tasks: [],
+    acceptanceCriteria: [],
+    metadata: null
+  };
+
+  if (!content) return workItem;
+
+  // Extract title (first # heading)
+  const titleMatch = content.match(/^#\s+(.+)$/m);
+  if (titleMatch) {
+    workItem.title = titleMatch[1].trim();
+  }
+
+  // Extract status
+  const statusMatch = content.match(/##\s*Status\s*\n+(\w+)/i);
+  if (statusMatch) {
+    workItem.status = statusMatch[1].trim();
+  }
+
+  // Extract description
+  const descMatch = content.match(/##\s*Description\s*\n+([\s\S]*?)(?=\n##|$)/i);
+  if (descMatch) {
+    workItem.description = descMatch[1].trim();
+  }
+
+  // Extract goals
+  const goalsMatch = content.match(/##\s*Goals\s*\n+([\s\S]*?)(?=\n##|$)/i);
+  if (goalsMatch) {
+    const goalLines = goalsMatch[1].trim().split('\n');
+    workItem.goals = goalLines
+      .filter(line => line.match(/^-\s*\[[\sx]\]/))
+      .map(line => ({
+        text: line.replace(/^-\s*\[[\sx]\]\s*/, ''),
+        completed: line.includes('[x]')
+      }));
+  }
+
+  // Extract detailed tasks (stop at Metadata or next ## section)
+  const tasksMatch = content.match(/##\s*Tasks\s*\n+([\s\S]*?)(?=\n##\s*(?:Metadata|$))/i);
+  if (tasksMatch) {
+    const tasksContent = tasksMatch[1].trim();
+    // Split by "### Task" but keep the content after it
+    const taskSections = tasksContent.split(/(?=###\s*Task\s+)/);
+    const taskMatches = taskSections.filter(t => t.trim() && t.includes('###'));
+    
+    console.log('Tasks content length:', tasksContent.length);
+    console.log('Task sections found:', taskMatches.length);
+    
+    workItem.tasks = taskMatches.map(taskSection => {
+      // Remove the ### Task prefix
+      const taskContent = taskSection.replace(/###\s*Task\s+/, '');
+      const task = {
+        id: '',
+        taskNumber: '',
+        title: '',
+        description: '',
+        goals: [],
+        workDescription: '',
+        validationCriteria: []
+      };
+      
+      // Extract task number and title
+      const titleMatch = taskContent.match(/^(\d+[a-z]?):\s*(.+?)(?:\n|$)/);
+      if (titleMatch) {
+        task.taskNumber = titleMatch[1];
+        task.title = titleMatch[2].trim();
+        task.id = `task-${titleMatch[1]}`; // Generate ID from task number
+      }
+      
+      // Extract description
+      const descMatch = taskContent.match(/\*\*Description:\*\*\s*(.+?)(?=\n\*\*|$)/s);
+      if (descMatch) {
+        task.description = descMatch[1].trim();
+      }
+      
+      // Extract goals
+      const goalsMatch = taskContent.match(/\*\*Goals:\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/);
+      if (goalsMatch) {
+        const goalLines = goalsMatch[1].trim().split('\n');
+        task.goals = goalLines
+          .filter(line => line.match(/^-\s*\[[\sx]\]/))
+          .map(line => line.replace(/^-\s*\[[\sx]\]\s*/, '').trim());
+      }
+      
+      // Extract work description
+      const workMatch = taskContent.match(/\*\*Work\s+Description:\*\*\s*\n?([\s\S]*?)(?=\n\*\*|$)/);
+      if (workMatch) {
+        task.workDescription = workMatch[1].trim();
+      }
+      
+      // Extract acceptance criteria
+      const criteriaMatch = taskContent.match(/\*\*Acceptance\s+Criteria:\*\*\s*\n?([\s\S]*?)$/);
+      if (criteriaMatch) {
+        const criteriaLines = criteriaMatch[1].trim().split('\n');
+        task.validationCriteria = criteriaLines
+          .filter(line => line.match(/^-\s*/))
+          .map(line => line.replace(/^-\s*/, '').trim());
+      }
+      
+      console.log(`Task ${task.taskNumber}: ${task.title}`);
+      return task;
+    }).filter(task => task.title); // Only include tasks with titles
+    
+    console.log('Total tasks parsed:', workItem.tasks.length);
+  }
+
+  // Extract acceptance criteria
+  const criteriaMatch = content.match(/##\s*Acceptance\s*Criteria\s*\n+([\s\S]*?)(?=\n##|$)/i);
+  if (criteriaMatch) {
+    const criteriaLines = criteriaMatch[1].trim().split('\n');
+    workItem.acceptanceCriteria = criteriaLines
+      .filter(line => line.match(/^-\s*/))
+      .map(line => line.replace(/^-\s*/, '').trim());
+  }
+
+  // Extract metadata (if exists - for backward compatibility)
+  const metadataMatch = content.match(/##\s*Metadata\s*\n+```json\n([\s\S]*?)\n```/i);
+  if (metadataMatch) {
+    try {
+      workItem.metadata = JSON.parse(metadataMatch[1]);
+    } catch (err) {
+      // Invalid JSON
+    }
+  }
+
+  return workItem;
+}
+
+// Parse README.md to extract project details
+function parseProjectReadme(readmeContent) {
+  const details = {
+    purpose: '',
+    repositories: [],
+    primaryRepoUrl: ''
+  };
+
+  if (!readmeContent) return details;
+
+  // Extract purpose/description (usually after # Project Name or ## Description)
+  const purposeMatch = readmeContent.match(/##?\s*(Purpose|Description|Overview|About)\s*\n+([\s\S]*?)(?=\n#|$)/i);
+  if (purposeMatch) {
+    // Extract just the first paragraph
+    const purposeText = purposeMatch[2].trim();
+    const firstParagraph = purposeText.split(/\n\n/)[0];
+    details.purpose = firstParagraph.replace(/\n/g, ' ').trim();
+  }
+
+  // Extract repository information
+  const repoSection = readmeContent.match(/##?\s*(Repositories?|Repository\s+Information|Repository|Repos?)\s*\n+([\s\S]*?)(?=\n#|$)/i);
+  if (repoSection) {
+    const repoContent = repoSection[2];
+    
+    // Look for repo URLs (GitHub or Azure DevOps)
+    const repoUrls = repoContent.match(/https?:\/\/(github\.com|dev\.azure\.com)[^\s\)]+/g) || [];
+    
+    // Also look for "Local development" or similar indicators
+    if (repoUrls.length === 0 && repoContent.match(/local\s+development|not\s+tracked/i)) {
+      // Create a placeholder for local development
+      details.repositories.push({
+        url: 'local://development',
+        type: 'github', // Default type
+        visibility: 'private',
+        isPrimary: true,
+        description: 'Local development repository'
+      });
+      details.primaryRepoUrl = 'local://development';
+    } else {
+      repoUrls.forEach(url => {
+        const repo = {
+          url: url.replace(/\.$/, ''), // Remove trailing period
+          type: url.includes('github.com') ? 'github' : 'ado',
+          visibility: 'private', // Default, can be overridden
+          isPrimary: false
+        };
+
+        // Check if marked as primary
+        const urlContext = repoContent.substring(Math.max(0, repoContent.indexOf(url) - 50), repoContent.indexOf(url) + url.length + 50);
+        if (urlContext.match(/primary|main/i)) {
+          repo.isPrimary = true;
+          details.primaryRepoUrl = url;
+        }
+
+        // Check visibility
+        if (urlContext.match(/public/i)) {
+          repo.visibility = 'public';
+        }
+
+        details.repositories.push(repo);
+      });
+
+      // If no primary marked, mark first as primary
+      if (details.repositories.length > 0 && !details.primaryRepoUrl) {
+        details.repositories[0].isPrimary = true;
+        details.primaryRepoUrl = details.repositories[0].url;
+      }
+    }
+  }
+
+  return details;
+}
+
+// Extract repo details from actual repository
+async function extractRepoDetails(repoPath) {
+  const details = {
+    type: 'github',
+    visibility: 'private',
+    importantFolders: []
+  };
+
+  try {
+    // Check for .git folder to determine repo type
+    const gitPath = path.join(repoPath, '.git');
+    const gitExists = await fs.access(gitPath).then(() => true).catch(() => false);
+    
+    if (gitExists) {
+      // Try to read git config for remote URL
+      try {
+        const configPath = path.join(gitPath, 'config');
+        const gitConfig = await fs.readFile(configPath, 'utf-8');
+        if (gitConfig.includes('dev.azure.com')) {
+          details.type = 'ado';
+        }
+      } catch (err) {
+        // Ignore git config read errors
+      }
+    }
+
+    // Check for package.json
+    const packageJsonPath = path.join(repoPath, 'package.json');
+    try {
+      const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf-8'));
+      if (packageJson.private === false) {
+        details.visibility = 'public';
+      }
+    } catch (err) {
+      // No package.json or invalid
+    }
+
+    // Identify important folders
+    const entries = await fs.readdir(repoPath, { withFileTypes: true });
+    const importantDirs = ['src', 'packages', 'apps', 'lib', 'docs', 'scripts', 'test', 'tests'];
+    
+    for (const entry of entries) {
+      if (entry.isDirectory() && importantDirs.includes(entry.name)) {
+        let description = '';
+        switch(entry.name) {
+          case 'src': description = 'Source code'; break;
+          case 'packages': description = 'Monorepo packages'; break;
+          case 'apps': description = 'Applications'; break;
+          case 'lib': description = 'Library output'; break;
+          case 'docs': description = 'Documentation'; break;
+          case 'scripts': description = 'Build and utility scripts'; break;
+          case 'test':
+          case 'tests': description = 'Test files'; break;
+        }
+        details.importantFolders.push({
+          path: entry.name,
+          description
+        });
+      }
+    }
+  } catch (err) {
+    console.error('Error extracting repo details:', err);
+  }
+
+  return details;
+}
 
 // Browse directories
 app.post('/api/browse/list', async (req, res) => {
@@ -313,7 +598,7 @@ app.post('/api/browse/create-folder', async (req, res) => {
   }
 });
 
-// Check if workspace exists
+// Check if workspace exists and has content
 app.post('/api/workspace/exists', async (req, res) => {
   try {
     const { workspacePath } = req.body;
@@ -324,9 +609,28 @@ app.post('/api/workspace/exists', async (req, res) => {
 
     try {
       const stats = await fs.stat(workspacePath);
-      res.json({ exists: stats.isDirectory() });
+      if (!stats.isDirectory()) {
+        res.json({ exists: false, hasContent: false });
+        return;
+      }
+
+      // Check if projects folder exists and has content
+      let hasContent = false;
+      try {
+        const projectsPath = path.join(workspacePath, 'projects');
+        const projectStats = await fs.stat(projectsPath);
+        if (projectStats.isDirectory()) {
+          const projectDirs = await fs.readdir(projectsPath);
+          // Check if there are any projects besides template and hidden folders
+          hasContent = projectDirs.some(dir => dir !== 'template' && !dir.startsWith('.'));
+        }
+      } catch (err) {
+        // Projects folder doesn't exist
+      }
+
+      res.json({ exists: true, hasContent });
     } catch (error) {
-      res.json({ exists: false });
+      res.json({ exists: false, hasContent: false });
     }
   } catch (error) {
     console.error('Error checking workspace:', error);
@@ -352,9 +656,14 @@ app.post('/api/workspace/read', async (req, res) => {
 
     try {
       const projectDirs = await fs.readdir(projectsPath);
+      console.log('Found directories in projects folder:', projectDirs);
       
       for (const projectName of projectDirs) {
-        if (projectName === 'template') continue;
+        console.log('Checking project:', projectName);
+        if (projectName.startsWith('.')) {
+          console.log('Skipping hidden folder:', projectName);
+          continue;
+        }
         
         const projectPath = path.join(projectsPath, projectName);
         const stats = await fs.stat(projectPath);
@@ -372,15 +681,23 @@ app.post('/api/workspace/read', async (req, res) => {
             }
           };
 
-          // Read README.md
+          // Read README.md and parse project details
+          let readmeContent = '';
           try {
             const readmePath = path.join(projectPath, 'README.md');
-            project.readme = await fs.readFile(readmePath, 'utf-8');
+            readmeContent = await fs.readFile(readmePath, 'utf-8');
+            project.readme = readmeContent;
           } catch (err) {
             // README is optional
           }
 
-          // Read repos
+          // Parse project details from README
+          const parsedDetails = parseProjectReadme(readmeContent);
+          project.purpose = parsedDetails.purpose;
+          project.repositories = parsedDetails.repositories;
+          project.primaryRepoUrl = parsedDetails.primaryRepoUrl;
+
+          // Read repos directory and enhance repository information
           try {
             const reposPath = path.join(projectPath, 'repos');
             const repoDirs = await fs.readdir(reposPath);
@@ -388,12 +705,46 @@ app.post('/api/workspace/read', async (req, res) => {
             for (const repoDir of repoDirs) {
               const match = repoDir.match(/^(.+)-(\d+)$/);
               if (match) {
+                const repoPath = path.join(reposPath, repoDir);
                 project.repos.push({
                   name: match[1],
                   number: parseInt(match[2]),
-                  path: path.join(reposPath, repoDir),
+                  path: repoPath,
                   isAvailable: true // TODO: Read from REPOS.md
                 });
+
+                // Extract additional repo details
+                const repoDetails = await extractRepoDetails(repoPath);
+                
+                // Try to find matching repository from README
+                const repoName = match[1];
+                let matchingRepo = project.repositories?.find(r => {
+                  // Check for local development placeholder
+                  if (r.url === 'local://development') {
+                    return true;
+                  }
+                  const urlParts = r.url.split('/');
+                  const urlRepoName = urlParts[urlParts.length - 1].replace('.git', '');
+                  return urlRepoName.toLowerCase() === repoName.toLowerCase();
+                });
+
+                if (matchingRepo) {
+                  // Enhance existing repo info
+                  Object.assign(matchingRepo, repoDetails);
+                  // Update the URL if it was a placeholder
+                  if (matchingRepo.url === 'local://development') {
+                    matchingRepo.url = `local://${repoName}`;
+                  }
+                } else if (project.repositories.length === 0) {
+                  // No matching repo found, create new entry
+                  const newRepo = {
+                    url: `local://${repoName}`,
+                    ...repoDetails,
+                    isPrimary: true
+                  };
+                  project.repositories.push(newRepo);
+                  project.primaryRepoUrl = newRepo.url;
+                }
               }
             }
           } catch (err) {
@@ -412,11 +763,18 @@ app.post('/api/workspace/read', async (req, res) => {
                   const planPath = path.join(plansPath, planFile);
                   const content = await fs.readFile(planPath, 'utf-8');
                   
+                  const parsedWorkItem = parseWorkItemMarkdown(content);
+                  console.log(`Parsed work item: ${planFile}`, {
+                    title: parsedWorkItem.title,
+                    tasksCount: parsedWorkItem.tasks ? parsedWorkItem.tasks.length : 0,
+                    tasks: parsedWorkItem.tasks
+                  });
                   project.plans[planType].push({
                     name: planFile.replace('.md', ''),
                     path: planPath,
                     status: planType,
-                    content: content
+                    content: content,
+                    workItem: parsedWorkItem
                   });
                 }
               }
@@ -425,6 +783,7 @@ app.post('/api/workspace/read', async (req, res) => {
             }
           }
 
+          console.log('Adding project:', project.name);
           projects.push(project);
         }
       }
@@ -432,6 +791,8 @@ app.post('/api/workspace/read', async (req, res) => {
       console.error('Error reading projects directory:', err);
     }
 
+    console.log('Total projects found:', projects.length);
+    console.log('Project names:', projects.map(p => p.name));
     res.json({ projects });
 
   } catch (error) {
@@ -455,39 +816,55 @@ app.post('/api/workspace/create', async (req, res) => {
     // Create basic workspace structure
     const dirs = [
       workspacePath,
-      path.join(workspacePath, 'projects'),
-      path.join(workspacePath, 'projects', 'template'),
-      path.join(workspacePath, 'projects', 'template', 'repos'),
-      path.join(workspacePath, 'projects', 'template', 'plans'),
-      path.join(workspacePath, 'projects', 'template', 'plans', 'ideas'),
-      path.join(workspacePath, 'projects', 'template', 'plans', 'planned'),
-      path.join(workspacePath, 'projects', 'template', 'plans', 'active'),
-      path.join(workspacePath, 'projects', 'template', 'plans', 'completed')
+      path.join(workspacePath, 'projects')
     ];
 
     for (const dir of dirs) {
       await fs.mkdir(dir, { recursive: true });
     }
 
-    // Create template files
-    const templateReadme = `# Project Name
+    // Check if .template folder exists, create it if not
+    const templatePath = path.join(workspacePath, 'projects', '.template');
+    try {
+      await fs.access(templatePath);
+      console.log('.template folder already exists, skipping creation');
+    } catch (err) {
+      // .template doesn't exist, create it
+      console.log('Creating .template folder structure');
+      
+      const templateDirs = [
+        templatePath,
+        path.join(templatePath, 'repos'),
+        path.join(templatePath, 'plans'),
+        path.join(templatePath, 'plans', 'ideas'),
+        path.join(templatePath, 'plans', 'planned'),
+        path.join(templatePath, 'plans', 'active'),
+        path.join(templatePath, 'plans', 'completed')
+      ];
+
+      for (const dir of templateDirs) {
+        await fs.mkdir(dir, { recursive: true });
+      }
+
+      // Create template files
+      const templateReadme = `# Project Name
 
 ## Description
 Brief description of the project.
 
+## Repository
+- **URL**: [Repository URL]
+- **Type**: [GitHub/ADO]
+
 ## Goals
 - Goal 1
 - Goal 2
-
-## Team
-- Lead: [Persona Name]
-- Members: [List of personas]
 `;
 
-    const templateRepos = `# Repository usage
+      const templateRepos = `# Repository usage
 
 ## Repository information
-- **URL**: [Repository URL]
+- **URL**: [https://github.com/org/repo or https://dev.azure.com/org/project/_git/repo]
 - **Type**: [GitHub/ADO]
 - **Access**: [Public/Private]
 
@@ -497,7 +874,7 @@ Brief description of the project.
 ## Active work
 `;
 
-    const templatePlan = `# Work Item Title
+      const templatePlan = `# Work Item Title
 
 ## Status
 idea
@@ -518,23 +895,28 @@ Describe the work item here.
 - Criteria 2
 `;
 
-    await fs.writeFile(
-      path.join(workspacePath, 'projects', 'template', 'README.md'),
-      templateReadme
-    );
+      await fs.writeFile(
+        path.join(templatePath, 'README.md'),
+        templateReadme
+      );
 
-    await fs.writeFile(
-      path.join(workspacePath, 'projects', 'template', 'REPOS.md'),
-      templateRepos
-    );
+      await fs.writeFile(
+        path.join(templatePath, 'REPOS.md'),
+        templateRepos
+      );
 
-    await fs.writeFile(
-      path.join(workspacePath, 'projects', 'template', 'plans', 'ideas', 'TEMPLATE.md'),
-      templatePlan
-    );
+      await fs.writeFile(
+        path.join(templatePath, 'plans', 'ideas', 'TEMPLATE.md'),
+        templatePlan
+      );
+    }
 
-    // Create STATUS.md
-    const statusMd = `# Project status
+    // Create STATUS.md at workspace root if it doesn't exist
+    const statusPath = path.join(workspacePath, 'STATUS.md');
+    try {
+      await fs.access(statusPath);
+    } catch (err) {
+      const statusMd = `# Project status
 
 ## Items needing attention
 
@@ -553,11 +935,9 @@ Describe the work item here.
 <!-- List planned work items -->
 `;
 
-    await fs.writeFile(
-      path.join(workspacePath, 'STATUS.md'),
-      statusMd
-    );
-
+      await fs.writeFile(statusPath, statusMd);
+    }
+    
     res.json({ success: true, message: 'Workspace created successfully' });
 
   } catch (error) {
@@ -569,7 +949,363 @@ Describe the work item here.
   }
 });
 
+// Create a new project folder structure
+app.post('/api/workspace/create-project', async (req, res) => {
+  try {
+    const { workspacePath, projectName } = req.body;
+    
+    if (!workspacePath || !projectName) {
+      return res.status(400).json({ error: 'Workspace path and project name are required' });
+    }
+
+    // Sanitize project name for folder
+    const folderName = projectName
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-') // Remove multiple hyphens
+      .trim();
+
+    const projectPath = path.join(workspacePath, 'projects', folderName);
+    
+    // Check if project folder already exists
+    try {
+      await fs.access(projectPath);
+      return res.status(409).json({ error: 'Project folder already exists' });
+    } catch (err) {
+      // Folder doesn't exist, continue
+    }
+
+    // Create project folder structure
+    const dirs = [
+      projectPath,
+      path.join(projectPath, 'repos'),
+      path.join(projectPath, 'plans'),
+      path.join(projectPath, 'plans', 'ideas'),
+      path.join(projectPath, 'plans', 'planned'),
+      path.join(projectPath, 'plans', 'active'),
+      path.join(projectPath, 'plans', 'completed')
+    ];
+
+    for (const dir of dirs) {
+      await fs.mkdir(dir, { recursive: true });
+    }
+
+    // Create README.md
+    const readmeContent = `# ${projectName}
+
+## Description
+${projectName} project created via UI.
+
+## Repository
+- **URL**: To be added
+- **Type**: GitHub
+- **Access**: Private
+
+## Goals
+- To be defined
+`;
+
+    await fs.writeFile(
+      path.join(projectPath, 'README.md'),
+      readmeContent
+    );
+
+    // Create REPOS.md
+    const reposContent = `# Repository usage
+
+## Repository information
+- **URL**: To be added
+- **Type**: GitHub
+- **Access**: Private
+
+## Available clones
+
+## Active work
+`;
+
+    await fs.writeFile(
+      path.join(projectPath, 'REPOS.md'),
+      reposContent
+    );
+
+    res.json({ 
+      success: true, 
+      path: projectPath,
+      folderName: folderName
+    });
+
+  } catch (error) {
+    console.error('Error creating project folder:', error);
+    res.status(500).json({ 
+      error: 'Failed to create project folder',
+      details: error.message 
+    });
+  }
+});
+
+// Create work item markdown file
+app.post('/api/workspace/create-workitem', async (req, res) => {
+  console.log('=== CREATE WORK ITEM ENDPOINT CALLED ===');
+  console.log('Request body:', JSON.stringify(req.body, null, 2));
+  
+  try {
+    const { workspacePath, projectPath, workItem, tasks } = req.body;
+    
+    if (!workspacePath || !projectPath || !workItem) {
+      console.error('Missing required fields:', { workspacePath: !!workspacePath, projectPath: !!projectPath, workItem: !!workItem });
+      return res.status(400).json({ error: 'Workspace path, project path, and work item are required' });
+    }
+
+    // Generate a kebab-case filename from the work item title
+    const filename = workItem.title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-') // Remove multiple hyphens
+      .trim();
+
+    // Always save to planned folder when creating work items
+    const planPath = path.join(projectPath, 'plans', 'planned');
+    
+    // Ensure the plans directory structure exists
+    await fs.mkdir(planPath, { recursive: true });
+
+    // Format the markdown content using TEMPLATE.md structure
+    const markdownContent = `# ${workItem.title}
+
+## Status
+planned
+
+## Description
+${workItem.description || 'No description provided.'}
+
+## Overall Goals
+${tasks && tasks.length > 0 ? 
+  // Extract unique goals from all tasks
+  [...new Set(tasks.flatMap(task => task.goals || []))]
+    .map(goal => `- [ ] ${goal}`)
+    .join('\n') 
+  : '- [ ] Complete implementation\n- [ ] Add tests'}
+
+## Tasks
+
+${tasks && tasks.length > 0 ? 
+  tasks.map(task => {
+    const taskNum = task.taskNumber || '1';
+    return `### Task ${taskNum}: ${task.title}
+**Description:** ${task.description || 'No description provided.'}
+
+**Goals:**
+${(task.goals || []).map(goal => `- [ ] ${goal}`).join('\n') || '- [ ] Complete this task'}
+
+**Work Description:**
+${task.workDescription || 'No work description provided.'}
+
+**Acceptance Criteria:**
+${(task.validationCriteria || []).map(criteria => `- ${criteria}`).join('\n') || '- Task completed successfully'}`;
+  }).join('\n\n') 
+  : `### Task 1: Implement the feature
+**Description:** Implement the main feature functionality.
+
+**Goals:**
+- [ ] Complete implementation
+
+**Work Description:**
+To be determined during implementation.
+
+**Acceptance Criteria:**
+- Feature works as expected`}
+
+## Metadata
+\`\`\`json
+${JSON.stringify({ workItemId: workItem.id, tasks: tasks || [] }, null, 2)}
+\`\`\`
+`;
+
+    // Write the markdown file
+    const filePath = path.join(planPath, `${filename}.md`);
+    await fs.writeFile(filePath, markdownContent);
+
+    console.log(`Created work item markdown at: ${filePath}`);
+    res.json({ 
+      success: true, 
+      path: filePath,
+      filename: `${filename}.md`
+    });
+
+  } catch (error) {
+    console.error('Error creating work item markdown:', error);
+    res.status(500).json({ 
+      error: 'Failed to create work item markdown',
+      details: error.message 
+    });
+  }
+});
+
+// Update work item markdown file
+app.post('/api/workspace/update-workitem', async (req, res) => {
+  console.log('=== UPDATE WORK ITEM ENDPOINT CALLED ===');
+  console.log('Request body:', JSON.stringify(req.body, null, 2));
+  
+  try {
+    const { workspacePath, projectPath, workItem, tasks, originalFilename } = req.body;
+    
+    if (!workspacePath || !projectPath || !workItem) {
+      console.error('Missing required fields:', { workspacePath: !!workspacePath, projectPath: !!projectPath, workItem: !!workItem });
+      return res.status(400).json({ error: 'Workspace path, project path, and work item are required' });
+    }
+
+    // Find the existing markdown file
+    let existingFilePath = null;
+    
+    if (originalFilename) {
+      // If we know the original filename, use it
+      existingFilePath = path.join(projectPath, 'plans', 'planned', originalFilename);
+    } else {
+      // Otherwise, try to find it by work item ID
+      const planTypes = ['ideas', 'planned', 'active', 'completed'];
+      for (const planType of planTypes) {
+        const planDir = path.join(projectPath, 'plans', planType);
+        try {
+          const files = await fs.readdir(planDir);
+          for (const file of files) {
+            if (file.endsWith('.md')) {
+              const filePath = path.join(planDir, file);
+              const content = await fs.readFile(filePath, 'utf-8');
+              
+              // Check if this file contains the work item ID in metadata
+              const metadataMatch = content.match(/## Metadata\s*\n+```json\n([\s\S]*?)\n```/i);
+              if (metadataMatch) {
+                try {
+                  const metadata = JSON.parse(metadataMatch[1]);
+                  if (metadata.workItemId === workItem.id) {
+                    existingFilePath = filePath;
+                    break;
+                  }
+                } catch (err) {
+                  // Invalid JSON, skip
+                }
+              }
+            }
+          }
+          if (existingFilePath) break;
+        } catch (err) {
+          // Directory doesn't exist, continue
+        }
+      }
+    }
+
+    if (!existingFilePath) {
+      console.error('Could not find existing markdown file for work item:', workItem.id);
+      return res.status(404).json({ error: 'Work item markdown file not found' });
+    }
+
+    console.log('Updating markdown file at:', existingFilePath);
+
+    // Generate a new filename from the updated title
+    const newFilename = workItem.title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-') // Remove multiple hyphens
+      .trim() + '.md';
+
+    const newFilePath = path.join(path.dirname(existingFilePath), newFilename);
+
+    // Format the markdown content using TEMPLATE.md structure
+    const markdownContent = `# ${workItem.title}
+
+## Status
+${workItem.status || 'planned'}
+
+## Description
+${workItem.description || 'No description provided.'}
+
+## Overall Goals
+${tasks && tasks.length > 0 ? 
+  // Extract unique goals from all tasks
+  [...new Set(tasks.flatMap(task => task.goals || []))]
+    .map(goal => `- [ ] ${goal}`)
+    .join('\n') 
+  : '- [ ] Complete implementation\n- [ ] Add tests'}
+
+## Tasks
+
+${tasks && tasks.length > 0 ? 
+  tasks.map(task => {
+    const taskNum = task.taskNumber || '1';
+    return `### Task ${taskNum}: ${task.title}
+**Description:** ${task.description || 'No description provided.'}
+
+**Goals:**
+${(task.goals || []).map(goal => `- [ ] ${goal}`).join('\n') || '- [ ] Complete this task'}
+
+**Work Description:**
+${task.workDescription || 'No work description provided.'}
+
+**Acceptance Criteria:**
+${(task.validationCriteria || []).map(criteria => `- ${criteria}`).join('\n') || '- Task completed successfully'}`;
+  }).join('\n\n') 
+  : `### Task 1: Implement the feature
+**Description:** Implement the main feature functionality.
+
+**Goals:**
+- [ ] Complete implementation
+
+**Work Description:**
+To be determined during implementation.
+
+**Acceptance Criteria:**
+- Feature works as expected`}
+
+## Metadata
+\`\`\`json
+${JSON.stringify({ workItemId: workItem.id, tasks: tasks || [] }, null, 2)}
+\`\`\`
+`;
+
+    // Write the updated content
+    await fs.writeFile(existingFilePath, markdownContent);
+
+    // If the filename changed, rename the file
+    if (existingFilePath !== newFilePath && path.basename(existingFilePath) !== newFilename) {
+      try {
+        await fs.rename(existingFilePath, newFilePath);
+        console.log(`Renamed file from ${path.basename(existingFilePath)} to ${newFilename}`);
+      } catch (err) {
+        console.error('Error renaming file:', err);
+        // If rename fails, keep the old filename
+      }
+    }
+
+    console.log(`Updated work item markdown at: ${newFilePath || existingFilePath}`);
+    res.json({ 
+      success: true, 
+      path: newFilePath || existingFilePath,
+      filename: path.basename(newFilePath || existingFilePath)
+    });
+
+  } catch (error) {
+    console.error('Error updating work item markdown:', error);
+    res.status(500).json({ 
+      error: 'Failed to update work item markdown',
+      details: error.message 
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
-  console.log(`Claude Code SDK integrated and ready`);
+  
+  // Check Claude availability on startup
+  if (claudeService.isClaudeAvailable) {
+    console.log('Claude Code SDK integrated and ready');
+  } else {
+    console.log('⚠️  Claude CLI not found or not authenticated');
+    console.log('   To use Claude features:');
+    console.log('   1. Install: npm install -g claude-code');
+    console.log('   2. Login: claude login');
+    console.log('   Or use mock mode for testing');
+  }
 });
