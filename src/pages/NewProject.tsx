@@ -4,13 +4,12 @@ import { useTheme } from '../contexts/ThemeContextV2';
 import { useApp } from '../contexts/AppContext';
 import { useWorkspace } from '../contexts/WorkspaceContext';
 import { Button } from '../components/ui/Button';
-import { v4 as uuidv4 } from 'uuid';
-import type { Project, Repository } from '../types';
+import type { Project } from '../types';
 
 export function NewProject() {
   const navigate = useNavigate();
   const { currentStyles } = useTheme();
-  const { createProject, personas } = useApp();
+  const { createProject } = useApp();
   const { workspace } = useWorkspace();
   const styles = currentStyles;
   

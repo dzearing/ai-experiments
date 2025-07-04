@@ -3,9 +3,24 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import { useTheme } from '../contexts/ThemeContextV2';
 import { StockPhotoAvatar } from '../components/StockPhotoAvatar';
-import MDEditor from '@uiw/react-md-editor';
-import '@uiw/react-md-editor/markdown-editor.css';
-import '@uiw/react-markdown-preview/markdown.css';
+import { 
+  MDXEditor, 
+  headingsPlugin,
+  listsPlugin,
+  quotePlugin,
+  thematicBreakPlugin,
+  markdownShortcutPlugin,
+  toolbarPlugin,
+  UndoRedo,
+  BoldItalicUnderlineToggles,
+  CreateLink,
+  InsertThematicBreak,
+  ListsToggle,
+  BlockTypeSelect,
+  Separator
+} from '@mdxeditor/editor';
+import '@mdxeditor/editor/style.css';
+import '../styles/mdx-editor.css';
 import type { Persona, PersonaType } from '../types';
 
 interface Message {
@@ -156,7 +171,7 @@ Document ideas as they emerge...
           const persona = personas.find(p => p.id === personaId);
           if (!persona) return;
 
-          const response = generatePersonaResponse(persona, inputMessage, focusDocument);
+          const response = generatePersonaResponse(persona);
           
           setMessages(prev => [...prev, {
             id: Date.now().toString() + personaId,
@@ -171,7 +186,7 @@ Document ideas as they emerge...
     });
   };
 
-  const generatePersonaResponse = (persona: Persona, message: string, context: string): string => {
+  const generatePersonaResponse = (persona: Persona): string => {
     // Simple mock responses based on persona type
     const responses: Record<PersonaType, string[]> = {
       'usability-expert': [
@@ -250,14 +265,34 @@ Document ideas as they emerge...
           </button>
         </div>
         
-        <div className="flex-1" data-color-mode={isDarkMode ? 'dark' : 'light'}>
-          <MDEditor
-            value={focusDocument}
+        <div className={`flex-1 overflow-y-auto ${isDarkMode ? 'mdx-dark' : 'mdx-light'}`}>
+          <MDXEditor
+            markdown={focusDocument}
             onChange={(value) => setFocusDocument(value || '')}
-            height="100%"
-            preview="edit"
-            hideToolbar={false}
-            visibleDragbar={false}
+            contentEditableClassName="prose prose-neutral dark:prose-invert max-w-none p-4"
+            plugins={[
+              headingsPlugin(),
+              listsPlugin(),
+              quotePlugin(),
+              thematicBreakPlugin(),
+              markdownShortcutPlugin(),
+              toolbarPlugin({
+                toolbarContents: () => (
+                  <>
+                    <UndoRedo />
+                    <Separator />
+                    <BoldItalicUnderlineToggles />
+                    <Separator />
+                    <ListsToggle />
+                    <Separator />
+                    <BlockTypeSelect />
+                    <Separator />
+                    <CreateLink />
+                    <InsertThematicBreak />
+                  </>
+                )
+              })
+            ]}
           />
         </div>
       </div>

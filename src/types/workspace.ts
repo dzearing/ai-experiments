@@ -13,6 +13,7 @@ export interface WorkspaceProject {
   name: string;
   path: string;
   repos: WorkspaceRepo[];
+  repositories?: any[]; // For backward compatibility
   plans: {
     ideas: WorkspacePlan[];
     planned: WorkspacePlan[];

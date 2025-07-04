@@ -18,7 +18,7 @@ export function DropdownTransition({
   const { animationsEnabled } = useTheme();
   const [shouldRender, setShouldRender] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   
   const shouldAnimate = animationEnabled && animationsEnabled;
 

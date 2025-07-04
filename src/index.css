@@ -9,6 +9,17 @@ html {
   scrollbar-gutter: stable;
 }
 
+/* Remove focus outline for mouse users, show for keyboard users */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Checkbox specific styles to prevent focus ring on click */
+input[type="checkbox"]:focus:not(:focus-visible) {
+  box-shadow: none;
+  outline: none;
+}
+
 /* Dark mode body background */
 body {
   @apply bg-white;

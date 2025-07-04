@@ -85,7 +85,8 @@ export type WorkItemStatus =
   | 'active'
   | 'in-review'
   | 'blocked'
-  | 'completed';
+  | 'completed'
+  | 'todo';
 
 export interface WorkflowStep {
   name: string;

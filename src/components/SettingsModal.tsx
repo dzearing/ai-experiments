@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContextV2';
 import { useWorkspace } from '../contexts/WorkspaceContext';
+import { useToast } from '../contexts/ToastContext';
 import { Toggle } from './ui/Toggle';
 import { Button } from './ui/Button';
 import { IconButton } from './ui/IconButton';
@@ -13,7 +14,8 @@ interface SettingsModalProps {
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { currentStyles, isDarkMode, toggleDarkMode, backgroundEffectEnabled, toggleBackgroundEffect, animationsEnabled, toggleAnimations } = useTheme();
-  const { workspace, setWorkspacePath } = useWorkspace();
+  const { workspace, setWorkspacePath, reloadWorkspace } = useWorkspace();
+  const { showToast } = useToast();
   const styles = currentStyles;
   const [activeTab, setActiveTab] = useState<'workspace' | 'appearance' | 'features'>('workspace');
   const [mockMode, setMockMode] = useState(() => {
@@ -21,6 +23,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     return saved ? JSON.parse(saved) : false;
   });
   const [tempWorkspacePath, setTempWorkspacePath] = useState(workspace.config?.path || '');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     const handleMockModeChange = (event: CustomEvent) => {
@@ -105,7 +108,42 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             {activeTab === 'workspace' && (
               <div className="space-y-6">
                 <div>
-                  <h3 className={`text-lg font-medium ${styles.headingColor} mb-4`}>Workspace settings</h3>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className={`text-lg font-medium ${styles.headingColor}`}>Workspace settings</h3>
+                    <Button
+                      onClick={async () => {
+                        setIsRefreshing(true);
+                        try {
+                          await reloadWorkspace();
+                          showToast('Workspace refreshed successfully', 'success');
+                        } catch (error) {
+                          console.error('Failed to refresh workspace:', error);
+                          showToast('Failed to refresh workspace', 'error');
+                        } finally {
+                          setIsRefreshing(false);
+                        }
+                      }}
+                      variant="secondary"
+                      size="sm"
+                      disabled={isRefreshing || !workspace.config}
+                      className="flex items-center gap-2"
+                    >
+                      <svg 
+                        className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} 
+                        fill="none" 
+                        viewBox="0 0 24 24" 
+                        stroke="currentColor"
+                      >
+                        <path 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          strokeWidth={2} 
+                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" 
+                        />
+                      </svg>
+                      {isRefreshing ? 'Refreshing...' : 'Refresh'}
+                    </Button>
+                  </div>
                   
                   <div className="space-y-4">
                     <div>

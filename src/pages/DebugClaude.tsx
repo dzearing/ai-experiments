@@ -79,7 +79,7 @@ export function DebugClaude() {
     const debugResponse: DebugResponse = {
       timestamp: new Date().toLocaleTimeString(),
       request: { query, model, tools, options: requestData },
-      response: { text: 'Loading...', error: null },
+      response: { text: 'Loading...', error: undefined },
       duration: 0,
     };
 

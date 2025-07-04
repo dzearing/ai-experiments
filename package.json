@@ -10,7 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@uiw/react-md-editor": "^4.0.7",
+    "@mdxeditor/editor": "^3.39.0",
+    "@tailwindcss/typography": "^0.5.16",
     "date-fns": "^4.1.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

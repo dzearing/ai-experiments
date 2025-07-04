@@ -1,13 +1,22 @@
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { useTheme } from '../contexts/ThemeContextV2';
+import { useWorkspace } from '../contexts/WorkspaceContext';
+import { useToast } from '../contexts/ToastContext';
 import { Button } from '../components/ui/Button';
 import { IconButton } from '../components/ui/IconButton';
+import { ProjectDeleteDialog } from '../components/ProjectDeleteDialog';
+import type { Project } from '../types';
 
 export function Projects() {
-  const { projects, personas } = useApp();
+  const { projects } = useApp();
   const { currentStyles } = useTheme();
+  const { workspace } = useWorkspace();
+  const { showToast } = useToast();
   const styles = currentStyles;
+  const [deleteProject, setDeleteProject] = useState<Project | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -45,7 +54,7 @@ export function Projects() {
         </div>
         {projects.length > 0 && (
           <Button as={Link} to="/projects/new" variant="primary">
-            Create project
+            Add project
           </Button>
         )}
       </div>
@@ -62,7 +71,7 @@ export function Projects() {
           <p className={`mt-2 ${styles.mutedText}`}>Get started by creating your first project.</p>
           <div className="mt-6">
             <Button as={Link} to="/projects/new" variant="primary">
-              Create project
+              Add project
             </Button>
           </div>
         </div>
@@ -126,7 +135,7 @@ export function Projects() {
                               className={`inline-flex items-center gap-2 px-3 py-1.5 text-sm ${styles.contentBg} ${styles.contentBorder} border ${styles.borderRadius} hover:opacity-80 transition-opacity`}
                             >
                               {getRepoTypeIcon(repo.type)}
-                              <span className={styles.linkText || styles.primaryText}>
+                              <span className="text-blue-600 dark:text-blue-400">
                                 {repo.url.split('/').slice(-2).join('/')}
                               </span>
                               {repo.visibility === 'public' && (
@@ -137,7 +146,7 @@ export function Projects() {
                                   Primary
                                 </span>
                               )}
-                              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <svg className="h-3 w-3 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                               </svg>
                             </a>
@@ -195,7 +204,14 @@ export function Projects() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                       </svg>
                     </IconButton>
-                    <IconButton aria-label="Delete project" variant="secondary">
+                    <IconButton 
+                      aria-label="Delete project" 
+                      variant="secondary"
+                      onClick={() => {
+                        setDeleteProject(project);
+                        setShowDeleteDialog(true);
+                      }}
+                    >
                       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
@@ -207,6 +223,49 @@ export function Projects() {
           })}
         </div>
       )}
+      
+      <ProjectDeleteDialog
+        isOpen={showDeleteDialog}
+        project={deleteProject}
+        onConfirm={async (_, removeFolder) => {
+          try {
+            // Call the server to hide or remove the project
+            const workspacePath = workspace?.config?.path;
+            const endpoint = removeFolder ? 'remove' : 'hide';
+            // Use the project name as the identifier for the server
+            const projectName = deleteProject?.name || '';
+            const response = await fetch(`http://localhost:3000/api/projects/${encodeURIComponent(projectName)}/${endpoint}?workspacePath=${encodeURIComponent(workspacePath || '')}`, {
+              method: 'POST',
+            });
+            
+            if (!response.ok) {
+              throw new Error(removeFolder ? 'Failed to remove project' : 'Failed to hide project');
+            }
+            
+            // Close dialog and refresh projects
+            setShowDeleteDialog(false);
+            setDeleteProject(null);
+            
+            showToast(
+              removeFolder ? 'Project removed successfully' : 'Project hidden successfully', 
+              'success'
+            );
+            
+            // TODO: Refresh projects list or trigger workspace sync
+            window.location.reload(); // Temporary solution
+          } catch (error) {
+            console.error('Error hiding project:', error);
+            showToast(
+              removeFolder ? 'Failed to remove project' : 'Failed to hide project', 
+              'error'
+            );
+          }
+        }}
+        onCancel={() => {
+          setShowDeleteDialog(false);
+          setDeleteProject(null);
+        }}
+      />
     </div>
   );
 }

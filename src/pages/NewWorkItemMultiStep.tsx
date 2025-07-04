@@ -7,9 +7,24 @@ import { useWorkspace } from '../contexts/WorkspaceContext';
 import { useLayout } from '../contexts/LayoutContext';
 import { Button } from '../components/ui/Button';
 import { DropdownTransition } from '../components/DropdownTransition';
-import MDEditor from '@uiw/react-md-editor';
-import '@uiw/react-md-editor/markdown-editor.css';
-import '@uiw/react-markdown-preview/markdown.css';
+import { 
+  MDXEditor, 
+  headingsPlugin,
+  listsPlugin,
+  quotePlugin,
+  thematicBreakPlugin,
+  markdownShortcutPlugin,
+  toolbarPlugin,
+  UndoRedo,
+  BoldItalicUnderlineToggles,
+  CreateLink,
+  InsertThematicBreak,
+  ListsToggle,
+  BlockTypeSelect,
+  Separator
+} from '@mdxeditor/editor';
+import '@mdxeditor/editor/style.css';
+import '../styles/mdx-editor.css';
 
 interface Task {
   id: string;
@@ -176,20 +191,18 @@ function NewWorkItemContent() {
         
         // Simple heuristic: if titles share common keywords or both mention similar actions
         const commonKeywords = ['implement', 'create', 'add', 'update', 'test', 'document'];
-        const currentHasKeyword = commonKeywords.some(kw => currentTitle.includes(kw));
-        const prevHasKeyword = commonKeywords.some(kw => prevTitle.includes(kw));
         
         // Check if both tasks are of similar type (e.g., both are "implement" tasks)
         const isParallel = commonKeywords.some(kw => 
           currentTitle.includes(kw) && prevTitle.includes(kw)
         ) || (currentTitle.includes('test') && prevTitle.includes('test'));
         
-        if (isParallel && numberedTasks[i - 1].taskNumber && !numberedTasks[i - 1].taskNumber.includes('a')) {
+        if (isParallel && numberedTasks[i - 1].taskNumber && !numberedTasks[i - 1].taskNumber?.includes('a')) {
           // Start a new parallel group
           numberedTasks[i - 1].taskNumber = `${currentNumber}a`;
           numberedTasks[i].taskNumber = `${currentNumber}b`;
           subLetter = 'c';
-        } else if (isParallel && numberedTasks[i - 1].taskNumber && numberedTasks[i - 1].taskNumber.includes(String(currentNumber))) {
+        } else if (isParallel && numberedTasks[i - 1].taskNumber && numberedTasks[i - 1].taskNumber?.includes(String(currentNumber))) {
           // Continue parallel group
           numberedTasks[i].taskNumber = `${currentNumber}${subLetter}`;
           subLetter = String.fromCharCode(subLetter.charCodeAt(0) + 1);
@@ -387,8 +400,6 @@ ${(selectedTask.validationCriteria || []).map(criteria => `- ${criteria}`).join(
     // Create a single work item with all tasks as sub-tasks
     const overallTitle = tasks.length > 0 ? tasks[0].title : 'Work Item';
     
-    // Use the saved idea as the overall description
-    const overallDescription = savedIdea || 'Work item description';
 
     // Store tasks as JSON in a special field
     let workItem;
@@ -714,15 +725,35 @@ ${(selectedTask.validationCriteria || []).map(criteria => `- ${criteria}`).join(
                   </div>
                 </div>
                 
-                <div className="flex-1 min-h-0" data-color-mode={isDarkMode ? 'dark' : 'light'}>
-                  <MDEditor
-                    value={editedContent}
+                <div className={`flex-1 min-h-0 overflow-y-auto ${isDarkMode ? 'mdx-dark' : 'mdx-light'}`}>
+                  <MDXEditor
+                    markdown={editedContent}
                     onChange={(value) => setEditedContent(value || '')}
                     onBlur={() => updateTaskFromMarkdown()}
-                    height="100%"
-                    preview="edit"
-                    hideToolbar={false}
-                    visibleDragbar={false}
+                    contentEditableClassName="prose prose-neutral dark:prose-invert max-w-none p-4"
+                    plugins={[
+                      headingsPlugin(),
+                      listsPlugin(),
+                      quotePlugin(),
+                      thematicBreakPlugin(),
+                      markdownShortcutPlugin(),
+                      toolbarPlugin({
+                        toolbarContents: () => (
+                          <>
+                            <UndoRedo />
+                            <Separator />
+                            <BoldItalicUnderlineToggles />
+                            <Separator />
+                            <ListsToggle />
+                            <Separator />
+                            <BlockTypeSelect />
+                            <Separator />
+                            <CreateLink />
+                            <InsertThematicBreak />
+                          </>
+                        )
+                      })
+                    ]}
                   />
                 </div>
               </>

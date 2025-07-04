@@ -222,7 +222,7 @@ export function ImportingWorkspaceDialog({
           <div className="p-6">
             {/* Task list with fixed height */}
             <div className="space-y-3 mb-6" style={{ minHeight: '240px' }}>
-              {tasks.map((task, index) => (
+              {tasks.map((task) => (
                 <div key={task.id} className="flex items-start gap-3" style={{ minHeight: '40px' }}>
                   <div className="mt-0.5">
                     {getStatusIcon(task.status)}

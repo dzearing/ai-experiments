@@ -1,11 +1,15 @@
-import { ButtonHTMLAttributes, ElementType, forwardRef } from 'react';
+import { forwardRef } from 'react';
 import { useTheme } from '../../contexts/ThemeContextV2';
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   fullWidth?: boolean;
-  as?: ElementType;
+  as?: any;
+  to?: string;
+  href?: string;
+  target?: string;
+  rel?: string;
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -46,3 +50,5 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 );
 
 Button.displayName = 'Button';
+
+export type { ButtonProps };

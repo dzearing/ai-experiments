@@ -1,0 +1,88 @@
+/* MDXEditor Theme Overrides */
+
+/* Light mode styles */
+.mdx-light .mdxeditor {
+  background-color: transparent;
+  color: inherit;
+  font-family: inherit;
+}
+
+.mdx-light .mdxeditor-toolbar {
+  background-color: rgb(249 250 251);
+  border-bottom: 1px solid rgb(229 231 235);
+  padding: 0.5rem;
+}
+
+.mdx-light .mdxeditor-toolbar button {
+  color: rgb(55 65 81);
+}
+
+.mdx-light .mdxeditor-toolbar button:hover {
+  background-color: rgb(243 244 246);
+}
+
+.mdx-light .mdxeditor-toolbar button[data-state="on"] {
+  background-color: rgb(229 231 235);
+}
+
+/* Dark mode styles */
+.mdx-dark .mdxeditor {
+  background-color: transparent;
+  color: inherit;
+  font-family: inherit;
+}
+
+.mdx-dark .mdxeditor-toolbar {
+  background-color: rgb(31 41 55);
+  border-bottom: 1px solid rgb(55 65 81);
+  padding: 0.5rem;
+}
+
+.mdx-dark .mdxeditor-toolbar button {
+  color: rgb(209 213 219);
+}
+
+.mdx-dark .mdxeditor-toolbar button:hover {
+  background-color: rgb(55 65 81);
+}
+
+.mdx-dark .mdxeditor-toolbar button[data-state="on"] {
+  background-color: rgb(75 85 99);
+}
+
+/* Common styles */
+.mdxeditor {
+  border: none;
+  min-height: 100%;
+}
+
+.mdxeditor-root-contenteditable {
+  min-height: 400px;
+}
+
+/* Remove focus outline and add custom styling */
+.mdxeditor [contenteditable]:focus {
+  outline: none;
+}
+
+/* Style the dropdown selects */
+.mdx-light select {
+  background-color: white;
+  border: 1px solid rgb(229 231 235);
+  color: rgb(55 65 81);
+}
+
+.mdx-dark select {
+  background-color: rgb(31 41 55);
+  border: 1px solid rgb(55 65 81);
+  color: rgb(209 213 219);
+}
+
+/* Ensure proper text color in editor content */
+.mdx-light .mdxeditor [data-lexical-editor="true"] {
+  color: rgb(31 41 55);
+}
+
+.mdx-dark .mdxeditor [data-lexical-editor="true"] {
+  color: rgb(229 231 235);
+}

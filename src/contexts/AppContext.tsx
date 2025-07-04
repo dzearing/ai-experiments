@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import type { Persona, Project, WorkItem, JamSession, DailyReport } from '../types';
@@ -32,7 +32,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [workItems, setWorkItems] = useState<WorkItem[]>([]);
   const [jamSessions, setJamSessions] = useState<JamSession[]>([]);
   const [dailyReports, setDailyReports] = useState<DailyReport[]>([]);
-  const [isInitialized, setIsInitialized] = useState(false);
 
   // Load data from localStorage on mount
   useEffect(() => {
@@ -45,7 +44,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setJamSessions(data.jamSessions || []);
       setDailyReports(data.dailyReports || []);
     }
-    setIsInitialized(true);
   }, []);
 
   // Save data to localStorage whenever it changes

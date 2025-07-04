@@ -32,7 +32,7 @@ export function AnimatedTransition({
   });
   
   const prevKeyRef = useRef(transitionKey);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     // Clean up on unmount

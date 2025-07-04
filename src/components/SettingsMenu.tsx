@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContextV2';
-import { useNavigate } from 'react-router-dom';
+import { useToast } from '../contexts/ToastContext';
 import { SettingsModal } from './SettingsModal';
 import { IconButton } from './ui/IconButton';
 import { DropdownTransition } from './DropdownTransition';
@@ -9,9 +9,9 @@ export function SettingsMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const { currentStyles, toggleDarkMode, isDarkMode, toggleBackgroundEffect, backgroundEffectEnabled } = useTheme();
+  const { showToast } = useToast();
   const styles = currentStyles;
   const menuRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -82,7 +82,7 @@ export function SettingsMenu() {
       ),
       onClick: () => {
         // TODO: Show keyboard shortcuts modal
-        alert('Keyboard shortcuts coming soon!');
+        showToast('Keyboard shortcuts coming soon!', 'info');
         setIsOpen(false);
       }
     },
@@ -107,7 +107,7 @@ export function SettingsMenu() {
       ),
       onClick: () => {
         // TODO: Show about modal
-        alert('Claude Flow v1.0.0\nAI-powered project management');
+        showToast('Claude Flow v1.0.0 - AI-powered project management', 'info');
         setIsOpen(false);
       }
     }

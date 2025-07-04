@@ -13,7 +13,7 @@ export function AnimatedOutlet() {
   const [items, setItems] = useState<OutletItem[]>([
     { key: location.pathname, element: currentOutlet, state: 'active' }
   ]);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const isFirstRender = useRef(true);
 
   useEffect(() => {

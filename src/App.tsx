@@ -4,16 +4,18 @@ import { AppProvider } from './contexts/AppContext';
 import { ThemeProvider } from './contexts/ThemeContextV2';
 import { WorkspaceProvider, useWorkspace } from './contexts/WorkspaceContext';
 import { LayoutProvider } from './contexts/LayoutContext';
+import { ToastProvider } from './contexts/ToastContext';
 import { ThemedLayoutV2 } from './components/ThemedLayoutV2';
 import { WorkspaceDialogContainer } from './components/WorkspaceDialogContainer';
 import { WorkspaceSync } from './components/WorkspaceSync';
 import { ThemeSwitcherV2 } from './components/ThemeSwitcherV2';
+import { ToastContainer } from './components/ToastContainer';
 import { ThemedDashboard } from './pages/ThemedDashboard';
 import { ThemedPersonas } from './pages/ThemedPersonas';
 import { WorkItems } from './pages/WorkItems';
 import { JamSessions } from './pages/JamSessions';
 import { ThemedNewPersona } from './pages/ThemedNewPersona';
-import { NewProject } from './pages/NewProject';
+import { NewProjectMultiStep } from './pages/NewProjectMultiStep';
 import { NewWorkItemMultiStep } from './pages/NewWorkItemMultiStep';
 import { Projects } from './pages/Projects';
 import { DebugClaude } from './pages/DebugClaude';
@@ -51,7 +53,7 @@ function AppContent() {
             <Route path="/" element={<ThemedLayoutV2 />}>
               <Route index element={<ThemedDashboard />} />
               <Route path="projects" element={<Projects />} />
-              <Route path="projects/new" element={<NewProject />} />
+              <Route path="projects/new" element={<NewProjectMultiStep />} />
               <Route path="projects/:projectId/workitems/new" element={<NewWorkItemMultiStep />} />
               <Route path="work-items" element={<WorkItems />} />
               <Route path="work-items/new" element={<NewWorkItemMultiStep />} />
@@ -65,6 +67,7 @@ function AppContent() {
             </Route>
           </Routes>
           <ThemeSwitcherV2 />
+          <ToastContainer />
         </>
       )}
     </>
@@ -75,13 +78,15 @@ function App() {
   return (
     <AppProvider>
       <ThemeProvider>
-        <WorkspaceProvider>
-          <LayoutProvider>
-            <BrowserRouter>
-              <AppContent />
-            </BrowserRouter>
-          </LayoutProvider>
-        </WorkspaceProvider>
+        <ToastProvider>
+          <WorkspaceProvider>
+            <LayoutProvider>
+              <BrowserRouter>
+                <AppContent />
+              </BrowserRouter>
+            </LayoutProvider>
+          </WorkspaceProvider>
+        </ToastProvider>
       </ThemeProvider>
     </AppProvider>
   );

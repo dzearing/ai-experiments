@@ -10,7 +10,7 @@ export function useNavigationDirection(): NavigationDirection {
   const navigationType = useNavigationType();
   const historyStack = useRef<string[]>([]);
   const currentIndex = useRef(0);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   useEffect(() => {
     const path = location.pathname;

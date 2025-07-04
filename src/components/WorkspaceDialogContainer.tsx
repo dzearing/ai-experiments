@@ -3,7 +3,6 @@ import { AnimatedTransition } from './AnimatedTransition';
 import { WorkspaceSetupDialog } from './WorkspaceSetupDialog';
 import { FolderBrowserDialog } from './FolderBrowserDialog';
 import { ImportingWorkspaceDialog } from './ImportingWorkspaceDialog';
-import { DropdownTransition } from './DropdownTransition';
 
 interface WorkspaceDialogContainerProps {
   isOpen: boolean;
@@ -14,7 +13,6 @@ export function WorkspaceDialogContainer({ isOpen, onComplete }: WorkspaceDialog
   const [showFolderBrowser, setShowFolderBrowser] = useState(false);
   const [showImporting, setShowImporting] = useState(false);
   const [workspacePath, setWorkspacePath] = useState('');
-  const [folderBrowserPath, setFolderBrowserPath] = useState('');
   const [selectedWorkspacePath, setSelectedWorkspacePath] = useState('');
 
   if (!isOpen) return null;

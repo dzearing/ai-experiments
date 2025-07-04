@@ -203,6 +203,9 @@ app.post('/api/claude/refine-tasks', async (req, res) => {
 const fs = require('fs').promises;
 const path = require('path');
 const os = require('os');
+const { exec } = require('child_process');
+const { promisify } = require('util');
+const execAsync = promisify(exec);
 
 // Parse work item markdown to extract details
 function parseWorkItemMarkdown(content) {
@@ -669,6 +672,20 @@ app.post('/api/workspace/read', async (req, res) => {
         const stats = await fs.stat(projectPath);
         
         if (stats.isDirectory()) {
+          // Check for claudeflow.settings.json
+          try {
+            const settingsPath = path.join(projectPath, 'claudeflow.settings.json');
+            const settingsContent = await fs.readFile(settingsPath, 'utf-8');
+            const settings = JSON.parse(settingsContent);
+            
+            if (settings.tracked === false) {
+              console.log(`Skipping project ${projectName} - marked as not tracked`);
+              continue;
+            }
+          } catch (err) {
+            // No settings file or error reading it - continue normally
+          }
+          
           const project = {
             name: projectName,
             path: projectPath,
@@ -1039,6 +1056,412 @@ ${projectName} project created via UI.
     console.error('Error creating project folder:', error);
     res.status(500).json({ 
       error: 'Failed to create project folder',
+      details: error.message 
+    });
+  }
+});
+
+// Clone a GitHub repository
+app.post('/api/workspace/clone-repo', async (req, res) => {
+  try {
+    const { projectPath, repoUrl, repoName } = req.body;
+    
+    if (!projectPath || !repoUrl || !repoName) {
+      return res.status(400).json({ error: 'Project path, repository URL, and repository name are required' });
+    }
+
+    // Sanitize repo name for folder
+    const folderName = repoName
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-') // Remove multiple hyphens
+      .trim();
+
+    // Find next available number
+    const reposPath = path.join(projectPath, 'repos');
+    let repoNumber = 1;
+    
+    try {
+      await fs.mkdir(reposPath, { recursive: true });
+      const existingRepos = await fs.readdir(reposPath);
+      
+      // Find existing repos with this name
+      const repoPattern = new RegExp(`^${folderName}-(\\d+)$`);
+      const numbers = existingRepos
+        .map(dir => {
+          const match = dir.match(repoPattern);
+          return match ? parseInt(match[1]) : 0;
+        })
+        .filter(n => n > 0);
+      
+      if (numbers.length > 0) {
+        repoNumber = Math.max(...numbers) + 1;
+      }
+    } catch (err) {
+      // Repos directory doesn't exist yet
+    }
+
+    const repoFolderName = `${folderName}-${repoNumber}`;
+    const repoPath = path.join(reposPath, repoFolderName);
+
+    console.log(`Cloning repository ${repoUrl} to ${repoPath}`);
+
+    // Clone the repository
+    try {
+      const { stdout, stderr } = await execAsync(`git clone "${repoUrl}" "${repoPath}"`, {
+        cwd: reposPath
+      });
+      
+      console.log('Clone output:', stdout);
+      if (stderr) console.log('Clone stderr:', stderr);
+      
+      // Update REPOS.md to track the new clone
+      const reposmdPath = path.join(projectPath, 'REPOS.md');
+      try {
+        let reposContent = await fs.readFile(reposmdPath, 'utf-8');
+        
+        // Update repository information if it's generic
+        if (reposContent.includes('To be added')) {
+          reposContent = reposContent.replace(
+            /- \*\*URL\*\*: To be added/,
+            `- **URL**: ${repoUrl}`
+          );
+        }
+        
+        // Add to available clones
+        const availableSection = reposContent.indexOf('## Available clones');
+        if (availableSection !== -1) {
+          const activeSection = reposContent.indexOf('## Active work');
+          const insertPos = activeSection !== -1 ? activeSection : reposContent.length;
+          
+          const beforeActive = reposContent.substring(0, insertPos);
+          const afterActive = activeSection !== -1 ? reposContent.substring(activeSection) : '';
+          
+          // Check if there are already clones listed
+          const hasClones = beforeActive.includes(`${folderName}-`);
+          if (!hasClones) {
+            // Replace the section with the new clone
+            reposContent = beforeActive.trimEnd() + `\n- ${repoFolderName}: Available\n\n` + afterActive;
+          } else {
+            // Add to existing list
+            reposContent = beforeActive.trimEnd() + `\n- ${repoFolderName}: Available` + afterActive;
+          }
+        }
+        
+        await fs.writeFile(reposmdPath, reposContent);
+      } catch (err) {
+        console.log('Could not update REPOS.md:', err.message);
+      }
+      
+      res.json({ 
+        success: true, 
+        repoPath,
+        repoFolderName,
+        message: 'Repository cloned successfully'
+      });
+      
+    } catch (cloneError) {
+      console.error('Git clone error:', cloneError);
+      return res.status(500).json({ 
+        error: 'Failed to clone repository',
+        details: cloneError.message,
+        suggestion: 'Please ensure the repository URL is correct and you have access to it'
+      });
+    }
+
+  } catch (error) {
+    console.error('Error in clone-repo endpoint:', error);
+    res.status(500).json({ 
+      error: 'Failed to process clone request',
+      details: error.message 
+    });
+  }
+});
+
+// Extract project details from cloned repository
+app.post('/api/workspace/extract-repo-details', async (req, res) => {
+  try {
+    const { repoPath } = req.body;
+    
+    if (!repoPath) {
+      return res.status(400).json({ error: 'Repository path is required' });
+    }
+
+    const details = {
+      description: '',
+      purpose: '',
+      isPrivate: true,
+      technologies: [],
+      scripts: {}
+    };
+
+    // Try to read package.json
+    try {
+      const packageJsonPath = path.join(repoPath, 'package.json');
+      const packageContent = await fs.readFile(packageJsonPath, 'utf-8');
+      const packageJson = JSON.parse(packageContent);
+      
+      if (packageJson.description) {
+        details.description = packageJson.description;
+      }
+      
+      if (packageJson.private === false) {
+        details.isPrivate = false;
+      }
+      
+      // Extract dependencies to determine technologies
+      const deps = {
+        ...packageJson.dependencies,
+        ...packageJson.devDependencies
+      };
+      
+      if (deps.react) details.technologies.push('React');
+      if (deps.vue) details.technologies.push('Vue');
+      if (deps.angular) details.technologies.push('Angular');
+      if (deps.typescript) details.technologies.push('TypeScript');
+      if (deps.express) details.technologies.push('Express');
+      if (deps.next) details.technologies.push('Next.js');
+      if (deps.vite) details.technologies.push('Vite');
+      if (deps.webpack) details.technologies.push('Webpack');
+      
+      // Extract useful scripts
+      if (packageJson.scripts) {
+        details.scripts = packageJson.scripts;
+      }
+      
+    } catch (err) {
+      console.log('No package.json found or error reading it:', err.message);
+    }
+
+    // Try to read README.md
+    try {
+      const readmePath = path.join(repoPath, 'README.md');
+      const readmeContent = await fs.readFile(readmePath, 'utf-8');
+      
+      // Extract description if not already found
+      if (!details.description) {
+        // Look for description in first paragraph
+        const firstParagraph = readmeContent.split('\n\n')[1]; // Skip title
+        if (firstParagraph && !firstParagraph.startsWith('#')) {
+          details.description = firstParagraph.replace(/\n/g, ' ').trim();
+          // Limit to reasonable length
+          if (details.description.length > 200) {
+            details.description = details.description.substring(0, 197) + '...';
+          }
+        }
+      }
+      
+      // Extract purpose/about section
+      const purposeMatch = readmeContent.match(/##?\s*(Purpose|About|Overview|What is|Description)\s*\n+([\s\S]*?)(?=\n#|\n\n#|$)/i);
+      if (purposeMatch) {
+        const purposeText = purposeMatch[2].trim();
+        const firstPurposeParagraph = purposeText.split('\n\n')[0];
+        details.purpose = firstPurposeParagraph.replace(/\n/g, ' ').trim();
+        // Limit to reasonable length
+        if (details.purpose.length > 300) {
+          details.purpose = details.purpose.substring(0, 297) + '...';
+        }
+      }
+      
+    } catch (err) {
+      console.log('No README.md found or error reading it:', err.message);
+    }
+
+    // Set default description if none found
+    if (!details.description) {
+      details.description = 'Repository imported from GitHub';
+    }
+
+    res.json(details);
+
+  } catch (error) {
+    console.error('Error extracting repo details:', error);
+    res.status(500).json({ 
+      error: 'Failed to extract repository details',
+      details: error.message 
+    });
+  }
+});
+
+// Update project README with extracted details
+app.post('/api/workspace/update-project-readme', async (req, res) => {
+  try {
+    const { projectPath, projectName, description, purpose, repositories, technologies, scripts } = req.body;
+    
+    if (!projectPath || !projectName) {
+      return res.status(400).json({ error: 'Project path and name are required' });
+    }
+
+    // Generate README content
+    let readmeContent = `# ${projectName}
+
+## Description
+${description || 'Project imported from GitHub.'}
+`;
+
+    if (purpose) {
+      readmeContent += `
+## Purpose
+${purpose}
+`;
+    }
+
+    if (technologies && technologies.length > 0) {
+      readmeContent += `
+## Technologies
+${technologies.map(tech => `- ${tech}`).join('\n')}
+`;
+    }
+
+    if (repositories && repositories.length > 0) {
+      readmeContent += `
+## Repository
+`;
+      repositories.forEach(repo => {
+        readmeContent += `- **URL**: ${repo.url}
+- **Type**: ${repo.type === 'github' ? 'GitHub' : 'Azure DevOps'}
+- **Access**: ${repo.visibility === 'public' ? 'Public' : 'Private'}
+`;
+        if (!repo.isPrimary && repositories.length > 1) {
+          readmeContent += `- **Primary**: No\n`;
+        }
+      });
+    }
+
+    if (scripts && Object.keys(scripts).length > 0) {
+      const importantScripts = ['start', 'dev', 'build', 'test', 'lint'];
+      const relevantScripts = Object.entries(scripts)
+        .filter(([key]) => importantScripts.includes(key))
+        .slice(0, 5); // Limit to 5 most important scripts
+      
+      if (relevantScripts.length > 0) {
+        readmeContent += `
+## Available Scripts
+`;
+        relevantScripts.forEach(([key, value]) => {
+          readmeContent += `- \`npm run ${key}\`: ${value}\n`;
+        });
+      }
+    }
+
+    readmeContent += `
+## Goals
+- Successfully integrate and maintain the project
+- Extend functionality as needed
+- Maintain code quality and test coverage
+`;
+
+    // Write the README file
+    const readmePath = path.join(projectPath, 'README.md');
+    await fs.writeFile(readmePath, readmeContent);
+
+    res.json({ 
+      success: true, 
+      path: readmePath,
+      message: 'Project README updated successfully'
+    });
+
+  } catch (error) {
+    console.error('Error updating project README:', error);
+    res.status(500).json({ 
+      error: 'Failed to update project README',
+      details: error.message 
+    });
+  }
+});
+
+// Hide project by creating claudeflow.settings.json
+app.post('/api/projects/:projectId/hide', async (req, res) => {
+  console.log('=== HIDE PROJECT ENDPOINT CALLED ===');
+  console.log('Project ID:', req.params.projectId);
+  
+  try {
+    const { projectId } = req.params;
+    
+    // Get workspace path from query or find it from the workspace endpoint
+    const workspacePath = req.query.workspacePath || process.env.WORKSPACE_PATH;
+    
+    if (!workspacePath) {
+      return res.status(400).json({ error: 'Workspace path is required' });
+    }
+    
+    // The projectId is now the project name (folder name)
+    const projectName = decodeURIComponent(projectId);
+    const projectsPath = path.join(workspacePath, 'projects');
+    const projectPath = path.join(projectsPath, projectName);
+    
+    // Check if project exists
+    try {
+      await fs.access(projectPath);
+    } catch (err) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+    
+    // Create claudeflow.settings.json
+    const settingsPath = path.join(projectPath, 'claudeflow.settings.json');
+    const settings = {
+      tracked: false
+    };
+    
+    await fs.writeFile(settingsPath, JSON.stringify(settings, null, 2));
+    
+    console.log(`Created claudeflow.settings.json at: ${settingsPath}`);
+    res.json({ 
+      success: true, 
+      path: settingsPath,
+      message: 'Project hidden successfully'
+    });
+    
+  } catch (error) {
+    console.error('Error hiding project:', error);
+    res.status(500).json({ 
+      error: 'Failed to hide project',
+      details: error.message 
+    });
+  }
+});
+
+// Remove project folder
+app.post('/api/projects/:projectId/remove', async (req, res) => {
+  console.log('=== REMOVE PROJECT ENDPOINT CALLED ===');
+  console.log('Project ID:', req.params.projectId);
+  
+  try {
+    const { projectId } = req.params;
+    
+    // Get workspace path from query or find it from the workspace endpoint
+    const workspacePath = req.query.workspacePath || process.env.WORKSPACE_PATH;
+    
+    if (!workspacePath) {
+      return res.status(400).json({ error: 'Workspace path is required' });
+    }
+    
+    // The projectId is now the project name (folder name)
+    const projectName = decodeURIComponent(projectId);
+    const projectsPath = path.join(workspacePath, 'projects');
+    const projectPath = path.join(projectsPath, projectName);
+    
+    // Check if project exists
+    try {
+      await fs.access(projectPath);
+    } catch (err) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+    
+    // Remove the project folder
+    await fs.rm(projectPath, { recursive: true, force: true });
+    
+    console.log(`Removed project folder at: ${projectPath}`);
+    res.json({ 
+      success: true, 
+      message: 'Project folder removed successfully'
+    });
+    
+  } catch (error) {
+    console.error('Error removing project:', error);
+    res.status(500).json({ 
+      error: 'Failed to remove project',
       details: error.message 
     });
   }
