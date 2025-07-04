@@ -2,14 +2,31 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const claudeService = require('./claude-service');
+const crypto = require('crypto');
+const path = require('path');
 
-dotenv.config();
+// Load .env from parent directory
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
+
+console.log('=== SERVER STARTUP ===');
+console.log('Current directory:', process.cwd());
+console.log('GITHUB_CLIENT_ID:', process.env.GITHUB_CLIENT_ID);
+console.log('GITHUB_CLIENT_SECRET:', process.env.GITHUB_CLIENT_SECRET ? '***hidden***' : 'not set');
+console.log('PORT:', process.env.PORT);
+console.log('FRONTEND_URL:', process.env.FRONTEND_URL);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, '../public')));
+
+// In-memory storage for OAuth states and tokens (in production, use a database)
+const oauthStates = new Map();
+const userTokens = new Map();
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -199,9 +216,297 @@ app.post('/api/claude/refine-tasks', async (req, res) => {
   }
 });
 
+// GitHub OAuth endpoints
+app.post('/api/auth/github/login', (req, res) => {
+  try {
+    console.log('=== GitHub OAuth Login Request ===');
+    console.log('GITHUB_CLIENT_ID from env:', process.env.GITHUB_CLIENT_ID);
+    
+    // Generate a random state for OAuth security
+    const state = crypto.randomBytes(32).toString('hex');
+    oauthStates.set(state, {
+      created: Date.now(),
+      // Additional data can be stored here
+    });
+
+    // Clean up old states (older than 10 minutes)
+    for (const [key, value] of oauthStates.entries()) {
+      if (Date.now() - value.created > 10 * 60 * 1000) {
+        oauthStates.delete(key);
+      }
+    }
+
+    // GitHub OAuth configuration
+    const clientId = process.env.GITHUB_CLIENT_ID || 'your-github-client-id';
+    console.log('Using client ID:', clientId);
+    
+    // Use the frontend URL for the redirect
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const redirectUri = `${frontendUrl}/oauth-callback.html`;
+    const scope = 'read:user user:email repo read:org';
+
+    // Construct GitHub OAuth URL
+    const authUrl = `https://github.com/login/oauth/authorize?` +
+      `client_id=${clientId}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&scope=${encodeURIComponent(scope)}` +
+      `&state=${state}`;
+
+    res.json({ authUrl });
+  } catch (error) {
+    console.error('Error initiating GitHub login:', error);
+    res.status(500).json({ error: 'Failed to initiate GitHub login' });
+  }
+});
+
+app.post('/api/auth/github/token', async (req, res) => {
+  try {
+    const { code, state } = req.body;
+
+    // Verify state
+    if (!state || !oauthStates.has(state)) {
+      return res.status(400).json({ error: 'Invalid state parameter' });
+    }
+
+    // Clean up used state
+    oauthStates.delete(state);
+
+    const clientId = process.env.GITHUB_CLIENT_ID || 'your-github-client-id';
+    const clientSecret = process.env.GITHUB_CLIENT_SECRET || 'your-github-client-secret';
+
+    // Exchange code for access token
+    const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        client_id: clientId,
+        client_secret: clientSecret,
+        code: code
+      })
+    });
+
+    if (!tokenResponse.ok) {
+      throw new Error('Failed to exchange code for token');
+    }
+
+    const tokenData = await tokenResponse.json();
+    
+    if (tokenData.error) {
+      throw new Error(tokenData.error_description || tokenData.error);
+    }
+
+    const accessToken = tokenData.access_token;
+
+    // Get user information from GitHub
+    const userResponse = await fetch('https://api.github.com/user', {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    });
+
+    if (!userResponse.ok) {
+      throw new Error('Failed to fetch user information');
+    }
+
+    const userData = await userResponse.json();
+
+    // Get user emails to determine account type
+    const emailsResponse = await fetch('https://api.github.com/user/emails', {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    });
+
+    // Determine account type
+    let accountType = 'personal';
+    
+    // Check if user belongs to any organizations with enterprise features
+    const orgsResponse = await fetch('https://api.github.com/user/orgs', {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    });
+    
+    if (orgsResponse.ok) {
+      const orgs = await orgsResponse.json();
+      
+      // Check each organization for enterprise features
+      for (const org of orgs) {
+        try {
+          const orgResponse = await fetch(`https://api.github.com/orgs/${org.login}`, {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Accept': 'application/vnd.github.v3+json'
+            }
+          });
+          
+          if (orgResponse.ok) {
+            const orgData = await orgResponse.json();
+            // GitHub Enterprise Cloud organizations have a plan name that includes 'enterprise'
+            if (orgData.plan && orgData.plan.name.toLowerCase().includes('enterprise')) {
+              accountType = 'enterprise';
+              break;
+            }
+          }
+        } catch (err) {
+          // Continue checking other orgs
+        }
+      }
+    }
+    
+    // Alternative: Check if the user's company field suggests enterprise
+    if (accountType === 'personal' && userData.company) {
+      // This is a heuristic - you might want to check against known enterprise companies
+      // For now, we'll keep it as personal unless we detect actual enterprise features
+    }
+
+    // Store token (in production, encrypt this)
+    const accountId = `github_${userData.id}`;
+    userTokens.set(accountId, {
+      accessToken: accessToken,
+      userId: userData.id,
+      username: userData.login,
+      created: Date.now()
+    });
+
+    // Return account information
+    const account = {
+      id: accountId,
+      username: userData.login,
+      email: userData.email || '',
+      avatarUrl: userData.avatar_url,
+      accountType: accountType,
+      connectedAt: new Date().toISOString()
+    };
+
+    res.json(account);
+  } catch (error) {
+    console.error('Error exchanging token:', error);
+    res.status(500).json({ error: 'Failed to complete authentication' });
+  }
+});
+
+app.post('/api/auth/github/logout/:accountId', (req, res) => {
+  try {
+    const { accountId } = req.params;
+    
+    // Remove token from storage
+    userTokens.delete(accountId);
+    
+    // In production, you might also want to revoke the token with GitHub
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error logging out:', error);
+    res.status(500).json({ error: 'Failed to logout' });
+  }
+});
+
+app.get('/api/auth/github/accounts', (req, res) => {
+  try {
+    // In production, this would fetch from a database
+    // For now, return empty array as tokens are not persisted
+    res.json([]);
+  } catch (error) {
+    console.error('Error fetching accounts:', error);
+    res.status(500).json({ error: 'Failed to fetch accounts' });
+  }
+});
+
+// Verify account - check if we still have a valid token
+app.post('/api/auth/github/verify', (req, res) => {
+  try {
+    const { accountId } = req.body;
+    
+    if (!accountId) {
+      return res.status(400).json({ error: 'Account ID is required' });
+    }
+    
+    // Check if we have a token for this account
+    const tokenData = userTokens.get(accountId);
+    
+    if (!tokenData) {
+      return res.status(401).json({ error: 'Account not found or session expired' });
+    }
+    
+    // In a real app, you might want to verify the token is still valid with GitHub
+    res.json({ valid: true });
+  } catch (error) {
+    console.error('Error verifying account:', error);
+    res.status(500).json({ error: 'Failed to verify account' });
+  }
+});
+
+// GitHub API proxy endpoint
+app.post('/api/github/proxy', async (req, res) => {
+  try {
+    const { accountId, endpoint, method = 'GET', body } = req.body;
+
+    // Get token for the account
+    const tokenData = userTokens.get(accountId);
+    if (!tokenData) {
+      return res.status(401).json({ error: 'Account not authenticated' });
+    }
+
+    // Make request to GitHub API
+    const githubResponse = await fetch(`https://api.github.com${endpoint}`, {
+      method: method,
+      headers: {
+        'Authorization': `Bearer ${tokenData.accessToken}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json'
+      },
+      body: body ? JSON.stringify(body) : undefined
+    });
+
+    // Check rate limit headers
+    const rateLimitRemaining = githubResponse.headers.get('x-ratelimit-remaining');
+    const rateLimitReset = githubResponse.headers.get('x-ratelimit-reset');
+    
+    if (rateLimitRemaining === '0') {
+      const resetTime = new Date(parseInt(rateLimitReset) * 1000);
+      return res.status(429).json({ 
+        error: 'GitHub API rate limit exceeded',
+        resetTime: resetTime.toISOString()
+      });
+    }
+
+    if (!githubResponse.ok) {
+      const errorData = await githubResponse.json();
+      return res.status(githubResponse.status).json({
+        error: errorData.message || 'GitHub API request failed',
+        details: errorData
+      });
+    }
+
+    const data = await githubResponse.json();
+    
+    // Include rate limit info in response headers
+    if (rateLimitRemaining) {
+      res.setHeader('X-RateLimit-Remaining', rateLimitRemaining);
+    }
+    if (rateLimitReset) {
+      res.setHeader('X-RateLimit-Reset', rateLimitReset);
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('GitHub proxy error:', error);
+    res.status(500).json({ 
+      error: 'Failed to proxy GitHub request',
+      message: error.message 
+    });
+  }
+});
+
 // Workspace endpoints
 const fs = require('fs').promises;
-const path = require('path');
 const os = require('os');
 const { exec } = require('child_process');
 const { promisify } = require('util');

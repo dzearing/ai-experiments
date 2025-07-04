@@ -5,6 +5,8 @@ import { ThemeProvider } from './contexts/ThemeContextV2';
 import { WorkspaceProvider, useWorkspace } from './contexts/WorkspaceContext';
 import { LayoutProvider } from './contexts/LayoutContext';
 import { ToastProvider } from './contexts/ToastContext';
+import { AuthProvider } from './contexts/AuthContext';
+import { GitHubProvider } from './contexts/GitHubContext';
 import { ThemedLayoutV2 } from './components/ThemedLayoutV2';
 import { WorkspaceDialogContainer } from './components/WorkspaceDialogContainer';
 import { WorkspaceSync } from './components/WorkspaceSync';
@@ -79,13 +81,17 @@ function App() {
     <AppProvider>
       <ThemeProvider>
         <ToastProvider>
-          <WorkspaceProvider>
-            <LayoutProvider>
-              <BrowserRouter>
-                <AppContent />
-              </BrowserRouter>
-            </LayoutProvider>
-          </WorkspaceProvider>
+          <AuthProvider>
+            <GitHubProvider>
+              <WorkspaceProvider>
+                <LayoutProvider>
+                  <BrowserRouter>
+                    <AppContent />
+                  </BrowserRouter>
+                </LayoutProvider>
+              </WorkspaceProvider>
+            </GitHubProvider>
+          </AuthProvider>
         </ToastProvider>
       </ThemeProvider>
     </AppProvider>

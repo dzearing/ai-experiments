@@ -8,6 +8,7 @@ import { AnimatedTransition } from './AnimatedTransition';
 import { AnimatedOutletWrapper } from './AnimatedOutletWrapper';
 import { useNavigationDirection } from '../hooks/useNavigationDirection';
 import { SettingsMenu } from './SettingsMenu';
+import { AuthAvatar } from './AuthAvatar';
 
 export function ThemedLayoutV2() {
   const location = useLocation();
@@ -145,6 +146,7 @@ export function ThemedLayoutV2() {
                 {workspace.config.path}
               </div>
             )}
+            <AuthAvatar />
             <SettingsMenu />
           </div>
         </header>
