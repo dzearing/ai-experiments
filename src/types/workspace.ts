@@ -12,15 +12,19 @@ export interface WorkspaceState {
 export interface WorkspaceProject {
   name: string;
   path: string;
+  isLoading?: boolean;
   repos: WorkspaceRepo[];
   repositories?: any[]; // For backward compatibility
-  plans: {
+  plans?: {
     ideas: WorkspacePlan[];
     planned: WorkspacePlan[];
     active: WorkspacePlan[];
     completed: WorkspacePlan[];
   };
   readme?: string;
+  purpose?: string;
+  primaryRepoUrl?: string;
+  id?: string;
 }
 
 export interface WorkspaceRepo {

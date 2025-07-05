@@ -200,15 +200,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const projectWorkItemMap: { [projectId: string]: string[] } = {};
     
     workspaceProjects.forEach(wp => {
-      if (wp.plans) {
-        const projectId = wp.id || uuidv4(); // Use existing ID or generate new one
-        projectWorkItemMap[projectId] = [];
-        
-        // Process all plan types
-        ['ideas', 'planned', 'active', 'completed'].forEach(planType => {
-          if (wp.plans[planType]) {
-            wp.plans[planType].forEach((plan: any) => {
-              if (plan.workItem) {
+      // Skip projects that are still loading (don't have plans yet)
+      if (wp.isLoading || !wp.plans) {
+        console.log(`Skipping project ${wp.name} - still loading details`);
+        return;
+      }
+      
+      const projectId = wp.id || uuidv4(); // Use existing ID or generate new one
+      projectWorkItemMap[projectId] = [];
+      
+      // Process all plan types
+      ['ideas', 'planned', 'active', 'completed'].forEach(planType => {
+        if (wp.plans[planType]) {
+          wp.plans[planType].forEach((plan: any) => {
+            if (plan.workItem) {
                 // Use metadata workItemId if available, otherwise generate from plan name
                 const workItemId = plan.workItem.metadata?.workItemId || 
                                  `${projectId}-${plan.name.replace(/\.md$/, '')}`;

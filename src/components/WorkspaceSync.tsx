@@ -13,6 +13,7 @@ export function WorkspaceSync() {
       const projectsHash = JSON.stringify(workspaceProjects.map(p => ({
         name: p.name,
         path: p.path,
+        isLoading: p.isLoading,
         repositories: p.repositories,
         plans: p.plans
       })));
