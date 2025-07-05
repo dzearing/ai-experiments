@@ -4,15 +4,18 @@ import { useApp } from '../contexts/AppContext';
 import { useTheme } from '../contexts/ThemeContextV2';
 import { Button } from '../components/ui/Button';
 import { IconButton } from '../components/ui/IconButton';
+import { WorkItemDeleteDialog } from '../components/WorkItemDeleteDialog';
 import type { WorkItem } from '../types';
 
 export function WorkItems() {
-  const { workItems, projects, personas } = useApp();
+  const { workItems, projects, personas, deleteWorkItem } = useApp();
   const { currentStyles } = useTheme();
   const navigate = useNavigate();
   const styles = currentStyles;
   const [filter, setFilter] = useState<'all' | WorkItem['status']>('all');
   const [sortBy, setSortBy] = useState<'priority' | 'dueDate' | 'created'>('priority');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [workItemToDelete, setWorkItemToDelete] = useState<WorkItem | null>(null);
   
   
   const getStatusColor = (status: WorkItem['status']) => {
@@ -269,7 +272,14 @@ export function WorkItems() {
                         </svg>
                       </IconButton>
                     )}
-                    <IconButton aria-label="Delete work item" variant="secondary">
+                    <IconButton 
+                      aria-label="Delete work item" 
+                      variant="secondary"
+                      onClick={() => {
+                        setWorkItemToDelete(item);
+                        setDeleteDialogOpen(true);
+                      }}
+                    >
                       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
@@ -281,6 +291,41 @@ export function WorkItems() {
           })}
         </div>
       )}
+      
+      <WorkItemDeleteDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => {
+          setDeleteDialogOpen(false);
+          setWorkItemToDelete(null);
+        }}
+        workItem={workItemToDelete}
+        onConfirm={async (permanentDelete) => {
+          if (!workItemToDelete) return;
+          
+          // Handle markdown file deletion/move if it exists
+          if (workItemToDelete.markdownPath) {
+            try {
+              const response = await fetch('http://localhost:3000/api/work-items/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  markdownPath: workItemToDelete.markdownPath,
+                  permanentDelete
+                })
+              });
+              
+              if (!response.ok) {
+                console.error('Failed to delete/move markdown file');
+              }
+            } catch (error) {
+              console.error('Error handling markdown file:', error);
+            }
+          }
+          
+          // Delete from app state
+          deleteWorkItem(workItemToDelete.id);
+        }}
+      />
     </div>
   );
 }

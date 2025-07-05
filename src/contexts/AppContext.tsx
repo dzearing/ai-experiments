@@ -17,6 +17,7 @@ interface AppContextType {
   createProject: (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'workItems'>) => void;
   createWorkItem: (workItem: Omit<WorkItem, 'id' | 'createdAt' | 'updatedAt' | 'jamSessionIds'>) => WorkItem;
   updateWorkItem: (id: string, updates: Partial<WorkItem>) => void;
+  deleteWorkItem: (id: string) => void;
   assignPersonaToWorkItem: (workItemId: string, personaId: string) => void;
   startJamSession: (workItemId: string, participantIds: string[], title: string) => string;
   addJamMessage: (sessionId: string, personaId: string, content: string, type: 'message' | 'challenge' | 'suggestion' | 'decision') => void;
@@ -107,6 +108,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
       w.id === id 
         ? { ...w, ...updates, updatedAt: new Date() } 
         : w
+    ));
+  };
+
+  const deleteWorkItem = (id: string) => {
+    // Remove from workItems
+    setWorkItems(workItems.filter(w => w.id !== id));
+    
+    // Remove from project's workItems array
+    const workItem = workItems.find(w => w.id === id);
+    if (workItem) {
+      setProjects(projects.map(p => 
+        p.id === workItem.projectId 
+          ? { ...p, workItems: p.workItems.filter(wId => wId !== id), updatedAt: new Date() }
+          : p
+      ));
+    }
+    
+    // Remove any jam sessions associated with this work item
+    setJamSessions(jamSessions.filter(js => js.workItemId !== id));
+    
+    // Clear any personas assigned to this work item
+    setPersonas(personas.map(p => 
+      p.currentTaskId === id 
+        ? { ...p, currentTaskId: undefined, status: 'available' }
+        : p
     ));
   };
 
@@ -295,6 +321,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     createProject,
     createWorkItem,
     updateWorkItem,
+    deleteWorkItem,
     assignPersonaToWorkItem,
     startJamSession,
     addJamMessage,

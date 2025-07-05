@@ -2196,6 +2196,84 @@ app.post('/api/workspace/update-repos-md', async (req, res) => {
   }
 });
 
+// Test endpoint
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'Test endpoint works' });
+});
+
+// Endpoint to handle work item deletion/discarding
+app.post('/api/work-items/delete', async (req, res) => {
+  console.log('DELETE ENDPOINT HIT - body:', req.body);
+  try {
+    const { markdownPath, permanentDelete } = req.body;
+    
+    if (!markdownPath) {
+      return res.status(400).json({ error: 'Markdown path is required' });
+    }
+    
+    // Handle both absolute and relative paths
+    let fullPath;
+    if (path.isAbsolute(markdownPath)) {
+      fullPath = markdownPath;
+    } else {
+      fullPath = path.join(process.cwd(), '..', markdownPath);
+    }
+    
+    console.log('Checking path:', fullPath);
+    
+    // Check if file exists
+    try {
+      await fs.access(fullPath);
+    } catch (err) {
+      console.error('File not found:', fullPath);
+      return res.status(404).json({ error: 'Markdown file not found' });
+    }
+    
+    if (permanentDelete) {
+      // Permanently delete the file
+      await fs.unlink(fullPath);
+      res.json({ 
+        success: true, 
+        message: 'Work item markdown permanently deleted' 
+      });
+    } else {
+      // Move to discarded folder
+      const pathParts = fullPath.split(path.sep);
+      const plansIndex = pathParts.lastIndexOf('plans');
+      
+      if (plansIndex === -1) {
+        return res.status(400).json({ error: 'Invalid markdown path structure' });
+      }
+      
+      // Build the discarded folder path
+      const discardedPath = [...pathParts.slice(0, plansIndex + 1), 'discarded'].join(path.sep);
+      
+      // Ensure discarded folder exists
+      await fs.mkdir(discardedPath, { recursive: true });
+      
+      // Get filename and create destination path
+      const filename = path.basename(fullPath);
+      const destPath = path.join(discardedPath, filename);
+      
+      // Move the file
+      await fs.rename(fullPath, destPath);
+      
+      res.json({ 
+        success: true, 
+        message: 'Work item moved to discarded folder',
+        newPath: path.relative(path.join(process.cwd(), '..'), destPath)
+      });
+    }
+    
+  } catch (error) {
+    console.error('Error deleting/discarding work item:', error);
+    res.status(500).json({ 
+      error: 'Failed to delete/discard work item',
+      details: error.message 
+    });
+  }
+});
+
 // Claude API endpoints for jam sessions
 app.post('/api/claude/analyze-document', async (req, res) => {
   try {
