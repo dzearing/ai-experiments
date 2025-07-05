@@ -624,7 +624,7 @@ ${(selectedTask.validationCriteria || []).map(criteria => `- ${criteria}`).join(
               >
                 {isProcessing ? (
                   <>
-                    <InlineLoadingSpinner className="mr-2 inline-flex" />
+                    <InlineLoadingSpinner className="mr-2 inline-flex" variant="primary" />
                     Processing...
                   </>
                 ) : (
@@ -702,7 +702,7 @@ ${(selectedTask.validationCriteria || []).map(criteria => `- ${criteria}`).join(
               >
                 {isProcessing ? (
                   <>
-                    <InlineLoadingSpinner className="mr-2 inline-flex" />
+                    <InlineLoadingSpinner className="mr-2 inline-flex" variant="primary" />
                     Refining...
                   </>
                 ) : (

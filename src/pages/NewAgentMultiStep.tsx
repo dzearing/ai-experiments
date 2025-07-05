@@ -162,7 +162,7 @@ function DescribeWorkStep({ onNext, workDescription, setWorkDescription, isAnaly
         >
           {isAnalyzing ? (
             <>
-              <InlineLoadingSpinner className="mr-2 inline-flex" />
+              <InlineLoadingSpinner className="mr-2 inline-flex" variant="primary" />
               Analyzing...
             </>
           ) : (

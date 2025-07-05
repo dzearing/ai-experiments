@@ -5,7 +5,6 @@ import { useWorkspace } from '../contexts/WorkspaceContext';
 import { useTheme } from '../contexts/ThemeContextV2';
 import { Button } from '../components/ui/Button';
 import { IconButton } from '../components/ui/IconButton';
-import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { WorkItemDeleteDialog } from '../components/WorkItemDeleteDialog';
 import type { WorkItem } from '../types';
 
@@ -124,11 +123,18 @@ export function WorkItems() {
       
       {/* Work Items List */}
       {isLoadingWorkspace ? (
-        <LoadingSpinner 
-          size="large" 
-          text="Loading work items..." 
-          showContainer={true}
-        />
+        <div className={`
+          ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius}
+          ${styles.cardShadow} p-12 text-center
+        `}>
+          <div className="animate-pulse mb-6">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full mx-auto mb-4"></div>
+            <div className="h-2 bg-neutral-300 dark:bg-neutral-700 rounded w-32 mx-auto mb-2"></div>
+            <div className="h-2 bg-neutral-300 dark:bg-neutral-700 rounded w-24 mx-auto"></div>
+          </div>
+          <p className={`${styles.textColor} font-medium`}>Loading work items...</p>
+          <p className={`${styles.mutedText} text-sm mt-2`}>Fetching your tasks and projects</p>
+        </div>
       ) : sortedItems.length === 0 ? (
         <div className={`
           ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius}

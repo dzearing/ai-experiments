@@ -12,7 +12,7 @@ import type { Project } from '../types';
 export function Projects() {
   const { projects } = useApp();
   const { currentStyles } = useTheme();
-  const { workspace } = useWorkspace();
+  const { workspace, isLoadingWorkspace } = useWorkspace();
   const { showToast } = useToast();
   const styles = currentStyles;
   const [deleteProject, setDeleteProject] = useState<Project | null>(null);
@@ -59,7 +59,20 @@ export function Projects() {
         )}
       </div>
       
-      {projects.length === 0 ? (
+      {isLoadingWorkspace ? (
+        <div className={`
+          ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius}
+          ${styles.cardShadow} p-12 text-center
+        `}>
+          <div className="animate-pulse mb-6">
+            <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-blue-500 rounded-full mx-auto mb-4"></div>
+            <div className="h-2 bg-neutral-300 dark:bg-neutral-700 rounded w-32 mx-auto mb-2"></div>
+            <div className="h-2 bg-neutral-300 dark:bg-neutral-700 rounded w-24 mx-auto"></div>
+          </div>
+          <p className={`${styles.textColor} font-medium`}>Loading projects...</p>
+          <p className={`${styles.mutedText} text-sm mt-2`}>Fetching your project information</p>
+        </div>
+      ) : projects.length === 0 ? (
         <div className={`
           ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius}
           ${styles.cardShadow} p-12 text-center

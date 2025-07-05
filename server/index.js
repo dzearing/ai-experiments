@@ -1025,7 +1025,257 @@ app.post('/api/workspace/exists', async (req, res) => {
   }
 });
 
-// Read workspace structure
+// Read workspace structure - lightweight version
+app.post('/api/workspace/read-light', async (req, res) => {
+  try {
+    const { workspacePath } = req.body;
+    
+    if (!workspacePath) {
+      return res.status(400).json({ error: 'Workspace path is required' });
+    }
+
+    // Check cache first
+    const cacheKey = `workspace-light:${workspacePath}`;
+    const cachedData = getCachedData(cacheKey);
+    if (cachedData) {
+      res.set({
+        'Cache-Control': 'private, max-age=60', // 1 minute for light data
+        'X-Cache': 'HIT'
+      });
+      return res.json(cachedData);
+    }
+
+    // Start timing
+    const startTime = Date.now();
+
+    // Read projects directory - just get names and basic info
+    const projectsPath = path.join(workspacePath, 'projects');
+    const projects = [];
+
+    try {
+      const projectDirs = await fs.readdir(projectsPath);
+      
+      // Read all project basic info in parallel
+      const projectPromises = projectDirs
+        .filter(name => !name.startsWith('.'))
+        .map(async (projectName) => {
+          const projectPath = path.join(projectsPath, projectName);
+          const stats = await fs.stat(projectPath);
+          
+          if (!stats.isDirectory()) return null;
+
+          // Check if tracked
+          try {
+            const settingsPath = path.join(projectPath, 'claudeflow.settings.json');
+            const settingsContent = await fs.readFile(settingsPath, 'utf-8');
+            const settings = JSON.parse(settingsContent);
+            if (settings.tracked === false) return null;
+          } catch (err) {
+            // No settings file - continue normally
+          }
+
+          // Just return basic info - no markdown parsing
+          return {
+            name: projectName,
+            path: projectPath,
+            // We'll load details later
+            isLoading: true
+          };
+        });
+
+      const projectResults = await Promise.all(projectPromises);
+      const validProjects = projectResults.filter(p => p !== null);
+
+      console.log(`[PERF] Workspace light read completed in ${Date.now() - startTime}ms`);
+
+      const responseData = { projects: validProjects };
+      setCachedData(cacheKey, responseData);
+
+      res.set({
+        'Cache-Control': 'private, max-age=60',
+        'X-Cache': 'MISS'
+      });
+      res.json(responseData);
+
+    } catch (error) {
+      console.error('Error reading projects directory:', error);
+      res.json({ projects: [] });
+    }
+
+  } catch (error) {
+    console.error('Error reading workspace (light):', error);
+    res.status(500).json({ 
+      error: 'Failed to read workspace',
+      details: error.message 
+    });
+  }
+});
+
+// Read individual project details
+app.post('/api/workspace/project-details', async (req, res) => {
+  try {
+    const { projectPath } = req.body;
+    
+    if (!projectPath) {
+      return res.status(400).json({ error: 'Project path is required' });
+    }
+
+    // Check cache first
+    const cacheKey = `project-details:${projectPath}`;
+    const cachedData = getCachedData(cacheKey);
+    if (cachedData) {
+      res.set({
+        'Cache-Control': 'private, max-age=300', // 5 minutes
+        'X-Cache': 'HIT'
+      });
+      return res.json(cachedData);
+    }
+
+    const startTime = Date.now();
+    const projectName = path.basename(projectPath);
+
+    const project = {
+      name: projectName,
+      path: projectPath,
+      repos: [],
+      plans: {
+        ideas: [],
+        planned: [],
+        active: [],
+        completed: []
+      }
+    };
+
+    // Read README.md and parse project details
+    let readmeContent = '';
+    try {
+      const readmePath = path.join(projectPath, 'README.md');
+      readmeContent = await fs.readFile(readmePath, 'utf-8');
+      project.readme = readmeContent;
+    } catch (err) {
+      // README is optional
+    }
+
+    // Parse project details from README
+    const parsedDetails = parseProjectReadme(readmeContent);
+    project.purpose = parsedDetails.purpose;
+    project.repositories = parsedDetails.repositories;
+    project.primaryRepoUrl = parsedDetails.primaryRepoUrl;
+
+    // Read repos directory
+    try {
+      const reposPath = path.join(projectPath, 'repos');
+      const repoDirs = await fs.readdir(reposPath);
+      
+      for (const repoDir of repoDirs) {
+        const match = repoDir.match(/^(.+)-(\d+)$/);
+        if (match) {
+          const repoPath = path.join(reposPath, repoDir);
+          project.repos.push({
+            name: match[1],
+            number: parseInt(match[2]),
+            path: repoPath,
+            isAvailable: true
+          });
+        }
+      }
+    } catch (err) {
+      // Repos directory is optional
+    }
+
+    // Read plans - but don't parse markdown content yet
+    const planTypes = ['ideas', 'planned', 'active', 'completed'];
+    
+    await Promise.all(planTypes.map(async (planType) => {
+      try {
+        const plansPath = path.join(projectPath, 'plans', planType);
+        const planFiles = await fs.readdir(plansPath);
+        
+        project.plans[planType] = planFiles
+          .filter(file => file.endsWith('.md') && file !== 'TEMPLATE.md')
+          .map(file => ({
+            name: file.replace('.md', ''),
+            path: path.join(plansPath, file),
+            status: planType,
+            // Don't read content yet - lazy load when needed
+            contentLoaded: false
+          }));
+      } catch (err) {
+        // Plan directory might not exist
+      }
+    }));
+
+    console.log(`[PERF] Project details read completed in ${Date.now() - startTime}ms for ${projectName}`);
+
+    setCachedData(cacheKey, project);
+
+    res.set({
+      'Cache-Control': 'private, max-age=300',
+      'X-Cache': 'MISS'
+    });
+    res.json(project);
+
+  } catch (error) {
+    console.error('Error reading project details:', error);
+    res.status(500).json({ 
+      error: 'Failed to read project details',
+      details: error.message 
+    });
+  }
+});
+
+// Read work item markdown content on demand
+app.post('/api/workspace/work-item-content', async (req, res) => {
+  try {
+    const { workItemPath } = req.body;
+    
+    if (!workItemPath) {
+      return res.status(400).json({ error: 'Work item path is required' });
+    }
+
+    // Check cache first
+    const cacheKey = `work-item:${workItemPath}`;
+    const cachedData = getCachedData(cacheKey);
+    if (cachedData) {
+      res.set({
+        'Cache-Control': 'private, max-age=300', // 5 minutes
+        'X-Cache': 'HIT'
+      });
+      return res.json(cachedData);
+    }
+
+    const startTime = Date.now();
+
+    // Read and parse the markdown file
+    const content = await fs.readFile(workItemPath, 'utf-8');
+    const parsedWorkItem = parseWorkItemMarkdown(content);
+
+    const result = {
+      content,
+      parsed: parsedWorkItem,
+      path: workItemPath
+    };
+
+    console.log(`[PERF] Work item content read completed in ${Date.now() - startTime}ms`);
+
+    setCachedData(cacheKey, result);
+
+    res.set({
+      'Cache-Control': 'private, max-age=300',
+      'X-Cache': 'MISS'
+    });
+    res.json(result);
+
+  } catch (error) {
+    console.error('Error reading work item content:', error);
+    res.status(500).json({ 
+      error: 'Failed to read work item content',
+      details: error.message 
+    });
+  }
+});
+
+// Read workspace structure - full version
 app.post('/api/workspace/read', async (req, res) => {
   try {
     const { workspacePath } = req.body;
@@ -1184,11 +1434,6 @@ app.post('/api/workspace/read', async (req, res) => {
                   const content = await fs.readFile(planPath, 'utf-8');
                   
                   const parsedWorkItem = parseWorkItemMarkdown(content);
-                  console.log(`Parsed work item: ${planFile}`, {
-                    title: parsedWorkItem.title,
-                    tasksCount: parsedWorkItem.tasks ? parsedWorkItem.tasks.length : 0,
-                    tasks: parsedWorkItem.tasks
-                  });
                   return {
                     planType,
                     plan: {

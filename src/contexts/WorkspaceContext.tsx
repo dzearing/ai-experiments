@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import type { WorkspaceConfig, WorkspaceState, WorkspaceProject } from '../types/workspace';
+import { getCached, invalidateCache } from '../utils/cache';
 
 interface WorkspaceContextType {
   workspace: WorkspaceState;
@@ -34,22 +35,74 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     setWorkspace(prev => ({ ...prev, isLoading: true, error: null }));
     
     try {
-      const response = await fetch('http://localhost:3000/api/workspace/read', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      // First, load basic project info quickly with caching
+      const lightData = await getCached(
+        `workspace-light:${path}`,
+        async () => {
+          const lightResponse = await fetch('http://localhost:3000/api/workspace/read-light', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ workspacePath: path })
+          });
+
+          if (!lightResponse.ok) {
+            const errorData = await lightResponse.json();
+            throw new Error(errorData.error || 'Failed to read workspace');
+          }
+
+          return lightResponse.json();
         },
-        body: JSON.stringify({ workspacePath: path })
-      });
+        {
+          maxAge: 60 * 1000, // 1 minute
+          staleWhileRevalidate: 5 * 60 * 1000 // 5 minutes
+        }
+      );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to read workspace');
-      }
-
-      const data = await response.json();
-      setProjects(data.projects || []);
+      setProjects(lightData.projects || []);
       setWorkspace(prev => ({ ...prev, isLoading: false }));
+
+      // Then load full details in the background
+      if (lightData.projects && lightData.projects.length > 0) {
+        // Load project details in parallel
+        const detailPromises = lightData.projects.map(async (project: any) => {
+          try {
+            const details = await getCached(
+              `project-details:${project.path}`,
+              async () => {
+                const detailResponse = await fetch('http://localhost:3000/api/workspace/project-details', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ projectPath: project.path })
+                });
+
+                if (!detailResponse.ok) {
+                  throw new Error('Failed to load project details');
+                }
+
+                return detailResponse.json();
+              },
+              {
+                maxAge: 5 * 60 * 1000, // 5 minutes
+                staleWhileRevalidate: 30 * 60 * 1000 // 30 minutes
+              }
+            );
+
+            // Update the specific project with full details
+            setProjects(prev => prev.map(p => 
+              p.path === project.path ? { ...p, ...details, isLoading: false } : p
+            ));
+          } catch (err) {
+            console.error(`Failed to load details for project ${project.name}:`, err);
+          }
+        });
+
+        // Don't wait for all details - they'll update as they come in
+        Promise.all(detailPromises).catch(console.error);
+      }
     } catch (error) {
       console.error('Failed to load workspace:', error);
       
@@ -133,6 +186,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const reloadWorkspace = async () => {
     if (workspace.config) {
+      // Invalidate cache before reloading
+      invalidateCache(`workspace-light:${workspace.config.path}`);
+      invalidateCache(/^project-details:/);
       await loadWorkspaceData(workspace.config.path);
     }
   };
