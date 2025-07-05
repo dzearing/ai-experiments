@@ -4,6 +4,7 @@ import type { WorkspaceConfig, WorkspaceState, WorkspaceProject } from '../types
 interface WorkspaceContextType {
   workspace: WorkspaceState;
   projects: WorkspaceProject[];
+  isLoadingWorkspace: boolean;
   setWorkspacePath: (path: string) => Promise<void>;
   reloadWorkspace: () => Promise<void>;
   clearWorkspace: () => void;
@@ -150,6 +151,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     <WorkspaceContext.Provider value={{
       workspace,
       projects,
+      isLoadingWorkspace: workspace.isLoading,
       setWorkspacePath,
       reloadWorkspace,
       clearWorkspace

@@ -1,14 +1,17 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
+import { useWorkspace } from '../contexts/WorkspaceContext';
 import { useTheme } from '../contexts/ThemeContextV2';
 import { Button } from '../components/ui/Button';
 import { IconButton } from '../components/ui/IconButton';
+import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { WorkItemDeleteDialog } from '../components/WorkItemDeleteDialog';
 import type { WorkItem } from '../types';
 
 export function WorkItems() {
   const { workItems, projects, personas, deleteWorkItem } = useApp();
+  const { isLoadingWorkspace } = useWorkspace();
   const { currentStyles } = useTheme();
   const navigate = useNavigate();
   const styles = currentStyles;
@@ -120,7 +123,13 @@ export function WorkItems() {
       </div>
       
       {/* Work Items List */}
-      {sortedItems.length === 0 ? (
+      {isLoadingWorkspace ? (
+        <LoadingSpinner 
+          size="large" 
+          text="Loading work items..." 
+          showContainer={true}
+        />
+      ) : sortedItems.length === 0 ? (
         <div className={`
           ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius}
           ${styles.cardShadow} p-12 text-center

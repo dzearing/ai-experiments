@@ -4,6 +4,7 @@ import { useApp } from '../contexts/AppContext';
 import { useTheme } from '../contexts/ThemeContextV2';
 import { Button } from '../components/ui/Button';
 import { IconButton } from '../components/ui/IconButton';
+import { LoadingSpinner, InlineLoadingSpinner } from '../components/ui/LoadingSpinner';
 import { StockPhotoAvatar, getGenderFromSeed, getRandomName } from '../components/StockPhotoAvatar';
 import { useAuth } from '../contexts/AuthContext';
 import { 
@@ -879,10 +880,7 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
                 />
                 {isUpdatingEditor && (
                   <div className="absolute inset-0 bg-white/50 dark:bg-black/50 flex items-center justify-center z-10">
-                    <div className="text-center">
-                      <div className="animate-spin h-8 w-8 border-4 border-neutral-300 dark:border-neutral-700 border-t-neutral-600 dark:border-t-neutral-400 rounded-full mx-auto mb-4"></div>
-                      <p className={`${styles.textColor} font-medium`}>Applying changes...</p>
-                    </div>
+                    <LoadingSpinner size="medium" text="Applying changes..." />
                   </div>
                 )}
               </>
@@ -1085,7 +1083,7 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
                         {message.type === 'action' && (
                           <div className="absolute top-0 right-0">
                             {message.actionStatus === 'pending' ? (
-                              <div className="animate-spin h-4 w-4 border-2 border-neutral-300 border-t-neutral-600 dark:border-neutral-600 dark:border-t-neutral-300 rounded-full"></div>
+                              <InlineLoadingSpinner />
                             ) : message.actionStatus === 'complete' ? (
                               <svg className="h-4 w-4 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />

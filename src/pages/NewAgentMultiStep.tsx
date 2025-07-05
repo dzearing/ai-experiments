@@ -6,6 +6,7 @@ import { Button } from '../components/ui/Button';
 import { IconButton } from '../components/ui/IconButton';
 import { StockPhotoAvatar, getRandomName, getGenderFromSeed, hashCode } from '../components/StockPhotoAvatar';
 import { AnimatedTransition } from '../components/AnimatedTransition';
+import { InlineLoadingSpinner } from '../components/ui/LoadingSpinner';
 import type { PersonaType } from '../types';
 
 interface StepProps {
@@ -161,7 +162,7 @@ function DescribeWorkStep({ onNext, workDescription, setWorkDescription, isAnaly
         >
           {isAnalyzing ? (
             <>
-              <span className="animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full mr-2" />
+              <InlineLoadingSpinner className="mr-2 inline-flex" />
               Analyzing...
             </>
           ) : (

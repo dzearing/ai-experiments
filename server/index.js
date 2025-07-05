@@ -29,6 +29,29 @@ app.use(express.static(path.join(__dirname, '../public')));
 const oauthStates = new Map();
 const userTokens = new Map();
 
+// In-memory cache for workspace data
+const workspaceCache = new Map();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+// Helper function to get cached data
+function getCachedData(key) {
+  const cached = workspaceCache.get(key);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    console.log(`Cache hit for: ${key}`);
+    return cached.data;
+  }
+  console.log(`Cache miss for: ${key}`);
+  return null;
+}
+
+// Helper function to set cached data
+function setCachedData(key, data) {
+  workspaceCache.set(key, {
+    data,
+    timestamp: Date.now()
+  });
+}
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', claudeAvailable: true });
@@ -1011,6 +1034,20 @@ app.post('/api/workspace/read', async (req, res) => {
       return res.status(400).json({ error: 'Workspace path is required' });
     }
 
+    // Check cache first
+    const cacheKey = `workspace:${workspacePath}`;
+    const cachedData = getCachedData(cacheKey);
+    if (cachedData) {
+      res.set({
+        'Cache-Control': 'private, max-age=300', // 5 minutes
+        'X-Cache': 'HIT'
+      });
+      return res.json(cachedData);
+    }
+
+    // Start timing
+    const startTime = Date.now();
+
     // Read projects directory
     const projectsPath = path.join(workspacePath, 'projects');
     const projects = [];
@@ -1073,6 +1110,7 @@ app.post('/api/workspace/read', async (req, res) => {
           project.primaryRepoUrl = parsedDetails.primaryRepoUrl;
 
           // Read repos directory and enhance repository information
+          const reposStartTime = Date.now();
           try {
             const reposPath = path.join(projectPath, 'repos');
             const repoDirs = await fs.readdir(reposPath);
@@ -1125,16 +1163,23 @@ app.post('/api/workspace/read', async (req, res) => {
           } catch (err) {
             // Repos directory might not exist
           }
+          const reposElapsed = Date.now() - reposStartTime;
+          console.log(`Repos scanned for ${project.name} in ${reposElapsed}ms`);
 
           // Read plans
+          const plansStartTime = Date.now();
           const planTypes = ['ideas', 'planned', 'active', 'completed'];
-          for (const planType of planTypes) {
+          
+          // Read all plan directories in parallel
+          const planPromises = planTypes.map(async (planType) => {
             try {
               const plansPath = path.join(projectPath, 'plans', planType);
               const planFiles = await fs.readdir(plansPath);
               
-              for (const planFile of planFiles) {
-                if (planFile.endsWith('.md') && planFile !== 'TEMPLATE.md') {
+              // Read all files in this plan type in parallel
+              const filePromises = planFiles
+                .filter(planFile => planFile.endsWith('.md') && planFile !== 'TEMPLATE.md')
+                .map(async (planFile) => {
                   const planPath = path.join(plansPath, planFile);
                   const content = await fs.readFile(planPath, 'utf-8');
                   
@@ -1144,20 +1189,40 @@ app.post('/api/workspace/read', async (req, res) => {
                     tasksCount: parsedWorkItem.tasks ? parsedWorkItem.tasks.length : 0,
                     tasks: parsedWorkItem.tasks
                   });
-                  project.plans[planType].push({
-                    name: planFile.replace('.md', ''),
-                    path: planPath,
-                    status: planType,
-                    content: content,
-                    workItem: parsedWorkItem
-                  });
-                }
-              }
+                  return {
+                    planType,
+                    plan: {
+                      name: planFile.replace('.md', ''),
+                      path: planPath,
+                      status: planType,
+                      content: content,
+                      workItem: parsedWorkItem
+                    }
+                  };
+                });
+              
+              return Promise.all(filePromises);
             } catch (err) {
               // Plan directory might not exist
+              return [];
             }
-          }
+          });
+          
+          // Wait for all plan types to be read
+          const allPlanResults = await Promise.all(planPromises);
+          
+          // Flatten and organize results by plan type
+          allPlanResults.forEach(results => {
+            results.forEach(({ planType, plan }) => {
+              if (plan) {
+                project.plans[planType].push(plan);
+              }
+            });
+          });
 
+          const plansElapsed = Date.now() - plansStartTime;
+          console.log(`Plans read for ${project.name} in ${plansElapsed}ms`);
+          
           console.log('Adding project:', project.name);
           projects.push(project);
         }
@@ -1168,7 +1233,20 @@ app.post('/api/workspace/read', async (req, res) => {
 
     console.log('Total projects found:', projects.length);
     console.log('Project names:', projects.map(p => p.name));
-    res.json({ projects });
+    
+    // Calculate elapsed time
+    const elapsedTime = Date.now() - startTime;
+    console.log(`Workspace scan completed in ${elapsedTime}ms`);
+    
+    // Cache the result
+    const responseData = { projects };
+    setCachedData(cacheKey, responseData);
+    
+    res.set({
+      'Cache-Control': 'private, max-age=300', // 5 minutes
+      'X-Cache': 'MISS'
+    });
+    res.json(responseData);
 
   } catch (error) {
     console.error('Error reading workspace:', error);
