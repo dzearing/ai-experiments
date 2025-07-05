@@ -1,11 +1,22 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import { useTheme } from '../contexts/ThemeContextV2';
 import { Button } from '../components/ui/Button';
 import { IconButton } from '../components/ui/IconButton';
 import { StockPhotoAvatar, getRandomName, getGenderFromSeed, hashCode } from '../components/StockPhotoAvatar';
 import type { PersonaType } from '../types';
+
+const personaTypeLabels: Record<PersonaType, string> = {
+  'usability-expert': 'Usability Expert',
+  'developer': 'Developer',
+  'tester': 'Tester',
+  'data-scientist': 'Data Scientist',
+  'devops': 'DevOps',
+  'project-manager': 'Project Manager',
+  'designer': 'Designer',
+  'motion-designer': 'Motion Designer',
+};
 
 const personaTypes: { value: PersonaType; label: string; description: string }[] = [
   { 
@@ -63,28 +74,36 @@ const defaultExpertise: Record<PersonaType, string[]> = {
 
 export function ThemedNewPersona() {
   const navigate = useNavigate();
-  const { createPersona } = useApp();
+  const { personaId } = useParams<{ personaId?: string }>();
+  const { personas, createPersona, updatePersona } = useApp();
   const { currentStyles } = useTheme();
   const styles = currentStyles;
   
+  const isEditMode = !!personaId;
+  const existingPersona = isEditMode ? personas.find(p => p.id === personaId) : null;
+  
   // Generate random seed for avatar
-  const [avatarSeed, setAvatarSeed] = useState(() => Date.now().toString());
+  const [avatarSeed, setAvatarSeed] = useState(() => 
+    existingPersona?.avatarSeed || Date.now().toString()
+  );
   
   const [formData, setFormData] = useState({
-    name: '',
-    type: 'developer' as PersonaType,
-    personality: '',
-    customExpertise: '',
+    name: existingPersona?.name || '',
+    type: (existingPersona?.type || 'developer') as PersonaType,
+    personality: existingPersona?.personality || '',
+    customExpertise: existingPersona?.expertise?.join(', ') || '',
   });
   
-  // Set random name on mount and when avatar changes
+  // Set random name on mount and when avatar changes (only in create mode)
   useEffect(() => {
-    const gender = getGenderFromSeed(avatarSeed);
-    setFormData(prev => ({
-      ...prev,
-      name: getRandomName(avatarSeed, gender)
-    }));
-  }, [avatarSeed]);
+    if (!isEditMode && !formData.name) {
+      const gender = getGenderFromSeed(avatarSeed);
+      setFormData(prev => ({
+        ...prev,
+        name: getRandomName(avatarSeed, gender)
+      }));
+    }
+  }, [avatarSeed, isEditMode, formData.name]);
   
   const randomizeAvatar = () => {
     console.log('Randomize avatar clicked');
@@ -107,22 +126,40 @@ export function ThemedNewPersona() {
       ...formData.customExpertise.split(',').map(e => e.trim()).filter(Boolean)
     ];
     
-    createPersona({
-      name: formData.name,
-      type: formData.type,
-      personality: formData.personality,
-      expertise,
-      status: 'available',
-    });
+    if (isEditMode && personaId) {
+      updatePersona(personaId, {
+        name: formData.name,
+        type: formData.type,
+        personality: formData.personality,
+        expertise,
+        avatarSeed,
+        avatarGender: getGenderFromSeed(avatarSeed),
+      });
+    } else {
+      createPersona({
+        name: formData.name,
+        type: formData.type,
+        jobTitle: personaTypeLabels[formData.type],
+        personality: formData.personality,
+        expertise,
+        status: 'available',
+        avatarSeed,
+        avatarGender: getGenderFromSeed(avatarSeed),
+      });
+    }
     
     navigate('/personas');
   };
   
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className={`text-2xl font-semibold ${styles.headingColor}`}>Spawn new agent</h1>
+      <h1 className={`text-2xl font-semibold ${styles.headingColor}`}>
+        {isEditMode ? 'Edit agent' : 'Spawn new agent'}
+      </h1>
       <p className={`mt-2 text-sm ${styles.mutedText}`}>
-        Create a new Claude agent persona with specific expertise and personality.
+        {isEditMode 
+          ? 'Update the agent persona details, expertise, and personality.'
+          : 'Create a new Claude agent persona with specific expertise and personality.'}
       </p>
       
       <form onSubmit={handleSubmit} className="mt-8 space-y-6">
@@ -251,7 +288,7 @@ export function ThemedNewPersona() {
             type="submit"
             variant="primary"
           >
-            Spawn agent
+            {isEditMode ? 'Update agent' : 'Spawn agent'}
           </Button>
         </div>
       </form>

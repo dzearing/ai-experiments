@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContextV2';
 import { useApp } from '../contexts/AppContext';
@@ -79,6 +79,10 @@ function NewWorkItemContent() {
     setError,
     resetToInput,
   } = useNewWorkItem();
+  
+  // Add local state for immediate UI response
+  const [_isPending, startTransition] = useTransition();
+  const [editorKey, setEditorKey] = useState(0);
   
   // Project selection state
   const [selectedProjectId, setSelectedProjectId] = useState<string>(
@@ -247,7 +251,7 @@ function NewWorkItemContent() {
   // Update edited content when task selection changes
   useEffect(() => {
     if (selectedTask) {
-      // Format the task as markdown
+      // Format the task as markdown immediately
       const markdown = `## Description
 ${selectedTask.description || 'No description'}
 
@@ -261,6 +265,11 @@ ${selectedTask.workDescription || 'No work description'}
 ${(selectedTask.validationCriteria || []).map(criteria => `- ${criteria}`).join('\n') || '- No criteria defined'}`;
       
       setEditedContent(markdown);
+      
+      // Force MDXEditor to recreate with new content
+      startTransition(() => {
+        setEditorKey(prev => prev + 1);
+      });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTaskId, tasks]); // Depend on selectedTaskId and tasks since selectedTask is derived from both
@@ -492,6 +501,11 @@ ${(selectedTask.validationCriteria || []).map(criteria => `- ${criteria}`).join(
         } else {
           const result = await response.json();
           console.log('Work item saved as markdown:', result.path);
+          
+          // Update the work item with the markdown path
+          if (result.path) {
+            updateWorkItem(workItem.id, { markdownPath: result.path });
+          }
         }
       } catch (error) {
         console.error('Error saving work item as markdown:', error);
@@ -533,30 +547,42 @@ ${(selectedTask.validationCriteria || []).map(criteria => `- ${criteria}`).join(
               What would you like to work on?
             </h2>
             
-            {/* Project selector - only show if no project context and multiple projects */}
-            {!projectId && !isEditMode && projects.length > 1 && (
+            {/* Project selector or display */}
+            {!isEditMode && (
               <div className="mb-4">
                 <label htmlFor="project-select" className={`block text-sm font-medium ${styles.textColor} mb-2`}>
-                  Select project
+                  Project
                 </label>
-                <select
-                  id="project-select"
-                  value={selectedProjectId}
-                  onChange={(e) => setSelectedProjectId(e.target.value)}
-                  className={`
+                {(projectId || projects.length === 1) ? (
+                  // Show project name as read-only when predetermined
+                  <div className={`
                     w-full px-3 py-2 ${styles.buttonRadius}
                     ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
-                    focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500
-                  `}
-                  required
-                >
-                  <option value="">Choose a project...</option>
-                  {projects.map(project => (
-                    <option key={project.id} value={project.id}>
-                      {project.name}
-                    </option>
-                  ))}
-                </select>
+                    opacity-75 cursor-not-allowed
+                  `}>
+                    {currentProject?.name || projects[0]?.name || 'Unknown project'}
+                  </div>
+                ) : (
+                  // Show dropdown when user needs to select
+                  <select
+                    id="project-select"
+                    value={selectedProjectId}
+                    onChange={(e) => setSelectedProjectId(e.target.value)}
+                    className={`
+                      w-full px-3 py-2 ${styles.buttonRadius}
+                      ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
+                      focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500
+                    `}
+                    required
+                  >
+                    <option value="">Choose a project...</option>
+                    {projects.map(project => (
+                      <option key={project.id} value={project.id}>
+                        {project.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
             )}
             
@@ -635,14 +661,18 @@ ${(selectedTask.validationCriteria || []).map(criteria => `- ${criteria}`).join(
               {tasks.map((task) => (
                 <button
                   key={task.id}
-                  onClick={() => setSelectedTaskId(task.id)}
+                  onClick={() => {
+                    if (selectedTaskId !== task.id) {
+                      setSelectedTaskId(task.id);
+                    }
+                  }}
                   className={`
                     w-full text-left p-3 ${styles.buttonRadius} border
                     ${selectedTaskId === task.id 
                       ? `${styles.primaryButton} ${styles.primaryButtonText} border-transparent` 
                       : `${styles.contentBg} ${styles.contentBorder} ${styles.textColor} hover:opacity-80`
                     }
-                    transition-colors
+                    transition-none
                   `}
                 >
                   <div className="font-medium">
@@ -712,21 +742,18 @@ ${(selectedTask.validationCriteria || []).map(criteria => `- ${criteria}`).join(
           </div>
 
           {/* Task Details */}
-          <div className={`lg:col-span-2 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-6 flex flex-col`} style={{ maxHeight: 'calc(100vh - 20rem)' }}>
+          <div className={`lg:col-span-2 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} flex flex-col overflow-hidden`} style={{ maxHeight: 'calc(100vh - 20rem)' }}>
             {selectedTask ? (
               <>
-                <div className="flex justify-between items-center mb-6 flex-shrink-0">
-                  <h2 className={`text-xl font-semibold ${styles.headingColor}`}>
+                <div className={`px-4 py-2 border-b ${styles.contentBorder} flex-shrink-0`}>
+                  <h3 className={`font-medium ${styles.headingColor}`}>
                     {selectedTask.taskNumber && <span className="font-mono">{selectedTask.taskNumber}. </span>}
                     {selectedTask.title}
-                  </h2>
-                  <div className={`text-sm ${styles.mutedText}`}>
-                    Changes save automatically
-                  </div>
+                  </h3>
                 </div>
-                
-                <div className={`flex-1 min-h-0 overflow-y-auto ${isDarkMode ? 'mdx-dark' : 'mdx-light'}`}>
+                <div className={`flex-1 min-h-0 ${isDarkMode ? 'mdx-dark' : 'mdx-light'} mdx-edge-to-edge flex flex-col`}>
                   <MDXEditor
+                    key={editorKey}
                     markdown={editedContent}
                     onChange={(value) => setEditedContent(value || '')}
                     onBlur={() => updateTaskFromMarkdown()}

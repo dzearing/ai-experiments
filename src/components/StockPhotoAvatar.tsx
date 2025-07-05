@@ -58,14 +58,18 @@ export function hashCode(str: string): number {
 }
 
 export function getRandomName(seed: string, gender?: 'male' | 'female' | 'any'): string {
-  // Determine gender from seed if not specified
-  const actualGender = gender === 'any' || !gender 
-    ? (hashCode(seed) % 2 === 0 ? 'female' : 'male')
-    : gender;
+  // If gender is explicitly provided and not 'any', use it
+  const actualGender = (gender && gender !== 'any') 
+    ? gender
+    : getGenderFromSeed(seed);
   
   const nameList = actualGender === 'male' ? maleNames : femaleNames;
   const index = hashCode(seed) % nameList.length;
-  return nameList[index];
+  
+  const name = nameList[index];
+  console.log('getRandomName:', { seed, gender, actualGender, index, name, isMale: actualGender === 'male' });
+  
+  return name;
 }
 
 export function getGenderFromSeed(seed: string): 'male' | 'female' {
@@ -74,7 +78,9 @@ export function getGenderFromSeed(seed: string): 'male' | 'female' {
 
 export function StockPhotoAvatar({ seed, size = 80, gender = 'any' }: StockPhotoAvatarProps) {
   const actualGender = useMemo(() => {
-    return gender === 'any' ? getGenderFromSeed(seed) : gender;
+    const g = gender === 'any' ? getGenderFromSeed(seed) : gender;
+    console.log('StockPhotoAvatar gender:', { seed, gender, actualGender: g });
+    return g;
   }, [seed, gender]);
   
   const avatarUrl = useMemo(() => {
@@ -82,6 +88,8 @@ export function StockPhotoAvatar({ seed, size = 80, gender = 'any' }: StockPhoto
     // The seed ensures we get the same photo for the same input
     const genderFolder = actualGender === 'female' ? 'women' : 'men';
     const photoIndex = hashCode(seed) % 100;
+    
+    console.log('StockPhotoAvatar URL:', { seed, actualGender, genderFolder, photoIndex });
     
     return `https://randomuser.me/api/portraits/${genderFolder}/${photoIndex}.jpg`;
   }, [seed, actualGender]);

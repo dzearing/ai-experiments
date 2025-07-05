@@ -21,39 +21,45 @@ export function CrossFade({ src, alt = '', className = '', duration = 300, fallb
   const [activeIndex, setActiveIndex] = useState(0);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const imageCountRef = useRef(1);
+  const currentSrcRef = useRef(src);
 
   useEffect(() => {
     // When src changes, add new image and start transition
-    const currentSrc = images[activeIndex]?.src;
-    if (src !== currentSrc) {
+    if (src !== currentSrcRef.current) {
+      currentSrcRef.current = src;
+      
       // Preload the new image
       const img = new Image();
       img.src = src;
       
-      // Add new image to the stack
-      const newKey = `img-${imageCountRef.current++}`;
-      setImages(prev => [...prev, { src, key: newKey }]);
-      
-      // Start transition to new image after a frame to ensure DOM update
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setActiveIndex(images.length); // This will be the index of the newly added image
-        });
-      });
-
-      // Clean up old images after transition
+      // Clear any pending timeout
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
       
+      // Add new image and immediately set it as active
+      const newKey = `img-${imageCountRef.current++}`;
+      setImages(prev => {
+        // Always keep exactly 2 images during transition
+        // Use the last image in the array as the current one
+        const currentImage = prev[prev.length - 1];
+        return [currentImage, { src, key: newKey }];
+      });
+      
+      // Start transition to new image after a frame to ensure DOM update
+      requestAnimationFrame(() => {
+        setActiveIndex(1);
+      });
+
+      // Clean up after transition completes
       timeoutRef.current = setTimeout(() => {
         setImages(prev => {
-          // Keep only the active image
-          const activeImg = prev[prev.length - 1];
-          return [activeImg];
+          // Keep only the currently visible image
+          const activeImage = prev[1] || prev[0];
+          return [activeImage];
         });
         setActiveIndex(0);
-      }, duration + 100); // Add small buffer after transition
+      }, duration + 50); // Small buffer after transition
     }
 
     return () => {
@@ -61,7 +67,7 @@ export function CrossFade({ src, alt = '', className = '', duration = 300, fallb
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [src, images, activeIndex, duration]);
+  }, [src, duration]); // Only depend on src and duration
 
   const handleError = (index: number) => {
     if (fallbackSrc) {
@@ -87,8 +93,7 @@ export function CrossFade({ src, alt = '', className = '', duration = 300, fallb
           className={`absolute inset-0 w-full h-full object-cover transition-opacity`}
           style={{ 
             transitionDuration: `${duration}ms`,
-            opacity: index === activeIndex ? 1 : 0,
-            zIndex: index === activeIndex ? 1 : 0
+            opacity: index === activeIndex ? 1 : 0
           }}
           onError={() => handleError(index)}
         />

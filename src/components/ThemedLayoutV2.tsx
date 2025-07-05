@@ -42,18 +42,24 @@ export function ThemedLayoutV2() {
     { path: '/', label: 'Dashboard' },
     { path: '/projects', label: 'Projects' },
     { path: '/work-items', label: 'Work items' },
-    { path: '/personas', label: 'Personas' },
+    { path: '/agents', label: 'Agents' },
     { path: '/jam-sessions', label: 'Jam sessions' },
   ];
   
   const isActive = (path: string) => location.pathname === path;
-  const currentLabel = navItems.find(item => item.path === location.pathname)?.label || 'Page';
+  const currentLabel = navItems.find(item => item.path === location.pathname)?.label || null;
   
   // Determine what to show in the header
   const getHeaderContent = () => {
     // If headerTitle is set by a page component, use it
     if (headerTitle) {
       return headerTitle;
+    }
+    
+    // Pages that should not show header text (they have their own headers)
+    const pagesWithOwnHeaders = ['/work-items', '/agents', '/projects', '/jam-sessions', '/'];
+    if (pagesWithOwnHeaders.includes(location.pathname)) {
+      return null;
     }
     
     // Otherwise, use the default logic
@@ -63,6 +69,12 @@ export function ThemedLayoutV2() {
     if (location.pathname === '/work-items/new') {
       return 'Create work item';
     }
+    
+    // For routes like /agents/new, don't show anything
+    if (!currentLabel) {
+      return null;
+    }
+    
     return currentLabel;
   };
   
@@ -128,32 +140,36 @@ export function ThemedLayoutV2() {
       
       {/* Main Content */}
       <div className="flex-1 flex flex-col relative z-10 overflow-hidden">
-        <header className={`${styles.contentBg} ${styles.contentBorder} border-b px-8 py-4 relative flex-shrink-0 flex items-center justify-between`}>
-          <AnimatedTransition 
-            transitionKey={location.pathname}
-            className="h-8 flex-1"
-            delay={100}
-            reverse={direction === 'backward'}
-            centered={false}
-          >
-            <h2 className={`text-xl font-semibold ${styles.headingColor}`}>
-              {getHeaderContent()}
-            </h2>
-          </AnimatedTransition>
+        <header className={`${styles.contentBg} ${styles.contentBorder} border-b px-4 py-4 relative flex-shrink-0 flex items-center justify-between`}>
+          <div className="flex-1">
+            {getHeaderContent() && (
+              <AnimatedTransition 
+                transitionKey={location.pathname}
+                className="h-8"
+                delay={100}
+                reverse={direction === 'backward'}
+                centered={false}
+              >
+                <h2 className={`text-xl font-semibold ${styles.headingColor}`}>
+                  {getHeaderContent()}
+                </h2>
+              </AnimatedTransition>
+            )}
+          </div>
           <div className="flex items-center gap-4">
             {workspace.config && (
               <div className={`text-sm ${styles.mutedText}`}>
                 {workspace.config.path}
               </div>
             )}
-            <AuthAvatar />
             <SettingsMenu />
+            <AuthAvatar />
           </div>
         </header>
         
         <main className={`flex-1 p-8 ${styles.contentBg} relative overflow-y-auto`}>
           <AnimatedOutletWrapper
-            className="max-w-6xl mx-auto h-full"
+            className={`${location.pathname.includes('/jam') ? '' : 'max-w-6xl mx-auto'} h-full`}
             delay={200}
           />
         </main>

@@ -5,6 +5,13 @@
   background-color: transparent;
   color: inherit;
   font-family: inherit;
+  /* MDXEditor theme variables for light mode */
+  --baseTextContrast: 55, 65, 81;  /* Gray-700 */
+  --baseTextContrastAlpha: 1;
+  --accentColor: 37, 99, 235;  /* Blue-600 */
+  --accentColorAlpha: 1;
+  --basePageBg: 255, 255, 255;  /* White */
+  --basePageBgAlpha: 1;
 }
 
 .mdx-light .mdxeditor-toolbar {
@@ -30,24 +37,31 @@
   background-color: transparent;
   color: inherit;
   font-family: inherit;
+  /* MDXEditor theme variables for dark mode */
+  --baseTextContrast: 255, 255, 255;  /* RGB values for white */
+  --baseTextContrastAlpha: 1;
+  --accentColor: 59, 130, 246;  /* Blue accent */
+  --accentColorAlpha: 1;
+  --basePageBg: 10, 10, 10;  /* Neutral-950 - matches sidebar */
+  --basePageBgAlpha: 1;
 }
 
 .mdx-dark .mdxeditor-toolbar {
-  background-color: rgb(31 41 55);
-  border-bottom: 1px solid rgb(55 65 81);
+  background-color: transparent;
+  border-bottom: 1px solid rgb(64 64 64);
   padding: 0.5rem;
 }
 
 .mdx-dark .mdxeditor-toolbar button {
-  color: rgb(209 213 219);
+  color: rgb(255 255 255);
 }
 
 .mdx-dark .mdxeditor-toolbar button:hover {
-  background-color: rgb(55 65 81);
+  background-color: rgba(255 255 255 / 0.1);
 }
 
 .mdx-dark .mdxeditor-toolbar button[data-state="on"] {
-  background-color: rgb(75 85 99);
+  background-color: rgba(255 255 255 / 0.2);
 }
 
 /* Common styles */
@@ -65,18 +79,7 @@
   outline: none;
 }
 
-/* Style the dropdown selects */
-.mdx-light select {
-  background-color: white;
-  border: 1px solid rgb(229 231 235);
-  color: rgb(55 65 81);
-}
-
-.mdx-dark select {
-  background-color: rgb(31 41 55);
-  border: 1px solid rgb(55 65 81);
-  color: rgb(209 213 219);
-}
+/* Remove any specific select overrides - let MDXEditor handle it with CSS variables */
 
 /* Ensure proper text color in editor content */
 .mdx-light .mdxeditor [data-lexical-editor="true"] {
@@ -85,4 +88,64 @@
 
 .mdx-dark .mdxeditor [data-lexical-editor="true"] {
   color: rgb(229 231 235);
+}
+
+/* Edge-to-edge toolbar styling */
+.mdx-edge-to-edge .mdxeditor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.mdx-edge-to-edge .mdxeditor-toolbar {
+  margin: 0;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+}
+
+.mdx-edge-to-edge .mdxeditor > div:first-child {
+  flex-shrink: 0;
+}
+
+.mdx-edge-to-edge .mdxeditor > div:last-child {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Fix checkbox alignment in lists */
+.mdxeditor li:has(input[type="checkbox"]) {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  position: relative;
+  padding-left: 0;
+}
+
+/* Remove the absolute positioned checkbox pseudo-element */
+.mdxeditor li:has(input[type="checkbox"])::before {
+  display: none;
+}
+
+/* Style the actual checkbox input */
+.mdxeditor li input[type="checkbox"] {
+  position: static;
+  margin: 0;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+/* Ensure proper spacing for nested checkbox lists */
+.mdxeditor li:has(input[type="checkbox"]) ul {
+  margin-top: 0.5rem;
+}
+
+/* Fix text wrapping in checkbox items */
+.mdxeditor li:has(input[type="checkbox"]) > span,
+.mdxeditor li:has(input[type="checkbox"]) > p {
+  flex: 1;
+  margin: 0;
 }

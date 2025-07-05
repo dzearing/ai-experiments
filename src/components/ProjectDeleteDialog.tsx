@@ -33,12 +33,12 @@ export function ProjectDeleteDialog({ isOpen, project, onConfirm, onCancel }: Pr
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-full items-center justify-center p-4 text-center">
-        <div className="fixed inset-0 bg-black/50" onClick={onCancel} />
+        <div className="fixed inset-0 bg-gray-900/50 dark:bg-black/50" onClick={onCancel} />
         
         <AnimatedTransition transitionKey="delete-dialog" className="relative">
           <div className={`
             w-full max-w-md transform overflow-hidden ${styles.borderRadius}
-            ${styles.cardBg} ${styles.cardBorder} border ${styles.cardShadow}
+            bg-white dark:bg-neutral-800 ${styles.cardBorder} border ${styles.cardShadow}
             text-left align-middle transition-all
           `}>
             <div className="p-6">

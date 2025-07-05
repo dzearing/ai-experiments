@@ -17,13 +17,13 @@ export function WorkspaceConfirmDialog({ isOpen, path, onConfirm, onCancel }: Wo
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" />
+      <div className="fixed inset-0 bg-gray-900/50 dark:bg-black/50 transition-opacity" />
       
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
         <div className={`
           relative w-full max-w-md
-          ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius}
+          bg-white dark:bg-neutral-800 ${styles.cardBorder} border ${styles.borderRadius}
           ${styles.cardShadow} 
         `}>
           {/* Header */}

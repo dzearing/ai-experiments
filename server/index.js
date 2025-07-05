@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 const claudeService = require('./claude-service');
 const crypto = require('crypto');
 const path = require('path');
+const { execSync } = require('child_process');
 
 // Load .env from parent directory
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
@@ -724,9 +725,11 @@ function parseProjectReadme(readmeContent) {
 // Extract repo details from actual repository
 async function extractRepoDetails(repoPath) {
   const details = {
-    type: 'github',
+    type: 'local',
     visibility: 'private',
-    importantFolders: []
+    importantFolders: [],
+    url: null,
+    gitRemote: null
   };
 
   try {
@@ -739,11 +742,61 @@ async function extractRepoDetails(repoPath) {
       try {
         const configPath = path.join(gitPath, 'config');
         const gitConfig = await fs.readFile(configPath, 'utf-8');
-        if (gitConfig.includes('dev.azure.com')) {
-          details.type = 'ado';
+        
+        // Extract remote origin URL using regex
+        const remoteMatch = gitConfig.match(/\[remote "origin"\]\s*\n\s*url = (.+)/);
+        if (remoteMatch) {
+          const remoteUrl = remoteMatch[1].trim();
+          details.gitRemote = remoteUrl;
+          details.url = remoteUrl;
+          
+          // Determine repo type from URL
+          if (remoteUrl.includes('github.com')) {
+            details.type = 'github';
+            
+            // Extract owner/repo from GitHub URL
+            const githubMatch = remoteUrl.match(/github\.com[:/]([^/]+)\/([^/.]+)(\.git)?$/);
+            if (githubMatch) {
+              const owner = githubMatch[1];
+              const repo = githubMatch[2];
+              
+              // Use gh CLI to get detailed GitHub info
+              try {
+                const ghResult = execSync(
+                  `gh repo view ${owner}/${repo} --json name,description,visibility,isPrivate,url,sshUrl,defaultBranchRef,createdAt,pushedAt,isArchived,isFork,parent`,
+                  { encoding: 'utf-8', cwd: repoPath }
+                );
+                
+                const ghData = JSON.parse(ghResult);
+                details.visibility = ghData.isPrivate ? 'private' : 'public';
+                details.description = ghData.description || '';
+                details.defaultBranch = ghData.defaultBranchRef?.name || 'main';
+                details.isArchived = ghData.isArchived || false;
+                details.isFork = ghData.isFork || false;
+                details.parent = ghData.parent ? {
+                  owner: ghData.parent.owner.login,
+                  name: ghData.parent.name,
+                  url: ghData.parent.url
+                } : null;
+                details.createdAt = ghData.createdAt;
+                details.pushedAt = ghData.pushedAt;
+                details.githubData = ghData;
+              } catch (ghError) {
+                console.log('Failed to get GitHub details via gh CLI:', ghError.message);
+                // gh CLI might not be available or user not authenticated
+                // Continue with basic git info
+              }
+            }
+          } else if (remoteUrl.includes('dev.azure.com')) {
+            details.type = 'ado';
+          } else if (remoteUrl.includes('gitlab.com')) {
+            details.type = 'gitlab';
+          } else if (remoteUrl.includes('bitbucket.org')) {
+            details.type = 'bitbucket';
+          }
         }
       } catch (err) {
-        // Ignore git config read errors
+        console.error('Error reading git config:', err);
       }
     }
 
@@ -1051,16 +1104,16 @@ app.post('/api/workspace/read', async (req, res) => {
                 });
 
                 if (matchingRepo) {
-                  // Enhance existing repo info
+                  // Enhance existing repo info with extracted details
                   Object.assign(matchingRepo, repoDetails);
-                  // Update the URL if it was a placeholder
-                  if (matchingRepo.url === 'local://development') {
-                    matchingRepo.url = `local://${repoName}`;
+                  // Update the URL if it was a placeholder or local
+                  if (matchingRepo.url === 'local://development' || matchingRepo.url.startsWith('local://')) {
+                    matchingRepo.url = repoDetails.url || `local://${repoName}`;
                   }
                 } else if (project.repositories.length === 0) {
-                  // No matching repo found, create new entry
+                  // No matching repo found, create new entry with extracted details
                   const newRepo = {
-                    url: `local://${repoName}`,
+                    url: repoDetails.url || `local://${repoName}`,
                     ...repoDetails,
                     isPrimary: true
                   };
@@ -1121,6 +1174,48 @@ app.post('/api/workspace/read', async (req, res) => {
     console.error('Error reading workspace:', error);
     res.status(500).json({ 
       error: 'Failed to read workspace',
+      details: error.message 
+    });
+  }
+});
+
+// Read file content
+app.post('/api/workspace/read-file', async (req, res) => {
+  try {
+    const { filePath } = req.body;
+    
+    if (!filePath) {
+      return res.status(400).json({ error: 'File path is required' });
+    }
+    
+    const content = await fs.readFile(filePath, 'utf-8');
+    res.json({ content });
+    
+  } catch (error) {
+    console.error('Error reading file:', error);
+    res.status(500).json({ 
+      error: 'Failed to read file',
+      details: error.message 
+    });
+  }
+});
+
+// Write file content
+app.post('/api/workspace/write-file', async (req, res) => {
+  try {
+    const { filePath, content } = req.body;
+    
+    if (!filePath || content === undefined) {
+      return res.status(400).json({ error: 'File path and content are required' });
+    }
+    
+    await fs.writeFile(filePath, content, 'utf-8');
+    res.json({ success: true });
+    
+  } catch (error) {
+    console.error('Error writing file:', error);
+    res.status(500).json({ 
+      error: 'Failed to write file',
       details: error.message 
     });
   }
@@ -2018,6 +2113,193 @@ ${JSON.stringify({ workItemId: workItem.id, tasks: tasks || [] }, null, 2)}
     console.error('Error updating work item markdown:', error);
     res.status(500).json({ 
       error: 'Failed to update work item markdown',
+      details: error.message 
+    });
+  }
+});
+
+// Update project REPOS.md with correct repository information
+app.post('/api/workspace/update-repos-md', async (req, res) => {
+  try {
+    const { projectPath, repositories } = req.body;
+    
+    if (!projectPath || !repositories || !Array.isArray(repositories)) {
+      return res.status(400).json({ error: 'Project path and repositories array are required' });
+    }
+
+    const reposPath = path.join(projectPath, 'REPOS.md');
+    
+    // Generate REPOS.md content
+    let content = '# Repository usage\n\n';
+    content += '## Repository information\n';
+    
+    // Get the primary repo or first repo
+    const primaryRepo = repositories.find(r => r.isPrimary) || repositories[0];
+    if (primaryRepo) {
+      content += `- **URL**: ${primaryRepo.url}\n`;
+      content += `- **Type**: ${primaryRepo.type.charAt(0).toUpperCase() + primaryRepo.type.slice(1)}\n`;
+      content += `- **Access**: ${primaryRepo.visibility.charAt(0).toUpperCase() + primaryRepo.visibility.slice(1)}\n`;
+      
+      if (primaryRepo.description) {
+        content += `- **Description**: ${primaryRepo.description}\n`;
+      }
+      if (primaryRepo.defaultBranch) {
+        content += `- **Default Branch**: ${primaryRepo.defaultBranch}\n`;
+      }
+      if (primaryRepo.isFork) {
+        content += `- **Fork**: Yes (parent: ${primaryRepo.parent.url})\n`;
+      }
+    }
+    
+    content += '\n## Available clones\n';
+    
+    // Read existing repos directory to list clones
+    try {
+      const reposDir = path.join(projectPath, 'repos');
+      const repoDirs = await fs.readdir(reposDir);
+      
+      for (const repoDir of repoDirs) {
+        const match = repoDir.match(/^(.+)-(\d+)$/);
+        if (match) {
+          content += `- ${repoDir}: Available\n`;
+        }
+      }
+    } catch (err) {
+      // Repos directory might not exist
+    }
+    
+    content += '\n## Active work\n';
+    content += '- None currently\n';
+    
+    content += '\n## Notes\n';
+    if (primaryRepo && primaryRepo.description) {
+      content += primaryRepo.description + '\n';
+    } else {
+      content += 'Project repository information extracted from git configuration.\n';
+    }
+
+    // Write the file
+    await fs.writeFile(reposPath, content, 'utf-8');
+    
+    res.json({ 
+      success: true, 
+      path: reposPath,
+      message: 'REPOS.md updated successfully'
+    });
+
+  } catch (error) {
+    console.error('Error updating REPOS.md:', error);
+    res.status(500).json({ 
+      error: 'Failed to update REPOS.md',
+      details: error.message 
+    });
+  }
+});
+
+// Claude API endpoints for jam sessions
+app.post('/api/claude/analyze-document', async (req, res) => {
+  try {
+    const { content, workItemTitle, workItemDescription, userName, personaName, personaGender } = req.body;
+    
+    if (!content || !workItemTitle) {
+      return res.status(400).json({ error: 'Content and work item title are required' });
+    }
+    
+    const result = await claudeService.analyzeDocument(
+      content, 
+      workItemTitle, 
+      workItemDescription, 
+      userName || 'there',
+      personaName,
+      personaGender
+    );
+    res.json(result);
+    
+  } catch (error) {
+    console.error('Error analyzing document:', error);
+    res.status(500).json({ 
+      error: 'Failed to analyze document',
+      details: error.message 
+    });
+  }
+});
+
+app.post('/api/claude/analyze-work', async (req, res) => {
+  try {
+    const { workDescription } = req.body;
+    
+    if (!workDescription) {
+      return res.status(400).json({ error: 'Work description is required' });
+    }
+    
+    const result = await claudeService.analyzeWorkDescription(workDescription);
+    res.json(result);
+    
+  } catch (error) {
+    console.error('Error analyzing work description:', error);
+    res.status(500).json({ 
+      error: 'Failed to analyze work description',
+      details: error.message 
+    });
+  }
+});
+
+app.post('/api/claude/chat', async (req, res) => {
+  try {
+    const { messages, userMessage, persona, documentContent, workItem } = req.body;
+    
+    if (!userMessage || !persona || !documentContent) {
+      return res.status(400).json({ error: 'User message, persona, and document content are required' });
+    }
+    
+    console.log('Chat endpoint - messages count:', messages?.length || 0, 'user message:', userMessage?.substring(0, 50));
+    
+    const result = await claudeService.chat(messages, userMessage, persona, documentContent, workItem);
+    
+    // Validate the result before sending
+    if (!result || typeof result !== 'object') {
+      console.error('Invalid result from chat service:', result);
+      return res.status(500).json({ 
+        error: 'Invalid response from chat service',
+        type: 'message',
+        response: 'I encountered an error processing your message. Please try again.'
+      });
+    }
+    
+    console.log('Chat response:', { 
+      type: result.type, 
+      action: result.action,
+      hasDocumentEdit: !!result.documentEdit,
+      responseLength: result.response?.length,
+      documentEditLength: result.documentEdit?.length 
+    });
+    
+    res.json(result);
+    
+  } catch (error) {
+    console.error('Error in chat:', error);
+    res.status(500).json({ 
+      error: 'Failed to process chat message',
+      details: error.message 
+    });
+  }
+});
+
+app.post('/api/claude/apply-changes', async (req, res) => {
+  try {
+    const { currentContent, previousSuggestion, persona, workItem } = req.body;
+    
+    if (!currentContent || !previousSuggestion) {
+      return res.status(400).json({ error: 'Current content and previous suggestion are required' });
+    }
+    
+    const result = await claudeService.applyChanges(currentContent, previousSuggestion, persona, workItem);
+    res.json(result);
+    
+  } catch (error) {
+    console.error('Error applying changes:', error);
+    res.status(500).json({ 
+      error: 'Failed to apply changes',
       details: error.message 
     });
   }

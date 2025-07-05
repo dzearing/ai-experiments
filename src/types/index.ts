@@ -1,11 +1,14 @@
 export interface Persona {
   id: string;
   type: PersonaType;
+  jobTitle: string;
   name: string;
   personality?: string;
   expertise: string[];
   status: 'available' | 'busy' | 'offline';
   currentTaskId?: string;
+  avatarSeed?: string;
+  avatarGender?: 'male' | 'female';
 }
 
 export type PersonaType = 
@@ -60,6 +63,7 @@ export interface WorkItem {
   workflow: WorkflowStep[];
   currentWorkflowStep?: number;
   jamSessionIds: string[];
+  markdownPath?: string;
   metadata?: {
     tasks?: Array<{
       id: string;
@@ -105,6 +109,8 @@ export interface JamSession {
   decisions: Decision[];
   createdAt: Date;
   status: 'active' | 'completed';
+  draftContent?: string; // Draft markdown content being edited
+  lastScrollPosition?: number; // To restore scroll position
 }
 
 export interface JamMessage {

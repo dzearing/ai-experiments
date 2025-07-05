@@ -16,12 +16,13 @@ import { ThemedDashboard } from './pages/ThemedDashboard';
 import { ThemedPersonas } from './pages/ThemedPersonas';
 import { WorkItems } from './pages/WorkItems';
 import { JamSessions } from './pages/JamSessions';
-import { ThemedNewPersona } from './pages/ThemedNewPersona';
+import { NewAgentMultiStep } from './pages/NewAgentMultiStep';
 import { NewProjectMultiStep } from './pages/NewProjectMultiStep';
 import { NewWorkItemMultiStep } from './pages/NewWorkItemMultiStep';
 import { Projects } from './pages/Projects';
 import { DebugClaude } from './pages/DebugClaude';
 import { JamSessionDetail } from './pages/JamSessionDetail';
+import { WorkItemJamSession } from './pages/WorkItemJamSession';
 
 function AppContent() {
   const { workspace, setWorkspacePath } = useWorkspace();
@@ -60,8 +61,12 @@ function AppContent() {
               <Route path="work-items" element={<WorkItems />} />
               <Route path="work-items/new" element={<NewWorkItemMultiStep />} />
               <Route path="work-items/:workItemId/edit" element={<NewWorkItemMultiStep />} />
-              <Route path="personas" element={<ThemedPersonas />} />
-              <Route path="personas/new" element={<ThemedNewPersona />} />
+              <Route path="work-items/:workItemId/jam" element={<WorkItemJamSession />} />
+              <Route path="agents" element={<ThemedPersonas />} />
+              <Route path="agents/new" element={<NewAgentMultiStep />} />
+              <Route path="agents/new/:step" element={<NewAgentMultiStep />} />
+              <Route path="agents/edit/:personaId" element={<NewAgentMultiStep />} />
+              <Route path="agents/edit/:personaId/:step" element={<NewAgentMultiStep />} />
               <Route path="jam-sessions" element={<JamSessions />} />
               <Route path="jam-sessions/:id" element={<JamSessionDetail />} />
               <Route path="daily-report" element={<div>Daily Report Page (TODO)</div>} />

@@ -37,4 +37,17 @@ export interface WorkspacePlan {
   path: string;
   status: 'idea' | 'planned' | 'active' | 'completed';
   content?: string;
+  workItem?: {
+    title?: string;
+    description?: string;
+    priority?: string;
+    status?: string;
+    tasks?: any[];
+    goals?: string[];
+    acceptanceCriteria?: string[];
+    metadata?: {
+      workItemId?: string;
+      [key: string]: any;
+    };
+  };
 }

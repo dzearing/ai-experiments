@@ -83,7 +83,7 @@ export function AuthAvatar() {
         <AnimatedTransition transitionKey="auth-dropdown">
           <div className={`
             absolute right-0 mt-2 w-80 
-            ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius}
+            bg-white dark:bg-neutral-800 ${styles.cardBorder} border ${styles.borderRadius}
             ${styles.cardShadow} overflow-hidden z-50
           `}>
             {/* Header */}

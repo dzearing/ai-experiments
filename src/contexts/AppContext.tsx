@@ -13,12 +13,14 @@ interface AppContextType {
   // Actions
   createPersona: (persona: Omit<Persona, 'id'>) => void;
   updatePersona: (id: string, updates: Partial<Persona>) => void;
+  deletePersona: (id: string) => void;
   createProject: (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'workItems'>) => void;
   createWorkItem: (workItem: Omit<WorkItem, 'id' | 'createdAt' | 'updatedAt' | 'jamSessionIds'>) => WorkItem;
   updateWorkItem: (id: string, updates: Partial<WorkItem>) => void;
   assignPersonaToWorkItem: (workItemId: string, personaId: string) => void;
   startJamSession: (workItemId: string, participantIds: string[], title: string) => string;
   addJamMessage: (sessionId: string, personaId: string, content: string, type: 'message' | 'challenge' | 'suggestion' | 'decision') => void;
+  updateJamSession: (sessionId: string, updates: Partial<JamSession>) => void;
   syncWorkspaceProjects: (workspaceProjects: any[]) => void;
 }
 
@@ -62,6 +64,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const updatePersona = (id: string, updates: Partial<Persona>) => {
     setPersonas(personas.map(p => p.id === id ? { ...p, ...updates } : p));
+  };
+
+  const deletePersona = (id: string) => {
+    setPersonas(personas.filter(p => p.id !== id));
   };
 
   const createProject = (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'workItems'>) => {
@@ -151,6 +157,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         : session
     ));
   };
+  
+  const updateJamSession = (sessionId: string, updates: Partial<JamSession>) => {
+    setJamSessions(jamSessions.map(session => 
+      session.id === sessionId 
+        ? { ...session, ...updates }
+        : session
+    ));
+  };
 
   const syncWorkspaceProjects = (workspaceProjects: any[]) => {
     console.log('Syncing workspace projects:', workspaceProjects);
@@ -207,6 +221,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
                     createdAt: new Date(),
                     updatedAt: new Date(),
                     jamSessionIds: [],
+                    markdownPath: plan.path,
                     metadata: {
                       ...(plan.workItem.metadata || {}),
                       tasks: plan.workItem.tasks || [],
@@ -276,12 +291,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     dailyReports,
     createPersona,
     updatePersona,
+    deletePersona,
     createProject,
     createWorkItem,
     updateWorkItem,
     assignPersonaToWorkItem,
     startJamSession,
     addJamMessage,
+    updateJamSession,
     syncWorkspaceProjects,
   };
 

@@ -50,7 +50,7 @@ export function WorkspaceDialogContainer({ isOpen, onComplete }: WorkspaceDialog
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" />
+      <div className="fixed inset-0 bg-gray-900/50 dark:bg-black/50 transition-opacity" />
       
       {/* Show importing dialog if needed */}
       {showImporting ? (

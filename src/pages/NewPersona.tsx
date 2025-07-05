@@ -79,6 +79,7 @@ export function NewPersona() {
     createPersona({
       name: formData.name,
       type: formData.type,
+      jobTitle: formData.type.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
       personality: formData.personality,
       expertise,
       status: 'available',

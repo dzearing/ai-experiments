@@ -54,7 +54,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     <DropdownTransition isOpen={isOpen} className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
       <div 
-        className={`fixed inset-0 bg-black transition-opacity ${isOpen ? 'bg-opacity-50' : 'bg-opacity-0'}`}
+        className={`fixed inset-0 transition-opacity ${isOpen ? 'bg-gray-900/50 dark:bg-black/50' : 'bg-transparent'}`}
         onClick={onClose}
       />
       
@@ -62,7 +62,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       <div className="flex min-h-full items-center justify-center p-4">
         <div className={`
           relative w-full max-w-3xl h-[600px] flex flex-col
-          ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius}
+          bg-white dark:bg-neutral-800 ${styles.cardBorder} border ${styles.borderRadius}
           ${styles.cardShadow} 
         `}>
           {/* Header */}

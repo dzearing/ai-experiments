@@ -85,7 +85,7 @@ export function Projects() {
                 key={project.id}
                 className={`
                   ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius}
-                  ${styles.cardShadow} p-6 hover:opacity-95 transition-opacity
+                  ${styles.cardShadow} p-6
                 `}
               >
                 <div className="flex items-start justify-between">
@@ -136,7 +136,7 @@ export function Projects() {
                             >
                               {getRepoTypeIcon(repo.type)}
                               <span className="text-blue-600 dark:text-blue-400">
-                                {repo.url.split('/').slice(-2).join('/')}
+                                {repo.url.split('/').slice(-2).join('/').replace(/\.git$/, '')}
                               </span>
                               {repo.visibility === 'public' && (
                                 <span className={`text-xs ${styles.mutedText}`}>(Public)</span>
