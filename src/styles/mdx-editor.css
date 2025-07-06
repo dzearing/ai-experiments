@@ -120,9 +120,9 @@
 .mdxeditor ul.contains-task-list > li {
   display: flex;
   align-items: baseline;
-  gap: var(--spacing-6, 24px);
+  gap: 0.5rem; /* 8px - more appropriate spacing */
   position: relative;
-  padding-left: 0 !important;
+  padding: 0 !important; /* Remove all padding */
   list-style: none !important;
 }
 
@@ -134,6 +134,24 @@
   margin: 0 !important;
   margin-top: 0.125em !important; /* Slight adjustment for baseline alignment */
   flex-shrink: 0;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Style the checked state - checkmark alignment */
+.mdxeditor li[role="checkbox"][aria-checked="true"]::before,
+.mdxeditor li.task-list-item.checked::before,
+.mdxeditor li[data-checked="true"]::before {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Potential ::after element for checkmark */
+.mdxeditor li[role="checkbox"]::after,
+.mdxeditor li.task-list-item::after {
+  display: none !important; /* Hide if it exists and causes issues */
 }
 
 /* Ensure proper spacing for nested checkbox lists */
