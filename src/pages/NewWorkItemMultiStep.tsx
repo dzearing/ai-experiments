@@ -1,4 +1,4 @@
-import { useState, useEffect, useTransition } from 'react';
+import { useState, useEffect, useTransition, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContextV2';
 import { useApp } from '../contexts/AppContext';
@@ -53,7 +53,7 @@ function NewWorkItemContent() {
   const { currentStyles, isDarkMode } = useTheme();
   const { createWorkItem, updateWorkItem, projects, workItems } = useApp();
   const { workspace, reloadWorkspace } = useWorkspace();
-  const { setHeaderTitle } = useLayout();
+  const { setHeaderContent } = useLayout();
   const styles = currentStyles;
   
   // Check if we're in edit mode
@@ -74,6 +74,8 @@ function NewWorkItemContent() {
     setSelectedTaskId,
     editedContent,
     setEditedContent,
+    generalMarkdown,
+    setGeneralMarkdown,
     isProcessing,
     setIsProcessing,
     error,
@@ -82,14 +84,11 @@ function NewWorkItemContent() {
   } = useNewWorkItem();
   
   // Add local state for immediate UI response
-  const [_isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [editorKey, setEditorKey] = useState(0);
   
   // State for what's selected in review step
   const [selectedSection, setSelectedSection] = useState<'general' | 'task'>('general');
-  
-  // State for general markdown content
-  const [generalMarkdown, setGeneralMarkdown] = useState<string>('');
   
   // Project selection state
   const [selectedProjectId, setSelectedProjectId] = useState<string>(
@@ -121,20 +120,53 @@ function NewWorkItemContent() {
   }, []);
 
   const selectedTask = tasks.find(t => t.id === selectedTaskId);
+  
+  // Track if content has changed for save button visibility
+  const [hasChanges, setHasChanges] = useState(false);
+  const [originalGeneralMarkdown, setOriginalGeneralMarkdown] = useState<string | undefined>(undefined);
+  const [originalTasks, setOriginalTasks] = useState<Task[]>([]);
+  const isProgrammaticChange = useRef(false);
+  const [originalTaskContents, setOriginalTaskContents] = useState<Record<string, string>>({});
+  const isInitializing = useRef(true);
 
-  // Update header title when project changes
+  // Update breadcrumb when in edit mode
   useEffect(() => {
-    if (currentProject) {
-      setHeaderTitle(currentProject.name);
+    if (isEditMode && existingWorkItem) {
+      const projectName = currentProject?.name || 'Unknown Project';
+      setHeaderContent([
+        { label: 'Work items', path: '/work-items' },
+        { label: `${projectName}: ${existingWorkItem.title}` }
+      ]);
     } else {
-      setHeaderTitle(null); // Let the layout use default logic
+      setHeaderContent(null);
     }
     
     // Clean up on unmount
     return () => {
-      setHeaderTitle(null);
+      setHeaderContent(null);
     };
-  }, [currentProject, setHeaderTitle]);
+  }, [isEditMode, existingWorkItem, currentProject, setHeaderContent]);
+  
+  // Don't use useEffect for change detection - only set hasChanges from user actions
+  
+  // Warn about unsaved changes when leaving the page
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    
+    // Add event listener for page unload
+    if (hasChanges) {
+      window.addEventListener('beforeunload', handleBeforeUnload);
+    }
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [hasChanges]);
 
   // Function to parse edited markdown content back into task properties
   const parseTaskFromMarkdown = (markdown: string): Partial<Task> => {
@@ -174,15 +206,36 @@ function NewWorkItemContent() {
   };
 
   // Update task when edited content changes
-  const updateTaskFromMarkdown = () => {
+  const updateTaskFromMarkdown = (isUserEdit: boolean = true) => {
     if (selectedTaskId && editedContent) {
       const parsedTask = parseTaskFromMarkdown(editedContent);
-      setTasks(tasks.map(task => 
+      const updatedTasks = tasks.map(task => 
         task.id === selectedTaskId 
           ? { ...task, ...parsedTask }
           : task
-      ));
+      );
+      setTasks(updatedTasks);
+      
+      // Check if tasks actually changed after update (only for user edits)
+      if (isEditMode && originalTasks.length > 0 && isUserEdit && !isProgrammaticChange.current) {
+        setHasChanges(generalMarkdown !== originalGeneralMarkdown || JSON.stringify(updatedTasks) !== JSON.stringify(originalTasks));
+      }
     }
+  };
+
+  // Helper function to format task to markdown
+  const formatTaskToMarkdown = (task: Task): string => {
+    return `## Description
+${task.description || 'No description'}
+
+## Goals
+${(task.goals || []).map(goal => `- ${goal}`).join('\n') || '- No goals defined'}
+
+## Work Description
+${task.workDescription || 'No work description'}
+
+## Validation Criteria
+${(task.validationCriteria || []).map(criteria => `- ${criteria}`).join('\n') || '- No criteria defined'}`;
   };
 
   // Function to assign task numbers with parallel task support
@@ -237,7 +290,9 @@ function NewWorkItemContent() {
       existingWorkItem,
       hasMetadata: !!existingWorkItem?.metadata,
       hasTasks: !!existingWorkItem?.metadata?.tasks,
-      tasksLength: existingWorkItem?.metadata?.tasks?.length
+      tasksLength: existingWorkItem?.metadata?.tasks?.length,
+      hasGeneralMarkdown: !!existingWorkItem?.metadata?.generalMarkdown,
+      generalMarkdownLength: existingWorkItem?.metadata?.generalMarkdown?.length
     });
     
     if (isEditMode && existingWorkItem && existingWorkItem.metadata?.tasks) {
@@ -261,23 +316,45 @@ function NewWorkItemContent() {
       
       // Initialize general markdown for existing items
       // If no general markdown exists, create a default one
+      let markdownForWorkItem: string;
       if (existingWorkItem.metadata?.generalMarkdown) {
-        setGeneralMarkdown(existingWorkItem.metadata.generalMarkdown);
+        markdownForWorkItem = existingWorkItem.metadata.generalMarkdown;
       } else {
         // Create default general markdown from existing data
-        const defaultMarkdown = `### Description
+        markdownForWorkItem = `# ${existingWorkItem.title}
+
+## Description
 
 ${existingWorkItem.description || 'No description provided'}
 
-### Overall goals
+## Overall goals
 
 - [ ] Complete all tasks successfully
-- [ ] Meet project requirements`;
-        setGeneralMarkdown(defaultMarkdown);
+- [ ] Meet project requirements
+
+## Acceptance criteria
+
+- [ ] All tasks completed according to specifications
+- [ ] Code reviewed and approved
+- [ ] Tests passing`;
       }
+      setGeneralMarkdown(markdownForWorkItem);
       
-      // Start at review step for editing
-      setStep('review');
+      // Store original values to track changes
+      setOriginalGeneralMarkdown(markdownForWorkItem);
+      setOriginalTasks(tasksWithNumbers);
+      
+      // Store original content for each task
+      const taskContents: Record<string, string> = {};
+      tasksWithNumbers.forEach(task => {
+        taskContents[task.id] = formatTaskToMarkdown(task);
+      });
+      setOriginalTaskContents(taskContents);
+      
+      // Mark initialization as complete after a short delay
+      setTimeout(() => {
+        isInitializing.current = false;
+      }, 100);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workItemId]); // Only re-run when the work item ID changes
@@ -285,18 +362,11 @@ ${existingWorkItem.description || 'No description provided'}
   // Update edited content when task selection changes
   useEffect(() => {
     if (selectedTask) {
+      // Mark this as a programmatic change
+      isProgrammaticChange.current = true;
+      
       // Format the task as markdown immediately
-      const markdown = `## Description
-${selectedTask.description || 'No description'}
-
-## Goals
-${(selectedTask.goals || []).map(goal => `- ${goal}`).join('\n') || '- No goals defined'}
-
-## Work Description
-${selectedTask.workDescription || 'No work description'}
-
-## Validation Criteria
-${(selectedTask.validationCriteria || []).map(criteria => `- ${criteria}`).join('\n') || '- No criteria defined'}`;
+      const markdown = formatTaskToMarkdown(selectedTask);
       
       setEditedContent(markdown);
       
@@ -304,9 +374,14 @@ ${(selectedTask.validationCriteria || []).map(criteria => `- ${criteria}`).join(
       startTransition(() => {
         setEditorKey(prev => prev + 1);
       });
+      
+      // Reset the flag after a short delay to allow the editor to update
+      setTimeout(() => {
+        isProgrammaticChange.current = false;
+      }, 100);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedTaskId, tasks]); // Depend on selectedTaskId and tasks since selectedTask is derived from both
+  }, [selectedTaskId]); // Only depend on selectedTaskId change
 
   const processIdea = async () => {
     if (!ideaText.trim()) return;
@@ -335,7 +410,7 @@ ${(selectedTask.validationCriteria || []).map(criteria => `- ${criteria}`).join(
           } else {
             throw new Error(errorMessage);
           }
-        } catch (parseError) {
+        } catch {
           // If we can't parse the error response, use the basic error
           throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
         }
@@ -445,7 +520,7 @@ ${(selectedTask.validationCriteria || []).map(criteria => `- ${criteria}`).join(
     let savedToDisk = false;
     // Make sure to update the currently selected task with the latest edited content
     if (selectedTaskId && editedContent) {
-      updateTaskFromMarkdown();
+      updateTaskFromMarkdown(false); // Pass false since this is not a user edit
     }
     
     // Create a single work item with all tasks as sub-tasks
@@ -593,20 +668,290 @@ ${(selectedTask.validationCriteria || []).map(criteria => `- ${criteria}`).join(
     }
   };
 
-  return (
-    <div className="max-w-6xl mx-auto">
-      <div className="mb-6">
-        <h1 className={`text-2xl font-bold ${styles.headingColor}`}>{isEditMode ? 'Edit work item' : 'Create work item'}</h1>
-        <p className={`mt-2 ${styles.mutedText}`}>
-          {isEditMode 
-            ? `Editing: ${existingWorkItem?.title || 'Work item'}`
-            : 'Describe your idea and let Claude help break it down into actionable tasks'
-          }
-        </p>
+  // The review content that will be rendered either with or without transition
+  const reviewContent = (
+    <div className={`grid grid-cols-1 lg:grid-cols-3 gap-6 ${isEditMode ? 'h-full' : ''}`}>
+      {/* Left Panel - General Details and Task List */}
+      <div className={`lg:col-span-1 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-4 flex flex-col ${isEditMode ? 'h-full' : ''}`}>
+        {/* General Details Section */}
+        <div className="mb-4">
+          <button
+            onClick={() => {
+              // Mark as programmatic change to prevent save button from appearing
+              isProgrammaticChange.current = true;
+              
+              // Update the task from markdown before switching (pass false for isUserEdit)
+              if (selectedTaskId && editedContent) {
+                updateTaskFromMarkdown(false);
+              }
+              
+              setSelectedSection('general');
+              setSelectedTaskId(null);
+              
+              // Reset the flag after a short delay
+              setTimeout(() => {
+                isProgrammaticChange.current = false;
+              }, 100);
+            }}
+            className={`
+              w-full text-left p-3 ${styles.buttonRadius} border
+              ${selectedSection === 'general' && !selectedTaskId
+                ? `${styles.primaryButton} ${styles.primaryButtonText} border-transparent` 
+                : `${styles.contentBg} ${styles.contentBorder} ${styles.textColor} hover:opacity-80`
+              }
+              transition-none
+            `}
+          >
+            <div className="font-medium">Work item description</div>
+            <div className={`text-sm mt-1 ${selectedSection === 'general' && !selectedTaskId ? 'opacity-90' : styles.mutedText}`}>
+              Overview and goals
+            </div>
+          </button>
+        </div>
+        
+        <div className={`border-t pt-4 ${styles.contentBorder}`}>
+          <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4 flex-shrink-0`}>Tasks</h2>
+        </div>
+        
+        <div className="space-y-2 overflow-y-auto flex-1 min-h-0">
+          {tasks.map((task) => (
+            <button
+              key={task.id}
+              onClick={() => {
+                if (selectedTaskId !== task.id) {
+                  // Mark as programmatic change to prevent save button from appearing
+                  isProgrammaticChange.current = true;
+                  
+                  // Update the current task from markdown before switching (pass false for isUserEdit)
+                  if (selectedTaskId && editedContent) {
+                    updateTaskFromMarkdown(false);
+                  }
+                  
+                  setSelectedSection('task');
+                  setSelectedTaskId(task.id);
+                  
+                  // Reset the flag after a short delay
+                  setTimeout(() => {
+                    isProgrammaticChange.current = false;
+                  }, 100);
+                }
+              }}
+              className={`
+                w-full text-left p-3 ${styles.buttonRadius} border
+                ${selectedTaskId === task.id 
+                  ? `${styles.primaryButton} ${styles.primaryButtonText} border-transparent` 
+                  : `${styles.contentBg} ${styles.contentBorder} ${styles.textColor} hover:opacity-80`
+                }
+                transition-none
+              `}
+            >
+              <div className="font-medium">
+                {task.taskNumber && <span className="font-mono">{task.taskNumber}. </span>}
+                {task.title}
+              </div>
+              <div className={`text-sm mt-1 ${selectedTaskId === task.id ? 'opacity-90' : styles.mutedText}`}>
+                {(task.goals?.length || 0)} goals • {(task.validationCriteria?.length || 0)} criteria
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {/* Refinement Input - Only show in create mode */}
+        {!isEditMode && (
+          <div className="mt-6 pt-6 border-t flex-shrink-0" style={{ borderColor: styles.contentBorder }}>
+          <h3 className={`text-sm font-medium ${styles.headingColor} mb-2`}>Refine the plan</h3>
+          <textarea
+            value={ideaText}
+            onChange={(e) => setIdeaText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.ctrlKey && e.key === 'Enter' && ideaText.trim() && !isProcessing) {
+                e.preventDefault();
+                refineIdea();
+              }
+            }}
+            className={`
+              w-full px-3 py-2 text-sm ${styles.buttonRadius}
+              ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
+              focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500
+              resize-none
+            `}
+            rows={3}
+            placeholder="Add more details or adjustments..."
+          />
+          <Button
+            onClick={refineIdea}
+            disabled={!ideaText.trim() || isProcessing}
+            variant="primary"
+            fullWidth
+            className="mt-2"
+          >
+            {isProcessing ? (
+              <>
+                <InlineLoadingSpinner className="mr-2 inline-flex" variant="primary" />
+                Refining...
+              </>
+            ) : (
+              'Refine tasks'
+            )}
+          </Button>
+        </div>
+        )}
       </div>
 
-      {/* Step 1: Idea Input */}
-      <DropdownTransition isOpen={step === 'input'}>
+      {/* Right Panel - Details View */}
+      <div className={`lg:col-span-2 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} flex flex-col overflow-hidden ${isEditMode ? 'h-full' : ''}`}>
+        {selectedSection === 'general' && !selectedTaskId ? (
+          // General Details View with MDXEditor
+          <div className={`flex-1 min-h-0 ${isDarkMode ? 'mdx-dark' : 'mdx-light'} mdx-edge-to-edge flex flex-col`}>
+              {generalMarkdown ? (
+                <MDXEditor
+                  key={`general-${editorKey}`}
+                  markdown={generalMarkdown}
+                  onChange={(value) => {
+                    const newValue = value || '';
+                    setGeneralMarkdown(newValue);
+                    // Check if content actually changed from original (only for user changes)
+                    if (isEditMode && !isProgrammaticChange.current && !isInitializing.current) {
+                      // Only set hasChanges if originalGeneralMarkdown has been initialized
+                      // and the new value is different
+                      if (originalGeneralMarkdown !== undefined) {
+                        setHasChanges(newValue !== originalGeneralMarkdown);
+                      }
+                    }
+                  }}
+                  contentEditableClassName="prose prose-neutral dark:prose-invert max-w-none p-4"
+                plugins={[
+                  headingsPlugin(),
+                  listsPlugin(),
+                  quotePlugin(),
+                  thematicBreakPlugin(),
+                  markdownShortcutPlugin(),
+                  toolbarPlugin({
+                    toolbarContents: () => (
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center">
+                          <UndoRedo />
+                          <Separator />
+                          <BoldItalicUnderlineToggles />
+                          <Separator />
+                          <ListsToggle />
+                          <Separator />
+                          <BlockTypeSelect />
+                          <Separator />
+                          <CreateLink />
+                          <InsertThematicBreak />
+                        </div>
+                        {isEditMode && (
+                          <button
+                            onClick={() => createOrUpdateWorkItems()}
+                            className={`px-3 py-1 text-sm font-medium rounded transition-opacity ${
+                              hasChanges 
+                                ? 'opacity-100 bg-blue-600 hover:bg-blue-700 text-white' 
+                                : 'opacity-0 pointer-events-none'
+                            }`}
+                            disabled={!hasChanges}
+                          >
+                            Save
+                          </button>
+                        )}
+                      </div>
+                    )
+                  })
+                ]}
+              />
+              ) : (
+                <div className="p-4 text-center text-gray-500">
+                  Loading description...
+                </div>
+              )}
+          </div>
+        ) : selectedTask ? (
+          // Task Details View
+          <div className={`flex-1 min-h-0 ${isDarkMode ? 'mdx-dark' : 'mdx-light'} mdx-edge-to-edge flex flex-col`}>
+              <MDXEditor
+                key={editorKey}
+                markdown={editedContent}
+                onChange={(value) => {
+                  const newValue = value || '';
+                  setEditedContent(newValue);
+                  
+                  // Only check for changes if this is a user edit
+                  if (isEditMode && !isProgrammaticChange.current && !isInitializing.current && selectedTask) {
+                    // Compare against the original content for this specific task
+                    const originalContent = originalTaskContents[selectedTask.id];
+                    const taskChanged = originalContent ? newValue.trim() !== originalContent.trim() : false;
+                    
+                    // Also check if general markdown changed
+                    const generalChanged = generalMarkdown !== originalGeneralMarkdown;
+                    
+                    setHasChanges(taskChanged || generalChanged);
+                  }
+                }}
+                onBlur={() => updateTaskFromMarkdown()}
+                contentEditableClassName="prose prose-neutral dark:prose-invert max-w-none p-4"
+                plugins={[
+                  headingsPlugin(),
+                  listsPlugin(),
+                  quotePlugin(),
+                  thematicBreakPlugin(),
+                  markdownShortcutPlugin(),
+                  toolbarPlugin({
+                    toolbarContents: () => (
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center">
+                          <UndoRedo />
+                          <Separator />
+                          <BoldItalicUnderlineToggles />
+                          <Separator />
+                          <ListsToggle />
+                          <Separator />
+                          <BlockTypeSelect />
+                          <Separator />
+                          <CreateLink />
+                          <InsertThematicBreak />
+                        </div>
+                        {isEditMode && (
+                          <button
+                            onClick={() => createOrUpdateWorkItems()}
+                            className={`px-3 py-1 text-sm font-medium rounded transition-opacity ${
+                              hasChanges 
+                                ? 'opacity-100 bg-blue-600 hover:bg-blue-700 text-white' 
+                                : 'opacity-0 pointer-events-none'
+                            }`}
+                            disabled={!hasChanges}
+                          >
+                            Save
+                          </button>
+                        )}
+                      </div>
+                    )
+                  })
+                ]}
+              />
+          </div>
+        ) : (
+          <div className={`text-center ${styles.mutedText} p-6`}>
+            Select an item to view details
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className={isEditMode ? "h-full flex flex-col" : "max-w-6xl mx-auto"}>
+      {/* Header for create mode only */}
+      {!isEditMode && (
+        <div className="mb-6">
+          <h1 className={`text-2xl font-bold ${styles.headingColor}`}>Create work item</h1>
+          <p className={`mt-2 ${styles.mutedText}`}>
+            Describe your idea and let Claude help break it down into actionable tasks
+          </p>
+        </div>
+      )}
+
+      {/* Step 1: Idea Input - Skip in edit mode */}
+      <DropdownTransition isOpen={!isEditMode && step === 'input'}>
         <div className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-8`}>
           <div className="max-w-2xl mx-auto">
             <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4`}>
@@ -701,218 +1046,38 @@ ${(selectedTask.validationCriteria || []).map(criteria => `- ${criteria}`).join(
         </div>
       </DropdownTransition>
 
-      {/* Step 2: Review Tasks */}
-      <DropdownTransition isOpen={step === 'review'}>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" style={{ maxHeight: 'calc(100vh - 20rem)' }}>
-          {/* Left Panel - General Details and Task List */}
-          <div className={`lg:col-span-1 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-4 flex flex-col`} style={{ maxHeight: 'calc(100vh - 20rem)' }}>
-            {/* General Details Section */}
-            <div className="mb-4">
-              <button
-                onClick={() => {
-                  setSelectedSection('general');
-                  setSelectedTaskId(null);
-                }}
-                className={`
-                  w-full text-left p-3 ${styles.buttonRadius} border
-                  ${selectedSection === 'general' && !selectedTaskId
-                    ? `${styles.primaryButton} ${styles.primaryButtonText} border-transparent` 
-                    : `${styles.contentBg} ${styles.contentBorder} ${styles.textColor} hover:opacity-80`
-                  }
-                  transition-none
-                `}
-              >
-                <div className="font-medium">Work item description</div>
-                <div className={`text-sm mt-1 ${selectedSection === 'general' && !selectedTaskId ? 'opacity-90' : styles.mutedText}`}>
-                  Overview and goals
-                </div>
-              </button>
-            </div>
-            
-            <div className={`border-t pt-4 ${styles.contentBorder}`}>
-              <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4 flex-shrink-0`}>Tasks</h2>
-            </div>
-            
-            <div className="space-y-2 overflow-y-auto flex-1 min-h-0">
-              {tasks.map((task) => (
-                <button
-                  key={task.id}
-                  onClick={() => {
-                    if (selectedTaskId !== task.id) {
-                      setSelectedSection('task');
-                      setSelectedTaskId(task.id);
-                    }
-                  }}
-                  className={`
-                    w-full text-left p-3 ${styles.buttonRadius} border
-                    ${selectedTaskId === task.id 
-                      ? `${styles.primaryButton} ${styles.primaryButtonText} border-transparent` 
-                      : `${styles.contentBg} ${styles.contentBorder} ${styles.textColor} hover:opacity-80`
-                    }
-                    transition-none
-                  `}
-                >
-                  <div className="font-medium">
-                    {task.taskNumber && <span className="font-mono">{task.taskNumber}. </span>}
-                    {task.title}
-                  </div>
-                  <div className={`text-sm mt-1 ${selectedTaskId === task.id ? 'opacity-90' : styles.mutedText}`}>
-                    {(task.goals?.length || 0)} goals • {(task.validationCriteria?.length || 0)} criteria
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            {/* Refinement Input */}
-            <div className="mt-6 pt-6 border-t flex-shrink-0" style={{ borderColor: styles.contentBorder }}>
-              <h3 className={`text-sm font-medium ${styles.headingColor} mb-2`}>Refine the plan</h3>
-              <textarea
-                value={ideaText}
-                onChange={(e) => setIdeaText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.ctrlKey && e.key === 'Enter' && ideaText.trim() && !isProcessing) {
-                    e.preventDefault();
-                    refineIdea();
-                  }
-                }}
-                className={`
-                  w-full px-3 py-2 text-sm ${styles.buttonRadius}
-                  ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
-                  focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500
-                  resize-none
-                `}
-                rows={3}
-                placeholder="Add more details or adjustments..."
-              />
-              <Button
-                onClick={refineIdea}
-                disabled={!ideaText.trim() || isProcessing}
-                variant="primary"
-                fullWidth
-                className="mt-2"
-              >
-                {isProcessing ? (
-                  <>
-                    <InlineLoadingSpinner className="mr-2 inline-flex" variant="primary" />
-                    Refining...
-                  </>
-                ) : (
-                  'Refine tasks'
-                )}
-              </Button>
-            </div>
-          </div>
-
-          {/* Right Panel - Details View */}
-          <div className={`lg:col-span-2 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} flex flex-col overflow-hidden`} style={{ maxHeight: 'calc(100vh - 20rem)' }}>
-            {selectedSection === 'general' && !selectedTaskId ? (
-              // General Details View with MDXEditor
-              <>
-                <div className={`px-4 py-2 border-b ${styles.contentBorder} flex-shrink-0`}>
-                  <h3 className={`font-medium ${styles.headingColor}`}>
-                    {tasks.length > 0 ? tasks[0].title : 'Work item'}
-                  </h3>
-                </div>
-                <div className={`flex-1 min-h-0 ${isDarkMode ? 'mdx-dark' : 'mdx-light'} mdx-edge-to-edge flex flex-col`}>
-                  <MDXEditor
-                    key={`general-${editorKey}`}
-                    markdown={generalMarkdown}
-                    onChange={(value) => setGeneralMarkdown(value || '')}
-                    contentEditableClassName="prose prose-neutral dark:prose-invert max-w-none p-4"
-                    plugins={[
-                      headingsPlugin(),
-                      listsPlugin(),
-                      quotePlugin(),
-                      thematicBreakPlugin(),
-                      markdownShortcutPlugin(),
-                      toolbarPlugin({
-                        toolbarContents: () => (
-                          <>
-                            <UndoRedo />
-                            <Separator />
-                            <BoldItalicUnderlineToggles />
-                            <Separator />
-                            <ListsToggle />
-                            <Separator />
-                            <BlockTypeSelect />
-                            <Separator />
-                            <CreateLink />
-                            <InsertThematicBreak />
-                          </>
-                        )
-                      })
-                    ]}
-                  />
-                </div>
-              </>
-            ) : selectedTask ? (
-              // Task Details View
-              <>
-                <div className={`px-4 py-2 border-b ${styles.contentBorder} flex-shrink-0`}>
-                  <h3 className={`font-medium ${styles.headingColor}`}>
-                    {selectedTask.taskNumber && <span className="font-mono">{selectedTask.taskNumber}. </span>}
-                    {selectedTask.title}
-                  </h3>
-                </div>
-                <div className={`flex-1 min-h-0 ${isDarkMode ? 'mdx-dark' : 'mdx-light'} mdx-edge-to-edge flex flex-col`}>
-                  <MDXEditor
-                    key={editorKey}
-                    markdown={editedContent}
-                    onChange={(value) => setEditedContent(value || '')}
-                    onBlur={() => updateTaskFromMarkdown()}
-                    contentEditableClassName="prose prose-neutral dark:prose-invert max-w-none p-4"
-                    plugins={[
-                      headingsPlugin(),
-                      listsPlugin(),
-                      quotePlugin(),
-                      thematicBreakPlugin(),
-                      markdownShortcutPlugin(),
-                      toolbarPlugin({
-                        toolbarContents: () => (
-                          <>
-                            <UndoRedo />
-                            <Separator />
-                            <BoldItalicUnderlineToggles />
-                            <Separator />
-                            <ListsToggle />
-                            <Separator />
-                            <BlockTypeSelect />
-                            <Separator />
-                            <CreateLink />
-                            <InsertThematicBreak />
-                          </>
-                        )
-                      })
-                    ]}
-                  />
-                </div>
-              </>
-            ) : (
-              <div className={`text-center ${styles.mutedText} p-6`}>
-                Select an item to view details
-              </div>
-            )}
-          </div>
+      {/* Step 2: Review Tasks - Always show in edit mode */}
+      {isEditMode ? (
+        // No transition for edit mode - render directly
+        <div className="flex-1 flex flex-col">
+          {reviewContent}
         </div>
-      </DropdownTransition>
+      ) : (
+        // Use transition for create mode
+        <DropdownTransition isOpen={step === 'review'}>
+          {reviewContent}
+        </DropdownTransition>
+      )}
 
-      {/* Action Buttons */}
-      <DropdownTransition isOpen={step === 'review'}>
-        <div className="mt-6 flex justify-end gap-3">
-          <Button
-            onClick={resetToInput}
-            variant="secondary"
-          >
-            Back
-          </Button>
-          <Button
-            onClick={createOrUpdateWorkItems}
-            variant="primary"
-          >
-            {isEditMode ? 'Update work item' : 'Create work item'}
-          </Button>
-        </div>
-      </DropdownTransition>
+      {/* Action Buttons - only for create mode */}
+      {!isEditMode && (
+        <DropdownTransition isOpen={step === 'review'}>
+          <div className="mt-6 flex justify-end gap-3">
+            <Button
+              onClick={resetToInput}
+              variant="secondary"
+            >
+              Back
+            </Button>
+            <Button
+              onClick={createOrUpdateWorkItems}
+              variant="primary"
+            >
+              Create work item
+            </Button>
+          </div>
+        </DropdownTransition>
+      )}
     </div>
   );
 }

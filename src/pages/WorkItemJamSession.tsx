@@ -7,6 +7,7 @@ import { IconButton } from '../components/ui/IconButton';
 import { LoadingSpinner, InlineLoadingSpinner } from '../components/ui/LoadingSpinner';
 import { StockPhotoAvatar, getGenderFromSeed, getRandomName } from '../components/StockPhotoAvatar';
 import { useAuth } from '../contexts/AuthContext';
+import { apiUrl } from '../config/api';
 import { 
   MDXEditor, 
   headingsPlugin,
@@ -166,10 +167,15 @@ export function WorkItemJamSession() {
       console.log('WorkItem:', workItem);
       console.log('WorkItem markdownPath:', workItem?.markdownPath);
       
-      if (workItem?.markdownPath) {
+      if (!workItem) {
+        console.log('No work item found');
+        return;
+      }
+      
+      if (workItem.markdownPath) {
         try {
           console.log('Loading markdown from:', workItem.markdownPath);
-          const response = await fetch('http://localhost:3000/api/workspace/read-file', {
+          const response = await fetch(apiUrl('/api/workspace/read-file'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ filePath: workItem.markdownPath })
@@ -198,11 +204,14 @@ export function WorkItemJamSession() {
       } else {
         console.log('No markdownPath on work item');
         // If no markdownPath, generate content from work item metadata
-        if (workItem?.metadata?.tasks) {
-          const generatedContent = `# ${workItem.title}
+        let generatedContent = `# ${workItem.title}
 
 ## Description
-${workItem.description}
+${workItem.description || 'No description provided.'}`;
+
+        // Add tasks section if tasks exist
+        if (workItem?.metadata?.tasks && workItem.metadata.tasks.length > 0) {
+          generatedContent += `
 
 ## Tasks
 ${workItem.metadata.tasks.map((task: any, index: number) => `
@@ -218,10 +227,10 @@ ${task.workDescription || 'No work description'}
 **Validation Criteria:**
 ${task.validationCriteria?.map((c: string) => `- ${c}`).join('\n') || '- No criteria defined'}
 `).join('\n')}`;
-          
-          setMarkdownContent(generatedContent);
-          setEditedContent(generatedContent);
         }
+        
+        setMarkdownContent(generatedContent);
+        setEditedContent(generatedContent);
       }
     };
     
@@ -332,7 +341,7 @@ ${task.validationCriteria?.map((c: string) => `- ${c}`).join('\n') || '- No crit
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
       
       try {
-        const response = await fetch('http://localhost:3000/api/claude/analyze-document', {
+        const response = await fetch(apiUrl('/api/claude/analyze-document'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -476,7 +485,7 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
     
     try {
       // Send to Claude for response
-      const response = await fetch('http://localhost:3000/api/claude/chat', {
+      const response = await fetch(apiUrl('/api/claude/chat'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -531,7 +540,7 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
         
         // Make a separate API call to apply the changes with current content
         try {
-          const applyResponse = await fetch('http://localhost:3000/api/claude/apply-changes', {
+          const applyResponse = await fetch(apiUrl('/api/claude/apply-changes'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -660,7 +669,7 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
         contentToSave = contentToSave.substring(0, metadataIndex);
       }
       
-      const response = await fetch('http://localhost:3000/api/workspace/write-file', {
+      const response = await fetch(apiUrl('/api/workspace/write-file'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -114,7 +114,7 @@ export function AnimatedTransition({
       
       {/* Current content (entering or static) */}
       <div
-        className={isTransitioning ? contentClasses : centered ? "w-full" : "static"}
+        className={isTransitioning ? contentClasses : centered ? "w-full" : "h-full"}
         style={{
           animation: isTransitioning
             ? reverse

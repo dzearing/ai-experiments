@@ -62,10 +62,17 @@ export function DropdownTransition({
     transition: 'opacity 150ms ease-out, transform 150ms ease-out',
   } : {};
 
+  // Merge animation styles with any height-related styles from className
+  const finalStyles = {
+    ...animationStyles,
+    // Preserve height properties if className includes flex or height classes
+    ...(className.includes('flex-1') || className.includes('h-full') ? { height: '100%' } : {})
+  };
+
   return (
     <div 
       className={className}
-      style={animationStyles}
+      style={finalStyles}
     >
       {children}
     </div>

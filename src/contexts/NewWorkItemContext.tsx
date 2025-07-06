@@ -30,6 +30,10 @@ interface NewWorkItemContextType {
   editedContent: string;
   setEditedContent: (content: string) => void;
   
+  // General markdown for work item description
+  generalMarkdown: string;
+  setGeneralMarkdown: (markdown: string) => void;
+  
   // Processing state
   isProcessing: boolean;
   setIsProcessing: (processing: boolean) => void;
@@ -75,6 +79,7 @@ export function NewWorkItemProvider({ children }: { children: ReactNode }) {
   const [tasks, setTasks] = useState<Task[]>(persistedState?.tasks || []);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(persistedState?.selectedTaskId || null);
   const [editedContent, setEditedContent] = useState(persistedState?.editedContent || '');
+  const [generalMarkdown, setGeneralMarkdown] = useState(persistedState?.generalMarkdown || '');
   
   // Processing state
   const [isProcessing, setIsProcessing] = useState(false);
@@ -88,9 +93,10 @@ export function NewWorkItemProvider({ children }: { children: ReactNode }) {
       tasks,
       selectedTaskId,
       editedContent,
+      generalMarkdown,
     };
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
-  }, [ideaText, savedIdea, tasks, selectedTaskId, editedContent]);
+  }, [ideaText, savedIdea, tasks, selectedTaskId, editedContent, generalMarkdown]);
   
   // Update URL when step changes
   const setStep = (newStep: 'input' | 'review') => {
@@ -143,6 +149,8 @@ export function NewWorkItemProvider({ children }: { children: ReactNode }) {
     setSelectedTaskId,
     editedContent,
     setEditedContent,
+    generalMarkdown,
+    setGeneralMarkdown,
     isProcessing,
     setIsProcessing,
     error,
