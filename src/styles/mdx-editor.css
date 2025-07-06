@@ -119,7 +119,7 @@
 .mdxeditor li.task-list-item,
 .mdxeditor ul.contains-task-list > li {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 0.5rem; /* 8px - more appropriate spacing */
   position: relative;
   padding: 0 !important; /* Remove all padding */
@@ -132,7 +132,6 @@
 .mdxeditor ul.contains-task-list > li::before {
   position: static !important;
   margin: 0 !important;
-  margin-top: 0.125em !important; /* Slight adjustment for baseline alignment */
   flex-shrink: 0;
   display: flex !important;
   align-items: center !important;
