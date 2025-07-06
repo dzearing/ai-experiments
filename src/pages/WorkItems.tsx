@@ -121,6 +121,20 @@ export function WorkItems() {
         </div>
       </div>
       
+      {/* Debug info */}
+      {(() => {
+        console.log('=== WorkItems Debug ===', {
+          workItems: workItems,
+          workItemsLength: workItems.length,
+          workItemIds: workItems.map(w => w.id),
+          projects: projects,
+          projectsLength: projects.length,
+          filteredItemsLength: filteredItems.length,
+          sortedItemsLength: sortedItems.length
+        });
+        return null;
+      })()}
+      
       {/* Work Items List */}
       {isLoadingWorkspace ? (
         <div className={`
@@ -165,6 +179,13 @@ export function WorkItems() {
             const project = projects.find(p => p.id === item.projectId);
             const assignee = item.assignedPersonaIds.length > 0 ? personas.find(p => p.id === item.assignedPersonaIds[0]) : undefined;
             
+            console.log(`WorkItem ${item.id}:`, {
+              title: item.title,
+              projectId: item.projectId,
+              foundProject: project,
+              projectName: project?.name
+            });
+            
             return (
               <div
                 key={item.id}
@@ -175,6 +196,11 @@ export function WorkItems() {
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
+                    {project && (
+                      <div className={`text-sm ${styles.mutedText} mb-1`}>
+                        {project.name}
+                      </div>
+                    )}
                     <div className="flex items-center gap-3 mb-2">
                       <span className="text-lg">{getPriorityIcon(item.priority)}</span>
                       <h3 className={`text-lg font-semibold ${styles.headingColor}`}>
@@ -229,15 +255,6 @@ export function WorkItems() {
                     {/* Tags - not implemented yet */}
                     
                     <div className="flex items-center gap-4 text-sm">
-                      {project && (
-                        <div className={`flex items-center gap-2 ${styles.mutedText}`}>
-                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                          </svg>
-                          <span>{project.name}</span>
-                        </div>
-                      )}
-                      
                       {assignee && (
                         <div className={`flex items-center gap-2 ${styles.mutedText}`}>
                           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -331,14 +348,22 @@ export function WorkItems() {
               
               if (!response.ok) {
                 console.error('Failed to delete/move markdown file');
+              } else {
+                // Invalidate client-side cache after successful deletion
+                const { invalidateCache } = await import('../utils/cache');
+                invalidateCache(/^workspace-light:/);
+                invalidateCache(/^project-details:/);
+                
+                // Reload the page to refresh the work items list
+                window.location.reload();
               }
             } catch (error) {
               console.error('Error handling markdown file:', error);
             }
+          } else {
+            // Delete from app state only (no markdown file)
+            deleteWorkItem(workItemToDelete.id);
           }
-          
-          // Delete from app state
-          deleteWorkItem(workItemToDelete.id);
         }}
       />
     </div>

@@ -194,6 +194,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const syncWorkspaceProjects = (workspaceProjects: any[]) => {
     console.log('Syncing workspace projects:', workspaceProjects);
+    console.log('Projects with plans:', workspaceProjects.filter(wp => wp.plans).map(wp => wp.name));
+    console.log('Projects loading:', workspaceProjects.filter(wp => wp.isLoading).map(wp => wp.name));
     
     // First, sync work items from plans
     const allWorkItems: WorkItem[] = [];
@@ -202,11 +204,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     workspaceProjects.forEach(wp => {
       // Skip projects that are still loading (don't have plans yet)
       if (wp.isLoading || !wp.plans) {
-        console.log(`Skipping project ${wp.name} - still loading details`);
+        console.log(`Skipping project ${wp.name} - still loading details`, { isLoading: wp.isLoading, hasPlans: !!wp.plans });
         return;
       }
       
-      const projectId = wp.id || uuidv4(); // Use existing ID or generate new one
+      // Use the workspace path as a stable identifier (same as in project creation)
+      const projectId = wp.path ? `project-${wp.path.replace(/[^a-zA-Z0-9]/g, '-')}` : uuidv4();
       projectWorkItemMap[projectId] = [];
       
       // Process all plan types
@@ -218,8 +221,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 const workItemId = plan.workItem.metadata?.workItemId || 
                                  `${projectId}-${plan.name.replace(/\.md$/, '')}`;
                 
-                // Check if work item already exists
-                const existingWorkItem = workItems.find(w => w.id === workItemId);
+                // Check if work item already exists by ID or markdown path
+                const existingWorkItem = workItems.find(w => 
+                  w.id === workItemId || 
+                  (w.markdownPath && w.markdownPath === plan.path)
+                );
+                
                 if (!existingWorkItem) {
                   console.log('Creating work item from plan:', {
                     planName: plan.name,
@@ -264,33 +271,54 @@ export function AppProvider({ children }: { children: ReactNode }) {
                   projectWorkItemMap[projectId].push(newWorkItem.id);
                 }
               }
-            });
-          }
-        });
-      }
+          });
+        }
+      });
     });
     
-    // Add new work items
+    // Add new work items (avoiding duplicates)
     if (allWorkItems.length > 0) {
-      setWorkItems([...workItems, ...allWorkItems]);
+      setWorkItems(prevWorkItems => {
+        // Create a map of existing work items by their markdown path
+        const existingPaths = new Set(prevWorkItems.map(item => item.markdownPath).filter(Boolean));
+        
+        // Filter out work items that already exist
+        const newUniqueWorkItems = allWorkItems.filter(item => 
+          !item.markdownPath || !existingPaths.has(item.markdownPath)
+        );
+        
+        console.log('Syncing work items:', {
+          existingCount: prevWorkItems.length,
+          newCount: allWorkItems.length,
+          uniqueNewCount: newUniqueWorkItems.length,
+          duplicatesSkipped: allWorkItems.length - newUniqueWorkItems.length
+        });
+        
+        return [...prevWorkItems, ...newUniqueWorkItems];
+      });
     }
     
     // Convert workspace projects to app projects
     const newProjects: Project[] = workspaceProjects.map(wp => {
-      const projectId = wp.id || uuidv4();
-      // Check if project already exists
-      const existingProject = projects.find(p => p.name === wp.name);
+      // Use the workspace path as a stable identifier
+      const stableProjectId = wp.path ? `project-${wp.path.replace(/[^a-zA-Z0-9]/g, '-')}` : uuidv4();
+      
+      // Check if project already exists by path or name
+      const existingProject = projects.find(p => p.path === wp.path || p.name === wp.name);
+      const projectId = existingProject?.id || stableProjectId;
+      
       if (existingProject) {
         // Update existing project with workspace data
         return {
           ...existingProject,
+          id: existingProject.id, // Keep existing ID
           description: wp.purpose || existingProject.description,
           purpose: wp.purpose,
           repositories: wp.repositories || [],
           primaryRepoUrl: wp.primaryRepoUrl,
           readme: wp.readme,
           path: wp.path,
-          workItems: [...existingProject.workItems, ...(projectWorkItemMap[projectId] || [])]
+          workItems: [...new Set([...existingProject.workItems, ...(projectWorkItemMap[projectId] || [])])] // Avoid duplicate work item IDs
         };
       }
       

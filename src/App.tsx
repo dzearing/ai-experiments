@@ -7,6 +7,7 @@ import { LayoutProvider } from './contexts/LayoutContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { GitHubProvider } from './contexts/GitHubContext';
+import { SubscriptionProvider } from './contexts/SubscriptionContext';
 import { ThemedLayoutV2 } from './components/ThemedLayoutV2';
 import { WorkspaceDialogContainer } from './components/WorkspaceDialogContainer';
 import { WorkspaceSync } from './components/WorkspaceSync';
@@ -20,6 +21,7 @@ import { NewAgentMultiStep } from './pages/NewAgentMultiStep';
 import { NewProjectMultiStep } from './pages/NewProjectMultiStep';
 import { NewWorkItemMultiStep } from './pages/NewWorkItemMultiStep';
 import { Projects } from './pages/Projects';
+import { ProjectDetail } from './pages/ProjectDetail';
 import { DebugClaude } from './pages/DebugClaude';
 import { JamSessionDetail } from './pages/JamSessionDetail';
 import { WorkItemJamSession } from './pages/WorkItemJamSession';
@@ -57,6 +59,7 @@ function AppContent() {
               <Route index element={<ThemedDashboard />} />
               <Route path="projects" element={<Projects />} />
               <Route path="projects/new" element={<NewProjectMultiStep />} />
+              <Route path="projects/:projectId" element={<ProjectDetail />} />
               <Route path="projects/:projectId/workitems/new" element={<NewWorkItemMultiStep />} />
               <Route path="work-items" element={<WorkItems />} />
               <Route path="work-items/new" element={<NewWorkItemMultiStep />} />
@@ -90,9 +93,11 @@ function App() {
             <GitHubProvider>
               <WorkspaceProvider>
                 <LayoutProvider>
-                  <BrowserRouter>
-                    <AppContent />
-                  </BrowserRouter>
+                  <SubscriptionProvider>
+                    <BrowserRouter>
+                      <AppContent />
+                    </BrowserRouter>
+                  </SubscriptionProvider>
                 </LayoutProvider>
               </WorkspaceProvider>
             </GitHubProvider>

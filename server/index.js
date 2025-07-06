@@ -5,6 +5,7 @@ const claudeService = require('./claude-service');
 const crypto = require('crypto');
 const path = require('path');
 const { execSync } = require('child_process');
+const subscriptionManager = require('./subscriptionManager');
 
 // Load .env from parent directory
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
@@ -52,9 +53,83 @@ function setCachedData(key, data) {
   });
 }
 
+// Helper function to invalidate cache
+function invalidateCache(pattern) {
+  if (typeof pattern === 'string' && !pattern.includes(':')) {
+    // Simple string, just delete it
+    workspaceCache.delete(pattern);
+  } else {
+    // Pattern with prefix, delete all matching keys
+    for (const key of workspaceCache.keys()) {
+      if (key.startsWith(pattern)) {
+        console.log(`Invalidating cache for: ${key}`);
+        workspaceCache.delete(key);
+      }
+    }
+  }
+}
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', claudeAvailable: true });
+});
+
+// SSE endpoint for real-time updates
+app.get('/api/sse/subscribe', (req, res) => {
+  const clientId = crypto.randomUUID();
+  
+  // Set SSE headers
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no', // Disable Nginx buffering
+    'X-Client-Id': clientId
+  });
+
+  // Register client
+  subscriptionManager.registerClient(clientId, res);
+
+  // Send initial connection event
+  res.write(`data: ${JSON.stringify({ type: 'connected', clientId })}\n\n`);
+
+  // Send heartbeat every 30 seconds to keep connection alive
+  const heartbeat = setInterval(() => {
+    try {
+      res.write(':heartbeat\n\n');
+    } catch (err) {
+      clearInterval(heartbeat);
+    }
+  }, 30000);
+
+  // Handle client disconnect
+  req.on('close', () => {
+    clearInterval(heartbeat);
+    subscriptionManager.unregisterClient(clientId);
+  });
+});
+
+// Subscription management endpoint
+app.post('/api/subscriptions', (req, res) => {
+  const { clientId, resources } = req.body;
+  
+  if (!clientId || !resources || !Array.isArray(resources)) {
+    return res.status(400).json({ error: 'Invalid request' });
+  }
+  
+  const success = subscriptionManager.subscribe(clientId, resources);
+  res.json({ success });
+});
+
+app.delete('/api/subscriptions', (req, res) => {
+  const { clientId, resources } = req.body;
+  
+  if (!clientId || !resources || !Array.isArray(resources)) {
+    return res.status(400).json({ error: 'Invalid request' });
+  }
+  
+  const success = subscriptionManager.unsubscribe(clientId, resources);
+  res.json({ success });
 });
 
 // Debug endpoint for testing Claude SDK
@@ -130,7 +205,7 @@ app.post('/api/claude/process-idea', async (req, res) => {
   try {
     const { idea, mockMode, model } = req.body;
     
-    console.log('Process idea request:', { idea: idea.substring(0, 50), mockMode, model });
+    console.log('Process idea request:', { idea, mockMode, model });
     
     if (!idea) {
       return res.status(400).json({ error: 'Idea text is required' });
@@ -142,11 +217,37 @@ app.post('/api/claude/process-idea', async (req, res) => {
       // Simulate processing delay
       await new Promise(resolve => setTimeout(resolve, 1500));
 
+      // Generate a mock title from the idea
+      const ideaWords = idea.split(' ').slice(0, 5).join(' ');
+      const mockTitle = ideaWords.charAt(0).toUpperCase() + ideaWords.slice(1).toLowerCase();
+
+      // Convert first-person to third-person in description
+      let professionalDescription = idea
+        .replace(/\bI want\b/gi, 'The user wants')
+        .replace(/\bI need\b/gi, 'The system needs')
+        .replace(/\bI have\b/gi, 'The user has')
+        .replace(/\bI('ve| have) created\b/gi, 'The user has created')
+        .replace(/\bI'm\b/gi, 'The user is')
+        .replace(/\bI am\b/gi, 'The user is')
+        .replace(/\bmy\b/gi, 'the user\'s')
+        .replace(/\bMe\b/g, 'The user');
+
+      // Generate mock general markdown (without H1 title, using H3 for sections)
+      const mockGeneralMarkdown = `### Description
+
+${professionalDescription}
+
+### Overall goals
+
+- [ ] Implement the core functionality as described
+- [ ] Ensure proper error handling and edge cases
+- [ ] Provide comprehensive documentation`;
+
       // Generate mock tasks based on the idea
       const mockTasks = [
         {
           id: Math.random().toString(36).substring(2, 9),
-          title: "Design and Architecture",
+          title: "Design and architecture",
           description: "Define the technical architecture and design patterns for the feature",
           goals: [
             "Create a scalable and maintainable architecture",
@@ -162,7 +263,7 @@ app.post('/api/claude/process-idea', async (req, res) => {
         },
         {
           id: Math.random().toString(36).substring(2, 9),
-          title: "Core Implementation",
+          title: "Core implementation",
           description: "Build the main functionality based on the design",
           goals: [
             "Implement all required features",
@@ -178,7 +279,10 @@ app.post('/api/claude/process-idea', async (req, res) => {
         }
       ];
 
-      return res.json({ tasks: mockTasks });
+      return res.json({ 
+        generalMarkdown: mockGeneralMarkdown,
+        tasks: mockTasks 
+      });
     }
 
     const response = await claudeService.processIdea(idea, model);
@@ -549,7 +653,12 @@ function parseWorkItemMarkdown(content) {
     metadata: null
   };
 
-  if (!content) return workItem;
+  if (!content) {
+    console.log('parseWorkItemMarkdown: No content provided');
+    return workItem;
+  }
+  
+  console.log('parseWorkItemMarkdown: Parsing content length:', content.length);
 
   // Extract title (first # heading)
   const titleMatch = content.match(/^#\s+(.+)$/m);
@@ -582,19 +691,17 @@ function parseWorkItemMarkdown(content) {
   }
 
   // Extract detailed tasks (stop at Metadata or next ## section)
-  const tasksMatch = content.match(/##\s*Tasks\s*\n+([\s\S]*?)(?=\n##\s*(?:Metadata|$))/i);
+  const tasksMatch = content.match(/##\s*Tasks\s*\n+([\s\S]*?)(?=\n##\s*(?:Metadata|$)|$)/i);
   if (tasksMatch) {
     const tasksContent = tasksMatch[1].trim();
-    // Split by "### Task" but keep the content after it
-    const taskSections = tasksContent.split(/(?=###\s*Task\s+)/);
+    // Split by "### " to find task sections
+    const taskSections = tasksContent.split(/(?=###\s*)/);
     const taskMatches = taskSections.filter(t => t.trim() && t.includes('###'));
     
     console.log('Tasks content length:', tasksContent.length);
     console.log('Task sections found:', taskMatches.length);
     
     workItem.tasks = taskMatches.map(taskSection => {
-      // Remove the ### Task prefix
-      const taskContent = taskSection.replace(/###\s*Task\s+/, '');
       const task = {
         id: '',
         taskNumber: '',
@@ -605,37 +712,38 @@ function parseWorkItemMarkdown(content) {
         validationCriteria: []
       };
       
-      // Extract task number and title
-      const titleMatch = taskContent.match(/^(\d+[a-z]?):\s*(.+?)(?:\n|$)/);
+      // Extract task number and title from "### 1. Task Title" format
+      const titleMatch = taskSection.match(/###\s*(\d+[a-z]?)\.\s*(.+?)(?:\n|$)/);
       if (titleMatch) {
         task.taskNumber = titleMatch[1];
         task.title = titleMatch[2].trim();
         task.id = `task-${titleMatch[1]}`; // Generate ID from task number
       }
       
-      // Extract description
-      const descMatch = taskContent.match(/\*\*Description:\*\*\s*(.+?)(?=\n\*\*|$)/s);
-      if (descMatch) {
+      // Extract description (not labeled with **)
+      const contentAfterTitle = taskSection.substring(taskSection.indexOf('\n') + 1);
+      const descMatch = contentAfterTitle.match(/^([\s\S]*?)(?=\n\*\*|$)/);
+      if (descMatch && descMatch[1].trim() && !descMatch[1].trim().startsWith('**')) {
         task.description = descMatch[1].trim();
       }
       
       // Extract goals
-      const goalsMatch = taskContent.match(/\*\*Goals:\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/);
+      const goalsMatch = taskSection.match(/\*\*Goals:\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/);
       if (goalsMatch) {
         const goalLines = goalsMatch[1].trim().split('\n');
         task.goals = goalLines
-          .filter(line => line.match(/^-\s*\[[\sx]\]/))
-          .map(line => line.replace(/^-\s*\[[\sx]\]\s*/, '').trim());
+          .filter(line => line.match(/^-\s*/))
+          .map(line => line.replace(/^-\s*/, '').trim());
       }
       
       // Extract work description
-      const workMatch = taskContent.match(/\*\*Work\s+Description:\*\*\s*\n?([\s\S]*?)(?=\n\*\*|$)/);
+      const workMatch = taskSection.match(/\*\*Work\s+Description:\*\*\s*\n?([\s\S]*?)(?=\n\*\*|$)/);
       if (workMatch) {
         task.workDescription = workMatch[1].trim();
       }
       
-      // Extract acceptance criteria
-      const criteriaMatch = taskContent.match(/\*\*Acceptance\s+Criteria:\*\*\s*\n?([\s\S]*?)$/);
+      // Extract validation criteria
+      const criteriaMatch = taskSection.match(/\*\*Validation\s+Criteria:\*\*\s*\n?([\s\S]*?)(?=\n\*\*|###|$)/);
       if (criteriaMatch) {
         const criteriaLines = criteriaMatch[1].trim().split('\n');
         task.validationCriteria = criteriaLines
@@ -659,13 +767,38 @@ function parseWorkItemMarkdown(content) {
       .map(line => line.replace(/^-\s*/, '').trim());
   }
 
-  // Extract metadata (if exists - for backward compatibility)
+  // Extract metadata (try both JSON and plain text formats)
   const metadataMatch = content.match(/##\s*Metadata\s*\n+```json\n([\s\S]*?)\n```/i);
   if (metadataMatch) {
     try {
       workItem.metadata = JSON.parse(metadataMatch[1]);
     } catch (err) {
       // Invalid JSON
+    }
+  } else {
+    // Try plain text metadata format
+    const plainMetadataMatch = content.match(/##\s*Metadata\s*\n+([\s\S]*?)(?=\n##|$)/i);
+    if (plainMetadataMatch) {
+      const metadataContent = plainMetadataMatch[1].trim();
+      
+      // Extract work item ID
+      const idMatch = metadataContent.match(/-\s*Work\s*Item\s*ID:\s*(.+)/i);
+      if (idMatch) {
+        workItem.metadata = workItem.metadata || {};
+        workItem.metadata.workItemId = idMatch[1].trim();
+      }
+      
+      // Extract priority
+      const priorityMatch = metadataContent.match(/-\s*Priority:\s*(.+)/i);
+      if (priorityMatch) {
+        workItem.priority = priorityMatch[1].trim();
+      }
+      
+      // Extract status
+      const statusMatch2 = metadataContent.match(/-\s*Status:\s*(.+)/i);
+      if (statusMatch2) {
+        workItem.status = statusMatch2[1].trim();
+      }
     }
   }
 
@@ -1191,15 +1324,23 @@ app.post('/api/workspace/project-details', async (req, res) => {
         const plansPath = path.join(projectPath, 'plans', planType);
         const planFiles = await fs.readdir(plansPath);
         
-        project.plans[planType] = planFiles
+        const plansPromises = planFiles
           .filter(file => file.endsWith('.md') && file !== 'TEMPLATE.md')
-          .map(file => ({
-            name: file.replace('.md', ''),
-            path: path.join(plansPath, file),
-            status: planType,
-            // Don't read content yet - lazy load when needed
-            contentLoaded: false
-          }));
+          .map(async (file) => {
+            const planPath = path.join(plansPath, file);
+            const content = await fs.readFile(planPath, 'utf-8');
+            const parsedWorkItem = parseWorkItemMarkdown(content);
+            
+            return {
+              name: file.replace('.md', ''),
+              path: planPath,
+              status: planType,
+              content: content,
+              workItem: parsedWorkItem
+            };
+          });
+        
+        project.plans[planType] = await Promise.all(plansPromises);
       } catch (err) {
         // Plan directory might not exist
       }
@@ -1219,6 +1360,190 @@ app.post('/api/workspace/project-details', async (req, res) => {
     console.error('Error reading project details:', error);
     res.status(500).json({ 
       error: 'Failed to read project details',
+      details: error.message 
+    });
+  }
+});
+
+// Create a new work item
+app.post('/api/workspace/create-workitem', async (req, res) => {
+  try {
+    const { workspacePath, projectPath, workItem, generalMarkdown, tasks } = req.body;
+    
+    if (!workspacePath || !projectPath || !workItem) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Generate filename from title
+    const fileName = workItem.title.toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') + '.md';
+    
+    // Determine target folder based on status
+    const statusFolder = workItem.status === 'planned' ? 'planned' : 
+                        workItem.status === 'active' ? 'active' : 
+                        workItem.status === 'completed' ? 'completed' : 'ideas';
+    
+    const targetPath = path.join(projectPath, 'plans', statusFolder, fileName);
+    
+    // Create markdown content
+    let markdownContent = '';
+    
+    // If general markdown is provided, use it as the beginning
+    if (generalMarkdown) {
+      markdownContent = generalMarkdown + '\n\n';
+    } else {
+      // Fallback to old format if no general markdown
+      markdownContent = `# ${workItem.title}\n\n`;
+      markdownContent += `## Description\n\n${workItem.description || 'No description provided.'}\n\n`;
+    }
+    
+    // Add metadata section at the end with work item ID
+    markdownContent += `\n## Metadata\n\n`;
+    markdownContent += `- Work Item ID: ${workItem.id}\n`;
+    markdownContent += `- Priority: ${workItem.priority}\n`;
+    markdownContent += `- Status: ${workItem.status}\n\n`;
+    
+    if (tasks && tasks.length > 0) {
+      markdownContent += `## Tasks\n\n`;
+      tasks.forEach((task, index) => {
+        markdownContent += `### ${task.taskNumber || index + 1}. ${task.title}\n\n`;
+        if (task.description) {
+          markdownContent += `${task.description}\n\n`;
+        }
+        if (task.goals && task.goals.length > 0) {
+          markdownContent += `**Goals:**\n`;
+          task.goals.forEach(goal => {
+            markdownContent += `- ${goal}\n`;
+          });
+          markdownContent += '\n';
+        }
+        if (task.validationCriteria && task.validationCriteria.length > 0) {
+          markdownContent += `**Validation Criteria:**\n`;
+          task.validationCriteria.forEach(criteria => {
+            markdownContent += `- ${criteria}\n`;
+          });
+          markdownContent += '\n';
+        }
+      });
+    }
+    
+    // Ensure directory exists
+    await fs.mkdir(path.dirname(targetPath), { recursive: true });
+    
+    // Write the file
+    await fs.writeFile(targetPath, markdownContent);
+    
+    // Invalidate cache for this project
+    invalidateCache(`workspace-light:${workspacePath}`);
+    invalidateCache(`project-details:${projectPath}`);
+    invalidateCache(`workspace:${workspacePath}`);
+    
+    console.log(`Created work item at: ${targetPath}`);
+    
+    res.json({ 
+      success: true, 
+      path: targetPath,
+      fileName: fileName
+    });
+    
+  } catch (error) {
+    console.error('Error creating work item:', error);
+    res.status(500).json({ 
+      error: 'Failed to create work item',
+      details: error.message 
+    });
+  }
+});
+
+// Update existing work item
+app.post('/api/workspace/update-workitem', async (req, res) => {
+  try {
+    const { workspacePath, projectPath, workItem, generalMarkdown, tasks, markdownPath } = req.body;
+    
+    if (!workspacePath || !projectPath || !workItem) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Use existing path or generate new one
+    let targetPath = markdownPath;
+    if (!targetPath) {
+      const fileName = workItem.title.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') + '.md';
+      
+      const statusFolder = workItem.status === 'planned' ? 'planned' : 
+                          workItem.status === 'active' ? 'active' : 
+                          workItem.status === 'completed' ? 'completed' : 'ideas';
+      
+      targetPath = path.join(projectPath, 'plans', statusFolder, fileName);
+    }
+    
+    // Create markdown content (same as create)
+    let markdownContent = '';
+    
+    // If general markdown is provided, use it as the beginning
+    if (generalMarkdown) {
+      markdownContent = generalMarkdown + '\n\n';
+    } else {
+      // Fallback to old format if no general markdown
+      markdownContent = `# ${workItem.title}\n\n`;
+      markdownContent += `## Description\n\n${workItem.description || 'No description provided.'}\n\n`;
+    }
+    
+    // Add metadata section at the end with work item ID
+    markdownContent += `\n## Metadata\n\n`;
+    markdownContent += `- Work Item ID: ${workItem.id}\n`;
+    markdownContent += `- Priority: ${workItem.priority}\n`;
+    markdownContent += `- Status: ${workItem.status}\n\n`;
+    
+    if (tasks && tasks.length > 0) {
+      markdownContent += `## Tasks\n\n`;
+      tasks.forEach((task, index) => {
+        markdownContent += `### ${task.taskNumber || index + 1}. ${task.title}\n\n`;
+        if (task.description) {
+          markdownContent += `${task.description}\n\n`;
+        }
+        if (task.goals && task.goals.length > 0) {
+          markdownContent += `**Goals:**\n`;
+          task.goals.forEach(goal => {
+            markdownContent += `- ${goal}\n`;
+          });
+          markdownContent += '\n';
+        }
+        if (task.validationCriteria && task.validationCriteria.length > 0) {
+          markdownContent += `**Validation Criteria:**\n`;
+          task.validationCriteria.forEach(criteria => {
+            markdownContent += `- ${criteria}\n`;
+          });
+          markdownContent += '\n';
+        }
+      });
+    }
+    
+    // Ensure directory exists
+    await fs.mkdir(path.dirname(targetPath), { recursive: true });
+    
+    // Write the file
+    await fs.writeFile(targetPath, markdownContent);
+    
+    // Invalidate cache for this project
+    invalidateCache(`workspace-light:${workspacePath}`);
+    invalidateCache(`project-details:${projectPath}`);
+    invalidateCache(`workspace:${workspacePath}`);
+    invalidateCache(`work-item:${targetPath}`);
+    
+    console.log(`Updated work item at: ${targetPath}`);
+    
+    res.json({ 
+      success: true, 
+      path: targetPath
+    });
+    
+  } catch (error) {
+    console.error('Error updating work item:', error);
+    res.status(500).json({ 
+      error: 'Failed to update work item',
       details: error.message 
     });
   }
@@ -2555,6 +2880,16 @@ app.post('/api/work-items/delete', async (req, res) => {
     if (permanentDelete) {
       // Permanently delete the file
       await fs.unlink(fullPath);
+      
+      // Invalidate cache after permanent deletion
+      const pathParts = fullPath.split(path.sep);
+      const plansIndex = pathParts.lastIndexOf('plans');
+      const projectPath = pathParts.slice(0, plansIndex).join(path.sep);
+      const workspacePath = projectPath.split(path.sep).slice(0, -2).join(path.sep);
+      invalidateCache(`workspace-light:${workspacePath}`);
+      invalidateCache(`project-details:${projectPath}`);
+      invalidateCache(`workspace:${workspacePath}`);
+      
       res.json({ 
         success: true, 
         message: 'Work item markdown permanently deleted' 
@@ -2587,6 +2922,13 @@ app.post('/api/work-items/delete', async (req, res) => {
         newPath: path.relative(path.join(process.cwd(), '..'), destPath)
       });
     }
+    
+    // Invalidate cache after successful deletion/move
+    const projectPath = fullPath.split(path.sep).slice(0, pathParts.lastIndexOf('plans')).join(path.sep);
+    const workspacePath = projectPath.split(path.sep).slice(0, -2).join(path.sep);
+    invalidateCache(`workspace-light:${workspacePath}`);
+    invalidateCache(`project-details:${projectPath}`);
+    invalidateCache(`workspace:${workspacePath}`);
     
   } catch (error) {
     console.error('Error deleting/discarding work item:', error);
@@ -2702,6 +3044,281 @@ app.post('/api/claude/apply-changes', async (req, res) => {
     res.status(500).json({ 
       error: 'Failed to apply changes',
       details: error.message 
+    });
+  }
+});
+
+// Git repository endpoints
+
+// Get repository status
+app.get('/api/repos/:projectPath/:repoName/status', async (req, res) => {
+  try {
+    const { projectPath, repoName } = req.params;
+    const fullPath = `${decodeURIComponent(projectPath)}/${repoName}`;
+    
+    // Use subscription manager to get status
+    const status = await subscriptionManager.getRepoStatus(fullPath);
+    res.json(status);
+    
+  } catch (error) {
+    console.error('Error getting repo status:', error);
+    res.status(500).json({ 
+      error: 'Failed to get repository status',
+      message: error.message 
+    });
+  }
+});
+
+// Rebase repository on main
+app.post('/api/repos/:projectPath/:repoName/rebase', async (req, res) => {
+  try {
+    const { projectPath, repoName } = req.params;
+    const repoPath = path.join(decodeURIComponent(projectPath), 'repos', repoName);
+    
+    // Check if directory exists
+    await fs.access(repoPath);
+    
+    // Fetch latest from origin
+    execSync('git fetch origin main', { cwd: repoPath });
+    
+    // Get current branch
+    const currentBranch = execSync('git rev-parse --abbrev-ref HEAD', {
+      cwd: repoPath,
+      encoding: 'utf-8'
+    }).trim();
+    
+    if (currentBranch === 'main') {
+      return res.status(400).json({ error: 'Cannot rebase main on itself' });
+    }
+    
+    // Rebase on origin/main
+    try {
+      execSync('git rebase origin/main', { cwd: repoPath });
+      
+      // Force update subscription status
+      const resourceId = `repo-status:${decodeURIComponent(projectPath)}/${repoName}`;
+      subscriptionManager.forceCheckResources([resourceId]);
+      
+      res.json({ 
+        success: true, 
+        message: `Successfully rebased ${currentBranch} on main` 
+      });
+    } catch (rebaseError) {
+      // Abort rebase if it failed
+      try {
+        execSync('git rebase --abort', { cwd: repoPath });
+      } catch (abortError) {
+        // Ignore abort errors
+      }
+      
+      throw new Error(`Rebase failed: ${rebaseError.message}`);
+    }
+    
+  } catch (error) {
+    console.error('Error rebasing repository:', error);
+    res.status(500).json({ 
+      error: 'Failed to rebase repository',
+      message: error.message 
+    });
+  }
+});
+
+// Reset repository to main
+app.post('/api/repos/:projectPath/:repoName/reset', async (req, res) => {
+  try {
+    const { projectPath, repoName } = req.params;
+    const { stashChanges = false } = req.body;
+    const repoPath = path.join(decodeURIComponent(projectPath), 'repos', repoName);
+    
+    // Check if directory exists
+    await fs.access(repoPath);
+    
+    // Stash changes if requested
+    if (stashChanges) {
+      try {
+        const status = execSync('git status --porcelain', { 
+          cwd: repoPath, 
+          encoding: 'utf-8' 
+        });
+        
+        if (status.trim()) {
+          execSync('git stash push -m "Auto-stash before reset"', { cwd: repoPath });
+        }
+      } catch (stashError) {
+        console.error('Error stashing changes:', stashError);
+      }
+    }
+    
+    // Fetch latest
+    execSync('git fetch origin main', { cwd: repoPath });
+    
+    // Checkout main
+    execSync('git checkout main', { cwd: repoPath });
+    
+    // Reset to origin/main
+    execSync('git reset --hard origin/main', { cwd: repoPath });
+    
+    // Force update subscription status
+    const resourceId = `repo-status:${decodeURIComponent(projectPath)}/${repoName}`;
+    subscriptionManager.forceCheckResources([resourceId]);
+    
+    res.json({ 
+      success: true, 
+      message: 'Successfully reset to main',
+      stashed: stashChanges 
+    });
+    
+  } catch (error) {
+    console.error('Error resetting repository:', error);
+    res.status(500).json({ 
+      error: 'Failed to reset repository',
+      message: error.message 
+    });
+  }
+});
+
+// Clone repository
+app.post('/api/repos/:projectPath/clone', async (req, res) => {
+  try {
+    const { projectPath } = req.params;
+    const { repoUrl, repoName: suggestedName } = req.body;
+    const decodedProjectPath = decodeURIComponent(projectPath);
+    
+    if (!repoUrl) {
+      return res.status(400).json({ error: 'Repository URL is required' });
+    }
+    
+    // Extract repo name from URL if not provided
+    let baseName = suggestedName;
+    if (!baseName) {
+      const urlParts = repoUrl.split('/');
+      baseName = urlParts[urlParts.length - 1].replace(/\.git$/, '');
+    }
+    
+    // Find existing clones to determine next number
+    const reposPath = path.join(decodedProjectPath, 'repos');
+    await fs.mkdir(reposPath, { recursive: true });
+    
+    const repoDirs = await fs.readdir(reposPath);
+    let nextNumber = 1;
+    
+    // Find all clones of this repo
+    repoDirs.forEach(dir => {
+      const match = dir.match(new RegExp(`^${baseName}-(\\d+)$`));
+      if (match) {
+        const num = parseInt(match[1]);
+        if (num >= nextNumber) {
+          nextNumber = num + 1;
+        }
+      }
+    });
+    
+    const newRepoName = `${baseName}-${nextNumber}`;
+    const newRepoPath = path.join(reposPath, newRepoName);
+    
+    console.log(`Cloning ${repoUrl} to ${newRepoPath}`);
+    
+    // Clone the repository
+    try {
+      execSync(`git clone "${repoUrl}" "${newRepoName}"`, {
+        cwd: reposPath,
+        stdio: 'pipe'
+      });
+    } catch (cloneError) {
+      console.error('Clone error:', cloneError);
+      return res.status(500).json({ 
+        error: 'Failed to clone repository',
+        message: cloneError.message 
+      });
+    }
+    
+    // Update REPOS.md if it exists
+    const reposFilePath = path.join(decodedProjectPath, 'REPOS.md');
+    try {
+      let reposContent = await fs.readFile(reposFilePath, 'utf-8');
+      
+      // Add new clone to available clones section
+      const availableSection = reposContent.match(/## Available clones\n([\s\S]*?)(?=\n##|$)/);
+      if (availableSection) {
+        const lines = availableSection[1].trim().split('\n');
+        lines.push(`- ${newRepoName}: Available`);
+        
+        reposContent = reposContent.replace(
+          availableSection[0],
+          `## Available clones\n\n${lines.join('\n')}\n`
+        );
+        
+        await fs.writeFile(reposFilePath, reposContent);
+      }
+    } catch (err) {
+      console.log('No REPOS.md file or error updating it:', err.message);
+    }
+    
+    // Invalidate cache
+    invalidateCache(`project-details:${decodedProjectPath}`);
+    invalidateCache(`workspace:`);
+    
+    // Force update subscription status
+    const resourceId = `repo-status:${decodedProjectPath}/${newRepoName}`;
+    subscriptionManager.forceCheckResources([resourceId]);
+    
+    res.json({ 
+      success: true, 
+      repoName: newRepoName,
+      path: newRepoPath,
+      message: `Successfully cloned repository as ${newRepoName}` 
+    });
+    
+  } catch (error) {
+    console.error('Error cloning repository:', error);
+    res.status(500).json({ 
+      error: 'Failed to clone repository',
+      message: error.message 
+    });
+  }
+});
+
+// Delete repository clone
+app.delete('/api/repos/:projectPath/:repoName', async (req, res) => {
+  try {
+    const { projectPath, repoName } = req.params;
+    const repoPath = path.join(decodeURIComponent(projectPath), 'repos', repoName);
+    
+    // Check if directory exists
+    await fs.access(repoPath);
+    
+    // Remove the directory
+    await fs.rm(repoPath, { recursive: true, force: true });
+    
+    // Update REPOS.md to remove this clone
+    const reposFilePath = path.join(decodeURIComponent(projectPath), 'REPOS.md');
+    try {
+      let reposContent = await fs.readFile(reposFilePath, 'utf-8');
+      
+      // Remove lines referencing this repo
+      const lines = reposContent.split('\n');
+      const filteredLines = lines.filter(line => !line.includes(repoName));
+      
+      await fs.writeFile(reposFilePath, filteredLines.join('\n'));
+    } catch (err) {
+      console.error('Error updating REPOS.md:', err);
+      // Continue even if REPOS.md update fails
+    }
+    
+    // Invalidate cache
+    invalidateCache(`project-details:${decodeURIComponent(projectPath)}`);
+    invalidateCache(`workspace:`);
+    
+    res.json({ 
+      success: true, 
+      message: `Successfully deleted ${repoName}` 
+    });
+    
+  } catch (error) {
+    console.error('Error deleting repository:', error);
+    res.status(500).json({ 
+      error: 'Failed to delete repository',
+      message: error.message 
     });
   }
 });

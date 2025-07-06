@@ -46,13 +46,8 @@ export function AnimatedTransition({
   useEffect(() => {
     // Update current content if key hasn't changed
     if (prevKeyRef.current === transitionKey) {
-      // Don't update children during transition
-      if (!state.isTransitioning) {
-        setState(prev => ({
-          ...prev,
-          current: children
-        }));
-      }
+      // Don't update the state at all if we're on the same key
+      // This preserves textarea cursor position and other DOM state
       return;
     }
 
@@ -131,7 +126,7 @@ export function AnimatedTransition({
           zIndex: 2
         }}
       >
-        {current}
+        {isTransitioning ? current : children}
       </div>
     </div>
   );

@@ -52,7 +52,7 @@ function NewWorkItemContent() {
   const { projectId, workItemId } = useParams<{ projectId?: string; workItemId?: string }>();
   const { currentStyles, isDarkMode } = useTheme();
   const { createWorkItem, updateWorkItem, projects, workItems } = useApp();
-  const { workspace } = useWorkspace();
+  const { workspace, reloadWorkspace } = useWorkspace();
   const { setHeaderTitle } = useLayout();
   const styles = currentStyles;
   
@@ -84,6 +84,12 @@ function NewWorkItemContent() {
   // Add local state for immediate UI response
   const [_isPending, startTransition] = useTransition();
   const [editorKey, setEditorKey] = useState(0);
+  
+  // State for what's selected in review step
+  const [selectedSection, setSelectedSection] = useState<'general' | 'task'>('general');
+  
+  // State for general markdown content
+  const [generalMarkdown, setGeneralMarkdown] = useState<string>('');
   
   // Project selection state
   const [selectedProjectId, setSelectedProjectId] = useState<string>(
@@ -225,6 +231,15 @@ function NewWorkItemContent() {
 
   // Initialize with existing work item data if in edit mode
   useEffect(() => {
+    console.log('=== Edit Mode Debug ===', {
+      isEditMode,
+      workItemId,
+      existingWorkItem,
+      hasMetadata: !!existingWorkItem?.metadata,
+      hasTasks: !!existingWorkItem?.metadata?.tasks,
+      tasksLength: existingWorkItem?.metadata?.tasks?.length
+    });
+    
     if (isEditMode && existingWorkItem && existingWorkItem.metadata?.tasks) {
       // Ensure tasks have all required properties
       const normalizedTasks = existingWorkItem.metadata.tasks.map((task: any) => ({
@@ -243,6 +258,24 @@ function NewWorkItemContent() {
       setSelectedTaskId(tasksWithNumbers[0]?.id || null);
       // Extract original idea from description or use title
       setSavedIdea(existingWorkItem.description || existingWorkItem.title);
+      
+      // Initialize general markdown for existing items
+      // If no general markdown exists, create a default one
+      if (existingWorkItem.metadata?.generalMarkdown) {
+        setGeneralMarkdown(existingWorkItem.metadata.generalMarkdown);
+      } else {
+        // Create default general markdown from existing data
+        const defaultMarkdown = `### Description
+
+${existingWorkItem.description || 'No description provided'}
+
+### Overall goals
+
+- [ ] Complete all tasks successfully
+- [ ] Meet project requirements`;
+        setGeneralMarkdown(defaultMarkdown);
+      }
+      
       // Start at review step for editing
       setStep('review');
     }
@@ -309,6 +342,12 @@ ${(selectedTask.validationCriteria || []).map(criteria => `- ${criteria}`).join(
       }
 
       const data = await response.json();
+      
+      // Handle new response format with generalMarkdown
+      if (data.generalMarkdown) {
+        setGeneralMarkdown(data.generalMarkdown);
+      }
+      
       const numberedTasks = assignTaskNumbers(data.tasks);
       setTasks(numberedTasks);
       setSelectedTaskId(numberedTasks[0]?.id || null);
@@ -402,6 +441,8 @@ ${(selectedTask.validationCriteria || []).map(criteria => `- ${criteria}`).join(
   };
 
   const createOrUpdateWorkItems = async () => {
+    // Track whether we successfully saved to disk
+    let savedToDisk = false;
     // Make sure to update the currently selected task with the latest edited content
     if (selectedTaskId && editedContent) {
       updateTaskFromMarkdown();
@@ -420,7 +461,8 @@ ${(selectedTask.validationCriteria || []).map(criteria => `- ${criteria}`).join(
         description: savedIdea || existingWorkItem.description,
         metadata: {
           tasks: tasks,
-          currentTaskIndex: existingWorkItem.metadata?.currentTaskIndex || 0
+          currentTaskIndex: existingWorkItem.metadata?.currentTaskIndex || 0,
+          generalMarkdown: generalMarkdown
         },
         updatedAt: new Date()
       });
@@ -455,7 +497,8 @@ ${(selectedTask.validationCriteria || []).map(criteria => `- ${criteria}`).join(
         // Store the tasks data for the work items UI to display
         metadata: {
           tasks: tasks,
-          currentTaskIndex: 0
+          currentTaskIndex: 0,
+          generalMarkdown: generalMarkdown
         }
       });
     }
@@ -478,6 +521,7 @@ ${(selectedTask.validationCriteria || []).map(criteria => `- ${criteria}`).join(
             priority: workItem.priority,
             status: workItem.status
           },
+          generalMarkdown: generalMarkdown,
           tasks: tasks
         };
         
@@ -507,6 +551,18 @@ ${(selectedTask.validationCriteria || []).map(criteria => `- ${criteria}`).join(
           if (result.path) {
             updateWorkItem(workItem.id, { markdownPath: result.path });
           }
+          
+          // Invalidate client-side cache and reload workspace
+          if (!isEditMode) {
+            // For new items, we need to invalidate cache
+            const { invalidateCache } = await import('../utils/cache');
+            invalidateCache(`workspace-light:${workspace.config.path}`);
+            invalidateCache(`project-details:${currentProject.path}`);
+            
+            // Trigger workspace reload to sync the new work item
+            await reloadWorkspace();
+            savedToDisk = true;
+          }
         }
       } catch (error) {
         console.error('Error saving work item as markdown:', error);
@@ -521,10 +577,19 @@ ${(selectedTask.validationCriteria || []).map(criteria => `- ${criteria}`).join(
     }
 
     // Navigate back to appropriate page
-    if (isEditMode) {
-      navigate('/work-items'); // Always go back to work items after edit
+    // If we saved to disk and it's a new item, wait a moment for sync to complete
+    if (!isEditMode && savedToDisk) {
+      // Give the workspace sync a moment to complete
+      setTimeout(() => {
+        navigate(projectId ? `/projects` : '/work-items');
+      }, 100);
     } else {
-      navigate(projectId ? `/projects` : '/work-items');
+      // For edits or items not saved to disk, navigate immediately
+      if (isEditMode) {
+        navigate('/work-items');
+      } else {
+        navigate(projectId ? `/projects` : '/work-items');
+      }
     }
   };
 
@@ -639,9 +704,34 @@ ${(selectedTask.validationCriteria || []).map(criteria => `- ${criteria}`).join(
       {/* Step 2: Review Tasks */}
       <DropdownTransition isOpen={step === 'review'}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" style={{ maxHeight: 'calc(100vh - 20rem)' }}>
-          {/* Task List */}
+          {/* Left Panel - General Details and Task List */}
           <div className={`lg:col-span-1 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-4 flex flex-col`} style={{ maxHeight: 'calc(100vh - 20rem)' }}>
-            <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4 flex-shrink-0`}>Tasks</h2>
+            {/* General Details Section */}
+            <div className="mb-4">
+              <button
+                onClick={() => {
+                  setSelectedSection('general');
+                  setSelectedTaskId(null);
+                }}
+                className={`
+                  w-full text-left p-3 ${styles.buttonRadius} border
+                  ${selectedSection === 'general' && !selectedTaskId
+                    ? `${styles.primaryButton} ${styles.primaryButtonText} border-transparent` 
+                    : `${styles.contentBg} ${styles.contentBorder} ${styles.textColor} hover:opacity-80`
+                  }
+                  transition-none
+                `}
+              >
+                <div className="font-medium">Work item description</div>
+                <div className={`text-sm mt-1 ${selectedSection === 'general' && !selectedTaskId ? 'opacity-90' : styles.mutedText}`}>
+                  Overview and goals
+                </div>
+              </button>
+            </div>
+            
+            <div className={`border-t pt-4 ${styles.contentBorder}`}>
+              <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4 flex-shrink-0`}>Tasks</h2>
+            </div>
             
             <div className="space-y-2 overflow-y-auto flex-1 min-h-0">
               {tasks.map((task) => (
@@ -649,6 +739,7 @@ ${(selectedTask.validationCriteria || []).map(criteria => `- ${criteria}`).join(
                   key={task.id}
                   onClick={() => {
                     if (selectedTaskId !== task.id) {
+                      setSelectedSection('task');
                       setSelectedTaskId(task.id);
                     }
                   }}
@@ -712,9 +803,50 @@ ${(selectedTask.validationCriteria || []).map(criteria => `- ${criteria}`).join(
             </div>
           </div>
 
-          {/* Task Details */}
+          {/* Right Panel - Details View */}
           <div className={`lg:col-span-2 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} flex flex-col overflow-hidden`} style={{ maxHeight: 'calc(100vh - 20rem)' }}>
-            {selectedTask ? (
+            {selectedSection === 'general' && !selectedTaskId ? (
+              // General Details View with MDXEditor
+              <>
+                <div className={`px-4 py-2 border-b ${styles.contentBorder} flex-shrink-0`}>
+                  <h3 className={`font-medium ${styles.headingColor}`}>
+                    {tasks.length > 0 ? tasks[0].title : 'Work item'}
+                  </h3>
+                </div>
+                <div className={`flex-1 min-h-0 ${isDarkMode ? 'mdx-dark' : 'mdx-light'} mdx-edge-to-edge flex flex-col`}>
+                  <MDXEditor
+                    key={`general-${editorKey}`}
+                    markdown={generalMarkdown}
+                    onChange={(value) => setGeneralMarkdown(value || '')}
+                    contentEditableClassName="prose prose-neutral dark:prose-invert max-w-none p-4"
+                    plugins={[
+                      headingsPlugin(),
+                      listsPlugin(),
+                      quotePlugin(),
+                      thematicBreakPlugin(),
+                      markdownShortcutPlugin(),
+                      toolbarPlugin({
+                        toolbarContents: () => (
+                          <>
+                            <UndoRedo />
+                            <Separator />
+                            <BoldItalicUnderlineToggles />
+                            <Separator />
+                            <ListsToggle />
+                            <Separator />
+                            <BlockTypeSelect />
+                            <Separator />
+                            <CreateLink />
+                            <InsertThematicBreak />
+                          </>
+                        )
+                      })
+                    ]}
+                  />
+                </div>
+              </>
+            ) : selectedTask ? (
+              // Task Details View
               <>
                 <div className={`px-4 py-2 border-b ${styles.contentBorder} flex-shrink-0`}>
                   <h3 className={`font-medium ${styles.headingColor}`}>
@@ -756,8 +888,8 @@ ${(selectedTask.validationCriteria || []).map(criteria => `- ${criteria}`).join(
                 </div>
               </>
             ) : (
-              <div className={`text-center ${styles.mutedText}`}>
-                Select a task to view details
+              <div className={`text-center ${styles.mutedText} p-6`}>
+                Select an item to view details
               </div>
             )}
           </div>
@@ -777,7 +909,7 @@ ${(selectedTask.validationCriteria || []).map(criteria => `- ${criteria}`).join(
             onClick={createOrUpdateWorkItems}
             variant="primary"
           >
-            {isEditMode ? 'Update Work Item' : 'Create Work Item'}
+            {isEditMode ? 'Update work item' : 'Create work item'}
           </Button>
         </div>
       </DropdownTransition>

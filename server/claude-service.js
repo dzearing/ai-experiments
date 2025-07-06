@@ -131,19 +131,32 @@ class ClaudeService {
 
 "${idea}"
 
-Please break this down into specific, actionable tasks. For each task, provide:
-1. A clear, concise title
+Please create:
+1. A general work item description in markdown format
+2. A breakdown of specific, actionable tasks
+
+For the general markdown:
+- Do NOT include the title as H1 (it will be displayed separately)
+- Use H3 (###) for sections like "Description" and "Overall goals"
+- Use sentence case for all headers (e.g., "Overall goals" not "Overall Goals")
+- Reword the description to use third-person language (convert "I want" to "The user wants", "I need" to "The system needs", etc.)
+- Make the description clear, concise, and professional
+- Do NOT include Priority or Status sections
+
+For each task, provide:
+1. A clear, concise title in sentence case (e.g., "Design authentication UI components" not "Design Authentication UI Components")
 2. A detailed description
 3. 2-3 specific goals
 4. A work description explaining what needs to be done
 5. 2-3 validation criteria to verify the task is complete
 
-Respond with a JSON array of tasks in this exact format:
+Respond with JSON in this exact format:
 {
+  "generalMarkdown": "### Description\\n\\nProfessional description here...\\n\\n### Overall goals\\n\\n- [ ] Goal 1\\n- [ ] Goal 2",
   "tasks": [
     {
       "id": "unique-id",
-      "title": "Task Title",
+      "title": "Task title in sentence case",
       "description": "Detailed description",
       "goals": ["Goal 1", "Goal 2"],
       "workDescription": "What needs to be done",

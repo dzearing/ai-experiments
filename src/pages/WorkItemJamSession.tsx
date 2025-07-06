@@ -258,13 +258,13 @@ ${task.validationCriteria?.map((c: string) => `- ${c}`).join('\n') || '- No crit
               setPersona(existingPersona);
               
               // Load existing messages
-              const sessionMessages = session.messages.map(msg => ({
+              const sessionMessages: ChatMessage[] = session.messages.map(msg => ({
                 id: msg.id,
-                personaId: msg.senderId,
+                personaId: msg.personaId,
                 content: msg.content,
                 timestamp: new Date(msg.timestamp),
-                type: msg.type || 'message' as const,
-                suggestedResponses: msg.senderId !== 'user' ? getSuggestedResponses('message') : undefined
+                type: (msg.type === 'challenge' || msg.type === 'decision') ? 'message' : msg.type as ChatMessage['type'],
+                suggestedResponses: msg.personaId !== 'user' ? getSuggestedResponses('message') : undefined
               }));
               
               setMessages(sessionMessages);

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import { useTheme } from '../contexts/ThemeContextV2';
@@ -25,7 +25,7 @@ interface AgentSuggestion {
 }
 
 // Step 1: Describe Work
-function DescribeWorkStep({ onNext, workDescription, setWorkDescription, isAnalyzing, setIsAnalyzing, setAgentSuggestion }: StepProps & {
+const DescribeWorkStep = memo(function DescribeWorkStep({ onNext, workDescription, setWorkDescription, isAnalyzing, setIsAnalyzing, setAgentSuggestion }: StepProps & {
   workDescription: string;
   setWorkDescription: (value: string) => void;
   isAnalyzing: boolean;
@@ -132,6 +132,7 @@ function DescribeWorkStep({ onNext, workDescription, setWorkDescription, isAnaly
         </label>
         <textarea
           id="workDescription"
+          key="workDescription-textarea"
           value={workDescription}
           onChange={(e) => setWorkDescription(e.target.value)}
           onKeyDown={(e) => {
@@ -172,7 +173,7 @@ function DescribeWorkStep({ onNext, workDescription, setWorkDescription, isAnaly
       </div>
     </div>
   );
-}
+});
 
 // Step 2: Review and Customize
 function ReviewCustomizeStep({ onNext, onBack, agentSuggestion, setAgentSuggestion, avatarSeed, setAvatarSeed }: StepProps & {

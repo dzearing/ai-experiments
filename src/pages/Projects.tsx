@@ -94,11 +94,14 @@ export function Projects() {
             const primaryRepo = project.repositories?.find(r => r.isPrimary) || project.repositories?.[0];
             
             return (
-              <div
+              <Link
                 key={project.id}
+                to={`/projects/${project.id}`}
                 className={`
+                  block
                   ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius}
                   ${styles.cardShadow} p-6
+                  transition-all hover:shadow-lg hover:border-opacity-80
                 `}
               >
                 <div className="flex items-start justify-between">
@@ -212,7 +215,14 @@ export function Projects() {
                   </div>
                   
                   <div className="flex items-center gap-2 ml-4">
-                    <IconButton aria-label="Edit project" variant="secondary">
+                    <IconButton 
+                      aria-label="Edit project" 
+                      variant="secondary"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        // TODO: Implement edit functionality
+                      }}
+                    >
                       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                       </svg>
@@ -220,7 +230,8 @@ export function Projects() {
                     <IconButton 
                       aria-label="Delete project" 
                       variant="secondary"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.preventDefault();
                         setDeleteProject(project);
                         setShowDeleteDialog(true);
                       }}
@@ -231,7 +242,7 @@ export function Projects() {
                     </IconButton>
                   </div>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>

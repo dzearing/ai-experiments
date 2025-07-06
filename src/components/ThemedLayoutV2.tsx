@@ -9,13 +9,14 @@ import { AnimatedOutletWrapper } from './AnimatedOutletWrapper';
 import { useNavigationDirection } from '../hooks/useNavigationDirection';
 import { SettingsMenu } from './SettingsMenu';
 import { AuthAvatar } from './AuthAvatar';
+import { Breadcrumb } from './ui/Breadcrumb';
 
 export function ThemedLayoutV2() {
   const location = useLocation();
   const { currentStyles, backgroundEffectEnabled } = useTheme();
   const { workspace } = useWorkspace();
   const { projects, workItems } = useApp();
-  const { headerTitle } = useLayout();
+  const { headerTitle, headerContent } = useLayout();
   const styles = currentStyles;
   const direction = useNavigationDirection();
 
@@ -51,6 +52,11 @@ export function ThemedLayoutV2() {
   
   // Determine what to show in the header
   const getHeaderContent = () => {
+    // If headerContent is set by a page component, use it
+    if (headerContent !== null) {
+      return headerContent;
+    }
+    
     // If headerTitle is set by a page component, use it
     if (headerTitle) {
       return headerTitle;
@@ -142,19 +148,40 @@ export function ThemedLayoutV2() {
       <div className="flex-1 flex flex-col relative z-10 overflow-hidden">
         <header className={`${styles.contentBg} ${styles.contentBorder} border-b px-4 py-4 relative flex-shrink-0 flex items-center justify-between`}>
           <div className="flex-1">
-            {getHeaderContent() && (
-              <AnimatedTransition 
-                transitionKey={location.pathname}
-                className="h-8"
-                delay={100}
-                reverse={direction === 'backward'}
-                centered={false}
-              >
-                <h2 className={`text-xl font-semibold ${styles.headingColor}`}>
-                  {getHeaderContent()}
-                </h2>
-              </AnimatedTransition>
-            )}
+            {(() => {
+              const content = getHeaderContent();
+              if (!content) return null;
+              
+              // Check if content is an array (breadcrumbs)
+              if (Array.isArray(content)) {
+                return (
+                  <AnimatedTransition 
+                    transitionKey={location.pathname}
+                    className="h-8"
+                    delay={100}
+                    reverse={direction === 'backward'}
+                    centered={false}
+                  >
+                    <Breadcrumb items={content} />
+                  </AnimatedTransition>
+                );
+              }
+              
+              // Otherwise it's a string
+              return (
+                <AnimatedTransition 
+                  transitionKey={location.pathname}
+                  className="h-8"
+                  delay={100}
+                  reverse={direction === 'backward'}
+                  centered={false}
+                >
+                  <h2 className={`text-xl font-semibold ${styles.headingColor}`}>
+                    {content}
+                  </h2>
+                </AnimatedTransition>
+              );
+            })()}
           </div>
           <div className="flex items-center gap-4">
             {workspace.config && (

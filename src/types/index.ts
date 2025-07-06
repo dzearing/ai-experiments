@@ -80,6 +80,7 @@ export interface WorkItem {
     goals?: string[];
     acceptanceCriteria?: string[];
     workItemId?: string;
+    generalMarkdown?: string;
   };
 }
 

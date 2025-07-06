@@ -92,6 +92,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
             );
 
             // Update the specific project with full details
+            console.log('Updating project with details:', project.name, details);
             setProjects(prev => prev.map(p => 
               p.path === project.path ? { ...p, ...details, isLoading: false } : p
             ));
