@@ -2844,6 +2844,121 @@ app.post('/api/workspace/update-repos-md', async (req, res) => {
   }
 });
 
+// Add new repository to project
+app.post('/api/workspace/add-repository', async (req, res) => {
+  try {
+    const { projectPath, repositoryUrl } = req.body;
+    
+    if (!projectPath || !repositoryUrl) {
+      return res.status(400).json({ error: 'Project path and repository URL are required' });
+    }
+
+    // Read current README.md
+    const readmePath = path.join(projectPath, 'README.md');
+    let readmeContent = '';
+    try {
+      readmeContent = await fs.readFile(readmePath, 'utf-8');
+    } catch (err) {
+      console.log('No existing README.md, will create one');
+    }
+
+    // Parse repository information from URL
+    const repoInfo = {
+      url: repositoryUrl,
+      type: repositoryUrl.includes('github.com') ? 'github' : 'ado',
+      visibility: 'private', // Default to private
+    };
+
+    // Extract repo name from URL
+    const repoName = repositoryUrl.split('/').pop()?.replace('.git', '') || 'unknown';
+
+    // Update README.md to add new repository
+    if (readmeContent) {
+      // Find repository section
+      const repoSectionMatch = readmeContent.match(/##?\s*(?:Repository|Repositories)\s*\n([\s\S]*?)(?=\n##|$)/i);
+      
+      if (repoSectionMatch) {
+        // Add to existing repository section
+        const updatedSection = repoSectionMatch[0] + 
+          `\n### Additional Repository: ${repoName}\n` +
+          `- **URL**: ${repoInfo.url}\n` +
+          `- **Type**: ${repoInfo.type === 'github' ? 'GitHub' : 'Azure DevOps'}\n` +
+          `- **Access**: ${repoInfo.visibility === 'public' ? 'Public' : 'Private'}\n`;
+        
+        readmeContent = readmeContent.replace(repoSectionMatch[0], updatedSection);
+      } else {
+        // Add new repository section
+        readmeContent += `\n## Repositories\n\n`;
+        readmeContent += `### ${repoName}\n`;
+        readmeContent += `- **URL**: ${repoInfo.url}\n`;
+        readmeContent += `- **Type**: ${repoInfo.type === 'github' ? 'GitHub' : 'Azure DevOps'}\n`;
+        readmeContent += `- **Access**: ${repoInfo.visibility === 'public' ? 'Public' : 'Private'}\n`;
+      }
+    } else {
+      // Create new README
+      const projectName = path.basename(projectPath);
+      readmeContent = `# ${projectName}\n\n`;
+      readmeContent += `## Description\n\nProject with multiple repositories.\n\n`;
+      readmeContent += `## Repositories\n\n`;
+      readmeContent += `### ${repoName}\n`;
+      readmeContent += `- **URL**: ${repoInfo.url}\n`;
+      readmeContent += `- **Type**: ${repoInfo.type === 'github' ? 'GitHub' : 'Azure DevOps'}\n`;
+      readmeContent += `- **Access**: ${repoInfo.visibility === 'public' ? 'Public' : 'Private'}\n`;
+    }
+
+    // Write updated README
+    await fs.writeFile(readmePath, readmeContent);
+
+    // Update REPOS.md to include new repository info
+    const reposPath = path.join(projectPath, 'REPOS.md');
+    let reposContent = '';
+    
+    try {
+      reposContent = await fs.readFile(reposPath, 'utf-8');
+      
+      // Update repository information section
+      const infoSection = reposContent.match(/##\s*Repository\s+information\s*\n([\s\S]*?)(?=\n##|$)/);
+      if (infoSection) {
+        // Check if this is the first additional repo
+        const hasMultipleRepos = infoSection[1].includes('Additional repositories:');
+        
+        if (!hasMultipleRepos) {
+          // Add "Additional repositories:" section
+          const updatedInfo = infoSection[0].trimEnd() + '\n\n### Additional repositories:\n' +
+            `- **${repoName}**: ${repoInfo.url}\n`;
+          reposContent = reposContent.replace(infoSection[0], updatedInfo);
+        } else {
+          // Add to existing additional repos
+          const updatedInfo = infoSection[0].trimEnd() + 
+            `- **${repoName}**: ${repoInfo.url}\n`;
+          reposContent = reposContent.replace(infoSection[0], updatedInfo);
+        }
+      }
+      
+      await fs.writeFile(reposPath, reposContent);
+    } catch (err) {
+      console.log('Could not update REPOS.md:', err.message);
+    }
+
+    // Invalidate cache
+    invalidateCache(`project-details:${projectPath}`);
+    invalidateCache(`workspace:`);
+
+    res.json({ 
+      success: true,
+      message: 'Repository added to project successfully',
+      repository: repoInfo
+    });
+
+  } catch (error) {
+    console.error('Error adding repository to project:', error);
+    res.status(500).json({ 
+      error: 'Failed to add repository to project',
+      details: error.message 
+    });
+  }
+});
+
 // Test endpoint
 app.get('/api/test', (req, res) => {
   res.json({ message: 'Test endpoint works' });

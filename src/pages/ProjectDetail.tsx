@@ -8,6 +8,7 @@ import { useWorkspace } from '../contexts/WorkspaceContext';
 import { useApp } from '../contexts/AppContext';
 import { Button } from '../components/ui/Button';
 import { IconButton } from '../components/ui/IconButton';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { apiUrl } from '../config/api';
 import type { WorkspaceRepo, WorkspaceProject } from '../types/workspace';
 
@@ -56,6 +57,10 @@ export function ProjectDetail() {
   const [showCloneDialog, setShowCloneDialog] = useState(false);
   const [cloneUrl, setCloneUrl] = useState('');
   const [isCloning, setIsCloning] = useState(false);
+  const [cloneMode, setCloneMode] = useState<'existing' | 'new'>('existing');
+  const [selectedRepoUrl, setSelectedRepoUrl] = useState('');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [repoToDelete, setRepoToDelete] = useState<WorkspaceRepo | null>(null);
 
   // Set breadcrumb on mount
   useEffect(() => {
@@ -116,8 +121,8 @@ export function ProjectDetail() {
       }
       
       showToast(`Successfully rebased ${repo.name}-${repo.number} on main`, 'success');
-    } catch (error: any) {
-      showToast(`Failed to rebase: ${error.message}`, 'error');
+    } catch (error) {
+      showToast(`Failed to rebase: ${(error as Error).message}`, 'error');
     } finally {
       setLoadingActions(prev => {
         const newSet = new Set(prev);
@@ -144,8 +149,8 @@ export function ProjectDetail() {
       }
       
       showToast(`Successfully reset ${repo.name}-${repo.number} to main`, 'success');
-    } catch (error: any) {
-      showToast(`Failed to reset: ${error.message}`, 'error');
+    } catch (error) {
+      showToast(`Failed to reset: ${(error as Error).message}`, 'error');
     } finally {
       setLoadingActions(prev => {
         const newSet = new Set(prev);
@@ -155,16 +160,20 @@ export function ProjectDetail() {
     }
   };
 
-  const handleDelete = async (repo: WorkspaceRepo) => {
-    if (!confirm(`Are you sure you want to delete ${repo.name}-${repo.number}? This action cannot be undone.`)) {
-      return;
-    }
-    
-    const key = `delete-${repo.name}-${repo.number}`;
+  const handleDelete = (repo: WorkspaceRepo) => {
+    setRepoToDelete(repo);
+    setShowDeleteDialog(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!repoToDelete || !project) return;
+
+    const key = `delete-${repoToDelete.name}-${repoToDelete.number}`;
     setLoadingActions(prev => new Set(prev).add(key));
+    setShowDeleteDialog(false);
     
     try {
-      const response = await fetch(apiUrl(`/api/repos/${encodeURIComponent(project.path || '')}/${repo.name}-${repo.number}`), {
+      const response = await fetch(apiUrl(`/api/repos/${encodeURIComponent(project.path || '')}/${repoToDelete.name}-${repoToDelete.number}`), {
         method: 'DELETE'
       });
       
@@ -173,17 +182,18 @@ export function ProjectDetail() {
         throw new Error(error.message || 'Failed to delete');
       }
       
-      showToast(`Successfully deleted ${repo.name}-${repo.number}`, 'success');
+      showToast(`Successfully deleted ${repoToDelete.name}-${repoToDelete.number}`, 'success');
       // Refresh project data
       await reloadWorkspace();
-    } catch (error: any) {
-      showToast(`Failed to delete: ${error.message}`, 'error');
+    } catch (error) {
+      showToast(`Failed to delete: ${(error as Error).message}`, 'error');
     } finally {
       setLoadingActions(prev => {
         const newSet = new Set(prev);
         newSet.delete(key);
         return newSet;
       });
+      setRepoToDelete(null);
     }
   };
 
@@ -219,26 +229,40 @@ export function ProjectDetail() {
   };
 
   const handleClone = async () => {
-    if (!cloneUrl.trim() || !project) return;
+    if (!project) return;
     
     setIsCloning(true);
     try {
-      // Extract repo URL from the project
-      let repoUrl = cloneUrl.trim();
+      let repoUrl: string;
       
-      // If user provided just the repo name, try to construct the URL
-      if (!repoUrl.includes('/') && appProject?.repositories?.[0]) {
-        const baseRepo = appProject.repositories[0];
-        if (baseRepo.url.includes('github.com')) {
-          const parts = baseRepo.url.split('/');
-          const owner = parts[parts.length - 2];
-          repoUrl = `https://github.com/${owner}/${repoUrl}`;
-          if (!repoUrl.endsWith('.git')) {
-            repoUrl += '.git';
-          }
+      if (cloneMode === 'new') {
+        // Adding new repository to project
+        if (!cloneUrl.trim()) return;
+        
+        repoUrl = cloneUrl.trim();
+        
+        // First, add the repository to the project
+        const addRepoResponse = await fetch(apiUrl('/api/workspace/add-repository'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            projectPath: project.path,
+            repositoryUrl: repoUrl
+          })
+        });
+        
+        if (!addRepoResponse.ok) {
+          const error = await addRepoResponse.json();
+          throw new Error(error.message || 'Failed to add repository to project');
         }
+        
+        showToast('Repository added to project', 'success');
+      } else {
+        // Cloning existing repository
+        repoUrl = selectedRepoUrl;
       }
       
+      // Clone the repository
       const response = await fetch(apiUrl(`/api/repos/${encodeURIComponent(project.path || '')}/clone`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -252,14 +276,21 @@ export function ProjectDetail() {
       
       const result = await response.json();
       showToast(`Successfully cloned repository as ${result.repoName}`, 'success');
-      setShowCloneDialog(false);
-      setCloneUrl('');
+      
+      // Wait a bit before reloading to ensure filesystem operations complete
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       // Refresh project data
       await reloadWorkspace();
-    } catch (error: any) {
-      showToast(`Failed to clone: ${error.message}`, 'error');
-    } finally {
+      
+      // Only close dialog after everything is successful
+      setShowCloneDialog(false);
+      setCloneUrl('');
+      setCloneMode('existing');
+      setSelectedRepoUrl('');
+      
+    } catch (error) {
+      showToast(`Failed: ${(error as Error).message}`, 'error');
       setIsCloning(false);
     }
   };
@@ -316,9 +347,19 @@ export function ProjectDetail() {
           <Button
             variant="primary"
             size="sm"
-            onClick={() => setShowCloneDialog(true)}
+            onClick={() => {
+              setShowCloneDialog(true);
+              setCloneMode('existing');
+              setCloneUrl('');
+              // Set default selected repo for single repo projects
+              if (appProject?.repositories && appProject.repositories.length === 1) {
+                setSelectedRepoUrl(appProject.repositories[0].url);
+              } else {
+                setSelectedRepoUrl('');
+              }
+            }}
           >
-            Clone repository
+            Add clone
           </Button>
         </div>
         
@@ -448,23 +489,99 @@ export function ProjectDetail() {
       {showCloneDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
           <div className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-6 max-w-lg w-full`}>
-            <h3 className={`text-lg font-semibold ${styles.headingColor} mb-4`}>Clone repository</h3>
+            <h3 className={`text-lg font-semibold ${styles.headingColor} mb-4`}>Add repository clone</h3>
             
-            <div className="mb-4">
-              <label className={`block text-sm font-medium ${styles.textColor} mb-2`}>
-                Repository URL
-              </label>
-              <input
-                type="text"
-                value={cloneUrl}
-                onChange={(e) => setCloneUrl(e.target.value)}
-                placeholder="https://github.com/owner/repo.git"
-                className={`w-full px-3 py-2 ${styles.contentBg} ${styles.contentBorder} border ${styles.borderRadius} ${styles.textColor} focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                disabled={isCloning}
-              />
-              <p className={`mt-2 text-sm ${styles.mutedText}`}>
-                Enter the full repository URL or just the repo name if it's from the same organization
-              </p>
+            {/* Repository selection */}
+            <div className="mb-6 space-y-4">
+              {appProject?.repositories && appProject.repositories.length === 1 ? (
+                // Single repository - show radio options
+                <div className="space-y-3">
+                  <label className={`flex items-start gap-3 cursor-pointer`}>
+                    <input
+                      type="radio"
+                      name="cloneMode"
+                      value="existing"
+                      checked={cloneMode === 'existing'}
+                      onChange={() => {
+                        setCloneMode('existing');
+                        setSelectedRepoUrl(appProject.repositories![0].url);
+                      }}
+                      className="mt-1"
+                    />
+                    <div className="flex-1">
+                      <div className={`font-medium ${styles.textColor}`}>
+                        Clone existing repository
+                      </div>
+                      <div className={`text-sm ${styles.mutedText} mt-1`}>
+                        {appProject.repositories[0].url.split('/').slice(-1)[0].replace('.git', '')}
+                      </div>
+                    </div>
+                  </label>
+                  
+                  <label className={`flex items-start gap-3 cursor-pointer`}>
+                    <input
+                      type="radio"
+                      name="cloneMode"
+                      value="new"
+                      checked={cloneMode === 'new'}
+                      onChange={() => setCloneMode('new')}
+                      className="mt-1"
+                    />
+                    <div className="flex-1">
+                      <div className={`font-medium ${styles.textColor}`}>
+                        Add new repository to project
+                      </div>
+                      <div className={`text-sm ${styles.mutedText} mt-1`}>
+                        Clone a different repository and add it to this project
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              ) : appProject?.repositories && appProject.repositories.length > 1 ? (
+                // Multiple repositories - show dropdown
+                <div>
+                  <label className={`block text-sm font-medium ${styles.textColor} mb-2`}>
+                    Select repository to clone
+                  </label>
+                  <select
+                    value={selectedRepoUrl}
+                    onChange={(e) => {
+                      setSelectedRepoUrl(e.target.value);
+                      setCloneMode(e.target.value === 'new' ? 'new' : 'existing');
+                    }}
+                    className={`w-full px-3 py-2 ${styles.contentBg} ${styles.contentBorder} border ${styles.borderRadius} ${styles.textColor} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    disabled={isCloning}
+                  >
+                    <option value="">Select a repository...</option>
+                    {appProject.repositories.map((repo, index) => (
+                      <option key={index} value={repo.url}>
+                        {repo.url.split('/').slice(-1)[0].replace('.git', '')}
+                      </option>
+                    ))}
+                    <option value="new">Add new repository to project...</option>
+                  </select>
+                </div>
+              ) : null}
+
+              {/* New repository URL input */}
+              {cloneMode === 'new' && (
+                <div>
+                  <label className={`block text-sm font-medium ${styles.textColor} mb-2`}>
+                    New repository URL
+                  </label>
+                  <input
+                    type="text"
+                    value={cloneUrl}
+                    onChange={(e) => setCloneUrl(e.target.value)}
+                    placeholder="https://github.com/owner/repo.git"
+                    className={`w-full px-3 py-2 ${styles.contentBg} ${styles.contentBorder} border ${styles.borderRadius} ${styles.textColor} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    disabled={isCloning}
+                  />
+                  <p className={`mt-2 text-sm ${styles.mutedText}`}>
+                    Enter the repository URL to add to this project
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-end gap-3">
@@ -473,6 +590,8 @@ export function ProjectDetail() {
                 onClick={() => {
                   setShowCloneDialog(false);
                   setCloneUrl('');
+                  setCloneMode('existing');
+                  setSelectedRepoUrl('');
                 }}
                 disabled={isCloning}
               >
@@ -481,7 +600,7 @@ export function ProjectDetail() {
               <Button
                 variant="primary"
                 onClick={handleClone}
-                disabled={!cloneUrl.trim() || isCloning}
+                disabled={isCloning || (cloneMode === 'new' ? !cloneUrl.trim() : !selectedRepoUrl)}
               >
                 {isCloning ? 'Cloning...' : 'Clone'}
               </Button>
@@ -489,6 +608,21 @@ export function ProjectDetail() {
           </div>
         </div>
       )}
+
+      {/* Delete confirmation dialog */}
+      <ConfirmDialog
+        isOpen={showDeleteDialog}
+        title="Delete repository clone"
+        message={`Are you sure you want to delete ${repoToDelete?.name}-${repoToDelete?.number}? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => {
+          setShowDeleteDialog(false);
+          setRepoToDelete(null);
+        }}
+        variant="danger"
+      />
     </div>
   );
 }

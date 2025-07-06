@@ -15,6 +15,7 @@ interface AppContextType {
   updatePersona: (id: string, updates: Partial<Persona>) => void;
   deletePersona: (id: string) => void;
   createProject: (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'workItems'>) => void;
+  updateProject: (id: string, updates: Partial<Project>) => void;
   createWorkItem: (workItem: Omit<WorkItem, 'id' | 'createdAt' | 'updatedAt' | 'jamSessionIds'>) => WorkItem;
   updateWorkItem: (id: string, updates: Partial<WorkItem>) => void;
   deleteWorkItem: (id: string) => void;
@@ -80,6 +81,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       workItems: [],
     };
     setProjects([...projects, newProject]);
+  };
+
+  const updateProject = (id: string, updates: Partial<Project>) => {
+    setProjects(projects.map(p => 
+      p.id === id 
+        ? { ...p, ...updates, updatedAt: new Date() } 
+        : p
+    ));
   };
 
   const createWorkItem = (workItem: Omit<WorkItem, 'id' | 'createdAt' | 'updatedAt' | 'jamSessionIds'>) => {
@@ -352,6 +361,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     updatePersona,
     deletePersona,
     createProject,
+    updateProject,
     createWorkItem,
     updateWorkItem,
     deleteWorkItem,
