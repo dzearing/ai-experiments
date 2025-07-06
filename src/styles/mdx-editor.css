@@ -126,13 +126,14 @@
   list-style: none !important;
 }
 
-/* Remove the absolute positioned checkbox pseudo-element */
+/* Style the checkbox pseudo-element to work with flexbox */
 .mdxeditor li[role="checkbox"]::before,
 .mdxeditor li.task-list-item::before,
 .mdxeditor ul.contains-task-list > li::before {
-  display: none !important;
-  content: none !important;
   position: static !important;
+  margin: 0 !important;
+  margin-top: 0.125em !important; /* Slight adjustment for baseline alignment */
+  flex-shrink: 0;
 }
 
 /* Ensure proper spacing for nested checkbox lists */
