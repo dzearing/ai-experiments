@@ -133,24 +133,8 @@
   position: static !important;
   margin: 0 !important;
   flex-shrink: 0;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-/* Style the checked state - checkmark alignment */
-.mdxeditor li[role="checkbox"][aria-checked="true"]::before,
-.mdxeditor li.task-list-item.checked::before,
-.mdxeditor li[data-checked="true"]::before {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-/* Potential ::after element for checkmark */
-.mdxeditor li[role="checkbox"]::after,
-.mdxeditor li.task-list-item::after {
-  display: none !important; /* Hide if it exists and causes issues */
+  /* Allow MDXEditor's default checkbox styling to work */
+  /* Only override positioning, not display or content */
 }
 
 /* Ensure proper spacing for nested checkbox lists */
