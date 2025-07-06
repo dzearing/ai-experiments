@@ -115,7 +115,7 @@
 }
 
 /* Fix checkbox alignment in lists */
-.mdxeditor li:has(input[type="checkbox"]),
+.mdxeditor li[role="checkbox"],
 .mdxeditor li.task-list-item,
 .mdxeditor ul.contains-task-list > li {
   display: flex;
@@ -127,31 +127,22 @@
 }
 
 /* Remove the absolute positioned checkbox pseudo-element */
-.mdxeditor li:has(input[type="checkbox"])::before,
+.mdxeditor li[role="checkbox"]::before,
 .mdxeditor li.task-list-item::before,
 .mdxeditor ul.contains-task-list > li::before {
   display: none !important;
-}
-
-/* Style the actual checkbox input */
-.mdxeditor li input[type="checkbox"] {
-  position: static;
-  margin: 0;
-  margin-top: 0.125em; /* Slight adjustment for better baseline alignment */
-  flex-shrink: 0;
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
+  content: none !important;
+  position: static !important;
 }
 
 /* Ensure proper spacing for nested checkbox lists */
-.mdxeditor li:has(input[type="checkbox"]) ul {
+.mdxeditor li[role="checkbox"] ul {
   margin-top: 0.5rem;
 }
 
 /* Fix text wrapping in checkbox items */
-.mdxeditor li:has(input[type="checkbox"]) > span,
-.mdxeditor li:has(input[type="checkbox"]) > p {
+.mdxeditor li[role="checkbox"] > span,
+.mdxeditor li[role="checkbox"] > p {
   flex: 1;
   margin: 0;
 }
