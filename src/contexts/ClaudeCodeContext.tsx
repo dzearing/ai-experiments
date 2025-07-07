@@ -246,6 +246,27 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
     }
   }, [messages, sessionId]);
   
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      // Close SSE connection
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+      }
+      
+      // End Claude Code session if exists
+      if (sessionId) {
+        fetch('http://localhost:3000/api/claude/code/end', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId })
+        }).catch(err => {
+          console.error('Failed to end Claude Code session:', err);
+        });
+      }
+    };
+  }, [sessionId]);
+  
   const value: ClaudeCodeContextType = {
     messages,
     mode,

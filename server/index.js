@@ -3457,33 +3457,144 @@ app.post('/api/claude/code/start', async (req, res) => {
     const reposPath = path.join(projectPath, 'repos');
     const reposDirs = await fs.readdir(reposPath).catch(() => []);
     
-    // Look for a claude repo or create one
-    let reservedRepo = reposDirs.find(dir => dir.includes('-claude'));
+    // Look for an available repo to use
+    let reservedRepo = null;
+    
+    // First, check if we already have a Claude-reserved repo
+    reservedRepo = reposDirs.find(dir => dir.includes('-claude'));
     
     if (!reservedRepo) {
-      // Find the primary repo to clone
+      // Check for any available (clean) repos
+      const { exec } = require('child_process');
+      const util = require('util');
+      const execAsync = util.promisify(exec);
+      
+      for (const repoDir of reposDirs) {
+        const repoPath = path.join(reposPath, repoDir);
+        
+        try {
+          // Check if repo is clean
+          const { stdout: statusOutput } = await execAsync('git status --porcelain', { 
+            cwd: repoPath 
+          });
+          
+          // Check if on main branch
+          const { stdout: branchOutput } = await execAsync('git branch --show-current', { 
+            cwd: repoPath 
+          });
+          
+          const isClean = statusOutput.trim() === '';
+          const isOnMain = branchOutput.trim() === 'main';
+          
+          // Also check REPOS.md to see if it's marked as available
+          const reposFilePath = path.join(projectPath, 'REPOS.md');
+          let isMarkedAvailable = true;
+          
+          try {
+            const reposContent = await fs.readFile(reposFilePath, 'utf-8');
+            const repoLine = reposContent.split('\n').find(line => line.includes(repoDir + ':'));
+            if (repoLine && !repoLine.toLowerCase().includes('available')) {
+              isMarkedAvailable = false;
+            }
+          } catch (err) {
+            // REPOS.md might not exist
+          }
+          
+          if (isClean && isOnMain && isMarkedAvailable) {
+            // Found an available repo!
+            reservedRepo = repoDir;
+            console.log(`Found available repo: ${reservedRepo}`);
+            break;
+          }
+        } catch (err) {
+          console.error(`Error checking repo status for ${repoDir}:`, err);
+          // Skip this repo if we can't check its status
+        }
+      }
+    }
+    
+    // If no available repo found, create a new one
+    if (!reservedRepo) {
       const primaryRepo = reposDirs.find(dir => dir.includes('-1'));
       if (primaryRepo) {
         const baseName = primaryRepo.replace(/-\d+$/, '');
-        const claudeNumber = reposDirs.filter(dir => dir.startsWith(baseName)).length + 1;
-        reservedRepo = `${baseName}-${claudeNumber}`;
+        
+        // Find next available number
+        let claudeNumber = reposDirs.filter(dir => dir.startsWith(baseName)).length + 1;
+        let targetPath;
+        
+        // Keep incrementing until we find an available directory
+        do {
+          reservedRepo = `${baseName}-${claudeNumber}`;
+          targetPath = path.join(reposPath, reservedRepo);
+          
+          try {
+            await fs.access(targetPath);
+            // Directory exists, try next number
+            claudeNumber++;
+          } catch {
+            // Directory doesn't exist, we can use this number
+            break;
+          }
+        } while (true);
         
         // Clone the repo
         const sourcePath = path.join(reposPath, primaryRepo);
-        const targetPath = path.join(reposPath, reservedRepo);
+        console.log(`Creating new clone: ${reservedRepo} from ${primaryRepo}`);
         
-        // Simple directory copy (in production, use proper git clone)
-        await fs.cp(sourcePath, targetPath, { recursive: true });
+        // Use git clone for proper repository cloning
+        const { exec } = require('child_process');
+        const util = require('util');
+        const execAsync = util.promisify(exec);
         
-        // Update REPOS.md
-        const reposFilePath = path.join(projectPath, 'REPOS.md');
         try {
-          let reposContent = await fs.readFile(reposFilePath, 'utf-8');
-          reposContent += `\n- ${reservedRepo}: Reserved for Claude Code`;
-          await fs.writeFile(reposFilePath, reposContent);
+          await execAsync(`git clone "${sourcePath}" "${targetPath}"`, {
+            cwd: reposPath
+          });
         } catch (err) {
-          console.error('Error updating REPOS.md:', err);
+          console.error('Git clone failed, falling back to file copy:', err);
+          // Fallback to simple copy
+          await fs.cp(sourcePath, targetPath, { recursive: true });
         }
+      }
+    }
+    
+    // Update REPOS.md to mark repo as reserved
+    if (reservedRepo) {
+      const reposFilePath = path.join(projectPath, 'REPOS.md');
+      try {
+        let reposContent = await fs.readFile(reposFilePath, 'utf-8');
+        
+        // Update existing entry or add new one
+        const lines = reposContent.split('\n');
+        let updated = false;
+        
+        for (let i = 0; i < lines.length; i++) {
+          if (lines[i].includes(`${reservedRepo}:`)) {
+            lines[i] = `- ${reservedRepo}: Reserved for Claude Code session`;
+            updated = true;
+            break;
+          }
+        }
+        
+        if (!updated) {
+          // Add to available clones section
+          const availableIndex = lines.findIndex(line => line.includes('## Available clones'));
+          if (availableIndex !== -1) {
+            // Find next section or end of file
+            let insertIndex = availableIndex + 1;
+            while (insertIndex < lines.length && !lines[insertIndex].startsWith('##')) {
+              insertIndex++;
+            }
+            lines.splice(insertIndex, 0, `- ${reservedRepo}: Reserved for Claude Code session`);
+          } else {
+            lines.push(`- ${reservedRepo}: Reserved for Claude Code session`);
+          }
+        }
+        
+        await fs.writeFile(reposFilePath, lines.join('\n'));
+      } catch (err) {
+        console.error('Error updating REPOS.md:', err);
       }
     }
     
@@ -3643,6 +3754,67 @@ app.get('/api/claude/code/stream', (req, res) => {
       clients.splice(index, 1);
     }
   });
+});
+
+// End Claude Code session
+app.post('/api/claude/code/end', async (req, res) => {
+  try {
+    const { sessionId } = req.body;
+    
+    if (!sessionId) {
+      return res.status(400).json({ error: 'Session ID required' });
+    }
+    
+    const session = claudeCodeSessions.get(sessionId);
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+    
+    // Clean up session
+    claudeCodeSessions.delete(sessionId);
+    
+    // Remove all SSE clients
+    const clients = claudeCodeClients.get(sessionId) || [];
+    clients.forEach(client => {
+      try {
+        client.write(`event: session-end\ndata: ${JSON.stringify({ message: 'Session ended' })}\n\n`);
+        client.end();
+      } catch (err) {
+        // Client might already be disconnected
+      }
+    });
+    claudeCodeClients.delete(sessionId);
+    
+    // Mark repo as available again in REPOS.md
+    if (session.reservedRepo && session.projectPath) {
+      const reposFilePath = path.join(session.projectPath, 'REPOS.md');
+      try {
+        let reposContent = await fs.readFile(reposFilePath, 'utf-8');
+        const lines = reposContent.split('\n');
+        
+        for (let i = 0; i < lines.length; i++) {
+          if (lines[i].includes(`${session.reservedRepo}:`)) {
+            lines[i] = `- ${session.reservedRepo}: Available`;
+            break;
+          }
+        }
+        
+        await fs.writeFile(reposFilePath, lines.join('\n'));
+        console.log(`Released repo ${session.reservedRepo} back to available`);
+      } catch (err) {
+        console.error('Error updating REPOS.md:', err);
+      }
+    }
+    
+    res.json({ success: true, message: 'Session ended' });
+    
+  } catch (error) {
+    console.error('Error ending Claude Code session:', error);
+    res.status(500).json({ 
+      error: 'Failed to end session',
+      message: error.message 
+    });
+  }
 });
 
 app.listen(PORT, () => {
