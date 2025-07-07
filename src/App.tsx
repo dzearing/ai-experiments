@@ -25,6 +25,7 @@ import { ProjectDetail } from './pages/ProjectDetail';
 import { DebugClaude } from './pages/DebugClaude';
 import { JamSessionDetail } from './pages/JamSessionDetail';
 import { WorkItemJamSession } from './pages/WorkItemJamSession';
+import { ClaudeCode } from './pages/ClaudeCode';
 
 function AppContent() {
   const { workspace, setWorkspacePath } = useWorkspace();
@@ -74,6 +75,7 @@ function AppContent() {
               <Route path="jam-sessions/:id" element={<JamSessionDetail />} />
               <Route path="daily-report" element={<div>Daily Report Page (TODO)</div>} />
               <Route path="debug-claude" element={<DebugClaude />} />
+              <Route path="projects/:projectId/claude-code" element={<ClaudeCode />} />
             </Route>
           </Routes>
           <ThemeSwitcherV2 />

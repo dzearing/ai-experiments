@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContextV2';
 import { useLayout } from '../contexts/LayoutContext';
 import { useRealtimeSubscription } from '../contexts/SubscriptionContext';
@@ -37,6 +37,7 @@ interface RepoStatus {
 
 export function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>();
+  const navigate = useNavigate();
   const { currentStyles } = useTheme();
   const { setHeaderContent } = useLayout();
   const { subscribe, isConnected } = useRealtimeSubscription();
@@ -327,17 +328,32 @@ export function ProjectDetail() {
 
       {/* Project info */}
       <div className={`mb-6 p-6 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius}`}>
-        <h1 className={`text-2xl font-bold ${styles.headingColor} mb-2`}>{project.name}</h1>
-        {project.readme && (
-          <p className={`${styles.textColor} mb-4`}>
-            {project.readme.split('\n').find((line: string) => line.trim() && !line.startsWith('#')) || ''}
-          </p>
-        )}
-        {project.purpose && (
-          <p className={`text-sm ${styles.mutedText}`}>
-            <span className="font-medium">Purpose:</span> {project.purpose}
-          </p>
-        )}
+        <div className="flex justify-between items-start">
+          <div className="flex-1">
+            <h1 className={`text-2xl font-bold ${styles.headingColor} mb-2`}>{project.name}</h1>
+            {project.readme && (
+              <p className={`${styles.textColor} mb-4`}>
+                {project.readme.split('\n').find((line: string) => line.trim() && !line.startsWith('#')) || ''}
+              </p>
+            )}
+            {project.purpose && (
+              <p className={`text-sm ${styles.mutedText}`}>
+                <span className="font-medium">Purpose:</span> {project.purpose}
+              </p>
+            )}
+          </div>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => navigate(`/projects/${projectId}/claude-code`)}
+            className="ml-4"
+          >
+            <span className="flex items-center gap-2">
+              <span className="text-lg">🤖</span>
+              Claude Code
+            </span>
+          </Button>
+        </div>
       </div>
 
       {/* Repository clones */}

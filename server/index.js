@@ -3438,6 +3438,213 @@ app.delete('/api/repos/:projectPath/:repoName', async (req, res) => {
   }
 });
 
+// Claude Code endpoints
+const claudeCodeSessions = new Map();
+const claudeCodeClients = new Map();
+
+// Initialize Claude Code session
+app.post('/api/claude/code/start', async (req, res) => {
+  try {
+    const { projectId, projectPath } = req.body;
+    
+    if (!projectId || !projectPath) {
+      return res.status(400).json({ error: 'Project ID and path are required' });
+    }
+    
+    const sessionId = `${projectId}-${crypto.randomUUID()}`;
+    
+    // Find available repo or create one
+    const reposPath = path.join(projectPath, 'repos');
+    const reposDirs = await fs.readdir(reposPath).catch(() => []);
+    
+    // Look for a claude repo or create one
+    let reservedRepo = reposDirs.find(dir => dir.includes('-claude'));
+    
+    if (!reservedRepo) {
+      // Find the primary repo to clone
+      const primaryRepo = reposDirs.find(dir => dir.includes('-1'));
+      if (primaryRepo) {
+        const baseName = primaryRepo.replace(/-\d+$/, '');
+        const claudeNumber = reposDirs.filter(dir => dir.startsWith(baseName)).length + 1;
+        reservedRepo = `${baseName}-${claudeNumber}`;
+        
+        // Clone the repo
+        const sourcePath = path.join(reposPath, primaryRepo);
+        const targetPath = path.join(reposPath, reservedRepo);
+        
+        // Simple directory copy (in production, use proper git clone)
+        await fs.cp(sourcePath, targetPath, { recursive: true });
+        
+        // Update REPOS.md
+        const reposFilePath = path.join(projectPath, 'REPOS.md');
+        try {
+          let reposContent = await fs.readFile(reposFilePath, 'utf-8');
+          reposContent += `\n- ${reservedRepo}: Reserved for Claude Code`;
+          await fs.writeFile(reposFilePath, reposContent);
+        } catch (err) {
+          console.error('Error updating REPOS.md:', err);
+        }
+      }
+    }
+    
+    // Store session info
+    claudeCodeSessions.set(sessionId, {
+      projectId,
+      projectPath,
+      reservedRepo,
+      messages: [],
+      contextTokens: 0,
+      maxTokens: 200000 // Claude's context window
+    });
+    
+    res.json({
+      sessionId,
+      reservedRepo,
+      contextUsage: 0
+    });
+    
+  } catch (error) {
+    console.error('Error starting Claude Code session:', error);
+    res.status(500).json({ 
+      error: 'Failed to start session',
+      message: error.message 
+    });
+  }
+});
+
+// Send message to Claude
+app.post('/api/claude/code/message', async (req, res) => {
+  try {
+    const { sessionId, message, mode } = req.body;
+    
+    const session = claudeCodeSessions.get(sessionId);
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+    
+    // Add user message to history
+    session.messages.push({ role: 'user', content: message });
+    
+    // Create unique message ID
+    const messageId = crypto.randomUUID();
+    
+    // Send to all SSE clients for this session
+    const clients = claudeCodeClients.get(sessionId) || [];
+    
+    // Send message start event
+    clients.forEach(client => {
+      client.write(`event: message-start\ndata: ${JSON.stringify({ id: messageId })}\n\n`);
+    });
+    
+    // Process with Claude (mock for now)
+    if (req.headers['x-mock-mode'] === 'true') {
+      // Simulate streaming response
+      const mockResponse = `I'll help you with that. Let me ${mode === 'plan' ? 'create a plan' : 'get started'}...\n\nThis is a mock response for testing the Claude Code interface. In a real implementation, this would connect to the Claude API and provide actual assistance.`;
+      
+      const words = mockResponse.split(' ');
+      let currentChunk = '';
+      
+      for (let i = 0; i < words.length; i++) {
+        currentChunk += words[i] + ' ';
+        
+        // Send chunk
+        clients.forEach(client => {
+          client.write(`event: message-chunk\ndata: ${JSON.stringify({ 
+            messageId, 
+            chunk: words[i] + ' ' 
+          })}\n\n`);
+        });
+        
+        // Simulate typing delay
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+      
+      // Add assistant message to history
+      session.messages.push({ role: 'assistant', content: mockResponse });
+      
+      // Update context usage (mock calculation)
+      const estimatedTokens = session.messages.reduce((sum, msg) => 
+        sum + Math.ceil(msg.content.length / 4), 0
+      );
+      const contextUsage = Math.round((estimatedTokens / session.maxTokens) * 100);
+      
+      // Send context update
+      clients.forEach(client => {
+        client.write(`event: context-update\ndata: ${JSON.stringify({ percentage: contextUsage })}\n\n`);
+      });
+      
+    } else {
+      // Real Claude integration would go here
+      // For now, return error
+      clients.forEach(client => {
+        client.write(`event: message-chunk\ndata: ${JSON.stringify({ 
+          messageId, 
+          chunk: 'Claude integration not yet implemented. Please use mock mode for testing.' 
+        })}\n\n`);
+      });
+    }
+    
+    // Send message end event
+    clients.forEach(client => {
+      client.write(`event: message-end\ndata: ${JSON.stringify({ messageId })}\n\n`);
+    });
+    
+    res.json({ success: true, messageId });
+    
+  } catch (error) {
+    console.error('Error processing Claude Code message:', error);
+    res.status(500).json({ 
+      error: 'Failed to process message',
+      message: error.message 
+    });
+  }
+});
+
+// SSE endpoint for Claude Code streaming
+app.get('/api/claude/code/stream', (req, res) => {
+  const { sessionId } = req.query;
+  
+  if (!sessionId) {
+    return res.status(400).json({ error: 'Session ID required' });
+  }
+  
+  // Set SSE headers
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no'
+  });
+  
+  // Add client to session
+  if (!claudeCodeClients.has(sessionId)) {
+    claudeCodeClients.set(sessionId, []);
+  }
+  claudeCodeClients.get(sessionId).push(res);
+  
+  // Send initial connection event
+  res.write(`data: ${JSON.stringify({ type: 'connected' })}\n\n`);
+  
+  // Heartbeat to keep connection alive
+  const heartbeat = setInterval(() => {
+    try {
+      res.write(':heartbeat\n\n');
+    } catch (err) {
+      clearInterval(heartbeat);
+    }
+  }, 30000);
+  
+  // Clean up on disconnect
+  req.on('close', () => {
+    clearInterval(heartbeat);
+    const clients = claudeCodeClients.get(sessionId) || [];
+    const index = clients.indexOf(res);
+    if (index > -1) {
+      clients.splice(index, 1);
+    }
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   

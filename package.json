@@ -12,6 +12,7 @@
   "dependencies": {
     "@mdxeditor/editor": "^3.39.0",
     "@tailwindcss/typography": "^0.5.16",
+    "@tanstack/react-virtual": "^3.13.12",
     "date-fns": "^4.1.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
