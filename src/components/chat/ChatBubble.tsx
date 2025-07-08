@@ -28,7 +28,7 @@ export const ChatBubble = memo(function ChatBubble({
   const isSent = variant === 'sent';
   
   return (
-    <div className={`flex gap-3 ${isSent ? 'justify-end' : ''} ${className}`}>
+    <div className={`flex gap-3 ${isSent ? 'justify-end' : ''} ${className}`} data-testid="message-bubble">
       {!isSent && showAvatar && (
         <div className="flex-shrink-0">
           {avatar}

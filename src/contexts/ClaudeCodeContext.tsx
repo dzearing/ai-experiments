@@ -91,6 +91,7 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
   const connectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastConnectionAttemptRef = useRef<number>(0);
   const sessionInitializationRef = useRef<Promise<void> | null>(null);
+  const isRestoringExistingSessionRef = useRef<boolean>(false);
   
   // Persist mode changes
   useEffect(() => {
@@ -155,6 +156,14 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
     eventSource.onopen = () => {
       console.log('SSE connection opened:', connectionId);
       setIsConnected(true);
+      
+      // Clear the restoring flag after a short delay to allow existing messages to be processed
+      if (isRestoringExistingSessionRef.current) {
+        setTimeout(() => {
+          console.log('Clearing isRestoringExistingSessionRef flag');
+          isRestoringExistingSessionRef.current = false;
+        }, 2000); // 2 seconds to ensure all existing messages are processed
+      }
     };
     
     eventSource.onmessage = (event) => {
@@ -183,20 +192,24 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
       const data = JSON.parse(event.data);
       console.log('message-start event received:', data);
       console.log('Is greeting:', data.isGreeting);
+      console.log('isRestoringExistingSessionRef.current:', isRestoringExistingSessionRef.current);
       
-      // Reset streaming content for new message
-      streamingMessageRef.current = '';
+      // Check if this is an existing message being restored
+      const isExistingMessage = isRestoringExistingSessionRef.current;
+      console.log('isExistingMessage:', isExistingMessage);
       
       // Create the new message
       const newMessage: ClaudeMessage = {
         id: data.id,
         role: 'assistant',
-        content: '',  // Start with empty content for streaming
+        content: '',  // Start with empty content
         timestamp: new Date(),
         startTime: new Date(),
-        isStreaming: true,
+        isStreaming: !isExistingMessage, // Don't stream existing messages
         isGreeting: data.isGreeting
       };
+      
+      console.log('Creating message with isStreaming:', !isExistingMessage, 'isExistingMessage:', isExistingMessage);
       
       // Check if message already exists or if we recently created a greeting
       setMessages(prev => {
@@ -228,11 +241,19 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
         return newMessages;
       });
       
-      if (!data.isGreeting) {
+      if (!data.isGreeting && !isExistingMessage) {
         setIsProcessing(true);
+        setCurrentMessageId(data.id);
       }
-      setCurrentMessageId(data.id);
-      streamingMessageRef.current = '';
+      
+      // Only clear streaming ref for NEW messages, not existing ones
+      // This is critical: existing messages should preserve their content
+      if (!isExistingMessage) {
+        streamingMessageRef.current = '';
+        console.log('Cleared streamingMessageRef for new message');
+      } else {
+        console.log('Preserving streamingMessageRef for existing message:', streamingMessageRef.current.substring(0, 50));
+      }
     });
     
     eventSource.addEventListener('message-chunk', (event) => {
@@ -240,9 +261,18 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
       const data = JSON.parse(event.data);
       console.log('Chunk for messageId:', data.messageId);
       console.log('Chunk content:', data.chunk);
+      console.log('Chunk content length:', data.chunk?.length);
       
-      // Append chunk to streaming content
-      streamingMessageRef.current += data.chunk;
+      // For existing messages, reset the streaming content before adding the chunk
+      // This prevents appending to previous content
+      if (isRestoringExistingSessionRef.current) {
+        streamingMessageRef.current = data.chunk;
+        console.log('Restored existing message content, length:', data.chunk?.length);
+      } else {
+        // Append chunk to streaming content for new messages
+        streamingMessageRef.current += data.chunk;
+      }
+      console.log('streamingMessageRef.current now:', streamingMessageRef.current.substring(0, 50));
       
       setMessages(prev => {
         console.log('setMessages in message-chunk, looking for messageId:', data.messageId);
@@ -265,11 +295,21 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
           return [...prev, newMessage];
         }
         
-        const updated = prev.map(msg => 
-          msg.id === data.messageId
-            ? { ...msg, content: streamingMessageRef.current }
-            : msg
-        );
+        const updated = prev.map(msg => {
+          if (msg.id === data.messageId) {
+            console.log('Updating message:', msg.id, 'old content:', msg.content.substring(0, 30), 'new content:', streamingMessageRef.current.substring(0, 30));
+            // For existing messages that aren't streaming, mark as complete immediately
+            const isComplete = !msg.isStreaming;
+            const updatedMessage = { 
+              ...msg, 
+              content: streamingMessageRef.current,
+              isStreaming: isComplete ? false : msg.isStreaming
+            };
+            console.log('Updated message content length:', updatedMessage.content.length);
+            return updatedMessage;
+          }
+          return msg;
+        });
         console.log('Updated messages after chunk:', updated.map(m => ({ id: m.id, content: m.content.substring(0, 30) })));
         return updated;
       });
@@ -292,15 +332,41 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
     
     eventSource.addEventListener('message-complete', (event) => {
       const data = JSON.parse(event.data);
-      setMessages(prev => prev.map(msg => {
-        if (msg.id === data.messageId) {
-          // Generate suggested responses based on the final content
-          const suggestedResponses = generateSuggestedResponses(msg.content);
-          return { ...msg, isStreaming: false, suggestedResponses };
-        }
-        return msg;
-      }));
-      streamingMessageRef.current = '';
+      console.log('message-complete event received for messageId:', data.messageId);
+      setMessages(prev => {
+        console.log('Processing message-complete, current messages:', prev.map(m => ({ id: m.id, content: m.content.substring(0, 30) })));
+        const updated = prev.map(msg => {
+          if (msg.id === data.messageId) {
+            console.log('Found message to complete:', msg.id, 'current content length:', msg.content.length);
+            console.log('streamingMessageRef.current length:', streamingMessageRef.current.length);
+            
+            // For existing messages, always use the message content (it should already be set)
+            // For new messages, use streamingMessageRef content
+            let finalContent = msg.content;
+            if (msg.content.length === 0 && streamingMessageRef.current.length > 0) {
+              finalContent = streamingMessageRef.current;
+              console.log('Using streamingMessageRef content for empty message');
+            } else if (msg.content.length > 0) {
+              console.log('Using existing message content');
+            }
+            
+            console.log('Final content length:', finalContent.length);
+            console.log('Final content preview:', finalContent.substring(0, 50));
+            
+            // Generate suggested responses based on the final content
+            const suggestedResponses = generateSuggestedResponses(finalContent);
+            return { ...msg, content: finalContent, isStreaming: false, suggestedResponses };
+          }
+          return msg;
+        });
+        console.log('After message-complete, updated messages:', updated.map(m => ({ id: m.id, content: m.content.substring(0, 30) })));
+        return updated;
+      });
+      
+      // Only clear streamingMessageRef if we're not restoring an existing session
+      if (!isRestoringExistingSessionRef.current) {
+        streamingMessageRef.current = '';
+      }
       setCurrentMessageId(null);
     });
     
@@ -480,10 +546,24 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
         }
         
         const data = await response.json();
-        console.log('Session created, response data:', data);
+        console.log('Session response:', data);
         setSessionId(data.sessionId);
-        setReservedRepo(data.reservedRepo || repoName); // Use repoName if reservedRepo not in response
+        setReservedRepo(data.reservedRepo || repoName);
         setContextUsage(data.contextUsage || 0);
+        
+        // Always start with empty messages and let SSE populate them
+        // For existing sessions, the server will send existing messages via SSE
+        // For new sessions, we start fresh
+        console.log(data.new ? 'New session created, starting fresh' : 'Existing session, will receive messages via SSE');
+        setMessages([]);
+        
+        // Set flag to track if we're restoring an existing session
+        isRestoringExistingSessionRef.current = !data.new;
+        
+        // Only clear localStorage for truly new sessions
+        if (data.new) {
+          localStorage.removeItem(`${STORAGE_KEY}-${repoName}`);
+        }
         
         // Set up SSE connection with a delay to ensure component is stable
         if (!eventSourceRef.current || eventSourceRef.current.readyState === EventSource.CLOSED) {
@@ -505,16 +585,6 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
           }, 500); // 500ms delay to allow component to stabilize
         }
         
-        // Clear any old messages when starting a new session
-        // This ensures we don't show stale messages from previous sessions
-        setMessages([]);
-        
-        // Also clear localStorage for this repo to start fresh
-        localStorage.removeItem(`${STORAGE_KEY}-${repoName}`);
-        
-        // Don't mark as initialized until SSE is connected
-        // This prevents the component from rendering too early
-        // The isConnected state will be set by the SSE onopen handler
         setIsInitializing(false);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to initialize session');

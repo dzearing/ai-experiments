@@ -3670,34 +3670,36 @@ app.post('/api/claude/code/start', async (req, res) => {
       const allSessions = sessionManager.getAllSessions();
       for (const session of allSessions) {
         if (session.projectPath === projectPath && session.repoName === repoName) {
-        logger.debug(`Found existing session for ${repoName}, cleaning it up first`);
-        
-        // Clean up the old session
-        sessionManager.deleteSession(session.sessionId);
-        
-        // Remove all SSE connections for the old session
-        const connections = claudeCodeClients.get(session.sessionId);
-        if (connections) {
-          for (const [connId, conn] of connections.entries()) {
-            try {
-              conn.res.end();
-            } catch (err) {
-              // Connection might already be closed
-            }
-          }
-          claudeCodeClients.delete(session.sessionId);
+          logger.debug(`Found existing session for ${repoName}, reusing it`);
+          
+          logger.logEvent('CLAUDE_SESSION_REUSED', 'Reusing existing Claude Code session', {
+            sessionId: session.sessionId,
+            repoName,
+            userName
+          });
+          
+          logger.logClient('RESPONSE', { 
+            status: 200, 
+            sessionId: session.sessionId,
+            reservedRepo: repoName,
+            new: false  // Indicate this is an existing session
+          });
+          
+          // Store in deduplication cache
+          sessionCreationRequests.set(requestKey, {
+            sessionId: session.sessionId,
+            timestamp: now
+          });
+          
+          // Return the existing session
+          return res.json({
+            sessionId: session.sessionId,
+            reservedRepo: repoName,
+            contextUsage: 0,
+            new: false
+          });
         }
-        
-        logger.logEvent('CLAUDE_SESSION_CLEANED', 'Cleaned up existing session before creating new one', {
-          oldSessionId: session.sessionId,
-          repoName,
-          userName
-        });
-        
-        // Continue to create a new session
-        break;
       }
-    }
     } catch (error) {
       // Error checking for existing sessions - log but continue with creating new session
       logger.error('Error checking for existing sessions:', error);
@@ -3837,7 +3839,8 @@ app.post('/api/claude/code/start', async (req, res) => {
     res.json({
       sessionId,
       reservedRepo,
-      contextUsage: 0
+      contextUsage: 0,
+      new: true
     });
     
   } catch (error) {
@@ -4426,13 +4429,16 @@ app.get('/api/claude/code/stream', (req, res) => {
   // Check if there are any existing messages to send to the new connection
   if (session.messages.length > 0) {
     debugLog(`Sending ${session.messages.length} existing messages to new connection`);
+    debugLog('Session messages:', session.messages.map(m => ({ id: m.id, role: m.role, content: m.content?.substring(0, 50) })));
     
     // Use setImmediate to ensure events are sent after connection is established
     setImmediate(() => {
       // Send all existing messages to the new connection
       for (const message of session.messages) {
+        debugLog(`Processing message: role=${message.role}, id=${message.id}, content=${message.content?.substring(0, 30)}`);
         if (message.role === 'assistant') {
           const messageId = message.id || crypto.randomUUID();
+          debugLog(`Sending assistant message: ${messageId}`);
           
           try {
             // Send message-start event

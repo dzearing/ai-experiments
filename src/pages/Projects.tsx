@@ -102,6 +102,7 @@ export function Projects() {
                   ${styles.cardShadow} p-6
                   transition-all hover:shadow-lg
                 `}
+                data-testid="project-card"
               >
                 {/* Background link for the entire card */}
                 <Link

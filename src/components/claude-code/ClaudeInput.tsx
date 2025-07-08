@@ -108,6 +108,7 @@ export const ClaudeInput = memo(function ClaudeInput({
             disabled:opacity-50 disabled:cursor-not-allowed
           `}
           style={{ minHeight: '56px' }}
+          data-testid="message-input"
         />
         
         {/* Submit button */}

@@ -57,17 +57,16 @@ function ClaudeCodeContent() {
   const project = projects.find(p => p.id === projectId);
   const workspaceProject = workspaceProjects.find(p => p.name === project?.name);
   
-  // Set breadcrumb with session ID
+  // Set breadcrumb
   useEffect(() => {
-    console.log('ClaudeCode breadcrumb effect - repoName:', repoName, 'projectId:', projectId, 'sessionId:', sessionId);
+    console.log('ClaudeCode breadcrumb effect - repoName:', repoName, 'projectId:', projectId);
     if (repoName && projectId) {
-      const claudeCodeLabel = sessionId ? `Claude Code (${sessionId.split('-').slice(-1)[0]})` : 'Claude Code';
       setHeaderContent([
         { label: repoName, path: `/projects/${projectId}` },
-        { label: claudeCodeLabel }
+        { label: 'Claude Code' }
       ]);
     }
-  }, [projectId, repoName, sessionId, setHeaderContent]);
+  }, [projectId, repoName, setHeaderContent]);
   
   // Initialize session
   useEffect(() => {
@@ -203,6 +202,7 @@ function ClaudeCodeContent() {
       <div 
         ref={scrollContainerRef}
         className={`flex-1 overflow-auto ${styles.contentBg}`}
+        data-testid="message-list"
       >
         {messages.length === 0 && isConnected ? (
           <div className="flex items-center justify-center h-full">
