@@ -27,3 +27,6 @@ dist-ssr
 # Environment files
 .env
 .env.local
+
+# Test results
+test-results/

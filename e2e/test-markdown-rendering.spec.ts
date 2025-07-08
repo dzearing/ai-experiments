@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, setupWorkspaceInBrowser } from './test-setup';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 
@@ -13,58 +13,70 @@ test.describe('Claude Code Markdown Rendering', () => {
     }
   });
 
-  test('should render markdown with bold text correctly', async ({ page }) => {
-    // Navigate to the application
-    await page.goto('http://localhost:5173');
+  test('should render markdown with bold text correctly', async ({ page, testWorkspace }) => {
+    // Set up workspace and navigate to projects page
+    await setupWorkspaceInBrowser(page, testWorkspace);
     
-    // Wait for the page to load
-    await page.waitForLoadState('networkidle');
-    
-    // Go to projects
-    await page.click('text=Projects');
-    await page.waitForURL('**/projects');
-    
-    // Select apisurf project
-    await page.click('text=apisurf');
-    await page.waitForURL('**/projects/**');
+    // Click on test project
+    const projectCard = page.locator('[data-testid="project-card"]').first();
+    await expect(projectCard).toBeVisible({ timeout: 10000 });
+    await projectCard.click();
+    await page.waitForSelector('[data-testid="repo-card"]', { timeout: 10000 });
     
     // Click on Claude Code button
-    await page.click('button:has-text("Claude Code")');
+    const claudeCodeButton = page.locator('[data-testid="claude-code-button"]').first();
+    await expect(claudeCodeButton).toBeVisible({ timeout: 10000 });
+    
+    // Dismiss any panels or toasts that might be blocking
+    const themeSwitcher = page.locator('text="Theme Switcher"');
+    if (await themeSwitcher.count() > 0) {
+      await page.click('body', { position: { x: 10, y: 10 } });
+      await page.waitForTimeout(500);
+    }
+    
+    const toasts = page.locator('[role="alert"], .fixed.bottom-4.right-4');
+    const toastCount = await toasts.count();
+    if (toastCount > 0) {
+      const closeButton = toasts.locator('button').first();
+      if (await closeButton.count() > 0) {
+        await closeButton.click({ force: true });
+      }
+      await page.waitForTimeout(1000);
+    }
+    
+    await claudeCodeButton.click();
     
     // Wait for Claude Code page to load and SSE connection to establish
-    await page.waitForURL('**/claude-code');
+    await page.waitForURL('**/claude-code/**');
+    await page.waitForSelector('[data-testid="message-list"]', { timeout: 10000 });
     await page.waitForTimeout(1000); // Wait for SSE setup
     
     // Wait for greeting message
-    await page.waitForSelector('[data-message-role="assistant"]', { timeout: 30000 });
+    await page.waitForSelector('[data-testid="message-bubble"]', { timeout: 30000 });
     
     // Type the test message
     const testMessage = 'Say "Hello **world**!" with the word world in bold markdown';
-    await page.fill('textarea[placeholder*="Type a message"]', testMessage);
+    const messageInput = page.locator('[data-testid="message-input"]');
+    await expect(messageInput).toBeVisible();
+    await messageInput.fill(testMessage);
     
     // Send the message
-    await page.press('textarea[placeholder*="Type a message"]', 'Enter');
+    await messageInput.press('Enter');
     
     // Wait for the response to complete
     await page.waitForTimeout(2000); // Give time for message to start
     
     // Wait for a new assistant message that contains "Hello" and check for completion
-    const responseSelector = '[data-message-role="assistant"]:last-child';
+    // We should have at least 3 messages now: greeting, user message, response
+    await page.waitForFunction(() => {
+      const messages = document.querySelectorAll('[data-testid="message-bubble"]');
+      return messages.length >= 3;
+    }, { timeout: 30000 });
     
-    // Wait for the message to appear and contain our expected text
-    await page.waitForFunction(
-      (selector) => {
-        const element = document.querySelector(selector);
-        if (!element) return false;
-        const text = element.textContent || '';
-        return text.includes('Hello') && (text.includes('world') || text.includes('**world**'));
-      },
-      responseSelector,
-      { timeout: 30000 }
-    );
-    
-    // Check if the response is properly rendered
-    const responseElement = await page.locator(responseSelector);
+    // Get the last message (assistant's response)
+    const messages = page.locator('[data-testid="message-bubble"]');
+    const messageCount = await messages.count();
+    const responseElement = messages.nth(messageCount - 1);
     const responseHTML = await responseElement.innerHTML();
     const responseText = await responseElement.textContent();
     

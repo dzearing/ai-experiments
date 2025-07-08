@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { useTheme } from '../contexts/ThemeContextV2';
+import { useLayout } from '../contexts/LayoutContext';
 import { useWorkspace } from '../contexts/WorkspaceContext';
 import { useToast } from '../contexts/ToastContext';
 import { Button } from '../components/ui/Button';
@@ -12,11 +13,20 @@ import type { Project } from '../types';
 export function Projects() {
   const { projects } = useApp();
   const { currentStyles } = useTheme();
+  const { setHeaderContent } = useLayout();
   const { workspace, isLoadingWorkspace } = useWorkspace();
   const { showToast } = useToast();
   const styles = currentStyles;
   const [deleteProject, setDeleteProject] = useState<Project | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  
+  // Clear header content on mount
+  useEffect(() => {
+    setHeaderContent(null);
+    return () => {
+      // No cleanup needed
+    };
+  }, [setHeaderContent]);
   
   const getStatusColor = (status: string) => {
     switch (status) {

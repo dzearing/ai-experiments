@@ -1,0 +1,26 @@
+{
+  "sessionId": "project--tmp-e2e-test-workspace-1751953282680-projects-test-project-hello-world-1-0ec345c5-313f-4d64-a584-9feecf7e48ae",
+  "projectId": "project--tmp-e2e-test-workspace-1751953282680-projects-test-project",
+  "repoName": "hello-world-1",
+  "userName": "",
+  "projectPath": "/tmp/e2e-test-workspace-1751953282680/projects/test-project",
+  "messages": [
+    {
+      "id": "3f9998d1-8f8c-4161-b399-62b285464c9d",
+      "role": "assistant",
+      "content": "Hey Developer! Welcome back to hello-world-1 - it's getting late but I'm here to help you make progress on test-project. What would you like to work on tonight?",
+      "isGreeting": true,
+      "timestamp": "2025-07-08T05:41:29.850Z"
+    }
+  ],
+  "greetingShown": true,
+  "greetingInProgress": false,
+  "createdAt": "2025-07-08T05:41:24.832Z",
+  "updatedAt": "2025-07-08T05:41:29.851Z",
+  "maxTokens": 200000,
+  "contextTokens": 0,
+  "tokenUsage": {
+    "input": 0,
+    "output": 0
+  }
+}

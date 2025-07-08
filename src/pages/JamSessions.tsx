@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
+import { useLayout } from '../contexts/LayoutContext';
 import { useTheme } from '../contexts/ThemeContextV2';
 import { Button } from '../components/ui/Button';
 import type { JamSession } from '../types';
@@ -8,6 +9,7 @@ import type { JamSession } from '../types';
 export function JamSessions() {
   const navigate = useNavigate();
   const { jamSessions, personas, workItems, startJamSession } = useApp();
+  const { setHeaderContent } = useLayout();
   const { currentStyles } = useTheme();
   const styles = currentStyles;
   const [showNewSessionForm, setShowNewSessionForm] = useState(false);
@@ -17,6 +19,11 @@ export function JamSessions() {
     workItemId: '',
     participantIds: [] as string[]
   });
+  
+  // Clear header content on mount
+  useEffect(() => {
+    setHeaderContent(null);
+  }, [setHeaderContent]);
   
   const activeSessions = jamSessions.filter(s => s.status === 'active');
   // No planned status for jam sessions - they are either active or completed

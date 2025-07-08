@@ -20,6 +20,7 @@ export function ThemedLayoutV2() {
   const styles = currentStyles;
   const direction = useNavigationDirection();
 
+
   // Extract projectId from various routes
   const getProjectIdFromPath = () => {
     // Match /projects/:projectId/workitems/new
@@ -154,11 +155,13 @@ export function ThemedLayoutV2() {
               
               // Check if content is an array (breadcrumbs)
               if (Array.isArray(content)) {
+                // Create a stable key from breadcrumb content
+                const breadcrumbKey = content.map(item => item.label).join(' > ');
                 return (
                   <AnimatedTransition 
-                    transitionKey={location.pathname}
+                    transitionKey={breadcrumbKey}
                     className="h-8"
-                    delay={100}
+                    delay={50}
                     reverse={direction === 'backward'}
                     centered={false}
                   >
@@ -170,7 +173,7 @@ export function ThemedLayoutV2() {
               // Otherwise it's a string
               return (
                 <AnimatedTransition 
-                  transitionKey={location.pathname}
+                  transitionKey={content}
                   className="h-8"
                   delay={100}
                   reverse={direction === 'backward'}

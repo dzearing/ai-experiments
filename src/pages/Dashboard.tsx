@@ -1,8 +1,16 @@
+import { useEffect } from 'react';
 import { useApp } from '../contexts/AppContext';
+import { useLayout } from '../contexts/LayoutContext';
 import { Link } from 'react-router-dom';
 
 export function Dashboard() {
   const { projects, workItems, personas, jamSessions } = useApp();
+  const { setHeaderContent } = useLayout();
+  
+  // Clear header content on mount
+  useEffect(() => {
+    setHeaderContent(null);
+  }, [setHeaderContent]);
   
   const activeProjects = projects.filter(p => p.status === 'active').length;
   const activeWorkItems = workItems.filter(w => w.status === 'active').length;

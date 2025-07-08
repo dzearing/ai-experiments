@@ -57,16 +57,23 @@ function ClaudeCodeContent() {
   const project = projects.find(p => p.id === projectId);
   const workspaceProject = workspaceProjects.find(p => p.name === project?.name);
   
-  // Set breadcrumb
+  // Set breadcrumb immediately when data is available
   useEffect(() => {
-    console.log('ClaudeCode breadcrumb effect - repoName:', repoName, 'projectId:', projectId);
-    if (repoName && projectId) {
-      setHeaderContent([
-        { label: repoName, path: `/projects/${projectId}` },
+    console.log('ClaudeCode breadcrumb effect - repoName:', repoName, 'projectId:', projectId, 'project:', project);
+    
+    if (repoName && projectId && project) {
+      console.log('Setting Claude Code breadcrumb with project:', project.name);
+      const newBreadcrumb = [
+        { label: project.name, path: `/projects/${projectId}` },
+        { label: repoName },
         { label: 'Claude Code' }
-      ]);
+      ];
+      console.log('New breadcrumb:', newBreadcrumb);
+      setHeaderContent(newBreadcrumb);
     }
-  }, [projectId, repoName, setHeaderContent]);
+    
+    // No cleanup needed - let the next page set its own header
+  }, [projectId, repoName, project, setHeaderContent]);
   
   // Initialize session
   useEffect(() => {

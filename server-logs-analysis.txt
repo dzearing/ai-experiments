@@ -1,0 +1,62 @@
+=== RECENT CLAUDE MESSAGES ===
+}
+[2025-07-08T05:41:25.334Z] Initiating greeting generation for new session
+[2025-07-08T05:41:25.334Z] Greeting session data: {
+  "userName": "",
+  "projectPath": "/tmp/e2e-test-workspace-1751953282680/projects/test-project",
+  "repoName": "hello-world-1"
+}
+[2025-07-08T05:41:25.334Z] Created greeting message ID: 3f9998d1-8f8c-4161-b399-62b285464c9d
+[2025-07-08T05:41:25.334Z] Sending greeting to 1 connections for session project--tmp-e2e-test-workspace-1751953282680-projects-test-project-hello-world-1-0ec345c5-313f-4d64-a584-9feecf7e48ae
+[2025-07-08T05:41:25.334Z] Sent message-start to connection project--tmp-e2e-test-workspace-1751953282680-projects-test-project-hello-world-1-0ec345c5-313f-4d64-a584-9feecf7e48ae-1751953285333-0.3790977305277222
+[2025-07-08T05:41:25.334Z] Claude service available: true
+[2025-07-08T05:41:25.334Z] Calling processClaudeCodeMessage for greeting
+[2025-07-08T05:41:29.800Z] Greeting response: {
+  "text": "Hey Developer! Welcome back to hello-world-1 - it's getting late but I'm here to help you make progress on test-project. What would you like to work on tonight?",
+  "toolExecutions": [],
+  "tokenUsage": {
+    "inputTokens": 225,
+    "outputTokens": 40,
+    "totalTokens": 265
+  },
+  "error": null
+}
+[2025-07-08T05:41:29.800Z] Response text type: string
+[2025-07-08T05:41:29.850Z] Sending greeting to 1 connections
+[2025-07-08T05:41:29.850Z] Sending chunk with messageId: 3f9998d1-8f8c-4161-b399-62b285464c9d to connection project--tmp-e2e-test-workspace-1751953282680-projects-test-project-hello-world-1-0ec345c5-313f-4d64-a584-9feecf7e48ae-1751953285333-0.3790977305277222
+[2025-07-08T05:41:29.850Z] Sent greeting chunk to connection project--tmp-e2e-test-workspace-1751953282680-projects-test-project-hello-world-1-0ec345c5-313f-4d64-a584-9feecf7e48ae-1751953285333-0.3790977305277222
+[2025-07-08T05:41:29.851Z] Sending message-complete to 1 connections
+[2025-07-08T05:41:29.851Z] Sent message-complete to connection project--tmp-e2e-test-workspace-1751953282680-projects-test-project-hello-world-1-0ec345c5-313f-4d64-a584-9feecf7e48ae-1751953285333-0.3790977305277222
+[2025-07-08T05:41:29.851Z] Greeting generation completed and marked
+
+
+=== RECENT EVENTS ===
+[2025-07-08T05:41:04.854Z] CLAUDE_SSE_CONNECTED | Claude Code SSE client connected | sessionId:project--tmp-e2e-test-workspace-1751953262163-projects-test-project-hello-world-1-24d4f3b4-22de-4f73-9212-02f9ebb1dc94 connectionId:project--tmp-e2e-test-workspace-1751953262163-projects-test-project-hello-world-1-24d4f3b4-22de-4f73-9212-02f9ebb1dc94-1751953264853-0.7106632449197724 totalConnections:1 removedStale:0
+[2025-07-08T05:41:07.342Z] CLAUDE_GREETING_GENERATED | Greeting message sent | sessionId:project--tmp-e2e-test-workspace-1751953258875-projects-test-project-hello-world-1-6f055791-5096-4672-a539-e58c6897c5b0 greetingLength:103 activeConnections:0
+[2025-07-08T05:41:09.118Z] CLAUDE_GREETING_GENERATED | Greeting message sent | sessionId:project--tmp-e2e-test-workspace-1751953262163-projects-test-project-hello-world-1-24d4f3b4-22de-4f73-9212-02f9ebb1dc94 greetingLength:129 activeConnections:1
+[2025-07-08T05:41:09.529Z] CLAUDE_SSE_DISCONNECTED | Claude Code SSE client disconnected | sessionId:project--tmp-e2e-test-workspace-1751953262163-projects-test-project-hello-world-1-24d4f3b4-22de-4f73-9212-02f9ebb1dc94 connectionId:project--tmp-e2e-test-workspace-1751953262163-projects-test-project-hello-world-1-24d4f3b4-22de-4f73-9212-02f9ebb1dc94-1751953264853-0.7106632449197724 remainingConnections:0
+[2025-07-08T05:41:09.529Z] CLAUDE_SSE_DISCONNECTED | Claude Code SSE client disconnected | sessionId:project--tmp-e2e-test-workspace-1751953262163-projects-test-project-hello-world-1-24d4f3b4-22de-4f73-9212-02f9ebb1dc94 connectionId:project--tmp-e2e-test-workspace-1751953262163-projects-test-project-hello-world-1-24d4f3b4-22de-4f73-9212-02f9ebb1dc94-1751953264853-0.7106632449197724 remainingConnections:0
+[2025-07-08T05:41:09.529Z] CLAUDE_SSE_DISCONNECTED | Claude Code SSE client disconnected | sessionId:project--tmp-e2e-test-workspace-1751953262163-projects-test-project-hello-world-1-24d4f3b4-22de-4f73-9212-02f9ebb1dc94 connectionId:project--tmp-e2e-test-workspace-1751953262163-projects-test-project-hello-world-1-24d4f3b4-22de-4f73-9212-02f9ebb1dc94-1751953264853-0.7106632449197724 remainingConnections:0
+[2025-07-08T05:41:09.784Z] SSE_SUBSCRIBE        | New SSE client connected | clientId:c9a8ed75-8805-4415-bde0-6e8a640d4fee
+[2025-07-08T05:41:09.784Z] CLIENT_REQUEST       | GET /api/sse/subscribe | sessionId:undefined
+[2025-07-08T05:41:10.009Z] SSE_SUBSCRIBE        | New SSE client connected | clientId:7d40efd5-0e30-4302-8c5b-c6f9a3ed02f4
+[2025-07-08T05:41:10.009Z] CLIENT_REQUEST       | GET /api/sse/subscribe | sessionId:undefined
+[2025-07-08T05:41:11.712Z] CLIENT_REQUEST       | POST /api/claude/code/start | sessionId:undefined
+[2025-07-08T05:41:11.715Z] CLAUDE_SESSION_CREATED | New Claude Code session | sessionId:project--tmp-e2e-test-workspace-1751953269554-projects-test-project-hello-world-1-85a1356a-e9f1-4921-88aa-dd3c382d8b7f repoName:hello-world-1 userName: projectPath:/tmp/e2e-test-workspace-1751953269554/projects/test-project
+[2025-07-08T05:41:11.715Z] CLIENT_RESPONSE      | Status: 200 | sessionId:project--tmp-e2e-test-workspace-1751953269554-projects-test-project-hello-world-1-85a1356a-e9f1-4921-88aa-dd3c382d8b7f
+[2025-07-08T05:41:12.217Z] CLIENT_REQUEST       | GET /api/claude/code/stream | sessionId:project--tmp-e2e-test-workspace-1751953269554-projects-test-project-hello-world-1-85a1356a-e9f1-4921-88aa-dd3c382d8b7f
+[2025-07-08T05:41:12.217Z] CLAUDE_SSE_CONNECTED | Claude Code SSE client connected | sessionId:project--tmp-e2e-test-workspace-1751953269554-projects-test-project-hello-world-1-85a1356a-e9f1-4921-88aa-dd3c382d8b7f connectionId:project--tmp-e2e-test-workspace-1751953269554-projects-test-project-hello-world-1-85a1356a-e9f1-4921-88aa-dd3c382d8b7f-1751953272216-0.9847940645735959 totalConnections:1 removedStale:0
+[2025-07-08T05:41:17.071Z] CLAUDE_GREETING_GENERATED | Greeting message sent | sessionId:project--tmp-e2e-test-workspace-1751953269554-projects-test-project-hello-world-1-85a1356a-e9f1-4921-88aa-dd3c382d8b7f greetingLength:88 activeConnections:1
+[2025-07-08T05:41:22.576Z] CLAUDE_SSE_DISCONNECTED | Claude Code SSE client disconnected | sessionId:project--tmp-e2e-test-workspace-1751953269554-projects-test-project-hello-world-1-85a1356a-e9f1-4921-88aa-dd3c382d8b7f connectionId:project--tmp-e2e-test-workspace-1751953269554-projects-test-project-hello-world-1-85a1356a-e9f1-4921-88aa-dd3c382d8b7f-1751953272216-0.9847940645735959 remainingConnections:0
+[2025-07-08T05:41:22.576Z] CLAUDE_SSE_DISCONNECTED | Claude Code SSE client disconnected | sessionId:project--tmp-e2e-test-workspace-1751953269554-projects-test-project-hello-world-1-85a1356a-e9f1-4921-88aa-dd3c382d8b7f connectionId:project--tmp-e2e-test-workspace-1751953269554-projects-test-project-hello-world-1-85a1356a-e9f1-4921-88aa-dd3c382d8b7f-1751953272216-0.9847940645735959 remainingConnections:0
+[2025-07-08T05:41:22.576Z] CLAUDE_SSE_DISCONNECTED | Claude Code SSE client disconnected | sessionId:project--tmp-e2e-test-workspace-1751953269554-projects-test-project-hello-world-1-85a1356a-e9f1-4921-88aa-dd3c382d8b7f connectionId:project--tmp-e2e-test-workspace-1751953269554-projects-test-project-hello-world-1-85a1356a-e9f1-4921-88aa-dd3c382d8b7f-1751953272216-0.9847940645735959 remainingConnections:0
+[2025-07-08T05:41:22.911Z] SSE_SUBSCRIBE        | New SSE client connected | clientId:e84f222b-afe6-4fe5-8a26-8990b0fb6d5b
+[2025-07-08T05:41:22.911Z] CLIENT_REQUEST       | GET /api/sse/subscribe | sessionId:undefined
+[2025-07-08T05:41:23.129Z] SSE_SUBSCRIBE        | New SSE client connected | clientId:4b6d0417-42ae-4802-a35f-da3b6ff3d986
+[2025-07-08T05:41:23.129Z] CLIENT_REQUEST       | GET /api/sse/subscribe | sessionId:undefined
+[2025-07-08T05:41:24.825Z] CLIENT_REQUEST       | POST /api/claude/code/start | sessionId:undefined
+[2025-07-08T05:41:24.832Z] CLAUDE_SESSION_CREATED | New Claude Code session | sessionId:project--tmp-e2e-test-workspace-1751953282680-projects-test-project-hello-world-1-0ec345c5-313f-4d64-a584-9feecf7e48ae repoName:hello-world-1 userName: projectPath:/tmp/e2e-test-workspace-1751953282680/projects/test-project
+[2025-07-08T05:41:24.832Z] CLIENT_RESPONSE      | Status: 200 | sessionId:project--tmp-e2e-test-workspace-1751953282680-projects-test-project-hello-world-1-0ec345c5-313f-4d64-a584-9feecf7e48ae
+[2025-07-08T05:41:25.334Z] CLIENT_REQUEST       | GET /api/claude/code/stream | sessionId:project--tmp-e2e-test-workspace-1751953282680-projects-test-project-hello-world-1-0ec345c5-313f-4d64-a584-9feecf7e48ae
+[2025-07-08T05:41:25.334Z] CLAUDE_SSE_CONNECTED | Claude Code SSE client connected | sessionId:project--tmp-e2e-test-workspace-1751953282680-projects-test-project-hello-world-1-0ec345c5-313f-4d64-a584-9feecf7e48ae connectionId:project--tmp-e2e-test-workspace-1751953282680-projects-test-project-hello-world-1-0ec345c5-313f-4d64-a584-9feecf7e48ae-1751953285333-0.3790977305277222 totalConnections:1 removedStale:0
+[2025-07-08T05:41:29.851Z] CLAUDE_GREETING_GENERATED | Greeting message sent | sessionId:project--tmp-e2e-test-workspace-1751953282680-projects-test-project-hello-world-1-0ec345c5-313f-4d64-a584-9feecf7e48ae greetingLength:160 activeConnections:1

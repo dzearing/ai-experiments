@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useApp } from '../contexts/AppContext';
+import { useLayout } from '../contexts/LayoutContext';
 import { useTheme } from '../contexts/ThemeContextV2';
 import { Button } from '../components/ui/Button';
 import { IconButton } from '../components/ui/IconButton';
@@ -21,12 +22,18 @@ const personaTypeLabels: Record<PersonaType, string> = {
 
 export function ThemedPersonas() {
   const { personas, deletePersona } = useApp();
+  const { setHeaderContent } = useLayout();
   const { currentStyles } = useTheme();
   const styles = currentStyles;
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; persona: Persona | null }>({
     isOpen: false,
     persona: null
   });
+  
+  // Clear header content on mount
+  useEffect(() => {
+    setHeaderContent(null);
+  }, [setHeaderContent]);
   
   return (
     <div>

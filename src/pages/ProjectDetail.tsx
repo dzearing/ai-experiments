@@ -72,7 +72,6 @@ export function ProjectDetail() {
         { label: project.name }
       ]);
     }
-    
   }, [project, setHeaderContent]);
 
   // Subscribe to repository status updates
@@ -445,6 +444,8 @@ export function ProjectDetail() {
               return (
                 <div 
                   key={`${repo.name}-${repo.number}`} 
+                  data-testid="repo-card"
+                  data-repo-name={`${repo.name}-${repo.number}`}
                   className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} p-6`}
                 >
                   <div className="flex items-start justify-between">
@@ -546,6 +547,8 @@ export function ProjectDetail() {
                       <Button
                         variant="secondary"
                         size="sm"
+                        data-testid="claude-code-button"
+                        data-repo-name={`${repo.name}-${repo.number}`}
                         onClick={() => navigate(`/projects/${projectId}/claude-code/${repo.name}-${repo.number}`)}
                       >
                         <span className="flex items-center gap-1">

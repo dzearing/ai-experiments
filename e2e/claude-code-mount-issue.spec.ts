@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, setupWorkspaceInBrowser } from './test-setup';
 import fs from 'fs/promises';
 import path from 'path';
 import { exec } from 'child_process';
@@ -7,7 +7,7 @@ import { promisify } from 'util';
 const execAsync = promisify(exec);
 
 test.describe('Claude Code Mount/Unmount Issue', () => {
-  test('should capture console logs when navigating to Claude Code', async ({ page }) => {
+  test('should capture console logs when navigating to Claude Code', async ({ page, testWorkspace }) => {
     // Clear any existing logs
     const logPath = path.join(process.cwd(), 'e2e-console-logs.txt');
     await fs.writeFile(logPath, '');
@@ -30,35 +30,44 @@ test.describe('Claude Code Mount/Unmount Issue', () => {
       // Ignore if folder doesn't exist
     }
     
-    console.log('Starting test: navigating to home page...');
+    console.log('Starting test: setting up workspace...');
     
-    // Navigate to home URL
-    await page.goto('http://localhost:5173');
+    // Set up workspace and navigate to projects page
+    await setupWorkspaceInBrowser(page, testWorkspace);
     
-    // Wait for the page to load
-    await page.waitForLoadState('networkidle');
+    console.log('Workspace setup complete, looking for test project...');
     
-    console.log('Home page loaded, looking for Projects link...');
-    
-    // Click on Projects
-    await page.click('text=Projects');
-    await page.waitForLoadState('networkidle');
-    
-    console.log('Projects page loaded, looking for apisurf project...');
-    
-    // Look for apisurf project
-    const projectCard = page.locator('text=apisurf').first();
+    // Look for test project
+    const projectCard = page.locator('[data-testid="project-card"]').first();
     await expect(projectCard).toBeVisible({ timeout: 10000 });
     
     // Click on the project
     await projectCard.click();
-    await page.waitForLoadState('networkidle');
+    await page.waitForSelector('[data-testid="repo-card"]', { timeout: 10000 });
     
     console.log('Project detail page loaded, looking for Claude Code button...');
     
     // Look for Claude Code button and click it
-    const claudeCodeButton = page.locator('button:has-text("Claude Code")').first();
+    const claudeCodeButton = page.locator('[data-testid="claude-code-button"]').first();
     await expect(claudeCodeButton).toBeVisible({ timeout: 10000 });
+    
+    // Dismiss any panels or toasts that might be blocking
+    const themeSwitcher = page.locator('text="Theme Switcher"');
+    if (await themeSwitcher.count() > 0) {
+      // Click somewhere else to close it
+      await page.click('body', { position: { x: 10, y: 10 } });
+      await page.waitForTimeout(500);
+    }
+    
+    const toasts = page.locator('[role="alert"], .fixed.bottom-4.right-4');
+    const toastCount = await toasts.count();
+    if (toastCount > 0) {
+      const closeButton = toasts.locator('button').first();
+      if (await closeButton.count() > 0) {
+        await closeButton.click({ force: true });
+      }
+      await page.waitForTimeout(1000);
+    }
     
     // Clear logs right before clicking to focus on the mount/unmount issue
     consoleLogs.length = 0;

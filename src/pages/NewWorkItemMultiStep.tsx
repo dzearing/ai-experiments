@@ -141,10 +141,7 @@ function NewWorkItemContent() {
       setHeaderContent(null);
     }
     
-    // Clean up on unmount
-    return () => {
-      setHeaderContent(null);
-    };
+    // No cleanup needed - let the next page set its own header
   }, [isEditMode, existingWorkItem, currentProject, setHeaderContent]);
   
   // Don't use useEffect for change detection - only set hasChanges from user actions

@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
+import { useLayout } from '../contexts/LayoutContext';
 import { useWorkspace } from '../contexts/WorkspaceContext';
 import { useTheme } from '../contexts/ThemeContextV2';
 import { Button } from '../components/ui/Button';
@@ -11,6 +12,7 @@ import type { WorkItem } from '../types';
 export function WorkItems() {
   const { workItems, projects, personas, deleteWorkItem } = useApp();
   const { isLoadingWorkspace } = useWorkspace();
+  const { setHeaderContent } = useLayout();
   const { currentStyles } = useTheme();
   const navigate = useNavigate();
   const styles = currentStyles;
@@ -18,6 +20,11 @@ export function WorkItems() {
   const [sortBy, setSortBy] = useState<'priority' | 'dueDate' | 'created'>('priority');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [workItemToDelete, setWorkItemToDelete] = useState<WorkItem | null>(null);
+  
+  // Clear header content on mount
+  useEffect(() => {
+    setHeaderContent(null);
+  }, [setHeaderContent]);
   
   
   const getStatusColor = (status: WorkItem['status']) => {
