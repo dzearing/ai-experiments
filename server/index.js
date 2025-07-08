@@ -6,9 +6,35 @@ const crypto = require('crypto');
 const path = require('path');
 const { execSync } = require('child_process');
 const subscriptionManager = require('./subscriptionManager');
+const claudeFlowSettings = require('./claudeflow-settings');
+const fs = require('fs');
+const fsAsync = fs.promises;
+const logger = require('./logger');
+const sessionManager = require('./session-manager');
 
 // Load .env from parent directory
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
+
+// Initialize logging system
+logger.initializeLogs();
+
+// Initialize session manager on startup
+(async () => {
+  try {
+    await sessionManager.initialize();
+    logger.info('Session manager initialized successfully');
+  } catch (error) {
+    logger.error('Failed to initialize session manager:', error);
+    process.exit(1);
+  }
+})();
+
+// Keep debugLog for backward compatibility but also log to appropriate files
+function debugLog(...args) {
+  console.log(...args);
+  // Log to claude log for claude-specific debugging
+  logger.writeClaudeLog(...args);
+}
 
 console.log('=== SERVER STARTUP ===');
 console.log('Current directory:', process.cwd());
@@ -16,6 +42,13 @@ console.log('GITHUB_CLIENT_ID:', process.env.GITHUB_CLIENT_ID);
 console.log('GITHUB_CLIENT_SECRET:', process.env.GITHUB_CLIENT_SECRET ? '***hidden***' : 'not set');
 console.log('PORT:', process.env.PORT);
 console.log('FRONTEND_URL:', process.env.FRONTEND_URL);
+
+// Log server startup event
+logger.logEvent('SERVER_START', 'Server initializing', {
+  port: process.env.PORT || 3000,
+  cwd: process.cwd(),
+  nodeVersion: process.version
+});
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -77,6 +110,13 @@ app.get('/api/health', (req, res) => {
 // SSE endpoint for real-time updates
 app.get('/api/sse/subscribe', (req, res) => {
   const clientId = crypto.randomUUID();
+  
+  logger.logEvent('SSE_SUBSCRIBE', 'New SSE client connected', { clientId });
+  logger.logClient('REQUEST', {
+    method: 'GET',
+    url: '/api/sse/subscribe',
+    clientId
+  });
   
   // Set SSE headers
   res.writeHead(200, {
@@ -634,7 +674,6 @@ app.post('/api/github/proxy', async (req, res) => {
 });
 
 // Workspace endpoints
-const fs = require('fs').promises;
 const os = require('os');
 const { exec } = require('child_process');
 const { promisify } = require('util');
@@ -891,13 +930,13 @@ async function extractRepoDetails(repoPath) {
   try {
     // Check for .git folder to determine repo type
     const gitPath = path.join(repoPath, '.git');
-    const gitExists = await fs.access(gitPath).then(() => true).catch(() => false);
+    const gitExists = await fsAsync.access(gitPath).then(() => true).catch(() => false);
     
     if (gitExists) {
       // Try to read git config for remote URL
       try {
         const configPath = path.join(gitPath, 'config');
-        const gitConfig = await fs.readFile(configPath, 'utf-8');
+        const gitConfig = await fsAsync.readFile(configPath, 'utf-8');
         
         // Extract remote origin URL using regex
         const remoteMatch = gitConfig.match(/\[remote "origin"\]\s*\n\s*url = (.+)/);
@@ -959,7 +998,7 @@ async function extractRepoDetails(repoPath) {
     // Check for package.json
     const packageJsonPath = path.join(repoPath, 'package.json');
     try {
-      const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf-8'));
+      const packageJson = JSON.parse(await fsAsync.readFile(packageJsonPath, 'utf-8'));
       if (packageJson.private === false) {
         details.visibility = 'public';
       }
@@ -968,7 +1007,7 @@ async function extractRepoDetails(repoPath) {
     }
 
     // Identify important folders
-    const entries = await fs.readdir(repoPath, { withFileTypes: true });
+    const entries = await fsAsync.readdir(repoPath, { withFileTypes: true });
     const importantDirs = ['src', 'packages', 'apps', 'lib', 'docs', 'scripts', 'test', 'tests'];
     
     for (const entry of entries) {
@@ -1009,7 +1048,7 @@ app.post('/api/browse/list', async (req, res) => {
     const resolvedPath = path.resolve(targetPath);
     
     try {
-      const items = await fs.readdir(resolvedPath);
+      const items = await fsAsync.readdir(resolvedPath);
       const results = [];
       
       console.log(`Browsing directory: ${resolvedPath}`);
@@ -1018,7 +1057,7 @@ app.post('/api/browse/list', async (req, res) => {
       for (const item of items) {
         try {
           const itemPath = path.join(resolvedPath, item);
-          const stats = await fs.stat(itemPath);
+          const stats = await fsAsync.stat(itemPath);
           
           // Include all directories, but mark hidden ones
           if (stats.isDirectory()) {
@@ -1093,7 +1132,7 @@ app.post('/api/browse/create-folder', async (req, res) => {
     const newFolderPath = path.join(parentPath, folderName);
     
     try {
-      await fs.mkdir(newFolderPath, { recursive: false });
+      await fsAsync.mkdir(newFolderPath, { recursive: false });
       res.json({ 
         success: true, 
         path: newFolderPath,
@@ -1125,7 +1164,7 @@ app.post('/api/workspace/exists', async (req, res) => {
     }
 
     try {
-      const stats = await fs.stat(workspacePath);
+      const stats = await fsAsync.stat(workspacePath);
       if (!stats.isDirectory()) {
         res.json({ exists: false, hasContent: false });
         return;
@@ -1135,9 +1174,9 @@ app.post('/api/workspace/exists', async (req, res) => {
       let hasContent = false;
       try {
         const projectsPath = path.join(workspacePath, 'projects');
-        const projectStats = await fs.stat(projectsPath);
+        const projectStats = await fsAsync.stat(projectsPath);
         if (projectStats.isDirectory()) {
-          const projectDirs = await fs.readdir(projectsPath);
+          const projectDirs = await fsAsync.readdir(projectsPath);
           // Check if there are any projects besides template and hidden folders
           hasContent = projectDirs.some(dir => dir !== 'template' && !dir.startsWith('.'));
         }
@@ -1186,21 +1225,21 @@ app.post('/api/workspace/read-light', async (req, res) => {
     const projects = [];
 
     try {
-      const projectDirs = await fs.readdir(projectsPath);
+      const projectDirs = await fsAsync.readdir(projectsPath);
       
       // Read all project basic info in parallel
       const projectPromises = projectDirs
         .filter(name => !name.startsWith('.'))
         .map(async (projectName) => {
           const projectPath = path.join(projectsPath, projectName);
-          const stats = await fs.stat(projectPath);
+          const stats = await fsAsync.stat(projectPath);
           
           if (!stats.isDirectory()) return null;
 
           // Check if tracked
           try {
             const settingsPath = path.join(projectPath, 'claudeflow.settings.json');
-            const settingsContent = await fs.readFile(settingsPath, 'utf-8');
+            const settingsContent = await fsAsync.readFile(settingsPath, 'utf-8');
             const settings = JSON.parse(settingsContent);
             if (settings.tracked === false) return null;
           } catch (err) {
@@ -1283,7 +1322,7 @@ app.post('/api/workspace/project-details', async (req, res) => {
     let readmeContent = '';
     try {
       const readmePath = path.join(projectPath, 'README.md');
-      readmeContent = await fs.readFile(readmePath, 'utf-8');
+      readmeContent = await fsAsync.readFile(readmePath, 'utf-8');
       project.readme = readmeContent;
     } catch (err) {
       // README is optional
@@ -1298,7 +1337,7 @@ app.post('/api/workspace/project-details', async (req, res) => {
     // Read repos directory
     try {
       const reposPath = path.join(projectPath, 'repos');
-      const repoDirs = await fs.readdir(reposPath);
+      const repoDirs = await fsAsync.readdir(reposPath);
       
       for (const repoDir of repoDirs) {
         const match = repoDir.match(/^(.+)-(\d+)$/);
@@ -1322,13 +1361,13 @@ app.post('/api/workspace/project-details', async (req, res) => {
     await Promise.all(planTypes.map(async (planType) => {
       try {
         const plansPath = path.join(projectPath, 'plans', planType);
-        const planFiles = await fs.readdir(plansPath);
+        const planFiles = await fsAsync.readdir(plansPath);
         
         const plansPromises = planFiles
           .filter(file => file.endsWith('.md') && file !== 'TEMPLATE.md')
           .map(async (file) => {
             const planPath = path.join(plansPath, file);
-            const content = await fs.readFile(planPath, 'utf-8');
+            const content = await fsAsync.readFile(planPath, 'utf-8');
             const parsedWorkItem = parseWorkItemMarkdown(content);
             
             return {
@@ -1429,10 +1468,10 @@ app.post('/api/workspace/create-workitem', async (req, res) => {
     }
     
     // Ensure directory exists
-    await fs.mkdir(path.dirname(targetPath), { recursive: true });
+    await fsAsync.mkdir(path.dirname(targetPath), { recursive: true });
     
     // Write the file
-    await fs.writeFile(targetPath, markdownContent);
+    await fsAsync.writeFile(targetPath, markdownContent);
     
     // Invalidate cache for this project
     invalidateCache(`workspace-light:${workspacePath}`);
@@ -1522,10 +1561,10 @@ app.post('/api/workspace/update-workitem', async (req, res) => {
     }
     
     // Ensure directory exists
-    await fs.mkdir(path.dirname(targetPath), { recursive: true });
+    await fsAsync.mkdir(path.dirname(targetPath), { recursive: true });
     
     // Write the file
-    await fs.writeFile(targetPath, markdownContent);
+    await fsAsync.writeFile(targetPath, markdownContent);
     
     // Invalidate cache for this project
     invalidateCache(`workspace-light:${workspacePath}`);
@@ -1572,7 +1611,7 @@ app.post('/api/workspace/work-item-content', async (req, res) => {
     const startTime = Date.now();
 
     // Read and parse the markdown file
-    const content = await fs.readFile(workItemPath, 'utf-8');
+    const content = await fsAsync.readFile(workItemPath, 'utf-8');
     const parsedWorkItem = parseWorkItemMarkdown(content);
 
     const result = {
@@ -1628,7 +1667,7 @@ app.post('/api/workspace/read', async (req, res) => {
     const projects = [];
 
     try {
-      const projectDirs = await fs.readdir(projectsPath);
+      const projectDirs = await fsAsync.readdir(projectsPath);
       console.log('Found directories in projects folder:', projectDirs);
       
       for (const projectName of projectDirs) {
@@ -1639,13 +1678,13 @@ app.post('/api/workspace/read', async (req, res) => {
         }
         
         const projectPath = path.join(projectsPath, projectName);
-        const stats = await fs.stat(projectPath);
+        const stats = await fsAsync.stat(projectPath);
         
         if (stats.isDirectory()) {
           // Check for claudeflow.settings.json
           try {
             const settingsPath = path.join(projectPath, 'claudeflow.settings.json');
-            const settingsContent = await fs.readFile(settingsPath, 'utf-8');
+            const settingsContent = await fsAsync.readFile(settingsPath, 'utf-8');
             const settings = JSON.parse(settingsContent);
             
             if (settings.tracked === false) {
@@ -1672,7 +1711,7 @@ app.post('/api/workspace/read', async (req, res) => {
           let readmeContent = '';
           try {
             const readmePath = path.join(projectPath, 'README.md');
-            readmeContent = await fs.readFile(readmePath, 'utf-8');
+            readmeContent = await fsAsync.readFile(readmePath, 'utf-8');
             project.readme = readmeContent;
           } catch (err) {
             // README is optional
@@ -1688,7 +1727,7 @@ app.post('/api/workspace/read', async (req, res) => {
           const reposStartTime = Date.now();
           try {
             const reposPath = path.join(projectPath, 'repos');
-            const repoDirs = await fs.readdir(reposPath);
+            const repoDirs = await fsAsync.readdir(reposPath);
             
             for (const repoDir of repoDirs) {
               const match = repoDir.match(/^(.+)-(\d+)$/);
@@ -1749,14 +1788,14 @@ app.post('/api/workspace/read', async (req, res) => {
           const planPromises = planTypes.map(async (planType) => {
             try {
               const plansPath = path.join(projectPath, 'plans', planType);
-              const planFiles = await fs.readdir(plansPath);
+              const planFiles = await fsAsync.readdir(plansPath);
               
               // Read all files in this plan type in parallel
               const filePromises = planFiles
                 .filter(planFile => planFile.endsWith('.md') && planFile !== 'TEMPLATE.md')
                 .map(async (planFile) => {
                   const planPath = path.join(plansPath, planFile);
-                  const content = await fs.readFile(planPath, 'utf-8');
+                  const content = await fsAsync.readFile(planPath, 'utf-8');
                   
                   const parsedWorkItem = parseWorkItemMarkdown(content);
                   return {
@@ -1836,8 +1875,30 @@ app.post('/api/workspace/read-file', async (req, res) => {
       return res.status(400).json({ error: 'File path is required' });
     }
     
-    const content = await fs.readFile(filePath, 'utf-8');
-    res.json({ content });
+    try {
+      const content = await fsAsync.readFile(filePath, 'utf-8');
+      res.json({ content });
+    } catch (readError) {
+      // Special handling for claudeflow.settings.json
+      if (filePath.endsWith('claudeflow.settings.json') && readError.code === 'ENOENT') {
+        // File doesn't exist, create default settings
+        const projectPath = path.dirname(filePath);
+        const projectName = path.basename(projectPath);
+        const defaultSettings = {
+          version: '1.0.0',
+          projectName: projectName,
+          repositories: {},
+          lastUpdated: new Date().toISOString()
+        };
+        
+        // Ensure directory exists
+        await fsAsync.mkdir(projectPath, { recursive: true });
+        await fsAsync.writeFile(filePath, JSON.stringify(defaultSettings, null, 2));
+        res.json({ content: JSON.stringify(defaultSettings, null, 2) });
+      } else {
+        throw readError;
+      }
+    }
     
   } catch (error) {
     console.error('Error reading file:', error);
@@ -1857,7 +1918,7 @@ app.post('/api/workspace/write-file', async (req, res) => {
       return res.status(400).json({ error: 'File path and content are required' });
     }
     
-    await fs.writeFile(filePath, content, 'utf-8');
+    await fsAsync.writeFile(filePath, content, 'utf-8');
     res.json({ success: true });
     
   } catch (error) {
@@ -1885,13 +1946,13 @@ app.post('/api/workspace/create', async (req, res) => {
     ];
 
     for (const dir of dirs) {
-      await fs.mkdir(dir, { recursive: true });
+      await fsAsync.mkdir(dir, { recursive: true });
     }
 
     // Check if .template folder exists, create it if not
     const templatePath = path.join(workspacePath, 'projects', '.template');
     try {
-      await fs.access(templatePath);
+      await fsAsync.access(templatePath);
       console.log('.template folder already exists, skipping creation');
     } catch (err) {
       // .template doesn't exist, create it
@@ -1908,7 +1969,7 @@ app.post('/api/workspace/create', async (req, res) => {
       ];
 
       for (const dir of templateDirs) {
-        await fs.mkdir(dir, { recursive: true });
+        await fsAsync.mkdir(dir, { recursive: true });
       }
 
       // Create template files
@@ -1960,17 +2021,17 @@ Describe the work item here.
 - Criteria 2
 `;
 
-      await fs.writeFile(
+      await fsAsync.writeFile(
         path.join(templatePath, 'README.md'),
         templateReadme
       );
 
-      await fs.writeFile(
+      await fsAsync.writeFile(
         path.join(templatePath, 'REPOS.md'),
         templateRepos
       );
 
-      await fs.writeFile(
+      await fsAsync.writeFile(
         path.join(templatePath, 'plans', 'ideas', 'TEMPLATE.md'),
         templatePlan
       );
@@ -1979,7 +2040,7 @@ Describe the work item here.
     // Create STATUS.md at workspace root if it doesn't exist
     const statusPath = path.join(workspacePath, 'STATUS.md');
     try {
-      await fs.access(statusPath);
+      await fsAsync.access(statusPath);
     } catch (err) {
       const statusMd = `# Project status
 
@@ -2000,7 +2061,7 @@ Describe the work item here.
 <!-- List planned work items -->
 `;
 
-      await fs.writeFile(statusPath, statusMd);
+      await fsAsync.writeFile(statusPath, statusMd);
     }
     
     res.json({ success: true, message: 'Workspace created successfully' });
@@ -2035,7 +2096,7 @@ app.post('/api/workspace/create-project', async (req, res) => {
     
     // Check if project folder already exists
     try {
-      await fs.access(projectPath);
+      await fsAsync.access(projectPath);
       return res.status(409).json({ error: 'Project folder already exists' });
     } catch (err) {
       // Folder doesn't exist, continue
@@ -2053,7 +2114,7 @@ app.post('/api/workspace/create-project', async (req, res) => {
     ];
 
     for (const dir of dirs) {
-      await fs.mkdir(dir, { recursive: true });
+      await fsAsync.mkdir(dir, { recursive: true });
     }
 
     // Create README.md
@@ -2071,7 +2132,7 @@ ${projectName} project created via UI.
 - To be defined
 `;
 
-    await fs.writeFile(
+    await fsAsync.writeFile(
       path.join(projectPath, 'README.md'),
       readmeContent
     );
@@ -2089,7 +2150,7 @@ ${projectName} project created via UI.
 ## Active work
 `;
 
-    await fs.writeFile(
+    await fsAsync.writeFile(
       path.join(projectPath, 'REPOS.md'),
       reposContent
     );
@@ -2131,8 +2192,8 @@ app.post('/api/workspace/clone-repo', async (req, res) => {
     let repoNumber = 1;
     
     try {
-      await fs.mkdir(reposPath, { recursive: true });
-      const existingRepos = await fs.readdir(reposPath);
+      await fsAsync.mkdir(reposPath, { recursive: true });
+      const existingRepos = await fsAsync.readdir(reposPath);
       
       // Find existing repos with this name
       const repoPattern = new RegExp(`^${folderName}-(\\d+)$`);
@@ -2167,7 +2228,7 @@ app.post('/api/workspace/clone-repo', async (req, res) => {
       // Update REPOS.md to track the new clone
       const reposmdPath = path.join(projectPath, 'REPOS.md');
       try {
-        let reposContent = await fs.readFile(reposmdPath, 'utf-8');
+        let reposContent = await fsAsync.readFile(reposmdPath, 'utf-8');
         
         // Update repository information if it's generic
         if (reposContent.includes('To be added')) {
@@ -2197,7 +2258,7 @@ app.post('/api/workspace/clone-repo', async (req, res) => {
           }
         }
         
-        await fs.writeFile(reposmdPath, reposContent);
+        await fsAsync.writeFile(reposmdPath, reposContent);
       } catch (err) {
         console.log('Could not update REPOS.md:', err.message);
       }
@@ -2247,7 +2308,7 @@ app.post('/api/workspace/extract-repo-details', async (req, res) => {
     // Try to read package.json
     try {
       const packageJsonPath = path.join(repoPath, 'package.json');
-      const packageContent = await fs.readFile(packageJsonPath, 'utf-8');
+      const packageContent = await fsAsync.readFile(packageJsonPath, 'utf-8');
       const packageJson = JSON.parse(packageContent);
       
       if (packageJson.description) {
@@ -2285,7 +2346,7 @@ app.post('/api/workspace/extract-repo-details', async (req, res) => {
     // Try to read README.md
     try {
       const readmePath = path.join(repoPath, 'README.md');
-      const readmeContent = await fs.readFile(readmePath, 'utf-8');
+      const readmeContent = await fsAsync.readFile(readmePath, 'utf-8');
       
       // Extract description if not already found
       if (!details.description) {
@@ -2402,7 +2463,7 @@ ${technologies.map(tech => `- ${tech}`).join('\n')}
 
     // Write the README file
     const readmePath = path.join(projectPath, 'README.md');
-    await fs.writeFile(readmePath, readmeContent);
+    await fsAsync.writeFile(readmePath, readmeContent);
 
     res.json({ 
       success: true, 
@@ -2441,7 +2502,7 @@ app.post('/api/projects/:projectId/hide', async (req, res) => {
     
     // Check if project exists
     try {
-      await fs.access(projectPath);
+      await fsAsync.access(projectPath);
     } catch (err) {
       return res.status(404).json({ error: 'Project not found' });
     }
@@ -2452,7 +2513,7 @@ app.post('/api/projects/:projectId/hide', async (req, res) => {
       tracked: false
     };
     
-    await fs.writeFile(settingsPath, JSON.stringify(settings, null, 2));
+    await fsAsync.writeFile(settingsPath, JSON.stringify(settings, null, 2));
     
     console.log(`Created claudeflow.settings.json at: ${settingsPath}`);
     res.json({ 
@@ -2492,13 +2553,13 @@ app.post('/api/projects/:projectId/remove', async (req, res) => {
     
     // Check if project exists
     try {
-      await fs.access(projectPath);
+      await fsAsync.access(projectPath);
     } catch (err) {
       return res.status(404).json({ error: 'Project not found' });
     }
     
     // Remove the project folder
-    await fs.rm(projectPath, { recursive: true, force: true });
+    await fsAsync.rm(projectPath, { recursive: true, force: true });
     
     console.log(`Removed project folder at: ${projectPath}`);
     res.json({ 
@@ -2540,7 +2601,7 @@ app.post('/api/workspace/create-workitem', async (req, res) => {
     const planPath = path.join(projectPath, 'plans', 'planned');
     
     // Ensure the plans directory structure exists
-    await fs.mkdir(planPath, { recursive: true });
+    await fsAsync.mkdir(planPath, { recursive: true });
 
     // Format the markdown content using TEMPLATE.md structure
     const markdownContent = `# ${workItem.title}
@@ -2596,7 +2657,7 @@ ${JSON.stringify({ workItemId: workItem.id, tasks: tasks || [] }, null, 2)}
 
     // Write the markdown file
     const filePath = path.join(planPath, `${filename}.md`);
-    await fs.writeFile(filePath, markdownContent);
+    await fsAsync.writeFile(filePath, markdownContent);
 
     console.log(`Created work item markdown at: ${filePath}`);
     res.json({ 
@@ -2639,11 +2700,11 @@ app.post('/api/workspace/update-workitem', async (req, res) => {
       for (const planType of planTypes) {
         const planDir = path.join(projectPath, 'plans', planType);
         try {
-          const files = await fs.readdir(planDir);
+          const files = await fsAsync.readdir(planDir);
           for (const file of files) {
             if (file.endsWith('.md')) {
               const filePath = path.join(planDir, file);
-              const content = await fs.readFile(filePath, 'utf-8');
+              const content = await fsAsync.readFile(filePath, 'utf-8');
               
               // Check if this file contains the work item ID in metadata
               const metadataMatch = content.match(/## Metadata\s*\n+```json\n([\s\S]*?)\n```/i);
@@ -2737,12 +2798,12 @@ ${JSON.stringify({ workItemId: workItem.id, tasks: tasks || [] }, null, 2)}
 `;
 
     // Write the updated content
-    await fs.writeFile(existingFilePath, markdownContent);
+    await fsAsync.writeFile(existingFilePath, markdownContent);
 
     // If the filename changed, rename the file
     if (existingFilePath !== newFilePath && path.basename(existingFilePath) !== newFilename) {
       try {
-        await fs.rename(existingFilePath, newFilePath);
+        await fsAsync.rename(existingFilePath, newFilePath);
         console.log(`Renamed file from ${path.basename(existingFilePath)} to ${newFilename}`);
       } catch (err) {
         console.error('Error renaming file:', err);
@@ -2768,6 +2829,11 @@ ${JSON.stringify({ workItemId: workItem.id, tasks: tasks || [] }, null, 2)}
 
 // Update project REPOS.md with correct repository information
 app.post('/api/workspace/update-repos-md', async (req, res) => {
+  console.log('=== UPDATE-REPOS-MD CALLED ===');
+  console.log('Caller:', req.headers.referer || 'Unknown');
+  console.log('Project path:', req.body.projectPath);
+  console.log('Stack trace:', new Error().stack);
+  
   try {
     const { projectPath, repositories } = req.body;
     
@@ -2776,6 +2842,14 @@ app.post('/api/workspace/update-repos-md', async (req, res) => {
     }
 
     const reposPath = path.join(projectPath, 'REPOS.md');
+    
+    // Check if REPOS.md already exists
+    try {
+      await fsAsync.access(reposPath);
+      console.log('REPOS.md already exists at:', reposPath);
+    } catch (err) {
+      console.log('REPOS.md does not exist, will create new one');
+    }
     
     // Generate REPOS.md content
     let content = '# Repository usage\n\n';
@@ -2801,15 +2875,40 @@ app.post('/api/workspace/update-repos-md', async (req, res) => {
     
     content += '\n## Available clones\n';
     
+    // Read existing REPOS.md to preserve statuses
+    let existingStatuses = new Map();
+    try {
+      const existingContent = await fsAsync.readFile(reposPath, 'utf-8');
+      const lines = existingContent.split('\n');
+      lines.forEach((line, index) => {
+        const match = line.match(/^- (.+): (.+)$/);
+        if (match) {
+          console.log(`Line ${index}: "${line}" -> Repo: "${match[1]}", Status: "${match[2]}"`);
+          existingStatuses.set(match[1], match[2]);
+        } else if (line.trim().startsWith('-')) {
+          console.log(`Line ${index}: "${line}" -> NO MATCH (but starts with -)`);
+        }
+      });
+      console.log('Existing REPOS.md content:');
+      console.log(existingContent);
+      console.log('Preserving existing repo statuses:', Array.from(existingStatuses.entries()));
+    } catch (err) {
+      // REPOS.md might not exist yet
+      console.log('No existing REPOS.md to preserve statuses from:', err.message);
+    }
+    
     // Read existing repos directory to list clones
     try {
       const reposDir = path.join(projectPath, 'repos');
-      const repoDirs = await fs.readdir(reposDir);
+      const repoDirs = await fsAsync.readdir(reposDir);
       
       for (const repoDir of repoDirs) {
         const match = repoDir.match(/^(.+)-(\d+)$/);
         if (match) {
-          content += `- ${repoDir}: Available\n`;
+          // Preserve existing status or default to Available
+          const status = existingStatuses.get(repoDir) || 'Available';
+          console.log(`Repo: ${repoDir}, Status from map: ${existingStatuses.get(repoDir)}, Final status: ${status}`);
+          content += `- ${repoDir}: ${status}\n`;
         }
       }
     } catch (err) {
@@ -2827,7 +2926,9 @@ app.post('/api/workspace/update-repos-md', async (req, res) => {
     }
 
     // Write the file
-    await fs.writeFile(reposPath, content, 'utf-8');
+    console.log('Writing new REPOS.md content:');
+    console.log(content);
+    await fsAsync.writeFile(reposPath, content, 'utf-8');
     
     res.json({ 
       success: true, 
@@ -2857,7 +2958,7 @@ app.post('/api/workspace/add-repository', async (req, res) => {
     const readmePath = path.join(projectPath, 'README.md');
     let readmeContent = '';
     try {
-      readmeContent = await fs.readFile(readmePath, 'utf-8');
+      readmeContent = await fsAsync.readFile(readmePath, 'utf-8');
     } catch (err) {
       console.log('No existing README.md, will create one');
     }
@@ -2907,14 +3008,14 @@ app.post('/api/workspace/add-repository', async (req, res) => {
     }
 
     // Write updated README
-    await fs.writeFile(readmePath, readmeContent);
+    await fsAsync.writeFile(readmePath, readmeContent);
 
     // Update REPOS.md to include new repository info
     const reposPath = path.join(projectPath, 'REPOS.md');
     let reposContent = '';
     
     try {
-      reposContent = await fs.readFile(reposPath, 'utf-8');
+      reposContent = await fsAsync.readFile(reposPath, 'utf-8');
       
       // Update repository information section
       const infoSection = reposContent.match(/##\s*Repository\s+information\s*\n([\s\S]*?)(?=\n##|$)/);
@@ -2935,7 +3036,7 @@ app.post('/api/workspace/add-repository', async (req, res) => {
         }
       }
       
-      await fs.writeFile(reposPath, reposContent);
+      await fsAsync.writeFile(reposPath, reposContent);
     } catch (err) {
       console.log('Could not update REPOS.md:', err.message);
     }
@@ -2986,7 +3087,7 @@ app.post('/api/work-items/delete', async (req, res) => {
     
     // Check if file exists
     try {
-      await fs.access(fullPath);
+      await fsAsync.access(fullPath);
     } catch (err) {
       console.error('File not found:', fullPath);
       return res.status(404).json({ error: 'Markdown file not found' });
@@ -2994,7 +3095,7 @@ app.post('/api/work-items/delete', async (req, res) => {
     
     if (permanentDelete) {
       // Permanently delete the file
-      await fs.unlink(fullPath);
+      await fsAsync.unlink(fullPath);
       
       // Invalidate cache after permanent deletion
       const pathParts = fullPath.split(path.sep);
@@ -3022,14 +3123,14 @@ app.post('/api/work-items/delete', async (req, res) => {
       const discardedPath = [...pathParts.slice(0, plansIndex + 1), 'discarded'].join(path.sep);
       
       // Ensure discarded folder exists
-      await fs.mkdir(discardedPath, { recursive: true });
+      await fsAsync.mkdir(discardedPath, { recursive: true });
       
       // Get filename and create destination path
       const filename = path.basename(fullPath);
       const destPath = path.join(discardedPath, filename);
       
       // Move the file
-      await fs.rename(fullPath, destPath);
+      await fsAsync.rename(fullPath, destPath);
       
       res.json({ 
         success: true, 
@@ -3191,7 +3292,7 @@ app.post('/api/repos/:projectPath/:repoName/rebase', async (req, res) => {
     const repoPath = path.join(decodeURIComponent(projectPath), 'repos', repoName);
     
     // Check if directory exists
-    await fs.access(repoPath);
+    await fsAsync.access(repoPath);
     
     // Fetch latest from origin
     execSync('git fetch origin main', { cwd: repoPath });
@@ -3246,7 +3347,7 @@ app.post('/api/repos/:projectPath/:repoName/reset', async (req, res) => {
     const repoPath = path.join(decodeURIComponent(projectPath), 'repos', repoName);
     
     // Check if directory exists
-    await fs.access(repoPath);
+    await fsAsync.access(repoPath);
     
     // Stash changes if requested
     if (stashChanges) {
@@ -3272,6 +3373,22 @@ app.post('/api/repos/:projectPath/:repoName/reset', async (req, res) => {
     
     // Reset to origin/main
     execSync('git reset --hard origin/main', { cwd: repoPath });
+    
+    // Update claudeflow.settings.json to mark repo as available
+    try {
+      const projectDir = decodeURIComponent(projectPath);
+      await claudeFlowSettings.releaseRepository(projectDir, repoName);
+      console.log(`Marked ${repoName} as available after reset in claudeflow.settings.json`);
+    } catch (err) {
+      console.error('Error updating claudeflow.settings.json:', err);
+    }
+    
+    // Clear Claude Code history for this repo
+    // This ensures fresh sessions when repo is reset
+    const claudeHistoryCleared = await clearClaudeHistory(repoName);
+    if (claudeHistoryCleared) {
+      console.log(`Cleared Claude Code history for ${repoName}`);
+    }
     
     // Force update subscription status
     const resourceId = `repo-status:${decodeURIComponent(projectPath)}/${repoName}`;
@@ -3312,9 +3429,9 @@ app.post('/api/repos/:projectPath/clone', async (req, res) => {
     
     // Find existing clones to determine next number
     const reposPath = path.join(decodedProjectPath, 'repos');
-    await fs.mkdir(reposPath, { recursive: true });
+    await fsAsync.mkdir(reposPath, { recursive: true });
     
-    const repoDirs = await fs.readdir(reposPath);
+    const repoDirs = await fsAsync.readdir(reposPath);
     let nextNumber = 1;
     
     // Find all clones of this repo
@@ -3350,7 +3467,7 @@ app.post('/api/repos/:projectPath/clone', async (req, res) => {
     // Update REPOS.md if it exists
     const reposFilePath = path.join(decodedProjectPath, 'REPOS.md');
     try {
-      let reposContent = await fs.readFile(reposFilePath, 'utf-8');
+      let reposContent = await fsAsync.readFile(reposFilePath, 'utf-8');
       
       // Add new clone to available clones section
       const availableSection = reposContent.match(/## Available clones\n([\s\S]*?)(?=\n##|$)/);
@@ -3363,7 +3480,7 @@ app.post('/api/repos/:projectPath/clone', async (req, res) => {
           `## Available clones\n\n${lines.join('\n')}\n`
         );
         
-        await fs.writeFile(reposFilePath, reposContent);
+        await fsAsync.writeFile(reposFilePath, reposContent);
       }
     } catch (err) {
       console.log('No REPOS.md file or error updating it:', err.message);
@@ -3400,21 +3517,21 @@ app.delete('/api/repos/:projectPath/:repoName', async (req, res) => {
     const repoPath = path.join(decodeURIComponent(projectPath), 'repos', repoName);
     
     // Check if directory exists
-    await fs.access(repoPath);
+    await fsAsync.access(repoPath);
     
     // Remove the directory
-    await fs.rm(repoPath, { recursive: true, force: true });
+    await fsAsync.rm(repoPath, { recursive: true, force: true });
     
     // Update REPOS.md to remove this clone
     const reposFilePath = path.join(decodeURIComponent(projectPath), 'REPOS.md');
     try {
-      let reposContent = await fs.readFile(reposFilePath, 'utf-8');
+      let reposContent = await fsAsync.readFile(reposFilePath, 'utf-8');
       
       // Remove lines referencing this repo
       const lines = reposContent.split('\n');
       const filteredLines = lines.filter(line => !line.includes(repoName));
       
-      await fs.writeFile(reposFilePath, filteredLines.join('\n'));
+      await fsAsync.writeFile(reposFilePath, filteredLines.join('\n'));
     } catch (err) {
       console.error('Error updating REPOS.md:', err);
       // Continue even if REPOS.md update fails
@@ -3439,174 +3556,283 @@ app.delete('/api/repos/:projectPath/:repoName', async (req, res) => {
 });
 
 // Claude Code endpoints
-const claudeCodeSessions = new Map();
-const claudeCodeClients = new Map();
+// Sessions are now managed by sessionManager
+// Store active Claude Code SSE clients by session ID
+// Each session maps to an object containing connections by connectionId
+const claudeCodeClients = new Map(); // Map<sessionId, Map<connectionId, { res, timestamp, lastHeartbeat }>>
+
+// Helper function to clear Claude history for a repo
+async function clearClaudeHistory(repoName) {
+  try {
+    // Find and end any active sessions for this repo
+    const allSessions = sessionManager.getAllSessions();
+    for (const session of allSessions) {
+      if (session.repoName === repoName) {
+        // Clean up session
+        await sessionManager.deleteSession(session.sessionId);
+        
+        // Remove all SSE connections
+        const connections = claudeCodeClients.get(session.sessionId);
+        if (connections) {
+          for (const [connId, conn] of connections.entries()) {
+            try {
+              conn.res.write(`event: session-end\ndata: ${JSON.stringify({ message: 'Session ended due to repo reset' })}\n\n`);
+              conn.res.end();
+            } catch (err) {
+              // Connection might already be disconnected
+            }
+          }
+          claudeCodeClients.delete(session.sessionId);
+        }
+        
+        logger.info(`Ended active Claude session ${session.sessionId} for repo ${repoName}`);
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    logger.error('Error clearing Claude history:', error);
+    return false;
+  }
+}
+
+// Request deduplication cache and lock mechanism (in-memory for now)
+const sessionCreationRequests = new Map();
+const sessionCreationLocks = new Set(); // Track in-flight session creation keys
+const SESSION_CREATION_DEBOUNCE_MS = 2000; // 2 seconds
 
 // Initialize Claude Code session
 app.post('/api/claude/code/start', async (req, res) => {
+  const { projectId, projectPath, repoName, userName, userEmail } = req.body;
+  
+  // Create a unique key for this session request (needed for finally block)
+  const requestKey = `${projectPath || 'unknown'}-${repoName || 'unknown'}-${userName || 'anonymous'}`;
+  
   try {
-    const { projectId, projectPath } = req.body;
+    logger.logClient('REQUEST', {
+      method: 'POST',
+      url: '/api/claude/code/start',
+      body: { projectId, projectPath, repoName, userName }
+    });
     
-    if (!projectId || !projectPath) {
-      return res.status(400).json({ error: 'Project ID and path are required' });
+    if (!projectId || !projectPath || !repoName) {
+      logger.logClient('RESPONSE', { status: 400, error: 'Missing required fields' });
+      return res.status(400).json({ error: 'Project ID, path, and repo name are required' });
     }
     
-    const sessionId = `${projectId}-${crypto.randomUUID()}`;
+    const now = Date.now();
     
-    // Find available repo or create one
-    const reposPath = path.join(projectPath, 'repos');
-    const reposDirs = await fs.readdir(reposPath).catch(() => []);
+    // Check if there's a recent request for the same session
+    const existingRequest = sessionCreationRequests.get(requestKey);
+    if (existingRequest && (now - existingRequest.timestamp) < SESSION_CREATION_DEBOUNCE_MS) {
+      const timeSinceRequest = now - existingRequest.timestamp;
+      logger.debug(`Duplicate session request detected - returning existing session: ${existingRequest.sessionId} (${timeSinceRequest}ms ago)`);
+      logger.logEvent('CLAUDE_SESSION_DEDUPLICATED', 'Returning existing session for duplicate request', {
+        sessionId: existingRequest.sessionId,
+        timeSinceRequest,
+        requestKey
+      });
+      logger.logClient('RESPONSE', { status: 200, sessionId: existingRequest.sessionId, duplicate: true });
+      return res.json({
+        sessionId: existingRequest.sessionId,
+        reservedRepo: repoName,
+        contextUsage: 0
+      });
+    }
     
-    // Look for an available repo to use
-    let reservedRepo = null;
-    
-    // First, check if we already have a Claude-reserved repo
-    reservedRepo = reposDirs.find(dir => dir.includes('-claude'));
-    
-    if (!reservedRepo) {
-      // Check for any available (clean) repos
-      const { exec } = require('child_process');
-      const util = require('util');
-      const execAsync = util.promisify(exec);
+    // Check if there's already a session creation in progress for this key
+    if (sessionCreationLocks.has(requestKey)) {
+      logger.debug(`Session creation already in progress for ${requestKey}, waiting briefly and retrying`);
       
-      for (const repoDir of reposDirs) {
-        const repoPath = path.join(reposPath, repoDir);
-        
-        try {
-          // Check if repo is clean
-          const { stdout: statusOutput } = await execAsync('git status --porcelain', { 
-            cwd: repoPath 
-          });
-          
-          // Check if on main branch
-          const { stdout: branchOutput } = await execAsync('git branch --show-current', { 
-            cwd: repoPath 
-          });
-          
-          const isClean = statusOutput.trim() === '';
-          const isOnMain = branchOutput.trim() === 'main';
-          
-          // Also check REPOS.md to see if it's marked as available
-          const reposFilePath = path.join(projectPath, 'REPOS.md');
-          let isMarkedAvailable = true;
-          
-          try {
-            const reposContent = await fs.readFile(reposFilePath, 'utf-8');
-            const repoLine = reposContent.split('\n').find(line => line.includes(repoDir + ':'));
-            if (repoLine && !repoLine.toLowerCase().includes('available')) {
-              isMarkedAvailable = false;
-            }
-          } catch (err) {
-            // REPOS.md might not exist
-          }
-          
-          if (isClean && isOnMain && isMarkedAvailable) {
-            // Found an available repo!
-            reservedRepo = repoDir;
-            console.log(`Found available repo: ${reservedRepo}`);
-            break;
-          }
-        } catch (err) {
-          console.error(`Error checking repo status for ${repoDir}:`, err);
-          // Skip this repo if we can't check its status
-        }
+      // Wait a short time and check cache again
+      await new Promise(resolve => setTimeout(resolve, 50));
+      const retryRequest = sessionCreationRequests.get(requestKey);
+      if (retryRequest) {
+        logger.logEvent('CLAUDE_SESSION_DEDUPLICATED', 'Returning session after brief wait', {
+          sessionId: retryRequest.sessionId,
+          requestKey
+        });
+        logger.logClient('RESPONSE', { status: 200, sessionId: retryRequest.sessionId, waitedForLock: true });
+        return res.json({
+          sessionId: retryRequest.sessionId,
+          reservedRepo: repoName,
+          contextUsage: 0
+        });
       }
     }
     
-    // If no available repo found, create a new one
-    if (!reservedRepo) {
-      const primaryRepo = reposDirs.find(dir => dir.includes('-1'));
-      if (primaryRepo) {
-        const baseName = primaryRepo.replace(/-\d+$/, '');
+    // Set lock to prevent race conditions
+    sessionCreationLocks.add(requestKey);
+    logger.debug(`Acquired session creation lock for ${requestKey}`);
+    
+    try {
+      // Check if there's already an active session for this repo
+      const allSessions = sessionManager.getAllSessions();
+      for (const session of allSessions) {
+        if (session.projectPath === projectPath && session.repoName === repoName) {
+        logger.debug(`Found existing session for ${repoName}, cleaning it up first`);
         
-        // Find next available number
-        let claudeNumber = reposDirs.filter(dir => dir.startsWith(baseName)).length + 1;
-        let targetPath;
+        // Clean up the old session
+        sessionManager.deleteSession(session.sessionId);
         
-        // Keep incrementing until we find an available directory
-        do {
-          reservedRepo = `${baseName}-${claudeNumber}`;
-          targetPath = path.join(reposPath, reservedRepo);
-          
-          try {
-            await fs.access(targetPath);
-            // Directory exists, try next number
-            claudeNumber++;
-          } catch {
-            // Directory doesn't exist, we can use this number
-            break;
+        // Remove all SSE connections for the old session
+        const connections = claudeCodeClients.get(session.sessionId);
+        if (connections) {
+          for (const [connId, conn] of connections.entries()) {
+            try {
+              conn.res.end();
+            } catch (err) {
+              // Connection might already be closed
+            }
           }
-        } while (true);
-        
-        // Clone the repo
-        const sourcePath = path.join(reposPath, primaryRepo);
-        console.log(`Creating new clone: ${reservedRepo} from ${primaryRepo}`);
-        
-        // Use git clone for proper repository cloning
-        const { exec } = require('child_process');
-        const util = require('util');
-        const execAsync = util.promisify(exec);
-        
-        try {
-          await execAsync(`git clone "${sourcePath}" "${targetPath}"`, {
-            cwd: reposPath
-          });
-        } catch (err) {
-          console.error('Git clone failed, falling back to file copy:', err);
-          // Fallback to simple copy
-          await fs.cp(sourcePath, targetPath, { recursive: true });
+          claudeCodeClients.delete(session.sessionId);
         }
+        
+        logger.logEvent('CLAUDE_SESSION_CLEANED', 'Cleaned up existing session before creating new one', {
+          oldSessionId: session.sessionId,
+          repoName,
+          userName
+        });
+        
+        // Continue to create a new session
+        break;
       }
     }
+    } catch (error) {
+      // Error checking for existing sessions - log but continue with creating new session
+      logger.error('Error checking for existing sessions:', error);
+    }
     
-    // Update REPOS.md to mark repo as reserved
-    if (reservedRepo) {
-      const reposFilePath = path.join(projectPath, 'REPOS.md');
-      try {
-        let reposContent = await fs.readFile(reposFilePath, 'utf-8');
-        
-        // Update existing entry or add new one
-        const lines = reposContent.split('\n');
-        let updated = false;
-        
-        for (let i = 0; i < lines.length; i++) {
-          if (lines[i].includes(`${reservedRepo}:`)) {
-            lines[i] = `- ${reservedRepo}: Reserved for Claude Code session`;
-            updated = true;
-            break;
-          }
-        }
-        
-        if (!updated) {
-          // Add to available clones section
-          const availableIndex = lines.findIndex(line => line.includes('## Available clones'));
-          if (availableIndex !== -1) {
-            // Find next section or end of file
-            let insertIndex = availableIndex + 1;
-            while (insertIndex < lines.length && !lines[insertIndex].startsWith('##')) {
-              insertIndex++;
-            }
-            lines.splice(insertIndex, 0, `- ${reservedRepo}: Reserved for Claude Code session`);
+    const sessionId = `${projectId}-${repoName}-${crypto.randomUUID()}`;
+    
+    // Use the specific repo requested by the user
+    const reposPath = path.join(projectPath, 'repos');
+    const repoPath = path.join(reposPath, repoName);
+    
+    // Verify the repo exists
+    try {
+      await fsAsync.access(repoPath);
+    } catch (err) {
+      return res.status(404).json({ error: `Repository ${repoName} not found` });
+    }
+    
+    // Check if repo is clean and available
+    const { exec } = require('child_process');
+    const util = require('util');
+    const execAsync = util.promisify(exec);
+    
+    try {
+      // Check if repo is clean
+      const { stdout: statusOutput } = await execAsync('git status --porcelain', { 
+        cwd: repoPath 
+      });
+      
+      if (statusOutput.trim() !== '') {
+        console.warn(`Repository ${repoName} has uncommitted changes but proceeding anyway`);
+      }
+    } catch (err) {
+      console.error(`Error checking repo status for ${repoName}:`, err);
+    }
+    
+    const reservedRepo = repoName;
+    
+    // Migrate from REPOS.md if needed
+    try {
+      await claudeFlowSettings.migrateFromReposMd(projectPath);
+    } catch (err) {
+      console.error('Error migrating from REPOS.md:', err);
+    }
+    
+    // Update claudeflow.settings.json to mark repo as reserved
+    try {
+      // First ensure the repo exists in settings
+      let settings = await claudeFlowSettings.load(projectPath);
+      if (!settings.repositories[reservedRepo]) {
+        await claudeFlowSettings.addRepository(projectPath, reservedRepo, {
+          type: 'local',
+          description: 'Repository for Claude Code sessions'
+        });
+        // Reload settings after adding repository
+        settings = await claudeFlowSettings.load(projectPath);
+      }
+      
+      // Check if it's already reserved by claude-code
+      const repo = settings.repositories[reservedRepo];
+      if (repo && repo.status === 'reserved' && repo.reservedBy === 'claude-code') {
+        // Repository is already reserved by us - this is fine and expected
+        // This happens when restarting sessions or when multiple session creation
+        // requests happen concurrently
+      } else {
+        // Now reserve it
+        try {
+          await claudeFlowSettings.reserveRepository(projectPath, reservedRepo, 'claude-code');
+        } catch (reserveError) {
+          // Check if it failed because it's already reserved by claude-code
+          // This can happen in race conditions with concurrent requests
+          const updatedSettings = await claudeFlowSettings.load(projectPath);
+          const updatedRepo = updatedSettings.repositories[reservedRepo];
+          if (updatedRepo && updatedRepo.status === 'reserved' && updatedRepo.reservedBy === 'claude-code') {
+            // Another concurrent request already reserved it for claude-code - that's fine
           } else {
-            lines.push(`- ${reservedRepo}: Reserved for Claude Code session`);
+            // This is an actual error - log it
+            logger.error('Unexpected error reserving repository:', reserveError);
+            logger.error('Project path was:', projectPath);
+            logger.error('Repo was:', reservedRepo);
           }
         }
-        
-        await fs.writeFile(reposFilePath, lines.join('\n'));
-      } catch (err) {
-        console.error('Error updating REPOS.md:', err);
       }
+    } catch (err) {
+      // This is an unexpected error
+      logger.error('Unexpected error updating claudeflow.settings.json:', err);
+      logger.error('Project path was:', projectPath);
+      logger.error('Repo was:', reservedRepo);
+      // Continue anyway - don't fail the session start
     }
     
-    // Store session info
-    claudeCodeSessions.set(sessionId, {
+    // Create session using session manager
+    const session = sessionManager.createSession({
+      sessionId,
       projectId,
       projectPath,
-      reservedRepo,
-      messages: [],
-      contextTokens: 0,
-      maxTokens: 200000 // Claude's context window
+      repoName: reservedRepo,
+      userName,
+      userEmail
     });
+    
+    logger.debug('Created session:', {
+      sessionId,
+      projectPath,
+      reservedRepo,
+      greetingShown: session.greetingShown
+    });
+    
+    logger.logEvent('CLAUDE_SESSION_CREATED', 'New Claude Code session', {
+      sessionId,
+      repoName: reservedRepo,
+      userName,
+      projectPath
+    });
+    
+    logger.logClient('RESPONSE', { 
+      status: 200, 
+      sessionId,
+      reservedRepo,
+      new: true 
+    });
+    
+    // Store in deduplication cache
+    sessionCreationRequests.set(requestKey, {
+      sessionId,
+      timestamp: now
+    });
+    
+    // Clean up old cache entries (older than 5 minutes)
+    const CACHE_CLEANUP_MS = 5 * 60 * 1000;
+    for (const [key, value] of sessionCreationRequests.entries()) {
+      if (now - value.timestamp > CACHE_CLEANUP_MS) {
+        sessionCreationRequests.delete(key);
+      }
+    }
     
     res.json({
       sessionId,
@@ -3620,6 +3846,10 @@ app.post('/api/claude/code/start', async (req, res) => {
       error: 'Failed to start session',
       message: error.message 
     });
+  } finally {
+    // Always remove the lock when done
+    sessionCreationLocks.delete(requestKey);
+    logger.debug(`Released session creation lock for ${requestKey}`);
   }
 });
 
@@ -3628,77 +3858,466 @@ app.post('/api/claude/code/message', async (req, res) => {
   try {
     const { sessionId, message, mode } = req.body;
     
-    const session = claudeCodeSessions.get(sessionId);
+    logger.logClient('REQUEST', {
+      method: 'POST',
+      url: '/api/claude/code/message',
+      sessionId,
+      messageLength: message?.length || 0,
+      mode
+    });
+    
+    const session = sessionManager.getSession(sessionId);
     if (!session) {
+      logger.logClient('RESPONSE', { status: 404, error: 'Session not found', sessionId });
       return res.status(404).json({ error: 'Session not found' });
     }
     
     // Add user message to history
-    session.messages.push({ role: 'user', content: message });
+    sessionManager.addMessage(sessionId, { 
+      role: 'user', 
+      content: message,
+      timestamp: new Date().toISOString()
+    });
     
     // Create unique message ID
     const messageId = crypto.randomUUID();
     
-    // Send to all SSE clients for this session
-    const clients = claudeCodeClients.get(sessionId) || [];
+    // Send to all SSE connections for this session
+    const connections = claudeCodeClients.get(sessionId);
+    if (!connections || connections.size === 0) {
+      logger.logClient('RESPONSE', { status: 503, error: 'No active connections', sessionId });
+      return res.status(503).json({ error: 'No active connections for this session' });
+    }
     
     // Send message start event
-    clients.forEach(client => {
-      client.write(`event: message-start\ndata: ${JSON.stringify({ id: messageId })}\n\n`);
-    });
+    for (const [connId, conn] of connections.entries()) {
+      try {
+        conn.res.write(`event: message-start\ndata: ${JSON.stringify({ id: messageId })}\n\n`);
+      } catch (err) {
+        console.error(`Error sending message-start to connection ${connId}:`, err);
+        connections.delete(connId);
+      }
+    }
     
-    // Process with Claude (mock for now)
-    if (req.headers['x-mock-mode'] === 'true') {
-      // Simulate streaming response
-      const mockResponse = `I'll help you with that. Let me ${mode === 'plan' ? 'create a plan' : 'get started'}...\n\nThis is a mock response for testing the Claude Code interface. In a real implementation, this would connect to the Claude API and provide actual assistance.`;
+    console.log(`Processing message for session ${sessionId}, mode: ${mode}, connections: ${connections.size}`);
+    
+    // Process with Claude
+    const claudeService = require('./claude-service');
+    
+    try {
+      // Check if we should use mock mode
+      const useMockMode = req.headers['x-mock-mode'] === 'true' || !claudeService.isClaudeAvailable;
       
-      const words = mockResponse.split(' ');
-      let currentChunk = '';
-      
-      for (let i = 0; i < words.length; i++) {
-        currentChunk += words[i] + ' ';
+      if (useMockMode) {
+        // Simulate streaming response
+        const mockResponse = `I'll help you with that. Let me ${mode === 'plan' ? 'create a plan' : 'get started'}...\n\nThis is a mock response for testing the Claude Code interface. In a real implementation, this would connect to the Claude API and provide actual assistance.`;
         
-        // Send chunk
-        clients.forEach(client => {
-          client.write(`event: message-chunk\ndata: ${JSON.stringify({ 
-            messageId, 
-            chunk: words[i] + ' ' 
-          })}\n\n`);
+        const words = mockResponse.split(' ');
+        let currentChunk = '';
+        
+        for (let i = 0; i < words.length; i++) {
+          currentChunk += words[i] + ' ';
+          
+          // Send chunk
+          for (const [connId, conn] of connections.entries()) {
+            try {
+              conn.res.write(`event: message-chunk\ndata: ${JSON.stringify({ 
+                messageId, 
+                chunk: words[i] + ' ' 
+              })}\n\n`);
+            } catch (err) {
+              console.error(`Error sending chunk to connection ${connId}:`, err);
+              connections.delete(connId);
+            }
+          }
+          
+          // Simulate typing delay
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
+        
+        // Add assistant message to history
+        sessionManager.addMessage(sessionId, { 
+          role: 'assistant', 
+          content: mockResponse,
+          timestamp: new Date().toISOString()
         });
         
-        // Simulate typing delay
-        await new Promise(resolve => setTimeout(resolve, 50));
+        // Update context usage (mock calculation)
+        const updatedSession = sessionManager.getSession(sessionId);
+        const estimatedTokens = updatedSession.messages.reduce((sum, msg) => 
+          sum + Math.ceil(msg.content.length / 4), 0
+        );
+        const contextUsage = Math.round((estimatedTokens / updatedSession.maxTokens) * 100);
+        sessionManager.updateContextTokens(sessionId, estimatedTokens);
+        
+        // Send context update
+        for (const [connId, conn] of connections.entries()) {
+          try {
+            conn.res.write(`event: context-update\ndata: ${JSON.stringify({ percentage: contextUsage })}\n\n`);
+          } catch (err) {
+            console.error(`Error sending context update to connection ${connId}:`, err);
+            connections.delete(connId);
+          }
+        }
+      } else {
+        // Real Claude integration using the SDK
+        console.log('Using Claude SDK for real response');
+        
+        // Build context from session messages
+        const contextMessages = session.messages.slice(-10); // Last 10 messages for context
+        const contextPrompt = contextMessages.map(msg => 
+          `${msg.role === 'user' ? 'Human' : 'Assistant'}: ${msg.content}`
+        ).join('\n\n');
+        
+        // Create the full prompt
+        const fullPrompt = `${contextPrompt}\n\nHuman: ${message}\n\nAssistant:`;
+        
+        // Configure tools based on mode (for context in prompt)
+        const tools = mode === 'plan' ? ['search', 'read'] : ['search', 'read', 'write', 'bash'];
+        
+        // Don't send tool notifications since the SDK doesn't actually use them
+        // Just send a thinking indicator
+        for (const [connId, conn] of connections.entries()) {
+          try {
+            conn.res.write(`event: thinking\ndata: ${JSON.stringify({ 
+              messageId,
+              status: 'Claude is thinking...' 
+            })}\n\n`);
+          } catch (err) {
+            console.error(`Error sending thinking status to connection ${connId}:`, err);
+            connections.delete(connId);
+          }
+        }
+        
+        // Get the repo path for Claude to work in
+        const repoPath = path.join(session.projectPath, 'repos', session.repoName);
+        
+        // Process with Claude with progress updates
+        console.log('=== CLAUDE REQUEST ===');
+        console.log('Full prompt:', fullPrompt);
+        console.log('Tools:', tools);
+        console.log('Repo path:', repoPath);
+        console.log('=====================');
+        
+        logger.logClaude('REQUEST', {
+          sessionId,
+          messageId,
+          mode,
+          userMessage: message,
+          promptLength: fullPrompt.length,
+          tools,
+          repoPath
+        });
+        
+        console.log('About to call processClaudeCodeMessage...');
+        let response;
+        try {
+          response = await claudeService.processClaudeCodeMessage(
+          fullPrompt, 
+          tools, 
+          'opus', // Use opus model as preferred
+          repoPath,
+          // onProgress callback
+          (status, tokenCount) => {
+            const currentConnections = claudeCodeClients.get(sessionId);
+            if (currentConnections) {
+              for (const [connId, conn] of currentConnections.entries()) {
+                try {
+                  conn.res.write(`event: progress\ndata: ${JSON.stringify({ 
+                    messageId, 
+                    status,
+                    tokenCount 
+                  })}\n\n`);
+                } catch (err) {
+                  console.error(`Error sending progress update to connection ${connId}:`, err);
+                  currentConnections.delete(connId);
+                }
+              }
+            }
+          },
+          // onToolExecution callback  
+          (toolExecution) => {
+            console.log('Sending tool execution event:', toolExecution.name);
+            const currentConnections = claudeCodeClients.get(sessionId);
+            if (currentConnections) {
+              for (const [connId, conn] of currentConnections.entries()) {
+                try {
+                  conn.res.write(`event: tool-execution\ndata: ${JSON.stringify({ 
+                    messageId,
+                    toolExecution 
+                  })}\n\n`);
+                } catch (err) {
+                  console.error(`Error sending tool execution to connection ${connId}:`, err);
+                  currentConnections.delete(connId);
+                }
+              }
+            }
+          },
+          // onMessage callback
+          (messageType, content) => {
+            debugLog('Claude message event - raw params:', { messageType, content });
+            
+            // Fix: The SDK is passing the full message object as the first parameter
+            let actualMessageType = messageType;
+            let actualContent = content;
+            
+            // Check if messageType is actually the full message object
+            if (typeof messageType === 'object' && messageType !== null) {
+              // Extract the actual type and content from the message object
+              if (messageType.type) {
+                actualMessageType = messageType.type;
+                actualContent = messageType.content || content;
+              } else {
+                // Fallback - treat the whole object as content
+                actualMessageType = 'message';
+                actualContent = messageType;
+              }
+            }
+            
+            debugLog('Parsed message event:', { type: actualMessageType, content: actualContent });
+            
+            // Handle content that might be an array of content blocks
+            let textContent = actualContent;
+            let skipMessage = false;
+            
+            if (Array.isArray(actualContent)) {
+              // Check for tool use blocks
+              const hasToolUse = actualContent.some(block => block && block.type === 'tool_use');
+              
+              if (hasToolUse) {
+                // Don't send tool use messages as regular messages
+                // They will be handled by tool execution events
+                debugLog('Skipping tool_use message - will be handled by tool execution events');
+                skipMessage = true;
+              } else {
+                // Extract text from content blocks
+                textContent = actualContent
+                  .filter(block => block && block.type === 'text')
+                  .map(block => block.text || '')
+                  .join('\n');
+                debugLog('Extracted text from content array:', textContent);
+              }
+            } else if (actualContent && typeof actualContent === 'object' && actualContent.type === 'text') {
+              textContent = actualContent.text;
+              debugLog('Extracted text from content object:', textContent);
+            } else if (typeof actualContent === 'string') {
+              textContent = actualContent;
+            } else {
+              debugLog('Unhandled content type:', typeof actualContent, actualContent);
+              textContent = '';
+            }
+            
+            // Only send message if we have text content and it's not a tool use
+            if (textContent && !skipMessage) {
+              const currentConnections = claudeCodeClients.get(sessionId);
+              if (currentConnections) {
+                for (const [connId, conn] of currentConnections.entries()) {
+                  try {
+                    conn.res.write(`event: claude-message\ndata: ${JSON.stringify({ 
+                      messageId,
+                      messageType: actualMessageType,
+                      content: textContent 
+                    })}\n\n`);
+                  } catch (err) {
+                    console.error(`Error sending Claude message to connection ${connId}:`, err);
+                    currentConnections.delete(connId);
+                  }
+                }
+              }
+            }
+          }
+        );
+        } catch (err) {
+          console.error('Error calling processClaudeCodeMessage:', err);
+          throw err;
+        }
+        
+        console.log('processClaudeCodeMessage returned');
+        console.log('Type of returned value:', typeof response);
+        console.log('Is Promise?', response instanceof Promise);
+        console.log('Constructor name:', response?.constructor?.name);
+        
+        console.log('=== CLAUDE RESPONSE ===');
+        console.log('Response type:', typeof response);
+        console.log('Response is null?', response === null);
+        console.log('Response is undefined?', response === undefined);
+        if (response) {
+          console.log('Response keys:', Object.keys(response));
+          console.log('Response.text type:', typeof response.text);
+          console.log('Response.text is object?', typeof response.text === 'object');
+          console.log('Response.text constructor:', response.text?.constructor?.name);
+          console.log('Response.text value:', response.text ? (typeof response.text === 'string' ? response.text.substring(0, 100) + '...' : `[${typeof response.text}] ${JSON.stringify(response.text)}`) : 'null/undefined');
+        }
+        console.log('Response:', JSON.stringify(response, null, 2));
+        console.log('======================');
+        
+        // Check if response.text is actually a string before logging
+        let logText = null;
+        if (response.text) {
+          if (typeof response.text === 'string') {
+            logText = response.text.substring(0, 200) + '...';
+          } else {
+            console.error('ERROR: response.text is not a string!', typeof response.text, response.text);
+            logText = String(response.text).substring(0, 200) + '...';
+          }
+        }
+        
+        logger.logClaude('RESPONSE', {
+          sessionId,
+          messageId,
+          success: !response.error,
+          error: response.error,
+          text: logText,
+          textLength: response.text ? response.text.length : 0,
+          toolExecutions: response.toolExecutions?.length || 0,
+          tokenUsage: response.tokenUsage
+        });
+        
+        if (response.error) {
+          throw new Error(response.error);
+        }
+        
+        // Stream the response
+        console.log('About to stream response - response:', response);
+        console.log('About to stream response - response.text type:', typeof response.text);
+        console.log('About to stream response - response.text:', response.text);
+        
+        // Debug: Check if response is actually the expected object
+        if (!response || typeof response !== 'object') {
+          console.error('ERROR: response is not an object!', typeof response, response);
+          throw new Error('Invalid response from processClaudeCodeMessage');
+        }
+        
+        const responseText = response.text || 'I apologize, but I was unable to generate a response.';
+        console.log('ResponseText to stream type:', typeof responseText);
+        console.log('ResponseText to stream:', responseText.substring(0, 100) + '...');
+        const words = responseText.split(' ');
+        
+        for (let i = 0; i < words.length; i++) {
+          const currentConnections = claudeCodeClients.get(sessionId);
+          if (currentConnections) {
+            for (const [connId, conn] of currentConnections.entries()) {
+              try {
+                conn.res.write(`event: message-chunk\ndata: ${JSON.stringify({ 
+                  messageId, 
+                  chunk: words[i] + ' ' 
+                })}\n\n`);
+              } catch (err) {
+                console.error(`Error writing to connection ${connId}:`, err);
+                currentConnections.delete(connId);
+              }
+            }
+          }
+          
+          // Small delay to simulate natural streaming
+          await new Promise(resolve => setTimeout(resolve, 20));
+        }
+        
+        // Send final tool execution summary if there were any
+        if (response.toolExecutions && response.toolExecutions.length > 0) {
+          console.log('Sending final tool execution summary:', response.toolExecutions.length, 'tools');
+          const currentConnections = claudeCodeClients.get(sessionId);
+          if (currentConnections) {
+            for (const [connId, conn] of currentConnections.entries()) {
+              try {
+                conn.res.write(`event: tool-summary\ndata: ${JSON.stringify({ 
+                  messageId,
+                  toolExecutions: response.toolExecutions,
+                  totalExecutions: response.toolExecutions.length,
+                  successfulExecutions: response.toolExecutions.filter(t => t.isSuccess).length
+                })}\n\n`);
+              } catch (err) {
+                console.error(`Error sending tool summary to connection ${connId}:`, err);
+                currentConnections.delete(connId);
+              }
+            }
+          }
+        }
+        
+        // Add to session history
+        sessionManager.addMessage(sessionId, { 
+          role: 'assistant', 
+          content: responseText,
+          timestamp: new Date().toISOString()
+        });
+        
+        // Update context usage based on token usage
+        if (response.tokenUsage) {
+          // Calculate cumulative tokens for the session
+          const currentSession = sessionManager.getSession(sessionId);
+          const newTokenTotal = (currentSession.contextTokens || 0) + response.tokenUsage.totalTokens;
+          sessionManager.updateContextTokens(sessionId, newTokenTotal);
+          const contextUsage = Math.round((newTokenTotal / currentSession.maxTokens) * 100);
+          
+          // Send final token count with the message
+          const currentConnections = claudeCodeClients.get(sessionId);
+          if (currentConnections) {
+            for (const [connId, conn] of currentConnections.entries()) {
+              try {
+                conn.res.write(`event: token-update\ndata: ${JSON.stringify({ 
+                  messageId,
+                  inputTokens: response.tokenUsage.inputTokens,
+                  outputTokens: response.tokenUsage.outputTokens,
+                  totalTokens: response.tokenUsage.totalTokens,
+                  sessionTotal: newTokenTotal
+                })}\n\n`);
+              } catch (err) {
+                console.error(`Error sending token update to connection ${connId}:`, err);
+                currentConnections.delete(connId);
+              }
+            }
+            
+            for (const [connId, conn] of currentConnections.entries()) {
+              try {
+                conn.res.write(`event: context-update\ndata: ${JSON.stringify({ percentage: contextUsage })}\n\n`);
+              } catch (err) {
+                console.error(`Error sending context update to connection ${connId}:`, err);
+                currentConnections.delete(connId);
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error processing Claude message:', error);
+      
+      // Send error message to connections
+      const errorMessage = `I apologize, but I encountered an error: ${error.message}`;
+      const errorConnections = claudeCodeClients.get(sessionId);
+      if (errorConnections) {
+        for (const [connId, conn] of errorConnections.entries()) {
+          try {
+            conn.res.write(`event: message-chunk\ndata: ${JSON.stringify({ 
+              messageId, 
+              chunk: errorMessage 
+            })}\n\n`);
+          } catch (err) {
+            console.error(`Error sending error message to connection ${connId}:`, err);
+            errorConnections.delete(connId);
+          }
+        }
       }
       
-      // Add assistant message to history
-      session.messages.push({ role: 'assistant', content: mockResponse });
-      
-      // Update context usage (mock calculation)
-      const estimatedTokens = session.messages.reduce((sum, msg) => 
-        sum + Math.ceil(msg.content.length / 4), 0
-      );
-      const contextUsage = Math.round((estimatedTokens / session.maxTokens) * 100);
-      
-      // Send context update
-      clients.forEach(client => {
-        client.write(`event: context-update\ndata: ${JSON.stringify({ percentage: contextUsage })}\n\n`);
-      });
-      
-    } else {
-      // Real Claude integration would go here
-      // For now, return error
-      clients.forEach(client => {
-        client.write(`event: message-chunk\ndata: ${JSON.stringify({ 
-          messageId, 
-          chunk: 'Claude integration not yet implemented. Please use mock mode for testing.' 
-        })}\n\n`);
+      // Add error to session history
+      sessionManager.addMessage(sessionId, { 
+        role: 'assistant', 
+        content: errorMessage,
+        timestamp: new Date().toISOString()
       });
     }
     
     // Send message end event
-    clients.forEach(client => {
-      client.write(`event: message-end\ndata: ${JSON.stringify({ messageId })}\n\n`);
-    });
+    const finalConnections = claudeCodeClients.get(sessionId);
+    if (finalConnections) {
+      for (const [connId, conn] of finalConnections.entries()) {
+        try {
+          conn.res.write(`event: message-end\ndata: ${JSON.stringify({ messageId })}\n\n`);
+        } catch (err) {
+          console.error(`Error sending message-end to connection ${connId}:`, err);
+          finalConnections.delete(connId);
+        }
+      }
+    }
     
     res.json({ success: true, messageId });
     
@@ -3713,10 +4332,18 @@ app.post('/api/claude/code/message', async (req, res) => {
 
 // SSE endpoint for Claude Code streaming
 app.get('/api/claude/code/stream', (req, res) => {
-  const { sessionId } = req.query;
+  const { sessionId, connectionId } = req.query;
   
-  if (!sessionId) {
-    return res.status(400).json({ error: 'Session ID required' });
+  logger.logClient('REQUEST', {
+    method: 'GET',
+    url: '/api/claude/code/stream',
+    sessionId,
+    connectionId
+  });
+  
+  if (!sessionId || !connectionId) {
+    logger.logClient('RESPONSE', { status: 400, error: 'Session ID and connection ID required' });
+    return res.status(400).json({ error: 'Session ID and connection ID required' });
   }
   
   // Set SSE headers
@@ -3727,33 +4354,390 @@ app.get('/api/claude/code/stream', (req, res) => {
     'X-Accel-Buffering': 'no'
   });
   
-  // Add client to session
+  // Initialize session connections map if needed
   if (!claudeCodeClients.has(sessionId)) {
-    claudeCodeClients.set(sessionId, []);
+    claudeCodeClients.set(sessionId, new Map());
   }
-  claudeCodeClients.get(sessionId).push(res);
+  
+  const sessionConnections = claudeCodeClients.get(sessionId);
+  
+  // Clean up old connections from this session (older than 30 seconds)
+  const now = Date.now();
+  const staleConnectionIds = [];
+  for (const [connId, conn] of sessionConnections.entries()) {
+    if (now - conn.timestamp > 30000) {
+      staleConnectionIds.push(connId);
+      try {
+        conn.res.end();
+      } catch (err) {
+        // Connection already closed
+      }
+    }
+  }
+  
+  // Remove stale connections
+  staleConnectionIds.forEach(connId => {
+    const staleConn = sessionConnections.get(connId);
+    const age = staleConn ? now - staleConn.timestamp : 0;
+    sessionConnections.delete(connId);
+    logger.logEvent('CLAUDE_SSE_STALE_REMOVED', 'Removed stale connection', {
+      sessionId,
+      connectionId: connId,
+      age
+    });
+  });
+  
+  // Add new connection
+  sessionConnections.set(connectionId, {
+    res,
+    timestamp: now,
+    lastHeartbeat: now
+  });
   
   // Send initial connection event
   res.write(`data: ${JSON.stringify({ type: 'connected' })}\n\n`);
   
-  // Heartbeat to keep connection alive
+  logger.logEvent('CLAUDE_SSE_CONNECTED', 'Claude Code SSE client connected', {
+    sessionId,
+    connectionId,
+    totalConnections: sessionConnections.size,
+    removedStale: staleConnectionIds.length
+  });
+  
+  // Get session from session manager
+  const session = sessionManager.getSession(sessionId);
+  
+  if (!session) {
+    logger.error('Session not found in SSE connection:', sessionId);
+    res.write(`event: error\ndata: ${JSON.stringify({ error: 'Session not found' })}\n\n`);
+    res.end();
+    return;
+  }
+  
+  debugLog('SSE connection - session state:', {
+    sessionId,
+    connectionId,
+    messageCount: session.messages.length,
+    activeConnections: sessionConnections.size,
+    greetingShown: session.greetingShown,
+    lastMessageCompleted: session.lastMessageCompleted
+  });
+  
+  // Check if there are any existing messages to send to the new connection
+  if (session.messages.length > 0) {
+    debugLog(`Sending ${session.messages.length} existing messages to new connection`);
+    
+    // Use setImmediate to ensure events are sent after connection is established
+    setImmediate(() => {
+      // Send all existing messages to the new connection
+      for (const message of session.messages) {
+        if (message.role === 'assistant') {
+          const messageId = message.id || crypto.randomUUID();
+          
+          try {
+            // Send message-start event
+            res.write(`event: message-start\ndata: ${JSON.stringify({ 
+              id: messageId,
+              type: 'assistant',
+              isGreeting: message.isGreeting || false
+            })}\n\n`);
+            
+            // Send the complete message content
+            res.write(`event: message-chunk\ndata: ${JSON.stringify({ 
+              messageId: messageId, 
+              chunk: message.content
+            })}\n\n`);
+            
+            // Send message-complete event
+            res.write(`event: message-complete\ndata: ${JSON.stringify({ 
+              messageId: messageId 
+            })}\n\n`);
+          } catch (err) {
+            debugLog('Error sending existing message:', err);
+          }
+        }
+      }
+    });
+  }
+  
+  // Check if we should show greeting (only if no messages exist)
+  if (!session.greetingShown && session.messages.length === 0 && !session.greetingInProgress) {
+    // Mark greeting as in progress to prevent duplicates
+    sessionManager.setGreetingInProgress(sessionId, true);
+    
+    // Generate greeting for new session immediately
+    debugLog('Initiating greeting generation for new session');
+    
+    // Generate greeting without delay
+    (async () => {
+      try {
+        
+        const { userName, userEmail } = session;
+        const { projectPath, repoName } = session;
+        
+        debugLog('Greeting session data:', { userName, projectPath, repoName });
+        
+        if (!projectPath || !repoName) {
+          debugLog('Missing required path data for greeting:', { projectPath, repoName });
+          throw new Error(`Missing path data: projectPath=${projectPath}, repoName=${repoName}`);
+        }
+        
+        // Get project info
+        const projectName = path.basename(projectPath);
+        
+        // Create greeting prompt
+        const greetingPrompt = `Generate a friendly, personalized greeting for a Claude Code session. Keep it brief (1-2 sentences), warm, and motivating.
+
+Context:
+- User's name: ${userName || 'Developer'}
+- Repository: ${repoName}
+- Project: ${projectName}
+- Current time: ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+
+The greeting should:
+- Welcome the user by name (if available)
+- Mention the repository they're working in
+- Be encouraging and ready to help
+- End with something like "What would you like to work on?" or similar
+- Feel fresh and not repetitive
+- Occasionally use relevant developer-friendly phrases or mild humor
+
+Examples of good greetings:
+- "Hey Alex! Ready to dive into the auth-service repo? Let's build something great today!"
+- "Good morning Sarah! I see you're working on the frontend-app repo. What feature shall we tackle?"
+- "Welcome back, Jordan! Time to make some magic happen in the api-gateway repo. What's on the agenda?"
+
+Generate a greeting now:`;
+
+        const claudeService = require('./claude-service');
+        
+        // Create a greeting message ID
+        const greetingMessageId = crypto.randomUUID();
+        debugLog(`Created greeting message ID: ${greetingMessageId}`);
+        
+        // Get current connections
+        const connections = claudeCodeClients.get(sessionId);
+        if (!connections || connections.size === 0) {
+          debugLog('No active connections for greeting, skipping');
+          sessionManager.setGreetingShown(sessionId, false);
+          sessionManager.setGreetingInProgress(sessionId, false);
+          return;
+        }
+        
+        debugLog(`Sending greeting to ${connections.size} connections for session ${sessionId}`);
+        
+        // Send greeting start event to all active connections
+        for (const [connId, conn] of connections.entries()) {
+          try {
+            conn.res.write(`event: message-start\ndata: ${JSON.stringify({ 
+              id: greetingMessageId,
+              type: 'assistant',
+              isGreeting: true 
+            })}\n\n`);
+            debugLog(`Sent message-start to connection ${connId}`);
+          } catch (err) {
+            debugLog(`Error sending message-start to connection ${connId}:`, err);
+            // Remove dead connection
+            connections.delete(connId);
+          }
+        }
+        
+        debugLog('Claude service available:', claudeService.isClaudeAvailable);
+        
+        let greetingText = '';
+        
+        if (claudeService.isClaudeAvailable) {
+          // Get real greeting from Claude
+          debugLog('Calling processClaudeCodeMessage for greeting');
+          const greetingResponse = await claudeService.processClaudeCodeMessage(
+            greetingPrompt,
+            [], // No tools needed for greeting
+            'opus',
+            path.join(projectPath, 'repos', repoName),
+            null, // No progress callback needed
+            null, // No tool execution callback
+            null  // No message callback
+          );
+          
+          debugLog('Greeting response:', greetingResponse);
+          debugLog('Response text type:', typeof greetingResponse.text);
+          
+          if (greetingResponse.text && typeof greetingResponse.text === 'string') {
+            greetingText = greetingResponse.text;
+          } else {
+            // Fallback if Claude returns no text
+            greetingText = `Hello${userName ? ' ' + userName : ''}! I'm ready to help you with the **${repoName}** repository. What would you like to work on today?`;
+          }
+        } else {
+          // Fallback greeting when Claude is not available
+          greetingText = `Hello${userName ? ' ' + userName : ''}! I'm ready to help you with the **${repoName}** repository. What would you like to work on today?`;
+        }
+        
+        // Send the complete greeting as a single chunk for reliability
+        // Add a small delay to ensure message-start is processed first
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
+        const currentConnections = claudeCodeClients.get(sessionId);
+        if (currentConnections && currentConnections.size > 0) {
+          debugLog(`Sending greeting to ${currentConnections.size} connections`);
+          
+          for (const [connId, conn] of currentConnections.entries()) {
+            try {
+              // Send the complete text as one chunk
+              debugLog(`Sending chunk with messageId: ${greetingMessageId} to connection ${connId}`);
+              conn.res.write(`event: message-chunk\ndata: ${JSON.stringify({ 
+                messageId: greetingMessageId, 
+                chunk: greetingText
+              })}\n\n`);
+              debugLog(`Sent greeting chunk to connection ${connId}`);
+            } catch (err) {
+              debugLog(`Error sending greeting to connection ${connId}:`, err);
+              currentConnections.delete(connId);
+            }
+          }
+        } else {
+          debugLog('No active connections to send greeting to');
+          // Store the greeting message so it can be retrieved when client reconnects
+          const existingMessage = session.messages.find(m => m.role === 'assistant' && m.isGreeting);
+          if (!existingMessage) {
+            debugLog('Storing greeting message for later delivery');
+          }
+        }
+        
+        // Add greeting to session messages with the same ID
+        sessionManager.addMessage(sessionId, { 
+          id: greetingMessageId,
+          role: 'assistant', 
+          content: greetingText,
+          isGreeting: true,
+          timestamp: new Date().toISOString()
+        });
+        
+        // Send message complete event
+        const finalConnections = claudeCodeClients.get(sessionId);
+        if (finalConnections && finalConnections.size > 0) {
+          debugLog(`Sending message-complete to ${finalConnections.size} connections`);
+          for (const [connId, conn] of finalConnections.entries()) {
+            try {
+              conn.res.write(`event: message-complete\ndata: ${JSON.stringify({ 
+                messageId: greetingMessageId 
+              })}\n\n`);
+              debugLog(`Sent message-complete to connection ${connId}`);
+            } catch (err) {
+              debugLog(`Error sending message-complete to connection ${connId}:`, err);
+              finalConnections.delete(connId);
+            }
+          }
+        }
+        
+        
+        logger.logEvent('CLAUDE_GREETING_GENERATED', 'Greeting message sent', {
+          sessionId,
+          greetingLength: greetingText.length,
+          activeConnections: finalConnections?.size || 0
+        });
+        
+        logger.writeClaudeLog('Greeting generation completed and marked');
+        
+        // Mark greeting as completed
+        sessionManager.setGreetingShown(sessionId, true);
+        sessionManager.setGreetingInProgress(sessionId, false);
+        
+      } catch (error) {
+        debugLog('Error generating greeting:', error);
+        debugLog('Error stack:', error.stack);
+        console.error('Error generating greeting:', error);
+        // Reset flags on error so greeting can be retried
+        sessionManager.setGreetingShown(sessionId, false);
+        sessionManager.setGreetingInProgress(sessionId, false);
+        // Continue without greeting on error
+      }
+    })();
+  }
+  
+  // Heartbeat to keep connection alive and detect dead connections
   const heartbeat = setInterval(() => {
     try {
       res.write(':heartbeat\n\n');
+      // Update last heartbeat time
+      const conn = sessionConnections.get(connectionId);
+      if (conn) {
+        conn.lastHeartbeat = Date.now();
+      }
     } catch (err) {
       clearInterval(heartbeat);
+      // Remove dead connection
+      sessionConnections.delete(connectionId);
+      logger.logEvent('CLAUDE_SSE_HEARTBEAT_FAILED', 'Connection failed during heartbeat', {
+        sessionId,
+        connectionId
+      });
     }
   }, 30000);
   
   // Clean up on disconnect
-  req.on('close', () => {
+  const cleanup = () => {
     clearInterval(heartbeat);
-    const clients = claudeCodeClients.get(sessionId) || [];
-    const index = clients.indexOf(res);
-    if (index > -1) {
-      clients.splice(index, 1);
+    
+    const connections = claudeCodeClients.get(sessionId);
+    if (connections) {
+      connections.delete(connectionId);
+      
+      // If no more connections for this session, clean up the session map
+      if (connections.size === 0) {
+        claudeCodeClients.delete(sessionId);
+      }
     }
-  });
+    
+    logger.logEvent('CLAUDE_SSE_DISCONNECTED', 'Claude Code SSE client disconnected', {
+      sessionId,
+      connectionId,
+      remainingConnections: connections?.size || 0
+    });
+  };
+  
+  // Handle both 'close' and 'error' events
+  req.on('close', cleanup);
+  req.on('error', cleanup);
+  res.on('close', cleanup);
+  res.on('error', cleanup);
+});
+
+// Cancel Claude Code message
+app.post('/api/claude/code/cancel', async (req, res) => {
+  try {
+    const { sessionId, messageId } = req.body;
+    
+    if (!sessionId || !messageId) {
+      return res.status(400).json({ error: 'Session ID and message ID required' });
+    }
+    
+    const session = sessionManager.getSession(sessionId);
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+    
+    // Send cancel event to all SSE connections
+    const connections = claudeCodeClients.get(sessionId);
+    if (connections) {
+      for (const [connId, conn] of connections.entries()) {
+        try {
+          conn.res.write(`event: message-cancelled\ndata: ${JSON.stringify({ messageId })}\n\n`);
+        } catch (err) {
+          console.error('Error sending cancel event to connection', connId, ':', err);
+          connections.delete(connId);
+        }
+      }
+    }
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error cancelling message:', error);
+    res.status(500).json({ 
+      error: 'Failed to cancel message',
+      message: error.message 
+    });
+  }
 });
 
 // End Claude Code session
@@ -3761,55 +4745,141 @@ app.post('/api/claude/code/end', async (req, res) => {
   try {
     const { sessionId } = req.body;
     
+    logger.logClient('REQUEST', {
+      method: 'POST',
+      url: '/api/claude/code/end',
+      sessionId
+    });
+    
+    console.log('=== END SESSION REQUEST ===');
+    console.log('Session ID:', sessionId);
+    console.log('All active sessions:', Array.from(sessionManager.getAllSessionIds()));
+    
     if (!sessionId) {
       return res.status(400).json({ error: 'Session ID required' });
     }
     
-    const session = claudeCodeSessions.get(sessionId);
+    const session = sessionManager.getSession(sessionId);
+    console.log('Session found:', !!session);
+    
+    // If session not found in memory, try to recover from sessionId
     if (!session) {
-      return res.status(404).json({ error: 'Session not found' });
+      console.log('Session not found in memory, attempting recovery from sessionId:', sessionId);
+      
+      // SessionId format: projectId-repoName-uuid
+      const parts = sessionId.split('-');
+      if (parts.length >= 3) {
+        const projectId = parts[0];
+        // Handle repo names that might contain hyphens
+        const repoName = parts.slice(1, -1).join('-');
+        
+        console.log('Recovered from sessionId:', { projectId, repoName });
+        
+        // Try to find project path from workspace
+        const workspacePath = '/home/dzearing/workspace';
+        const projectsPath = path.join(workspacePath, 'projects');
+        
+        try {
+          const projectDirs = await fsAsync.readdir(projectsPath);
+          for (const projectName of projectDirs) {
+            const projectPath = path.join(projectsPath, projectName);
+            
+            // Check if this project has the repo we're looking for
+            const reposPath = path.join(projectPath, 'repos');
+            try {
+              const repoDirs = await fsAsync.readdir(reposPath);
+              if (repoDirs.includes(repoName)) {
+                console.log('Found project path:', projectPath);
+                
+                // Release the repository
+                try {
+                  await claudeFlowSettings.releaseRepository(projectPath, repoName);
+                  console.log(`Released repo ${repoName} back to available in claudeflow.settings.json (recovery mode)`);
+                  
+                  res.json({ success: true, message: 'Session ended (recovered)' });
+                  return;
+                } catch (err) {
+                  console.error('Error releasing repository during recovery:', err);
+                }
+              }
+            } catch (err) {
+              // repos directory might not exist
+            }
+          }
+        } catch (err) {
+          console.error('Error during session recovery:', err);
+        }
+      }
+      
+      return res.status(404).json({ error: 'Session not found and recovery failed' });
     }
     
     // Clean up session
-    claudeCodeSessions.delete(sessionId);
+    sessionManager.deleteSession(sessionId);
     
-    // Remove all SSE clients
-    const clients = claudeCodeClients.get(sessionId) || [];
-    clients.forEach(client => {
-      try {
-        client.write(`event: session-end\ndata: ${JSON.stringify({ message: 'Session ended' })}\n\n`);
-        client.end();
-      } catch (err) {
-        // Client might already be disconnected
-      }
-    });
-    claudeCodeClients.delete(sessionId);
-    
-    // Mark repo as available again in REPOS.md
-    if (session.reservedRepo && session.projectPath) {
-      const reposFilePath = path.join(session.projectPath, 'REPOS.md');
-      try {
-        let reposContent = await fs.readFile(reposFilePath, 'utf-8');
-        const lines = reposContent.split('\n');
-        
-        for (let i = 0; i < lines.length; i++) {
-          if (lines[i].includes(`${session.reservedRepo}:`)) {
-            lines[i] = `- ${session.reservedRepo}: Available`;
-            break;
-          }
+    // Remove all SSE connections
+    const connections = claudeCodeClients.get(sessionId);
+    if (connections) {
+      for (const [connId, conn] of connections.entries()) {
+        try {
+          conn.res.write(`event: session-end\ndata: ${JSON.stringify({ message: 'Session ended' })}\n\n`);
+          conn.res.end();
+        } catch (err) {
+          // Connection might already be disconnected
         }
-        
-        await fs.writeFile(reposFilePath, lines.join('\n'));
-        console.log(`Released repo ${session.reservedRepo} back to available`);
-      } catch (err) {
-        console.error('Error updating REPOS.md:', err);
       }
+      claudeCodeClients.delete(sessionId);
     }
     
+    // Mark repo as available again in REPOS.md and clear Claude history
+    console.log('Session cleanup:', {
+      sessionId,
+      repoName: session.repoName,
+      projectPath: session.projectPath
+    });
+    
+    if (session.repoName && session.projectPath) {
+      const repoPath = path.join(session.projectPath, 'repos', session.repoName);
+      
+      console.log('Repo path:', repoPath);
+      
+      // Clear Claude history for this repo
+      try {
+        await clearClaudeHistory(repoPath);
+        console.log(`Cleared Claude history for ${session.repoName}`);
+      } catch (err) {
+        console.error('Error clearing Claude history:', err);
+      }
+      
+      // Update claudeflow.settings.json
+      try {
+        console.log('About to release repository:', session.repoName);
+        await claudeFlowSettings.releaseRepository(session.projectPath, session.repoName);
+        console.log(`Released repo ${session.repoName} back to available in claudeflow.settings.json`);
+        
+        // Verify it was released
+        const settings = await claudeFlowSettings.load(session.projectPath);
+        console.log('Verification - repo status after release:', settings.repositories[session.repoName]);
+      } catch (err) {
+        console.error('Error updating claudeflow.settings.json:', err);
+        console.error('Full error:', err.stack);
+      }
+    } else {
+      console.log('Warning: No reservedRepo or projectPath in session');
+    }
+    
+    logger.logEvent('CLAUDE_SESSION_ENDED', 'Claude Code session ended successfully', {
+      sessionId,
+      repoName: session.repoName,
+      projectPath: session.projectPath
+    });
+    
+    logger.logClient('RESPONSE', { status: 200, success: true });
     res.json({ success: true, message: 'Session ended' });
     
   } catch (error) {
     console.error('Error ending Claude Code session:', error);
+    logger.logClient('RESPONSE', { status: 500, error: error.message });
     res.status(500).json({ 
       error: 'Failed to end session',
       message: error.message 
@@ -3817,8 +4887,17 @@ app.post('/api/claude/code/end', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Log files available in: ${path.join(__dirname, 'logs')}/`);
+  console.log('  - client-messages.log: Client requests and responses');
+  console.log('  - claude-messages.log: Claude API interactions');
+  console.log('  - events.log: High-level system events');
+  
+  logger.logEvent('SERVER_READY', `Server listening on port ${PORT}`, {
+    port: PORT,
+    frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173'
+  });
   
   // Check Claude availability on startup
   if (claudeService.isClaudeAvailable) {
@@ -3830,4 +4909,52 @@ app.listen(PORT, () => {
     console.log('   2. Login: claude login');
     console.log('   Or use mock mode for testing');
   }
+  
+  // Clean up any orphaned Claude Code reservations on startup
+  console.log('Checking for orphaned Claude Code reservations...');
+  const workspacePath = '/home/dzearing/workspace';
+  const projectsPath = path.join(workspacePath, 'projects');
+  
+  try {
+    const projectDirs = await fsAsync.readdir(projectsPath);
+    for (const projectName of projectDirs) {
+      if (projectName.startsWith('.')) continue;
+      
+      const projectPath = path.join(projectsPath, projectName);
+      const settingsPath = path.join(projectPath, 'claudeflow.settings.json');
+      
+      try {
+        // Check if settings file exists
+        await fsAsync.access(settingsPath);
+        
+        // Load settings
+        const settings = await claudeFlowSettings.load(projectPath);
+        
+        if (settings.repositories) {
+          let hasOrphaned = false;
+          
+          // Check for orphaned Claude Code reservations
+          for (const [repoName, repo] of Object.entries(settings.repositories)) {
+            if (repo.status === 'reserved' && repo.reservedBy === 'claude-code') {
+              console.log(`Found orphaned Claude Code reservation: ${projectName}/${repoName}`);
+              
+              // Release it
+              await claudeFlowSettings.releaseRepository(projectPath, repoName);
+              hasOrphaned = true;
+            }
+          }
+          
+          if (hasOrphaned) {
+            console.log(`Cleaned up orphaned reservations in ${projectName}`);
+          }
+        }
+      } catch (err) {
+        // Settings file doesn't exist or error reading it
+      }
+    }
+  } catch (err) {
+    console.error('Error cleaning up orphaned reservations:', err);
+  }
+  
+  console.log('Server startup complete');
 });

@@ -11,10 +11,11 @@ interface AnimatedTransitionProps {
   centered?: boolean;
 }
 
-interface TransitionState {
-  current: ReactNode;
-  prev: ReactNode | null;
-  isTransitioning: boolean;
+interface AnimationItem {
+  key: string;
+  content: ReactNode;
+  state: 'entering' | 'active' | 'exiting';
+  timestamp: number;
 }
 
 export function AnimatedTransition({ 
@@ -22,69 +23,100 @@ export function AnimatedTransition({
   transitionKey, 
   className = '',
   delay = 100,
+  distance = 20,
   reverse = false,
   centered = true
 }: AnimatedTransitionProps) {
-  const [state, setState] = useState<TransitionState>({
-    current: children,
-    prev: null,
-    isTransitioning: false
-  });
+  const [items, setItems] = useState<AnimationItem[]>([
+    {
+      key: transitionKey,
+      content: children,
+      state: 'active',
+      timestamp: Date.now()
+    }
+  ]);
   
   const prevKeyRef = useRef(transitionKey);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const timeoutsRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
+  // Cleanup timeouts on unmount
   useEffect(() => {
-    // Clean up on unmount
     return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
+      timeoutsRef.current.forEach(timeout => clearTimeout(timeout));
+      timeoutsRef.current.clear();
     };
   }, []);
 
   useEffect(() => {
-    // Update current content if key hasn't changed
+    // Skip if key hasn't changed
     if (prevKeyRef.current === transitionKey) {
-      // Don't update the state at all if we're on the same key
-      // This preserves textarea cursor position and other DOM state
+      // Update the content of the active item without animation
+      setItems(current => 
+        current.map(item => 
+          item.state === 'active' 
+            ? { ...item, content: children }
+            : item
+        )
+      );
       return;
-    }
-
-    // Clear any pending timeout
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
     }
 
     prevKeyRef.current = transitionKey;
 
-    // Start transition - keep old content as current until transition completes
-    setState(prev => ({
-      current: prev.current,  // Keep displaying old content
-      prev: prev.current,     // Also animate it out
-      isTransitioning: true
-    }));
+    // Create unique key for this transition
+    const newKey = `${transitionKey}-${Date.now()}`;
 
-    // After a short delay, bring in the new content
-    setTimeout(() => {
-      setState(prev => ({
-        ...prev,
-        current: children  // Now update to new content
+    // Mark all existing items as exiting
+    setItems(current => {
+      const exitingItems = current.map(item => ({
+        ...item,
+        state: 'exiting' as const
       }));
-    }, 50);
 
-    // Clean up after animations complete
-    timeoutRef.current = setTimeout(() => {
-      setState(prev => ({
-        ...prev,
-        prev: null,
-        isTransitioning: false
-      }));
-    }, 200 + delay);
+      // Add new item as entering
+      const newItem: AnimationItem = {
+        key: newKey,
+        content: children,
+        state: 'entering',
+        timestamp: Date.now()
+      };
+
+      return [...exitingItems, newItem];
+    });
+
+    // Clear any existing timeout for this key
+    const existingTimeout = timeoutsRef.current.get(newKey);
+    if (existingTimeout) {
+      clearTimeout(existingTimeout);
+    }
+
+    // Transition new item to active after delay
+    const activateTimeout = setTimeout(() => {
+      setItems(current => 
+        current.map(item => 
+          item.key === newKey 
+            ? { ...item, state: 'active' }
+            : item
+        )
+      );
+    }, delay);
+
+    timeoutsRef.current.set(`${newKey}-activate`, activateTimeout);
+
+    // Remove exiting items after animation completes
+    const cleanupTimeout = setTimeout(() => {
+      setItems(current => 
+        current.filter(item => item.state !== 'exiting')
+      );
+      
+      // Clean up timeout references
+      timeoutsRef.current.delete(`${newKey}-activate`);
+      timeoutsRef.current.delete(`${newKey}-cleanup`);
+    }, 300 + delay); // 300ms for exit animation + delay
+
+    timeoutsRef.current.set(`${newKey}-cleanup`, cleanupTimeout);
 
   }, [transitionKey, children, delay]);
-
-  const { current, prev, isTransitioning } = state;
 
   const containerClasses = centered 
     ? `relative flex items-center justify-center ${className}`
@@ -94,40 +126,34 @@ export function AnimatedTransition({
     ? "absolute inset-0 flex items-center justify-center"
     : "absolute inset-0";
 
+  const getTransform = (state: AnimationItem['state'], reverse: boolean) => {
+    switch (state) {
+      case 'entering':
+        return `translateX(${reverse ? -distance : distance}px)`;
+      case 'active':
+        return 'translateX(0)';
+      case 'exiting':
+        return `translateX(${reverse ? distance : -distance}px)`;
+    }
+  };
+
   return (
     <div className={containerClasses}>
-      {/* Previous content (exiting) */}
-      {prev && isTransitioning && (
+      {items.map((item) => (
         <div
+          key={item.key}
           className={contentClasses}
           style={{
-            animation: reverse 
-              ? 'slideOutToRight 200ms cubic-bezier(0, 0, 0.2, 1) forwards'
-              : 'slideOutToLeft 200ms cubic-bezier(0, 0, 0.2, 1) forwards',
-            pointerEvents: 'none',
-            zIndex: 1
+            opacity: item.state === 'active' ? 1 : 0,
+            transform: getTransform(item.state, reverse),
+            transition: `all 300ms cubic-bezier(0.4, 0, 0.2, 1)`,
+            pointerEvents: item.state === 'active' ? 'auto' : 'none',
+            zIndex: item.state === 'active' ? 2 : 1
           }}
         >
-          {prev}
+          {item.content}
         </div>
-      )}
-      
-      {/* Current content (entering or static) */}
-      <div
-        className={isTransitioning ? contentClasses : centered ? "w-full" : "h-full"}
-        style={{
-          animation: isTransitioning
-            ? reverse
-              ? `slideInFromLeft 200ms cubic-bezier(0, 0, 0.2, 1) ${delay}ms forwards`
-              : `slideInFromRight 200ms cubic-bezier(0, 0, 0.2, 1) ${delay}ms forwards`
-            : undefined,
-          opacity: isTransitioning ? 0 : 1,
-          pointerEvents: isTransitioning ? 'none' : 'auto',
-          zIndex: 2
-        }}
-      >
-        {isTransitioning ? current : children}
-      </div>
+      ))}
     </div>
   );
 }

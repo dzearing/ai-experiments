@@ -75,7 +75,7 @@ function AppContent() {
               <Route path="jam-sessions/:id" element={<JamSessionDetail />} />
               <Route path="daily-report" element={<div>Daily Report Page (TODO)</div>} />
               <Route path="debug-claude" element={<DebugClaude />} />
-              <Route path="projects/:projectId/claude-code" element={<ClaudeCode />} />
+              <Route path="projects/:projectId/claude-code/:repoName" element={<ClaudeCode />} />
             </Route>
           </Routes>
           <ThemeSwitcherV2 />

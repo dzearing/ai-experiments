@@ -94,17 +94,22 @@ export function Projects() {
             const primaryRepo = project.repositories?.find(r => r.isPrimary) || project.repositories?.[0];
             
             return (
-              <Link
+              <div
                 key={project.id}
-                to={`/projects/${project.id}`}
                 className={`
-                  block
+                  relative
                   ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius}
                   ${styles.cardShadow} p-6
-                  transition-all hover:shadow-lg hover:border-opacity-80
+                  transition-all hover:shadow-lg
                 `}
               >
-                <div className="flex items-start justify-between">
+                {/* Background link for the entire card */}
+                <Link
+                  to={`/projects/${project.id}`}
+                  className="absolute inset-0 hover:bg-gray-900/5 dark:hover:bg-gray-100/5 transition-colors"
+                  aria-label={`View ${project.name} project`}
+                />
+                <div className="relative flex items-start justify-between pointer-events-none">
                   <div className="flex-1">
                     <div className="flex items-center gap-3">
                       <h3 className={`text-lg font-semibold ${styles.headingColor}`}>
@@ -148,7 +153,7 @@ export function Projects() {
                               href={repo.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className={`inline-flex items-center gap-2 px-3 py-1.5 text-sm ${styles.contentBg} ${styles.contentBorder} border ${styles.borderRadius} hover:opacity-80 transition-opacity`}
+                              className={`relative inline-flex items-center gap-2 px-3 py-1.5 text-sm ${styles.contentBg} ${styles.contentBorder} border ${styles.borderRadius} hover:opacity-80 transition-opacity pointer-events-auto`}
                             >
                               {getRepoTypeIcon(repo.type)}
                               <span className="text-blue-600 dark:text-blue-400">
@@ -191,35 +196,33 @@ export function Projects() {
                     
                     {/* Action buttons */}
                     <div className="mt-4 flex items-center gap-3">
-                      <Button 
-                        as={Link} 
+                      <Link 
                         to={`/projects/${project.id}/workitems/new`}
-                        variant="secondary"
-                        size="sm"
+                        className={`relative inline-flex items-center px-3 py-1.5 text-sm font-medium ${styles.primaryButton} ${styles.primaryButtonText} ${styles.buttonRadius} hover:opacity-90 transition-opacity pointer-events-auto`}
                       >
                         Create workitem
-                      </Button>
+                      </Link>
                       {primaryRepo && !primaryRepo.url.startsWith('local://') && (
-                        <Button
-                          as="a"
+                        <a
                           href={primaryRepo.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          variant="secondary"
-                          size="sm"
+                          className={`relative inline-flex items-center px-3 py-1.5 text-sm font-medium ${styles.contentBg} ${styles.textColor} ${styles.buttonRadius} border ${styles.contentBorder} hover:opacity-90 transition-opacity pointer-events-auto`}
                         >
                           Go to GitHub
-                        </Button>
+                        </a>
                       )}
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-2 ml-4">
+                  <div className="relative flex items-center gap-2 ml-4">
                     <IconButton 
                       aria-label="Edit project" 
                       variant="secondary"
+                      className="pointer-events-auto"
                       onClick={(e) => {
                         e.preventDefault();
+                        e.stopPropagation();
                         // TODO: Implement edit functionality
                       }}
                     >
@@ -230,8 +233,10 @@ export function Projects() {
                     <IconButton 
                       aria-label="Delete project" 
                       variant="secondary"
+                      className="pointer-events-auto"
                       onClick={(e) => {
                         e.preventDefault();
+                        e.stopPropagation();
                         setDeleteProject(project);
                         setShowDeleteDialog(true);
                       }}
@@ -242,7 +247,7 @@ export function Projects() {
                     </IconButton>
                   </div>
                 </div>
-              </Link>
+              </div>
             );
           })}
         </div>

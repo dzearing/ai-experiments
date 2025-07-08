@@ -1,0 +1,46 @@
+{
+  "sessionId": "project--home-dzearing-workspace-projects-apisurf-apisurf-1-2676555a-26c8-46c3-8f4f-744162cf9ec6",
+  "projectId": "project--home-dzearing-workspace-projects-apisurf",
+  "repoName": "apisurf-1",
+  "userName": "dzearing",
+  "projectPath": "/home/dzearing/workspace/projects/apisurf",
+  "messages": [
+    {
+      "id": "f83bc520-980f-4c82-93ed-758743cd588d",
+      "role": "assistant",
+      "content": "Hey dzearing! Good evening! Ready to continue working on apisurf-1? What would you like to tackle tonight?",
+      "isGreeting": true,
+      "timestamp": "2025-07-08T01:22:04.725Z"
+    },
+    {
+      "role": "user",
+      "content": "Say \"hello, world!\" but bold the word \"world\"",
+      "timestamp": "2025-07-08T01:22:40.221Z"
+    },
+    {
+      "role": "assistant",
+      "content": "hello, **world**!",
+      "timestamp": "2025-07-08T01:22:45.988Z"
+    },
+    {
+      "role": "user",
+      "content": "now tell me a joke, but exercise a variety of markdown features including code formatting.",
+      "timestamp": "2025-07-08T01:23:02.062Z"
+    },
+    {
+      "role": "assistant",
+      "content": "## The Programmer's Paradox\n\nA developer walks into a bar and orders `1.0` beers. The bartender says:\n\n> \"Sorry, we don't serve **floating point** numbers here. You'll have to *round up*!\"\n\nThe developer replies:\n```javascript\nMath.ceil(1.0); // Still 1\n```\n\n### The bartender's response:\n- ~~\"That's still just one beer!\"~~\n- \"Wait, let me check the ***documentation***...\"\n\n---\n\n| Order | Result |\n|-------|--------|\n| `1.0` | 🍺 |\n| `1.999...` | 🍺🍺 |\n\nThe moral? Even in bars, **edge cases** matter! 😄",
+      "timestamp": "2025-07-08T01:23:13.956Z"
+    }
+  ],
+  "greetingShown": true,
+  "greetingInProgress": false,
+  "createdAt": "2025-07-08T01:21:59.249Z",
+  "updatedAt": "2025-07-08T01:23:13.956Z",
+  "maxTokens": 200000,
+  "contextTokens": 163,
+  "tokenUsage": {
+    "input": 0,
+    "output": 0
+  }
+}

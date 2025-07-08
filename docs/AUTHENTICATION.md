@@ -5,10 +5,11 @@ This document describes the GitHub authentication system implemented in Claude F
 ## Overview
 
 The authentication system allows users to:
+
 - Sign in with multiple GitHub accounts (personal and enterprise)
 - Switch between accounts seamlessly
 - Execute GitHub API operations with the selected account
-- Securely manage authentication tokens
+- Securely manage authentication tokensa
 
 ## Setup
 
@@ -18,8 +19,8 @@ The authentication system allows users to:
 2. Click "New OAuth App"
 3. Fill in the application details:
    - **Application name**: Claude Flow (or your preferred name)
-   - **Homepage URL**: http://localhost:5173
-   - **Authorization callback URL**: http://localhost:5173/oauth-callback.html
+   - **Homepage URL**: http://localhost:3000
+   - **Authorization callback URL**: http://localhost:3000/oauth-callback.html
 4. Click "Register application"
 5. Copy the Client ID and generate a Client Secret
 
@@ -64,16 +65,16 @@ GITHUB_CLIENT_SECRET=your-github-client-secret
 ### Signing In
 
 ```typescript
-import { useAuth } from './contexts/AuthContext';
+import { useAuth } from "./contexts/AuthContext";
 
 function MyComponent() {
   const { signInWithGitHub } = useAuth();
-  
+
   const handleSignIn = async () => {
     try {
       await signInWithGitHub();
     } catch (error) {
-      console.error('Sign in failed:', error);
+      console.error("Sign in failed:", error);
     }
   };
 }
@@ -82,17 +83,17 @@ function MyComponent() {
 ### Using GitHub API
 
 ```typescript
-import { useGitHub } from './contexts/GitHubContext';
+import { useGitHub } from "./contexts/GitHubContext";
 
 function RepositoryList() {
   const { listRepositories, isAuthenticated } = useGitHub();
-  
+
   useEffect(() => {
     if (isAuthenticated) {
       const fetchRepos = async () => {
-        const repos = await listRepositories({ 
-          sort: 'updated',
-          per_page: 20 
+        const repos = await listRepositories({
+          sort: "updated",
+          per_page: 20,
         });
         setRepositories(repos);
       };
@@ -125,6 +126,7 @@ Users can connect multiple GitHub accounts:
 ## Rate Limiting
 
 The system handles GitHub API rate limits:
+
 - Rate limit headers are checked on each request
 - When limit is exceeded, user receives appropriate error message
 - Rate limit info is included in API responses

@@ -8,6 +8,9 @@ import { ClaudeCodeProvider, useClaudeCode } from '../contexts/ClaudeCodeContext
 import { VirtualMessageList } from '../components/claude-code/VirtualMessageList';
 import { ClaudeInput } from '../components/claude-code/ClaudeInput';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
+import { ProgressIndicator } from '../components/chat/ProgressIndicator';
+import { ConfirmDialog } from '../components/ConfirmDialog';
+import { DancingBubbles } from '../components/ui/DancingBubbles';
 import type { ClaudeMode } from '../contexts/ClaudeCodeContext';
 
 export function ClaudeCode() {
@@ -19,7 +22,7 @@ export function ClaudeCode() {
 }
 
 function ClaudeCodeContent() {
-  const { projectId } = useParams<{ projectId: string }>();
+  const { projectId, repoName } = useParams<{ projectId: string; repoName: string }>();
   const navigate = useNavigate();
   const { currentStyles } = useTheme();
   const { setHeaderContent } = useLayout();
@@ -32,46 +35,58 @@ function ClaudeCodeContent() {
     isInitializing,
     isConnected,
     error,
+    isProcessing,
+    sessionId,
+    reservedRepo,
     sendMessage,
     setMode,
-    initializeSession
+    initializeSession,
+    cancelMessage,
+    clearMessages
   } = useClaudeCode();
+  
+  // Debug logging
+  console.log('ClaudeCode component render, messages:', messages.length);
+  console.log('isInitializing:', isInitializing, 'isConnected:', isConnected, 'sessionId:', sessionId);
   
   const styles = currentStyles;
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [input, setInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   
   const project = projects.find(p => p.id === projectId);
   const workspaceProject = workspaceProjects.find(p => p.name === project?.name);
   
-  // Set breadcrumb
+  // Set breadcrumb with session ID
   useEffect(() => {
-    if (project) {
+    console.log('ClaudeCode breadcrumb effect - repoName:', repoName, 'projectId:', projectId, 'sessionId:', sessionId);
+    if (repoName && projectId) {
+      const claudeCodeLabel = sessionId ? `Claude Code (${sessionId.split('-').slice(-1)[0]})` : 'Claude Code';
       setHeaderContent([
-        { label: 'Projects', path: '/projects' },
-        { label: project.name, path: `/projects/${projectId}` },
-        { label: 'Claude Code' }
+        { label: repoName, path: `/projects/${projectId}` },
+        { label: claudeCodeLabel }
       ]);
     }
-    
-    return () => {
-      setHeaderContent(null);
-    };
-  }, [project, projectId, setHeaderContent]);
+  }, [projectId, repoName, sessionId, setHeaderContent]);
   
   // Initialize session
   useEffect(() => {
-    if (projectId && workspaceProject?.path) {
-      initializeSession(projectId, workspaceProject.path);
+    console.log('ClaudeCode init session:', {
+      projectId,
+      projectName: project?.name,
+      workspaceProjectPath: workspaceProject?.path,
+      repoName
+    });
+    
+    if (projectId && workspaceProject?.path && repoName) {
+      initializeSession(projectId, workspaceProject.path, repoName);
     }
-  }, [projectId, workspaceProject?.path, initializeSession]);
+  }, [projectId, workspaceProject?.path, repoName]);
   
   const handleSubmit = useCallback(async (message: string) => {
     if (!message.trim() || isSubmitting || !isConnected) return;
     
     setIsSubmitting(true);
-    setInput('');
     
     try {
       await sendMessage(message);
@@ -85,6 +100,38 @@ function ClaudeCodeContent() {
   const handleModeChange = useCallback((newMode: ClaudeMode) => {
     setMode(newMode);
   }, [setMode]);
+  
+  const handleCloseSession = useCallback(() => {
+    setShowCloseConfirm(true);
+  }, []);
+  
+  const handleConfirmClose = useCallback(async () => {
+    if (!sessionId) return;
+    
+    try {
+      // End the Claude session
+      const response = await fetch('http://localhost:3000/api/claude/code/end', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Failed to close session:', response.status, errorData);
+        // Still navigate away even if session cleanup failed
+      }
+      
+      // Clear messages and navigate back
+      clearMessages();
+      navigate(`/projects/${projectId}`);
+    } catch (error) {
+      console.error('Failed to close session:', error);
+      // Still navigate away even if request failed
+      clearMessages();
+      navigate(`/projects/${projectId}`);
+    }
+  }, [sessionId, projectId, navigate, clearMessages]);
   
   if (!project) {
     return (
@@ -121,8 +168,8 @@ function ClaudeCodeContent() {
           <p className={`${styles.mutedText} mb-4`}>{error}</p>
           <button
             onClick={() => {
-              if (projectId && workspaceProject?.path) {
-                initializeSession(projectId, workspaceProject.path);
+              if (projectId && workspaceProject?.path && repoName) {
+                initializeSession(projectId, workspaceProject.path, repoName);
               }
             }}
             className={`px-4 py-2 ${styles.primaryButton} ${styles.primaryButtonText} ${styles.buttonRadius}`}
@@ -136,30 +183,78 @@ function ClaudeCodeContent() {
   
   return (
     <div className="h-full flex flex-col">
+      {/* Button Bar */}
+      <div className={`flex items-center justify-between px-4 py-2 border-b ${styles.contentBorder} ${styles.cardBg}`}>
+        <div className="flex items-center gap-2">
+          <span className={`text-sm ${styles.mutedText}`}>Claude Code Session</span>
+          {reservedRepo && (
+            <span className={`text-sm ${styles.textColor} font-medium`}>{reservedRepo}</span>
+          )}
+        </div>
+        <button
+          onClick={handleCloseSession}
+          className={`px-3 py-1.5 text-sm ${styles.buttonRadius} ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor} hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150`}
+        >
+          Close Session
+        </button>
+      </div>
+      
       {/* Messages Area */}
       <div 
         ref={scrollContainerRef}
         className={`flex-1 overflow-auto ${styles.contentBg}`}
       >
-        <VirtualMessageList 
-          messages={messages}
-          scrollContainerRef={scrollContainerRef as React.RefObject<HTMLDivElement>}
-        />
+        {messages.length === 0 && isConnected ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <DancingBubbles className="justify-center mb-4" />
+              <p className={`${styles.mutedText}`}>Claude is preparing to greet you...</p>
+            </div>
+          </div>
+        ) : (
+          <VirtualMessageList 
+            messages={messages}
+            scrollContainerRef={scrollContainerRef as React.RefObject<HTMLDivElement>}
+            onSuggestedResponse={(response) => {
+              if (!isProcessing) {
+                handleSubmit(response);
+              }
+            }}
+          />
+        )}
       </div>
       
-      {/* Input Area */}
+      {/* Input Area or Progress Indicator */}
       <div className={`border-t ${styles.contentBorder} ${styles.cardBg}`}>
-        <ClaudeInput
-          value={input}
-          onChange={setInput}
-          onSubmit={handleSubmit}
-          onModeChange={handleModeChange}
-          mode={mode}
-          contextUsage={contextUsage}
-          isSubmitting={isSubmitting}
-          isConnected={isConnected}
-        />
+        {isProcessing ? (
+          <ProgressIndicator
+            startTime={messages.find(m => m.isStreaming)?.startTime || new Date()}
+            tokenCount={messages.find(m => m.isStreaming)?.tokenCount}
+            status={messages.find(m => m.isStreaming)?.content || 'Processing'}
+            onCancel={cancelMessage}
+          />
+        ) : (
+          <ClaudeInput
+            onSubmit={handleSubmit}
+            onModeChange={handleModeChange}
+            mode={mode}
+            contextUsage={contextUsage}
+            isSubmitting={isSubmitting}
+            isConnected={isConnected}
+          />
+        )}
       </div>
+      
+      {/* Confirm close dialog */}
+      <ConfirmDialog
+        isOpen={showCloseConfirm}
+        onCancel={() => setShowCloseConfirm(false)}
+        onConfirm={handleConfirmClose}
+        title="Close Claude Code Session"
+        message="Are you sure you want to close this Claude Code session? This will clear the chat history and release the repository."
+        confirmText="Close Session"
+        variant="danger"
+      />
     </div>
   );
 }

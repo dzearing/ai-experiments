@@ -6,9 +6,13 @@ import type { ClaudeMessage as ClaudeMessageType } from '../../contexts/ClaudeCo
 interface VirtualMessageListProps {
   messages: ClaudeMessageType[];
   scrollContainerRef: React.RefObject<HTMLDivElement>;
+  onSuggestedResponse?: (response: string) => void;
 }
 
-export function VirtualMessageList({ messages, scrollContainerRef }: VirtualMessageListProps) {
+export function VirtualMessageList({ messages, scrollContainerRef, onSuggestedResponse }: VirtualMessageListProps) {
+  console.log('VirtualMessageList render, messages count:', messages.length);
+  console.log('Messages:', messages.map(m => ({ id: m.id, role: m.role, content: m.content.substring(0, 50) })));
+  
   const measurementsCache = useRef<Record<string, number>>({});
   const shouldAutoScroll = useRef(true);
   const isUserScrolling = useRef(false);
@@ -134,7 +138,15 @@ export function VirtualMessageList({ messages, scrollContainerRef }: VirtualMess
               transform: `translateY(${virtualItem.start}px)`,
             }}
           >
-            <ClaudeMessage message={message} />
+            <ClaudeMessage 
+              message={message} 
+              onSuggestedResponse={onSuggestedResponse}
+              isLatestAssistantMessage={
+                message.role === 'assistant' && 
+                virtualItem.index === messages.length - 1 &&
+                !message.isStreaming
+              }
+            />
           </div>
         );
       })}

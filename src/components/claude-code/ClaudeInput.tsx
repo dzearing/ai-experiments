@@ -1,10 +1,8 @@
-import { useCallback, useRef, useEffect, type KeyboardEvent } from 'react';
+import { useCallback, useRef, useEffect, useState, memo, type KeyboardEvent } from 'react';
 import { useTheme } from '../../contexts/ThemeContextV2';
 import type { ClaudeMode } from '../../contexts/ClaudeCodeContext';
 
 interface ClaudeInputProps {
-  value: string;
-  onChange: (value: string) => void;
   onSubmit: (value: string) => void;
   onModeChange: (mode: ClaudeMode) => void;
   mode: ClaudeMode;
@@ -13,9 +11,7 @@ interface ClaudeInputProps {
   isConnected: boolean;
 }
 
-export function ClaudeInput({
-  value,
-  onChange,
+export const ClaudeInput = memo(function ClaudeInput({
   onSubmit,
   onModeChange,
   mode,
@@ -26,6 +22,7 @@ export function ClaudeInput({
   const { currentStyles } = useTheme();
   const styles = currentStyles;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [value, setValue] = useState('');
   
   // Auto-resize textarea
   useEffect(() => {
@@ -34,6 +31,14 @@ export function ClaudeInput({
       textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
     }
   }, [value]);
+  
+  // Clear input after successful submission
+  useEffect(() => {
+    if (!isSubmitting && value === '') {
+      // Input was cleared externally (after submission)
+      setValue('');
+    }
+  }, [isSubmitting]);
   
   const handleKeyDown = useCallback((e: KeyboardEvent<HTMLTextAreaElement>) => {
     // Shift+Tab to cycle modes
@@ -51,6 +56,7 @@ export function ClaudeInput({
       e.preventDefault();
       if (value.trim() && !isSubmitting && isConnected) {
         onSubmit(value);
+        setValue(''); // Clear input after submission
       }
     }
   }, [mode, onModeChange, value, isSubmitting, isConnected, onSubmit]);
@@ -89,13 +95,13 @@ export function ClaudeInput({
         <textarea
           ref={textareaRef}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={isConnected ? "Type a message... (Enter to send, Shift+Enter for new line)" : "Connecting..."}
           disabled={!isConnected || isSubmitting}
           className={`
             w-full px-4 py-3 pr-24
-            ${styles.inputBg} ${styles.inputBorder} ${styles.inputText}
+            ${styles.contentBg} ${styles.contentBorder} ${styles.textColor}
             ${styles.borderRadius} border
             focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500
             resize-none overflow-hidden
@@ -106,7 +112,12 @@ export function ClaudeInput({
         
         {/* Submit button */}
         <button
-          onClick={() => value.trim() && !isSubmitting && isConnected && onSubmit(value)}
+          onClick={() => {
+            if (value.trim() && !isSubmitting && isConnected) {
+              onSubmit(value);
+              setValue(''); // Clear input after submission
+            }
+          }}
           disabled={!value.trim() || isSubmitting || !isConnected}
           className={`
             absolute right-2 top-3 px-3 py-1.5
@@ -163,4 +174,4 @@ export function ClaudeInput({
       </div>
     </div>
   );
-}
+});

@@ -62,6 +62,7 @@ export function ProjectDetail() {
   const [selectedRepoUrl, setSelectedRepoUrl] = useState('');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [repoToDelete, setRepoToDelete] = useState<WorkspaceRepo | null>(null);
+  const [repoReservations, setRepoReservations] = useState<Map<string, string>>(new Map());
 
   // Set breadcrumb on mount
   useEffect(() => {
@@ -72,9 +73,6 @@ export function ProjectDetail() {
       ]);
     }
     
-    return () => {
-      setHeaderContent(null);
-    };
   }, [project, setHeaderContent]);
 
   // Subscribe to repository status updates
@@ -95,6 +93,74 @@ export function ProjectDetail() {
       unsubscribers.forEach((unsub: () => void) => unsub());
     };
   }, [project, subscribe]);
+
+  // Fetch claudeflow.settings.json to check reservations
+  useEffect(() => {
+    if (!project) return;
+
+    const fetchReservations = async () => {
+      try {
+        // First try claudeflow.settings.json
+        const response = await fetch(apiUrl('/api/workspace/read-file'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filePath: `${project.path}/claudeflow.settings.json` })
+        });
+
+        if (response.ok) {
+          const { content } = await response.json();
+          console.log('claudeflow.settings.json content:', content);
+          const settings = JSON.parse(content);
+          const reservations = new Map<string, string>();
+
+          if (settings.repositories) {
+            Object.entries(settings.repositories).forEach(([repoName, repo]: [string, any]) => {
+              if (repo.status === 'reserved' && repo.reservedBy === 'claude-code') {
+                console.log(`Found Claude Code reservation: ${repoName}`);
+                reservations.set(repoName, 'Claude Code session');
+              }
+            });
+          }
+
+          console.log('Final reservations map:', Array.from(reservations.entries()));
+          setRepoReservations(reservations);
+        } else {
+          // Fallback to REPOS.md for backward compatibility
+          const fallbackResponse = await fetch(apiUrl('/api/workspace/read-file'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filePath: `${project.path}/REPOS.md` })
+          });
+
+          if (fallbackResponse.ok) {
+            const { content } = await fallbackResponse.json();
+            const lines = content.split('\n');
+            const reservations = new Map<string, string>();
+
+            lines.forEach((line: string) => {
+              const match = line.match(/^- (.+): (.+)$/);
+              if (match) {
+                const [, repoName, status] = match;
+                if (status.toLowerCase().includes('claude code')) {
+                  reservations.set(repoName, status);
+                }
+              }
+            });
+
+            setRepoReservations(reservations);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching reservations:', err);
+      }
+    };
+
+    fetchReservations();
+    // Refresh every 5 seconds
+    const interval = setInterval(fetchReservations, 5000);
+
+    return () => clearInterval(interval);
+  }, [project]);
 
   if (!project) {
     return (
@@ -328,32 +394,17 @@ export function ProjectDetail() {
 
       {/* Project info */}
       <div className={`mb-6 p-6 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius}`}>
-        <div className="flex justify-between items-start">
-          <div className="flex-1">
-            <h1 className={`text-2xl font-bold ${styles.headingColor} mb-2`}>{project.name}</h1>
-            {project.readme && (
-              <p className={`${styles.textColor} mb-4`}>
-                {project.readme.split('\n').find((line: string) => line.trim() && !line.startsWith('#')) || ''}
-              </p>
-            )}
-            {project.purpose && (
-              <p className={`text-sm ${styles.mutedText}`}>
-                <span className="font-medium">Purpose:</span> {project.purpose}
-              </p>
-            )}
-          </div>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => navigate(`/projects/${projectId}/claude-code`)}
-            className="ml-4"
-          >
-            <span className="flex items-center gap-2">
-              <span className="text-lg">🤖</span>
-              Claude Code
-            </span>
-          </Button>
-        </div>
+        <h1 className={`text-2xl font-bold ${styles.headingColor} mb-2`}>{project.name}</h1>
+        {project.readme && (
+          <p className={`${styles.textColor} mb-4`}>
+            {project.readme.split('\n').find((line: string) => line.trim() && !line.startsWith('#')) || ''}
+          </p>
+        )}
+        {project.purpose && (
+          <p className={`text-sm ${styles.mutedText}`}>
+            <span className="font-medium">Purpose:</span> {project.purpose}
+          </p>
+        )}
       </div>
 
       {/* Repository clones */}
@@ -402,6 +453,16 @@ export function ProjectDetail() {
                         <h3 className={`text-lg font-semibold ${styles.headingColor}`}>
                           {repo.name}-{repo.number}
                         </h3>
+                        {(() => {
+                          const repoKey = `${repo.name}-${repo.number}`;
+                          const hasReservation = repoReservations.has(repoKey);
+                          console.log(`Checking badge for ${repoKey}: ${hasReservation}`, 'repo:', repo, 'map:', Array.from(repoReservations.keys()));
+                          return hasReservation && (
+                            <span className={`px-2 py-1 text-xs font-medium rounded bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400`}>
+                              🤖 Reserved: Claude Code
+                            </span>
+                          );
+                        })()}
                         {getStatusBadge(status)}
                         {status && !status.error && (
                           <span className={`text-sm ${styles.mutedText}`}>
@@ -482,13 +543,25 @@ export function ProjectDetail() {
                         {loadingActions.has(resetKey) ? 'Resetting...' : 'Reset to main'}
                       </Button>
                       
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => navigate(`/projects/${projectId}/claude-code/${repo.name}-${repo.number}`)}
+                      >
+                        <span className="flex items-center gap-1">
+                          <span>🤖</span>
+                          Claude Code
+                        </span>
+                      </Button>
+                      
                       <IconButton
                         variant="secondary"
+                        size="sm"
                         aria-label="Delete clone"
                         onClick={() => handleDelete(repo)}
                         disabled={loadingActions.has(deleteKey)}
                       >
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
                       </IconButton>

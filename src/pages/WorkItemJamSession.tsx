@@ -7,6 +7,7 @@ import { IconButton } from '../components/ui/IconButton';
 import { LoadingSpinner, InlineLoadingSpinner } from '../components/ui/LoadingSpinner';
 import { StockPhotoAvatar, getGenderFromSeed, getRandomName } from '../components/StockPhotoAvatar';
 import { useAuth } from '../contexts/AuthContext';
+import { DancingBubbles } from '../components/ui/DancingBubbles';
 import { apiUrl } from '../config/api';
 import { 
   MDXEditor, 
@@ -1133,11 +1134,7 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
                 {isTyping && (
                   <div className="flex justify-start">
                     <div className={`${styles.contentBg} ${styles.contentBorder} border rounded-lg px-4 py-2`}>
-                      <div className="flex gap-1">
-                        <div className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                        <div className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                        <div className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                      </div>
+                      <DancingBubbles />
                     </div>
                   </div>
                 )}
