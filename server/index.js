@@ -3900,6 +3900,13 @@ app.post('/api/claude/code/message', async (req, res) => {
     // Process with Claude
     const claudeService = require('./claude-service');
     
+    // Define these variables outside try block so they're accessible in the finally section
+    let pendingAssistantText = '';
+    let toolExecutions = [];
+    let currentAssistantMessageId = null;
+    let hasCompletedInitialMessage = false;
+    let activeMessageId = null; // Track the actual message ID being streamed
+    
     try {
       // Check if we should use mock mode
       const useMockMode = req.headers['x-mock-mode'] === 'true' || !claudeService.isClaudeAvailable;
@@ -3995,10 +4002,6 @@ app.post('/api/claude/code/message', async (req, res) => {
         
         console.log('About to call processClaudeCodeMessage...');
         let response;
-        let pendingAssistantText = '';
-        let toolExecutions = [];
-        let currentAssistantMessageId = null;
-        let hasCompletedInitialMessage = false;
         
         try {
           response = await claudeService.processClaudeCodeMessage(
@@ -4162,6 +4165,7 @@ app.post('/api/claude/code/message', async (req, res) => {
               // If this is the first assistant text, create a new message
               if (!currentAssistantMessageId) {
                 currentAssistantMessageId = crypto.randomUUID();
+                activeMessageId = currentAssistantMessageId; // Track this as the active message
                 // Send message-start event
                 const currentConnections = claudeCodeClients.get(sessionId);
                 if (currentConnections) {
@@ -4281,6 +4285,7 @@ app.post('/api/claude/code/message', async (req, res) => {
           console.log('No assistant messages sent via streaming, using response.text');
           // Create a new message ID for the final response
           const finalMessageId = crypto.randomUUID();
+          activeMessageId = finalMessageId; // Track this as the active message
           
           // Send message-start event
           const currentConnections = claudeCodeClients.get(sessionId);
@@ -4431,17 +4436,37 @@ app.post('/api/claude/code/message', async (req, res) => {
       });
     }
     
-    // Send message end event
-    const finalConnections = claudeCodeClients.get(sessionId);
-    if (finalConnections) {
-      for (const [connId, conn] of finalConnections.entries()) {
-        try {
-          conn.res.write(`event: message-end\ndata: ${JSON.stringify({ messageId })}\n\n`);
-        } catch (err) {
-          console.error(`Error sending message-end to connection ${connId}:`, err);
-          finalConnections.delete(connId);
+    // If we have pending assistant text that hasn't been completed, complete it now
+    if (pendingAssistantText && currentAssistantMessageId && !hasCompletedInitialMessage) {
+      console.log('Finalizing pending assistant text, messageId:', currentAssistantMessageId);
+      
+      // Save to session
+      sessionManager.addMessage(sessionId, {
+        id: currentAssistantMessageId,
+        role: 'assistant',
+        content: pendingAssistantText,
+        timestamp: new Date().toISOString()
+      });
+      
+      activeMessageId = currentAssistantMessageId; // Make sure we track this message
+    }
+    
+    // Send message end event for the active message
+    if (activeMessageId) {
+      console.log('Sending final message-end for activeMessageId:', activeMessageId);
+      const finalConnections = claudeCodeClients.get(sessionId);
+      if (finalConnections) {
+        for (const [connId, conn] of finalConnections.entries()) {
+          try {
+            conn.res.write(`event: message-end\ndata: ${JSON.stringify({ messageId: activeMessageId })}\n\n`);
+          } catch (err) {
+            console.error(`Error sending message-end to connection ${connId}:`, err);
+            finalConnections.delete(connId);
+          }
         }
       }
+    } else {
+      console.log('No activeMessageId to send message-end for');
     }
     
     res.json({ success: true, messageId });

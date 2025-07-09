@@ -240,6 +240,21 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
           }
         }
         
+        // Find and replace any placeholder message (empty assistant message that's streaming)
+        const placeholderIndex = prev.findIndex(msg => 
+          msg.role === 'assistant' && 
+          msg.content === '' && 
+          msg.isStreaming === true &&
+          !msg.isGreeting
+        );
+        
+        if (placeholderIndex !== -1) {
+          console.log('Replacing placeholder message at index:', placeholderIndex);
+          const newMessages = [...prev];
+          newMessages[placeholderIndex] = newMessage;
+          return newMessages;
+        }
+        
         console.log('Creating new message:', newMessage);
         const newMessages = [...prev, newMessage];
         console.log('New messages array:', newMessages.map(m => ({ id: m.id, role: m.role, content: m.content.substring(0, 50) })));
@@ -322,8 +337,10 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
     
     eventSource.addEventListener('message-end', (event) => {
       const data = JSON.parse(event.data);
+      console.log('message-end event received for messageId:', data.messageId);
       setMessages(prev => prev.map(msg => {
         if (msg.id === data.messageId) {
+          console.log('Setting isStreaming to false for message:', msg.id);
           // Generate suggested responses based on the final content
           const suggestedResponses = generateSuggestedResponses(msg.content);
           return { ...msg, isStreaming: false, suggestedResponses };
@@ -373,6 +390,7 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
         streamingMessageRef.current = '';
       }
       setCurrentMessageId(null);
+      setIsProcessing(false);
     });
     
     eventSource.addEventListener('thinking', (event) => {
@@ -435,7 +453,7 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
       // Mark all recent tool messages as complete and update execution times
       setMessages(prev => {
         // Find the most recent tool messages (those that come after the last user message)
-        const lastUserMessageIndex = prev.findLastIndex(msg => msg.role === 'user');
+        const lastUserMessageIndex = prev.findLastIndex((msg: ClaudeMessage) => msg.role === 'user');
         const recentMessages = prev.slice(lastUserMessageIndex + 1);
         const toolMessages = recentMessages.filter(msg => msg.role === 'tool' && msg.status === 'running');
         
@@ -446,7 +464,7 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
           const toolMsg = toolMessages.find(tm => tm.id === msg.id);
           if (toolMsg) {
             // Find corresponding tool execution data from summary
-            const toolData = data.toolExecutions?.find(t => 
+            const toolData = data.toolExecutions?.find((t: any) => 
               msg.id.includes(t.id) || (t.name === msg.name)
             );
             
@@ -654,7 +672,19 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
       content,
       timestamp: new Date()
     };
-    setMessages(prev => [...prev, userMessage]);
+    
+    // Add a placeholder assistant message with isStreaming true to show dancing bubbles
+    const placeholderMessage: ClaudeMessage = {
+      id: uuidv4(),
+      role: 'assistant',
+      content: '', // Empty content will trigger dancing bubbles in ClaudeMessage component
+      timestamp: new Date(),
+      isStreaming: true,
+      startTime: new Date()
+    };
+    
+    setMessages(prev => [...prev, userMessage, placeholderMessage]);
+    setIsProcessing(true);
     
     try {
       const response = await fetch('http://localhost:3000/api/claude/code/message', {
@@ -677,14 +707,27 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
       console.error('Error sending message:', err);
       setError(err instanceof Error ? err.message : 'Failed to send message');
       
-      // Add error message
-      const errorMessage: ClaudeMessage = {
-        id: uuidv4(),
-        role: 'system',
-        content: `Error: ${err instanceof Error ? err.message : 'Failed to send message'}`,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      // Remove the placeholder message and add error message
+      setMessages(prev => {
+        // Filter out the placeholder
+        const filtered = prev.filter(msg => !(
+          msg.role === 'assistant' && 
+          msg.content === '' && 
+          msg.isStreaming === true
+        ));
+        
+        // Add error message
+        const errorMessage: ClaudeMessage = {
+          id: uuidv4(),
+          role: 'system',
+          content: `Error: ${err instanceof Error ? err.message : 'Failed to send message'}`,
+          timestamp: new Date()
+        };
+        
+        return [...filtered, errorMessage];
+      });
+      
+      setIsProcessing(false);
     }
   }, [sessionId, mode]);
   

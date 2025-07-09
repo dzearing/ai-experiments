@@ -1,4 +1,5 @@
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
+import { marked } from 'marked';
 import { ChatBubble } from '../chat/ChatBubble';
 import { ToolExecution } from '../chat/ToolExecution';
 import { SuggestedResponses } from '../chat/SuggestedResponses';
@@ -31,66 +32,66 @@ export const ClaudeMessage = memo(function ClaudeMessage({
     }
   }
   
-  const formatContent = (content: string) => {
-    // Simple markdown-like formatting
-    const lines = content.split('\n');
-    const formatted = [];
-    let inCodeBlock = false;
-    let codeContent = [];
-    
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
+  const formatContent = useMemo(() => (content: string) => {
+    try {
+      // Configure marked options for this parse
+      marked.setOptions({
+        breaks: true,
+        gfm: true
+      });
       
-      if (line.startsWith('```')) {
-        if (!inCodeBlock) {
-          inCodeBlock = true;
-          codeContent = [];
-        } else {
-          // End of code block
-          formatted.push(
-            <pre 
-              key={`code-${i}`}
-              className="bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md p-4 my-2 overflow-x-auto"
-            >
-              <code className="text-sm text-gray-800 dark:text-gray-200">
-                {codeContent.join('\n')}
-              </code>
-            </pre>
-          );
-          inCodeBlock = false;
-          codeContent = [];
-        }
-      } else if (inCodeBlock) {
-        codeContent.push(line);
-      } else {
-        // Regular text with basic formatting
-        let formattedLine = line;
-        
-        // Bold
-        formattedLine = formattedLine.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        
-        // Italic
-        formattedLine = formattedLine.replace(/\*(.*?)\*/g, '<em>$1</em>');
-        
+      // Parse markdown to HTML
+      let html = marked.parse(content) as string;
+      
+      // Post-process HTML to add custom styling
+      // Add classes to elements for Tailwind styling
+      html = html
+        // Headers
+        .replace(/<h1>/g, '<h1 class="text-2xl font-bold mt-4 mb-2 text-gray-900 dark:text-gray-100">')
+        .replace(/<h2>/g, '<h2 class="text-xl font-semibold mt-4 mb-2 text-gray-900 dark:text-gray-100">')
+        .replace(/<h3>/g, '<h3 class="text-lg font-semibold mt-4 mb-2 text-gray-900 dark:text-gray-100">')
+        .replace(/<h4>/g, '<h4 class="text-base font-medium mt-4 mb-2 text-gray-900 dark:text-gray-100">')
+        .replace(/<h5>/g, '<h5 class="text-sm font-medium mt-4 mb-2 text-gray-900 dark:text-gray-100">')
+        .replace(/<h6>/g, '<h6 class="text-xs font-medium mt-4 mb-2 text-gray-900 dark:text-gray-100">')
+        // Code blocks
+        .replace(/<pre>/g, '<pre class="bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md p-4 my-3 overflow-x-auto">')
+        .replace(/<code>/g, '<code class="text-sm text-gray-800 dark:text-gray-200">')
         // Inline code
-        formattedLine = formattedLine.replace(
-          /`([^`]+)`/g, 
-          '<code class="px-1 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded text-sm">$1</code>'
-        );
-        
-        if (line || formattedLine) {
-          formatted.push(
-            <div 
-              key={`line-${i}`} 
-              dangerouslySetInnerHTML={{ __html: formattedLine }}
-            />
-          );
-        }
-      }
+        .replace(/<code([^>]*)>/g, (match, attrs) => {
+          // Check if this is inside a pre tag by looking for class attribute
+          if (attrs && attrs.includes('class=')) {
+            return match; // Already has classes, likely in a pre block
+          }
+          return '<code class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded text-sm font-mono">';
+        })
+        // Lists
+        .replace(/<ul>/g, '<ul class="list-disc list-inside ml-4 my-2 space-y-1">')
+        .replace(/<ol>/g, '<ol class="list-decimal list-inside ml-4 my-2 space-y-1">')
+        // Checkboxes
+        .replace(/<li>\s*<input([^>]*type="checkbox"[^>]*)>/gi, (_match, attrs) => {
+          const isChecked = attrs.includes('checked');
+          return `<li class="list-none ml-0"><label class="flex items-start gap-2"><input type="checkbox" ${isChecked ? 'checked' : ''} disabled class="mt-1 rounded border-gray-300 dark:border-gray-600">`;
+        })
+        .replace(/(<\/label>)?<\/li>/g, (match, hasLabel) => {
+          return hasLabel ? match : '</label></li>';
+        })
+        // Paragraphs
+        .replace(/<p>/g, '<p class="mb-3 last:mb-0">')
+        // Links
+        .replace(/<a /g, '<a class="text-blue-600 dark:text-blue-400 hover:underline" target="_blank" rel="noopener noreferrer" ')
+        // Blockquotes
+        .replace(/<blockquote>/g, '<blockquote class="border-l-4 border-gray-300 dark:border-gray-600 pl-4 italic my-3">')
+        // Horizontal rules
+        .replace(/<hr>/g, '<hr class="my-4 border-gray-300 dark:border-gray-600" />')
+        // Strong
+        .replace(/<strong>/g, '<strong class="font-semibold">');
+      
+      return <div className="prose prose-sm max-w-none dark:prose-invert markdown-content" dangerouslySetInnerHTML={{ __html: html }} />;
+    } catch (error) {
+      console.error('Error parsing markdown:', error);
+      return <div className="prose prose-sm max-w-none dark:prose-invert">{content}</div>;
     }
-    
-    return formatted;
-  };
+  }, []);
   
   // Show thinking indicator for streaming messages
   const isThinking = message.isStreaming && messageContent.startsWith('Claude is thinking');
@@ -147,9 +148,7 @@ export const ClaudeMessage = memo(function ClaudeMessage({
         {isThinking || (message.isStreaming && !messageContent) ? (
           <DancingBubbles />
         ) : (
-          <div className="prose prose-sm max-w-none dark:prose-invert">
-            {formatContent(messageContent)}
-          </div>
+          formatContent(messageContent)
         )}
         
         {/* Streaming cursor */}
