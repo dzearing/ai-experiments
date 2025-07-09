@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const logger = require('./logger');
 
 class SessionManager {
@@ -147,10 +148,14 @@ class SessionManager {
       return false;
     }
 
-    session.messages.push({
+    // Ensure message has an ID
+    const messageWithId = {
       ...message,
-      timestamp: new Date().toISOString()
-    });
+      id: message.id || crypto.randomUUID(),
+      timestamp: message.timestamp || new Date().toISOString()
+    };
+
+    session.messages.push(messageWithId);
     session.updatedAt = new Date().toISOString();
     this.saveSession(sessionId);
     return true;

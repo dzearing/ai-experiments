@@ -11,7 +11,10 @@ interface VirtualMessageListProps {
 
 export function VirtualMessageList({ messages, scrollContainerRef, onSuggestedResponse }: VirtualMessageListProps) {
   console.log('VirtualMessageList render, messages count:', messages.length);
-  console.log('Messages:', messages.map(m => ({ id: m.id, role: m.role, content: m.content.substring(0, 50) })));
+  console.log('Messages:', messages.map(m => ({
+    ...m,
+    content: m.content.substring(0, 50) + (m.content.length > 50 ? '...' : '')
+  })));
   
   const measurementsCache = useRef<Record<string, number>>({});
   const shouldAutoScroll = useRef(true);

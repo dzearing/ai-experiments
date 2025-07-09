@@ -3892,15 +3892,8 @@ app.post('/api/claude/code/message', async (req, res) => {
       return res.status(503).json({ error: 'No active connections for this session' });
     }
     
-    // Send message start event
-    for (const [connId, conn] of connections.entries()) {
-      try {
-        conn.res.write(`event: message-start\ndata: ${JSON.stringify({ id: messageId })}\n\n`);
-      } catch (err) {
-        console.error(`Error sending message-start to connection ${connId}:`, err);
-        connections.delete(connId);
-      }
-    }
+    // Don't send a message-start event here - it creates an empty message
+    // The actual assistant messages will be created by the onMessage callback
     
     console.log(`Processing message for session ${sessionId}, mode: ${mode}, connections: ${connections.size}`);
     
@@ -3978,19 +3971,7 @@ app.post('/api/claude/code/message', async (req, res) => {
         // Configure tools based on mode (for context in prompt)
         const tools = mode === 'plan' ? ['search', 'read'] : ['search', 'read', 'write', 'bash'];
         
-        // Don't send tool notifications since the SDK doesn't actually use them
-        // Just send a thinking indicator
-        for (const [connId, conn] of connections.entries()) {
-          try {
-            conn.res.write(`event: thinking\ndata: ${JSON.stringify({ 
-              messageId,
-              status: 'Claude is thinking...' 
-            })}\n\n`);
-          } catch (err) {
-            console.error(`Error sending thinking status to connection ${connId}:`, err);
-            connections.delete(connId);
-          }
-        }
+        // Don't send any thinking or progress messages
         
         // Get the repo path for Claude to work in
         const repoPath = path.join(session.projectPath, 'repos', session.repoName);
@@ -4014,40 +3995,100 @@ app.post('/api/claude/code/message', async (req, res) => {
         
         console.log('About to call processClaudeCodeMessage...');
         let response;
+        let pendingAssistantText = '';
+        let toolExecutions = [];
+        let currentAssistantMessageId = null;
+        let hasCompletedInitialMessage = false;
+        
         try {
           response = await claudeService.processClaudeCodeMessage(
           fullPrompt, 
           tools, 
           'opus', // Use opus model as preferred
           repoPath,
-          // onProgress callback
-          (status, tokenCount) => {
-            const currentConnections = claudeCodeClients.get(sessionId);
-            if (currentConnections) {
-              for (const [connId, conn] of currentConnections.entries()) {
-                try {
-                  conn.res.write(`event: progress\ndata: ${JSON.stringify({ 
-                    messageId, 
-                    status,
-                    tokenCount 
-                  })}\n\n`);
-                } catch (err) {
-                  console.error(`Error sending progress update to connection ${connId}:`, err);
-                  currentConnections.delete(connId);
-                }
-              }
-            }
-          },
+          // onProgress callback - don't send any progress messages
+          null,
           // onToolExecution callback  
           (toolExecution) => {
-            console.log('Sending tool execution event:', toolExecution.name);
+            console.log('Tool execution received:', toolExecution);
+            
+            // If we have pending assistant text, complete and save it as a message first
+            if (pendingAssistantText && currentAssistantMessageId && !hasCompletedInitialMessage) {
+              // Send message-end event
+              const currentConnections = claudeCodeClients.get(sessionId);
+              if (currentConnections) {
+                for (const [connId, conn] of currentConnections.entries()) {
+                  try {
+                    conn.res.write(`event: message-end\ndata: ${JSON.stringify({ 
+                      messageId: currentAssistantMessageId
+                    })}\n\n`);
+                  } catch (err) {
+                    console.error(`Error sending message-end to connection ${connId}:`, err);
+                    currentConnections.delete(connId);
+                  }
+                }
+              }
+              
+              // Save to session
+              sessionManager.addMessage(sessionId, {
+                id: currentAssistantMessageId,
+                role: 'assistant',
+                content: pendingAssistantText,
+                timestamp: new Date().toISOString()
+              });
+              
+              pendingAssistantText = '';
+              hasCompletedInitialMessage = true;
+              currentAssistantMessageId = null;
+            }
+            
+            // Format tool args for display
+            let displayArgs = '';
+            if (toolExecution.args) {
+              try {
+                const args = typeof toolExecution.args === 'string' ? JSON.parse(toolExecution.args) : toolExecution.args;
+                if (toolExecution.name === 'Read' && args.file_path) {
+                  displayArgs = args.file_path;
+                } else if (toolExecution.name === 'Write' && args.file_path) {
+                  displayArgs = args.file_path;
+                } else if (toolExecution.name === 'Bash' && args.command) {
+                  displayArgs = args.command;
+                } else {
+                  displayArgs = JSON.stringify(args, null, 2);
+                }
+              } catch (e) {
+                displayArgs = toolExecution.args;
+              }
+            }
+            
+            // Create tool message
+            const toolMessageId = `${messageId}-tool-${toolExecution.id || Date.now()}`;
+            const toolMessage = {
+              id: toolMessageId,
+              role: 'tool',
+              name: toolExecution.name,
+              args: displayArgs,
+              status: toolExecution.status || 'complete',
+              timestamp: new Date().toISOString(),
+              executionTime: toolExecution.executionTime
+            };
+            
+            // Add to session
+            sessionManager.addMessage(sessionId, toolMessage);
+            
+            // Store for later reference
+            toolExecutions.push(toolExecution);
+            
             const currentConnections = claudeCodeClients.get(sessionId);
             if (currentConnections) {
               for (const [connId, conn] of currentConnections.entries()) {
                 try {
                   conn.res.write(`event: tool-execution\ndata: ${JSON.stringify({ 
                     messageId,
-                    toolExecution 
+                    toolExecution: {
+                      ...toolExecution,
+                      args: displayArgs
+                    }
                   })}\n\n`);
                 } catch (err) {
                   console.error(`Error sending tool execution to connection ${connId}:`, err);
@@ -4078,6 +4119,12 @@ app.post('/api/claude/code/message', async (req, res) => {
             }
             
             debugLog('Parsed message event:', { type: actualMessageType, content: actualContent });
+            
+            // Skip "result" type messages as they contain the full response that we've already streamed
+            if (actualMessageType === 'result') {
+              debugLog('Skipping result message - already handled through streaming');
+              return;
+            }
             
             // Handle content that might be an array of content blocks
             let textContent = actualContent;
@@ -4112,17 +4159,40 @@ app.post('/api/claude/code/message', async (req, res) => {
             
             // Only send message if we have text content and it's not a tool use
             if (textContent && !skipMessage) {
+              // If this is the first assistant text, create a new message
+              if (!currentAssistantMessageId) {
+                currentAssistantMessageId = crypto.randomUUID();
+                // Send message-start event
+                const currentConnections = claudeCodeClients.get(sessionId);
+                if (currentConnections) {
+                  for (const [connId, conn] of currentConnections.entries()) {
+                    try {
+                      conn.res.write(`event: message-start\ndata: ${JSON.stringify({ 
+                        id: currentAssistantMessageId,
+                        isGreeting: false
+                      })}\n\n`);
+                    } catch (err) {
+                      console.error(`Error sending message-start to connection ${connId}:`, err);
+                      currentConnections.delete(connId);
+                    }
+                  }
+                }
+              }
+              
+              // Accumulate text
+              pendingAssistantText += textContent;
+              
+              // Send as message chunk
               const currentConnections = claudeCodeClients.get(sessionId);
               if (currentConnections) {
                 for (const [connId, conn] of currentConnections.entries()) {
                   try {
-                    conn.res.write(`event: claude-message\ndata: ${JSON.stringify({ 
-                      messageId,
-                      messageType: actualMessageType,
-                      content: textContent 
+                    conn.res.write(`event: message-chunk\ndata: ${JSON.stringify({ 
+                      messageId: currentAssistantMessageId,
+                      chunk: textContent 
                     })}\n\n`);
                   } catch (err) {
-                    console.error(`Error sending Claude message to connection ${connId}:`, err);
+                    console.error(`Error sending message chunk to connection ${connId}:`, err);
                     currentConnections.delete(connId);
                   }
                 }
@@ -4194,26 +4264,83 @@ app.post('/api/claude/code/message', async (req, res) => {
         const responseText = response.text || 'I apologize, but I was unable to generate a response.';
         console.log('ResponseText to stream type:', typeof responseText);
         console.log('ResponseText to stream:', responseText.substring(0, 100) + '...');
-        const words = responseText.split(' ');
+        console.log('PendingAssistantText:', pendingAssistantText.substring(0, 100) + '...');
+        console.log('ResponseText length:', responseText.length);
+        console.log('PendingAssistantText length:', pendingAssistantText.length);
+        console.log('Are they equal?', responseText === pendingAssistantText);
         
-        for (let i = 0; i < words.length; i++) {
+        // If we already sent assistant messages through onMessage callback, ignore the final response
+        if (pendingAssistantText || hasCompletedInitialMessage) {
+          console.log('Already sent assistant messages through streaming, ignoring response.text');
+          console.log('Messages sent via streaming:', hasCompletedInitialMessage ? 'yes' : 'no');
+          console.log('PendingAssistantText length:', pendingAssistantText.length);
+          console.log('Response.text length:', responseText.length);
+          // Don't send anything - we already streamed the content
+        } else if (responseText) {
+          // Only send response.text if we haven't sent anything yet (simple responses without tools)
+          console.log('No assistant messages sent via streaming, using response.text');
+          // Create a new message ID for the final response
+          const finalMessageId = crypto.randomUUID();
+          
+          // Send message-start event
           const currentConnections = claudeCodeClients.get(sessionId);
           if (currentConnections) {
             for (const [connId, conn] of currentConnections.entries()) {
               try {
-                conn.res.write(`event: message-chunk\ndata: ${JSON.stringify({ 
-                  messageId, 
-                  chunk: words[i] + ' ' 
+                conn.res.write(`event: message-start\ndata: ${JSON.stringify({ 
+                  id: finalMessageId,
+                  isGreeting: false
                 })}\n\n`);
               } catch (err) {
-                console.error(`Error writing to connection ${connId}:`, err);
+                console.error(`Error sending message-start to connection ${connId}:`, err);
                 currentConnections.delete(connId);
               }
             }
           }
           
-          // Small delay to simulate natural streaming
-          await new Promise(resolve => setTimeout(resolve, 20));
+          // Stream the response
+          const words = responseText.split(' ');
+          for (let i = 0; i < words.length; i++) {
+            const currentConnections = claudeCodeClients.get(sessionId);
+            if (currentConnections) {
+              for (const [connId, conn] of currentConnections.entries()) {
+                try {
+                  conn.res.write(`event: message-chunk\ndata: ${JSON.stringify({ 
+                    messageId: finalMessageId, 
+                    chunk: words[i] + ' ' 
+                  })}\n\n`);
+                } catch (err) {
+                  console.error(`Error writing to connection ${connId}:`, err);
+                  currentConnections.delete(connId);
+                }
+              }
+            }
+            
+            // Small delay to simulate natural streaming
+            await new Promise(resolve => setTimeout(resolve, 20));
+          }
+          
+          // Send message-end event
+          if (currentConnections) {
+            for (const [connId, conn] of currentConnections.entries()) {
+              try {
+                conn.res.write(`event: message-end\ndata: ${JSON.stringify({ 
+                  messageId: finalMessageId
+                })}\n\n`);
+              } catch (err) {
+                console.error(`Error sending message-end to connection ${connId}:`, err);
+                currentConnections.delete(connId);
+              }
+            }
+          }
+          
+          // Save the final message
+          sessionManager.addMessage(sessionId, { 
+            id: finalMessageId,
+            role: 'assistant', 
+            content: responseText,
+            timestamp: new Date().toISOString()
+          });
         }
         
         // Send final tool execution summary if there were any
@@ -4237,12 +4364,7 @@ app.post('/api/claude/code/message', async (req, res) => {
           }
         }
         
-        // Add to session history
-        sessionManager.addMessage(sessionId, { 
-          role: 'assistant', 
-          content: responseText,
-          timestamp: new Date().toISOString()
-        });
+        // Message has already been added in the streaming section above
         
         // Update context usage based on token usage
         if (response.tokenUsage) {
@@ -4460,6 +4582,24 @@ app.get('/api/claude/code/stream', (req, res) => {
             })}\n\n`);
           } catch (err) {
             debugLog('Error sending existing message:', err);
+          }
+        } else if (message.role === 'tool') {
+          debugLog(`Sending tool message: ${message.id}`);
+          
+          try {
+            // Send tool execution event
+            res.write(`event: tool-execution\ndata: ${JSON.stringify({ 
+              messageId: message.id,
+              toolExecution: {
+                id: message.id,
+                name: message.name,
+                args: message.args,
+                status: message.status || 'complete',
+                executionTime: message.executionTime
+              }
+            })}\n\n`);
+          } catch (err) {
+            debugLog('Error sending tool message:', err);
           }
         }
       }

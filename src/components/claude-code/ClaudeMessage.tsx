@@ -19,7 +19,6 @@ export const ClaudeMessage = memo(function ClaudeMessage({
   // Handle content that might be an array or object
   let messageContent = message.content;
   if (typeof messageContent !== 'string') {
-    console.warn('ClaudeMessage received non-string content:', messageContent);
     if (Array.isArray(messageContent)) {
       messageContent = (messageContent as Array<any>)
         .filter(block => block?.type === 'text')
@@ -116,6 +115,24 @@ export const ClaudeMessage = memo(function ClaudeMessage({
     );
   }
   
+  // Tool messages are rendered as tool executions
+  if (message.role === 'tool') {
+    return (
+      <div className="px-4 py-2" data-testid="tool-execution">
+        <ToolExecution
+          name={message.name || 'Unknown Tool'}
+          args={message.args}
+          output=""
+          status={message.status || 'complete'}
+          expandedByDefault={false}
+          executionTime={message.executionTime}
+          data-testid="tool-execution"
+        />
+      </div>
+    );
+  }
+  
+  
   return (
     <>
       <ChatBubble
@@ -124,55 +141,8 @@ export const ClaudeMessage = memo(function ClaudeMessage({
         avatar={getAvatar()}
         timestamp={message.timestamp}
         className="mx-4 my-2"
+        data-testid={`message-${message.isStreaming ? 'streaming' : 'complete'}`}
       >
-        {/* Show tool executions if any */}
-        {message.toolExecutions && message.toolExecutions.length > 0 && (
-          <div className="mb-2">
-            {message.toolExecutions.map((tool, index) => {
-              // Safely convert args and result to strings
-              let argsString = '';
-              if (tool.args) {
-                if (typeof tool.args === 'string') {
-                  argsString = tool.args;
-                } else if (typeof tool.args === 'object') {
-                  // Check if it's the problematic {name, input} object
-                  if (tool.args.name && tool.args.input) {
-                    argsString = `${tool.args.name}: ${tool.args.input}`;
-                  } else {
-                    argsString = JSON.stringify(tool.args, null, 2);
-                  }
-                } else {
-                  argsString = String(tool.args);
-                }
-              }
-              
-              let resultString = '';
-              if (tool.result) {
-                if (typeof tool.result === 'string') {
-                  resultString = tool.result;
-                } else if (typeof tool.result === 'object') {
-                  resultString = JSON.stringify(tool.result, null, 2);
-                } else {
-                  resultString = String(tool.result);
-                }
-              }
-              
-              return (
-                <ToolExecution
-                  key={index}
-                  name={tool.name}
-                  args={argsString}
-                  output={resultString}
-                  status={tool.status}
-                  error={tool.isSuccess ? undefined : 'Tool execution failed'}
-                  expandedByDefault={false}
-                  executionTime={tool.executionTime}
-                />
-              );
-            })}
-          </div>
-        )}
-        
         {/* Message content */}
         {isThinking || (message.isStreaming && !messageContent) ? (
           <DancingBubbles />

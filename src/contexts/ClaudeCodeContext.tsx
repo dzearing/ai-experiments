@@ -16,7 +16,7 @@ export interface ToolExecution {
 
 export interface ClaudeMessage {
   id: string;
-  role: 'user' | 'assistant' | 'system';
+  role: 'user' | 'assistant' | 'system' | 'tool';
   content: string;
   timestamp: Date;
   isStreaming?: boolean;
@@ -25,6 +25,11 @@ export interface ClaudeMessage {
   tokenCount?: number;
   suggestedResponses?: string[];
   isGreeting?: boolean;
+  // Tool-specific fields
+  name?: string;
+  args?: string;
+  status?: 'pending' | 'running' | 'complete' | 'error';
+  executionTime?: number;
 }
 
 interface ClaudeCodeContextType {
@@ -378,47 +383,86 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
     
     eventSource.addEventListener('progress', (event) => {
       const data = JSON.parse(event.data);
-      // Update the streaming message with progress status and token count
-      setMessages(prev => prev.map(msg => 
-        msg.id === data.messageId && msg.isStreaming
-          ? { ...msg, content: data.status, tokenCount: data.tokenCount }
-          : msg
-      ));
+      console.log('Progress event received (should not happen):', data);
+      // Don't update message content with progress status
+      // Only update token count if needed
+      if (data.tokenCount) {
+        setMessages(prev => prev.map(msg => 
+          msg.id === data.messageId
+            ? { ...msg, tokenCount: data.tokenCount }
+            : msg
+        ));
+      }
     });
     
     eventSource.addEventListener('tool-execution', (event) => {
       const data = JSON.parse(event.data);
-      console.log('Tool execution event:', data);
+      console.log('tool-execution event received:', data);
       
-      setMessages(prev => prev.map(msg => 
-        msg.id === data.messageId
-          ? {
-              ...msg,
-              toolExecutions: [
-                ...(msg.toolExecutions || []),
-                data.toolExecution
-              ]
-            }
-          : msg
-      ));
+      // Create a tool message
+      const toolMessageId = data.toolExecution.id || `tool-${Date.now()}`;
+      const toolMessage: ClaudeMessage = {
+        id: toolMessageId,
+        role: 'tool',
+        content: '', // Tool messages don't need content as they use specialized fields
+        timestamp: new Date(),
+        name: data.toolExecution.name,
+        args: data.toolExecution.args,
+        status: data.toolExecution.status || 'complete',
+        executionTime: data.toolExecution.executionTime
+      };
+      
+      setMessages(prev => {
+        // Check if this tool message already exists
+        if (prev.some(msg => msg.id === toolMessageId)) {
+          // Update existing tool message
+          return prev.map(msg => 
+            msg.id === toolMessageId
+              ? { ...msg, ...toolMessage }
+              : msg
+          );
+        } else {
+          // Add new tool message
+          return [...prev, toolMessage];
+        }
+      });
     });
     
     eventSource.addEventListener('tool-summary', (event) => {
       const data = JSON.parse(event.data);
-      console.log('Tool summary event:', data);
+      console.log('tool-summary event received:', data);
       
-      setMessages(prev => prev.map(msg => 
-        msg.id === data.messageId
-          ? {
+      // Mark all recent tool messages as complete and update execution times
+      setMessages(prev => {
+        // Find the most recent tool messages (those that come after the last user message)
+        const lastUserMessageIndex = prev.findLastIndex(msg => msg.role === 'user');
+        const recentMessages = prev.slice(lastUserMessageIndex + 1);
+        const toolMessages = recentMessages.filter(msg => msg.role === 'tool' && msg.status === 'running');
+        
+        console.log('Tool messages to mark complete:', toolMessages.map(m => m.id));
+        
+        return prev.map(msg => {
+          // Check if this is a tool message that needs updating
+          const toolMsg = toolMessages.find(tm => tm.id === msg.id);
+          if (toolMsg) {
+            // Find corresponding tool execution data from summary
+            const toolData = data.toolExecutions?.find(t => 
+              msg.id.includes(t.id) || (t.name === msg.name)
+            );
+            
+            return {
               ...msg,
-              toolExecutions: data.toolExecutions || []
-            }
-          : msg
-      ));
+              status: 'complete',
+              // Preserve executionTime from tool data or keep existing
+              executionTime: toolData?.executionTime || msg.executionTime
+            };
+          }
+          return msg;
+        });
+      });
     });
     
     eventSource.addEventListener('error', (event: MessageEvent) => {
-      console.error('SSE custom error event:', event);
       try {
         const data = JSON.parse(event.data);
         if (data.error === 'Session not found') {

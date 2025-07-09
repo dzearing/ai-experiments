@@ -461,10 +461,7 @@ Respond with exactly this JSON structure:
             onMessage(messageType, content);
           }
           
-          // Update progress for thinking states
-          if (onProgress && messageType === 'thinking') {
-            onProgress('Claude is thinking...', null);
-          }
+          // Don't send any mock progress messages
         })
         .onAssistant((content) => {
           console.log('Assistant message chunk:', content);
@@ -493,82 +490,60 @@ Respond with exactly this JSON structure:
             assistantMessage += String(content);
           }
           
-          // Send progress updates as content streams in
-          if (onProgress) {
-            onProgress('Generating response...', null);
-          }
+          // Don't send any mock progress messages
         })
-        .onToolUse((...callbackArgs) => {
-          // Log the number of arguments to understand the SDK's callback signature
-          logger.debug('onToolUse callback called with', callbackArgs.length, 'arguments');
+        .onToolUse((toolInfo) => {
+          // The onToolUse callback only receives tool invocation info, not results
+          logger.debug('onToolUse callback called with tool info:', toolInfo);
           
-          // Destructure with defaults
-          const [toolName, args, result, isSuccess, executionTime] = callbackArgs;
+          // Handle different formats of tool info
+          let toolName = '';
+          let toolArgs = {};
           
-          logger.debug('Tool execution raw data:', {
-            toolName,
-            toolNameType: typeof toolName,
-            args,
-            argsType: typeof args,
-            result: typeof result === 'string' ? result.substring(0, 200) + '...' : result,
-            resultType: typeof result,
-            resultIsUndefined: result === undefined,
-            resultIsNull: result === null,
-            isSuccess,
-            isSuccessType: typeof isSuccess,
-            isSuccessValue: String(isSuccess),
-            executionTime
-          });
-          
-          // Handle the case where toolName might be an object
-          let actualToolName = toolName;
-          let actualArgs = args;
-          
-          if (typeof toolName === 'object' && toolName.name) {
-            // toolName is actually {name: 'ToolName', input: {...}}
-            actualToolName = toolName.name;
-            actualArgs = toolName.input || args;
+          if (typeof toolInfo === 'object') {
+            if (toolInfo.name) {
+              // Format: {name: 'ToolName', input: {...}}
+              toolName = toolInfo.name;
+              toolArgs = toolInfo.input || {};
+            } else if (toolInfo.tool_name) {
+              // Alternative format
+              toolName = toolInfo.tool_name;
+              toolArgs = toolInfo.arguments || toolInfo.args || {};
+            } else {
+              // Fallback
+              toolName = 'Unknown Tool';
+              toolArgs = toolInfo;
+            }
+          } else if (typeof toolInfo === 'string') {
+            toolName = toolInfo;
           }
           
-          // Ensure args is a string for display
+          // Format args for display
           let argsDisplay = '';
-          if (actualArgs) {
-            if (typeof actualArgs === 'string') {
-              argsDisplay = actualArgs;
-            } else if (typeof actualArgs === 'object') {
-              argsDisplay = JSON.stringify(actualArgs, null, 2);
+          if (toolArgs) {
+            if (typeof toolArgs === 'string') {
+              argsDisplay = toolArgs;
+            } else if (typeof toolArgs === 'object') {
+              argsDisplay = JSON.stringify(toolArgs, null, 2);
             } else {
-              argsDisplay = String(actualArgs);
+              argsDisplay = String(toolArgs);
             }
           }
           
-          // Force isSuccess to be a boolean (it might be undefined)
-          // If result exists and is not an error message, consider it successful
-          const hasResult = result !== undefined && result !== null && result !== '';
-          const isErrorResult = typeof result === 'string' && 
-                               (result.toLowerCase().includes('error') || result.toLowerCase().includes('failed'));
-          
-          const successStatus = isSuccess === true || isSuccess === 'true' || 
-                               (isSuccess !== false && isSuccess !== 'false' && hasResult && !isErrorResult);
-          
-          logger.debug('Success status calculation:', {
-            hasResult,
-            isErrorResult,
-            originalIsSuccess: isSuccess,
-            calculatedSuccess: successStatus
-          });
-          
+          // Create a pending tool execution entry with unique ID
           const execution = {
-            name: String(actualToolName),
+            id: `tool-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            name: String(toolName),
             args: argsDisplay,
-            result: result || (successStatus ? 'Success' : 'Failed'),
-            isSuccess: successStatus,
-            executionTime: executionTime,
+            result: 'Executing...',
+            isSuccess: null, // Unknown until execution completes
             timestamp: new Date().toISOString(),
-            status: successStatus ? 'complete' : 'error'
+            status: 'running',
+            startTime: Date.now(), // Track start time for duration calculation
+            executionTime: null // Will be calculated when complete
           };
           
-          logger.debug('Processed tool execution:', execution);
+          logger.debug('Tool invocation tracked:', execution);
           
           toolExecutions.push(execution);
           
@@ -577,10 +552,7 @@ Respond with exactly this JSON structure:
             onToolExecution(execution);
           }
           
-          // Update progress during tool execution
-          if (onProgress) {
-            onProgress(`Executing ${actualToolName}...`, null);
-          }
+          // Don't send any mock progress messages
         });
       
       console.log('Executing Claude query with tool support...');
@@ -598,7 +570,8 @@ Respond with exactly this JSON structure:
       console.log('=========================');
       
       logger.debug('Claude execution completed');
-      logger.debug('Tool executions found:', result.toolExecutions?.length || 0);
+      logger.debug('Tool executions from SDK:', result.toolExecutions?.length || 0);
+      logger.debug('Tool executions from callbacks:', toolExecutions.length);
       logger.debug('Result response type:', typeof result.response);
       logger.debug('Result response is array:', Array.isArray(result.response));
       if (typeof result.response === 'string') {
@@ -673,9 +646,18 @@ Respond with exactly this JSON structure:
         responseText = 'No response generated';
       }
       
+      // Mark all tool executions as complete since we got a response
+      const completedToolExecutions = toolExecutions.map(tool => ({
+        ...tool,
+        status: 'complete',
+        isSuccess: true,
+        result: 'Completed successfully',
+        executionTime: tool.startTime ? Date.now() - tool.startTime : null
+      }));
+      
       const finalResponse = {
         text: responseText,
-        toolExecutions: result.toolExecutions || toolExecutions,
+        toolExecutions: completedToolExecutions, // Send completed tool executions
         tokenUsage: tokenUsage,
         error: null
       };
