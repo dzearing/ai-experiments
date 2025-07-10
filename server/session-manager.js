@@ -2,11 +2,12 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const logger = require('./logger');
+const PATHS = require('./paths');
 
 class SessionManager {
   constructor() {
     this.sessions = new Map();
-    this.sessionsDir = path.join(__dirname, 'sessions');
+    this.sessionsDir = PATHS.sessionsDir;
     this.saveQueue = new Set();
     this.saving = false;
   }
@@ -101,7 +102,7 @@ class SessionManager {
     this.sessions.delete(sessionId);
     
     // Delete session file from disk
-    const sessionFile = path.join(this.sessionsDir, `${sessionId}.json`);
+    const sessionFile = PATHS.getSessionFile(sessionId);
     try {
       if (fs.existsSync(sessionFile)) {
         logger.debug(`Deleting session file: ${sessionFile}`);
@@ -161,6 +162,32 @@ class SessionManager {
     return true;
   }
 
+  updateMessage(sessionId, messageId, updates) {
+    const session = this.sessions.get(sessionId);
+    if (!session) {
+      return false;
+    }
+
+    // Find the message and update it
+    const messageIndex = session.messages.findIndex(msg => msg.id === messageId);
+    if (messageIndex === -1) {
+      logger.debug(`Message not found for update: ${messageId} in session ${sessionId}`);
+      return false;
+    }
+
+    // Update the message with provided fields
+    session.messages[messageIndex] = {
+      ...session.messages[messageIndex],
+      ...updates
+    };
+    
+    session.updatedAt = new Date().toISOString();
+    this.saveSession(sessionId);
+    
+    logger.debug(`Updated message ${messageId} in session ${sessionId} with:`, updates);
+    return true;
+  }
+
   updateTokenUsage(sessionId, inputTokens, outputTokens) {
     const session = this.sessions.get(sessionId);
     if (!session) {
@@ -217,7 +244,7 @@ class SessionManager {
         const session = this.sessions.get(id);
         if (session) {
           try {
-            const sessionFile = path.join(this.sessionsDir, `${id}.json`);
+            const sessionFile = PATHS.getSessionFile(id);
             await fs.promises.writeFile(sessionFile, JSON.stringify(session, null, 2));
           } catch (error) {
             logger.error(`Failed to save session ${id}:`, error);

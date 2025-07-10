@@ -7,9 +7,10 @@ interface VirtualMessageListProps {
   messages: ClaudeMessageType[];
   scrollContainerRef: React.RefObject<HTMLDivElement>;
   onSuggestedResponse?: (response: string) => void;
+  sessionId: string;
 }
 
-export function VirtualMessageList({ messages, scrollContainerRef, onSuggestedResponse }: VirtualMessageListProps) {
+export function VirtualMessageList({ messages, scrollContainerRef, onSuggestedResponse, sessionId }: VirtualMessageListProps) {
   console.log('VirtualMessageList render, messages count:', messages.length);
   console.log('Messages:', messages.map(m => ({
     ...m,
@@ -149,6 +150,7 @@ export function VirtualMessageList({ messages, scrollContainerRef, onSuggestedRe
                 virtualItem.index === messages.length - 1 &&
                 !message.isStreaming
               }
+              sessionId={sessionId}
             />
           </div>
         );

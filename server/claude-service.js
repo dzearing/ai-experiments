@@ -383,7 +383,7 @@ Respond with exactly this JSON structure:
     }
   }
 
-  async processClaudeCodeMessage(prompt, tools = [], model, workingDirectory = null, onProgress = null, onToolExecution = null, onMessage = null) {
+  async processClaudeCodeMessage(prompt, tools = [], model, workingDirectory = null, onProgress = null, onToolExecution = null, onMessage = null, isPlanMode = false) {
     const modelName = this.getModel(model);
     
     // Check if Claude is available first
@@ -394,6 +394,13 @@ Respond with exactly this JSON structure:
         toolExecutions: [],
         tokenUsage: null
       };
+    }
+    
+    // Safety check: if we detect plan mode, ensure no write tools are included
+    if (isPlanMode || tools.includes('plan')) {
+      // Filter out any write-related tools
+      tools = tools.filter(tool => !['write', 'bash', 'todo'].includes(tool));
+      logger.debug('Plan mode detected - filtered tools to read-only:', tools);
     }
 
     try {
@@ -439,8 +446,48 @@ Respond with exactly this JSON structure:
       
       // Build the Claude SDK chain with proper tool access and event handlers
       let claudeInstance = claude()
-        .withModel(modelName)
-        .allowTools(['LS', 'Read', 'Grep', 'Bash', 'Write', 'Edit', 'MultiEdit', 'Glob'])
+        .withModel(modelName);
+        
+      // Map tool names to Claude SDK tool names
+      const toolMapping = {
+        'search': ['Grep', 'Glob'],
+        'read': ['Read', 'LS', 'TodoRead'],
+        'write': ['Write', 'Edit', 'MultiEdit', 'NotebookEdit'],
+        'bash': ['Bash'],
+        'plan': [], // In plan mode, we'll control tools explicitly
+        'todo': ['TodoWrite', 'TodoRead']
+      };
+      
+      // Build the allowed tools list based on the tools parameter
+      let allowedTools = [];
+      if (tools && tools.length > 0) {
+        tools.forEach(tool => {
+          if (toolMapping[tool]) {
+            allowedTools.push(...toolMapping[tool]);
+          }
+        });
+      } else {
+        // Default to all tools if none specified
+        allowedTools = ['LS', 'Read', 'Grep', 'Bash', 'Write', 'Edit', 'MultiEdit', 'Glob', 
+                       'NotebookRead', 'NotebookEdit', 'WebFetch', 'TodoRead', 'TodoWrite', 
+                       'WebSearch', 'Task'];
+      }
+      
+      // CRITICAL: In plan mode, remove ALL write/edit/execution tools
+      if (isPlanMode || tools.includes('plan')) {
+        // Only allow read-only tools in plan mode
+        const readOnlyTools = ['LS', 'Read', 'Grep', 'Glob', 'TodoRead', 'NotebookRead', 'WebFetch', 'WebSearch'];
+        allowedTools = allowedTools.filter(tool => readOnlyTools.includes(tool));
+        console.log('PLAN MODE ACTIVE - Restricting to read-only tools');
+        console.log('Filtered out write tools. Original:', allowedTools.length, 'Filtered:', allowedTools.filter(tool => readOnlyTools.includes(tool)).length);
+      }
+      
+      console.log('Requested tools:', tools);
+      console.log('Allowed tools:', allowedTools);
+      console.log('Is plan mode:', isPlanMode);
+      
+      claudeInstance = claudeInstance
+        .allowTools(allowedTools)
         .skipPermissions(); // Auto-accept tool usage to avoid permission prompts
       
       // Set working directory if provided

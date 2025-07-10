@@ -40,7 +40,7 @@ export const ChatBubble = memo(function ChatBubble({
           <div className={`text-xs ${styles.mutedText} mb-1`}>{name}</div>
         )}
         
-        <div className={`px-4 py-2 ${styles.buttonRadius} ${
+        <div className={`relative px-4 py-2 ${styles.buttonRadius} ${
           isSent 
             ? `${styles.primaryButton} ${styles.primaryButtonText}`
             : `${styles.cardBg} ${styles.cardBorder} border ${styles.textColor}`

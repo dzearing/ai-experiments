@@ -7,10 +7,14 @@ import { useWorkspace } from '../contexts/WorkspaceContext';
 import { ClaudeCodeProvider, useClaudeCode } from '../contexts/ClaudeCodeContext';
 import { VirtualMessageList } from '../components/claude-code/VirtualMessageList';
 import { ClaudeInput } from '../components/claude-code/ClaudeInput';
+import { TodoList } from '../components/claude-code/TodoList';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { ProgressIndicator } from '../components/chat/ProgressIndicator';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { DancingBubbles } from '../components/ui/DancingBubbles';
+import { FeedbackDialog } from '../components/FeedbackDialog';
+import { FeedbackSuccessDialog } from '../components/FeedbackSuccessDialog';
+import { useFeedback } from '../hooks/useFeedback';
 import type { ClaudeMode } from '../contexts/ClaudeCodeContext';
 
 export function ClaudeCode() {
@@ -38,6 +42,7 @@ function ClaudeCodeContent() {
     isProcessing,
     sessionId,
     reservedRepo,
+    todos,
     sendMessage,
     setMode,
     initializeSession,
@@ -53,9 +58,35 @@ function ClaudeCodeContent() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const [showTodos, setShowTodos] = useState(true);
   
   const project = projects.find(p => p.id === projectId);
   const workspaceProject = workspaceProjects.find(p => p.name === project?.name);
+  
+  // Re-show todos when new todos arrive
+  useEffect(() => {
+    if (todos.length > 0) {
+      setShowTodos(true);
+    }
+  }, [todos.length]);
+  
+  // Set up session-level feedback
+  const {
+    showDialog: showSessionFeedback,
+    showSuccess: showSessionSuccess,
+    isSubmitting: isSubmittingFeedback,
+    error: feedbackError,
+    feedbackId: sessionFeedbackId,
+    openFeedback: openSessionFeedback,
+    closeFeedback: closeSessionFeedback,
+    submitFeedback: submitSessionFeedback,
+    closeSuccess: closeSessionSuccess
+  } = useFeedback({
+    sessionId: sessionId || '',
+    repoName: repoName || '',
+    projectId: projectId || '',
+    // No messageId for session-level feedback
+  });
   
   // Set breadcrumb immediately when data is available
   useEffect(() => {
@@ -197,38 +228,60 @@ function ClaudeCodeContent() {
             <span className={`text-sm ${styles.textColor} font-medium`}>{reservedRepo}</span>
           )}
         </div>
-        <button
-          onClick={handleCloseSession}
-          className={`px-3 py-1.5 text-sm ${styles.buttonRadius} ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor} hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150`}
-        >
-          Close Session
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={openSessionFeedback}
+            className={`px-3 py-1.5 text-sm ${styles.buttonRadius} ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor} hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150`}
+          >
+            Leave feedback
+          </button>
+          <button
+            onClick={handleCloseSession}
+            className={`px-3 py-1.5 text-sm ${styles.buttonRadius} ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor} hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150`}
+          >
+            Close Session
+          </button>
+        </div>
       </div>
       
-      {/* Messages Area */}
-      <div 
-        ref={scrollContainerRef}
-        className={`flex-1 overflow-auto ${styles.contentBg}`}
-        data-testid="message-list"
-      >
-        {messages.length === 0 && isConnected ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <DancingBubbles className="justify-center mb-4" />
-              <p className={`${styles.mutedText}`}>Claude is preparing to greet you...</p>
-            </div>
+      {/* Content Area - Split when todos exist */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Todo List - Shows when todos exist and user hasn't dismissed */}
+        {todos.length > 0 && showTodos && (
+          <div className="p-4 overflow-auto scrollbar-gutter-stable" style={{ maxHeight: '30vh', scrollbarGutter: 'stable' }}>
+            <TodoList 
+              todos={todos} 
+              onDismiss={() => setShowTodos(false)}
+            />
           </div>
-        ) : (
-          <VirtualMessageList 
-            messages={messages}
-            scrollContainerRef={scrollContainerRef as React.RefObject<HTMLDivElement>}
-            onSuggestedResponse={(response) => {
-              if (!isProcessing) {
-                handleSubmit(response);
-              }
-            }}
-          />
         )}
+        
+        {/* Messages Area */}
+        <div 
+          ref={scrollContainerRef}
+          className={`flex-1 overflow-auto ${styles.contentBg}`}
+          data-testid="message-list"
+        >
+          {messages.length === 0 && isConnected ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <DancingBubbles className="justify-center mb-4" />
+                <p className={`${styles.mutedText}`}>Claude is preparing to greet you...</p>
+              </div>
+            </div>
+          ) : (
+            <VirtualMessageList 
+              messages={messages}
+              scrollContainerRef={scrollContainerRef as React.RefObject<HTMLDivElement>}
+              onSuggestedResponse={(response) => {
+                if (!isProcessing) {
+                  handleSubmit(response);
+                }
+              }}
+              sessionId={sessionId || ''}
+            />
+          )}
+        </div>
       </div>
       
       {/* Input Area or Progress Indicator */}
@@ -237,7 +290,7 @@ function ClaudeCodeContent() {
           <ProgressIndicator
             startTime={messages.find(m => m.isStreaming)?.startTime || new Date()}
             tokenCount={messages.find(m => m.isStreaming)?.tokenCount}
-            status={messages.find(m => m.isStreaming)?.content || 'Processing'}
+            status="Processing"
             onCancel={cancelMessage}
           />
         ) : (
@@ -262,6 +315,23 @@ function ClaudeCodeContent() {
         confirmText="Close Session"
         variant="danger"
       />
+      
+      {/* Session feedback dialogs */}
+      <FeedbackDialog
+        isOpen={showSessionFeedback}
+        onClose={closeSessionFeedback}
+        onSubmit={submitSessionFeedback}
+        isSubmitting={isSubmittingFeedback}
+        error={feedbackError}
+      />
+      
+      {sessionFeedbackId && (
+        <FeedbackSuccessDialog
+          isOpen={showSessionSuccess}
+          onClose={closeSessionSuccess}
+          feedbackId={sessionFeedbackId}
+        />
+      )}
     </div>
   );
 }

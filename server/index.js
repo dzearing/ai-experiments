@@ -11,6 +11,7 @@ const fs = require('fs');
 const fsAsync = fs.promises;
 const logger = require('./logger');
 const sessionManager = require('./session-manager');
+const feedbackHandler = require('./feedback-handler');
 
 // Load .env from parent directory
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
@@ -54,7 +55,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' })); // Increased limit for screenshots
 
 // Serve static files from public directory
 app.use(express.static(path.join(__dirname, '../public')));
@@ -3879,7 +3880,8 @@ app.post('/api/claude/code/message', async (req, res) => {
     sessionManager.addMessage(sessionId, { 
       role: 'user', 
       content: message,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      mode
     });
     
     // Create unique message ID
@@ -3903,6 +3905,7 @@ app.post('/api/claude/code/message', async (req, res) => {
     // Define these variables outside try block so they're accessible in the finally section
     let pendingAssistantText = '';
     let toolExecutions = [];
+    const toolExecutionToMessageId = new Map(); // Map tool execution IDs to their message IDs
     let currentAssistantMessageId = null;
     let hasCompletedInitialMessage = false;
     let activeMessageId = null; // Track the actual message ID being streamed
@@ -3976,7 +3979,8 @@ app.post('/api/claude/code/message', async (req, res) => {
         const fullPrompt = `${contextPrompt}\n\nHuman: ${message}\n\nAssistant:`;
         
         // Configure tools based on mode (for context in prompt)
-        const tools = mode === 'plan' ? ['search', 'read'] : ['search', 'read', 'write', 'bash'];
+        // In plan mode, only allow read-only tools (no writes, edits, or executions)
+        const tools = mode === 'plan' ? ['search', 'read', 'plan'] : ['search', 'read', 'write', 'bash', 'todo'];
         
         // Don't send any thinking or progress messages
         
@@ -4037,7 +4041,8 @@ app.post('/api/claude/code/message', async (req, res) => {
                 id: currentAssistantMessageId,
                 role: 'assistant',
                 content: pendingAssistantText,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                mode
               });
               
               pendingAssistantText = '';
@@ -4071,13 +4076,28 @@ app.post('/api/claude/code/message', async (req, res) => {
               role: 'tool',
               name: toolExecution.name,
               args: displayArgs,
-              status: toolExecution.status || 'complete',
+              status: toolExecution.status,
               timestamp: new Date().toISOString(),
               executionTime: toolExecution.executionTime
             };
             
             // Add to session
             sessionManager.addMessage(sessionId, toolMessage);
+            
+            // Store mapping of tool execution ID to message ID
+            if (toolExecution.id) {
+              toolExecutionToMessageId.set(toolExecution.id, toolMessageId);
+            }
+            
+            // Log tool execution start
+            logger.logToolExecution('START', {
+              sessionId,
+              messageId,
+              toolId: toolExecution.id,
+              toolName: toolExecution.name,
+              status: toolExecution.status,
+              args: displayArgs
+            });
             
             // Store for later reference
             toolExecutions.push(toolExecution);
@@ -4173,7 +4193,8 @@ app.post('/api/claude/code/message', async (req, res) => {
                     try {
                       conn.res.write(`event: message-start\ndata: ${JSON.stringify({ 
                         id: currentAssistantMessageId,
-                        isGreeting: false
+                        isGreeting: false,
+                        mode
                       })}\n\n`);
                     } catch (err) {
                       console.error(`Error sending message-start to connection ${connId}:`, err);
@@ -4202,7 +4223,9 @@ app.post('/api/claude/code/message', async (req, res) => {
                 }
               }
             }
-          }
+          },
+          // isPlanMode parameter
+          mode === 'plan'
         );
         } catch (err) {
           console.error('Error calling processClaudeCodeMessage:', err);
@@ -4294,7 +4317,8 @@ app.post('/api/claude/code/message', async (req, res) => {
               try {
                 conn.res.write(`event: message-start\ndata: ${JSON.stringify({ 
                   id: finalMessageId,
-                  isGreeting: false
+                  isGreeting: false,
+                  mode
                 })}\n\n`);
               } catch (err) {
                 console.error(`Error sending message-start to connection ${connId}:`, err);
@@ -4344,13 +4368,41 @@ app.post('/api/claude/code/message', async (req, res) => {
             id: finalMessageId,
             role: 'assistant', 
             content: responseText,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            mode
           });
         }
         
         // Send final tool execution summary if there were any
         if (response.toolExecutions && response.toolExecutions.length > 0) {
           console.log('Sending final tool execution summary:', response.toolExecutions.length, 'tools');
+          
+          // Update tool messages with their final status
+          for (const completedTool of response.toolExecutions) {
+            if (completedTool.id) {
+              const toolMessageId = toolExecutionToMessageId.get(completedTool.id);
+              if (toolMessageId) {
+                // Update the tool message with completed status
+                sessionManager.updateMessage(sessionId, toolMessageId, {
+                  status: completedTool.status || 'complete',
+                  executionTime: completedTool.executionTime
+                });
+                logger.debug(`Updated tool message ${toolMessageId} to status: ${completedTool.status || 'complete'}`);
+                
+                // Log tool execution end
+                logger.logToolExecution('END', {
+                  sessionId,
+                  messageId,
+                  toolId: completedTool.id,
+                  toolName: completedTool.name,
+                  status: completedTool.status || 'complete',
+                  executionTime: completedTool.executionTime,
+                  result: completedTool.result
+                });
+              }
+            }
+          }
+          
           const currentConnections = claudeCodeClients.get(sessionId);
           if (currentConnections) {
             for (const [connId, conn] of currentConnections.entries()) {
@@ -4411,14 +4463,36 @@ app.post('/api/claude/code/message', async (req, res) => {
     } catch (error) {
       console.error('Error processing Claude message:', error);
       
+      // Create a new message ID for the error
+      const errorMessageId = crypto.randomUUID();
+      activeMessageId = errorMessageId; // Track this as the active message
+      
       // Send error message to connections
-      const errorMessage = `I apologize, but I encountered an error: ${error.message}`;
+      const errorMessage = error.message && error.message.includes('API Error:') 
+        ? error.message 
+        : `I apologize, but I encountered an error: ${error.message}`;
+      
       const errorConnections = claudeCodeClients.get(sessionId);
       if (errorConnections) {
+        // First send message-start for the error message
+        for (const [connId, conn] of errorConnections.entries()) {
+          try {
+            conn.res.write(`event: message-start\ndata: ${JSON.stringify({ 
+              id: errorMessageId,
+              isGreeting: false,
+              isError: true
+            })}\n\n`);
+          } catch (err) {
+            console.error(`Error sending message-start to connection ${connId}:`, err);
+            errorConnections.delete(connId);
+          }
+        }
+        
+        // Then send the error content
         for (const [connId, conn] of errorConnections.entries()) {
           try {
             conn.res.write(`event: message-chunk\ndata: ${JSON.stringify({ 
-              messageId, 
+              messageId: errorMessageId, 
               chunk: errorMessage 
             })}\n\n`);
           } catch (err) {
@@ -4429,10 +4503,12 @@ app.post('/api/claude/code/message', async (req, res) => {
       }
       
       // Add error to session history
-      sessionManager.addMessage(sessionId, { 
+      sessionManager.addMessage(sessionId, {
+        id: errorMessageId,
         role: 'assistant', 
         content: errorMessage,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        isError: true
       });
     }
     
@@ -4445,7 +4521,8 @@ app.post('/api/claude/code/message', async (req, res) => {
         id: currentAssistantMessageId,
         role: 'assistant',
         content: pendingAssistantText,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        mode
       });
       
       activeMessageId = currentAssistantMessageId; // Make sure we track this message
@@ -4592,7 +4669,8 @@ app.get('/api/claude/code/stream', (req, res) => {
             res.write(`event: message-start\ndata: ${JSON.stringify({ 
               id: messageId,
               type: 'assistant',
-              isGreeting: message.isGreeting || false
+              isGreeting: message.isGreeting || false,
+              mode: message.mode
             })}\n\n`);
             
             // Send the complete message content
@@ -5054,6 +5132,70 @@ app.post('/api/claude/code/end', async (req, res) => {
     res.status(500).json({ 
       error: 'Failed to end session',
       message: error.message 
+    });
+  }
+});
+
+// Feedback endpoints
+app.post('/api/feedback/screenshot', async (req, res) => {
+  try {
+    const { imageData, sessionId, repoName } = req.body;
+    
+    logger.logClient('REQUEST', { 
+      method: 'POST', 
+      url: '/api/feedback/screenshot',
+      sessionId 
+    });
+    
+    const result = await feedbackHandler.saveScreenshot(imageData, sessionId, repoName);
+    
+    logger.logClient('RESPONSE', { 
+      status: result.success ? 200 : 400,
+      success: result.success 
+    });
+    
+    if (result.success) {
+      res.json(result);
+    } else {
+      res.status(400).json(result);
+    }
+  } catch (error) {
+    logger.error('Screenshot upload error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Internal server error' 
+    });
+  }
+});
+
+app.post('/api/feedback/submit', async (req, res) => {
+  try {
+    const feedbackData = req.body;
+    
+    logger.logClient('REQUEST', { 
+      method: 'POST', 
+      url: '/api/feedback/submit',
+      sessionId: feedbackData.sessionId 
+    });
+    
+    const result = await feedbackHandler.saveFeedback(feedbackData);
+    
+    logger.logClient('RESPONSE', { 
+      status: result.success ? 200 : 400,
+      success: result.success,
+      feedbackId: result.feedbackId 
+    });
+    
+    if (result.success) {
+      res.json(result);
+    } else {
+      res.status(400).json(result);
+    }
+  } catch (error) {
+    logger.error('Feedback submission error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Internal server error' 
     });
   }
 });

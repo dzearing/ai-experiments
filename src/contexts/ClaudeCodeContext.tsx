@@ -25,11 +25,22 @@ export interface ClaudeMessage {
   tokenCount?: number;
   suggestedResponses?: string[];
   isGreeting?: boolean;
+  isError?: boolean;
+  mode?: ClaudeMode;
   // Tool-specific fields
   name?: string;
   args?: string;
   status?: 'pending' | 'running' | 'complete' | 'error';
   executionTime?: number;
+}
+
+export interface Todo {
+  id: string;
+  content: string;
+  status: 'pending' | 'in_progress' | 'completed';
+  priority: 'high' | 'medium' | 'low';
+  parentId?: string;
+  children?: Todo[];
 }
 
 interface ClaudeCodeContextType {
@@ -44,6 +55,7 @@ interface ClaudeCodeContextType {
   reservedRepo: string | null;
   isProcessing: boolean;
   currentMessageId: string | null;
+  todos: Todo[];
   
   // Actions
   sendMessage: (content: string) => Promise<void>;
@@ -89,6 +101,7 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
   const [reservedRepo, setReservedRepo] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentMessageId, setCurrentMessageId] = useState<string | null>(null);
+  const [todos, setTodos] = useState<Todo[]>([]);
   
   const eventSourceRef = useRef<EventSource | null>(null);
   const streamingMessageRef = useRef<string>('');
@@ -211,7 +224,9 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
         timestamp: new Date(),
         startTime: new Date(),
         isStreaming: !isExistingMessage, // Don't stream existing messages
-        isGreeting: data.isGreeting
+        isGreeting: data.isGreeting,
+        isError: data.isError,
+        mode: data.mode
       };
       
       console.log('Creating message with isStreaming:', !isExistingMessage, 'isExistingMessage:', isExistingMessage);
@@ -444,6 +459,23 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
           return [...prev, toolMessage];
         }
       });
+      
+      // Handle TodoWrite tool specifically
+      if (data.toolExecution.name === 'TodoWrite' && data.toolExecution.args) {
+        try {
+          // Parse the args to get the todos
+          const argsData = typeof data.toolExecution.args === 'string' 
+            ? JSON.parse(data.toolExecution.args) 
+            : data.toolExecution.args;
+          
+          if (argsData.todos && Array.isArray(argsData.todos)) {
+            console.log('Updating todos from TodoWrite:', argsData.todos);
+            setTodos(argsData.todos);
+          }
+        } catch (err) {
+          console.error('Error parsing TodoWrite args:', err);
+        }
+      }
     });
     
     eventSource.addEventListener('tool-summary', (event) => {
@@ -670,7 +702,8 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
       id: uuidv4(),
       role: 'user',
       content,
-      timestamp: new Date()
+      timestamp: new Date(),
+      mode
     };
     
     // Add a placeholder assistant message with isStreaming true to show dancing bubbles
@@ -733,6 +766,7 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
   
   const clearMessages = useCallback(() => {
     setMessages([]);
+    setTodos([]);
     // Clear from localStorage too
     if (reservedRepo) {
       localStorage.removeItem(`${STORAGE_KEY}-${reservedRepo}`);
@@ -801,6 +835,7 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
     reservedRepo,
     isProcessing,
     currentMessageId,
+    todos,
     sendMessage,
     setMode,
     initializeSession,

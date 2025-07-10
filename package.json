@@ -17,6 +17,8 @@
     "@tanstack/react-virtual": "^3.13.12",
     "@types/marked": "^6.0.0",
     "date-fns": "^4.1.0",
+    "diff": "^8.0.2",
+    "dom-to-image": "^2.6.0",
     "eventsource": "^4.0.0",
     "marked": "^16.0.0",
     "react": "^19.1.0",
@@ -29,6 +31,8 @@
     "@playwright/test": "^1.53.2",
     "@tailwindcss/forms": "^0.5.7",
     "@tailwindcss/postcss": "^4.1.11",
+    "@types/diff": "^7.0.2",
+    "@types/dom-to-image": "^2.6.7",
     "@types/node": "^24.0.10",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
@@ -44,5 +48,6 @@
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.34.1",
     "vite": "^7.0.0"
-  }
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

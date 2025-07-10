@@ -4,19 +4,49 @@ import { ChatBubble } from '../chat/ChatBubble';
 import { ToolExecution } from '../chat/ToolExecution';
 import { SuggestedResponses } from '../chat/SuggestedResponses';
 import { DancingBubbles } from '../ui/DancingBubbles';
+import { FeedbackLink } from '../FeedbackLink';
+import { FeedbackDialog } from '../FeedbackDialog';
+import { FeedbackSuccessDialog } from '../FeedbackSuccessDialog';
+import { useFeedback } from '../../hooks/useFeedback';
+import { useParams } from 'react-router-dom';
 import type { ClaudeMessage as ClaudeMessageType } from '../../contexts/ClaudeCodeContext';
 
 interface ClaudeMessageProps {
   message: ClaudeMessageType;
   onSuggestedResponse?: (response: string) => void;
   isLatestAssistantMessage?: boolean;
+  sessionId: string;
 }
 
 export const ClaudeMessage = memo(function ClaudeMessage({ 
   message, 
   onSuggestedResponse,
-  isLatestAssistantMessage = false 
+  isLatestAssistantMessage = false,
+  sessionId
 }: ClaudeMessageProps) {
+  const { projectId, repoName } = useParams<{ projectId: string; repoName: string }>();
+  
+  // Set up feedback for this message
+  const {
+    showDialog,
+    showSuccess,
+    isSubmitting,
+    error,
+    feedbackId,
+    openFeedback,
+    closeFeedback,
+    submitFeedback,
+    closeSuccess
+  } = useFeedback({
+    sessionId,
+    repoName: repoName || '',
+    projectId: projectId || '',
+    messageId: message.id
+  });
+  // Check if this is an error message
+  const isErrorMessage = message.content.startsWith('API Error:') || message.content.includes('authentication_error');
+  const is401Error = message.content.includes('401') && message.content.includes('authentication_error');
+  
   // Handle content that might be an array or object
   let messageContent = message.content;
   if (typeof messageContent !== 'string') {
@@ -42,6 +72,16 @@ export const ClaudeMessage = memo(function ClaudeMessage({
       
       // Parse markdown to HTML
       let html = marked.parse(content) as string;
+      
+      // Convert file paths to clickable links (e.g., /path/to/file.ts:123)
+      html = html.replace(
+        /(?<![">])((\/[\w\-\.\/]+)+\.[\w]+)(:\d+)?(?![<"])/g,
+        (match, filePath, _fullPath, lineNumber) => {
+          const line = lineNumber ? lineNumber.substring(1) : '';
+          const vscodeUrl = `vscode://file${filePath}${line ? ':' + line : ''}`;
+          return `<a href="${vscodeUrl}" class="file-link text-purple-600 dark:text-purple-400 hover:underline font-mono text-sm" title="Open in VSCode">${match}</a>`;
+        }
+      );
       
       // Post-process HTML to add custom styling
       // Add classes to elements for Tailwind styling
@@ -79,6 +119,8 @@ export const ClaudeMessage = memo(function ClaudeMessage({
         .replace(/<p>/g, '<p class="mb-3 last:mb-0">')
         // Links
         .replace(/<a /g, '<a class="text-blue-600 dark:text-blue-400 hover:underline" target="_blank" rel="noopener noreferrer" ')
+        // File links (override target for VSCode links)
+        .replace(/<a href="vscode:\/\//g, '<a href="vscode://')
         // Blockquotes
         .replace(/<blockquote>/g, '<blockquote class="border-l-4 border-gray-300 dark:border-gray-600 pl-4 italic my-3">')
         // Horizontal rules
@@ -118,21 +160,115 @@ export const ClaudeMessage = memo(function ClaudeMessage({
   
   // Tool messages are rendered as tool executions
   if (message.role === 'tool') {
+    // Extract tool name from message ID if name is not provided
+    let toolName = message.name;
+    if (!toolName && message.id?.includes('-')) {
+      // Try to extract from ID pattern like "tool-1752121277934-drvpkpw31"
+      const parts = message.id.split('-');
+      if (parts[0] === 'tool' && parts.length > 2) {
+        toolName = 'Tool execution';
+      }
+    }
+    
     return (
-      <div className="px-4 py-2" data-testid="tool-execution">
-        <ToolExecution
-          name={message.name || 'Unknown Tool'}
-          args={message.args}
-          output=""
-          status={message.status || 'complete'}
-          expandedByDefault={false}
-          executionTime={message.executionTime}
-          data-testid="tool-execution"
+      <>
+        <div className="px-4 py-2" data-testid="tool-execution">
+          <ToolExecution
+            name={toolName || 'Tool execution'}
+            args={message.args || message.content || ''}
+            output=""
+            status={message.status || 'complete'}
+            expandedByDefault={false}
+            executionTime={message.executionTime}
+            data-testid="tool-execution"
+            sessionId={sessionId}
+            messageId={message.id}
+          />
+        </div>
+        
+        {/* Feedback dialogs for tool execution */}
+        <FeedbackDialog
+          isOpen={showDialog}
+          onClose={closeFeedback}
+          onSubmit={submitFeedback}
+          isSubmitting={isSubmitting}
+          error={error}
         />
-      </div>
+        
+        {feedbackId && (
+          <FeedbackSuccessDialog
+            isOpen={showSuccess}
+            onClose={closeSuccess}
+            feedbackId={feedbackId}
+          />
+        )}
+      </>
     );
   }
   
+  // Render error messages with special styling
+  if (isErrorMessage) {
+    return (
+      <>
+        <div className="mx-4 my-2 p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0">
+              <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-red-800 dark:text-red-200 mb-1">
+                {is401Error ? 'Authentication Error' : 'Error'}
+              </h3>
+              <div className="text-sm text-red-700 dark:text-red-300">
+                {is401Error ? (
+                  <>
+                    <p className="mb-2">Your authentication token is invalid or has expired.</p>
+                    <p>Please try logging in again or check your API credentials.</p>
+                  </>
+                ) : (
+                  <p>{messageContent}</p>
+                )}
+              </div>
+              {is401Error && (
+                <button
+                  onClick={() => window.location.href = '/login'}
+                  className="mt-3 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm font-medium transition-colors"
+                >
+                  Re-authenticate
+                </button>
+              )}
+            </div>
+          </div>
+          
+          {/* Feedback link */}
+          {!message.isStreaming && (
+            <div className="mt-3 border-t border-red-200 dark:border-red-800 pt-3">
+              <FeedbackLink onClick={openFeedback} />
+            </div>
+          )}
+        </div>
+        
+        {/* Feedback dialogs */}
+        <FeedbackDialog
+          isOpen={showDialog}
+          onClose={closeFeedback}
+          onSubmit={submitFeedback}
+          isSubmitting={isSubmitting}
+          error={error}
+        />
+        
+        {feedbackId && (
+          <FeedbackSuccessDialog
+            isOpen={showSuccess}
+            onClose={closeSuccess}
+            feedbackId={feedbackId}
+          />
+        )}
+      </>
+    );
+  }
   
   return (
     <>
@@ -156,16 +292,12 @@ export const ClaudeMessage = memo(function ClaudeMessage({
           <span className="inline-block w-2 h-4 bg-current animate-pulse ml-1" />
         )}
         
-        {/* Debug info */}
-        {process.env.NODE_ENV !== 'production' && (
-          <div className="text-xs text-gray-400 dark:text-gray-600 mt-2 font-mono">
-            <div>ID: {message.id}</div>
-            <div>Streaming: {String(message.isStreaming)}</div>
-            <div>Greeting: {String(message.isGreeting || false)}</div>
-            <div>Content type: {typeof message.content}</div>
-            {typeof message.content !== 'string' && (
-              <div>Raw content: {JSON.stringify(message.content).substring(0, 100)}...</div>
-            )}
+        {/* Planning mode indicator for user messages */}
+        {message.role === 'user' && message.mode === 'plan' && (
+          <div className="absolute bottom-2 right-2">
+            <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded">
+              Planning
+            </span>
           </div>
         )}
         
@@ -177,7 +309,31 @@ export const ClaudeMessage = memo(function ClaudeMessage({
             disabled={message.isStreaming}
           />
         )}
+        
+        {/* Feedback link */}
+        {!message.isStreaming && (
+          <div className="mt-2">
+            <FeedbackLink onClick={openFeedback} />
+          </div>
+        )}
       </ChatBubble>
+      
+      {/* Feedback dialogs */}
+      <FeedbackDialog
+        isOpen={showDialog}
+        onClose={closeFeedback}
+        onSubmit={submitFeedback}
+        isSubmitting={isSubmitting}
+        error={error}
+      />
+      
+      {feedbackId && (
+        <FeedbackSuccessDialog
+          isOpen={showSuccess}
+          onClose={closeSuccess}
+          feedbackId={feedbackId}
+        />
+      )}
     </>
   );
 });

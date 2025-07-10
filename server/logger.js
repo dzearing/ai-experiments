@@ -1,20 +1,8 @@
 const fs = require('fs');
-const path = require('path');
+const PATHS = require('./paths');
 
-// Ensure logs directory exists
-const logsDir = path.join(__dirname, 'logs');
-if (!fs.existsSync(logsDir)) {
-  fs.mkdirSync(logsDir, { recursive: true });
-}
-
-// Log file paths
-const LOG_FILES = {
-  client: path.join(logsDir, 'client-messages.log'),
-  claude: path.join(logsDir, 'claude-messages.log'),
-  events: path.join(logsDir, 'events.log'),
-  debug: path.join(logsDir, 'debug.log'),
-  errors: path.join(logsDir, 'errors.log')
-};
+// Use centralized log file paths
+const LOG_FILES = PATHS.logs;
 
 // Initialize log files on server start
 function initializeLogs() {
@@ -26,7 +14,8 @@ function initializeLogs() {
     fs.writeFileSync(LOG_FILES.events, `=== Events Log Started at ${timestamp} ===\n\n`);
     fs.writeFileSync(LOG_FILES.debug, `=== Debug Log Started at ${timestamp} ===\n\n`);
     fs.writeFileSync(LOG_FILES.errors, `=== Errors Log Started at ${timestamp} ===\n\n`);
-    console.log('Log files initialized in:', logsDir);
+    fs.writeFileSync(LOG_FILES.toolExecutions, `=== Tool Executions Log Started at ${timestamp} ===\n\n`);
+    console.log('Log files initialized in:', PATHS.logsDir);
   } catch (err) {
     console.error('Failed to initialize log files:', err);
   }
@@ -80,6 +69,51 @@ function logClaude(action, data) {
   }
 }
 
+// Log tool executions
+function logToolExecution(action, data) {
+  const timestamp = new Date().toISOString();
+  const {
+    sessionId,
+    messageId,
+    toolId,
+    toolName,
+    status,
+    executionTime,
+    args,
+    result,
+    error
+  } = data;
+  
+  // Format the log entry
+  const logEntry = {
+    timestamp,
+    action,
+    sessionId,
+    messageId,
+    toolId,
+    toolName,
+    status,
+    executionTime,
+    ...(args && { args }),
+    ...(result && { result: typeof result === 'string' && result.length > 200 ? result.substring(0, 200) + '...' : result }),
+    ...(error && { error })
+  };
+  
+  writeLog(LOG_FILES.toolExecutions, `[${action}]`, logEntry);
+  
+  // Also log high-level event
+  if (action === 'START') {
+    logEvent('TOOL_START', `${toolName} (${toolId})`, { sessionId, messageId, status });
+  } else if (action === 'END') {
+    logEvent('TOOL_END', `${toolName} (${toolId})`, { 
+      sessionId, 
+      messageId, 
+      status, 
+      executionTime: executionTime ? `${executionTime}ms` : 'unknown' 
+    });
+  }
+}
+
 // Log high-level system events
 function logEvent(eventType, description, metadata = {}) {
   const timestamp = new Date().toISOString();
@@ -119,6 +153,7 @@ module.exports = {
   initializeLogs,
   logClient,
   logClaude,
+  logToolExecution,
   logEvent,
   debug,
   error,
@@ -128,5 +163,6 @@ module.exports = {
   writeClaudeLog: (...args) => writeLog(LOG_FILES.claude, ...args),
   writeEventLog: (...args) => writeLog(LOG_FILES.events, ...args),
   writeDebugLog: (...args) => writeLog(LOG_FILES.debug, ...args),
-  writeErrorLog: (...args) => writeLog(LOG_FILES.errors, ...args)
+  writeErrorLog: (...args) => writeLog(LOG_FILES.errors, ...args),
+  writeToolExecutionLog: (...args) => writeLog(LOG_FILES.toolExecutions, ...args)
 };

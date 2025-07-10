@@ -77,6 +77,10 @@ body {
 
 /* Page transition animations */
 @layer utilities {
+  .scrollbar-gutter-stable {
+    scrollbar-gutter: stable;
+  }
+  
   .page-transition-enter {
     opacity: 0;
     transform: translateY(20px);

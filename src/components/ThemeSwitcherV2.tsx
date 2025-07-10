@@ -17,13 +17,7 @@ export function ThemeSwitcherV2() {
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey) {
-        if (e.key === 'ArrowRight') {
-          e.preventDefault();
-          nextTheme();
-        } else if (e.key === 'ArrowLeft') {
-          e.preventDefault();
-          previousTheme();
-        } else if (e.key === 'd' || e.key === 'D') {
+        if (e.key === 'd' || e.key === 'D') {
           e.preventDefault();
           toggleDarkMode();
         } else if (e.key === 'b' || e.key === 'B') {
@@ -142,7 +136,6 @@ export function ThemeSwitcherV2() {
         </div>
         
         <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
-          <div>Use Ctrl/Cmd + Arrow keys to switch themes</div>
           <div>Use Ctrl/Cmd + D to toggle dark mode</div>
           <div>Use Ctrl/Cmd + B to toggle background effect</div>
         </div>
