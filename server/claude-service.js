@@ -475,16 +475,32 @@ Respond with exactly this JSON structure:
       
       // CRITICAL: In plan mode, remove ALL write/edit/execution tools
       if (isPlanMode || tools.includes('plan')) {
-        // Only allow read-only tools in plan mode
-        const readOnlyTools = ['LS', 'Read', 'Grep', 'Glob', 'TodoRead', 'NotebookRead', 'WebFetch', 'WebSearch'];
+        // Only allow read-only tools in plan mode (plus exit_plan_mode)
+        const readOnlyTools = ['LS', 'Read', 'Grep', 'Glob', 'TodoRead', 'NotebookRead', 'WebFetch', 'WebSearch', 'exit_plan_mode'];
+        const originalLength = allowedTools.length;
         allowedTools = allowedTools.filter(tool => readOnlyTools.includes(tool));
-        console.log('PLAN MODE ACTIVE - Restricting to read-only tools');
-        console.log('Filtered out write tools. Original:', allowedTools.length, 'Filtered:', allowedTools.filter(tool => readOnlyTools.includes(tool)).length);
+        logger.debug('PLAN MODE ACTIVE - Restricting to read-only tools');
+        logger.debug('Tools before filtering:', allowedTools);
+        logger.debug(`Filtered out write tools. Original: ${originalLength}, Filtered: ${allowedTools.length}`);
+        
+        // Double-check: ensure no write tools remain
+        const writeTools = ['Write', 'Edit', 'MultiEdit', 'NotebookEdit', 'Bash', 'TodoWrite'];
+        const remainingWriteTools = allowedTools.filter(tool => writeTools.includes(tool));
+        if (remainingWriteTools.length > 0) {
+          logger.error('ERROR: Write tools still present in plan mode:', remainingWriteTools);
+          allowedTools = allowedTools.filter(tool => !writeTools.includes(tool));
+        }
       }
       
-      console.log('Requested tools:', tools);
-      console.log('Allowed tools:', allowedTools);
-      console.log('Is plan mode:', isPlanMode);
+      logger.debug('Requested tools:', tools);
+      logger.debug('Final allowed tools:', allowedTools);
+      logger.debug('Is plan mode:', isPlanMode);
+      
+      // If in plan mode and no tools left, default to minimal read-only set
+      if ((isPlanMode || tools.includes('plan')) && allowedTools.length === 0) {
+        allowedTools = ['Read', 'LS', 'Grep', 'Glob', 'exit_plan_mode'];
+        logger.debug('Plan mode with empty tools, defaulting to:', allowedTools);
+      }
       
       claudeInstance = claudeInstance
         .allowTools(allowedTools)
@@ -627,6 +643,21 @@ Respond with exactly this JSON structure:
           
           // Don't send any mock progress messages
         });
+      
+      // Add system instruction for plan mode
+      if (isPlanMode || tools.includes('plan')) {
+        const planModePrompt = `CRITICAL: You are in PLAN MODE. You must NOT make any edits, writes, or execute any commands. You can only:
+- Read files to understand the current state
+- Search for relevant code
+- Describe what changes would be made
+- Ask the user if they want to proceed with the plan
+
+DO NOT use Edit, Write, MultiEdit, Bash, or any other modification tools. Only describe what you would do.
+
+User request: ${prompt}`;
+        prompt = planModePrompt;
+        logger.debug('Added plan mode restrictions to prompt');
+      }
       
       console.log('Executing Claude query with tool support...');
       

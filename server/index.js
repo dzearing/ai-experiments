@@ -3906,6 +3906,7 @@ app.post('/api/claude/code/message', async (req, res) => {
     let pendingAssistantText = '';
     let toolExecutions = [];
     const toolExecutionToMessageId = new Map(); // Map tool execution IDs to their message IDs
+    const seenToolSignatures = new Set(); // Track unique tool executions to prevent duplicates
     let currentAssistantMessageId = null;
     let hasCompletedInitialMessage = false;
     let activeMessageId = null; // Track the actual message ID being streamed
@@ -4113,6 +4114,16 @@ app.post('/api/claude/code/message', async (req, res) => {
                 displayArgs = toolExecution.args;
               }
             }
+            
+            // Create a signature to detect duplicate tool executions
+            const toolSignature = `${toolExecution.name}-${displayArgs}`;
+            
+            // Check if we've already seen this exact tool execution
+            if (seenToolSignatures.has(toolSignature)) {
+              logger.debug(`Skipping duplicate tool execution: ${toolExecution.name}`);
+              return; // Skip duplicate
+            }
+            seenToolSignatures.add(toolSignature);
             
             // Create tool message
             const toolMessageId = `${messageId}-tool-${toolExecution.id || Date.now()}`;
