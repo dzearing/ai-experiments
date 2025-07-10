@@ -4019,6 +4019,51 @@ app.post('/api/claude/code/message', async (req, res) => {
           (toolExecution) => {
             console.log('Tool execution received:', toolExecution);
             
+            // Check if this is an update to an existing tool execution
+            if (toolExecution.isUpdate) {
+              const existingToolMessageId = toolExecutionToMessageId.get(toolExecution.id);
+              if (existingToolMessageId) {
+                // Update the existing tool message
+                sessionManager.updateMessage(sessionId, existingToolMessageId, {
+                  status: toolExecution.status,
+                  executionTime: toolExecution.executionTime,
+                  output: toolExecution.result
+                });
+                
+                // Send status update to clients
+                const currentConnections = claudeCodeClients.get(sessionId);
+                if (currentConnections) {
+                  for (const [connId, conn] of currentConnections.entries()) {
+                    try {
+                      conn.res.write(`event: tool-status\ndata: ${JSON.stringify({
+                        messageId: existingToolMessageId,
+                        status: toolExecution.status,
+                        executionTime: toolExecution.executionTime
+                      })}\n\n`);
+                    } catch (err) {
+                      console.error(`Error sending tool status to connection ${connId}:`, err);
+                      currentConnections.delete(connId);
+                    }
+                  }
+                }
+                
+                // Log tool execution end if complete
+                if (toolExecution.status === 'complete') {
+                  logger.logToolExecution('END', {
+                    sessionId,
+                    messageId,
+                    toolId: toolExecution.id,
+                    toolName: toolExecution.name,
+                    status: toolExecution.status,
+                    executionTime: toolExecution.executionTime,
+                    result: toolExecution.result
+                  });
+                }
+                
+                return; // Don't process as new tool
+              }
+            }
+            
             // If we have pending assistant text, complete and save it as a message first
             if (pendingAssistantText && currentAssistantMessageId && !hasCompletedInitialMessage) {
               // Send message-end event
@@ -4377,11 +4422,18 @@ app.post('/api/claude/code/message', async (req, res) => {
         if (response.toolExecutions && response.toolExecutions.length > 0) {
           console.log('Sending final tool execution summary:', response.toolExecutions.length, 'tools');
           
+          // Track which tools we've already logged as complete
+          const loggedToolIds = new Set();
+          
           // Update tool messages with their final status
           for (const completedTool of response.toolExecutions) {
             if (completedTool.id) {
               const toolMessageId = toolExecutionToMessageId.get(completedTool.id);
               if (toolMessageId) {
+                // Get the current message to check if already complete
+                const currentMessage = sessionManager.getMessage(sessionId, toolMessageId);
+                const wasAlreadyComplete = currentMessage && currentMessage.status === 'complete';
+                
                 // Update the tool message with completed status
                 sessionManager.updateMessage(sessionId, toolMessageId, {
                   status: completedTool.status || 'complete',
@@ -4389,16 +4441,19 @@ app.post('/api/claude/code/message', async (req, res) => {
                 });
                 logger.debug(`Updated tool message ${toolMessageId} to status: ${completedTool.status || 'complete'}`);
                 
-                // Log tool execution end
-                logger.logToolExecution('END', {
-                  sessionId,
-                  messageId,
-                  toolId: completedTool.id,
+                // Only log tool execution end if not already logged
+                if (!wasAlreadyComplete && !loggedToolIds.has(completedTool.id)) {
+                  logger.logToolExecution('END', {
+                    sessionId,
+                    messageId,
+                    toolId: completedTool.id,
                   toolName: completedTool.name,
                   status: completedTool.status || 'complete',
                   executionTime: completedTool.executionTime,
                   result: completedTool.result
                 });
+                  loggedToolIds.add(completedTool.id);
+                }
               }
             }
           }

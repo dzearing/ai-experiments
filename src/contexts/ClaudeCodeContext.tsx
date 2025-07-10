@@ -566,6 +566,21 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
       setContextUsage(data.percentage);
     });
     
+    eventSource.addEventListener('tool-status', (event) => {
+      const data = JSON.parse(event.data);
+      console.log('Tool status update:', data);
+      
+      setMessages(prev => prev.map(msg => 
+        msg.id === data.messageId
+          ? { 
+              ...msg, 
+              status: data.status,
+              executionTime: data.executionTime 
+            }
+          : msg
+      ));
+    });
+    
     eventSource.addEventListener('message-cancelled', (event) => {
       const data = JSON.parse(event.data);
       setMessages(prev => prev.map(msg => 

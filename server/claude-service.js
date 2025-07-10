@@ -497,8 +497,10 @@ Respond with exactly this JSON structure:
       
       // Track tool executions and messages
       const toolExecutions = [];
+      const pendingToolExecutions = new Map(); // Track tools waiting for results
       let assistantMessage = '';
       let tokenUsage = null;
+      let lastToolId = null; // Track the most recently invoked tool
       
       // Add event handlers for real-time feedback
       claudeInstance = claudeInstance
@@ -506,6 +508,28 @@ Respond with exactly this JSON structure:
           logger.debug('Message event:', messageType, content);
           if (onMessage) {
             onMessage(messageType, content);
+          }
+          
+          // Check if this is a tool result message
+          if (messageType === 'tool_result' && lastToolId && pendingToolExecutions.has(lastToolId)) {
+            const toolExecution = pendingToolExecutions.get(lastToolId);
+            toolExecution.status = 'complete';
+            toolExecution.isSuccess = true;
+            toolExecution.executionTime = Date.now() - toolExecution.startTime;
+            toolExecution.result = typeof content === 'string' ? content : JSON.stringify(content);
+            
+            pendingToolExecutions.delete(lastToolId);
+            
+            // Send completion update
+            if (onToolExecution) {
+              onToolExecution({
+                ...toolExecution,
+                isUpdate: true
+              });
+            }
+            
+            logger.debug('Tool execution completed:', toolExecution.id);
+            lastToolId = null; // Reset
           }
           
           // Don't send any mock progress messages
@@ -593,6 +617,8 @@ Respond with exactly this JSON structure:
           logger.debug('Tool invocation tracked:', execution);
           
           toolExecutions.push(execution);
+          pendingToolExecutions.set(execution.id, execution);
+          lastToolId = execution.id;
           
           // Send real-time tool execution update
           if (onToolExecution) {
@@ -693,14 +719,21 @@ Respond with exactly this JSON structure:
         responseText = 'No response generated';
       }
       
-      // Mark all tool executions as complete since we got a response
-      const completedToolExecutions = toolExecutions.map(tool => ({
-        ...tool,
-        status: 'complete',
-        isSuccess: true,
-        result: 'Completed successfully',
-        executionTime: tool.startTime ? Date.now() - tool.startTime : null
-      }));
+      // Mark any remaining pending tool executions as complete
+      const completedToolExecutions = toolExecutions.map(tool => {
+        // If already marked complete, keep the existing status
+        if (tool.status === 'complete') {
+          return tool;
+        }
+        // Otherwise mark as complete
+        return {
+          ...tool,
+          status: 'complete',
+          isSuccess: true,
+          result: 'Completed successfully',
+          executionTime: tool.startTime ? Date.now() - tool.startTime : null
+        };
+      });
       
       const finalResponse = {
         text: responseText,

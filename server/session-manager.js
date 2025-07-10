@@ -162,6 +162,16 @@ class SessionManager {
     return true;
   }
 
+  getMessage(sessionId, messageId) {
+    const session = this.sessions.get(sessionId);
+    if (!session) {
+      return null;
+    }
+
+    // Find and return the message
+    return session.messages.find(msg => msg.id === messageId);
+  }
+
   updateMessage(sessionId, messageId, updates) {
     const session = this.sessions.get(sessionId);
     if (!session) {
