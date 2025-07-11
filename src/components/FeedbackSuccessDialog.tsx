@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { useTheme } from '../contexts/ThemeContextV2';
 import { Button } from './ui/Button';
 
@@ -17,8 +18,8 @@ export function FeedbackSuccessDialog({
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-[9999] overflow-y-auto">
+  const dialogContent = (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
       <div 
         className="fixed inset-0 bg-gray-900/50 dark:bg-black/50 transition-opacity" 
@@ -85,4 +86,6 @@ export function FeedbackSuccessDialog({
       </div>
     </div>
   );
+
+  return createPortal(dialogContent, document.body);
 }

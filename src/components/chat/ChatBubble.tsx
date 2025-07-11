@@ -35,7 +35,7 @@ export const ChatBubble = memo(function ChatBubble({
         </div>
       )}
       
-      <div className={`max-w-[70%] ${isSent ? 'order-first' : ''}`}>
+      <div className={`max-w-[85%] ${isSent ? 'order-first' : ''}`}>
         {!isSent && name && (
           <div className={`text-xs ${styles.mutedText} mb-1`}>{name}</div>
         )}

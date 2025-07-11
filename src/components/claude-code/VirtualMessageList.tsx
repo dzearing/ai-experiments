@@ -1,6 +1,7 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useMemo } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ClaudeMessage } from './ClaudeMessage';
+import { ToolExecutionGroup } from '../chat/ToolExecutionGroup';
 import type { ClaudeMessage as ClaudeMessageType } from '../../contexts/ClaudeCodeContext';
 
 interface VirtualMessageListProps {
@@ -8,6 +9,12 @@ interface VirtualMessageListProps {
   scrollContainerRef: React.RefObject<HTMLDivElement>;
   onSuggestedResponse?: (response: string) => void;
   sessionId: string;
+}
+
+interface GroupedMessage {
+  type: 'single' | 'toolGroup';
+  messages: ClaudeMessageType[];
+  id: string;
 }
 
 export function VirtualMessageList({ messages, scrollContainerRef, onSuggestedResponse, sessionId }: VirtualMessageListProps) {
@@ -22,42 +29,90 @@ export function VirtualMessageList({ messages, scrollContainerRef, onSuggestedRe
   const isUserScrolling = useRef(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   
-  // Estimate initial size based on message content
-  const estimateSize = useCallback((index: number) => {
-    const message = messages[index];
-    if (!message) return 150; // Default height
+  // Group consecutive tool messages
+  const groupedMessages = useMemo<GroupedMessage[]>(() => {
+    const grouped: GroupedMessage[] = [];
+    let currentToolGroup: ClaudeMessageType[] = [];
     
-    // Use cached measurement if available
-    if (measurementsCache.current[message.id]) {
-      return measurementsCache.current[message.id];
+    messages.forEach((message) => {
+      if (message.role === 'tool') {
+        currentToolGroup.push(message);
+      } else {
+        // If we have accumulated tool messages, add them as a group
+        if (currentToolGroup.length > 0) {
+          grouped.push({
+            type: 'toolGroup',
+            messages: currentToolGroup,
+            id: `tool-group-${currentToolGroup[0].id}`
+          });
+          currentToolGroup = [];
+        }
+        // Add non-tool message
+        grouped.push({
+          type: 'single',
+          messages: [message],
+          id: message.id
+        });
+      }
+    });
+    
+    // Don't forget the last group if it's tools
+    if (currentToolGroup.length > 0) {
+      grouped.push({
+        type: 'toolGroup',
+        messages: currentToolGroup,
+        id: `tool-group-${currentToolGroup[0].id}`
+      });
     }
     
-    // Rough estimation based on content length and type
-    const baseHeight = 80; // Base height for message wrapper
-    const charPerLine = 80;
-    const lineHeight = 24;
-    const codeBlockHeight = 200; // Estimated height for code blocks
-    
-    let contentLines = Math.ceil(message.content.length / charPerLine);
-    
-    // Add extra height for code blocks
-    const codeBlockCount = (message.content.match(/```/g) || []).length / 2;
-    const estimatedHeight = baseHeight + (contentLines * lineHeight) + (codeBlockCount * codeBlockHeight);
-    
-    return Math.min(estimatedHeight, 800); // Cap at reasonable max height
+    return grouped;
   }, [messages]);
   
+  // Estimate initial size based on message content
+  const estimateSize = useCallback((index: number) => {
+    const group = groupedMessages[index];
+    if (!group) return 150; // Default height
+    
+    // Use cached measurement if available
+    if (measurementsCache.current[group.id]) {
+      return measurementsCache.current[group.id];
+    }
+    
+    if (group.type === 'toolGroup') {
+      // Estimate height for tool group
+      const baseHeight = 40; // Header height
+      const toolHeight = 60; // Height per tool
+      return baseHeight + (group.messages.length * toolHeight);
+    } else {
+      // Single message estimation
+      const message = group.messages[0];
+      // Rough estimation based on content length and type
+      const baseHeight = 80; // Base height for message wrapper
+      const charPerLine = 80;
+      const lineHeight = 24;
+      const codeBlockHeight = 200; // Estimated height for code blocks
+      
+      let contentLines = Math.ceil(message.content.length / charPerLine);
+      
+      // Add extra height for code blocks
+      const codeBlockCount = (message.content.match(/```/g) || []).length / 2;
+      const estimatedHeight = baseHeight + (contentLines * lineHeight) + (codeBlockCount * codeBlockHeight);
+      
+      return Math.min(estimatedHeight, 800); // Cap at reasonable max height
+    }
+  }, [groupedMessages]);
+  
   const rowVirtualizer = useVirtualizer({
-    count: messages.length,
+    count: groupedMessages.length,
     getScrollElement: () => scrollContainerRef.current,
     estimateSize,
     overscan: 5,
     measureElement: (element) => {
       // Cache the measurement
-      const messageId = element.getAttribute('data-message-id');
+      const groupId = element.getAttribute('data-group-id');
       const htmlElement = element as HTMLElement;
-      if (messageId && htmlElement.offsetHeight) {
-        measurementsCache.current[messageId] = htmlElement.offsetHeight;
+      if (groupId && htmlElement.offsetHeight) {
+        measurementsCache.current[groupId] = htmlElement.offsetHeight;
       }
       return htmlElement.offsetHeight;
     },
@@ -126,12 +181,12 @@ export function VirtualMessageList({ messages, scrollContainerRef, onSuggestedRe
       }}
     >
       {virtualItems.map((virtualItem) => {
-        const message = messages[virtualItem.index];
+        const group = groupedMessages[virtualItem.index];
         
         return (
           <div
             key={virtualItem.key}
-            data-message-id={message.id}
+            data-group-id={group.id}
             ref={rowVirtualizer.measureElement}
             data-index={virtualItem.index}
             style={{
@@ -142,16 +197,24 @@ export function VirtualMessageList({ messages, scrollContainerRef, onSuggestedRe
               transform: `translateY(${virtualItem.start}px)`,
             }}
           >
-            <ClaudeMessage 
-              message={message} 
-              onSuggestedResponse={onSuggestedResponse}
-              isLatestAssistantMessage={
-                message.role === 'assistant' && 
-                virtualItem.index === messages.length - 1 &&
-                !message.isStreaming
-              }
-              sessionId={sessionId}
-            />
+            {group.type === 'toolGroup' ? (
+              <ToolExecutionGroup
+                tools={group.messages}
+                sessionId={sessionId}
+              />
+            ) : (
+              <ClaudeMessage 
+                message={group.messages[0]} 
+                onSuggestedResponse={onSuggestedResponse}
+                isLatestAssistantMessage={
+                  group.messages[0].role === 'assistant' && 
+                  !group.messages[0].isStreaming &&
+                  // Find the last assistant message
+                  messages.findLastIndex(m => m.role === 'assistant' && m.id === group.messages[0].id) === messages.length - 1
+                }
+                sessionId={sessionId}
+              />
+            )}
           </div>
         );
       })}

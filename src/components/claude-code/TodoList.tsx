@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
 import { useTheme } from '../../contexts/ThemeContextV2';
+import { Spinner } from '../ui/Spinner';
 import type { Todo } from '../../contexts/ClaudeCodeContext';
 
 interface TodoListProps {
@@ -58,9 +59,7 @@ export const TodoList = memo(function TodoList({ todos, onDismiss }: TodoListPro
         );
       case 'in_progress':
         return (
-          <svg className="w-4 h-4 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
-          </svg>
+          <Spinner size="small" className="text-blue-500 flex-shrink-0" />
         );
       case 'pending':
         return (
@@ -137,14 +136,14 @@ export const TodoList = memo(function TodoList({ todos, onDismiss }: TodoListPro
       </div>
       
       <div className="py-2">
-        {/* Show in-progress items first */}
+        {/* Show completed items first - they bubble to the top */}
+        {todosByStatus.completed?.map(todo => renderTodoItem(todo))}
+        
+        {/* Then in-progress items */}
         {todosByStatus.in_progress?.map(todo => renderTodoItem(todo))}
         
-        {/* Then pending items */}
+        {/* Finally pending items */}
         {todosByStatus.pending?.map(todo => renderTodoItem(todo))}
-        
-        {/* Finally completed items */}
-        {todosByStatus.completed?.map(todo => renderTodoItem(todo))}
       </div>
     </div>
   );

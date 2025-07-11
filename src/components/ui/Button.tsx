@@ -36,7 +36,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <Component
         ref={ref}
         className={`
-          inline-flex items-center justify-center
+          inline-flex items-center justify-center whitespace-nowrap select-none
           ${!isIconButton && variant !== 'circular' ? sizeClasses[size] : ''}
           ${variantClasses[variant]}
           ${variant === 'circular' ? 'rounded-full' : styles.buttonRadius}

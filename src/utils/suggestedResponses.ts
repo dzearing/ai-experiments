@@ -5,6 +5,18 @@
 export function generateSuggestedResponses(content: string): string[] | undefined {
   const lowerContent = content.toLowerCase();
   
+  // Plan mode - check for plan execution questions
+  if (
+    lowerContent.includes('would you like me to proceed') ||
+    lowerContent.includes('do you want me to proceed') ||
+    lowerContent.includes('should i proceed with') ||
+    lowerContent.includes('shall i proceed with') ||
+    lowerContent.includes('proceed with making') ||
+    lowerContent.includes('proceed with these')
+  ) {
+    return ['Yes, proceed with the plan', 'No, let me review more', 'Make some changes first'];
+  }
+  
   // Permission requests
   if (
     lowerContent.includes('could you grant') ||

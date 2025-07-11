@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { feedbackService, type FeedbackData } from '../services/feedbackService';
 import { useClaudeCode } from '../contexts/ClaudeCodeContext';
+import { useToast } from '../contexts/ToastContext';
 
 interface UseFeedbackOptions {
   sessionId: string;
@@ -28,13 +29,26 @@ export function useFeedback({
   messageId
 }: UseFeedbackOptions): UseFeedbackReturn {
   const { messages, mode, isConnected } = useClaudeCode();
+  const { showToast } = useToast();
   const [showDialog, setShowDialog] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [feedbackId, setFeedbackId] = useState<string | null>(null);
+  const [capturedScreenshot, setCapturedScreenshot] = useState<string | null>(null);
 
-  const openFeedback = useCallback(() => {
+  const openFeedback = useCallback(async () => {
+    // Capture screenshot before opening dialog
+    try {
+      console.log('Capturing screenshot before opening feedback dialog...');
+      const screenshot = await feedbackService.captureScreenshot();
+      setCapturedScreenshot(screenshot);
+    } catch (err) {
+      console.error('Failed to capture screenshot:', err);
+      setCapturedScreenshot(null);
+    }
+    
+    // Now open the dialog
     setShowDialog(true);
     setError(null);
   }, []);
@@ -42,6 +56,7 @@ export function useFeedback({
   const closeFeedback = useCallback(() => {
     setShowDialog(false);
     setError(null);
+    setCapturedScreenshot(null); // Clear captured screenshot
   }, []);
 
   const closeSuccess = useCallback(() => {
@@ -77,13 +92,34 @@ export function useFeedback({
         isConnected
       };
 
-      // Submit feedback with screenshot
-      const id = await feedbackService.submitFeedbackWithScreenshot(feedbackData);
+      // Upload the pre-captured screenshot if available
+      let screenshotPath: string | null = null;
+      if (capturedScreenshot) {
+        try {
+          screenshotPath = await feedbackService.uploadScreenshot(
+            capturedScreenshot,
+            sessionId,
+            repoName
+          );
+        } catch (err) {
+          console.warn('Failed to upload screenshot:', err);
+        }
+      }
+
+      // Submit feedback with screenshot path
+      const completeData: FeedbackData = {
+        ...feedbackData,
+        screenshotPath: screenshotPath || undefined,
+        timestamp: new Date().toISOString()
+      };
+      
+      const id = await feedbackService.submitFeedback(completeData);
       
       // Success!
       setFeedbackId(id);
       setShowDialog(false);
-      setShowSuccess(true);
+      // Show toast notification instead of success dialog
+      showToast(`Feedback submitted successfully! ID: ${id}`, 'success', 5000);
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to submit feedback';
@@ -92,7 +128,7 @@ export function useFeedback({
     } finally {
       setIsSubmitting(false);
     }
-  }, [sessionId, repoName, projectId, messageId, messages, mode, isConnected]);
+  }, [sessionId, repoName, projectId, messageId, messages, mode, isConnected, capturedScreenshot, showToast]);
 
   return {
     showDialog,

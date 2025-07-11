@@ -477,10 +477,20 @@ Respond with exactly this JSON structure:
       if (isPlanMode || tools.includes('plan')) {
         // Only allow read-only tools in plan mode (plus exit_plan_mode)
         const readOnlyTools = ['LS', 'Read', 'Grep', 'Glob', 'TodoRead', 'NotebookRead', 'WebFetch', 'WebSearch', 'exit_plan_mode'];
+        const originalTools = [...allowedTools];
         const originalLength = allowedTools.length;
         allowedTools = allowedTools.filter(tool => readOnlyTools.includes(tool));
+        
+        console.log('===== PLAN MODE TOOL FILTERING =====');
+        console.log('isPlanMode:', isPlanMode);
+        console.log('tools includes plan:', tools.includes('plan'));
+        console.log('Original tools:', originalTools);
+        console.log('Filtered tools:', allowedTools);
+        console.log('Tools removed:', originalTools.filter(t => !allowedTools.includes(t)));
+        console.log('====================================');
+        
         logger.debug('PLAN MODE ACTIVE - Restricting to read-only tools');
-        logger.debug('Tools before filtering:', allowedTools);
+        logger.debug('Tools before filtering:', originalTools);
         logger.debug(`Filtered out write tools. Original: ${originalLength}, Filtered: ${allowedTools.length}`);
         
         // Double-check: ensure no write tools remain

@@ -41,13 +41,12 @@ export const ClaudeInput = memo(function ClaudeInput({
   }, [isSubmitting]);
   
   const handleKeyDown = useCallback((e: KeyboardEvent<HTMLTextAreaElement>) => {
-    // Shift+Tab to cycle modes
+    // Shift+Tab to toggle between Plan and Execute modes
     if (e.key === 'Tab' && e.shiftKey) {
       e.preventDefault();
-      const modes: ClaudeMode[] = ['default', 'plan', 'auto-accept'];
-      const currentIndex = modes.indexOf(mode);
-      const nextIndex = (currentIndex + 1) % modes.length;
-      onModeChange(modes[nextIndex]);
+      // Toggle between plan and execute (default) modes only
+      const newMode = mode === 'plan' ? 'default' : 'plan';
+      onModeChange(newMode);
       return;
     }
     
@@ -147,11 +146,11 @@ export const ClaudeInput = memo(function ClaudeInput({
           <div className={`flex items-center gap-1.5 ${getModeColor()}`}>
             <span>{getModeIcon()}</span>
             <span className="font-medium">
-              {mode === 'auto-accept' ? 'Auto-accept' : mode === 'plan' ? 'Plan mode' : 'Default mode'}
+              {mode === 'plan' ? 'Planning' : 'Execute'}
             </span>
           </div>
           <span className={styles.mutedText}>
-            Shift+Tab to change mode
+            Shift+Tab to toggle mode
           </span>
         </div>
         

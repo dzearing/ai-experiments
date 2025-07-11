@@ -147,8 +147,7 @@ export function AnimatedTransition({
             opacity: item.state === 'active' ? 1 : 0,
             transform: getTransform(item.state, reverse),
             transition: `all 300ms cubic-bezier(0.4, 0, 0.2, 1)`,
-            pointerEvents: item.state === 'active' ? 'auto' : 'none',
-            zIndex: item.state === 'active' ? 2 : 1
+            pointerEvents: item.state === 'active' ? 'auto' : 'none'
           }}
         >
           {item.content}

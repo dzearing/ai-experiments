@@ -25,7 +25,7 @@ export const SuggestedResponses = memo(function SuggestedResponses({
           onClick={() => onSelect(response)}
           disabled={disabled}
           className={`
-            px-3 py-1.5 text-sm
+            px-3 py-1.5 text-sm whitespace-nowrap select-none
             ${styles.contentBg} ${styles.contentBorder} border
             ${styles.textColor} ${styles.buttonRadius}
             hover:bg-gray-100 dark:hover:bg-gray-700

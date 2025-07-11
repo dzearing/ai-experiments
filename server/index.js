@@ -3981,7 +3981,7 @@ app.post('/api/claude/code/message', async (req, res) => {
         
         // Configure tools based on mode (for context in prompt)
         // In plan mode, only allow read-only tools (no writes, edits, or executions)
-        const tools = mode === 'plan' ? ['search', 'read', 'plan'] : ['search', 'read', 'write', 'bash', 'todo'];
+        const tools = mode === 'plan' ? ['search', 'read'] : ['search', 'read', 'write', 'bash', 'todo'];
         
         // Don't send any thinking or progress messages
         

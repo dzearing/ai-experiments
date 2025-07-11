@@ -90,7 +90,7 @@ export function ThemedLayoutV2() {
       {/* Background pattern when enabled */}
       {backgroundEffectEnabled && <BackgroundPattern />}
       {/* Sidebar */}
-      <aside className={`w-64 ${styles.sidebarBg} ${styles.sidebarBorder} border-r relative z-10`}>
+      <aside className={`w-64 ${styles.sidebarBg} ${styles.sidebarBorder} border-r relative`}>
         <div className="p-6">
           <h1 className={`text-2xl font-bold ${styles.sidebarText}`}>
             Claude Flow
@@ -146,7 +146,7 @@ export function ThemedLayoutV2() {
       </aside>
       
       {/* Main Content */}
-      <div className="flex-1 flex flex-col relative z-10 overflow-hidden">
+      <div className="flex-1 flex flex-col relative overflow-hidden">
         <header className={`${styles.contentBg} ${styles.contentBorder} border-b px-4 py-4 relative flex-shrink-0 flex items-center justify-between`}>
           <div className="flex-1">
             {(() => {

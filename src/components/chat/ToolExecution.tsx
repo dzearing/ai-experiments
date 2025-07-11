@@ -2,7 +2,6 @@ import { memo, useState, useEffect, useRef } from 'react';
 import { useTheme } from '../../contexts/ThemeContextV2';
 import { FeedbackLink } from '../FeedbackLink';
 import { FeedbackDialog } from '../FeedbackDialog';
-import { FeedbackSuccessDialog } from '../FeedbackSuccessDialog';
 import { useFeedback } from '../../hooks/useFeedback';
 import { useParams } from 'react-router-dom';
 import { DiffView } from './DiffView';
@@ -65,14 +64,11 @@ export const ToolExecution = memo(function ToolExecution({
   // Set up feedback for this tool execution (only if sessionId is provided)
   const {
     showDialog,
-    showSuccess,
     isSubmitting,
     error: feedbackError,
-    feedbackId,
     openFeedback,
     closeFeedback,
-    submitFeedback,
-    closeSuccess
+    submitFeedback
   } = useFeedback({
     sessionId: sessionId || '',
     repoName: repoName || '',
@@ -189,7 +185,7 @@ export const ToolExecution = memo(function ToolExecution({
   
   return (
     <div 
-      className={`${styles.contentBg} ${styles.contentBorder} border ${styles.borderRadius} p-2 mb-1 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors`}
+      className="py-2"
       data-testid={dataTestId}
     >
       <div className="flex items-start gap-3">
@@ -200,7 +196,7 @@ export const ToolExecution = memo(function ToolExecution({
           <div className="flex items-baseline">
             <div className="flex items-baseline gap-2">
               <span className={`font-medium ${styles.textColor}`} data-testid="tool-name">{formatToolName(name)}</span>
-              {args && name !== 'TodoWrite' && name !== 'Edit' && name !== 'MultiEdit' && name !== 'Grep' && name !== 'Glob' && (
+              {args && name !== 'TodoWrite' && name !== 'Edit' && name !== 'MultiEdit' && name !== 'Grep' && name !== 'Glob' && name !== 'LS' && name !== 'Task' && (
                 <span className={`text-sm ${styles.mutedText} truncate max-w-md font-mono`} title={args}>
                   {args.length > 80 ? args.substring(0, 80) + '...' : args}
                 </span>
@@ -276,6 +272,41 @@ export const ToolExecution = memo(function ToolExecution({
                   }
                 })()
               )}
+              {args && name === 'LS' && (
+                (() => {
+                  try {
+                    const argsData = typeof args === 'string' ? JSON.parse(args) : args;
+                    const path = argsData.path || '.';
+                    const displayPath = path === '.' ? 'current directory' : path.split('/').pop() || path;
+                    return (
+                      <span className={`text-sm ${styles.mutedText} font-mono`}>{displayPath}</span>
+                    );
+                  } catch {
+                    return (
+                      <span className={`text-sm ${styles.mutedText} font-mono`}>
+                        {args.length > 80 ? args.substring(0, 80) + '...' : args}
+                      </span>
+                    );
+                  }
+                })()
+              )}
+              {args && name === 'Task' && (
+                (() => {
+                  try {
+                    const argsData = typeof args === 'string' ? JSON.parse(args) : args;
+                    const description = argsData.description || 'Running task';
+                    return (
+                      <span className={`text-sm ${styles.mutedText}`}>{description}</span>
+                    );
+                  } catch {
+                    return (
+                      <span className={`text-sm ${styles.mutedText}`}>
+                        {args.length > 80 ? args.substring(0, 80) + '...' : args}
+                      </span>
+                    );
+                  }
+                })()
+              )}
             </div>
             {(status === 'running' || status === 'complete' || executionTime) && (
               <span className={`text-xs ${styles.mutedText} ml-auto`}>
@@ -316,6 +347,28 @@ export const ToolExecution = memo(function ToolExecution({
                   return (
                     <div className={`text-xs ${styles.mutedText} pl-9`}>
                       Pattern: <span className="font-mono">"{pattern}"</span>
+                    </div>
+                  );
+                } catch {
+                  return null;
+                }
+              })()}
+            </div>
+          )}
+          
+          {/* Task tool details - show prompt */}
+          {args && name === 'Task' && (
+            <div className="mt-1">
+              {(() => {
+                try {
+                  const argsData = typeof args === 'string' ? JSON.parse(args) : args;
+                  const prompt = argsData.prompt || '';
+                  // Show first line or first 200 chars of prompt
+                  const firstLine = prompt.split('\n')[0];
+                  const displayPrompt = firstLine.length > 200 ? firstLine.substring(0, 200) + '...' : firstLine;
+                  return (
+                    <div className={`text-xs ${styles.mutedText} pl-9`}>
+                      Task: {displayPrompt}
                     </div>
                   );
                 } catch {
@@ -471,13 +524,6 @@ export const ToolExecution = memo(function ToolExecution({
             error={feedbackError}
           />
           
-          {feedbackId && (
-            <FeedbackSuccessDialog
-              isOpen={showSuccess}
-              onClose={closeSuccess}
-              feedbackId={feedbackId}
-            />
-          )}
         </>
       )}
     </div>

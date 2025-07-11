@@ -104,7 +104,7 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
   const [todos, setTodos] = useState<Todo[]>([]);
   
   const eventSourceRef = useRef<EventSource | null>(null);
-  const streamingMessageRef = useRef<string>('');
+  const streamingMessageContentRef = useRef<Map<string, string>>(new Map());
   const connectionIdRef = useRef<string | null>(null);
   const connectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastConnectionAttemptRef = useRef<number>(0);
@@ -281,13 +281,13 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
         setCurrentMessageId(data.id);
       }
       
-      // Only clear streaming ref for NEW messages, not existing ones
-      // This is critical: existing messages should preserve their content
+      // Initialize streaming content for this message
       if (!isExistingMessage) {
-        streamingMessageRef.current = '';
-        console.log('Cleared streamingMessageRef for new message');
+        streamingMessageContentRef.current.set(data.id, '');
+        console.log('Initialized streaming content for new message:', data.id);
       } else {
-        console.log('Preserving streamingMessageRef for existing message:', streamingMessageRef.current.substring(0, 50));
+        const existingContent = streamingMessageContentRef.current.get(data.id) || '';
+        console.log('Preserving streaming content for existing message:', data.id, existingContent.substring(0, 50));
       }
     });
     
@@ -298,16 +298,20 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
       console.log('Chunk content:', data.chunk);
       console.log('Chunk content length:', data.chunk?.length);
       
+      // Get current content for this message
+      const currentContent = streamingMessageContentRef.current.get(data.messageId) || '';
+      
       // For existing messages, reset the streaming content before adding the chunk
       // This prevents appending to previous content
       if (isRestoringExistingSessionRef.current) {
-        streamingMessageRef.current = data.chunk;
+        streamingMessageContentRef.current.set(data.messageId, data.chunk);
         console.log('Restored existing message content, length:', data.chunk?.length);
       } else {
         // Append chunk to streaming content for new messages
-        streamingMessageRef.current += data.chunk;
+        streamingMessageContentRef.current.set(data.messageId, currentContent + data.chunk);
       }
-      console.log('streamingMessageRef.current now:', streamingMessageRef.current.substring(0, 50));
+      const updatedContent = streamingMessageContentRef.current.get(data.messageId) || '';
+      console.log('Streaming content for', data.messageId, 'now:', updatedContent.substring(0, 50));
       
       setMessages(prev => {
         console.log('setMessages in message-chunk, looking for messageId:', data.messageId);
@@ -321,7 +325,7 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
           const newMessage: ClaudeMessage = {
             id: data.messageId,
             role: 'assistant',
-            content: streamingMessageRef.current,
+            content: streamingMessageContentRef.current.get(data.messageId) || '',
             timestamp: new Date(),
             startTime: new Date(),
             isStreaming: true,
@@ -332,12 +336,13 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
         
         const updated = prev.map(msg => {
           if (msg.id === data.messageId) {
-            console.log('Updating message:', msg.id, 'old content:', msg.content.substring(0, 30), 'new content:', streamingMessageRef.current.substring(0, 30));
+            const newContent = streamingMessageContentRef.current.get(data.messageId) || '';
+            console.log('Updating message:', msg.id, 'old content:', msg.content.substring(0, 30), 'new content:', newContent.substring(0, 30));
             // For existing messages that aren't streaming, mark as complete immediately
             const isComplete = !msg.isStreaming;
             const updatedMessage = { 
               ...msg, 
-              content: streamingMessageRef.current,
+              content: streamingMessageContentRef.current.get(data.messageId) || '',
               isStreaming: isComplete ? false : msg.isStreaming
             };
             console.log('Updated message content length:', updatedMessage.content.length);
@@ -362,7 +367,8 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
         }
         return msg;
       }));
-      streamingMessageRef.current = '';
+      // Clean up streaming content for this message
+      streamingMessageContentRef.current.delete(data.messageId);
       setIsProcessing(false);
       setCurrentMessageId(null);
     });
@@ -375,14 +381,15 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
         const updated = prev.map(msg => {
           if (msg.id === data.messageId) {
             console.log('Found message to complete:', msg.id, 'current content length:', msg.content.length);
-            console.log('streamingMessageRef.current length:', streamingMessageRef.current.length);
+            const streamingContent = streamingMessageContentRef.current.get(data.messageId) || '';
+            console.log('streamingContent length:', streamingContent.length);
             
             // For existing messages, always use the message content (it should already be set)
-            // For new messages, use streamingMessageRef content
+            // For new messages, use streaming content
             let finalContent = msg.content;
-            if (msg.content.length === 0 && streamingMessageRef.current.length > 0) {
-              finalContent = streamingMessageRef.current;
-              console.log('Using streamingMessageRef content for empty message');
+            if (msg.content.length === 0 && streamingContent.length > 0) {
+              finalContent = streamingContent;
+              console.log('Using streaming content for empty message');
             } else if (msg.content.length > 0) {
               console.log('Using existing message content');
             }
@@ -400,9 +407,9 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
         return updated;
       });
       
-      // Only clear streamingMessageRef if we're not restoring an existing session
+      // Clean up streaming content for this message if we're not restoring
       if (!isRestoringExistingSessionRef.current) {
-        streamingMessageRef.current = '';
+        streamingMessageContentRef.current.delete(data.messageId);
       }
       setCurrentMessageId(null);
       setIsProcessing(false);
@@ -428,11 +435,63 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
       }
     });
     
+    eventSource.addEventListener('tool-start', (event) => {
+      const data = JSON.parse(event.data);
+      console.log('tool-start event received:', data);
+      
+      // First, end any currently streaming assistant message
+      const currentStreamingMessageId = currentMessageId;
+      if (currentStreamingMessageId) {
+        console.log('Ending streaming message due to tool start:', currentStreamingMessageId);
+        setMessages(prev => prev.map(msg => {
+          if (msg.id === currentStreamingMessageId && msg.isStreaming) {
+            console.log('Setting isStreaming to false for message:', msg.id);
+            // Generate suggested responses based on the current content
+            const suggestedResponses = generateSuggestedResponses(msg.content);
+            return { ...msg, isStreaming: false, suggestedResponses };
+          }
+          return msg;
+        }));
+        // Clean up streaming content for this message
+        streamingMessageContentRef.current.delete(currentStreamingMessageId);
+        setIsProcessing(false);
+        setCurrentMessageId(null);
+      }
+      
+      // Create a tool message with running status
+      const toolMessageId = data.toolId || `tool-${Date.now()}`;
+      const toolMessage: ClaudeMessage = {
+        id: toolMessageId,
+        role: 'tool',
+        content: '', // Tool messages don't need content as they use specialized fields
+        timestamp: new Date(),
+        name: data.name,
+        args: data.args,
+        status: 'running',
+        executionTime: undefined
+      };
+      
+      setMessages(prev => {
+        // Check if this tool message already exists
+        if (prev.some(msg => msg.id === toolMessageId)) {
+          // Update existing tool message
+          return prev.map(msg => 
+            msg.id === toolMessageId
+              ? { ...msg, ...toolMessage }
+              : msg
+          );
+        } else {
+          // Add new tool message
+          return [...prev, toolMessage];
+        }
+      });
+    });
+    
     eventSource.addEventListener('tool-execution', (event) => {
       const data = JSON.parse(event.data);
       console.log('tool-execution event received:', data);
       
-      // Create a tool message
+      // Update the tool message with completion status
       const toolMessageId = data.toolExecution.id || `tool-${Date.now()}`;
       const toolMessage: ClaudeMessage = {
         id: toolMessageId,
@@ -451,11 +510,11 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
           // Update existing tool message
           return prev.map(msg => 
             msg.id === toolMessageId
-              ? { ...msg, ...toolMessage }
+              ? { ...msg, ...toolMessage, status: 'complete', executionTime: data.toolExecution.executionTime }
               : msg
           );
         } else {
-          // Add new tool message
+          // Add new tool message if it doesn't exist (backwards compatibility)
           return [...prev, toolMessage];
         }
       });

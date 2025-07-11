@@ -46,9 +46,8 @@ test.describe('Feedback Feature', () => {
     await page.click('[data-testid="message-complete"] >> text=Leave feedback');
     
     // Check dialog appears
-    await expect(page.locator('h2:has-text("Leave Feedback")')).toBeVisible();
-    await expect(page.locator('text=What did you expect to happen?')).toBeVisible();
-    await expect(page.locator('text=What actually happened?')).toBeVisible();
+    await expect(page.locator('h2:has-text("Leave feedback")')).toBeVisible();
+    await expect(page.locator('text=Describe your feedback')).toBeVisible();
     await expect(page.locator('text=A screenshot will be included automatically')).toBeVisible();
   });
 
@@ -58,18 +57,18 @@ test.describe('Feedback Feature', () => {
     // Open feedback dialog
     await page.click('[data-testid="message-complete"] >> text=Leave feedback');
     
-    // Try to submit without filling fields
-    await page.click('button:has-text("Submit Feedback")');
+    // Try to submit without filling the textarea
+    await page.click('button:has-text("Submit feedback")');
     
     // Should show validation error
-    await expect(page.locator('text=Please describe what you expected to happen')).toBeVisible();
+    await expect(page.locator('text=Please provide your feedback')).toBeVisible();
     
-    // Fill only one field
-    await page.fill('textarea[placeholder*="expected behavior"]', 'Expected behavior');
-    await page.click('button:has-text("Submit Feedback")');
+    // Fill the textarea
+    await page.fill('textarea', 'Test feedback content');
     
-    // Should show validation error for second field
-    await expect(page.locator('text=Please describe what actually happened')).toBeVisible();
+    // Should be able to submit now
+    const submitButton = page.locator('button:has-text("Submit feedback")');
+    await expect(submitButton).toBeEnabled();
   });
 
   test('should capture screenshot when feedback is initiated', async ({ page }) => {
@@ -106,19 +105,20 @@ test.describe('Feedback Feature', () => {
     await page.click('[data-testid="message-complete"] >> text=Leave feedback');
     
     // Fill feedback form
-    await page.fill('textarea[placeholder*="expected behavior"]', 'Claude should understand the context');
-    await page.fill('textarea[placeholder*="actually happened"]', 'Claude gave an unrelated response');
+    await page.fill('textarea', 'What happened: Claude gave an unrelated response\nWhat I expected: Claude should understand the context');
     
     // Submit feedback
-    await page.click('button:has-text("Submit Feedback")');
+    await page.click('button:has-text("Submit feedback")');
     
     // Wait for submission
     const feedbackReq = await feedbackPromise;
     const feedbackData = feedbackReq.postDataJSON();
     
-    // Verify feedback data structure
-    expect(feedbackData).toHaveProperty('expectedBehavior', 'Claude should understand the context');
-    expect(feedbackData).toHaveProperty('actualBehavior', 'Claude gave an unrelated response');
+    // Verify feedback data structure - the component should parse the input
+    expect(feedbackData).toHaveProperty('expectedBehavior');
+    expect(feedbackData).toHaveProperty('actualBehavior');
+    expect(feedbackData.expectedBehavior).toContain('Claude should understand the context');
+    expect(feedbackData.actualBehavior).toContain('Claude gave an unrelated response');
     expect(feedbackData).toHaveProperty('sessionId');
     expect(feedbackData).toHaveProperty('repoName', 'hello-world-1');
     expect(feedbackData).toHaveProperty('projectId');
@@ -153,9 +153,8 @@ test.describe('Feedback Feature', () => {
     
     // Submit feedback
     await page.click('[data-testid="message-complete"] >> text=Leave feedback');
-    await page.fill('textarea[placeholder*="expected behavior"]', 'Test expectation');
-    await page.fill('textarea[placeholder*="actually happened"]', 'Test actual');
-    await page.click('button:has-text("Submit Feedback")');
+    await page.fill('textarea', 'What happened: Test actual\nWhat I expected: Test expectation');
+    await page.click('button:has-text("Submit feedback")');
     
     // Check success dialog
     await expect(page.locator('h2:has-text("Feedback Submitted")')).toBeVisible();
@@ -175,11 +174,10 @@ test.describe('Feedback Feature', () => {
     await page.click('button:has-text("Leave feedback"):near(button:has-text("Close Session"))');
     
     // Fill feedback form
-    await page.fill('textarea[placeholder*="expected behavior"]', 'Session should work properly');
-    await page.fill('textarea[placeholder*="actually happened"]', 'Session had issues');
+    await page.fill('textarea', 'What happened: Session had issues\nWhat I expected: Session should work properly');
     
     // Submit feedback
-    await page.click('button:has-text("Submit Feedback")');
+    await page.click('button:has-text("Submit feedback")');
     
     // Wait for submission
     const feedbackReq = await feedbackPromise;
@@ -229,9 +227,8 @@ test.describe('Feedback Feature', () => {
     
     // Submit feedback
     await page.click('[data-testid="message-complete"] >> text=Leave feedback');
-    await page.fill('textarea[placeholder*="expected behavior"]', 'Test without screenshot');
-    await page.fill('textarea[placeholder*="actually happened"]', 'Screenshot failed but feedback works');
-    await page.click('button:has-text("Submit Feedback")');
+    await page.fill('textarea', 'What happened: Screenshot failed but feedback works\nWhat I expected: Test without screenshot');
+    await page.click('button:has-text("Submit feedback")');
     
     // Should still succeed
     await expect(page.locator('h2:has-text("Feedback Submitted")')).toBeVisible();
@@ -257,9 +254,8 @@ test.describe('Feedback Feature', () => {
     await userMessage.locator('text=Leave feedback').click();
     
     // Submit feedback
-    await page.fill('textarea[placeholder*="expected behavior"]', 'Test');
-    await page.fill('textarea[placeholder*="actually happened"]', 'Test');
-    await page.click('button:has-text("Submit Feedback")');
+    await page.fill('textarea', 'Test feedback for message context');
+    await page.click('button:has-text("Submit feedback")');
     
     // Check feedback data
     const feedbackReq = await feedbackPromise;

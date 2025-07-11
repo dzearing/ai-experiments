@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContextV2';
-import { AnimatedTransition } from './AnimatedTransition';
+import { DropdownTransition } from './DropdownTransition';
 
 export function AuthAvatar() {
   const { authState, activeAccount, signInWithGitHub, signOut, switchAccount } = useAuth();
@@ -79,13 +79,11 @@ export function AuthAvatar() {
       </button>
 
       {/* Dropdown Menu */}
-      {isOpen && (
-        <AnimatedTransition transitionKey="auth-dropdown">
-          <div className={`
-            absolute right-0 mt-2 w-80 
-            bg-white dark:bg-neutral-800 ${styles.cardBorder} border ${styles.borderRadius}
-            ${styles.cardShadow} overflow-hidden z-50
-          `}>
+      <DropdownTransition isOpen={isOpen} className="absolute right-0 mt-2 w-80 origin-top-right z-50">
+        <div className={`
+          bg-white dark:bg-neutral-800 ${styles.cardBorder} border ${styles.borderRadius}
+          ${styles.cardShadow} overflow-hidden
+        `}>
             {/* Header */}
             <div className={`px-4 py-3 ${styles.contentBg} border-b ${styles.contentBorder}`}>
               <h3 className={`font-semibold ${styles.headingColor}`}>GitHub Accounts</h3>
@@ -172,9 +170,8 @@ export function AuthAvatar() {
                 Add GitHub Account
               </button>
             </div>
-          </div>
-        </AnimatedTransition>
-      )}
+        </div>
+      </DropdownTransition>
     </div>
   );
 }

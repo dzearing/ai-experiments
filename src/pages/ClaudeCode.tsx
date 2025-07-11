@@ -13,7 +13,6 @@ import { ProgressIndicator } from '../components/chat/ProgressIndicator';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { DancingBubbles } from '../components/ui/DancingBubbles';
 import { FeedbackDialog } from '../components/FeedbackDialog';
-import { FeedbackSuccessDialog } from '../components/FeedbackSuccessDialog';
 import { useFeedback } from '../hooks/useFeedback';
 import type { ClaudeMode } from '../contexts/ClaudeCodeContext';
 
@@ -73,14 +72,11 @@ function ClaudeCodeContent() {
   // Set up session-level feedback
   const {
     showDialog: showSessionFeedback,
-    showSuccess: showSessionSuccess,
     isSubmitting: isSubmittingFeedback,
     error: feedbackError,
-    feedbackId: sessionFeedbackId,
     openFeedback: openSessionFeedback,
     closeFeedback: closeSessionFeedback,
-    submitFeedback: submitSessionFeedback,
-    closeSuccess: closeSessionSuccess
+    submitFeedback: submitSessionFeedback
   } = useFeedback({
     sessionId: sessionId || '',
     repoName: repoName || '',
@@ -123,6 +119,12 @@ function ClaudeCodeContent() {
   const handleSubmit = useCallback(async (message: string) => {
     if (!message.trim() || isSubmitting || !isConnected) return;
     
+    // Check if user is approving a plan
+    if (mode === 'plan' && message.toLowerCase().includes('yes') && message.toLowerCase().includes('proceed')) {
+      // Switch to execution mode
+      setMode('default');
+    }
+    
     setIsSubmitting(true);
     
     try {
@@ -132,11 +134,16 @@ function ClaudeCodeContent() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [isSubmitting, isConnected, sendMessage]);
+  }, [isSubmitting, isConnected, sendMessage, mode, setMode]);
   
   const handleModeChange = useCallback((newMode: ClaudeMode) => {
     setMode(newMode);
   }, [setMode]);
+
+  const handleCancel = useCallback(() => {
+    setIsSubmitting(false);
+    cancelMessage();
+  }, [cancelMessage]);
   
   const handleCloseSession = useCallback(() => {
     setShowCloseConfirm(true);
@@ -291,7 +298,7 @@ function ClaudeCodeContent() {
             startTime={messages.find(m => m.isStreaming)?.startTime || new Date()}
             tokenCount={messages.find(m => m.isStreaming)?.tokenCount}
             status="Processing"
-            onCancel={cancelMessage}
+            onCancel={handleCancel}
           />
         ) : (
           <ClaudeInput
@@ -316,7 +323,7 @@ function ClaudeCodeContent() {
         variant="danger"
       />
       
-      {/* Session feedback dialogs */}
+      {/* Session feedback dialog */}
       <FeedbackDialog
         isOpen={showSessionFeedback}
         onClose={closeSessionFeedback}
@@ -324,14 +331,6 @@ function ClaudeCodeContent() {
         isSubmitting={isSubmittingFeedback}
         error={feedbackError}
       />
-      
-      {sessionFeedbackId && (
-        <FeedbackSuccessDialog
-          isOpen={showSessionSuccess}
-          onClose={closeSessionSuccess}
-          feedbackId={sessionFeedbackId}
-        />
-      )}
     </div>
   );
 }
