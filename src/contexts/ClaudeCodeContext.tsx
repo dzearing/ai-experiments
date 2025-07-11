@@ -706,7 +706,7 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
         const response = await fetch('http://localhost:3000/api/claude/code/start', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ projectId, projectPath, repoName, userName, userEmail })
+          body: JSON.stringify({ projectId, projectPath, repoName, userName, userEmail, initialMode: mode })
         });
         
         if (!response.ok) {
@@ -764,7 +764,7 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
     
     sessionInitializationRef.current = initPromise;
     return initPromise;
-  }, [setupSSEConnection]);
+  }, [setupSSEConnection, mode]);
   
   const sendMessage = useCallback(async (content: string) => {
     if (!sessionId || !content.trim()) return;

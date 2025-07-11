@@ -67,6 +67,110 @@ export const ToolExecution = memo(function ToolExecution({
     return text.length > 80 ? text.substring(0, 80) + '...' : text;
   };
   
+  // Helper function to create VS Code link
+  const createVSCodeLink = (filePath: string, key: string, workingDir?: string) => {
+    // Ensure the path is absolute
+    let absolutePath = filePath;
+    if (!filePath.startsWith('/')) {
+      // If we have a working directory context, prepend it
+      if (workingDir) {
+        absolutePath = `${workingDir}/${filePath}`;
+      } else {
+        // Otherwise, just prepend a slash to make it absolute from root
+        absolutePath = `/${filePath}`;
+      }
+    }
+    
+    const vscodeUrl = `vscode://file${absolutePath}`;
+    return (
+      <a
+        key={key}
+        href={vscodeUrl}
+        className="hover:underline text-blue-500 dark:text-blue-400"
+        onClick={(e) => {
+          e.preventDefault();
+          window.location.href = vscodeUrl;
+        }}
+        title={`Open in VS Code: ${absolutePath}`}
+      >
+        {filePath}
+      </a>
+    );
+  };
+
+  // Helper function to parse a line and extract file paths
+  const parseLineForFilePaths = (line: string, lineIndex: number, workingDir?: string) => {
+    // Check if line contains a file path (common patterns in git status output)
+    // This pattern captures paths like "packages/apisurf/src/analyzers/analyzeNpmPackageVersions.ts"
+    const filePathPattern = /(?:modified:|new file:|deleted:|renamed:|copied:|updated:|typechange:|added:|untracked:)?\s*((?:[\w\-]+\/)*[\w\-]+\.[\w]+)/g;
+    
+    let lastIndex = 0;
+    const parts: React.ReactNode[] = [];
+    let match;
+    
+    while ((match = filePathPattern.exec(line)) !== null) {
+      // Add text before the match
+      if (match.index > lastIndex) {
+        parts.push(
+          <span key={`text-${lineIndex}-${lastIndex}`}>
+            {line.substring(lastIndex, match.index)}
+          </span>
+        );
+      }
+      
+      // Add the file path as a link
+      const filePath = match[1];
+      parts.push(createVSCodeLink(filePath, `link-${lineIndex}-${match.index}`, workingDir));
+      
+      lastIndex = match.index + match[0].length;
+    }
+    
+    // Add remaining text after the last match
+    if (lastIndex < line.length) {
+      parts.push(
+        <span key={`text-${lineIndex}-end`}>
+          {line.substring(lastIndex)}
+        </span>
+      );
+    }
+    
+    // If no matches, return the entire line
+    if (parts.length === 0) {
+      return line || '\u00A0';
+    }
+    
+    return parts;
+  };
+  
+  // Function to get working directory from context
+  const getWorkingDirectory = () => {
+    // Try to get the working directory from the URL params
+    // The repoName in params gives us a clue about the project structure
+    if (repoName && projectId) {
+      // Construct the likely working directory based on the project structure
+      // This follows the pattern: /home/{user}/workspace/projects/{project-name}/repos/{repo-name}
+      const projectName = projectId.replace('project--home-dzearing-workspace-projects-', '');
+      return `/home/dzearing/workspace/projects/${projectName}/repos/${repoName}`;
+    }
+    return undefined;
+  };
+  
+  // Function to render bash output with clickable file paths
+  const renderBashOutput = (text: string) => {
+    const lines = text.split('\n');
+    const workingDir = getWorkingDirectory();
+    
+    return (
+      <div className="space-y-0.5">
+        {lines.map((line, index) => (
+          <div key={index}>
+            {parseLineForFilePaths(line, index, workingDir)}
+          </div>
+        ))}
+      </div>
+    );
+  };
+  
   // Format tool name to be more user-friendly
   const formatToolName = (toolName: string): string => {
     const nameMap: Record<string, string> = {
@@ -567,6 +671,10 @@ export const ToolExecution = memo(function ToolExecution({
                       return <pre className="whitespace-pre-wrap font-mono">{outputInfo.text}</pre>;
                     }
                   })()}
+                </div>
+              ) : name === 'Bash' ? (
+                <div className={`text-xs ${styles.contentBg} ${styles.borderRadius} p-2 overflow-x-auto ${styles.textColor} font-mono`}>
+                  {renderBashOutput(outputInfo.text)}
                 </div>
               ) : (
                 <pre className={`text-xs ${styles.contentBg} ${styles.borderRadius} p-2 overflow-x-auto ${styles.textColor} whitespace-pre-wrap font-mono`}>

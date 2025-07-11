@@ -51,7 +51,7 @@ class SessionManager {
     }
   }
 
-  createSession({ sessionId, projectId, repoName, userName, projectPath }) {
+  createSession({ sessionId, projectId, repoName, userName, projectPath, initialMode }) {
     const session = {
       sessionId,
       projectId,
@@ -68,7 +68,8 @@ class SessionManager {
       tokenUsage: {
         input: 0,
         output: 0
-      }
+      },
+      initialMode: initialMode || 'default'
     };
 
     this.sessions.set(sessionId, session);

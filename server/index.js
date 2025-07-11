@@ -3604,7 +3604,7 @@ const SESSION_CREATION_DEBOUNCE_MS = 2000; // 2 seconds
 
 // Initialize Claude Code session
 app.post('/api/claude/code/start', async (req, res) => {
-  const { projectId, projectPath, repoName, userName, userEmail } = req.body;
+  const { projectId, projectPath, repoName, userName, userEmail, initialMode } = req.body;
   
   // Create a unique key for this session request (needed for finally block)
   const requestKey = `${projectPath || 'unknown'}-${repoName || 'unknown'}-${userName || 'anonymous'}`;
@@ -3799,7 +3799,8 @@ app.post('/api/claude/code/start', async (req, res) => {
       projectPath,
       repoName: reservedRepo,
       userName,
-      userEmail
+      userEmail,
+      initialMode
     });
     
     logger.debug('Created session:', {
@@ -4800,6 +4801,10 @@ app.get('/api/claude/code/stream', (req, res) => {
         // Get project info
         const projectName = path.basename(projectPath);
         
+        // Get the mode from the session
+        const sessionMode = session.initialMode || 'default';
+        const isPlanMode = sessionMode === 'plan';
+        
         // Create greeting prompt
         const greetingPrompt = `Generate a friendly, personalized greeting for a Claude Code session. Keep it brief (1-2 sentences), warm, and motivating.
 
@@ -4808,19 +4813,31 @@ Context:
 - Repository: ${repoName}
 - Project: ${projectName}
 - Current time: ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+- Mode: ${isPlanMode ? 'PLAN MODE' : 'default mode'}
 
 The greeting should:
 - Welcome the user by name (if available)
 - Mention the repository they're working in
+${isPlanMode ? '- Mention that you\'re in PLAN MODE where you can only read and analyze code, not make changes' : ''}
 - Be encouraging and ready to help
-- End with something like "What would you like to work on?" or similar
+- End with something like "What would you like to ${isPlanMode ? 'explore or plan' : 'work on'}?" or similar
 - Feel fresh and not repetitive
 - Occasionally use relevant developer-friendly phrases or mild humor
 
+${isPlanMode ? `Important: Since we're in PLAN MODE, mention that you can:
+- Read files to understand the current state
+- Search for relevant code
+- Help plan changes
+- But cannot make edits or execute commands` : ''}
+
 Examples of good greetings:
-- "Hey Alex! Ready to dive into the auth-service repo? Let's build something great today!"
+${isPlanMode ? 
+`- "Hey Alex! Ready to explore the auth-service repo in plan mode? I can help you understand the codebase and plan your changes."
+- "Good morning Sarah! I'm here to help you analyze the frontend-app repo. In plan mode, I'll read files and help you plan your approach."
+- "Welcome back, Jordan! Let's explore the api-gateway repo together. I'm in plan mode, so I'll help you understand the code and plan your next steps."` :
+`- "Hey Alex! Ready to dive into the auth-service repo? Let's build something great today!"
 - "Good morning Sarah! I see you're working on the frontend-app repo. What feature shall we tackle?"
-- "Welcome back, Jordan! Time to make some magic happen in the api-gateway repo. What's on the agenda?"
+- "Welcome back, Jordan! Time to make some magic happen in the api-gateway repo. What's on the agenda?"`}
 
 Generate a greeting now:`;
 

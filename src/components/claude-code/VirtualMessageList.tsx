@@ -31,10 +31,17 @@ export function VirtualMessageList({ messages, scrollContainerRef, onSuggestedRe
   
   // Group consecutive tool messages
   const groupedMessages = useMemo<GroupedMessage[]>(() => {
+    // First, sort messages by timestamp to ensure consistent order
+    const sortedMessages = [...messages].sort((a, b) => {
+      const timeA = new Date(a.timestamp).getTime();
+      const timeB = new Date(b.timestamp).getTime();
+      return timeA - timeB;
+    });
+    
     const grouped: GroupedMessage[] = [];
     let currentToolGroup: ClaudeMessageType[] = [];
     
-    messages.forEach((message) => {
+    sortedMessages.forEach((message) => {
       if (message.role === 'tool') {
         currentToolGroup.push(message);
       } else {

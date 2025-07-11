@@ -284,7 +284,7 @@ function ClaudeCodeContent() {
                     <div className={`text-xs ${styles.mutedText} mb-0.5`}>Changes</div>
                     <div className={`text-sm ${styles.textColor} font-mono`}>
                       {repoStatus.isDirty ? (
-                        <>{repoStatus.changes.modified + repoStatus.changes.added + repoStatus.changes.deleted} Staged, {repoStatus.changes.untracked} Unstaged</>
+                        <>{repoStatus.changes.modified + repoStatus.changes.added + repoStatus.changes.deleted + repoStatus.changes.untracked} Unstaged</>
                       ) : (
                         <>none</>
                       )}

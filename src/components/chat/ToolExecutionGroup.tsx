@@ -39,8 +39,9 @@ export const ToolExecutionGroup = memo(function ToolExecutionGroup({
   
   return (
     <div className={`mx-4 my-2 ${styles.contentBg} ${styles.contentBorder} border ${styles.borderRadius} overflow-hidden`}>
-      <div className={`px-3 py-2 ${styles.mutedText} text-xs font-medium border-b ${styles.contentBorder}`}>
-        {tools.length} tool execution{tools.length === 1 ? '' : 's'}
+      <div className={`px-3 py-2 ${styles.mutedText} text-xs font-medium border-b ${styles.contentBorder} flex justify-between items-center`}>
+        <span>{tools.length} tool execution{tools.length === 1 ? '' : 's'}</span>
+        <FeedbackLink onClick={openFeedback} />
       </div>
       <div className="divide-y divide-gray-200 dark:divide-gray-700 p-4">
         {tools.map((tool) => {
@@ -71,11 +72,6 @@ export const ToolExecutionGroup = memo(function ToolExecutionGroup({
             </div>
           );
         })}
-      </div>
-      
-      {/* Single feedback link for the entire group */}
-      <div className={`px-3 py-2 border-t ${styles.contentBorder}`}>
-        <FeedbackLink onClick={openFeedback} />
       </div>
       
       {/* Feedback dialog */}
