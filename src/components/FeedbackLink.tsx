@@ -13,7 +13,7 @@ export function FeedbackLink({ onClick, className = '' }: FeedbackLinkProps) {
     <button
       onClick={onClick}
       className={`
-        text-sm ${styles.mutedText} hover:${styles.primaryText} 
+        text-xs ${styles.mutedText} hover:${styles.primaryText} 
         transition-colors duration-150 underline-offset-2 hover:underline
         ${className}
       `}

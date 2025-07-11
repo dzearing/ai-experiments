@@ -1,6 +1,10 @@
 import { memo } from 'react';
 import { useTheme } from '../../contexts/ThemeContextV2';
 import { ToolExecution } from './ToolExecution';
+import { FeedbackLink } from '../FeedbackLink';
+import { FeedbackDialog } from '../FeedbackDialog';
+import { useFeedback } from '../../hooks/useFeedback';
+import { useParams } from 'react-router-dom';
 import type { ClaudeMessage } from '../../contexts/ClaudeCodeContext';
 
 interface ToolExecutionGroupProps {
@@ -14,6 +18,22 @@ export const ToolExecutionGroup = memo(function ToolExecutionGroup({
 }: ToolExecutionGroupProps) {
   const { currentStyles } = useTheme();
   const styles = currentStyles;
+  const { projectId, repoName } = useParams<{ projectId: string; repoName: string }>();
+  
+  // Set up feedback for this tool group (use first tool's ID as the messageId)
+  const {
+    showDialog,
+    isSubmitting,
+    error: feedbackError,
+    openFeedback,
+    closeFeedback,
+    submitFeedback
+  } = useFeedback({
+    sessionId: sessionId || '',
+    repoName: repoName || '',
+    projectId: projectId || '',
+    messageId: tools[0]?.id
+  });
   
   if (tools.length === 0) return null;
   
@@ -46,11 +66,26 @@ export const ToolExecutionGroup = memo(function ToolExecutionGroup({
                 data-testid="tool-execution"
                 sessionId={sessionId}
                 messageId={tool.id}
+                hideFeedbackLink={true}
               />
             </div>
           );
         })}
       </div>
+      
+      {/* Single feedback link for the entire group */}
+      <div className={`px-3 py-2 border-t ${styles.contentBorder}`}>
+        <FeedbackLink onClick={openFeedback} />
+      </div>
+      
+      {/* Feedback dialog */}
+      <FeedbackDialog
+        isOpen={showDialog}
+        onClose={closeFeedback}
+        onSubmit={submitFeedback}
+        isSubmitting={isSubmitting}
+        error={feedbackError}
+      />
     </div>
   );
 });

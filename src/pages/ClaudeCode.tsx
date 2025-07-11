@@ -4,6 +4,7 @@ import { useTheme } from '../contexts/ThemeContextV2';
 import { useLayout } from '../contexts/LayoutContext';
 import { useApp } from '../contexts/AppContext';
 import { useWorkspace } from '../contexts/WorkspaceContext';
+import { useRealtimeSubscription } from '../contexts/SubscriptionContext';
 import { ClaudeCodeProvider, useClaudeCode } from '../contexts/ClaudeCodeContext';
 import { VirtualMessageList } from '../components/claude-code/VirtualMessageList';
 import { ClaudeInput } from '../components/claude-code/ClaudeInput';
@@ -14,7 +15,31 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { DancingBubbles } from '../components/ui/DancingBubbles';
 import { FeedbackDialog } from '../components/FeedbackDialog';
 import { useFeedback } from '../hooks/useFeedback';
+import { Button } from '../components/ui/Button';
 import type { ClaudeMode } from '../contexts/ClaudeCodeContext';
+
+interface RepoStatus {
+  resourceId: string;
+  repoPath: string;
+  branch: string;
+  isDirty: boolean;
+  changes: {
+    modified: number;
+    added: number;
+    deleted: number;
+    untracked: number;
+  };
+  ahead: number;
+  behind: number;
+  lastCommit: {
+    hash: string;
+    subject: string;
+    author: string;
+    relativeTime: string;
+  } | null;
+  timestamp: string;
+  error?: string;
+}
 
 export function ClaudeCode() {
   return (
@@ -31,6 +56,7 @@ function ClaudeCodeContent() {
   const { setHeaderContent } = useLayout();
   const { projects } = useApp();
   const { projects: workspaceProjects } = useWorkspace();
+  const { subscribe } = useRealtimeSubscription();
   const {
     messages,
     mode,
@@ -58,9 +84,21 @@ function ClaudeCodeContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [showTodos, setShowTodos] = useState(true);
+  const [repoStatus, setRepoStatus] = useState<RepoStatus | null>(null);
   
   const project = projects.find(p => p.id === projectId);
   const workspaceProject = workspaceProjects.find(p => p.name === project?.name);
+  
+  // Subscribe to repo status updates
+  useEffect(() => {
+    if (!workspaceProject?.path || !repoName) return;
+    
+    const unsubscribe = subscribe('repo-status', `${workspaceProject.path}/${repoName}`, (status: RepoStatus) => {
+      setRepoStatus(status);
+    });
+    
+    return unsubscribe;
+  }, [workspaceProject?.path, repoName, subscribe]);
   
   // Re-show todos when new todos arrive
   useEffect(() => {
@@ -182,12 +220,12 @@ function ClaudeCodeContent() {
       <div className={`flex items-center justify-center h-full ${styles.textColor}`}>
         <div className="text-center">
           <p className="text-lg mb-4">Project not found</p>
-          <button
+          <Button
             onClick={() => navigate('/projects')}
-            className={`px-4 py-2 ${styles.primaryButton} ${styles.primaryButtonText} ${styles.buttonRadius}`}
+            variant="primary"
           >
             Back to Projects
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -210,16 +248,16 @@ function ClaudeCodeContent() {
         <div className="text-center max-w-md">
           <p className="text-lg mb-2 text-red-600 dark:text-red-400">Error</p>
           <p className={`${styles.mutedText} mb-4`}>{error}</p>
-          <button
+          <Button
             onClick={() => {
               if (projectId && workspaceProject?.path && repoName) {
                 initializeSession(projectId, workspaceProject.path, repoName);
               }
             }}
-            className={`px-4 py-2 ${styles.primaryButton} ${styles.primaryButtonText} ${styles.buttonRadius}`}
+            variant="primary"
           >
             Retry
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -228,26 +266,50 @@ function ClaudeCodeContent() {
   return (
     <div className="h-full flex flex-col">
       {/* Button Bar */}
-      <div className={`flex items-center justify-between px-4 py-2 border-b ${styles.contentBorder} ${styles.cardBg}`}>
-        <div className="flex items-center gap-2">
-          <span className={`text-sm ${styles.mutedText}`}>Claude Code Session</span>
+      <div className={`flex items-center justify-between px-4 py-3 border-b ${styles.contentBorder} ${styles.cardBg}`}>
+        <div className="flex items-center gap-6">
           {reservedRepo && (
-            <span className={`text-sm ${styles.textColor} font-medium`}>{reservedRepo}</span>
+            <>
+              <div>
+                <div className={`text-xs ${styles.mutedText} mb-0.5`}>Repo</div>
+                <div className={`text-sm ${styles.textColor} font-mono`}>{reservedRepo}</div>
+              </div>
+              {repoStatus && !repoStatus.error && (
+                <>
+                  <div>
+                    <div className={`text-xs ${styles.mutedText} mb-0.5`}>Branch</div>
+                    <div className={`text-sm ${styles.textColor} font-mono`}>{repoStatus.branch}</div>
+                  </div>
+                  <div>
+                    <div className={`text-xs ${styles.mutedText} mb-0.5`}>Changes</div>
+                    <div className={`text-sm ${styles.textColor} font-mono`}>
+                      {repoStatus.isDirty ? (
+                        <>{repoStatus.changes.modified + repoStatus.changes.added + repoStatus.changes.deleted} Staged, {repoStatus.changes.untracked} Unstaged</>
+                      ) : (
+                        <>none</>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </>
           )}
         </div>
         <div className="flex items-center gap-2">
-          <button
+          <Button
             onClick={openSessionFeedback}
-            className={`px-3 py-1.5 text-sm ${styles.buttonRadius} ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor} hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150`}
+            variant="outline"
+            size="sm"
           >
             Leave feedback
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleCloseSession}
-            className={`px-3 py-1.5 text-sm ${styles.buttonRadius} ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor} hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150`}
+            variant="danger"
+            size="sm"
           >
-            Close Session
-          </button>
+            Close session
+          </Button>
         </div>
       </div>
       
@@ -317,9 +379,9 @@ function ClaudeCodeContent() {
         isOpen={showCloseConfirm}
         onCancel={() => setShowCloseConfirm(false)}
         onConfirm={handleConfirmClose}
-        title="Close Claude Code Session"
+        title="Close Claude Code session"
         message="Are you sure you want to close this Claude Code session? This will clear the chat history and release the repository."
-        confirmText="Close Session"
+        confirmText="Close session"
         variant="danger"
       />
       

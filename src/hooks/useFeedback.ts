@@ -119,7 +119,7 @@ export function useFeedback({
       setFeedbackId(id);
       setShowDialog(false);
       // Show toast notification instead of success dialog
-      showToast(`Feedback submitted successfully! ID: ${id}`, 'success', 5000);
+      showToast('Feedback submitted successfully!', 'success', 5000);
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to submit feedback';

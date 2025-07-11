@@ -17,6 +17,7 @@ export interface ToolExecutionProps {
   'data-testid'?: string;
   sessionId?: string;
   messageId?: string;
+  hideFeedbackLink?: boolean;
 }
 
 export const ToolExecution = memo(function ToolExecution({
@@ -29,10 +30,42 @@ export const ToolExecution = memo(function ToolExecution({
   executionTime,
   'data-testid': dataTestId,
   sessionId,
-  messageId
+  messageId,
+  hideFeedbackLink = false
 }: ToolExecutionProps) {
   const { currentStyles } = useTheme();
   const styles = currentStyles;
+  
+  // Function to render file paths as clickable VS Code links
+  const renderFilePathOrText = (text: string) => {
+    // Check if the entire text is a file path
+    const trimmedText = text.trim();
+    const singlePathMatch = trimmedText.match(/^((?:\/[\w.-]+)+(?:\/[\w.-]+)*|(?:\.\/)?[\w.-]+(?:\/[\w.-]+)+)(?:\:(\d+))?$/);
+    
+    if (singlePathMatch) {
+      const [, path, lineNumber] = singlePathMatch;
+      const vscodeUrl = lineNumber 
+        ? `vscode://file${path}:${lineNumber}:1`
+        : `vscode://file${path}`;
+      
+      return (
+        <a 
+          href={vscodeUrl}
+          className="hover:underline text-blue-500 dark:text-blue-400"
+          onClick={(e) => {
+            e.preventDefault();
+            window.location.href = vscodeUrl;
+          }}
+          title={`Open in VS Code: ${path}${lineNumber ? `:${lineNumber}` : ''}`}
+        >
+          {trimmedText}
+        </a>
+      );
+    }
+    
+    // For other text, show truncated version
+    return text.length > 80 ? text.substring(0, 80) + '...' : text;
+  };
   
   // Format tool name to be more user-friendly
   const formatToolName = (toolName: string): string => {
@@ -192,13 +225,13 @@ export const ToolExecution = memo(function ToolExecution({
         <div className={`flex items-center gap-1.5 ${getStatusColor()} text-xs mt-0.5`} data-testid="tool-status">
           {getStatusIcon()}
         </div>
-        <div className="flex-1">
-          <div className="flex items-baseline">
-            <div className="flex items-baseline gap-2">
-              <span className={`font-medium ${styles.textColor}`} data-testid="tool-name">{formatToolName(name)}</span>
-              {args && name !== 'TodoWrite' && name !== 'Edit' && name !== 'MultiEdit' && name !== 'Grep' && name !== 'Glob' && name !== 'LS' && name !== 'Task' && (
-                <span className={`text-sm ${styles.mutedText} truncate max-w-md font-mono`} title={args}>
-                  {args.length > 80 ? args.substring(0, 80) + '...' : args}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline justify-between gap-4">
+            <div className="flex items-baseline gap-2 min-w-0 flex-1">
+              <span className={`font-medium ${styles.textColor} flex-shrink-0`} data-testid="tool-name">{formatToolName(name)}</span>
+              {args && name !== 'TodoWrite' && name !== 'Edit' && name !== 'MultiEdit' && name !== 'Grep' && name !== 'Glob' && name !== 'LS' && name !== 'Task' && name !== 'Read' && name !== 'Write' && (
+                <span className={`text-sm ${styles.mutedText} truncate font-mono`} title={args}>
+                  {renderFilePathOrText(args)}
                 </span>
               )}
               {args && name === 'TodoWrite' && (
@@ -219,17 +252,64 @@ export const ToolExecution = memo(function ToolExecution({
                   {(() => {
                     try {
                       const argsData = typeof args === 'string' ? JSON.parse(args) : args;
-                      if (name === 'Edit') {
-                        const filePath = argsData.file_path || '';
+                      const filePath = argsData.file_path || '';
+                      
+                      if (filePath) {
+                        const vscodeUrl = `vscode://file${filePath}`;
                         const fileName = filePath.split('/').pop() || filePath;
-                        return fileName;
-                      } else {
-                        // MultiEdit
-                        const filePath = argsData.file_path || '';
-                        const fileName = filePath.split('/').pop() || filePath;
-                        const editCount = argsData.edits?.length || 0;
-                        return `${fileName} (${editCount} edit${editCount === 1 ? '' : 's'})`;
+                        const displayText = name === 'MultiEdit' && argsData.edits?.length 
+                          ? `${fileName} (${argsData.edits.length} edit${argsData.edits.length === 1 ? '' : 's'})`
+                          : fileName;
+                        
+                        return (
+                          <a 
+                            href={vscodeUrl}
+                            className="hover:underline text-blue-500 dark:text-blue-400"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              window.location.href = vscodeUrl;
+                            }}
+                            title={`Open in VS Code: ${filePath}`}
+                          >
+                            {displayText}
+                          </a>
+                        );
                       }
+                      
+                      return args.length > 80 ? args.substring(0, 80) + '...' : args;
+                    } catch {
+                      return args.length > 80 ? args.substring(0, 80) + '...' : args;
+                    }
+                  })()}
+                </span>
+              )}
+              {args && (name === 'Read' || name === 'Write') && (
+                <span className={`text-sm ${styles.mutedText} font-mono`}>
+                  {(() => {
+                    try {
+                      const argsData = typeof args === 'string' ? JSON.parse(args) : args;
+                      const filePath = argsData.file_path || '';
+                      
+                      if (filePath) {
+                        const vscodeUrl = `vscode://file${filePath}`;
+                        const fileName = filePath.split('/').pop() || filePath;
+                        
+                        return (
+                          <a 
+                            href={vscodeUrl}
+                            className="hover:underline text-blue-500 dark:text-blue-400"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              window.location.href = vscodeUrl;
+                            }}
+                            title={`Open in VS Code: ${filePath}`}
+                          >
+                            {fileName}
+                          </a>
+                        );
+                      }
+                      
+                      return args.length > 80 ? args.substring(0, 80) + '...' : args;
                     } catch {
                       return args.length > 80 ? args.substring(0, 80) + '...' : args;
                     }
@@ -309,7 +389,7 @@ export const ToolExecution = memo(function ToolExecution({
               )}
             </div>
             {(status === 'running' || status === 'complete' || executionTime) && (
-              <span className={`text-xs ${styles.mutedText} ml-auto`}>
+              <span className={`text-xs ${styles.mutedText} flex-shrink-0`}>
                 {status === 'running' 
                   ? formatDuration(runningDuration)
                   : formatDuration(executionTime || runningDuration || 0)
@@ -506,8 +586,8 @@ export const ToolExecution = memo(function ToolExecution({
         </div>
       </div>
       
-      {/* Feedback link - only show if we have session context */}
-      {sessionId && status === 'complete' && (
+      {/* Feedback link - only show if we have session context and not hidden */}
+      {sessionId && status === 'complete' && !hideFeedbackLink && (
         <div className="mt-2 px-3">
           <FeedbackLink onClick={openFeedback} />
         </div>
