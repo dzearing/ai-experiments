@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work Items - Kanban View</title>
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --purple-color: #8b5cf6;
+            --indigo-color: #6366f1;
+            
+            /* Light theme */
+            --bg-color: #f9fafb;
+            --surface-color: #ffffff;
+            --surface-secondary: #f3f4f6;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --text-muted: #9ca3af;
+            --border-color: #e5e7eb;
+            --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.08);
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #1f2937;
+            --surface-color: #374151;
+            --surface-secondary: #4b5563;
+            --text-primary: #f9fafb;
+            --text-secondary: #d1d5db;
+            --text-muted: #9ca3af;
+            --border-color: #6b7280;
+            --shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Header */
+        .header {
+            background: var(--surface-color);
+            height: 64px;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            box-shadow: var(--shadow);
+            position: relative;
+            z-index: 100;
+        }
+
+        .header-brand {
+            font-size: 20px;
+            font-weight: 600;
+            margin-right: 40px;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .breadcrumb .active {
+            color: var(--text-primary);
+        }
+
+        .theme-toggle {
+            margin-left: auto;
+            background: var(--surface-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px 12px;
+            cursor: pointer;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        /* Page Header */
+        .page-header {
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-right: 40px;
+        }
+
+        .view-toggle {
+            display: flex;
+            gap: 12px;
+        }
+
+        .view-btn {
+            padding: 8px 16px;
+            border-radius: 16px;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .view-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .view-btn:not(.active) {
+            background: var(--surface-color);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .new-item-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* Filter Bar */
+        .filter-bar {
+            background: var(--surface-color);
+            margin: 0 24px;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            background: var(--surface-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px 12px;
+            width: 300px;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .filter-select {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 13px;
+            color: var(--text-primary);
+            min-width: 100px;
+        }
+
+        /* Kanban Board */
+        .kanban-board {
+            padding: 24px;
+            display: flex;
+            gap: 16px;
+            min-height: 660px;
+            overflow-x: auto;
+        }
+
+        .kanban-column {
+            background: var(--surface-secondary);
+            border-radius: 8px;
+            min-width: 340px;
+            height: fit-content;
+            position: relative;
+        }
+
+        .column-header {
+            background: var(--surface-color);
+            margin: 16px;
+            padding: 12px 16px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .column-title {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .column-count {
+            background: var(--border-color);
+            color: var(--text-secondary);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+
+        .column-count.in-progress {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .column-count.review {
+            background: #e0e7ff;
+            color: #4338ca;
+        }
+
+        .column-count.done {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .column-items {
+            padding: 0 16px 16px;
+            min-height: 100px;
+        }
+
+        /* Work Item Cards */
+        .work-item {
+            background: var(--surface-color);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: var(--shadow-card);
+            cursor: move;
+            border-left: 4px solid transparent;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .work-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .work-item.dragging {
+            opacity: 0.5;
+            transform: rotate(5deg);
+        }
+
+        .work-item.high-priority {
+            border-left-color: var(--error-color);
+        }
+
+        .work-item.medium-priority {
+            border-left-color: var(--warning-color);
+        }
+
+        .work-item.low-priority {
+            border-left-color: var(--text-muted);
+        }
+
+        .work-item.completed {
+            opacity: 0.8;
+        }
+
+        .work-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .work-item-id {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .priority-badge {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 500;
+        }
+
+        .priority-high {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .priority-medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .priority-low {
+            background: var(--border-color);
+            color: #374151;
+        }
+
+        .work-item-title {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .work-item-title.completed {
+            text-decoration: line-through;
+            color: var(--text-secondary);
+        }
+
+        .work-item-description {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .work-item-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .work-item-tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 500;
+        }
+
+        .tag-frontend {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .tag-backend {
+            background: #e0e7ff;
+            color: #4338ca;
+        }
+
+        .tag-testing {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .tag-pr {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .assignee {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .assignee-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 500;
+            color: white;
+        }
+
+        .assignee-text {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--border-color);
+            border-radius: 3px;
+            margin: 12px 0 8px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary-color);
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        /* Drag and Drop */
+        .column-items.drag-over {
+            background: rgba(59, 130, 246, 0.1);
+            border: 2px dashed var(--primary-color);
+            border-radius: 8px;
+        }
+
+        /* Quick Add */
+        .quick-add {
+            position: fixed;
+            bottom: 24px;
+            left: 24px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            box-shadow: var(--shadow);
+            z-index: 50;
+        }
+
+        /* Sprint Info */
+        .sprint-info {
+            background: #1f2937;
+            color: white;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 40;
+        }
+
+        .sprint-progress {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .progress-bar-sprint {
+            width: 200px;
+            height: 4px;
+            background: #374151;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill-sprint {
+            height: 100%;
+            background: var(--success-color);
+            width: 72%;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--surface-color);
+            border-radius: 8px;
+            padding: 24px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--surface-color);
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 24px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--surface-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .kanban-board {
+                flex-direction: column;
+            }
+            
+            .kanban-column {
+                min-width: 100%;
+            }
+            
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-input {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <!-- Header -->
+    <header class="header">
+        <div class="header-brand">Claude Flow</div>
+        <nav class="breadcrumb">
+            <span>Dashboard</span>
+            <span>/</span>
+            <span>Projects</span>
+            <span>/</span>
+            <span>E-commerce Platform</span>
+            <span>/</span>
+            <span class="active">Work Items</span>
+        </nav>
+        <button class="theme-toggle" id="themeToggle">🌙 Dark Mode</button>
+    </header>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div style="display: flex; align-items: center;">
+            <h1 class="page-title">Work Items</h1>
+            <div class="view-toggle">
+                <button class="view-btn active">Kanban</button>
+                <button class="view-btn">List</button>
+                <button class="view-btn">Timeline</button>
+            </div>
+        </div>
+        <button class="new-item-btn" id="newItemBtn">+ New Work Item</button>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+        <input type="text" class="search-input" placeholder="🔍 Search work items..." id="searchInput">
+        
+        <div class="filter-group">
+            <label class="filter-label">Assignee:</label>
+            <select class="filter-select" id="assigneeFilter">
+                <option value="">All Members</option>
+                <option value="MJ">MJ</option>
+                <option value="AR">AR</option>
+                <option value="TK">TK</option>
+                <option value="SC">SC</option>
+                <option value="unassigned">Unassigned</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label class="filter-label">Priority:</label>
+            <select class="filter-select" id="priorityFilter">
+                <option value="">All</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label class="filter-label">Sprint:</label>
+            <select class="filter-select" id="sprintFilter">
+                <option value="current">Current</option>
+                <option value="next">Next Sprint</option>
+                <option value="backlog">Backlog</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Kanban Board -->
+    <div class="kanban-board">
+        <!-- To Do Column -->
+        <div class="kanban-column" data-status="todo">
+            <div class="column-header">
+                <div class="column-title">To Do</div>
+                <div class="column-count" id="todoCount">4</div>
+            </div>
+            <div class="column-items" id="todoItems"></div>
+        </div>
+
+        <!-- In Progress Column -->
+        <div class="kanban-column" data-status="in-progress">
+            <div class="column-header">
+                <div class="column-title">In Progress</div>
+                <div class="column-count in-progress" id="inProgressCount">2</div>
+            </div>
+            <div class="column-items" id="inProgressItems"></div>
+        </div>
+
+        <!-- In Review Column -->
+        <div class="kanban-column" data-status="review">
+            <div class="column-header">
+                <div class="column-title">In Review</div>
+                <div class="column-count review" id="reviewCount">3</div>
+            </div>
+            <div class="column-items" id="reviewItems"></div>
+        </div>
+
+        <!-- Done Column -->
+        <div class="kanban-column" data-status="done">
+            <div class="column-header">
+                <div class="column-title">Done</div>
+                <div class="column-count done" id="doneCount">14</div>
+            </div>
+            <div class="column-items" id="doneItems"></div>
+        </div>
+    </div>
+
+    <!-- Quick Add Button -->
+    <button class="quick-add" id="quickAddBtn">+ Quick Add</button>
+
+    <!-- Sprint Info Bar -->
+    <div class="sprint-info">
+        <span>Sprint 4: E-commerce MVP</span>
+        <span style="color: #9ca3af;">•</span>
+        <span>5 days remaining</span>
+        <span style="color: #9ca3af;">•</span>
+        <span>23 story points completed of 32</span>
+        <div class="sprint-progress">
+            <div class="progress-bar-sprint">
+                <div class="progress-fill-sprint"></div>
+            </div>
+            <span>72%</span>
+        </div>
+    </div>
+
+    <!-- Work Item Modal -->
+    <div class="modal" id="workItemModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">New Work Item</h2>
+                <button class="close-btn" id="closeModal">&times;</button>
+            </div>
+            <form id="workItemForm">
+                <div class="form-group">
+                    <label class="form-label">Title</label>
+                    <input type="text" class="form-input" id="itemTitle" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-textarea" id="itemDescription"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Priority</label>
+                    <select class="form-select" id="itemPriority">
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Assignee</label>
+                    <select class="form-select" id="itemAssignee">
+                        <option value="">Unassigned</option>
+                        <option value="MJ">MJ</option>
+                        <option value="AR">AR</option>
+                        <option value="TK">TK</option>
+                        <option value="SC">SC</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tags (comma-separated)</label>
+                    <input type="text" class="form-input" id="itemTags" placeholder="frontend, backend, testing">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Work Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Sample data
+        let workItems = [
+            {
+                id: 'WI-157',
+                title: 'Add product search functionality',
+                description: 'Implement full-text search with filters',
+                priority: 'high',
+                status: 'todo',
+                assignee: 'SC',
+                tags: ['frontend', 'backend'],
+                progress: 0
+            },
+            {
+                id: 'WI-159',
+                title: 'Write unit tests for cart logic',
+                description: '',
+                priority: 'medium',
+                status: 'todo',
+                assignee: '',
+                tags: ['testing'],
+                progress: 0
+            },
+            {
+                id: 'WI-156',
+                title: 'Implement payment gateway',
+                description: 'Stripe integration for checkout flow',
+                priority: 'high',
+                status: 'in-progress',
+                assignee: 'MJ',
+                tags: [],
+                progress: 60,
+                daysInProgress: 2
+            },
+            {
+                id: 'WI-154',
+                title: 'Update product catalog UI',
+                description: '',
+                priority: 'medium',
+                status: 'in-progress',
+                assignee: 'AR',
+                tags: [],
+                progress: 30
+            },
+            {
+                id: 'WI-153',
+                title: 'Add order history page',
+                description: '',
+                priority: 'low',
+                status: 'review',
+                assignee: 'TK',
+                tags: ['PR #234'],
+                progress: 100
+            },
+            {
+                id: 'WI-152',
+                title: 'Fix responsive layout issues',
+                description: '',
+                priority: 'medium',
+                status: 'review',
+                assignee: '',
+                tags: ['PR #235'],
+                progress: 100,
+                comments: 2
+            },
+            {
+                id: 'WI-145',
+                title: 'Setup user authentication',
+                description: '',
+                priority: 'high',
+                status: 'done',
+                assignee: '',
+                tags: [],
+                progress: 100,
+                completedDays: 2
+            },
+            {
+                id: 'WI-144',
+                title: 'Create database schema',
+                description: '',
+                priority: 'medium',
+                status: 'done',
+                assignee: '',
+                tags: [],
+                progress: 100,
+                completedDays: 3
+            }
+        ];
+
+        let currentEditingId = null;
+        let draggedItem = null;
+
+        // Assignee colors
+        const assigneeColors = {
+            'MJ': '#8b5cf6',
+            'AR': '#ef4444',
+            'TK': '#10b981',
+            'SC': '#fbbf24'
+        };
+
+        // Theme toggle
+        const themeToggle = document.getElementById('themeToggle');
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.body.setAttribute('data-theme', newTheme);
+            themeToggle.textContent = newTheme === 'light' ? '🌙 Dark Mode' : '☀️ Light Mode';
+        });
+
+        // Modal handling
+        const modal = document.getElementById('workItemModal');
+        const newItemBtn = document.getElementById('newItemBtn');
+        const quickAddBtn = document.getElementById('quickAddBtn');
+        const closeModal = document.getElementById('closeModal');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const workItemForm = document.getElementById('workItemForm');
+
+        function openModal(itemId = null) {
+            currentEditingId = itemId;
+            const modalTitle = document.getElementById('modalTitle');
+            
+            if (itemId) {
+                const item = workItems.find(item => item.id === itemId);
+                modalTitle.textContent = 'Edit Work Item';
+                document.getElementById('itemTitle').value = item.title;
+                document.getElementById('itemDescription').value = item.description;
+                document.getElementById('itemPriority').value = item.priority;
+                document.getElementById('itemAssignee').value = item.assignee;
+                document.getElementById('itemTags').value = item.tags.join(', ');
+            } else {
+                modalTitle.textContent = 'New Work Item';
+                workItemForm.reset();
+            }
+            
+            modal.classList.add('active');
+        }
+
+        function closeModalHandler() {
+            modal.classList.remove('active');
+            currentEditingId = null;
+        }
+
+        newItemBtn.addEventListener('click', () => openModal());
+        quickAddBtn.addEventListener('click', () => openModal());
+        closeModal.addEventListener('click', closeModalHandler);
+        cancelBtn.addEventListener('click', closeModalHandler);
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModalHandler();
+        });
+
+        // Form submission
+        workItemForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const title = document.getElementById('itemTitle').value;
+            const description = document.getElementById('itemDescription').value;
+            const priority = document.getElementById('itemPriority').value;
+            const assignee = document.getElementById('itemAssignee').value;
+            const tags = document.getElementById('itemTags').value
+                .split(',')
+                .map(tag => tag.trim())
+                .filter(tag => tag);
+
+            if (currentEditingId) {
+                // Edit existing item
+                const item = workItems.find(item => item.id === currentEditingId);
+                item.title = title;
+                item.description = description;
+                item.priority = priority;
+                item.assignee = assignee;
+                item.tags = tags;
+            } else {
+                // Create new item
+                const newId = 'WI-' + (Math.max(...workItems.map(item => parseInt(item.id.split('-')[1]))) + 1);
+                workItems.push({
+                    id: newId,
+                    title,
+                    description,
+                    priority,
+                    status: 'todo',
+                    assignee,
+                    tags,
+                    progress: 0
+                });
+            }
+            
+            renderKanbanBoard();
+            closeModalHandler();
+        });
+
+        // Render functions
+        function createWorkItemElement(item) {
+            const element = document.createElement('div');
+            element.className = `work-item ${item.priority}-priority ${item.status === 'done' ? 'completed' : ''}`;
+            element.draggable = true;
+            element.dataset.id = item.id;
+
+            const tags = item.tags.map(tag => {
+                let tagClass = 'tag';
+                if (tag === 'frontend') tagClass += ' tag-frontend';
+                else if (tag === 'backend') tagClass += ' tag-backend';
+                else if (tag === 'testing') tagClass += ' tag-testing';
+                else if (tag.startsWith('PR')) tagClass += ' tag-pr';
+                
+                return `<span class="${tagClass}">${tag}</span>`;
+            }).join('');
+
+            const assigneeHtml = item.assignee ? `
+                <div class="assignee">
+                    <div class="assignee-avatar" style="background: ${assigneeColors[item.assignee] || '#6b7280'}">
+                        ${item.assignee}
+                    </div>
+                    ${item.daysInProgress ? `<span class="assignee-text">${item.daysInProgress} days in progress</span>` : ''}
+                </div>
+            ` : '<span class="assignee-text">Unassigned</span>';
+
+            const progressHtml = item.progress > 0 ? `
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${item.progress}%"></div>
+                </div>
+                <div class="progress-text">${item.progress}% Complete</div>
+            ` : '';
+
+            const completedHtml = item.completedDays ? `
+                <div class="assignee">
+                    <div style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; margin-right: 8px;"></div>
+                    <span class="assignee-text">Completed ${item.completedDays} days ago</span>
+                </div>
+            ` : '';
+
+            const commentsHtml = item.comments ? `
+                <span style="color: #ef4444; font-size: 11px;">${item.comments} comments</span>
+            ` : '';
+
+            element.innerHTML = `
+                <div class="work-item-header">
+                    <div class="work-item-id">${item.id}</div>
+                    <div class="priority-badge priority-${item.priority}">${item.priority.charAt(0).toUpperCase() + item.priority.slice(1)}</div>
+                </div>
+                <div class="work-item-title ${item.status === 'done' ? 'completed' : ''}">${item.title}</div>
+                ${item.description ? `<div class="work-item-description">${item.description}</div>` : ''}
+                ${progressHtml}
+                <div class="work-item-footer">
+                    <div class="work-item-tags">${tags}</div>
+                    ${assigneeHtml}
+                    ${commentsHtml}
+                    ${completedHtml}
+                </div>
+            `;
+
+            // Add click handler for editing
+            element.addEventListener('click', (e) => {
+                if (!e.target.closest('.assignee-avatar')) {
+                    openModal(item.id);
+                }
+            });
+
+            // Drag and drop handlers
+            element.addEventListener('dragstart', handleDragStart);
+            element.addEventListener('dragend', handleDragEnd);
+
+            return element;
+        }
+
+        function renderKanbanBoard() {
+            const filteredItems = filterItems();
+            
+            // Clear all columns
+            document.getElementById('todoItems').innerHTML = '';
+            document.getElementById('inProgressItems').innerHTML = '';
+            document.getElementById('reviewItems').innerHTML = '';
+            document.getElementById('doneItems').innerHTML = '';
+
+            // Group items by status
+            const itemsByStatus = {
+                'todo': filteredItems.filter(item => item.status === 'todo'),
+                'in-progress': filteredItems.filter(item => item.status === 'in-progress'),
+                'review': filteredItems.filter(item => item.status === 'review'),
+                'done': filteredItems.filter(item => item.status === 'done')
+            };
+
+            // Render items in each column
+            Object.entries(itemsByStatus).forEach(([status, items]) => {
+                const columnId = status === 'todo' ? 'todoItems' : 
+                               status === 'in-progress' ? 'inProgressItems' :
+                               status === 'review' ? 'reviewItems' : 'doneItems';
+                
+                const column = document.getElementById(columnId);
+                items.forEach(item => {
+                    column.appendChild(createWorkItemElement(item));
+                });
+            });
+
+            // Update counts
+            document.getElementById('todoCount').textContent = itemsByStatus['todo'].length;
+            document.getElementById('inProgressCount').textContent = itemsByStatus['in-progress'].length;
+            document.getElementById('reviewCount').textContent = itemsByStatus['review'].length;
+            document.getElementById('doneCount').textContent = itemsByStatus['done'].length;
+
+            // Add "Show more" for done column if needed
+            if (itemsByStatus['done'].length > 2) {
+                const showMore = document.createElement('div');
+                showMore.style.textAlign = 'center';
+                showMore.style.padding = '12px';
+                showMore.style.color = 'var(--primary-color)';
+                showMore.style.cursor = 'pointer';
+                showMore.style.fontSize = '12px';
+                showMore.textContent = `Show ${itemsByStatus['done'].length - 2} more items ↓`;
+                document.getElementById('doneItems').appendChild(showMore);
+            }
+        }
+
+        // Filtering
+        function filterItems() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const assigneeFilter = document.getElementById('assigneeFilter').value;
+            const priorityFilter = document.getElementById('priorityFilter').value;
+
+            return workItems.filter(item => {
+                const matchesSearch = !searchTerm || 
+                    item.title.toLowerCase().includes(searchTerm) ||
+                    item.description.toLowerCase().includes(searchTerm) ||
+                    item.id.toLowerCase().includes(searchTerm);
+
+                const matchesAssignee = !assigneeFilter || 
+                    (assigneeFilter === 'unassigned' && !item.assignee) ||
+                    item.assignee === assigneeFilter;
+
+                const matchesPriority = !priorityFilter || item.priority === priorityFilter;
+
+                return matchesSearch && matchesAssignee && matchesPriority;
+            });
+        }
+
+        // Add filter event listeners
+        document.getElementById('searchInput').addEventListener('input', renderKanbanBoard);
+        document.getElementById('assigneeFilter').addEventListener('change', renderKanbanBoard);
+        document.getElementById('priorityFilter').addEventListener('change', renderKanbanBoard);
+
+        // Drag and drop functionality
+        function handleDragStart(e) {
+            draggedItem = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', this.outerHTML);
+        }
+
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+            draggedItem = null;
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDragEnter(e) {
+            this.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            this.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+
+            this.classList.remove('drag-over');
+
+            if (draggedItem !== this) {
+                const newStatus = this.closest('.kanban-column').dataset.status;
+                const itemId = draggedItem.dataset.id;
+                const item = workItems.find(item => item.id === itemId);
+                
+                if (item) {
+                    item.status = newStatus;
+                    renderKanbanBoard();
+                }
+            }
+
+            return false;
+        }
+
+        // Add drop zone event listeners
+        function addDropZoneListeners() {
+            const dropZones = document.querySelectorAll('.column-items');
+            dropZones.forEach(zone => {
+                zone.addEventListener('dragover', handleDragOver);
+                zone.addEventListener('dragenter', handleDragEnter);
+                zone.addEventListener('dragleave', handleDragLeave);
+                zone.addEventListener('drop', handleDrop);
+            });
+        }
+
+        // Initialize the board
+        function init() {
+            renderKanbanBoard();
+            addDropZoneListeners();
+        }
+
+        // Start the application
+        init();
+    </script>
+</body>
+</html>

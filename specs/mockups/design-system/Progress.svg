@@ -1,0 +1,261 @@
+<svg viewBox="0 0 1200 700" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Animated progress fill -->
+    <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2563eb;stop-opacity:1" />
+      <animate attributeName="x1" values="0%;100%;0%" dur="3s" repeatCount="indefinite" />
+      <animate attributeName="x2" values="100%;200%;100%" dur="3s" repeatCount="indefinite" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Title -->
+  <text x="600" y="40" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="600" text-anchor="middle">Progress Indicators</text>
+  
+  <!-- Light Theme Container -->
+  <g transform="translate(50, 80)">
+    <rect x="0" y="0" width="500" height="580" fill="#ffffff" stroke="#e0e0e0" stroke-width="1"/>
+    <text x="250" y="30" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="500" text-anchor="middle">Light Theme</text>
+    
+    <!-- Linear Progress Bars -->
+    <text x="20" y="70" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#666666">Progress Bars</text>
+    
+    <!-- Basic Progress -->
+    <g transform="translate(20, 90)">
+      <text x="0" y="0" font-family="system-ui, -apple-system, sans-serif" font-size="12" fill="#374151">Basic Progress (60%)</text>
+      <rect x="0" y="8" width="400" height="8" rx="4" fill="#e5e7eb"/>
+      <rect x="0" y="8" width="240" height="8" rx="4" fill="#3b82f6"/>
+    </g>
+    
+    <!-- With Label -->
+    <g transform="translate(20, 130)">
+      <text x="0" y="0" font-family="system-ui, -apple-system, sans-serif" font-size="12" fill="#374151">With Label</text>
+      <rect x="0" y="8" width="400" height="8" rx="4" fill="#e5e7eb"/>
+      <rect x="0" y="8" width="180" height="8" rx="4" fill="#10b981"/>
+      <text x="410" y="14" font-family="system-ui, -apple-system, sans-serif" font-size="12" fill="#374151">45%</text>
+    </g>
+    
+    <!-- With Steps -->
+    <g transform="translate(20, 170)">
+      <text x="0" y="0" font-family="system-ui, -apple-system, sans-serif" font-size="12" fill="#374151">Step Progress</text>
+      <rect x="0" y="8" width="400" height="8" rx="4" fill="#e5e7eb"/>
+      <rect x="0" y="8" width="300" height="8" rx="4" fill="#2563eb"/>
+      <!-- Step markers -->
+      <circle cx="100" cy="12" r="8" fill="#2563eb"/>
+      <circle cx="200" cy="12" r="8" fill="#2563eb"/>
+      <circle cx="300" cy="12" r="8" fill="#2563eb"/>
+      <circle cx="400" cy="12" r="8" fill="#e5e7eb"/>
+      <text x="0" y="36" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#6b7280">Step 3 of 4</text>
+    </g>
+    
+    <!-- Animated Loading -->
+    <g transform="translate(20, 230)">
+      <text x="0" y="0" font-family="system-ui, -apple-system, sans-serif" font-size="12" fill="#374151">Loading...</text>
+      <rect x="0" y="8" width="400" height="8" rx="4" fill="#e5e7eb"/>
+      <rect x="0" y="8" width="400" height="8" rx="4" fill="url(#progressGradient)" opacity="0.3"/>
+    </g>
+    
+    <!-- Circular Progress -->
+    <text x="20" y="290" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#666666">Circular Progress</text>
+    
+    <g transform="translate(20, 310)">
+      <!-- Small -->
+      <g transform="translate(0, 0)">
+        <circle cx="20" cy="20" r="16" fill="none" stroke="#e5e7eb" stroke-width="4"/>
+        <circle cx="20" cy="20" r="16" fill="none" stroke="#3b82f6" stroke-width="4" 
+                stroke-dasharray="75.4 100.5" stroke-dashoffset="25.1" transform="rotate(-90 20 20)"/>
+        <text x="20" y="50" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#374151" text-anchor="middle">75%</text>
+      </g>
+      
+      <!-- Medium -->
+      <g transform="translate(80, 0)">
+        <circle cx="32" cy="32" r="28" fill="none" stroke="#e5e7eb" stroke-width="6"/>
+        <circle cx="32" cy="32" r="28" fill="none" stroke="#10b981" stroke-width="6" 
+                stroke-dasharray="88 176" stroke-dashoffset="44" transform="rotate(-90 32 32)"/>
+        <text x="32" y="38" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#374151" text-anchor="middle">50%</text>
+      </g>
+      
+      <!-- Large -->
+      <g transform="translate(180, 0)">
+        <circle cx="40" cy="40" r="36" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+        <circle cx="40" cy="40" r="36" fill="none" stroke="#ef4444" stroke-width="8" 
+                stroke-dasharray="56.5 226" stroke-dashoffset="56.5" transform="rotate(-90 40 40)"/>
+        <text x="40" y="46" font-family="system-ui, -apple-system, sans-serif" font-size="16" fill="#374151" text-anchor="middle">25%</text>
+      </g>
+    </g>
+    
+    <!-- Spinner Loaders -->
+    <text x="20" y="420" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#666666">Loading Spinners</text>
+    
+    <g transform="translate(20, 440)">
+      <!-- Spin Loader -->
+      <g transform="translate(20, 20)">
+        <circle cx="0" cy="0" r="16" fill="none" stroke="#e5e7eb" stroke-width="3"/>
+        <circle cx="0" cy="0" r="16" fill="none" stroke="#3b82f6" stroke-width="3" 
+                stroke-dasharray="50 100" transform="rotate(0 0 0)">
+          <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="1s" repeatCount="indefinite"/>
+        </circle>
+      </g>
+      
+      <!-- Dots Loader -->
+      <g transform="translate(100, 20)">
+        <circle cx="0" cy="0" r="4" fill="#3b82f6">
+          <animate attributeName="opacity" values="1;0.3;1" dur="1.2s" repeatCount="indefinite" begin="0s"/>
+        </circle>
+        <circle cx="16" cy="0" r="4" fill="#3b82f6">
+          <animate attributeName="opacity" values="1;0.3;1" dur="1.2s" repeatCount="indefinite" begin="0.3s"/>
+        </circle>
+        <circle cx="32" cy="0" r="4" fill="#3b82f6">
+          <animate attributeName="opacity" values="1;0.3;1" dur="1.2s" repeatCount="indefinite" begin="0.6s"/>
+        </circle>
+      </g>
+      
+      <!-- Pulse Loader -->
+      <g transform="translate(200, 20)">
+        <circle cx="0" cy="0" r="20" fill="#3b82f6" opacity="0.3">
+          <animate attributeName="r" values="10;20;10" dur="1.5s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.8;0.3;0.8" dur="1.5s" repeatCount="indefinite"/>
+        </circle>
+      </g>
+    </g>
+    
+    <!-- Skeleton Loading -->
+    <text x="20" y="510" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#666666">Skeleton Loading</text>
+    
+    <g transform="translate(20, 530)">
+      <rect x="0" y="0" width="120" height="12" rx="6" fill="#e5e7eb">
+        <animate attributeName="opacity" values="1;0.5;1" dur="2s" repeatCount="indefinite"/>
+      </rect>
+      <rect x="0" y="20" width="200" height="12" rx="6" fill="#e5e7eb">
+        <animate attributeName="opacity" values="1;0.5;1" dur="2s" repeatCount="indefinite" begin="0.1s"/>
+      </rect>
+      <rect x="0" y="40" width="160" height="12" rx="6" fill="#e5e7eb">
+        <animate attributeName="opacity" values="1;0.5;1" dur="2s" repeatCount="indefinite" begin="0.2s"/>
+      </rect>
+    </g>
+  </g>
+  
+  <!-- Dark Theme Container -->
+  <g transform="translate(650, 80)">
+    <rect x="0" y="0" width="500" height="580" fill="#1f2937" stroke="#374151" stroke-width="1"/>
+    <text x="250" y="30" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="500" fill="#f3f4f6" text-anchor="middle">Dark Theme</text>
+    
+    <!-- Linear Progress Bars -->
+    <text x="20" y="70" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#9ca3af">Progress Bars</text>
+    
+    <!-- Basic Progress -->
+    <g transform="translate(20, 90)">
+      <text x="0" y="0" font-family="system-ui, -apple-system, sans-serif" font-size="12" fill="#e5e7eb">Basic Progress (60%)</text>
+      <rect x="0" y="8" width="400" height="8" rx="4" fill="#374151"/>
+      <rect x="0" y="8" width="240" height="8" rx="4" fill="#3b82f6"/>
+    </g>
+    
+    <!-- With Label -->
+    <g transform="translate(20, 130)">
+      <text x="0" y="0" font-family="system-ui, -apple-system, sans-serif" font-size="12" fill="#e5e7eb">With Label</text>
+      <rect x="0" y="8" width="400" height="8" rx="4" fill="#374151"/>
+      <rect x="0" y="8" width="180" height="8" rx="4" fill="#10b981"/>
+      <text x="410" y="14" font-family="system-ui, -apple-system, sans-serif" font-size="12" fill="#e5e7eb">45%</text>
+    </g>
+    
+    <!-- With Steps -->
+    <g transform="translate(20, 170)">
+      <text x="0" y="0" font-family="system-ui, -apple-system, sans-serif" font-size="12" fill="#e5e7eb">Step Progress</text>
+      <rect x="0" y="8" width="400" height="8" rx="4" fill="#374151"/>
+      <rect x="0" y="8" width="300" height="8" rx="4" fill="#3b82f6"/>
+      <!-- Step markers -->
+      <circle cx="100" cy="12" r="8" fill="#3b82f6"/>
+      <circle cx="200" cy="12" r="8" fill="#3b82f6"/>
+      <circle cx="300" cy="12" r="8" fill="#3b82f6"/>
+      <circle cx="400" cy="12" r="8" fill="#374151"/>
+      <text x="0" y="36" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#9ca3af">Step 3 of 4</text>
+    </g>
+    
+    <!-- Animated Loading -->
+    <g transform="translate(20, 230)">
+      <text x="0" y="0" font-family="system-ui, -apple-system, sans-serif" font-size="12" fill="#e5e7eb">Loading...</text>
+      <rect x="0" y="8" width="400" height="8" rx="4" fill="#374151"/>
+      <rect x="0" y="8" width="400" height="8" rx="4" fill="url(#progressGradient)" opacity="0.5"/>
+    </g>
+    
+    <!-- Circular Progress -->
+    <text x="20" y="290" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#9ca3af">Circular Progress</text>
+    
+    <g transform="translate(20, 310)">
+      <!-- Small -->
+      <g transform="translate(0, 0)">
+        <circle cx="20" cy="20" r="16" fill="none" stroke="#374151" stroke-width="4"/>
+        <circle cx="20" cy="20" r="16" fill="none" stroke="#60a5fa" stroke-width="4" 
+                stroke-dasharray="75.4 100.5" stroke-dashoffset="25.1" transform="rotate(-90 20 20)"/>
+        <text x="20" y="50" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#e5e7eb" text-anchor="middle">75%</text>
+      </g>
+      
+      <!-- Medium -->
+      <g transform="translate(80, 0)">
+        <circle cx="32" cy="32" r="28" fill="none" stroke="#374151" stroke-width="6"/>
+        <circle cx="32" cy="32" r="28" fill="none" stroke="#10b981" stroke-width="6" 
+                stroke-dasharray="88 176" stroke-dashoffset="44" transform="rotate(-90 32 32)"/>
+        <text x="32" y="38" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#e5e7eb" text-anchor="middle">50%</text>
+      </g>
+      
+      <!-- Large -->
+      <g transform="translate(180, 0)">
+        <circle cx="40" cy="40" r="36" fill="none" stroke="#374151" stroke-width="8"/>
+        <circle cx="40" cy="40" r="36" fill="none" stroke="#ef4444" stroke-width="8" 
+                stroke-dasharray="56.5 226" stroke-dashoffset="56.5" transform="rotate(-90 40 40)"/>
+        <text x="40" y="46" font-family="system-ui, -apple-system, sans-serif" font-size="16" fill="#e5e7eb" text-anchor="middle">25%</text>
+      </g>
+    </g>
+    
+    <!-- Spinner Loaders -->
+    <text x="20" y="420" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#9ca3af">Loading Spinners</text>
+    
+    <g transform="translate(20, 440)">
+      <!-- Spin Loader -->
+      <g transform="translate(20, 20)">
+        <circle cx="0" cy="0" r="16" fill="none" stroke="#374151" stroke-width="3"/>
+        <circle cx="0" cy="0" r="16" fill="none" stroke="#60a5fa" stroke-width="3" 
+                stroke-dasharray="50 100" transform="rotate(0 0 0)">
+          <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="1s" repeatCount="indefinite"/>
+        </circle>
+      </g>
+      
+      <!-- Dots Loader -->
+      <g transform="translate(100, 20)">
+        <circle cx="0" cy="0" r="4" fill="#60a5fa">
+          <animate attributeName="opacity" values="1;0.3;1" dur="1.2s" repeatCount="indefinite" begin="0s"/>
+        </circle>
+        <circle cx="16" cy="0" r="4" fill="#60a5fa">
+          <animate attributeName="opacity" values="1;0.3;1" dur="1.2s" repeatCount="indefinite" begin="0.3s"/>
+        </circle>
+        <circle cx="32" cy="0" r="4" fill="#60a5fa">
+          <animate attributeName="opacity" values="1;0.3;1" dur="1.2s" repeatCount="indefinite" begin="0.6s"/>
+        </circle>
+      </g>
+      
+      <!-- Pulse Loader -->
+      <g transform="translate(200, 20)">
+        <circle cx="0" cy="0" r="20" fill="#60a5fa" opacity="0.3">
+          <animate attributeName="r" values="10;20;10" dur="1.5s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.8;0.3;0.8" dur="1.5s" repeatCount="indefinite"/>
+        </circle>
+      </g>
+    </g>
+    
+    <!-- Skeleton Loading -->
+    <text x="20" y="510" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#9ca3af">Skeleton Loading</text>
+    
+    <g transform="translate(20, 530)">
+      <rect x="0" y="0" width="120" height="12" rx="6" fill="#374151">
+        <animate attributeName="opacity" values="1;0.5;1" dur="2s" repeatCount="indefinite"/>
+      </rect>
+      <rect x="0" y="20" width="200" height="12" rx="6" fill="#374151">
+        <animate attributeName="opacity" values="1;0.5;1" dur="2s" repeatCount="indefinite" begin="0.1s"/>
+      </rect>
+      <rect x="0" y="40" width="160" height="12" rx="6" fill="#374151">
+        <animate attributeName="opacity" values="1;0.5;1" dur="2s" repeatCount="indefinite" begin="0.2s"/>
+      </rect>
+    </g>
+  </g>
+</svg>

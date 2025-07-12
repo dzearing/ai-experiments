@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Flow - Interactive Chat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #f9fafb;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f3f4f6;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --text-tertiary: #9ca3af;
+            --border-color: #e5e7eb;
+            --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            --message-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --claude-gradient: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            --user-message: #3b82f6;
+            --user-message-text: #ffffff;
+            --user-message-secondary: #93bbfc;
+            --claude-message: #f3f4f6;
+            --claude-message-text: #374151;
+            --tool-bg: #fef3c7;
+            --tool-header: #f59e0b;
+            --success-color: #10b981;
+            --success-bg: #dcfce7;
+            --success-text: #065f46;
+            --danger-color: #ef4444;
+            --danger-text: #ffffff;
+            --code-bg: #1f2937;
+            --code-text: #10b981;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #111827;
+            --bg-secondary: #1f2937;
+            --bg-tertiary: #374151;
+            --text-primary: #f9fafb;
+            --text-secondary: #d1d5db;
+            --text-tertiary: #9ca3af;
+            --border-color: #4b5563;
+            --shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            --message-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            --claude-message: #374151;
+            --claude-message-text: #f9fafb;
+            --tool-bg: #451a03;
+            --tool-header: #92400e;
+            --success-bg: #064e3b;
+            --success-text: #6ee7b7;
+            --danger-color: #dc2626;
+            --code-bg: #0f172a;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            height: 64px;
+            background: var(--bg-secondary);
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 10;
+            position: relative;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .breadcrumb-current {
+            color: var(--text-primary);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .session-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--success-bg);
+            color: var(--success-text);
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success-color);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .theme-toggle {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .theme-toggle:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .main-container {
+            display: flex;
+            height: calc(100vh - 64px);
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-secondary);
+        }
+
+        .context-bar {
+            height: 48px;
+            background: var(--bg-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            font-size: 14px;
+        }
+
+        .context-title {
+            font-weight: 500;
+        }
+
+        .work-item {
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px 200px 20px;
+            scroll-behavior: smooth;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .user-message {
+            justify-content: flex-end;
+        }
+
+        .claude-message {
+            justify-content: flex-start;
+        }
+
+        .message-bubble {
+            max-width: 580px;
+            padding: 16px 20px;
+            border-radius: 16px;
+            box-shadow: var(--message-shadow);
+            position: relative;
+        }
+
+        .user-message .message-bubble {
+            background: var(--user-message);
+            color: var(--user-message-text);
+        }
+
+        .claude-message .message-bubble {
+            background: var(--claude-message);
+            color: var(--claude-message-text);
+            max-width: 800px;
+        }
+
+        .claude-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--claude-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .message-content {
+            line-height: 1.5;
+            font-size: 15px;
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: var(--user-message-secondary);
+            text-align: right;
+            margin-top: 8px;
+        }
+
+        .claude-message .message-time {
+            color: var(--text-tertiary);
+        }
+
+        .code-block {
+            background: var(--code-bg);
+            color: var(--code-text);
+            padding: 12px;
+            border-radius: 8px;
+            margin: 12px 0;
+            font-family: monospace;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .tool-execution {
+            background: var(--tool-bg);
+            border-radius: 16px;
+            margin: 20px 0;
+            box-shadow: var(--message-shadow);
+            overflow: hidden;
+        }
+
+        .tool-header {
+            background: var(--tool-header);
+            color: white;
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .feedback-link {
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .tool-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 16px;
+            background: white;
+            margin: 8px 16px;
+            border-radius: 4px;
+        }
+
+        .tool-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success-color);
+            margin-right: 12px;
+        }
+
+        .tool-text {
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            margin-left: 8px;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--text-tertiary);
+            animation: typing 1.5s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.5s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 1s;
+        }
+
+        @keyframes typing {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .input-area {
+            background: var(--bg-secondary);
+            box-shadow: var(--shadow);
+            padding: 16px 200px 20px;
+        }
+
+        .suggested-actions {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .suggestion-button {
+            padding: 8px 16px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border-radius: 16px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .suggestion-button:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .input-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .message-input {
+            flex: 1;
+            height: 44px;
+            padding: 0 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 22px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-size: 15px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .message-input:focus {
+            border-color: var(--user-message);
+            background: var(--bg-secondary);
+        }
+
+        .message-input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .input-button {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .attachment-button {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .attachment-button:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .send-button {
+            background: var(--user-message);
+            color: white;
+        }
+
+        .send-button:hover {
+            transform: scale(1.05);
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .sidebar {
+            width: 200px;
+            background: var(--bg-primary);
+            padding: 24px 16px;
+            border-left: 1px solid var(--border-color);
+        }
+
+        .sidebar-section {
+            margin-bottom: 32px;
+        }
+
+        .sidebar-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .sidebar-item {
+            margin-bottom: 16px;
+        }
+
+        .sidebar-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .sidebar-value {
+            font-size: 13px;
+        }
+
+        .sidebar-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 24px 0;
+        }
+
+        .file-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .file-item:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .end-session-button {
+            width: 100%;
+            background: var(--danger-color);
+            color: var(--danger-text);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .end-session-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+        }
+
+        .loading {
+            opacity: 0.7;
+        }
+
+        @media (max-width: 1200px) {
+            .messages-area {
+                padding: 40px 100px 20px;
+            }
+            .input-area {
+                padding: 16px 100px 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .messages-area {
+                padding: 20px;
+            }
+            .input-area {
+                padding: 16px 20px;
+            }
+            .sidebar {
+                display: none;
+            }
+            .breadcrumb {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <header class="header">
+        <div class="header-left">
+            <div class="header-title">Claude Flow</div>
+            <div class="breadcrumb">
+                <span>Dashboard</span>
+                <span>/</span>
+                <span>Projects</span>
+                <span>/</span>
+                <span>E-commerce Platform</span>
+                <span>/</span>
+                <span class="breadcrumb-current">Claude Session</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="session-status">
+                <div class="status-dot"></div>
+                <span>Session Active</span>
+            </div>
+            <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="chat-container">
+            <div class="context-bar">
+                <span class="context-title">Context: API Design for Product Catalog</span>
+                <span class="work-item">Work Item #234</span>
+            </div>
+
+            <div class="messages-area" id="messagesArea">
+                <!-- Initial messages will be loaded here -->
+            </div>
+
+            <div class="input-area">
+                <div class="suggested-actions">
+                    <button class="suggestion-button" onclick="sendSuggestion('Add authentication')">Add authentication</button>
+                    <button class="suggestion-button" onclick="sendSuggestion('Write unit tests')">Write unit tests</button>
+                    <button class="suggestion-button" onclick="sendSuggestion('Deploy to staging')">Deploy to staging</button>
+                </div>
+                <div class="input-container">
+                    <input type="text" class="message-input" id="messageInput" placeholder="Type a message..." onkeypress="handleKeyPress(event)">
+                    <button class="input-button attachment-button" onclick="handleAttachment()">📎</button>
+                    <button class="input-button send-button" id="sendButton" onclick="sendMessage()">▶</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Session Info</div>
+                <div class="sidebar-item">
+                    <div class="sidebar-label">Started</div>
+                    <div class="sidebar-value" id="sessionStart">Today, 2:34 PM</div>
+                </div>
+                <div class="sidebar-item">
+                    <div class="sidebar-label">Duration</div>
+                    <div class="sidebar-value" id="sessionDuration">5 minutes</div>
+                </div>
+                <div class="sidebar-item">
+                    <div class="sidebar-label">Messages</div>
+                    <div class="sidebar-value" id="messageCount">4 messages</div>
+                </div>
+            </div>
+
+            <div class="sidebar-divider"></div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-title">Files Created</div>
+                <div class="file-item" onclick="openFile('schema.json')">📄 schema.json</div>
+                <div class="file-item" onclick="openFile('routes.js')">📄 routes.js</div>
+            </div>
+
+            <div style="margin-top: auto;">
+                <button class="end-session-button" onclick="endSession()">End Session</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let messageCounter = 4;
+        let sessionStartTime = new Date();
+        let isTyping = false;
+
+        // Initial messages data
+        const initialMessages = [
+            {
+                type: 'user',
+                content: 'I need help designing a RESTful API for our product catalog. It should support CRUD operations and filtering.',
+                time: '2:34 PM'
+            },
+            {
+                type: 'claude',
+                content: `I'll help you design a RESTful API for your product catalog. Here's a comprehensive approach:
+
+1. Resource Structure:`,
+                code: `/api/v1/products
+/api/v1/products/{id}
+/api/v1/categories`,
+                additionalContent: `2. HTTP Methods:
+• GET /products - List all products (with pagination)
+• POST /products - Create a new product
+• PUT /products/{id} - Update a product`,
+                time: '2:34 PM'
+            },
+            {
+                type: 'tool',
+                title: 'Tool Execution (2)',
+                items: [
+                    'FileCreate: api/products/schema.json',
+                    'FileCreate: api/products/routes.js'
+                ]
+            },
+            {
+                type: 'user',
+                content: 'Can you add validation for the product schema?',
+                time: '2:36 PM'
+            },
+            {
+                type: 'claude',
+                content: 'Absolutely! I\'ll add comprehensive validation...',
+                time: '2:36 PM',
+                typing: true
+            }
+        ];
+
+        function initializeChat() {
+            const messagesArea = document.getElementById('messagesArea');
+            
+            initialMessages.forEach((message, index) => {
+                setTimeout(() => {
+                    addMessage(message);
+                }, index * 500);
+            });
+
+            updateSessionInfo();
+            setInterval(updateSessionInfo, 60000); // Update every minute
+        }
+
+        function addMessage(messageData) {
+            const messagesArea = document.getElementById('messagesArea');
+            const messageDiv = document.createElement('div');
+            
+            if (messageData.type === 'tool') {
+                messageDiv.className = 'tool-execution';
+                messageDiv.innerHTML = `
+                    <div class="tool-header">
+                        <span>${messageData.title}</span>
+                        <span class="feedback-link" onclick="leaveFeedback()">Leave feedback</span>
+                    </div>
+                    ${messageData.items.map(item => `
+                        <div class="tool-item">
+                            <div class="tool-status"></div>
+                            <div class="tool-text">${item}</div>
+                        </div>
+                    `).join('')}
+                `;
+            } else {
+                messageDiv.className = `message ${messageData.type}-message`;
+                
+                if (messageData.type === 'claude') {
+                    messageDiv.innerHTML = `
+                        <div class="claude-avatar">C</div>
+                        <div class="message-bubble">
+                            <div class="message-content">
+                                ${messageData.content}
+                                ${messageData.code ? `<div class="code-block">${messageData.code}</div>` : ''}
+                                ${messageData.additionalContent || ''}
+                                ${messageData.typing ? '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>' : ''}
+                            </div>
+                            <div class="message-time">${messageData.time}</div>
+                        </div>
+                    `;
+                } else {
+                    messageDiv.innerHTML = `
+                        <div class="message-bubble">
+                            <div class="message-content">${messageData.content}</div>
+                            <div class="message-time">${messageData.time}</div>
+                        </div>
+                    `;
+                }
+            }
+            
+            messagesArea.appendChild(messageDiv);
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+            
+            if (messageData.type !== 'tool') {
+                messageCounter++;
+                updateMessageCount();
+            }
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message || isTyping) return;
+            
+            const currentTime = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            // Add user message
+            addMessage({
+                type: 'user',
+                content: message,
+                time: currentTime
+            });
+            
+            input.value = '';
+            
+            // Simulate Claude response
+            simulateClaudeResponse(message);
+        }
+
+        function simulateClaudeResponse(userMessage) {
+            isTyping = true;
+            const sendButton = document.getElementById('sendButton');
+            sendButton.disabled = true;
+            
+            setTimeout(() => {
+                const currentTime = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                let response = generateResponse(userMessage);
+                
+                addMessage({
+                    type: 'claude',
+                    content: response.content,
+                    code: response.code,
+                    additionalContent: response.additionalContent,
+                    time: currentTime
+                });
+                
+                // Sometimes add tool execution
+                if (Math.random() > 0.6) {
+                    setTimeout(() => {
+                        addMessage({
+                            type: 'tool',
+                            title: 'Tool Execution (1)',
+                            items: [response.toolAction || 'FileCreate: validation.js']
+                        });
+                    }, 1000);
+                }
+                
+                isTyping = false;
+                sendButton.disabled = false;
+            }, 2000);
+        }
+
+        function generateResponse(userMessage) {
+            const responses = [
+                {
+                    content: "I'll help you implement that feature. Let me create the necessary files and structure:",
+                    code: "// Example implementation\nfunction validateProduct(data) {\n  // validation logic\n}",
+                    toolAction: "FileCreate: validation/product.js"
+                },
+                {
+                    content: "Great suggestion! Here's how we can approach that:",
+                    additionalContent: "• Step 1: Define the requirements\n• Step 2: Implement the logic\n• Step 3: Add tests",
+                    toolAction: "FileCreate: tests/unit.test.js"
+                },
+                {
+                    content: "I've analyzed your request and here's the recommended solution:",
+                    code: "export const config = {\n  validation: true,\n  strict: false\n};",
+                    toolAction: "FileEdit: config/settings.js"
+                }
+            ];
+            
+            return responses[Math.floor(Math.random() * responses.length)];
+        }
+
+        function sendSuggestion(suggestion) {
+            const input = document.getElementById('messageInput');
+            input.value = suggestion;
+            sendMessage();
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function handleAttachment() {
+            alert('Attachment feature would be implemented here');
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const themeToggle = document.querySelector('.theme-toggle');
+            
+            if (body.getAttribute('data-theme') === 'light') {
+                body.setAttribute('data-theme', 'dark');
+                themeToggle.textContent = '☀️';
+            } else {
+                body.setAttribute('data-theme', 'light');
+                themeToggle.textContent = '🌙';
+            }
+        }
+
+        function updateSessionInfo() {
+            const now = new Date();
+            const duration = Math.floor((now - sessionStartTime) / 60000);
+            
+            document.getElementById('sessionDuration').textContent = `${duration} minutes`;
+        }
+
+        function updateMessageCount() {
+            document.getElementById('messageCount').textContent = `${messageCounter} messages`;
+        }
+
+        function openFile(filename) {
+            alert(`Opening ${filename} - this would integrate with your IDE or file viewer`);
+        }
+
+        function leaveFeedback() {
+            const feedback = prompt('Please share your feedback about this tool execution:');
+            if (feedback) {
+                alert('Thank you for your feedback! It has been recorded.');
+            }
+        }
+
+        function endSession() {
+            if (confirm('Are you sure you want to end this session? All unsaved progress will be lost.')) {
+                alert('Session ended. Redirecting to dashboard...');
+                // In a real app, this would redirect to the dashboard
+            }
+        }
+
+        // Initialize the chat when the page loads
+        document.addEventListener('DOMContentLoaded', initializeChat);
+
+        // Auto-focus the input field
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('messageInput').focus();
+        });
+
+        // Handle window resize for responsive behavior
+        window.addEventListener('resize', () => {
+            const messagesArea = document.getElementById('messagesArea');
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+        });
+    </script>
+</body>
+</html>

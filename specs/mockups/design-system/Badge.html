@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Badge and Tag Components</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #f8fafc;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        body.dark {
+            background: #0f172a;
+            color: #f1f5f9;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 20px;
+        }
+
+        body.dark .header h1 {
+            color: #f1f5f9;
+        }
+
+        .theme-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 16px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        body.dark .theme-toggle {
+            background: #1e293b;
+            border-color: #475569;
+            color: #f1f5f9;
+        }
+
+        .theme-toggle:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+
+        body.dark .theme-toggle:hover {
+            background: #334155;
+            border-color: #64748b;
+        }
+
+        .themes-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .themes-container {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+        }
+
+        .theme-panel {
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .theme-panel.dark-panel {
+            background: #1e293b;
+            border-color: #475569;
+        }
+
+        .theme-title {
+            font-size: 18px;
+            font-weight: 500;
+            text-align: center;
+            margin-bottom: 30px;
+            color: #1e293b;
+        }
+
+        .dark-panel .theme-title {
+            color: #f1f5f9;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 15px;
+        }
+
+        .dark-panel .section-title {
+            color: #94a3b8;
+        }
+
+        .badge-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+
+        /* Badge Base Styles */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: default;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .badge:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Status Badges */
+        .badge-active {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-completed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-overdue {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-draft {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        /* Dark Theme Status Badges */
+        .dark-panel .badge-active {
+            background: #1e3a8a;
+            color: #93c5fd;
+        }
+
+        .dark-panel .badge-completed {
+            background: #064e3b;
+            color: #6ee7b7;
+        }
+
+        .dark-panel .badge-overdue {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+
+        .dark-panel .badge-pending {
+            background: #78350f;
+            color: #fde68a;
+        }
+
+        .dark-panel .badge-draft {
+            background: #374151;
+            color: #9ca3af;
+        }
+
+        /* Priority Badges */
+        .badge-priority {
+            border-radius: 4px;
+            gap: 8px;
+        }
+
+        .priority-indicator {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        .badge-critical {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-critical .priority-indicator {
+            background: #ef4444;
+        }
+
+        .badge-high {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-high .priority-indicator {
+            background: #ef4444;
+        }
+
+        .badge-medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-medium .priority-indicator {
+            background: #f59e0b;
+        }
+
+        .badge-low {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .badge-low .priority-indicator {
+            background: #9ca3af;
+        }
+
+        /* Dark Theme Priority Badges */
+        .dark-panel .badge-critical {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+
+        .dark-panel .badge-high {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+
+        .dark-panel .badge-medium {
+            background: #78350f;
+            color: #fde68a;
+        }
+
+        .dark-panel .badge-low {
+            background: #374151;
+            color: #e5e7eb;
+        }
+
+        /* Count Badges */
+        .badge-count {
+            min-width: 24px;
+            height: 24px;
+            padding: 0 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            justify-content: center;
+            color: white;
+        }
+
+        .badge-count.circle {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            padding: 0;
+        }
+
+        .badge-count-red {
+            background: #ef4444;
+        }
+
+        .badge-count-blue {
+            background: #3b82f6;
+        }
+
+        .badge-count-green {
+            background: #10b981;
+        }
+
+        .badge-count-purple {
+            background: #6366f1;
+        }
+
+        /* Category Tags */
+        .tag {
+            padding: 6px 14px;
+            border-radius: 14px;
+            font-size: 12px;
+            font-weight: 500;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            color: #374151;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tag:hover {
+            border-color: #3b82f6;
+            background: #f8fafc;
+            transform: translateY(-1px);
+        }
+
+        .dark-panel .tag {
+            background: #374151;
+            border-color: #4b5563;
+            color: #e5e7eb;
+        }
+
+        .dark-panel .tag:hover {
+            border-color: #3b82f6;
+            background: #475569;
+        }
+
+        /* Removable Tags */
+        .tag-removable {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .tag-removable:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .tag-react {
+            background: #eff6ff;
+            border: 1px solid #3b82f6;
+            color: #1e40af;
+        }
+
+        .tag-nodejs {
+            background: #f0fdf4;
+            border: 1px solid #10b981;
+            color: #065f46;
+        }
+
+        .dark-panel .tag-react {
+            background: #1e3a8a;
+            color: #93c5fd;
+        }
+
+        .dark-panel .tag-nodejs {
+            background: #064e3b;
+            color: #6ee7b7;
+        }
+
+        .remove-btn {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tag-react .remove-btn {
+            background: #3b82f6;
+        }
+
+        .tag-nodejs .remove-btn {
+            background: #10b981;
+        }
+
+        .remove-btn:hover {
+            transform: scale(1.1);
+            opacity: 0.8;
+        }
+
+        .interactive-demo {
+            margin-top: 40px;
+            padding: 30px;
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        body.dark .interactive-demo {
+            background: #1e293b;
+            border-color: #475569;
+        }
+
+        .demo-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #1e293b;
+        }
+
+        body.dark .demo-title {
+            color: #f1f5f9;
+        }
+
+        .demo-section {
+            margin-bottom: 25px;
+        }
+
+        .demo-section h3 {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 10px;
+            color: #64748b;
+        }
+
+        body.dark .demo-section h3 {
+            color: #94a3b8;
+        }
+
+        .add-tag-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .add-tag-input {
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+            min-width: 150px;
+            flex: 1;
+        }
+
+        body.dark .add-tag-input {
+            background: #374151;
+            border-color: #4b5563;
+            color: #f1f5f9;
+        }
+
+        .add-tag-btn {
+            padding: 8px 16px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .add-tag-btn:hover {
+            background: #2563eb;
+        }
+
+        .user-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .fade-out {
+            animation: fadeOut 0.3s ease-out forwards;
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: scale(1);
+            }
+            to {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 16px;
+            background: #10b981;
+            color: white;
+            border-radius: 8px;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        body.dark .notification {
+            background: #059669;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Badge and Tag Components</h1>
+            <div class="theme-toggle" onclick="toggleTheme()">
+                <span id="theme-icon">🌙</span>
+                <span id="theme-text">Dark Mode</span>
+            </div>
+        </div>
+
+        <div class="themes-container">
+            <!-- Light Theme Panel -->
+            <div class="theme-panel light-panel">
+                <h2 class="theme-title">Light Theme</h2>
+                
+                <div class="section">
+                    <h3 class="section-title">Status Badges</h3>
+                    <div class="badge-row">
+                        <span class="badge badge-active">Active</span>
+                        <span class="badge badge-completed">Completed</span>
+                        <span class="badge badge-overdue">Overdue</span>
+                        <span class="badge badge-pending">Pending</span>
+                        <span class="badge badge-draft">Draft</span>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3 class="section-title">Priority Badges</h3>
+                    <div class="badge-row">
+                        <span class="badge badge-priority badge-critical">
+                            <span class="priority-indicator"></span>
+                            Critical
+                        </span>
+                        <span class="badge badge-priority badge-high">
+                            <span class="priority-indicator"></span>
+                            High
+                        </span>
+                        <span class="badge badge-priority badge-medium">
+                            <span class="priority-indicator"></span>
+                            Medium
+                        </span>
+                        <span class="badge badge-priority badge-low">
+                            <span class="priority-indicator"></span>
+                            Low
+                        </span>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3 class="section-title">Count Badges</h3>
+                    <div class="badge-row">
+                        <span class="badge badge-count badge-count-red circle">3</span>
+                        <span class="badge badge-count badge-count-blue circle">12</span>
+                        <span class="badge badge-count badge-count-green">99+</span>
+                        <span class="badge badge-count badge-count-purple">NEW</span>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3 class="section-title">Category Tags</h3>
+                    <div class="badge-row">
+                        <span class="tag" onclick="selectTag(this)">Frontend</span>
+                        <span class="tag" onclick="selectTag(this)">Backend</span>
+                        <span class="tag" onclick="selectTag(this)">API</span>
+                        <span class="tag" onclick="selectTag(this)">Performance</span>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3 class="section-title">Removable Tags</h3>
+                    <div class="badge-row">
+                        <span class="tag-removable tag-react">
+                            React
+                            <span class="remove-btn" onclick="removeTag(this)">&times;</span>
+                        </span>
+                        <span class="tag-removable tag-nodejs">
+                            Node.js
+                            <span class="remove-btn" onclick="removeTag(this)">&times;</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dark Theme Panel -->
+            <div class="theme-panel dark-panel">
+                <h2 class="theme-title">Dark Theme</h2>
+                
+                <div class="section">
+                    <h3 class="section-title">Status Badges</h3>
+                    <div class="badge-row">
+                        <span class="badge badge-active">Active</span>
+                        <span class="badge badge-completed">Completed</span>
+                        <span class="badge badge-overdue">Overdue</span>
+                        <span class="badge badge-pending">Pending</span>
+                        <span class="badge badge-draft">Draft</span>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3 class="section-title">Priority Badges</h3>
+                    <div class="badge-row">
+                        <span class="badge badge-priority badge-critical">
+                            <span class="priority-indicator"></span>
+                            Critical
+                        </span>
+                        <span class="badge badge-priority badge-high">
+                            <span class="priority-indicator"></span>
+                            High
+                        </span>
+                        <span class="badge badge-priority badge-medium">
+                            <span class="priority-indicator"></span>
+                            Medium
+                        </span>
+                        <span class="badge badge-priority badge-low">
+                            <span class="priority-indicator"></span>
+                            Low
+                        </span>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3 class="section-title">Count Badges</h3>
+                    <div class="badge-row">
+                        <span class="badge badge-count badge-count-red circle">3</span>
+                        <span class="badge badge-count badge-count-blue circle">12</span>
+                        <span class="badge badge-count badge-count-green">99+</span>
+                        <span class="badge badge-count badge-count-purple">NEW</span>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3 class="section-title">Category Tags</h3>
+                    <div class="badge-row">
+                        <span class="tag" onclick="selectTag(this)">Frontend</span>
+                        <span class="tag" onclick="selectTag(this)">Backend</span>
+                        <span class="tag" onclick="selectTag(this)">API</span>
+                        <span class="tag" onclick="selectTag(this)">Performance</span>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3 class="section-title">Removable Tags</h3>
+                    <div class="badge-row">
+                        <span class="tag-removable tag-react">
+                            React
+                            <span class="remove-btn" onclick="removeTag(this)">&times;</span>
+                        </span>
+                        <span class="tag-removable tag-nodejs">
+                            Node.js
+                            <span class="remove-btn" onclick="removeTag(this)">&times;</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Demo Section -->
+        <div class="interactive-demo">
+            <h2 class="demo-title">Interactive Demo</h2>
+            
+            <div class="demo-section">
+                <h3>Add Custom Tags</h3>
+                <div class="add-tag-form">
+                    <input type="text" class="add-tag-input" id="tagInput" placeholder="Enter tag name..." maxlength="20">
+                    <button class="add-tag-btn" onclick="addCustomTag()">Add Tag</button>
+                </div>
+                <div class="user-tags" id="userTags"></div>
+            </div>
+
+            <div class="demo-section">
+                <h3>Click Counter</h3>
+                <div class="badge-row">
+                    <span class="badge badge-count badge-count-blue circle" id="clickCounter" onclick="incrementCounter()">0</span>
+                    <button class="add-tag-btn" onclick="resetCounter()">Reset</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <script>
+        let clickCount = 0;
+        let tagCounter = 0;
+
+        function toggleTheme() {
+            const body = document.body;
+            const themeIcon = document.getElementById('theme-icon');
+            const themeText = document.getElementById('theme-text');
+            
+            body.classList.toggle('dark');
+            
+            if (body.classList.contains('dark')) {
+                themeIcon.textContent = '☀️';
+                themeText.textContent = 'Light Mode';
+            } else {
+                themeIcon.textContent = '🌙';
+                themeText.textContent = 'Dark Mode';
+            }
+        }
+
+        function selectTag(element) {
+            // Create ripple effect
+            const ripple = document.createElement('div');
+            ripple.style.position = 'absolute';
+            ripple.style.borderRadius = '50%';
+            ripple.style.background = 'rgba(59, 130, 246, 0.3)';
+            ripple.style.transform = 'scale(0)';
+            ripple.style.animation = 'ripple 0.6s linear';
+            ripple.style.left = '50%';
+            ripple.style.top = '50%';
+            ripple.style.width = '20px';
+            ripple.style.height = '20px';
+            ripple.style.marginLeft = '-10px';
+            ripple.style.marginTop = '-10px';
+            
+            element.style.position = 'relative';
+            element.appendChild(ripple);
+            
+            setTimeout(() => {
+                element.removeChild(ripple);
+            }, 600);
+            
+            showNotification(`Selected: ${element.textContent}`);
+        }
+
+        function removeTag(button) {
+            const tag = button.parentElement;
+            const tagName = tag.textContent.replace('×', '').trim();
+            
+            tag.classList.add('fade-out');
+            
+            setTimeout(() => {
+                tag.remove();
+                showNotification(`Removed: ${tagName}`);
+            }, 300);
+        }
+
+        function addCustomTag() {
+            const input = document.getElementById('tagInput');
+            const tagName = input.value.trim();
+            
+            if (tagName && tagName.length > 0) {
+                const userTags = document.getElementById('userTags');
+                const colors = ['react', 'nodejs'];
+                const colorClass = colors[tagCounter % colors.length];
+                
+                const tag = document.createElement('span');
+                tag.className = `tag-removable tag-${colorClass}`;
+                tag.innerHTML = `
+                    ${tagName}
+                    <span class="remove-btn" onclick="removeTag(this)">&times;</span>
+                `;
+                
+                userTags.appendChild(tag);
+                input.value = '';
+                tagCounter++;
+                
+                showNotification(`Added: ${tagName}`);
+            }
+        }
+
+        function incrementCounter() {
+            clickCount++;
+            document.getElementById('clickCounter').textContent = clickCount > 99 ? '99+' : clickCount;
+            
+            // Add bounce animation
+            const counter = document.getElementById('clickCounter');
+            counter.style.transform = 'scale(1.2)';
+            setTimeout(() => {
+                counter.style.transform = 'scale(1)';
+            }, 150);
+        }
+
+        function resetCounter() {
+            clickCount = 0;
+            document.getElementById('clickCounter').textContent = '0';
+            showNotification('Counter reset');
+        }
+
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 2000);
+        }
+
+        // Add CSS for ripple animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Add keyboard support for adding tags
+        document.getElementById('tagInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addCustomTag();
+            }
+        });
+
+        // Add responsive behavior for small screens
+        function handleResize() {
+            const container = document.querySelector('.themes-container');
+            if (window.innerWidth <= 768) {
+                container.style.gridTemplateColumns = '1fr';
+            } else {
+                container.style.gridTemplateColumns = '1fr 1fr';
+            }
+        }
+
+        window.addEventListener('resize', handleResize);
+        handleResize(); // Call on load
+    </script>
+</body>
+</html>

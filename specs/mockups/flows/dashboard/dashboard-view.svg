@@ -1,0 +1,156 @@
+<svg viewBox="0 0 1440 900" xmlns="http://www.w3.org/2000/svg">
+  <!-- Dashboard View Mockup -->
+  <defs>
+    <!-- Define reusable gradients and shadows -->
+    <filter id="cardShadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.1"/>
+    </filter>
+    <linearGradient id="primaryGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2563eb;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1440" height="900" fill="#f9fafb"/>
+  
+  <!-- Header -->
+  <rect width="1440" height="64" fill="#ffffff" filter="url(#cardShadow)"/>
+  <text x="24" y="40" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="600">Claude Flow</text>
+  
+  <!-- User Avatar -->
+  <circle cx="1380" cy="32" r="16" fill="#e5e7eb"/>
+  <text x="1380" y="37" font-family="system-ui" font-size="12" text-anchor="middle" fill="#6b7280">JD</text>
+  
+  <!-- Theme Toggle -->
+  <rect x="1300" y="22" width="40" height="20" rx="10" fill="#e5e7eb"/>
+  <circle cx="1310" cy="32" r="8" fill="#ffffff"/>
+  
+  <!-- Main Content Area -->
+  <g transform="translate(24, 88)">
+    <!-- Welcome Section -->
+    <text x="0" y="24" font-family="system-ui" font-size="28" font-weight="700">Welcome back, John</text>
+    <text x="0" y="52" font-family="system-ui" font-size="16" fill="#6b7280">Here's what's happening with your projects today.</text>
+    
+    <!-- Stats Cards Row -->
+    <g transform="translate(0, 80)">
+      <!-- Active Projects Card -->
+      <rect x="0" y="0" width="340" height="120" rx="8" fill="#ffffff" filter="url(#cardShadow)"/>
+      <rect x="0" y="0" width="340" height="8" rx="8 8 0 0" fill="url(#primaryGradient)"/>
+      <text x="20" y="40" font-family="system-ui" font-size="14" fill="#6b7280">Active Projects</text>
+      <text x="20" y="72" font-family="system-ui" font-size="32" font-weight="700">12</text>
+      <text x="20" y="96" font-family="system-ui" font-size="12" fill="#10b981">↑ 2 from last week</text>
+      
+      <!-- Work Items Card -->
+      <rect x="360" y="0" width="340" height="120" rx="8" fill="#ffffff" filter="url(#cardShadow)"/>
+      <rect x="360" y="0" width="340" height="8" rx="8 8 0 0" fill="#8b5cf6"/>
+      <text x="380" y="40" font-family="system-ui" font-size="14" fill="#6b7280">Open Work Items</text>
+      <text x="380" y="72" font-family="system-ui" font-size="32" font-weight="700">34</text>
+      <text x="380" y="96" font-family="system-ui" font-size="12" fill="#6b7280">8 due this week</text>
+      
+      <!-- Team Members Card -->
+      <rect x="720" y="0" width="340" height="120" rx="8" fill="#ffffff" filter="url(#cardShadow)"/>
+      <rect x="720" y="0" width="340" height="8" rx="8 8 0 0" fill="#10b981"/>
+      <text x="740" y="40" font-family="system-ui" font-size="14" fill="#6b7280">Team Members</text>
+      <text x="740" y="72" font-family="system-ui" font-size="32" font-weight="700">8</text>
+      <text x="740" y="96" font-family="system-ui" font-size="12" fill="#6b7280">3 online now</text>
+      
+      <!-- Claude Sessions Card -->
+      <rect x="1080" y="0" width="312" height="120" rx="8" fill="#ffffff" filter="url(#cardShadow)"/>
+      <rect x="1080" y="0" width="312" height="8" rx="8 8 0 0" fill="#f59e0b"/>
+      <text x="1100" y="40" font-family="system-ui" font-size="14" fill="#6b7280">Claude Sessions</text>
+      <text x="1100" y="72" font-family="system-ui" font-size="32" font-weight="700">5</text>
+      <text x="1100" y="96" font-family="system-ui" font-size="12" fill="#6b7280">2 active</text>
+    </g>
+    
+    <!-- Recent Activity Section -->
+    <g transform="translate(0, 240)">
+      <rect x="0" y="0" width="680" height="420" rx="8" fill="#ffffff" filter="url(#cardShadow)"/>
+      <text x="20" y="32" font-family="system-ui" font-size="18" font-weight="600">Recent Activity</text>
+      
+      <!-- Activity Items -->
+      <g transform="translate(20, 60)">
+        <!-- Item 1 -->
+        <circle cx="16" cy="16" r="4" fill="#3b82f6"/>
+        <text x="32" y="20" font-family="system-ui" font-size="14" font-weight="500">New project "E-commerce Platform" created</text>
+        <text x="32" y="38" font-family="system-ui" font-size="12" fill="#6b7280">2 hours ago by Sarah Chen</text>
+        
+        <!-- Item 2 -->
+        <g transform="translate(0, 60)">
+          <circle cx="16" cy="16" r="4" fill="#10b981"/>
+          <text x="32" y="20" font-family="system-ui" font-size="14" font-weight="500">Work item "Setup CI/CD pipeline" completed</text>
+          <text x="32" y="38" font-family="system-ui" font-size="12" fill="#6b7280">4 hours ago by Mike Johnson</text>
+        </g>
+        
+        <!-- Item 3 -->
+        <g transform="translate(0, 120)">
+          <circle cx="16" cy="16" r="4" fill="#8b5cf6"/>
+          <text x="32" y="20" font-family="system-ui" font-size="14" font-weight="500">Claude session started for "API Design Review"</text>
+          <text x="32" y="38" font-family="system-ui" font-size="12" fill="#6b7280">5 hours ago by You</text>
+        </g>
+        
+        <!-- Item 4 -->
+        <g transform="translate(0, 180)">
+          <circle cx="16" cy="16" r="4" fill="#f59e0b"/>
+          <text x="32" y="20" font-family="system-ui" font-size="14" font-weight="500">New team member "Alex Rivera" joined</text>
+          <text x="32" y="38" font-family="system-ui" font-size="12" fill="#6b7280">1 day ago</text>
+        </g>
+        
+        <!-- Item 5 -->
+        <g transform="translate(0, 240)">
+          <circle cx="16" cy="16" r="4" fill="#ef4444"/>
+          <text x="32" y="20" font-family="system-ui" font-size="14" font-weight="500">High priority issue reported in "Mobile App"</text>
+          <text x="32" y="38" font-family="system-ui" font-size="12" fill="#6b7280">2 days ago by Customer Support</text>
+        </g>
+      </g>
+      
+      <!-- View All Link -->
+      <text x="20" y="390" font-family="system-ui" font-size="14" fill="#3b82f6" cursor="pointer">View all activity →</text>
+    </g>
+    
+    <!-- Quick Actions Section -->
+    <g transform="translate(712, 240)">
+      <rect x="0" y="0" width="680" height="420" rx="8" fill="#ffffff" filter="url(#cardShadow)"/>
+      <text x="20" y="32" font-family="system-ui" font-size="18" font-weight="600">Quick Actions</text>
+      
+      <!-- Action Buttons -->
+      <g transform="translate(20, 60)">
+        <!-- New Project Button -->
+        <rect x="0" y="0" width="640" height="56" rx="8" fill="#3b82f6" cursor="pointer"/>
+        <text x="320" y="35" font-family="system-ui" font-size="16" font-weight="500" fill="#ffffff" text-anchor="middle">+ New Project</text>
+        
+        <!-- Start Claude Session -->
+        <rect x="0" y="72" width="640" height="56" rx="8" fill="#ffffff" stroke="#e5e7eb" stroke-width="1" cursor="pointer"/>
+        <circle cx="36" cy="100" r="16" fill="#f3f4f6"/>
+        <text x="36" y="105" font-family="system-ui" font-size="20" text-anchor="middle">🤖</text>
+        <text x="68" y="105" font-family="system-ui" font-size="16" font-weight="500">Start Claude Session</text>
+        
+        <!-- Create Work Item -->
+        <rect x="0" y="144" width="640" height="56" rx="8" fill="#ffffff" stroke="#e5e7eb" stroke-width="1" cursor="pointer"/>
+        <circle cx="36" cy="172" r="16" fill="#f3f4f6"/>
+        <text x="36" y="177" font-family="system-ui" font-size="20" text-anchor="middle">📝</text>
+        <text x="68" y="177" font-family="system-ui" font-size="16" font-weight="500">Create Work Item</text>
+        
+        <!-- Invite Team Member -->
+        <rect x="0" y="216" width="640" height="56" rx="8" fill="#ffffff" stroke="#e5e7eb" stroke-width="1" cursor="pointer"/>
+        <circle cx="36" cy="244" r="16" fill="#f3f4f6"/>
+        <text x="36" y="249" font-family="system-ui" font-size="20" text-anchor="middle">👥</text>
+        <text x="68" y="249" font-family="system-ui" font-size="16" font-weight="500">Invite Team Member</text>
+      </g>
+      
+      <!-- Recent Feedback -->
+      <text x="20" y="320" font-family="system-ui" font-size="16" font-weight="600">Recent Feedback</text>
+      <g transform="translate(20, 340)">
+        <rect x="0" y="0" width="640" height="1" fill="#e5e7eb"/>
+        <text x="0" y="20" font-family="system-ui" font-size="14">Button hover state needs refinement</text>
+        <text x="0" y="38" font-family="system-ui" font-size="12" fill="#6b7280">Submitted 1 hour ago</text>
+        <rect x="540" y="8" width="100" height="24" rx="12" fill="#dcfce7"/>
+        <text x="590" y="24" font-family="system-ui" font-size="12" text-anchor="middle" fill="#166534">Resolved</text>
+      </g>
+    </g>
+  </g>
+  
+  <!-- Floating Action Button -->
+  <circle cx="1360" cy="820" r="28" fill="#3b82f6" filter="url(#cardShadow)" cursor="pointer"/>
+  <text x="1360" y="828" font-family="system-ui" font-size="24" fill="#ffffff" text-anchor="middle">+</text>
+</svg>

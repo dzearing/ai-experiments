@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Button Component - Interactive Design System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            line-height: 1.5;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Theme Variables */
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f3f4f6;
+            --text-primary: #374151;
+            --text-secondary: #666666;
+            --text-muted: #9ca3af;
+            --border: #d1d5db;
+            --border-hover: #9ca3af;
+            --button-primary: #2563eb;
+            --button-primary-hover: #1d4ed8;
+            --button-primary-active: #1e40af;
+            --button-secondary: #ffffff;
+            --button-secondary-hover: #f3f4f6;
+            --button-ghost-hover: #f3f4f6;
+            --button-danger: #dc2626;
+            --button-danger-hover: #b91c1c;
+            --button-disabled: #e5e7eb;
+            --text-disabled: #9ca3af;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-hover: 0 2px 3px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #1f2937;
+            --bg-secondary: #374151;
+            --text-primary: #e5e7eb;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+            --border: #4b5563;
+            --border-hover: #6b7280;
+            --button-primary: #3b82f6;
+            --button-primary-hover: #2563eb;
+            --button-primary-active: #1d4ed8;
+            --button-secondary: #374151;
+            --button-secondary-hover: #4b5563;
+            --button-ghost-hover: #374151;
+            --button-danger: #ef4444;
+            --button-danger-hover: #dc2626;
+            --button-disabled: #374151;
+            --text-disabled: #6b7280;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+            --shadow-hover: 0 2px 3px 0 rgba(0, 0, 0, 0.4);
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .theme-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .theme-switch {
+            position: relative;
+            width: 48px;
+            height: 24px;
+            background: var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .theme-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+
+        [data-theme="dark"] .theme-switch {
+            background: var(--button-primary);
+        }
+
+        [data-theme="dark"] .theme-switch::after {
+            transform: translateX(24px);
+        }
+
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .section-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        /* Base Button Styles */
+        .btn {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-family: inherit;
+            font-weight: 500;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            overflow: hidden;
+            text-decoration: none;
+            user-select: none;
+            outline: none;
+        }
+
+        .btn:focus-visible {
+            outline: 2px solid var(--button-primary);
+            outline-offset: 2px;
+        }
+
+        /* Button Sizes */
+        .btn-sm {
+            height: 32px;
+            padding: 0 12px;
+            font-size: 0.875rem;
+        }
+
+        .btn-md {
+            height: 40px;
+            padding: 0 16px;
+            font-size: 0.875rem;
+        }
+
+        .btn-lg {
+            height: 48px;
+            padding: 0 20px;
+            font-size: 1rem;
+        }
+
+        /* Button Variants */
+        .btn-primary {
+            background: var(--button-primary);
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--button-primary-hover);
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:active:not(:disabled) {
+            background: var(--button-primary-active);
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: var(--button-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--button-secondary-hover);
+            border-color: var(--border-hover);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-primary);
+        }
+
+        .btn-ghost:hover:not(:disabled) {
+            background: var(--button-ghost-hover);
+        }
+
+        .btn-danger {
+            background: var(--button-danger);
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: var(--button-danger-hover);
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-danger:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        /* Disabled State */
+        .btn:disabled {
+            background: var(--button-disabled) !important;
+            color: var(--text-disabled) !important;
+            border-color: var(--button-disabled) !important;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        /* Loading State */
+        .btn-loading {
+            color: transparent !important;
+        }
+
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .btn-loading.btn-primary::after,
+        .btn-loading.btn-danger::after {
+            border-top-color: white;
+        }
+
+        .btn-loading.btn-secondary::after,
+        .btn-loading.btn-ghost::after {
+            border-top-color: var(--text-primary);
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Ripple Effect */
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.3s ease, height 0.3s ease;
+        }
+
+        .btn.btn-secondary::before,
+        .btn.btn-ghost::before {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] .btn.btn-secondary::before,
+        [data-theme="dark"] .btn.btn-ghost::before {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn.ripple::before {
+            width: 100px;
+            height: 100px;
+        }
+
+        /* Icons */
+        .btn-icon {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+        }
+
+        /* Button Groups */
+        .btn-group {
+            display: inline-flex;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-group .btn {
+            border-radius: 0;
+            border-right: 1px solid var(--border);
+        }
+
+        .btn-group .btn:last-child {
+            border-right: none;
+        }
+
+        .btn-group .btn:first-child {
+            border-top-left-radius: 6px;
+            border-bottom-left-radius: 6px;
+        }
+
+        .btn-group .btn:last-child {
+            border-top-right-radius: 6px;
+            border-bottom-right-radius: 6px;
+        }
+
+        /* Demo Sections */
+        .demo-section {
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .state-demo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .state-label {
+            min-width: 80px;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Button Component</h1>
+            <div class="theme-toggle">
+                <span>Light</span>
+                <div class="theme-switch" onclick="toggleTheme()"></div>
+                <span>Dark</span>
+            </div>
+        </header>
+
+        <!-- Button Sizes -->
+        <section class="section">
+            <h2 class="section-title">Button Sizes</h2>
+            <div class="button-group">
+                <button class="btn btn-primary btn-sm">Small</button>
+                <button class="btn btn-primary btn-md">Medium</button>
+                <button class="btn btn-primary btn-lg">Large</button>
+            </div>
+        </section>
+
+        <!-- Button Variants -->
+        <section class="section">
+            <h2 class="section-title">Button Variants</h2>
+            <div class="demo-section">
+                <h3 class="section-subtitle">Primary</h3>
+                <div class="state-demo">
+                    <span class="state-label">Default:</span>
+                    <button class="btn btn-primary btn-md">Primary</button>
+                </div>
+                <div class="state-demo">
+                    <span class="state-label">Loading:</span>
+                    <button class="btn btn-primary btn-md btn-loading">Loading</button>
+                </div>
+                <div class="state-demo">
+                    <span class="state-label">Disabled:</span>
+                    <button class="btn btn-primary btn-md" disabled>Disabled</button>
+                </div>
+            </div>
+
+            <div class="demo-section">
+                <h3 class="section-subtitle">Secondary</h3>
+                <div class="state-demo">
+                    <span class="state-label">Default:</span>
+                    <button class="btn btn-secondary btn-md">Secondary</button>
+                </div>
+                <div class="state-demo">
+                    <span class="state-label">Loading:</span>
+                    <button class="btn btn-secondary btn-md btn-loading">Loading</button>
+                </div>
+                <div class="state-demo">
+                    <span class="state-label">Disabled:</span>
+                    <button class="btn btn-secondary btn-md" disabled>Disabled</button>
+                </div>
+            </div>
+
+            <div class="demo-section">
+                <h3 class="section-subtitle">Ghost</h3>
+                <div class="state-demo">
+                    <span class="state-label">Default:</span>
+                    <button class="btn btn-ghost btn-md">Ghost</button>
+                </div>
+                <div class="state-demo">
+                    <span class="state-label">Loading:</span>
+                    <button class="btn btn-ghost btn-md btn-loading">Loading</button>
+                </div>
+                <div class="state-demo">
+                    <span class="state-label">Disabled:</span>
+                    <button class="btn btn-ghost btn-md" disabled>Disabled</button>
+                </div>
+            </div>
+
+            <div class="demo-section">
+                <h3 class="section-subtitle">Danger</h3>
+                <div class="state-demo">
+                    <span class="state-label">Default:</span>
+                    <button class="btn btn-danger btn-md">Danger</button>
+                </div>
+                <div class="state-demo">
+                    <span class="state-label">Loading:</span>
+                    <button class="btn btn-danger btn-md btn-loading">Loading</button>
+                </div>
+                <div class="state-demo">
+                    <span class="state-label">Disabled:</span>
+                    <button class="btn btn-danger btn-md" disabled>Disabled</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Buttons with Icons -->
+        <section class="section">
+            <h2 class="section-title">Buttons with Icons</h2>
+            <div class="button-group">
+                <button class="btn btn-primary btn-md">
+                    <svg class="btn-icon" viewBox="0 0 24 24">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Add Item
+                </button>
+                <button class="btn btn-danger btn-md">
+                    Delete
+                    <svg class="btn-icon" viewBox="0 0 24 24">
+                        <polyline points="3,6 5,6 21,6"></polyline>
+                        <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                    </svg>
+                </button>
+                <button class="btn btn-secondary btn-md">
+                    <svg class="btn-icon" viewBox="0 0 24 24">
+                        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9,22 9,12 15,12 15,22"></polyline>
+                    </svg>
+                    Home
+                </button>
+                <button class="btn btn-ghost btn-md">
+                    <svg class="btn-icon" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                    Search
+                </button>
+            </div>
+        </section>
+
+        <!-- Button Groups -->
+        <section class="section">
+            <h2 class="section-title">Button Groups</h2>
+            <div class="demo-section">
+                <h3 class="section-subtitle">Primary Group</h3>
+                <div class="btn-group">
+                    <button class="btn btn-primary btn-md">Left</button>
+                    <button class="btn btn-primary btn-md">Center</button>
+                    <button class="btn btn-primary btn-md">Right</button>
+                </div>
+            </div>
+            
+            <div class="demo-section">
+                <h3 class="section-subtitle">Secondary Group</h3>
+                <div class="btn-group">
+                    <button class="btn btn-secondary btn-md">View</button>
+                    <button class="btn btn-secondary btn-md">Edit</button>
+                    <button class="btn btn-secondary btn-md">Delete</button>
+                </div>
+            </div>
+
+            <div class="demo-section">
+                <h3 class="section-subtitle">Toggle Group</h3>
+                <div class="btn-group">
+                    <button class="btn btn-secondary btn-md" onclick="toggleActive(this)">
+                        <svg class="btn-icon" viewBox="0 0 24 24">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
+                    </button>
+                    <button class="btn btn-secondary btn-md" onclick="toggleActive(this)">
+                        <svg class="btn-icon" viewBox="0 0 24 24">
+                            <line x1="8" y1="6" x2="21" y2="6"></line>
+                            <line x1="8" y1="12" x2="21" y2="12"></line>
+                            <line x1="8" y1="18" x2="21" y2="18"></line>
+                            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interactive Demo -->
+        <section class="section">
+            <h2 class="section-title">Interactive Demo</h2>
+            <div class="demo-section">
+                <h3 class="section-subtitle">Click for Ripple Effect</h3>
+                <div class="button-group">
+                    <button class="btn btn-primary btn-md" onclick="addRipple(this)">Ripple Primary</button>
+                    <button class="btn btn-secondary btn-md" onclick="addRipple(this)">Ripple Secondary</button>
+                    <button class="btn btn-danger btn-md" onclick="addRipple(this)">Ripple Danger</button>
+                </div>
+            </div>
+
+            <div class="demo-section">
+                <h3 class="section-subtitle">Loading States</h3>
+                <div class="button-group">
+                    <button class="btn btn-primary btn-md" onclick="toggleLoading(this)">Toggle Loading</button>
+                    <button class="btn btn-secondary btn-md" onclick="simulateAsync(this)">Simulate Async</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- All Combinations -->
+        <section class="section">
+            <h2 class="section-title">All Size & Variant Combinations</h2>
+            <div class="color-grid">
+                <div class="demo-section">
+                    <h3 class="section-subtitle">Primary</h3>
+                    <div class="button-group">
+                        <button class="btn btn-primary btn-sm">Small</button>
+                        <button class="btn btn-primary btn-md">Medium</button>
+                        <button class="btn btn-primary btn-lg">Large</button>
+                    </div>
+                </div>
+
+                <div class="demo-section">
+                    <h3 class="section-subtitle">Secondary</h3>
+                    <div class="button-group">
+                        <button class="btn btn-secondary btn-sm">Small</button>
+                        <button class="btn btn-secondary btn-md">Medium</button>
+                        <button class="btn btn-secondary btn-lg">Large</button>
+                    </div>
+                </div>
+
+                <div class="demo-section">
+                    <h3 class="section-subtitle">Ghost</h3>
+                    <div class="button-group">
+                        <button class="btn btn-ghost btn-sm">Small</button>
+                        <button class="btn btn-ghost btn-md">Medium</button>
+                        <button class="btn btn-ghost btn-lg">Large</button>
+                    </div>
+                </div>
+
+                <div class="demo-section">
+                    <h3 class="section-subtitle">Danger</h3>
+                    <div class="button-group">
+                        <button class="btn btn-danger btn-sm">Small</button>
+                        <button class="btn btn-danger btn-md">Medium</button>
+                        <button class="btn btn-danger btn-lg">Large</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Theme toggle functionality
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
+
+        // Load saved theme
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.body.setAttribute('data-theme', savedTheme);
+        }
+
+        // Ripple effect
+        function addRipple(button) {
+            button.classList.add('ripple');
+            setTimeout(() => {
+                button.classList.remove('ripple');
+            }, 300);
+        }
+
+        // Loading state toggle
+        function toggleLoading(button) {
+            if (button.classList.contains('btn-loading')) {
+                button.classList.remove('btn-loading');
+                button.textContent = 'Toggle Loading';
+            } else {
+                button.classList.add('btn-loading');
+                button.textContent = 'Loading...';
+            }
+        }
+
+        // Simulate async operation
+        function simulateAsync(button) {
+            const originalText = button.textContent;
+            button.classList.add('btn-loading');
+            button.textContent = 'Loading...';
+            button.disabled = true;
+
+            setTimeout(() => {
+                button.classList.remove('btn-loading');
+                button.textContent = 'Success!';
+                button.classList.remove('btn-secondary');
+                button.classList.add('btn-primary');
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.disabled = false;
+                    button.classList.remove('btn-primary');
+                    button.classList.add('btn-secondary');
+                }, 1000);
+            }, 2000);
+        }
+
+        // Toggle active state for button groups
+        function toggleActive(button) {
+            const group = button.parentElement;
+            const buttons = group.querySelectorAll('.btn');
+            
+            buttons.forEach(btn => {
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-secondary');
+            });
+            
+            button.classList.remove('btn-secondary');
+            button.classList.add('btn-primary');
+        }
+
+        // Add click ripple effect to all buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTheme();
+            
+            const buttons = document.querySelectorAll('.btn:not([onclick*="addRipple"])');
+            buttons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    if (!this.disabled && !this.classList.contains('btn-loading')) {
+                        addRipple(this);
+                    }
+                });
+            });
+        });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Tab') {
+                // Let default tab behavior work
+                return;
+            }
+            
+            if (e.key === 'Enter' || e.key === ' ') {
+                const focusedElement = document.activeElement;
+                if (focusedElement.classList.contains('btn')) {
+                    e.preventDefault();
+                    focusedElement.click();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

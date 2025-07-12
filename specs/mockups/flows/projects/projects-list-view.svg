@@ -1,0 +1,246 @@
+<svg viewBox="0 0 1440 900" xmlns="http://www.w3.org/2000/svg">
+  <!-- Projects List View Mockup -->
+  <defs>
+    <filter id="cardShadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.1"/>
+    </filter>
+    <linearGradient id="activeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2563eb;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="completeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1440" height="900" fill="#f9fafb"/>
+  
+  <!-- Header -->
+  <rect width="1440" height="64" fill="#ffffff" filter="url(#cardShadow)"/>
+  <text x="24" y="40" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="600">Claude Flow</text>
+  
+  <!-- Breadcrumb -->
+  <text x="200" y="40" font-family="system-ui" font-size="14" fill="#6b7280">Dashboard</text>
+  <text x="280" y="40" font-family="system-ui" font-size="14" fill="#6b7280">/</text>
+  <text x="300" y="40" font-family="system-ui" font-size="14" fill="#111827">Projects</text>
+  
+  <!-- Page Header -->
+  <g transform="translate(24, 88)">
+    <text x="0" y="32" font-family="system-ui" font-size="32" font-weight="700">Projects</text>
+    <text x="0" y="56" font-family="system-ui" font-size="16" fill="#6b7280">Manage and track all your projects in one place</text>
+    
+    <!-- New Project Button -->
+    <rect x="1268" y="8" width="148" height="40" rx="6" fill="#3b82f6" cursor="pointer"/>
+    <text x="1342" y="32" font-family="system-ui" font-size="14" font-weight="500" fill="#ffffff" text-anchor="middle">+ New Project</text>
+  </g>
+  
+  <!-- Filter and Search Bar -->
+  <g transform="translate(24, 180)">
+    <rect x="0" y="0" width="1392" height="56" rx="8" fill="#ffffff" filter="url(#cardShadow)"/>
+    
+    <!-- Search Input -->
+    <rect x="16" y="12" width="400" height="32" rx="6" fill="#f3f4f6" stroke="#e5e7eb"/>
+    <text x="28" y="32" font-family="system-ui" font-size="14" fill="#9ca3af">🔍 Search projects...</text>
+    
+    <!-- Filter Buttons -->
+    <rect x="440" y="12" width="80" height="32" rx="16" fill="#3b82f6"/>
+    <text x="480" y="32" font-family="system-ui" font-size="13" fill="#ffffff" text-anchor="middle">All (15)</text>
+    
+    <rect x="532" y="12" width="100" height="32" rx="16" fill="#ffffff" stroke="#e5e7eb"/>
+    <text x="582" y="32" font-family="system-ui" font-size="13" fill="#6b7280" text-anchor="middle">Active (12)</text>
+    
+    <rect x="644" y="12" width="120" height="32" rx="16" fill="#ffffff" stroke="#e5e7eb"/>
+    <text x="704" y="32" font-family="system-ui" font-size="13" fill="#6b7280" text-anchor="middle">Completed (3)</text>
+    
+    <!-- Sort Dropdown -->
+    <rect x="1240" y="12" width="140" height="32" rx="6" fill="#ffffff" stroke="#e5e7eb"/>
+    <text x="1252" y="32" font-family="system-ui" font-size="13" fill="#374151">Sort: Recent ▼</text>
+  </g>
+  
+  <!-- Projects Grid -->
+  <g transform="translate(24, 260)">
+    <!-- Row 1 -->
+    <!-- Project Card 1 - Active -->
+    <g transform="translate(0, 0)">
+      <rect x="0" y="0" width="456" height="200" rx="8" fill="#ffffff" filter="url(#cardShadow)" cursor="pointer"/>
+      <rect x="0" y="0" width="456" height="8" rx="8 8 0 0" fill="url(#activeGradient)"/>
+      
+      <text x="20" y="40" font-family="system-ui" font-size="18" font-weight="600">E-commerce Platform</text>
+      <rect x="20" y="52" width="60" height="20" rx="10" fill="#dbeafe"/>
+      <text x="50" y="66" font-family="system-ui" font-size="11" fill="#1e40af" text-anchor="middle">Active</text>
+      
+      <text x="20" y="96" font-family="system-ui" font-size="14" fill="#6b7280">Modern e-commerce solution with React and Node.js</text>
+      
+      <!-- Progress Bar -->
+      <rect x="20" y="120" width="416" height="6" rx="3" fill="#e5e7eb"/>
+      <rect x="20" y="120" width="291" height="6" rx="3" fill="#3b82f6"/>
+      <text x="20" y="142" font-family="system-ui" font-size="12" fill="#6b7280">Progress: 70%</text>
+      
+      <!-- Team Avatars -->
+      <g transform="translate(20, 160)">
+        <circle cx="12" cy="12" r="12" fill="#fbbf24"/>
+        <circle cx="32" cy="12" r="12" fill="#8b5cf6"/>
+        <circle cx="52" cy="12" r="12" fill="#10b981"/>
+        <text x="76" y="17" font-family="system-ui" font-size="12" fill="#6b7280">+2 more</text>
+      </g>
+      
+      <!-- Stats -->
+      <text x="356" y="176" font-family="system-ui" font-size="12" fill="#6b7280">8 tasks • 3 in progress</text>
+    </g>
+    
+    <!-- Project Card 2 - Active -->
+    <g transform="translate(468, 0)">
+      <rect x="0" y="0" width="456" height="200" rx="8" fill="#ffffff" filter="url(#cardShadow)" cursor="pointer"/>
+      <rect x="0" y="0" width="456" height="8" rx="8 8 0 0" fill="url(#activeGradient)"/>
+      
+      <text x="20" y="40" font-family="system-ui" font-size="18" font-weight="600">Mobile App Redesign</text>
+      <rect x="20" y="52" width="60" height="20" rx="10" fill="#dbeafe"/>
+      <text x="50" y="66" font-family="system-ui" font-size="11" fill="#1e40af" text-anchor="middle">Active</text>
+      
+      <text x="20" y="96" font-family="system-ui" font-size="14" fill="#6b7280">Complete UI/UX overhaul for iOS and Android apps</text>
+      
+      <!-- Progress Bar -->
+      <rect x="20" y="120" width="416" height="6" rx="3" fill="#e5e7eb"/>
+      <rect x="20" y="120" width="187" height="6" rx="3" fill="#3b82f6"/>
+      <text x="20" y="142" font-family="system-ui" font-size="12" fill="#6b7280">Progress: 45%</text>
+      
+      <!-- Team Avatars -->
+      <g transform="translate(20, 160)">
+        <circle cx="12" cy="12" r="12" fill="#ef4444"/>
+        <circle cx="32" cy="12" r="12" fill="#3b82f6"/>
+      </g>
+      
+      <!-- Stats -->
+      <text x="356" y="176" font-family="system-ui" font-size="12" fill="#6b7280">12 tasks • 5 in progress</text>
+    </g>
+    
+    <!-- Project Card 3 - Completed -->
+    <g transform="translate(936, 0)">
+      <rect x="0" y="0" width="456" height="200" rx="8" fill="#ffffff" filter="url(#cardShadow)" cursor="pointer"/>
+      <rect x="0" y="0" width="456" height="8" rx="8 8 0 0" fill="url(#completeGradient)"/>
+      
+      <text x="20" y="40" font-family="system-ui" font-size="18" font-weight="600">API Documentation</text>
+      <rect x="20" y="52" width="80" height="20" rx="10" fill="#d1fae5"/>
+      <text x="60" y="66" font-family="system-ui" font-size="11" fill="#065f46" text-anchor="middle">Completed</text>
+      
+      <text x="20" y="96" font-family="system-ui" font-size="14" fill="#6b7280">Comprehensive API docs with OpenAPI specs</text>
+      
+      <!-- Progress Bar -->
+      <rect x="20" y="120" width="416" height="6" rx="3" fill="#e5e7eb"/>
+      <rect x="20" y="120" width="416" height="6" rx="3" fill="#10b981"/>
+      <text x="20" y="142" font-family="system-ui" font-size="12" fill="#6b7280">Progress: 100%</text>
+      
+      <!-- Team Avatars -->
+      <g transform="translate(20, 160)">
+        <circle cx="12" cy="12" r="12" fill="#6366f1"/>
+        <circle cx="32" cy="12" r="12" fill="#f59e0b"/>
+      </g>
+      
+      <!-- Stats -->
+      <text x="336" y="176" font-family="system-ui" font-size="12" fill="#6b7280">24 tasks • Completed</text>
+    </g>
+    
+    <!-- Row 2 -->
+    <!-- Project Card 4 - Active with Warning -->
+    <g transform="translate(0, 220)">
+      <rect x="0" y="0" width="456" height="200" rx="8" fill="#ffffff" filter="url(#cardShadow)" cursor="pointer"/>
+      <rect x="0" y="0" width="456" height="8" rx="8 8 0 0" fill="#f59e0b"/>
+      
+      <text x="20" y="40" font-family="system-ui" font-size="18" font-weight="600">Data Migration Tool</text>
+      <rect x="20" y="52" width="60" height="20" rx="10" fill="#dbeafe"/>
+      <text x="50" y="66" font-family="system-ui" font-size="11" fill="#1e40af" text-anchor="middle">Active</text>
+      <rect x="88" y="52" width="80" height="20" rx="10" fill="#fef3c7"/>
+      <text x="128" y="66" font-family="system-ui" font-size="11" fill="#92400e" text-anchor="middle">At Risk</text>
+      
+      <text x="20" y="96" font-family="system-ui" font-size="14" fill="#6b7280">ETL pipeline for legacy system migration</text>
+      
+      <!-- Progress Bar -->
+      <rect x="20" y="120" width="416" height="6" rx="3" fill="#e5e7eb"/>
+      <rect x="20" y="120" width="125" height="6" rx="3" fill="#f59e0b"/>
+      <text x="20" y="142" font-family="system-ui" font-size="12" fill="#6b7280">Progress: 30%</text>
+      
+      <!-- Team Avatars -->
+      <g transform="translate(20, 160)">
+        <circle cx="12" cy="12" r="12" fill="#10b981"/>
+        <circle cx="32" cy="12" r="12" fill="#8b5cf6"/>
+        <circle cx="52" cy="12" r="12" fill="#ef4444"/>
+      </g>
+      
+      <!-- Stats -->
+      <text x="326" y="176" font-family="system-ui" font-size="12" fill="#6b7280">15 tasks • 2 blocked</text>
+    </g>
+    
+    <!-- Project Card 5 - Active -->
+    <g transform="translate(468, 220)">
+      <rect x="0" y="0" width="456" height="200" rx="8" fill="#ffffff" filter="url(#cardShadow)" cursor="pointer"/>
+      <rect x="0" y="0" width="456" height="8" rx="8 8 0 0" fill="url(#activeGradient)"/>
+      
+      <text x="20" y="40" font-family="system-ui" font-size="18" font-weight="600">Analytics Dashboard</text>
+      <rect x="20" y="52" width="60" height="20" rx="10" fill="#dbeafe"/>
+      <text x="50" y="66" font-family="system-ui" font-size="11" fill="#1e40af" text-anchor="middle">Active</text>
+      
+      <text x="20" y="96" font-family="system-ui" font-size="14" fill="#6b7280">Real-time analytics and reporting dashboard</text>
+      
+      <!-- Progress Bar -->
+      <rect x="20" y="120" width="416" height="6" rx="3" fill="#e5e7eb"/>
+      <rect x="20" y="120" width="354" height="6" rx="3" fill="#3b82f6"/>
+      <text x="20" y="142" font-family="system-ui" font-size="12" fill="#6b7280">Progress: 85%</text>
+      
+      <!-- Team Avatars -->
+      <g transform="translate(20, 160)">
+        <circle cx="12" cy="12" r="12" fill="#3b82f6"/>
+        <circle cx="32" cy="12" r="12" fill="#fbbf24"/>
+        <circle cx="52" cy="12" r="12" fill="#6366f1"/>
+        <circle cx="72" cy="12" r="12" fill="#10b981"/>
+      </g>
+      
+      <!-- Stats -->
+      <text x="356" y="176" font-family="system-ui" font-size="12" fill="#6b7280">6 tasks • 1 in review</text>
+    </g>
+    
+    <!-- Project Card 6 - Planning -->
+    <g transform="translate(936, 220)">
+      <rect x="0" y="0" width="456" height="200" rx="8" fill="#ffffff" filter="url(#cardShadow)" cursor="pointer"/>
+      <rect x="0" y="0" width="456" height="8" rx="8 8 0 0" fill="#9ca3af"/>
+      
+      <text x="20" y="40" font-family="system-ui" font-size="18" font-weight="600">Cloud Infrastructure</text>
+      <rect x="20" y="52" width="70" height="20" rx="10" fill="#f3f4f6"/>
+      <text x="55" y="66" font-family="system-ui" font-size="11" fill="#6b7280" text-anchor="middle">Planning</text>
+      
+      <text x="20" y="96" font-family="system-ui" font-size="14" fill="#6b7280">Kubernetes deployment and CI/CD setup</text>
+      
+      <!-- Progress Bar -->
+      <rect x="20" y="120" width="416" height="6" rx="3" fill="#e5e7eb"/>
+      <rect x="20" y="120" width="42" height="6" rx="3" fill="#9ca3af"/>
+      <text x="20" y="142" font-family="system-ui" font-size="12" fill="#6b7280">Progress: 10%</text>
+      
+      <!-- Team Avatars -->
+      <g transform="translate(20, 160)">
+        <circle cx="12" cy="12" r="12" fill="#ef4444"/>
+      </g>
+      
+      <!-- Stats -->
+      <text x="336" y="176" font-family="system-ui" font-size="12" fill="#6b7280">3 tasks • Not started</text>
+    </g>
+  </g>
+  
+  <!-- Pagination -->
+  <g transform="translate(680, 780)">
+    <rect x="0" y="0" width="80" height="32" rx="6" fill="#ffffff" stroke="#e5e7eb"/>
+    <text x="40" y="22" font-family="system-ui" font-size="14" text-anchor="middle">Previous</text>
+    
+    <rect x="92" y="0" width="32" height="32" rx="6" fill="#3b82f6"/>
+    <text x="108" y="22" font-family="system-ui" font-size="14" fill="#ffffff" text-anchor="middle">1</text>
+    
+    <rect x="136" y="0" width="32" height="32" rx="6" fill="#ffffff" stroke="#e5e7eb"/>
+    <text x="152" y="22" font-family="system-ui" font-size="14" text-anchor="middle">2</text>
+    
+    <rect x="180" y="0" width="32" height="32" rx="6" fill="#ffffff" stroke="#e5e7eb"/>
+    <text x="196" y="22" font-family="system-ui" font-size="14" text-anchor="middle">3</text>
+    
+    <rect x="224" y="0" width="60" height="32" rx="6" fill="#ffffff" stroke="#e5e7eb"/>
+    <text x="254" y="22" font-family="system-ui" font-size="14" text-anchor="middle">Next</text>
+  </g>
+</svg>

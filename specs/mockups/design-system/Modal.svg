@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Modal shadow -->
+    <filter id="modal-shadow">
+      <feDropShadow dx="0" dy="25" stdDeviation="25" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+  
+  <!-- Title -->
+  <text x="600" y="40" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="600" text-anchor="middle">Modal and Dialog Components</text>
+  
+  <!-- Light Theme Container -->
+  <g transform="translate(50, 80)">
+    <rect x="0" y="0" width="500" height="680" fill="#f3f4f6" stroke="#e0e0e0" stroke-width="1"/>
+    <text x="250" y="30" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="500" text-anchor="middle">Light Theme</text>
+    
+    <!-- Basic Modal -->
+    <text x="20" y="70" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#666666">Basic Modal</text>
+    
+    <!-- Backdrop -->
+    <rect x="20" y="90" width="460" height="250" fill="#000000" opacity="0.3"/>
+    
+    <!-- Modal -->
+    <g transform="translate(80, 120)">
+      <rect x="0" y="0" width="340" height="180" rx="8" fill="#ffffff" filter="url(#modal-shadow)"/>
+      <!-- Header -->
+      <text x="20" y="35" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="600" fill="#111827">Modal Title</text>
+      <text x="320" y="35" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#6b7280" text-anchor="end" cursor="pointer">×</text>
+      <line x1="0" y1="50" x2="340" y2="50" stroke="#e5e7eb" stroke-width="1"/>
+      <!-- Content -->
+      <text x="20" y="80" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#6b7280">This is the modal content. It can contain</text>
+      <text x="20" y="100" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#6b7280">any type of information or form fields.</text>
+      <!-- Footer -->
+      <line x1="0" y1="130" x2="340" y2="130" stroke="#e5e7eb" stroke-width="1"/>
+      <g transform="translate(340, 150)">
+        <rect x="-180" y="-5" width="80" height="32" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1"/>
+        <text x="-140" y="16" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#374151" text-anchor="middle">Cancel</text>
+        <rect x="-90" y="-5" width="80" height="32" rx="6" fill="#2563eb"/>
+        <text x="-50" y="16" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#ffffff" text-anchor="middle">Confirm</text>
+      </g>
+    </g>
+    
+    <!-- Confirmation Dialog -->
+    <text x="20" y="380" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#666666">Confirmation Dialog</text>
+    
+    <!-- Backdrop -->
+    <rect x="20" y="400" width="460" height="180" fill="#000000" opacity="0.3"/>
+    
+    <!-- Dialog -->
+    <g transform="translate(120, 430)">
+      <rect x="0" y="0" width="260" height="120" rx="8" fill="#ffffff" filter="url(#modal-shadow)"/>
+      <!-- Icon -->
+      <circle cx="130" cy="30" r="20" fill="#fef3c7"/>
+      <text x="130" y="38" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#f59e0b" text-anchor="middle">!</text>
+      <!-- Content -->
+      <text x="130" y="70" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="600" fill="#111827" text-anchor="middle">Are you sure?</text>
+      <text x="130" y="90" font-family="system-ui, -apple-system, sans-serif" font-size="12" fill="#6b7280" text-anchor="middle">This action cannot be undone.</text>
+      <!-- Actions -->
+      <g transform="translate(130, 105)">
+        <rect x="-80" y="-5" width="70" height="28" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1"/>
+        <text x="-45" y="14" font-family="system-ui, -apple-system, sans-serif" font-size="12" fill="#374151" text-anchor="middle">Cancel</text>
+        <rect x="10" y="-5" width="70" height="28" rx="6" fill="#dc2626"/>
+        <text x="45" y="14" font-family="system-ui, -apple-system, sans-serif" font-size="12" fill="#ffffff" text-anchor="middle">Delete</text>
+      </g>
+    </g>
+  </g>
+  
+  <!-- Dark Theme Container -->
+  <g transform="translate(650, 80)">
+    <rect x="0" y="0" width="500" height="680" fill="#111827" stroke="#374151" stroke-width="1"/>
+    <text x="250" y="30" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="500" fill="#f3f4f6" text-anchor="middle">Dark Theme</text>
+    
+    <!-- Basic Modal -->
+    <text x="20" y="70" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#9ca3af">Basic Modal</text>
+    
+    <!-- Backdrop -->
+    <rect x="20" y="90" width="460" height="250" fill="#000000" opacity="0.5"/>
+    
+    <!-- Modal -->
+    <g transform="translate(80, 120)">
+      <rect x="0" y="0" width="340" height="180" rx="8" fill="#1f2937" filter="url(#modal-shadow)"/>
+      <!-- Header -->
+      <text x="20" y="35" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="600" fill="#f3f4f6">Modal Title</text>
+      <text x="320" y="35" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#9ca3af" text-anchor="end" cursor="pointer">×</text>
+      <line x1="0" y1="50" x2="340" y2="50" stroke="#374151" stroke-width="1"/>
+      <!-- Content -->
+      <text x="20" y="80" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#9ca3af">This is the modal content. It can contain</text>
+      <text x="20" y="100" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#9ca3af">any type of information or form fields.</text>
+      <!-- Footer -->
+      <line x1="0" y1="130" x2="340" y2="130" stroke="#374151" stroke-width="1"/>
+      <g transform="translate(340, 150)">
+        <rect x="-180" y="-5" width="80" height="32" rx="6" fill="#374151" stroke="#4b5563" stroke-width="1"/>
+        <text x="-140" y="16" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#e5e7eb" text-anchor="middle">Cancel</text>
+        <rect x="-90" y="-5" width="80" height="32" rx="6" fill="#3b82f6"/>
+        <text x="-50" y="16" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#ffffff" text-anchor="middle">Confirm</text>
+      </g>
+    </g>
+    
+    <!-- Confirmation Dialog -->
+    <text x="20" y="380" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#9ca3af">Confirmation Dialog</text>
+    
+    <!-- Backdrop -->
+    <rect x="20" y="400" width="460" height="180" fill="#000000" opacity="0.5"/>
+    
+    <!-- Dialog -->
+    <g transform="translate(120, 430)">
+      <rect x="0" y="0" width="260" height="120" rx="8" fill="#1f2937" filter="url(#modal-shadow)"/>
+      <!-- Icon -->
+      <circle cx="130" cy="30" r="20" fill="#451a03"/>
+      <text x="130" y="38" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#f59e0b" text-anchor="middle">!</text>
+      <!-- Content -->
+      <text x="130" y="70" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="600" fill="#f3f4f6" text-anchor="middle">Are you sure?</text>
+      <text x="130" y="90" font-family="system-ui, -apple-system, sans-serif" font-size="12" fill="#9ca3af" text-anchor="middle">This action cannot be undone.</text>
+      <!-- Actions -->
+      <g transform="translate(130, 105)">
+        <rect x="-80" y="-5" width="70" height="28" rx="6" fill="#374151" stroke="#4b5563" stroke-width="1"/>
+        <text x="-45" y="14" font-family="system-ui, -apple-system, sans-serif" font-size="12" fill="#e5e7eb" text-anchor="middle">Cancel</text>
+        <rect x="10" y="-5" width="70" height="28" rx="6" fill="#ef4444"/>
+        <text x="45" y="14" font-family="system-ui, -apple-system, sans-serif" font-size="12" fill="#ffffff" text-anchor="middle">Delete</text>
+      </g>
+    </g>
+    
+    <!-- Toast Notification -->
+    <text x="20" y="600" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#9ca3af">Toast Notifications</text>
+    
+    <g transform="translate(20, 620)">
+      <!-- Success Toast -->
+      <rect x="0" y="0" width="220" height="40" rx="6" fill="#065f46" filter="url(#modal-shadow)"/>
+      <circle cx="20" cy="20" r="8" fill="#10b981"/>
+      <polyline points="17,20 19,22 23,18" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="40" y="25" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#ffffff">Changes saved!</text>
+      
+      <!-- Error Toast -->
+      <rect x="240" y="0" width="220" height="40" rx="6" fill="#7f1d1d" filter="url(#modal-shadow)"/>
+      <circle cx="260" cy="20" r="8" fill="#ef4444"/>
+      <text x="260" y="25" font-family="system-ui, -apple-system, sans-serif" font-size="16" fill="#ffffff" text-anchor="middle">×</text>
+      <text x="280" y="25" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#ffffff">Error occurred!</text>
+    </g>
+  </g>
+</svg>

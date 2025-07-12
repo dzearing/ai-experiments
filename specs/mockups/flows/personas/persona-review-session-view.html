@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Persona Review Session - Claude Flow</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Light theme */
+            --bg-primary: #f9fafb;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f3f4f6;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --border-primary: #e5e7eb;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #1f2937;
+            --bg-secondary: #374151;
+            --bg-tertiary: #4b5563;
+            --text-primary: #f9fafb;
+            --text-secondary: #d1d5db;
+            --border-primary: #4b5563;
+            --shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.4);
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            max-width: 1440px;
+            margin: 0 auto;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            height: 64px;
+            background: var(--bg-secondary);
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .session-title {
+            font-size: 16px;
+            color: var(--text-primary);
+            position: absolute;
+            left: 200px;
+        }
+
+        .theme-toggle {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-right: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .theme-toggle:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .exit-btn {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .exit-btn:hover {
+            background: var(--bg-tertiary);
+        }
+
+        /* Progress Bar */
+        .progress-section {
+            height: 48px;
+            background: var(--bg-secondary);
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            gap: 20px;
+        }
+
+        .progress-label {
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 12px;
+            background: var(--border-primary);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--accent-blue);
+            width: 66.6%;
+            transition: width 0.5s ease;
+        }
+
+        .progress-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            position: relative;
+        }
+
+        /* Persona Sidebar */
+        .persona-sidebar {
+            width: 300px;
+            background: var(--bg-secondary);
+            box-shadow: var(--shadow);
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .persona-sidebar h2 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .persona-card {
+            width: 100%;
+            height: 100px;
+            border: 2px solid var(--border-primary);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .persona-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .persona-card.selected {
+            border-color: var(--accent-blue);
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05));
+        }
+
+        .persona-card.reviewed {
+            border-color: var(--accent-green);
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));
+        }
+
+        .persona-card.active {
+            border-color: var(--accent-purple);
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(139, 92, 246, 0.05));
+        }
+
+        .persona-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin-right: 16px;
+        }
+
+        .persona-ux { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+        .persona-be { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+        .persona-pm { background: linear-gradient(135deg, #10b981, #059669); }
+        .persona-sec { background: var(--accent-red); }
+
+        .persona-info h3 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .persona-info p {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .persona-status {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+        }
+
+        .status-check {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 10px;
+        }
+
+        .status-active {
+            background: var(--accent-orange);
+            color: #78350f;
+            padding: 4px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 500;
+        }
+
+        .status-pending {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--border-primary);
+        }
+
+        .continue-btn {
+            width: 100%;
+            height: 40px;
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 40px;
+            transition: background-color 0.3s;
+        }
+
+        .continue-btn:hover {
+            background: #2563eb;
+        }
+
+        /* Review Content */
+        .review-content {
+            flex: 1;
+            background: var(--bg-secondary);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .current-persona-header {
+            height: 80px;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(139, 92, 246, 0.05));
+            display: flex;
+            align-items: center;
+            padding: 0 32px;
+        }
+
+        .current-persona-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-right: 20px;
+        }
+
+        .current-persona-info h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .current-persona-info p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .suggestions-section {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .suggestions-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        .suggestion-card {
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            margin-bottom: 16px;
+            background: var(--bg-primary);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .suggestion-card:hover {
+            box-shadow: var(--shadow-lg);
+        }
+
+        .suggestion-card.accepted {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));
+            border-color: var(--accent-green);
+            opacity: 0.8;
+        }
+
+        .suggestion-stripe {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 4px;
+            height: 100%;
+        }
+
+        .suggestion-stripe.warning { background: var(--accent-orange); }
+        .suggestion-stripe.success { background: var(--accent-green); }
+        .suggestion-stripe.info { background: var(--accent-blue); }
+
+        .suggestion-content {
+            padding: 20px 20px 20px 24px;
+        }
+
+        .suggestion-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .suggestion-description {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+
+        .suggestion-tags {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .tag {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .tag.performance {
+            background: rgba(59, 130, 246, 0.1);
+            color: #1e40af;
+        }
+
+        .tag.architecture {
+            background: rgba(245, 158, 11, 0.2);
+            color: #92400e;
+        }
+
+        .tag.accepted {
+            background: rgba(16, 185, 129, 0.2);
+            color: #065f46;
+        }
+
+        .suggestion-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-accept {
+            background: var(--accent-green);
+            color: white;
+        }
+
+        .btn-skip, .btn-refine {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            color: var(--text-primary);
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+
+        .code-example {
+            background: #1f2937;
+            border-radius: 4px;
+            padding: 12px 16px;
+            margin: 8px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #10b981;
+        }
+
+        /* Navigation */
+        .navigation {
+            height: 80px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            margin: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+
+        .nav-btn {
+            padding: 12px 24px;
+            border-radius: 6px;
+            border: 1px solid var(--border-primary);
+            background: var(--bg-secondary);
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .nav-btn.primary {
+            background: var(--accent-blue);
+            color: white;
+            border-color: var(--accent-blue);
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+
+        .nav-status {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* Summary Sidebar */
+        .summary-sidebar {
+            width: 300px;
+            background: var(--bg-primary);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .summary-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .stats-card {
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+
+        .stat-number.green { color: var(--accent-green); }
+        .stat-number.orange { color: var(--accent-orange); }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .accepted-list {
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            padding: 16px;
+        }
+
+        .accepted-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-primary);
+        }
+
+        .accepted-item:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .accepted-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 12px;
+            margin-top: 4px;
+        }
+
+        .accepted-dot.blue { background: var(--accent-blue); }
+        .accepted-dot.purple { background: var(--accent-purple); }
+
+        .accepted-content h4 {
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .accepted-content p {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .accepted-content small {
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+
+        .complete-btn {
+            width: 100%;
+            height: 44px;
+            background: var(--accent-green);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: not-allowed;
+            opacity: 0.5;
+            margin-top: 40px;
+        }
+
+        .complete-help {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        /* Refinement Dialog */
+        .dialog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .dialog-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .dialog {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            width: 600px;
+            max-width: 90vw;
+            box-shadow: var(--shadow-lg);
+            transform: scale(0.9);
+            transition: transform 0.3s;
+        }
+
+        .dialog-overlay.active .dialog {
+            transform: scale(1);
+        }
+
+        .dialog-header {
+            background: var(--bg-tertiary);
+            padding: 16px 24px;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .dialog-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .dialog-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .dialog-content {
+            padding: 24px;
+        }
+
+        .dialog-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .dialog-textarea {
+            width: 100%;
+            height: 120px;
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+            padding: 12px;
+            font-family: inherit;
+            font-size: 14px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            resize: vertical;
+            margin-bottom: 24px;
+        }
+
+        .dialog-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .dialog-btn {
+            padding: 12px 24px;
+            border-radius: 6px;
+            border: 1px solid var(--border-primary);
+            background: var(--bg-secondary);
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .dialog-btn.primary {
+            background: var(--accent-blue);
+            color: white;
+            border-color: var(--accent-blue);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .summary-sidebar {
+                display: none;
+            }
+            
+            .session-title {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .persona-sidebar {
+                width: 250px;
+            }
+            
+            .current-persona-header {
+                padding: 0 16px;
+            }
+            
+            .suggestions-section {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>Claude Flow</h1>
+            <div class="session-title">AI Review Session: Add product search functionality (#WI-157)</div>
+            <div style="display: flex; align-items: center;">
+                <button class="theme-toggle" onclick="toggleTheme()">🌙 Dark</button>
+                <button class="exit-btn" onclick="exitReview()">Exit Review</button>
+            </div>
+        </header>
+
+        <!-- Progress Bar -->
+        <div class="progress-section">
+            <span class="progress-label">Review Progress</span>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <span class="progress-text" id="progressText">2 of 3 personas reviewed</span>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Persona Sidebar -->
+            <aside class="persona-sidebar">
+                <h2>Select Personas</h2>
+                
+                <div class="persona-card selected reviewed" data-persona="ux" onclick="selectPersona('ux')">
+                    <div class="persona-avatar persona-ux">🎨</div>
+                    <div class="persona-info">
+                        <h3>UX Designer</h3>
+                        <p>User experience focus</p>
+                    </div>
+                    <div class="persona-status">
+                        <div class="status-check">✓</div>
+                    </div>
+                </div>
+
+                <div class="persona-card selected active" data-persona="backend" onclick="selectPersona('backend')">
+                    <div class="persona-avatar persona-be">⚙️</div>
+                    <div class="persona-info">
+                        <h3>Backend Engineer</h3>
+                        <p>Technical focus</p>
+                    </div>
+                    <div class="persona-status">
+                        <div class="status-active">Active</div>
+                    </div>
+                </div>
+
+                <div class="persona-card selected" data-persona="pm" onclick="selectPersona('pm')">
+                    <div class="persona-avatar persona-pm">📊</div>
+                    <div class="persona-info">
+                        <h3>Product Manager</h3>
+                        <p>Business priorities</p>
+                    </div>
+                    <div class="persona-status">
+                        <div class="status-pending"></div>
+                    </div>
+                </div>
+
+                <div class="persona-card" data-persona="security" onclick="selectPersona('security')">
+                    <div class="persona-avatar persona-sec">🔒</div>
+                    <div class="persona-info">
+                        <h3>Security Expert</h3>
+                        <p>Security compliance</p>
+                    </div>
+                </div>
+
+                <button class="continue-btn" onclick="continueReview()">Continue Review</button>
+            </aside>
+
+            <!-- Review Content -->
+            <main class="review-content">
+                <!-- Current Persona Header -->
+                <div class="current-persona-header">
+                    <div class="current-persona-avatar">⚙️</div>
+                    <div class="current-persona-info">
+                        <h2 id="currentPersonaName">Backend Engineer Review</h2>
+                        <p id="currentPersonaDesc">Reviewing technical implementation aspects</p>
+                    </div>
+                </div>
+
+                <!-- Suggestions Section -->
+                <div class="suggestions-section">
+                    <h3 class="suggestions-title">Suggestions</h3>
+
+                    <!-- Suggestion 1 -->
+                    <div class="suggestion-card">
+                        <div class="suggestion-stripe warning"></div>
+                        <div class="suggestion-content">
+                            <h4 class="suggestion-title">Consider using a dedicated search service</h4>
+                            <p class="suggestion-description">
+                                Instead of implementing search directly in the database, consider using Elasticsearch or 
+                                Algolia for better performance and features like fuzzy matching, faceted search, and relevance scoring.
+                            </p>
+                            <div class="suggestion-tags">
+                                <span class="tag performance">Performance</span>
+                                <span class="tag architecture">Architecture</span>
+                            </div>
+                            <div class="suggestion-actions">
+                                <button class="btn btn-accept" onclick="acceptSuggestion(this)">Accept</button>
+                                <button class="btn btn-skip" onclick="skipSuggestion(this)">Skip</button>
+                                <button class="btn btn-refine" onclick="refineSuggestion(this)">Refine</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Suggestion 2 (Accepted) -->
+                    <div class="suggestion-card accepted">
+                        <div class="suggestion-stripe success"></div>
+                        <div class="suggestion-content">
+                            <h4 class="suggestion-title">Add caching layer for search results</h4>
+                            <p class="suggestion-description">
+                                Implement Redis caching for frequently searched terms to reduce database load and improve response times.
+                            </p>
+                            <div class="suggestion-tags">
+                                <span class="tag accepted">✓ Accepted</span>
+                            </div>
+                            <div style="text-align: right; color: var(--text-secondary); font-size: 12px;">
+                                Added to requirements
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Suggestion 3 -->
+                    <div class="suggestion-card">
+                        <div class="suggestion-stripe info"></div>
+                        <div class="suggestion-content">
+                            <h4 class="suggestion-title">Implement search analytics</h4>
+                            <p class="suggestion-description">
+                                Track search queries, click-through rates, and "no results" searches to continuously improve 
+                                the search algorithm and understand user behavior. This data can inform product decisions.
+                            </p>
+                            <div class="code-example">
+                                trackSearch({ query, resultsCount, userId, timestamp });
+                            </div>
+                            <div class="suggestion-actions">
+                                <button class="btn btn-accept" onclick="acceptSuggestion(this)">Accept</button>
+                                <button class="btn btn-skip" onclick="skipSuggestion(this)">Skip</button>
+                                <button class="btn btn-refine" onclick="refineSuggestion(this)">Refine</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation -->
+                <div class="navigation">
+                    <button class="nav-btn" onclick="previousPersona()">← Previous</button>
+                    <div class="nav-status" id="navStatus">2 suggestions accepted, 1 pending</div>
+                    <button class="nav-btn primary" onclick="nextPersona()">Next Persona →</button>
+                </div>
+            </main>
+
+            <!-- Summary Sidebar -->
+            <aside class="summary-sidebar">
+                <h3 class="summary-title">Review Summary</h3>
+                
+                <div class="stats-card">
+                    <div class="stat-item">
+                        <span class="stat-number green" id="acceptedCount">7</span>
+                        <span class="stat-label">suggestions accepted</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number orange" id="pendingCount">3</span>
+                        <span class="stat-label">pending review</span>
+                    </div>
+                </div>
+
+                <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 16px;">Accepted Changes</h4>
+                
+                <div class="accepted-list" id="acceptedList">
+                    <div class="accepted-item">
+                        <div class="accepted-dot blue"></div>
+                        <div class="accepted-content">
+                            <h4>UX: Simplify search UI</h4>
+                            <p>Remove advanced filters initially</p>
+                            <small>by UX Designer • 10 min ago</small>
+                        </div>
+                    </div>
+                    <div class="accepted-item">
+                        <div class="accepted-dot blue"></div>
+                        <div class="accepted-content">
+                            <h4>UX: Add search history</h4>
+                            <p>Show recent searches dropdown</p>
+                            <small>by UX Designer • 8 min ago</small>
+                        </div>
+                    </div>
+                    <div class="accepted-item">
+                        <div class="accepted-dot purple"></div>
+                        <div class="accepted-content">
+                            <h4>BE: Add caching layer</h4>
+                            <p>Redis for search results</p>
+                            <small>by Backend Engineer • 2 min ago</small>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="complete-btn">Complete Review</button>
+                <div class="complete-help">Finish all personas first</div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- Refinement Dialog -->
+    <div class="dialog-overlay" id="dialogOverlay">
+        <div class="dialog">
+            <div class="dialog-header">
+                <h3 class="dialog-title">Refine Suggestion</h3>
+                <button class="dialog-close" onclick="closeDialog()">×</button>
+            </div>
+            <div class="dialog-content">
+                <div class="dialog-label">Ask the Backend Engineer to clarify or modify their suggestion:</div>
+                <textarea class="dialog-textarea" placeholder="Can you provide more specific implementation details for the search service? What about indexing strategies and query optimization?"></textarea>
+                <div class="dialog-actions">
+                    <button class="dialog-btn" onclick="closeDialog()">Cancel</button>
+                    <button class="dialog-btn primary" onclick="submitRefinement()">Refine</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let currentPersona = 'backend';
+        let acceptedSuggestions = 7;
+        let pendingSuggestions = 3;
+        let reviewedPersonas = 2;
+        let totalPersonas = 3;
+
+        // Theme management
+        function toggleTheme() {
+            const body = document.body;
+            const button = document.querySelector('.theme-toggle');
+            
+            if (body.getAttribute('data-theme') === 'dark') {
+                body.removeAttribute('data-theme');
+                button.textContent = '🌙 Dark';
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                button.textContent = '☀️ Light';
+            }
+        }
+
+        // Persona selection
+        function selectPersona(persona) {
+            // Update current persona
+            currentPersona = persona;
+            
+            // Update UI based on persona
+            const personaData = {
+                ux: {
+                    name: 'UX Designer Review',
+                    desc: 'Reviewing user experience and interface design',
+                    avatar: '🎨',
+                    gradient: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05))'
+                },
+                backend: {
+                    name: 'Backend Engineer Review',
+                    desc: 'Reviewing technical implementation aspects',
+                    avatar: '⚙️',
+                    gradient: 'linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(139, 92, 246, 0.05))'
+                },
+                pm: {
+                    name: 'Product Manager Review',
+                    desc: 'Reviewing business priorities and requirements',
+                    avatar: '📊',
+                    gradient: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05))'
+                },
+                security: {
+                    name: 'Security Expert Review',
+                    desc: 'Reviewing security compliance and vulnerabilities',
+                    avatar: '🔒',
+                    gradient: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05))'
+                }
+            };
+            
+            const data = personaData[persona];
+            if (data) {
+                document.getElementById('currentPersonaName').textContent = data.name;
+                document.getElementById('currentPersonaDesc').textContent = data.desc;
+                document.querySelector('.current-persona-avatar').textContent = data.avatar;
+                document.querySelector('.current-persona-header').style.background = data.gradient;
+            }
+
+            // Update active states
+            document.querySelectorAll('.persona-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            
+            const selectedCard = document.querySelector(`[data-persona="${persona}"]`);
+            if (selectedCard && selectedCard.classList.contains('selected')) {
+                selectedCard.classList.add('active');
+            }
+        }
+
+        // Suggestion actions
+        function acceptSuggestion(button) {
+            const card = button.closest('.suggestion-card');
+            card.classList.add('accepted');
+            
+            // Update stripe
+            card.querySelector('.suggestion-stripe').className = 'suggestion-stripe success';
+            
+            // Update actions
+            const actions = card.querySelector('.suggestion-actions');
+            actions.innerHTML = '<span class="tag accepted">✓ Accepted</span>';
+            
+            // Add to accepted list
+            addToAcceptedList(card.querySelector('.suggestion-title').textContent);
+            
+            // Update counters
+            acceptedSuggestions++;
+            pendingSuggestions--;
+            updateCounters();
+            
+            // Animate
+            card.style.transform = 'scale(1.02)';
+            setTimeout(() => {
+                card.style.transform = 'scale(1)';
+            }, 200);
+        }
+
+        function skipSuggestion(button) {
+            const card = button.closest('.suggestion-card');
+            card.style.opacity = '0.5';
+            
+            const actions = card.querySelector('.suggestion-actions');
+            actions.innerHTML = '<span style="color: var(--text-secondary); font-size: 12px;">Skipped</span>';
+            
+            pendingSuggestions--;
+            updateCounters();
+        }
+
+        function refineSuggestion(button) {
+            document.getElementById('dialogOverlay').classList.add('active');
+        }
+
+        function closeDialog() {
+            document.getElementById('dialogOverlay').classList.remove('active');
+        }
+
+        function submitRefinement() {
+            // Here you would typically send the refinement request
+            closeDialog();
+            
+            // Show a toast or notification
+            showNotification('Refinement request sent to Backend Engineer');
+        }
+
+        function addToAcceptedList(title) {
+            const list = document.getElementById('acceptedList');
+            const item = document.createElement('div');
+            item.className = 'accepted-item';
+            item.innerHTML = `
+                <div class="accepted-dot purple"></div>
+                <div class="accepted-content">
+                    <h4>BE: ${title}</h4>
+                    <p>Just accepted</p>
+                    <small>by Backend Engineer • now</small>
+                </div>
+            `;
+            list.insertBefore(item, list.firstChild);
+        }
+
+        function updateCounters() {
+            document.getElementById('acceptedCount').textContent = acceptedSuggestions;
+            document.getElementById('pendingCount').textContent = pendingSuggestions;
+            document.getElementById('navStatus').textContent = `${acceptedSuggestions - 5} suggestions accepted, ${pendingSuggestions} pending`;
+        }
+
+        // Navigation
+        function previousPersona() {
+            const personas = ['ux', 'backend', 'pm'];
+            const currentIndex = personas.indexOf(currentPersona);
+            if (currentIndex > 0) {
+                selectPersona(personas[currentIndex - 1]);
+            }
+        }
+
+        function nextPersona() {
+            const personas = ['ux', 'backend', 'pm'];
+            const currentIndex = personas.indexOf(currentPersona);
+            if (currentIndex < personas.length - 1) {
+                selectPersona(personas[currentIndex + 1]);
+            }
+        }
+
+        function continueReview() {
+            nextPersona();
+        }
+
+        function exitReview() {
+            if (confirm('Are you sure you want to exit the review session? Your progress will be saved.')) {
+                showNotification('Review session saved. You can continue later.');
+            }
+        }
+
+        // Utility functions
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                background: var(--accent-green);
+                color: white;
+                padding: 12px 20px;
+                border-radius: 6px;
+                z-index: 1001;
+                box-shadow: var(--shadow-lg);
+                transform: translateX(100%);
+                transition: transform 0.3s;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 100);
+            
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeDialog();
+            } else if (e.key === 'ArrowLeft' && e.ctrlKey) {
+                previousPersona();
+            } else if (e.key === 'ArrowRight' && e.ctrlKey) {
+                nextPersona();
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set initial progress
+            const progressFill = document.getElementById('progressFill');
+            progressFill.style.width = `${(reviewedPersonas / totalPersonas) * 100}%`;
+            
+            // Set initial persona
+            selectPersona('backend');
+        });
+
+        // Close dialog when clicking outside
+        document.getElementById('dialogOverlay').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                closeDialog();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,198 @@
+<svg viewBox="0 0 1440 900" xmlns="http://www.w3.org/2000/svg">
+  <!-- Claude Chat View Mockup -->
+  <defs>
+    <filter id="cardShadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.1"/>
+    </filter>
+    <filter id="messageShadow">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-opacity="0.05"/>
+    </filter>
+    <linearGradient id="claudeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1440" height="900" fill="#f9fafb"/>
+  
+  <!-- Header -->
+  <rect width="1440" height="64" fill="#ffffff" filter="url(#cardShadow)"/>
+  <text x="24" y="40" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="600">Claude Flow</text>
+  
+  <!-- Breadcrumb -->
+  <text x="200" y="40" font-family="system-ui" font-size="14" fill="#6b7280">Dashboard</text>
+  <text x="280" y="40" font-family="system-ui" font-size="14" fill="#6b7280">/</text>
+  <text x="300" y="40" font-family="system-ui" font-size="14" fill="#6b7280">Projects</text>
+  <text x="360" y="40" font-family="system-ui" font-size="14" fill="#6b7280">/</text>
+  <text x="380" y="40" font-family="system-ui" font-size="14" fill="#6b7280">E-commerce Platform</text>
+  <text x="540" y="40" font-family="system-ui" font-size="14" fill="#6b7280">/</text>
+  <text x="560" y="40" font-family="system-ui" font-size="14" fill="#111827">Claude Session</text>
+  
+  <!-- Session Status -->
+  <rect x="1280" y="22" width="136" height="24" rx="12" fill="#dcfce7"/>
+  <circle cx="1296" cy="34" r="4" fill="#10b981"/>
+  <text x="1308" y="38" font-family="system-ui" font-size="12" fill="#065f46">Session Active</text>
+  
+  <!-- Main Chat Container -->
+  <rect x="0" y="64" width="1440" height="836" fill="#ffffff"/>
+  
+  <!-- Messages Area -->
+  <g transform="translate(0, 64)">
+    <!-- Context Bar -->
+    <rect x="0" y="0" width="1440" height="48" fill="#f3f4f6"/>
+    <text x="24" y="30" font-family="system-ui" font-size="14" font-weight="500">Context: API Design for Product Catalog</text>
+    <text x="1200" y="30" font-family="system-ui" font-size="12" fill="#6b7280">Work Item #234</text>
+    
+    <!-- Chat Messages -->
+    <g transform="translate(200, 80)">
+      <!-- User Message 1 -->
+      <g transform="translate(440, 0)">
+        <rect x="0" y="0" width="580" height="80" rx="16" fill="#3b82f6" filter="url(#messageShadow)"/>
+        <text x="20" y="32" font-family="system-ui" font-size="15" fill="#ffffff">I need help designing a RESTful API for our product catalog.</text>
+        <text x="20" y="52" font-family="system-ui" font-size="15" fill="#ffffff">It should support CRUD operations and filtering.</text>
+        <text x="540" y="68" font-family="system-ui" font-size="11" fill="#93bbfc">2:34 PM</text>
+      </g>
+      
+      <!-- Claude Response 1 -->
+      <g transform="translate(0, 100)">
+        <rect x="0" y="0" width="800" height="240" rx="16" fill="#f3f4f6" filter="url(#messageShadow)"/>
+        <circle cx="32" cy="32" r="16" fill="url(#claudeGradient)"/>
+        <text x="32" y="38" font-family="system-ui" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="bold">C</text>
+        
+        <text x="60" y="32" font-family="system-ui" font-size="15" font-weight="500">I'll help you design a RESTful API for your product catalog. Here's a comprehensive approach:</text>
+        
+        <text x="60" y="60" font-family="system-ui" font-size="14" fill="#374151">1. Resource Structure:</text>
+        <rect x="60" y="72" width="720" height="60" rx="8" fill="#1f2937"/>
+        <text x="72" y="92" font-family="monospace" font-size="13" fill="#10b981">/api/v1/products</text>
+        <text x="72" y="110" font-family="monospace" font-size="13" fill="#10b981">/api/v1/products/{id}</text>
+        <text x="72" y="128" font-family="monospace" font-size="13" fill="#10b981">/api/v1/categories</text>
+        
+        <text x="60" y="156" font-family="system-ui" font-size="14" fill="#374151">2. HTTP Methods:</text>
+        <text x="60" y="176" font-family="system-ui" font-size="14" fill="#374151">• GET /products - List all products (with pagination)</text>
+        <text x="60" y="196" font-family="system-ui" font-size="14" fill="#374151">• POST /products - Create a new product</text>
+        <text x="60" y="216" font-family="system-ui" font-size="14" fill="#374151">• PUT /products/{id} - Update a product</text>
+        
+        <text x="720" y="228" font-family="system-ui" font-size="11" fill="#9ca3af">2:34 PM</text>
+      </g>
+      
+      <!-- Tool Execution Group -->
+      <g transform="translate(0, 360)">
+        <rect x="0" y="0" width="800" height="120" rx="16" fill="#fef3c7" filter="url(#messageShadow)"/>
+        <rect x="0" y="0" width="800" height="32" rx="16 16 0 0" fill="#f59e0b"/>
+        <text x="16" y="22" font-family="system-ui" font-size="12" font-weight="500" fill="#ffffff">Tool Execution (3)</text>
+        <text x="720" y="22" font-family="system-ui" font-size="11" fill="#ffffff" cursor="pointer">Leave feedback</text>
+        
+        <g transform="translate(16, 44)">
+          <rect x="0" y="0" width="768" height="24" rx="4" fill="#ffffff"/>
+          <circle cx="12" cy="12" r="4" fill="#10b981"/>
+          <text x="24" y="16" font-family="monospace" font-size="12">FileCreate: api/products/schema.json</text>
+        </g>
+        
+        <g transform="translate(16, 76)">
+          <rect x="0" y="0" width="768" height="24" rx="4" fill="#ffffff"/>
+          <circle cx="12" cy="12" r="4" fill="#10b981"/>
+          <text x="24" y="16" font-family="monospace" font-size="12">FileCreate: api/products/routes.js</text>
+        </g>
+      </g>
+      
+      <!-- User Message 2 -->
+      <g transform="translate(440, 500)">
+        <rect x="0" y="0" width="580" height="60" rx="16" fill="#3b82f6" filter="url(#messageShadow)"/>
+        <text x="20" y="32" font-family="system-ui" font-size="15" fill="#ffffff">Can you add validation for the product schema?</text>
+        <text x="540" y="48" font-family="system-ui" font-size="11" fill="#93bbfc">2:36 PM</text>
+      </g>
+      
+      <!-- Claude Response 2 (Currently typing) -->
+      <g transform="translate(0, 580)">
+        <rect x="0" y="0" width="400" height="60" rx="16" fill="#f3f4f6" filter="url(#messageShadow)"/>
+        <circle cx="32" cy="32" r="16" fill="url(#claudeGradient)"/>
+        <text x="32" y="38" font-family="system-ui" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="bold">C</text>
+        
+        <text x="60" y="36" font-family="system-ui" font-size="15" fill="#374151">Absolutely! I'll add comprehensive validation...</text>
+        
+        <!-- Typing indicator -->
+        <g transform="translate(320, 24)">
+          <circle cx="0" cy="0" r="3" fill="#9ca3af">
+            <animate attributeName="opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite" begin="0s"/>
+          </circle>
+          <circle cx="12" cy="0" r="3" fill="#9ca3af">
+            <animate attributeName="opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite" begin="0.5s"/>
+          </circle>
+          <circle cx="24" cy="0" r="3" fill="#9ca3af">
+            <animate attributeName="opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite" begin="1s"/>
+          </circle>
+        </g>
+      </g>
+    </g>
+  </g>
+  
+  <!-- Input Area -->
+  <g transform="translate(0, 780)">
+    <rect x="0" y="0" width="1440" height="120" fill="#ffffff" filter="url(#cardShadow)"/>
+    
+    <!-- Suggested Actions -->
+    <g transform="translate(200, 16)">
+      <rect x="0" y="0" width="180" height="32" rx="16" fill="#ffffff" stroke="#e5e7eb" cursor="pointer"/>
+      <text x="90" y="22" font-family="system-ui" font-size="13" text-anchor="middle">Add authentication</text>
+      
+      <rect x="192" y="0" width="160" height="32" rx="16" fill="#ffffff" stroke="#e5e7eb" cursor="pointer"/>
+      <text x="272" y="22" font-family="system-ui" font-size="13" text-anchor="middle">Write unit tests</text>
+      
+      <rect x="364" y="0" width="180" height="32" rx="16" fill="#ffffff" stroke="#e5e7eb" cursor="pointer"/>
+      <text x="454" y="22" font-family="system-ui" font-size="13" text-anchor="middle">Deploy to staging</text>
+    </g>
+    
+    <!-- Input Field -->
+    <g transform="translate(200, 60)">
+      <rect x="0" y="0" width="1040" height="44" rx="22" fill="#f3f4f6" stroke="#e5e7eb"/>
+      <text x="20" y="28" font-family="system-ui" font-size="15" fill="#9ca3af">Type a message...</text>
+      
+      <!-- Attachment Button -->
+      <circle cx="960" cy="22" r="16" fill="#ffffff" stroke="#e5e7eb" cursor="pointer"/>
+      <text x="960" y="27" font-family="system-ui" font-size="16" text-anchor="middle">📎</text>
+      
+      <!-- Send Button -->
+      <circle cx="1008" cy="22" r="16" fill="#3b82f6" cursor="pointer"/>
+      <path d="M 1000 22 L 1008 18 L 1008 26 Z" fill="#ffffff"/>
+    </g>
+  </g>
+  
+  <!-- Right Sidebar - Session Info -->
+  <g transform="translate(1240, 112)">
+    <rect x="0" y="0" width="200" height="668" fill="#f9fafb"/>
+    
+    <!-- Session Details -->
+    <text x="16" y="24" font-family="system-ui" font-size="14" font-weight="600">Session Info</text>
+    
+    <text x="16" y="52" font-family="system-ui" font-size="12" fill="#6b7280">Started</text>
+    <text x="16" y="68" font-family="system-ui" font-size="13">Today, 2:34 PM</text>
+    
+    <text x="16" y="96" font-family="system-ui" font-size="12" fill="#6b7280">Duration</text>
+    <text x="16" y="112" font-family="system-ui" font-size="13">5 minutes</text>
+    
+    <text x="16" y="140" font-family="system-ui" font-size="12" fill="#6b7280">Messages</text>
+    <text x="16" y="156" font-family="system-ui" font-size="13">4 messages</text>
+    
+    <rect x="16" y="180" width="168" height="1" fill="#e5e7eb"/>
+    
+    <!-- Related Files -->
+    <text x="16" y="208" font-family="system-ui" font-size="14" font-weight="600">Files Created</text>
+    
+    <g transform="translate(16, 228)">
+      <rect x="0" y="0" width="168" height="32" rx="6" fill="#ffffff" stroke="#e5e7eb" cursor="pointer"/>
+      <text x="8" y="22" font-family="system-ui" font-size="12">📄 schema.json</text>
+    </g>
+    
+    <g transform="translate(16, 268)">
+      <rect x="0" y="0" width="168" height="32" rx="6" fill="#ffffff" stroke="#e5e7eb" cursor="pointer"/>
+      <text x="8" y="22" font-family="system-ui" font-size="12">📄 routes.js</text>
+    </g>
+    
+    <!-- Actions -->
+    <g transform="translate(16, 580)">
+      <rect x="0" y="0" width="168" height="32" rx="6" fill="#ef4444" cursor="pointer"/>
+      <text x="84" y="22" font-family="system-ui" font-size="13" fill="#ffffff" text-anchor="middle">End Session</text>
+    </g>
+  </g>
+</svg>

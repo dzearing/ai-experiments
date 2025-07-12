@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Chat Bubbles</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            transition: all 0.3s ease;
+            min-height: 100vh;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        /* CSS Variables for themes */
+        :root {
+            --bg-primary: #f8f9fa;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #1f2937;
+            --border-color: #e0e0e0;
+            --text-primary: #374151;
+            --text-secondary: #666666;
+            --text-muted: #9ca3af;
+            --user-bubble: #2563eb;
+            --assistant-bubble: #ffffff;
+            --assistant-border: #e5e7eb;
+            --typing-bubble: #ffffff;
+            --typing-border: #e5e7eb;
+            --error-bg: #fef2f2;
+            --error-border: #fecaca;
+            --error-text: #991b1b;
+            --code-bg: #1f2937;
+            --code-text: #f3f4f6;
+            --code-keyword: #60a5fa;
+            --input-bg: #ffffff;
+            --input-border: #d1d5db;
+            --icon-color: #6b7280;
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #111827;
+            --bg-secondary: #1f2937;
+            --bg-tertiary: #374151;
+            --border-color: #374151;
+            --text-primary: #e5e7eb;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+            --user-bubble: #3b82f6;
+            --assistant-bubble: #1f2937;
+            --assistant-border: #374151;
+            --typing-bubble: #1f2937;
+            --typing-border: #374151;
+            --error-bg: #450a0a;
+            --error-border: #7f1d1d;
+            --error-text: #fca5a5;
+            --code-bg: #0f172a;
+            --input-bg: #374151;
+            --input-border: #4b5563;
+            --icon-color: #9ca3af;
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .theme-toggle {
+            background: var(--user-bubble);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: opacity 0.2s;
+        }
+
+        .theme-toggle:hover {
+            opacity: 0.8;
+        }
+
+        .chat-demo {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .theme-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            min-height: 800px;
+        }
+
+        .theme-title {
+            font-size: 18px;
+            font-weight: 500;
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--text-primary);
+        }
+
+        .section-title {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin: 30px 0 15px 0;
+        }
+
+        .section-title:first-of-type {
+            margin-top: 0;
+        }
+
+        /* Chat Messages */
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message.user {
+            align-items: flex-end;
+        }
+
+        .message.assistant {
+            align-items: flex-start;
+        }
+
+        .message-bubble {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            position: relative;
+            word-wrap: break-word;
+        }
+
+        .message.user .message-bubble {
+            background: var(--user-bubble);
+            color: white;
+        }
+
+        .message.assistant .message-bubble {
+            background: var(--assistant-bubble);
+            border: 1px solid var(--assistant-border);
+            color: var(--text-primary);
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 5px;
+            align-self: flex-start;
+        }
+
+        .message.user .message-time {
+            align-self: flex-end;
+        }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            background: var(--typing-bubble);
+            border: 1px solid var(--typing-border);
+            border-radius: 20px;
+            padding: 10px 16px;
+            width: fit-content;
+            box-shadow: var(--shadow);
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            animation: dance 1.4s ease-in-out infinite;
+        }
+
+        .dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes dance {
+            0%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-8px);
+            }
+        }
+
+        /* Code Block */
+        .code-block {
+            background: var(--code-bg);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .code-block .code-line {
+            color: var(--code-text);
+            line-height: 1.5;
+        }
+
+        .code-keyword {
+            color: var(--code-keyword);
+        }
+
+        .copy-button {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .code-block:hover .copy-button {
+            opacity: 1;
+        }
+
+        .copy-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Multi-part Message */
+        .multi-part {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .bullet-list {
+            list-style: none;
+            margin: 12px 0;
+        }
+
+        .bullet-list li {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .bullet-list li::before {
+            content: '•';
+            color: var(--text-muted);
+            margin-right: 12px;
+            margin-top: 2px;
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--assistant-border);
+            margin: 12px 0;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--user-bubble);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--assistant-border);
+        }
+
+        .btn:hover {
+            opacity: 0.8;
+            transform: translateY(-1px);
+        }
+
+        /* Error Message */
+        .error-message .message-bubble {
+            background: var(--error-bg) !important;
+            border: 1px solid var(--error-border) !important;
+            color: var(--error-text) !important;
+        }
+
+        .error-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #ef4444;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        /* Interactive Chat Input */
+        .interactive-chat {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 40px;
+        }
+
+        .chat-messages {
+            height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-primary);
+        }
+
+        .chat-input-container {
+            display: flex;
+            align-items: center;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 25px;
+            padding: 8px 8px 8px 16px;
+            gap: 8px;
+        }
+
+        .chat-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            background: transparent;
+            color: var(--text-primary);
+            font-size: 14px;
+            padding: 8px 0;
+        }
+
+        .chat-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .input-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .action-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--icon-color);
+            transition: color 0.2s;
+        }
+
+        .action-icon:hover {
+            color: var(--user-bubble);
+        }
+
+        .send-button {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--user-bubble);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .send-button:hover {
+            transform: scale(1.05);
+            opacity: 0.9;
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .chat-demo {
+                grid-template-columns: 1fr;
+            }
+            
+            .message-bubble {
+                max-width: 90%;
+            }
+        }
+
+        /* Scrollbar Styling */
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--text-muted);
+            border-radius: 3px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Interactive Chat Components</h1>
+            <button class="theme-toggle" onclick="toggleTheme()">Toggle Dark Mode</button>
+        </div>
+
+        <div class="chat-demo">
+            <!-- Light Theme Section -->
+            <div class="theme-section">
+                <h2 class="theme-title">Light Theme</h2>
+                
+                <div class="section-title">User Messages</div>
+                <div class="message user">
+                    <div class="message-bubble">
+                        Can you help me create a new component for the dashboard?
+                    </div>
+                    <div class="message-time">2:34 PM</div>
+                </div>
+
+                <div class="section-title">Assistant Messages</div>
+                <div class="message assistant">
+                    <div class="message-bubble">
+                        I'd be happy to help you create a new dashboard component. What type of component do you need?
+                    </div>
+                    <div class="message-time">2:35 PM</div>
+                </div>
+
+                <div class="section-title">Typing Indicators</div>
+                <div class="typing-indicator">
+                    <div class="typing-dots">
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                    </div>
+                </div>
+
+                <div class="section-title">Code Block Message</div>
+                <div class="message assistant">
+                    <div class="message-bubble">
+                        Here's the component code:
+                        <div class="code-block">
+                            <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                            <div class="code-line"><span class="code-keyword">const</span> Dashboard = () => {</div>
+                            <div class="code-line">  <span class="code-keyword">return</span> &lt;div&gt;Dashboard&lt;/div&gt;;</div>
+                            <div class="code-line">};</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-title">Multi-part Messages</div>
+                <div class="message assistant">
+                    <div class="message-bubble">
+                        <div class="multi-part">
+                            <div>I'll help you with that. Here's what I'll do:</div>
+                            <ul class="bullet-list">
+                                <li>Create the component structure</li>
+                                <li>Add necessary styling</li>
+                                <li>Implement the required functionality</li>
+                            </ul>
+                            <div class="divider"></div>
+                            <div class="action-buttons">
+                                <button class="btn btn-primary" onclick="showAlert('Started!')">Start</button>
+                                <button class="btn btn-secondary" onclick="showAlert('Cancelled!')">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-title">Error State</div>
+                <div class="message assistant error-message">
+                    <div class="message-bubble">
+                        <div style="display: flex; align-items: flex-start;">
+                            <div class="error-icon">!</div>
+                            <div>
+                                <div>Failed to process request.</div>
+                                <div>Please try again.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dark Theme Section -->
+            <div class="theme-section" data-theme="dark">
+                <h2 class="theme-title">Dark Theme</h2>
+                
+                <div class="section-title">User Messages</div>
+                <div class="message user">
+                    <div class="message-bubble">
+                        Can you help me create a new component for the dashboard?
+                    </div>
+                    <div class="message-time">2:34 PM</div>
+                </div>
+
+                <div class="section-title">Assistant Messages</div>
+                <div class="message assistant">
+                    <div class="message-bubble">
+                        I'd be happy to help you create a new dashboard component. What type of component do you need?
+                    </div>
+                    <div class="message-time">2:35 PM</div>
+                </div>
+
+                <div class="section-title">Typing Indicators</div>
+                <div class="typing-indicator">
+                    <div class="typing-dots">
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                    </div>
+                </div>
+
+                <div class="section-title">Code Block Message</div>
+                <div class="message assistant">
+                    <div class="message-bubble">
+                        Here's the component code:
+                        <div class="code-block">
+                            <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                            <div class="code-line"><span class="code-keyword">const</span> Dashboard = () => {</div>
+                            <div class="code-line">  <span class="code-keyword">return</span> &lt;div&gt;Dashboard&lt;/div&gt;;</div>
+                            <div class="code-line">};</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Chat Section -->
+        <div class="interactive-chat">
+            <h2 class="theme-title">Interactive Chat Demo</h2>
+            <div class="chat-messages" id="chatMessages">
+                <div class="message assistant">
+                    <div class="message-bubble">
+                        Welcome! Try typing a message below to see the interactive chat in action.
+                    </div>
+                    <div class="message-time">Now</div>
+                </div>
+            </div>
+            
+            <div class="chat-input-container">
+                <input 
+                    type="text" 
+                    class="chat-input" 
+                    placeholder="Type a message..."
+                    id="chatInput"
+                    onkeypress="handleKeyPress(event)"
+                >
+                <div class="input-actions">
+                    <div class="action-icon" onclick="showAlert('Attachment clicked!')" title="Attach file">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M4 8L8 12L12 8" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                            <rect x="1" y="3" width="14" height="10" rx="1" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                        </svg>
+                    </div>
+                    <div class="action-icon" onclick="toggleVoice()" title="Voice input" id="voiceIcon">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                            <rect x="6" y="1" width="4" height="8" rx="2" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                            <path d="M 2 6 Q 2 12 8 12 Q 14 6 8 12" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+                            <line x1="8" y1="12" x2="8" y2="15" stroke="currentColor" stroke-width="1.5"/>
+                        </svg>
+                    </div>
+                </div>
+                <button class="send-button" onclick="sendMessage()" id="sendButton">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="white">
+                        <path d="M2 8L14 8M10 4L14 8L10 12" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isVoiceActive = false;
+        let messageCount = 0;
+
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? '' : 'dark';
+            body.setAttribute('data-theme', newTheme);
+            
+            // Update button text
+            const button = document.querySelector('.theme-toggle');
+            button.textContent = newTheme === 'dark' ? 'Toggle Light Mode' : 'Toggle Dark Mode';
+        }
+
+        function copyCode(button) {
+            const codeBlock = button.parentElement;
+            const codeLines = codeBlock.querySelectorAll('.code-line');
+            const code = Array.from(codeLines).map(line => line.textContent).join('\n');
+            
+            navigator.clipboard.writeText(code).then(() => {
+                button.textContent = 'Copied!';
+                setTimeout(() => {
+                    button.textContent = 'Copy';
+                }, 2000);
+            });
+        }
+
+        function showAlert(message) {
+            alert(message);
+        }
+
+        function toggleVoice() {
+            isVoiceActive = !isVoiceActive;
+            const voiceIcon = document.getElementById('voiceIcon');
+            
+            if (isVoiceActive) {
+                voiceIcon.style.color = '#ef4444';
+                voiceIcon.title = 'Stop recording';
+                // Simulate voice recording
+                setTimeout(() => {
+                    isVoiceActive = false;
+                    voiceIcon.style.color = '';
+                    voiceIcon.title = 'Voice input';
+                }, 3000);
+            } else {
+                voiceIcon.style.color = '';
+                voiceIcon.title = 'Voice input';
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message
+            addMessage(message, 'user');
+            input.value = '';
+            
+            // Show typing indicator
+            showTypingIndicator();
+            
+            // Simulate assistant response
+            setTimeout(() => {
+                hideTypingIndicator();
+                
+                const responses = [
+                    "Thanks for your message! This is a demo response.",
+                    "I understand what you're asking. Let me help you with that.",
+                    "That's an interesting question. Here's what I think...",
+                    "I can definitely help you with that. Let me break it down:",
+                    generateCodeResponse(),
+                    generateMultiPartResponse()
+                ];
+                
+                const response = responses[messageCount % responses.length];
+                addMessage(response, 'assistant');
+                messageCount++;
+            }, 1500 + Math.random() * 2000);
+        }
+
+        function addMessage(content, sender) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                minute: '2-digit',
+                hour12: true 
+            });
+            
+            if (typeof content === 'string') {
+                messageDiv.innerHTML = `
+                    <div class="message-bubble">${content}</div>
+                    <div class="message-time">${timeString}</div>
+                `;
+            } else {
+                // For complex content (like code blocks)
+                const bubbleDiv = document.createElement('div');
+                bubbleDiv.className = 'message-bubble';
+                bubbleDiv.appendChild(content);
+                messageDiv.appendChild(bubbleDiv);
+                
+                const timeDiv = document.createElement('div');
+                timeDiv.className = 'message-time';
+                timeDiv.textContent = timeString;
+                messageDiv.appendChild(timeDiv);
+            }
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const chatMessages = document.getElementById('chatMessages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message assistant';
+            typingDiv.id = 'typingIndicator';
+            typingDiv.innerHTML = `
+                <div class="typing-indicator">
+                    <div class="typing-dots">
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                    </div>
+                </div>
+            `;
+            
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            const typingIndicator = document.getElementById('typingIndicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+
+        function generateCodeResponse() {
+            const codeDiv = document.createElement('div');
+            codeDiv.innerHTML = `
+                Here's a sample component:
+                <div class="code-block">
+                    <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                    <div class="code-line"><span class="code-keyword">function</span> MyComponent() {</div>
+                    <div class="code-line">  <span class="code-keyword">return</span> (</div>
+                    <div class="code-line">    &lt;div className="my-component"&gt;</div>
+                    <div class="code-line">      &lt;h1&gt;Hello World!&lt;/h1&gt;</div>
+                    <div class="code-line">    &lt;/div&gt;</div>
+                    <div class="code-line">  );</div>
+                    <div class="code-line">}</div>
+                </div>
+            `;
+            return codeDiv;
+        }
+
+        function generateMultiPartResponse() {
+            const multiDiv = document.createElement('div');
+            multiDiv.innerHTML = `
+                <div class="multi-part">
+                    <div>I can help you with several things:</div>
+                    <ul class="bullet-list">
+                        <li>Create new components</li>
+                        <li>Debug existing code</li>
+                        <li>Provide best practices</li>
+                        <li>Review your implementation</li>
+                    </ul>
+                    <div class="divider"></div>
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="showAlert('Great choice!')">Get Started</button>
+                        <button class="btn btn-secondary" onclick="showAlert('Maybe later!')">Not Now</button>
+                    </div>
+                </div>
+            `;
+            return multiDiv;
+        }
+
+        // Auto-focus input on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('chatInput').focus();
+        });
+    </script>
+</body>
+</html>

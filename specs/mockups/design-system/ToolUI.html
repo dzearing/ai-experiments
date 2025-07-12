@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tool UI Components - Interactive Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background 0.3s ease, color 0.3s ease;
+            padding: 20px;
+        }
+
+        /* Light theme variables */
+        :root {
+            --bg-primary: #f8f9fa;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f3f4f6;
+            --bg-tool-running: #dbeafe;
+            --bg-tool-success: #dcfce7;
+            --bg-tool-warning: #fef3c7;
+            --bg-tool-error: #fee2e2;
+            --bg-tool-pending: #e5e7eb;
+            --bg-diff-removed: #fee2e2;
+            --bg-diff-added: #dcfce7;
+            
+            --border-primary: #e5e7eb;
+            --border-secondary: #d1d5db;
+            --border-accent: #3b82f6;
+            --border-success: #10b981;
+            --border-warning: #f59e0b;
+            --border-error: #ef4444;
+            
+            --text-primary: #374151;
+            --text-secondary: #6b7280;
+            --text-tertiary: #9ca3af;
+            --text-success: #10b981;
+            --text-warning: #f59e0b;
+            --text-error: #ef4444;
+            --text-accent: #3b82f6;
+            
+            --accent-primary: #3b82f6;
+            --accent-success: #10b981;
+            --accent-warning: #f59e0b;
+            --accent-error: #ef4444;
+            --accent-purple: #8b5cf6;
+            
+            --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Dark theme variables */
+        [data-theme="dark"] {
+            --bg-primary: #111827;
+            --bg-secondary: #1f2937;
+            --bg-tertiary: #374151;
+            --bg-tool-running: #1e3a8a;
+            --bg-tool-success: #065f46;
+            --bg-tool-warning: #78350f;
+            --bg-tool-error: #7f1d1d;
+            --bg-tool-pending: #374151;
+            --bg-diff-removed: rgba(127, 29, 29, 0.3);
+            --bg-diff-added: rgba(20, 83, 45, 0.3);
+            
+            --border-primary: #374151;
+            --border-secondary: #4b5563;
+            --border-accent: #3b82f6;
+            --border-success: #10b981;
+            --border-warning: #f59e0b;
+            --border-error: #ef4444;
+            
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --text-tertiary: #6b7280;
+            --text-success: #10b981;
+            --text-warning: #f59e0b;
+            --text-error: #ef4444;
+            --text-accent: #3b82f6;
+            
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .theme-toggle {
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .theme-toggle:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+
+        .demo-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+
+        .theme-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .theme-title {
+            font-size: 18px;
+            font-weight: 500;
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--text-primary);
+        }
+
+        .section-title {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+            margin-top: 30px;
+        }
+
+        .section-title:first-of-type {
+            margin-top: 0;
+        }
+
+        .tool-group {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .tool-group.running {
+            border-color: var(--border-accent);
+            border-width: 2px;
+        }
+
+        .tool-group.error {
+            border-color: var(--border-error);
+        }
+
+        .tool-group-header {
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .tool-group-header:hover {
+            background: var(--border-primary);
+        }
+
+        .tool-group.expanded .tool-group-header {
+            border-radius: 8px 8px 0 0;
+        }
+
+        .collapse-icon {
+            width: 16px;
+            height: 16px;
+            background: var(--bg-secondary);
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s ease;
+        }
+
+        .tool-group.expanded .collapse-icon {
+            transform: rotate(90deg);
+        }
+
+        .collapse-icon::after {
+            content: "▶";
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+
+        .tool-group-title {
+            flex: 1;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .tool-group-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .status-indicator {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: white;
+        }
+
+        .status-indicator.success {
+            background: var(--accent-success);
+        }
+
+        .status-indicator.running {
+            background: var(--accent-primary);
+            animation: spin 1s linear infinite;
+        }
+
+        .status-indicator.warning {
+            background: var(--accent-warning);
+        }
+
+        .status-indicator.error {
+            background: var(--accent-error);
+        }
+
+        .status-indicator.pending {
+            background: var(--text-tertiary);
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .status-indicator.success::after {
+            content: "✓";
+        }
+
+        .status-indicator.running::after {
+            content: "⟳";
+        }
+
+        .status-indicator.error::after {
+            content: "!";
+        }
+
+        .tool-group-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .tool-group.expanded .tool-group-content {
+            max-height: 1000px;
+        }
+
+        .tool-group-body {
+            padding: 0;
+        }
+
+        .tool-item {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+        }
+
+        .tool-item:last-child {
+            border-bottom: none;
+        }
+
+        .tool-item.success {
+            background: var(--bg-tool-success);
+            border-left: 4px solid var(--accent-success);
+        }
+
+        .tool-item.running {
+            background: var(--bg-tool-running);
+            border-left: 4px solid var(--accent-primary);
+        }
+
+        .tool-item.warning {
+            background: var(--bg-tool-warning);
+            border-left: 4px solid var(--accent-warning);
+        }
+
+        .tool-item.error {
+            background: var(--bg-tool-error);
+            border-left: 4px solid var(--accent-error);
+        }
+
+        .tool-item.pending {
+            background: var(--bg-tool-pending);
+            border-left: 4px solid var(--text-tertiary);
+        }
+
+        .tool-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .tool-icon.success {
+            background: var(--accent-success);
+        }
+
+        .tool-icon.running {
+            background: var(--accent-primary);
+            animation: spin 1s linear infinite;
+        }
+
+        .tool-icon.warning {
+            background: var(--accent-warning);
+        }
+
+        .tool-icon.error {
+            background: var(--accent-error);
+        }
+
+        .tool-icon.pending {
+            background: var(--text-tertiary);
+        }
+
+        .tool-icon.success::after {
+            content: "✓";
+        }
+
+        .tool-icon.running::after {
+            content: "⟳";
+        }
+
+        .tool-icon.error::after {
+            content: "!";
+        }
+
+        .tool-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .tool-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .tool-details {
+            font-family: monospace;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .tool-timing {
+            font-size: 11px;
+            color: var(--text-secondary);
+            align-self: flex-start;
+        }
+
+        .tool-timing.success {
+            color: var(--text-success);
+        }
+
+        .tool-timing.running {
+            color: var(--text-accent);
+        }
+
+        .tool-timing.warning {
+            color: var(--text-warning);
+        }
+
+        .tool-timing.error {
+            color: var(--text-error);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--border-primary);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-purple));
+            transition: width 0.3s ease;
+        }
+
+        .diff-container {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .diff-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .diff-icon {
+            width: 24px;
+            height: 24px;
+            background: var(--accent-primary);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+        }
+
+        .diff-title {
+            flex: 1;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .diff-file-path {
+            background: var(--bg-tertiary);
+            padding: 12px 16px;
+            font-family: monospace;
+            font-size: 12px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-primary);
+        }
+
+        .diff-content {
+            padding: 16px;
+        }
+
+        .diff-line {
+            font-family: monospace;
+            font-size: 11px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin-bottom: 4px;
+        }
+
+        .diff-line.context {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+        }
+
+        .diff-line.removed {
+            background: var(--bg-diff-removed);
+            color: var(--text-error);
+            text-decoration: line-through;
+        }
+
+        .diff-line.added {
+            background: var(--bg-diff-added);
+            color: var(--text-success);
+        }
+
+        .summary-stats {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .stat-card {
+            background: var(--bg-tertiary);
+            padding: 16px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .stat-value.success {
+            color: var(--text-success);
+        }
+
+        .stat-value.running {
+            color: var(--text-accent);
+        }
+
+        .stat-value.error {
+            color: var(--text-error);
+        }
+
+        .multi-tool-summary {
+            background: var(--bg-tertiary);
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .summary-text {
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+
+        .summary-progress {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .demo-container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="title">Tool UI Components - Interactive Demo</h1>
+        <button class="theme-toggle" onclick="toggleTheme()">Toggle Dark Mode</button>
+    </div>
+
+    <div class="demo-container">
+        <!-- Light Theme Column -->
+        <div class="theme-section">
+            <h2 class="theme-title">Tool Execution Examples</h2>
+
+            <div class="section-title">Expanded tool group</div>
+            <div class="tool-group expanded" onclick="toggleGroup(this)">
+                <div class="tool-group-header">
+                    <div class="collapse-icon"></div>
+                    <div class="tool-group-title">Reading files (3 tools)</div>
+                    <div class="tool-group-status">
+                        <div class="status-indicator success"></div>
+                        <span class="success">0.15s</span>
+                    </div>
+                </div>
+                <div class="tool-group-content">
+                    <div class="tool-group-body">
+                        <div class="tool-item success">
+                            <div class="tool-icon success"></div>
+                            <div class="tool-info">
+                                <div class="tool-name">Read</div>
+                                <div class="tool-details">src/components/Button.tsx</div>
+                            </div>
+                            <div class="tool-timing success">0.05s</div>
+                        </div>
+                        <div class="tool-item success">
+                            <div class="tool-icon success"></div>
+                            <div class="tool-info">
+                                <div class="tool-name">Read</div>
+                                <div class="tool-details">src/components/Card.tsx</div>
+                            </div>
+                            <div class="tool-timing success">0.05s</div>
+                        </div>
+                        <div class="tool-item success">
+                            <div class="tool-icon success"></div>
+                            <div class="tool-info">
+                                <div class="tool-name">Read</div>
+                                <div class="tool-details">src/components/Modal.tsx</div>
+                            </div>
+                            <div class="tool-timing success">0.05s</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-title">Collapsed tool groups</div>
+            <div class="tool-group" onclick="toggleGroup(this)">
+                <div class="tool-group-header">
+                    <div class="collapse-icon"></div>
+                    <div class="tool-group-title">Searching files (5 tools)</div>
+                    <div class="tool-group-status">
+                        <div class="status-indicator warning"></div>
+                        <span class="warning">0.34s</span>
+                    </div>
+                </div>
+                <div class="tool-group-content">
+                    <div class="tool-group-body">
+                        <div class="tool-item warning">
+                            <div class="tool-icon warning"></div>
+                            <div class="tool-info">
+                                <div class="tool-name">Grep</div>
+                                <div class="tool-details">Searching for "useState" pattern</div>
+                            </div>
+                            <div class="tool-timing warning">0.12s</div>
+                        </div>
+                        <div class="tool-item warning">
+                            <div class="tool-icon warning"></div>
+                            <div class="tool-info">
+                                <div class="tool-name">Glob</div>
+                                <div class="tool-details">Finding *.tsx files</div>
+                            </div>
+                            <div class="tool-timing warning">0.08s</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tool-group" onclick="toggleGroup(this)">
+                <div class="tool-group-header">
+                    <div class="collapse-icon"></div>
+                    <div class="tool-group-title">Editing files (3 tools)</div>
+                    <div class="tool-group-status">
+                        <div class="status-indicator success"></div>
+                        <span class="success">0.22s</span>
+                    </div>
+                </div>
+                <div class="tool-group-content">
+                    <div class="tool-group-body">
+                        <div class="tool-item success">
+                            <div class="tool-icon success"></div>
+                            <div class="tool-info">
+                                <div class="tool-name">Edit</div>
+                                <div class="tool-details">Updated Button component styles</div>
+                            </div>
+                            <div class="tool-timing success">0.08s</div>
+                        </div>
+                        <div class="tool-item success">
+                            <div class="tool-icon success"></div>
+                            <div class="tool-info">
+                                <div class="tool-name">MultiEdit</div>
+                                <div class="tool-details">Applied 3 changes to Modal.tsx</div>
+                            </div>
+                            <div class="tool-timing success">0.14s</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tool-group running" onclick="toggleGroup(this)">
+                <div class="tool-group-header">
+                    <div class="collapse-icon"></div>
+                    <div class="tool-group-title">Writing files (2 tools)</div>
+                    <div class="tool-group-status">
+                        <div class="status-indicator running"></div>
+                        <span class="running">0.12s</span>
+                    </div>
+                </div>
+                <div class="tool-group-content">
+                    <div class="tool-group-body">
+                        <div class="tool-item running">
+                            <div class="tool-icon running"></div>
+                            <div class="tool-info">
+                                <div class="tool-name">Write</div>
+                                <div class="tool-details">Creating new component file</div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 70%;"></div>
+                                </div>
+                            </div>
+                            <div class="tool-timing running">Running...</div>
+                        </div>
+                        <div class="tool-item pending">
+                            <div class="tool-icon pending"></div>
+                            <div class="tool-info">
+                                <div class="tool-name">Write</div>
+                                <div class="tool-details">Updating index.ts exports</div>
+                            </div>
+                            <div class="tool-timing">Pending</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-title">Edit tool with inline diff</div>
+            <div class="diff-container">
+                <div class="diff-header">
+                    <div class="diff-icon">📝</div>
+                    <div class="diff-title">Editing file</div>
+                    <div class="status-indicator success"></div>
+                </div>
+                <div class="diff-file-path">/src/components/Button.tsx</div>
+                <div class="diff-content">
+                    <div class="diff-line removed">- const buttonClass = 'px-4 py-2 bg-blue-500';</div>
+                    <div class="diff-line added">+ const buttonClass = 'px-4 py-2 bg-blue-600 hover:bg-blue-700';</div>
+                    <div style="margin-top: 12px; font-size: 11px; color: var(--text-success);">✓ Applied 1 change</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dark Theme Column -->
+        <div class="theme-section">
+            <h2 class="theme-title">Complex Multi-Tool Execution</h2>
+
+            <div class="section-title">Mixed expanded/collapsed groups</div>
+            <div class="tool-group expanded" onclick="toggleGroup(this)">
+                <div class="tool-group-header">
+                    <div class="collapse-icon"></div>
+                    <div class="tool-group-title">Reading source files (3 tools)</div>
+                    <div class="tool-group-status">
+                        <div class="status-indicator success"></div>
+                        <span class="success">0.12s</span>
+                    </div>
+                </div>
+                <div class="tool-group-content">
+                    <div class="tool-group-body">
+                        <div class="tool-item success">
+                            <div class="tool-icon success"></div>
+                            <div class="tool-info">
+                                <div class="tool-name">Read</div>
+                                <div class="tool-details">src/App.tsx (0.04s)</div>
+                            </div>
+                            <div class="tool-timing success">✓</div>
+                        </div>
+                        <div class="tool-item success">
+                            <div class="tool-icon success"></div>
+                            <div class="tool-info">
+                                <div class="tool-name">Read</div>
+                                <div class="tool-details">src/index.tsx (0.04s)</div>
+                            </div>
+                            <div class="tool-timing success">✓</div>
+                        </div>
+                        <div class="tool-item success">
+                            <div class="tool-icon success"></div>
+                            <div class="tool-info">
+                                <div class="tool-name">Read</div>
+                                <div class="tool-details">src/routes.tsx (0.04s)</div>
+                            </div>
+                            <div class="tool-timing success">✓</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tool-group" onclick="toggleGroup(this)">
+                <div class="tool-group-header">
+                    <div class="collapse-icon"></div>
+                    <div class="tool-group-title">Searching for imports (8 tools)</div>
+                    <div class="tool-group-status">
+                        <div class="status-indicator warning"></div>
+                        <span class="warning">0.48s</span>
+                    </div>
+                </div>
+                <div class="tool-group-content">
+                    <div class="tool-group-body">
+                        <div class="tool-item warning">
+                            <div class="tool-icon warning"></div>
+                            <div class="tool-info">
+                                <div class="tool-name">Grep</div>
+                                <div class="tool-details">Searching import statements</div>
+                            </div>
+                            <div class="tool-timing warning">0.15s</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tool-group running" onclick="toggleGroup(this)">
+                <div class="tool-group-header">
+                    <div class="collapse-icon"></div>
+                    <div class="tool-group-title">Refactoring components (4 tools)</div>
+                    <div class="tool-group-status">
+                        <div class="status-indicator running"></div>
+                        <span class="running">2 of 4</span>
+                    </div>
+                </div>
+                <div class="tool-group-content">
+                    <div class="tool-group-body">
+                        <div class="tool-item success">
+                            <div class="tool-icon success"></div>
+                            <div class="tool-info">
+                                <div class="tool-name">Edit</div>
+                                <div class="tool-details">Updated Button.tsx imports</div>
+                            </div>
+                            <div class="tool-timing success">0.08s</div>
+                        </div>
+                        <div class="tool-item running">
+                            <div class="tool-icon running"></div>
+                            <div class="tool-info">
+                                <div class="tool-name">MultiEdit</div>
+                                <div class="tool-details">Refactoring component props</div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 45%;"></div>
+                                </div>
+                            </div>
+                            <div class="tool-timing running">Running...</div>
+                        </div>
+                        <div class="tool-item pending">
+                            <div class="tool-icon pending"></div>
+                            <div class="tool-info">
+                                <div class="tool-name">Edit</div>
+                                <div class="tool-details">Update type definitions</div>
+                            </div>
+                            <div class="tool-timing">Pending</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tool-group error" onclick="toggleGroup(this)">
+                <div class="tool-group-header">
+                    <div class="collapse-icon"></div>
+                    <div class="tool-group-title">Testing changes (2 tools)</div>
+                    <div class="tool-group-status">
+                        <div class="status-indicator error"></div>
+                        <span class="error">Failed</span>
+                    </div>
+                </div>
+                <div class="tool-group-content">
+                    <div class="tool-group-body">
+                        <div class="tool-item error">
+                            <div class="tool-icon error"></div>
+                            <div class="tool-info">
+                                <div class="tool-name">Bash</div>
+                                <div class="tool-details">Error: File not found</div>
+                                <div class="tool-details" style="color: var(--text-error);">/src/components/NonExistent.tsx</div>
+                            </div>
+                            <div class="tool-timing error">Failed</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="multi-tool-summary">
+                <div class="summary-text">Progress: 13 of 16 tools completed</div>
+                <div class="summary-progress">
+                    <div class="progress-bar" style="width: 140px;">
+                        <div class="progress-fill" style="width: 81%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-title">Advanced diff view</div>
+            <div class="diff-container">
+                <div class="diff-header">
+                    <div class="diff-icon">📝</div>
+                    <div class="diff-title">Editing file</div>
+                    <div class="status-indicator running"></div>
+                </div>
+                <div class="diff-file-path">/src/components/Button.tsx</div>
+                <div class="diff-content">
+                    <div class="diff-line context">  import React from 'react';</div>
+                    <div class="diff-line removed">- import './Button.css';</div>
+                    <div class="diff-line added">+ import styles from './Button.module.css';</div>
+                    <div class="diff-line context">  </div>
+                    <div class="diff-line removed">- const Button = ({ children, variant = 'primary' }) => {</div>
+                    <div class="diff-line added">+ const Button = ({ children, variant = 'primary', size = 'medium' }) => {</div>
+                    <div class="diff-line added">+   const className = `${styles.button} ${styles[variant]} ${styles[size]}`;</div>
+                    <div style="margin-top: 12px; font-size: 11px; color: var(--text-accent);">✓ Applied 3 changes</div>
+                </div>
+            </div>
+
+            <div class="section-title">Execution summary</div>
+            <div class="summary-stats">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Tools</div>
+                        <div class="stat-value">23</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Completed</div>
+                        <div class="stat-value success">19</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Running</div>
+                        <div class="stat-value running">2</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Failed</div>
+                        <div class="stat-value error">2</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Theme management
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
+
+        // Load saved theme or default to light
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        }
+
+        // Tool group collapse/expand
+        function toggleGroup(element) {
+            element.classList.toggle('expanded');
+        }
+
+        // Simulate tool execution states
+        function simulateExecution() {
+            const runningGroups = document.querySelectorAll('.tool-group.running');
+            runningGroups.forEach(group => {
+                const progressBars = group.querySelectorAll('.progress-fill');
+                progressBars.forEach(bar => {
+                    let width = parseInt(bar.style.width) || 0;
+                    const interval = setInterval(() => {
+                        width += Math.random() * 10;
+                        if (width >= 100) {
+                            width = 100;
+                            clearInterval(interval);
+                            // Optionally change to success state
+                            setTimeout(() => {
+                                bar.closest('.tool-item').classList.remove('running');
+                                bar.closest('.tool-item').classList.add('success');
+                                const icon = bar.closest('.tool-item').querySelector('.tool-icon');
+                                icon.classList.remove('running');
+                                icon.classList.add('success');
+                                const timing = bar.closest('.tool-item').querySelector('.tool-timing');
+                                timing.textContent = `${(Math.random() * 0.5 + 0.1).toFixed(2)}s`;
+                                timing.classList.remove('running');
+                                timing.classList.add('success');
+                            }, 500);
+                        }
+                        bar.style.width = width + '%';
+                    }, 500 + Math.random() * 1000);
+                });
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTheme();
+            simulateExecution();
+            
+            // Add click handlers for all tool groups
+            document.querySelectorAll('.tool-group').forEach(group => {
+                if (!group.classList.contains('expanded')) {
+                    group.addEventListener('click', () => toggleGroup(group));
+                }
+            });
+        });
+
+        // Auto-refresh running tools every few seconds
+        setInterval(() => {
+            const runningIndicators = document.querySelectorAll('.status-indicator.running');
+            runningIndicators.forEach(indicator => {
+                // Add a subtle pulse effect
+                indicator.style.transform = 'scale(1.1)';
+                setTimeout(() => {
+                    indicator.style.transform = 'scale(1)';
+                }, 200);
+            });
+        }, 2000);
+    </script>
+</body>
+</html>

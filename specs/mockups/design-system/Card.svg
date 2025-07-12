@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Shadows -->
+    <filter id="shadow-card">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.1"/>
+    </filter>
+    <filter id="shadow-hover">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+  
+  <!-- Title -->
+  <text x="600" y="40" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="600" text-anchor="middle">Card and Container Components</text>
+  
+  <!-- Light Theme Container -->
+  <g transform="translate(50, 80)">
+    <rect x="0" y="0" width="500" height="680" fill="#f8f9fa" stroke="#e0e0e0" stroke-width="1"/>
+    <text x="250" y="30" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="500" text-anchor="middle">Light Theme</text>
+    
+    <!-- Basic Card -->
+    <text x="20" y="70" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#666666">Basic Card</text>
+    
+    <g transform="translate(20, 90)">
+      <rect x="0" y="0" width="320" height="120" rx="8" fill="#ffffff" stroke="#e5e7eb" stroke-width="1" filter="url(#shadow-card)"/>
+      <text x="20" y="35" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="600" fill="#111827">Card Title</text>
+      <text x="20" y="60" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#6b7280">Card description text that provides</text>
+      <text x="20" y="80" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#6b7280">additional context and information.</text>
+    </g>
+    
+    <!-- Card with Header -->
+    <text x="20" y="250" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#666666">Card with Header</text>
+    
+    <g transform="translate(20, 270)">
+      <rect x="0" y="0" width="320" height="140" rx="8" fill="#ffffff" stroke="#e5e7eb" stroke-width="1" filter="url(#shadow-card)"/>
+      <!-- Header -->
+      <rect x="0" y="0" width="320" height="48" rx="8 8 0 0" fill="#f3f4f6"/>
+      <text x="20" y="30" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="600" fill="#111827">Project Alpha</text>
+      <text x="280" y="30" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#6b7280" text-anchor="end">Active</text>
+      <!-- Content -->
+      <text x="20" y="75" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#6b7280">8 tasks • 3 members</text>
+      <text x="20" y="95" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#6b7280">Due in 5 days</text>
+      <!-- Footer -->
+      <rect x="0" y="110" width="320" height="30" fill="#f9fafb"/>
+      <text x="20" y="130" font-family="system-ui, -apple-system, sans-serif" font-size="12" fill="#3b82f6">View Details →</text>
+    </g>
+    
+    <!-- Interactive Card -->
+    <text x="20" y="450" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#666666">Interactive Card (Hover State)</text>
+    
+    <g transform="translate(20, 470)">
+      <rect x="0" y="0" width="320" height="120" rx="8" fill="#ffffff" stroke="#3b82f6" stroke-width="2" filter="url(#shadow-hover)" cursor="pointer"/>
+      <text x="20" y="35" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="600" fill="#111827">Click Me</text>
+      <text x="20" y="60" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#6b7280">This card has hover effects and</text>
+      <text x="20" y="80" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#6b7280">can be clicked for interaction.</text>
+    </g>
+  </g>
+  
+  <!-- Dark Theme Container -->
+  <g transform="translate(650, 80)">
+    <rect x="0" y="0" width="500" height="680" fill="#111827" stroke="#374151" stroke-width="1"/>
+    <text x="250" y="30" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="500" fill="#f3f4f6" text-anchor="middle">Dark Theme</text>
+    
+    <!-- Basic Card -->
+    <text x="20" y="70" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#9ca3af">Basic Card</text>
+    
+    <g transform="translate(20, 90)">
+      <rect x="0" y="0" width="320" height="120" rx="8" fill="#1f2937" stroke="#374151" stroke-width="1" filter="url(#shadow-card)"/>
+      <text x="20" y="35" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="600" fill="#f3f4f6">Card Title</text>
+      <text x="20" y="60" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#9ca3af">Card description text that provides</text>
+      <text x="20" y="80" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#9ca3af">additional context and information.</text>
+    </g>
+    
+    <!-- Card with Header -->
+    <text x="20" y="250" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#9ca3af">Card with Header</text>
+    
+    <g transform="translate(20, 270)">
+      <rect x="0" y="0" width="320" height="140" rx="8" fill="#1f2937" stroke="#374151" stroke-width="1" filter="url(#shadow-card)"/>
+      <!-- Header -->
+      <rect x="0" y="0" width="320" height="48" rx="8 8 0 0" fill="#374151"/>
+      <text x="20" y="30" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="600" fill="#f3f4f6">Project Alpha</text>
+      <text x="280" y="30" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#9ca3af" text-anchor="end">Active</text>
+      <!-- Content -->
+      <text x="20" y="75" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#9ca3af">8 tasks • 3 members</text>
+      <text x="20" y="95" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#9ca3af">Due in 5 days</text>
+      <!-- Footer -->
+      <rect x="0" y="110" width="320" height="30" fill="#111827"/>
+      <text x="20" y="130" font-family="system-ui, -apple-system, sans-serif" font-size="12" fill="#60a5fa">View Details →</text>
+    </g>
+    
+    <!-- Interactive Card -->
+    <text x="20" y="450" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#9ca3af">Interactive Card (Hover State)</text>
+    
+    <g transform="translate(20, 470)">
+      <rect x="0" y="0" width="320" height="120" rx="8" fill="#1f2937" stroke="#3b82f6" stroke-width="2" filter="url(#shadow-hover)" cursor="pointer"/>
+      <text x="20" y="35" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="600" fill="#f3f4f6">Click Me</text>
+      <text x="20" y="60" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#9ca3af">This card has hover effects and</text>
+      <text x="20" y="80" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#9ca3af">can be clicked for interaction.</text>
+    </g>
+  </g>
+  
+  <!-- Grid Layout Example -->
+  <g transform="translate(50, 600)">
+    <text x="0" y="0" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#666666">Card Grid Layout Example</text>
+    
+    <g transform="translate(0, 20)">
+      <!-- Card 1 -->
+      <rect x="0" y="0" width="160" height="100" rx="6" fill="#ffffff" stroke="#e5e7eb" stroke-width="1" filter="url(#shadow-card)"/>
+      <rect x="0" y="0" width="160" height="6" rx="6 6 0 0" fill="#3b82f6"/>
+      
+      <!-- Card 2 -->
+      <rect x="180" y="0" width="160" height="100" rx="6" fill="#ffffff" stroke="#e5e7eb" stroke-width="1" filter="url(#shadow-card)"/>
+      <rect x="180" y="0" width="160" height="6" rx="6 6 0 0" fill="#10b981"/>
+      
+      <!-- Card 3 -->
+      <rect x="360" y="0" width="160" height="100" rx="6" fill="#ffffff" stroke="#e5e7eb" stroke-width="1" filter="url(#shadow-card)"/>
+      <rect x="360" y="0" width="160" height="6" rx="6 6 0 0" fill="#f59e0b"/>
+    </g>
+  </g>
+</svg>

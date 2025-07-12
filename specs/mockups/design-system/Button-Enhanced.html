@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Button Component - All Variants</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #f8fafc;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        .theme-container {
+            display: flex;
+            min-height: 800px;
+        }
+
+        .theme-section {
+            flex: 1;
+            padding: 40px;
+        }
+
+        .light-theme {
+            background: #ffffff;
+            color: #374151;
+            border-right: 1px solid #e5e7eb;
+        }
+
+        .dark-theme {
+            background: #1f2937;
+            color: #f3f4f6;
+        }
+
+        .theme-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: inherit;
+        }
+
+        .light-theme .section-title {
+            color: #374151;
+        }
+
+        .dark-theme .section-title {
+            color: #d1d5db;
+        }
+
+        .section-subtitle {
+            font-size: 0.875rem;
+            margin-bottom: 16px;
+            opacity: 0.7;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .button-group.vertical {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        /* Base Button Styles */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: none;
+            border-radius: 6px;
+            font-family: inherit;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            user-select: none;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        /* Button Sizes */
+        .btn-sm {
+            height: 28px;
+            padding: 0 12px;
+            font-size: 13px;
+        }
+
+        .btn-md {
+            height: 40px;
+            padding: 0 16px;
+            font-size: 14px;
+        }
+
+        .btn-lg {
+            height: 48px;
+            padding: 0 24px;
+            font-size: 16px;
+        }
+
+        /* Icon only buttons */
+        .btn-icon {
+            width: 40px;
+            padding: 0;
+        }
+
+        .btn-icon.btn-sm {
+            width: 28px;
+        }
+
+        .btn-icon.btn-lg {
+            width: 48px;
+        }
+
+        /* Button Variants - Light Theme */
+        .light-theme .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .light-theme .btn-primary:hover:not(:disabled) {
+            background: #1d4ed8;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        }
+
+        .light-theme .btn-primary:active:not(:disabled) {
+            background: #1e40af;
+            transform: translateY(1px);
+        }
+
+        .light-theme .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .light-theme .btn-success:hover:not(:disabled) {
+            background: #059669;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        }
+
+        .light-theme .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .light-theme .btn-danger:hover:not(:disabled) {
+            background: #dc2626;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        }
+
+        .light-theme .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .light-theme .btn-secondary:hover:not(:disabled) {
+            background: #4b5563;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Outline Variants - Light Theme */
+        .light-theme .btn-outline-primary {
+            background: transparent;
+            color: #2563eb;
+            border: 1.5px solid #2563eb;
+            box-shadow: none;
+        }
+
+        .light-theme .btn-outline-primary:hover:not(:disabled) {
+            background: #2563eb;
+            color: white;
+        }
+
+        .light-theme .btn-outline-success {
+            background: transparent;
+            color: #10b981;
+            border: 1.5px solid #10b981;
+            box-shadow: none;
+        }
+
+        .light-theme .btn-outline-success:hover:not(:disabled) {
+            background: #10b981;
+            color: white;
+        }
+
+        .light-theme .btn-outline-danger {
+            background: transparent;
+            color: #ef4444;
+            border: 1.5px solid #ef4444;
+            box-shadow: none;
+        }
+
+        .light-theme .btn-outline-danger:hover:not(:disabled) {
+            background: #ef4444;
+            color: white;
+        }
+
+        .light-theme .btn-outline-secondary {
+            background: transparent;
+            color: #6b7280;
+            border: 1.5px solid #6b7280;
+            box-shadow: none;
+        }
+
+        .light-theme .btn-outline-secondary:hover:not(:disabled) {
+            background: #6b7280;
+            color: white;
+        }
+
+        /* Ghost/Text buttons - Light Theme */
+        .light-theme .btn-ghost {
+            background: transparent;
+            color: #6b7280;
+            box-shadow: none;
+        }
+
+        .light-theme .btn-ghost:hover:not(:disabled) {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        /* Button Variants - Dark Theme */
+        .dark-theme .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .dark-theme .btn-primary:hover:not(:disabled) {
+            background: #2563eb;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .dark-theme .btn-primary:active:not(:disabled) {
+            background: #1d4ed8;
+            transform: translateY(1px);
+        }
+
+        .dark-theme .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .dark-theme .btn-success:hover:not(:disabled) {
+            background: #059669;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .dark-theme .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .dark-theme .btn-danger:hover:not(:disabled) {
+            background: #dc2626;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .dark-theme .btn-secondary {
+            background: #4b5563;
+            color: white;
+        }
+
+        .dark-theme .btn-secondary:hover:not(:disabled) {
+            background: #374151;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Outline Variants - Dark Theme */
+        .dark-theme .btn-outline-primary {
+            background: transparent;
+            color: #60a5fa;
+            border: 1.5px solid #60a5fa;
+            box-shadow: none;
+        }
+
+        .dark-theme .btn-outline-primary:hover:not(:disabled) {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        .dark-theme .btn-outline-success {
+            background: transparent;
+            color: #10b981;
+            border: 1.5px solid #10b981;
+            box-shadow: none;
+        }
+
+        .dark-theme .btn-outline-success:hover:not(:disabled) {
+            background: #10b981;
+            color: white;
+        }
+
+        .dark-theme .btn-outline-danger {
+            background: transparent;
+            color: #ef4444;
+            border: 1.5px solid #ef4444;
+            box-shadow: none;
+        }
+
+        .dark-theme .btn-outline-danger:hover:not(:disabled) {
+            background: #ef4444;
+            color: white;
+        }
+
+        .dark-theme .btn-outline-secondary {
+            background: transparent;
+            color: #9ca3af;
+            border: 1.5px solid #4b5563;
+            box-shadow: none;
+        }
+
+        .dark-theme .btn-outline-secondary:hover:not(:disabled) {
+            background: #4b5563;
+            color: white;
+        }
+
+        /* Ghost/Text buttons - Dark Theme */
+        .dark-theme .btn-ghost {
+            background: transparent;
+            color: #9ca3af;
+            box-shadow: none;
+        }
+
+        .dark-theme .btn-ghost:hover:not(:disabled) {
+            background: #374151;
+            color: #f3f4f6;
+        }
+
+        /* Loading State */
+        .btn-loading {
+            pointer-events: none;
+            position: relative;
+        }
+
+        .btn-loading .btn-text {
+            opacity: 0.7;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Button Groups */
+        .btn-group {
+            display: inline-flex;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-group .btn {
+            border-radius: 0;
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: none;
+            margin: 0;
+        }
+
+        .btn-group .btn:first-child {
+            border-radius: 6px 0 0 6px;
+        }
+
+        .btn-group .btn:last-child {
+            border-radius: 0 6px 6px 0;
+            border-right: none;
+        }
+
+        .btn-group .btn:only-child {
+            border-radius: 6px;
+            border-right: none;
+        }
+
+        /* Split Button */
+        .split-button {
+            display: inline-flex;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .split-button .btn-main {
+            border-radius: 0;
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .split-button .btn-dropdown {
+            border-radius: 0;
+            width: 40px;
+            padding: 0;
+            position: relative;
+        }
+
+        .split-button .btn-main:first-child {
+            border-radius: 6px 0 0 6px;
+        }
+
+        .split-button .btn-dropdown:last-child {
+            border-radius: 0 6px 6px 0;
+        }
+
+        /* Icons */
+        .icon {
+            width: 16px;
+            height: 16px;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+
+        .icon-plus::before {
+            content: "➕";
+            font-size: 12px;
+        }
+
+        .icon-check::before {
+            content: "✅";
+            font-size: 12px;
+        }
+
+        .icon-download::before {
+            content: "⬇️";
+            font-size: 12px;
+        }
+
+        .icon-settings::before {
+            content: "⚙️";
+            font-size: 12px;
+        }
+
+        .icon-trash::before {
+            content: "🗑️";
+            font-size: 12px;
+        }
+
+        .icon-chevron-down::before {
+            content: "▼";
+            font-size: 10px;
+        }
+
+        /* Dropdown Menu */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
+            z-index: 1000;
+            min-width: 150px;
+        }
+
+        .dark-theme .dropdown-menu {
+            background: #374151;
+            border-color: #4b5563;
+        }
+
+        .dropdown.active .dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            display: block;
+            width: 100%;
+            padding: 8px 12px;
+            text-align: left;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .dropdown-item:hover {
+            background: #f3f4f6;
+        }
+
+        .dark-theme .dropdown-item:hover {
+            background: #4b5563;
+        }
+
+        /* Disabled State */
+        .light-theme .btn:disabled {
+            background: #e5e7eb !important;
+            color: #9ca3af !important;
+            border-color: #e5e7eb !important;
+        }
+
+        .dark-theme .btn:disabled {
+            background: #374151 !important;
+            color: #6b7280 !important;
+            border-color: #374151 !important;
+        }
+
+        /* Toggle Button */
+        .btn-toggle.active {
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .light-theme .btn-toggle.active {
+            background: #1d4ed8 !important;
+        }
+
+        .dark-theme .btn-toggle.active {
+            background: #1d4ed8 !important;
+        }
+
+        /* Demo Controls */
+        .demo-controls {
+            background: #f8fafc;
+            padding: 20px;
+            border-top: 1px solid #e5e7eb;
+            text-align: center;
+        }
+
+        .demo-controls h3 {
+            margin-bottom: 16px;
+            color: #374151;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .theme-container {
+                flex-direction: column;
+            }
+
+            .light-theme {
+                border-right: none;
+                border-bottom: 1px solid #e5e7eb;
+            }
+
+            .button-group {
+                justify-content: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Button Component - All Variants</h1>
+            <p>Interactive demonstration of button states, variants, and behaviors</p>
+        </div>
+
+        <div class="theme-container">
+            <!-- Light Theme -->
+            <div class="theme-section light-theme">
+                <h2 class="theme-title">Light Theme</h2>
+
+                <!-- Button Sizes -->
+                <div class="section">
+                    <h3 class="section-title">Button Sizes</h3>
+                    <p class="section-subtitle">Small (28px) / Medium (40px) / Large (48px)</p>
+                    <div class="button-group">
+                        <button class="btn btn-primary btn-sm">Small</button>
+                        <button class="btn btn-primary btn-md">Medium</button>
+                        <button class="btn btn-primary btn-lg">Large</button>
+                    </div>
+                </div>
+
+                <!-- Solid Buttons -->
+                <div class="section">
+                    <h3 class="section-title">Solid Buttons</h3>
+                    <div class="button-group">
+                        <button class="btn btn-primary">Primary</button>
+                        <button class="btn btn-success">Success</button>
+                        <button class="btn btn-danger">Danger</button>
+                        <button class="btn btn-secondary">Secondary</button>
+                    </div>
+                </div>
+
+                <!-- Outline Buttons -->
+                <div class="section">
+                    <h3 class="section-title">Outline Buttons</h3>
+                    <div class="button-group">
+                        <button class="btn btn-outline-primary">Primary</button>
+                        <button class="btn btn-outline-success">Success</button>
+                        <button class="btn btn-outline-danger">Danger</button>
+                        <button class="btn btn-outline-secondary">Secondary</button>
+                    </div>
+                </div>
+
+                <!-- Ghost Buttons -->
+                <div class="section">
+                    <h3 class="section-title">Ghost Buttons</h3>
+                    <div class="button-group">
+                        <button class="btn btn-ghost">Ghost</button>
+                        <button class="btn btn-ghost">Link Style</button>
+                    </div>
+                </div>
+
+                <!-- Icon Buttons -->
+                <div class="section">
+                    <h3 class="section-title">Icon Buttons</h3>
+                    <div class="button-group">
+                        <button class="btn btn-primary btn-icon" title="Add">
+                            <span class="icon icon-plus"></span>
+                        </button>
+                        <button class="btn btn-secondary btn-icon" title="Settings">
+                            <span class="icon icon-settings"></span>
+                        </button>
+                        <button class="btn btn-danger btn-icon" title="Delete">
+                            <span class="icon icon-trash"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Buttons with Icons -->
+                <div class="section">
+                    <h3 class="section-title">Buttons with Icons</h3>
+                    <div class="button-group vertical">
+                        <button class="btn btn-primary">
+                            <span class="icon icon-plus"></span>
+                            <span>Add Item</span>
+                        </button>
+                        <button class="btn btn-success">
+                            <span>Save</span>
+                            <span class="icon icon-check"></span>
+                        </button>
+                        <button class="btn btn-outline-secondary">
+                            <span class="icon icon-download"></span>
+                            <span>Download</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Button States -->
+                <div class="section">
+                    <h3 class="section-title">Button States</h3>
+                    <div class="button-group">
+                        <button class="btn btn-primary">Default</button>
+                        <button class="btn btn-primary" disabled>Disabled</button>
+                        <button class="btn btn-primary btn-loading" id="loadingBtn">
+                            <span class="spinner"></span>
+                            <span class="btn-text">Loading</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Button Group -->
+                <div class="section">
+                    <h3 class="section-title">Button Groups</h3>
+                    <div class="btn-group" id="buttonGroup">
+                        <button class="btn btn-outline-primary" data-value="left">Left</button>
+                        <button class="btn btn-primary" data-value="center">Center</button>
+                        <button class="btn btn-outline-primary" data-value="right">Right</button>
+                    </div>
+                </div>
+
+                <!-- Split Button -->
+                <div class="section">
+                    <h3 class="section-title">Split Button</h3>
+                    <div class="dropdown">
+                        <div class="split-button">
+                            <button class="btn btn-primary btn-main" onclick="alert('Main action clicked!')">
+                                Action
+                            </button>
+                            <button class="btn btn-primary btn-dropdown" onclick="toggleDropdown(this)">
+                                <span class="icon icon-chevron-down"></span>
+                            </button>
+                        </div>
+                        <div class="dropdown-menu">
+                            <button class="dropdown-item" onclick="alert('Option 1 selected')">Option 1</button>
+                            <button class="dropdown-item" onclick="alert('Option 2 selected')">Option 2</button>
+                            <button class="dropdown-item" onclick="alert('Option 3 selected')">Option 3</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Toggle Buttons -->
+                <div class="section">
+                    <h3 class="section-title">Toggle Buttons</h3>
+                    <div class="button-group">
+                        <button class="btn btn-outline-primary btn-toggle" onclick="toggleButton(this)">Toggle Me</button>
+                        <button class="btn btn-outline-primary btn-toggle active" onclick="toggleButton(this)">Active Toggle</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dark Theme -->
+            <div class="theme-section dark-theme">
+                <h2 class="theme-title">Dark Theme</h2>
+
+                <!-- Button Sizes -->
+                <div class="section">
+                    <h3 class="section-title">Button Sizes</h3>
+                    <p class="section-subtitle">Small (28px) / Medium (40px) / Large (48px)</p>
+                    <div class="button-group">
+                        <button class="btn btn-primary btn-sm">Small</button>
+                        <button class="btn btn-primary btn-md">Medium</button>
+                        <button class="btn btn-primary btn-lg">Large</button>
+                    </div>
+                </div>
+
+                <!-- Solid Buttons -->
+                <div class="section">
+                    <h3 class="section-title">Solid Buttons</h3>
+                    <div class="button-group">
+                        <button class="btn btn-primary">Primary</button>
+                        <button class="btn btn-success">Success</button>
+                        <button class="btn btn-danger">Danger</button>
+                        <button class="btn btn-secondary">Secondary</button>
+                    </div>
+                </div>
+
+                <!-- Outline Buttons -->
+                <div class="section">
+                    <h3 class="section-title">Outline Buttons</h3>
+                    <div class="button-group">
+                        <button class="btn btn-outline-primary">Primary</button>
+                        <button class="btn btn-outline-success">Success</button>
+                        <button class="btn btn-outline-danger">Danger</button>
+                        <button class="btn btn-outline-secondary">Secondary</button>
+                    </div>
+                </div>
+
+                <!-- Ghost Buttons -->
+                <div class="section">
+                    <h3 class="section-title">Ghost Buttons</h3>
+                    <div class="button-group">
+                        <button class="btn btn-ghost">Ghost</button>
+                        <button class="btn btn-ghost">Link Style</button>
+                    </div>
+                </div>
+
+                <!-- Icon Buttons -->
+                <div class="section">
+                    <h3 class="section-title">Icon Buttons</h3>
+                    <div class="button-group">
+                        <button class="btn btn-primary btn-icon" title="Add">
+                            <span class="icon icon-plus"></span>
+                        </button>
+                        <button class="btn btn-secondary btn-icon" title="Settings">
+                            <span class="icon icon-settings"></span>
+                        </button>
+                        <button class="btn btn-danger btn-icon" title="Delete">
+                            <span class="icon icon-trash"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Buttons with Icons -->
+                <div class="section">
+                    <h3 class="section-title">Buttons with Icons</h3>
+                    <div class="button-group vertical">
+                        <button class="btn btn-primary">
+                            <span class="icon icon-plus"></span>
+                            <span>Add Item</span>
+                        </button>
+                        <button class="btn btn-success">
+                            <span>Save</span>
+                            <span class="icon icon-check"></span>
+                        </button>
+                        <button class="btn btn-outline-secondary">
+                            <span class="icon icon-download"></span>
+                            <span>Download</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Button States -->
+                <div class="section">
+                    <h3 class="section-title">Button States</h3>
+                    <div class="button-group">
+                        <button class="btn btn-primary">Default</button>
+                        <button class="btn btn-primary" disabled>Disabled</button>
+                        <button class="btn btn-primary btn-loading" id="loadingBtn2">
+                            <span class="spinner"></span>
+                            <span class="btn-text">Loading</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Button Group -->
+                <div class="section">
+                    <h3 class="section-title">Button Groups</h3>
+                    <div class="btn-group" id="buttonGroup2">
+                        <button class="btn btn-outline-primary" data-value="left">Left</button>
+                        <button class="btn btn-primary" data-value="center">Center</button>
+                        <button class="btn btn-outline-primary" data-value="right">Right</button>
+                    </div>
+                </div>
+
+                <!-- Split Button -->
+                <div class="section">
+                    <h3 class="section-title">Split Button</h3>
+                    <div class="dropdown">
+                        <div class="split-button">
+                            <button class="btn btn-primary btn-main" onclick="alert('Main action clicked!')">
+                                Action
+                            </button>
+                            <button class="btn btn-primary btn-dropdown" onclick="toggleDropdown(this)">
+                                <span class="icon icon-chevron-down"></span>
+                            </button>
+                        </div>
+                        <div class="dropdown-menu">
+                            <button class="dropdown-item" onclick="alert('Option 1 selected')">Option 1</button>
+                            <button class="dropdown-item" onclick="alert('Option 2 selected')">Option 2</button>
+                            <button class="dropdown-item" onclick="alert('Option 3 selected')">Option 3</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Toggle Buttons -->
+                <div class="section">
+                    <h3 class="section-title">Toggle Buttons</h3>
+                    <div class="button-group">
+                        <button class="btn btn-outline-primary btn-toggle" onclick="toggleButton(this)">Toggle Me</button>
+                        <button class="btn btn-outline-primary btn-toggle active" onclick="toggleButton(this)">Active Toggle</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Demo Controls -->
+        <div class="demo-controls">
+            <h3>Interactive Demo Controls</h3>
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="simulateLoading()">Test Loading State</button>
+                <button class="btn btn-outline-primary" onclick="toggleAllStates()">Toggle All Button States</button>
+                <button class="btn btn-secondary" onclick="resetDemo()">Reset Demo</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Button Group Selection
+        function initButtonGroups() {
+            const buttonGroups = document.querySelectorAll('.btn-group');
+            
+            buttonGroups.forEach(group => {
+                const buttons = group.querySelectorAll('.btn');
+                
+                buttons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        // Remove active state from all buttons in this group
+                        buttons.forEach(btn => {
+                            btn.classList.remove('btn-primary');
+                            btn.classList.add('btn-outline-primary');
+                        });
+                        
+                        // Add active state to clicked button
+                        this.classList.remove('btn-outline-primary');
+                        this.classList.add('btn-primary');
+                    });
+                });
+            });
+        }
+
+        // Toggle Button Functionality
+        function toggleButton(button) {
+            button.classList.toggle('active');
+        }
+
+        // Dropdown Functionality
+        function toggleDropdown(button) {
+            const dropdown = button.closest('.dropdown');
+            dropdown.classList.toggle('active');
+            
+            // Close dropdown when clicking outside
+            setTimeout(() => {
+                document.addEventListener('click', function closeDropdown(e) {
+                    if (!dropdown.contains(e.target)) {
+                        dropdown.classList.remove('active');
+                        document.removeEventListener('click', closeDropdown);
+                    }
+                });
+            }, 0);
+        }
+
+        // Loading State Demo
+        function simulateLoading() {
+            const buttons = document.querySelectorAll('#loadingBtn, #loadingBtn2');
+            
+            buttons.forEach(button => {
+                button.classList.add('btn-loading');
+                button.disabled = true;
+                
+                setTimeout(() => {
+                    button.classList.remove('btn-loading');
+                    button.disabled = false;
+                }, 3000);
+            });
+        }
+
+        // Toggle All States Demo
+        function toggleAllStates() {
+            const allButtons = document.querySelectorAll('.btn:not(.btn-loading)');
+            
+            allButtons.forEach((button, index) => {
+                setTimeout(() => {
+                    button.disabled = !button.disabled;
+                }, index * 100);
+            });
+            
+            // Reset after 2 seconds
+            setTimeout(() => {
+                allButtons.forEach(button => {
+                    button.disabled = false;
+                });
+            }, 2000);
+        }
+
+        // Reset Demo
+        function resetDemo() {
+            // Reset all button states
+            const allButtons = document.querySelectorAll('.btn');
+            allButtons.forEach(button => {
+                button.disabled = false;
+                button.classList.remove('btn-loading', 'active');
+            });
+            
+            // Reset button groups
+            const buttonGroups = document.querySelectorAll('.btn-group');
+            buttonGroups.forEach(group => {
+                const buttons = group.querySelectorAll('.btn');
+                buttons.forEach((button, index) => {
+                    if (index === 1) { // Make center button active by default
+                        button.classList.remove('btn-outline-primary');
+                        button.classList.add('btn-primary');
+                    } else {
+                        button.classList.remove('btn-primary');
+                        button.classList.add('btn-outline-primary');
+                    }
+                });
+            });
+            
+            // Close all dropdowns
+            const dropdowns = document.querySelectorAll('.dropdown');
+            dropdowns.forEach(dropdown => {
+                dropdown.classList.remove('active');
+            });
+        }
+
+        // Add ripple effect to buttons
+        function addRippleEffect() {
+            const buttons = document.querySelectorAll('.btn');
+            
+            buttons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    if (this.disabled) return;
+                    
+                    const ripple = document.createElement('span');
+                    const rect = this.getBoundingClientRect();
+                    const size = Math.max(rect.width, rect.height);
+                    const x = e.clientX - rect.left - size / 2;
+                    const y = e.clientY - rect.top - size / 2;
+                    
+                    ripple.style.cssText = `
+                        position: absolute;
+                        width: ${size}px;
+                        height: ${size}px;
+                        background: rgba(255, 255, 255, 0.6);
+                        border-radius: 50%;
+                        transform: scale(0);
+                        animation: ripple 0.6s linear;
+                        left: ${x}px;
+                        top: ${y}px;
+                        pointer-events: none;
+                    `;
+                    
+                    this.style.position = 'relative';
+                    this.style.overflow = 'hidden';
+                    this.appendChild(ripple);
+                    
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 600);
+                });
+            });
+        }
+
+        // Add CSS for ripple animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes ripple {
+                to {
+                    transform: scale(2);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Initialize everything when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initButtonGroups();
+            addRippleEffect();
+        });
+
+        // Add keyboard navigation support
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                const focusedElement = document.activeElement;
+                if (focusedElement.classList.contains('btn')) {
+                    e.preventDefault();
+                    focusedElement.click();
+                }
+            }
+        });
+
+        // Add focus management for dropdowns
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const activeDropdowns = document.querySelectorAll('.dropdown.active');
+                activeDropdowns.forEach(dropdown => {
+                    dropdown.classList.remove('active');
+                });
+            }
+        });
+    </script>
+</body>
+</html>

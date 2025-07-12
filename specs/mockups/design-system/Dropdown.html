@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dropdown Components</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #f8fafc;
+            padding: 20px;
+            transition: background-color 0.2s ease;
+        }
+        
+        body.dark-theme {
+            background-color: #0f172a;
+            color: #f1f5f9;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 20px;
+        }
+        
+        .dark-theme .title {
+            color: #f1f5f9;
+        }
+        
+        .theme-toggle {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s ease;
+        }
+        
+        .theme-toggle:hover {
+            background: #2563eb;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .theme-section {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            background: white;
+            transition: all 0.2s ease;
+        }
+        
+        .dark-theme .theme-section {
+            background: #1f2937;
+            border-color: #374151;
+        }
+        
+        .theme-title {
+            font-size: 18px;
+            font-weight: 500;
+            text-align: center;
+            margin-bottom: 30px;
+            color: #1e293b;
+        }
+        
+        .dark-theme .theme-title {
+            color: #f3f4f6;
+        }
+        
+        .dropdown-group {
+            margin-bottom: 40px;
+        }
+        
+        .dropdown-label {
+            font-size: 14px;
+            color: #666666;
+            margin-bottom: 10px;
+            display: block;
+        }
+        
+        .dark-theme .dropdown-label {
+            color: #9ca3af;
+        }
+        
+        .dropdown-container {
+            position: relative;
+            display: inline-block;
+            margin-right: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .dropdown-trigger {
+            width: 200px;
+            height: 40px;
+            padding: 0 12px;
+            border-radius: 6px;
+            border: 1px solid #d1d5db;
+            background: white;
+            color: #374151;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        
+        .dropdown-trigger:hover {
+            border-color: #3b82f6;
+        }
+        
+        .dropdown-trigger.open {
+            border-color: #3b82f6;
+            border-width: 2px;
+        }
+        
+        .dark-theme .dropdown-trigger {
+            background: #374151;
+            border-color: #4b5563;
+            color: #e5e7eb;
+        }
+        
+        .dark-theme .dropdown-trigger:hover {
+            border-color: #3b82f6;
+        }
+        
+        .dropdown-trigger.open .chevron {
+            transform: rotate(180deg);
+        }
+        
+        .chevron {
+            width: 16px;
+            height: 16px;
+            stroke: #6b7280;
+            transition: transform 0.2s ease;
+        }
+        
+        .dropdown-trigger.open .chevron {
+            stroke: #3b82f6;
+        }
+        
+        .dark-theme .chevron {
+            stroke: #9ca3af;
+        }
+        
+        .dark-theme .dropdown-trigger.open .chevron {
+            stroke: #60a5fa;
+        }
+        
+        .dropdown-menu {
+            position: absolute;
+            top: 44px;
+            left: 0;
+            width: 100%;
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            display: none;
+            overflow: hidden;
+        }
+        
+        .dropdown-menu.open {
+            display: block;
+        }
+        
+        .dark-theme .dropdown-menu {
+            background: #374151;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        .dropdown-option {
+            padding: 8px 16px;
+            color: #374151;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            transition: background-color 0.2s ease;
+        }
+        
+        .dropdown-option:hover {
+            background: #eff6ff;
+        }
+        
+        .dropdown-option.selected {
+            background: #eff6ff;
+            color: #1e40af;
+            font-weight: 500;
+        }
+        
+        .dropdown-option.destructive {
+            color: #ef4444;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .dark-theme .dropdown-option {
+            color: #e5e7eb;
+        }
+        
+        .dark-theme .dropdown-option:hover {
+            background: rgba(30, 58, 138, 0.3);
+        }
+        
+        .dark-theme .dropdown-option.selected {
+            background: rgba(30, 58, 138, 0.3);
+            color: #93c5fd;
+        }
+        
+        .dark-theme .dropdown-option.destructive {
+            border-top-color: #4b5563;
+        }
+        
+        /* Icon Dropdown Styles */
+        .dropdown-trigger.with-icon {
+            width: 240px;
+        }
+        
+        .option-icon {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        
+        .option-content {
+            flex: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .option-status {
+            font-size: 12px;
+            color: #6b7280;
+        }
+        
+        .dark-theme .option-status {
+            color: #9ca3af;
+        }
+        
+        /* Multi-select Dropdown Styles */
+        .dropdown-trigger.multi-select {
+            width: 260px;
+        }
+        
+        .checkbox {
+            width: 16px;
+            height: 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 3px;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            transition: all 0.2s ease;
+        }
+        
+        .checkbox.checked {
+            background: #2563eb;
+            border-color: #2563eb;
+        }
+        
+        .checkbox.checked svg {
+            width: 12px;
+            height: 12px;
+            stroke: white;
+            stroke-width: 2;
+            fill: none;
+        }
+        
+        .dark-theme .checkbox {
+            background: #374151;
+            border-color: #4b5563;
+        }
+        
+        .dark-theme .checkbox.checked {
+            background: #3b82f6;
+            border-color: #3b82f6;
+        }
+        
+        /* Searchable Dropdown Styles */
+        .search-input {
+            width: 100%;
+            padding: 8px 12px 8px 36px;
+            border: none;
+            background: #f3f4f6;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #111827;
+            outline: none;
+        }
+        
+        .dark-theme .search-input {
+            background: #4b5563;
+            color: #f3f4f6;
+        }
+        
+        .search-container {
+            position: relative;
+            padding: 8px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .dark-theme .search-container {
+            border-bottom-color: #4b5563;
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            stroke: #6b7280;
+            stroke-width: 2;
+            fill: none;
+        }
+        
+        .user-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #6b7280;
+            margin-right: 12px;
+        }
+        
+        .search-results-count {
+            padding: 8px 16px;
+            text-align: center;
+            font-size: 12px;
+            color: #9ca3af;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .dark-theme .search-results-count {
+            border-top-color: #4b5563;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .dropdown-container {
+                display: block;
+                margin-right: 0;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="title">Dropdown Components</h1>
+        <button class="theme-toggle" onclick="toggleTheme()">Toggle Dark Theme</button>
+    </div>
+    
+    <div class="container">
+        <!-- Light Theme Section -->
+        <div class="theme-section">
+            <h2 class="theme-title">Light Theme</h2>
+            
+            <!-- Basic Dropdown -->
+            <div class="dropdown-group">
+                <label class="dropdown-label">Basic Dropdown</label>
+                <div class="dropdown-container">
+                    <div class="dropdown-trigger" onclick="toggleDropdown('basic1')">
+                        <span id="basic1-text">Select an option</span>
+                        <svg class="chevron" viewBox="0 0 20 20">
+                            <path d="M6 8l4 4 4-4"/>
+                        </svg>
+                    </div>
+                    <div class="dropdown-menu" id="basic1-menu">
+                        <div class="dropdown-option" onclick="selectOption('basic1', 'Option 1')">Option 1</div>
+                        <div class="dropdown-option" onclick="selectOption('basic1', 'Option 2')">Option 2</div>
+                        <div class="dropdown-option" onclick="selectOption('basic1', 'Option 3')">Option 3</div>
+                        <div class="dropdown-option" onclick="selectOption('basic1', 'Option 4')">Option 4</div>
+                        <div class="dropdown-option destructive" onclick="selectOption('basic1', 'Delete')">Delete</div>
+                    </div>
+                </div>
+                
+                <div class="dropdown-container">
+                    <div class="dropdown-trigger" onclick="toggleDropdown('basic2')">
+                        <span id="basic2-text">Select an option</span>
+                        <svg class="chevron" viewBox="0 0 20 20">
+                            <path d="M6 8l4 4 4-4"/>
+                        </svg>
+                    </div>
+                    <div class="dropdown-menu" id="basic2-menu">
+                        <div class="dropdown-option selected" onclick="selectOption('basic2', 'Option 1')">Option 1</div>
+                        <div class="dropdown-option" onclick="selectOption('basic2', 'Option 2')">Option 2</div>
+                        <div class="dropdown-option" onclick="selectOption('basic2', 'Option 3')">Option 3</div>
+                        <div class="dropdown-option" onclick="selectOption('basic2', 'Option 4')">Option 4</div>
+                        <div class="dropdown-option destructive" onclick="selectOption('basic2', 'Delete')">Delete</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Dropdown with Icons -->
+            <div class="dropdown-group">
+                <label class="dropdown-label">Dropdown with Icons</label>
+                <div class="dropdown-container">
+                    <div class="dropdown-trigger with-icon" onclick="toggleDropdown('icon1')">
+                        <div style="display: flex; align-items: center;">
+                            <div class="option-icon" style="background: #3b82f6;"></div>
+                            <span id="icon1-text">Project Alpha</span>
+                        </div>
+                        <svg class="chevron" viewBox="0 0 20 20">
+                            <path d="M6 8l4 4 4-4"/>
+                        </svg>
+                    </div>
+                    <div class="dropdown-menu" id="icon1-menu" style="width: 240px;">
+                        <div class="dropdown-option selected" onclick="selectIconOption('icon1', 'Project Alpha', '#3b82f6', 'Active')">
+                            <div class="option-icon" style="background: #3b82f6;"></div>
+                            <div class="option-content">
+                                <span>Project Alpha</span>
+                                <span class="option-status">Active</span>
+                            </div>
+                        </div>
+                        <div class="dropdown-option" onclick="selectIconOption('icon1', 'Project Beta', '#10b981', 'Completed')">
+                            <div class="option-icon" style="background: #10b981;"></div>
+                            <div class="option-content">
+                                <span>Project Beta</span>
+                                <span class="option-status">Completed</span>
+                            </div>
+                        </div>
+                        <div class="dropdown-option" onclick="selectIconOption('icon1', 'Project Gamma', '#f59e0b', 'In Progress')">
+                            <div class="option-icon" style="background: #f59e0b;"></div>
+                            <div class="option-content">
+                                <span>Project Gamma</span>
+                                <span class="option-status">In Progress</span>
+                            </div>
+                        </div>
+                        <div class="dropdown-option" onclick="selectIconOption('icon1', 'Project Delta', '#ef4444', 'Delayed')">
+                            <div class="option-icon" style="background: #ef4444;"></div>
+                            <div class="option-content">
+                                <span>Project Delta</span>
+                                <span class="option-status">Delayed</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Multi-select Dropdown -->
+            <div class="dropdown-group">
+                <label class="dropdown-label">Multi-select Dropdown</label>
+                <div class="dropdown-container">
+                    <div class="dropdown-trigger multi-select" onclick="toggleDropdown('multi1')">
+                        <span id="multi1-text">2 items selected</span>
+                        <svg class="chevron" viewBox="0 0 20 20">
+                            <path d="M6 8l4 4 4-4"/>
+                        </svg>
+                    </div>
+                    <div class="dropdown-menu" id="multi1-menu" style="width: 260px;">
+                        <div class="dropdown-option selected" onclick="toggleMultiOption('multi1', 'frontend', 'Frontend Development')">
+                            <div class="checkbox checked">
+                                <svg viewBox="0 0 20 20">
+                                    <path d="M6 10l2 2 6-6"/>
+                                </svg>
+                            </div>
+                            <span>Frontend Development</span>
+                        </div>
+                        <div class="dropdown-option selected" onclick="toggleMultiOption('multi1', 'backend', 'Backend Development')">
+                            <div class="checkbox checked">
+                                <svg viewBox="0 0 20 20">
+                                    <path d="M6 10l2 2 6-6"/>
+                                </svg>
+                            </div>
+                            <span>Backend Development</span>
+                        </div>
+                        <div class="dropdown-option" onclick="toggleMultiOption('multi1', 'design', 'UI/UX Design')">
+                            <div class="checkbox"></div>
+                            <span>UI/UX Design</span>
+                        </div>
+                        <div class="dropdown-option" onclick="toggleMultiOption('multi1', 'testing', 'Testing & QA')">
+                            <div class="checkbox"></div>
+                            <span>Testing & QA</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Searchable Dropdown -->
+            <div class="dropdown-group">
+                <label class="dropdown-label">Searchable Dropdown</label>
+                <div class="dropdown-container">
+                    <div class="dropdown-trigger" onclick="toggleDropdown('search1')">
+                        <span id="search1-text">John Doe</span>
+                        <svg class="chevron" viewBox="0 0 20 20">
+                            <path d="M6 8l4 4 4-4"/>
+                        </svg>
+                    </div>
+                    <div class="dropdown-menu" id="search1-menu" style="width: 240px;">
+                        <div class="search-container">
+                            <svg class="search-icon" viewBox="0 0 20 20">
+                                <circle cx="9" cy="9" r="6"/>
+                                <path d="m15 15 6 6"/>
+                            </svg>
+                            <input type="text" class="search-input" placeholder="Search users..." 
+                                   oninput="filterUsers('search1')" id="search1-input" value="John">
+                        </div>
+                        <div id="search1-results">
+                            <div class="dropdown-option selected" onclick="selectSearchOption('search1', 'John Doe')">
+                                <div class="user-avatar">JD</div>
+                                <span>John Doe</span>
+                            </div>
+                            <div class="dropdown-option" onclick="selectSearchOption('search1', 'John Smith')">
+                                <div class="user-avatar">JS</div>
+                                <span>John Smith</span>
+                            </div>
+                            <div class="dropdown-option" onclick="selectSearchOption('search1', 'John Williams')">
+                                <div class="user-avatar">JW</div>
+                                <span>John Williams</span>
+                            </div>
+                        </div>
+                        <div class="search-results-count">3 results found</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Dark Theme Section -->
+        <div class="theme-section">
+            <h2 class="theme-title">Dark Theme</h2>
+            
+            <!-- Basic Dropdown -->
+            <div class="dropdown-group">
+                <label class="dropdown-label">Basic Dropdown</label>
+                <div class="dropdown-container">
+                    <div class="dropdown-trigger" onclick="toggleDropdown('basic3')">
+                        <span id="basic3-text">Select an option</span>
+                        <svg class="chevron" viewBox="0 0 20 20">
+                            <path d="M6 8l4 4 4-4"/>
+                        </svg>
+                    </div>
+                    <div class="dropdown-menu" id="basic3-menu">
+                        <div class="dropdown-option" onclick="selectOption('basic3', 'Option 1')">Option 1</div>
+                        <div class="dropdown-option" onclick="selectOption('basic3', 'Option 2')">Option 2</div>
+                        <div class="dropdown-option" onclick="selectOption('basic3', 'Option 3')">Option 3</div>
+                        <div class="dropdown-option" onclick="selectOption('basic3', 'Option 4')">Option 4</div>
+                        <div class="dropdown-option destructive" onclick="selectOption('basic3', 'Delete')">Delete</div>
+                    </div>
+                </div>
+                
+                <div class="dropdown-container">
+                    <div class="dropdown-trigger" onclick="toggleDropdown('basic4')">
+                        <span id="basic4-text">Select an option</span>
+                        <svg class="chevron" viewBox="0 0 20 20">
+                            <path d="M6 8l4 4 4-4"/>
+                        </svg>
+                    </div>
+                    <div class="dropdown-menu" id="basic4-menu">
+                        <div class="dropdown-option selected" onclick="selectOption('basic4', 'Option 1')">Option 1</div>
+                        <div class="dropdown-option" onclick="selectOption('basic4', 'Option 2')">Option 2</div>
+                        <div class="dropdown-option" onclick="selectOption('basic4', 'Option 3')">Option 3</div>
+                        <div class="dropdown-option" onclick="selectOption('basic4', 'Option 4')">Option 4</div>
+                        <div class="dropdown-option destructive" onclick="selectOption('basic4', 'Delete')">Delete</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Dropdown with Icons -->
+            <div class="dropdown-group">
+                <label class="dropdown-label">Dropdown with Icons</label>
+                <div class="dropdown-container">
+                    <div class="dropdown-trigger with-icon" onclick="toggleDropdown('icon2')">
+                        <div style="display: flex; align-items: center;">
+                            <div class="option-icon" style="background: #3b82f6;"></div>
+                            <span id="icon2-text">Project Alpha</span>
+                        </div>
+                        <svg class="chevron" viewBox="0 0 20 20">
+                            <path d="M6 8l4 4 4-4"/>
+                        </svg>
+                    </div>
+                    <div class="dropdown-menu" id="icon2-menu" style="width: 240px;">
+                        <div class="dropdown-option selected" onclick="selectIconOption('icon2', 'Project Alpha', '#3b82f6', 'Active')">
+                            <div class="option-icon" style="background: #3b82f6;"></div>
+                            <div class="option-content">
+                                <span>Project Alpha</span>
+                                <span class="option-status">Active</span>
+                            </div>
+                        </div>
+                        <div class="dropdown-option" onclick="selectIconOption('icon2', 'Project Beta', '#10b981', 'Completed')">
+                            <div class="option-icon" style="background: #10b981;"></div>
+                            <div class="option-content">
+                                <span>Project Beta</span>
+                                <span class="option-status">Completed</span>
+                            </div>
+                        </div>
+                        <div class="dropdown-option" onclick="selectIconOption('icon2', 'Project Gamma', '#f59e0b', 'In Progress')">
+                            <div class="option-icon" style="background: #f59e0b;"></div>
+                            <div class="option-content">
+                                <span>Project Gamma</span>
+                                <span class="option-status">In Progress</span>
+                            </div>
+                        </div>
+                        <div class="dropdown-option" onclick="selectIconOption('icon2', 'Project Delta', '#ef4444', 'Delayed')">
+                            <div class="option-icon" style="background: #ef4444;"></div>
+                            <div class="option-content">
+                                <span>Project Delta</span>
+                                <span class="option-status">Delayed</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Multi-select Dropdown -->
+            <div class="dropdown-group">
+                <label class="dropdown-label">Multi-select Dropdown</label>
+                <div class="dropdown-container">
+                    <div class="dropdown-trigger multi-select" onclick="toggleDropdown('multi2')">
+                        <span id="multi2-text">2 items selected</span>
+                        <svg class="chevron" viewBox="0 0 20 20">
+                            <path d="M6 8l4 4 4-4"/>
+                        </svg>
+                    </div>
+                    <div class="dropdown-menu" id="multi2-menu" style="width: 260px;">
+                        <div class="dropdown-option selected" onclick="toggleMultiOption('multi2', 'frontend', 'Frontend Development')">
+                            <div class="checkbox checked">
+                                <svg viewBox="0 0 20 20">
+                                    <path d="M6 10l2 2 6-6"/>
+                                </svg>
+                            </div>
+                            <span>Frontend Development</span>
+                        </div>
+                        <div class="dropdown-option selected" onclick="toggleMultiOption('multi2', 'backend', 'Backend Development')">
+                            <div class="checkbox checked">
+                                <svg viewBox="0 0 20 20">
+                                    <path d="M6 10l2 2 6-6"/>
+                                </svg>
+                            </div>
+                            <span>Backend Development</span>
+                        </div>
+                        <div class="dropdown-option" onclick="toggleMultiOption('multi2', 'design', 'UI/UX Design')">
+                            <div class="checkbox"></div>
+                            <span>UI/UX Design</span>
+                        </div>
+                        <div class="dropdown-option" onclick="toggleMultiOption('multi2', 'testing', 'Testing & QA')">
+                            <div class="checkbox"></div>
+                            <span>Testing & QA</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state for dropdowns
+        const dropdownState = {
+            multi1: { frontend: true, backend: true, design: false, testing: false },
+            multi2: { frontend: true, backend: true, design: false, testing: false }
+        };
+        
+        const searchData = [
+            { name: 'John Doe', initials: 'JD' },
+            { name: 'John Smith', initials: 'JS' },
+            { name: 'John Williams', initials: 'JW' },
+            { name: 'Jane Doe', initials: 'JD' },
+            { name: 'Bob Johnson', initials: 'BJ' },
+            { name: 'Alice Brown', initials: 'AB' }
+        ];
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+        }
+
+        function toggleDropdown(id) {
+            const trigger = document.querySelector(`[onclick="toggleDropdown('${id}')"]`);
+            const menu = document.getElementById(`${id}-menu`);
+            
+            // Close all other dropdowns
+            document.querySelectorAll('.dropdown-menu.open').forEach(dropdown => {
+                if (dropdown.id !== `${id}-menu`) {
+                    dropdown.classList.remove('open');
+                    const otherId = dropdown.id.replace('-menu', '');
+                    const otherTrigger = document.querySelector(`[onclick="toggleDropdown('${otherId}')"]`);
+                    if (otherTrigger) {
+                        otherTrigger.classList.remove('open');
+                    }
+                }
+            });
+            
+            // Toggle current dropdown
+            const isOpen = menu.classList.contains('open');
+            if (isOpen) {
+                menu.classList.remove('open');
+                trigger.classList.remove('open');
+            } else {
+                menu.classList.add('open');
+                trigger.classList.add('open');
+                
+                // Focus search input if it exists
+                const searchInput = menu.querySelector('.search-input');
+                if (searchInput) {
+                    setTimeout(() => searchInput.focus(), 100);
+                }
+            }
+        }
+
+        function selectOption(dropdownId, optionText) {
+            document.getElementById(`${dropdownId}-text`).textContent = optionText;
+            
+            // Update selected state
+            const menu = document.getElementById(`${dropdownId}-menu`);
+            menu.querySelectorAll('.dropdown-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            event.target.classList.add('selected');
+            
+            // Close dropdown
+            toggleDropdown(dropdownId);
+        }
+
+        function selectIconOption(dropdownId, name, color, status) {
+            const textElement = document.getElementById(`${dropdownId}-text`);
+            const iconElement = textElement.previousElementSibling;
+            
+            textElement.textContent = name;
+            iconElement.style.background = color;
+            
+            // Update selected state
+            const menu = document.getElementById(`${dropdownId}-menu`);
+            menu.querySelectorAll('.dropdown-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            event.target.closest('.dropdown-option').classList.add('selected');
+            
+            // Close dropdown
+            toggleDropdown(dropdownId);
+        }
+
+        function toggleMultiOption(dropdownId, optionKey, optionText) {
+            const option = event.target.closest('.dropdown-option');
+            const checkbox = option.querySelector('.checkbox');
+            const isChecked = checkbox.classList.contains('checked');
+            
+            // Toggle state
+            dropdownState[dropdownId][optionKey] = !isChecked;
+            
+            if (isChecked) {
+                checkbox.classList.remove('checked');
+                checkbox.innerHTML = '';
+                option.classList.remove('selected');
+            } else {
+                checkbox.classList.add('checked');
+                checkbox.innerHTML = '<svg viewBox="0 0 20 20"><path d="M6 10l2 2 6-6"/></svg>';
+                option.classList.add('selected');
+            }
+            
+            // Update trigger text
+            const selectedCount = Object.values(dropdownState[dropdownId]).filter(Boolean).length;
+            document.getElementById(`${dropdownId}-text`).textContent = 
+                selectedCount === 0 ? 'Select items' : 
+                selectedCount === 1 ? '1 item selected' : 
+                `${selectedCount} items selected`;
+                
+            // Don't close dropdown for multi-select
+            event.stopPropagation();
+        }
+
+        function selectSearchOption(dropdownId, name) {
+            document.getElementById(`${dropdownId}-text`).textContent = name;
+            
+            // Update selected state
+            const resultsContainer = document.getElementById(`${dropdownId}-results`);
+            resultsContainer.querySelectorAll('.dropdown-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            event.target.classList.add('selected');
+            
+            // Close dropdown
+            toggleDropdown(dropdownId);
+        }
+
+        function filterUsers(dropdownId) {
+            const input = document.getElementById(`${dropdownId}-input`);
+            const resultsContainer = document.getElementById(`${dropdownId}-results`);
+            const searchTerm = input.value.toLowerCase();
+            
+            const filteredUsers = searchData.filter(user => 
+                user.name.toLowerCase().includes(searchTerm)
+            );
+            
+            resultsContainer.innerHTML = filteredUsers.map(user => `
+                <div class="dropdown-option" onclick="selectSearchOption('${dropdownId}', '${user.name}')">
+                    <div class="user-avatar">${user.initials}</div>
+                    <span>${user.name}</span>
+                </div>
+            `).join('');
+            
+            // Update results count
+            const countElement = document.querySelector(`#${dropdownId}-menu .search-results-count`);
+            countElement.textContent = `${filteredUsers.length} result${filteredUsers.length !== 1 ? 's' : ''} found`;
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.dropdown-container')) {
+                document.querySelectorAll('.dropdown-menu.open').forEach(menu => {
+                    menu.classList.remove('open');
+                    const id = menu.id.replace('-menu', '');
+                    const trigger = document.querySelector(`[onclick="toggleDropdown('${id}')"]`);
+                    if (trigger) {
+                        trigger.classList.remove('open');
+                    }
+                });
+            }
+        });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                document.querySelectorAll('.dropdown-menu.open').forEach(menu => {
+                    menu.classList.remove('open');
+                    const id = menu.id.replace('-menu', '');
+                    const trigger = document.querySelector(`[onclick="toggleDropdown('${id}')"]`);
+                    if (trigger) {
+                        trigger.classList.remove('open');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
