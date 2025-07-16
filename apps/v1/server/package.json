@@ -1,0 +1,24 @@
+{
+  "name": "@claude-flow/v1-server",
+  "private": true,
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js",
+    "mock": "node mock-server.js",
+    "build": "echo 'No build needed for server'",
+    "test": "echo 'No tests for v1-server'"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@anthropic-ai/claude-code": "^1.0.41",
+    "@instantlyeasy/claude-code-sdk-ts": "^0.3.3",
+    "cors": "^2.8.5",
+    "dotenv": "^17.0.1",
+    "express": "^5.1.0"
+  }
+}
