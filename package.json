@@ -17,13 +17,17 @@
     "build:v1": "pnpm --filter @claude-flow/v1-client build",
     "lint:v1": "pnpm --filter @claude-flow/v1-client lint",
     "test:e2e": "pnpm --filter @claude-flow/v1-client test:e2e",
-    "test:e2e:ui": "pnpm --filter @claude-flow/v1-client test:e2e:ui"
+    "test:e2e:ui": "pnpm --filter @claude-flow/v1-client test:e2e:ui",
+    "tcm": "tcm",
+    "tcm:watch": "tcm --watch"
   },
   "devDependencies": {
     "@types/resolve": "^1.20.6",
+    "concurrently": "^8.2.0",
     "lage": "^2.7.9",
     "resolve": "^1.22.10",
     "tinyglobby": "^0.2.14",
+    "typed-css-modules": "^0.9.1",
     "workspace-tools": "^0.38.4"
   },
   "packageManager": "pnpm@9.0.0"

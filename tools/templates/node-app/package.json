@@ -1,0 +1,24 @@
+{
+  "name": "@claude-flow/{{name}}",
+  "version": "1.0.0",
+  "private": true,
+  "description": "{{description}}",
+  "type": "module",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "dev": "tsc -b --watch",
+    "clean": "repo-scripts clean",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "test": "echo 'No tests configured'",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@claude-flow/tsconfig": "workspace:*",
+    "@types/node": "^20.0.0",
+    "typescript": "~5.8.3"
+  }
+}

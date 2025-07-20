@@ -36,3 +36,6 @@ test-results/
 
 # Temporary files (logs, sessions, feedback)
 temp/
+
+# Generated CSS module type definitions
+*.module.css.d.ts

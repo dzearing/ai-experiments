@@ -274,17 +274,23 @@ import { debounce } from 'lodash-es';
 
 ## CSS and Styling
 
+- use css modules
+- scope things within a @layer "base" or "overrides"
+- use classnames alias "cx" to conditionalize classnames.
+
 ```typescript
-// ✅ Use CSS modules
+// ✅ Use CSS modules and scope things within base layer or overrides layer.
 import styles from './Button.module.css';
-<button className={styles.primary}>Click</button>
+import cx from 'classnames'
+<button className={cx(styles.root, isCircular && styles.circular)}>Click</button>
 ```
 
 ```css
-/* ✅ BEM-like naming */
-.button { }
-.button--primary { }
-.button__icon { }
+/* css modules only. */
+@layer base {
+  .root { }
+  .circular { }
+}
 ```
 
 ## Documentation
