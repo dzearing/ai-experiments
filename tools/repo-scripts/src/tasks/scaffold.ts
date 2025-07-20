@@ -127,14 +127,42 @@ const scaffold: Task = {
       console.log(chalk.green(`✓ Created ${templateType} package: ${packageAnswers.name}`));
       console.log(chalk.gray(`  Location: ${targetPath}`));
       console.log();
-      console.log(chalk.cyan('Next steps:'));
-      console.log(chalk.gray('  1. cd ' + path.relative(process.cwd(), targetPath)));
-      console.log(chalk.gray('  2. pnpm install'));
+
+      // Change to the new directory
+      process.chdir(targetPath);
+      console.log(chalk.blue('Installing dependencies...'));
       
-      if (templateType === 'react-app') {
-        console.log(chalk.gray('  3. pnpm dev'));
-      } else {
-        console.log(chalk.gray('  3. pnpm build'));
+      // Install dependencies
+      const { execa } = await import('execa');
+      try {
+        await execa('pnpm', ['install'], { stdio: 'inherit' });
+        console.log(chalk.green('✓ Dependencies installed'));
+        console.log();
+
+        // Start dev server for react-app and component-library
+        if (templateType === 'react-app' || templateType === 'component-library') {
+          console.log(chalk.cyan('Starting development server...'));
+          console.log(chalk.gray('Press Ctrl+C to stop'));
+          console.log();
+          
+          await execa('pnpm', ['dev'], { stdio: 'inherit' });
+        } else {
+          // For node-app, just build it
+          console.log(chalk.blue('Building package...'));
+          await execa('pnpm', ['build'], { stdio: 'inherit' });
+          console.log(chalk.green('✓ Build complete'));
+          console.log();
+          console.log(chalk.cyan('Package is ready!'));
+          console.log(chalk.gray(`You can run it with: node lib/index.js`));
+        }
+      } catch (error) {
+        // If the dev server is stopped with Ctrl+C, this is normal
+        if (error && typeof error === 'object' && 'signal' in error && error.signal === 'SIGINT') {
+          console.log();
+          console.log(chalk.yellow('Development server stopped'));
+        } else {
+          throw error;
+        }
       }
 
       return { success: true };
