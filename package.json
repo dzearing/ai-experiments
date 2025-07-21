@@ -8,7 +8,7 @@
     "build": "lage build",
     "test": "lage test",
     "lint": "lage lint",
-    "check": "lage build build:cjs bundle test lint format:check api",
+    "check": "pnpm format:check && lage build build:cjs bundle test lint api",
     "check:verbose": "pnpm check --verbose --reporter adoLog",
     "lint:fix": "lage lint:fix",
     "typecheck": "lage typecheck",
