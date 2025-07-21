@@ -25,23 +25,19 @@ interface GitHubUser {
 class GitHubService {
   private baseUrl = 'http://localhost:3000/api';
 
-  async makeAuthenticatedRequest(
-    accountId: string,
-    endpoint: string,
-    options: RequestInit = {}
-  ) {
+  async makeAuthenticatedRequest(accountId: string, endpoint: string, options: RequestInit = {}) {
     const response = await fetch(`${this.baseUrl}/github/proxy`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...options.headers
+        ...options.headers,
       },
       body: JSON.stringify({
         accountId,
         endpoint,
         method: options.method || 'GET',
-        body: options.body
-      })
+        body: options.body,
+      }),
     });
 
     if (!response.ok) {
@@ -52,12 +48,15 @@ class GitHubService {
     return response.json();
   }
 
-  async listRepositories(accountId: string, options?: {
-    type?: 'all' | 'owner' | 'public' | 'private' | 'member';
-    sort?: 'created' | 'updated' | 'pushed' | 'full_name';
-    per_page?: number;
-    page?: number;
-  }): Promise<GitHubRepository[]> {
+  async listRepositories(
+    accountId: string,
+    options?: {
+      type?: 'all' | 'owner' | 'public' | 'private' | 'member';
+      sort?: 'created' | 'updated' | 'pushed' | 'full_name';
+      per_page?: number;
+      page?: number;
+    }
+  ): Promise<GitHubRepository[]> {
     const params = new URLSearchParams();
     if (options?.type) params.append('type', options.type);
     if (options?.sort) params.append('sort', options.sort);
@@ -68,17 +67,20 @@ class GitHubService {
     return this.makeAuthenticatedRequest(accountId, endpoint);
   }
 
-  async createRepository(accountId: string, options: {
-    name: string;
-    description?: string;
-    private?: boolean;
-    auto_init?: boolean;
-    gitignore_template?: string;
-    license_template?: string;
-  }): Promise<GitHubRepository> {
+  async createRepository(
+    accountId: string,
+    options: {
+      name: string;
+      description?: string;
+      private?: boolean;
+      auto_init?: boolean;
+      gitignore_template?: string;
+      license_template?: string;
+    }
+  ): Promise<GitHubRepository> {
     return this.makeAuthenticatedRequest(accountId, '/user/repos', {
       method: 'POST',
-      body: JSON.stringify(options)
+      body: JSON.stringify(options),
     });
   }
 
@@ -100,19 +102,15 @@ class GitHubService {
     branch?: string
   ) {
     const encodedContent = btoa(content);
-    
-    return this.makeAuthenticatedRequest(
-      accountId,
-      `/repos/${owner}/${repo}/contents/${path}`,
-      {
-        method: 'PUT',
-        body: JSON.stringify({
-          message,
-          content: encodedContent,
-          branch
-        })
-      }
-    );
+
+    return this.makeAuthenticatedRequest(accountId, `/repos/${owner}/${repo}/contents/${path}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        message,
+        content: encodedContent,
+        branch,
+      }),
+    });
   }
 
   async updateFile(
@@ -126,20 +124,16 @@ class GitHubService {
     branch?: string
   ) {
     const encodedContent = btoa(content);
-    
-    return this.makeAuthenticatedRequest(
-      accountId,
-      `/repos/${owner}/${repo}/contents/${path}`,
-      {
-        method: 'PUT',
-        body: JSON.stringify({
-          message,
-          content: encodedContent,
-          sha,
-          branch
-        })
-      }
-    );
+
+    return this.makeAuthenticatedRequest(accountId, `/repos/${owner}/${repo}/contents/${path}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        message,
+        content: encodedContent,
+        sha,
+        branch,
+      }),
+    });
   }
 
   async createPullRequest(
@@ -154,22 +148,22 @@ class GitHubService {
       draft?: boolean;
     }
   ) {
-    return this.makeAuthenticatedRequest(
-      accountId,
-      `/repos/${owner}/${repo}/pulls`,
-      {
-        method: 'POST',
-        body: JSON.stringify(options)
-      }
-    );
+    return this.makeAuthenticatedRequest(accountId, `/repos/${owner}/${repo}/pulls`, {
+      method: 'POST',
+      body: JSON.stringify(options),
+    });
   }
 
-  async searchRepositories(accountId: string, query: string, options?: {
-    sort?: 'stars' | 'forks' | 'updated';
-    order?: 'asc' | 'desc';
-    per_page?: number;
-    page?: number;
-  }) {
+  async searchRepositories(
+    accountId: string,
+    query: string,
+    options?: {
+      sort?: 'stars' | 'forks' | 'updated';
+      order?: 'asc' | 'desc';
+      per_page?: number;
+      page?: number;
+    }
+  ) {
     const params = new URLSearchParams();
     params.append('q', query);
     if (options?.sort) params.append('sort', options.sort);

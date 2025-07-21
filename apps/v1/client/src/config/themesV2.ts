@@ -5,41 +5,41 @@ export interface ThemeStyles {
   sidebarHover: string;
   sidebarActive: string;
   sidebarBorder: string;
-  
+
   // Main content
   mainBg: string;
   contentBg: string;
   contentBorder: string;
   contentHover: string;
-  
+
   // Typography
   headingColor: string;
   textColor: string;
   mutedText: string;
   linkText?: string;
   primaryText?: string;
-  
+
   // Interactive elements
   primaryButton: string;
   primaryButtonHover: string;
   primaryButtonText: string;
-  
+
   // Form elements
   inputBg?: string;
   inputBorder?: string;
   inputText?: string;
-  
+
   // Cards and surfaces
   cardBg: string;
   cardBorder: string;
   cardShadow: string;
-  
+
   // Status colors
   successBg: string;
   successText: string;
   warningBg: string;
   warningText: string;
-  
+
   // Additional styling
   borderRadius: string;
   buttonRadius: string;
@@ -84,7 +84,7 @@ export const themesV2: Theme[] = [
       warningText: 'text-neutral-900',
       borderRadius: 'rounded-xl',
       buttonRadius: 'rounded-md',
-      fontFamily: 'font-sans'
+      fontFamily: 'font-sans',
     },
     dark: {
       sidebarBg: 'bg-neutral-950/90',
@@ -111,8 +111,8 @@ export const themesV2: Theme[] = [
       warningText: 'text-neutral-100',
       borderRadius: 'rounded-xl',
       buttonRadius: 'rounded-md',
-      fontFamily: 'font-sans'
-    }
+      fontFamily: 'font-sans',
+    },
   },
   {
     id: 'github',
@@ -143,7 +143,7 @@ export const themesV2: Theme[] = [
       warningText: 'text-yellow-800',
       borderRadius: 'rounded-md',
       buttonRadius: 'rounded-md',
-      fontFamily: 'font-mono'
+      fontFamily: 'font-mono',
     },
     dark: {
       sidebarBg: 'bg-gray-950',
@@ -170,8 +170,8 @@ export const themesV2: Theme[] = [
       warningText: 'text-yellow-400',
       borderRadius: 'rounded-md',
       buttonRadius: 'rounded-md',
-      fontFamily: 'font-mono'
-    }
+      fontFamily: 'font-mono',
+    },
   },
   {
     id: 'onedrive',
@@ -202,7 +202,7 @@ export const themesV2: Theme[] = [
       warningText: 'text-amber-700',
       borderRadius: 'rounded-none',
       buttonRadius: 'rounded',
-      fontFamily: 'font-sans'
+      fontFamily: 'font-sans',
     },
     dark: {
       sidebarBg: 'bg-gray-900',
@@ -229,8 +229,8 @@ export const themesV2: Theme[] = [
       warningText: 'text-amber-400',
       borderRadius: 'rounded-none',
       buttonRadius: 'rounded',
-      fontFamily: 'font-sans'
-    }
+      fontFamily: 'font-sans',
+    },
   },
   {
     id: 'teams',
@@ -261,7 +261,7 @@ export const themesV2: Theme[] = [
       warningText: 'text-yellow-800',
       borderRadius: 'rounded',
       buttonRadius: 'rounded',
-      fontFamily: 'font-sans'
+      fontFamily: 'font-sans',
     },
     dark: {
       sidebarBg: 'bg-gray-950',
@@ -288,8 +288,8 @@ export const themesV2: Theme[] = [
       warningText: 'text-yellow-400',
       borderRadius: 'rounded',
       buttonRadius: 'rounded',
-      fontFamily: 'font-sans'
-    }
+      fontFamily: 'font-sans',
+    },
   },
   {
     id: 'fluent',
@@ -320,7 +320,7 @@ export const themesV2: Theme[] = [
       warningText: 'text-amber-700',
       borderRadius: 'rounded-lg',
       buttonRadius: 'rounded',
-      fontFamily: 'font-sans'
+      fontFamily: 'font-sans',
     },
     dark: {
       sidebarBg: 'bg-gray-900',
@@ -347,8 +347,8 @@ export const themesV2: Theme[] = [
       warningText: 'text-amber-400',
       borderRadius: 'rounded-lg',
       buttonRadius: 'rounded',
-      fontFamily: 'font-sans'
-    }
+      fontFamily: 'font-sans',
+    },
   },
   {
     id: 'neon-dreams',
@@ -368,7 +368,8 @@ export const themesV2: Theme[] = [
       textColor: 'text-gray-700',
       mutedText: 'text-gray-500',
       primaryButton: 'bg-gradient-to-r from-pink-500 to-purple-600 shadow-lg shadow-purple-500/50',
-      primaryButtonHover: 'hover:from-pink-600 hover:to-purple-700 hover:shadow-xl hover:shadow-purple-500/60',
+      primaryButtonHover:
+        'hover:from-pink-600 hover:to-purple-700 hover:shadow-xl hover:shadow-purple-500/60',
       primaryButtonText: 'text-white',
       cardBg: 'bg-white',
       cardBorder: 'border-purple-200',
@@ -379,7 +380,7 @@ export const themesV2: Theme[] = [
       warningText: 'text-amber-700',
       borderRadius: 'rounded-2xl',
       buttonRadius: 'rounded-full',
-      fontFamily: 'font-sans'
+      fontFamily: 'font-sans',
     },
     dark: {
       sidebarBg: 'bg-black',
@@ -395,7 +396,8 @@ export const themesV2: Theme[] = [
       textColor: 'text-gray-300',
       mutedText: 'text-gray-600',
       primaryButton: 'bg-gradient-to-r from-pink-500 to-purple-500 shadow-lg shadow-pink-600/50',
-      primaryButtonHover: 'hover:from-pink-600 hover:to-purple-600 hover:shadow-xl hover:shadow-pink-600/60',
+      primaryButtonHover:
+        'hover:from-pink-600 hover:to-purple-600 hover:shadow-xl hover:shadow-pink-600/60',
       primaryButtonText: 'text-white',
       cardBg: 'bg-gray-900',
       cardBorder: 'border-pink-600/50',
@@ -406,8 +408,8 @@ export const themesV2: Theme[] = [
       warningText: 'text-yellow-400',
       borderRadius: 'rounded-2xl',
       buttonRadius: 'rounded-full',
-      fontFamily: 'font-sans'
-    }
+      fontFamily: 'font-sans',
+    },
   },
   {
     id: 'paper-sketch',
@@ -438,7 +440,7 @@ export const themesV2: Theme[] = [
       warningText: 'text-orange-800',
       borderRadius: 'rounded-[30px_5px_30px_5px/5px_30px_5px_30px]',
       buttonRadius: 'rounded-[15px_2px_15px_2px/2px_15px_2px_15px]',
-      fontFamily: 'font-mono'
+      fontFamily: 'font-mono',
     },
     dark: {
       sidebarBg: 'bg-gray-900',
@@ -465,8 +467,8 @@ export const themesV2: Theme[] = [
       warningText: 'text-orange-400',
       borderRadius: 'rounded-[30px_5px_30px_5px/5px_30px_5px_30px]',
       buttonRadius: 'rounded-[15px_2px_15px_2px/2px_15px_2px_15px]',
-      fontFamily: 'font-mono'
-    }
+      fontFamily: 'font-mono',
+    },
   },
   {
     id: 'ocean-depths',
@@ -497,7 +499,7 @@ export const themesV2: Theme[] = [
       warningText: 'text-amber-800',
       borderRadius: 'rounded-3xl',
       buttonRadius: 'rounded-2xl',
-      fontFamily: 'font-sans'
+      fontFamily: 'font-sans',
     },
     dark: {
       sidebarBg: 'bg-gradient-to-b from-blue-950 to-cyan-950',
@@ -524,8 +526,8 @@ export const themesV2: Theme[] = [
       warningText: 'text-amber-400',
       borderRadius: 'rounded-3xl',
       buttonRadius: 'rounded-2xl',
-      fontFamily: 'font-sans'
-    }
+      fontFamily: 'font-sans',
+    },
   },
   {
     id: 'brutalist',
@@ -556,7 +558,7 @@ export const themesV2: Theme[] = [
       warningText: 'text-gray-900',
       borderRadius: 'rounded-none',
       buttonRadius: 'rounded-none',
-      fontFamily: 'font-mono'
+      fontFamily: 'font-mono',
     },
     dark: {
       sidebarBg: 'bg-black',
@@ -583,8 +585,8 @@ export const themesV2: Theme[] = [
       warningText: 'text-gray-100',
       borderRadius: 'rounded-none',
       buttonRadius: 'rounded-none',
-      fontFamily: 'font-mono'
-    }
+      fontFamily: 'font-mono',
+    },
   },
   {
     id: 'pastel-kawaii',
@@ -615,7 +617,7 @@ export const themesV2: Theme[] = [
       warningText: 'text-yellow-700',
       borderRadius: 'rounded-[2rem]',
       buttonRadius: 'rounded-full',
-      fontFamily: 'font-sans'
+      fontFamily: 'font-sans',
     },
     dark: {
       sidebarBg: 'bg-gradient-to-b from-purple-900 to-pink-900',
@@ -642,8 +644,8 @@ export const themesV2: Theme[] = [
       warningText: 'text-yellow-400',
       borderRadius: 'rounded-[2rem]',
       buttonRadius: 'rounded-full',
-      fontFamily: 'font-sans'
-    }
+      fontFamily: 'font-sans',
+    },
   },
   {
     id: 'terminal-green',
@@ -674,7 +676,7 @@ export const themesV2: Theme[] = [
       warningText: 'text-yellow-800',
       borderRadius: 'rounded',
       buttonRadius: 'rounded',
-      fontFamily: 'font-mono'
+      fontFamily: 'font-mono',
     },
     dark: {
       sidebarBg: 'bg-black',
@@ -701,8 +703,8 @@ export const themesV2: Theme[] = [
       warningText: 'text-yellow-400',
       borderRadius: 'rounded',
       buttonRadius: 'rounded',
-      fontFamily: 'font-mono'
-    }
+      fontFamily: 'font-mono',
+    },
   },
   {
     id: 'arctic-aurora',
@@ -733,7 +735,7 @@ export const themesV2: Theme[] = [
       warningText: 'text-amber-800',
       borderRadius: 'rounded-xl',
       buttonRadius: 'rounded-lg',
-      fontFamily: 'font-sans'
+      fontFamily: 'font-sans',
     },
     dark: {
       sidebarBg: 'bg-gradient-to-b from-teal-950 to-blue-950',
@@ -760,8 +762,8 @@ export const themesV2: Theme[] = [
       warningText: 'text-amber-400',
       borderRadius: 'rounded-xl',
       buttonRadius: 'rounded-lg',
-      fontFamily: 'font-sans'
-    }
+      fontFamily: 'font-sans',
+    },
   },
   {
     id: 'desert-sand',
@@ -792,7 +794,7 @@ export const themesV2: Theme[] = [
       warningText: 'text-red-800',
       borderRadius: 'rounded-lg',
       buttonRadius: 'rounded-md',
-      fontFamily: 'font-serif'
+      fontFamily: 'font-serif',
     },
     dark: {
       sidebarBg: 'bg-gradient-to-b from-stone-900 to-orange-950',
@@ -819,8 +821,8 @@ export const themesV2: Theme[] = [
       warningText: 'text-red-400',
       borderRadius: 'rounded-lg',
       buttonRadius: 'rounded-md',
-      fontFamily: 'font-serif'
-    }
+      fontFamily: 'font-serif',
+    },
   },
   {
     id: 'minimalist-mono',
@@ -851,7 +853,7 @@ export const themesV2: Theme[] = [
       warningText: 'text-black',
       borderRadius: 'rounded-none',
       buttonRadius: 'rounded-none',
-      fontFamily: 'font-mono'
+      fontFamily: 'font-mono',
     },
     dark: {
       sidebarBg: 'bg-black',
@@ -878,8 +880,8 @@ export const themesV2: Theme[] = [
       warningText: 'text-white',
       borderRadius: 'rounded-none',
       buttonRadius: 'rounded-none',
-      fontFamily: 'font-mono'
-    }
+      fontFamily: 'font-mono',
+    },
   },
   {
     id: 'forest-moss',
@@ -910,7 +912,7 @@ export const themesV2: Theme[] = [
       warningText: 'text-amber-800',
       borderRadius: 'rounded-xl',
       buttonRadius: 'rounded-lg',
-      fontFamily: 'font-sans'
+      fontFamily: 'font-sans',
     },
     dark: {
       sidebarBg: 'bg-gradient-to-b from-emerald-950 to-green-950',
@@ -937,8 +939,8 @@ export const themesV2: Theme[] = [
       warningText: 'text-amber-400',
       borderRadius: 'rounded-xl',
       buttonRadius: 'rounded-lg',
-      fontFamily: 'font-sans'
-    }
+      fontFamily: 'font-sans',
+    },
   },
   {
     id: 'cosmic-purple',
@@ -969,7 +971,7 @@ export const themesV2: Theme[] = [
       warningText: 'text-amber-800',
       borderRadius: 'rounded-2xl',
       buttonRadius: 'rounded-xl',
-      fontFamily: 'font-sans'
+      fontFamily: 'font-sans',
     },
     dark: {
       sidebarBg: 'bg-gradient-to-b from-purple-950 to-indigo-950',
@@ -996,8 +998,8 @@ export const themesV2: Theme[] = [
       warningText: 'text-amber-400',
       borderRadius: 'rounded-2xl',
       buttonRadius: 'rounded-xl',
-      fontFamily: 'font-sans'
-    }
+      fontFamily: 'font-sans',
+    },
   },
   {
     id: 'vintage-sepia',
@@ -1028,7 +1030,7 @@ export const themesV2: Theme[] = [
       warningText: 'text-orange-900',
       borderRadius: 'rounded-lg',
       buttonRadius: 'rounded',
-      fontFamily: 'font-serif'
+      fontFamily: 'font-serif',
     },
     dark: {
       sidebarBg: 'bg-gradient-to-b from-stone-900 to-yellow-950',
@@ -1055,8 +1057,8 @@ export const themesV2: Theme[] = [
       warningText: 'text-orange-400',
       borderRadius: 'rounded-lg',
       buttonRadius: 'rounded',
-      fontFamily: 'font-serif'
-    }
+      fontFamily: 'font-serif',
+    },
   },
   {
     id: 'ice-crystal',
@@ -1087,7 +1089,7 @@ export const themesV2: Theme[] = [
       warningText: 'text-amber-800',
       borderRadius: 'rounded-sm',
       buttonRadius: 'rounded-sm',
-      fontFamily: 'font-sans'
+      fontFamily: 'font-sans',
     },
     dark: {
       sidebarBg: 'bg-gradient-to-b from-slate-900 to-sky-950',
@@ -1114,7 +1116,7 @@ export const themesV2: Theme[] = [
       warningText: 'text-amber-400',
       borderRadius: 'rounded-sm',
       buttonRadius: 'rounded-sm',
-      fontFamily: 'font-sans'
-    }
-  }
+      fontFamily: 'font-sans',
+    },
+  },
 ];

@@ -20,12 +20,16 @@ class SessionManager {
 
     // Load existing sessions from disk
     try {
-      const sessionFiles = fs.readdirSync(this.sessionsDir).filter(file => file.endsWith('.json'));
-      
+      const sessionFiles = fs
+        .readdirSync(this.sessionsDir)
+        .filter((file) => file.endsWith('.json'));
+
       for (const file of sessionFiles) {
         try {
-          const sessionData = JSON.parse(fs.readFileSync(path.join(this.sessionsDir, file), 'utf8'));
-          
+          const sessionData = JSON.parse(
+            fs.readFileSync(path.join(this.sessionsDir, file), 'utf8')
+          );
+
           // Migrate old sessions: extract repoName from sessionId if missing
           if (!sessionData.repoName && sessionData.sessionId) {
             const parts = sessionData.sessionId.split('-');
@@ -34,17 +38,19 @@ class SessionManager {
               // Find where the UUID starts (last 5 parts are UUID)
               const uuidStartIndex = parts.length - 5;
               sessionData.repoName = parts.slice(1, uuidStartIndex).join('-');
-              logger.debug(`Migrated session ${sessionData.sessionId}, extracted repoName: ${sessionData.repoName}`);
+              logger.debug(
+                `Migrated session ${sessionData.sessionId}, extracted repoName: ${sessionData.repoName}`
+              );
             }
           }
-          
+
           this.sessions.set(sessionData.sessionId, sessionData);
           logger.debug(`Loaded session from disk: ${sessionData.sessionId}`);
         } catch (error) {
           logger.error(`Failed to load session file ${file}:`, error);
         }
       }
-      
+
       logger.debug(`Loaded ${this.sessions.size} sessions from disk`);
     } catch (error) {
       logger.error('Failed to load sessions from disk:', error);
@@ -67,9 +73,9 @@ class SessionManager {
       contextTokens: 0,
       tokenUsage: {
         input: 0,
-        output: 0
+        output: 0,
       },
-      initialMode: initialMode || 'default'
+      initialMode: initialMode || 'default',
     };
 
     this.sessions.set(sessionId, session);
@@ -101,7 +107,7 @@ class SessionManager {
 
     logger.debug(`Deleting session: ${sessionId}`);
     this.sessions.delete(sessionId);
-    
+
     // Delete session file from disk
     const sessionFile = PATHS.getSessionFile(sessionId);
     try {
@@ -154,7 +160,7 @@ class SessionManager {
     const messageWithId = {
       ...message,
       id: message.id || crypto.randomUUID(),
-      timestamp: message.timestamp || new Date().toISOString()
+      timestamp: message.timestamp || new Date().toISOString(),
     };
 
     session.messages.push(messageWithId);
@@ -170,7 +176,7 @@ class SessionManager {
     }
 
     // Find and return the message
-    return session.messages.find(msg => msg.id === messageId);
+    return session.messages.find((msg) => msg.id === messageId);
   }
 
   updateMessage(sessionId, messageId, updates) {
@@ -180,7 +186,7 @@ class SessionManager {
     }
 
     // Find the message and update it
-    const messageIndex = session.messages.findIndex(msg => msg.id === messageId);
+    const messageIndex = session.messages.findIndex((msg) => msg.id === messageId);
     if (messageIndex === -1) {
       logger.debug(`Message not found for update: ${messageId} in session ${sessionId}`);
       return false;
@@ -189,12 +195,12 @@ class SessionManager {
     // Update the message with provided fields
     session.messages[messageIndex] = {
       ...session.messages[messageIndex],
-      ...updates
+      ...updates,
     };
-    
+
     session.updatedAt = new Date().toISOString();
     this.saveSession(sessionId);
-    
+
     logger.debug(`Updated message ${messageId} in session ${sessionId} with:`, updates);
     return true;
   }
@@ -239,7 +245,7 @@ class SessionManager {
   async saveSession(sessionId) {
     // Add to save queue
     this.saveQueue.add(sessionId);
-    
+
     // If already saving, return
     if (this.saving) {
       return;
@@ -267,7 +273,8 @@ class SessionManager {
   }
 
   // Cleanup old sessions (optional maintenance method)
-  cleanupOldSessions(maxAgeMs = 7 * 24 * 60 * 60 * 1000) { // 7 days
+  cleanupOldSessions(maxAgeMs = 7 * 24 * 60 * 60 * 1000) {
+    // 7 days
     const now = Date.now();
     const sessionsToDelete = [];
 

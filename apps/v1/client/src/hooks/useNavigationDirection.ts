@@ -14,15 +14,15 @@ export function useNavigationDirection(): NavigationDirection {
 
   useEffect(() => {
     const path = location.pathname;
-    
+
     if (navigationType === 'POP') {
       // Browser back/forward navigation
       const stack = historyStack.current;
       const prevIndex = currentIndex.current;
-      
+
       // Find where we are in the history
       const newIndex = stack.lastIndexOf(path);
-      
+
       if (newIndex === -1) {
         // Path not in history, treat as forward
         setDirection('forward');
@@ -40,7 +40,7 @@ export function useNavigationDirection(): NavigationDirection {
     } else {
       // Regular navigation (PUSH or REPLACE)
       setDirection('forward');
-      
+
       if (navigationType === 'PUSH') {
         // Trim any forward history and add new entry
         const stack = historyStack.current.slice(0, currentIndex.current + 1);

@@ -12,15 +12,15 @@ export function Portal({ children, containerId = 'portal-root' }: PortalProps) {
   useEffect(() => {
     // Find or create the container element
     let container = document.getElementById(containerId);
-    
+
     if (!container) {
       container = document.createElement('div');
       container.id = containerId;
       document.body.appendChild(container);
     }
-    
+
     containerRef.current = container;
-    
+
     // Cleanup: only remove if we created it and it's empty
     return () => {
       if (container && container.childNodes.length === 0) {

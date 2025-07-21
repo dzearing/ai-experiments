@@ -11,13 +11,11 @@ import type { Task } from '../types.js';
 const build: Task = {
   command: 'build',
   description: 'Build packages with TypeScript',
-  options: [
-    { flag: '--clean', description: 'Clean output directory before building' }
-  ],
+  options: [{ flag: '--clean', description: 'Clean output directory before building' }],
   execute: async function build(additionalArgs = []) {
     const { packageJson } = getPackageData(process.cwd());
     const packageType = detectPackageType();
-    
+
     // Handle --clean flag
     const cleanIndex = additionalArgs.indexOf('--clean');
     if (cleanIndex !== -1) {
@@ -26,7 +24,7 @@ const build: Task = {
       // Don't pass --clean to downstream tools
       additionalArgs.splice(cleanIndex, 1);
     }
-    
+
     // Special case for scripts package
     if (packageJson.name === '@claude-flow/repo-scripts') {
       return runScript({
@@ -35,19 +33,19 @@ const build: Task = {
         args: ['-b', '--noEmit', ...additionalArgs],
       });
     }
-    
+
     // Run tcm for packages with CSS modules
     if (packageType === 'react-app' || packageType === 'component-library') {
       await runTcm();
     }
-    
+
     // Run TypeScript build
     await runScript({
       packageName: 'typescript',
       name: 'tsc',
       args: ['-b', ...additionalArgs],
     });
-    
+
     // Post-build steps based on package type
     switch (packageType) {
       case 'react-app':
@@ -57,7 +55,7 @@ const build: Task = {
           additionalArgs,
         });
         break;
-        
+
       case 'component-library':
         // Copy CSS files to lib directory
         copyFiles({
@@ -67,7 +65,7 @@ const build: Task = {
         });
         break;
     }
-  }
+  },
 };
 
 export { build };

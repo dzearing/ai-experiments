@@ -31,25 +31,27 @@ export const ToolExecution = memo(function ToolExecution({
   'data-testid': dataTestId,
   sessionId,
   messageId,
-  hideFeedbackLink = false
+  hideFeedbackLink = false,
 }: ToolExecutionProps) {
   const { currentStyles } = useTheme();
   const styles = currentStyles;
-  
+
   // Function to render file paths as clickable VS Code links
   const renderFilePathOrText = (text: string) => {
     // Check if the entire text is a file path
     const trimmedText = text.trim();
-    const singlePathMatch = trimmedText.match(/^((?:\/[\w.-]+)+(?:\/[\w.-]+)*|(?:\.\/)?[\w.-]+(?:\/[\w.-]+)+)(?:\:(\d+))?$/);
-    
+    const singlePathMatch = trimmedText.match(
+      /^((?:\/[\w.-]+)+(?:\/[\w.-]+)*|(?:\.\/)?[\w.-]+(?:\/[\w.-]+)+)(?:\:(\d+))?$/
+    );
+
     if (singlePathMatch) {
       const [, path, lineNumber] = singlePathMatch;
-      const vscodeUrl = lineNumber 
+      const vscodeUrl = lineNumber
         ? `vscode://file${path}:${lineNumber}:1`
         : `vscode://file${path}`;
-      
+
       return (
-        <a 
+        <a
           href={vscodeUrl}
           className="hover:underline text-blue-500 dark:text-blue-400"
           onClick={(e) => {
@@ -62,11 +64,11 @@ export const ToolExecution = memo(function ToolExecution({
         </a>
       );
     }
-    
+
     // For other text, show truncated version
     return text.length > 80 ? text.substring(0, 80) + '...' : text;
   };
-  
+
   // Helper function to create VS Code link
   const createVSCodeLink = (filePath: string, key: string, workingDir?: string) => {
     // Ensure the path is absolute
@@ -80,7 +82,7 @@ export const ToolExecution = memo(function ToolExecution({
         absolutePath = `/${filePath}`;
       }
     }
-    
+
     const vscodeUrl = `vscode://file${absolutePath}`;
     return (
       <a
@@ -102,12 +104,13 @@ export const ToolExecution = memo(function ToolExecution({
   const parseLineForFilePaths = (line: string, lineIndex: number, workingDir?: string) => {
     // Check if line contains a file path (common patterns in git status output)
     // This pattern captures paths like "packages/apisurf/src/analyzers/analyzeNpmPackageVersions.ts"
-    const filePathPattern = /(?:modified:|new file:|deleted:|renamed:|copied:|updated:|typechange:|added:|untracked:)?\s*((?:[\w\-]+\/)*[\w\-]+\.[\w]+)/g;
-    
+    const filePathPattern =
+      /(?:modified:|new file:|deleted:|renamed:|copied:|updated:|typechange:|added:|untracked:)?\s*((?:[\w\-]+\/)*[\w\-]+\.[\w]+)/g;
+
     let lastIndex = 0;
     const parts: React.ReactNode[] = [];
     let match;
-    
+
     while ((match = filePathPattern.exec(line)) !== null) {
       // Add text before the match
       if (match.index > lastIndex) {
@@ -117,31 +120,27 @@ export const ToolExecution = memo(function ToolExecution({
           </span>
         );
       }
-      
+
       // Add the file path as a link
       const filePath = match[1];
       parts.push(createVSCodeLink(filePath, `link-${lineIndex}-${match.index}`, workingDir));
-      
+
       lastIndex = match.index + match[0].length;
     }
-    
+
     // Add remaining text after the last match
     if (lastIndex < line.length) {
-      parts.push(
-        <span key={`text-${lineIndex}-end`}>
-          {line.substring(lastIndex)}
-        </span>
-      );
+      parts.push(<span key={`text-${lineIndex}-end`}>{line.substring(lastIndex)}</span>);
     }
-    
+
     // If no matches, return the entire line
     if (parts.length === 0) {
       return line || '\u00A0';
     }
-    
+
     return parts;
   };
-  
+
   // Function to get working directory from context
   const getWorkingDirectory = () => {
     // Try to get the working directory from the URL params
@@ -154,41 +153,39 @@ export const ToolExecution = memo(function ToolExecution({
     }
     return undefined;
   };
-  
+
   // Function to render bash output with clickable file paths
   const renderBashOutput = (text: string) => {
     const lines = text.split('\n');
     const workingDir = getWorkingDirectory();
-    
+
     return (
       <div className="space-y-0.5">
         {lines.map((line, index) => (
-          <div key={index}>
-            {parseLineForFilePaths(line, index, workingDir)}
-          </div>
+          <div key={index}>{parseLineForFilePaths(line, index, workingDir)}</div>
         ))}
       </div>
     );
   };
-  
+
   // Format tool name to be more user-friendly
   const formatToolName = (toolName: string): string => {
     const nameMap: Record<string, string> = {
-      'TodoWrite': '📝 Update todo list',
-      'Edit': '✏️ Edit file',
-      'MultiEdit': '✏️ Edit multiple sections',
-      'Read': '📖 Read file',
-      'Write': '📄 Write file',
-      'Bash': '💻 Run command',
-      'Grep': '🔍 Search files',
-      'Glob': '📁 Find files',
-      'LS': '📋 List directory',
-      'NotebookRead': '📓 Read notebook',
-      'NotebookEdit': '📓 Edit notebook',
-      'WebFetch': '🌐 Fetch web content',
-      'WebSearch': '🔎 Search web',
-      'Task': '🤖 Launch agent',
-      'exit_plan_mode': '✅ Exit plan mode'
+      TodoWrite: '📝 Update todo list',
+      Edit: '✏️ Edit file',
+      MultiEdit: '✏️ Edit multiple sections',
+      Read: '📖 Read file',
+      Write: '📄 Write file',
+      Bash: '💻 Run command',
+      Grep: '🔍 Search files',
+      Glob: '📁 Find files',
+      LS: '📋 List directory',
+      NotebookRead: '📓 Read notebook',
+      NotebookEdit: '📓 Edit notebook',
+      WebFetch: '🌐 Fetch web content',
+      WebSearch: '🔎 Search web',
+      Task: '🤖 Launch agent',
+      exit_plan_mode: '✅ Exit plan mode',
     };
     return nameMap[toolName] || toolName;
   };
@@ -197,7 +194,7 @@ export const ToolExecution = memo(function ToolExecution({
   const startTimeRef = useRef<number | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const { projectId, repoName } = useParams<{ projectId: string; repoName: string }>();
-  
+
   // Set up feedback for this tool execution (only if sessionId is provided)
   const {
     showDialog,
@@ -205,14 +202,14 @@ export const ToolExecution = memo(function ToolExecution({
     error: feedbackError,
     openFeedback,
     closeFeedback,
-    submitFeedback
+    submitFeedback,
   } = useFeedback({
     sessionId: sessionId || '',
     repoName: repoName || '',
     projectId: projectId || '',
-    messageId
+    messageId,
   });
-  
+
   // Track running duration
   useEffect(() => {
     if (status === 'running') {
@@ -220,14 +217,14 @@ export const ToolExecution = memo(function ToolExecution({
       if (!startTimeRef.current) {
         startTimeRef.current = Date.now();
       }
-      
+
       // Update duration every 100ms
       intervalRef.current = setInterval(() => {
         if (startTimeRef.current) {
           setRunningDuration(Date.now() - startTimeRef.current);
         }
       }, 100); // Update every 100ms for smoother display
-      
+
       return () => {
         if (intervalRef.current) {
           clearInterval(intervalRef.current);
@@ -245,7 +242,7 @@ export const ToolExecution = memo(function ToolExecution({
       }
     }
   }, [status, executionTime]);
-  
+
   // Format duration for display
   const formatDuration = (ms: number) => {
     if (ms < 1000) {
@@ -254,7 +251,7 @@ export const ToolExecution = memo(function ToolExecution({
       return `${(ms / 1000).toFixed(1)}s`;
     }
   };
-  
+
   const getStatusIcon = () => {
     switch (status) {
       case 'pending':
@@ -266,25 +263,48 @@ export const ToolExecution = memo(function ToolExecution({
       case 'running':
         return (
           <svg className="w-4 h-4 animate-spin text-blue-500" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            />
           </svg>
         );
       case 'complete':
         return (
-          <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+          <svg
+            className="w-4 h-4 text-green-500"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth="3"
+          >
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         );
       case 'error':
         return (
-          <svg className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <svg
+            className="w-4 h-4 text-red-500"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         );
     }
   };
-  
+
   const getStatusColor = () => {
     switch (status) {
       case 'pending':
@@ -297,47 +317,61 @@ export const ToolExecution = memo(function ToolExecution({
         return 'text-red-500';
     }
   };
-  
+
   const formatOutput = (text: string) => {
     const lines = text.split('\n');
     const maxLines = 5;
     const hasMore = lines.length > maxLines;
-    
+
     if (!isExpanded && hasMore) {
       return {
         text: lines.slice(0, maxLines).join('\n'),
         hasMore: true,
-        moreCount: lines.length - maxLines
+        moreCount: lines.length - maxLines,
       };
     }
-    
+
     return {
       text,
       hasMore: false,
-      moreCount: 0
+      moreCount: 0,
     };
   };
-  
+
   const outputInfo = output ? formatOutput(output) : null;
-  
+
   return (
-    <div 
-      className="py-2"
-      data-testid={dataTestId}
-    >
+    <div className="py-2" data-testid={dataTestId}>
       <div className="flex items-start gap-3">
-        <div className={`flex items-center gap-1.5 ${getStatusColor()} text-xs mt-0.5`} data-testid="tool-status">
+        <div
+          className={`flex items-center gap-1.5 ${getStatusColor()} text-xs mt-0.5`}
+          data-testid="tool-status"
+        >
           {getStatusIcon()}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline justify-between gap-4">
             <div className="flex items-baseline gap-2 min-w-0 flex-1">
-              <span className={`font-medium ${styles.textColor} flex-shrink-0`} data-testid="tool-name">{formatToolName(name)}</span>
-              {args && name !== 'TodoWrite' && name !== 'Edit' && name !== 'MultiEdit' && name !== 'Grep' && name !== 'Glob' && name !== 'LS' && name !== 'Task' && name !== 'Read' && name !== 'Write' && (
-                <span className={`text-sm ${styles.mutedText} truncate font-mono`} title={args}>
-                  {renderFilePathOrText(args)}
-                </span>
-              )}
+              <span
+                className={`font-medium ${styles.textColor} flex-shrink-0`}
+                data-testid="tool-name"
+              >
+                {formatToolName(name)}
+              </span>
+              {args &&
+                name !== 'TodoWrite' &&
+                name !== 'Edit' &&
+                name !== 'MultiEdit' &&
+                name !== 'Grep' &&
+                name !== 'Glob' &&
+                name !== 'LS' &&
+                name !== 'Task' &&
+                name !== 'Read' &&
+                name !== 'Write' && (
+                  <span className={`text-sm ${styles.mutedText} truncate font-mono`} title={args}>
+                    {renderFilePathOrText(args)}
+                  </span>
+                )}
               {args && name === 'TodoWrite' && (
                 <span className={`text-sm ${styles.mutedText}`}>
                   {(() => {
@@ -357,16 +391,17 @@ export const ToolExecution = memo(function ToolExecution({
                     try {
                       const argsData = typeof args === 'string' ? JSON.parse(args) : args;
                       const filePath = argsData.file_path || '';
-                      
+
                       if (filePath) {
                         const vscodeUrl = `vscode://file${filePath}`;
                         const fileName = filePath.split('/').pop() || filePath;
-                        const displayText = name === 'MultiEdit' && argsData.edits?.length 
-                          ? `${fileName} (${argsData.edits.length} edit${argsData.edits.length === 1 ? '' : 's'})`
-                          : fileName;
-                        
+                        const displayText =
+                          name === 'MultiEdit' && argsData.edits?.length
+                            ? `${fileName} (${argsData.edits.length} edit${argsData.edits.length === 1 ? '' : 's'})`
+                            : fileName;
+
                         return (
-                          <a 
+                          <a
                             href={vscodeUrl}
                             className="hover:underline text-blue-500 dark:text-blue-400"
                             onClick={(e) => {
@@ -379,7 +414,7 @@ export const ToolExecution = memo(function ToolExecution({
                           </a>
                         );
                       }
-                      
+
                       return args.length > 80 ? args.substring(0, 80) + '...' : args;
                     } catch {
                       return args.length > 80 ? args.substring(0, 80) + '...' : args;
@@ -393,13 +428,13 @@ export const ToolExecution = memo(function ToolExecution({
                     try {
                       const argsData = typeof args === 'string' ? JSON.parse(args) : args;
                       const filePath = argsData.file_path || '';
-                      
+
                       if (filePath) {
                         const vscodeUrl = `vscode://file${filePath}`;
                         const fileName = filePath.split('/').pop() || filePath;
-                        
+
                         return (
-                          <a 
+                          <a
                             href={vscodeUrl}
                             className="hover:underline text-blue-500 dark:text-blue-400"
                             onClick={(e) => {
@@ -412,7 +447,7 @@ export const ToolExecution = memo(function ToolExecution({
                           </a>
                         );
                       }
-                      
+
                       return args.length > 80 ? args.substring(0, 80) + '...' : args;
                     } catch {
                       return args.length > 80 ? args.substring(0, 80) + '...' : args;
@@ -420,7 +455,8 @@ export const ToolExecution = memo(function ToolExecution({
                   })()}
                 </span>
               )}
-              {args && name === 'Grep' && (
+              {args &&
+                name === 'Grep' &&
                 (() => {
                   try {
                     const argsData = typeof args === 'string' ? JSON.parse(args) : args;
@@ -436,9 +472,9 @@ export const ToolExecution = memo(function ToolExecution({
                       </span>
                     );
                   }
-                })()
-              )}
-              {args && name === 'Glob' && (
+                })()}
+              {args &&
+                name === 'Glob' &&
                 (() => {
                   try {
                     const argsData = typeof args === 'string' ? JSON.parse(args) : args;
@@ -454,14 +490,15 @@ export const ToolExecution = memo(function ToolExecution({
                       </span>
                     );
                   }
-                })()
-              )}
-              {args && name === 'LS' && (
+                })()}
+              {args &&
+                name === 'LS' &&
                 (() => {
                   try {
                     const argsData = typeof args === 'string' ? JSON.parse(args) : args;
                     const path = argsData.path || '.';
-                    const displayPath = path === '.' ? 'current directory' : path.split('/').pop() || path;
+                    const displayPath =
+                      path === '.' ? 'current directory' : path.split('/').pop() || path;
                     return (
                       <span className={`text-sm ${styles.mutedText} font-mono`}>{displayPath}</span>
                     );
@@ -472,16 +509,14 @@ export const ToolExecution = memo(function ToolExecution({
                       </span>
                     );
                   }
-                })()
-              )}
-              {args && name === 'Task' && (
+                })()}
+              {args &&
+                name === 'Task' &&
                 (() => {
                   try {
                     const argsData = typeof args === 'string' ? JSON.parse(args) : args;
                     const description = argsData.description || 'Running task';
-                    return (
-                      <span className={`text-sm ${styles.mutedText}`}>{description}</span>
-                    );
+                    return <span className={`text-sm ${styles.mutedText}`}>{description}</span>;
                   } catch {
                     return (
                       <span className={`text-sm ${styles.mutedText}`}>
@@ -489,19 +524,17 @@ export const ToolExecution = memo(function ToolExecution({
                       </span>
                     );
                   }
-                })()
-              )}
+                })()}
             </div>
             {(status === 'running' || status === 'complete' || executionTime) && (
               <span className={`text-xs ${styles.mutedText} flex-shrink-0`}>
-                {status === 'running' 
+                {status === 'running'
                   ? formatDuration(runningDuration)
-                  : formatDuration(executionTime || runningDuration || 0)
-                }
+                  : formatDuration(executionTime || runningDuration || 0)}
               </span>
             )}
           </div>
-          
+
           {/* Grep tool details - show pattern */}
           {args && name === 'Grep' && (
             <div className="mt-1">
@@ -520,7 +553,7 @@ export const ToolExecution = memo(function ToolExecution({
               })()}
             </div>
           )}
-          
+
           {/* Glob tool details - show pattern */}
           {args && name === 'Glob' && (
             <div className="mt-1">
@@ -539,7 +572,7 @@ export const ToolExecution = memo(function ToolExecution({
               })()}
             </div>
           )}
-          
+
           {/* Task tool details - show prompt */}
           {args && name === 'Task' && (
             <div className="mt-1">
@@ -549,11 +582,10 @@ export const ToolExecution = memo(function ToolExecution({
                   const prompt = argsData.prompt || '';
                   // Show first line or first 200 chars of prompt
                   const firstLine = prompt.split('\n')[0];
-                  const displayPrompt = firstLine.length > 200 ? firstLine.substring(0, 200) + '...' : firstLine;
+                  const displayPrompt =
+                    firstLine.length > 200 ? firstLine.substring(0, 200) + '...' : firstLine;
                   return (
-                    <div className={`text-xs ${styles.mutedText} pl-9`}>
-                      Task: {displayPrompt}
-                    </div>
+                    <div className={`text-xs ${styles.mutedText} pl-9`}>Task: {displayPrompt}</div>
                   );
                 } catch {
                   return null;
@@ -561,22 +593,24 @@ export const ToolExecution = memo(function ToolExecution({
               })()}
             </div>
           )}
-          
+
           {/* Edit tool details - show before/after */}
           {args && (name === 'Edit' || name === 'MultiEdit') && status === 'complete' && (
             <div className="mt-2">
               {(() => {
                 try {
                   const argsData = typeof args === 'string' ? JSON.parse(args) : args;
-                  
+
                   if (name === 'Edit') {
                     // Single edit
                     return (
                       <div className="space-y-2">
-                        <div className={`text-xs font-medium ${styles.mutedText} mb-1`}>Changes:</div>
-                        <DiffView 
-                          oldText={argsData.old_string || ''} 
-                          newText={argsData.new_string || ''} 
+                        <div className={`text-xs font-medium ${styles.mutedText} mb-1`}>
+                          Changes:
+                        </div>
+                        <DiffView
+                          oldText={argsData.old_string || ''}
+                          newText={argsData.new_string || ''}
                         />
                       </div>
                     );
@@ -584,18 +618,18 @@ export const ToolExecution = memo(function ToolExecution({
                     // MultiEdit - show first edit only with count
                     const edits = argsData.edits || [];
                     if (edits.length === 0) return null;
-                    
+
                     const firstEdit = edits[0];
                     const showCount = edits.length > 1;
-                    
+
                     return (
                       <div className="space-y-2">
                         <div className={`text-xs font-medium ${styles.mutedText} mb-1`}>
                           Changes{showCount ? ` (edit 1 of ${edits.length})` : ''}:
                         </div>
-                        <DiffView 
-                          oldText={firstEdit.old_string || ''} 
-                          newText={firstEdit.new_string || ''} 
+                        <DiffView
+                          oldText={firstEdit.old_string || ''}
+                          newText={firstEdit.new_string || ''}
                         />
                         {showCount && (
                           <div className={`text-xs ${styles.mutedText} italic`}>
@@ -611,21 +645,27 @@ export const ToolExecution = memo(function ToolExecution({
               })()}
             </div>
           )}
-          
+
           {error && (
             <div className="mt-2">
-              <div className={`text-sm font-medium text-red-600 dark:text-red-400 mb-1`}>Error:</div>
-              <pre className={`text-xs ${styles.contentBg} ${styles.borderRadius} p-2 overflow-x-auto text-red-600 dark:text-red-400`}>
+              <div className={`text-sm font-medium text-red-600 dark:text-red-400 mb-1`}>
+                Error:
+              </div>
+              <pre
+                className={`text-xs ${styles.contentBg} ${styles.borderRadius} p-2 overflow-x-auto text-red-600 dark:text-red-400`}
+              >
                 {error}
               </pre>
             </div>
           )}
-          
+
           {outputInfo && (
             <div className="mt-2">
               <div className={`text-sm ${styles.mutedText} mb-1`}>⎿</div>
               {name === 'LS' && output ? (
-                <div className={`text-xs ${styles.contentBg} ${styles.borderRadius} p-2 overflow-x-auto ${styles.textColor}`}>
+                <div
+                  className={`text-xs ${styles.contentBg} ${styles.borderRadius} p-2 overflow-x-auto ${styles.textColor}`}
+                >
                   {(() => {
                     try {
                       // Try to parse as JSON array
@@ -637,7 +677,11 @@ export const ToolExecution = memo(function ToolExecution({
                             <div className="space-y-1 font-mono">
                               {displayItems.map((item, index) => (
                                 <div key={index} className="flex items-center gap-2">
-                                  <span className={item.type === 'directory' ? 'text-blue-500' : styles.textColor}>
+                                  <span
+                                    className={
+                                      item.type === 'directory' ? 'text-blue-500' : styles.textColor
+                                    }
+                                  >
                                     {item.type === 'directory' ? '📁' : '📄'}
                                   </span>
                                   <span>{item.name}</span>
@@ -664,7 +708,9 @@ export const ToolExecution = memo(function ToolExecution({
                         );
                       } else {
                         // Not an array, show as plain text
-                        return <pre className="whitespace-pre-wrap font-mono">{outputInfo.text}</pre>;
+                        return (
+                          <pre className="whitespace-pre-wrap font-mono">{outputInfo.text}</pre>
+                        );
                       }
                     } catch {
                       // Failed to parse as JSON, show as plain text
@@ -673,11 +719,15 @@ export const ToolExecution = memo(function ToolExecution({
                   })()}
                 </div>
               ) : name === 'Bash' ? (
-                <div className={`text-xs ${styles.contentBg} ${styles.borderRadius} p-2 overflow-x-auto ${styles.textColor} font-mono`}>
+                <div
+                  className={`text-xs ${styles.contentBg} ${styles.borderRadius} p-2 overflow-x-auto ${styles.textColor} font-mono`}
+                >
                   {renderBashOutput(outputInfo.text)}
                 </div>
               ) : (
-                <pre className={`text-xs ${styles.contentBg} ${styles.borderRadius} p-2 overflow-x-auto ${styles.textColor} whitespace-pre-wrap font-mono`}>
+                <pre
+                  className={`text-xs ${styles.contentBg} ${styles.borderRadius} p-2 overflow-x-auto ${styles.textColor} whitespace-pre-wrap font-mono`}
+                >
                   {outputInfo.text}
                 </pre>
               )}
@@ -693,14 +743,14 @@ export const ToolExecution = memo(function ToolExecution({
           )}
         </div>
       </div>
-      
+
       {/* Feedback link - only show if we have session context and not hidden */}
       {sessionId && status === 'complete' && !hideFeedbackLink && (
         <div className="mt-2 px-3">
           <FeedbackLink onClick={openFeedback} />
         </div>
       )}
-      
+
       {/* Feedback dialogs */}
       {sessionId && (
         <>
@@ -711,7 +761,6 @@ export const ToolExecution = memo(function ToolExecution({
             isSubmitting={isSubmitting}
             error={feedbackError}
           />
-          
         </>
       )}
     </div>

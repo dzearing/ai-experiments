@@ -14,7 +14,7 @@ console.log('Starting migration to temp directory structure...\n');
 const oldPaths = {
   logs: path.join(__dirname, 'logs'),
   sessions: path.join(__dirname, 'sessions'),
-  feedback: path.join(__dirname, '..', 'feedback')
+  feedback: path.join(__dirname, '..', 'feedback'),
 };
 
 // Migration function
@@ -25,22 +25,22 @@ async function migrateDirectory(oldPath, newPath, description) {
   }
 
   console.log(`Migrating ${description} from ${oldPath} to ${newPath}`);
-  
+
   try {
     // Read all files from old directory
     const files = fs.readdirSync(oldPath);
     let migratedCount = 0;
-    
+
     for (const file of files) {
       const oldFilePath = path.join(oldPath, file);
       const newFilePath = path.join(newPath, file);
-      
+
       // Skip if it's a directory (unless it's feedback subdirectories)
       const stats = fs.statSync(oldFilePath);
       if (stats.isDirectory() && description !== 'feedback') {
         continue;
       }
-      
+
       // Copy file to new location
       if (stats.isFile()) {
         fs.copyFileSync(oldFilePath, newFilePath);
@@ -60,13 +60,12 @@ async function migrateDirectory(oldPath, newPath, description) {
         }
       }
     }
-    
+
     console.log(`✓ Migrated ${migratedCount} files`);
-    
+
     // Ask user if they want to delete old files
     console.log(`\nOld ${description} directory still exists at: ${oldPath}`);
     console.log('You can manually delete it after verifying the migration was successful.');
-    
   } catch (error) {
     console.error(`✗ Error migrating ${description}:`, error.message);
   }
@@ -76,13 +75,13 @@ async function migrateDirectory(oldPath, newPath, description) {
 async function runMigration() {
   // Migrate logs
   await migrateDirectory(oldPaths.logs, PATHS.logsDir, 'logs');
-  
+
   // Migrate sessions
   await migrateDirectory(oldPaths.sessions, PATHS.sessionsDir, 'sessions');
-  
+
   // Migrate feedback
   await migrateDirectory(oldPaths.feedback, PATHS.feedbackDir, 'feedback');
-  
+
   console.log('\nMigration complete!');
   console.log('\nNew directory structure:');
   console.log(`  Logs: ${PATHS.logsDir}`);

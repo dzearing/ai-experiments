@@ -13,7 +13,7 @@ We use explicit task files instead of command-line arguments for better discover
 pnpm build              # Standard development build
 pnpm build:prod         # Optimized production build
 
-# Testing  
+# Testing
 pnpm test               # Run tests once
 pnpm test:coverage      # Generate coverage report
 pnpm test:watch         # Watch mode for TDD
@@ -31,12 +31,14 @@ pnpm clean              # Remove build artifacts
 ### Why Task Files?
 
 Instead of:
+
 ```bash
 # Old approach - hard to discover options
 repo-scripts test --coverage --watch --reporter=verbose
 ```
 
 We use:
+
 ```bash
 # New approach - each variant is discoverable
 pnpm test:coverage
@@ -44,6 +46,7 @@ pnpm test:watch
 ```
 
 Benefits:
+
 - All commands visible in package.json
 - Each task file can have specific TypeScript types
 - No complex argument parsing needed
@@ -65,14 +68,16 @@ packages/my-app/
 ```
 
 **Repo scripts behavior**:
+
 - ✅ `tsconfig.json` exists → TypeScript runs
-- ✅ `.eslintrc.js` exists → ESLint runs  
+- ✅ `.eslintrc.js` exists → ESLint runs
 - ✅ `vitest.config.ts` exists → Tests run
 - ❌ No config → Tool skips this package (no-op)
 
 ### Example Configurations
 
 **TypeScript** (`tsconfig.json`):
+
 ```json
 {
   "extends": "@claude-flow/tsconfig/react.json",
@@ -80,32 +85,32 @@ packages/my-app/
     "outDir": "./dist"
   },
   "include": ["src"],
-  "references": [
-    { "path": "../../packages/design-system" }
-  ]
+  "references": [{ "path": "../../packages/design-system" }]
 }
 ```
 
 **ESLint** (`.eslintrc.js`):
+
 ```javascript
 module.exports = {
   extends: ['@claude-flow/eslint-config/react'],
   rules: {
     // Package-specific overrides
-    'react/prop-types': 'off'
-  }
+    'react/prop-types': 'off',
+  },
 };
 ```
 
 **Vitest** (`vitest.config.ts`):
+
 ```typescript
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
     environment: 'jsdom',
-    setupFiles: './src/test/setup.ts'
-  }
+    setupFiles: './src/test/setup.ts',
+  },
 });
 ```
 
@@ -114,22 +119,26 @@ export default defineConfig({
 ### Adding a New Feature
 
 1. **Create a feature branch**
+
    ```bash
    git checkout -b feature/my-new-feature
    ```
 
 2. **Scaffold if needed**
+
    ```bash
    # Need a new component?
    pnpm scaffold component MyComponent --package design-system
    ```
 
 3. **Develop with hot reload**
+
    ```bash
    pnpm dev
    ```
 
 4. **Write tests alongside code**
+
    ```bash
    pnpm test:watch
    ```
@@ -147,15 +156,16 @@ When your feature spans multiple packages:
 
 1. **Make changes in dependency order**
    - First: shared types
-   - Second: utility packages  
+   - Second: utility packages
    - Third: UI components
    - Last: applications
 
 2. **Use workspace commands**
+
    ```bash
    # Build all affected packages
    pnpm build --filter ...my-app
-   
+
    # Test a specific package
    pnpm test --filter @claude-flow/design-system
    ```
@@ -189,6 +199,7 @@ When your feature spans multiple packages:
 #### Server-Side Debugging
 
 1. **Console Logging**
+
    ```typescript
    console.log('Debug info:', { data });
    ```
@@ -224,6 +235,7 @@ pnpm build --declaration
 ### Unit Tests
 
 Write tests next to the code:
+
 ```
 src/
 ├── Button.tsx
@@ -232,6 +244,7 @@ src/
 ```
 
 Run tests:
+
 ```bash
 pnpm test              # Single run
 pnpm test:watch        # Watch mode
@@ -241,6 +254,7 @@ pnpm test:coverage     # Coverage report
 ### Integration Tests
 
 For API endpoints and services:
+
 ```typescript
 // server/routes/api.test.ts
 import { createTestClient } from '../test/utils';
@@ -255,6 +269,7 @@ test('GET /api/users returns users', async () => {
 ### E2E Tests
 
 Located in `apps/e2e/`:
+
 ```typescript
 // apps/e2e/tests/login.spec.ts
 import { test, expect } from '@playwright/test';
@@ -273,15 +288,17 @@ test('user can log in', async ({ page }) => {
 ### Build Performance
 
 1. **Use Lage caching**
+
    ```bash
    # First build is slow
    pnpm build
-   
+
    # Subsequent builds are fast (cached)
    pnpm build
    ```
 
 2. **Build specific packages**
+
    ```bash
    # Only build what changed
    pnpm build --filter my-package
@@ -301,10 +318,11 @@ test('user can log in', async ({ page }) => {
    - Incremental compilation
 
 2. **Optimize imports**
+
    ```typescript
    // ❌ Slow - imports entire library
    import _ from 'lodash';
-   
+
    // ✅ Fast - imports only what's needed
    import debounce from 'lodash/debounce';
    ```
@@ -314,6 +332,7 @@ test('user can log in', async ({ page }) => {
 ### Pre-commit Checks
 
 Before committing:
+
 ```bash
 # Fix formatting
 pnpm lint:fix
@@ -374,6 +393,7 @@ pnpm test -- -u
 ## Best Practices
 
 ### Do's
+
 - ✅ Write tests for new features
 - ✅ Use TypeScript types (avoid `any`)
 - ✅ Follow existing patterns
@@ -381,6 +401,7 @@ pnpm test -- -u
 - ✅ Update documentation
 
 ### Don'ts
+
 - ❌ Commit directly to main
 - ❌ Skip tests to save time
 - ❌ Use relative imports across packages

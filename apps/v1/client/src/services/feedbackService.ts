@@ -35,7 +35,7 @@ class FeedbackService {
   async captureScreenshot(): Promise<string | null> {
     try {
       console.log('Starting screenshot capture...');
-      
+
       const dataUrl = await domtoimage.toPng(document.body, {
         quality: 0.95,
         bgcolor: '#ffffff',
@@ -48,9 +48,9 @@ class FeedbackService {
             return false;
           }
           return true;
-        }
+        },
       });
-      
+
       console.log('Screenshot captured successfully');
       return dataUrl;
     } catch (error) {
@@ -80,12 +80,12 @@ class FeedbackService {
         body: JSON.stringify({
           imageData,
           sessionId,
-          repoName
-        })
+          repoName,
+        }),
       });
 
       const data: ScreenshotUploadResponse = await response.json();
-      
+
       if (!response.ok || !data.success) {
         console.error('Screenshot upload failed:', data.error);
         return null;
@@ -110,11 +110,11 @@ class FeedbackService {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(feedbackData)
+        body: JSON.stringify(feedbackData),
       });
 
       const data: FeedbackSubmitResponse = await response.json();
-      
+
       if (!response.ok || !data.success) {
         throw new Error(data.error || 'Failed to submit feedback');
       }
@@ -158,7 +158,7 @@ class FeedbackService {
     const completeData: FeedbackData = {
       ...feedbackData,
       screenshotPath: screenshotPath || undefined,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
     return this.submitFeedback(completeData);

@@ -47,12 +47,12 @@ class ClientCache {
 
     // If no cache or expired, fetch new data
     const fetchPromise = fetcher()
-      .then(data => {
+      .then((data) => {
         this.set(key, data);
         this.pendingRequests.delete(key);
         return data;
       })
-      .catch(error => {
+      .catch((error) => {
         this.pendingRequests.delete(key);
         // If we have stale data and fetch failed, return stale data
         if (cached && error instanceof Error && error.message.includes('fetch')) {
@@ -71,7 +71,7 @@ class ClientCache {
     this.cache.set(key, {
       data,
       timestamp: Date.now(),
-      etag
+      etag,
     });
   }
 
@@ -84,8 +84,8 @@ class ClientCache {
   // Clear all cache entries matching a pattern
   invalidatePattern(pattern: string | RegExp): void {
     const regex = typeof pattern === 'string' ? new RegExp(pattern) : pattern;
-    
-    Array.from(this.cache.keys()).forEach(key => {
+
+    Array.from(this.cache.keys()).forEach((key) => {
       if (regex.test(key)) {
         this.invalidate(key);
       }
@@ -117,7 +117,7 @@ class ClientCache {
   getStats(): { size: number; keys: string[] } {
     return {
       size: this.cache.size,
-      keys: Array.from(this.cache.keys())
+      keys: Array.from(this.cache.keys()),
     };
   }
 }
@@ -135,7 +135,11 @@ export function getCached<T>(
 }
 
 export function invalidateCache(keyOrPattern: string | RegExp): void {
-  if (typeof keyOrPattern === 'string' && !keyOrPattern.includes('*') && !keyOrPattern.includes('|')) {
+  if (
+    typeof keyOrPattern === 'string' &&
+    !keyOrPattern.includes('*') &&
+    !keyOrPattern.includes('|')
+  ) {
     clientCache.invalidate(keyOrPattern);
   } else {
     clientCache.invalidatePattern(keyOrPattern);

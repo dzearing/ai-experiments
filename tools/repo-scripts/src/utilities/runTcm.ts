@@ -17,20 +17,20 @@ export async function runTcm({
   additionalArgs = [],
 }: RunTcmOptions = {}): Promise<void> {
   const srcPath = join(process.cwd(), srcDir);
-  
+
   if (!existsSync(srcPath)) {
     console.log(`No ${srcDir} directory found, skipping tcm`);
     return;
   }
-  
+
   const args = [srcPath];
-  
+
   if (watch) {
     args.push('--watch');
   }
-  
+
   args.push(...additionalArgs);
-  
+
   return runScript({
     packageName: 'typed-css-modules',
     name: 'tcm',

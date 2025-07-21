@@ -17,7 +17,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [workspace, setWorkspace] = useState<WorkspaceState>({
     config: null,
     isLoading: false,
-    error: null
+    error: null,
   });
   const [projects, setProjects] = useState<WorkspaceProject[]>([]);
 
@@ -26,14 +26,14 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     const savedConfig = localStorage.getItem('workspaceConfig');
     if (savedConfig) {
       const config = JSON.parse(savedConfig) as WorkspaceConfig;
-      setWorkspace(prev => ({ ...prev, config }));
+      setWorkspace((prev) => ({ ...prev, config }));
       loadWorkspaceData(config.path);
     }
   }, []);
 
   const loadWorkspaceData = async (path: string) => {
-    setWorkspace(prev => ({ ...prev, isLoading: true, error: null }));
-    
+    setWorkspace((prev) => ({ ...prev, isLoading: true, error: null }));
+
     try {
       // First, load basic project info quickly with caching
       const lightData = await getCached(
@@ -44,7 +44,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ workspacePath: path })
+            body: JSON.stringify({ workspacePath: path }),
           });
 
           if (!lightResponse.ok) {
@@ -56,12 +56,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         },
         {
           maxAge: 60 * 1000, // 1 minute
-          staleWhileRevalidate: 5 * 60 * 1000 // 5 minutes
+          staleWhileRevalidate: 5 * 60 * 1000, // 5 minutes
         }
       );
 
       setProjects(lightData.projects || []);
-      setWorkspace(prev => ({ ...prev, isLoading: false }));
+      setWorkspace((prev) => ({ ...prev, isLoading: false }));
 
       // Then load full details in the background
       if (lightData.projects && lightData.projects.length > 0) {
@@ -71,13 +71,16 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
             const details = await getCached(
               `project-details:${project.path}`,
               async () => {
-                const detailResponse = await fetch('http://localhost:3000/api/workspace/project-details', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({ projectPath: project.path })
-                });
+                const detailResponse = await fetch(
+                  'http://localhost:3000/api/workspace/project-details',
+                  {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ projectPath: project.path }),
+                  }
+                );
 
                 if (!detailResponse.ok) {
                   throw new Error('Failed to load project details');
@@ -87,15 +90,17 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
               },
               {
                 maxAge: 5 * 60 * 1000, // 5 minutes
-                staleWhileRevalidate: 30 * 60 * 1000 // 30 minutes
+                staleWhileRevalidate: 30 * 60 * 1000, // 30 minutes
               }
             );
 
             // Update the specific project with full details
             console.log('Updating project with details:', project.name, details);
-            setProjects(prev => prev.map(p => 
-              p.path === project.path ? { ...p, ...details, isLoading: false } : p
-            ));
+            setProjects((prev) =>
+              prev.map((p) =>
+                p.path === project.path ? { ...p, ...details, isLoading: false } : p
+              )
+            );
           } catch (err) {
             console.error(`Failed to load details for project ${project.name}:`, err);
           }
@@ -106,7 +111,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('Failed to load workspace:', error);
-      
+
       // If it's a connection error, try to create the workspace structure
       if (error instanceof TypeError && error.message.includes('fetch')) {
         // Server might not be running, use mock data
@@ -122,8 +127,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
                 path: `${path}/projects/project-mgmt-ux/repos/project-mgmt-ux-1`,
                 isAvailable: false,
                 activeWorkItem: 'implement-workspace',
-                branch: 'feature/workspace-support'
-              }
+                branch: 'feature/workspace-support',
+              },
             ],
             plans: {
               ideas: [],
@@ -133,20 +138,21 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
                   name: 'implement-workspace',
                   path: `${path}/projects/project-mgmt-ux/plans/active/implement-workspace.md`,
                   status: 'active',
-                  content: '# Implement Workspace Support\n\nAdd workspace management to Claude Flow.'
-                }
+                  content:
+                    '# Implement Workspace Support\n\nAdd workspace management to Claude Flow.',
+                },
               ],
-              completed: []
-            }
-          }
+              completed: [],
+            },
+          },
         ];
         setProjects(mockProjects);
-        setWorkspace(prev => ({ ...prev, isLoading: false }));
+        setWorkspace((prev) => ({ ...prev, isLoading: false }));
       } else {
-        setWorkspace(prev => ({ 
-          ...prev, 
-          isLoading: false, 
-          error: error instanceof Error ? error.message : 'Failed to load workspace' 
+        setWorkspace((prev) => ({
+          ...prev,
+          isLoading: false,
+          error: error instanceof Error ? error.message : 'Failed to load workspace',
         }));
       }
     }
@@ -155,9 +161,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const setWorkspacePath = async (path: string) => {
     const config: WorkspaceConfig = {
       path,
-      name: path.split('/').pop() || 'Workspace'
+      name: path.split('/').pop() || 'Workspace',
     };
-    
+
     // First, try to create workspace structure if it doesn't exist
     try {
       const response = await fetch('http://localhost:3000/api/workspace/create', {
@@ -165,7 +171,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ workspacePath: path })
+        body: JSON.stringify({ workspacePath: path }),
       });
 
       if (!response.ok) {
@@ -174,13 +180,13 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.warn('Could not create workspace structure:', error);
     }
-    
+
     // Save to localStorage
     localStorage.setItem('workspaceConfig', JSON.stringify(config));
-    
+
     // Update state
-    setWorkspace(prev => ({ ...prev, config }));
-    
+    setWorkspace((prev) => ({ ...prev, config }));
+
     // Load workspace data
     await loadWorkspaceData(path);
   };
@@ -199,20 +205,22 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     setWorkspace({
       config: null,
       isLoading: false,
-      error: null
+      error: null,
     });
     setProjects([]);
   };
 
   return (
-    <WorkspaceContext.Provider value={{
-      workspace,
-      projects,
-      isLoadingWorkspace: workspace.isLoading,
-      setWorkspacePath,
-      reloadWorkspace,
-      clearWorkspace
-    }}>
+    <WorkspaceContext.Provider
+      value={{
+        workspace,
+        projects,
+        isLoadingWorkspace: workspace.isLoading,
+        setWorkspacePath,
+        reloadWorkspace,
+        clearWorkspace,
+      }}
+    >
       {children}
     </WorkspaceContext.Provider>
   );

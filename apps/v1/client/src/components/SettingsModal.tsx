@@ -13,7 +13,15 @@ interface SettingsModalProps {
 }
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
-  const { currentStyles, isDarkMode, toggleDarkMode, backgroundEffectEnabled, toggleBackgroundEffect, animationsEnabled, toggleAnimations } = useTheme();
+  const {
+    currentStyles,
+    isDarkMode,
+    toggleDarkMode,
+    backgroundEffectEnabled,
+    toggleBackgroundEffect,
+    animationsEnabled,
+    toggleAnimations,
+  } = useTheme();
   const { workspace, setWorkspacePath, reloadWorkspace } = useWorkspace();
   const { showToast } = useToast();
   const styles = currentStyles;
@@ -43,7 +51,6 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     }
   }, [isOpen, workspace.config?.path]);
 
-
   const handleMockModeChange = (newValue: boolean) => {
     setMockMode(newValue);
     localStorage.setItem('mockMode', JSON.stringify(newValue));
@@ -53,29 +60,33 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   return (
     <DropdownTransition isOpen={isOpen} className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
-      <div 
+      <div
         className={`fixed inset-0 transition-opacity ${isOpen ? 'bg-gray-900/50 dark:bg-black/50' : 'bg-transparent'}`}
         onClick={onClose}
       />
-      
+
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className={`
+        <div
+          className={`
           relative w-full max-w-3xl h-[600px] flex flex-col
           bg-white dark:bg-neutral-800 ${styles.cardBorder} border ${styles.borderRadius}
           ${styles.cardShadow} 
-        `}>
+        `}
+        >
           {/* Header */}
-          <div className={`flex items-center justify-between px-6 py-4 border-b ${styles.contentBorder}`}>
+          <div
+            className={`flex items-center justify-between px-6 py-4 border-b ${styles.contentBorder}`}
+          >
             <h2 className={`text-xl font-semibold ${styles.headingColor}`}>Settings</h2>
-            <IconButton
-              onClick={onClose}
-              aria-label="Close settings"
-              variant="ghost"
-              size="lg"
-            >
+            <IconButton onClick={onClose} aria-label="Close settings" variant="ghost" size="lg">
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </IconButton>
           </div>
@@ -85,16 +96,17 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             {[
               { id: 'workspace', label: 'Workspace' },
               { id: 'appearance', label: 'Appearance' },
-              { id: 'features', label: 'Features' }
-            ].map(tab => (
+              { id: 'features', label: 'Features' },
+            ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`
                   px-6 py-3 text-sm font-medium transition-colors
-                  ${activeTab === tab.id 
-                    ? `${styles.primaryButton} ${styles.primaryButtonText} border-b-2 border-current` 
-                    : `${styles.textColor} hover:opacity-70`
+                  ${
+                    activeTab === tab.id
+                      ? `${styles.primaryButton} ${styles.primaryButtonText} border-b-2 border-current`
+                      : `${styles.textColor} hover:opacity-70`
                   }
                 `}
               >
@@ -109,7 +121,9 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               <div className="space-y-6">
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className={`text-lg font-medium ${styles.headingColor}`}>Workspace settings</h3>
+                    <h3 className={`text-lg font-medium ${styles.headingColor}`}>
+                      Workspace settings
+                    </h3>
                     <Button
                       onClick={async () => {
                         setIsRefreshing(true);
@@ -128,23 +142,23 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       disabled={isRefreshing || !workspace.config}
                       className="flex items-center gap-2"
                     >
-                      <svg 
-                        className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} 
-                        fill="none" 
-                        viewBox="0 0 24 24" 
+                      <svg
+                        className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`}
+                        fill="none"
+                        viewBox="0 0 24 24"
                         stroke="currentColor"
                       >
-                        <path 
-                          strokeLinecap="round" 
-                          strokeLinejoin="round" 
-                          strokeWidth={2} 
-                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" 
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                         />
                       </svg>
                       {isRefreshing ? 'Refreshing...' : 'Refresh'}
                     </Button>
                   </div>
-                  
+
                   <div className="space-y-4">
                     <div>
                       <label className={`block text-sm font-medium ${styles.textColor} mb-1`}>
@@ -168,13 +182,25 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                           disabled
                           title="Folder selection not available in browser"
                         >
-                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                          <svg
+                            className="h-5 w-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                            />
                           </svg>
                         </IconButton>
                       </div>
                       <p className={`mt-2 text-sm ${styles.mutedText}`}>
-                        {workspace.config ? `Current: ${workspace.config.path}` : 'No workspace configured'}
+                        {workspace.config
+                          ? `Current: ${workspace.config.path}`
+                          : 'No workspace configured'}
                       </p>
                     </div>
 
@@ -182,11 +208,13 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       <label className={`block text-sm font-medium ${styles.textColor} mb-1`}>
                         Default project template
                       </label>
-                      <select className={`
+                      <select
+                        className={`
                         w-full px-3 py-2 ${styles.buttonRadius}
                         ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
                         focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500
-                      `}>
+                      `}
+                      >
                         <option>Agile sprint</option>
                         <option>Kanban board</option>
                         <option>Waterfall</option>
@@ -198,11 +226,13 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       <label className={`block text-sm font-medium ${styles.textColor} mb-1`}>
                         Auto-save interval
                       </label>
-                      <select className={`
+                      <select
+                        className={`
                         w-full px-3 py-2 ${styles.buttonRadius}
                         ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
                         focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500
-                      `}>
+                      `}
+                      >
                         <option>Every 30 seconds</option>
                         <option>Every minute</option>
                         <option>Every 5 minutes</option>
@@ -217,8 +247,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             {activeTab === 'appearance' && (
               <div className="space-y-6">
                 <div>
-                  <h3 className={`text-lg font-medium ${styles.headingColor} mb-4`}>Appearance settings</h3>
-                  
+                  <h3 className={`text-lg font-medium ${styles.headingColor} mb-4`}>
+                    Appearance settings
+                  </h3>
+
                   <div className="space-y-4">
                     <Toggle
                       checked={isDarkMode}
@@ -254,11 +286,13 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       <label className={`block text-sm font-medium ${styles.textColor} mb-1`}>
                         Font size
                       </label>
-                      <select className={`
+                      <select
+                        className={`
                         w-full px-3 py-2 ${styles.buttonRadius}
                         ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
                         focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500
-                      `}>
+                      `}
+                      >
                         <option>Small</option>
                         <option>Default</option>
                         <option>Large</option>
@@ -270,11 +304,13 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       <label className={`block text-sm font-medium ${styles.textColor} mb-1`}>
                         Sidebar position
                       </label>
-                      <select className={`
+                      <select
+                        className={`
                         w-full px-3 py-2 ${styles.buttonRadius}
                         ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
                         focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500
-                      `}>
+                      `}
+                      >
                         <option>Left (default)</option>
                         <option>Right</option>
                       </select>
@@ -287,8 +323,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             {activeTab === 'features' && (
               <div className="space-y-6">
                 <div>
-                  <h3 className={`text-lg font-medium ${styles.headingColor} mb-4`}>Feature settings</h3>
-                  
+                  <h3 className={`text-lg font-medium ${styles.headingColor} mb-4`}>
+                    Feature settings
+                  </h3>
+
                   <div className="space-y-4">
                     <Toggle
                       checked={mockMode}
@@ -297,17 +335,21 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       className="justify-between"
                     />
 
-                    <div className={`p-3 ${styles.contentBg} ${styles.borderRadius} border ${styles.contentBorder}`}>
+                    <div
+                      className={`p-3 ${styles.contentBg} ${styles.borderRadius} border ${styles.contentBorder}`}
+                    >
                       <p className={`text-sm ${styles.mutedText}`}>
-                        {mockMode 
-                          ? "Mock mode is enabled. AI features will use simulated responses." 
-                          : "Mock mode is disabled. AI features will use Claude API."}
+                        {mockMode
+                          ? 'Mock mode is enabled. AI features will use simulated responses.'
+                          : 'Mock mode is disabled. AI features will use Claude API.'}
                       </p>
                     </div>
 
                     <div className="pt-4">
-                      <h4 className={`text-sm font-medium ${styles.textColor} mb-3`}>AI assistant features</h4>
-                      
+                      <h4 className={`text-sm font-medium ${styles.textColor} mb-3`}>
+                        AI assistant features
+                      </h4>
+
                       <div className="space-y-3">
                         <Toggle
                           checked={true}
@@ -315,14 +357,14 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                           label="Smart task breakdown"
                           className="justify-between"
                         />
-                        
+
                         <Toggle
                           checked={true}
                           onChange={() => {}}
                           label="Persona suggestions"
                           className="justify-between"
                         />
-                        
+
                         <Toggle
                           checked={true}
                           onChange={() => {}}
@@ -333,8 +375,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     </div>
 
                     <div className="pt-4">
-                      <h4 className={`text-sm font-medium ${styles.textColor} mb-3`}>Notifications</h4>
-                      
+                      <h4 className={`text-sm font-medium ${styles.textColor} mb-3`}>
+                        Notifications
+                      </h4>
+
                       <div className="space-y-3">
                         <Toggle
                           checked={true}
@@ -342,14 +386,14 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                           label="Desktop notifications"
                           className="justify-between"
                         />
-                        
+
                         <Toggle
                           checked={false}
                           onChange={() => {}}
                           label="Email notifications"
                           className="justify-between"
                         />
-                        
+
                         <Toggle
                           checked={true}
                           onChange={() => {}}
@@ -365,7 +409,9 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           </div>
 
           {/* Footer */}
-          <div className={`flex items-center justify-end gap-3 px-6 py-4 border-t ${styles.contentBorder}`}>
+          <div
+            className={`flex items-center justify-end gap-3 px-6 py-4 border-t ${styles.contentBorder}`}
+          >
             <Button onClick={onClose} variant="secondary">
               Cancel
             </Button>

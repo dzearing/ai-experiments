@@ -18,7 +18,7 @@ program
   .option('-p, --prod', 'Run in production mode')
   .action(async (task, options) => {
     const taskFile = join(tasksDir, `${task}.mjs`);
-    
+
     if (!existsSync(taskFile)) {
       console.error(`Task "${task}" not found. Expected file: ${taskFile}`);
       process.exit(1);
@@ -31,7 +31,7 @@ program
 
     const proc = spawn('node', [taskFile, ...process.argv.slice(3)], {
       stdio: 'inherit',
-      cwd: process.cwd()
+      cwd: process.cwd(),
     });
 
     proc.on('exit', (code) => {

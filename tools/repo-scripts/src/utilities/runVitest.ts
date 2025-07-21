@@ -13,13 +13,13 @@ export async function runVitest({
   additionalArgs = [],
 }: RunVitestOptions = {}): Promise<void> {
   const args = [];
-  
+
   if (!watch) {
     args.push('run');
   }
-  
+
   args.push(...additionalArgs);
-  
+
   return runScript({
     packageName: 'vitest',
     args,

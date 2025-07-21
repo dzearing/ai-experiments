@@ -5,10 +5,5 @@ export default {
   testPathIgnorePatterns: ['/node_modules/', '\\.node\\.test\\.js$'],
   moduleFileExtensions: ['js', 'json', 'node'],
   verbose: true,
-  collectCoverageFrom: [
-    'lib/**/*.js',
-    '!lib/**/*.test.js',
-    '!lib/**/*.d.ts',
-    '!lib/**/*.map'
-  ],
+  collectCoverageFrom: ['lib/**/*.js', '!lib/**/*.test.js', '!lib/**/*.d.ts', '!lib/**/*.map'],
 };

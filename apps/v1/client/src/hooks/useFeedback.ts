@@ -26,7 +26,7 @@ export function useFeedback({
   sessionId,
   repoName,
   projectId,
-  messageId
+  messageId,
 }: UseFeedbackOptions): UseFeedbackReturn {
   const { messages, mode, isConnected } = useClaudeCode();
   const { showToast } = useToast();
@@ -47,7 +47,7 @@ export function useFeedback({
       console.error('Failed to capture screenshot:', err);
       setCapturedScreenshot(null);
     }
-    
+
     // Now open the dialog
     setShowDialog(true);
     setError(null);
@@ -64,71 +64,80 @@ export function useFeedback({
     setFeedbackId(null);
   }, []);
 
-  const submitFeedback = useCallback(async (
-    expectedBehavior: string,
-    actualBehavior: string
-  ) => {
-    setIsSubmitting(true);
-    setError(null);
+  const submitFeedback = useCallback(
+    async (expectedBehavior: string, actualBehavior: string) => {
+      setIsSubmitting(true);
+      setError(null);
 
-    try {
-      // Prepare feedback data
-      const feedbackData: Omit<FeedbackData, 'screenshotPath' | 'timestamp'> = {
-        expectedBehavior,
-        actualBehavior,
-        sessionId,
-        repoName,
-        projectId,
-        messageId,
-        messages: messages.map(msg => ({
-          id: msg.id,
-          role: msg.role,
-          content: msg.content,
-          timestamp: msg.timestamp,
-          isGreeting: msg.isGreeting,
-          toolExecutions: msg.toolExecutions
-        })),
-        mode,
-        isConnected
-      };
+      try {
+        // Prepare feedback data
+        const feedbackData: Omit<FeedbackData, 'screenshotPath' | 'timestamp'> = {
+          expectedBehavior,
+          actualBehavior,
+          sessionId,
+          repoName,
+          projectId,
+          messageId,
+          messages: messages.map((msg) => ({
+            id: msg.id,
+            role: msg.role,
+            content: msg.content,
+            timestamp: msg.timestamp,
+            isGreeting: msg.isGreeting,
+            toolExecutions: msg.toolExecutions,
+          })),
+          mode,
+          isConnected,
+        };
 
-      // Upload the pre-captured screenshot if available
-      let screenshotPath: string | null = null;
-      if (capturedScreenshot) {
-        try {
-          screenshotPath = await feedbackService.uploadScreenshot(
-            capturedScreenshot,
-            sessionId,
-            repoName
-          );
-        } catch (err) {
-          console.warn('Failed to upload screenshot:', err);
+        // Upload the pre-captured screenshot if available
+        let screenshotPath: string | null = null;
+        if (capturedScreenshot) {
+          try {
+            screenshotPath = await feedbackService.uploadScreenshot(
+              capturedScreenshot,
+              sessionId,
+              repoName
+            );
+          } catch (err) {
+            console.warn('Failed to upload screenshot:', err);
+          }
         }
-      }
 
-      // Submit feedback with screenshot path
-      const completeData: FeedbackData = {
-        ...feedbackData,
-        screenshotPath: screenshotPath || undefined,
-        timestamp: new Date().toISOString()
-      };
-      
-      const id = await feedbackService.submitFeedback(completeData);
-      
-      // Success!
-      setFeedbackId(id);
-      setShowDialog(false);
-      // Show toast notification instead of success dialog
-      showToast('Feedback submitted successfully!', 'success', 5000);
-      
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to submit feedback';
-      setError(errorMessage);
-      console.error('Feedback submission failed:', err);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [sessionId, repoName, projectId, messageId, messages, mode, isConnected, capturedScreenshot, showToast]);
+        // Submit feedback with screenshot path
+        const completeData: FeedbackData = {
+          ...feedbackData,
+          screenshotPath: screenshotPath || undefined,
+          timestamp: new Date().toISOString(),
+        };
+
+        const id = await feedbackService.submitFeedback(completeData);
+
+        // Success!
+        setFeedbackId(id);
+        setShowDialog(false);
+        // Show toast notification instead of success dialog
+        showToast('Feedback submitted successfully!', 'success', 5000);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to submit feedback';
+        setError(errorMessage);
+        console.error('Feedback submission failed:', err);
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [
+      sessionId,
+      repoName,
+      projectId,
+      messageId,
+      messages,
+      mode,
+      isConnected,
+      capturedScreenshot,
+      showToast,
+    ]
+  );
 
   return {
     showDialog,
@@ -139,6 +148,6 @@ export function useFeedback({
     openFeedback,
     closeFeedback,
     submitFeedback,
-    closeSuccess
+    closeSuccess,
   };
 }

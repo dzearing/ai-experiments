@@ -24,49 +24,49 @@ async function saveScreenshot(imageData, sessionId, repoName) {
 
     // Remove data URL prefix if present
     const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
-    
+
     // Convert to buffer
     const buffer = Buffer.from(base64Data, 'base64');
-    
+
     // Check size (10MB limit)
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (buffer.length > maxSize) {
       throw new Error('Image size exceeds 10MB limit');
     }
-    
+
     // Generate filename (without extension, as the function will add it)
     const timestamp = Date.now();
     const fileId = `${repoName}-${sessionId}-${timestamp}`;
     const filePath = PATHS.getFeedbackScreenshotFile(fileId);
-    
+
     // Save file
     await fs.promises.writeFile(filePath, buffer);
-    
+
     // Return relative path
     const filename = `${fileId}.png`;
     const relativePath = path.join('temp', 'feedback', 'screenshots', filename);
-    
+
     logger.logEvent('FEEDBACK_SCREENSHOT_SAVED', `Screenshot saved: ${filename}`, {
       sessionId,
       repoName,
       size: buffer.length,
-      path: relativePath
+      path: relativePath,
     });
-    
+
     return {
       success: true,
-      path: relativePath
+      path: relativePath,
     };
   } catch (error) {
     logger.error('Failed to save screenshot:', error);
     logger.logEvent('FEEDBACK_SCREENSHOT_ERROR', error.message, {
       sessionId,
-      repoName
+      repoName,
     });
-    
+
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 }
@@ -81,44 +81,40 @@ async function extractServerLogs(sessionId, startTime) {
   const logs = {
     claudeMessages: [],
     events: [],
-    errors: []
+    errors: [],
   };
-  
+
   try {
     // Read Claude messages log
     const claudeLogPath = PATHS.logs.claude;
     if (fs.existsSync(claudeLogPath)) {
       const claudeContent = await fs.promises.readFile(claudeLogPath, 'utf8');
       const lines = claudeContent.split('\n');
-      
+
       // Filter lines containing the sessionId
-      logs.claudeMessages = lines
-        .filter(line => line.includes(sessionId))
-        .slice(-50); // Last 50 relevant lines
+      logs.claudeMessages = lines.filter((line) => line.includes(sessionId)).slice(-50); // Last 50 relevant lines
     }
-    
+
     // Read events log
     const eventsLogPath = PATHS.logs.events;
     if (fs.existsSync(eventsLogPath)) {
       const eventsContent = await fs.promises.readFile(eventsLogPath, 'utf8');
       const lines = eventsContent.split('\n');
-      
+
       // Filter lines containing the sessionId
-      logs.events = lines
-        .filter(line => line.includes(sessionId))
-        .slice(-50); // Last 50 relevant lines
+      logs.events = lines.filter((line) => line.includes(sessionId)).slice(-50); // Last 50 relevant lines
     }
-    
+
     // Read errors log
     const errorsLogPath = PATHS.logs.errors;
     if (fs.existsSync(errorsLogPath)) {
       const errorsContent = await fs.promises.readFile(errorsLogPath, 'utf8');
       const lines = errorsContent.split('\n');
-      
+
       // Filter recent errors (within last hour)
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
       logs.errors = lines
-        .filter(line => {
+        .filter((line) => {
           const match = line.match(/\[([\d-T:.Z]+)\]/);
           if (match) {
             const lineTime = new Date(match[1]);
@@ -131,7 +127,7 @@ async function extractServerLogs(sessionId, startTime) {
   } catch (error) {
     logger.error('Failed to extract server logs:', error);
   }
-  
+
   return logs;
 }
 
@@ -144,20 +140,20 @@ async function saveFeedback(feedbackData) {
   try {
     // Generate feedback ID
     const feedbackId = `fb-${new Date().toISOString().split('T')[0]}-${Math.random().toString(36).substr(2, 6)}`;
-    
+
     // Extract server logs
     const serverLogs = await extractServerLogs(
       feedbackData.sessionId,
       new Date(feedbackData.timestamp)
     );
-    
+
     // Compile complete feedback record
     const completeRecord = {
       feedbackId,
       timestamp: feedbackData.timestamp,
       user: {
         expectedBehavior: feedbackData.expectedBehavior,
-        actualBehavior: feedbackData.actualBehavior
+        actualBehavior: feedbackData.actualBehavior,
       },
       context: {
         sessionId: feedbackData.sessionId,
@@ -165,41 +161,40 @@ async function saveFeedback(feedbackData) {
         projectId: feedbackData.projectId,
         messageId: feedbackData.messageId,
         mode: feedbackData.mode,
-        isConnected: feedbackData.isConnected
+        isConnected: feedbackData.isConnected,
       },
       messages: feedbackData.messages,
       screenshotPath: feedbackData.screenshotPath,
-      serverLogs
+      serverLogs,
     };
-    
+
     // Save to file
-    const filePath = PATHS.getFeedbackReportFile(`${feedbackData.timestamp.replace(/[:.]/g, '-')}-${feedbackData.sessionId}`);
-    
-    await fs.promises.writeFile(
-      filePath,
-      JSON.stringify(completeRecord, null, 2)
+    const filePath = PATHS.getFeedbackReportFile(
+      `${feedbackData.timestamp.replace(/[:.]/g, '-')}-${feedbackData.sessionId}`
     );
-    
+
+    await fs.promises.writeFile(filePath, JSON.stringify(completeRecord, null, 2));
+
     logger.logEvent('FEEDBACK_SUBMITTED', `Feedback saved: ${feedbackId}`, {
       sessionId: feedbackData.sessionId,
       repoName: feedbackData.repoName,
       hasScreenshot: !!feedbackData.screenshotPath,
-      messageCount: feedbackData.messages.length
+      messageCount: feedbackData.messages.length,
     });
-    
+
     return {
       success: true,
-      feedbackId
+      feedbackId,
     };
   } catch (error) {
     logger.error('Failed to save feedback:', error);
     logger.logEvent('FEEDBACK_SUBMIT_ERROR', error.message, {
-      sessionId: feedbackData.sessionId
+      sessionId: feedbackData.sessionId,
     });
-    
+
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 }
@@ -207,5 +202,5 @@ async function saveFeedback(feedbackData) {
 module.exports = {
   saveScreenshot,
   saveFeedback,
-  extractServerLogs
+  extractServerLogs,
 };

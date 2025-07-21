@@ -7,6 +7,7 @@ This guide provides practical steps to implement the architectures defined in ou
 ## Current State vs Target State
 
 ### Current Implementation
+
 - **Styling**: Tailwind CSS utilities
 - **State**: React Context API (multiple contexts)
 - **Real-time**: EventSource (SSE) with manual event handling
@@ -14,6 +15,7 @@ This guide provides practical steps to implement the architectures defined in ou
 - **Build**: Vite with single app bundle
 
 ### Target Implementation
+
 - **Styling**: CSS Modules + @layer
 - **State**: Zustand stores with DataBus pattern
 - **Real-time**: uWebSockets.js with automatic store sync
@@ -129,19 +131,19 @@ pnpm init
     border: none;
     font: inherit;
     cursor: pointer;
-    
+
     /* From Tailwind's px-4 py-2 */
     padding: 0.5rem 1rem;
-    
+
     /* From Tailwind's rounded-md */
     border-radius: 0.375rem;
-    
+
     /* From Tailwind's font-medium */
     font-weight: 500;
-    
+
     /* Transition */
     transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
-    
+
     /* Flex layout */
     display: inline-flex;
     align-items: center;
@@ -156,27 +158,27 @@ pnpm init
     background-color: #2563eb;
     color: #ffffff;
   }
-  
+
   .primary:hover {
     background-color: #1d4ed8;
   }
-  
+
   /* Secondary - from bg-gray-200 text-gray-900 */
   .secondary {
     background-color: #e5e7eb;
     color: #111827;
   }
-  
+
   .secondary:hover {
     background-color: #d1d5db;
   }
-  
+
   /* Sizes */
   .sm {
     padding: 0.375rem 0.75rem;
     font-size: 0.875rem;
   }
-  
+
   .lg {
     padding: 0.625rem 1.5rem;
     font-size: 1.125rem;
@@ -188,7 +190,7 @@ pnpm init
     outline: 2px solid #2563eb;
     outline-offset: 2px;
   }
-  
+
   .button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
@@ -213,26 +215,24 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ 
-    variant = 'primary',
-    size = 'md',
-    className,
-    children,
-    disabled,
-    loading,
-    leftIcon,
-    rightIcon,
-    ...props 
-  }, ref) => {
+  (
+    {
+      variant = 'primary',
+      size = 'md',
+      className,
+      children,
+      disabled,
+      loading,
+      leftIcon,
+      rightIcon,
+      ...props
+    },
+    ref
+  ) => {
     return (
       <button
         ref={ref}
-        className={cn(
-          styles.button,
-          styles[variant],
-          size !== 'md' && styles[size],
-          className
-        )}
+        className={cn(styles.button, styles[variant], size !== 'md' && styles[size], className)}
         disabled={disabled || loading}
         {...props}
       >
@@ -263,12 +263,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     --color-blue-700: #1d4ed8;
     --color-blue-800: #1e40af;
     --color-blue-900: #1e3a8a;
-    
+
     /* Semantic tokens */
     --color-primary: var(--color-blue-600);
     --color-primary-hover: var(--color-blue-700);
     --color-primary-foreground: white;
-    
+
     /* Spacing */
     --spacing-1: 0.25rem;
     --spacing-2: 0.5rem;
@@ -277,20 +277,20 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     --spacing-5: 1.25rem;
     --spacing-6: 1.5rem;
     --spacing-8: 2rem;
-    
+
     /* Radius */
     --radius-sm: 0.125rem;
     --radius-md: 0.375rem;
     --radius-lg: 0.5rem;
-    
+
     /* Transitions */
     --duration-150: 150ms;
     --duration-300: 300ms;
     --ease-out: cubic-bezier(0.4, 0, 0.2, 1);
   }
-  
+
   /* Dark mode tokens */
-  [data-theme="dark"] {
+  [data-theme='dark'] {
     --color-primary: var(--color-blue-500);
     --color-primary-hover: var(--color-blue-400);
   }
@@ -318,7 +318,7 @@ interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  
+
   // Actions
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => Promise<void>;
@@ -332,7 +332,7 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isAuthenticated: false,
       isLoading: true,
-      
+
       login: async (credentials) => {
         set({ isLoading: true });
         try {
@@ -341,9 +341,9 @@ export const useAuthStore = create<AuthState>()(
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(credentials),
           });
-          
+
           if (!response.ok) throw new Error('Login failed');
-          
+
           const user = await response.json();
           set({ user, isAuthenticated: true, isLoading: false });
         } catch (error) {
@@ -351,16 +351,16 @@ export const useAuthStore = create<AuthState>()(
           throw error;
         }
       },
-      
+
       logout: async () => {
         await fetch('/api/auth/logout', { method: 'POST' });
         set({ user: null, isAuthenticated: false });
-        
+
         // Clear other stores
         useWorkspaceStore.getState().reset();
         useProjectStore.getState().reset();
       },
-      
+
       checkAuth: async () => {
         try {
           const response = await fetch('/api/auth/check');
@@ -374,7 +374,7 @@ export const useAuthStore = create<AuthState>()(
           set({ user: null, isAuthenticated: false, isLoading: false });
         }
       },
-      
+
       updateUser: (user) => set({ user }),
     }),
     {
@@ -399,20 +399,20 @@ export class DataBus extends EventEmitter {
   private ws: WebSocket | null = null;
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private subscriptions = new Map<string, Set<Function>>();
-  
+
   connect(userId: string) {
     if (this.ws?.readyState === WebSocket.OPEN) return;
-    
+
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const url = `${protocol}//${window.location.host}/ws?userId=${userId}`;
-    
+
     this.ws = new WebSocket(url);
-    
+
     this.ws.onopen = () => {
       console.log('DataBus connected');
       this.emit('connected');
     };
-    
+
     this.ws.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data);
@@ -421,34 +421,34 @@ export class DataBus extends EventEmitter {
         console.error('Failed to parse message:', error);
       }
     };
-    
+
     this.ws.onclose = () => {
       console.log('DataBus disconnected');
       this.emit('disconnected');
       this.scheduleReconnect(userId);
     };
   }
-  
+
   private handleMessage(message: any) {
     const { type, data } = message;
-    
+
     // Emit to specific subscribers
     const subscribers = this.subscriptions.get(type);
     if (subscribers) {
-      subscribers.forEach(callback => callback(data));
+      subscribers.forEach((callback) => callback(data));
     }
-    
+
     // Emit global event
     this.emit('message', message);
   }
-  
+
   subscribe<T>(pattern: string, callback: (data: T) => void): Subscription {
     if (!this.subscriptions.has(pattern)) {
       this.subscriptions.set(pattern, new Set());
     }
-    
+
     this.subscriptions.get(pattern)!.add(callback);
-    
+
     return {
       unsubscribe: () => {
         const subs = this.subscriptions.get(pattern);
@@ -458,24 +458,24 @@ export class DataBus extends EventEmitter {
             this.subscriptions.delete(pattern);
           }
         }
-      }
+      },
     };
   }
-  
+
   private scheduleReconnect(userId: string) {
     if (this.reconnectTimeout) clearTimeout(this.reconnectTimeout);
-    
+
     this.reconnectTimeout = setTimeout(() => {
       this.connect(userId);
     }, 3000);
   }
-  
+
   disconnect() {
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
     }
-    
+
     if (this.ws) {
       this.ws.close();
       this.ws = null;
@@ -610,36 +610,42 @@ pnpm storybook
 ## Migration Checklist
 
 ### Week 1: Foundation
+
 - [ ] Create monorepo structure
 - [ ] Setup pnpm workspaces
 - [ ] Configure Lage
 - [ ] Create base packages
 
 ### Week 2: Design System
+
 - [ ] Setup design system package
 - [ ] Create token system
 - [ ] Migrate Button component
 - [ ] Setup Storybook
 
 ### Week 3: Core Components
+
 - [ ] Migrate form components
 - [ ] Create missing components
 - [ ] Document component APIs
 - [ ] Add visual tests
 
 ### Week 4: State Management
+
 - [ ] Setup Zustand stores
 - [ ] Create DataBus service
 - [ ] Migrate auth state
 - [ ] Connect stores to DataBus
 
 ### Week 5: Integration
+
 - [ ] Update app to use new components
 - [ ] Migrate page layouts
 - [ ] Test real-time updates
 - [ ] Performance optimization
 
 ### Week 6: Cleanup
+
 - [ ] Remove old components
 - [ ] Remove Tailwind
 - [ ] Update documentation
@@ -648,20 +654,24 @@ pnpm storybook
 ## Common Issues & Solutions
 
 ### Issue: CSS Module styles not applying
+
 **Solution**: Ensure Vite is configured for CSS Modules:
+
 ```js
 // vite.config.js
 export default {
   css: {
     modules: {
-      localsConvention: 'camelCase'
-    }
-  }
-}
+      localsConvention: 'camelCase',
+    },
+  },
+};
 ```
 
 ### Issue: TypeScript errors with CSS Modules
+
 **Solution**: Create type declarations:
+
 ```ts
 // src/types/css-modules.d.ts
 declare module '*.module.css' {
@@ -671,14 +681,18 @@ declare module '*.module.css' {
 ```
 
 ### Issue: Storybook not loading CSS
+
 **Solution**: Import tokens in preview:
+
 ```js
 // .storybook/preview.js
 import '@claude-flow/design-system/styles';
 ```
 
 ### Issue: Dark mode not working
+
 **Solution**: Ensure data-theme attribute is set:
+
 ```tsx
 useEffect(() => {
   document.documentElement.setAttribute('data-theme', theme);

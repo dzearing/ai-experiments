@@ -12,33 +12,35 @@ export function NewProject() {
   const { createProject } = useApp();
   const { workspace } = useWorkspace();
   const styles = currentStyles;
-  
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     purpose: '',
     status: 'active' as Project['status'],
-    repositories: [{
-      url: '',
-      type: 'github' as 'github' | 'ado',
-      visibility: 'private' as 'public' | 'private',
-      isPrimary: true
-    }]
+    repositories: [
+      {
+        url: '',
+        type: 'github' as 'github' | 'ado',
+        visibility: 'private' as 'public' | 'private',
+        isPrimary: true,
+      },
+    ],
   });
-  
+
   const repoTypeOptions = [
     { value: 'github', label: 'GitHub' },
-    { value: 'ado', label: 'Azure DevOps' }
+    { value: 'ado', label: 'Azure DevOps' },
   ];
-  
+
   const visibilityOptions = [
     { value: 'public', label: 'Public' },
-    { value: 'private', label: 'Private' }
+    { value: 'private', label: 'Private' },
   ];
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Create project folder in workspace if workspace is configured
     let projectPath = '';
     if (workspace.config) {
@@ -50,8 +52,8 @@ export function NewProject() {
           },
           body: JSON.stringify({
             workspacePath: workspace.config.path,
-            projectName: formData.name
-          })
+            projectName: formData.name,
+          }),
         });
 
         if (response.ok) {
@@ -65,7 +67,7 @@ export function NewProject() {
         console.error('Error creating project folder:', error);
       }
     }
-    
+
     createProject({
       name: formData.name,
       description: formData.description,
@@ -73,42 +75,45 @@ export function NewProject() {
       status: formData.status,
       repositories: formData.repositories,
       primaryRepoUrl: formData.repositories[0]?.url || '',
-      path: projectPath // Add the path to the project
+      path: projectPath, // Add the path to the project
     });
-    
+
     navigate('/projects');
   };
-  
+
   const updateRepository = (index: number, field: string, value: any) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      repositories: prev.repositories.map((repo, i) => 
+      repositories: prev.repositories.map((repo, i) =>
         i === index ? { ...repo, [field]: value } : repo
-      )
+      ),
     }));
   };
-  
+
   const addRepository = () => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      repositories: [...prev.repositories, {
-        url: '',
-        type: 'github' as 'github' | 'ado',
-        visibility: 'private' as 'public' | 'private',
-        isPrimary: false
-      }]
+      repositories: [
+        ...prev.repositories,
+        {
+          url: '',
+          type: 'github' as 'github' | 'ado',
+          visibility: 'private' as 'public' | 'private',
+          isPrimary: false,
+        },
+      ],
     }));
   };
-  
+
   const removeRepository = (index: number) => {
     if (formData.repositories.length > 1) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        repositories: prev.repositories.filter((_, i) => i !== index)
+        repositories: prev.repositories.filter((_, i) => i !== index),
       }));
     }
   };
-  
+
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-8">
@@ -117,12 +122,14 @@ export function NewProject() {
           Define a new project with its purpose and repository information.
         </p>
       </div>
-      
+
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Basic Information */}
-        <div className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-6`}>
+        <div
+          className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-6`}
+        >
           <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4`}>Basic Information</h2>
-          
+
           <div className="space-y-4">
             <div>
               <label className={`block text-sm font-medium ${styles.textColor} mb-1`}>
@@ -137,7 +144,7 @@ export function NewProject() {
                 placeholder="My Awesome Project"
               />
             </div>
-            
+
             <div>
               <label className={`block text-sm font-medium ${styles.textColor} mb-1`}>
                 Description *
@@ -151,7 +158,7 @@ export function NewProject() {
                 placeholder="Brief description of the project..."
               />
             </div>
-            
+
             <div>
               <label className={`block text-sm font-medium ${styles.textColor} mb-1`}>
                 Purpose
@@ -164,17 +171,23 @@ export function NewProject() {
                 placeholder="What is the main purpose or goal of this project?"
               />
             </div>
-            
           </div>
         </div>
-        
+
         {/* Repository Information */}
-        <div className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-6`}>
-          <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4`}>Repository Information</h2>
-          
+        <div
+          className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-6`}
+        >
+          <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4`}>
+            Repository Information
+          </h2>
+
           <div className="space-y-4">
             {formData.repositories.map((repo, index) => (
-              <div key={index} className={`p-4 ${styles.contentBg} ${styles.contentBorder} border ${styles.borderRadius}`}>
+              <div
+                key={index}
+                className={`p-4 ${styles.contentBg} ${styles.contentBorder} border ${styles.borderRadius}`}
+              >
                 <div className="space-y-4">
                   <div>
                     <label className={`block text-sm font-medium ${styles.textColor} mb-1`}>
@@ -189,7 +202,7 @@ export function NewProject() {
                       placeholder="https://github.com/org/repo"
                     />
                   </div>
-                  
+
                   <div className="grid grid-cols-3 gap-4">
                     <div>
                       <label className={`block text-sm font-medium ${styles.textColor} mb-1`}>
@@ -200,14 +213,14 @@ export function NewProject() {
                         onChange={(e) => updateRepository(index, 'type', e.target.value)}
                         className={`w-full px-3 py-2 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.textColor} focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
                       >
-                        {repoTypeOptions.map(option => (
+                        {repoTypeOptions.map((option) => (
                           <option key={option.value} value={option.value}>
                             {option.label}
                           </option>
                         ))}
                       </select>
                     </div>
-                    
+
                     <div>
                       <label className={`block text-sm font-medium ${styles.textColor} mb-1`}>
                         Visibility
@@ -217,14 +230,14 @@ export function NewProject() {
                         onChange={(e) => updateRepository(index, 'visibility', e.target.value)}
                         className={`w-full px-3 py-2 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.textColor} focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
                       >
-                        {visibilityOptions.map(option => (
+                        {visibilityOptions.map((option) => (
                           <option key={option.value} value={option.value}>
                             {option.label}
                           </option>
                         ))}
                       </select>
                     </div>
-                    
+
                     <div className="flex items-end">
                       <label className={`flex items-center ${styles.textColor}`}>
                         <input
@@ -233,12 +246,12 @@ export function NewProject() {
                           onChange={(e) => {
                             // If setting as primary, unset others
                             if (e.target.checked) {
-                              setFormData(prev => ({
+                              setFormData((prev) => ({
                                 ...prev,
                                 repositories: prev.repositories.map((r, i) => ({
                                   ...r,
-                                  isPrimary: i === index
-                                }))
+                                  isPrimary: i === index,
+                                })),
                               }));
                             } else {
                               updateRepository(index, 'isPrimary', false);
@@ -248,7 +261,7 @@ export function NewProject() {
                         />
                         Primary repo
                       </label>
-                      
+
                       {formData.repositories.length > 1 && (
                         <Button
                           type="button"
@@ -265,31 +278,19 @@ export function NewProject() {
                 </div>
               </div>
             ))}
-            
-            <Button
-              type="button"
-              onClick={addRepository}
-              variant="secondary"
-              size="sm"
-            >
+
+            <Button type="button" onClick={addRepository} variant="secondary" size="sm">
               Add repository
             </Button>
           </div>
         </div>
-        
+
         {/* Form Actions */}
         <div className="flex justify-end gap-4">
-          <Button
-            type="button"
-            onClick={() => navigate('/projects')}
-            variant="secondary"
-          >
+          <Button type="button" onClick={() => navigate('/projects')} variant="secondary">
             Cancel
           </Button>
-          <Button
-            type="submit"
-            variant="primary"
-          >
+          <Button type="submit" variant="primary">
             Create project
           </Button>
         </div>

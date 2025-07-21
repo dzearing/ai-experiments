@@ -44,7 +44,7 @@
 When z-index IS needed, use this consistent scale:
 
 - `z-10` - Sticky elements (headers, footers)
-- `z-20` - Floating UI (tooltips, popovers) 
+- `z-20` - Floating UI (tooltips, popovers)
 - `z-30` - Overlays (dropdown menus)
 - `z-40` - Modal backdrops
 - `z-50` - Modal content

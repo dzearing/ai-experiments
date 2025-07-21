@@ -1,22 +1,26 @@
 module.exports = {
   pipeline: {
     build: {
-      dependsOn: ["^build"],
-      outputs: ["lib/**", "dist/**", "build/**"],
+      dependsOn: ['^build'],
+      outputs: ['lib/**', 'dist/**', 'build/**'],
     },
     test: {
-      dependsOn: ["build"],
+      dependsOn: ['build'],
     },
     lint: {
       dependsOn: [],
     },
+    'format:check': {
+      dependsOn: [],
+      cache: true,
+    },
     typecheck: {
-      dependsOn: ["^build"],
+      dependsOn: ['^build'],
     },
     dev: {
       cache: false,
       persistent: true,
     },
   },
-  npmClient: "pnpm",
+  npmClient: 'pnpm',
 };

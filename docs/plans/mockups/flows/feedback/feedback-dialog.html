@@ -1,314 +1,317 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Feedback Dialog - Clean View</title>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            height: 100vh;
-            overflow: hidden;
-            transition: background-color 0.3s ease;
-        }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        height: 100vh;
+        overflow: hidden;
+        transition: background-color 0.3s ease;
+      }
 
-        /* Theme Variables */
-        body.light {
-            --bg-color: #f3f4f6;
-            --surface-color: #ffffff;
-            --text-primary: #111827;
-            --text-secondary: #6b7280;
-            --border-color: #e5e7eb;
-            --accent-color: #3b82f6;
-            --accent-hover: #2563eb;
-            --overlay-bg: rgba(0, 0, 0, 0.5);
-        }
+      /* Theme Variables */
+      body.light {
+        --bg-color: #f3f4f6;
+        --surface-color: #ffffff;
+        --text-primary: #111827;
+        --text-secondary: #6b7280;
+        --border-color: #e5e7eb;
+        --accent-color: #3b82f6;
+        --accent-hover: #2563eb;
+        --overlay-bg: rgba(0, 0, 0, 0.5);
+      }
 
-        body.dark {
-            --bg-color: #111827;
-            --surface-color: #1f2937;
-            --text-primary: #f9fafb;
-            --text-secondary: #9ca3af;
-            --border-color: #374151;
-            --accent-color: #60a5fa;
-            --accent-hover: #3b82f6;
-            --overlay-bg: rgba(0, 0, 0, 0.7);
-        }
+      body.dark {
+        --bg-color: #111827;
+        --surface-color: #1f2937;
+        --text-primary: #f9fafb;
+        --text-secondary: #9ca3af;
+        --border-color: #374151;
+        --accent-color: #60a5fa;
+        --accent-hover: #3b82f6;
+        --overlay-bg: rgba(0, 0, 0, 0.7);
+      }
 
-        /* Background Application State */
-        .app-background {
-            position: absolute;
-            width: 100vw;
-            height: 100vh;
-            background: var(--bg-color);
-            filter: blur(2px);
-            opacity: 0.6;
-        }
+      /* Background Application State */
+      .app-background {
+        position: absolute;
+        width: 100vw;
+        height: 100vh;
+        background: var(--bg-color);
+        filter: blur(2px);
+        opacity: 0.6;
+      }
 
-        /* Overlay */
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: var(--overlay-bg);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
+      /* Overlay */
+      .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: var(--overlay-bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
 
-        /* Feedback Dialog */
-        .feedback-dialog {
-            width: 500px;
-            background: var(--surface-color);
-            border-radius: 8px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            display: flex;
-            flex-direction: column;
-            animation: slideIn 0.2s ease-out;
-        }
+      /* Feedback Dialog */
+      .feedback-dialog {
+        width: 500px;
+        background: var(--surface-color);
+        border-radius: 8px;
+        box-shadow:
+          0 20px 25px -5px rgba(0, 0, 0, 0.1),
+          0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        display: flex;
+        flex-direction: column;
+        animation: slideIn 0.2s ease-out;
+      }
 
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: scale(0.95);
         }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
 
-        .dialog-header {
-            padding: 20px 24px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
+      .dialog-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
 
-        .dialog-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
+      .dialog-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
 
-        .close-btn {
-            width: 32px;
-            height: 32px;
-            border: none;
-            background: none;
-            font-size: 20px;
-            color: var(--text-secondary);
-            cursor: pointer;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
+      .close-btn {
+        width: 32px;
+        height: 32px;
+        border: none;
+        background: none;
+        font-size: 20px;
+        color: var(--text-secondary);
+        cursor: pointer;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+      }
 
-        .close-btn:hover {
-            background: var(--bg-color);
-            color: var(--text-primary);
-        }
+      .close-btn:hover {
+        background: var(--bg-color);
+        color: var(--text-primary);
+      }
 
-        /* Dialog Content */
-        .dialog-content {
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
+      /* Dialog Content */
+      .dialog-content {
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
 
-        /* Screenshot Section */
-        .screenshot-section {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
+      /* Screenshot Section */
+      .screenshot-section {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
 
-        .screenshot-container {
-            position: relative;
-            width: 100%;
-            height: 200px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            background: var(--bg-secondary);
-            overflow: hidden;
-        }
+      .screenshot-container {
+        position: relative;
+        width: 100%;
+        height: 200px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background: var(--bg-secondary);
+        overflow: hidden;
+      }
 
-        .screenshot-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-tertiary);
-            font-size: var(--font-size-sm);
-        }
+      .screenshot-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-tertiary);
+        font-size: var(--font-size-sm);
+      }
 
-        .retake-button {
-            position: absolute;
-            bottom: 8px;
-            right: 8px;
-            padding: 6px 12px;
-            background: var(--bg-primary);
-            border: 1px solid var(--border-default);
-            border-radius: 6px;
-            font-size: var(--font-size-sm);
-            color: var(--text-primary);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s;
-        }
+      .retake-button {
+        position: absolute;
+        bottom: 8px;
+        right: 8px;
+        padding: 6px 12px;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-default);
+        border-radius: 6px;
+        font-size: var(--font-size-sm);
+        color: var(--text-primary);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+      }
 
-        .retake-button:hover {
-            background: var(--bg-secondary);
-            border-color: var(--border-hover);
-        }
+      .retake-button:hover {
+        background: var(--bg-secondary);
+        border-color: var(--border-hover);
+      }
 
-        /* Feedback Input */
-        .feedback-input-section {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
+      /* Feedback Input */
+      .feedback-input-section {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
 
-        .input-label {
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--text-primary);
-            margin-bottom: 4px;
-        }
+      .input-label {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-primary);
+        margin-bottom: 4px;
+      }
 
-        .feedback-textarea {
-            width: 100%;
-            min-height: 120px;
-            padding: 12px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            background: var(--surface-color);
-            color: var(--text-primary);
-            font-family: inherit;
-            font-size: 14px;
-            line-height: 1.5;
-            resize: vertical;
-            transition: border-color 0.2s;
-        }
+      .feedback-textarea {
+        width: 100%;
+        min-height: 120px;
+        padding: 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background: var(--surface-color);
+        color: var(--text-primary);
+        font-family: inherit;
+        font-size: 14px;
+        line-height: 1.5;
+        resize: vertical;
+        transition: border-color 0.2s;
+      }
 
-        .feedback-textarea:focus {
-            outline: none;
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
+      .feedback-textarea:focus {
+        outline: none;
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
 
-        .feedback-textarea::placeholder {
-            color: var(--text-secondary);
-        }
+      .feedback-textarea::placeholder {
+        color: var(--text-secondary);
+      }
 
-        /* Dialog Footer */
-        .dialog-footer {
-            padding: 16px 24px;
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-            background: var(--bg-color);
-            border-radius: 0 0 8px 8px;
-        }
+      /* Dialog Footer */
+      .dialog-footer {
+        padding: 16px 24px;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        background: var(--bg-color);
+        border-radius: 0 0 8px 8px;
+      }
 
-        .btn {
-            height: 36px;
-            padding: 0 16px;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            white-space: nowrap;
-        }
+      .btn {
+        height: 36px;
+        padding: 0 16px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
+      }
 
-        .btn-secondary {
-            background: var(--surface-color);
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
-        }
+      .btn-secondary {
+        background: var(--surface-color);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+      }
 
-        .btn-secondary:hover {
-            background: var(--bg-color);
-        }
+      .btn-secondary:hover {
+        background: var(--bg-color);
+      }
 
-        .btn-primary {
-            background: var(--accent-color);
-            color: white;
-        }
+      .btn-primary {
+        background: var(--accent-color);
+        color: white;
+      }
 
-        .btn-primary:hover {
-            background: var(--accent-hover);
-        }
+      .btn-primary:hover {
+        background: var(--accent-hover);
+      }
 
-        .btn-primary:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+      .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
 
-        .btn-primary:disabled:hover {
-            background: var(--accent-color);
-        }
+      .btn-primary:disabled:hover {
+        background: var(--accent-color);
+      }
 
-        /* Theme Toggle */
-        .theme-toggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            background: var(--surface-color);
-            border: 1px solid var(--border-color);
-            font-size: 18px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-            z-index: 1001;
-        }
+      /* Theme Toggle */
+      .theme-toggle {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        background: var(--surface-color);
+        border: 1px solid var(--border-color);
+        font-size: 18px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        z-index: 1001;
+      }
 
-        .theme-toggle:hover {
-            background: var(--bg-color);
-        }
+      .theme-toggle:hover {
+        background: var(--bg-color);
+      }
 
-        /* Character count */
-        .char-count {
-            font-size: 12px;
-            color: var(--text-secondary);
-            text-align: right;
-            margin-top: 4px;
-        }
+      /* Character count */
+      .char-count {
+        font-size: 12px;
+        color: var(--text-secondary);
+        text-align: right;
+        margin-top: 4px;
+      }
     </style>
-</head>
-<body class="light">
+  </head>
+  <body class="light">
     <!-- Theme Toggle -->
     <button class="theme-toggle" onclick="toggleTheme()">
-        <span id="theme-icon">🌙</span>
+      <span id="theme-icon">🌙</span>
     </button>
 
     <!-- Background Application State -->
@@ -316,170 +319,184 @@
 
     <!-- Feedback Dialog Overlay -->
     <div class="overlay" id="feedbackOverlay">
-        <!-- Main Feedback Dialog -->
-        <div class="feedback-dialog" id="feedbackDialog">
-            <div class="dialog-header">
-                <h2 class="dialog-title">Send Feedback</h2>
-                <button class="close-btn" onclick="closeFeedbackDialog()" aria-label="Close dialog">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M15 5L5 15M5 5l10 10"/>
-                    </svg>
-                </button>
-            </div>
-            
-            <div class="dialog-content">
-                <!-- Screenshot Section -->
-                <div class="screenshot-section">
-                    <label class="input-label">Screenshot</label>
-                    <div class="screenshot-container">
-                        <div class="screenshot-image" id="screenshotPreview">
-                            Screenshot preview
-                        </div>
-                        <button class="retake-button" onclick="retakeScreenshot()">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="3" y="3" width="10" height="10" rx="1"/>
-                                <circle cx="8" cy="8" r="2"/>
-                            </svg>
-                            Retake
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Feedback Input -->
-                <div class="feedback-input-section">
-                    <label class="input-label" for="feedbackText">Describe your feedback</label>
-                    <textarea 
-                        class="feedback-textarea" 
-                        id="feedbackText"
-                        placeholder="Please describe the issue you're experiencing or the feature you'd like to see..."
-                        oninput="validateForm()"
-                        maxlength="1000"
-                        autofocus
-                    ></textarea>
-                    <div class="char-count" id="charCount">0 / 1000</div>
-                </div>
-            </div>
-
-            <div class="dialog-footer">
-                <button class="btn btn-secondary" onclick="closeFeedbackDialog()">Cancel</button>
-                <button class="btn btn-primary" id="submitBtn" onclick="submitFeedback()" disabled>Submit Feedback</button>
-            </div>
+      <!-- Main Feedback Dialog -->
+      <div class="feedback-dialog" id="feedbackDialog">
+        <div class="dialog-header">
+          <h2 class="dialog-title">Send Feedback</h2>
+          <button class="close-btn" onclick="closeFeedbackDialog()" aria-label="Close dialog">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M15 5L5 15M5 5l10 10" />
+            </svg>
+          </button>
         </div>
+
+        <div class="dialog-content">
+          <!-- Screenshot Section -->
+          <div class="screenshot-section">
+            <label class="input-label">Screenshot</label>
+            <div class="screenshot-container">
+              <div class="screenshot-image" id="screenshotPreview">Screenshot preview</div>
+              <button class="retake-button" onclick="retakeScreenshot()">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <rect x="3" y="3" width="10" height="10" rx="1" />
+                  <circle cx="8" cy="8" r="2" />
+                </svg>
+                Retake
+              </button>
+            </div>
+          </div>
+
+          <!-- Feedback Input -->
+          <div class="feedback-input-section">
+            <label class="input-label" for="feedbackText">Describe your feedback</label>
+            <textarea
+              class="feedback-textarea"
+              id="feedbackText"
+              placeholder="Please describe the issue you're experiencing or the feature you'd like to see..."
+              oninput="validateForm()"
+              maxlength="1000"
+              autofocus
+            ></textarea>
+            <div class="char-count" id="charCount">0 / 1000</div>
+          </div>
+        </div>
+
+        <div class="dialog-footer">
+          <button class="btn btn-secondary" onclick="closeFeedbackDialog()">Cancel</button>
+          <button class="btn btn-primary" id="submitBtn" onclick="submitFeedback()" disabled>
+            Submit Feedback
+          </button>
+        </div>
+      </div>
     </div>
 
     <script>
-        // Global state
-        let isDarkMode = false;
+      // Global state
+      let isDarkMode = false;
 
-        // Theme toggle functionality
-        function toggleTheme() {
-            isDarkMode = !isDarkMode;
-            document.body.className = isDarkMode ? 'dark' : 'light';
-            document.getElementById('theme-icon').textContent = isDarkMode ? '☀️' : '🌙';
+      // Theme toggle functionality
+      function toggleTheme() {
+        isDarkMode = !isDarkMode;
+        document.body.className = isDarkMode ? 'dark' : 'light';
+        document.getElementById('theme-icon').textContent = isDarkMode ? '☀️' : '🌙';
+      }
+
+      // Form validation and character count
+      function validateForm() {
+        const feedbackText = document.getElementById('feedbackText').value;
+        const submitBtn = document.getElementById('submitBtn');
+        const charCount = document.getElementById('charCount');
+
+        // Update character count
+        charCount.textContent = `${feedbackText.length} / 1000`;
+
+        // Enable submit if we have meaningful feedback (more than just whitespace)
+        const hasContent = feedbackText.trim().length > 0;
+        submitBtn.disabled = !hasContent;
+      }
+
+      // Retake screenshot
+      function retakeScreenshot() {
+        // In a real implementation, this would capture a new screenshot
+        console.log('Retaking screenshot...');
+
+        // Simulate screenshot capture
+        const preview = document.getElementById('screenshotPreview');
+        preview.style.opacity = '0.5';
+        preview.textContent = 'Capturing...';
+
+        setTimeout(() => {
+          preview.style.opacity = '1';
+          preview.textContent = 'New screenshot captured';
+        }, 500);
+      }
+
+      // Submit feedback
+      function submitFeedback() {
+        const feedbackText = document.getElementById('feedbackText').value.trim();
+
+        if (!feedbackText) return;
+
+        // Collect feedback data
+        const feedbackData = {
+          text: feedbackText,
+          screenshot: 'screenshot_data_here', // Would include actual screenshot data
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+          theme: isDarkMode ? 'dark' : 'light',
+        };
+
+        console.log('Feedback submitted:', feedbackData);
+
+        // In a real implementation, send to backend
+        // fetch('/api/feedback', {
+        //     method: 'POST',
+        //     headers: { 'Content-Type': 'application/json' },
+        //     body: JSON.stringify(feedbackData)
+        // });
+
+        // Close dialog after submission
+        closeFeedbackDialog();
+
+        // Show success notification (in real app)
+        alert('Thank you for your feedback!');
+      }
+
+      // Close feedback dialog
+      function closeFeedbackDialog() {
+        document.getElementById('feedbackOverlay').style.display = 'none';
+        // Clear the form
+        document.getElementById('feedbackText').value = '';
+        validateForm();
+      }
+
+      // Show feedback dialog (for testing)
+      function showFeedbackDialog() {
+        document.getElementById('feedbackOverlay').style.display = 'flex';
+        document.getElementById('feedbackText').focus();
+      }
+
+      // Close dialog when clicking outside
+      document.getElementById('feedbackOverlay').addEventListener('click', function (e) {
+        if (e.target === this) {
+          closeFeedbackDialog();
+        }
+      });
+
+      // Keyboard shortcuts
+      document.addEventListener('keydown', function (e) {
+        // Close on Escape
+        if (e.key === 'Escape') {
+          closeFeedbackDialog();
         }
 
-        // Form validation and character count
-        function validateForm() {
-            const feedbackText = document.getElementById('feedbackText').value;
-            const submitBtn = document.getElementById('submitBtn');
-            const charCount = document.getElementById('charCount');
-            
-            // Update character count
-            charCount.textContent = `${feedbackText.length} / 1000`;
-            
-            // Enable submit if we have meaningful feedback (more than just whitespace)
-            const hasContent = feedbackText.trim().length > 0;
-            submitBtn.disabled = !hasContent;
+        // Submit on Ctrl/Cmd + Enter
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+          const submitBtn = document.getElementById('submitBtn');
+          if (!submitBtn.disabled) {
+            submitFeedback();
+          }
         }
+      });
 
-        // Retake screenshot
-        function retakeScreenshot() {
-            // In a real implementation, this would capture a new screenshot
-            console.log('Retaking screenshot...');
-            
-            // Simulate screenshot capture
-            const preview = document.getElementById('screenshotPreview');
-            preview.style.opacity = '0.5';
-            preview.textContent = 'Capturing...';
-            
-            setTimeout(() => {
-                preview.style.opacity = '1';
-                preview.textContent = 'New screenshot captured';
-            }, 500);
-        }
-
-        // Submit feedback
-        function submitFeedback() {
-            const feedbackText = document.getElementById('feedbackText').value.trim();
-            
-            if (!feedbackText) return;
-
-            // Collect feedback data
-            const feedbackData = {
-                text: feedbackText,
-                screenshot: 'screenshot_data_here', // Would include actual screenshot data
-                timestamp: new Date().toISOString(),
-                userAgent: navigator.userAgent,
-                theme: isDarkMode ? 'dark' : 'light'
-            };
-
-            console.log('Feedback submitted:', feedbackData);
-
-            // In a real implementation, send to backend
-            // fetch('/api/feedback', {
-            //     method: 'POST',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify(feedbackData)
-            // });
-
-            // Close dialog after submission
-            closeFeedbackDialog();
-            
-            // Show success notification (in real app)
-            alert('Thank you for your feedback!');
-        }
-
-        // Close feedback dialog
-        function closeFeedbackDialog() {
-            document.getElementById('feedbackOverlay').style.display = 'none';
-            // Clear the form
-            document.getElementById('feedbackText').value = '';
-            validateForm();
-        }
-
-        // Show feedback dialog (for testing)
-        function showFeedbackDialog() {
-            document.getElementById('feedbackOverlay').style.display = 'flex';
-            document.getElementById('feedbackText').focus();
-        }
-
-        // Close dialog when clicking outside
-        document.getElementById('feedbackOverlay').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeFeedbackDialog();
-            }
-        });
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', function(e) {
-            // Close on Escape
-            if (e.key === 'Escape') {
-                closeFeedbackDialog();
-            }
-            
-            // Submit on Ctrl/Cmd + Enter
-            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                const submitBtn = document.getElementById('submitBtn');
-                if (!submitBtn.disabled) {
-                    submitFeedback();
-                }
-            }
-        });
-
-        // Auto-show dialog on load for demo
-        window.addEventListener('load', function() {
-            setTimeout(showFeedbackDialog, 100);
-        });
+      // Auto-show dialog on load for demo
+      window.addEventListener('load', function () {
+        setTimeout(showFeedbackDialog, 100);
+      });
     </script>
-</body>
+  </body>
 </html>

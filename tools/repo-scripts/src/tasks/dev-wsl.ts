@@ -9,12 +9,12 @@ const devWsl: Task = {
   description: 'Start development server with host binding for WSL',
   execute: async (additionalArgs = []) => {
     const packageType = detectPackageType();
-    
+
     switch (packageType) {
       case 'react-app':
         // Run tcm first
         await runTcm();
-        
+
         // Then run vite and tcm watch concurrently
         return runConcurrently({
           commands: [
@@ -22,7 +22,7 @@ const devWsl: Task = {
             { name: 'tcm', command: 'tcm src --watch' },
           ],
         });
-        
+
       case 'component-library':
         // For libraries, run tsc and tcm in watch mode
         return runConcurrently({
@@ -31,7 +31,7 @@ const devWsl: Task = {
             { name: 'tcm', command: 'tcm src --watch' },
           ],
         });
-        
+
       case 'node-app':
         // For node apps, just run tsc in watch mode
         return runScript({
@@ -39,7 +39,7 @@ const devWsl: Task = {
           name: 'tsc',
           args: ['-b', '--watch', ...additionalArgs],
         });
-        
+
       default:
         console.error('Unable to determine package type for dev mode');
         process.exit(1);

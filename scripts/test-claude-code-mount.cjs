@@ -6,7 +6,7 @@ const path = require('path');
 
 async function analyzeServerLogs() {
   console.log('=== Claude Code Mount/Unmount Issue Analysis ===\n');
-  
+
   const instructions = `
 To manually test and capture the mount/unmount issue:
 
@@ -43,33 +43,36 @@ preventing the greeting message from being delivered.
 `;
 
   console.log(instructions);
-  
+
   // Try to analyze the most recent server logs
   try {
     const logsPath = path.join(__dirname, '..', 'server', 'logs');
     const claudeLog = await fs.readFile(path.join(logsPath, 'claude-messages.log'), 'utf-8');
     const eventsLog = await fs.readFile(path.join(logsPath, 'events.log'), 'utf-8');
-    
+
     // Get last 20 lines of each
     const claudeLines = claudeLog.split('\n').filter(Boolean).slice(-20);
     const eventsLines = eventsLog.split('\n').filter(Boolean).slice(-20);
-    
+
     console.log('\n=== Recent Claude Messages Log ===');
-    claudeLines.forEach(line => console.log(line));
-    
+    claudeLines.forEach((line) => console.log(line));
+
     console.log('\n=== Recent Events Log ===');
-    eventsLines.forEach(line => console.log(line));
-    
+    eventsLines.forEach((line) => console.log(line));
+
     // Look for the problematic pattern
-    const hasNoActiveConnections = claudeLines.some(line => line.includes('No active connections to send greeting to'));
-    const hasDisconnects = eventsLines.some(line => line.includes('CLAUDE_SSE_DISCONNECTED'));
-    
+    const hasNoActiveConnections = claudeLines.some((line) =>
+      line.includes('No active connections to send greeting to')
+    );
+    const hasDisconnects = eventsLines.some((line) => line.includes('CLAUDE_SSE_DISCONNECTED'));
+
     if (hasNoActiveConnections && hasDisconnects) {
-      console.log('\n⚠️  ISSUE CONFIRMED: The logs show SSE disconnections followed by "No active connections" when trying to send greeting!');
+      console.log(
+        '\n⚠️  ISSUE CONFIRMED: The logs show SSE disconnections followed by "No active connections" when trying to send greeting!'
+      );
     }
-    
   } catch (error) {
-    console.log('\nCouldn\'t read server logs:', error.message);
+    console.log("\nCouldn't read server logs:", error.message);
   }
 }
 

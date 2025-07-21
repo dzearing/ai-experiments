@@ -15,13 +15,13 @@ interface NewWorkItemContextType {
   // Step management
   step: 'input' | 'review';
   setStep: (step: 'input' | 'review') => void;
-  
+
   // Form state
   ideaText: string;
   setIdeaText: (text: string) => void;
   savedIdea: string;
   setSavedIdea: (text: string) => void;
-  
+
   // Tasks
   tasks: Task[];
   setTasks: (tasks: Task[]) => void;
@@ -29,17 +29,17 @@ interface NewWorkItemContextType {
   setSelectedTaskId: (id: string | null) => void;
   editedContent: string;
   setEditedContent: (content: string) => void;
-  
+
   // General markdown for work item description
   generalMarkdown: string;
   setGeneralMarkdown: (markdown: string) => void;
-  
+
   // Processing state
   isProcessing: boolean;
   setIsProcessing: (processing: boolean) => void;
   error: string | null;
   setError: (error: string | null) => void;
-  
+
   // Utility functions
   resetToInput: () => void;
 }
@@ -50,10 +50,10 @@ const STORAGE_KEY = 'newWorkItemState';
 
 export function NewWorkItemProvider({ children }: { children: ReactNode }) {
   const [searchParams, setSearchParams] = useSearchParams();
-  
+
   // Get initial step from URL
   const stepFromUrl = searchParams.get('step') as 'input' | 'review' | null;
-  
+
   // Load persisted state
   const loadPersistedState = () => {
     const saved = sessionStorage.getItem(STORAGE_KEY);
@@ -66,25 +66,27 @@ export function NewWorkItemProvider({ children }: { children: ReactNode }) {
     }
     return null;
   };
-  
+
   const persistedState = loadPersistedState();
-  
+
   const [step, setStepState] = useState<'input' | 'review'>(stepFromUrl || 'input');
-  
+
   // Form state - initialize from persisted state if available
   const [ideaText, setIdeaText] = useState(persistedState?.ideaText || '');
   const [savedIdea, setSavedIdea] = useState(persistedState?.savedIdea || '');
-  
+
   // Tasks state
   const [tasks, setTasks] = useState<Task[]>(persistedState?.tasks || []);
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(persistedState?.selectedTaskId || null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(
+    persistedState?.selectedTaskId || null
+  );
   const [editedContent, setEditedContent] = useState(persistedState?.editedContent || '');
   const [generalMarkdown, setGeneralMarkdown] = useState(persistedState?.generalMarkdown || '');
-  
+
   // Processing state
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Persist state on changes
   useEffect(() => {
     const stateToSave = {
@@ -97,7 +99,7 @@ export function NewWorkItemProvider({ children }: { children: ReactNode }) {
     };
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
   }, [ideaText, savedIdea, tasks, selectedTaskId, editedContent, generalMarkdown]);
-  
+
   // Update URL when step changes
   const setStep = (newStep: 'input' | 'review') => {
     setStepState(newStep);
@@ -114,12 +116,12 @@ export function NewWorkItemProvider({ children }: { children: ReactNode }) {
     }
     setSearchParams(searchParams);
   };
-  
+
   // Handle browser back/forward
   useEffect(() => {
     const urlStep = searchParams.get('step') as 'input' | 'review' | null;
     const currentStep = urlStep || 'input';
-    
+
     if (currentStep !== step) {
       setStepState(currentStep);
       // If going back to input, restore the saved idea
@@ -128,14 +130,14 @@ export function NewWorkItemProvider({ children }: { children: ReactNode }) {
       }
     }
   }, [searchParams, step, savedIdea]);
-  
+
   // Reset to input step with saved idea
   const resetToInput = () => {
     setStep('input');
     setIdeaText(savedIdea);
     setError(null);
   };
-  
+
   const value: NewWorkItemContextType = {
     step,
     setStep,
@@ -157,12 +159,8 @@ export function NewWorkItemProvider({ children }: { children: ReactNode }) {
     setError,
     resetToInput,
   };
-  
-  return (
-    <NewWorkItemContext.Provider value={value}>
-      {children}
-    </NewWorkItemContext.Provider>
-  );
+
+  return <NewWorkItemContext.Provider value={value}>{children}</NewWorkItemContext.Provider>;
 }
 
 export function useNewWorkItem() {

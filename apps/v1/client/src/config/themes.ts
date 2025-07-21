@@ -9,33 +9,33 @@ export interface Theme {
     sidebarHover: string;
     sidebarActive: string;
     sidebarBorder: string;
-    
+
     // Main content
     mainBg: string;
     contentBg: string;
     contentBorder: string;
-    
+
     // Typography
     headingColor: string;
     textColor: string;
     mutedText: string;
-    
+
     // Interactive elements
     primaryButton: string;
     primaryButtonHover: string;
     primaryButtonText: string;
-    
+
     // Cards and surfaces
     cardBg: string;
     cardBorder: string;
     cardShadow: string;
-    
+
     // Status colors
     successBg: string;
     successText: string;
     warningBg: string;
     warningText: string;
-    
+
     // Additional styling
     borderRadius: string;
     fontFamily: string;
@@ -70,8 +70,8 @@ export const themes: Theme[] = [
       warningBg: 'bg-amber-50',
       warningText: 'text-amber-700',
       borderRadius: 'rounded-none',
-      fontFamily: 'font-sans'
-    }
+      fontFamily: 'font-sans',
+    },
   },
   {
     id: 'soft-gradient',
@@ -100,8 +100,8 @@ export const themes: Theme[] = [
       warningBg: 'bg-amber-100',
       warningText: 'text-amber-800',
       borderRadius: 'rounded-2xl',
-      fontFamily: 'font-sans'
-    }
+      fontFamily: 'font-sans',
+    },
   },
   {
     id: 'dark-mode-pro',
@@ -130,8 +130,8 @@ export const themes: Theme[] = [
       warningBg: 'bg-amber-950',
       warningText: 'text-amber-400',
       borderRadius: 'rounded-lg',
-      fontFamily: 'font-mono'
-    }
+      fontFamily: 'font-mono',
+    },
   },
   {
     id: 'nature-inspired',
@@ -160,8 +160,8 @@ export const themes: Theme[] = [
       warningBg: 'bg-orange-50',
       warningText: 'text-orange-700',
       borderRadius: 'rounded-xl',
-      fontFamily: 'font-serif'
-    }
+      fontFamily: 'font-serif',
+    },
   },
   {
     id: 'glassmorphism',
@@ -190,8 +190,8 @@ export const themes: Theme[] = [
       warningBg: 'bg-amber-500/20',
       warningText: 'text-white',
       borderRadius: 'rounded-2xl',
-      fontFamily: 'font-sans'
-    }
+      fontFamily: 'font-sans',
+    },
   },
   {
     id: 'retro-terminal',
@@ -220,8 +220,8 @@ export const themes: Theme[] = [
       warningBg: 'bg-yellow-950',
       warningText: 'text-yellow-400',
       borderRadius: 'rounded-none',
-      fontFamily: 'font-mono'
-    }
+      fontFamily: 'font-mono',
+    },
   },
   {
     id: 'pastel-dream',
@@ -250,8 +250,8 @@ export const themes: Theme[] = [
       warningBg: 'bg-yellow-100',
       warningText: 'text-yellow-700',
       borderRadius: 'rounded-3xl',
-      fontFamily: 'font-sans'
-    }
+      fontFamily: 'font-sans',
+    },
   },
   {
     id: 'corporate-blue',
@@ -280,8 +280,8 @@ export const themes: Theme[] = [
       warningBg: 'bg-yellow-50',
       warningText: 'text-yellow-800',
       borderRadius: 'rounded-lg',
-      fontFamily: 'font-sans'
-    }
+      fontFamily: 'font-sans',
+    },
   },
   {
     id: 'cyberpunk-neon',
@@ -310,8 +310,8 @@ export const themes: Theme[] = [
       warningBg: 'bg-yellow-950',
       warningText: 'text-yellow-400',
       borderRadius: 'rounded-sm',
-      fontFamily: 'font-mono'
-    }
+      fontFamily: 'font-mono',
+    },
   },
   {
     id: 'zen-minimal',
@@ -340,7 +340,7 @@ export const themes: Theme[] = [
       warningBg: 'bg-amber-50',
       warningText: 'text-amber-600',
       borderRadius: 'rounded-md',
-      fontFamily: 'font-sans'
-    }
-  }
+      fontFamily: 'font-sans',
+    },
+  },
 ];

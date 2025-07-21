@@ -9,7 +9,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [authState, setAuthState] = useState<AuthState>({
     isAuthenticated: false,
     accounts: [],
-    activeAccountId: null
+    activeAccountId: null,
   });
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -18,16 +18,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const loadAndVerifyAuth = async () => {
       const savedState = localStorage.getItem(STORAGE_KEY);
       console.log('Loading auth state from localStorage:', savedState);
-      
+
       if (savedState) {
         try {
           const parsed = JSON.parse(savedState);
           console.log('Parsed auth state:', parsed);
-          
+
           // For development, skip verification and trust the stored state
           // In production, you'd want to verify tokens are still valid
           const skipVerification = true; // Toggle this for development
-          
+
           if (skipVerification) {
             // Just restore the saved state
             setAuthState(parsed);
@@ -39,9 +39,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const response = await fetch('http://localhost:3000/api/auth/github/verify', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ accountId: account.id })
+                  body: JSON.stringify({ accountId: account.id }),
                 });
-                
+
                 if (response.ok) {
                   validAccounts.push(account);
                 } else {
@@ -51,14 +51,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 console.log(`Account ${account.username} verification error:`, error);
               }
             }
-            
+
             // Update state with only valid accounts
             setAuthState({
               isAuthenticated: validAccounts.length > 0,
               accounts: validAccounts,
-              activeAccountId: validAccounts.find(a => a.id === parsed.activeAccountId) 
-                ? parsed.activeAccountId 
-                : (validAccounts[0]?.id || null)
+              activeAccountId: validAccounts.find((a) => a.id === parsed.activeAccountId)
+                ? parsed.activeAccountId
+                : validAccounts[0]?.id || null,
             });
           }
         } catch (error) {
@@ -67,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setIsInitialized(true);
     };
-    
+
     loadAndVerifyAuth();
   }, []);
 
@@ -79,16 +79,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [authState, isInitialized]);
 
-  const activeAccount = authState.accounts.find(
-    account => account.id === authState.activeAccountId
-  ) || null;
+  const activeAccount =
+    authState.accounts.find((account) => account.id === authState.activeAccountId) || null;
 
   const signInWithGitHub = async () => {
     try {
       // Initiate GitHub OAuth flow
       const response = await fetch('http://localhost:3000/api/auth/github/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
 
       if (!response.ok) {
@@ -108,7 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         'github-oauth',
         `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes,resizable=yes`
       );
-      
+
       if (!popup) {
         throw new Error('Please allow popups for GitHub authentication');
       }
@@ -116,7 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Listen for OAuth callback
       const handleMessage = async (event: MessageEvent) => {
         console.log('Message received:', event.origin, event.data);
-        
+
         if (event.origin !== window.location.origin) {
           console.log('Origin mismatch:', event.origin, 'vs', window.location.origin);
           return;
@@ -130,17 +129,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const tokenResponse = await fetch('http://localhost:3000/api/auth/github/token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code, state })
+            body: JSON.stringify({ code, state }),
           });
 
           if (tokenResponse.ok) {
             const accountData = await tokenResponse.json();
-            
+
             // Add or update account in state
-            setAuthState(prev => {
-              const existingIndex = prev.accounts.findIndex(
-                acc => acc.id === accountData.id
-              );
+            setAuthState((prev) => {
+              const existingIndex = prev.accounts.findIndex((acc) => acc.id === accountData.id);
 
               let newAccounts;
               if (existingIndex >= 0) {
@@ -155,7 +152,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               return {
                 isAuthenticated: true,
                 accounts: newAccounts,
-                activeAccountId: accountData.id
+                activeAccountId: accountData.id,
               };
             });
           }
@@ -177,7 +174,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           window.removeEventListener('message', handleMessage);
         }
       }, 1000);
-
     } catch (error) {
       console.error('GitHub sign in error:', error);
       throw error;
@@ -188,20 +184,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       // Call backend to revoke token
       await fetch(`http://localhost:3000/api/auth/github/logout/${accountId}`, {
-        method: 'POST'
+        method: 'POST',
       });
 
       // Remove account from state
-      setAuthState(prev => {
-        const newAccounts = prev.accounts.filter(acc => acc.id !== accountId);
+      setAuthState((prev) => {
+        const newAccounts = prev.accounts.filter((acc) => acc.id !== accountId);
         const wasActive = prev.activeAccountId === accountId;
-        
+
         return {
           isAuthenticated: newAccounts.length > 0,
           accounts: newAccounts,
-          activeAccountId: wasActive && newAccounts.length > 0 
-            ? newAccounts[0].id 
-            : prev.activeAccountId
+          activeAccountId:
+            wasActive && newAccounts.length > 0 ? newAccounts[0].id : prev.activeAccountId,
         };
       });
     } catch (error) {
@@ -211,9 +206,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const switchAccount = (accountId: string) => {
-    setAuthState(prev => ({
+    setAuthState((prev) => ({
       ...prev,
-      activeAccountId: accountId
+      activeAccountId: accountId,
     }));
   };
 
@@ -223,9 +218,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await fetch('http://localhost:3000/api/auth/github/accounts');
       if (response.ok) {
         const accounts = await response.json();
-        setAuthState(prev => ({
+        setAuthState((prev) => ({
           ...prev,
-          accounts
+          accounts,
         }));
       }
     } catch (error) {
@@ -239,7 +234,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signInWithGitHub,
     signOut,
     switchAccount,
-    refreshAccounts
+    refreshAccounts,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

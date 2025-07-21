@@ -2,12 +2,15 @@ import { useTheme } from '../contexts/ThemeContextV2';
 
 export function BackgroundPattern() {
   const { isDarkMode } = useTheme();
-  
+
   return (
-    <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none" style={{ isolation: 'isolate' }}>
+    <div
+      className="fixed inset-0 z-0 overflow-hidden pointer-events-none"
+      style={{ isolation: 'isolate' }}
+    >
       {/* Gradient base */}
       <div className="absolute inset-0 bg-gradient-to-br from-neutral-500 via-neutral-300 to-neutral-400 dark:from-black dark:via-neutral-900 dark:to-neutral-950" />
-      
+
       {/* Animated gradient orbs - more, bigger, more transparent */}
       <div className="absolute inset-0">
         <div
@@ -61,17 +64,17 @@ export function BackgroundPattern() {
           } rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl opacity-30 animate-blob-reverse animation-delay-9000`}
         />
       </div>
-      
+
       {/* Subtle grid pattern */}
-      <div 
+      <div
         className="absolute inset-0 opacity-[0.03] dark:opacity-[0.02]"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
         }}
       />
-      
+
       {/* Noise texture */}
-      <div 
+      <div
         className="absolute inset-0 opacity-[0.015] dark:opacity-[0.02]"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,

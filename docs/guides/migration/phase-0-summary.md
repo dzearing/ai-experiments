@@ -21,7 +21,7 @@ Successfully reorganized the repository without breaking v1 functionality.
 4. **Updated paths and configs**
    - Updated server `paths.js` to find root temp directory
    - Updated `pnpm-workspace.yaml` to include v1 apps
-   - Cleaned up root `package.json` 
+   - Cleaned up root `package.json`
 
 5. **Updated repo-scripts**
    - V1 dev command now starts both client and server
@@ -77,9 +77,10 @@ pnpm test:e2e
 ### Monorepo Commands Verified ✅
 
 All core monorepo commands have been tested and are working:
+
 - `pnpm install` - Installs dependencies across all packages
 - `pnpm build` - Builds all packages using Lage
-- `pnpm test` - Runs tests for all packages  
+- `pnpm test` - Runs tests for all packages
 - `pnpm lint` - Lints all packages
 - `pnpm dev` - Interactive dev menu for v1/v2 selection
 

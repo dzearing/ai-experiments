@@ -5,6 +5,7 @@
 The current Claude Flow server is a monolithic Node.js application written in JavaScript with significant architectural limitations. This document outlines a comprehensive plan to migrate the server to TypeScript with a modern, modular architecture that enables parallel development, improves maintainability, and provides robust real-time capabilities.
 
 ### Current State
+
 - **9,000+ lines** of JavaScript code
 - **5,355 lines** in a single `index.js` file
 - **54+ API routes** mixed with business logic
@@ -14,6 +15,7 @@ The current Claude Flow server is a monolithic Node.js application written in Ja
 - **Tight coupling** between components
 
 ### Target State
+
 - **100% TypeScript** with strict mode
 - **Modular architecture** with clear boundaries
 - **SQLite database** with TypeORM for persistence
@@ -24,6 +26,7 @@ The current Claude Flow server is a monolithic Node.js application written in Ja
 - **Zero client bundle overhead** with native WebSocket
 
 ### Migration Strategy
+
 - **6-phase migration** over 8-10 weeks
 - **5+ parallel workstreams** for independent modules
 - **Zero-downtime** migration with backwards compatibility
@@ -32,6 +35,7 @@ The current Claude Flow server is a monolithic Node.js application written in Ja
 ## Current Architecture Analysis
 
 ### File Structure
+
 ```
 server/
 ├── index.js              # 5,355 lines - Monolithic entry point
@@ -46,15 +50,16 @@ server/
 ```
 
 ### API Routes (54+ endpoints)
-1. **Health & SSE**: 
+
+1. **Health & SSE**:
    - `/api/health` - Server health check
    - `/api/sse/subscribe` - Server-sent events for real-time updates
 
-2. **Authentication**: 
+2. **Authentication**:
    - `/api/auth/github/*` (login, token, logout, accounts, verify)
    - GitHub OAuth flow and token management
 
-3. **Claude AI Integration**: 
+3. **Claude AI Integration**:
    - `/api/claude/debug` - Debug Claude responses
    - `/api/claude/process-idea` - Process work item ideas with AI
    - `/api/claude/refine-tasks` - Refine task descriptions
@@ -67,7 +72,7 @@ server/
    - `/api/claude/analyze-document` - Analyze uploaded documents
    - `/api/claude/analyze-work-item` - Analyze specific work item
 
-4. **Workspace Management**: 
+4. **Workspace Management**:
    - `/api/workspace/exists` - Check if workspace exists
    - `/api/workspace/read` - Read workspace data
    - `/api/workspace/reload` - Reload workspace from disk
@@ -88,54 +93,60 @@ server/
    - `/api/personas` - GET (list), POST (create)
    - `/api/personas/:id` - GET (read), PUT (update), DELETE (delete)
 
-8. **Repository Management**: 
+8. **Repository Management**:
    - `/api/repos/:projectPath/:repoName/status` - Git status
    - `/api/repos/:projectPath/:repoName/clone` - Clone repository
    - `/api/repos/:projectPath/:repoName/rebase` - Rebase branch
    - `/api/repos/:projectPath/:repoName/reset` - Reset changes
    - `/api/repos/:projectPath/:repoName` - DELETE repository
 
-9. **Feedback System**: 
+9. **Feedback System**:
    - `/api/feedback/screenshot` - Upload screenshot
    - `/api/feedback/submit` - Submit feedback report
 
-10. **GitHub Proxy**: 
+10. **GitHub Proxy**:
     - `/api/github/proxy` - Proxy requests to GitHub API with authentication
     - Used for fetching repos, issues, PRs without exposing tokens to client
 
 ### Key Pain Points
 
 #### 1. Monolithic Structure
+
 - All routes defined in single file
 - Business logic intertwined with HTTP handling
 - Difficult to test individual components
 - High risk of regression with changes
 
 #### 2. Type Safety
+
 - No TypeScript means runtime errors
 - API contracts not enforced
 - Difficult refactoring
 - Poor IDE support
 
 #### 3. Data Persistence
+
 - JSON files cause race conditions
 - No ACID transactions
 - No query capabilities
 - Performance issues with large datasets
 
 #### 4. Real-time Communication
+
 - SSE is unidirectional
 - No reconnection logic
 - Limited event types
 - Manual subscription management
 
 #### 5. Testing
+
 - Minimal test coverage
 - No unit tests for routes
 - Integration tests only
 - No performance benchmarks
 
 #### 6. Scalability
+
 - In-memory state limits horizontal scaling
 - File I/O bottlenecks
 - No caching strategy
@@ -144,6 +155,7 @@ server/
 ## Target Architecture Design
 
 ### Core Principles
+
 1. **Type Safety First**: Full TypeScript with strict mode
 2. **Modular Design**: Clear separation of concerns
 3. **Testability**: Dependency injection and mocking
@@ -155,16 +167,19 @@ server/
 ### Technology Stack
 
 #### Core Framework
+
 - **TypeScript 5.3+**: With strict mode and ES2022 target
 - **Node.js 20+**: LTS version for stability
 - **Express.js 5+**: Web framework (already in use)
 
 #### Data Layer
+
 - **SQLite**: Embedded database for simplicity
 - **TypeORM**: Type-safe ORM with migrations
 - **Redis** (optional): For caching and pub/sub
 
 #### Real-time Communication
+
 - **uWebSockets.js**: Ultra-fast C++ WebSocket server
   - 10-15x faster than Socket.io
   - 10x lower memory usage
@@ -176,12 +191,14 @@ server/
 - **Custom Reconnection**: Minimal client-side logic (~2KB)
 
 #### Testing & Quality
+
 - **Jest**: Unit and integration testing
 - **Supertest**: HTTP endpoint testing
 - **TypeScript ESLint**: Code quality
 - **Prettier**: Code formatting
 
 #### Infrastructure
+
 - **TSyringe**: Dependency injection
 - **Winston**: Structured logging
 - **Joi**: Input validation
@@ -229,9 +246,11 @@ server/
 ## Detailed Module Breakdown
 
 ### Module 1: Core Infrastructure (Agent 1)
+
 **Estimated effort**: 2 weeks
 
 #### Responsibilities
+
 - Database setup and migrations
 - Dependency injection configuration
 - Base repository patterns
@@ -240,6 +259,7 @@ server/
 - Logging infrastructure
 
 #### Key Components
+
 ```typescript
 // src/infrastructure/database/
 ├── entities/          # TypeORM entities
@@ -255,6 +275,7 @@ server/
 ```
 
 #### Deliverables
+
 - Database schema and entities
 - Migration scripts
 - Base repository with CRUD operations
@@ -263,9 +284,11 @@ server/
 - Error handling middleware
 
 ### Module 2: Authentication & Security (Agent 2)
+
 **Estimated effort**: 1.5 weeks
 
 #### Responsibilities
+
 - GitHub OAuth integration
 - JWT token management
 - Session handling
@@ -273,6 +296,7 @@ server/
 - Security headers
 
 #### Key Components
+
 ```typescript
 // src/modules/auth/
 ├── controllers/
@@ -291,6 +315,7 @@ server/
 ```
 
 #### Deliverables
+
 - OAuth flow implementation
 - JWT token generation/validation
 - Session persistence in database
@@ -298,9 +323,11 @@ server/
 - User management APIs
 
 ### Module 3: Claude Integration (Agent 3)
+
 **Estimated effort**: 2 weeks
 
 #### Responsibilities
+
 - Claude AI service wrapper
 - Message streaming
 - Tool execution handling
@@ -308,6 +335,7 @@ server/
 - Rate limiting
 
 #### Key Components
+
 ```typescript
 // src/modules/claude/
 ├── controllers/
@@ -326,6 +354,7 @@ server/
 ```
 
 #### Deliverables
+
 - Claude API integration
 - WebSocket streaming
 - Message persistence
@@ -333,9 +362,11 @@ server/
 - Token usage tracking
 
 ### Module 4: Project Management (Agent 4)
+
 **Estimated effort**: 2 weeks
 
 #### Responsibilities
+
 - Workspace reloading and browsing
 - Project CRUD operations
 - Work item CRUD operations
@@ -344,6 +375,7 @@ server/
 - Settings management
 
 #### Key Components
+
 ```typescript
 // src/modules/project/
 ├── controllers/
@@ -368,6 +400,7 @@ server/
 ```
 
 #### Deliverables
+
 - Workspace reload and directory browsing
 - Project CRUD with settings management
 - Work item CRUD with status transitions
@@ -376,9 +409,11 @@ server/
 - Project-specific settings persistence
 
 ### Module 5: Real-time Communication (Agent 5)
+
 **Estimated effort**: 1.5 weeks
 
 #### Responsibilities
+
 - uWebSockets.js server setup
 - High-performance message routing
 - Subscription management
@@ -386,6 +421,7 @@ server/
 - Binary protocol handling
 
 #### Key Components
+
 ```typescript
 // src/modules/realtime/
 ├── server/
@@ -404,6 +440,7 @@ server/
 ```
 
 #### Deliverables
+
 - uWebSockets.js server with 150K+ msg/sec capacity
 - Binary message protocol with MessagePack
 - Topic-based pub/sub system
@@ -413,16 +450,17 @@ server/
 ## WebSocket Protocol Design
 
 ### Message Format
+
 All messages use MessagePack binary encoding for minimal overhead:
 
 ```typescript
 // Base message structure
 interface WSMessage {
-  id?: string;        // Optional request ID for req/response tracking
-  type: MessageType;  // Message type enum
-  topic?: string;     // Topic for pub/sub
-  payload?: any;      // Message payload
-  error?: WSError;    // Error info if applicable
+  id?: string; // Optional request ID for req/response tracking
+  type: MessageType; // Message type enum
+  topic?: string; // Topic for pub/sub
+  payload?: any; // Message payload
+  error?: WSError; // Error info if applicable
 }
 
 enum MessageType {
@@ -431,12 +469,12 @@ enum MessageType {
   UNSUBSCRIBE = 2,
   PUBLISH = 3,
   REQUEST = 4,
-  
+
   // Server -> Client
   EVENT = 10,
   RESPONSE = 11,
   ERROR = 12,
-  
+
   // Bidirectional
   PING = 20,
   PONG = 21,
@@ -461,19 +499,19 @@ export class WebSocketServer {
   private app: uWS.App;
   private clients = new Map<uWS.WebSocket, Client>();
   private topics = new Map<string, Set<uWS.WebSocket>>();
-  
+
   constructor(private port: number) {
     this.app = uWS.App();
     this.setupRoutes();
   }
-  
+
   private setupRoutes() {
     this.app.ws('/*', {
       // Optimize for performance
       compression: uWS.DEDICATED_COMPRESSOR_3KB,
       maxPayloadLength: 16 * 1024 * 1024, // 16MB
       idleTimeout: 60,
-      
+
       open: (ws) => {
         const client: Client = {
           id: this.generateId(),
@@ -481,18 +519,18 @@ export class WebSocketServer {
           isAlive: true,
         };
         this.clients.set(ws, client);
-        
+
         // Send welcome message
         this.sendToClient(ws, {
           type: MessageType.EVENT,
           topic: 'system',
-          payload: { event: 'connected', clientId: client.id }
+          payload: { event: 'connected', clientId: client.id },
         });
       },
-      
+
       message: (ws, message, isBinary) => {
         if (!isBinary) return; // Only accept binary
-        
+
         try {
           const data = decode(new Uint8Array(message)) as WSMessage;
           this.handleMessage(ws, data);
@@ -500,12 +538,12 @@ export class WebSocketServer {
           this.sendError(ws, 'Invalid message format');
         }
       },
-      
+
       close: (ws) => {
         const client = this.clients.get(ws);
         if (client) {
           // Unsubscribe from all topics
-          client.subscriptions.forEach(topic => {
+          client.subscriptions.forEach((topic) => {
             const subs = this.topics.get(topic);
             if (subs) {
               subs.delete(ws);
@@ -517,59 +555,59 @@ export class WebSocketServer {
           this.clients.delete(ws);
         }
       },
-      
+
       pong: (ws) => {
         const client = this.clients.get(ws);
         if (client) {
           client.isAlive = true;
         }
-      }
+      },
     });
   }
-  
+
   private handleMessage(ws: uWS.WebSocket, msg: WSMessage) {
     const client = this.clients.get(ws);
     if (!client) return;
-    
+
     switch (msg.type) {
       case MessageType.SUBSCRIBE:
         this.handleSubscribe(ws, client, msg.topic!);
         break;
-        
+
       case MessageType.UNSUBSCRIBE:
         this.handleUnsubscribe(ws, client, msg.topic!);
         break;
-        
+
       case MessageType.PUBLISH:
         this.handlePublish(ws, msg.topic!, msg.payload);
         break;
-        
+
       case MessageType.REQUEST:
         this.handleRequest(ws, msg);
         break;
-        
+
       case MessageType.PING:
         this.sendToClient(ws, { type: MessageType.PONG });
         break;
     }
   }
-  
+
   broadcast(topic: string, payload: any) {
     const subscribers = this.topics.get(topic);
     if (!subscribers || subscribers.size === 0) return;
-    
+
     const message = encode({
       type: MessageType.EVENT,
       topic,
-      payload
+      payload,
     });
-    
+
     // Ultra-fast broadcasting
-    subscribers.forEach(ws => {
+    subscribers.forEach((ws) => {
       ws.send(message, true);
     });
   }
-  
+
   listen() {
     this.app.listen(this.port, (listenSocket) => {
       if (listenSocket) {
@@ -603,12 +641,12 @@ export class DataBus {
   private cache = new Map<string, CacheEntry<any>>();
   private providers = new Map<string, DataProvider<any>>();
   private subscribers = new Map<string, Set<Subscriber<any>>>();
-  
+
   // Register a data provider for a key pattern
   provide<T>(pattern: string, provider: DataProvider<T>) {
     this.providers.set(pattern, provider);
   }
-  
+
   // Request data - returns cached if valid, otherwise fetches
   async request<T>(key: string): Promise<T> {
     // Check cache first
@@ -616,17 +654,17 @@ export class DataBus {
     if (cached && !this.isCacheExpired(cached)) {
       return cached.data;
     }
-    
+
     // Find matching provider
     const provider = this.findProvider(key);
     if (!provider) {
       throw new Error(`No provider for key: ${key}`);
     }
-    
+
     // Fetch fresh data
     const data = await provider.fetch(key);
     this.updateCache(key, data);
-    
+
     // Setup real-time subscription if provider supports it
     if (provider.subscribe) {
       provider.subscribe(key, (newData) => {
@@ -634,20 +672,20 @@ export class DataBus {
         this.notifySubscribers(key, newData);
       });
     }
-    
+
     return data;
   }
-  
+
   // Subscribe to data changes
   subscribe<T>(key: string, callback: (data: T) => void): Unsubscribe {
     if (!this.subscribers.has(key)) {
       this.subscribers.set(key, new Set());
       // Trigger initial fetch if needed
-      this.request(key).then(data => callback(data));
+      this.request(key).then((data) => callback(data));
     }
-    
+
     this.subscribers.get(key)!.add(callback);
-    
+
     return () => {
       const subs = this.subscribers.get(key);
       if (subs) {
@@ -668,20 +706,20 @@ class ProjectProvider implements DataProvider<Project> {
     private api: ApiClient,
     private websocket: ReconnectingWebSocket
   ) {}
-  
+
   async fetch(key: string): Promise<Project> {
     const projectId = this.extractId(key);
     return this.api.get(`/api/projects/${projectId}`);
   }
-  
+
   subscribe(key: string, callback: (data: Project) => void): Unsubscribe {
     const projectId = this.extractId(key);
     return this.websocket.subscribe(`project:${projectId}`, callback);
   }
-  
+
   cache = {
     ttl: 5 * 60 * 1000, // 5 minutes
-    strategy: 'time-based'
+    strategy: 'time-based',
   };
 }
 ```
@@ -699,46 +737,47 @@ export function useDataBus<T>(key: string): {
   const [state, setState] = useState<DataBusState<T>>({
     data: dataBus.get(key),
     loading: !dataBus.get(key),
-    error: null
+    error: null,
   });
-  
+
   useEffect(() => {
     let mounted = true;
-    
+
     // Subscribe to changes
     const unsubscribe = dataBus.subscribe<T>(key, (data) => {
       if (mounted) {
         setState({ data, loading: false, error: null });
       }
     });
-    
+
     // Initial fetch if not cached
     if (!state.data) {
-      dataBus.request<T>(key)
-        .then(data => {
+      dataBus
+        .request<T>(key)
+        .then((data) => {
           if (mounted) {
             setState({ data, loading: false, error: null });
           }
         })
-        .catch(error => {
+        .catch((error) => {
           if (mounted) {
             setState({ data: undefined, loading: false, error });
           }
         });
     }
-    
+
     return () => {
       mounted = false;
       unsubscribe();
     };
   }, [key]);
-  
+
   const refetch = useCallback(() => {
-    setState(prev => ({ ...prev, loading: true }));
+    setState((prev) => ({ ...prev, loading: true }));
     dataBus.invalidate(key);
     dataBus.request<T>(key);
   }, [key]);
-  
+
   return { ...state, refetch };
 }
 ```
@@ -752,9 +791,9 @@ function ProjectDashboard({ projectId }: Props) {
   const { data: project, loading } = useDataBus<Project>(`project:${projectId}`);
   const { data: workItems } = useDataBus<WorkItem[]>(`project:${projectId}:work-items`);
   const { data: repoStatus } = useDataBus<RepoStatus>(`repo-status:${projectId}`);
-  
+
   if (loading) return <Spinner />;
-  
+
   return (
     <div>
       <h1>{project.name}</h1>
@@ -767,10 +806,10 @@ function ProjectDashboard({ projectId }: Props) {
 // When a work item is created elsewhere
 async function createWorkItem(projectId: string, data: CreateWorkItemDto) {
   // Optimistic update
-  dataBus.optimisticUpdate(`project:${projectId}:work-items`, (items) => 
+  dataBus.optimisticUpdate(`project:${projectId}:work-items`, (items) =>
     [...items, { ...data, id: 'temp-id', status: 'creating' }]
   );
-  
+
   try {
     const newItem = await api.post(`/api/work-items`, data);
     // Real update comes via WebSocket automatically
@@ -802,15 +841,15 @@ export class ReconnectingWebSocket {
   private reconnectInterval = 1000;
   private messageQueue: Uint8Array[] = [];
   private subscriptions = new Map<string, Set<(data: any) => void>>();
-  
+
   constructor(private url: string) {
     this.connect();
   }
-  
+
   private connect() {
     this.ws = new WebSocket(this.url);
     this.ws.binaryType = 'arraybuffer';
-    
+
     this.ws.onopen = () => {
       this.reconnectInterval = 1000;
       this.reconnectTimer = null;
@@ -824,19 +863,19 @@ export class ReconnectingWebSocket {
         this.send({ type: 'subscribe', topic });
       });
     };
-    
+
     this.ws.onmessage = (event) => {
       const data = decode(new Uint8Array(event.data)) as any;
       if (data.topic && this.subscriptions.has(data.topic)) {
-        this.subscriptions.get(data.topic)!.forEach(cb => cb(data.payload));
+        this.subscriptions.get(data.topic)!.forEach((cb) => cb(data.payload));
       }
     };
-    
+
     this.ws.onclose = () => {
       this.scheduleReconnect();
     };
   }
-  
+
   private scheduleReconnect() {
     if (!this.reconnectTimer) {
       this.reconnectTimer = window.setTimeout(() => {
@@ -845,14 +884,14 @@ export class ReconnectingWebSocket {
       }, this.reconnectInterval);
     }
   }
-  
+
   subscribe(topic: string, callback: (data: any) => void) {
     if (!this.subscriptions.has(topic)) {
       this.subscriptions.set(topic, new Set());
       this.send({ type: 'subscribe', topic });
     }
     this.subscriptions.get(topic)!.add(callback);
-    
+
     return () => {
       const subs = this.subscriptions.get(topic);
       if (subs) {
@@ -864,7 +903,7 @@ export class ReconnectingWebSocket {
       }
     };
   }
-  
+
   send(data: any) {
     const encoded = encode(data);
     if (this.ws?.readyState === WebSocket.OPEN) {
@@ -924,7 +963,7 @@ function WorkItemsPage({ projectId }: Props) {
   const { data: workItems, loading } = useDataBus<WorkItem[]>(
     `project:${projectId}:work-items`
   );
-  
+
   // Data bus automatically:
   // - Checks cache (empty on first load)
   // - Calls WorkItemProvider.fetch()
@@ -982,6 +1021,7 @@ dataBus.provide('workspace', new WorkspaceProvider(apiClient));
 ## Migration Phases
 
 ### Phase 1: Infrastructure Setup (Week 1-2)
+
 **Team**: Agent 1
 
 1. **TypeScript Configuration**
@@ -1007,6 +1047,7 @@ dataBus.provide('workspace', new WorkspaceProvider(apiClient));
 **Deliverable**: Working TypeScript server with database
 
 ### Phase 2: Core Module Development (Week 3-4)
+
 **Team**: Agents 2-5 in parallel
 
 1. **Authentication Module** (Agent 2)
@@ -1032,6 +1073,7 @@ dataBus.provide('workspace', new WorkspaceProvider(apiClient));
 **Deliverable**: All core modules with unit tests
 
 ### Phase 3: Feature Migration (Week 5-6)
+
 **Team**: All agents
 
 1. **API Migration**
@@ -1052,6 +1094,7 @@ dataBus.provide('workspace', new WorkspaceProvider(apiClient));
 **Deliverable**: Feature-complete TypeScript server
 
 ### Phase 4: Client Integration (Week 7)
+
 **Team**: Frontend developers
 
 1. **Data Bus Implementation**
@@ -1072,6 +1115,7 @@ dataBus.provide('workspace', new WorkspaceProvider(apiClient));
 **Deliverable**: Integrated client with real-time updates
 
 ### Phase 5: Testing & Validation (Week 8)
+
 **Team**: All agents
 
 1. **Unit Testing**
@@ -1097,6 +1141,7 @@ dataBus.provide('workspace', new WorkspaceProvider(apiClient));
 **Deliverable**: Fully tested system
 
 ### Phase 6: Cutover & Cleanup (Week 9-10)
+
 **Team**: DevOps + all agents
 
 1. **Data Migration**
@@ -1124,26 +1169,27 @@ dataBus.provide('workspace', new WorkspaceProvider(apiClient));
 ## Testing Strategy
 
 ### Unit Testing
+
 ```typescript
 // Example unit test
 describe('ProjectService', () => {
   let service: ProjectService;
   let repository: MockRepository<Project>;
-  
+
   beforeEach(() => {
     repository = new MockRepository();
     service = new ProjectService(repository);
   });
-  
+
   it('should create project', async () => {
     const project = await service.create({
       name: 'Test Project',
-      workspaceId: '123'
+      workspaceId: '123',
     });
-    
+
     expect(project).toMatchObject({
       name: 'Test Project',
-      workspaceId: '123'
+      workspaceId: '123',
     });
     expect(repository.save).toHaveBeenCalled();
   });
@@ -1151,6 +1197,7 @@ describe('ProjectService', () => {
 ```
 
 ### Integration Testing
+
 ```typescript
 // Example API test
 describe('POST /api/projects', () => {
@@ -1159,7 +1206,7 @@ describe('POST /api/projects', () => {
       .post('/api/projects')
       .set('Authorization', 'Bearer token')
       .send({ name: 'Test Project' });
-    
+
     expect(response.status).toBe(201);
     expect(response.body).toHaveProperty('id');
   });
@@ -1167,6 +1214,7 @@ describe('POST /api/projects', () => {
 ```
 
 ### E2E Testing
+
 ```typescript
 // Example E2E test
 test('create and manage project', async ({ page }) => {
@@ -1174,7 +1222,7 @@ test('create and manage project', async ({ page }) => {
   await page.click('button:has-text("New Project")');
   await page.fill('input[name="name"]', 'Test Project');
   await page.click('button:has-text("Create")');
-  
+
   await expect(page).toHaveURL(/\/projects\/\d+/);
   await expect(page.locator('h1')).toHaveText('Test Project');
 });
@@ -1183,6 +1231,7 @@ test('create and manage project', async ({ page }) => {
 ## Data Migration Plan
 
 ### Migration Strategy
+
 1. **Dual Write**: New system writes to both SQLite and JSON
 2. **Background Migration**: Script to migrate existing data
 3. **Validation**: Compare data between systems
@@ -1190,6 +1239,7 @@ test('create and manage project', async ({ page }) => {
 5. **Cleanup**: Remove JSON files
 
 ### Schema Mapping
+
 ```sql
 -- Sessions table
 CREATE TABLE sessions (
@@ -1224,24 +1274,25 @@ CREATE TABLE projects (
 ```
 
 ### Migration Script
+
 ```typescript
 // scripts/migrate-data.ts
 async function migrateSessionFiles() {
   const files = await fs.readdir('./sessions');
-  
+
   for (const file of files) {
     const data = await fs.readFile(`./sessions/${file}`, 'utf8');
     const session = JSON.parse(data);
-    
+
     await db.transaction(async (manager) => {
       // Insert session
       await manager.insert(Session, {
         id: session.sessionId,
         userId: session.userName,
         projectId: session.projectId,
-        data: session
+        data: session,
       });
-      
+
       // Insert messages
       for (const message of session.messages) {
         await manager.insert(Message, {
@@ -1249,7 +1300,7 @@ async function migrateSessionFiles() {
           sessionId: session.sessionId,
           role: message.role,
           content: message.content,
-          metadata: message
+          metadata: message,
         });
       }
     });
@@ -1260,6 +1311,7 @@ async function migrateSessionFiles() {
 ## Performance Considerations
 
 ### Optimization Strategies
+
 1. **uWebSockets.js**: 10-15x faster than Socket.io
 2. **Binary Protocol**: MessagePack reduces payload size by 50-70%
 3. **Connection Pooling**: Reuse database connections
@@ -1270,6 +1322,7 @@ async function migrateSessionFiles() {
 8. **Async Processing**: Queue long-running tasks
 
 ### Performance Targets
+
 - **API Response Time**: < 50ms for 95th percentile
 - **WebSocket Latency**: < 5ms for message delivery
 - **Message Throughput**: 150,000+ messages/second
@@ -1279,16 +1332,18 @@ async function migrateSessionFiles() {
 - **Client Bundle Impact**: 0KB (native WebSocket) + ~8KB (MessagePack)
 
 ### Benchmark Comparison
-| Metric | Current (SSE) | Socket.io | uWebSockets.js |
-|--------|---------------|-----------|----------------|
-| Messages/sec | ~5K | ~20K | ~150K |
-| Memory/1K clients | 200MB | 100MB | 10MB |
-| Latency (p99) | 50ms | 5ms | <1ms |
-| Client bundle | 0KB | 84KB | 0KB |
+
+| Metric            | Current (SSE) | Socket.io | uWebSockets.js |
+| ----------------- | ------------- | --------- | -------------- |
+| Messages/sec      | ~5K           | ~20K      | ~150K          |
+| Memory/1K clients | 200MB         | 100MB     | 10MB           |
+| Latency (p99)     | 50ms          | 5ms       | <1ms           |
+| Client bundle     | 0KB           | 84KB      | 0KB            |
 
 ## Security Considerations
 
 ### Security Measures
+
 1. **Input Validation**: Joi schemas for all inputs
 2. **SQL Injection**: Parameterized queries via ORM
 3. **XSS Protection**: Sanitize user content
@@ -1299,39 +1354,44 @@ async function migrateSessionFiles() {
 8. **Encryption**: TLS for all communications
 
 ### Security Headers
+
 ```typescript
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "wss:", "https:"],
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", 'data:', 'https:'],
+        connectSrc: ["'self'", 'wss:', 'https:'],
+      },
     },
-  },
-  hsts: {
-    maxAge: 31536000,
-    includeSubDomains: true,
-    preload: true,
-  },
-}));
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true,
+    },
+  })
+);
 ```
 
 ## Monitoring & Observability
 
 ### Logging Strategy
+
 ```typescript
 // Structured logging with Winston
 logger.info('Project created', {
   projectId: project.id,
   userId: user.id,
   duration: Date.now() - startTime,
-  metadata: { name: project.name }
+  metadata: { name: project.name },
 });
 ```
 
 ### Metrics Collection
+
 - **API Metrics**: Response times, error rates
 - **Database Metrics**: Query performance, connection pool
 - **WebSocket Metrics**: Active connections, message rates
@@ -1339,6 +1399,7 @@ logger.info('Project created', {
 - **System Metrics**: CPU, memory, disk usage
 
 ### Health Checks
+
 ```typescript
 app.get('/health', async (req, res) => {
   const health = {
@@ -1348,9 +1409,9 @@ app.get('/health', async (req, res) => {
       database: await checkDatabase(),
       redis: await checkRedis(),
       claude: await checkClaude(),
-    }
+    },
   };
-  
+
   res.json(health);
 });
 ```
@@ -1358,6 +1419,7 @@ app.get('/health', async (req, res) => {
 ## Rollback Plan
 
 ### Rollback Strategy
+
 1. **Feature Flags**: Gradually enable features
 2. **Blue-Green Deployment**: Switch between versions
 3. **Database Compatibility**: Maintain schema compatibility
@@ -1365,6 +1427,7 @@ app.get('/health', async (req, res) => {
 5. **Data Backup**: Regular backups before migration
 
 ### Emergency Procedures
+
 1. **Immediate Rollback**: Switch to old server
 2. **Data Recovery**: Restore from backups
 3. **Communication**: Notify users of issues
@@ -1374,6 +1437,7 @@ app.get('/health', async (req, res) => {
 ## Success Criteria
 
 ### Technical Metrics
+
 - ✅ 100% TypeScript coverage
 - ✅ 80%+ unit test coverage
 - ✅ All 54+ APIs migrated
@@ -1382,6 +1446,7 @@ app.get('/health', async (req, res) => {
 - ✅ No critical security issues
 
 ### Business Metrics
+
 - ✅ Zero downtime during migration
 - ✅ No user-facing errors
 - ✅ Improved developer velocity
@@ -1389,6 +1454,7 @@ app.get('/health', async (req, res) => {
 - ✅ Faster feature delivery
 
 ### Team Metrics
+
 - ✅ All modules delivered on schedule
 - ✅ Knowledge transfer completed
 - ✅ Documentation updated
@@ -1398,7 +1464,9 @@ app.get('/health', async (req, res) => {
 ## Appendix
 
 ### File Size Guidelines
+
 To maintain the 500-line limit:
+
 1. **Controllers**: Route handlers only
 2. **Services**: Business logic split by domain
 3. **Entities**: Simple data models
@@ -1406,6 +1474,7 @@ To maintain the 500-line limit:
 5. **Tests**: One test file per source file
 
 ### Naming Conventions
+
 - **Files**: `kebab-case.ts`
 - **Classes**: `PascalCase`
 - **Interfaces**: `IPascalCase`
@@ -1414,6 +1483,7 @@ To maintain the 500-line limit:
 - **Database**: `snake_case`
 
 ### Code Organization
+
 ```
 src/
 ├── infrastructure/     # Core infrastructure
@@ -1433,6 +1503,7 @@ src/
 ```
 
 ### Development Workflow
+
 1. **Branch Strategy**: Feature branches from `develop`
 2. **Code Review**: All PRs require approval
 3. **CI/CD**: Automated testing and deployment

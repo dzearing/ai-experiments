@@ -9,6 +9,7 @@ Claude Flow is a project management and workflow automation platform that integr
 ### Key Concepts
 
 **Workspace Structure**:
+
 - **Workspace**: The top-level container for all your projects
 - **Projects**: Individual products or initiatives within the workspace
 - **Repositories**: One or more code repos linked to each project
@@ -18,6 +19,7 @@ Claude Flow is a project management and workflow automation platform that integr
   - Tracked through completion
 
 **Agent-Driven Workflow**:
+
 1. **Planning**: Agents analyze work items and create detailed execution plans
 2. **Refinement**: Plans are refined to ensure proper implementation and validation
 3. **Execution**: Human-approved work items trigger agent execution
@@ -28,6 +30,7 @@ Claude Flow is a project management and workflow automation platform that integr
 8. **Completion**: Merging the PR closes the work item
 
 **GitHub Integration**:
+
 - Authenticates agents to work on your behalf
 - Syncs with GitHub Issues and Pull Requests
 - Tracks external issues as work items
@@ -36,6 +39,7 @@ Claude Flow is a project management and workflow automation platform that integr
 ### Architecture Overview
 
 The codebase is organized as a monorepo containing:
+
 - **Web Applications**: User interfaces for project management
 - **Backend Services**: API servers and agent orchestration
 - **Shared Packages**: Reusable components and utilities
@@ -46,11 +50,13 @@ The codebase is organized as a monorepo containing:
 Before you begin, ensure you have the following installed:
 
 - **Node.js**: Version 18.0.0 or higher
+
   ```bash
   node --version  # Should output v18.x.x or higher
   ```
 
 - **pnpm**: Version 8.0.0 or higher (for v2 development)
+
   ```bash
   npm install -g pnpm@8
   pnpm --version  # Should output 8.x.x or higher
@@ -65,12 +71,14 @@ Before you begin, ensure you have the following installed:
 ## Initial Setup
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url>
    cd claude-flow
    ```
 
 2. **Install dependencies**
+
    ```bash
    # Install all dependencies (both v1 and v2)
    npm run install
@@ -126,11 +134,11 @@ npm run dev:all
 
 ### Service Ports
 
-| Service | Port | URL |
-|---------|------|-----|
-| V1 Web | 3000 | http://localhost:3000 |
+| Service   | Port | URL                   |
+| --------- | ---- | --------------------- |
+| V1 Web    | 3000 | http://localhost:3000 |
 | V1 Server | 3001 | http://localhost:3001 |
-| V2 Web | 4000 | http://localhost:4000 |
+| V2 Web    | 4000 | http://localhost:4000 |
 | V2 Server | 4001 | http://localhost:4001 |
 | Storybook | 6006 | http://localhost:6006 |
 
@@ -139,17 +147,20 @@ npm run dev:all
 Let's create a simple feature in v2. We'll add a new component to the design system:
 
 1. **Navigate to the design system**
+
    ```bash
    cd packages/design-system
    ```
 
 2. **Create a new component using scaffolding**
+
    ```bash
    # From the root directory
    pnpm scaffold component Button --package design-system
    ```
 
 3. **Start Storybook to see your component**
+
    ```bash
    # From packages/design-system
    pnpm storybook
@@ -160,41 +171,44 @@ Let's create a simple feature in v2. We'll add a new component to the design sys
 5. **Add tests** in `src/components/Button/Button.test.tsx`
 
 6. **Run tests**
+
    ```bash
    pnpm test
    ```
 
 7. **Run all potential checks that will be ran during PR**
-  ```bash
-  cd ../..
-  pnpm ci
-  ```
+
+```bash
+cd ../..
+pnpm ci
+```
 
 8. **Create a branch and submit a PR**
+
    ```bash
    # Create branch following naming conventions
    git checkout -b feature/add-button-component
    # Branch naming conventions:
    # - feature/description - For new features
-   # - fix/description - For bug fixes  
+   # - fix/description - For bug fixes
    # - chore/description - For maintenance tasks
    # - docs/description - For documentation updates
-   
+
    # Commit your changes
    git add .
    git commit -m "feat: add Button component to design system"
-   
+
    # Push to remote
    git push -u origin feature/add-button-component
-   
+
    # Create PR via GitHub CLI or web interface
    gh pr create --title "Add Button component" --body "Adds new Button component with tests and stories"
    ```
 
-
 ## Common Commands
 
 ### Development
+
 ```bash
 pnpm dev          # Start dev server
 pnpm build        # Build for production
@@ -205,9 +219,10 @@ pnpm typecheck    # Check TypeScript types
 ```
 
 ### Creating new packages
+
 ```bash
 pnpm scaffold web-app my-app              # New web application
-pnpm scaffold node-service my-service     # New Node.js service  
+pnpm scaffold node-service my-service     # New Node.js service
 pnpm scaffold component-library my-lib    # New component library
 pnpm scaffold node-library my-utils       # New utility library
 ```
@@ -269,15 +284,19 @@ For debugging v2 applications, add to `.vscode/launch.json`:
 ### Common Issues
 
 **Problem**: `pnpm: command not found`
+
 - **Solution**: Install pnpm globally: `npm install -g pnpm@8`
 
 **Problem**: Build fails with TypeScript errors
+
 - **Solution**: Run `pnpm typecheck` to see detailed errors, ensure your IDE is using the workspace TypeScript version
 
 **Problem**: "Port already in use" error
+
 - **Solution**: Check if another instance is running, or use `lsof -i :PORT` to find and kill the process
 
 **Problem**: Dependencies out of sync
+
 - **Solution**: Run `pnpm install` from the root directory
 
 ## Next Steps
@@ -297,15 +316,15 @@ For debugging v2 applications, add to `.vscode/launch.json`:
 
 ### Root Commands (run from repository root)
 
-| Task | Command | Description |
-|------|---------|-------------|
-| Start development | `yarn dev` | Interactive menu to choose services |
-| Run all tests | `pnpm test` | Tests all packages |
-| Build everything | `pnpm build` | Builds all packages |
-| Check all linting | `pnpm lint` | Lints all packages |
-| Fix all linting | `pnpm lint:fix` | Auto-fixes issues |
-| Add new package | `pnpm scaffold <type> <name>` | Create from template |
-| Update all deps | `pnpm update` | Updates dependencies |
+| Task              | Command                       | Description                         |
+| ----------------- | ----------------------------- | ----------------------------------- |
+| Start development | `yarn dev`                    | Interactive menu to choose services |
+| Run all tests     | `pnpm test`                   | Tests all packages                  |
+| Build everything  | `pnpm build`                  | Builds all packages                 |
+| Check all linting | `pnpm lint`                   | Lints all packages                  |
+| Fix all linting   | `pnpm lint:fix`               | Auto-fixes issues                   |
+| Add new package   | `pnpm scaffold <type> <name>` | Create from template                |
+| Update all deps   | `pnpm update`                 | Updates dependencies                |
 
 ### Package Commands (run from package directory)
 
@@ -313,12 +332,12 @@ For debugging v2 applications, add to `.vscode/launch.json`:
 cd packages/my-package  # or apps/v2/web
 ```
 
-| Task | Command | Description |
-|------|---------|-------------|
-| Start dev mode | `pnpm dev` | Start this package only |
-| Run tests | `pnpm test` | Test this package |
-| Build package | `pnpm build` | Build this package |
-| Lint package | `pnpm lint` | Lint this package |
-| Type check | `pnpm typecheck` | Check TypeScript |
+| Task           | Command          | Description             |
+| -------------- | ---------------- | ----------------------- |
+| Start dev mode | `pnpm dev`       | Start this package only |
+| Run tests      | `pnpm test`      | Test this package       |
+| Build package  | `pnpm build`     | Build this package      |
+| Lint package   | `pnpm lint`      | Lint this package       |
+| Type check     | `pnpm typecheck` | Check TypeScript        |
 
 **Note**: Root commands use Lage to run tasks across all packages in dependency order, while package commands run only for that specific package.

@@ -12,7 +12,12 @@ interface ProjectDeleteDialogProps {
   onCancel: () => void;
 }
 
-export function ProjectDeleteDialog({ isOpen, project, onConfirm, onCancel }: ProjectDeleteDialogProps) {
+export function ProjectDeleteDialog({
+  isOpen,
+  project,
+  onConfirm,
+  onCancel,
+}: ProjectDeleteDialogProps) {
   const { currentStyles } = useTheme();
   const styles = currentStyles;
   const [isDeleting, setIsDeleting] = useState(false);
@@ -34,22 +39,24 @@ export function ProjectDeleteDialog({ isOpen, project, onConfirm, onCancel }: Pr
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-full items-center justify-center p-4 text-center">
         <div className="fixed inset-0 bg-gray-900/50 dark:bg-black/50" onClick={onCancel} />
-        
+
         <AnimatedTransition transitionKey="delete-dialog" className="relative">
-          <div className={`
+          <div
+            className={`
             w-full max-w-md transform overflow-hidden ${styles.borderRadius}
             bg-white dark:bg-neutral-800 ${styles.cardBorder} border ${styles.cardShadow}
             text-left align-middle transition-all
-          `}>
+          `}
+          >
             <div className="p-6">
               <h3 className={`text-lg font-medium ${styles.headingColor} mb-4`}>
                 Confirm removing project
               </h3>
-              
+
               <p className={`${styles.textColor} mb-6`}>
                 Do you want to remove the project "{project.name}"?
               </p>
-              
+
               <Checkbox
                 label="Remove project folder"
                 checked={removeFolder}
@@ -57,18 +64,10 @@ export function ProjectDeleteDialog({ isOpen, project, onConfirm, onCancel }: Pr
               />
 
               <div className="flex justify-end gap-3 mt-8">
-                <Button
-                  onClick={onCancel}
-                  variant="secondary"
-                  disabled={isDeleting}
-                >
+                <Button onClick={onCancel} variant="secondary" disabled={isDeleting}>
                   Cancel
                 </Button>
-                <Button
-                  onClick={handleConfirm}
-                  variant="primary"
-                  disabled={isDeleting}
-                >
+                <Button onClick={handleConfirm} variant="primary" disabled={isDeleting}>
                   {isDeleting ? 'Processing...' : 'OK'}
                 </Button>
               </div>

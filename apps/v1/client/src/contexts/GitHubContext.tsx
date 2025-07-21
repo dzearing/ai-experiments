@@ -8,8 +8,23 @@ interface GitHubContextValue {
   createRepository: (options: any) => Promise<any>;
   getRepository: (owner: string, repo: string) => Promise<any>;
   searchRepositories: (query: string, options?: any) => Promise<any>;
-  createFile: (owner: string, repo: string, path: string, content: string, message: string, branch?: string) => Promise<any>;
-  updateFile: (owner: string, repo: string, path: string, content: string, message: string, sha: string, branch?: string) => Promise<any>;
+  createFile: (
+    owner: string,
+    repo: string,
+    path: string,
+    content: string,
+    message: string,
+    branch?: string
+  ) => Promise<any>;
+  updateFile: (
+    owner: string,
+    repo: string,
+    path: string,
+    content: string,
+    message: string,
+    sha: string,
+    branch?: string
+  ) => Promise<any>;
   createPullRequest: (owner: string, repo: string, options: any) => Promise<any>;
   isAuthenticated: boolean;
 }
@@ -40,7 +55,7 @@ export function GitHubProvider({ children }: { children: ReactNode }) {
 
   const value: GitHubContextValue = {
     isAuthenticated: !!activeAccount,
-    
+
     listRepositories: async (options) => {
       try {
         const accountId = ensureAuthenticated();
@@ -80,7 +95,15 @@ export function GitHubProvider({ children }: { children: ReactNode }) {
     createFile: async (owner, repo, path, content, message, branch) => {
       try {
         const accountId = ensureAuthenticated();
-        return await githubService.createFile(accountId, owner, repo, path, content, message, branch);
+        return await githubService.createFile(
+          accountId,
+          owner,
+          repo,
+          path,
+          content,
+          message,
+          branch
+        );
       } catch (error) {
         return handleApiError(error);
       }
@@ -89,7 +112,16 @@ export function GitHubProvider({ children }: { children: ReactNode }) {
     updateFile: async (owner, repo, path, content, message, sha, branch) => {
       try {
         const accountId = ensureAuthenticated();
-        return await githubService.updateFile(accountId, owner, repo, path, content, message, sha, branch);
+        return await githubService.updateFile(
+          accountId,
+          owner,
+          repo,
+          path,
+          content,
+          message,
+          sha,
+          branch
+        );
       } catch (error) {
         return handleApiError(error);
       }
@@ -102,7 +134,7 @@ export function GitHubProvider({ children }: { children: ReactNode }) {
       } catch (error) {
         return handleApiError(error);
       }
-    }
+    },
   };
 
   return <GitHubContext.Provider value={value}>{children}</GitHubContext.Provider>;

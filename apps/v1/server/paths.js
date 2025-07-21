@@ -14,7 +14,7 @@ const PATHS = {
   serverDir: SERVER_DIR,
   projectRoot: PROJECT_ROOT,
   tempDir: TEMP_DIR,
-  
+
   // Logs directory and files
   logsDir: path.join(TEMP_DIR, 'logs'),
   logs: {
@@ -23,23 +23,25 @@ const PATHS = {
     events: path.join(TEMP_DIR, 'logs', 'events.log'),
     debug: path.join(TEMP_DIR, 'logs', 'debug.log'),
     errors: path.join(TEMP_DIR, 'logs', 'errors.log'),
-    toolExecutions: path.join(TEMP_DIR, 'logs', 'tool-executions.log')
+    toolExecutions: path.join(TEMP_DIR, 'logs', 'tool-executions.log'),
   },
-  
+
   // Sessions directory
   sessionsDir: path.join(TEMP_DIR, 'sessions'),
-  
+
   // Feedback directory and subdirectories
   feedbackDir: path.join(TEMP_DIR, 'feedback'),
   feedbackReportsDir: path.join(TEMP_DIR, 'feedback', 'reports'),
   feedbackScreenshotsDir: path.join(TEMP_DIR, 'feedback', 'screenshots'),
-  
+
   // Function to get session file path
   getSessionFile: (sessionId) => path.join(TEMP_DIR, 'sessions', `${sessionId}.json`),
-  
+
   // Function to get feedback file paths
-  getFeedbackReportFile: (feedbackId) => path.join(TEMP_DIR, 'feedback', 'reports', `${feedbackId}.json`),
-  getFeedbackScreenshotFile: (feedbackId) => path.join(TEMP_DIR, 'feedback', 'screenshots', `${feedbackId}.png`)
+  getFeedbackReportFile: (feedbackId) =>
+    path.join(TEMP_DIR, 'feedback', 'reports', `${feedbackId}.json`),
+  getFeedbackScreenshotFile: (feedbackId) =>
+    path.join(TEMP_DIR, 'feedback', 'screenshots', `${feedbackId}.png`),
 };
 
 // Ensure all directories exist
@@ -50,9 +52,9 @@ function ensureDirectories() {
     PATHS.sessionsDir,
     PATHS.feedbackDir,
     PATHS.feedbackReportsDir,
-    PATHS.feedbackScreenshotsDir
+    PATHS.feedbackScreenshotsDir,
   ];
-  
+
   for (const dir of directories) {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
@@ -84,5 +86,5 @@ ensureDirectories();
 module.exports = {
   ...PATHS,
   ensureDirectories,
-  cleanupSessions
+  cleanupSessions,
 };

@@ -10,11 +10,11 @@ interface WorkItemDeleteDialogProps {
   onConfirm: (permanentDelete: boolean) => void;
 }
 
-export function WorkItemDeleteDialog({ 
-  isOpen, 
-  onClose, 
+export function WorkItemDeleteDialog({
+  isOpen,
+  onClose,
   workItem,
-  onConfirm 
+  onConfirm,
 }: WorkItemDeleteDialogProps) {
   const { currentStyles } = useTheme();
   const styles = currentStyles;
@@ -36,22 +36,22 @@ export function WorkItemDeleteDialog({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
-      <div 
-        className="fixed inset-0 bg-gray-900/50 dark:bg-black/50 transition-opacity" 
+      <div
+        className="fixed inset-0 bg-gray-900/50 dark:bg-black/50 transition-opacity"
         onClick={handleCancel}
       />
-      
+
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className={`
+        <div
+          className={`
           relative w-full max-w-md
           bg-white dark:bg-neutral-800 ${styles.cardBorder} border ${styles.borderRadius}
           ${styles.cardShadow} 
-        `}>
+        `}
+        >
           <div className={`px-6 py-4 border-b ${styles.contentBorder}`}>
-            <h2 className={`text-lg font-semibold ${styles.headingColor}`}>
-              Delete Work Item
-            </h2>
+            <h2 className={`text-lg font-semibold ${styles.headingColor}`}>Delete Work Item</h2>
           </div>
 
           <div className="p-6">
@@ -59,7 +59,9 @@ export function WorkItemDeleteDialog({
               Are you sure you want to delete "{workItem.title}"?
             </p>
 
-            <div className={`bg-gray-50 dark:bg-neutral-900/50 ${styles.contentBorder} border rounded-lg p-4`}>
+            <div
+              className={`bg-gray-50 dark:bg-neutral-900/50 ${styles.contentBorder} border rounded-lg p-4`}
+            >
               <label className="flex items-start gap-3 cursor-pointer">
                 <input
                   type="checkbox"
@@ -72,8 +74,8 @@ export function WorkItemDeleteDialog({
                     Permanently delete markdown file
                   </span>
                   <p className={`${styles.mutedText} text-sm mt-1`}>
-                    {permanentDelete 
-                      ? "The markdown file will be permanently deleted and cannot be recovered."
+                    {permanentDelete
+                      ? 'The markdown file will be permanently deleted and cannot be recovered.'
                       : "The markdown file will be moved to the 'discarded' folder and can be restored later."}
                   </p>
                 </div>
@@ -81,17 +83,16 @@ export function WorkItemDeleteDialog({
             </div>
           </div>
 
-          <div className={`flex items-center justify-end gap-3 px-6 py-4 border-t ${styles.contentBorder}`}>
-            <Button
-              onClick={handleCancel}
-              variant="secondary"
-            >
+          <div
+            className={`flex items-center justify-end gap-3 px-6 py-4 border-t ${styles.contentBorder}`}
+          >
+            <Button onClick={handleCancel} variant="secondary">
               Cancel
             </Button>
             <Button
               onClick={handleConfirm}
               variant="primary"
-              className={permanentDelete ? "!bg-red-600 hover:!bg-red-700" : ""}
+              className={permanentDelete ? '!bg-red-600 hover:!bg-red-700' : ''}
             >
               {permanentDelete ? 'Delete Permanently' : 'Move to Discarded'}
             </Button>

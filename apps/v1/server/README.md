@@ -5,6 +5,7 @@ This server provides API endpoints for the AI-powered work item creation feature
 ## Setup
 
 1. Install dependencies:
+
    ```bash
    npm install
    ```
@@ -18,15 +19,19 @@ This server provides API endpoints for the AI-powered work item creation feature
 ## Running the server
 
 ### Mock mode (no API key required)
+
 ```bash
 npm run mock
 ```
+
 This runs a mock server that simulates Claude responses for testing.
 
 ### Real mode (requires Anthropic API key)
+
 ```bash
 npm start
 ```
+
 This uses the actual Claude Code SDK to process ideas.
 
 ## API endpoints

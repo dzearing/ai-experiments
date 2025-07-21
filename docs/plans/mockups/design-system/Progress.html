@@ -1,871 +1,1007 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Progress Indicators - Interactive Design System</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            background: #f8fafc;
-            padding: 20px;
-            min-height: 100vh;
-            transition: background-color 0.3s ease;
-        }
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        background: #f8fafc;
+        padding: 20px;
+        min-height: 100vh;
+        transition: background-color 0.3s ease;
+      }
 
-        body.dark {
-            background: #0f172a;
-            color: #f1f5f9;
-        }
+      body.dark {
+        background: #0f172a;
+        color: #f1f5f9;
+      }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
 
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
+      .header {
+        text-align: center;
+        margin-bottom: 40px;
+      }
 
-        .header h1 {
-            font-size: 32px;
-            font-weight: 600;
-            color: #1e293b;
-            margin-bottom: 16px;
-        }
+      .header h1 {
+        font-size: 32px;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 16px;
+      }
 
-        body.dark .header h1 {
-            color: #f1f5f9;
+      body.dark .header h1 {
+        color: #f1f5f9;
+      }
+
+      .controls {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 40px;
+      }
+
+      .control-btn {
+        background: #3b82f6;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: background-color 0.2s ease;
+      }
+
+      .control-btn:hover {
+        background: #2563eb;
+      }
+
+      .control-btn:disabled {
+        background: #94a3b8;
+        cursor: not-allowed;
+      }
+
+      .theme-toggle {
+        background: #64748b;
+        margin-left: 20px;
+      }
+
+      .theme-toggle:hover {
+        background: #475569;
+      }
+
+      body.dark .theme-toggle {
+        background: #475569;
+      }
+
+      body.dark .theme-toggle:hover {
+        background: #64748b;
+      }
+
+      .themes-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+        margin-bottom: 40px;
+      }
+
+      .theme-panel {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 30px;
+        min-height: 600px;
+      }
+
+      body.dark .theme-panel {
+        background: #1e293b;
+        border-color: #334155;
+      }
+
+      .theme-title {
+        font-size: 20px;
+        font-weight: 500;
+        text-align: center;
+        margin-bottom: 30px;
+        color: #1e293b;
+      }
+
+      body.dark .theme-title {
+        color: #f1f5f9;
+      }
+
+      .section {
+        margin-bottom: 40px;
+      }
+
+      .section-title {
+        font-size: 16px;
+        font-weight: 500;
+        margin-bottom: 20px;
+        color: #64748b;
+      }
+
+      body.dark .section-title {
+        color: #94a3b8;
+      }
+
+      .progress-item {
+        margin-bottom: 30px;
+      }
+
+      .progress-label {
+        font-size: 14px;
+        margin-bottom: 8px;
+        color: #374151;
+      }
+
+      body.dark .progress-label {
+        color: #e5e7eb;
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: #e5e7eb;
+        border-radius: 4px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      body.dark .progress-bar {
+        background: #374151;
+      }
+
+      .progress-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.3s ease;
+      }
+
+      .progress-fill.blue {
+        background: #3b82f6;
+      }
+
+      .progress-fill.green {
+        background: #10b981;
+      }
+
+      .progress-fill.red {
+        background: #ef4444;
+      }
+
+      .progress-with-label {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .progress-with-label .progress-bar {
+        flex: 1;
+      }
+
+      .progress-percentage {
+        font-size: 14px;
+        color: #374151;
+        min-width: 40px;
+      }
+
+      body.dark .progress-percentage {
+        color: #e5e7eb;
+      }
+
+      .step-progress {
+        position: relative;
+      }
+
+      .step-markers {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 8px;
+        position: relative;
+      }
+
+      .step-marker {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #e5e7eb;
+        border: 2px solid #e5e7eb;
+        position: relative;
+        z-index: 2;
+        transition: all 0.3s ease;
+      }
+
+      body.dark .step-marker {
+        background: #374151;
+        border-color: #374151;
+      }
+
+      .step-marker.completed {
+        background: #3b82f6;
+        border-color: #3b82f6;
+      }
+
+      .step-info {
+        font-size: 12px;
+        color: #6b7280;
+        margin-top: 8px;
+      }
+
+      body.dark .step-info {
+        color: #9ca3af;
+      }
+
+      .loading-bar {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .loading-shimmer {
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        animation: shimmer 2s infinite;
+      }
+
+      body.dark .loading-shimmer {
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      }
+
+      @keyframes shimmer {
+        0% {
+          left: -100%;
+        }
+        100% {
+          left: 100%;
+        }
+      }
+
+      .circular-progress-container {
+        display: flex;
+        gap: 40px;
+        align-items: center;
+      }
+
+      .circular-progress {
+        position: relative;
+        display: inline-block;
+      }
+
+      .circular-progress svg {
+        transform: rotate(-90deg);
+      }
+
+      .circular-progress .progress-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-weight: 500;
+        color: #374151;
+      }
+
+      body.dark .circular-progress .progress-text {
+        color: #e5e7eb;
+      }
+
+      .loaders-container {
+        display: flex;
+        gap: 40px;
+        align-items: center;
+        height: 80px;
+      }
+
+      .spinner {
+        width: 32px;
+        height: 32px;
+        border: 3px solid #e5e7eb;
+        border-top: 3px solid #3b82f6;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      body.dark .spinner {
+        border-color: #374151;
+        border-top-color: #60a5fa;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .dots-loader {
+        display: flex;
+        gap: 8px;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        background: #3b82f6;
+        border-radius: 50%;
+        animation: dotPulse 1.2s infinite ease-in-out;
+      }
+
+      body.dark .dot {
+        background: #60a5fa;
+      }
+
+      .dot:nth-child(1) {
+        animation-delay: 0s;
+      }
+      .dot:nth-child(2) {
+        animation-delay: 0.3s;
+      }
+      .dot:nth-child(3) {
+        animation-delay: 0.6s;
+      }
+
+      @keyframes dotPulse {
+        0%,
+        60%,
+        100% {
+          opacity: 1;
+        }
+        30% {
+          opacity: 0.3;
+        }
+      }
+
+      .pulse-loader {
+        width: 40px;
+        height: 40px;
+        background: #3b82f6;
+        border-radius: 50%;
+        animation: pulse 1.5s infinite ease-in-out;
+        opacity: 0.3;
+      }
+
+      body.dark .pulse-loader {
+        background: #60a5fa;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(0.8);
+          opacity: 0.8;
+        }
+        50% {
+          transform: scale(1.2);
+          opacity: 0.3;
+        }
+        100% {
+          transform: scale(0.8);
+          opacity: 0.8;
+        }
+      }
+
+      .skeleton-loader {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .skeleton-line {
+        height: 12px;
+        background: #e5e7eb;
+        border-radius: 6px;
+        animation: skeletonPulse 2s infinite ease-in-out;
+      }
+
+      body.dark .skeleton-line {
+        background: #374151;
+      }
+
+      .skeleton-line:nth-child(1) {
+        width: 30%;
+        animation-delay: 0s;
+      }
+      .skeleton-line:nth-child(2) {
+        width: 50%;
+        animation-delay: 0.1s;
+      }
+      .skeleton-line:nth-child(3) {
+        width: 40%;
+        animation-delay: 0.2s;
+      }
+
+      @keyframes skeletonPulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      .indeterminate-progress {
+        background: #e5e7eb;
+        border-radius: 4px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      body.dark .indeterminate-progress {
+        background: #374151;
+      }
+
+      .indeterminate-fill {
+        height: 100%;
+        background: #3b82f6;
+        border-radius: 4px;
+        position: absolute;
+        width: 30%;
+        animation: indeterminate 2s infinite ease-in-out;
+      }
+
+      @keyframes indeterminate {
+        0% {
+          left: -30%;
+        }
+        50% {
+          left: 100%;
+        }
+        100% {
+          left: -30%;
+        }
+      }
+
+      .paused .progress-fill,
+      .paused .indeterminate-fill,
+      .paused .loading-shimmer,
+      .paused .spinner,
+      .paused .dot,
+      .paused .pulse-loader,
+      .paused .skeleton-line {
+        animation-play-state: paused;
+      }
+
+      .status-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-left: 12px;
+      }
+
+      .status-indicator.playing {
+        background: #10b981;
+        animation: blink 1s infinite;
+      }
+
+      .status-indicator.paused {
+        background: #f59e0b;
+      }
+
+      @keyframes blink {
+        0%,
+        50% {
+          opacity: 1;
+        }
+        51%,
+        100% {
+          opacity: 0.3;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .themes-container {
+          grid-template-columns: 1fr;
+          gap: 20px;
         }
 
         .controls {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 40px;
-        }
-
-        .control-btn {
-            background: #3b82f6;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: background-color 0.2s ease;
-        }
-
-        .control-btn:hover {
-            background: #2563eb;
-        }
-
-        .control-btn:disabled {
-            background: #94a3b8;
-            cursor: not-allowed;
-        }
-
-        .theme-toggle {
-            background: #64748b;
-            margin-left: 20px;
-        }
-
-        .theme-toggle:hover {
-            background: #475569;
-        }
-
-        body.dark .theme-toggle {
-            background: #475569;
-        }
-
-        body.dark .theme-toggle:hover {
-            background: #64748b;
-        }
-
-        .themes-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            margin-bottom: 40px;
-        }
-
-        .theme-panel {
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 30px;
-            min-height: 600px;
-        }
-
-        body.dark .theme-panel {
-            background: #1e293b;
-            border-color: #334155;
-        }
-
-        .theme-title {
-            font-size: 20px;
-            font-weight: 500;
-            text-align: center;
-            margin-bottom: 30px;
-            color: #1e293b;
-        }
-
-        body.dark .theme-title {
-            color: #f1f5f9;
-        }
-
-        .section {
-            margin-bottom: 40px;
-        }
-
-        .section-title {
-            font-size: 16px;
-            font-weight: 500;
-            margin-bottom: 20px;
-            color: #64748b;
-        }
-
-        body.dark .section-title {
-            color: #94a3b8;
-        }
-
-        .progress-item {
-            margin-bottom: 30px;
-        }
-
-        .progress-label {
-            font-size: 14px;
-            margin-bottom: 8px;
-            color: #374151;
-        }
-
-        body.dark .progress-label {
-            color: #e5e7eb;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: #e5e7eb;
-            border-radius: 4px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        body.dark .progress-bar {
-            background: #374151;
-        }
-
-        .progress-fill {
-            height: 100%;
-            border-radius: 4px;
-            transition: width 0.3s ease;
-        }
-
-        .progress-fill.blue {
-            background: #3b82f6;
-        }
-
-        .progress-fill.green {
-            background: #10b981;
-        }
-
-        .progress-fill.red {
-            background: #ef4444;
-        }
-
-        .progress-with-label {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .progress-with-label .progress-bar {
-            flex: 1;
-        }
-
-        .progress-percentage {
-            font-size: 14px;
-            color: #374151;
-            min-width: 40px;
-        }
-
-        body.dark .progress-percentage {
-            color: #e5e7eb;
-        }
-
-        .step-progress {
-            position: relative;
-        }
-
-        .step-markers {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 8px;
-            position: relative;
-        }
-
-        .step-marker {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: #e5e7eb;
-            border: 2px solid #e5e7eb;
-            position: relative;
-            z-index: 2;
-            transition: all 0.3s ease;
-        }
-
-        body.dark .step-marker {
-            background: #374151;
-            border-color: #374151;
-        }
-
-        .step-marker.completed {
-            background: #3b82f6;
-            border-color: #3b82f6;
-        }
-
-        .step-info {
-            font-size: 12px;
-            color: #6b7280;
-            margin-top: 8px;
-        }
-
-        body.dark .step-info {
-            color: #9ca3af;
-        }
-
-        .loading-bar {
-            position: relative;
-            overflow: hidden;
-        }
-
-        .loading-shimmer {
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            animation: shimmer 2s infinite;
-        }
-
-        body.dark .loading-shimmer {
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-        }
-
-        @keyframes shimmer {
-            0% { left: -100%; }
-            100% { left: 100%; }
+          flex-wrap: wrap;
         }
 
         .circular-progress-container {
-            display: flex;
-            gap: 40px;
-            align-items: center;
-        }
-
-        .circular-progress {
-            position: relative;
-            display: inline-block;
-        }
-
-        .circular-progress svg {
-            transform: rotate(-90deg);
-        }
-
-        .circular-progress .progress-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-weight: 500;
-            color: #374151;
-        }
-
-        body.dark .circular-progress .progress-text {
-            color: #e5e7eb;
+          flex-direction: column;
+          gap: 20px;
         }
 
         .loaders-container {
-            display: flex;
-            gap: 40px;
-            align-items: center;
-            height: 80px;
+          flex-direction: column;
+          height: auto;
+          gap: 20px;
         }
-
-        .spinner {
-            width: 32px;
-            height: 32px;
-            border: 3px solid #e5e7eb;
-            border-top: 3px solid #3b82f6;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        body.dark .spinner {
-            border-color: #374151;
-            border-top-color: #60a5fa;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .dots-loader {
-            display: flex;
-            gap: 8px;
-        }
-
-        .dot {
-            width: 8px;
-            height: 8px;
-            background: #3b82f6;
-            border-radius: 50%;
-            animation: dotPulse 1.2s infinite ease-in-out;
-        }
-
-        body.dark .dot {
-            background: #60a5fa;
-        }
-
-        .dot:nth-child(1) { animation-delay: 0s; }
-        .dot:nth-child(2) { animation-delay: 0.3s; }
-        .dot:nth-child(3) { animation-delay: 0.6s; }
-
-        @keyframes dotPulse {
-            0%, 60%, 100% { opacity: 1; }
-            30% { opacity: 0.3; }
-        }
-
-        .pulse-loader {
-            width: 40px;
-            height: 40px;
-            background: #3b82f6;
-            border-radius: 50%;
-            animation: pulse 1.5s infinite ease-in-out;
-            opacity: 0.3;
-        }
-
-        body.dark .pulse-loader {
-            background: #60a5fa;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(0.8); opacity: 0.8; }
-            50% { transform: scale(1.2); opacity: 0.3; }
-            100% { transform: scale(0.8); opacity: 0.8; }
-        }
-
-        .skeleton-loader {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .skeleton-line {
-            height: 12px;
-            background: #e5e7eb;
-            border-radius: 6px;
-            animation: skeletonPulse 2s infinite ease-in-out;
-        }
-
-        body.dark .skeleton-line {
-            background: #374151;
-        }
-
-        .skeleton-line:nth-child(1) { width: 30%; animation-delay: 0s; }
-        .skeleton-line:nth-child(2) { width: 50%; animation-delay: 0.1s; }
-        .skeleton-line:nth-child(3) { width: 40%; animation-delay: 0.2s; }
-
-        @keyframes skeletonPulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .indeterminate-progress {
-            background: #e5e7eb;
-            border-radius: 4px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        body.dark .indeterminate-progress {
-            background: #374151;
-        }
-
-        .indeterminate-fill {
-            height: 100%;
-            background: #3b82f6;
-            border-radius: 4px;
-            position: absolute;
-            width: 30%;
-            animation: indeterminate 2s infinite ease-in-out;
-        }
-
-        @keyframes indeterminate {
-            0% { left: -30%; }
-            50% { left: 100%; }
-            100% { left: -30%; }
-        }
-
-        .paused .progress-fill,
-        .paused .indeterminate-fill,
-        .paused .loading-shimmer,
-        .paused .spinner,
-        .paused .dot,
-        .paused .pulse-loader,
-        .paused .skeleton-line {
-            animation-play-state: paused;
-        }
-
-        .status-indicator {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-left: 12px;
-        }
-
-        .status-indicator.playing {
-            background: #10b981;
-            animation: blink 1s infinite;
-        }
-
-        .status-indicator.paused {
-            background: #f59e0b;
-        }
-
-        @keyframes blink {
-            0%, 50% { opacity: 1; }
-            51%, 100% { opacity: 0.3; }
-        }
-
-        @media (max-width: 768px) {
-            .themes-container {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-            
-            .controls {
-                flex-wrap: wrap;
-            }
-            
-            .circular-progress-container {
-                flex-direction: column;
-                gap: 20px;
-            }
-            
-            .loaders-container {
-                flex-direction: column;
-                height: auto;
-                gap: 20px;
-            }
-        }
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <div class="header">
-            <h1>Progress Indicators</h1>
-            <div class="controls">
-                <button class="control-btn" id="playBtn">▶ Play</button>
-                <button class="control-btn" id="pauseBtn" disabled>⏸ Pause</button>
-                <button class="control-btn" id="resetBtn">⏮ Reset</button>
-                <span class="status-indicator playing" id="statusIndicator"></span>
-                <button class="control-btn theme-toggle" id="themeToggle">🌙 Dark Mode</button>
+      <div class="header">
+        <h1>Progress Indicators</h1>
+        <div class="controls">
+          <button class="control-btn" id="playBtn">▶ Play</button>
+          <button class="control-btn" id="pauseBtn" disabled>⏸ Pause</button>
+          <button class="control-btn" id="resetBtn">⏮ Reset</button>
+          <span class="status-indicator playing" id="statusIndicator"></span>
+          <button class="control-btn theme-toggle" id="themeToggle">🌙 Dark Mode</button>
+        </div>
+      </div>
+
+      <div class="themes-container">
+        <!-- Light Theme -->
+        <div class="theme-panel">
+          <h2 class="theme-title">Light Theme</h2>
+
+          <div class="section">
+            <h3 class="section-title">Progress Bars</h3>
+
+            <div class="progress-item">
+              <div class="progress-label">Basic Progress</div>
+              <div class="progress-bar">
+                <div class="progress-fill blue" id="basicProgress" style="width: 60%"></div>
+              </div>
             </div>
+
+            <div class="progress-item">
+              <div class="progress-label">With Label</div>
+              <div class="progress-with-label">
+                <div class="progress-bar">
+                  <div class="progress-fill green" id="labelProgress" style="width: 45%"></div>
+                </div>
+                <span class="progress-percentage" id="labelPercentage">45%</span>
+              </div>
+            </div>
+
+            <div class="progress-item">
+              <div class="progress-label">Step Progress</div>
+              <div class="step-progress">
+                <div class="progress-bar">
+                  <div class="progress-fill blue" id="stepProgress" style="width: 75%"></div>
+                </div>
+                <div class="step-markers">
+                  <div class="step-marker completed"></div>
+                  <div class="step-marker completed"></div>
+                  <div class="step-marker completed"></div>
+                  <div class="step-marker" id="step4"></div>
+                </div>
+                <div class="step-info" id="stepInfo">Step 3 of 4</div>
+              </div>
+            </div>
+
+            <div class="progress-item">
+              <div class="progress-label">Loading...</div>
+              <div class="progress-bar loading-bar indeterminate-progress">
+                <div class="indeterminate-fill"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3 class="section-title">Circular Progress</h3>
+            <div class="circular-progress-container">
+              <div class="circular-progress">
+                <svg width="40" height="40">
+                  <circle cx="20" cy="20" r="16" fill="none" stroke="#e5e7eb" stroke-width="4" />
+                  <circle
+                    cx="20"
+                    cy="20"
+                    r="16"
+                    fill="none"
+                    stroke="#3b82f6"
+                    stroke-width="4"
+                    stroke-dasharray="100.53"
+                    stroke-dashoffset="25.13"
+                    id="circularSmall"
+                  />
+                </svg>
+                <div class="progress-text" id="circularSmallText">75%</div>
+              </div>
+
+              <div class="circular-progress">
+                <svg width="64" height="64">
+                  <circle cx="32" cy="32" r="28" fill="none" stroke="#e5e7eb" stroke-width="6" />
+                  <circle
+                    cx="32"
+                    cy="32"
+                    r="28"
+                    fill="none"
+                    stroke="#10b981"
+                    stroke-width="6"
+                    stroke-dasharray="175.93"
+                    stroke-dashoffset="87.96"
+                    id="circularMedium"
+                  />
+                </svg>
+                <div class="progress-text" id="circularMediumText">50%</div>
+              </div>
+
+              <div class="circular-progress">
+                <svg width="80" height="80">
+                  <circle cx="40" cy="40" r="36" fill="none" stroke="#e5e7eb" stroke-width="8" />
+                  <circle
+                    cx="40"
+                    cy="40"
+                    r="36"
+                    fill="none"
+                    stroke="#ef4444"
+                    stroke-width="8"
+                    stroke-dasharray="226.19"
+                    stroke-dashoffset="169.64"
+                    id="circularLarge"
+                  />
+                </svg>
+                <div class="progress-text" id="circularLargeText">25%</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3 class="section-title">Loading Spinners</h3>
+            <div class="loaders-container">
+              <div class="spinner"></div>
+
+              <div class="dots-loader">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+              </div>
+
+              <div class="pulse-loader"></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3 class="section-title">Skeleton Loading</h3>
+            <div class="skeleton-loader">
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line"></div>
+            </div>
+          </div>
         </div>
 
-        <div class="themes-container">
-            <!-- Light Theme -->
-            <div class="theme-panel">
-                <h2 class="theme-title">Light Theme</h2>
-                
-                <div class="section">
-                    <h3 class="section-title">Progress Bars</h3>
-                    
-                    <div class="progress-item">
-                        <div class="progress-label">Basic Progress</div>
-                        <div class="progress-bar">
-                            <div class="progress-fill blue" id="basicProgress" style="width: 60%;"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="progress-item">
-                        <div class="progress-label">With Label</div>
-                        <div class="progress-with-label">
-                            <div class="progress-bar">
-                                <div class="progress-fill green" id="labelProgress" style="width: 45%;"></div>
-                            </div>
-                            <span class="progress-percentage" id="labelPercentage">45%</span>
-                        </div>
-                    </div>
-                    
-                    <div class="progress-item">
-                        <div class="progress-label">Step Progress</div>
-                        <div class="step-progress">
-                            <div class="progress-bar">
-                                <div class="progress-fill blue" id="stepProgress" style="width: 75%;"></div>
-                            </div>
-                            <div class="step-markers">
-                                <div class="step-marker completed"></div>
-                                <div class="step-marker completed"></div>
-                                <div class="step-marker completed"></div>
-                                <div class="step-marker" id="step4"></div>
-                            </div>
-                            <div class="step-info" id="stepInfo">Step 3 of 4</div>
-                        </div>
-                    </div>
-                    
-                    <div class="progress-item">
-                        <div class="progress-label">Loading...</div>
-                        <div class="progress-bar loading-bar indeterminate-progress">
-                            <div class="indeterminate-fill"></div>
-                        </div>
-                    </div>
-                </div>
+        <!-- Dark Theme -->
+        <div class="theme-panel">
+          <h2 class="theme-title">Dark Theme</h2>
 
-                <div class="section">
-                    <h3 class="section-title">Circular Progress</h3>
-                    <div class="circular-progress-container">
-                        <div class="circular-progress">
-                            <svg width="40" height="40">
-                                <circle cx="20" cy="20" r="16" fill="none" stroke="#e5e7eb" stroke-width="4"/>
-                                <circle cx="20" cy="20" r="16" fill="none" stroke="#3b82f6" stroke-width="4" 
-                                        stroke-dasharray="100.53" stroke-dashoffset="25.13" id="circularSmall"/>
-                            </svg>
-                            <div class="progress-text" id="circularSmallText">75%</div>
-                        </div>
-                        
-                        <div class="circular-progress">
-                            <svg width="64" height="64">
-                                <circle cx="32" cy="32" r="28" fill="none" stroke="#e5e7eb" stroke-width="6"/>
-                                <circle cx="32" cy="32" r="28" fill="none" stroke="#10b981" stroke-width="6" 
-                                        stroke-dasharray="175.93" stroke-dashoffset="87.96" id="circularMedium"/>
-                            </svg>
-                            <div class="progress-text" id="circularMediumText">50%</div>
-                        </div>
-                        
-                        <div class="circular-progress">
-                            <svg width="80" height="80">
-                                <circle cx="40" cy="40" r="36" fill="none" stroke="#e5e7eb" stroke-width="8"/>
-                                <circle cx="40" cy="40" r="36" fill="none" stroke="#ef4444" stroke-width="8" 
-                                        stroke-dasharray="226.19" stroke-dashoffset="169.64" id="circularLarge"/>
-                            </svg>
-                            <div class="progress-text" id="circularLargeText">25%</div>
-                        </div>
-                    </div>
-                </div>
+          <div class="section">
+            <h3 class="section-title">Progress Bars</h3>
 
-                <div class="section">
-                    <h3 class="section-title">Loading Spinners</h3>
-                    <div class="loaders-container">
-                        <div class="spinner"></div>
-                        
-                        <div class="dots-loader">
-                            <div class="dot"></div>
-                            <div class="dot"></div>
-                            <div class="dot"></div>
-                        </div>
-                        
-                        <div class="pulse-loader"></div>
-                    </div>
-                </div>
-
-                <div class="section">
-                    <h3 class="section-title">Skeleton Loading</h3>
-                    <div class="skeleton-loader">
-                        <div class="skeleton-line"></div>
-                        <div class="skeleton-line"></div>
-                        <div class="skeleton-line"></div>
-                    </div>
-                </div>
+            <div class="progress-item">
+              <div class="progress-label">Basic Progress</div>
+              <div class="progress-bar">
+                <div class="progress-fill blue" id="basicProgressDark" style="width: 60%"></div>
+              </div>
             </div>
 
-            <!-- Dark Theme -->
-            <div class="theme-panel">
-                <h2 class="theme-title">Dark Theme</h2>
-                
-                <div class="section">
-                    <h3 class="section-title">Progress Bars</h3>
-                    
-                    <div class="progress-item">
-                        <div class="progress-label">Basic Progress</div>
-                        <div class="progress-bar">
-                            <div class="progress-fill blue" id="basicProgressDark" style="width: 60%;"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="progress-item">
-                        <div class="progress-label">With Label</div>
-                        <div class="progress-with-label">
-                            <div class="progress-bar">
-                                <div class="progress-fill green" id="labelProgressDark" style="width: 45%;"></div>
-                            </div>
-                            <span class="progress-percentage" id="labelPercentageDark">45%</span>
-                        </div>
-                    </div>
-                    
-                    <div class="progress-item">
-                        <div class="progress-label">Step Progress</div>
-                        <div class="step-progress">
-                            <div class="progress-bar">
-                                <div class="progress-fill blue" id="stepProgressDark" style="width: 75%;"></div>
-                            </div>
-                            <div class="step-markers">
-                                <div class="step-marker completed"></div>
-                                <div class="step-marker completed"></div>
-                                <div class="step-marker completed"></div>
-                                <div class="step-marker" id="step4Dark"></div>
-                            </div>
-                            <div class="step-info" id="stepInfoDark">Step 3 of 4</div>
-                        </div>
-                    </div>
-                    
-                    <div class="progress-item">
-                        <div class="progress-label">Loading...</div>
-                        <div class="progress-bar loading-bar indeterminate-progress">
-                            <div class="indeterminate-fill"></div>
-                        </div>
-                    </div>
+            <div class="progress-item">
+              <div class="progress-label">With Label</div>
+              <div class="progress-with-label">
+                <div class="progress-bar">
+                  <div class="progress-fill green" id="labelProgressDark" style="width: 45%"></div>
                 </div>
-
-                <div class="section">
-                    <h3 class="section-title">Circular Progress</h3>
-                    <div class="circular-progress-container">
-                        <div class="circular-progress">
-                            <svg width="40" height="40">
-                                <circle cx="20" cy="20" r="16" fill="none" stroke="#374151" stroke-width="4"/>
-                                <circle cx="20" cy="20" r="16" fill="none" stroke="#60a5fa" stroke-width="4" 
-                                        stroke-dasharray="100.53" stroke-dashoffset="25.13" id="circularSmallDark"/>
-                            </svg>
-                            <div class="progress-text" id="circularSmallTextDark">75%</div>
-                        </div>
-                        
-                        <div class="circular-progress">
-                            <svg width="64" height="64">
-                                <circle cx="32" cy="32" r="28" fill="none" stroke="#374151" stroke-width="6"/>
-                                <circle cx="32" cy="32" r="28" fill="none" stroke="#10b981" stroke-width="6" 
-                                        stroke-dasharray="175.93" stroke-dashoffset="87.96" id="circularMediumDark"/>
-                            </svg>
-                            <div class="progress-text" id="circularMediumTextDark">50%</div>
-                        </div>
-                        
-                        <div class="circular-progress">
-                            <svg width="80" height="80">
-                                <circle cx="40" cy="40" r="36" fill="none" stroke="#374151" stroke-width="8"/>
-                                <circle cx="40" cy="40" r="36" fill="none" stroke="#ef4444" stroke-width="8" 
-                                        stroke-dasharray="226.19" stroke-dashoffset="169.64" id="circularLargeDark"/>
-                            </svg>
-                            <div class="progress-text" id="circularLargeTextDark">25%</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="section">
-                    <h3 class="section-title">Loading Spinners</h3>
-                    <div class="loaders-container">
-                        <div class="spinner"></div>
-                        
-                        <div class="dots-loader">
-                            <div class="dot"></div>
-                            <div class="dot"></div>
-                            <div class="dot"></div>
-                        </div>
-                        
-                        <div class="pulse-loader"></div>
-                    </div>
-                </div>
-
-                <div class="section">
-                    <h3 class="section-title">Skeleton Loading</h3>
-                    <div class="skeleton-loader">
-                        <div class="skeleton-line"></div>
-                        <div class="skeleton-line"></div>
-                        <div class="skeleton-line"></div>
-                    </div>
-                </div>
+                <span class="progress-percentage" id="labelPercentageDark">45%</span>
+              </div>
             </div>
+
+            <div class="progress-item">
+              <div class="progress-label">Step Progress</div>
+              <div class="step-progress">
+                <div class="progress-bar">
+                  <div class="progress-fill blue" id="stepProgressDark" style="width: 75%"></div>
+                </div>
+                <div class="step-markers">
+                  <div class="step-marker completed"></div>
+                  <div class="step-marker completed"></div>
+                  <div class="step-marker completed"></div>
+                  <div class="step-marker" id="step4Dark"></div>
+                </div>
+                <div class="step-info" id="stepInfoDark">Step 3 of 4</div>
+              </div>
+            </div>
+
+            <div class="progress-item">
+              <div class="progress-label">Loading...</div>
+              <div class="progress-bar loading-bar indeterminate-progress">
+                <div class="indeterminate-fill"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3 class="section-title">Circular Progress</h3>
+            <div class="circular-progress-container">
+              <div class="circular-progress">
+                <svg width="40" height="40">
+                  <circle cx="20" cy="20" r="16" fill="none" stroke="#374151" stroke-width="4" />
+                  <circle
+                    cx="20"
+                    cy="20"
+                    r="16"
+                    fill="none"
+                    stroke="#60a5fa"
+                    stroke-width="4"
+                    stroke-dasharray="100.53"
+                    stroke-dashoffset="25.13"
+                    id="circularSmallDark"
+                  />
+                </svg>
+                <div class="progress-text" id="circularSmallTextDark">75%</div>
+              </div>
+
+              <div class="circular-progress">
+                <svg width="64" height="64">
+                  <circle cx="32" cy="32" r="28" fill="none" stroke="#374151" stroke-width="6" />
+                  <circle
+                    cx="32"
+                    cy="32"
+                    r="28"
+                    fill="none"
+                    stroke="#10b981"
+                    stroke-width="6"
+                    stroke-dasharray="175.93"
+                    stroke-dashoffset="87.96"
+                    id="circularMediumDark"
+                  />
+                </svg>
+                <div class="progress-text" id="circularMediumTextDark">50%</div>
+              </div>
+
+              <div class="circular-progress">
+                <svg width="80" height="80">
+                  <circle cx="40" cy="40" r="36" fill="none" stroke="#374151" stroke-width="8" />
+                  <circle
+                    cx="40"
+                    cy="40"
+                    r="36"
+                    fill="none"
+                    stroke="#ef4444"
+                    stroke-width="8"
+                    stroke-dasharray="226.19"
+                    stroke-dashoffset="169.64"
+                    id="circularLargeDark"
+                  />
+                </svg>
+                <div class="progress-text" id="circularLargeTextDark">25%</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3 class="section-title">Loading Spinners</h3>
+            <div class="loaders-container">
+              <div class="spinner"></div>
+
+              <div class="dots-loader">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+              </div>
+
+              <div class="pulse-loader"></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3 class="section-title">Skeleton Loading</h3>
+            <div class="skeleton-loader">
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line"></div>
+            </div>
+          </div>
         </div>
+      </div>
     </div>
 
     <script>
-        class ProgressController {
-            constructor() {
-                this.isPlaying = true;
-                this.isDark = false;
-                this.animationId = null;
-                this.startTime = Date.now();
-                this.pausedTime = 0;
-                
-                this.initializeElements();
-                this.bindEvents();
-                this.startAnimations();
-            }
+      class ProgressController {
+        constructor() {
+          this.isPlaying = true;
+          this.isDark = false;
+          this.animationId = null;
+          this.startTime = Date.now();
+          this.pausedTime = 0;
 
-            initializeElements() {
-                this.playBtn = document.getElementById('playBtn');
-                this.pauseBtn = document.getElementById('pauseBtn');
-                this.resetBtn = document.getElementById('resetBtn');
-                this.themeToggle = document.getElementById('themeToggle');
-                this.statusIndicator = document.getElementById('statusIndicator');
-                this.body = document.body;
-            }
-
-            bindEvents() {
-                this.playBtn.addEventListener('click', () => this.play());
-                this.pauseBtn.addEventListener('click', () => this.pause());
-                this.resetBtn.addEventListener('click', () => this.reset());
-                this.themeToggle.addEventListener('click', () => this.toggleTheme());
-            }
-
-            play() {
-                if (!this.isPlaying) {
-                    this.isPlaying = true;
-                    this.startTime = Date.now() - this.pausedTime;
-                    this.body.classList.remove('paused');
-                    this.playBtn.disabled = true;
-                    this.pauseBtn.disabled = false;
-                    this.statusIndicator.className = 'status-indicator playing';
-                    this.startAnimations();
-                }
-            }
-
-            pause() {
-                if (this.isPlaying) {
-                    this.isPlaying = false;
-                    this.pausedTime = Date.now() - this.startTime;
-                    this.body.classList.add('paused');
-                    this.playBtn.disabled = false;
-                    this.pauseBtn.disabled = true;
-                    this.statusIndicator.className = 'status-indicator paused';
-                    this.stopAnimations();
-                }
-            }
-
-            reset() {
-                this.startTime = Date.now();
-                this.pausedTime = 0;
-                this.updateProgress();
-                
-                if (!this.isPlaying) {
-                    this.play();
-                }
-            }
-
-            toggleTheme() {
-                this.isDark = !this.isDark;
-                this.body.classList.toggle('dark', this.isDark);
-                this.themeToggle.textContent = this.isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
-            }
-
-            startAnimations() {
-                if (this.isPlaying) {
-                    this.updateProgress();
-                    this.animationId = requestAnimationFrame(() => this.startAnimations());
-                }
-            }
-
-            stopAnimations() {
-                if (this.animationId) {
-                    cancelAnimationFrame(this.animationId);
-                    this.animationId = null;
-                }
-            }
-
-            updateProgress() {
-                const elapsed = (Date.now() - this.startTime) / 1000;
-                
-                // Update basic progress (cycles every 10 seconds)
-                const basicValue = ((elapsed % 10) / 10) * 100;
-                this.setProgress('basicProgress', basicValue);
-                this.setProgress('basicProgressDark', basicValue);
-                
-                // Update labeled progress (cycles every 8 seconds)
-                const labelValue = ((elapsed % 8) / 8) * 100;
-                this.setProgress('labelProgress', labelValue);
-                this.setProgress('labelProgressDark', labelValue);
-                document.getElementById('labelPercentage').textContent = Math.round(labelValue) + '%';
-                document.getElementById('labelPercentageDark').textContent = Math.round(labelValue) + '%';
-                
-                // Update step progress (cycles every 12 seconds)
-                const stepValue = ((elapsed % 12) / 12) * 100;
-                this.setProgress('stepProgress', stepValue);
-                this.setProgress('stepProgressDark', stepValue);
-                this.updateStepMarkers(stepValue);
-                
-                // Update circular progress
-                this.updateCircularProgress('circularSmall', 'circularSmallText', ((elapsed % 6) / 6) * 100);
-                this.updateCircularProgress('circularSmallDark', 'circularSmallTextDark', ((elapsed % 6) / 6) * 100);
-                
-                this.updateCircularProgress('circularMedium', 'circularMediumText', ((elapsed % 7) / 7) * 100);
-                this.updateCircularProgress('circularMediumDark', 'circularMediumTextDark', ((elapsed % 7) / 7) * 100);
-                
-                this.updateCircularProgress('circularLarge', 'circularLargeText', ((elapsed % 9) / 9) * 100);
-                this.updateCircularProgress('circularLargeDark', 'circularLargeTextDark', ((elapsed % 9) / 9) * 100);
-            }
-
-            setProgress(elementId, percentage) {
-                const element = document.getElementById(elementId);
-                if (element) {
-                    element.style.width = Math.min(100, Math.max(0, percentage)) + '%';
-                }
-            }
-
-            updateStepMarkers(percentage) {
-                const step = Math.floor(percentage / 25) + 1;
-                const stepInfo = `Step ${Math.min(4, step)} of 4`;
-                
-                document.getElementById('stepInfo').textContent = stepInfo;
-                document.getElementById('stepInfoDark').textContent = stepInfo;
-                
-                // Update step 4 marker
-                const step4 = document.getElementById('step4');
-                const step4Dark = document.getElementById('step4Dark');
-                
-                if (percentage >= 75) {
-                    step4.classList.add('completed');
-                    step4Dark.classList.add('completed');
-                } else {
-                    step4.classList.remove('completed');
-                    step4Dark.classList.remove('completed');
-                }
-            }
-
-            updateCircularProgress(elementId, textId, percentage) {
-                const element = document.getElementById(elementId);
-                const textElement = document.getElementById(textId);
-                
-                if (element && textElement) {
-                    const radius = parseFloat(element.getAttribute('r'));
-                    const circumference = 2 * Math.PI * radius;
-                    const offset = circumference - (percentage / 100) * circumference;
-                    
-                    element.style.strokeDasharray = circumference;
-                    element.style.strokeDashoffset = offset;
-                    element.style.transition = 'stroke-dashoffset 0.3s ease';
-                    
-                    textElement.textContent = Math.round(percentage) + '%';
-                }
-            }
+          this.initializeElements();
+          this.bindEvents();
+          this.startAnimations();
         }
 
-        // Initialize the progress controller when the page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            new ProgressController();
-        });
+        initializeElements() {
+          this.playBtn = document.getElementById('playBtn');
+          this.pauseBtn = document.getElementById('pauseBtn');
+          this.resetBtn = document.getElementById('resetBtn');
+          this.themeToggle = document.getElementById('themeToggle');
+          this.statusIndicator = document.getElementById('statusIndicator');
+          this.body = document.body;
+        }
+
+        bindEvents() {
+          this.playBtn.addEventListener('click', () => this.play());
+          this.pauseBtn.addEventListener('click', () => this.pause());
+          this.resetBtn.addEventListener('click', () => this.reset());
+          this.themeToggle.addEventListener('click', () => this.toggleTheme());
+        }
+
+        play() {
+          if (!this.isPlaying) {
+            this.isPlaying = true;
+            this.startTime = Date.now() - this.pausedTime;
+            this.body.classList.remove('paused');
+            this.playBtn.disabled = true;
+            this.pauseBtn.disabled = false;
+            this.statusIndicator.className = 'status-indicator playing';
+            this.startAnimations();
+          }
+        }
+
+        pause() {
+          if (this.isPlaying) {
+            this.isPlaying = false;
+            this.pausedTime = Date.now() - this.startTime;
+            this.body.classList.add('paused');
+            this.playBtn.disabled = false;
+            this.pauseBtn.disabled = true;
+            this.statusIndicator.className = 'status-indicator paused';
+            this.stopAnimations();
+          }
+        }
+
+        reset() {
+          this.startTime = Date.now();
+          this.pausedTime = 0;
+          this.updateProgress();
+
+          if (!this.isPlaying) {
+            this.play();
+          }
+        }
+
+        toggleTheme() {
+          this.isDark = !this.isDark;
+          this.body.classList.toggle('dark', this.isDark);
+          this.themeToggle.textContent = this.isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
+        }
+
+        startAnimations() {
+          if (this.isPlaying) {
+            this.updateProgress();
+            this.animationId = requestAnimationFrame(() => this.startAnimations());
+          }
+        }
+
+        stopAnimations() {
+          if (this.animationId) {
+            cancelAnimationFrame(this.animationId);
+            this.animationId = null;
+          }
+        }
+
+        updateProgress() {
+          const elapsed = (Date.now() - this.startTime) / 1000;
+
+          // Update basic progress (cycles every 10 seconds)
+          const basicValue = ((elapsed % 10) / 10) * 100;
+          this.setProgress('basicProgress', basicValue);
+          this.setProgress('basicProgressDark', basicValue);
+
+          // Update labeled progress (cycles every 8 seconds)
+          const labelValue = ((elapsed % 8) / 8) * 100;
+          this.setProgress('labelProgress', labelValue);
+          this.setProgress('labelProgressDark', labelValue);
+          document.getElementById('labelPercentage').textContent = Math.round(labelValue) + '%';
+          document.getElementById('labelPercentageDark').textContent = Math.round(labelValue) + '%';
+
+          // Update step progress (cycles every 12 seconds)
+          const stepValue = ((elapsed % 12) / 12) * 100;
+          this.setProgress('stepProgress', stepValue);
+          this.setProgress('stepProgressDark', stepValue);
+          this.updateStepMarkers(stepValue);
+
+          // Update circular progress
+          this.updateCircularProgress(
+            'circularSmall',
+            'circularSmallText',
+            ((elapsed % 6) / 6) * 100
+          );
+          this.updateCircularProgress(
+            'circularSmallDark',
+            'circularSmallTextDark',
+            ((elapsed % 6) / 6) * 100
+          );
+
+          this.updateCircularProgress(
+            'circularMedium',
+            'circularMediumText',
+            ((elapsed % 7) / 7) * 100
+          );
+          this.updateCircularProgress(
+            'circularMediumDark',
+            'circularMediumTextDark',
+            ((elapsed % 7) / 7) * 100
+          );
+
+          this.updateCircularProgress(
+            'circularLarge',
+            'circularLargeText',
+            ((elapsed % 9) / 9) * 100
+          );
+          this.updateCircularProgress(
+            'circularLargeDark',
+            'circularLargeTextDark',
+            ((elapsed % 9) / 9) * 100
+          );
+        }
+
+        setProgress(elementId, percentage) {
+          const element = document.getElementById(elementId);
+          if (element) {
+            element.style.width = Math.min(100, Math.max(0, percentage)) + '%';
+          }
+        }
+
+        updateStepMarkers(percentage) {
+          const step = Math.floor(percentage / 25) + 1;
+          const stepInfo = `Step ${Math.min(4, step)} of 4`;
+
+          document.getElementById('stepInfo').textContent = stepInfo;
+          document.getElementById('stepInfoDark').textContent = stepInfo;
+
+          // Update step 4 marker
+          const step4 = document.getElementById('step4');
+          const step4Dark = document.getElementById('step4Dark');
+
+          if (percentage >= 75) {
+            step4.classList.add('completed');
+            step4Dark.classList.add('completed');
+          } else {
+            step4.classList.remove('completed');
+            step4Dark.classList.remove('completed');
+          }
+        }
+
+        updateCircularProgress(elementId, textId, percentage) {
+          const element = document.getElementById(elementId);
+          const textElement = document.getElementById(textId);
+
+          if (element && textElement) {
+            const radius = parseFloat(element.getAttribute('r'));
+            const circumference = 2 * Math.PI * radius;
+            const offset = circumference - (percentage / 100) * circumference;
+
+            element.style.strokeDasharray = circumference;
+            element.style.strokeDashoffset = offset;
+            element.style.transition = 'stroke-dashoffset 0.3s ease';
+
+            textElement.textContent = Math.round(percentage) + '%';
+          }
+        }
+      }
+
+      // Initialize the progress controller when the page loads
+      document.addEventListener('DOMContentLoaded', () => {
+        new ProgressController();
+      });
     </script>
-</body>
+  </body>
 </html>

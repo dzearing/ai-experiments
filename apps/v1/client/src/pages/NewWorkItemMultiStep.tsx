@@ -8,8 +8,8 @@ import { useLayout } from '../contexts/LayoutContext';
 import { Button } from '../components/ui/Button';
 import { InlineLoadingSpinner } from '../components/ui/LoadingSpinner';
 import { DropdownTransition } from '../components/DropdownTransition';
-import { 
-  MDXEditor, 
+import {
+  MDXEditor,
   headingsPlugin,
   listsPlugin,
   quotePlugin,
@@ -22,7 +22,7 @@ import {
   InsertThematicBreak,
   ListsToggle,
   BlockTypeSelect,
-  Separator
+  Separator,
 } from '@mdxeditor/editor';
 import '@mdxeditor/editor/style.css';
 import '../styles/mdx-editor.css';
@@ -55,11 +55,11 @@ function NewWorkItemContent() {
   const { workspace, reloadWorkspace } = useWorkspace();
   const { setHeaderContent } = useLayout();
   const styles = currentStyles;
-  
+
   // Check if we're in edit mode
   const isEditMode = !!workItemId;
-  const existingWorkItem = isEditMode ? workItems.find(w => w.id === workItemId) : null;
-  
+  const existingWorkItem = isEditMode ? workItems.find((w) => w.id === workItemId) : null;
+
   // Use context for all state management
   const {
     step,
@@ -82,30 +82,32 @@ function NewWorkItemContent() {
     setError,
     resetToInput,
   } = useNewWorkItem();
-  
+
   // Add local state for immediate UI response
   const [, startTransition] = useTransition();
   const [editorKey, setEditorKey] = useState(0);
-  
+
   // State for what's selected in review step
   const [selectedSection, setSelectedSection] = useState<'general' | 'task'>('general');
-  
+
   // Project selection state
   const [selectedProjectId, setSelectedProjectId] = useState<string>(
     projectId || existingWorkItem?.projectId || (projects.length === 1 ? projects[0].id : '')
   );
-  
+
   // Get the project info if we're creating from a project context or editing
-  const currentProject = projectId ? 
-    projects.find(p => p.id === projectId) : 
-    (existingWorkItem ? projects.find(p => p.id === existingWorkItem.projectId) : 
-     (selectedProjectId ? projects.find(p => p.id === selectedProjectId) : undefined));
-  
+  const currentProject = projectId
+    ? projects.find((p) => p.id === projectId)
+    : existingWorkItem
+      ? projects.find((p) => p.id === existingWorkItem.projectId)
+      : selectedProjectId
+        ? projects.find((p) => p.id === selectedProjectId)
+        : undefined;
+
   const [mockMode, setMockMode] = useState(() => {
     const saved = localStorage.getItem('mockMode');
     return saved ? JSON.parse(saved) : false;
   });
-
 
   // Listen for mock mode changes
   useEffect(() => {
@@ -119,11 +121,13 @@ function NewWorkItemContent() {
     };
   }, []);
 
-  const selectedTask = tasks.find(t => t.id === selectedTaskId);
-  
+  const selectedTask = tasks.find((t) => t.id === selectedTaskId);
+
   // Track if content has changed for save button visibility
   const [hasChanges, setHasChanges] = useState(false);
-  const [originalGeneralMarkdown, setOriginalGeneralMarkdown] = useState<string | undefined>(undefined);
+  const [originalGeneralMarkdown, setOriginalGeneralMarkdown] = useState<string | undefined>(
+    undefined
+  );
   const [originalTasks, setOriginalTasks] = useState<Task[]>([]);
   const isProgrammaticChange = useRef(false);
   const [originalTaskContents, setOriginalTaskContents] = useState<Record<string, string>>({});
@@ -135,17 +139,17 @@ function NewWorkItemContent() {
       const projectName = currentProject?.name || 'Unknown Project';
       setHeaderContent([
         { label: 'Work items', path: '/work-items' },
-        { label: `${projectName}: ${existingWorkItem.title}` }
+        { label: `${projectName}: ${existingWorkItem.title}` },
       ]);
     } else {
       setHeaderContent(null);
     }
-    
+
     // No cleanup needed - let the next page set its own header
   }, [isEditMode, existingWorkItem, currentProject, setHeaderContent]);
-  
+
   // Don't use useEffect for change detection - only set hasChanges from user actions
-  
+
   // Warn about unsaved changes when leaving the page
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -154,12 +158,12 @@ function NewWorkItemContent() {
         e.returnValue = '';
       }
     };
-    
+
     // Add event listener for page unload
     if (hasChanges) {
       window.addEventListener('beforeunload', handleBeforeUnload);
     }
-    
+
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
@@ -168,37 +172,37 @@ function NewWorkItemContent() {
   // Function to parse edited markdown content back into task properties
   const parseTaskFromMarkdown = (markdown: string): Partial<Task> => {
     const task: Partial<Task> = {};
-    
+
     // Extract description
     const descMatch = markdown.match(/##\s*Description\s*\n+([\s\S]*?)(?=\n##|$)/);
     if (descMatch) {
       task.description = descMatch[1].trim();
     }
-    
+
     // Extract goals
     const goalsMatch = markdown.match(/##\s*Goals\s*\n+([\s\S]*?)(?=\n##|$)/);
     if (goalsMatch) {
       const goalLines = goalsMatch[1].trim().split('\n');
       task.goals = goalLines
-        .filter(line => line.match(/^-\s*/))
-        .map(line => line.replace(/^-\s*/, '').trim());
+        .filter((line) => line.match(/^-\s*/))
+        .map((line) => line.replace(/^-\s*/, '').trim());
     }
-    
+
     // Extract work description
     const workMatch = markdown.match(/##\s*Work\s*Description\s*\n+([\s\S]*?)(?=\n##|$)/);
     if (workMatch) {
       task.workDescription = workMatch[1].trim();
     }
-    
+
     // Extract validation criteria
     const criteriaMatch = markdown.match(/##\s*Validation\s*Criteria\s*\n+([\s\S]*?)(?=\n##|$)/);
     if (criteriaMatch) {
       const criteriaLines = criteriaMatch[1].trim().split('\n');
       task.validationCriteria = criteriaLines
-        .filter(line => line.match(/^-\s*/))
-        .map(line => line.replace(/^-\s*/, '').trim());
+        .filter((line) => line.match(/^-\s*/))
+        .map((line) => line.replace(/^-\s*/, '').trim());
     }
-    
+
     return task;
   };
 
@@ -206,16 +210,17 @@ function NewWorkItemContent() {
   const updateTaskFromMarkdown = (isUserEdit: boolean = true) => {
     if (selectedTaskId && editedContent) {
       const parsedTask = parseTaskFromMarkdown(editedContent);
-      const updatedTasks = tasks.map(task => 
-        task.id === selectedTaskId 
-          ? { ...task, ...parsedTask }
-          : task
+      const updatedTasks = tasks.map((task) =>
+        task.id === selectedTaskId ? { ...task, ...parsedTask } : task
       );
       setTasks(updatedTasks);
-      
+
       // Check if tasks actually changed after update (only for user edits)
       if (isEditMode && originalTasks.length > 0 && isUserEdit && !isProgrammaticChange.current) {
-        setHasChanges(generalMarkdown !== originalGeneralMarkdown || JSON.stringify(updatedTasks) !== JSON.stringify(originalTasks));
+        setHasChanges(
+          generalMarkdown !== originalGeneralMarkdown ||
+            JSON.stringify(updatedTasks) !== JSON.stringify(originalTasks)
+        );
       }
     }
   };
@@ -226,13 +231,13 @@ function NewWorkItemContent() {
 ${task.description || 'No description'}
 
 ## Goals
-${(task.goals || []).map(goal => `- ${goal}`).join('\n') || '- No goals defined'}
+${(task.goals || []).map((goal) => `- ${goal}`).join('\n') || '- No goals defined'}
 
 ## Work Description
 ${task.workDescription || 'No work description'}
 
 ## Validation Criteria
-${(task.validationCriteria || []).map(criteria => `- ${criteria}`).join('\n') || '- No criteria defined'}`;
+${(task.validationCriteria || []).map((criteria) => `- ${criteria}`).join('\n') || '- No criteria defined'}`;
   };
 
   // Function to assign task numbers with parallel task support
@@ -241,7 +246,7 @@ ${(task.validationCriteria || []).map(criteria => `- ${criteria}`).join('\n') ||
     const numberedTasks = [...taskList];
     let currentNumber = 1;
     let subLetter = 'a';
-    
+
     for (let i = 0; i < numberedTasks.length; i++) {
       if (i === 0) {
         numberedTasks[i].taskNumber = '1';
@@ -249,21 +254,29 @@ ${(task.validationCriteria || []).map(criteria => `- ${criteria}`).join('\n') ||
         // Check if this task might be parallel with the previous one
         const currentTitle = numberedTasks[i].title.toLowerCase();
         const prevTitle = numberedTasks[i - 1].title.toLowerCase();
-        
+
         // Simple heuristic: if titles share common keywords or both mention similar actions
         const commonKeywords = ['implement', 'create', 'add', 'update', 'test', 'document'];
-        
+
         // Check if both tasks are of similar type (e.g., both are "implement" tasks)
-        const isParallel = commonKeywords.some(kw => 
-          currentTitle.includes(kw) && prevTitle.includes(kw)
-        ) || (currentTitle.includes('test') && prevTitle.includes('test'));
-        
-        if (isParallel && numberedTasks[i - 1].taskNumber && !numberedTasks[i - 1].taskNumber?.includes('a')) {
+        const isParallel =
+          commonKeywords.some((kw) => currentTitle.includes(kw) && prevTitle.includes(kw)) ||
+          (currentTitle.includes('test') && prevTitle.includes('test'));
+
+        if (
+          isParallel &&
+          numberedTasks[i - 1].taskNumber &&
+          !numberedTasks[i - 1].taskNumber?.includes('a')
+        ) {
           // Start a new parallel group
           numberedTasks[i - 1].taskNumber = `${currentNumber}a`;
           numberedTasks[i].taskNumber = `${currentNumber}b`;
           subLetter = 'c';
-        } else if (isParallel && numberedTasks[i - 1].taskNumber && numberedTasks[i - 1].taskNumber?.includes(String(currentNumber))) {
+        } else if (
+          isParallel &&
+          numberedTasks[i - 1].taskNumber &&
+          numberedTasks[i - 1].taskNumber?.includes(String(currentNumber))
+        ) {
           // Continue parallel group
           numberedTasks[i].taskNumber = `${currentNumber}${subLetter}`;
           subLetter = String.fromCharCode(subLetter.charCodeAt(0) + 1);
@@ -275,7 +288,7 @@ ${(task.validationCriteria || []).map(criteria => `- ${criteria}`).join('\n') ||
         }
       }
     }
-    
+
     return numberedTasks;
   };
 
@@ -289,9 +302,9 @@ ${(task.validationCriteria || []).map(criteria => `- ${criteria}`).join('\n') ||
       hasTasks: !!existingWorkItem?.metadata?.tasks,
       tasksLength: existingWorkItem?.metadata?.tasks?.length,
       hasGeneralMarkdown: !!existingWorkItem?.metadata?.generalMarkdown,
-      generalMarkdownLength: existingWorkItem?.metadata?.generalMarkdown?.length
+      generalMarkdownLength: existingWorkItem?.metadata?.generalMarkdown?.length,
     });
-    
+
     if (isEditMode && existingWorkItem && existingWorkItem.metadata?.tasks) {
       // Ensure tasks have all required properties
       const normalizedTasks = existingWorkItem.metadata.tasks.map((task: any) => ({
@@ -301,16 +314,16 @@ ${(task.validationCriteria || []).map(criteria => `- ${criteria}`).join('\n') ||
         goals: task.goals || [],
         workDescription: task.workDescription || '',
         validationCriteria: task.validationCriteria || [],
-        taskNumber: task.taskNumber
+        taskNumber: task.taskNumber,
       }));
-      
+
       // Set tasks from metadata
       const tasksWithNumbers = assignTaskNumbers(normalizedTasks);
       setTasks(tasksWithNumbers);
       setSelectedTaskId(tasksWithNumbers[0]?.id || null);
       // Extract original idea from description or use title
       setSavedIdea(existingWorkItem.description || existingWorkItem.title);
-      
+
       // Initialize general markdown for existing items
       // If no general markdown exists, create a default one
       let markdownForWorkItem: string;
@@ -336,18 +349,18 @@ ${existingWorkItem.description || 'No description provided'}
 - [ ] Tests passing`;
       }
       setGeneralMarkdown(markdownForWorkItem);
-      
+
       // Store original values to track changes
       setOriginalGeneralMarkdown(markdownForWorkItem);
       setOriginalTasks(tasksWithNumbers);
-      
+
       // Store original content for each task
       const taskContents: Record<string, string> = {};
-      tasksWithNumbers.forEach(task => {
+      tasksWithNumbers.forEach((task) => {
         taskContents[task.id] = formatTaskToMarkdown(task);
       });
       setOriginalTaskContents(taskContents);
-      
+
       // Mark initialization as complete after a short delay
       setTimeout(() => {
         isInitializing.current = false;
@@ -360,17 +373,17 @@ ${existingWorkItem.description || 'No description provided'}
     if (selectedTask) {
       // Mark this as a programmatic change
       isProgrammaticChange.current = true;
-      
+
       // Format the task as markdown immediately
       const markdown = formatTaskToMarkdown(selectedTask);
-      
+
       setEditedContent(markdown);
-      
+
       // Force MDXEditor to recreate with new content
       startTransition(() => {
-        setEditorKey(prev => prev + 1);
+        setEditorKey((prev) => prev + 1);
       });
-      
+
       // Reset the flag after a short delay to allow the editor to update
       setTimeout(() => {
         isProgrammaticChange.current = false;
@@ -396,9 +409,12 @@ ${existingWorkItem.description || 'No description provided'}
       if (!response.ok) {
         try {
           const errorData = await response.json();
-          const errorMessage = errorData.details || errorData.error || `Server responded with ${response.status}: ${response.statusText}`;
+          const errorMessage =
+            errorData.details ||
+            errorData.error ||
+            `Server responded with ${response.status}: ${response.statusText}`;
           const suggestion = errorData.suggestion;
-          
+
           // Show both error and suggestion
           if (suggestion) {
             throw new Error(`${errorMessage}\n\n${suggestion}`);
@@ -412,12 +428,12 @@ ${existingWorkItem.description || 'No description provided'}
       }
 
       const data = await response.json();
-      
+
       // Handle new response format with generalMarkdown
       if (data.generalMarkdown) {
         setGeneralMarkdown(data.generalMarkdown);
       }
-      
+
       const numberedTasks = assignTaskNumbers(data.tasks);
       setTasks(numberedTasks);
       setSelectedTaskId(numberedTasks[0]?.id || null);
@@ -425,7 +441,9 @@ ${existingWorkItem.description || 'No description provided'}
       setStep('review'); // Context will clear ideaText
     } catch (err) {
       if (err instanceof TypeError && err.message === 'Failed to fetch') {
-        setError('Cannot connect to server. Please ensure the mock server is running on port 3000. Run: cd server && npm run mock');
+        setError(
+          'Cannot connect to server. Please ensure the mock server is running on port 3000. Run: cd server && npm run mock'
+        );
       } else {
         setError(err instanceof Error ? err.message : 'An error occurred');
       }
@@ -446,10 +464,10 @@ ${existingWorkItem.description || 'No description provided'}
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           refinement: ideaText,
-          currentTasks: { tasks },  // Wrap in object to match expected format
-          mockMode
+          currentTasks: { tasks }, // Wrap in object to match expected format
+          mockMode,
         }),
       });
 
@@ -457,7 +475,7 @@ ${existingWorkItem.description || 'No description provided'}
         const errorData = await response.json();
         const errorMessage = errorData.details || errorData.error || 'Failed to refine tasks';
         const suggestion = errorData.suggestion;
-        
+
         // Show both error and suggestion
         if (suggestion) {
           throw new Error(`${errorMessage}\n\n${suggestion}`);
@@ -468,21 +486,22 @@ ${existingWorkItem.description || 'No description provided'}
 
       const data = await response.json();
       const numberedTasks = assignTaskNumbers(data.tasks);
-      
+
       // Handle selection preservation
       if (selectedTaskId && tasks.length > 0 && numberedTasks.length > 0) {
         // Find the currently selected task
-        const currentSelectedIndex = tasks.findIndex(t => t.id === selectedTaskId);
-        const currentSelectedTask = tasks.find(t => t.id === selectedTaskId);
-        
+        const currentSelectedIndex = tasks.findIndex((t) => t.id === selectedTaskId);
+        const currentSelectedTask = tasks.find((t) => t.id === selectedTaskId);
+
         if (currentSelectedIndex !== -1 && currentSelectedTask) {
           // Try to find the same task in the new list by matching title
-          const matchingNewTask = numberedTasks.find(t => 
-            t.title === currentSelectedTask.title || 
-            t.title.includes(currentSelectedTask.title) ||
-            currentSelectedTask.title.includes(t.title)
+          const matchingNewTask = numberedTasks.find(
+            (t) =>
+              t.title === currentSelectedTask.title ||
+              t.title.includes(currentSelectedTask.title) ||
+              currentSelectedTask.title.includes(t.title)
           );
-          
+
           if (matchingNewTask) {
             // Task still exists (possibly with different position), select it
             setSelectedTaskId(matchingNewTask.id);
@@ -496,12 +515,14 @@ ${existingWorkItem.description || 'No description provided'}
         // No previous selection or no tasks before, select first task
         setSelectedTaskId(numberedTasks[0].id);
       }
-      
+
       setTasks(numberedTasks);
       setIdeaText(''); // Clear for next refinement
     } catch (err) {
       if (err instanceof TypeError && err.message === 'Failed to fetch') {
-        setError('Cannot connect to server. Please ensure the mock server is running on port 3000. Run: cd server && npm run mock');
+        setError(
+          'Cannot connect to server. Please ensure the mock server is running on port 3000. Run: cd server && npm run mock'
+        );
       } else {
         setError(err instanceof Error ? err.message : 'An error occurred');
       }
@@ -517,10 +538,9 @@ ${existingWorkItem.description || 'No description provided'}
     if (selectedTaskId && editedContent) {
       updateTaskFromMarkdown(false); // Pass false since this is not a user edit
     }
-    
+
     // Create a single work item with all tasks as sub-tasks
     const overallTitle = tasks.length > 0 ? tasks[0].title : 'Work Item';
-    
 
     // Store tasks as JSON in a special field
     let workItem;
@@ -532,21 +552,21 @@ ${existingWorkItem.description || 'No description provided'}
         metadata: {
           tasks: tasks,
           currentTaskIndex: existingWorkItem.metadata?.currentTaskIndex || 0,
-          generalMarkdown: generalMarkdown
+          generalMarkdown: generalMarkdown,
         },
-        updatedAt: new Date()
+        updatedAt: new Date(),
       });
-      workItem = { 
-        ...existingWorkItem, 
+      workItem = {
+        ...existingWorkItem,
         id: existingWorkItem.id,
-        title: overallTitle, 
+        title: overallTitle,
         description: savedIdea || existingWorkItem.description,
         priority: existingWorkItem.priority || 'high',
         status: existingWorkItem.status || 'planned',
         metadata: {
           tasks: tasks,
-          currentTaskIndex: existingWorkItem.metadata?.currentTaskIndex || 0
-        }
+          currentTaskIndex: existingWorkItem.metadata?.currentTaskIndex || 0,
+        },
       };
     } else {
       // Create new work item
@@ -561,15 +581,15 @@ ${existingWorkItem.description || 'No description provided'}
           { name: 'Planning', status: 'completed' },
           { name: 'Development', status: 'pending' },
           { name: 'Testing', status: 'pending' },
-          { name: 'Review', status: 'pending' }
+          { name: 'Review', status: 'pending' },
         ],
         currentWorkflowStep: 0,
         // Store the tasks data for the work items UI to display
         metadata: {
           tasks: tasks,
           currentTaskIndex: 0,
-          generalMarkdown: generalMarkdown
-        }
+          generalMarkdown: generalMarkdown,
+        },
       });
     }
 
@@ -579,7 +599,7 @@ ${existingWorkItem.description || 'No description provided'}
       console.log('Workspace config:', workspace.config);
       console.log('Current project:', currentProject);
       console.log('Project path:', currentProject.path);
-      
+
       try {
         const requestBody = {
           workspacePath: workspace.config.path,
@@ -589,24 +609,24 @@ ${existingWorkItem.description || 'No description provided'}
             title: workItem.title,
             description: savedIdea, // Use the original idea as description
             priority: workItem.priority,
-            status: workItem.status
+            status: workItem.status,
           },
           generalMarkdown: generalMarkdown,
-          tasks: tasks
+          tasks: tasks,
         };
-        
+
         console.log('Request body:', requestBody);
-        
-        const endpoint = isEditMode ? 
-          'http://localhost:3000/api/workspace/update-workitem' : 
-          'http://localhost:3000/api/workspace/create-workitem';
-        
+
+        const endpoint = isEditMode
+          ? 'http://localhost:3000/api/workspace/update-workitem'
+          : 'http://localhost:3000/api/workspace/create-workitem';
+
         const response = await fetch(endpoint, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(requestBody)
+          body: JSON.stringify(requestBody),
         });
 
         if (!response.ok) {
@@ -616,19 +636,19 @@ ${existingWorkItem.description || 'No description provided'}
         } else {
           const result = await response.json();
           console.log('Work item saved as markdown:', result.path);
-          
+
           // Update the work item with the markdown path
           if (result.path) {
             updateWorkItem(workItem.id, { markdownPath: result.path });
           }
-          
+
           // Invalidate client-side cache and reload workspace
           if (!isEditMode) {
             // For new items, we need to invalidate cache
             const { invalidateCache } = await import('../utils/cache');
             invalidateCache(`workspace-light:${workspace.config.path}`);
             invalidateCache(`project-details:${currentProject.path}`);
-            
+
             // Trigger workspace reload to sync the new work item
             await reloadWorkspace();
             savedToDisk = true;
@@ -642,7 +662,9 @@ ${existingWorkItem.description || 'No description provided'}
       console.log('- workspace.config:', workspace.config);
       console.log('- currentProject:', currentProject);
       if (currentProject && !currentProject.path) {
-        console.log('- Project exists but has no path (may have been created before workspace integration)');
+        console.log(
+          '- Project exists but has no path (may have been created before workspace integration)'
+        );
       }
     }
 
@@ -667,22 +689,24 @@ ${existingWorkItem.description || 'No description provided'}
   const reviewContent = (
     <div className={`grid grid-cols-1 lg:grid-cols-3 gap-6 ${isEditMode ? 'h-full' : ''}`}>
       {/* Left Panel - General Details and Task List */}
-      <div className={`lg:col-span-1 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-4 flex flex-col ${isEditMode ? 'h-full' : ''}`}>
+      <div
+        className={`lg:col-span-1 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-4 flex flex-col ${isEditMode ? 'h-full' : ''}`}
+      >
         {/* General Details Section */}
         <div className="mb-4">
           <button
             onClick={() => {
               // Mark as programmatic change to prevent save button from appearing
               isProgrammaticChange.current = true;
-              
+
               // Update the task from markdown before switching (pass false for isUserEdit)
               if (selectedTaskId && editedContent) {
                 updateTaskFromMarkdown(false);
               }
-              
+
               setSelectedSection('general');
               setSelectedTaskId(null);
-              
+
               // Reset the flag after a short delay
               setTimeout(() => {
                 isProgrammaticChange.current = false;
@@ -690,24 +714,29 @@ ${existingWorkItem.description || 'No description provided'}
             }}
             className={`
               w-full text-left p-3 ${styles.buttonRadius} border
-              ${selectedSection === 'general' && !selectedTaskId
-                ? `${styles.primaryButton} ${styles.primaryButtonText} border-transparent` 
-                : `${styles.contentBg} ${styles.contentBorder} ${styles.textColor} hover:opacity-80`
+              ${
+                selectedSection === 'general' && !selectedTaskId
+                  ? `${styles.primaryButton} ${styles.primaryButtonText} border-transparent`
+                  : `${styles.contentBg} ${styles.contentBorder} ${styles.textColor} hover:opacity-80`
               }
               transition-none
             `}
           >
             <div className="font-medium">Work item description</div>
-            <div className={`text-sm mt-1 ${selectedSection === 'general' && !selectedTaskId ? 'opacity-90' : styles.mutedText}`}>
+            <div
+              className={`text-sm mt-1 ${selectedSection === 'general' && !selectedTaskId ? 'opacity-90' : styles.mutedText}`}
+            >
               Overview and goals
             </div>
           </button>
         </div>
-        
+
         <div className={`border-t pt-4 ${styles.contentBorder}`}>
-          <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4 flex-shrink-0`}>Tasks</h2>
+          <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4 flex-shrink-0`}>
+            Tasks
+          </h2>
         </div>
-        
+
         <div className="space-y-2 overflow-y-auto flex-1 min-h-0">
           {tasks.map((task) => (
             <button
@@ -716,15 +745,15 @@ ${existingWorkItem.description || 'No description provided'}
                 if (selectedTaskId !== task.id) {
                   // Mark as programmatic change to prevent save button from appearing
                   isProgrammaticChange.current = true;
-                  
+
                   // Update the current task from markdown before switching (pass false for isUserEdit)
                   if (selectedTaskId && editedContent) {
                     updateTaskFromMarkdown(false);
                   }
-                  
+
                   setSelectedSection('task');
                   setSelectedTaskId(task.id);
-                  
+
                   // Reset the flag after a short delay
                   setTimeout(() => {
                     isProgrammaticChange.current = false;
@@ -733,9 +762,10 @@ ${existingWorkItem.description || 'No description provided'}
               }}
               className={`
                 w-full text-left p-3 ${styles.buttonRadius} border
-                ${selectedTaskId === task.id 
-                  ? `${styles.primaryButton} ${styles.primaryButtonText} border-transparent` 
-                  : `${styles.contentBg} ${styles.contentBorder} ${styles.textColor} hover:opacity-80`
+                ${
+                  selectedTaskId === task.id
+                    ? `${styles.primaryButton} ${styles.primaryButtonText} border-transparent`
+                    : `${styles.contentBg} ${styles.contentBorder} ${styles.textColor} hover:opacity-80`
                 }
                 transition-none
               `}
@@ -744,8 +774,10 @@ ${existingWorkItem.description || 'No description provided'}
                 {task.taskNumber && <span className="font-mono">{task.taskNumber}. </span>}
                 {task.title}
               </div>
-              <div className={`text-sm mt-1 ${selectedTaskId === task.id ? 'opacity-90' : styles.mutedText}`}>
-                {(task.goals?.length || 0)} goals • {(task.validationCriteria?.length || 0)} criteria
+              <div
+                className={`text-sm mt-1 ${selectedTaskId === task.id ? 'opacity-90' : styles.mutedText}`}
+              >
+                {task.goals?.length || 0} goals • {task.validationCriteria?.length || 0} criteria
               </div>
             </button>
           ))}
@@ -753,136 +785,74 @@ ${existingWorkItem.description || 'No description provided'}
 
         {/* Refinement Input - Only show in create mode */}
         {!isEditMode && (
-          <div className="mt-6 pt-6 border-t flex-shrink-0" style={{ borderColor: styles.contentBorder }}>
-          <h3 className={`text-sm font-medium ${styles.headingColor} mb-2`}>Refine the plan</h3>
-          <textarea
-            value={ideaText}
-            onChange={(e) => setIdeaText(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.ctrlKey && e.key === 'Enter' && ideaText.trim() && !isProcessing) {
-                e.preventDefault();
-                refineIdea();
-              }
-            }}
-            className={`
+          <div
+            className="mt-6 pt-6 border-t flex-shrink-0"
+            style={{ borderColor: styles.contentBorder }}
+          >
+            <h3 className={`text-sm font-medium ${styles.headingColor} mb-2`}>Refine the plan</h3>
+            <textarea
+              value={ideaText}
+              onChange={(e) => setIdeaText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.ctrlKey && e.key === 'Enter' && ideaText.trim() && !isProcessing) {
+                  e.preventDefault();
+                  refineIdea();
+                }
+              }}
+              className={`
               w-full px-3 py-2 text-sm ${styles.buttonRadius}
               ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
               focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500
               resize-none
             `}
-            rows={3}
-            placeholder="Add more details or adjustments..."
-          />
-          <Button
-            onClick={refineIdea}
-            disabled={!ideaText.trim() || isProcessing}
-            variant="primary"
-            fullWidth
-            className="mt-2"
-          >
-            {isProcessing ? (
-              <>
-                <InlineLoadingSpinner className="mr-2 inline-flex" variant="primary" />
-                Refining...
-              </>
-            ) : (
-              'Refine tasks'
-            )}
-          </Button>
-        </div>
+              rows={3}
+              placeholder="Add more details or adjustments..."
+            />
+            <Button
+              onClick={refineIdea}
+              disabled={!ideaText.trim() || isProcessing}
+              variant="primary"
+              fullWidth
+              className="mt-2"
+            >
+              {isProcessing ? (
+                <>
+                  <InlineLoadingSpinner className="mr-2 inline-flex" variant="primary" />
+                  Refining...
+                </>
+              ) : (
+                'Refine tasks'
+              )}
+            </Button>
+          </div>
         )}
       </div>
 
       {/* Right Panel - Details View */}
-      <div className={`lg:col-span-2 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} flex flex-col overflow-hidden ${isEditMode ? 'h-full' : ''}`}>
+      <div
+        className={`lg:col-span-2 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} flex flex-col overflow-hidden ${isEditMode ? 'h-full' : ''}`}
+      >
         {selectedSection === 'general' && !selectedTaskId ? (
           // General Details View with MDXEditor
-          <div className={`flex-1 min-h-0 ${isDarkMode ? 'mdx-dark' : 'mdx-light'} mdx-edge-to-edge flex flex-col`}>
-              {generalMarkdown ? (
-                <MDXEditor
-                  key={`general-${editorKey}`}
-                  markdown={generalMarkdown}
-                  onChange={(value) => {
-                    const newValue = value || '';
-                    setGeneralMarkdown(newValue);
-                    // Check if content actually changed from original (only for user changes)
-                    if (isEditMode && !isProgrammaticChange.current && !isInitializing.current) {
-                      // Only set hasChanges if originalGeneralMarkdown has been initialized
-                      // and the new value is different
-                      if (originalGeneralMarkdown !== undefined) {
-                        setHasChanges(newValue !== originalGeneralMarkdown);
-                      }
-                    }
-                  }}
-                  contentEditableClassName="prose prose-neutral dark:prose-invert max-w-none p-4"
-                plugins={[
-                  headingsPlugin(),
-                  listsPlugin(),
-                  quotePlugin(),
-                  thematicBreakPlugin(),
-                  markdownShortcutPlugin(),
-                  toolbarPlugin({
-                    toolbarContents: () => (
-                      <div className="flex items-center justify-between w-full">
-                        <div className="flex items-center">
-                          <UndoRedo />
-                          <Separator />
-                          <BoldItalicUnderlineToggles />
-                          <Separator />
-                          <ListsToggle />
-                          <Separator />
-                          <BlockTypeSelect />
-                          <Separator />
-                          <CreateLink />
-                          <InsertThematicBreak />
-                        </div>
-                        {isEditMode && (
-                          <button
-                            onClick={() => createOrUpdateWorkItems()}
-                            className={`px-3 py-1 text-sm font-medium rounded transition-opacity ${
-                              hasChanges 
-                                ? 'opacity-100 bg-blue-600 hover:bg-blue-700 text-white' 
-                                : 'opacity-0 pointer-events-none'
-                            }`}
-                            disabled={!hasChanges}
-                          >
-                            Save
-                          </button>
-                        )}
-                      </div>
-                    )
-                  })
-                ]}
-              />
-              ) : (
-                <div className="p-4 text-center text-gray-500">
-                  Loading description...
-                </div>
-              )}
-          </div>
-        ) : selectedTask ? (
-          // Task Details View
-          <div className={`flex-1 min-h-0 ${isDarkMode ? 'mdx-dark' : 'mdx-light'} mdx-edge-to-edge flex flex-col`}>
+          <div
+            className={`flex-1 min-h-0 ${isDarkMode ? 'mdx-dark' : 'mdx-light'} mdx-edge-to-edge flex flex-col`}
+          >
+            {generalMarkdown ? (
               <MDXEditor
-                key={editorKey}
-                markdown={editedContent}
+                key={`general-${editorKey}`}
+                markdown={generalMarkdown}
                 onChange={(value) => {
                   const newValue = value || '';
-                  setEditedContent(newValue);
-                  
-                  // Only check for changes if this is a user edit
-                  if (isEditMode && !isProgrammaticChange.current && !isInitializing.current && selectedTask) {
-                    // Compare against the original content for this specific task
-                    const originalContent = originalTaskContents[selectedTask.id];
-                    const taskChanged = originalContent ? newValue.trim() !== originalContent.trim() : false;
-                    
-                    // Also check if general markdown changed
-                    const generalChanged = generalMarkdown !== originalGeneralMarkdown;
-                    
-                    setHasChanges(taskChanged || generalChanged);
+                  setGeneralMarkdown(newValue);
+                  // Check if content actually changed from original (only for user changes)
+                  if (isEditMode && !isProgrammaticChange.current && !isInitializing.current) {
+                    // Only set hasChanges if originalGeneralMarkdown has been initialized
+                    // and the new value is different
+                    if (originalGeneralMarkdown !== undefined) {
+                      setHasChanges(newValue !== originalGeneralMarkdown);
+                    }
                   }
                 }}
-                onBlur={() => updateTaskFromMarkdown()}
                 contentEditableClassName="prose prose-neutral dark:prose-invert max-w-none p-4"
                 plugins={[
                   headingsPlugin(),
@@ -909,8 +879,8 @@ ${existingWorkItem.description || 'No description provided'}
                           <button
                             onClick={() => createOrUpdateWorkItems()}
                             className={`px-3 py-1 text-sm font-medium rounded transition-opacity ${
-                              hasChanges 
-                                ? 'opacity-100 bg-blue-600 hover:bg-blue-700 text-white' 
+                              hasChanges
+                                ? 'opacity-100 bg-blue-600 hover:bg-blue-700 text-white'
                                 : 'opacity-0 pointer-events-none'
                             }`}
                             disabled={!hasChanges}
@@ -919,10 +889,86 @@ ${existingWorkItem.description || 'No description provided'}
                           </button>
                         )}
                       </div>
-                    )
-                  })
+                    ),
+                  }),
                 ]}
               />
+            ) : (
+              <div className="p-4 text-center text-gray-500">Loading description...</div>
+            )}
+          </div>
+        ) : selectedTask ? (
+          // Task Details View
+          <div
+            className={`flex-1 min-h-0 ${isDarkMode ? 'mdx-dark' : 'mdx-light'} mdx-edge-to-edge flex flex-col`}
+          >
+            <MDXEditor
+              key={editorKey}
+              markdown={editedContent}
+              onChange={(value) => {
+                const newValue = value || '';
+                setEditedContent(newValue);
+
+                // Only check for changes if this is a user edit
+                if (
+                  isEditMode &&
+                  !isProgrammaticChange.current &&
+                  !isInitializing.current &&
+                  selectedTask
+                ) {
+                  // Compare against the original content for this specific task
+                  const originalContent = originalTaskContents[selectedTask.id];
+                  const taskChanged = originalContent
+                    ? newValue.trim() !== originalContent.trim()
+                    : false;
+
+                  // Also check if general markdown changed
+                  const generalChanged = generalMarkdown !== originalGeneralMarkdown;
+
+                  setHasChanges(taskChanged || generalChanged);
+                }
+              }}
+              onBlur={() => updateTaskFromMarkdown()}
+              contentEditableClassName="prose prose-neutral dark:prose-invert max-w-none p-4"
+              plugins={[
+                headingsPlugin(),
+                listsPlugin(),
+                quotePlugin(),
+                thematicBreakPlugin(),
+                markdownShortcutPlugin(),
+                toolbarPlugin({
+                  toolbarContents: () => (
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center">
+                        <UndoRedo />
+                        <Separator />
+                        <BoldItalicUnderlineToggles />
+                        <Separator />
+                        <ListsToggle />
+                        <Separator />
+                        <BlockTypeSelect />
+                        <Separator />
+                        <CreateLink />
+                        <InsertThematicBreak />
+                      </div>
+                      {isEditMode && (
+                        <button
+                          onClick={() => createOrUpdateWorkItems()}
+                          className={`px-3 py-1 text-sm font-medium rounded transition-opacity ${
+                            hasChanges
+                              ? 'opacity-100 bg-blue-600 hover:bg-blue-700 text-white'
+                              : 'opacity-0 pointer-events-none'
+                          }`}
+                          disabled={!hasChanges}
+                        >
+                          Save
+                        </button>
+                      )}
+                    </div>
+                  ),
+                }),
+              ]}
+            />
           </div>
         ) : (
           <div className={`text-center ${styles.mutedText} p-6`}>
@@ -934,7 +980,7 @@ ${existingWorkItem.description || 'No description provided'}
   );
 
   return (
-    <div className={isEditMode ? "h-full flex flex-col" : "max-w-6xl mx-auto"}>
+    <div className={isEditMode ? 'h-full flex flex-col' : 'max-w-6xl mx-auto'}>
       {/* Header for create mode only */}
       {!isEditMode && (
         <div className="mb-6">
@@ -947,25 +993,32 @@ ${existingWorkItem.description || 'No description provided'}
 
       {/* Step 1: Idea Input - Skip in edit mode */}
       <DropdownTransition isOpen={!isEditMode && step === 'input'}>
-        <div className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-8`}>
+        <div
+          className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-8`}
+        >
           <div className="max-w-2xl mx-auto">
             <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4`}>
               What would you like to work on?
             </h2>
-            
+
             {/* Project selector or display */}
             {!isEditMode && (
               <div className="mb-4">
-                <label htmlFor="project-select" className={`block text-sm font-medium ${styles.textColor} mb-2`}>
+                <label
+                  htmlFor="project-select"
+                  className={`block text-sm font-medium ${styles.textColor} mb-2`}
+                >
                   Project
                 </label>
-                {(projectId || projects.length === 1) ? (
+                {projectId || projects.length === 1 ? (
                   // Show project name as read-only when predetermined
-                  <div className={`
+                  <div
+                    className={`
                     w-full px-3 py-2 ${styles.buttonRadius}
                     ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
                     opacity-75 cursor-not-allowed
-                  `}>
+                  `}
+                  >
                     {currentProject?.name || projects[0]?.name || 'Unknown project'}
                   </div>
                 ) : (
@@ -982,7 +1035,7 @@ ${existingWorkItem.description || 'No description provided'}
                     required
                   >
                     <option value="">Choose a project...</option>
-                    {projects.map(project => (
+                    {projects.map((project) => (
                       <option key={project.id} value={project.id}>
                         {project.name}
                       </option>
@@ -991,7 +1044,7 @@ ${existingWorkItem.description || 'No description provided'}
                 )}
               </div>
             )}
-            
+
             <textarea
               value={ideaText}
               onChange={(e) => setIdeaText(e.target.value)}
@@ -1008,9 +1061,7 @@ ${existingWorkItem.description || 'No description provided'}
 
             {error && (
               <div className="mt-4 p-4 bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-800 rounded-md">
-                <div className="text-red-800 dark:text-red-200 whitespace-pre-wrap">
-                  {error}
-                </div>
+                <div className="text-red-800 dark:text-red-200 whitespace-pre-wrap">{error}</div>
               </div>
             )}
 
@@ -1023,7 +1074,11 @@ ${existingWorkItem.description || 'No description provided'}
               </Button>
               <Button
                 onClick={processIdea}
-                disabled={!ideaText.trim() || isProcessing || (!projectId && !isEditMode && !selectedProjectId)}
+                disabled={
+                  !ideaText.trim() ||
+                  isProcessing ||
+                  (!projectId && !isEditMode && !selectedProjectId)
+                }
                 variant="primary"
                 className="min-w-[180px]"
               >
@@ -1044,30 +1099,20 @@ ${existingWorkItem.description || 'No description provided'}
       {/* Step 2: Review Tasks - Always show in edit mode */}
       {isEditMode ? (
         // No transition for edit mode - render directly
-        <div className="flex-1 flex flex-col">
-          {reviewContent}
-        </div>
+        <div className="flex-1 flex flex-col">{reviewContent}</div>
       ) : (
         // Use transition for create mode
-        <DropdownTransition isOpen={step === 'review'}>
-          {reviewContent}
-        </DropdownTransition>
+        <DropdownTransition isOpen={step === 'review'}>{reviewContent}</DropdownTransition>
       )}
 
       {/* Action Buttons - only for create mode */}
       {!isEditMode && (
         <DropdownTransition isOpen={step === 'review'}>
           <div className="mt-6 flex justify-end gap-3">
-            <Button
-              onClick={resetToInput}
-              variant="secondary"
-            >
+            <Button onClick={resetToInput} variant="secondary">
               Back
             </Button>
-            <Button
-              onClick={createOrUpdateWorkItems}
-              variant="primary"
-            >
+            <Button onClick={createOrUpdateWorkItems} variant="primary">
               Create work item
             </Button>
           </div>

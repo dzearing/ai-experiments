@@ -4,7 +4,7 @@ const assert = require('assert');
 const mockLogger = {
   debug: () => {},
   error: () => {},
-  log: () => {}
+  log: () => {},
 };
 
 // Run tests if this file is executed directly
@@ -14,10 +14,10 @@ if (require.main === module) {
 
 function runTests() {
   console.log('Running ClaudeService tests...\n');
-  
+
   let passed = 0;
   let failed = 0;
-  
+
   // Test helper
   function test(name, fn) {
     try {
@@ -30,17 +30,17 @@ function runTests() {
       failed++;
     }
   }
-  
+
   console.log('Tool Execution Tracking Tests:');
-  
+
   // Test 1: Handle tool invocation with object format
   test('should handle tool invocation with object format', () => {
     const toolExecutions = [];
     const toolInfo = {
       name: 'Read',
       input: {
-        file_path: '/home/user/README.md'
-      }
+        file_path: '/home/user/README.md',
+      },
     };
 
     const execution = simulateToolUse(toolInfo);
@@ -58,8 +58,8 @@ function runTests() {
     const toolInfo = {
       name: 'Read',
       input: {
-        file_path: '/path/to/error-handling.md'
-      }
+        file_path: '/path/to/error-handling.md',
+      },
     };
 
     const execution = simulateToolUse(toolInfo);
@@ -76,23 +76,23 @@ function runTests() {
       // Format 1: {name, input}
       {
         input: { name: 'Search', input: { query: 'test' } },
-        expectedName: 'Search'
+        expectedName: 'Search',
       },
       // Format 2: {tool_name, arguments}
       {
         input: { tool_name: 'Write', arguments: { path: '/file.txt', content: 'data' } },
-        expectedName: 'Write'
+        expectedName: 'Write',
       },
       // Format 3: string
       {
         input: 'ListFiles',
-        expectedName: 'ListFiles'
+        expectedName: 'ListFiles',
       },
       // Format 4: unknown object
       {
         input: { someField: 'value' },
-        expectedName: 'Unknown Tool'
-      }
+        expectedName: 'Unknown Tool',
+      },
     ];
 
     for (const testCase of testCases) {
@@ -107,16 +107,16 @@ function runTests() {
     const testCases = [
       {
         toolInfo: { name: 'Tool1', input: { key: 'value' } },
-        expectedArgs: '{\n  "key": "value"\n}'
+        expectedArgs: '{\n  "key": "value"\n}',
       },
       {
         toolInfo: { name: 'Tool2', input: 'string argument' },
-        expectedArgs: 'string argument'
+        expectedArgs: 'string argument',
       },
       {
         toolInfo: { name: 'Tool3', input: null },
-        expectedArgs: '{}'
-      }
+        expectedArgs: '{}',
+      },
     ];
 
     for (const testCase of testCases) {
@@ -130,7 +130,7 @@ function runTests() {
     // Simulate a file read that contains "error" and "failed" in content
     const toolInfo = {
       name: 'Read',
-      input: { file_path: '/docs/error-handling.md' }
+      input: { file_path: '/docs/error-handling.md' },
     };
 
     // This simulates the old behavior where content was checked for error keywords
@@ -153,21 +153,23 @@ function runTests() {
     assert.strictEqual(execution.status, 'pending');
     assert.strictEqual(execution.isSuccess, null);
     assert.strictEqual(execution.result, 'Pending...');
-    
+
     // Verify that even with error keywords in the content, it's not marked as failed
-    const hasErrorKeywords = fileContent.toLowerCase().includes('error') || 
-                            fileContent.toLowerCase().includes('failed');
+    const hasErrorKeywords =
+      fileContent.toLowerCase().includes('error') || fileContent.toLowerCase().includes('failed');
     assert.strictEqual(hasErrorKeywords, true); // Content has error keywords
     assert.notStrictEqual(execution.status, 'error'); // But status is not error
   });
 
   console.log(`\n\nTest Results: ${passed} passed, ${failed} failed`);
-  
+
   if (passed === 5 && failed === 0) {
-    console.log('\nThe fix is working correctly! Tools are no longer incorrectly marked as failed.');
+    console.log(
+      '\nThe fix is working correctly! Tools are no longer incorrectly marked as failed.'
+    );
     console.log('Tools now start with "pending" status and only fail on actual errors.');
   }
-  
+
   process.exit(failed > 0 ? 1 : 0);
 }
 
@@ -175,7 +177,7 @@ function runTests() {
 function simulateToolUse(toolInfo) {
   let toolName = '';
   let toolArgs = {};
-  
+
   if (typeof toolInfo === 'object') {
     if (toolInfo.name) {
       toolName = toolInfo.name;
@@ -190,7 +192,7 @@ function simulateToolUse(toolInfo) {
   } else if (typeof toolInfo === 'string') {
     toolName = toolInfo;
   }
-  
+
   let argsDisplay = '';
   if (toolArgs) {
     if (typeof toolArgs === 'string') {
@@ -201,15 +203,15 @@ function simulateToolUse(toolInfo) {
       argsDisplay = String(toolArgs);
     }
   }
-  
+
   const execution = {
     name: String(toolName),
     args: argsDisplay,
     result: 'Pending...',
     isSuccess: null,
     timestamp: new Date().toISOString(),
-    status: 'pending' // Fixed: was 'error' before
+    status: 'pending', // Fixed: was 'error' before
   };
-  
+
   return execution;
 }

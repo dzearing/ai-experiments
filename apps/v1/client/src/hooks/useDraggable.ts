@@ -19,15 +19,15 @@ export function useDraggable(options: UseDraggableOptions = {}) {
   useEffect(() => {
     const handleMouseDown = (e: MouseEvent) => {
       if (!handleRef.current?.contains(e.target as Node)) return;
-      
+
       e.preventDefault();
       setIsDragging(true);
       isDraggingRef.current = true;
-      
+
       // Store initial positions
       dragStartPos.current = { x: e.clientX, y: e.clientY };
       elementStartPos.current = { ...position };
-      
+
       // Add listeners to document to capture mouse movement outside element
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
@@ -35,31 +35,31 @@ export function useDraggable(options: UseDraggableOptions = {}) {
 
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDraggingRef.current) return;
-      
+
       const deltaX = e.clientX - dragStartPos.current.x;
       const deltaY = e.clientY - dragStartPos.current.y;
-      
+
       const newX = elementStartPos.current.x + deltaX;
       const newY = elementStartPos.current.y + deltaY;
-      
+
       setPosition({ x: newX, y: newY });
       options.onDrag?.(newX, newY);
     };
 
     const handleMouseUp = (e: MouseEvent) => {
       if (!isDraggingRef.current) return;
-      
+
       setIsDragging(false);
       isDraggingRef.current = false;
-      
+
       const deltaX = e.clientX - dragStartPos.current.x;
       const deltaY = e.clientY - dragStartPos.current.y;
-      
+
       const finalX = elementStartPos.current.x + deltaX;
       const finalY = elementStartPos.current.y + deltaY;
-      
+
       options.onDragEnd?.(finalX, finalY);
-      
+
       // Remove document listeners
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
@@ -88,7 +88,7 @@ export function useDraggable(options: UseDraggableOptions = {}) {
     isDragging,
     style: {
       transform: `translate(${position.x}px, ${position.y}px)`,
-      transition: isDragging ? 'none' : 'transform 0.2s ease-out'
-    }
+      transition: isDragging ? 'none' : 'transform 0.2s ease-out',
+    },
   };
 }

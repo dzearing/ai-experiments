@@ -2,5 +2,5 @@
 import { runLintFix } from '@claude-flow/repo-scripts';
 
 await runLintFix({
-  additionalArgs: process.argv.slice(2)
+  additionalArgs: process.argv.slice(2),
 });

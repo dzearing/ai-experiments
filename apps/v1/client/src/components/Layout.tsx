@@ -2,9 +2,9 @@ import { Link, Outlet, useLocation } from 'react-router-dom';
 
 export function Layout() {
   const location = useLocation();
-  
+
   const isActive = (path: string) => location.pathname === path;
-  
+
   return (
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm border-b">
@@ -18,8 +18,8 @@ export function Layout() {
                 <Link
                   to="/"
                   className={`${
-                    isActive('/') 
-                      ? 'border-indigo-500 text-gray-900' 
+                    isActive('/')
+                      ? 'border-indigo-500 text-gray-900'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
                 >
@@ -28,8 +28,8 @@ export function Layout() {
                 <Link
                   to="/projects"
                   className={`${
-                    isActive('/projects') 
-                      ? 'border-indigo-500 text-gray-900' 
+                    isActive('/projects')
+                      ? 'border-indigo-500 text-gray-900'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
                 >
@@ -38,8 +38,8 @@ export function Layout() {
                 <Link
                   to="/work-items"
                   className={`${
-                    isActive('/work-items') 
-                      ? 'border-indigo-500 text-gray-900' 
+                    isActive('/work-items')
+                      ? 'border-indigo-500 text-gray-900'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
                 >
@@ -48,8 +48,8 @@ export function Layout() {
                 <Link
                   to="/personas"
                   className={`${
-                    isActive('/personas') 
-                      ? 'border-indigo-500 text-gray-900' 
+                    isActive('/personas')
+                      ? 'border-indigo-500 text-gray-900'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
                 >
@@ -58,8 +58,8 @@ export function Layout() {
                 <Link
                   to="/jam-sessions"
                   className={`${
-                    isActive('/jam-sessions') 
-                      ? 'border-indigo-500 text-gray-900' 
+                    isActive('/jam-sessions')
+                      ? 'border-indigo-500 text-gray-900'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
                 >
@@ -78,7 +78,7 @@ export function Layout() {
           </div>
         </div>
       </nav>
-      
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Outlet />
       </main>

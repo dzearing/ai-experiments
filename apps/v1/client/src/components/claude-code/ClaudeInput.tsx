@@ -17,13 +17,13 @@ export const ClaudeInput = memo(function ClaudeInput({
   mode,
   contextUsage,
   isSubmitting,
-  isConnected
+  isConnected,
 }: ClaudeInputProps) {
   const { currentStyles } = useTheme();
   const styles = currentStyles;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [value, setValue] = useState('');
-  
+
   // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
@@ -31,7 +31,7 @@ export const ClaudeInput = memo(function ClaudeInput({
       textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
     }
   }, [value]);
-  
+
   // Clear input after successful submission
   useEffect(() => {
     if (!isSubmitting && value === '') {
@@ -39,27 +39,30 @@ export const ClaudeInput = memo(function ClaudeInput({
       setValue('');
     }
   }, [isSubmitting]);
-  
-  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLTextAreaElement>) => {
-    // Shift+Tab to toggle between Plan and Execute modes
-    if (e.key === 'Tab' && e.shiftKey) {
-      e.preventDefault();
-      // Toggle between plan and execute (default) modes only
-      const newMode = mode === 'plan' ? 'default' : 'plan';
-      onModeChange(newMode);
-      return;
-    }
-    
-    // Enter to submit (Shift+Enter for new line)
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      if (value.trim() && !isSubmitting && isConnected) {
-        onSubmit(value);
-        setValue(''); // Clear input after submission
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLTextAreaElement>) => {
+      // Shift+Tab to toggle between Plan and Execute modes
+      if (e.key === 'Tab' && e.shiftKey) {
+        e.preventDefault();
+        // Toggle between plan and execute (default) modes only
+        const newMode = mode === 'plan' ? 'default' : 'plan';
+        onModeChange(newMode);
+        return;
       }
-    }
-  }, [mode, onModeChange, value, isSubmitting, isConnected, onSubmit]);
-  
+
+      // Enter to submit (Shift+Enter for new line)
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if (value.trim() && !isSubmitting && isConnected) {
+          onSubmit(value);
+          setValue(''); // Clear input after submission
+        }
+      }
+    },
+    [mode, onModeChange, value, isSubmitting, isConnected, onSubmit]
+  );
+
   const getModeColor = () => {
     switch (mode) {
       case 'auto-accept':
@@ -70,7 +73,7 @@ export const ClaudeInput = memo(function ClaudeInput({
         return styles.mutedText;
     }
   };
-  
+
   const getModeIcon = () => {
     switch (mode) {
       case 'auto-accept':
@@ -81,13 +84,13 @@ export const ClaudeInput = memo(function ClaudeInput({
         return '💬';
     }
   };
-  
+
   const getContextColor = () => {
     if (contextUsage >= 90) return 'text-red-600 dark:text-red-400';
     if (contextUsage >= 70) return 'text-yellow-600 dark:text-yellow-400';
     return styles.mutedText;
   };
-  
+
   return (
     <div className="p-4">
       <div className="relative">
@@ -96,7 +99,11 @@ export const ClaudeInput = memo(function ClaudeInput({
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={isConnected ? "Type a message... (Enter to send, Shift+Enter for new line)" : "Connecting..."}
+          placeholder={
+            isConnected
+              ? 'Type a message... (Enter to send, Shift+Enter for new line)'
+              : 'Connecting...'
+          }
           disabled={!isConnected || isSubmitting}
           className={`
             w-full px-4 py-3 pr-24
@@ -109,7 +116,7 @@ export const ClaudeInput = memo(function ClaudeInput({
           style={{ minHeight: '56px' }}
           data-testid="message-input"
         />
-        
+
         {/* Submit button */}
         <button
           onClick={() => {
@@ -130,40 +137,46 @@ export const ClaudeInput = memo(function ClaudeInput({
           {isSubmitting ? (
             <span className="flex items-center gap-1">
               <span className="inline-block w-2 h-2 bg-current rounded-full animate-pulse" />
-              <span className="inline-block w-2 h-2 bg-current rounded-full animate-pulse" style={{ animationDelay: '100ms' }} />
-              <span className="inline-block w-2 h-2 bg-current rounded-full animate-pulse" style={{ animationDelay: '200ms' }} />
+              <span
+                className="inline-block w-2 h-2 bg-current rounded-full animate-pulse"
+                style={{ animationDelay: '100ms' }}
+              />
+              <span
+                className="inline-block w-2 h-2 bg-current rounded-full animate-pulse"
+                style={{ animationDelay: '200ms' }}
+              />
             </span>
           ) : (
             'Send'
           )}
         </button>
       </div>
-      
+
       {/* Status bar */}
       <div className="mt-2 flex items-center justify-between text-xs">
         {/* Mode indicator */}
         <div className="flex items-center gap-4">
           <div className={`flex items-center gap-1.5 ${getModeColor()}`}>
             <span>{getModeIcon()}</span>
-            <span className="font-medium">
-              {mode === 'plan' ? 'Planning' : 'Execute'}
-            </span>
+            <span className="font-medium">{mode === 'plan' ? 'Planning' : 'Execute'}</span>
           </div>
-          <span className={styles.mutedText}>
-            Shift+Tab to toggle mode
-          </span>
+          <span className={styles.mutedText}>Shift+Tab to toggle mode</span>
         </div>
-        
+
         {/* Context usage */}
         <div className={`flex items-center gap-2 ${getContextColor()}`}>
           <span>Context:</span>
           <div className="flex items-center gap-1">
-            <div className={`w-24 h-2 ${styles.contentBg} ${styles.contentBorder} border ${styles.borderRadius} overflow-hidden`}>
-              <div 
+            <div
+              className={`w-24 h-2 ${styles.contentBg} ${styles.contentBorder} border ${styles.borderRadius} overflow-hidden`}
+            >
+              <div
                 className={`h-full transition-all duration-300 ${
-                  contextUsage >= 90 ? 'bg-red-500' : 
-                  contextUsage >= 70 ? 'bg-yellow-500' : 
-                  'bg-green-500'
+                  contextUsage >= 90
+                    ? 'bg-red-500'
+                    : contextUsage >= 70
+                      ? 'bg-yellow-500'
+                      : 'bg-green-500'
                 }`}
                 style={{ width: `${contextUsage}%` }}
               />

@@ -26,7 +26,7 @@ export default tseslint.config(
   {
     files: ['**/*.{ts,tsx,js,jsx}'],
     plugins: {
-      'react': reactPlugin,
+      react: reactPlugin,
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
     },
@@ -66,5 +66,5 @@ export default tseslint.config(
       // Disable one-export-per-file for v1
       '@claude-flow/one-export-per-file': 'off',
     },
-  },
+  }
 );

@@ -48,10 +48,7 @@ function AppContent() {
 
   return (
     <>
-      <WorkspaceDialogContainer 
-        isOpen={showWorkspaceSetup} 
-        onComplete={handleWorkspaceSetup} 
-      />
+      <WorkspaceDialogContainer isOpen={showWorkspaceSetup} onComplete={handleWorkspaceSetup} />
       {workspace.config && (
         <>
           <WorkspaceSync />

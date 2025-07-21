@@ -20,7 +20,9 @@
     "test:e2e": "repo-scripts test-e2e",
     "test:e2e:ui": "repo-scripts test-e2e-ui",
     "test:watch": "repo-scripts test-watch",
-    "typecheck": "repo-scripts typecheck"
+    "typecheck": "repo-scripts typecheck",
+    "format": "repo-scripts format",
+    "format:check": "repo-scripts format-check"
   },
   "dependencies": {
     "classnames": "^2.5.1",

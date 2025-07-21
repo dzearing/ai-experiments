@@ -8,15 +8,15 @@ interface AnimatedOutletWrapperProps {
   distance?: number;
 }
 
-export function AnimatedOutletWrapper({ 
-  className = '', 
+export function AnimatedOutletWrapper({
+  className = '',
   delay = 200,
-  distance = 20 
+  distance = 20,
 }: AnimatedOutletWrapperProps) {
   const location = useLocation();
   const outlet = useOutlet();
   const direction = useNavigationDirection();
-  
+
   return (
     <AnimatedTransition
       transitionKey={location.pathname}

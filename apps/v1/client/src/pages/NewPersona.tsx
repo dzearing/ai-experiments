@@ -4,97 +4,118 @@ import { useApp } from '../contexts/AppContext';
 import type { PersonaType } from '../types';
 
 const personaTypes: { value: PersonaType; label: string; description: string }[] = [
-  { 
-    value: 'usability-expert', 
+  {
+    value: 'usability-expert',
     label: 'Usability Expert',
-    description: 'Focuses on user experience, accessibility, and interface design patterns'
+    description: 'Focuses on user experience, accessibility, and interface design patterns',
   },
-  { 
-    value: 'developer', 
+  {
+    value: 'developer',
     label: 'Developer',
-    description: 'Implements technical solutions and writes production-quality code'
+    description: 'Implements technical solutions and writes production-quality code',
   },
-  { 
-    value: 'tester', 
+  {
+    value: 'tester',
     label: 'Tester',
-    description: 'Challenges designs, identifies edge cases, and ensures quality'
+    description: 'Challenges designs, identifies edge cases, and ensures quality',
   },
-  { 
-    value: 'data-scientist', 
+  {
+    value: 'data-scientist',
     label: 'Data Scientist',
-    description: 'Analyzes data patterns and provides insights for decision making'
+    description: 'Analyzes data patterns and provides insights for decision making',
   },
-  { 
-    value: 'devops', 
+  {
+    value: 'devops',
     label: 'DevOps',
-    description: 'Handles deployment, infrastructure, and operational concerns'
+    description: 'Handles deployment, infrastructure, and operational concerns',
   },
-  { 
-    value: 'project-manager', 
+  {
+    value: 'project-manager',
     label: 'Project Manager',
-    description: 'Manages timelines, resolves ambiguity, and coordinates efforts'
+    description: 'Manages timelines, resolves ambiguity, and coordinates efforts',
   },
-  { 
-    value: 'designer', 
+  {
+    value: 'designer',
     label: 'Designer',
-    description: 'Creates visual designs and maintains design consistency'
+    description: 'Creates visual designs and maintains design consistency',
   },
-  { 
-    value: 'motion-designer', 
+  {
+    value: 'motion-designer',
     label: 'Motion Designer',
-    description: 'Adds animations and micro-interactions to enhance UX'
+    description: 'Adds animations and micro-interactions to enhance UX',
   },
 ];
 
 const defaultExpertise: Record<PersonaType, string[]> = {
-  'usability-expert': ['User Research', 'Accessibility', 'Information Architecture', 'Usability Testing'],
-  'developer': ['Frontend Development', 'Backend Development', 'API Design', 'Code Review'],
-  'tester': ['Test Planning', 'Edge Case Analysis', 'Performance Testing', 'Security Testing'],
-  'data-scientist': ['Data Analysis', 'Machine Learning', 'Statistical Modeling', 'Data Visualization'],
-  'devops': ['CI/CD', 'Infrastructure as Code', 'Monitoring', 'Cloud Platforms'],
-  'project-manager': ['Sprint Planning', 'Risk Management', 'Stakeholder Communication', 'Resource Allocation'],
-  'designer': ['Visual Design', 'Brand Identity', 'Design Systems', 'Prototyping'],
+  'usability-expert': [
+    'User Research',
+    'Accessibility',
+    'Information Architecture',
+    'Usability Testing',
+  ],
+  developer: ['Frontend Development', 'Backend Development', 'API Design', 'Code Review'],
+  tester: ['Test Planning', 'Edge Case Analysis', 'Performance Testing', 'Security Testing'],
+  'data-scientist': [
+    'Data Analysis',
+    'Machine Learning',
+    'Statistical Modeling',
+    'Data Visualization',
+  ],
+  devops: ['CI/CD', 'Infrastructure as Code', 'Monitoring', 'Cloud Platforms'],
+  'project-manager': [
+    'Sprint Planning',
+    'Risk Management',
+    'Stakeholder Communication',
+    'Resource Allocation',
+  ],
+  designer: ['Visual Design', 'Brand Identity', 'Design Systems', 'Prototyping'],
   'motion-designer': ['Animation', 'Transitions', 'Micro-interactions', 'Motion Principles'],
 };
 
 export function NewPersona() {
   const navigate = useNavigate();
   const { createPersona } = useApp();
-  
+
   const [formData, setFormData] = useState({
     name: '',
     type: 'developer' as PersonaType,
     personality: '',
     customExpertise: '',
   });
-  
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const expertise = [
       ...defaultExpertise[formData.type],
-      ...formData.customExpertise.split(',').map(e => e.trim()).filter(Boolean)
+      ...formData.customExpertise
+        .split(',')
+        .map((e) => e.trim())
+        .filter(Boolean),
     ];
-    
+
     createPersona({
       name: formData.name,
       type: formData.type,
-      jobTitle: formData.type.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+      jobTitle: formData.type
+        .split('-')
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' '),
       personality: formData.personality,
       expertise,
       status: 'available',
     });
-    
+
     navigate('/personas');
   };
-  
+
   return (
     <div className="max-w-2xl mx-auto">
       <h1 className="text-2xl font-semibold text-gray-900">Spawn new agent</h1>
       <p className="mt-2 text-sm text-gray-700">
         Create a new Claude agent persona with specific expertise and personality.
       </p>
-      
+
       <form onSubmit={handleSubmit} className="mt-8 space-y-6">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700">
@@ -110,7 +131,7 @@ export function NewPersona() {
             placeholder="e.g., Alex the Developer"
           />
         </div>
-        
+
         <div>
           <label htmlFor="type" className="block text-sm font-medium text-gray-700">
             Persona Type
@@ -128,7 +149,7 @@ export function NewPersona() {
             ))}
           </select>
         </div>
-        
+
         <div>
           <label htmlFor="personality" className="block text-sm font-medium text-gray-700">
             Personality Traits (Optional)
@@ -142,11 +163,9 @@ export function NewPersona() {
             placeholder="e.g., Detail-oriented, pragmatic, loves clean code architecture"
           />
         </div>
-        
+
         <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Default Expertise
-          </label>
+          <label className="block text-sm font-medium text-gray-700">Default Expertise</label>
           <div className="mt-2 flex flex-wrap gap-2">
             {defaultExpertise[formData.type].map((skill) => (
               <span
@@ -158,7 +177,7 @@ export function NewPersona() {
             ))}
           </div>
         </div>
-        
+
         <div>
           <label htmlFor="customExpertise" className="block text-sm font-medium text-gray-700">
             Additional Expertise (comma-separated)
@@ -172,7 +191,7 @@ export function NewPersona() {
             placeholder="e.g., React Native, GraphQL, WebSockets"
           />
         </div>
-        
+
         <div className="flex justify-end space-x-3">
           <button
             type="button"

@@ -9,6 +9,7 @@ Claude Flow is a modern project management platform with AI-powered features, or
 ## Common Commands
 
 ### Development
+
 ```bash
 # Install dependencies (run from root)
 pnpm install
@@ -30,6 +31,7 @@ pnpm build:v1
 ```
 
 ### Testing
+
 ```bash
 # Run all tests (orchestrated with Lage)
 pnpm test
@@ -45,6 +47,7 @@ cd apps/v1/client && pnpm playwright test <test-name>
 ```
 
 ### Code Quality
+
 ```bash
 # Lint all packages
 pnpm lint
@@ -60,6 +63,7 @@ pnpm check
 ```
 
 ### Utilities
+
 ```bash
 # Create new package from template
 pnpm scaffold
@@ -71,6 +75,7 @@ pnpm clean
 ## High-Level Architecture
 
 ### Monorepo Structure
+
 ```
 /
 ├── apps/
@@ -86,6 +91,7 @@ pnpm clean
 ```
 
 ### Key Technologies
+
 - **Frontend**: React 19, TypeScript, Vite, Tailwind CSS, React Router v7
 - **Backend**: Express v5, Claude Code SDK, file-based storage
 - **Testing**: Playwright (e2e), configured for headless Chromium
@@ -95,12 +101,14 @@ pnpm clean
 ### Context-Based State Management
 
 The application uses a hierarchical context provider structure:
+
 ```
-AppProvider → ThemeProvider → ToastProvider → AuthProvider → 
+AppProvider → ThemeProvider → ToastProvider → AuthProvider →
 GitHubProvider → WorkspaceProvider → LayoutProvider → SubscriptionProvider
 ```
 
 Key contexts:
+
 - **AppContext**: Core state (projects, work items, personas)
 - **WorkspaceContext**: Workspace management with caching
 - **ClaudeCodeContext**: Claude API session management
@@ -111,12 +119,14 @@ Key contexts:
 The application requires workspace selection before functionality is available. Workspaces sync with the backend file system, and projects/work items are discovered from markdown files.
 
 ### Component Organization
+
 - `/components/ui/`: Reusable UI primitives
 - `/components/chat/`: Chat functionality
 - `/components/claude-code/`: Claude Code integration
 - `/components/dialogs/`: Dialog components (no native browser dialogs)
 
 ### Data Flow Patterns
+
 - Client-side caching with `getCached` utility
 - Progressive loading (light data first)
 - Optimistic UI updates
@@ -124,6 +134,7 @@ The application requires workspace selection before functionality is available. 
 - File system as database on server
 
 ### Server Architecture
+
 - Express middleware stack
 - In-memory caching with TTL
 - Session persistence in `/temp/sessions/`
@@ -133,32 +144,38 @@ The application requires workspace selection before functionality is available. 
 ## Important Development Notes
 
 ### Server Restart Required
+
 **CRITICAL**: When modifying ANY server files (`/apps/v1/server/*.js`), you MUST manually restart the server. The development server does not auto-restart. Always remind users: **"Please restart your server to apply these changes"**
 
 ### Dialog Patterns
+
 - **NEVER** use `alert()`, `confirm()`, or `prompt()`
 - Always use React dialog components (e.g., `ConfirmDialog`)
 - Maintain consistent dialog UI/UX patterns
 
 ### File Operations
+
 - Use absolute paths in all file operations
 - Workspace data stored in file system
 - Feedback stored in `/temp/feedback/`
 - Sessions stored in `/temp/sessions/`
 
 ### Testing Practices
+
 - E2E tests use Playwright with headless Chromium
 - Tests are in `/apps/v1/client/e2e/`
 - Mock data supported for consistent testing
 - Video/screenshot capture on failure
 
 ### Code Style
+
 - TypeScript for type safety (avoid `any`)
 - No CSS-in-JS (use CSS modules or Tailwind)
 - Functional components with hooks
 - Type imports: `import type { Foo }` or `import { type Foo, Bar }`
 
 ### Git Workflow
+
 - Feature branches: `feature/`, `fix/`, `chore/`
 - No AI attribution in commits or code
 - Run tests and lint before committing
@@ -175,6 +192,7 @@ The application requires workspace selection before functionality is available. 
 ## Feedback Processing
 
 When processing feedback:
+
 1. Check `/temp/feedback/reports/` for feedback files
 2. Analyze with corresponding screenshots
 3. Fix root causes, not symptoms
@@ -185,6 +203,7 @@ When processing feedback:
 ## Migration Strategy
 
 The project follows a phased migration from V1 to V2:
+
 - Phase 0-1: ✅ Repository restructure complete
 - Phase 2: 🚧 Core package development
 - Phase 3-5: Future V2 development and migration

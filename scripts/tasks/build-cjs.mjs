@@ -2,5 +2,5 @@
 import { runBuildCJS } from '@claude-flow/repo-scripts';
 
 await runBuildCJS({
-  additionalArgs: process.argv.slice(2)
+  additionalArgs: process.argv.slice(2),
 });

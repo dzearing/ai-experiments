@@ -5,6 +5,7 @@ This directory contains visual mockups for the Claude Flow project management to
 ## Directory Structure
 
 ### `/design-system/`
+
 Contains mockups of all reusable UI components shown in both light and dark themes:
 
 - **Button.svg** - All button variants (primary, secondary, ghost, danger) with sizes and states
@@ -16,25 +17,31 @@ Contains mockups of all reusable UI components shown in both light and dark them
 - **Progress.svg** - Linear progress bars, circular progress, loading spinners, and skeleton screens
 
 ### `/flows/`
+
 Contains screen mockups organized by feature area:
 
 #### `/dashboard/`
+
 - **dashboard-view.svg** - Main dashboard with stats, recent activity, and quick actions
 - **claude-chat-view.svg** - Claude AI chat interface for development assistance
 
 #### `/projects/`
+
 - **projects-list-view.svg** - Grid view of all projects with filters and status indicators
 - **project-detail-view.svg** - Individual project view with team, progress, and tabs
 
 #### `/work-items/`
+
 - **work-items-kanban-view.svg** - Kanban board with drag-and-drop columns
 - **work-item-editor-view.svg** - Detailed work item editor with all fields
 
 #### `/feedback/`
+
 - **feedback-dialog-view.svg** - Original feedback dialog with category/priority
 - **feedback-dialog-simple-view.svg** - Simplified feedback dialog with just screenshot and input
 
 #### `/personas/`
+
 - **persona-review-session-view.svg** - AI persona review session interface
 
 ## Design Principles
@@ -48,6 +55,7 @@ Contains screen mockups organized by feature area:
 ## Color System
 
 ### Light Theme
+
 - Primary: #3b82f6 (Blue)
 - Success: #10b981 (Green)
 - Warning: #f59e0b (Amber)
@@ -55,6 +63,7 @@ Contains screen mockups organized by feature area:
 - Neutral: #6b7280 (Gray)
 
 ### Dark Theme
+
 - Adjusted colors for proper contrast on dark backgrounds
 - Primary: #60a5fa (Lighter Blue)
 - Background: #1f2937
@@ -63,6 +72,7 @@ Contains screen mockups organized by feature area:
 ## Component States
 
 All interactive components include:
+
 - Default state
 - Hover state
 - Active/pressed state
@@ -73,6 +83,7 @@ All interactive components include:
 ## Usage Notes
 
 These mockups serve as the visual specification for implementing the Claude Flow UI. They demonstrate:
+
 - Component composition and spacing
 - Visual hierarchy and typography
 - Interaction patterns

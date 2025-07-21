@@ -15,7 +15,9 @@
     "lint:fix": "repo-scripts lint-fix",
     "test": "repo-scripts test",
     "test:watch": "repo-scripts test-watch",
-    "typecheck": "repo-scripts typecheck"
+    "typecheck": "repo-scripts typecheck",
+    "format": "repo-scripts format",
+    "format:check": "repo-scripts format-check"
   },
   "dependencies": {},
   "devDependencies": {

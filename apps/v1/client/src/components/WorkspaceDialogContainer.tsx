@@ -29,10 +29,10 @@ export function WorkspaceDialogContainer({ isOpen, onComplete }: WorkspaceDialog
   const handleFolderCancel = () => {
     setShowFolderBrowser(false);
   };
-  
+
   const handleWorkspaceSelected = (path: string, hasExistingContent?: boolean) => {
     console.log('Workspace selected:', path, 'Has content:', hasExistingContent);
-    
+
     if (hasExistingContent) {
       // Show importing dialog
       setSelectedWorkspacePath(path);
@@ -42,7 +42,7 @@ export function WorkspaceDialogContainer({ isOpen, onComplete }: WorkspaceDialog
       onComplete(path);
     }
   };
-  
+
   const handleImportComplete = () => {
     onComplete(selectedWorkspacePath);
   };
@@ -51,7 +51,7 @@ export function WorkspaceDialogContainer({ isOpen, onComplete }: WorkspaceDialog
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
       <div className="fixed inset-0 bg-gray-900/50 dark:bg-black/50 transition-opacity" />
-      
+
       {/* Show importing dialog if needed */}
       {showImporting ? (
         <ImportingWorkspaceDialog

@@ -6,7 +6,7 @@ const mockLogger = {
   writeClaudeLog: () => {},
   logEvent: () => {},
   logClaude: () => {},
-  logClient: () => {}
+  logClient: () => {},
 };
 
 const mockFs = {
@@ -14,14 +14,14 @@ const mockFs = {
   mkdirSync: () => {},
   readdirSync: () => [],
   promises: {
-    writeFile: async () => {}
-  }
+    writeFile: async () => {},
+  },
 };
 
 // Override require for mocked modules
 const Module = require('module');
 const originalRequire = Module.prototype.require;
-Module.prototype.require = function(id) {
+Module.prototype.require = function (id) {
   if (id === './logger') return mockLogger;
   if (id === 'fs') return mockFs;
   return originalRequire.apply(this, arguments);
@@ -50,10 +50,12 @@ function expect(actual) {
     not: {
       toBe(expected) {
         if (actual === expected) {
-          throw new Error(`Expected ${JSON.stringify(actual)} not to be ${JSON.stringify(expected)}`);
+          throw new Error(
+            `Expected ${JSON.stringify(actual)} not to be ${JSON.stringify(expected)}`
+          );
         }
-      }
-    }
+      },
+    },
   };
 }
 
@@ -79,34 +81,34 @@ describe('Message Flow Tests', () => {
   beforeEach(() => {
     // Clear all sessions before each test
     const sessions = sessionManager.getAllSessions();
-    sessions.forEach(session => {
+    sessions.forEach((session) => {
       sessionManager.deleteSession(session.sessionId);
     });
   });
 
   test('should create separate messages for assistant text and tool executions', () => {
     const sessionId = 'test-session-1';
-    
+
     // Create session
     sessionManager.createSession({
       sessionId,
       projectId: 'test-project',
       repoName: 'test-repo',
       userName: 'testuser',
-      projectPath: '/test/path'
+      projectPath: '/test/path',
     });
 
     // Add user message
     sessionManager.addMessage(sessionId, {
       role: 'user',
-      content: 'summarize the readme'
+      content: 'summarize the readme',
     });
 
     // Add assistant pre-tool message
     sessionManager.addMessage(sessionId, {
       id: 'assistant-1',
       role: 'assistant',
-      content: 'I\'ll analyze the README for you.'
+      content: "I'll analyze the README for you.",
     });
 
     // Add tool execution message
@@ -116,24 +118,24 @@ describe('Message Flow Tests', () => {
       name: 'Read',
       args: '/path/to/README.md',
       status: 'complete',
-      executionTime: 150
+      executionTime: 150,
     });
 
     // Add final assistant response
     sessionManager.addMessage(sessionId, {
       id: 'assistant-2',
       role: 'assistant',
-      content: 'The README describes a project that...'
+      content: 'The README describes a project that...',
     });
 
     // Verify messages
     const session = sessionManager.getSession(sessionId);
     expect(session.messages).toHaveLength(4);
-    
+
     // Check message order and types
     expect(session.messages[0].role).toBe('user');
     expect(session.messages[1].role).toBe('assistant');
-    expect(session.messages[1].content).toBe('I\'ll analyze the README for you.');
+    expect(session.messages[1].content).toBe("I'll analyze the README for you.");
     expect(session.messages[2].role).toBe('tool');
     expect(session.messages[2].name).toBe('Read');
     expect(session.messages[2].args).toBe('/path/to/README.md');
@@ -143,26 +145,26 @@ describe('Message Flow Tests', () => {
 
   test('should handle multiple tool executions', () => {
     const sessionId = 'test-session-2';
-    
+
     // Create session
     sessionManager.createSession({
       sessionId,
       projectId: 'test-project',
       repoName: 'test-repo',
       userName: 'testuser',
-      projectPath: '/test/path'
+      projectPath: '/test/path',
     });
 
     // Add user message
     sessionManager.addMessage(sessionId, {
       role: 'user',
-      content: 'analyze all test files'
+      content: 'analyze all test files',
     });
 
     // Add assistant message
     sessionManager.addMessage(sessionId, {
       role: 'assistant',
-      content: 'I\'ll search for and analyze all test files.'
+      content: "I'll search for and analyze all test files.",
     });
 
     // Add multiple tool executions
@@ -172,41 +174,41 @@ describe('Message Flow Tests', () => {
       name: 'Glob',
       args: '**/*.test.js',
       status: 'complete',
-      executionTime: 50
+      executionTime: 50,
     });
 
     sessionManager.addMessage(sessionId, {
-      id: 'tool-2', 
+      id: 'tool-2',
       role: 'tool',
       name: 'Read',
       args: 'test1.test.js',
       status: 'complete',
-      executionTime: 30
+      executionTime: 30,
     });
 
     sessionManager.addMessage(sessionId, {
       id: 'tool-3',
-      role: 'tool', 
+      role: 'tool',
       name: 'Read',
       args: 'test2.test.js',
       status: 'complete',
-      executionTime: 25
+      executionTime: 25,
     });
 
     // Add final response
     sessionManager.addMessage(sessionId, {
       role: 'assistant',
-      content: 'I found and analyzed 2 test files...'
+      content: 'I found and analyzed 2 test files...',
     });
 
     // Verify
     const session = sessionManager.getSession(sessionId);
     expect(session.messages).toHaveLength(6);
-    
+
     // Count tool messages
-    const toolMessages = session.messages.filter(m => m.role === 'tool');
+    const toolMessages = session.messages.filter((m) => m.role === 'tool');
     expect(toolMessages).toHaveLength(3);
-    
+
     // Verify tool message details
     expect(toolMessages[0].name).toBe('Glob');
     expect(toolMessages[1].name).toBe('Read');
@@ -215,14 +217,14 @@ describe('Message Flow Tests', () => {
 
   test('should preserve message IDs for proper rehydration', () => {
     const sessionId = 'test-session-3';
-    
+
     // Create session
     sessionManager.createSession({
       sessionId,
       projectId: 'test-project',
       repoName: 'test-repo',
       userName: 'testuser',
-      projectPath: '/test/path'
+      projectPath: '/test/path',
     });
 
     // Add messages with specific IDs
@@ -230,19 +232,19 @@ describe('Message Flow Tests', () => {
       user: 'user-msg-1',
       assistant1: 'assistant-msg-1',
       tool: 'tool-exec-1',
-      assistant2: 'assistant-msg-2'
+      assistant2: 'assistant-msg-2',
     };
 
     sessionManager.addMessage(sessionId, {
       id: messageIds.user,
       role: 'user',
-      content: 'test message'
+      content: 'test message',
     });
 
     sessionManager.addMessage(sessionId, {
       id: messageIds.assistant1,
       role: 'assistant',
-      content: 'Processing...'
+      content: 'Processing...',
     });
 
     sessionManager.addMessage(sessionId, {
@@ -250,13 +252,13 @@ describe('Message Flow Tests', () => {
       role: 'tool',
       name: 'Bash',
       args: 'npm test',
-      status: 'complete'
+      status: 'complete',
     });
 
     sessionManager.addMessage(sessionId, {
       id: messageIds.assistant2,
       role: 'assistant',
-      content: 'Tests completed successfully.'
+      content: 'Tests completed successfully.',
     });
 
     // Verify IDs are preserved
@@ -269,14 +271,14 @@ describe('Message Flow Tests', () => {
 
   test('should format tool args based on tool type', () => {
     const sessionId = 'test-session-4';
-    
+
     // Create session
     sessionManager.createSession({
       sessionId,
       projectId: 'test-project',
       repoName: 'test-repo',
       userName: 'testuser',
-      projectPath: '/test/path'
+      projectPath: '/test/path',
     });
 
     // Test different tool arg formats
@@ -284,23 +286,23 @@ describe('Message Flow Tests', () => {
       {
         name: 'Read',
         args: '/path/to/file.js',
-        expectedArgs: '/path/to/file.js'
+        expectedArgs: '/path/to/file.js',
       },
       {
         name: 'Write',
         args: '/path/to/output.txt',
-        expectedArgs: '/path/to/output.txt'
+        expectedArgs: '/path/to/output.txt',
       },
       {
         name: 'Bash',
         args: 'npm run build',
-        expectedArgs: 'npm run build'
+        expectedArgs: 'npm run build',
       },
       {
         name: 'Edit',
         args: JSON.stringify({ file: 'test.js', line: 10 }, null, 2),
-        expectedArgs: JSON.stringify({ file: 'test.js', line: 10 }, null, 2)
-      }
+        expectedArgs: JSON.stringify({ file: 'test.js', line: 10 }, null, 2),
+      },
     ];
 
     tools.forEach((tool, index) => {
@@ -309,16 +311,16 @@ describe('Message Flow Tests', () => {
         role: 'tool',
         name: tool.name,
         args: tool.args,
-        status: 'complete'
+        status: 'complete',
       });
     });
 
     // Verify
     const session = sessionManager.getSession(sessionId);
-    const toolMessages = session.messages.filter(m => m.role === 'tool');
-    
+    const toolMessages = session.messages.filter((m) => m.role === 'tool');
+
     expect(toolMessages).toHaveLength(tools.length);
-    
+
     tools.forEach((tool, index) => {
       expect(toolMessages[index].name).toBe(tool.name);
       expect(toolMessages[index].args).toBe(tool.expectedArgs);
@@ -327,14 +329,14 @@ describe('Message Flow Tests', () => {
 
   test('should handle tool execution status progression', () => {
     const sessionId = 'test-session-5';
-    
+
     // Create session
     sessionManager.createSession({
       sessionId,
       projectId: 'test-project',
       repoName: 'test-repo',
       userName: 'testuser',
-      projectPath: '/test/path'
+      projectPath: '/test/path',
     });
 
     // Add tool in running state
@@ -343,7 +345,7 @@ describe('Message Flow Tests', () => {
       role: 'tool',
       name: 'Bash',
       args: 'npm install',
-      status: 'running'
+      status: 'running',
     });
 
     // Verify running state
@@ -363,28 +365,28 @@ describe('Message Flow Tests', () => {
 
   test('should not concatenate assistant messages when tools are used', () => {
     const sessionId = 'test-session-6';
-    
+
     // Create session
     sessionManager.createSession({
       sessionId,
       projectId: 'test-project',
       repoName: 'test-repo',
       userName: 'testuser',
-      projectPath: '/test/path'
+      projectPath: '/test/path',
     });
 
     // Simulate the actual flow
     // 1. User message
     sessionManager.addMessage(sessionId, {
       role: 'user',
-      content: 'read and summarize config.json'
+      content: 'read and summarize config.json',
     });
 
     // 2. Assistant message before tool
     sessionManager.addMessage(sessionId, {
       id: 'assistant-pre-tool',
       role: 'assistant',
-      content: 'I\'ll read the config.json file for you.'
+      content: "I'll read the config.json file for you.",
     });
 
     // 3. Tool execution
@@ -393,26 +395,26 @@ describe('Message Flow Tests', () => {
       role: 'tool',
       name: 'Read',
       args: 'config.json',
-      status: 'complete'
+      status: 'complete',
     });
 
     // 4. Assistant message with result
     sessionManager.addMessage(sessionId, {
       id: 'assistant-post-tool',
       role: 'assistant',
-      content: 'The config.json file contains the following settings...'
+      content: 'The config.json file contains the following settings...',
     });
 
     // Verify messages are separate
     const session = sessionManager.getSession(sessionId);
     expect(session.messages).toHaveLength(4);
-    
+
     // Ensure assistant messages are not concatenated
-    const assistantMessages = session.messages.filter(m => m.role === 'assistant');
+    const assistantMessages = session.messages.filter((m) => m.role === 'assistant');
     expect(assistantMessages).toHaveLength(2);
-    expect(assistantMessages[0].content).toBe('I\'ll read the config.json file for you.');
+    expect(assistantMessages[0].content).toBe("I'll read the config.json file for you.");
     expect(assistantMessages[1].content).toContain('The config.json file contains');
-    
+
     // Ensure they have different IDs
     expect(assistantMessages[0].id).not.toBe(assistantMessages[1].id);
   });
@@ -424,7 +426,7 @@ console.log('Running Message Flow tests...');
 let passed = 0;
 let failed = 0;
 
-tests.forEach(test => {
+tests.forEach((test) => {
   try {
     if (beforeEachFn) beforeEachFn();
     test.fn();

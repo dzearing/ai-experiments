@@ -11,7 +11,7 @@ export function NewWorkItem() {
   const { currentStyles } = useTheme();
   const { projects, personas } = useApp();
   const styles = currentStyles;
-  
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -28,74 +28,88 @@ export function NewWorkItem() {
     dependencies: [''],
     acceptanceCriteria: [''],
     healthMetrics: [''],
-    notes: ''
+    notes: '',
   });
-  
+
   const [newTag, setNewTag] = useState('');
-  
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // TODO: Actually create the work item
     navigate('/work-items');
   };
-  
-  const addArrayItem = (field: 'problems' | 'goals' | 'dependencies' | 'acceptanceCriteria' | 'healthMetrics') => {
-    setFormData(prev => ({
+
+  const addArrayItem = (
+    field: 'problems' | 'goals' | 'dependencies' | 'acceptanceCriteria' | 'healthMetrics'
+  ) => {
+    setFormData((prev) => ({
       ...prev,
-      [field]: [...prev[field], '']
+      [field]: [...prev[field], ''],
     }));
   };
-  
-  const updateArrayItem = (field: 'problems' | 'goals' | 'dependencies' | 'acceptanceCriteria' | 'healthMetrics', index: number, value: string) => {
-    setFormData(prev => ({
+
+  const updateArrayItem = (
+    field: 'problems' | 'goals' | 'dependencies' | 'acceptanceCriteria' | 'healthMetrics',
+    index: number,
+    value: string
+  ) => {
+    setFormData((prev) => ({
       ...prev,
-      [field]: prev[field].map((item, i) => i === index ? value : item)
+      [field]: prev[field].map((item, i) => (i === index ? value : item)),
     }));
   };
-  
-  const removeArrayItem = (field: 'problems' | 'goals' | 'dependencies' | 'acceptanceCriteria' | 'healthMetrics', index: number) => {
-    setFormData(prev => ({
+
+  const removeArrayItem = (
+    field: 'problems' | 'goals' | 'dependencies' | 'acceptanceCriteria' | 'healthMetrics',
+    index: number
+  ) => {
+    setFormData((prev) => ({
       ...prev,
-      [field]: prev[field].filter((_, i) => i !== index)
+      [field]: prev[field].filter((_, i) => i !== index),
     }));
   };
-  
+
   const addTag = () => {
     if (newTag.trim() && !formData.tags.includes(newTag.trim())) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        tags: [...prev.tags, newTag.trim()]
+        tags: [...prev.tags, newTag.trim()],
       }));
       setNewTag('');
     }
   };
-  
+
   const removeTag = (tag: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      tags: prev.tags.filter(t => t !== tag)
+      tags: prev.tags.filter((t) => t !== tag),
     }));
   };
-  
+
   return (
     <div className="max-w-4xl mx-auto">
       <h1 className={`text-2xl font-bold ${styles.headingColor} mb-6`}>Create work item</h1>
-      
+
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Basic Information */}
-        <div className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-6`}>
+        <div
+          className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-6`}
+        >
           <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4`}>Basic information</h2>
-          
+
           <div className="space-y-4">
             <div>
-              <label htmlFor="title" className={`block text-sm font-medium ${styles.textColor} mb-1`}>
+              <label
+                htmlFor="title"
+                className={`block text-sm font-medium ${styles.textColor} mb-1`}
+              >
                 Title
               </label>
               <input
                 type="text"
                 id="title"
                 value={formData.title}
-                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
                 className={`
                   w-full px-3 py-2 ${styles.buttonRadius}
                   ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
@@ -105,15 +119,18 @@ export function NewWorkItem() {
                 required
               />
             </div>
-            
+
             <div>
-              <label htmlFor="description" className={`block text-sm font-medium ${styles.textColor} mb-1`}>
+              <label
+                htmlFor="description"
+                className={`block text-sm font-medium ${styles.textColor} mb-1`}
+              >
                 Description
               </label>
               <textarea
                 id="description"
                 value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
                 rows={4}
                 className={`
                   w-full px-3 py-2 ${styles.buttonRadius}
@@ -124,16 +141,24 @@ export function NewWorkItem() {
                 required
               />
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="priority" className={`block text-sm font-medium ${styles.textColor} mb-1`}>
+                <label
+                  htmlFor="priority"
+                  className={`block text-sm font-medium ${styles.textColor} mb-1`}
+                >
                   Priority
                 </label>
                 <select
                   id="priority"
                   value={formData.priority}
-                  onChange={(e) => setFormData(prev => ({ ...prev, priority: e.target.value as WorkItem['priority'] }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      priority: e.target.value as WorkItem['priority'],
+                    }))
+                  }
                   className={`
                     w-full px-3 py-2 ${styles.buttonRadius}
                     ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
@@ -146,15 +171,23 @@ export function NewWorkItem() {
                   <option value="critical">Critical</option>
                 </select>
               </div>
-              
+
               <div>
-                <label htmlFor="status" className={`block text-sm font-medium ${styles.textColor} mb-1`}>
+                <label
+                  htmlFor="status"
+                  className={`block text-sm font-medium ${styles.textColor} mb-1`}
+                >
                   Status
                 </label>
                 <select
                   id="status"
                   value={formData.status}
-                  onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as WorkItem['status'] }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      status: e.target.value as WorkItem['status'],
+                    }))
+                  }
                   className={`
                     w-full px-3 py-2 ${styles.buttonRadius}
                     ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
@@ -171,20 +204,25 @@ export function NewWorkItem() {
             </div>
           </div>
         </div>
-        
+
         {/* Assignment */}
-        <div className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-6`}>
+        <div
+          className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-6`}
+        >
           <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4`}>Assignment</h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="project" className={`block text-sm font-medium ${styles.textColor} mb-1`}>
+              <label
+                htmlFor="project"
+                className={`block text-sm font-medium ${styles.textColor} mb-1`}
+              >
                 Project
               </label>
               <select
                 id="project"
                 value={formData.projectId}
-                onChange={(e) => setFormData(prev => ({ ...prev, projectId: e.target.value }))}
+                onChange={(e) => setFormData((prev) => ({ ...prev, projectId: e.target.value }))}
                 className={`
                   w-full px-3 py-2 ${styles.buttonRadius}
                   ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
@@ -192,20 +230,25 @@ export function NewWorkItem() {
                 `}
               >
                 <option value="">Select a project</option>
-                {projects.map(project => (
-                  <option key={project.id} value={project.id}>{project.name}</option>
+                {projects.map((project) => (
+                  <option key={project.id} value={project.id}>
+                    {project.name}
+                  </option>
                 ))}
               </select>
             </div>
-            
+
             <div>
-              <label htmlFor="assignee" className={`block text-sm font-medium ${styles.textColor} mb-1`}>
+              <label
+                htmlFor="assignee"
+                className={`block text-sm font-medium ${styles.textColor} mb-1`}
+              >
                 Assignee
               </label>
               <select
                 id="assignee"
                 value={formData.assigneeId}
-                onChange={(e) => setFormData(prev => ({ ...prev, assigneeId: e.target.value }))}
+                onChange={(e) => setFormData((prev) => ({ ...prev, assigneeId: e.target.value }))}
                 className={`
                   w-full px-3 py-2 ${styles.buttonRadius}
                   ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
@@ -213,23 +256,26 @@ export function NewWorkItem() {
                 `}
               >
                 <option value="">Unassigned</option>
-                {personas.map(persona => (
+                {personas.map((persona) => (
                   <option key={persona.id} value={persona.id}>
                     {persona.name} ({persona.type})
                   </option>
                 ))}
               </select>
             </div>
-            
+
             <div>
-              <label htmlFor="dueDate" className={`block text-sm font-medium ${styles.textColor} mb-1`}>
+              <label
+                htmlFor="dueDate"
+                className={`block text-sm font-medium ${styles.textColor} mb-1`}
+              >
                 Due date
               </label>
               <input
                 type="date"
                 id="dueDate"
                 value={formData.dueDate}
-                onChange={(e) => setFormData(prev => ({ ...prev, dueDate: e.target.value }))}
+                onChange={(e) => setFormData((prev) => ({ ...prev, dueDate: e.target.value }))}
                 className={`
                   w-full px-3 py-2 ${styles.buttonRadius}
                   ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
@@ -237,16 +283,21 @@ export function NewWorkItem() {
                 `}
               />
             </div>
-            
+
             <div>
-              <label htmlFor="effort" className={`block text-sm font-medium ${styles.textColor} mb-1`}>
+              <label
+                htmlFor="effort"
+                className={`block text-sm font-medium ${styles.textColor} mb-1`}
+              >
                 Estimated effort
               </label>
               <input
                 type="text"
                 id="effort"
                 value={formData.estimatedEffort}
-                onChange={(e) => setFormData(prev => ({ ...prev, estimatedEffort: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, estimatedEffort: e.target.value }))
+                }
                 className={`
                   w-full px-3 py-2 ${styles.buttonRadius}
                   ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
@@ -257,12 +308,16 @@ export function NewWorkItem() {
             </div>
           </div>
         </div>
-        
+
         {/* Problems */}
-        <div className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-6`}>
+        <div
+          className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-6`}
+        >
           <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4`}>Problems</h2>
-          <p className={`text-sm ${styles.mutedText} mb-4`}>List the problems this work item aims to solve</p>
-          
+          <p className={`text-sm ${styles.mutedText} mb-4`}>
+            List the problems this work item aims to solve
+          </p>
+
           <div className="space-y-2">
             {formData.problems.map((problem, index) => (
               <div key={index} className="flex gap-2">
@@ -286,7 +341,12 @@ export function NewWorkItem() {
                     aria-label="Remove problem"
                   >
                     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </IconButton>
                 )}
@@ -302,12 +362,16 @@ export function NewWorkItem() {
             </Button>
           </div>
         </div>
-        
+
         {/* Goals */}
-        <div className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-6`}>
+        <div
+          className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-6`}
+        >
           <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4`}>Goals</h2>
-          <p className={`text-sm ${styles.mutedText} mb-4`}>Define specific goals for this work item</p>
-          
+          <p className={`text-sm ${styles.mutedText} mb-4`}>
+            Define specific goals for this work item
+          </p>
+
           <div className="space-y-2">
             {formData.goals.map((goal, index) => (
               <div key={index} className="flex gap-2">
@@ -331,7 +395,12 @@ export function NewWorkItem() {
                     aria-label="Remove goal"
                   >
                     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </IconButton>
                 )}
@@ -347,20 +416,27 @@ export function NewWorkItem() {
             </Button>
           </div>
         </div>
-        
+
         {/* Technical Details */}
-        <div className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-6`}>
+        <div
+          className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-6`}
+        >
           <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4`}>Technical details</h2>
-          
+
           <div className="space-y-4">
             <div>
-              <label htmlFor="approach" className={`block text-sm font-medium ${styles.textColor} mb-1`}>
+              <label
+                htmlFor="approach"
+                className={`block text-sm font-medium ${styles.textColor} mb-1`}
+              >
                 Technical approach
               </label>
               <textarea
                 id="approach"
                 value={formData.technicalApproach}
-                onChange={(e) => setFormData(prev => ({ ...prev, technicalApproach: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, technicalApproach: e.target.value }))
+                }
                 rows={3}
                 className={`
                   w-full px-3 py-2 ${styles.buttonRadius}
@@ -370,7 +446,7 @@ export function NewWorkItem() {
                 placeholder="Outline the technical approach or solution strategy"
               />
             </div>
-            
+
             <div>
               <label className={`block text-sm font-medium ${styles.textColor} mb-1`}>
                 Dependencies
@@ -397,8 +473,18 @@ export function NewWorkItem() {
                         size="sm"
                         aria-label="Remove dependency"
                       >
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        <svg
+                          className="h-5 w-5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
                         </svg>
                       </IconButton>
                     )}
@@ -416,11 +502,15 @@ export function NewWorkItem() {
             </div>
           </div>
         </div>
-        
+
         {/* Acceptance Criteria */}
-        <div className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-6`}>
-          <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4`}>Acceptance criteria</h2>
-          
+        <div
+          className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-6`}
+        >
+          <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4`}>
+            Acceptance criteria
+          </h2>
+
           <div className="space-y-2">
             {formData.acceptanceCriteria.map((criterion, index) => (
               <div key={index} className="flex gap-2">
@@ -444,7 +534,12 @@ export function NewWorkItem() {
                     aria-label="Remove criterion"
                   >
                     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </IconButton>
                 )}
@@ -460,12 +555,16 @@ export function NewWorkItem() {
             </Button>
           </div>
         </div>
-        
+
         {/* Health Metrics */}
-        <div className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-6`}>
+        <div
+          className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-6`}
+        >
           <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4`}>Health metrics</h2>
-          <p className={`text-sm ${styles.mutedText} mb-4`}>Define what telemetry/metrics indicate healthy functionality</p>
-          
+          <p className={`text-sm ${styles.mutedText} mb-4`}>
+            Define what telemetry/metrics indicate healthy functionality
+          </p>
+
           <div className="space-y-2">
             {formData.healthMetrics.map((metric, index) => (
               <div key={index} className="flex gap-2">
@@ -489,7 +588,12 @@ export function NewWorkItem() {
                     aria-label="Remove metric"
                   >
                     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </IconButton>
                 )}
@@ -505,16 +609,18 @@ export function NewWorkItem() {
             </Button>
           </div>
         </div>
-        
+
         {/* Tags and Notes */}
-        <div className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-6`}>
-          <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4`}>Additional information</h2>
-          
+        <div
+          className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-6`}
+        >
+          <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4`}>
+            Additional information
+          </h2>
+
           <div className="space-y-4">
             <div>
-              <label className={`block text-sm font-medium ${styles.textColor} mb-1`}>
-                Tags
-              </label>
+              <label className={`block text-sm font-medium ${styles.textColor} mb-1`}>Tags</label>
               <div className="flex gap-2 mb-2">
                 <input
                   type="text"
@@ -528,17 +634,13 @@ export function NewWorkItem() {
                   `}
                   placeholder="Add a tag"
                 />
-                <Button
-                  type="button"
-                  onClick={addTag}
-                  variant="primary"
-                >
+                <Button type="button" onClick={addTag} variant="primary">
                   Add
                 </Button>
               </div>
               {formData.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  {formData.tags.map(tag => (
+                  {formData.tags.map((tag) => (
                     <span
                       key={tag}
                       className={`
@@ -555,8 +657,18 @@ export function NewWorkItem() {
                         aria-label={`Remove tag ${tag}`}
                         className="ml-1"
                       >
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
                         </svg>
                       </IconButton>
                     </span>
@@ -564,15 +676,18 @@ export function NewWorkItem() {
                 </div>
               )}
             </div>
-            
+
             <div>
-              <label htmlFor="notes" className={`block text-sm font-medium ${styles.textColor} mb-1`}>
+              <label
+                htmlFor="notes"
+                className={`block text-sm font-medium ${styles.textColor} mb-1`}
+              >
                 Notes
               </label>
               <textarea
                 id="notes"
                 value={formData.notes}
-                onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
                 rows={3}
                 className={`
                   w-full px-3 py-2 ${styles.buttonRadius}
@@ -584,20 +699,13 @@ export function NewWorkItem() {
             </div>
           </div>
         </div>
-        
+
         {/* Form Actions */}
         <div className="flex justify-end gap-3">
-          <Button
-            type="button"
-            onClick={() => navigate('/work-items')}
-            variant="secondary"
-          >
+          <Button type="button" onClick={() => navigate('/work-items')} variant="secondary">
             Cancel
           </Button>
-          <Button
-            type="submit"
-            variant="primary"
-          >
+          <Button type="submit" variant="primary">
             Create work item
           </Button>
         </div>

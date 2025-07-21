@@ -6,7 +6,7 @@ const lintFix: Task = {
   description: 'Run ESLint and automatically fix issues',
   execute: async function lintFix(additionalArgs = []) {
     return lint.execute(['--fix', ...additionalArgs]);
-  }
+  },
 };
 
 export { lintFix };

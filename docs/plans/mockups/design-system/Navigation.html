@@ -1,891 +1,950 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Navigation Components</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            background: #f5f5f5;
-            padding: 20px;
-            transition: background-color 0.3s ease;
-        }
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        background: #f5f5f5;
+        padding: 20px;
+        transition: background-color 0.3s ease;
+      }
 
-        body.dark {
-            background: #0f172a;
-        }
+      body.dark {
+        background: #0f172a;
+      }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
 
-        h1 {
-            text-align: center;
-            margin-bottom: 40px;
-            font-size: 24px;
-            font-weight: 600;
-            color: #111827;
-        }
+      h1 {
+        text-align: center;
+        margin-bottom: 40px;
+        font-size: 24px;
+        font-weight: 600;
+        color: #111827;
+      }
 
-        body.dark h1 {
-            color: #f3f4f6;
-        }
+      body.dark h1 {
+        color: #f3f4f6;
+      }
 
-        .theme-toggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #2563eb;
-            color: white;
-            border: none;
-            padding: 10px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: background-color 0.3s ease;
-            z-index: 1000;
-        }
+      .theme-toggle {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #2563eb;
+        color: white;
+        border: none;
+        padding: 10px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: background-color 0.3s ease;
+        z-index: 1000;
+      }
 
-        .theme-toggle:hover {
-            background: #1d4ed8;
+      .theme-toggle:hover {
+        background: #1d4ed8;
+      }
+
+      .mobile-menu-toggle {
+        display: none;
+        background: #2563eb;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-bottom: 20px;
+      }
+
+      .demo-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 50px;
+        margin-bottom: 50px;
+      }
+
+      .theme-section {
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 30px;
+        transition:
+          background-color 0.3s ease,
+          border-color 0.3s ease;
+      }
+
+      body.dark .theme-section {
+        background: #1f2937;
+        border-color: #374151;
+      }
+
+      .theme-title {
+        text-align: center;
+        font-size: 18px;
+        font-weight: 500;
+        margin-bottom: 30px;
+        color: #111827;
+      }
+
+      body.dark .theme-title {
+        color: #f3f4f6;
+      }
+
+      .component-section {
+        margin-bottom: 40px;
+      }
+
+      .component-label {
+        font-size: 14px;
+        color: #666666;
+        margin-bottom: 10px;
+        font-weight: 500;
+      }
+
+      body.dark .component-label {
+        color: #9ca3af;
+      }
+
+      /* Header Navigation */
+      .header-nav {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+      }
+
+      body.dark .header-nav {
+        background: #111827;
+        border-color: #374151;
+      }
+
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .logo-icon {
+        width: 24px;
+        height: 24px;
+        background: #2563eb;
+        border-radius: 4px;
+      }
+
+      .logo-text {
+        font-size: 16px;
+        font-weight: 600;
+        color: #111827;
+      }
+
+      body.dark .logo-text {
+        color: #f3f4f6;
+      }
+
+      .header-nav-items {
+        display: flex;
+        gap: 20px;
+      }
+
+      .header-nav-item {
+        font-size: 14px;
+        color: #374151;
+        text-decoration: none;
+        padding: 8px 12px;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+        position: relative;
+      }
+
+      .header-nav-item:hover {
+        background: #f3f4f6;
+        color: #2563eb;
+      }
+
+      .header-nav-item.active {
+        color: #2563eb;
+        font-weight: 500;
+      }
+
+      .header-nav-item.active::after {
+        content: '';
+        position: absolute;
+        bottom: -16px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100%;
+        height: 2px;
+        background: #2563eb;
+      }
+
+      body.dark .header-nav-item {
+        color: #e5e7eb;
+      }
+
+      body.dark .header-nav-item:hover {
+        background: #374151;
+        color: #60a5fa;
+      }
+
+      body.dark .header-nav-item.active {
+        color: #60a5fa;
+      }
+
+      body.dark .header-nav-item.active::after {
+        background: #60a5fa;
+      }
+
+      .user-menu {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #e5e7eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        color: #6b7280;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+      }
+
+      .user-menu:hover {
+        background: #d1d5db;
+      }
+
+      body.dark .user-menu {
+        background: #374151;
+        color: #9ca3af;
+      }
+
+      body.dark .user-menu:hover {
+        background: #4b5563;
+      }
+
+      /* Sidebar Navigation */
+      .sidebar-nav {
+        width: 200px;
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 8px;
+        transition: transform 0.3s ease;
+      }
+
+      body.dark .sidebar-nav {
+        background: #111827;
+        border-color: #374151;
+      }
+
+      .sidebar-nav.mobile-hidden {
+        transform: translateX(-100%);
+      }
+
+      .sidebar-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 8px;
+        border-radius: 6px;
+        font-size: 14px;
+        color: #6b7280;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        position: relative;
+        cursor: pointer;
+      }
+
+      .sidebar-item:hover {
+        background: #f3f4f6;
+        color: #374151;
+      }
+
+      .sidebar-item.active {
+        background: #eff6ff;
+        color: #1e40af;
+        font-weight: 500;
+      }
+
+      .sidebar-item.active::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 3px;
+        height: 100%;
+        background: #2563eb;
+        border-radius: 0 3px 3px 0;
+      }
+
+      .sidebar-icon {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #e5e7eb;
+      }
+
+      .sidebar-item.active .sidebar-icon {
+        background: #2563eb;
+      }
+
+      body.dark .sidebar-item {
+        color: #9ca3af;
+      }
+
+      body.dark .sidebar-item:hover {
+        background: #374151;
+        color: #e5e7eb;
+      }
+
+      body.dark .sidebar-item.active {
+        background: rgba(30, 58, 138, 0.2);
+        color: #93c5fd;
+      }
+
+      body.dark .sidebar-item.active::before {
+        background: #3b82f6;
+      }
+
+      body.dark .sidebar-icon {
+        background: #374151;
+      }
+
+      body.dark .sidebar-item.active .sidebar-icon {
+        background: #3b82f6;
+      }
+
+      .sidebar-section {
+        margin-top: 20px;
+        padding-top: 16px;
+      }
+
+      .sidebar-section-title {
+        font-size: 12px;
+        color: #9ca3af;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        padding: 0 8px;
+        font-weight: 500;
+      }
+
+      body.dark .sidebar-section-title {
+        color: #6b7280;
+      }
+
+      /* Breadcrumb */
+      .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 20px;
+      }
+
+      .breadcrumb-item {
+        font-size: 14px;
+        text-decoration: none;
+        transition: color 0.2s ease;
+      }
+
+      .breadcrumb-item:not(.current) {
+        color: #3b82f6;
+      }
+
+      .breadcrumb-item:not(.current):hover {
+        color: #1d4ed8;
+      }
+
+      .breadcrumb-item.current {
+        color: #374151;
+      }
+
+      .breadcrumb-separator {
+        color: #9ca3af;
+      }
+
+      body.dark .breadcrumb-item:not(.current) {
+        color: #60a5fa;
+      }
+
+      body.dark .breadcrumb-item:not(.current):hover {
+        color: #93c5fd;
+      }
+
+      body.dark .breadcrumb-item.current {
+        color: #e5e7eb;
+      }
+
+      body.dark .breadcrumb-separator {
+        color: #6b7280;
+      }
+
+      /* Tab Navigation */
+      .tab-nav {
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 20px;
+      }
+
+      body.dark .tab-nav {
+        border-bottom-color: #374151;
+      }
+
+      .tab-nav-items {
+        display: flex;
+        gap: 20px;
+      }
+
+      .tab-nav-item {
+        font-size: 14px;
+        color: #6b7280;
+        text-decoration: none;
+        padding: 12px 6px;
+        border-bottom: 3px solid transparent;
+        transition: all 0.2s ease;
+        position: relative;
+        cursor: pointer;
+      }
+
+      .tab-nav-item:hover {
+        color: #374151;
+      }
+
+      .tab-nav-item.active {
+        color: #2563eb;
+        font-weight: 500;
+        border-bottom-color: #2563eb;
+      }
+
+      body.dark .tab-nav-item {
+        color: #9ca3af;
+      }
+
+      body.dark .tab-nav-item:hover {
+        color: #e5e7eb;
+      }
+
+      body.dark .tab-nav-item.active {
+        color: #60a5fa;
+        border-bottom-color: #60a5fa;
+      }
+
+      /* Pagination */
+      .pagination {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .pagination-item {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        background: #ffffff;
+        border: 1px solid #d1d5db;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        cursor: pointer;
+      }
+
+      .pagination-item:hover {
+        background: #f3f4f6;
+        border-color: #9ca3af;
+      }
+
+      .pagination-item.active {
+        background: #2563eb;
+        border-color: #2563eb;
+        color: #ffffff;
+      }
+
+      .pagination-item.disabled {
+        color: #9ca3af;
+        cursor: not-allowed;
+      }
+
+      .pagination-item.disabled:hover {
+        background: #ffffff;
+        border-color: #d1d5db;
+      }
+
+      .pagination-ellipsis {
+        color: #6b7280;
+        font-size: 14px;
+        padding: 0 4px;
+      }
+
+      body.dark .pagination-item {
+        background: #374151;
+        border-color: #4b5563;
+        color: #e5e7eb;
+      }
+
+      body.dark .pagination-item:hover {
+        background: #4b5563;
+        border-color: #6b7280;
+      }
+
+      body.dark .pagination-item.active {
+        background: #3b82f6;
+        border-color: #3b82f6;
+        color: #ffffff;
+      }
+
+      body.dark .pagination-item.disabled {
+        color: #6b7280;
+      }
+
+      body.dark .pagination-item.disabled:hover {
+        background: #374151;
+        border-color: #4b5563;
+      }
+
+      body.dark .pagination-ellipsis {
+        color: #6b7280;
+      }
+
+      /* Mobile Responsive */
+      @media (max-width: 768px) {
+        .demo-container {
+          grid-template-columns: 1fr;
+          gap: 30px;
         }
 
         .mobile-menu-toggle {
-            display: none;
-            background: #2563eb;
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            margin-bottom: 20px;
-        }
-
-        .demo-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 50px;
-            margin-bottom: 50px;
-        }
-
-        .theme-section {
-            background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 12px;
-            padding: 30px;
-            transition: background-color 0.3s ease, border-color 0.3s ease;
-        }
-
-        body.dark .theme-section {
-            background: #1f2937;
-            border-color: #374151;
-        }
-
-        .theme-title {
-            text-align: center;
-            font-size: 18px;
-            font-weight: 500;
-            margin-bottom: 30px;
-            color: #111827;
-        }
-
-        body.dark .theme-title {
-            color: #f3f4f6;
-        }
-
-        .component-section {
-            margin-bottom: 40px;
-        }
-
-        .component-label {
-            font-size: 14px;
-            color: #666666;
-            margin-bottom: 10px;
-            font-weight: 500;
-        }
-
-        body.dark .component-label {
-            color: #9ca3af;
-        }
-
-        /* Header Navigation */
-        .header-nav {
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-
-        body.dark .header-nav {
-            background: #111827;
-            border-color: #374151;
-        }
-
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .logo-icon {
-            width: 24px;
-            height: 24px;
-            background: #2563eb;
-            border-radius: 4px;
-        }
-
-        .logo-text {
-            font-size: 16px;
-            font-weight: 600;
-            color: #111827;
-        }
-
-        body.dark .logo-text {
-            color: #f3f4f6;
+          display: block;
         }
 
         .header-nav-items {
-            display: flex;
-            gap: 20px;
+          display: none;
         }
 
-        .header-nav-item {
-            font-size: 14px;
-            color: #374151;
-            text-decoration: none;
-            padding: 8px 12px;
-            border-radius: 6px;
-            transition: all 0.2s ease;
-            position: relative;
-        }
-
-        .header-nav-item:hover {
-            background: #f3f4f6;
-            color: #2563eb;
-        }
-
-        .header-nav-item.active {
-            color: #2563eb;
-            font-weight: 500;
-        }
-
-        .header-nav-item.active::after {
-            content: '';
-            position: absolute;
-            bottom: -16px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            height: 2px;
-            background: #2563eb;
-        }
-
-        body.dark .header-nav-item {
-            color: #e5e7eb;
-        }
-
-        body.dark .header-nav-item:hover {
-            background: #374151;
-            color: #60a5fa;
-        }
-
-        body.dark .header-nav-item.active {
-            color: #60a5fa;
-        }
-
-        body.dark .header-nav-item.active::after {
-            background: #60a5fa;
-        }
-
-        .user-menu {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: #e5e7eb;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            color: #6b7280;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-
-        .user-menu:hover {
-            background: #d1d5db;
-        }
-
-        body.dark .user-menu {
-            background: #374151;
-            color: #9ca3af;
-        }
-
-        body.dark .user-menu:hover {
-            background: #4b5563;
-        }
-
-        /* Sidebar Navigation */
         .sidebar-nav {
-            width: 200px;
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 8px;
-            transition: transform 0.3s ease;
+          position: fixed;
+          top: 0;
+          left: 0;
+          height: 100vh;
+          z-index: 999;
+          width: 250px;
+          background: white;
+          box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
         }
 
         body.dark .sidebar-nav {
-            background: #111827;
-            border-color: #374151;
-        }
-
-        .sidebar-nav.mobile-hidden {
-            transform: translateX(-100%);
-        }
-
-        .sidebar-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 8px;
-            border-radius: 6px;
-            font-size: 14px;
-            color: #6b7280;
-            text-decoration: none;
-            transition: all 0.2s ease;
-            position: relative;
-            cursor: pointer;
-        }
-
-        .sidebar-item:hover {
-            background: #f3f4f6;
-            color: #374151;
-        }
-
-        .sidebar-item.active {
-            background: #eff6ff;
-            color: #1e40af;
-            font-weight: 500;
-        }
-
-        .sidebar-item.active::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 3px;
-            height: 100%;
-            background: #2563eb;
-            border-radius: 0 3px 3px 0;
-        }
-
-        .sidebar-icon {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: #e5e7eb;
-        }
-
-        .sidebar-item.active .sidebar-icon {
-            background: #2563eb;
-        }
-
-        body.dark .sidebar-item {
-            color: #9ca3af;
-        }
-
-        body.dark .sidebar-item:hover {
-            background: #374151;
-            color: #e5e7eb;
-        }
-
-        body.dark .sidebar-item.active {
-            background: rgba(30, 58, 138, 0.2);
-            color: #93c5fd;
-        }
-
-        body.dark .sidebar-item.active::before {
-            background: #3b82f6;
-        }
-
-        body.dark .sidebar-icon {
-            background: #374151;
-        }
-
-        body.dark .sidebar-item.active .sidebar-icon {
-            background: #3b82f6;
-        }
-
-        .sidebar-section {
-            margin-top: 20px;
-            padding-top: 16px;
-        }
-
-        .sidebar-section-title {
-            font-size: 12px;
-            color: #9ca3af;
-            text-transform: uppercase;
-            margin-bottom: 8px;
-            padding: 0 8px;
-            font-weight: 500;
-        }
-
-        body.dark .sidebar-section-title {
-            color: #6b7280;
-        }
-
-        /* Breadcrumb */
-        .breadcrumb {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 20px;
-        }
-
-        .breadcrumb-item {
-            font-size: 14px;
-            text-decoration: none;
-            transition: color 0.2s ease;
-        }
-
-        .breadcrumb-item:not(.current) {
-            color: #3b82f6;
-        }
-
-        .breadcrumb-item:not(.current):hover {
-            color: #1d4ed8;
-        }
-
-        .breadcrumb-item.current {
-            color: #374151;
-        }
-
-        .breadcrumb-separator {
-            color: #9ca3af;
-        }
-
-        body.dark .breadcrumb-item:not(.current) {
-            color: #60a5fa;
-        }
-
-        body.dark .breadcrumb-item:not(.current):hover {
-            color: #93c5fd;
-        }
-
-        body.dark .breadcrumb-item.current {
-            color: #e5e7eb;
-        }
-
-        body.dark .breadcrumb-separator {
-            color: #6b7280;
-        }
-
-        /* Tab Navigation */
-        .tab-nav {
-            border-bottom: 1px solid #e5e7eb;
-            margin-bottom: 20px;
-        }
-
-        body.dark .tab-nav {
-            border-bottom-color: #374151;
+          background: #111827;
+          box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
         }
 
         .tab-nav-items {
-            display: flex;
-            gap: 20px;
+          overflow-x: auto;
+          flex-wrap: nowrap;
         }
 
-        .tab-nav-item {
-            font-size: 14px;
-            color: #6b7280;
-            text-decoration: none;
-            padding: 12px 6px;
-            border-bottom: 3px solid transparent;
-            transition: all 0.2s ease;
-            position: relative;
-            cursor: pointer;
-        }
-
-        .tab-nav-item:hover {
-            color: #374151;
-        }
-
-        .tab-nav-item.active {
-            color: #2563eb;
-            font-weight: 500;
-            border-bottom-color: #2563eb;
-        }
-
-        body.dark .tab-nav-item {
-            color: #9ca3af;
-        }
-
-        body.dark .tab-nav-item:hover {
-            color: #e5e7eb;
-        }
-
-        body.dark .tab-nav-item.active {
-            color: #60a5fa;
-            border-bottom-color: #60a5fa;
-        }
-
-        /* Pagination */
         .pagination {
-            display: flex;
-            gap: 8px;
-            align-items: center;
+          flex-wrap: wrap;
+          justify-content: center;
         }
+      }
 
-        .pagination-item {
-            width: 32px;
-            height: 32px;
-            border-radius: 6px;
-            background: #ffffff;
-            border: 1px solid #d1d5db;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            text-decoration: none;
-            transition: all 0.2s ease;
-            cursor: pointer;
-        }
+      /* Interactive Demo Section */
+      .interactive-demo {
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 30px;
+        margin-top: 40px;
+      }
 
-        .pagination-item:hover {
-            background: #f3f4f6;
-            border-color: #9ca3af;
-        }
+      body.dark .interactive-demo {
+        background: #1f2937;
+        border-color: #374151;
+      }
 
-        .pagination-item.active {
-            background: #2563eb;
-            border-color: #2563eb;
-            color: #ffffff;
-        }
+      .demo-title {
+        text-align: center;
+        font-size: 18px;
+        font-weight: 500;
+        margin-bottom: 30px;
+        color: #111827;
+      }
 
-        .pagination-item.disabled {
-            color: #9ca3af;
-            cursor: not-allowed;
-        }
+      body.dark .demo-title {
+        color: #f3f4f6;
+      }
 
-        .pagination-item.disabled:hover {
-            background: #ffffff;
-            border-color: #d1d5db;
-        }
+      .demo-layout {
+        display: flex;
+        gap: 20px;
+        min-height: 400px;
+      }
 
-        .pagination-ellipsis {
-            color: #6b7280;
-            font-size: 14px;
-            padding: 0 4px;
-        }
+      .demo-main {
+        flex: 1;
+        background: #f9fafb;
+        border-radius: 8px;
+        padding: 20px;
+      }
 
-        body.dark .pagination-item {
-            background: #374151;
-            border-color: #4b5563;
-            color: #e5e7eb;
-        }
+      body.dark .demo-main {
+        background: #0f172a;
+      }
 
-        body.dark .pagination-item:hover {
-            background: #4b5563;
-            border-color: #6b7280;
-        }
+      .demo-content {
+        background: white;
+        border-radius: 6px;
+        padding: 20px;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        color: #6b7280;
+      }
 
-        body.dark .pagination-item.active {
-            background: #3b82f6;
-            border-color: #3b82f6;
-            color: #ffffff;
-        }
-
-        body.dark .pagination-item.disabled {
-            color: #6b7280;
-        }
-
-        body.dark .pagination-item.disabled:hover {
-            background: #374151;
-            border-color: #4b5563;
-        }
-
-        body.dark .pagination-ellipsis {
-            color: #6b7280;
-        }
-
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            .demo-container {
-                grid-template-columns: 1fr;
-                gap: 30px;
-            }
-
-            .mobile-menu-toggle {
-                display: block;
-            }
-
-            .header-nav-items {
-                display: none;
-            }
-
-            .sidebar-nav {
-                position: fixed;
-                top: 0;
-                left: 0;
-                height: 100vh;
-                z-index: 999;
-                width: 250px;
-                background: white;
-                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-            }
-
-            body.dark .sidebar-nav {
-                background: #111827;
-                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
-            }
-
-            .tab-nav-items {
-                overflow-x: auto;
-                flex-wrap: nowrap;
-            }
-
-            .pagination {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-        }
-
-        /* Interactive Demo Section */
-        .interactive-demo {
-            background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 12px;
-            padding: 30px;
-            margin-top: 40px;
-        }
-
-        body.dark .interactive-demo {
-            background: #1f2937;
-            border-color: #374151;
-        }
-
-        .demo-title {
-            text-align: center;
-            font-size: 18px;
-            font-weight: 500;
-            margin-bottom: 30px;
-            color: #111827;
-        }
-
-        body.dark .demo-title {
-            color: #f3f4f6;
-        }
-
-        .demo-layout {
-            display: flex;
-            gap: 20px;
-            min-height: 400px;
-        }
-
-        .demo-main {
-            flex: 1;
-            background: #f9fafb;
-            border-radius: 8px;
-            padding: 20px;
-        }
-
-        body.dark .demo-main {
-            background: #0f172a;
-        }
-
-        .demo-content {
-            background: white;
-            border-radius: 6px;
-            padding: 20px;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            color: #6b7280;
-        }
-
-        body.dark .demo-content {
-            background: #1f2937;
-            color: #9ca3af;
-        }
+      body.dark .demo-content {
+        background: #1f2937;
+        color: #9ca3af;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <button class="theme-toggle" onclick="toggleTheme()">🌙 Dark Mode</button>
-    
+
     <div class="container">
-        <h1>Navigation Components</h1>
-        
-        <div class="demo-container">
-            <!-- Light Theme Demo -->
-            <div class="theme-section">
-                <h2 class="theme-title">Component Library</h2>
-                
-                <div class="component-section">
-                    <div class="component-label">Header Navigation</div>
-                    <nav class="header-nav">
-                        <div class="header-left">
-                            <div class="logo">
-                                <div class="logo-icon"></div>
-                                <span class="logo-text">Claude Flow</span>
-                            </div>
-                            <div class="header-nav-items">
-                                <a href="#" class="header-nav-item" onclick="setActiveHeader(event, this)">Projects</a>
-                                <a href="#" class="header-nav-item active" onclick="setActiveHeader(event, this)">Work Items</a>
-                                <a href="#" class="header-nav-item" onclick="setActiveHeader(event, this)">Team</a>
-                            </div>
-                        </div>
-                        <div class="user-menu">JD</div>
-                    </nav>
+      <h1>Navigation Components</h1>
+
+      <div class="demo-container">
+        <!-- Light Theme Demo -->
+        <div class="theme-section">
+          <h2 class="theme-title">Component Library</h2>
+
+          <div class="component-section">
+            <div class="component-label">Header Navigation</div>
+            <nav class="header-nav">
+              <div class="header-left">
+                <div class="logo">
+                  <div class="logo-icon"></div>
+                  <span class="logo-text">Claude Flow</span>
                 </div>
-                
-                <div class="component-section">
-                    <div class="component-label">Sidebar Navigation</div>
-                    <nav class="sidebar-nav" id="sidebar">
-                        <a href="#" class="sidebar-item active" onclick="setActiveSidebar(event, this)">
-                            <div class="sidebar-icon"></div>
-                            Dashboard
-                        </a>
-                        <a href="#" class="sidebar-item" onclick="setActiveSidebar(event, this)">
-                            <div class="sidebar-icon"></div>
-                            Projects
-                        </a>
-                        <a href="#" class="sidebar-item" onclick="setActiveSidebar(event, this)">
-                            <div class="sidebar-icon"></div>
-                            Work Items
-                        </a>
-                        <div class="sidebar-section">
-                            <div class="sidebar-section-title">Team</div>
-                            <a href="#" class="sidebar-item" onclick="setActiveSidebar(event, this)">
-                                <div class="sidebar-icon"></div>
-                                Members
-                            </a>
-                            <a href="#" class="sidebar-item" onclick="setActiveSidebar(event, this)">
-                                <div class="sidebar-icon"></div>
-                                Settings
-                            </a>
-                        </div>
-                    </nav>
+                <div class="header-nav-items">
+                  <a href="#" class="header-nav-item" onclick="setActiveHeader(event, this)"
+                    >Projects</a
+                  >
+                  <a href="#" class="header-nav-item active" onclick="setActiveHeader(event, this)"
+                    >Work Items</a
+                  >
+                  <a href="#" class="header-nav-item" onclick="setActiveHeader(event, this)"
+                    >Team</a
+                  >
                 </div>
-                
-                <div class="component-section">
-                    <div class="component-label">Breadcrumb</div>
-                    <nav class="breadcrumb">
-                        <a href="#" class="breadcrumb-item">Home</a>
-                        <span class="breadcrumb-separator">/</span>
-                        <a href="#" class="breadcrumb-item">Projects</a>
-                        <span class="breadcrumb-separator">/</span>
-                        <span class="breadcrumb-item current">Project Alpha</span>
-                    </nav>
-                </div>
-                
-                <div class="component-section">
-                    <div class="component-label">Tab Navigation</div>
-                    <nav class="tab-nav">
-                        <div class="tab-nav-items">
-                            <a href="#" class="tab-nav-item active" onclick="setActiveTab(event, this)">Overview</a>
-                            <a href="#" class="tab-nav-item" onclick="setActiveTab(event, this)">Tasks</a>
-                            <a href="#" class="tab-nav-item" onclick="setActiveTab(event, this)">Files</a>
-                            <a href="#" class="tab-nav-item" onclick="setActiveTab(event, this)">Activity</a>
-                            <a href="#" class="tab-nav-item" onclick="setActiveTab(event, this)">Settings</a>
-                        </div>
-                    </nav>
-                </div>
-                
-                <div class="component-section">
-                    <div class="component-label">Pagination</div>
-                    <nav class="pagination">
-                        <a href="#" class="pagination-item disabled">←</a>
-                        <a href="#" class="pagination-item active">1</a>
-                        <a href="#" class="pagination-item" onclick="setActivePage(event, this)">2</a>
-                        <a href="#" class="pagination-item" onclick="setActivePage(event, this)">3</a>
-                        <span class="pagination-ellipsis">...</span>
-                        <a href="#" class="pagination-item" onclick="setActivePage(event, this)">10</a>
-                        <a href="#" class="pagination-item">→</a>
-                    </nav>
-                </div>
-            </div>
+              </div>
+              <div class="user-menu">JD</div>
+            </nav>
+          </div>
+
+          <div class="component-section">
+            <div class="component-label">Sidebar Navigation</div>
+            <nav class="sidebar-nav" id="sidebar">
+              <a href="#" class="sidebar-item active" onclick="setActiveSidebar(event, this)">
+                <div class="sidebar-icon"></div>
+                Dashboard
+              </a>
+              <a href="#" class="sidebar-item" onclick="setActiveSidebar(event, this)">
+                <div class="sidebar-icon"></div>
+                Projects
+              </a>
+              <a href="#" class="sidebar-item" onclick="setActiveSidebar(event, this)">
+                <div class="sidebar-icon"></div>
+                Work Items
+              </a>
+              <div class="sidebar-section">
+                <div class="sidebar-section-title">Team</div>
+                <a href="#" class="sidebar-item" onclick="setActiveSidebar(event, this)">
+                  <div class="sidebar-icon"></div>
+                  Members
+                </a>
+                <a href="#" class="sidebar-item" onclick="setActiveSidebar(event, this)">
+                  <div class="sidebar-icon"></div>
+                  Settings
+                </a>
+              </div>
+            </nav>
+          </div>
+
+          <div class="component-section">
+            <div class="component-label">Breadcrumb</div>
+            <nav class="breadcrumb">
+              <a href="#" class="breadcrumb-item">Home</a>
+              <span class="breadcrumb-separator">/</span>
+              <a href="#" class="breadcrumb-item">Projects</a>
+              <span class="breadcrumb-separator">/</span>
+              <span class="breadcrumb-item current">Project Alpha</span>
+            </nav>
+          </div>
+
+          <div class="component-section">
+            <div class="component-label">Tab Navigation</div>
+            <nav class="tab-nav">
+              <div class="tab-nav-items">
+                <a href="#" class="tab-nav-item active" onclick="setActiveTab(event, this)"
+                  >Overview</a
+                >
+                <a href="#" class="tab-nav-item" onclick="setActiveTab(event, this)">Tasks</a>
+                <a href="#" class="tab-nav-item" onclick="setActiveTab(event, this)">Files</a>
+                <a href="#" class="tab-nav-item" onclick="setActiveTab(event, this)">Activity</a>
+                <a href="#" class="tab-nav-item" onclick="setActiveTab(event, this)">Settings</a>
+              </div>
+            </nav>
+          </div>
+
+          <div class="component-section">
+            <div class="component-label">Pagination</div>
+            <nav class="pagination">
+              <a href="#" class="pagination-item disabled">←</a>
+              <a href="#" class="pagination-item active">1</a>
+              <a href="#" class="pagination-item" onclick="setActivePage(event, this)">2</a>
+              <a href="#" class="pagination-item" onclick="setActivePage(event, this)">3</a>
+              <span class="pagination-ellipsis">...</span>
+              <a href="#" class="pagination-item" onclick="setActivePage(event, this)">10</a>
+              <a href="#" class="pagination-item">→</a>
+            </nav>
+          </div>
         </div>
-        
-        <!-- Interactive Demo -->
-        <div class="interactive-demo">
-            <h2 class="demo-title">Interactive Demo</h2>
-            <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰ Menu</button>
-            
-            <div class="demo-layout">
-                <nav class="sidebar-nav" id="demo-sidebar">
-                    <a href="#" class="sidebar-item active" onclick="setActiveSidebar(event, this); updateDemoContent('Dashboard')">
-                        <div class="sidebar-icon"></div>
-                        Dashboard
-                    </a>
-                    <a href="#" class="sidebar-item" onclick="setActiveSidebar(event, this); updateDemoContent('Projects')">
-                        <div class="sidebar-icon"></div>
-                        Projects
-                    </a>
-                    <a href="#" class="sidebar-item" onclick="setActiveSidebar(event, this); updateDemoContent('Work Items')">
-                        <div class="sidebar-icon"></div>
-                        Work Items
-                    </a>
-                    <div class="sidebar-section">
-                        <div class="sidebar-section-title">Team</div>
-                        <a href="#" class="sidebar-item" onclick="setActiveSidebar(event, this); updateDemoContent('Members')">
-                            <div class="sidebar-icon"></div>
-                            Members
-                        </a>
-                        <a href="#" class="sidebar-item" onclick="setActiveSidebar(event, this); updateDemoContent('Settings')">
-                            <div class="sidebar-icon"></div>
-                            Settings
-                        </a>
-                    </div>
-                </nav>
-                
-                <div class="demo-main">
-                    <nav class="breadcrumb">
-                        <a href="#" class="breadcrumb-item">Home</a>
-                        <span class="breadcrumb-separator">/</span>
-                        <span class="breadcrumb-item current" id="breadcrumb-current">Dashboard</span>
-                    </nav>
-                    
-                    <nav class="tab-nav">
-                        <div class="tab-nav-items">
-                            <a href="#" class="tab-nav-item active" onclick="setActiveTab(event, this); updateDemoContent('Overview')">Overview</a>
-                            <a href="#" class="tab-nav-item" onclick="setActiveTab(event, this); updateDemoContent('Details')">Details</a>
-                            <a href="#" class="tab-nav-item" onclick="setActiveTab(event, this); updateDemoContent('Analytics')">Analytics</a>
-                        </div>
-                    </nav>
-                    
-                    <div class="demo-content" id="demo-content">
-                        Dashboard Overview - Click any navigation item to see it in action
-                    </div>
-                </div>
+      </div>
+
+      <!-- Interactive Demo -->
+      <div class="interactive-demo">
+        <h2 class="demo-title">Interactive Demo</h2>
+        <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰ Menu</button>
+
+        <div class="demo-layout">
+          <nav class="sidebar-nav" id="demo-sidebar">
+            <a
+              href="#"
+              class="sidebar-item active"
+              onclick="setActiveSidebar(event, this); updateDemoContent('Dashboard')"
+            >
+              <div class="sidebar-icon"></div>
+              Dashboard
+            </a>
+            <a
+              href="#"
+              class="sidebar-item"
+              onclick="setActiveSidebar(event, this); updateDemoContent('Projects')"
+            >
+              <div class="sidebar-icon"></div>
+              Projects
+            </a>
+            <a
+              href="#"
+              class="sidebar-item"
+              onclick="setActiveSidebar(event, this); updateDemoContent('Work Items')"
+            >
+              <div class="sidebar-icon"></div>
+              Work Items
+            </a>
+            <div class="sidebar-section">
+              <div class="sidebar-section-title">Team</div>
+              <a
+                href="#"
+                class="sidebar-item"
+                onclick="setActiveSidebar(event, this); updateDemoContent('Members')"
+              >
+                <div class="sidebar-icon"></div>
+                Members
+              </a>
+              <a
+                href="#"
+                class="sidebar-item"
+                onclick="setActiveSidebar(event, this); updateDemoContent('Settings')"
+              >
+                <div class="sidebar-icon"></div>
+                Settings
+              </a>
             </div>
+          </nav>
+
+          <div class="demo-main">
+            <nav class="breadcrumb">
+              <a href="#" class="breadcrumb-item">Home</a>
+              <span class="breadcrumb-separator">/</span>
+              <span class="breadcrumb-item current" id="breadcrumb-current">Dashboard</span>
+            </nav>
+
+            <nav class="tab-nav">
+              <div class="tab-nav-items">
+                <a
+                  href="#"
+                  class="tab-nav-item active"
+                  onclick="setActiveTab(event, this); updateDemoContent('Overview')"
+                  >Overview</a
+                >
+                <a
+                  href="#"
+                  class="tab-nav-item"
+                  onclick="setActiveTab(event, this); updateDemoContent('Details')"
+                  >Details</a
+                >
+                <a
+                  href="#"
+                  class="tab-nav-item"
+                  onclick="setActiveTab(event, this); updateDemoContent('Analytics')"
+                  >Analytics</a
+                >
+              </div>
+            </nav>
+
+            <div class="demo-content" id="demo-content">
+              Dashboard Overview - Click any navigation item to see it in action
+            </div>
+          </div>
         </div>
+      </div>
     </div>
 
     <script>
-        // Theme toggle functionality
-        function toggleTheme() {
-            const body = document.body;
-            const button = document.querySelector('.theme-toggle');
-            
-            body.classList.toggle('dark');
-            
-            if (body.classList.contains('dark')) {
-                button.textContent = '☀️ Light Mode';
-            } else {
-                button.textContent = '🌙 Dark Mode';
-            }
-        }
+      // Theme toggle functionality
+      function toggleTheme() {
+        const body = document.body;
+        const button = document.querySelector('.theme-toggle');
 
-        // Navigation state management
-        function setActiveHeader(event, element) {
-            event.preventDefault();
-            
-            // Remove active class from all header nav items
-            document.querySelectorAll('.header-nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            
-            // Add active class to clicked item
-            element.classList.add('active');
-        }
+        body.classList.toggle('dark');
 
-        function setActiveSidebar(event, element) {
-            event.preventDefault();
-            
-            // Remove active class from all sidebar items
-            element.closest('.sidebar-nav').querySelectorAll('.sidebar-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            
-            // Add active class to clicked item
-            element.classList.add('active');
+        if (body.classList.contains('dark')) {
+          button.textContent = '☀️ Light Mode';
+        } else {
+          button.textContent = '🌙 Dark Mode';
         }
+      }
 
-        function setActiveTab(event, element) {
-            event.preventDefault();
-            
-            // Remove active class from all tab items
-            element.closest('.tab-nav').querySelectorAll('.tab-nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            
-            // Add active class to clicked item
-            element.classList.add('active');
-        }
+      // Navigation state management
+      function setActiveHeader(event, element) {
+        event.preventDefault();
 
-        function setActivePage(event, element) {
-            event.preventDefault();
-            
-            // Remove active class from all pagination items
-            element.closest('.pagination').querySelectorAll('.pagination-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            
-            // Add active class to clicked item
-            element.classList.add('active');
-        }
-
-        // Mobile sidebar toggle
-        function toggleSidebar() {
-            const sidebar = document.getElementById('demo-sidebar');
-            sidebar.classList.toggle('mobile-hidden');
-        }
-
-        // Demo content update
-        function updateDemoContent(section) {
-            const content = document.getElementById('demo-content');
-            const breadcrumb = document.getElementById('breadcrumb-current');
-            
-            content.textContent = `${section} - Interactive content for ${section} section`;
-            breadcrumb.textContent = section;
-        }
-
-        // Close mobile sidebar when clicking outside
-        document.addEventListener('click', function(event) {
-            const sidebar = document.getElementById('demo-sidebar');
-            const toggleButton = document.querySelector('.mobile-menu-toggle');
-            
-            if (window.innerWidth <= 768 && 
-                !sidebar.contains(event.target) && 
-                !toggleButton.contains(event.target) &&
-                !sidebar.classList.contains('mobile-hidden')) {
-                sidebar.classList.add('mobile-hidden');
-            }
+        // Remove active class from all header nav items
+        document.querySelectorAll('.header-nav-item').forEach((item) => {
+          item.classList.remove('active');
         });
 
-        // Handle window resize
-        window.addEventListener('resize', function() {
-            const sidebar = document.getElementById('demo-sidebar');
-            if (window.innerWidth > 768) {
-                sidebar.classList.remove('mobile-hidden');
-            }
-        });
+        // Add active class to clicked item
+        element.classList.add('active');
+      }
 
-        // Initialize mobile state
-        if (window.innerWidth <= 768) {
-            document.getElementById('demo-sidebar').classList.add('mobile-hidden');
+      function setActiveSidebar(event, element) {
+        event.preventDefault();
+
+        // Remove active class from all sidebar items
+        element
+          .closest('.sidebar-nav')
+          .querySelectorAll('.sidebar-item')
+          .forEach((item) => {
+            item.classList.remove('active');
+          });
+
+        // Add active class to clicked item
+        element.classList.add('active');
+      }
+
+      function setActiveTab(event, element) {
+        event.preventDefault();
+
+        // Remove active class from all tab items
+        element
+          .closest('.tab-nav')
+          .querySelectorAll('.tab-nav-item')
+          .forEach((item) => {
+            item.classList.remove('active');
+          });
+
+        // Add active class to clicked item
+        element.classList.add('active');
+      }
+
+      function setActivePage(event, element) {
+        event.preventDefault();
+
+        // Remove active class from all pagination items
+        element
+          .closest('.pagination')
+          .querySelectorAll('.pagination-item')
+          .forEach((item) => {
+            item.classList.remove('active');
+          });
+
+        // Add active class to clicked item
+        element.classList.add('active');
+      }
+
+      // Mobile sidebar toggle
+      function toggleSidebar() {
+        const sidebar = document.getElementById('demo-sidebar');
+        sidebar.classList.toggle('mobile-hidden');
+      }
+
+      // Demo content update
+      function updateDemoContent(section) {
+        const content = document.getElementById('demo-content');
+        const breadcrumb = document.getElementById('breadcrumb-current');
+
+        content.textContent = `${section} - Interactive content for ${section} section`;
+        breadcrumb.textContent = section;
+      }
+
+      // Close mobile sidebar when clicking outside
+      document.addEventListener('click', function (event) {
+        const sidebar = document.getElementById('demo-sidebar');
+        const toggleButton = document.querySelector('.mobile-menu-toggle');
+
+        if (
+          window.innerWidth <= 768 &&
+          !sidebar.contains(event.target) &&
+          !toggleButton.contains(event.target) &&
+          !sidebar.classList.contains('mobile-hidden')
+        ) {
+          sidebar.classList.add('mobile-hidden');
         }
+      });
+
+      // Handle window resize
+      window.addEventListener('resize', function () {
+        const sidebar = document.getElementById('demo-sidebar');
+        if (window.innerWidth > 768) {
+          sidebar.classList.remove('mobile-hidden');
+        }
+      });
+
+      // Initialize mobile state
+      if (window.innerWidth <= 768) {
+        document.getElementById('demo-sidebar').classList.add('mobile-hidden');
+      }
     </script>
-</body>
+  </body>
 </html>

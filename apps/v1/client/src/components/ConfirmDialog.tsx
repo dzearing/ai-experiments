@@ -20,7 +20,7 @@ export function ConfirmDialog({
   cancelText = 'Cancel',
   onConfirm,
   onCancel,
-  variant = 'danger'
+  variant = 'danger',
 }: ConfirmDialogProps) {
   const { currentStyles } = useTheme();
   const styles = currentStyles;
@@ -38,35 +38,32 @@ export function ConfirmDialog({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
-      <div 
-        className="fixed inset-0 bg-gray-900/50 dark:bg-black/50 transition-opacity" 
+      <div
+        className="fixed inset-0 bg-gray-900/50 dark:bg-black/50 transition-opacity"
         onClick={handleCancel}
       />
-      
+
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className={`
+        <div
+          className={`
           relative w-full max-w-md
           bg-white dark:bg-neutral-800 ${styles.cardBorder} border ${styles.borderRadius}
           ${styles.cardShadow} 
-        `}>
+        `}
+        >
           <div className={`px-6 py-4 border-b ${styles.contentBorder}`}>
-            <h2 className={`text-lg font-semibold ${styles.headingColor}`}>
-              {title}
-            </h2>
+            <h2 className={`text-lg font-semibold ${styles.headingColor}`}>{title}</h2>
           </div>
 
           <div className="p-6">
-            <p className={`${styles.textColor}`}>
-              {message}
-            </p>
+            <p className={`${styles.textColor}`}>{message}</p>
           </div>
 
-          <div className={`flex items-center justify-end gap-3 px-6 py-4 border-t ${styles.contentBorder}`}>
-            <Button
-              onClick={handleCancel}
-              variant="secondary"
-            >
+          <div
+            className={`flex items-center justify-end gap-3 px-6 py-4 border-t ${styles.contentBorder}`}
+          >
+            <Button onClick={handleCancel} variant="secondary">
               {cancelText}
             </Button>
             <Button

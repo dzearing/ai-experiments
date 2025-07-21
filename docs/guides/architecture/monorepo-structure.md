@@ -137,45 +137,59 @@ packages:
 ## Directory Purposes
 
 ### `/apps`
+
 Contains all runnable applications:
+
 - `v1/` - Legacy applications using npm
 - `v2/` - New applications using pnpm and modern tooling
 - `e2e/` - End-to-end tests covering both versions
 
 ### `/packages`
+
 Shared code used by v2 applications:
+
 - Each package is independently versioned
 - Packages can depend on other packages
 - All packages use TypeScript
 
 ### `/tools`
+
 Development-time tools:
+
 - Custom ESLint rules and plugins
 - Build and scaffolding scripts
 - Development utilities
 - Not included in production builds
 
 ### `/configs`
+
 Shared configuration packages:
+
 - TypeScript configurations (base, react, node)
 - ESLint configurations (base, react, node)
 - Prettier configurations (if needed)
 - Jest/Vitest configurations (if needed)
 
 ### `/shared`
+
 Resources accessed by both v1 and v2:
+
 - Data files and databases
 - User sessions
 - Runtime configuration
 
 ### `/scripts`
+
 Root-level utility scripts:
+
 - Shell scripts for starting applications
 - Migration utilities
 - Deployment helpers
 
 ### `/docs`
+
 Project documentation:
+
 - Architecture decisions
 - API documentation
 - Migration guides
@@ -205,11 +219,9 @@ package-name/
   - Used for Node.js libraries and packages
   - Not bundled or minified
   - Preserves module structure
-  
 - **`lib-commonjs/`** - CommonJS output (only when required)
   - Avoid unless absolutely necessary
   - Only for packages that must support legacy CommonJS consumers
-  
 - **`dist/`** - Production-ready bundled output
   - Used for applications and browser libraries
   - Bundled, minified, and optimized

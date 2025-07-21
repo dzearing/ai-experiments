@@ -8,7 +8,11 @@ interface DiffViewProps {
   className?: string;
 }
 
-export const DiffView = memo(function DiffView({ oldText, newText, className = '' }: DiffViewProps) {
+export const DiffView = memo(function DiffView({
+  oldText,
+  newText,
+  className = '',
+}: DiffViewProps) {
   const { currentStyles } = useTheme();
   const styles = currentStyles;
 

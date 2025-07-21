@@ -122,7 +122,7 @@ function findTaggedNames(tagName: string, program: ts.Program): Set<string> {
       sourceFile,
       `ClassDeclaration, Constructor, EnumDeclaration, EnumMember, FunctionDeclaration, GetAccessor, ` +
         `InterfaceDeclaration, MethodDeclaration, MethodSignature, PropertyDeclaration, PropertySignature, ` +
-        `SetAccessor, TypeAliasDeclaration, VariableDeclaration`,
+        `SetAccessor, TypeAliasDeclaration, VariableDeclaration`
     );
     for (const node of nodes) {
       const tags = ts.getJSDocTags(node);
@@ -158,7 +158,9 @@ function getTags(tagName: string, node: ts.Identifier, tc: ts.TypeChecker): stri
     symbol = tc.getTypeAtLocation(parent.parent).getProperty(node.text);
   } else if (
     (tsutils.isPropertyAssignment(parent) && parent.name === node) ||
-    (tsutils.isShorthandPropertyAssignment(parent) && parent.name === node && tsutils.isReassignmentTarget(node))
+    (tsutils.isShorthandPropertyAssignment(parent) &&
+      parent.name === node &&
+      tsutils.isReassignmentTarget(node))
   ) {
     symbol = tc.getPropertySymbolOfDestructuringAssignment(node);
   } else {

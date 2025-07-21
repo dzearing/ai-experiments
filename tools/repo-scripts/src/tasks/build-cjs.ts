@@ -36,7 +36,7 @@ const buildCJS: Task = {
         .replace(/require\(["'](\.[^"']+)\.js["']\)/g, (_match, p1) => `require("${p1}.cjs")`);
       fs.writeFileSync(cjsFile, newContents);
     }
-  }
+  },
 };
 
 export { buildCJS };

@@ -84,8 +84,11 @@ export const noDefaultExport = createRule<[], MessageIds>({
           node.specifiers.forEach((specifier) => {
             if (
               specifier.type === 'ExportSpecifier' &&
-              ((specifier.exported.type === 'Identifier' && specifier.exported.name === 'default') ||
-               (specifier.exported.type === 'Literal' && typeof specifier.exported.value === 'string' && specifier.exported.value === 'default'))
+              ((specifier.exported.type === 'Identifier' &&
+                specifier.exported.name === 'default') ||
+                (specifier.exported.type === 'Literal' &&
+                  typeof specifier.exported.value === 'string' &&
+                  specifier.exported.value === 'default'))
             ) {
               context.report({
                 node: specifier,
@@ -94,10 +97,7 @@ export const noDefaultExport = createRule<[], MessageIds>({
                   // For re-exports like: export { something as default }
                   // Convert to: export { something }
                   if (specifier.local.type === 'Identifier' && specifier.local.name !== 'default') {
-                    return fixer.replaceText(
-                      specifier,
-                      specifier.local.name
-                    );
+                    return fixer.replaceText(specifier, specifier.local.name);
                   }
                   // Can't auto-fix export { default } from './module'
                   return null;

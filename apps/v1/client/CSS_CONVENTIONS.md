@@ -52,6 +52,7 @@ z-[9999] /* Critical system dialogs (feedback, errors) */
 ### Common patterns
 
 #### Modals and dialogs
+
 ```tsx
 // Standard dialog
 <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -67,21 +68,19 @@ z-[9999] /* Critical system dialogs (feedback, errors) */
 ```
 
 #### Dropdown menus
+
 ```tsx
 <div className="relative">
   <button>Trigger</button>
-  <div className="absolute z-50">
-    {/* Dropdown content */}
-  </div>
+  <div className="absolute z-50">{/* Dropdown content */}</div>
 </div>
 ```
 
 #### Fixed position elements
+
 ```tsx
 // Toast notifications
-<div className="fixed bottom-4 right-4 z-50">
-  {/* Toast content */}
-</div>
+<div className="fixed bottom-4 right-4 z-50">{/* Toast content */}</div>
 ```
 
 ### Debugging z-index issues
@@ -96,6 +95,7 @@ If you encounter layering issues:
 ### Future considerations
 
 As the application grows, we may need to:
+
 - Add more granular levels between existing values
 - Create component-specific z-index variables
 - Implement a z-index management system for complex nested components

@@ -7,9 +7,30 @@ interface AvatarProps {
 }
 
 const randomNames = [
-  'Alex', 'Blake', 'Casey', 'Drew', 'Emery', 'Finley', 'Gray', 'Harper',
-  'Indigo', 'Jamie', 'Kai', 'Logan', 'Morgan', 'Nova', 'Oakley', 'Phoenix',
-  'Quinn', 'River', 'Sage', 'Taylor', 'Unity', 'Vale', 'Winter', 'Zion'
+  'Alex',
+  'Blake',
+  'Casey',
+  'Drew',
+  'Emery',
+  'Finley',
+  'Gray',
+  'Harper',
+  'Indigo',
+  'Jamie',
+  'Kai',
+  'Logan',
+  'Morgan',
+  'Nova',
+  'Oakley',
+  'Phoenix',
+  'Quinn',
+  'River',
+  'Sage',
+  'Taylor',
+  'Unity',
+  'Vale',
+  'Winter',
+  'Zion',
 ];
 
 // Simple hash function to get consistent random values from seed
@@ -17,7 +38,7 @@ function hashCode(str: string): number {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
+    hash = (hash << 5) - hash + char;
     hash = hash & hash;
   }
   return Math.abs(hash);
@@ -42,25 +63,35 @@ export function AvatarGenerator({ seed, size = 100, isDarkMode = false }: Avatar
     // Skin colors (warm tones)
     const skinColors = ['#FFE0BD', '#FFCD94', '#F3C9A3', '#DDB192', '#D4A574', '#C58C5F'];
     const skinColor = getRandomFromSeed(seed + 'skin', skinColors);
-    
+
     // Hair colors
-    const hairColors = ['#2C1810', '#3D2314', '#5A3825', '#8B5A3C', '#D2691E', '#FFD700', '#FF6B6B', '#A8E6CF', '#9370DB'];
+    const hairColors = [
+      '#2C1810',
+      '#3D2314',
+      '#5A3825',
+      '#8B5A3C',
+      '#D2691E',
+      '#FFD700',
+      '#FF6B6B',
+      '#A8E6CF',
+      '#9370DB',
+    ];
     const hairColor = getRandomFromSeed(seed + 'hair', hairColors);
-    
+
     // Hair styles (0-5 different styles)
     const hairStyle = getRandomNumberFromSeed(seed + 'hairstyle', 0, 5);
-    
+
     // Eye style (0 = dots, 1 = curved lines)
     const eyeStyle = getRandomNumberFromSeed(seed + 'eyestyle', 0, 1);
-    
+
     // Accessories
     const hasGlasses = getRandomNumberFromSeed(seed + 'glasses', 0, 3) === 0;
-    
+
     return { skinColor, hairColor, hairStyle, eyeStyle, hasGlasses };
   }, [seed]);
-  
+
   const { skinColor, hairColor, hairStyle, eyeStyle, hasGlasses } = avatarData;
-  
+
   return (
     <svg
       width={size}
@@ -70,21 +101,12 @@ export function AvatarGenerator({ seed, size = 100, isDarkMode = false }: Avatar
       style={{ backgroundColor: isDarkMode ? '#404040' : '#F0F4F8' }}
     >
       {/* Face - more oval shape */}
-      <ellipse
-        cx="50"
-        cy="52"
-        rx="28"
-        ry="36"
-        fill={skinColor}
-      />
-      
+      <ellipse cx="50" cy="52" rx="28" ry="36" fill={skinColor} />
+
       {/* Hair */}
       {hairStyle === 0 && (
         // Short neat hair
-        <path
-          d={`M 25 30 Q 50 20, 75 30 Q 77 40, 75 45 L 25 45 Q 23 40, 25 30`}
-          fill={hairColor}
-        />
+        <path d={`M 25 30 Q 50 20, 75 30 Q 77 40, 75 45 L 25 45 Q 23 40, 25 30`} fill={hairColor} />
       )}
       {hairStyle === 1 && (
         // Bob cut
@@ -112,7 +134,10 @@ export function AvatarGenerator({ seed, size = 100, isDarkMode = false }: Avatar
       {hairStyle === 4 && (
         // Pigtails
         <>
-          <path d={`M 25 30 Q 50 20, 75 30 Q 77 40, 75 45 L 25 45 Q 23 40, 25 30`} fill={hairColor} />
+          <path
+            d={`M 25 30 Q 50 20, 75 30 Q 77 40, 75 45 L 25 45 Q 23 40, 25 30`}
+            fill={hairColor}
+          />
           <circle cx="18" cy="40" r="8" fill={hairColor} />
           <circle cx="82" cy="40" r="8" fill={hairColor} />
           <circle cx="15" cy="48" r="6" fill={hairColor} />
@@ -126,7 +151,7 @@ export function AvatarGenerator({ seed, size = 100, isDarkMode = false }: Avatar
           fill={hairColor}
         />
       )}
-      
+
       {/* Eyes - cute dots or curved lines */}
       {eyeStyle === 0 ? (
         // Dot eyes
@@ -137,21 +162,39 @@ export function AvatarGenerator({ seed, size = 100, isDarkMode = false }: Avatar
       ) : (
         // Happy curved line eyes
         <>
-          <path d="M 33 48 Q 38 52, 43 48" stroke="#2C1810" strokeWidth="2" fill="none" strokeLinecap="round" />
-          <path d="M 57 48 Q 62 52, 67 48" stroke="#2C1810" strokeWidth="2" fill="none" strokeLinecap="round" />
+          <path
+            d="M 33 48 Q 38 52, 43 48"
+            stroke="#2C1810"
+            strokeWidth="2"
+            fill="none"
+            strokeLinecap="round"
+          />
+          <path
+            d="M 57 48 Q 62 52, 67 48"
+            stroke="#2C1810"
+            strokeWidth="2"
+            fill="none"
+            strokeLinecap="round"
+          />
         </>
       )}
-      
+
       {/* Simple nose */}
       <circle cx="50" cy="56" r="1" fill={skinColor} opacity="0.4" />
-      
+
       {/* Cute smile */}
-      <path d="M 42 62 Q 50 66, 58 62" stroke="#E57373" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-      
+      <path
+        d="M 42 62 Q 50 66, 58 62"
+        stroke="#E57373"
+        strokeWidth="1.5"
+        fill="none"
+        strokeLinecap="round"
+      />
+
       {/* Cheeks (blush) */}
       <ellipse cx="28" cy="58" rx="6" ry="4" fill="#FFB6C1" opacity="0.25" />
       <ellipse cx="72" cy="58" rx="6" ry="4" fill="#FFB6C1" opacity="0.25" />
-      
+
       {/* Glasses - rounder and cuter */}
       {hasGlasses && (
         <g fill="none" stroke="#333" strokeWidth="1.5">

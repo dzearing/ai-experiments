@@ -23,8 +23,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const showToast = (message: string, type: ToastType = 'info', duration: number = 0) => {
     const id = Date.now().toString();
     const toast: Toast = { id, message, type, duration };
-    
-    setToasts(prev => [...prev, toast]);
+
+    setToasts((prev) => [...prev, toast]);
 
     // Disabled auto-dismiss - toasts must be manually dismissed
     // if (duration > 0) {
@@ -35,7 +35,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   };
 
   const removeToast = (id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
   };
 
   return (

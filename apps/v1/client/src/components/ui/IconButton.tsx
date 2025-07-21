@@ -11,7 +11,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
     const sizeClasses = {
       sm: 'h-8 w-8',
       md: 'h-10 w-10',
-      lg: 'h-12 w-12'
+      lg: 'h-12 w-12',
     };
 
     const isCircular = variant === 'circular';

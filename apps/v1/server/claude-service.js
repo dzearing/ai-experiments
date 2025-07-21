@@ -6,34 +6,34 @@ class ClaudeService {
   constructor() {
     this.isClaudeAvailable = this.checkClaudeAvailability();
     this.defaultTimeout = 30000; // 30 seconds
-    
+
     // Centralized model configuration
     this.models = {
       // Use 'latest' to always get the most recent version
-      opus: 'opus',           // Will use latest Opus
-      sonnet: 'sonnet',       // Will use latest Sonnet  
-      haiku: 'haiku',         // Will use latest Haiku
-      default: 'sonnet'       // Default model for all operations
+      opus: 'opus', // Will use latest Opus
+      sonnet: 'sonnet', // Will use latest Sonnet
+      haiku: 'haiku', // Will use latest Haiku
+      default: 'sonnet', // Default model for all operations
     };
   }
-  
+
   // Get the appropriate model name
   getModel(modelKey) {
     // If no key provided, use default
     if (!modelKey) {
       return this.models.default;
     }
-    
+
     // Return mapped model or use the key as-is if not found
     return this.models[modelKey] || modelKey;
   }
-  
+
   // Helper function to add timeout to promises
   async withTimeout(promise, timeoutMs = this.defaultTimeout) {
     const timeoutPromise = new Promise((_, reject) => {
       setTimeout(() => reject(new Error('Request timed out')), timeoutMs);
     });
-    
+
     return Promise.race([promise, timeoutPromise]);
   }
 
@@ -55,26 +55,27 @@ class ClaudeService {
       console.log('Query length:', query.length);
       console.log('Model:', model);
       console.log('Tools requested:', tools);
-      
+
       let response = {
         text: null,
         json: null,
         toolExecutions: null,
         tokenUsage: null,
-        error: null
+        error: null,
       };
 
       try {
         // Use the simplest form of the SDK
         console.log('Calling claude().query().asText()...');
-        const claudeResponse = await claude()
-          .query(query)
-          .asText();
-          
+        const claudeResponse = await claude().query(query).asText();
+
         response.text = claudeResponse;
         console.log('Claude SDK response received.');
         console.log('Response length:', response.text ? response.text.length : 0);
-        console.log('Response preview:', response.text ? response.text.substring(0, 200) + '...' : 'No response');
+        console.log(
+          'Response preview:',
+          response.text ? response.text.substring(0, 200) + '...' : 'No response'
+        );
         console.log('Full response:', response.text);
       } catch (e) {
         console.error('Claude SDK error:', e);
@@ -99,9 +100,10 @@ class ClaudeService {
       response.tokenUsage = {
         inputTokens: Math.ceil(query.length / 4), // rough estimate
         outputTokens: response.text ? Math.ceil(response.text.length / 4) : 0,
-        totalTokens: 0
+        totalTokens: 0,
       };
-      response.tokenUsage.totalTokens = response.tokenUsage.inputTokens + response.tokenUsage.outputTokens;
+      response.tokenUsage.totalTokens =
+        response.tokenUsage.inputTokens + response.tokenUsage.outputTokens;
 
       return response;
     } catch (error) {
@@ -111,22 +113,22 @@ class ClaudeService {
         text: null,
         json: null,
         toolExecutions: null,
-        tokenUsage: null
+        tokenUsage: null,
       };
     }
   }
 
   async processIdea(idea, model) {
     const modelName = this.getModel(model);
-    
+
     // Check if Claude is available first
     if (!this.isClaudeAvailable) {
       throw new Error(
         'Claude CLI is not installed or not in PATH.\n' +
-        'Please install Claude Code CLI and authenticate:\n' +
-        '1. Install: npm install -g claude-code\n' +
-        '2. Login: claude login\n' +
-        'Or enable mock mode in settings for testing.'
+          'Please install Claude Code CLI and authenticate:\n' +
+          '1. Install: npm install -g claude-code\n' +
+          '2. Login: claude login\n' +
+          'Or enable mock mode in settings for testing.'
       );
     }
 
@@ -170,13 +172,10 @@ Respond with JSON in this exact format:
 
     try {
       console.log('Processing idea with Claude SDK...');
-      const response = await claude()
-        .withModel(modelName)
-        .query(prompt)
-        .asText();
+      const response = await claude().withModel(modelName).query(prompt).asText();
 
       console.log('Claude SDK response received');
-      
+
       // Extract JSON from response
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
@@ -185,31 +184,31 @@ Respond with JSON in this exact format:
       throw new Error('Could not parse response as JSON');
     } catch (error) {
       console.error('Error processing idea:', error);
-      
+
       // If it's a CLI execution error, provide a helpful message
       if (error.message && error.message.includes('exited with code 1')) {
         throw new Error(
           'Claude CLI authentication error. Please ensure:\n' +
-          '1. You are logged in: claude login\n' +
-          '2. Or enable mock mode in settings for testing'
+            '1. You are logged in: claude login\n' +
+            '2. Or enable mock mode in settings for testing'
         );
       }
-      
+
       throw error;
     }
   }
 
   async refineTasks(refinement, currentTasks, model) {
     const modelName = this.getModel(model);
-    
+
     // Check if Claude is available first
     if (!this.isClaudeAvailable) {
       throw new Error(
         'Claude CLI is not installed or not in PATH.\n' +
-        'Please install Claude Code CLI and authenticate:\n' +
-        '1. Install: npm install -g claude-code\n' +
-        '2. Login: claude login\n' +
-        'Or enable mock mode in settings for testing.'
+          'Please install Claude Code CLI and authenticate:\n' +
+          '1. Install: npm install -g claude-code\n' +
+          '2. Login: claude login\n' +
+          'Or enable mock mode in settings for testing.'
       );
     }
 
@@ -230,13 +229,10 @@ Respond with the updated JSON array of tasks in the same format as before.`;
 
     try {
       console.log('Attempting to refine tasks with Claude SDK...');
-      const response = await claude()
-        .withModel(modelName)
-        .query(prompt)
-        .asText();
+      const response = await claude().withModel(modelName).query(prompt).asText();
 
       console.log('Claude SDK response received for refine tasks');
-      
+
       // Extract JSON from response
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
@@ -246,39 +242,50 @@ Respond with the updated JSON array of tasks in the same format as before.`;
     } catch (error) {
       console.error('Error refining tasks:', error);
       console.error('Error details:', error.stack);
-      
+
       // If it's a CLI authentication error, provide a helpful message
       if (error.message && error.message.includes('exited with code 1')) {
         throw new Error(
           'Claude CLI authentication error. Please ensure:\n' +
-          '1. Claude Code is installed: npm install -g claude-code\n' +
-          '2. You are logged in: claude login\n' +
-          '3. Try using mock mode for testing without authentication'
+            '1. Claude Code is installed: npm install -g claude-code\n' +
+            '2. You are logged in: claude login\n' +
+            '3. Try using mock mode for testing without authentication'
         );
       }
-      
+
       throw error;
     }
   }
 
-  async analyzeDocument(content, workItemTitle, workItemDescription, userName, personaName, personaGender, model) {
+  async analyzeDocument(
+    content,
+    workItemTitle,
+    workItemDescription,
+    userName,
+    personaName,
+    personaGender,
+    model
+  ) {
     const modelName = this.getModel(model);
-    
+
     // Check if Claude is available first
     if (!this.isClaudeAvailable) {
       // Return a mock response for development
-      const isAuthRelated = workItemTitle.toLowerCase().includes('auth') || content.toLowerCase().includes('authentication');
+      const isAuthRelated =
+        workItemTitle.toLowerCase().includes('auth') ||
+        content.toLowerCase().includes('authentication');
       const topicKeyword = isAuthRelated ? 'authentication' : 'this topic';
-      
+
       // Use the provided persona name or generate a default
       const name = personaName || 'Alex Chen';
-      
+
       return {
         personaType: 'usability-expert',
         expertise: ['UI/UX Design', 'User Research', 'Accessibility', 'Design Systems'],
-        personality: 'Thoughtful and detail-oriented, with a focus on user experience and design consistency',
+        personality:
+          'Thoughtful and detail-oriented, with a focus on user experience and design consistency',
         greetingMessage: `Hey ${userName}! I'm ${name}, a UX specialist.`,
-        personalizedGreeting: isAuthRelated 
+        personalizedGreeting: isAuthRelated
           ? `I love talking about authentication - it's got so many interesting edge cases. I'll try to find some! Give me a second while I read through your document...`
           : `This looks like an interesting ${topicKeyword} to review. Let me take a moment to analyze the document...`,
         analysisMessage: `I've found 3 areas we can improve. Let's go through them one by one.`,
@@ -291,7 +298,7 @@ For better clarity, I suggest we specify:
 - Whether we need multi-factor authentication support
 - If we're supporting SSO
 
-This will help developers know exactly what to build. Would you like me to update this section?`
+This will help developers know exactly what to build. Would you like me to update this section?`,
       };
     }
 
@@ -351,13 +358,10 @@ Respond with exactly this JSON structure:
 
     try {
       const response = await this.withTimeout(
-        claude()
-          .withModel(modelName)
-          .query(prompt)
-          .asText(),
+        claude().withModel(modelName).query(prompt).asText(),
         35000 // 35 seconds to allow some buffer over client timeout
       );
-      
+
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         return JSON.parse(jsonMatch[0]);
@@ -365,7 +369,7 @@ Respond with exactly this JSON structure:
       throw new Error('Could not parse response as JSON');
     } catch (error) {
       console.error('Error analyzing document:', error);
-      
+
       // Re-throw timeout errors to let client handle them
       if (error.message === 'Request timed out') {
         throw error;
@@ -378,28 +382,37 @@ Respond with exactly this JSON structure:
         greetingMessage: `Hi ${userName}! I'm ${personaName || 'your reviewer'}.`,
         personalizedGreeting: `I'll be reviewing your work item today. Let me provide suggestions to improve it.`,
         analysisMessage: `I've found several areas we can improve.`,
-        issueCount: 3
+        issueCount: 3,
       };
     }
   }
 
-  async processClaudeCodeMessage(prompt, tools = [], model, workingDirectory = null, onProgress = null, onToolExecution = null, onMessage = null, isPlanMode = false) {
+  async processClaudeCodeMessage(
+    prompt,
+    tools = [],
+    model,
+    workingDirectory = null,
+    onProgress = null,
+    onToolExecution = null,
+    onMessage = null,
+    isPlanMode = false
+  ) {
     const modelName = this.getModel(model);
-    
+
     // Check if Claude is available first
     if (!this.isClaudeAvailable) {
       return {
         error: 'Claude CLI is not available. Please install and authenticate Claude Code CLI.',
         text: null,
         toolExecutions: [],
-        tokenUsage: null
+        tokenUsage: null,
       };
     }
-    
+
     // Safety check: if we detect plan mode, ensure no write tools are included
     if (isPlanMode || tools.includes('plan')) {
       // Filter out any write-related tools
-      tools = tools.filter(tool => !['write', 'bash', 'todo'].includes(tool));
+      tools = tools.filter((tool) => !['write', 'bash', 'todo'].includes(tool));
       logger.debug('Plan mode detected - filtered tools to read-only:', tools);
     }
 
@@ -409,125 +422,148 @@ Respond with exactly this JSON structure:
       logger.debug('Model:', model);
       logger.debug('Requested tools:', tools);
       logger.debug('Tools array is empty?', tools.length === 0);
-      
+
       // For simple text queries without tools, use asText()
       if (tools.length === 0) {
         logger.debug('Using simple text query (no tools)');
         logger.debug('Using model:', modelName);
-        
-        let claudeInstance = claude()
-          .withModel(modelName);
-          
+
+        let claudeInstance = claude().withModel(modelName);
+
         if (workingDirectory) {
           claudeInstance = claudeInstance.inDirectory(workingDirectory);
         }
-        
+
         console.log('Sending prompt to Claude...');
-        const response = await claudeInstance
-          .query(prompt)
-          .asText();
-          
+        const response = await claudeInstance.query(prompt).asText();
+
         console.log('Simple text response:', response);
         console.log('Response type:', typeof response);
-        
+
         return {
           text: response,
           toolExecutions: [],
           tokenUsage: {
             inputTokens: Math.ceil(prompt.length / 4),
             outputTokens: Math.ceil(response.length / 4),
-            totalTokens: Math.ceil(prompt.length / 4) + Math.ceil(response.length / 4)
+            totalTokens: Math.ceil(prompt.length / 4) + Math.ceil(response.length / 4),
           },
-          error: null
+          error: null,
         };
       }
-      
+
       console.log('Using model for tool execution:', modelName);
-      
+
       // Build the Claude SDK chain with proper tool access and event handlers
-      let claudeInstance = claude()
-        .withModel(modelName);
-        
+      let claudeInstance = claude().withModel(modelName);
+
       // Map tool names to Claude SDK tool names
       const toolMapping = {
-        'search': ['Grep', 'Glob'],
-        'read': ['Read', 'LS', 'TodoRead'],
-        'write': ['Write', 'Edit', 'MultiEdit', 'NotebookEdit'],
-        'bash': ['Bash'],
-        'plan': [], // In plan mode, we'll control tools explicitly
-        'todo': ['TodoWrite', 'TodoRead']
+        search: ['Grep', 'Glob'],
+        read: ['Read', 'LS', 'TodoRead'],
+        write: ['Write', 'Edit', 'MultiEdit', 'NotebookEdit'],
+        bash: ['Bash'],
+        plan: [], // In plan mode, we'll control tools explicitly
+        todo: ['TodoWrite', 'TodoRead'],
       };
-      
+
       // Build the allowed tools list based on the tools parameter
       let allowedTools = [];
       if (tools && tools.length > 0) {
-        tools.forEach(tool => {
+        tools.forEach((tool) => {
           if (toolMapping[tool]) {
             allowedTools.push(...toolMapping[tool]);
           }
         });
       } else {
         // Default to all tools if none specified
-        allowedTools = ['LS', 'Read', 'Grep', 'Bash', 'Write', 'Edit', 'MultiEdit', 'Glob', 
-                       'NotebookRead', 'NotebookEdit', 'WebFetch', 'TodoRead', 'TodoWrite', 
-                       'WebSearch', 'Task'];
+        allowedTools = [
+          'LS',
+          'Read',
+          'Grep',
+          'Bash',
+          'Write',
+          'Edit',
+          'MultiEdit',
+          'Glob',
+          'NotebookRead',
+          'NotebookEdit',
+          'WebFetch',
+          'TodoRead',
+          'TodoWrite',
+          'WebSearch',
+          'Task',
+        ];
       }
-      
+
       // CRITICAL: In plan mode, remove ALL write/edit/execution tools
       if (isPlanMode || tools.includes('plan')) {
         // Only allow read-only tools in plan mode (plus exit_plan_mode)
-        const readOnlyTools = ['LS', 'Read', 'Grep', 'Glob', 'TodoRead', 'NotebookRead', 'WebFetch', 'WebSearch', 'exit_plan_mode'];
+        const readOnlyTools = [
+          'LS',
+          'Read',
+          'Grep',
+          'Glob',
+          'TodoRead',
+          'NotebookRead',
+          'WebFetch',
+          'WebSearch',
+          'exit_plan_mode',
+        ];
         const originalTools = [...allowedTools];
         const originalLength = allowedTools.length;
-        allowedTools = allowedTools.filter(tool => readOnlyTools.includes(tool));
-        
+        allowedTools = allowedTools.filter((tool) => readOnlyTools.includes(tool));
+
         console.log('===== PLAN MODE TOOL FILTERING =====');
         console.log('isPlanMode:', isPlanMode);
         console.log('tools includes plan:', tools.includes('plan'));
         console.log('Original tools:', originalTools);
         console.log('Filtered tools:', allowedTools);
-        console.log('Tools removed:', originalTools.filter(t => !allowedTools.includes(t)));
+        console.log(
+          'Tools removed:',
+          originalTools.filter((t) => !allowedTools.includes(t))
+        );
         console.log('====================================');
-        
+
         logger.debug('PLAN MODE ACTIVE - Restricting to read-only tools');
         logger.debug('Tools before filtering:', originalTools);
-        logger.debug(`Filtered out write tools. Original: ${originalLength}, Filtered: ${allowedTools.length}`);
-        
+        logger.debug(
+          `Filtered out write tools. Original: ${originalLength}, Filtered: ${allowedTools.length}`
+        );
+
         // Double-check: ensure no write tools remain
         const writeTools = ['Write', 'Edit', 'MultiEdit', 'NotebookEdit', 'Bash', 'TodoWrite'];
-        const remainingWriteTools = allowedTools.filter(tool => writeTools.includes(tool));
+        const remainingWriteTools = allowedTools.filter((tool) => writeTools.includes(tool));
         if (remainingWriteTools.length > 0) {
           logger.error('ERROR: Write tools still present in plan mode:', remainingWriteTools);
-          allowedTools = allowedTools.filter(tool => !writeTools.includes(tool));
+          allowedTools = allowedTools.filter((tool) => !writeTools.includes(tool));
         }
       }
-      
+
       logger.debug('Requested tools:', tools);
       logger.debug('Final allowed tools:', allowedTools);
       logger.debug('Is plan mode:', isPlanMode);
-      
+
       // If in plan mode and no tools left, default to minimal read-only set
       if ((isPlanMode || tools.includes('plan')) && allowedTools.length === 0) {
         allowedTools = ['Read', 'LS', 'Grep', 'Glob', 'exit_plan_mode'];
         logger.debug('Plan mode with empty tools, defaulting to:', allowedTools);
       }
-      
-      claudeInstance = claudeInstance
-        .allowTools(allowedTools)
-        .skipPermissions(); // Auto-accept tool usage to avoid permission prompts
-      
+
+      claudeInstance = claudeInstance.allowTools(allowedTools).skipPermissions(); // Auto-accept tool usage to avoid permission prompts
+
       // Set working directory if provided
       if (workingDirectory) {
         claudeInstance = claudeInstance.inDirectory(workingDirectory);
       }
-      
+
       // Track tool executions and messages
       const toolExecutions = [];
       const pendingToolExecutions = new Map(); // Track tools waiting for results
       let assistantMessage = '';
       let tokenUsage = null;
       let lastToolId = null; // Track the most recently invoked tool
-      
+
       // Add event handlers for real-time feedback
       claudeInstance = claudeInstance
         .onMessage((messageType, content) => {
@@ -535,35 +571,39 @@ Respond with exactly this JSON structure:
           if (onMessage) {
             onMessage(messageType, content);
           }
-          
+
           // Check if this is a tool result message
-          if (messageType === 'tool_result' && lastToolId && pendingToolExecutions.has(lastToolId)) {
+          if (
+            messageType === 'tool_result' &&
+            lastToolId &&
+            pendingToolExecutions.has(lastToolId)
+          ) {
             const toolExecution = pendingToolExecutions.get(lastToolId);
             toolExecution.status = 'complete';
             toolExecution.isSuccess = true;
             toolExecution.executionTime = Date.now() - toolExecution.startTime;
             toolExecution.result = typeof content === 'string' ? content : JSON.stringify(content);
-            
+
             pendingToolExecutions.delete(lastToolId);
-            
+
             // Send completion update
             if (onToolExecution) {
               onToolExecution({
                 ...toolExecution,
-                isUpdate: true
+                isUpdate: true,
               });
             }
-            
+
             logger.debug('Tool execution completed:', toolExecution.id);
             lastToolId = null; // Reset
           }
-          
+
           // Don't send any mock progress messages
         })
         .onAssistant((content) => {
           console.log('Assistant message chunk:', content);
           console.log('Assistant message chunk type:', typeof content);
-          
+
           // Ensure content is a string
           if (typeof content === 'string') {
             assistantMessage += content;
@@ -574,8 +614,8 @@ Respond with exactly this JSON structure:
             } else if (Array.isArray(content)) {
               // Handle array of content blocks
               const textContent = content
-                .filter(block => block && block.type === 'text')
-                .map(block => block.text || '')
+                .filter((block) => block && block.type === 'text')
+                .map((block) => block.text || '')
                 .join('');
               assistantMessage += textContent;
             } else {
@@ -586,17 +626,17 @@ Respond with exactly this JSON structure:
             console.warn('Non-string content in onAssistant:', typeof content, content);
             assistantMessage += String(content);
           }
-          
+
           // Don't send any mock progress messages
         })
         .onToolUse((toolInfo) => {
           // The onToolUse callback only receives tool invocation info, not results
           logger.debug('onToolUse callback called with tool info:', toolInfo);
-          
+
           // Handle different formats of tool info
           let toolName = '';
           let toolArgs = {};
-          
+
           if (typeof toolInfo === 'object') {
             if (toolInfo.name) {
               // Format: {name: 'ToolName', input: {...}}
@@ -614,7 +654,7 @@ Respond with exactly this JSON structure:
           } else if (typeof toolInfo === 'string') {
             toolName = toolInfo;
           }
-          
+
           // Format args for display
           let argsDisplay = '';
           if (toolArgs) {
@@ -626,7 +666,7 @@ Respond with exactly this JSON structure:
               argsDisplay = String(toolArgs);
             }
           }
-          
+
           // Create a pending tool execution entry with unique ID
           const execution = {
             id: `tool-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -637,23 +677,23 @@ Respond with exactly this JSON structure:
             timestamp: new Date().toISOString(),
             status: 'running',
             startTime: Date.now(), // Track start time for duration calculation
-            executionTime: null // Will be calculated when complete
+            executionTime: null, // Will be calculated when complete
           };
-          
+
           logger.debug('Tool invocation tracked:', execution);
-          
+
           toolExecutions.push(execution);
           pendingToolExecutions.set(execution.id, execution);
           lastToolId = execution.id;
-          
+
           // Send real-time tool execution update
           if (onToolExecution) {
             onToolExecution(execution);
           }
-          
+
           // Don't send any mock progress messages
         });
-      
+
       // Add system instruction for plan mode
       if (isPlanMode || tools.includes('plan')) {
         const planModePrompt = `CRITICAL: You are in PLAN MODE. You must NOT make any edits, writes, or execute any commands. You can only:
@@ -668,21 +708,19 @@ User request: ${prompt}`;
         prompt = planModePrompt;
         logger.debug('Added plan mode restrictions to prompt');
       }
-      
+
       console.log('Executing Claude query with tool support...');
-      
+
       // Execute the query and get tool executions
-      const result = await claudeInstance
-        .query(prompt)
-        .asToolExecutions();
-      
+      const result = await claudeInstance.query(prompt).asToolExecutions();
+
       console.log('=== CLAUDE SDK RESULT ===');
       console.log('Result type:', typeof result);
       console.log('Result keys:', Object.keys(result || {}));
       console.log('Result.response type:', typeof result.response);
       console.log('Result.response:', result.response);
       console.log('=========================');
-      
+
       logger.debug('Claude execution completed');
       logger.debug('Tool executions from SDK:', result.toolExecutions?.length || 0);
       logger.debug('Tool executions from callbacks:', toolExecutions.length);
@@ -693,46 +731,49 @@ User request: ${prompt}`;
       } else {
         logger.debug('Result response structure:', JSON.stringify(result.response, null, 2));
       }
-      
+
       // Extract token usage if available
       if (result.tokenUsage) {
         tokenUsage = {
           inputTokens: result.tokenUsage.inputTokens || 0,
           outputTokens: result.tokenUsage.outputTokens || 0,
-          totalTokens: result.tokenUsage.totalTokens || 0
+          totalTokens: result.tokenUsage.totalTokens || 0,
         };
       } else {
         // Fallback token estimation
         tokenUsage = {
           inputTokens: Math.ceil(prompt.length / 4),
           outputTokens: Math.ceil((result.response || '').length / 4),
-          totalTokens: 0
+          totalTokens: 0,
         };
         tokenUsage.totalTokens = tokenUsage.inputTokens + tokenUsage.outputTokens;
       }
-      
+
       // Extract text from response if it's an array of content blocks
       let responseText = '';
-      
+
       // First, check if we have assistantMessage from the onAssistant callback
       console.log('assistantMessage value:', assistantMessage);
       console.log('assistantMessage type:', typeof assistantMessage);
       console.log('assistantMessage length:', assistantMessage.length);
-      
+
       if (assistantMessage && assistantMessage.trim()) {
         responseText = assistantMessage;
-        logger.debug('Using assistantMessage from onAssistant callback:', responseText.substring(0, 100) + '...');
+        logger.debug(
+          'Using assistantMessage from onAssistant callback:',
+          responseText.substring(0, 100) + '...'
+        );
       } else if (result.response) {
         // If no assistantMessage, extract from result.response
         logger.debug('No assistantMessage, extracting from result.response');
-        
+
         if (typeof result.response === 'string') {
           responseText = result.response;
         } else if (Array.isArray(result.response)) {
           // If response is an array of content blocks, extract text
           responseText = result.response
-            .filter(block => block && block.type === 'text')
-            .map(block => block.text || '')
+            .filter((block) => block && block.type === 'text')
+            .map((block) => block.text || '')
             .join('\n');
           logger.debug('Extracted text from array:', responseText.substring(0, 100) + '...');
         } else if (result.response && typeof result.response === 'object') {
@@ -745,23 +786,23 @@ User request: ${prompt}`;
               responseText = result.response.content;
             } else if (Array.isArray(result.response.content)) {
               responseText = result.response.content
-                .filter(block => block && block.type === 'text')
-                .map(block => block.text || '')
+                .filter((block) => block && block.type === 'text')
+                .map((block) => block.text || '')
                 .join('\n');
             }
           }
           logger.debug('Extracted text from object:', responseText.substring(0, 100) + '...');
         }
       }
-      
+
       // Ensure responseText is always a string
       if (!responseText || typeof responseText !== 'string') {
         logger.debug('Warning: responseText is not a string, type:', typeof responseText);
         responseText = 'No response generated';
       }
-      
+
       // Mark any remaining pending tool executions as complete
-      const completedToolExecutions = toolExecutions.map(tool => {
+      const completedToolExecutions = toolExecutions.map((tool) => {
         // If already marked complete, keep the existing status
         if (tool.status === 'complete') {
           return tool;
@@ -772,62 +813,61 @@ User request: ${prompt}`;
           status: 'complete',
           isSuccess: true,
           result: 'Completed successfully',
-          executionTime: tool.startTime ? Date.now() - tool.startTime : null
+          executionTime: tool.startTime ? Date.now() - tool.startTime : null,
         };
       });
-      
+
       const finalResponse = {
         text: responseText,
         toolExecutions: completedToolExecutions, // Send completed tool executions
         tokenUsage: tokenUsage,
-        error: null
+        error: null,
       };
-      
+
       logger.debug('Final response object:', {
         textType: typeof finalResponse.text,
         textValue: finalResponse.text ? finalResponse.text.substring(0, 100) + '...' : null,
         hasToolExecutions: !!finalResponse.toolExecutions,
-        hasTokenUsage: !!finalResponse.tokenUsage
+        hasTokenUsage: !!finalResponse.tokenUsage,
       });
-      
+
       return finalResponse;
-      
     } catch (error) {
       console.error('Claude Code processing error:', error);
-      
+
       // Enhanced error handling
       let errorMessage = 'Failed to process Claude Code message';
       let errorDetails = null;
-      
+
       if (isEnhancedError(error)) {
         console.log('Enhanced error detected');
         errorMessage = error.message || errorMessage;
-        
+
         if (hasResolution(error)) {
           console.log('Error has resolution:', error.resolution);
           errorDetails = {
             type: error.type || 'unknown',
             resolution: error.resolution,
-            category: error.category || 'general'
+            category: error.category || 'general',
           };
         }
       }
-      
+
       console.error('Error details:', errorDetails);
-      
+
       return {
         error: errorMessage,
         errorDetails: errorDetails,
         text: null,
         toolExecutions: [],
-        tokenUsage: null
+        tokenUsage: null,
       };
     }
   }
 
   async analyzeWorkDescription(workDescription, model) {
     const modelName = this.getModel(model);
-    
+
     // Check if Claude is available first
     if (!this.isClaudeAvailable) {
       // Return a mock response for development
@@ -835,26 +875,29 @@ User request: ${prompt}`;
       let type = 'developer';
       let jobTitle = 'Senior Software Engineer';
       let expertise = ['Code Review', 'Best Practices', 'Architecture', 'Performance Optimization'];
-      let personality = 'A thoughtful and analytical developer who focuses on writing clean, maintainable code.';
-      
+      let personality =
+        'A thoughtful and analytical developer who focuses on writing clean, maintainable code.';
+
       if (lowerDesc.includes('design') || lowerDesc.includes('ui') || lowerDesc.includes('ux')) {
         type = 'designer';
         jobTitle = 'UI/UX Designer';
         expertise = ['UI Design', 'User Experience', 'Design Systems', 'Prototyping'];
-        personality = 'A creative designer with a keen eye for aesthetics and user-centered design principles.';
+        personality =
+          'A creative designer with a keen eye for aesthetics and user-centered design principles.';
       } else if (lowerDesc.includes('test') || lowerDesc.includes('qa')) {
         type = 'tester';
         jobTitle = 'Quality Assurance Engineer';
         expertise = ['Test Planning', 'Edge Cases', 'Automation', 'Quality Assurance'];
-        personality = 'A meticulous tester who enjoys finding edge cases and ensuring software quality.';
+        personality =
+          'A meticulous tester who enjoys finding edge cases and ensuring software quality.';
       }
-      
+
       return {
         type,
         jobTitle,
         name: 'Alex Chen',
         personality,
-        expertise
+        expertise,
       };
     }
 
@@ -882,13 +925,10 @@ Respond in JSON format:
 
     try {
       const response = await this.withTimeout(
-        claude()
-          .withModel(modelName)
-          .query(prompt)
-          .asText(),
+        claude().withModel(modelName).query(prompt).asText(),
         25000 // 25 seconds for work analysis
       );
-      
+
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         return JSON.parse(jsonMatch[0]);
@@ -896,7 +936,7 @@ Respond in JSON format:
       throw new Error('Could not parse response as JSON');
     } catch (error) {
       console.error('Error analyzing work description:', error);
-      
+
       // Re-throw timeout errors
       if (error.message === 'Request timed out') {
         throw error;
@@ -906,14 +946,14 @@ Respond in JSON format:
         type: 'developer',
         name: 'Alex Chen',
         personality: 'A versatile professional ready to tackle various challenges.',
-        expertise: ['Problem Solving', 'Collaboration', 'Technical Analysis', 'Documentation']
+        expertise: ['Problem Solving', 'Collaboration', 'Technical Analysis', 'Documentation'],
       };
     }
   }
 
   async applyChanges(currentContent, previousSuggestion, persona, workItem, model) {
     const modelName = this.getModel(model);
-    
+
     // Check if Claude is available first
     if (!this.isClaudeAvailable) {
       // Return mock implementation for development
@@ -925,11 +965,11 @@ Respond in JSON format:
         }
         return line;
       });
-      
+
       return {
         success: true,
         updatedContent: updatedLines.join('\n'),
-        summary: 'Applied suggested changes to improve clarity and completeness.'
+        summary: 'Applied suggested changes to improve clarity and completeness.',
       };
     }
 
@@ -981,13 +1021,10 @@ Respond with exactly this JSON structure:
 
     try {
       const response = await this.withTimeout(
-        claude()
-          .withModel(modelName)
-          .query(prompt)
-          .asText(),
+        claude().withModel(modelName).query(prompt).asText(),
         30000 // 30 seconds timeout
       );
-      
+
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const result = JSON.parse(jsonMatch[0]);
@@ -1000,89 +1037,117 @@ Respond with exactly this JSON structure:
       throw new Error('Could not parse response as JSON');
     } catch (error) {
       console.error('Error applying changes:', error);
-      
+
       // Return error response
       return {
         success: false,
         error: error.message || 'Failed to apply changes',
-        updatedContent: currentContent // Return original content on error
+        updatedContent: currentContent, // Return original content on error
       };
     }
   }
 
   async chat(messages, userMessage, persona, documentContent, workItem, model) {
     const modelName = this.getModel(model);
-    
+
     // Check if Claude is available first
     if (!this.isClaudeAvailable) {
       // Return a mock response for development
       // Determine response based on conversation flow
       const messageCount = messages.length;
       console.log('Mock chat - message count:', messageCount, 'user message:', userMessage);
-      console.log('Last few messages:', messages.slice(-3).map(m => ({ persona: m.personaId, type: m.type, content: m.content.substring(0, 50) })));
-      
+      console.log(
+        'Last few messages:',
+        messages
+          .slice(-3)
+          .map((m) => ({ persona: m.personaId, type: m.type, content: m.content.substring(0, 50) }))
+      );
+
       // Get only user and persona messages (exclude system/action messages)
-      const conversationMessages = messages.filter(m => m.type === 'message' || m.type === 'suggestion');
-      const userMessages = conversationMessages.filter(m => m.personaId === 'user');
+      const conversationMessages = messages.filter(
+        (m) => m.type === 'message' || m.type === 'suggestion'
+      );
+      const userMessages = conversationMessages.filter((m) => m.personaId === 'user');
       const userMessageCount = userMessages.length;
-      
-      console.log('User message count:', userMessageCount, 'Total conversation messages:', conversationMessages.length);
-      
+
+      console.log(
+        'User message count:',
+        userMessageCount,
+        'Total conversation messages:',
+        conversationMessages.length
+      );
+
       // Check if this is a response to a suggestion
-      const lastPersonaMessage = [...messages].reverse().find(m => m.personaId !== 'user' && m.personaId !== 'system');
-      const isRespondingToSuggestion = lastPersonaMessage && (lastPersonaMessage.type === 'suggestion' || lastPersonaMessage.content.includes('Would you like'));
-      
-      console.log('Last persona message type:', lastPersonaMessage?.type, 'Is responding to suggestion:', isRespondingToSuggestion);
-      
+      const lastPersonaMessage = [...messages]
+        .reverse()
+        .find((m) => m.personaId !== 'user' && m.personaId !== 'system');
+      const isRespondingToSuggestion =
+        lastPersonaMessage &&
+        (lastPersonaMessage.type === 'suggestion' ||
+          lastPersonaMessage.content.includes('Would you like'));
+
+      console.log(
+        'Last persona message type:',
+        lastPersonaMessage?.type,
+        'Is responding to suggestion:',
+        isRespondingToSuggestion
+      );
+
       // First real user message - provide a suggestion
       if (userMessageCount === 1 && !isRespondingToSuggestion) {
         return {
-          response: "I notice the task breakdown could be more specific. For example, the first task mentions 'Design Authentication UI Components' but doesn't specify which authentication methods to support. Would you like me to suggest a more detailed breakdown?",
-          type: 'suggestion'
+          response:
+            "I notice the task breakdown could be more specific. For example, the first task mentions 'Design Authentication UI Components' but doesn't specify which authentication methods to support. Would you like me to suggest a more detailed breakdown?",
+          type: 'suggestion',
         };
       }
-      
+
       // If user is responding to a suggestion
       if (isRespondingToSuggestion) {
-        const userAgreed = userMessage.toLowerCase().includes('yes') || 
-                          userMessage.toLowerCase().includes('apply') || 
-                          userMessage.toLowerCase().includes('ok') ||
-                          userMessage.toLowerCase().includes('sure') ||
-                          userMessage.toLowerCase().includes('please');
-        
+        const userAgreed =
+          userMessage.toLowerCase().includes('yes') ||
+          userMessage.toLowerCase().includes('apply') ||
+          userMessage.toLowerCase().includes('ok') ||
+          userMessage.toLowerCase().includes('sure') ||
+          userMessage.toLowerCase().includes('please');
+
         console.log('User agreed?', userAgreed);
-        
+
         if (userAgreed) {
           // Return an action response indicating changes should be applied
           return {
-            response: "Great! Let me apply those changes to make the authentication requirements more specific.",
+            response:
+              'Great! Let me apply those changes to make the authentication requirements more specific.',
             type: 'action',
             action: 'apply-changes',
-            suggestionToApply: lastPersonaMessage.content
+            suggestionToApply: lastPersonaMessage.content,
           };
         } else {
           return {
-            response: "No problem! Let me know if you'd like me to look at other aspects of the document.",
-            type: 'message'
+            response:
+              "No problem! Let me know if you'd like me to look at other aspects of the document.",
+            type: 'message',
           };
         }
       }
-      
+
       // Default fallback - continue conversation
       console.log('Falling back to default response');
-      
+
       // Check if this might be a continuation after applying changes
       const lastMessage = messages[messages.length - 1];
       if (lastMessage && lastMessage.type === 'summary') {
         return {
-          response: "In [Task 2](doc:Task 2), I notice it mentions implementing backend services but doesn't specify the API structure or data models. Would you like me to add those details?",
-          type: 'suggestion'
+          response:
+            "In [Task 2](doc:Task 2), I notice it mentions implementing backend services but doesn't specify the API structure or data models. Would you like me to add those details?",
+          type: 'suggestion',
         };
       }
-      
+
       return {
-        response: "I'm here to help improve your work item plan. What would you like me to focus on next?",
-        type: 'message'
+        response:
+          "I'm here to help improve your work item plan. What would you like me to focus on next?",
+        type: 'message',
       };
     }
 
@@ -1098,11 +1163,14 @@ Current document content:
 ${documentContent}
 
 Conversation history:
-${messages.map(m => {
-  const speaker = m.personaId === 'user' ? 'User' : m.personaId === 'system' ? 'System' : persona.name;
-  const typeInfo = m.type !== 'message' ? ` [${m.type}]` : '';
-  return `${speaker}${typeInfo}: ${m.content}`;
-}).join('\n')}
+${messages
+  .map((m) => {
+    const speaker =
+      m.personaId === 'user' ? 'User' : m.personaId === 'system' ? 'System' : persona.name;
+    const typeInfo = m.type !== 'message' ? ` [${m.type}]` : '';
+    return `${speaker}${typeInfo}: ${m.content}`;
+  })
+  .join('\n')}
 
 User: ${userMessage}
 
@@ -1155,11 +1223,8 @@ Respond with this exact JSON structure (replace the values but keep the structur
 Note: Include "action" field ONLY when type is "action". Include "suggestionToApply" ONLY when type is "action".`;
 
     try {
-      const response = await claude()
-        .withModel(modelName)
-        .query(prompt)
-        .asText();
-      
+      const response = await claude().withModel(modelName).query(prompt).asText();
+
       // Extract JSON from response
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
@@ -1177,8 +1242,9 @@ Note: Include "action" field ONLY when type is "action". Include "suggestionToAp
       console.error('Error in chat:', error);
       // Return a helpful error message
       return {
-        response: "I'm having trouble connecting to provide suggestions right now. Please try again or check your Claude CLI authentication.",
-        type: 'message'
+        response:
+          "I'm having trouble connecting to provide suggestions right now. Please try again or check your Claude CLI authentication.",
+        type: 'message',
       };
     }
   }

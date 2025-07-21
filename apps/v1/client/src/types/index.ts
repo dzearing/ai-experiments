@@ -11,9 +11,9 @@ export interface Persona {
   avatarGender?: 'male' | 'female';
 }
 
-export type PersonaType = 
+export type PersonaType =
   | 'usability-expert'
-  | 'developer' 
+  | 'developer'
   | 'tester'
   | 'data-scientist'
   | 'devops'
@@ -84,9 +84,9 @@ export interface WorkItem {
   };
 }
 
-export type WorkItemStatus = 
+export type WorkItemStatus =
   | 'ideas'
-  | 'planned' 
+  | 'planned'
   | 'active'
   | 'in-review'
   | 'blocked'

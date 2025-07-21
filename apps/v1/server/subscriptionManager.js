@@ -21,13 +21,13 @@ class SubscriptionManager {
   // Unregister a client (on disconnect)
   unregisterClient(clientId) {
     const resources = this.subscriptions.get(clientId) || new Set();
-    
+
     // Remove client from all monitor subscriber lists
-    resources.forEach(resourceId => {
+    resources.forEach((resourceId) => {
       const monitor = this.monitors.get(resourceId);
       if (monitor) {
         monitor.subscribers.delete(clientId);
-        
+
         // Stop monitoring if no subscribers left
         if (monitor.subscribers.size === 0) {
           clearInterval(monitor.interval);
@@ -36,7 +36,7 @@ class SubscriptionManager {
         }
       }
     });
-    
+
     this.subscriptions.delete(clientId);
     this.clients.delete(clientId);
     console.log(`Client unregistered: ${clientId}`);
@@ -50,31 +50,31 @@ class SubscriptionManager {
     }
 
     const clientSubs = this.subscriptions.get(clientId) || new Set();
-    
-    resources.forEach(resourceId => {
+
+    resources.forEach((resourceId) => {
       // Add to client's subscriptions
       clientSubs.add(resourceId);
-      
+
       // Start monitoring if not already
       if (!this.monitors.has(resourceId)) {
         this.startMonitoring(resourceId);
       }
-      
+
       // Add client to monitor's subscribers
       const monitor = this.monitors.get(resourceId);
       if (monitor) {
         monitor.subscribers.add(clientId);
       }
     });
-    
+
     this.subscriptions.set(clientId, clientSubs);
     console.log(`Client ${clientId} subscribed to:`, resources);
-    
+
     // Send initial status for all subscribed resources
-    resources.forEach(resourceId => {
+    resources.forEach((resourceId) => {
       this.checkResource(resourceId, true); // force initial update
     });
-    
+
     return true;
   }
 
@@ -82,14 +82,14 @@ class SubscriptionManager {
   unsubscribe(clientId, resources) {
     const clientSubs = this.subscriptions.get(clientId);
     if (!clientSubs) return false;
-    
-    resources.forEach(resourceId => {
+
+    resources.forEach((resourceId) => {
       clientSubs.delete(resourceId);
-      
+
       const monitor = this.monitors.get(resourceId);
       if (monitor) {
         monitor.subscribers.delete(clientId);
-        
+
         // Stop monitoring if no subscribers left
         if (monitor.subscribers.size === 0) {
           clearInterval(monitor.interval);
@@ -98,22 +98,22 @@ class SubscriptionManager {
         }
       }
     });
-    
+
     return true;
   }
 
   // Start monitoring a resource
   startMonitoring(resourceId) {
     console.log(`Starting monitoring: ${resourceId}`);
-    
+
     const interval = setInterval(() => {
       this.checkResource(resourceId);
     }, this.checkInterval);
-    
+
     this.monitors.set(resourceId, {
       interval,
       lastStatus: null,
-      subscribers: new Set()
+      subscribers: new Set(),
     });
   }
 
@@ -128,19 +128,19 @@ class SubscriptionManager {
     try {
       const { type, path: resourcePath } = this.parseResourceId(resourceId);
       const monitor = this.monitors.get(resourceId);
-      
+
       if (!monitor) return;
-      
+
       let newStatus = null;
-      
+
       if (type === 'repo-status') {
         newStatus = await this.getRepoStatus(resourcePath);
       }
-      
+
       // Compare with last status
-      const statusChanged = forceUpdate || 
-        JSON.stringify(newStatus) !== JSON.stringify(monitor.lastStatus);
-      
+      const statusChanged =
+        forceUpdate || JSON.stringify(newStatus) !== JSON.stringify(monitor.lastStatus);
+
       if (statusChanged && newStatus) {
         monitor.lastStatus = newStatus;
         this.notifySubscribers(resourceId, newStatus);
@@ -157,42 +157,42 @@ class SubscriptionManager {
       const parts = repoPath.split('/');
       const repoName = parts.pop();
       const projectPath = parts.join('/');
-      
+
       // Construct full repo path
       const fullRepoPath = path.join(projectPath, 'repos', repoName);
-      
+
       // Check if directory exists
       try {
         await fs.access(fullRepoPath);
       } catch {
         return { error: 'Repository not found' };
       }
-      
+
       // Get current branch
       let branch = 'unknown';
       try {
         branch = execSync('git rev-parse --abbrev-ref HEAD', {
           cwd: fullRepoPath,
-          encoding: 'utf-8'
+          encoding: 'utf-8',
         }).trim();
       } catch (err) {
         console.error('Error getting branch:', err);
       }
-      
+
       // Check if working directory is clean
       let isDirty = false;
       let changes = { modified: 0, added: 0, deleted: 0, untracked: 0 };
       try {
         const status = execSync('git status --porcelain', {
           cwd: fullRepoPath,
-          encoding: 'utf-8'
+          encoding: 'utf-8',
         });
-        
+
         isDirty = status.trim().length > 0;
-        
+
         if (isDirty) {
           const lines = status.trim().split('\n');
-          lines.forEach(line => {
+          lines.forEach((line) => {
             const prefix = line.substring(0, 2);
             if (prefix.includes('M')) changes.modified++;
             else if (prefix.includes('A')) changes.added++;
@@ -203,7 +203,7 @@ class SubscriptionManager {
       } catch (err) {
         console.error('Error getting status:', err);
       }
-      
+
       // Get ahead/behind status vs main
       let ahead = 0;
       let behind = 0;
@@ -211,9 +211,9 @@ class SubscriptionManager {
         if (branch !== 'main') {
           const aheadBehind = execSync('git rev-list --left-right --count main...HEAD', {
             cwd: fullRepoPath,
-            encoding: 'utf-8'
+            encoding: 'utf-8',
           }).trim();
-          
+
           const [behindStr, aheadStr] = aheadBehind.split('\t');
           behind = parseInt(behindStr) || 0;
           ahead = parseInt(aheadStr) || 0;
@@ -221,21 +221,21 @@ class SubscriptionManager {
       } catch (err) {
         // Main branch might not exist or other error
       }
-      
+
       // Get last commit info
       let lastCommit = null;
       try {
         const commitInfo = execSync('git log -1 --format="%H|%s|%an|%ar"', {
           cwd: fullRepoPath,
-          encoding: 'utf-8'
+          encoding: 'utf-8',
         }).trim();
-        
+
         const [hash, subject, author, relativeTime] = commitInfo.split('|');
         lastCommit = { hash, subject, author, relativeTime };
       } catch (err) {
         console.error('Error getting last commit:', err);
       }
-      
+
       return {
         resourceId: `repo-status:${repoPath}`,
         repoPath,
@@ -245,14 +245,14 @@ class SubscriptionManager {
         ahead,
         behind,
         lastCommit,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     } catch (error) {
       console.error(`Error getting repo status for ${repoPath}:`, error);
       return {
         resourceId: `repo-status:${repoPath}`,
         error: error.message,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     }
   }
@@ -261,16 +261,16 @@ class SubscriptionManager {
   notifySubscribers(resourceId, data) {
     const monitor = this.monitors.get(resourceId);
     if (!monitor) return;
-    
+
     const { type } = this.parseResourceId(resourceId);
     const event = {
       type,
       id: resourceId,
       payload: data,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
-    
-    monitor.subscribers.forEach(clientId => {
+
+    monitor.subscribers.forEach((clientId) => {
       const client = this.clients.get(clientId);
       if (client) {
         try {
@@ -297,7 +297,7 @@ class SubscriptionManager {
 
   // Force check all subscribed resources (useful after git operations)
   forceCheckResources(resourceIds) {
-    resourceIds.forEach(resourceId => {
+    resourceIds.forEach((resourceId) => {
       if (this.monitors.has(resourceId)) {
         this.checkResource(resourceId, true);
       }

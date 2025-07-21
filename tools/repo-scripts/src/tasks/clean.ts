@@ -10,12 +10,12 @@ const clean: Task = {
   execute: async function clean(additionalArgs = []) {
     const cwd = process.cwd();
     const dirsToClean = ['lib', 'dist', 'lib-commonjs'];
-    
+
     // Add any additional directories from arguments
     if (additionalArgs.length > 0) {
       dirsToClean.push(...additionalArgs);
     }
-    
+
     for (const dir of dirsToClean) {
       const dirPath = resolve(cwd, dir);
       if (existsSync(dirPath)) {
@@ -29,7 +29,7 @@ const clean: Task = {
         console.log(chalk.gray(`- ${dir} not found, skipping`));
       }
     }
-  }
+  },
 };
 
 export { clean };

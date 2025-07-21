@@ -8,7 +8,7 @@ export function getJestConfigPath(packageRoot: string): string {
     'jest.config.mjs',
     'jest.config.cjs',
     'jest.config.json',
-    'jest.config.ts'
+    'jest.config.ts',
   ];
 
   for (const configFile of configFiles) {

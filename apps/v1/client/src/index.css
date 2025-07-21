@@ -16,7 +16,7 @@ html {
 }
 
 /* Checkbox specific styles to prevent focus ring on click */
-input[type="checkbox"]:focus:not(:focus-visible) {
+input[type='checkbox']:focus:not(:focus-visible) {
   box-shadow: none;
   outline: none;
 }
@@ -80,33 +80,38 @@ body {
   .scrollbar-gutter-stable {
     scrollbar-gutter: stable;
   }
-  
+
   .page-transition-enter {
     opacity: 0;
     transform: translateY(20px);
   }
-  
+
   .page-transition-enter-active {
     opacity: 1;
     transform: translateY(0);
-    transition: opacity 300ms ease-out, transform 300ms ease-out;
+    transition:
+      opacity 300ms ease-out,
+      transform 300ms ease-out;
   }
-  
+
   .page-transition-exit {
     opacity: 1;
     transform: translateY(0);
   }
-  
+
   .page-transition-exit-active {
     opacity: 0;
     transform: translateY(-20px);
-    transition: opacity 150ms ease-in, transform 150ms ease-in;
+    transition:
+      opacity 150ms ease-in,
+      transform 150ms ease-in;
   }
 }
 
 /* Performance-optimized animations with more movement */
 @keyframes float-slow {
-  0%, 100% {
+  0%,
+  100% {
     transform: translate3d(0, 0, 0);
   }
   25% {
@@ -121,7 +126,8 @@ body {
 }
 
 @keyframes float-reverse {
-  0%, 100% {
+  0%,
+  100% {
     transform: translate3d(0, 0, 0);
   }
   25% {

@@ -19,25 +19,25 @@ export function ToastContainer() {
   // Initialize or clean up toast states when toasts change
   useEffect(() => {
     // Add new toasts to state
-    toasts.forEach(toast => {
+    toasts.forEach((toast) => {
       if (!toastStates[toast.id]) {
-        setToastStates(prev => ({
+        setToastStates((prev) => ({
           ...prev,
           [toast.id]: {
             opacity: 1,
-            isHovered: false
-          }
+            isHovered: false,
+          },
         }));
 
         // Start fade timer if duration is set
         if (toast.duration && toast.duration > 0) {
           const fadeTimeout = setTimeout(() => {
-            setToastStates(prev => ({
+            setToastStates((prev) => ({
               ...prev,
               [toast.id]: {
                 ...prev[toast.id],
-                opacity: 0
-              }
+                opacity: 0,
+              },
             }));
 
             // Remove toast after fade completes
@@ -45,34 +45,34 @@ export function ToastContainer() {
               removeToast(toast.id);
             }, 5000); // 5 second fade duration
 
-            setToastStates(prev => ({
+            setToastStates((prev) => ({
               ...prev,
               [toast.id]: {
                 ...prev[toast.id],
-                removeTimeout
-              }
+                removeTimeout,
+              },
             }));
           }, 5000); // Start fade after 5 seconds
 
-          setToastStates(prev => ({
+          setToastStates((prev) => ({
             ...prev,
             [toast.id]: {
               ...prev[toast.id],
-              fadeTimeout
-            }
+              fadeTimeout,
+            },
           }));
         }
       }
     });
 
     // Clean up removed toasts
-    const toastIds = toasts.map(t => t.id);
-    Object.keys(toastStates).forEach(id => {
+    const toastIds = toasts.map((t) => t.id);
+    Object.keys(toastStates).forEach((id) => {
       if (!toastIds.includes(id)) {
         const state = toastStates[id];
         if (state.fadeTimeout) clearTimeout(state.fadeTimeout);
         if (state.removeTimeout) clearTimeout(state.removeTimeout);
-        setToastStates(prev => {
+        setToastStates((prev) => {
           const newState = { ...prev };
           delete newState[id];
           return newState;
@@ -90,12 +90,12 @@ export function ToastContainer() {
     if (state.removeTimeout) clearTimeout(state.removeTimeout);
 
     // Set opacity back to 1 and mark as hovered
-    setToastStates(prev => ({
+    setToastStates((prev) => ({
       ...prev,
       [toastId]: {
         opacity: 1,
-        isHovered: true
-      }
+        isHovered: true,
+      },
     }));
   };
 
@@ -103,44 +103,44 @@ export function ToastContainer() {
     const state = toastStates[toastId];
     if (!state) return;
 
-    setToastStates(prev => ({
+    setToastStates((prev) => ({
       ...prev,
       [toastId]: {
         ...prev[toastId],
-        isHovered: false
-      }
+        isHovered: false,
+      },
     }));
 
     // Restart the countdown if duration is set
     if (duration && duration > 0) {
       const fadeTimeout = setTimeout(() => {
-        setToastStates(prev => ({
+        setToastStates((prev) => ({
           ...prev,
           [toastId]: {
             ...prev[toastId],
-            opacity: 0
-          }
+            opacity: 0,
+          },
         }));
 
         const removeTimeout = setTimeout(() => {
           removeToast(toastId);
         }, 5000); // 5 second fade duration
 
-        setToastStates(prev => ({
+        setToastStates((prev) => ({
           ...prev,
           [toastId]: {
             ...prev[toastId],
-            removeTimeout
-          }
+            removeTimeout,
+          },
         }));
       }, 5000); // Start fade after 5 seconds
 
-      setToastStates(prev => ({
+      setToastStates((prev) => ({
         ...prev,
         [toastId]: {
           ...prev[toastId],
-          fadeTimeout
-        }
+          fadeTimeout,
+        },
       }));
     }
   };
@@ -169,19 +169,34 @@ export function ToastContainer() {
       case 'error':
         return (
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
         );
       case 'warning':
         return (
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
           </svg>
         );
       default:
         return (
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
         );
     }
@@ -191,7 +206,7 @@ export function ToastContainer() {
     <Portal>
       <div className="fixed bottom-8 right-8 z-50 pointer-events-none">
         <div className="flex flex-col-reverse gap-3 pointer-events-auto">
-          {toasts.map(toast => {
+          {toasts.map((toast) => {
             const state = toastStates[toast.id] || { opacity: 1, isHovered: false };
             return (
               <div
@@ -201,29 +216,34 @@ export function ToastContainer() {
                   opacity: state.opacity,
                   transform: 'translateY(0)',
                   transitionDuration: state.opacity === 0 ? '5000ms' : '300ms',
-                  transitionProperty: 'opacity, transform'
+                  transitionProperty: 'opacity, transform',
                 }}
                 onMouseEnter={() => handleMouseEnter(toast.id)}
                 onMouseLeave={() => handleMouseLeave(toast.id, toast.duration)}
               >
-                <div className={`
+                <div
+                  className={`
                   flex items-start gap-3 px-4 py-3 ${styles.borderRadius} shadow-lg backdrop-blur-sm
                   ${getToastStyles(toast.type)} min-w-[350px] max-w-xl
-                `}>
-                <div className="flex-shrink-0 mt-0.5">
-                  {getIcon(toast.type)}
-                </div>
-                <p className="flex-1 text-sm font-medium break-words">{toast.message}</p>
-                <button
-                  onClick={() => removeToast(toast.id)}
-                  className="flex-shrink-0 mt-0.5 ml-2 hover:opacity-80 transition-opacity"
+                `}
                 >
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+                  <div className="flex-shrink-0 mt-0.5">{getIcon(toast.type)}</div>
+                  <p className="flex-1 text-sm font-medium break-words">{toast.message}</p>
+                  <button
+                    onClick={() => removeToast(toast.id)}
+                    className="flex-shrink-0 mt-0.5 ml-2 hover:opacity-80 transition-opacity"
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
               </div>
-            </div>
             );
           })}
         </div>

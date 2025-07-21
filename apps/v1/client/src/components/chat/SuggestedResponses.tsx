@@ -10,13 +10,13 @@ interface SuggestedResponsesProps {
 export const SuggestedResponses = memo(function SuggestedResponses({
   responses,
   onSelect,
-  disabled = false
+  disabled = false,
 }: SuggestedResponsesProps) {
   const { currentStyles } = useTheme();
   const styles = currentStyles;
-  
+
   if (!responses || responses.length === 0) return null;
-  
+
   return (
     <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
       {responses.map((response, index) => (

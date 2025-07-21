@@ -2,5 +2,5 @@
 import { runBuild } from '@claude-flow/repo-scripts';
 
 await runBuild({
-  additionalArgs: process.argv.slice(2)
+  additionalArgs: process.argv.slice(2),
 });

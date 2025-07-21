@@ -6,11 +6,11 @@
   color: inherit;
   font-family: inherit;
   /* MDXEditor theme variables for light mode */
-  --baseTextContrast: 55, 65, 81;  /* Gray-700 */
+  --baseTextContrast: 55, 65, 81; /* Gray-700 */
   --baseTextContrastAlpha: 1;
-  --accentColor: 37, 99, 235;  /* Blue-600 */
+  --accentColor: 37, 99, 235; /* Blue-600 */
   --accentColorAlpha: 1;
-  --basePageBg: 255, 255, 255;  /* White */
+  --basePageBg: 255, 255, 255; /* White */
   --basePageBgAlpha: 1;
 }
 
@@ -28,7 +28,7 @@
   background-color: rgb(243 244 246);
 }
 
-.mdx-light .mdxeditor-toolbar button[data-state="on"] {
+.mdx-light .mdxeditor-toolbar button[data-state='on'] {
   background-color: rgb(229 231 235);
 }
 
@@ -38,11 +38,11 @@
   color: inherit;
   font-family: inherit;
   /* MDXEditor theme variables for dark mode */
-  --baseTextContrast: 255, 255, 255;  /* RGB values for white */
+  --baseTextContrast: 255, 255, 255; /* RGB values for white */
   --baseTextContrastAlpha: 1;
-  --accentColor: 59, 130, 246;  /* Blue accent */
+  --accentColor: 59, 130, 246; /* Blue accent */
   --accentColorAlpha: 1;
-  --basePageBg: 10, 10, 10;  /* Neutral-950 - matches sidebar */
+  --basePageBg: 10, 10, 10; /* Neutral-950 - matches sidebar */
   --basePageBgAlpha: 1;
 }
 
@@ -60,7 +60,7 @@
   background-color: rgba(255 255 255 / 0.1);
 }
 
-.mdx-dark .mdxeditor-toolbar button[data-state="on"] {
+.mdx-dark .mdxeditor-toolbar button[data-state='on'] {
   background-color: rgba(255 255 255 / 0.2);
 }
 
@@ -82,11 +82,11 @@
 /* Remove any specific select overrides - let MDXEditor handle it with CSS variables */
 
 /* Ensure proper text color in editor content */
-.mdx-light .mdxeditor [data-lexical-editor="true"] {
+.mdx-light .mdxeditor [data-lexical-editor='true'] {
   color: rgb(31 41 55);
 }
 
-.mdx-dark .mdxeditor [data-lexical-editor="true"] {
+.mdx-dark .mdxeditor [data-lexical-editor='true'] {
   color: rgb(229 231 235);
 }
 
@@ -115,7 +115,7 @@
 }
 
 /* Fix checkbox alignment in lists */
-.mdxeditor li[role="checkbox"],
+.mdxeditor li[role='checkbox'],
 .mdxeditor li.task-list-item,
 .mdxeditor ul.contains-task-list > li {
   display: flex;
@@ -127,7 +127,7 @@
 }
 
 /* Style the checkbox pseudo-element to work with flexbox */
-.mdxeditor li[role="checkbox"]::before,
+.mdxeditor li[role='checkbox']::before,
 .mdxeditor li.task-list-item::before,
 .mdxeditor ul.contains-task-list > li::before {
   position: static !important;
@@ -138,13 +138,13 @@
 }
 
 /* Ensure proper spacing for nested checkbox lists */
-.mdxeditor li[role="checkbox"] ul {
+.mdxeditor li[role='checkbox'] ul {
   margin-top: 0.5rem;
 }
 
 /* Fix text wrapping in checkbox items */
-.mdxeditor li[role="checkbox"] > span,
-.mdxeditor li[role="checkbox"] > p {
+.mdxeditor li[role='checkbox'] > span,
+.mdxeditor li[role='checkbox'] > p {
   flex: 1;
   margin: 0;
 }

@@ -62,12 +62,12 @@ export interface StoreArchitecture {
   workspace: WorkspaceStore;
   theme: ThemeStore;
   navigation: NavigationStore;
-  
+
   // Domain stores (lazy loaded)
   projects: ProjectStore;
   workItems: WorkItemStore;
   claude: ClaudeStore;
-  
+
   // UI stores (ephemeral)
   toast: ToastStore;
   modal: ModalStore;
@@ -86,7 +86,7 @@ interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  
+
   // Actions
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => Promise<void>;
@@ -98,7 +98,7 @@ export const useAuthStore = create<AuthState>()(
     user: null,
     isAuthenticated: false,
     isLoading: true,
-    
+
     login: async (credentials) => {
       set({ isLoading: true });
       try {
@@ -108,7 +108,7 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: false });
       }
     },
-    
+
     logout: async () => {
       await authService.logout();
       set({ user: null, isAuthenticated: false });
@@ -116,11 +116,11 @@ export const useAuthStore = create<AuthState>()(
       useProjectStore.getState().reset();
       useWorkItemStore.getState().reset();
     },
-    
+
     checkAuth: async () => {
       const user = await authService.getCurrentUser();
       set({ user, isAuthenticated: !!user, isLoading: false });
-    }
+    },
   }))
 );
 
@@ -150,15 +150,15 @@ interface ProjectState {
   // Normalized data
   projects: Record<string, Project>;
   projectIds: string[];
-  
+
   // UI state
   selectedProjectId: string | null;
   isCreating: boolean;
-  
+
   // Computed selectors
   selectedProject: () => Project | null;
   sortedProjects: () => Project[];
-  
+
   // Actions with optimistic updates
   createProject: (data: CreateProjectData) => Promise<void>;
   updateProject: (id: string, data: UpdateProjectData) => Promise<void>;
@@ -169,35 +169,35 @@ interface ProjectState {
 createProject: async (data) => {
   const tempId = `temp-${Date.now()}`;
   const optimisticProject = { ...data, id: tempId, status: 'creating' };
-  
+
   // Optimistic update
   set((state) => ({
     projects: { ...state.projects, [tempId]: optimisticProject },
-    projectIds: [...state.projectIds, tempId]
+    projectIds: [...state.projectIds, tempId],
   }));
-  
+
   try {
     const project = await api.createProject(data);
-    
+
     // Replace temp with real
     set((state) => {
       const { [tempId]: _, ...projects } = state.projects;
-      const projectIds = state.projectIds.filter(id => id !== tempId);
-      
+      const projectIds = state.projectIds.filter((id) => id !== tempId);
+
       return {
         projects: { ...projects, [project.id]: project },
-        projectIds: [...projectIds, project.id]
+        projectIds: [...projectIds, project.id],
       };
     });
   } catch (error) {
     // Rollback
     set((state) => ({
       projects: omit(state.projects, tempId),
-      projectIds: state.projectIds.filter(id => id !== tempId)
+      projectIds: state.projectIds.filter((id) => id !== tempId),
     }));
     throw error;
   }
-}
+};
 ```
 
 ## Real-time Subscriptions
@@ -211,13 +211,9 @@ export class StoreSync {
     private dataBus: DataBus,
     private stores: Map<string, StoreApi<any>>
   ) {}
-  
+
   // Sync store with DataBus
-  syncStore<T>(
-    storeName: string,
-    dataKey: string,
-    selector: (data: T) => void
-  ) {
+  syncStore<T>(storeName: string, dataKey: string, selector: (data: T) => void) {
     // Subscribe to data changes
     return this.dataBus.subscribe<T>(dataKey, (data) => {
       const store = this.stores.get(storeName);
@@ -226,33 +222,33 @@ export class StoreSync {
       }
     });
   }
-  
+
   // Example: Sync projects
   initialize() {
     // Projects list
     this.syncStore('projects', 'projects:list', (projects: Project[]) => {
       useProjectStore.setState({
         projects: keyBy(projects, 'id'),
-        projectIds: projects.map(p => p.id)
+        projectIds: projects.map((p) => p.id),
       });
     });
-    
+
     // Individual project updates
     this.syncStore('projects', 'project:*', (event: ProjectEvent) => {
       const { action, project } = event;
-      
+
       switch (action) {
         case 'created':
         case 'updated':
           useProjectStore.setState((state) => ({
-            projects: { ...state.projects, [project.id]: project }
+            projects: { ...state.projects, [project.id]: project },
           }));
           break;
-          
+
         case 'deleted':
           useProjectStore.setState((state) => ({
             projects: omit(state.projects, project.id),
-            projectIds: state.projectIds.filter(id => id !== project.id)
+            projectIds: state.projectIds.filter((id) => id !== project.id),
           }));
           break;
       }
@@ -265,24 +261,21 @@ export class StoreSync {
 
 ```typescript
 // useSubscription.ts
-export function useSubscription<T>(
-  key: string,
-  options?: SubscriptionOptions
-) {
+export function useSubscription<T>(key: string, options?: SubscriptionOptions) {
   const [data, setData] = useState<T | undefined>();
   const [error, setError] = useState<Error | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   useEffect(() => {
     let unsubscribe: (() => void) | null = null;
-    
+
     const subscribe = async () => {
       try {
         // Initial fetch
         const initialData = await dataBus.request<T>(key);
         setData(initialData);
         setIsLoading(false);
-        
+
         // Subscribe to updates
         unsubscribe = dataBus.subscribe<T>(key, (newData) => {
           setData(newData);
@@ -292,14 +285,14 @@ export function useSubscription<T>(
         setIsLoading(false);
       }
     };
-    
+
     subscribe();
-    
+
     return () => {
       unsubscribe?.();
     };
   }, [key]);
-  
+
   return { data, error, isLoading };
 }
 ```
@@ -372,7 +365,7 @@ export function AppRoutes() {
 export class ProgressiveLoader {
   private loadQueue: Array<() => Promise<any>> = [];
   private isIdle = false;
-  
+
   constructor() {
     // Use requestIdleCallback for non-critical loads
     if ('requestIdleCallback' in window) {
@@ -387,7 +380,7 @@ export class ProgressiveLoader {
       }, 2000);
     }
   }
-  
+
   // Queue non-critical imports
   queue(loader: () => Promise<any>) {
     this.loadQueue.push(loader);
@@ -395,7 +388,7 @@ export class ProgressiveLoader {
       this.processQueue();
     }
   }
-  
+
   private async processQueue() {
     while (this.loadQueue.length > 0) {
       const loader = this.loadQueue.shift()!;
@@ -427,16 +420,10 @@ export default defineConfig({
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
           'state-vendor': ['zustand', '@tanstack/react-query'],
           'ui-vendor': ['@claude-flow/design-system'],
-          
+
           // Feature chunks
-          'claude-features': [
-            './src/pages/ClaudeChat',
-            './src/components/claude',
-          ],
-          'project-features': [
-            './src/pages/Projects',
-            './src/pages/ProjectDetail',
-          ],
+          'claude-features': ['./src/pages/ClaudeChat', './src/components/claude'],
+          'project-features': ['./src/pages/Projects', './src/pages/ProjectDetail'],
         },
       },
     },
@@ -454,14 +441,14 @@ interface NavigationState {
   // History stack
   history: NavigationEntry[];
   currentIndex: number;
-  
+
   // Navigation state
   isNavigating: boolean;
   direction: 'forward' | 'backward' | null;
-  
+
   // Breadcrumb data
   breadcrumbs: BreadcrumbItem[];
-  
+
   // Actions
   navigate: (to: string, options?: NavigateOptions) => void;
   goBack: () => void;
@@ -484,7 +471,7 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
   isNavigating: false,
   direction: null,
   breadcrumbs: [],
-  
+
   navigate: (to, options = {}) => {
     const { replace = false, state = {} } = options;
     const entry: NavigationEntry = {
@@ -493,18 +480,18 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
       state,
       timestamp: Date.now(),
     };
-    
+
     set((prev) => {
       if (replace) {
         const history = [...prev.history];
         history[prev.currentIndex] = entry;
         return { history };
       }
-      
+
       // Remove forward history
       const history = prev.history.slice(0, prev.currentIndex + 1);
       history.push(entry);
-      
+
       return {
         history,
         currentIndex: history.length - 1,
@@ -512,11 +499,11 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
         isNavigating: true,
       };
     });
-    
+
     // Perform navigation
     router.navigate(to, { state });
   },
-  
+
   goBack: () => {
     const { currentIndex, history } = get();
     if (currentIndex > 0) {
@@ -525,12 +512,12 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
         direction: 'backward',
         isNavigating: true,
       });
-      
+
       const entry = history[currentIndex - 1];
       router.navigate(entry.path, { state: entry.state });
     }
   },
-  
+
   canGoBack: () => get().currentIndex > 0,
   canGoForward: () => {
     const { currentIndex, history } = get();
@@ -552,7 +539,7 @@ interface RouteGuardProps {
 export function RouteGuard({ condition, fallback, children }: RouteGuardProps) {
   const navigate = useNavigate();
   const [isAllowed, setIsAllowed] = useState<boolean | null>(null);
-  
+
   useEffect(() => {
     const check = async () => {
       const allowed = await condition();
@@ -562,19 +549,19 @@ export function RouteGuard({ condition, fallback, children }: RouteGuardProps) {
         setIsAllowed(true);
       }
     };
-    
+
     check();
   }, [condition, fallback, navigate]);
-  
+
   if (isAllowed === null) {
     return <PageLoader />;
   }
-  
+
   return <>{children}</>;
 }
 
 // Usage
-<RouteGuard 
+<RouteGuard
   condition={() => useAuthStore.getState().isAuthenticated}
   fallback="/login"
 >
@@ -597,26 +584,26 @@ export function PageTransition({ children, transitionKey }: PageTransitionProps)
   const { direction } = useNavigationStore();
   const [displayChildren, setDisplayChildren] = useState(children);
   const [transitionStage, setTransitionStage] = useState<'enter' | 'exit'>('enter');
-  
+
   useEffect(() => {
     if (children !== displayChildren) {
       setTransitionStage('exit');
     }
   }, [children, displayChildren]);
-  
+
   const handleTransitionEnd = () => {
     if (transitionStage === 'exit') {
       setDisplayChildren(children);
       setTransitionStage('enter');
     }
   };
-  
+
   const className = cn(
     styles.page,
     styles[direction || 'forward'],
     styles[transitionStage]
   );
-  
+
   return (
     <div
       className={className}
@@ -648,20 +635,20 @@ export function PageTransition({ children, transitionKey }: PageTransitionProps)
   .forward.enter {
     animation: slide-in-right var(--duration-300) var(--ease-out);
   }
-  
+
   .forward.exit {
     animation: slide-out-left var(--duration-300) var(--ease-in);
   }
-  
+
   /* Backward navigation */
   .backward.enter {
     animation: slide-in-left var(--duration-300) var(--ease-out);
   }
-  
+
   .backward.exit {
     animation: slide-out-right var(--duration-300) var(--ease-in);
   }
-  
+
   /* Animations */
   @keyframes slide-in-right {
     from {
@@ -673,7 +660,7 @@ export function PageTransition({ children, transitionKey }: PageTransitionProps)
       opacity: 1;
     }
   }
-  
+
   @keyframes slide-out-left {
     from {
       transform: translateX(0);
@@ -684,7 +671,7 @@ export function PageTransition({ children, transitionKey }: PageTransitionProps)
       opacity: 0;
     }
   }
-  
+
   /* Reduced motion */
   @media (prefers-reduced-motion: reduce) {
     .page {
@@ -703,7 +690,7 @@ graph LR
     B -->|300ms| C[DOM Swap]
     C -->|0ms| D[Enter Animation]
     D -->|300ms| E[New Page]
-    
+
     style A fill:#f9f,stroke:#333,stroke-width:2px
     style E fill:#9f9,stroke:#333,stroke-width:2px
     style B fill:#ff9,stroke:#333,stroke-width:2px
@@ -735,14 +722,14 @@ export function Page({
 }: PageProps) {
   // Set document title
   useDocumentTitle(title);
-  
+
   // Update navigation store
   useEffect(() => {
-    useNavigationStore.setState({ 
-      breadcrumbs: breadcrumb || [] 
+    useNavigationStore.setState({
+      breadcrumbs: breadcrumb || []
     });
   }, [breadcrumb]);
-  
+
   return (
     <PageTransition transitionKey={title}>
       <div className={cn(styles.page, className)}>
@@ -751,7 +738,7 @@ export function Page({
           description={description}
           actions={actions}
         />
-        
+
         <PageContent>
           {children}
         </PageContent>
@@ -777,7 +764,7 @@ export function createPage<T extends Record<string, unknown>>(
     subscriptions = [],
     guards = [],
   } = config;
-  
+
   return function GeneratedPage(props: T) {
     // Apply guards
     for (const guard of guards) {
@@ -786,10 +773,10 @@ export function createPage<T extends Record<string, unknown>>(
         return <Navigate to={result.redirect} />;
       }
     }
-    
+
     // Setup subscriptions
     const subscriptionData = useSubscriptions(subscriptions);
-    
+
     // Render page
     return (
       <Page
@@ -829,7 +816,7 @@ export const ProjectDetailPage = createPage({
   ),
   render: (props, { project, workItems }) => {
     if (!project) return <Skeleton />;
-    
+
     return (
       <div>
         <ProjectInfo project={project} />
@@ -848,35 +835,35 @@ export const ProjectDetailPage = createPage({
 <svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
   <!-- Page Container -->
   <rect x="0" y="0" width="800" height="600" fill="#f8f9fa" stroke="#dee2e6"/>
-  
+
   <!-- Header -->
   <rect x="0" y="0" width="800" height="60" fill="#ffffff" stroke="#dee2e6"/>
   <text x="20" y="35" font-family="Arial" font-size="20" font-weight="bold">Dashboard</text>
-  
+
   <!-- Stats Cards -->
   <g transform="translate(20, 80)">
     <rect x="0" y="0" width="180" height="100" rx="8" fill="#ffffff" stroke="#dee2e6"/>
     <text x="20" y="30" font-size="14" fill="#6c757d">Active Projects</text>
     <text x="20" y="60" font-size="24" font-weight="bold">12</text>
   </g>
-  
+
   <g transform="translate(220, 80)">
     <rect x="0" y="0" width="180" height="100" rx="8" fill="#ffffff" stroke="#dee2e6"/>
     <text x="20" y="30" font-size="14" fill="#6c757d">Open Tasks</text>
     <text x="20" y="60" font-size="24" font-weight="bold">34</text>
   </g>
-  
+
   <g transform="translate(420, 80)">
     <rect x="0" y="0" width="180" height="100" rx="8" fill="#ffffff" stroke="#dee2e6"/>
     <text x="20" y="30" font-size="14" fill="#6c757d">Team Members</text>
     <text x="20" y="60" font-size="24" font-weight="bold">8</text>
   </g>
-  
+
   <!-- Recent Activity -->
   <g transform="translate(20, 200)">
     <rect x="0" y="0" width="360" height="380" rx="8" fill="#ffffff" stroke="#dee2e6"/>
     <text x="20" y="30" font-size="16" font-weight="bold">Recent Activity</text>
-    
+
     <!-- Activity Items -->
     <g transform="translate(20, 50)">
       <circle cx="10" cy="10" r="4" fill="#28a745"/>
@@ -887,12 +874,12 @@ export const ProjectDetailPage = createPage({
       <text x="25" y="15" font-size="14">Task #123 completed</text>
     </g>
   </g>
-  
+
   <!-- Quick Actions -->
   <g transform="translate(400, 200)">
     <rect x="0" y="0" width="380" height="380" rx="8" fill="#ffffff" stroke="#dee2e6"/>
     <text x="20" y="30" font-size="16" font-weight="bold">Quick Actions</text>
-    
+
     <g transform="translate(20, 60)">
       <rect x="0" y="0" width="340" height="50" rx="4" fill="#007bff" cursor="pointer"/>
       <text x="170" y="30" font-size="14" fill="#ffffff" text-anchor="middle">New Project</text>
@@ -907,17 +894,17 @@ export const ProjectDetailPage = createPage({
 <svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
   <!-- Page Container -->
   <rect x="0" y="0" width="800" height="600" fill="#f8f9fa" stroke="#dee2e6"/>
-  
+
   <!-- Header with Actions -->
   <rect x="0" y="0" width="800" height="60" fill="#ffffff" stroke="#dee2e6"/>
   <text x="20" y="35" font-family="Arial" font-size="20" font-weight="bold">Projects</text>
   <rect x="680" y="15" width="100" height="30" rx="4" fill="#28a745"/>
   <text x="730" y="35" font-size="14" fill="#ffffff" text-anchor="middle">New Project</text>
-  
+
   <!-- Filter Bar -->
   <rect x="20" y="80" width="760" height="50" rx="4" fill="#ffffff" stroke="#dee2e6"/>
   <text x="40" y="110" font-size="14" fill="#6c757d">Filter by status, team, or name...</text>
-  
+
   <!-- Project Grid -->
   <g transform="translate(20, 150)">
     <!-- Project Card 1 -->
@@ -926,7 +913,7 @@ export const ProjectDetailPage = createPage({
     <text x="20" y="40" font-size="16" font-weight="bold">Project Alpha</text>
     <text x="20" y="60" font-size="14" fill="#6c757d">In Progress</text>
     <text x="20" y="100" font-size="12" fill="#6c757d">8 tasks • 3 members</text>
-    
+
     <!-- Project Card 2 -->
     <rect x="260" y="0" width="240" height="180" rx="8" fill="#ffffff" stroke="#dee2e6"/>
     <rect x="260" y="0" width="240" height="8" rx="8 8 0 0" fill="#28a745"/>
@@ -943,28 +930,28 @@ export const ProjectDetailPage = createPage({
 <svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
   <!-- Page Container -->
   <rect x="0" y="0" width="800" height="600" fill="#f8f9fa" stroke="#dee2e6"/>
-  
+
   <!-- Chat Header -->
   <rect x="0" y="0" width="800" height="60" fill="#ffffff" stroke="#dee2e6"/>
   <text x="20" y="35" font-family="Arial" font-size="20" font-weight="bold">Claude Chat</text>
   <text x="680" y="35" font-size="14" fill="#6c757d">Session Active</text>
-  
+
   <!-- Messages Area -->
   <rect x="0" y="60" width="800" height="480" fill="#ffffff"/>
-  
+
   <!-- User Message -->
   <g transform="translate(400, 100)">
     <rect x="0" y="0" width="380" height="60" rx="12" fill="#007bff"/>
     <text x="20" y="35" font-size="14" fill="#ffffff">How do I implement a data bus pattern?</text>
   </g>
-  
+
   <!-- Claude Response -->
   <g transform="translate(20, 180)">
     <rect x="0" y="0" width="600" height="120" rx="12" fill="#f8f9fa" stroke="#dee2e6"/>
     <text x="20" y="30" font-size="14">The data bus pattern is a centralized state management</text>
     <text x="20" y="50" font-size="14">approach that provides a single source of truth...</text>
   </g>
-  
+
   <!-- Input Area -->
   <rect x="0" y="540" width="800" height="60" fill="#ffffff" stroke="#dee2e6"/>
   <rect x="20" y="555" width="680" height="30" rx="15" fill="#f8f9fa" stroke="#dee2e6"/>
@@ -984,30 +971,30 @@ export const ProjectDetailPage = createPage({
       <polygon points="0 0, 10 3, 0 6" fill="#6c757d"/>
     </marker>
   </defs>
-  
+
   <!-- Page Container -->
   <rect x="100" y="50" width="600" height="500" fill="#f8f9fa" stroke="#333" stroke-width="2"/>
-  
+
   <!-- Header Section -->
   <rect x="100" y="50" width="600" height="80" fill="#ffffff" stroke="#333"/>
   <text x="120" y="80" font-size="12" fill="#6c757d">Breadcrumb > Navigation > Path</text>
   <text x="120" y="105" font-size="18" font-weight="bold">Page Title</text>
   <text x="550" y="105" font-size="14" fill="#007bff">Actions</text>
-  
+
   <!-- Content Area -->
   <rect x="120" y="150" width="560" height="380" fill="#ffffff" stroke="#dee2e6" stroke-dasharray="5,5"/>
   <text x="400" y="340" font-size="16" fill="#6c757d" text-anchor="middle">Page Content</text>
-  
+
   <!-- Annotations -->
   <line x1="50" y1="90" x2="90" y2="90" stroke="#6c757d" marker-end="url(#arrow)"/>
   <text x="10" y="95" font-size="12" fill="#6c757d">Header</text>
-  
+
   <line x1="50" y1="340" x2="90" y2="340" stroke="#6c757d" marker-end="url(#arrow)"/>
   <text x="5" y="345" font-size="12" fill="#6c757d">Content</text>
-  
+
   <line x1="710" y1="90" x2="710" y2="130" stroke="#6c757d"/>
   <text x="720" y="110" font-size="12" fill="#6c757d">60-80px</text>
-  
+
   <!-- Transition Zones -->
   <rect x="80" y="30" width="640" height="540" fill="none" stroke="#007bff" stroke-width="2" stroke-dasharray="10,5" opacity="0.5"/>
   <text x="85" y="25" font-size="12" fill="#007bff">Transition Container</text>
@@ -1031,7 +1018,7 @@ sequenceDiagram
     participant Server
     participant LLM
     participant WorkItemStore
-    
+
     User->>UI: Click feedback link
     UI->>Screenshot: Capture current view
     UI->>FeedbackService: Gather context
@@ -1052,25 +1039,25 @@ sequenceDiagram
 // feedbackService.ts
 export class FeedbackService {
   private contextProviders = new Map<string, ContextProvider>();
-  
+
   registerContextProvider(type: string, provider: ContextProvider) {
     this.contextProviders.set(type, provider);
   }
-  
+
   async captureFeedback(options: FeedbackOptions) {
     // 1. Capture screenshot
     const screenshot = await this.captureScreenshot();
-    
+
     // 2. Gather context based on trigger location
     const context = await this.gatherContext(options);
-    
+
     // 3. Show feedback dialog
     const feedback = await this.showFeedbackDialog({
       screenshot,
       context,
       suggestedTags: this.suggestTags(context)
     });
-    
+
     // 4. Send to server
     if (feedback) {
       await this.submitFeedback({
@@ -1086,7 +1073,7 @@ export class FeedbackService {
       });
     }
   }
-  
+
   private async captureScreenshot(): Promise<Blob> {
     // Use html2canvas or similar library
     const canvas = await html2canvas(document.body, {
@@ -1094,12 +1081,12 @@ export class FeedbackService {
       logging: false,
       useCORS: true
     });
-    
+
     return new Promise((resolve) => {
       canvas.toBlob((blob) => resolve(blob!), 'image/png', 0.9);
     });
   }
-  
+
   private async gatherContext(options: FeedbackOptions): Promise<FeedbackContext> {
     const baseContext = {
       url: window.location.href,
@@ -1107,14 +1094,14 @@ export class FeedbackService {
       sessionId: useAuthStore.getState().sessionId,
       userId: useAuthStore.getState().user?.id
     };
-    
+
     // Get type-specific context
     const provider = this.contextProviders.get(options.type);
     if (provider) {
       const specificContext = await provider.getContext(options.target);
       return { ...baseContext, ...specificContext };
     }
-    
+
     return baseContext;
   }
 }
@@ -1125,7 +1112,7 @@ export class ChatBubbleContextProvider implements ContextProvider {
     const messageId = element.dataset.messageId;
     const sessionId = element.dataset.sessionId;
     const messageType = element.dataset.messageType;
-    
+
     return {
       type: 'chat_bubble',
       messageId,
@@ -1141,26 +1128,26 @@ export class ChatBubbleContextProvider implements ContextProvider {
 // React hook for feedback
 export function useFeedback() {
   const feedbackService = useMemo(() => new FeedbackService(), []);
-  
+
   const triggerFeedback = useCallback((options: FeedbackOptions) => {
     feedbackService.captureFeedback(options);
   }, [feedbackService]);
-  
+
   return { triggerFeedback };
 }
 
 // Feedback dialog component
-export function FeedbackDialog({ 
-  screenshot, 
-  context, 
-  onSubmit, 
-  onCancel 
+export function FeedbackDialog({
+  screenshot,
+  context,
+  onSubmit,
+  onCancel
 }: FeedbackDialogProps) {
   const [feedback, setFeedback] = useState('');
-  const [screenshotUrl, setScreenshotUrl] = useState<string>(() => 
+  const [screenshotUrl, setScreenshotUrl] = useState<string>(() =>
     URL.createObjectURL(screenshot)
   );
-  
+
   const handleRetakeScreenshot = async () => {
     onCancel(); // Close dialog
     // Trigger new screenshot capture
@@ -1169,31 +1156,31 @@ export function FeedbackDialog({
     setScreenshotUrl(newUrl);
     // Reopen dialog with new screenshot
   };
-  
+
   useEffect(() => {
     return () => {
       // Cleanup blob URL
       URL.revokeObjectURL(screenshotUrl);
     };
   }, [screenshotUrl]);
-  
+
   return (
     <Dialog open onClose={onCancel}>
       <DialogHeader>
         <DialogTitle>Share Feedback</DialogTitle>
       </DialogHeader>
-      
+
       <DialogBody>
         {/* Screenshot Preview */}
         <div className={styles.screenshotSection}>
           <label className={styles.label}>Screenshot</label>
           <div className={styles.screenshotContainer}>
-            <img 
-              src={screenshotUrl} 
-              alt="Screenshot" 
+            <img
+              src={screenshotUrl}
+              alt="Screenshot"
               className={styles.screenshot}
             />
-            <button 
+            <button
               className={styles.retakeButton}
               onClick={handleRetakeScreenshot}
             >
@@ -1201,7 +1188,7 @@ export function FeedbackDialog({
             </button>
           </div>
         </div>
-        
+
         {/* Feedback Input */}
         <div className={styles.feedbackSection}>
           <label className={styles.label}>Describe your feedback</label>
@@ -1215,13 +1202,13 @@ export function FeedbackDialog({
           />
         </div>
       </DialogBody>
-      
+
       <DialogFooter>
         <Button variant="ghost" onClick={onCancel}>
           Cancel
         </Button>
-        <Button 
-          variant="primary" 
+        <Button
+          variant="primary"
           onClick={() => onSubmit({ feedback })}
           disabled={!feedback.trim()}
         >
@@ -1241,36 +1228,36 @@ export class FeedbackProcessor {
   async processFeedback(feedbackData: FeedbackSubmission) {
     // 1. Enrich with server context
     const enrichedFeedback = await this.enrichFeedback(feedbackData);
-    
+
     // 2. Save to temp/feedback
     const filename = `feedback-${Date.now()}-${crypto.randomUUID()}.json`;
     await fs.writeFile(
       path.join('temp/feedback', filename),
       JSON.stringify(enrichedFeedback, null, 2)
     );
-    
+
     // 3. Process through LLM
     const workItem = await this.convertToWorkItem(enrichedFeedback);
-    
+
     // 4. Create work item
     await this.createWorkItem(workItem);
-    
+
     // 5. Notify via WebSocket
     this.broadcast('workitem:created', workItem);
   }
-  
+
   private async enrichFeedback(feedback: FeedbackSubmission) {
     const serverContext = {
       serverVersion: process.env.VERSION,
       processingTime: new Date().toISOString(),
       sessionData: await this.getSessionData(feedback.context.sessionId),
       relatedWorkItems: await this.findRelatedWorkItems(feedback),
-      userHistory: await this.getUserFeedbackHistory(feedback.context.userId)
+      userHistory: await this.getUserFeedbackHistory(feedback.context.userId),
     };
-    
+
     return { ...feedback, serverContext };
   }
-  
+
   private async convertToWorkItem(feedback: EnrichedFeedback) {
     const prompt = `
       Convert this user feedback into a structured work item.
@@ -1301,7 +1288,7 @@ export class FeedbackProcessor {
       - If it's annoying but has workaround → medium
       - If it's nice to have → low
     `;
-    
+
     const response = await llm.complete(prompt);
     return this.parseWorkItem(response);
   }
@@ -1316,20 +1303,20 @@ export function WorkItemReview({ workItem }: WorkItemReviewProps) {
   const [selectedPersonas, setSelectedPersonas] = useState<Persona[]>([]);
   const [reviews, setReviews] = useState<PersonaReview[]>([]);
   const [isReviewing, setIsReviewing] = useState(false);
-  
+
   const requestReviews = async () => {
     setIsReviewing(true);
-    
+
     const reviewPromises = selectedPersonas.map(async (persona) => {
       const review = await getPersonaReview(workItem, persona);
       return { persona, review };
     });
-    
+
     const results = await Promise.all(reviewPromises);
     setReviews(results);
     setIsReviewing(false);
   };
-  
+
   return (
     <div className={styles.reviewContainer}>
       {/* Persona Selection */}
@@ -1344,7 +1331,7 @@ export function WorkItemReview({ workItem }: WorkItemReviewProps) {
           Request Reviews
         </Button>
       </div>
-      
+
       {/* Reviews */}
       <div className={styles.reviews}>
         {reviews.map(({ persona, review }) => (
@@ -1366,24 +1353,28 @@ export function WorkItemReview({ workItem }: WorkItemReviewProps) {
 ## Implementation Checklist
 
 ### Phase 1: Core Infrastructure (Week 1)
+
 - [ ] Setup Zustand stores with TypeScript
 - [ ] Implement DataBus service
 - [ ] Create WebSocket connection manager
 - [ ] Setup route configuration with lazy loading
 
 ### Phase 2: State Management (Week 2)
+
 - [ ] Implement auth store with persistence
 - [ ] Create project and work item stores
 - [ ] Setup store synchronization with DataBus
 - [ ] Add optimistic update patterns
 
 ### Phase 3: Navigation & UI (Week 3)
+
 - [ ] Implement navigation store with history
 - [ ] Create page transition components
 - [ ] Setup route guards and middleware
 - [ ] Add breadcrumb management
 
 ### Phase 4: Feedback System (Week 4)
+
 - [ ] Implement screenshot capture service
 - [ ] Create context providers for UI elements
 - [ ] Build feedback dialog component
@@ -1391,12 +1382,14 @@ export function WorkItemReview({ workItem }: WorkItemReviewProps) {
 - [ ] Integrate LLM for work item generation
 
 ### Phase 5: Work Item Features (Week 5)
+
 - [ ] Create work item editor component
 - [ ] Implement persona review system
 - [ ] Build suggestion management UI
 - [ ] Add real-time collaboration features
 
 ### Phase 6: Performance & Polish (Week 6)
+
 - [ ] Optimize bundle splitting
 - [ ] Implement progressive loading
 - [ ] Add service worker for caching

@@ -36,7 +36,7 @@ describe('Button', () => {
     const user = userEvent.setup();
 
     render(<Button onClick={handleClick}>Click me</Button>);
-    
+
     await user.click(screen.getByRole('button'));
     expect(handleClick).toHaveBeenCalledOnce();
   });

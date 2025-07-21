@@ -21,12 +21,14 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
   const [headerContent, setHeaderContent] = useState<HeaderContent>(null);
 
   return (
-    <LayoutContext.Provider value={{ 
-      headerTitle, 
-      setHeaderTitle,
-      headerContent,
-      setHeaderContent 
-    }}>
+    <LayoutContext.Provider
+      value={{
+        headerTitle,
+        setHeaderTitle,
+        headerContent,
+        setHeaderContent,
+      }}
+    >
       {children}
     </LayoutContext.Provider>
   );

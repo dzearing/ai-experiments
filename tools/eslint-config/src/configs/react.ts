@@ -9,46 +9,40 @@ import globals from 'globals';
  * ESLint configuration for React applications.
  * Extends the base configuration with React-specific rules and browser globals.
  */
-export const react = tseslint.config(
-  ...base,
-  {
-    files: ['**/*.{ts,tsx,js,jsx}'],
-    plugins: {
-      react: reactPlugin,
-      'react-hooks': reactHooksPlugin,
-      'react-refresh': reactRefreshPlugin,
-    },
-    languageOptions: {
-      parserOptions: {
-        ecmaFeatures: {
-          jsx: true,
-        },
-      },
-      globals: {
-        ...globals.browser,
-        ...globals.es2022,
+export const react = tseslint.config(...base, {
+  files: ['**/*.{ts,tsx,js,jsx}'],
+  plugins: {
+    react: reactPlugin,
+    'react-hooks': reactHooksPlugin,
+    'react-refresh': reactRefreshPlugin,
+  },
+  languageOptions: {
+    parserOptions: {
+      ecmaFeatures: {
+        jsx: true,
       },
     },
-    rules: {
-      // React rules
-      'react/jsx-uses-react': 'off',
-      'react/react-in-jsx-scope': 'off',
-      'react/prop-types': 'off',
-      
-      // React Hooks rules
-      'react-hooks/rules-of-hooks': 'error',
-      'react-hooks/exhaustive-deps': 'warn',
-      
-      // React Refresh rules
-      'react-refresh/only-export-components': [
-        'warn',
-        { allowConstantExport: true },
-      ],
+    globals: {
+      ...globals.browser,
+      ...globals.es2022,
     },
-    settings: {
-      react: {
-        version: 'detect',
-      },
+  },
+  rules: {
+    // React rules
+    'react/jsx-uses-react': 'off',
+    'react/react-in-jsx-scope': 'off',
+    'react/prop-types': 'off',
+
+    // React Hooks rules
+    'react-hooks/rules-of-hooks': 'error',
+    'react-hooks/exhaustive-deps': 'warn',
+
+    // React Refresh rules
+    'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+  },
+  settings: {
+    react: {
+      version: 'detect',
     },
-  }
-);
+  },
+});

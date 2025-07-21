@@ -13,13 +13,13 @@ export async function runPlaywright({
   additionalArgs = [],
 }: RunPlaywrightOptions = {}): Promise<void> {
   const args = ['test'];
-  
+
   if (ui) {
     args.push('--ui');
   }
-  
+
   args.push(...additionalArgs);
-  
+
   return runScript({
     packageName: '@playwright/test',
     name: 'playwright',

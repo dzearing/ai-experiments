@@ -23,12 +23,12 @@ export function useSubscription(): UseSubscriptionReturn {
     const connect = () => {
       console.log('Connecting to SSE...');
       es = new EventSource(sseUrl('/api/sse/subscribe'));
-      
+
       es.onopen = () => {
         console.log('SSE connection opened');
         reconnectAttemptsRef.current = 0;
       };
-      
+
       es.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
@@ -50,18 +50,18 @@ export function useSubscription(): UseSubscriptionReturn {
           setIsConnected(false);
           setClientId(null);
         }
-        
+
         // Reconnect with exponential backoff
         const attempts = reconnectAttemptsRef.current;
         const delay = Math.min(5000 * Math.pow(2, attempts), 60000); // Max 60 seconds
-        
+
         console.log(`Reconnecting in ${delay}ms (attempt ${attempts + 1})`);
         reconnectAttemptsRef.current++;
-        
+
         if (reconnectTimeoutRef.current) {
           clearTimeout(reconnectTimeoutRef.current);
         }
-        
+
         reconnectTimeoutRef.current = setTimeout(() => {
           if (isMounted && es?.readyState === EventSource.CLOSED) {
             connect();
@@ -87,63 +87,69 @@ export function useSubscription(): UseSubscriptionReturn {
     };
   }, []);
 
-  const subscribe = useCallback(async (resources: string[]) => {
-    if (!clientId) {
-      console.warn('Cannot subscribe: no client ID');
-      return;
-    }
-    
-    try {
-      const response = await fetch(apiUrl('/api/subscriptions'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clientId, resources })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to subscribe');
+  const subscribe = useCallback(
+    async (resources: string[]) => {
+      if (!clientId) {
+        console.warn('Cannot subscribe: no client ID');
+        return;
       }
-      
-      const result = await response.json();
-      if (result.success) {
-        console.log('Subscribed to resources:', resources);
-      }
-    } catch (error) {
-      console.error('Error subscribing:', error);
-    }
-  }, [clientId]);
 
-  const unsubscribe = useCallback(async (resources: string[]) => {
-    if (!clientId) {
-      console.warn('Cannot unsubscribe: no client ID');
-      return;
-    }
-    
-    try {
-      const response = await fetch(apiUrl('/api/subscriptions'), {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clientId, resources })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to unsubscribe');
+      try {
+        const response = await fetch(apiUrl('/api/subscriptions'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ clientId, resources }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to subscribe');
+        }
+
+        const result = await response.json();
+        if (result.success) {
+          console.log('Subscribed to resources:', resources);
+        }
+      } catch (error) {
+        console.error('Error subscribing:', error);
       }
-      
-      const result = await response.json();
-      if (result.success) {
-        console.log('Unsubscribed from resources:', resources);
+    },
+    [clientId]
+  );
+
+  const unsubscribe = useCallback(
+    async (resources: string[]) => {
+      if (!clientId) {
+        console.warn('Cannot unsubscribe: no client ID');
+        return;
       }
-    } catch (error) {
-      console.error('Error unsubscribing:', error);
-    }
-  }, [clientId]);
+
+      try {
+        const response = await fetch(apiUrl('/api/subscriptions'), {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ clientId, resources }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to unsubscribe');
+        }
+
+        const result = await response.json();
+        if (result.success) {
+          console.log('Unsubscribed from resources:', resources);
+        }
+      } catch (error) {
+        console.error('Error unsubscribing:', error);
+      }
+    },
+    [clientId]
+  );
 
   return {
     eventSource,
     clientId,
     isConnected,
     subscribe,
-    unsubscribe
+    unsubscribe,
   };
 }

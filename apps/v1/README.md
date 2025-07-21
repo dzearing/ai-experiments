@@ -21,6 +21,7 @@ A modern project management interface with AI-powered work item creation.
 
 1. Clone the repository
 2. Install dependencies:
+
    ```bash
    npm install
    ```
@@ -47,18 +48,22 @@ This will start both servers automatically.
 #### Option 2: Manual setup
 
 1. **Terminal 1 - Start the mock server:**
+
    ```bash
    cd server
    npm install  # First time only
    npm run mock
    ```
+
    The server will run on http://localhost:3000
 
 2. **Terminal 2 - Start the frontend:**
+
    ```bash
    cd client
    npm run dev
    ```
+
    The frontend will run on http://localhost:5173
 
 3. Navigate to Work Items and click "Create with AI"
@@ -66,6 +71,7 @@ This will start both servers automatically.
 #### Using real Claude integration
 
 Instead of the mock server, you can use real Claude:
+
 ```bash
 cd server
 cp .env.example .env
@@ -76,6 +82,7 @@ npm start
 #### Troubleshooting
 
 If you get "Failed to fetch" errors:
+
 - Ensure the mock server is running on port 3000
 - Check that no other service is using port 3000
 - Try accessing http://localhost:3000/api/health directly
@@ -101,12 +108,14 @@ server/
 ### Available Scripts
 
 From the monorepo root:
+
 - `pnpm dev` - Start both client and server
 - `pnpm build:v1` - Build v1 for production
 - `pnpm lint:v1` - Run ESLint on v1
 - `pnpm test:e2e` - Run e2e tests
 
 From this directory (`apps/v1`):
+
 - Client scripts are in `client/package.json`
 - Server scripts are in `server/package.json`
 

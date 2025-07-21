@@ -17,39 +17,35 @@ interface ClaudeMessageProps {
   sessionId: string;
 }
 
-export const ClaudeMessage = memo(function ClaudeMessage({ 
-  message, 
+export const ClaudeMessage = memo(function ClaudeMessage({
+  message,
   onSuggestedResponse,
   isLatestAssistantMessage = false,
-  sessionId
+  sessionId,
 }: ClaudeMessageProps) {
   const { projectId, repoName } = useParams<{ projectId: string; repoName: string }>();
-  
+
   // Set up feedback for this message
-  const {
-    showDialog,
-    isSubmitting,
-    error,
-    openFeedback,
-    closeFeedback,
-    submitFeedback
-  } = useFeedback({
-    sessionId,
-    repoName: repoName || '',
-    projectId: projectId || '',
-    messageId: message.id
-  });
+  const { showDialog, isSubmitting, error, openFeedback, closeFeedback, submitFeedback } =
+    useFeedback({
+      sessionId,
+      repoName: repoName || '',
+      projectId: projectId || '',
+      messageId: message.id,
+    });
   // Check if this is an error message
-  const isErrorMessage = message.content.startsWith('API Error:') || message.content.includes('authentication_error');
-  const is401Error = message.content.includes('401') && message.content.includes('authentication_error');
-  
+  const isErrorMessage =
+    message.content.startsWith('API Error:') || message.content.includes('authentication_error');
+  const is401Error =
+    message.content.includes('401') && message.content.includes('authentication_error');
+
   // Handle content that might be an array or object
   let messageContent = message.content;
   if (typeof messageContent !== 'string') {
     if (Array.isArray(messageContent)) {
       messageContent = (messageContent as Array<any>)
-        .filter(block => block?.type === 'text')
-        .map(block => block?.text || '')
+        .filter((block) => block?.type === 'text')
+        .map((block) => block?.text || '')
         .join('\n');
     } else if (messageContent && typeof messageContent === 'object' && 'text' in messageContent) {
       messageContent = (messageContent as any).text;
@@ -57,38 +53,54 @@ export const ClaudeMessage = memo(function ClaudeMessage({
       messageContent = String(messageContent);
     }
   }
-  
+
   // Clean up message content to remove artifacts from malformed API responses
   if (typeof messageContent === 'string') {
     // Remove "undefined" at the start of messages
     messageContent = messageContent.replace(/^undefined\s*\n?/i, '');
-    
+
     // Remove "H:" and "A:" conversation prefixes that shouldn't be visible
     messageContent = messageContent.replace(/^(H|A):\s*(.+?)(?=\n\n(H|A):|$)/gm, '$2');
-    
+
     // Clean up any remaining leading/trailing whitespace
     messageContent = messageContent.trim();
   }
-  
-  const formatContent = useMemo(() => (content: string) => {
-    const html = parseMarkdown(content);
-    return <div className="prose prose-sm max-w-none dark:prose-invert markdown-content" dangerouslySetInnerHTML={{ __html: html }} />;
-  }, []);
-  
+
+  const formatContent = useMemo(
+    () => (content: string) => {
+      const html = parseMarkdown(content);
+      return (
+        <div
+          className="prose prose-sm max-w-none dark:prose-invert markdown-content"
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+      );
+    },
+    []
+  );
+
   // Show thinking indicator for streaming messages
   const isThinking = message.isStreaming && messageContent.startsWith('Claude is thinking');
-  
+
   const getAvatar = () => {
     switch (message.role) {
       case 'user':
-        return <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm">U</div>;
+        return (
+          <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm">
+            U
+          </div>
+        );
       case 'assistant':
-        return <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white text-sm">C</div>;
+        return (
+          <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white text-sm">
+            C
+          </div>
+        );
       case 'system':
         return null;
     }
   };
-  
+
   // System messages get special treatment
   if (message.role === 'system') {
     return (
@@ -97,7 +109,7 @@ export const ClaudeMessage = memo(function ClaudeMessage({
       </div>
     );
   }
-  
+
   // Tool messages are rendered as tool executions
   if (message.role === 'tool') {
     // Extract tool name from message ID if name is not provided
@@ -109,7 +121,7 @@ export const ClaudeMessage = memo(function ClaudeMessage({
         toolName = 'Tool execution';
       }
     }
-    
+
     return (
       <>
         <div className="px-4 py-2" data-testid="tool-execution">
@@ -125,7 +137,7 @@ export const ClaudeMessage = memo(function ClaudeMessage({
             messageId={message.id}
           />
         </div>
-        
+
         {/* Feedback dialog for tool execution */}
         <FeedbackDialog
           isOpen={showDialog}
@@ -137,7 +149,7 @@ export const ClaudeMessage = memo(function ClaudeMessage({
       </>
     );
   }
-  
+
   // Render error messages with special styling
   if (isErrorMessage) {
     return (
@@ -145,8 +157,18 @@ export const ClaudeMessage = memo(function ClaudeMessage({
         <div className="mx-4 my-2 p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
           <div className="flex items-start gap-3">
             <div className="flex-shrink-0">
-              <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="w-6 h-6 text-red-600 dark:text-red-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
             </div>
             <div className="flex-1">
@@ -165,7 +187,7 @@ export const ClaudeMessage = memo(function ClaudeMessage({
               </div>
               {is401Error && (
                 <button
-                  onClick={() => window.location.href = '/login'}
+                  onClick={() => (window.location.href = '/login')}
                   className="mt-3 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm font-medium transition-colors"
                 >
                   Re-authenticate
@@ -173,7 +195,7 @@ export const ClaudeMessage = memo(function ClaudeMessage({
               )}
             </div>
           </div>
-          
+
           {/* Feedback link */}
           {!message.isStreaming && (
             <div className="mt-3 border-t border-red-200 dark:border-red-800 pt-3">
@@ -181,7 +203,7 @@ export const ClaudeMessage = memo(function ClaudeMessage({
             </div>
           )}
         </div>
-        
+
         {/* Feedback dialog */}
         <FeedbackDialog
           isOpen={showDialog}
@@ -193,7 +215,7 @@ export const ClaudeMessage = memo(function ClaudeMessage({
       </>
     );
   }
-  
+
   return (
     <>
       <ChatBubble
@@ -214,12 +236,12 @@ export const ClaudeMessage = memo(function ClaudeMessage({
           // Assistant messages get markdown formatting
           formatContent(messageContent)
         )}
-        
+
         {/* Streaming cursor */}
         {message.isStreaming && !isThinking && messageContent && (
           <span className="inline-block w-2 h-4 bg-current animate-pulse ml-1" />
         )}
-        
+
         {/* Planning mode indicator for user messages */}
         {message.role === 'user' && message.mode === 'plan' && (
           <div className="absolute bottom-2 right-2">
@@ -228,7 +250,7 @@ export const ClaudeMessage = memo(function ClaudeMessage({
             </span>
           </div>
         )}
-        
+
         {/* Suggested responses for the latest assistant message */}
         {isLatestAssistantMessage && message.suggestedResponses && onSuggestedResponse && (
           <SuggestedResponses
@@ -237,7 +259,7 @@ export const ClaudeMessage = memo(function ClaudeMessage({
             disabled={message.isStreaming}
           />
         )}
-        
+
         {/* Feedback link */}
         {!message.isStreaming && (
           <div className="mt-2">
@@ -245,7 +267,7 @@ export const ClaudeMessage = memo(function ClaudeMessage({
           </div>
         )}
       </ChatBubble>
-      
+
       {/* Feedback dialog */}
       <FeedbackDialog
         isOpen={showDialog}

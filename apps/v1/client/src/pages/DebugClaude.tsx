@@ -101,44 +101,38 @@ export function DebugClaude() {
       }
 
       const data = await response.json();
-      
+
       // Update the response with actual data
       debugResponse.response = data;
       debugResponse.duration = Date.now() - startTime;
-      
+
       // Update the responses array
-      setResponses(current => [
-        { ...debugResponse },
-        ...current.slice(1)
-      ]);
-      
+      setResponses((current) => [{ ...debugResponse }, ...current.slice(1)]);
+
       // Switch to response tab if successful
       if (!data.error) {
         setActiveTab('response');
       }
-      
+
       setQuery('');
     } catch (error) {
       console.error('Debug request failed:', error);
-      
+
       // Update with error
-      debugResponse.response = { 
-        error: error instanceof Error 
-          ? `${error.message}. Make sure the server is running on http://localhost:3000` 
-          : 'Unknown error' 
+      debugResponse.response = {
+        error:
+          error instanceof Error
+            ? `${error.message}. Make sure the server is running on http://localhost:3000`
+            : 'Unknown error',
       };
       debugResponse.duration = Date.now() - startTime;
-      
+
       // Update the responses array
-      setResponses(current => [
-        { ...debugResponse },
-        ...current.slice(1)
-      ]);
+      setResponses((current) => [{ ...debugResponse }, ...current.slice(1)]);
     } finally {
       setLoading(false);
     }
   };
-
 
   return (
     <div className="space-y-6">
@@ -147,18 +141,20 @@ export function DebugClaude() {
         <div className="flex justify-between items-center mb-4">
           <h2 className={`text-xl font-semibold ${styles.headingColor}`}>Claude Debug Interface</h2>
           <div className="flex items-center gap-2">
-            <span className={`text-sm ${mockMode ? 'text-yellow-600 dark:text-yellow-400' : 'text-green-600 dark:text-green-400'}`}>
+            <span
+              className={`text-sm ${mockMode ? 'text-yellow-600 dark:text-yellow-400' : 'text-green-600 dark:text-green-400'}`}
+            >
               {mockMode ? 'Mock Mode' : 'Live Mode'}
             </span>
-            <div className={`w-2 h-2 rounded-full ${mockMode ? 'bg-yellow-500' : 'bg-green-500'} animate-pulse`}></div>
+            <div
+              className={`w-2 h-2 rounded-full ${mockMode ? 'bg-yellow-500' : 'bg-green-500'} animate-pulse`}
+            ></div>
           </div>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className={`block text-sm font-medium ${styles.headingColor} mb-2`}>
-              Query
-            </label>
+            <label className={`block text-sm font-medium ${styles.headingColor} mb-2`}>Query</label>
             <textarea
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -170,9 +166,7 @@ export function DebugClaude() {
           </div>
 
           <div>
-            <label className={`block text-sm font-medium ${styles.headingColor} mb-2`}>
-              Model
-            </label>
+            <label className={`block text-sm font-medium ${styles.headingColor} mb-2`}>Model</label>
             <select
               value={model}
               onChange={(e) => setModel(e.target.value)}
@@ -190,15 +184,13 @@ export function DebugClaude() {
           </div>
 
           <div>
-            <label className={`block text-sm font-medium ${styles.headingColor} mb-2`}>
-              Tools
-            </label>
+            <label className={`block text-sm font-medium ${styles.headingColor} mb-2`}>Tools</label>
             <div className="flex gap-4">
               {Object.entries(enabledTools).map(([tool, enabled]) => (
                 <ToggleButton
                   key={tool}
                   checked={enabled}
-                  onChange={(checked) => setEnabledTools(prev => ({ ...prev, [tool]: checked }))}
+                  onChange={(checked) => setEnabledTools((prev) => ({ ...prev, [tool]: checked }))}
                   label={tool}
                   disabled={loading}
                 />
@@ -222,11 +214,11 @@ export function DebugClaude() {
       {responses.length > 0 && (
         <div className={`${styles.cardBg} ${styles.cardBorder} ${styles.borderRadius} p-6`}>
           <h3 className={`text-lg font-semibold ${styles.headingColor} mb-4`}>Responses</h3>
-          
+
           <div className="space-y-4">
             {responses.map((response, index) => (
-              <div 
-                key={index} 
+              <div
+                key={index}
                 className={`${styles.sidebarBg} ${styles.borderRadius} p-4 border ${styles.sidebarBorder} relative`}
               >
                 {/* Remove button */}
@@ -238,7 +230,12 @@ export function DebugClaude() {
                   className="absolute top-2 right-2"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </IconButton>
 
@@ -252,7 +249,9 @@ export function DebugClaude() {
                         Loading...
                       </span>
                     )}
-                    <span className={`text-xs px-2 py-1 ${styles.borderRadius} ${styles.primaryButton} ${styles.primaryButtonText}`}>
+                    <span
+                      className={`text-xs px-2 py-1 ${styles.borderRadius} ${styles.primaryButton} ${styles.primaryButtonText}`}
+                    >
                       {response.request.model}
                     </span>
                   </div>
@@ -321,7 +320,9 @@ export function DebugClaude() {
                 </div>
 
                 {/* Tab Content */}
-                <div className={`${styles.inputBg} ${styles.borderRadius} p-3 max-h-64 overflow-auto`}>
+                <div
+                  className={`${styles.inputBg} ${styles.borderRadius} p-3 max-h-64 overflow-auto`}
+                >
                   {response.response.error ? (
                     <pre className="text-red-500 dark:text-red-400 text-sm whitespace-pre-wrap font-mono">
                       Error: {response.response.error}
@@ -329,34 +330,46 @@ export function DebugClaude() {
                   ) : (
                     <>
                       {activeTab === 'request' && (
-                        <pre className={`text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap font-mono`}>
-                          {JSON.stringify({
-                            endpoint: 'http://localhost:3000/api/claude/debug',
-                            method: 'POST',
-                            headers: {
-                              'Content-Type': 'application/json'
+                        <pre
+                          className={`text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap font-mono`}
+                        >
+                          {JSON.stringify(
+                            {
+                              endpoint: 'http://localhost:3000/api/claude/debug',
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                              },
+                              body: {
+                                query: response.request.query,
+                                model: response.request.model,
+                                tools: response.request.tools,
+                                mockMode: response.request.options?.mockMode,
+                              },
                             },
-                            body: {
-                              query: response.request.query,
-                              model: response.request.model,
-                              tools: response.request.tools,
-                              mockMode: response.request.options?.mockMode
-                            }
-                          }, null, 2)}
+                            null,
+                            2
+                          )}
                         </pre>
                       )}
                       {activeTab === 'response' && (
-                        <pre className={`text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap font-mono`}>
+                        <pre
+                          className={`text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap font-mono`}
+                        >
                           {JSON.stringify(response.response, null, 2)}
                         </pre>
                       )}
                       {activeTab === 'json' && response.response.json && (
-                        <pre className={`text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap font-mono`}>
+                        <pre
+                          className={`text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap font-mono`}
+                        >
                           {JSON.stringify(response.response.json, null, 2)}
                         </pre>
                       )}
                       {activeTab === 'tools' && response.response.toolExecutions && (
-                        <pre className={`text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap font-mono`}>
+                        <pre
+                          className={`text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap font-mono`}
+                        >
                           {JSON.stringify(response.response.toolExecutions, null, 2)}
                         </pre>
                       )}

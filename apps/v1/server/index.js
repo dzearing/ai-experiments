@@ -48,7 +48,7 @@ console.log('FRONTEND_URL:', process.env.FRONTEND_URL);
 logger.logEvent('SERVER_START', 'Server initializing', {
   port: process.env.PORT || 3000,
   cwd: process.cwd(),
-  nodeVersion: process.version
+  nodeVersion: process.version,
 });
 
 const app = express();
@@ -83,7 +83,7 @@ function getCachedData(key) {
 function setCachedData(key, data) {
   workspaceCache.set(key, {
     data,
-    timestamp: Date.now()
+    timestamp: Date.now(),
   });
 }
 
@@ -111,21 +111,21 @@ app.get('/api/health', (req, res) => {
 // SSE endpoint for real-time updates
 app.get('/api/sse/subscribe', (req, res) => {
   const clientId = crypto.randomUUID();
-  
+
   logger.logEvent('SSE_SUBSCRIBE', 'New SSE client connected', { clientId });
   logger.logClient('REQUEST', {
     method: 'GET',
     url: '/api/sse/subscribe',
-    clientId
+    clientId,
   });
-  
+
   // Set SSE headers
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
-    'Connection': 'keep-alive',
+    Connection: 'keep-alive',
     'X-Accel-Buffering': 'no', // Disable Nginx buffering
-    'X-Client-Id': clientId
+    'X-Client-Id': clientId,
   });
 
   // Register client
@@ -153,22 +153,22 @@ app.get('/api/sse/subscribe', (req, res) => {
 // Subscription management endpoint
 app.post('/api/subscriptions', (req, res) => {
   const { clientId, resources } = req.body;
-  
+
   if (!clientId || !resources || !Array.isArray(resources)) {
     return res.status(400).json({ error: 'Invalid request' });
   }
-  
+
   const success = subscriptionManager.subscribe(clientId, resources);
   res.json({ success });
 });
 
 app.delete('/api/subscriptions', (req, res) => {
   const { clientId, resources } = req.body;
-  
+
   if (!clientId || !resources || !Array.isArray(resources)) {
     return res.status(400).json({ error: 'Invalid request' });
   }
-  
+
   const success = subscriptionManager.unsubscribe(clientId, resources);
   res.json({ success });
 });
@@ -177,7 +177,7 @@ app.delete('/api/subscriptions', (req, res) => {
 app.post('/api/claude/debug', async (req, res) => {
   try {
     const { query, model, tools, mockMode } = req.body;
-    
+
     if (!query) {
       return res.status(400).json({ error: 'Query is required' });
     }
@@ -185,58 +185,64 @@ app.post('/api/claude/debug', async (req, res) => {
     // If mock mode is enabled, return mock data
     if (mockMode) {
       // Simulate processing delay
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise((resolve) => setTimeout(resolve, 800));
 
       // Generate mock response
       const mockResponse = {
         text: `Mock response for query: "${query}"\n\nThis is a simulated response from the Claude API using model ${model || 'claude-3-5-sonnet-20241022'}.${tools && tools.length > 0 ? `\n\nTools enabled: ${tools.join(', ')}` : ''}\n\nIn a real scenario, this would contain Claude's actual response to your query.`,
-        json: query.toLowerCase().includes('json') ? {
-          mock: true,
-          query: query,
-          model: model || 'claude-3-5-sonnet-20241022',
-          timestamp: new Date().toISOString(),
-          data: {
-            example: "This is mock JSON data",
-            items: ["item1", "item2", "item3"]
-          }
-        } : null,
-        toolExecutions: tools && tools.length > 0 ? tools.map(tool => ({
-          tool: tool,
-          executed: true,
-          mockResult: `Mock result for ${tool} tool`
-        })) : null,
+        json: query.toLowerCase().includes('json')
+          ? {
+              mock: true,
+              query: query,
+              model: model || 'claude-3-5-sonnet-20241022',
+              timestamp: new Date().toISOString(),
+              data: {
+                example: 'This is mock JSON data',
+                items: ['item1', 'item2', 'item3'],
+              },
+            }
+          : null,
+        toolExecutions:
+          tools && tools.length > 0
+            ? tools.map((tool) => ({
+                tool: tool,
+                executed: true,
+                mockResult: `Mock result for ${tool} tool`,
+              }))
+            : null,
         tokenUsage: {
           inputTokens: Math.floor(Math.random() * 500) + 100,
           outputTokens: Math.floor(Math.random() * 1000) + 200,
-          totalTokens: 0
+          totalTokens: 0,
         },
-        error: null
+        error: null,
       };
 
       // Calculate total tokens
-      mockResponse.tokenUsage.totalTokens = mockResponse.tokenUsage.inputTokens + mockResponse.tokenUsage.outputTokens;
-      
+      mockResponse.tokenUsage.totalTokens =
+        mockResponse.tokenUsage.inputTokens + mockResponse.tokenUsage.outputTokens;
+
       return res.json(mockResponse);
     }
 
     // Otherwise, use the real Claude service
     console.log('Processing live request with Claude SDK...');
     const response = await claudeService.processDebugQuery(
-      query, 
+      query,
       model || 'claude-3-5-sonnet-20241022',
       tools || []
     );
-    
+
     res.json(response);
   } catch (error) {
     console.error('Debug endpoint error:', error);
     console.error('Stack trace:', error.stack);
-    
+
     // Return a more detailed error response
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to process debug query',
       text: `Error: ${error.message}\n\nThis may be due to:\n1. Claude CLI not being logged in (run: claude login)\n2. Missing Claude Code installation\n3. API connectivity issues`,
-      details: error.message 
+      details: error.message,
     });
   }
 });
@@ -245,9 +251,9 @@ app.post('/api/claude/debug', async (req, res) => {
 app.post('/api/claude/process-idea', async (req, res) => {
   try {
     const { idea, mockMode, model } = req.body;
-    
+
     console.log('Process idea request:', { idea, mockMode, model });
-    
+
     if (!idea) {
       return res.status(400).json({ error: 'Idea text is required' });
     }
@@ -256,7 +262,7 @@ app.post('/api/claude/process-idea', async (req, res) => {
     if (mockMode) {
       console.log('Using mock mode for process-idea');
       // Simulate processing delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
       // Generate a mock title from the idea
       const ideaWords = idea.split(' ').slice(0, 5).join(' ');
@@ -270,7 +276,7 @@ app.post('/api/claude/process-idea', async (req, res) => {
         .replace(/\bI('ve| have) created\b/gi, 'The user has created')
         .replace(/\bI'm\b/gi, 'The user is')
         .replace(/\bI am\b/gi, 'The user is')
-        .replace(/\bmy\b/gi, 'the user\'s')
+        .replace(/\bmy\b/gi, "the user's")
         .replace(/\bMe\b/g, 'The user');
 
       // Generate mock general markdown (without H1 title, using H3 for sections)
@@ -288,55 +294,57 @@ ${professionalDescription}
       const mockTasks = [
         {
           id: Math.random().toString(36).substring(2, 9),
-          title: "Design and architecture",
-          description: "Define the technical architecture and design patterns for the feature",
+          title: 'Design and architecture',
+          description: 'Define the technical architecture and design patterns for the feature',
           goals: [
-            "Create a scalable and maintainable architecture",
-            "Define clear interfaces and data flow",
-            "Document technical decisions"
+            'Create a scalable and maintainable architecture',
+            'Define clear interfaces and data flow',
+            'Document technical decisions',
           ],
-          workDescription: "Research best practices, create architectural diagrams, define component interfaces, and document the technical approach including data models and API contracts.",
+          workDescription:
+            'Research best practices, create architectural diagrams, define component interfaces, and document the technical approach including data models and API contracts.',
           validationCriteria: [
-            "Architecture diagram is complete and reviewed",
-            "All interfaces are clearly defined with TypeScript types",
-            "Technical documentation is comprehensive"
-          ]
+            'Architecture diagram is complete and reviewed',
+            'All interfaces are clearly defined with TypeScript types',
+            'Technical documentation is comprehensive',
+          ],
         },
         {
           id: Math.random().toString(36).substring(2, 9),
-          title: "Core implementation",
-          description: "Build the main functionality based on the design",
+          title: 'Core implementation',
+          description: 'Build the main functionality based on the design',
           goals: [
-            "Implement all required features",
-            "Write clean, maintainable code",
-            "Follow established patterns"
+            'Implement all required features',
+            'Write clean, maintainable code',
+            'Follow established patterns',
           ],
-          workDescription: "Develop the core features following the architectural design, ensuring code quality and proper testing coverage.",
+          workDescription:
+            'Develop the core features following the architectural design, ensuring code quality and proper testing coverage.',
           validationCriteria: [
-            "All features work as specified",
-            "Code passes linting and type checks",
-            "Unit tests provide adequate coverage"
-          ]
-        }
+            'All features work as specified',
+            'Code passes linting and type checks',
+            'Unit tests provide adequate coverage',
+          ],
+        },
       ];
 
-      return res.json({ 
+      return res.json({
         generalMarkdown: mockGeneralMarkdown,
-        tasks: mockTasks 
+        tasks: mockTasks,
       });
     }
 
     const response = await claudeService.processIdea(idea, model);
     res.json(response);
-
   } catch (error) {
     console.error('Error processing idea:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to process idea',
       details: error.message,
-      suggestion: error.message.includes('CLI') || error.message.includes('authentication')
-        ? 'Enable mock mode in settings to test without Claude authentication' 
-        : null
+      suggestion:
+        error.message.includes('CLI') || error.message.includes('authentication')
+          ? 'Enable mock mode in settings to test without Claude authentication'
+          : null,
     });
   }
 });
@@ -345,7 +353,7 @@ ${professionalDescription}
 app.post('/api/claude/refine-tasks', async (req, res) => {
   try {
     const { refinement, currentTasks, model, mockMode } = req.body;
-    
+
     if (!refinement || !currentTasks) {
       return res.status(400).json({ error: 'Refinement text and current tasks are required' });
     }
@@ -353,15 +361,19 @@ app.post('/api/claude/refine-tasks', async (req, res) => {
     // If mock mode is enabled, return mock refinement
     if (mockMode) {
       // Simulate processing delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Mock refined tasks - modify the existing ones slightly
       const refinedTasks = currentTasks.tasks.map((task, index) => ({
         ...task,
-        title: task.title + " (Refined)",
-        description: task.description + " - Updated based on refinement: " + refinement.substring(0, 50) + "...",
-        goals: [...task.goals, "Address refinement feedback"],
-        validationCriteria: [...task.validationCriteria, "Refinement requirements are met"]
+        title: task.title + ' (Refined)',
+        description:
+          task.description +
+          ' - Updated based on refinement: ' +
+          refinement.substring(0, 50) +
+          '...',
+        goals: [...task.goals, 'Address refinement feedback'],
+        validationCriteria: [...task.validationCriteria, 'Refinement requirements are met'],
       }));
 
       return res.json({ tasks: refinedTasks });
@@ -369,18 +381,17 @@ app.post('/api/claude/refine-tasks', async (req, res) => {
 
     const response = await claudeService.refineTasks(refinement, currentTasks, model);
     res.json(response);
-
   } catch (error) {
     console.error('Error refining tasks:', error);
     console.error('Stack trace:', error.stack);
-    
+
     // Return a user-friendly error message
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to refine tasks',
       details: error.message,
-      suggestion: error.message.includes('authentication') 
-        ? 'Enable mock mode in settings to test without Claude authentication' 
-        : null
+      suggestion: error.message.includes('authentication')
+        ? 'Enable mock mode in settings to test without Claude authentication'
+        : null,
     });
   }
 });
@@ -390,7 +401,7 @@ app.post('/api/auth/github/login', (req, res) => {
   try {
     console.log('=== GitHub OAuth Login Request ===');
     console.log('GITHUB_CLIENT_ID from env:', process.env.GITHUB_CLIENT_ID);
-    
+
     // Generate a random state for OAuth security
     const state = crypto.randomBytes(32).toString('hex');
     oauthStates.set(state, {
@@ -408,14 +419,15 @@ app.post('/api/auth/github/login', (req, res) => {
     // GitHub OAuth configuration
     const clientId = process.env.GITHUB_CLIENT_ID || 'your-github-client-id';
     console.log('Using client ID:', clientId);
-    
+
     // Use the frontend URL for the redirect
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     const redirectUri = `${frontendUrl}/oauth-callback.html`;
     const scope = 'read:user user:email repo read:org';
 
     // Construct GitHub OAuth URL
-    const authUrl = `https://github.com/login/oauth/authorize?` +
+    const authUrl =
+      `https://github.com/login/oauth/authorize?` +
       `client_id=${clientId}` +
       `&redirect_uri=${encodeURIComponent(redirectUri)}` +
       `&scope=${encodeURIComponent(scope)}` +
@@ -447,14 +459,14 @@ app.post('/api/auth/github/token', async (req, res) => {
     const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
       method: 'POST',
       headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         client_id: clientId,
         client_secret: clientSecret,
-        code: code
-      })
+        code: code,
+      }),
     });
 
     if (!tokenResponse.ok) {
@@ -462,7 +474,7 @@ app.post('/api/auth/github/token', async (req, res) => {
     }
 
     const tokenData = await tokenResponse.json();
-    
+
     if (tokenData.error) {
       throw new Error(tokenData.error_description || tokenData.error);
     }
@@ -472,9 +484,9 @@ app.post('/api/auth/github/token', async (req, res) => {
     // Get user information from GitHub
     const userResponse = await fetch('https://api.github.com/user', {
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Accept': 'application/vnd.github.v3+json'
-      }
+        Authorization: `Bearer ${accessToken}`,
+        Accept: 'application/vnd.github.v3+json',
+      },
     });
 
     if (!userResponse.ok) {
@@ -486,35 +498,35 @@ app.post('/api/auth/github/token', async (req, res) => {
     // Get user emails to determine account type
     const emailsResponse = await fetch('https://api.github.com/user/emails', {
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Accept': 'application/vnd.github.v3+json'
-      }
+        Authorization: `Bearer ${accessToken}`,
+        Accept: 'application/vnd.github.v3+json',
+      },
     });
 
     // Determine account type
     let accountType = 'personal';
-    
+
     // Check if user belongs to any organizations with enterprise features
     const orgsResponse = await fetch('https://api.github.com/user/orgs', {
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Accept': 'application/vnd.github.v3+json'
-      }
+        Authorization: `Bearer ${accessToken}`,
+        Accept: 'application/vnd.github.v3+json',
+      },
     });
-    
+
     if (orgsResponse.ok) {
       const orgs = await orgsResponse.json();
-      
+
       // Check each organization for enterprise features
       for (const org of orgs) {
         try {
           const orgResponse = await fetch(`https://api.github.com/orgs/${org.login}`, {
             headers: {
-              'Authorization': `Bearer ${accessToken}`,
-              'Accept': 'application/vnd.github.v3+json'
-            }
+              Authorization: `Bearer ${accessToken}`,
+              Accept: 'application/vnd.github.v3+json',
+            },
           });
-          
+
           if (orgResponse.ok) {
             const orgData = await orgResponse.json();
             // GitHub Enterprise Cloud organizations have a plan name that includes 'enterprise'
@@ -528,7 +540,7 @@ app.post('/api/auth/github/token', async (req, res) => {
         }
       }
     }
-    
+
     // Alternative: Check if the user's company field suggests enterprise
     if (accountType === 'personal' && userData.company) {
       // This is a heuristic - you might want to check against known enterprise companies
@@ -541,7 +553,7 @@ app.post('/api/auth/github/token', async (req, res) => {
       accessToken: accessToken,
       userId: userData.id,
       username: userData.login,
-      created: Date.now()
+      created: Date.now(),
     });
 
     // Return account information
@@ -551,7 +563,7 @@ app.post('/api/auth/github/token', async (req, res) => {
       email: userData.email || '',
       avatarUrl: userData.avatar_url,
       accountType: accountType,
-      connectedAt: new Date().toISOString()
+      connectedAt: new Date().toISOString(),
     };
 
     res.json(account);
@@ -564,12 +576,12 @@ app.post('/api/auth/github/token', async (req, res) => {
 app.post('/api/auth/github/logout/:accountId', (req, res) => {
   try {
     const { accountId } = req.params;
-    
+
     // Remove token from storage
     userTokens.delete(accountId);
-    
+
     // In production, you might also want to revoke the token with GitHub
-    
+
     res.json({ success: true });
   } catch (error) {
     console.error('Error logging out:', error);
@@ -592,18 +604,18 @@ app.get('/api/auth/github/accounts', (req, res) => {
 app.post('/api/auth/github/verify', (req, res) => {
   try {
     const { accountId } = req.body;
-    
+
     if (!accountId) {
       return res.status(400).json({ error: 'Account ID is required' });
     }
-    
+
     // Check if we have a token for this account
     const tokenData = userTokens.get(accountId);
-    
+
     if (!tokenData) {
       return res.status(401).json({ error: 'Account not found or session expired' });
     }
-    
+
     // In a real app, you might want to verify the token is still valid with GitHub
     res.json({ valid: true });
   } catch (error) {
@@ -627,22 +639,22 @@ app.post('/api/github/proxy', async (req, res) => {
     const githubResponse = await fetch(`https://api.github.com${endpoint}`, {
       method: method,
       headers: {
-        'Authorization': `Bearer ${tokenData.accessToken}`,
-        'Accept': 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json'
+        Authorization: `Bearer ${tokenData.accessToken}`,
+        Accept: 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
       },
-      body: body ? JSON.stringify(body) : undefined
+      body: body ? JSON.stringify(body) : undefined,
     });
 
     // Check rate limit headers
     const rateLimitRemaining = githubResponse.headers.get('x-ratelimit-remaining');
     const rateLimitReset = githubResponse.headers.get('x-ratelimit-reset');
-    
+
     if (rateLimitRemaining === '0') {
       const resetTime = new Date(parseInt(rateLimitReset) * 1000);
-      return res.status(429).json({ 
+      return res.status(429).json({
         error: 'GitHub API rate limit exceeded',
-        resetTime: resetTime.toISOString()
+        resetTime: resetTime.toISOString(),
       });
     }
 
@@ -650,12 +662,12 @@ app.post('/api/github/proxy', async (req, res) => {
       const errorData = await githubResponse.json();
       return res.status(githubResponse.status).json({
         error: errorData.message || 'GitHub API request failed',
-        details: errorData
+        details: errorData,
       });
     }
 
     const data = await githubResponse.json();
-    
+
     // Include rate limit info in response headers
     if (rateLimitRemaining) {
       res.setHeader('X-RateLimit-Remaining', rateLimitRemaining);
@@ -667,9 +679,9 @@ app.post('/api/github/proxy', async (req, res) => {
     res.json(data);
   } catch (error) {
     console.error('GitHub proxy error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to proxy GitHub request',
-      message: error.message 
+      message: error.message,
     });
   }
 });
@@ -690,14 +702,14 @@ function parseWorkItemMarkdown(content) {
     goals: [],
     tasks: [],
     acceptanceCriteria: [],
-    metadata: null
+    metadata: null,
   };
 
   if (!content) {
     console.log('parseWorkItemMarkdown: No content provided');
     return workItem;
   }
-  
+
   console.log('parseWorkItemMarkdown: Parsing content length:', content.length);
 
   // Extract title (first # heading)
@@ -723,10 +735,10 @@ function parseWorkItemMarkdown(content) {
   if (goalsMatch) {
     const goalLines = goalsMatch[1].trim().split('\n');
     workItem.goals = goalLines
-      .filter(line => line.match(/^-\s*\[[\sx]\]/))
-      .map(line => ({
+      .filter((line) => line.match(/^-\s*\[[\sx]\]/))
+      .map((line) => ({
         text: line.replace(/^-\s*\[[\sx]\]\s*/, ''),
-        completed: line.includes('[x]')
+        completed: line.includes('[x]'),
       }));
   }
 
@@ -736,65 +748,71 @@ function parseWorkItemMarkdown(content) {
     const tasksContent = tasksMatch[1].trim();
     // Split by "### " to find task sections
     const taskSections = tasksContent.split(/(?=###\s*)/);
-    const taskMatches = taskSections.filter(t => t.trim() && t.includes('###'));
-    
+    const taskMatches = taskSections.filter((t) => t.trim() && t.includes('###'));
+
     console.log('Tasks content length:', tasksContent.length);
     console.log('Task sections found:', taskMatches.length);
-    
-    workItem.tasks = taskMatches.map(taskSection => {
-      const task = {
-        id: '',
-        taskNumber: '',
-        title: '',
-        description: '',
-        goals: [],
-        workDescription: '',
-        validationCriteria: []
-      };
-      
-      // Extract task number and title from "### 1. Task Title" format
-      const titleMatch = taskSection.match(/###\s*(\d+[a-z]?)\.\s*(.+?)(?:\n|$)/);
-      if (titleMatch) {
-        task.taskNumber = titleMatch[1];
-        task.title = titleMatch[2].trim();
-        task.id = `task-${titleMatch[1]}`; // Generate ID from task number
-      }
-      
-      // Extract description (not labeled with **)
-      const contentAfterTitle = taskSection.substring(taskSection.indexOf('\n') + 1);
-      const descMatch = contentAfterTitle.match(/^([\s\S]*?)(?=\n\*\*|$)/);
-      if (descMatch && descMatch[1].trim() && !descMatch[1].trim().startsWith('**')) {
-        task.description = descMatch[1].trim();
-      }
-      
-      // Extract goals
-      const goalsMatch = taskSection.match(/\*\*Goals:\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/);
-      if (goalsMatch) {
-        const goalLines = goalsMatch[1].trim().split('\n');
-        task.goals = goalLines
-          .filter(line => line.match(/^-\s*/))
-          .map(line => line.replace(/^-\s*/, '').trim());
-      }
-      
-      // Extract work description
-      const workMatch = taskSection.match(/\*\*Work\s+Description:\*\*\s*\n?([\s\S]*?)(?=\n\*\*|$)/);
-      if (workMatch) {
-        task.workDescription = workMatch[1].trim();
-      }
-      
-      // Extract validation criteria
-      const criteriaMatch = taskSection.match(/\*\*Validation\s+Criteria:\*\*\s*\n?([\s\S]*?)(?=\n\*\*|###|$)/);
-      if (criteriaMatch) {
-        const criteriaLines = criteriaMatch[1].trim().split('\n');
-        task.validationCriteria = criteriaLines
-          .filter(line => line.match(/^-\s*/))
-          .map(line => line.replace(/^-\s*/, '').trim());
-      }
-      
-      console.log(`Task ${task.taskNumber}: ${task.title}`);
-      return task;
-    }).filter(task => task.title); // Only include tasks with titles
-    
+
+    workItem.tasks = taskMatches
+      .map((taskSection) => {
+        const task = {
+          id: '',
+          taskNumber: '',
+          title: '',
+          description: '',
+          goals: [],
+          workDescription: '',
+          validationCriteria: [],
+        };
+
+        // Extract task number and title from "### 1. Task Title" format
+        const titleMatch = taskSection.match(/###\s*(\d+[a-z]?)\.\s*(.+?)(?:\n|$)/);
+        if (titleMatch) {
+          task.taskNumber = titleMatch[1];
+          task.title = titleMatch[2].trim();
+          task.id = `task-${titleMatch[1]}`; // Generate ID from task number
+        }
+
+        // Extract description (not labeled with **)
+        const contentAfterTitle = taskSection.substring(taskSection.indexOf('\n') + 1);
+        const descMatch = contentAfterTitle.match(/^([\s\S]*?)(?=\n\*\*|$)/);
+        if (descMatch && descMatch[1].trim() && !descMatch[1].trim().startsWith('**')) {
+          task.description = descMatch[1].trim();
+        }
+
+        // Extract goals
+        const goalsMatch = taskSection.match(/\*\*Goals:\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/);
+        if (goalsMatch) {
+          const goalLines = goalsMatch[1].trim().split('\n');
+          task.goals = goalLines
+            .filter((line) => line.match(/^-\s*/))
+            .map((line) => line.replace(/^-\s*/, '').trim());
+        }
+
+        // Extract work description
+        const workMatch = taskSection.match(
+          /\*\*Work\s+Description:\*\*\s*\n?([\s\S]*?)(?=\n\*\*|$)/
+        );
+        if (workMatch) {
+          task.workDescription = workMatch[1].trim();
+        }
+
+        // Extract validation criteria
+        const criteriaMatch = taskSection.match(
+          /\*\*Validation\s+Criteria:\*\*\s*\n?([\s\S]*?)(?=\n\*\*|###|$)/
+        );
+        if (criteriaMatch) {
+          const criteriaLines = criteriaMatch[1].trim().split('\n');
+          task.validationCriteria = criteriaLines
+            .filter((line) => line.match(/^-\s*/))
+            .map((line) => line.replace(/^-\s*/, '').trim());
+        }
+
+        console.log(`Task ${task.taskNumber}: ${task.title}`);
+        return task;
+      })
+      .filter((task) => task.title); // Only include tasks with titles
+
     console.log('Total tasks parsed:', workItem.tasks.length);
   }
 
@@ -803,8 +821,8 @@ function parseWorkItemMarkdown(content) {
   if (criteriaMatch) {
     const criteriaLines = criteriaMatch[1].trim().split('\n');
     workItem.acceptanceCriteria = criteriaLines
-      .filter(line => line.match(/^-\s*/))
-      .map(line => line.replace(/^-\s*/, '').trim());
+      .filter((line) => line.match(/^-\s*/))
+      .map((line) => line.replace(/^-\s*/, '').trim());
   }
 
   // Extract metadata (try both JSON and plain text formats)
@@ -820,20 +838,20 @@ function parseWorkItemMarkdown(content) {
     const plainMetadataMatch = content.match(/##\s*Metadata\s*\n+([\s\S]*?)(?=\n##|$)/i);
     if (plainMetadataMatch) {
       const metadataContent = plainMetadataMatch[1].trim();
-      
+
       // Extract work item ID
       const idMatch = metadataContent.match(/-\s*Work\s*Item\s*ID:\s*(.+)/i);
       if (idMatch) {
         workItem.metadata = workItem.metadata || {};
         workItem.metadata.workItemId = idMatch[1].trim();
       }
-      
+
       // Extract priority
       const priorityMatch = metadataContent.match(/-\s*Priority:\s*(.+)/i);
       if (priorityMatch) {
         workItem.priority = priorityMatch[1].trim();
       }
-      
+
       // Extract status
       const statusMatch2 = metadataContent.match(/-\s*Status:\s*(.+)/i);
       if (statusMatch2) {
@@ -850,13 +868,15 @@ function parseProjectReadme(readmeContent) {
   const details = {
     purpose: '',
     repositories: [],
-    primaryRepoUrl: ''
+    primaryRepoUrl: '',
   };
 
   if (!readmeContent) return details;
 
   // Extract purpose/description (usually after # Project Name or ## Description)
-  const purposeMatch = readmeContent.match(/##?\s*(Purpose|Description|Overview|About)\s*\n+([\s\S]*?)(?=\n#|$)/i);
+  const purposeMatch = readmeContent.match(
+    /##?\s*(Purpose|Description|Overview|About)\s*\n+([\s\S]*?)(?=\n#|$)/i
+  );
   if (purposeMatch) {
     // Extract just the first paragraph
     const purposeText = purposeMatch[2].trim();
@@ -865,13 +885,15 @@ function parseProjectReadme(readmeContent) {
   }
 
   // Extract repository information
-  const repoSection = readmeContent.match(/##?\s*(Repositories?|Repository\s+Information|Repository|Repos?)\s*\n+([\s\S]*?)(?=\n#|$)/i);
+  const repoSection = readmeContent.match(
+    /##?\s*(Repositories?|Repository\s+Information|Repository|Repos?)\s*\n+([\s\S]*?)(?=\n#|$)/i
+  );
   if (repoSection) {
     const repoContent = repoSection[2];
-    
+
     // Look for repo URLs (GitHub or Azure DevOps)
     const repoUrls = repoContent.match(/https?:\/\/(github\.com|dev\.azure\.com)[^\s\)]+/g) || [];
-    
+
     // Also look for "Local development" or similar indicators
     if (repoUrls.length === 0 && repoContent.match(/local\s+development|not\s+tracked/i)) {
       // Create a placeholder for local development
@@ -880,20 +902,23 @@ function parseProjectReadme(readmeContent) {
         type: 'github', // Default type
         visibility: 'private',
         isPrimary: true,
-        description: 'Local development repository'
+        description: 'Local development repository',
       });
       details.primaryRepoUrl = 'local://development';
     } else {
-      repoUrls.forEach(url => {
+      repoUrls.forEach((url) => {
         const repo = {
           url: url.replace(/\.$/, ''), // Remove trailing period
           type: url.includes('github.com') ? 'github' : 'ado',
           visibility: 'private', // Default, can be overridden
-          isPrimary: false
+          isPrimary: false,
         };
 
         // Check if marked as primary
-        const urlContext = repoContent.substring(Math.max(0, repoContent.indexOf(url) - 50), repoContent.indexOf(url) + url.length + 50);
+        const urlContext = repoContent.substring(
+          Math.max(0, repoContent.indexOf(url) - 50),
+          repoContent.indexOf(url) + url.length + 50
+        );
         if (urlContext.match(/primary|main/i)) {
           repo.isPrimary = true;
           details.primaryRepoUrl = url;
@@ -925,55 +950,60 @@ async function extractRepoDetails(repoPath) {
     visibility: 'private',
     importantFolders: [],
     url: null,
-    gitRemote: null
+    gitRemote: null,
   };
 
   try {
     // Check for .git folder to determine repo type
     const gitPath = path.join(repoPath, '.git');
-    const gitExists = await fsAsync.access(gitPath).then(() => true).catch(() => false);
-    
+    const gitExists = await fsAsync
+      .access(gitPath)
+      .then(() => true)
+      .catch(() => false);
+
     if (gitExists) {
       // Try to read git config for remote URL
       try {
         const configPath = path.join(gitPath, 'config');
         const gitConfig = await fsAsync.readFile(configPath, 'utf-8');
-        
+
         // Extract remote origin URL using regex
         const remoteMatch = gitConfig.match(/\[remote "origin"\]\s*\n\s*url = (.+)/);
         if (remoteMatch) {
           const remoteUrl = remoteMatch[1].trim();
           details.gitRemote = remoteUrl;
           details.url = remoteUrl;
-          
+
           // Determine repo type from URL
           if (remoteUrl.includes('github.com')) {
             details.type = 'github';
-            
+
             // Extract owner/repo from GitHub URL
             const githubMatch = remoteUrl.match(/github\.com[:/]([^/]+)\/([^/.]+)(\.git)?$/);
             if (githubMatch) {
               const owner = githubMatch[1];
               const repo = githubMatch[2];
-              
+
               // Use gh CLI to get detailed GitHub info
               try {
                 const ghResult = execSync(
                   `gh repo view ${owner}/${repo} --json name,description,visibility,isPrivate,url,sshUrl,defaultBranchRef,createdAt,pushedAt,isArchived,isFork,parent`,
                   { encoding: 'utf-8', cwd: repoPath }
                 );
-                
+
                 const ghData = JSON.parse(ghResult);
                 details.visibility = ghData.isPrivate ? 'private' : 'public';
                 details.description = ghData.description || '';
                 details.defaultBranch = ghData.defaultBranchRef?.name || 'main';
                 details.isArchived = ghData.isArchived || false;
                 details.isFork = ghData.isFork || false;
-                details.parent = ghData.parent ? {
-                  owner: ghData.parent.owner.login,
-                  name: ghData.parent.name,
-                  url: ghData.parent.url
-                } : null;
+                details.parent = ghData.parent
+                  ? {
+                      owner: ghData.parent.owner.login,
+                      name: ghData.parent.name,
+                      url: ghData.parent.url,
+                    }
+                  : null;
                 details.createdAt = ghData.createdAt;
                 details.pushedAt = ghData.pushedAt;
                 details.githubData = ghData;
@@ -1010,23 +1040,37 @@ async function extractRepoDetails(repoPath) {
     // Identify important folders
     const entries = await fsAsync.readdir(repoPath, { withFileTypes: true });
     const importantDirs = ['src', 'packages', 'apps', 'lib', 'docs', 'scripts', 'test', 'tests'];
-    
+
     for (const entry of entries) {
       if (entry.isDirectory() && importantDirs.includes(entry.name)) {
         let description = '';
-        switch(entry.name) {
-          case 'src': description = 'Source code'; break;
-          case 'packages': description = 'Monorepo packages'; break;
-          case 'apps': description = 'Applications'; break;
-          case 'lib': description = 'Library output'; break;
-          case 'docs': description = 'Documentation'; break;
-          case 'scripts': description = 'Build and utility scripts'; break;
+        switch (entry.name) {
+          case 'src':
+            description = 'Source code';
+            break;
+          case 'packages':
+            description = 'Monorepo packages';
+            break;
+          case 'apps':
+            description = 'Applications';
+            break;
+          case 'lib':
+            description = 'Library output';
+            break;
+          case 'docs':
+            description = 'Documentation';
+            break;
+          case 'scripts':
+            description = 'Build and utility scripts';
+            break;
           case 'test':
-          case 'tests': description = 'Test files'; break;
+          case 'tests':
+            description = 'Test files';
+            break;
         }
         details.importantFolders.push({
           path: entry.name,
-          description
+          description,
         });
       }
     }
@@ -1041,25 +1085,25 @@ async function extractRepoDetails(repoPath) {
 app.post('/api/browse/list', async (req, res) => {
   try {
     const { path: dirPath } = req.body;
-    
+
     // Use home directory if no path provided
     const targetPath = dirPath || os.homedir();
-    
+
     // Security: Resolve the path to prevent directory traversal attacks
     const resolvedPath = path.resolve(targetPath);
-    
+
     try {
       const items = await fsAsync.readdir(resolvedPath);
       const results = [];
-      
+
       console.log(`Browsing directory: ${resolvedPath}`);
       console.log(`Found ${items.length} items`);
-      
+
       for (const item of items) {
         try {
           const itemPath = path.join(resolvedPath, item);
           const stats = await fsAsync.stat(itemPath);
-          
+
           // Include all directories, but mark hidden ones
           if (stats.isDirectory()) {
             const isHidden = item.startsWith('.');
@@ -1071,48 +1115,48 @@ app.post('/api/browse/list', async (req, res) => {
               name: item,
               path: itemPath,
               type: 'directory',
-              hidden: isHidden
+              hidden: isHidden,
             });
           }
         } catch (err) {
           console.log(`Skipping inaccessible item: ${item}`, err.message);
         }
       }
-      
+
       // Sort directories alphabetically, with non-hidden first
       results.sort((a, b) => {
         if (a.hidden !== b.hidden) return a.hidden ? 1 : -1;
         return a.name.localeCompare(b.name);
       });
-      
+
       console.log(`Returning ${results.length} directories`);
-      
+
       res.json({
         currentPath: resolvedPath,
         parent: path.dirname(resolvedPath),
         items: results,
-        separator: path.sep
+        separator: path.sep,
       });
     } catch (error) {
-      res.status(403).json({ 
+      res.status(403).json({
         error: 'Cannot access directory',
-        details: error.message 
+        details: error.message,
       });
     }
   } catch (error) {
     console.error('Error browsing directory:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to browse directory',
-      details: error.message 
+      details: error.message,
     });
   }
 });
 
 // Get user home directory
 app.get('/api/browse/home', (req, res) => {
-  res.json({ 
+  res.json({
     path: os.homedir(),
-    separator: path.sep
+    separator: path.sep,
   });
 });
 
@@ -1120,7 +1164,7 @@ app.get('/api/browse/home', (req, res) => {
 app.post('/api/browse/create-folder', async (req, res) => {
   try {
     const { parentPath, folderName } = req.body;
-    
+
     if (!parentPath || !folderName) {
       return res.status(400).json({ error: 'Parent path and folder name are required' });
     }
@@ -1131,13 +1175,13 @@ app.post('/api/browse/create-folder', async (req, res) => {
     }
 
     const newFolderPath = path.join(parentPath, folderName);
-    
+
     try {
       await fsAsync.mkdir(newFolderPath, { recursive: false });
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         path: newFolderPath,
-        name: folderName
+        name: folderName,
       });
     } catch (error) {
       if (error.code === 'EEXIST') {
@@ -1148,9 +1192,9 @@ app.post('/api/browse/create-folder', async (req, res) => {
     }
   } catch (error) {
     console.error('Error creating folder:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to create folder',
-      details: error.message 
+      details: error.message,
     });
   }
 });
@@ -1159,7 +1203,7 @@ app.post('/api/browse/create-folder', async (req, res) => {
 app.post('/api/workspace/exists', async (req, res) => {
   try {
     const { workspacePath } = req.body;
-    
+
     if (!workspacePath) {
       return res.status(400).json({ error: 'Workspace path is required' });
     }
@@ -1179,7 +1223,7 @@ app.post('/api/workspace/exists', async (req, res) => {
         if (projectStats.isDirectory()) {
           const projectDirs = await fsAsync.readdir(projectsPath);
           // Check if there are any projects besides template and hidden folders
-          hasContent = projectDirs.some(dir => dir !== 'template' && !dir.startsWith('.'));
+          hasContent = projectDirs.some((dir) => dir !== 'template' && !dir.startsWith('.'));
         }
       } catch (err) {
         // Projects folder doesn't exist
@@ -1191,9 +1235,9 @@ app.post('/api/workspace/exists', async (req, res) => {
     }
   } catch (error) {
     console.error('Error checking workspace:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to check workspace',
-      details: error.message 
+      details: error.message,
     });
   }
 });
@@ -1202,7 +1246,7 @@ app.post('/api/workspace/exists', async (req, res) => {
 app.post('/api/workspace/read-light', async (req, res) => {
   try {
     const { workspacePath } = req.body;
-    
+
     if (!workspacePath) {
       return res.status(400).json({ error: 'Workspace path is required' });
     }
@@ -1213,7 +1257,7 @@ app.post('/api/workspace/read-light', async (req, res) => {
     if (cachedData) {
       res.set({
         'Cache-Control': 'private, max-age=60', // 1 minute for light data
-        'X-Cache': 'HIT'
+        'X-Cache': 'HIT',
       });
       return res.json(cachedData);
     }
@@ -1227,14 +1271,14 @@ app.post('/api/workspace/read-light', async (req, res) => {
 
     try {
       const projectDirs = await fsAsync.readdir(projectsPath);
-      
+
       // Read all project basic info in parallel
       const projectPromises = projectDirs
-        .filter(name => !name.startsWith('.'))
+        .filter((name) => !name.startsWith('.'))
         .map(async (projectName) => {
           const projectPath = path.join(projectsPath, projectName);
           const stats = await fsAsync.stat(projectPath);
-          
+
           if (!stats.isDirectory()) return null;
 
           // Check if tracked
@@ -1252,12 +1296,12 @@ app.post('/api/workspace/read-light', async (req, res) => {
             name: projectName,
             path: projectPath,
             // We'll load details later
-            isLoading: true
+            isLoading: true,
           };
         });
 
       const projectResults = await Promise.all(projectPromises);
-      const validProjects = projectResults.filter(p => p !== null);
+      const validProjects = projectResults.filter((p) => p !== null);
 
       console.log(`[PERF] Workspace light read completed in ${Date.now() - startTime}ms`);
 
@@ -1266,20 +1310,18 @@ app.post('/api/workspace/read-light', async (req, res) => {
 
       res.set({
         'Cache-Control': 'private, max-age=60',
-        'X-Cache': 'MISS'
+        'X-Cache': 'MISS',
       });
       res.json(responseData);
-
     } catch (error) {
       console.error('Error reading projects directory:', error);
       res.json({ projects: [] });
     }
-
   } catch (error) {
     console.error('Error reading workspace (light):', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to read workspace',
-      details: error.message 
+      details: error.message,
     });
   }
 });
@@ -1288,7 +1330,7 @@ app.post('/api/workspace/read-light', async (req, res) => {
 app.post('/api/workspace/project-details', async (req, res) => {
   try {
     const { projectPath } = req.body;
-    
+
     if (!projectPath) {
       return res.status(400).json({ error: 'Project path is required' });
     }
@@ -1299,7 +1341,7 @@ app.post('/api/workspace/project-details', async (req, res) => {
     if (cachedData) {
       res.set({
         'Cache-Control': 'private, max-age=300', // 5 minutes
-        'X-Cache': 'HIT'
+        'X-Cache': 'HIT',
       });
       return res.json(cachedData);
     }
@@ -1315,8 +1357,8 @@ app.post('/api/workspace/project-details', async (req, res) => {
         ideas: [],
         planned: [],
         active: [],
-        completed: []
-      }
+        completed: [],
+      },
     };
 
     // Read README.md and parse project details
@@ -1339,7 +1381,7 @@ app.post('/api/workspace/project-details', async (req, res) => {
     try {
       const reposPath = path.join(projectPath, 'repos');
       const repoDirs = await fsAsync.readdir(reposPath);
-      
+
       for (const repoDir of repoDirs) {
         const match = repoDir.match(/^(.+)-(\d+)$/);
         if (match) {
@@ -1348,7 +1390,7 @@ app.post('/api/workspace/project-details', async (req, res) => {
             name: match[1],
             number: parseInt(match[2]),
             path: repoPath,
-            isAvailable: true
+            isAvailable: true,
           });
         }
       }
@@ -1358,49 +1400,52 @@ app.post('/api/workspace/project-details', async (req, res) => {
 
     // Read plans - but don't parse markdown content yet
     const planTypes = ['ideas', 'planned', 'active', 'completed'];
-    
-    await Promise.all(planTypes.map(async (planType) => {
-      try {
-        const plansPath = path.join(projectPath, 'plans', planType);
-        const planFiles = await fsAsync.readdir(plansPath);
-        
-        const plansPromises = planFiles
-          .filter(file => file.endsWith('.md') && file !== 'TEMPLATE.md')
-          .map(async (file) => {
-            const planPath = path.join(plansPath, file);
-            const content = await fsAsync.readFile(planPath, 'utf-8');
-            const parsedWorkItem = parseWorkItemMarkdown(content);
-            
-            return {
-              name: file.replace('.md', ''),
-              path: planPath,
-              status: planType,
-              content: content,
-              workItem: parsedWorkItem
-            };
-          });
-        
-        project.plans[planType] = await Promise.all(plansPromises);
-      } catch (err) {
-        // Plan directory might not exist
-      }
-    }));
 
-    console.log(`[PERF] Project details read completed in ${Date.now() - startTime}ms for ${projectName}`);
+    await Promise.all(
+      planTypes.map(async (planType) => {
+        try {
+          const plansPath = path.join(projectPath, 'plans', planType);
+          const planFiles = await fsAsync.readdir(plansPath);
+
+          const plansPromises = planFiles
+            .filter((file) => file.endsWith('.md') && file !== 'TEMPLATE.md')
+            .map(async (file) => {
+              const planPath = path.join(plansPath, file);
+              const content = await fsAsync.readFile(planPath, 'utf-8');
+              const parsedWorkItem = parseWorkItemMarkdown(content);
+
+              return {
+                name: file.replace('.md', ''),
+                path: planPath,
+                status: planType,
+                content: content,
+                workItem: parsedWorkItem,
+              };
+            });
+
+          project.plans[planType] = await Promise.all(plansPromises);
+        } catch (err) {
+          // Plan directory might not exist
+        }
+      })
+    );
+
+    console.log(
+      `[PERF] Project details read completed in ${Date.now() - startTime}ms for ${projectName}`
+    );
 
     setCachedData(cacheKey, project);
 
     res.set({
       'Cache-Control': 'private, max-age=300',
-      'X-Cache': 'MISS'
+      'X-Cache': 'MISS',
     });
     res.json(project);
-
   } catch (error) {
     console.error('Error reading project details:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to read project details',
-      details: error.message 
+      details: error.message,
     });
   }
 });
@@ -1409,26 +1454,33 @@ app.post('/api/workspace/project-details', async (req, res) => {
 app.post('/api/workspace/create-workitem', async (req, res) => {
   try {
     const { workspacePath, projectPath, workItem, generalMarkdown, tasks } = req.body;
-    
+
     if (!workspacePath || !projectPath || !workItem) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
     // Generate filename from title
-    const fileName = workItem.title.toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '') + '.md';
-    
+    const fileName =
+      workItem.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') + '.md';
+
     // Determine target folder based on status
-    const statusFolder = workItem.status === 'planned' ? 'planned' : 
-                        workItem.status === 'active' ? 'active' : 
-                        workItem.status === 'completed' ? 'completed' : 'ideas';
-    
+    const statusFolder =
+      workItem.status === 'planned'
+        ? 'planned'
+        : workItem.status === 'active'
+          ? 'active'
+          : workItem.status === 'completed'
+            ? 'completed'
+            : 'ideas';
+
     const targetPath = path.join(projectPath, 'plans', statusFolder, fileName);
-    
+
     // Create markdown content
     let markdownContent = '';
-    
+
     // If general markdown is provided, use it as the beginning
     if (generalMarkdown) {
       markdownContent = generalMarkdown + '\n\n';
@@ -1437,13 +1489,13 @@ app.post('/api/workspace/create-workitem', async (req, res) => {
       markdownContent = `# ${workItem.title}\n\n`;
       markdownContent += `## Description\n\n${workItem.description || 'No description provided.'}\n\n`;
     }
-    
+
     // Add metadata section at the end with work item ID
     markdownContent += `\n## Metadata\n\n`;
     markdownContent += `- Work Item ID: ${workItem.id}\n`;
     markdownContent += `- Priority: ${workItem.priority}\n`;
     markdownContent += `- Status: ${workItem.status}\n\n`;
-    
+
     if (tasks && tasks.length > 0) {
       markdownContent += `## Tasks\n\n`;
       tasks.forEach((task, index) => {
@@ -1453,45 +1505,44 @@ app.post('/api/workspace/create-workitem', async (req, res) => {
         }
         if (task.goals && task.goals.length > 0) {
           markdownContent += `**Goals:**\n`;
-          task.goals.forEach(goal => {
+          task.goals.forEach((goal) => {
             markdownContent += `- ${goal}\n`;
           });
           markdownContent += '\n';
         }
         if (task.validationCriteria && task.validationCriteria.length > 0) {
           markdownContent += `**Validation Criteria:**\n`;
-          task.validationCriteria.forEach(criteria => {
+          task.validationCriteria.forEach((criteria) => {
             markdownContent += `- ${criteria}\n`;
           });
           markdownContent += '\n';
         }
       });
     }
-    
+
     // Ensure directory exists
     await fsAsync.mkdir(path.dirname(targetPath), { recursive: true });
-    
+
     // Write the file
     await fsAsync.writeFile(targetPath, markdownContent);
-    
+
     // Invalidate cache for this project
     invalidateCache(`workspace-light:${workspacePath}`);
     invalidateCache(`project-details:${projectPath}`);
     invalidateCache(`workspace:${workspacePath}`);
-    
+
     console.log(`Created work item at: ${targetPath}`);
-    
-    res.json({ 
-      success: true, 
+
+    res.json({
+      success: true,
       path: targetPath,
-      fileName: fileName
+      fileName: fileName,
     });
-    
   } catch (error) {
     console.error('Error creating work item:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to create work item',
-      details: error.message 
+      details: error.message,
     });
   }
 });
@@ -1500,7 +1551,7 @@ app.post('/api/workspace/create-workitem', async (req, res) => {
 app.post('/api/workspace/update-workitem', async (req, res) => {
   try {
     const { workspacePath, projectPath, workItem, generalMarkdown, tasks, markdownPath } = req.body;
-    
+
     if (!workspacePath || !projectPath || !workItem) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
@@ -1508,20 +1559,27 @@ app.post('/api/workspace/update-workitem', async (req, res) => {
     // Use existing path or generate new one
     let targetPath = markdownPath;
     if (!targetPath) {
-      const fileName = workItem.title.toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '') + '.md';
-      
-      const statusFolder = workItem.status === 'planned' ? 'planned' : 
-                          workItem.status === 'active' ? 'active' : 
-                          workItem.status === 'completed' ? 'completed' : 'ideas';
-      
+      const fileName =
+        workItem.title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '') + '.md';
+
+      const statusFolder =
+        workItem.status === 'planned'
+          ? 'planned'
+          : workItem.status === 'active'
+            ? 'active'
+            : workItem.status === 'completed'
+              ? 'completed'
+              : 'ideas';
+
       targetPath = path.join(projectPath, 'plans', statusFolder, fileName);
     }
-    
+
     // Create markdown content (same as create)
     let markdownContent = '';
-    
+
     // If general markdown is provided, use it as the beginning
     if (generalMarkdown) {
       markdownContent = generalMarkdown + '\n\n';
@@ -1530,13 +1588,13 @@ app.post('/api/workspace/update-workitem', async (req, res) => {
       markdownContent = `# ${workItem.title}\n\n`;
       markdownContent += `## Description\n\n${workItem.description || 'No description provided.'}\n\n`;
     }
-    
+
     // Add metadata section at the end with work item ID
     markdownContent += `\n## Metadata\n\n`;
     markdownContent += `- Work Item ID: ${workItem.id}\n`;
     markdownContent += `- Priority: ${workItem.priority}\n`;
     markdownContent += `- Status: ${workItem.status}\n\n`;
-    
+
     if (tasks && tasks.length > 0) {
       markdownContent += `## Tasks\n\n`;
       tasks.forEach((task, index) => {
@@ -1546,45 +1604,44 @@ app.post('/api/workspace/update-workitem', async (req, res) => {
         }
         if (task.goals && task.goals.length > 0) {
           markdownContent += `**Goals:**\n`;
-          task.goals.forEach(goal => {
+          task.goals.forEach((goal) => {
             markdownContent += `- ${goal}\n`;
           });
           markdownContent += '\n';
         }
         if (task.validationCriteria && task.validationCriteria.length > 0) {
           markdownContent += `**Validation Criteria:**\n`;
-          task.validationCriteria.forEach(criteria => {
+          task.validationCriteria.forEach((criteria) => {
             markdownContent += `- ${criteria}\n`;
           });
           markdownContent += '\n';
         }
       });
     }
-    
+
     // Ensure directory exists
     await fsAsync.mkdir(path.dirname(targetPath), { recursive: true });
-    
+
     // Write the file
     await fsAsync.writeFile(targetPath, markdownContent);
-    
+
     // Invalidate cache for this project
     invalidateCache(`workspace-light:${workspacePath}`);
     invalidateCache(`project-details:${projectPath}`);
     invalidateCache(`workspace:${workspacePath}`);
     invalidateCache(`work-item:${targetPath}`);
-    
+
     console.log(`Updated work item at: ${targetPath}`);
-    
-    res.json({ 
-      success: true, 
-      path: targetPath
+
+    res.json({
+      success: true,
+      path: targetPath,
     });
-    
   } catch (error) {
     console.error('Error updating work item:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to update work item',
-      details: error.message 
+      details: error.message,
     });
   }
 });
@@ -1593,7 +1650,7 @@ app.post('/api/workspace/update-workitem', async (req, res) => {
 app.post('/api/workspace/work-item-content', async (req, res) => {
   try {
     const { workItemPath } = req.body;
-    
+
     if (!workItemPath) {
       return res.status(400).json({ error: 'Work item path is required' });
     }
@@ -1604,7 +1661,7 @@ app.post('/api/workspace/work-item-content', async (req, res) => {
     if (cachedData) {
       res.set({
         'Cache-Control': 'private, max-age=300', // 5 minutes
-        'X-Cache': 'HIT'
+        'X-Cache': 'HIT',
       });
       return res.json(cachedData);
     }
@@ -1618,7 +1675,7 @@ app.post('/api/workspace/work-item-content', async (req, res) => {
     const result = {
       content,
       parsed: parsedWorkItem,
-      path: workItemPath
+      path: workItemPath,
     };
 
     console.log(`[PERF] Work item content read completed in ${Date.now() - startTime}ms`);
@@ -1627,15 +1684,14 @@ app.post('/api/workspace/work-item-content', async (req, res) => {
 
     res.set({
       'Cache-Control': 'private, max-age=300',
-      'X-Cache': 'MISS'
+      'X-Cache': 'MISS',
     });
     res.json(result);
-
   } catch (error) {
     console.error('Error reading work item content:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to read work item content',
-      details: error.message 
+      details: error.message,
     });
   }
 });
@@ -1644,7 +1700,7 @@ app.post('/api/workspace/work-item-content', async (req, res) => {
 app.post('/api/workspace/read', async (req, res) => {
   try {
     const { workspacePath } = req.body;
-    
+
     if (!workspacePath) {
       return res.status(400).json({ error: 'Workspace path is required' });
     }
@@ -1655,7 +1711,7 @@ app.post('/api/workspace/read', async (req, res) => {
     if (cachedData) {
       res.set({
         'Cache-Control': 'private, max-age=300', // 5 minutes
-        'X-Cache': 'HIT'
+        'X-Cache': 'HIT',
       });
       return res.json(cachedData);
     }
@@ -1670,24 +1726,24 @@ app.post('/api/workspace/read', async (req, res) => {
     try {
       const projectDirs = await fsAsync.readdir(projectsPath);
       console.log('Found directories in projects folder:', projectDirs);
-      
+
       for (const projectName of projectDirs) {
         console.log('Checking project:', projectName);
         if (projectName.startsWith('.')) {
           console.log('Skipping hidden folder:', projectName);
           continue;
         }
-        
+
         const projectPath = path.join(projectsPath, projectName);
         const stats = await fsAsync.stat(projectPath);
-        
+
         if (stats.isDirectory()) {
           // Check for claudeflow.settings.json
           try {
             const settingsPath = path.join(projectPath, 'claudeflow.settings.json');
             const settingsContent = await fsAsync.readFile(settingsPath, 'utf-8');
             const settings = JSON.parse(settingsContent);
-            
+
             if (settings.tracked === false) {
               console.log(`Skipping project ${projectName} - marked as not tracked`);
               continue;
@@ -1695,7 +1751,7 @@ app.post('/api/workspace/read', async (req, res) => {
           } catch (err) {
             // No settings file or error reading it - continue normally
           }
-          
+
           const project = {
             name: projectName,
             path: projectPath,
@@ -1704,8 +1760,8 @@ app.post('/api/workspace/read', async (req, res) => {
               ideas: [],
               planned: [],
               active: [],
-              completed: []
-            }
+              completed: [],
+            },
           };
 
           // Read README.md and parse project details
@@ -1729,7 +1785,7 @@ app.post('/api/workspace/read', async (req, res) => {
           try {
             const reposPath = path.join(projectPath, 'repos');
             const repoDirs = await fsAsync.readdir(reposPath);
-            
+
             for (const repoDir of repoDirs) {
               const match = repoDir.match(/^(.+)-(\d+)$/);
               if (match) {
@@ -1738,15 +1794,15 @@ app.post('/api/workspace/read', async (req, res) => {
                   name: match[1],
                   number: parseInt(match[2]),
                   path: repoPath,
-                  isAvailable: true // TODO: Read from REPOS.md
+                  isAvailable: true, // TODO: Read from REPOS.md
                 });
 
                 // Extract additional repo details
                 const repoDetails = await extractRepoDetails(repoPath);
-                
+
                 // Try to find matching repository from README
                 const repoName = match[1];
-                let matchingRepo = project.repositories?.find(r => {
+                let matchingRepo = project.repositories?.find((r) => {
                   // Check for local development placeholder
                   if (r.url === 'local://development') {
                     return true;
@@ -1760,7 +1816,10 @@ app.post('/api/workspace/read', async (req, res) => {
                   // Enhance existing repo info with extracted details
                   Object.assign(matchingRepo, repoDetails);
                   // Update the URL if it was a placeholder or local
-                  if (matchingRepo.url === 'local://development' || matchingRepo.url.startsWith('local://')) {
+                  if (
+                    matchingRepo.url === 'local://development' ||
+                    matchingRepo.url.startsWith('local://')
+                  ) {
                     matchingRepo.url = repoDetails.url || `local://${repoName}`;
                   }
                 } else if (project.repositories.length === 0) {
@@ -1768,7 +1827,7 @@ app.post('/api/workspace/read', async (req, res) => {
                   const newRepo = {
                     url: repoDetails.url || `local://${repoName}`,
                     ...repoDetails,
-                    isPrimary: true
+                    isPrimary: true,
                   };
                   project.repositories.push(newRepo);
                   project.primaryRepoUrl = newRepo.url;
@@ -1784,20 +1843,20 @@ app.post('/api/workspace/read', async (req, res) => {
           // Read plans
           const plansStartTime = Date.now();
           const planTypes = ['ideas', 'planned', 'active', 'completed'];
-          
+
           // Read all plan directories in parallel
           const planPromises = planTypes.map(async (planType) => {
             try {
               const plansPath = path.join(projectPath, 'plans', planType);
               const planFiles = await fsAsync.readdir(plansPath);
-              
+
               // Read all files in this plan type in parallel
               const filePromises = planFiles
-                .filter(planFile => planFile.endsWith('.md') && planFile !== 'TEMPLATE.md')
+                .filter((planFile) => planFile.endsWith('.md') && planFile !== 'TEMPLATE.md')
                 .map(async (planFile) => {
                   const planPath = path.join(plansPath, planFile);
                   const content = await fsAsync.readFile(planPath, 'utf-8');
-                  
+
                   const parsedWorkItem = parseWorkItemMarkdown(content);
                   return {
                     planType,
@@ -1806,23 +1865,23 @@ app.post('/api/workspace/read', async (req, res) => {
                       path: planPath,
                       status: planType,
                       content: content,
-                      workItem: parsedWorkItem
-                    }
+                      workItem: parsedWorkItem,
+                    },
                   };
                 });
-              
+
               return Promise.all(filePromises);
             } catch (err) {
               // Plan directory might not exist
               return [];
             }
           });
-          
+
           // Wait for all plan types to be read
           const allPlanResults = await Promise.all(planPromises);
-          
+
           // Flatten and organize results by plan type
-          allPlanResults.forEach(results => {
+          allPlanResults.forEach((results) => {
             results.forEach(({ planType, plan }) => {
               if (plan) {
                 project.plans[planType].push(plan);
@@ -1832,7 +1891,7 @@ app.post('/api/workspace/read', async (req, res) => {
 
           const plansElapsed = Date.now() - plansStartTime;
           console.log(`Plans read for ${project.name} in ${plansElapsed}ms`);
-          
+
           console.log('Adding project:', project.name);
           projects.push(project);
         }
@@ -1842,27 +1901,29 @@ app.post('/api/workspace/read', async (req, res) => {
     }
 
     console.log('Total projects found:', projects.length);
-    console.log('Project names:', projects.map(p => p.name));
-    
+    console.log(
+      'Project names:',
+      projects.map((p) => p.name)
+    );
+
     // Calculate elapsed time
     const elapsedTime = Date.now() - startTime;
     console.log(`Workspace scan completed in ${elapsedTime}ms`);
-    
+
     // Cache the result
     const responseData = { projects };
     setCachedData(cacheKey, responseData);
-    
+
     res.set({
       'Cache-Control': 'private, max-age=300', // 5 minutes
-      'X-Cache': 'MISS'
+      'X-Cache': 'MISS',
     });
     res.json(responseData);
-
   } catch (error) {
     console.error('Error reading workspace:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to read workspace',
-      details: error.message 
+      details: error.message,
     });
   }
 });
@@ -1871,11 +1932,11 @@ app.post('/api/workspace/read', async (req, res) => {
 app.post('/api/workspace/read-file', async (req, res) => {
   try {
     const { filePath } = req.body;
-    
+
     if (!filePath) {
       return res.status(400).json({ error: 'File path is required' });
     }
-    
+
     try {
       const content = await fsAsync.readFile(filePath, 'utf-8');
       res.json({ content });
@@ -1889,9 +1950,9 @@ app.post('/api/workspace/read-file', async (req, res) => {
           version: '1.0.0',
           projectName: projectName,
           repositories: {},
-          lastUpdated: new Date().toISOString()
+          lastUpdated: new Date().toISOString(),
         };
-        
+
         // Ensure directory exists
         await fsAsync.mkdir(projectPath, { recursive: true });
         await fsAsync.writeFile(filePath, JSON.stringify(defaultSettings, null, 2));
@@ -1900,12 +1961,11 @@ app.post('/api/workspace/read-file', async (req, res) => {
         throw readError;
       }
     }
-    
   } catch (error) {
     console.error('Error reading file:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to read file',
-      details: error.message 
+      details: error.message,
     });
   }
 });
@@ -1914,19 +1974,18 @@ app.post('/api/workspace/read-file', async (req, res) => {
 app.post('/api/workspace/write-file', async (req, res) => {
   try {
     const { filePath, content } = req.body;
-    
+
     if (!filePath || content === undefined) {
       return res.status(400).json({ error: 'File path and content are required' });
     }
-    
+
     await fsAsync.writeFile(filePath, content, 'utf-8');
     res.json({ success: true });
-    
   } catch (error) {
     console.error('Error writing file:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to write file',
-      details: error.message 
+      details: error.message,
     });
   }
 });
@@ -1935,16 +1994,13 @@ app.post('/api/workspace/write-file', async (req, res) => {
 app.post('/api/workspace/create', async (req, res) => {
   try {
     const { workspacePath } = req.body;
-    
+
     if (!workspacePath) {
       return res.status(400).json({ error: 'Workspace path is required' });
     }
 
     // Create basic workspace structure
-    const dirs = [
-      workspacePath,
-      path.join(workspacePath, 'projects')
-    ];
+    const dirs = [workspacePath, path.join(workspacePath, 'projects')];
 
     for (const dir of dirs) {
       await fsAsync.mkdir(dir, { recursive: true });
@@ -1958,7 +2014,7 @@ app.post('/api/workspace/create', async (req, res) => {
     } catch (err) {
       // .template doesn't exist, create it
       console.log('Creating .template folder structure');
-      
+
       const templateDirs = [
         templatePath,
         path.join(templatePath, 'repos'),
@@ -1966,7 +2022,7 @@ app.post('/api/workspace/create', async (req, res) => {
         path.join(templatePath, 'plans', 'ideas'),
         path.join(templatePath, 'plans', 'planned'),
         path.join(templatePath, 'plans', 'active'),
-        path.join(templatePath, 'plans', 'completed')
+        path.join(templatePath, 'plans', 'completed'),
       ];
 
       for (const dir of templateDirs) {
@@ -2022,15 +2078,9 @@ Describe the work item here.
 - Criteria 2
 `;
 
-      await fsAsync.writeFile(
-        path.join(templatePath, 'README.md'),
-        templateReadme
-      );
+      await fsAsync.writeFile(path.join(templatePath, 'README.md'), templateReadme);
 
-      await fsAsync.writeFile(
-        path.join(templatePath, 'REPOS.md'),
-        templateRepos
-      );
+      await fsAsync.writeFile(path.join(templatePath, 'REPOS.md'), templateRepos);
 
       await fsAsync.writeFile(
         path.join(templatePath, 'plans', 'ideas', 'TEMPLATE.md'),
@@ -2064,14 +2114,13 @@ Describe the work item here.
 
       await fsAsync.writeFile(statusPath, statusMd);
     }
-    
-    res.json({ success: true, message: 'Workspace created successfully' });
 
+    res.json({ success: true, message: 'Workspace created successfully' });
   } catch (error) {
     console.error('Error creating workspace:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to create workspace',
-      details: error.message 
+      details: error.message,
     });
   }
 });
@@ -2080,7 +2129,7 @@ Describe the work item here.
 app.post('/api/workspace/create-project', async (req, res) => {
   try {
     const { workspacePath, projectName } = req.body;
-    
+
     if (!workspacePath || !projectName) {
       return res.status(400).json({ error: 'Workspace path and project name are required' });
     }
@@ -2094,7 +2143,7 @@ app.post('/api/workspace/create-project', async (req, res) => {
       .trim();
 
     const projectPath = path.join(workspacePath, 'projects', folderName);
-    
+
     // Check if project folder already exists
     try {
       await fsAsync.access(projectPath);
@@ -2111,7 +2160,7 @@ app.post('/api/workspace/create-project', async (req, res) => {
       path.join(projectPath, 'plans', 'ideas'),
       path.join(projectPath, 'plans', 'planned'),
       path.join(projectPath, 'plans', 'active'),
-      path.join(projectPath, 'plans', 'completed')
+      path.join(projectPath, 'plans', 'completed'),
     ];
 
     for (const dir of dirs) {
@@ -2133,10 +2182,7 @@ ${projectName} project created via UI.
 - To be defined
 `;
 
-    await fsAsync.writeFile(
-      path.join(projectPath, 'README.md'),
-      readmeContent
-    );
+    await fsAsync.writeFile(path.join(projectPath, 'README.md'), readmeContent);
 
     // Create REPOS.md
     const reposContent = `# Repository usage
@@ -2151,22 +2197,18 @@ ${projectName} project created via UI.
 ## Active work
 `;
 
-    await fsAsync.writeFile(
-      path.join(projectPath, 'REPOS.md'),
-      reposContent
-    );
+    await fsAsync.writeFile(path.join(projectPath, 'REPOS.md'), reposContent);
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       path: projectPath,
-      folderName: folderName
+      folderName: folderName,
     });
-
   } catch (error) {
     console.error('Error creating project folder:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to create project folder',
-      details: error.message 
+      details: error.message,
     });
   }
 });
@@ -2175,9 +2217,11 @@ ${projectName} project created via UI.
 app.post('/api/workspace/clone-repo', async (req, res) => {
   try {
     const { projectPath, repoUrl, repoName } = req.body;
-    
+
     if (!projectPath || !repoUrl || !repoName) {
-      return res.status(400).json({ error: 'Project path, repository URL, and repository name are required' });
+      return res
+        .status(400)
+        .json({ error: 'Project path, repository URL, and repository name are required' });
     }
 
     // Sanitize repo name for folder
@@ -2191,20 +2235,20 @@ app.post('/api/workspace/clone-repo', async (req, res) => {
     // Find next available number
     const reposPath = path.join(projectPath, 'repos');
     let repoNumber = 1;
-    
+
     try {
       await fsAsync.mkdir(reposPath, { recursive: true });
       const existingRepos = await fsAsync.readdir(reposPath);
-      
+
       // Find existing repos with this name
       const repoPattern = new RegExp(`^${folderName}-(\\d+)$`);
       const numbers = existingRepos
-        .map(dir => {
+        .map((dir) => {
           const match = dir.match(repoPattern);
           return match ? parseInt(match[1]) : 0;
         })
-        .filter(n => n > 0);
-      
+        .filter((n) => n > 0);
+
       if (numbers.length > 0) {
         repoNumber = Math.max(...numbers) + 1;
       }
@@ -2220,17 +2264,17 @@ app.post('/api/workspace/clone-repo', async (req, res) => {
     // Clone the repository
     try {
       const { stdout, stderr } = await execAsync(`git clone "${repoUrl}" "${repoPath}"`, {
-        cwd: reposPath
+        cwd: reposPath,
       });
-      
+
       console.log('Clone output:', stdout);
       if (stderr) console.log('Clone stderr:', stderr);
-      
+
       // Update REPOS.md to track the new clone
       const reposmdPath = path.join(projectPath, 'REPOS.md');
       try {
         let reposContent = await fsAsync.readFile(reposmdPath, 'utf-8');
-        
+
         // Update repository information if it's generic
         if (reposContent.includes('To be added')) {
           reposContent = reposContent.replace(
@@ -2238,53 +2282,53 @@ app.post('/api/workspace/clone-repo', async (req, res) => {
             `- **URL**: ${repoUrl}`
           );
         }
-        
+
         // Add to available clones
         const availableSection = reposContent.indexOf('## Available clones');
         if (availableSection !== -1) {
           const activeSection = reposContent.indexOf('## Active work');
           const insertPos = activeSection !== -1 ? activeSection : reposContent.length;
-          
+
           const beforeActive = reposContent.substring(0, insertPos);
           const afterActive = activeSection !== -1 ? reposContent.substring(activeSection) : '';
-          
+
           // Check if there are already clones listed
           const hasClones = beforeActive.includes(`${folderName}-`);
           if (!hasClones) {
             // Replace the section with the new clone
-            reposContent = beforeActive.trimEnd() + `\n- ${repoFolderName}: Available\n\n` + afterActive;
+            reposContent =
+              beforeActive.trimEnd() + `\n- ${repoFolderName}: Available\n\n` + afterActive;
           } else {
             // Add to existing list
-            reposContent = beforeActive.trimEnd() + `\n- ${repoFolderName}: Available` + afterActive;
+            reposContent =
+              beforeActive.trimEnd() + `\n- ${repoFolderName}: Available` + afterActive;
           }
         }
-        
+
         await fsAsync.writeFile(reposmdPath, reposContent);
       } catch (err) {
         console.log('Could not update REPOS.md:', err.message);
       }
-      
-      res.json({ 
-        success: true, 
+
+      res.json({
+        success: true,
         repoPath,
         repoFolderName,
-        message: 'Repository cloned successfully'
+        message: 'Repository cloned successfully',
       });
-      
     } catch (cloneError) {
       console.error('Git clone error:', cloneError);
-      return res.status(500).json({ 
+      return res.status(500).json({
         error: 'Failed to clone repository',
         details: cloneError.message,
-        suggestion: 'Please ensure the repository URL is correct and you have access to it'
+        suggestion: 'Please ensure the repository URL is correct and you have access to it',
       });
     }
-
   } catch (error) {
     console.error('Error in clone-repo endpoint:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to process clone request',
-      details: error.message 
+      details: error.message,
     });
   }
 });
@@ -2293,7 +2337,7 @@ app.post('/api/workspace/clone-repo', async (req, res) => {
 app.post('/api/workspace/extract-repo-details', async (req, res) => {
   try {
     const { repoPath } = req.body;
-    
+
     if (!repoPath) {
       return res.status(400).json({ error: 'Repository path is required' });
     }
@@ -2303,7 +2347,7 @@ app.post('/api/workspace/extract-repo-details', async (req, res) => {
       purpose: '',
       isPrivate: true,
       technologies: [],
-      scripts: {}
+      scripts: {},
     };
 
     // Try to read package.json
@@ -2311,21 +2355,21 @@ app.post('/api/workspace/extract-repo-details', async (req, res) => {
       const packageJsonPath = path.join(repoPath, 'package.json');
       const packageContent = await fsAsync.readFile(packageJsonPath, 'utf-8');
       const packageJson = JSON.parse(packageContent);
-      
+
       if (packageJson.description) {
         details.description = packageJson.description;
       }
-      
+
       if (packageJson.private === false) {
         details.isPrivate = false;
       }
-      
+
       // Extract dependencies to determine technologies
       const deps = {
         ...packageJson.dependencies,
-        ...packageJson.devDependencies
+        ...packageJson.devDependencies,
       };
-      
+
       if (deps.react) details.technologies.push('React');
       if (deps.vue) details.technologies.push('Vue');
       if (deps.angular) details.technologies.push('Angular');
@@ -2334,12 +2378,11 @@ app.post('/api/workspace/extract-repo-details', async (req, res) => {
       if (deps.next) details.technologies.push('Next.js');
       if (deps.vite) details.technologies.push('Vite');
       if (deps.webpack) details.technologies.push('Webpack');
-      
+
       // Extract useful scripts
       if (packageJson.scripts) {
         details.scripts = packageJson.scripts;
       }
-      
     } catch (err) {
       console.log('No package.json found or error reading it:', err.message);
     }
@@ -2348,7 +2391,7 @@ app.post('/api/workspace/extract-repo-details', async (req, res) => {
     try {
       const readmePath = path.join(repoPath, 'README.md');
       const readmeContent = await fsAsync.readFile(readmePath, 'utf-8');
-      
+
       // Extract description if not already found
       if (!details.description) {
         // Look for description in first paragraph
@@ -2361,9 +2404,11 @@ app.post('/api/workspace/extract-repo-details', async (req, res) => {
           }
         }
       }
-      
+
       // Extract purpose/about section
-      const purposeMatch = readmeContent.match(/##?\s*(Purpose|About|Overview|What is|Description)\s*\n+([\s\S]*?)(?=\n#|\n\n#|$)/i);
+      const purposeMatch = readmeContent.match(
+        /##?\s*(Purpose|About|Overview|What is|Description)\s*\n+([\s\S]*?)(?=\n#|\n\n#|$)/i
+      );
       if (purposeMatch) {
         const purposeText = purposeMatch[2].trim();
         const firstPurposeParagraph = purposeText.split('\n\n')[0];
@@ -2373,7 +2418,6 @@ app.post('/api/workspace/extract-repo-details', async (req, res) => {
           details.purpose = details.purpose.substring(0, 297) + '...';
         }
       }
-      
     } catch (err) {
       console.log('No README.md found or error reading it:', err.message);
     }
@@ -2384,12 +2428,11 @@ app.post('/api/workspace/extract-repo-details', async (req, res) => {
     }
 
     res.json(details);
-
   } catch (error) {
     console.error('Error extracting repo details:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to extract repository details',
-      details: error.message 
+      details: error.message,
     });
   }
 });
@@ -2397,8 +2440,9 @@ app.post('/api/workspace/extract-repo-details', async (req, res) => {
 // Update project README with extracted details
 app.post('/api/workspace/update-project-readme', async (req, res) => {
   try {
-    const { projectPath, projectName, description, purpose, repositories, technologies, scripts } = req.body;
-    
+    const { projectPath, projectName, description, purpose, repositories, technologies, scripts } =
+      req.body;
+
     if (!projectPath || !projectName) {
       return res.status(400).json({ error: 'Project path and name are required' });
     }
@@ -2420,7 +2464,7 @@ ${purpose}
     if (technologies && technologies.length > 0) {
       readmeContent += `
 ## Technologies
-${technologies.map(tech => `- ${tech}`).join('\n')}
+${technologies.map((tech) => `- ${tech}`).join('\n')}
 `;
     }
 
@@ -2428,7 +2472,7 @@ ${technologies.map(tech => `- ${tech}`).join('\n')}
       readmeContent += `
 ## Repository
 `;
-      repositories.forEach(repo => {
+      repositories.forEach((repo) => {
         readmeContent += `- **URL**: ${repo.url}
 - **Type**: ${repo.type === 'github' ? 'GitHub' : 'Azure DevOps'}
 - **Access**: ${repo.visibility === 'public' ? 'Public' : 'Private'}
@@ -2444,7 +2488,7 @@ ${technologies.map(tech => `- ${tech}`).join('\n')}
       const relevantScripts = Object.entries(scripts)
         .filter(([key]) => importantScripts.includes(key))
         .slice(0, 5); // Limit to 5 most important scripts
-      
+
       if (relevantScripts.length > 0) {
         readmeContent += `
 ## Available Scripts
@@ -2466,17 +2510,16 @@ ${technologies.map(tech => `- ${tech}`).join('\n')}
     const readmePath = path.join(projectPath, 'README.md');
     await fsAsync.writeFile(readmePath, readmeContent);
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       path: readmePath,
-      message: 'Project README updated successfully'
+      message: 'Project README updated successfully',
     });
-
   } catch (error) {
     console.error('Error updating project README:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to update project README',
-      details: error.message 
+      details: error.message,
     });
   }
 });
@@ -2485,49 +2528,48 @@ ${technologies.map(tech => `- ${tech}`).join('\n')}
 app.post('/api/projects/:projectId/hide', async (req, res) => {
   console.log('=== HIDE PROJECT ENDPOINT CALLED ===');
   console.log('Project ID:', req.params.projectId);
-  
+
   try {
     const { projectId } = req.params;
-    
+
     // Get workspace path from query or find it from the workspace endpoint
     const workspacePath = req.query.workspacePath || process.env.WORKSPACE_PATH;
-    
+
     if (!workspacePath) {
       return res.status(400).json({ error: 'Workspace path is required' });
     }
-    
+
     // The projectId is now the project name (folder name)
     const projectName = decodeURIComponent(projectId);
     const projectsPath = path.join(workspacePath, 'projects');
     const projectPath = path.join(projectsPath, projectName);
-    
+
     // Check if project exists
     try {
       await fsAsync.access(projectPath);
     } catch (err) {
       return res.status(404).json({ error: 'Project not found' });
     }
-    
+
     // Create claudeflow.settings.json
     const settingsPath = path.join(projectPath, 'claudeflow.settings.json');
     const settings = {
-      tracked: false
+      tracked: false,
     };
-    
+
     await fsAsync.writeFile(settingsPath, JSON.stringify(settings, null, 2));
-    
+
     console.log(`Created claudeflow.settings.json at: ${settingsPath}`);
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       path: settingsPath,
-      message: 'Project hidden successfully'
+      message: 'Project hidden successfully',
     });
-    
   } catch (error) {
     console.error('Error hiding project:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to hide project',
-      details: error.message 
+      details: error.message,
     });
   }
 });
@@ -2536,43 +2578,42 @@ app.post('/api/projects/:projectId/hide', async (req, res) => {
 app.post('/api/projects/:projectId/remove', async (req, res) => {
   console.log('=== REMOVE PROJECT ENDPOINT CALLED ===');
   console.log('Project ID:', req.params.projectId);
-  
+
   try {
     const { projectId } = req.params;
-    
+
     // Get workspace path from query or find it from the workspace endpoint
     const workspacePath = req.query.workspacePath || process.env.WORKSPACE_PATH;
-    
+
     if (!workspacePath) {
       return res.status(400).json({ error: 'Workspace path is required' });
     }
-    
+
     // The projectId is now the project name (folder name)
     const projectName = decodeURIComponent(projectId);
     const projectsPath = path.join(workspacePath, 'projects');
     const projectPath = path.join(projectsPath, projectName);
-    
+
     // Check if project exists
     try {
       await fsAsync.access(projectPath);
     } catch (err) {
       return res.status(404).json({ error: 'Project not found' });
     }
-    
+
     // Remove the project folder
     await fsAsync.rm(projectPath, { recursive: true, force: true });
-    
+
     console.log(`Removed project folder at: ${projectPath}`);
-    res.json({ 
-      success: true, 
-      message: 'Project folder removed successfully'
+    res.json({
+      success: true,
+      message: 'Project folder removed successfully',
     });
-    
   } catch (error) {
     console.error('Error removing project:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to remove project',
-      details: error.message 
+      details: error.message,
     });
   }
 });
@@ -2581,13 +2622,19 @@ app.post('/api/projects/:projectId/remove', async (req, res) => {
 app.post('/api/workspace/create-workitem', async (req, res) => {
   console.log('=== CREATE WORK ITEM ENDPOINT CALLED ===');
   console.log('Request body:', JSON.stringify(req.body, null, 2));
-  
+
   try {
     const { workspacePath, projectPath, workItem, tasks } = req.body;
-    
+
     if (!workspacePath || !projectPath || !workItem) {
-      console.error('Missing required fields:', { workspacePath: !!workspacePath, projectPath: !!projectPath, workItem: !!workItem });
-      return res.status(400).json({ error: 'Workspace path, project path, and work item are required' });
+      console.error('Missing required fields:', {
+        workspacePath: !!workspacePath,
+        projectPath: !!projectPath,
+        workItem: !!workItem,
+      });
+      return res
+        .status(400)
+        .json({ error: 'Workspace path, project path, and work item are required' });
     }
 
     // Generate a kebab-case filename from the work item title
@@ -2600,7 +2647,7 @@ app.post('/api/workspace/create-workitem', async (req, res) => {
 
     // Always save to planned folder when creating work items
     const planPath = path.join(projectPath, 'plans', 'planned');
-    
+
     // Ensure the plans directory structure exists
     await fsAsync.mkdir(planPath, { recursive: true });
 
@@ -2614,31 +2661,36 @@ planned
 ${workItem.description || 'No description provided.'}
 
 ## Overall Goals
-${tasks && tasks.length > 0 ? 
-  // Extract unique goals from all tasks
-  [...new Set(tasks.flatMap(task => task.goals || []))]
-    .map(goal => `- [ ] ${goal}`)
-    .join('\n') 
-  : '- [ ] Complete implementation\n- [ ] Add tests'}
+${
+  tasks && tasks.length > 0
+    ? // Extract unique goals from all tasks
+      [...new Set(tasks.flatMap((task) => task.goals || []))]
+        .map((goal) => `- [ ] ${goal}`)
+        .join('\n')
+    : '- [ ] Complete implementation\n- [ ] Add tests'
+}
 
 ## Tasks
 
-${tasks && tasks.length > 0 ? 
-  tasks.map(task => {
-    const taskNum = task.taskNumber || '1';
-    return `### Task ${taskNum}: ${task.title}
+${
+  tasks && tasks.length > 0
+    ? tasks
+        .map((task) => {
+          const taskNum = task.taskNumber || '1';
+          return `### Task ${taskNum}: ${task.title}
 **Description:** ${task.description || 'No description provided.'}
 
 **Goals:**
-${(task.goals || []).map(goal => `- [ ] ${goal}`).join('\n') || '- [ ] Complete this task'}
+${(task.goals || []).map((goal) => `- [ ] ${goal}`).join('\n') || '- [ ] Complete this task'}
 
 **Work Description:**
 ${task.workDescription || 'No work description provided.'}
 
 **Acceptance Criteria:**
-${(task.validationCriteria || []).map(criteria => `- ${criteria}`).join('\n') || '- Task completed successfully'}`;
-  }).join('\n\n') 
-  : `### Task 1: Implement the feature
+${(task.validationCriteria || []).map((criteria) => `- ${criteria}`).join('\n') || '- Task completed successfully'}`;
+        })
+        .join('\n\n')
+    : `### Task 1: Implement the feature
 **Description:** Implement the main feature functionality.
 
 **Goals:**
@@ -2648,7 +2700,8 @@ ${(task.validationCriteria || []).map(criteria => `- ${criteria}`).join('\n') ||
 To be determined during implementation.
 
 **Acceptance Criteria:**
-- Feature works as expected`}
+- Feature works as expected`
+}
 
 ## Metadata
 \`\`\`json
@@ -2661,17 +2714,16 @@ ${JSON.stringify({ workItemId: workItem.id, tasks: tasks || [] }, null, 2)}
     await fsAsync.writeFile(filePath, markdownContent);
 
     console.log(`Created work item markdown at: ${filePath}`);
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       path: filePath,
-      filename: `${filename}.md`
+      filename: `${filename}.md`,
     });
-
   } catch (error) {
     console.error('Error creating work item markdown:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to create work item markdown',
-      details: error.message 
+      details: error.message,
     });
   }
 });
@@ -2680,18 +2732,24 @@ ${JSON.stringify({ workItemId: workItem.id, tasks: tasks || [] }, null, 2)}
 app.post('/api/workspace/update-workitem', async (req, res) => {
   console.log('=== UPDATE WORK ITEM ENDPOINT CALLED ===');
   console.log('Request body:', JSON.stringify(req.body, null, 2));
-  
+
   try {
     const { workspacePath, projectPath, workItem, tasks, originalFilename } = req.body;
-    
+
     if (!workspacePath || !projectPath || !workItem) {
-      console.error('Missing required fields:', { workspacePath: !!workspacePath, projectPath: !!projectPath, workItem: !!workItem });
-      return res.status(400).json({ error: 'Workspace path, project path, and work item are required' });
+      console.error('Missing required fields:', {
+        workspacePath: !!workspacePath,
+        projectPath: !!projectPath,
+        workItem: !!workItem,
+      });
+      return res
+        .status(400)
+        .json({ error: 'Workspace path, project path, and work item are required' });
     }
 
     // Find the existing markdown file
     let existingFilePath = null;
-    
+
     if (originalFilename) {
       // If we know the original filename, use it
       existingFilePath = path.join(projectPath, 'plans', 'planned', originalFilename);
@@ -2706,7 +2764,7 @@ app.post('/api/workspace/update-workitem', async (req, res) => {
             if (file.endsWith('.md')) {
               const filePath = path.join(planDir, file);
               const content = await fsAsync.readFile(filePath, 'utf-8');
-              
+
               // Check if this file contains the work item ID in metadata
               const metadataMatch = content.match(/## Metadata\s*\n+```json\n([\s\S]*?)\n```/i);
               if (metadataMatch) {
@@ -2737,12 +2795,13 @@ app.post('/api/workspace/update-workitem', async (req, res) => {
     console.log('Updating markdown file at:', existingFilePath);
 
     // Generate a new filename from the updated title
-    const newFilename = workItem.title
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
-      .replace(/\s+/g, '-') // Replace spaces with hyphens
-      .replace(/-+/g, '-') // Remove multiple hyphens
-      .trim() + '.md';
+    const newFilename =
+      workItem.title
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+        .replace(/\s+/g, '-') // Replace spaces with hyphens
+        .replace(/-+/g, '-') // Remove multiple hyphens
+        .trim() + '.md';
 
     const newFilePath = path.join(path.dirname(existingFilePath), newFilename);
 
@@ -2756,31 +2815,36 @@ ${workItem.status || 'planned'}
 ${workItem.description || 'No description provided.'}
 
 ## Overall Goals
-${tasks && tasks.length > 0 ? 
-  // Extract unique goals from all tasks
-  [...new Set(tasks.flatMap(task => task.goals || []))]
-    .map(goal => `- [ ] ${goal}`)
-    .join('\n') 
-  : '- [ ] Complete implementation\n- [ ] Add tests'}
+${
+  tasks && tasks.length > 0
+    ? // Extract unique goals from all tasks
+      [...new Set(tasks.flatMap((task) => task.goals || []))]
+        .map((goal) => `- [ ] ${goal}`)
+        .join('\n')
+    : '- [ ] Complete implementation\n- [ ] Add tests'
+}
 
 ## Tasks
 
-${tasks && tasks.length > 0 ? 
-  tasks.map(task => {
-    const taskNum = task.taskNumber || '1';
-    return `### Task ${taskNum}: ${task.title}
+${
+  tasks && tasks.length > 0
+    ? tasks
+        .map((task) => {
+          const taskNum = task.taskNumber || '1';
+          return `### Task ${taskNum}: ${task.title}
 **Description:** ${task.description || 'No description provided.'}
 
 **Goals:**
-${(task.goals || []).map(goal => `- [ ] ${goal}`).join('\n') || '- [ ] Complete this task'}
+${(task.goals || []).map((goal) => `- [ ] ${goal}`).join('\n') || '- [ ] Complete this task'}
 
 **Work Description:**
 ${task.workDescription || 'No work description provided.'}
 
 **Acceptance Criteria:**
-${(task.validationCriteria || []).map(criteria => `- ${criteria}`).join('\n') || '- Task completed successfully'}`;
-  }).join('\n\n') 
-  : `### Task 1: Implement the feature
+${(task.validationCriteria || []).map((criteria) => `- ${criteria}`).join('\n') || '- Task completed successfully'}`;
+        })
+        .join('\n\n')
+    : `### Task 1: Implement the feature
 **Description:** Implement the main feature functionality.
 
 **Goals:**
@@ -2790,7 +2854,8 @@ ${(task.validationCriteria || []).map(criteria => `- ${criteria}`).join('\n') ||
 To be determined during implementation.
 
 **Acceptance Criteria:**
-- Feature works as expected`}
+- Feature works as expected`
+}
 
 ## Metadata
 \`\`\`json
@@ -2813,17 +2878,16 @@ ${JSON.stringify({ workItemId: workItem.id, tasks: tasks || [] }, null, 2)}
     }
 
     console.log(`Updated work item markdown at: ${newFilePath || existingFilePath}`);
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       path: newFilePath || existingFilePath,
-      filename: path.basename(newFilePath || existingFilePath)
+      filename: path.basename(newFilePath || existingFilePath),
     });
-
   } catch (error) {
     console.error('Error updating work item markdown:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to update work item markdown',
-      details: error.message 
+      details: error.message,
     });
   }
 });
@@ -2834,16 +2898,16 @@ app.post('/api/workspace/update-repos-md', async (req, res) => {
   console.log('Caller:', req.headers.referer || 'Unknown');
   console.log('Project path:', req.body.projectPath);
   console.log('Stack trace:', new Error().stack);
-  
+
   try {
     const { projectPath, repositories } = req.body;
-    
+
     if (!projectPath || !repositories || !Array.isArray(repositories)) {
       return res.status(400).json({ error: 'Project path and repositories array are required' });
     }
 
     const reposPath = path.join(projectPath, 'REPOS.md');
-    
+
     // Check if REPOS.md already exists
     try {
       await fsAsync.access(reposPath);
@@ -2851,18 +2915,18 @@ app.post('/api/workspace/update-repos-md', async (req, res) => {
     } catch (err) {
       console.log('REPOS.md does not exist, will create new one');
     }
-    
+
     // Generate REPOS.md content
     let content = '# Repository usage\n\n';
     content += '## Repository information\n';
-    
+
     // Get the primary repo or first repo
-    const primaryRepo = repositories.find(r => r.isPrimary) || repositories[0];
+    const primaryRepo = repositories.find((r) => r.isPrimary) || repositories[0];
     if (primaryRepo) {
       content += `- **URL**: ${primaryRepo.url}\n`;
       content += `- **Type**: ${primaryRepo.type.charAt(0).toUpperCase() + primaryRepo.type.slice(1)}\n`;
       content += `- **Access**: ${primaryRepo.visibility.charAt(0).toUpperCase() + primaryRepo.visibility.slice(1)}\n`;
-      
+
       if (primaryRepo.description) {
         content += `- **Description**: ${primaryRepo.description}\n`;
       }
@@ -2873,9 +2937,9 @@ app.post('/api/workspace/update-repos-md', async (req, res) => {
         content += `- **Fork**: Yes (parent: ${primaryRepo.parent.url})\n`;
       }
     }
-    
+
     content += '\n## Available clones\n';
-    
+
     // Read existing REPOS.md to preserve statuses
     let existingStatuses = new Map();
     try {
@@ -2897,28 +2961,30 @@ app.post('/api/workspace/update-repos-md', async (req, res) => {
       // REPOS.md might not exist yet
       console.log('No existing REPOS.md to preserve statuses from:', err.message);
     }
-    
+
     // Read existing repos directory to list clones
     try {
       const reposDir = path.join(projectPath, 'repos');
       const repoDirs = await fsAsync.readdir(reposDir);
-      
+
       for (const repoDir of repoDirs) {
         const match = repoDir.match(/^(.+)-(\d+)$/);
         if (match) {
           // Preserve existing status or default to Available
           const status = existingStatuses.get(repoDir) || 'Available';
-          console.log(`Repo: ${repoDir}, Status from map: ${existingStatuses.get(repoDir)}, Final status: ${status}`);
+          console.log(
+            `Repo: ${repoDir}, Status from map: ${existingStatuses.get(repoDir)}, Final status: ${status}`
+          );
           content += `- ${repoDir}: ${status}\n`;
         }
       }
     } catch (err) {
       // Repos directory might not exist
     }
-    
+
     content += '\n## Active work\n';
     content += '- None currently\n';
-    
+
     content += '\n## Notes\n';
     if (primaryRepo && primaryRepo.description) {
       content += primaryRepo.description + '\n';
@@ -2930,18 +2996,17 @@ app.post('/api/workspace/update-repos-md', async (req, res) => {
     console.log('Writing new REPOS.md content:');
     console.log(content);
     await fsAsync.writeFile(reposPath, content, 'utf-8');
-    
-    res.json({ 
-      success: true, 
-      path: reposPath,
-      message: 'REPOS.md updated successfully'
-    });
 
+    res.json({
+      success: true,
+      path: reposPath,
+      message: 'REPOS.md updated successfully',
+    });
   } catch (error) {
     console.error('Error updating REPOS.md:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to update REPOS.md',
-      details: error.message 
+      details: error.message,
     });
   }
 });
@@ -2950,7 +3015,7 @@ app.post('/api/workspace/update-repos-md', async (req, res) => {
 app.post('/api/workspace/add-repository', async (req, res) => {
   try {
     const { projectPath, repositoryUrl } = req.body;
-    
+
     if (!projectPath || !repositoryUrl) {
       return res.status(400).json({ error: 'Project path and repository URL are required' });
     }
@@ -2977,16 +3042,19 @@ app.post('/api/workspace/add-repository', async (req, res) => {
     // Update README.md to add new repository
     if (readmeContent) {
       // Find repository section
-      const repoSectionMatch = readmeContent.match(/##?\s*(?:Repository|Repositories)\s*\n([\s\S]*?)(?=\n##|$)/i);
-      
+      const repoSectionMatch = readmeContent.match(
+        /##?\s*(?:Repository|Repositories)\s*\n([\s\S]*?)(?=\n##|$)/i
+      );
+
       if (repoSectionMatch) {
         // Add to existing repository section
-        const updatedSection = repoSectionMatch[0] + 
+        const updatedSection =
+          repoSectionMatch[0] +
           `\n### Additional Repository: ${repoName}\n` +
           `- **URL**: ${repoInfo.url}\n` +
           `- **Type**: ${repoInfo.type === 'github' ? 'GitHub' : 'Azure DevOps'}\n` +
           `- **Access**: ${repoInfo.visibility === 'public' ? 'Public' : 'Private'}\n`;
-        
+
         readmeContent = readmeContent.replace(repoSectionMatch[0], updatedSection);
       } else {
         // Add new repository section
@@ -3014,29 +3082,32 @@ app.post('/api/workspace/add-repository', async (req, res) => {
     // Update REPOS.md to include new repository info
     const reposPath = path.join(projectPath, 'REPOS.md');
     let reposContent = '';
-    
+
     try {
       reposContent = await fsAsync.readFile(reposPath, 'utf-8');
-      
+
       // Update repository information section
-      const infoSection = reposContent.match(/##\s*Repository\s+information\s*\n([\s\S]*?)(?=\n##|$)/);
+      const infoSection = reposContent.match(
+        /##\s*Repository\s+information\s*\n([\s\S]*?)(?=\n##|$)/
+      );
       if (infoSection) {
         // Check if this is the first additional repo
         const hasMultipleRepos = infoSection[1].includes('Additional repositories:');
-        
+
         if (!hasMultipleRepos) {
           // Add "Additional repositories:" section
-          const updatedInfo = infoSection[0].trimEnd() + '\n\n### Additional repositories:\n' +
+          const updatedInfo =
+            infoSection[0].trimEnd() +
+            '\n\n### Additional repositories:\n' +
             `- **${repoName}**: ${repoInfo.url}\n`;
           reposContent = reposContent.replace(infoSection[0], updatedInfo);
         } else {
           // Add to existing additional repos
-          const updatedInfo = infoSection[0].trimEnd() + 
-            `- **${repoName}**: ${repoInfo.url}\n`;
+          const updatedInfo = infoSection[0].trimEnd() + `- **${repoName}**: ${repoInfo.url}\n`;
           reposContent = reposContent.replace(infoSection[0], updatedInfo);
         }
       }
-      
+
       await fsAsync.writeFile(reposPath, reposContent);
     } catch (err) {
       console.log('Could not update REPOS.md:', err.message);
@@ -3046,17 +3117,16 @@ app.post('/api/workspace/add-repository', async (req, res) => {
     invalidateCache(`project-details:${projectPath}`);
     invalidateCache(`workspace:`);
 
-    res.json({ 
+    res.json({
       success: true,
       message: 'Repository added to project successfully',
-      repository: repoInfo
+      repository: repoInfo,
     });
-
   } catch (error) {
     console.error('Error adding repository to project:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to add repository to project',
-      details: error.message 
+      details: error.message,
     });
   }
 });
@@ -3071,11 +3141,11 @@ app.post('/api/work-items/delete', async (req, res) => {
   console.log('DELETE ENDPOINT HIT - body:', req.body);
   try {
     const { markdownPath, permanentDelete } = req.body;
-    
+
     if (!markdownPath) {
       return res.status(400).json({ error: 'Markdown path is required' });
     }
-    
+
     // Handle both absolute and relative paths
     let fullPath;
     if (path.isAbsolute(markdownPath)) {
@@ -3083,9 +3153,9 @@ app.post('/api/work-items/delete', async (req, res) => {
     } else {
       fullPath = path.join(process.cwd(), '..', markdownPath);
     }
-    
+
     console.log('Checking path:', fullPath);
-    
+
     // Check if file exists
     try {
       await fsAsync.access(fullPath);
@@ -3093,11 +3163,11 @@ app.post('/api/work-items/delete', async (req, res) => {
       console.error('File not found:', fullPath);
       return res.status(404).json({ error: 'Markdown file not found' });
     }
-    
+
     if (permanentDelete) {
       // Permanently delete the file
       await fsAsync.unlink(fullPath);
-      
+
       // Invalidate cache after permanent deletion
       const pathParts = fullPath.split(path.sep);
       const plansIndex = pathParts.lastIndexOf('plans');
@@ -3106,52 +3176,54 @@ app.post('/api/work-items/delete', async (req, res) => {
       invalidateCache(`workspace-light:${workspacePath}`);
       invalidateCache(`project-details:${projectPath}`);
       invalidateCache(`workspace:${workspacePath}`);
-      
-      res.json({ 
-        success: true, 
-        message: 'Work item markdown permanently deleted' 
+
+      res.json({
+        success: true,
+        message: 'Work item markdown permanently deleted',
       });
     } else {
       // Move to discarded folder
       const pathParts = fullPath.split(path.sep);
       const plansIndex = pathParts.lastIndexOf('plans');
-      
+
       if (plansIndex === -1) {
         return res.status(400).json({ error: 'Invalid markdown path structure' });
       }
-      
+
       // Build the discarded folder path
       const discardedPath = [...pathParts.slice(0, plansIndex + 1), 'discarded'].join(path.sep);
-      
+
       // Ensure discarded folder exists
       await fsAsync.mkdir(discardedPath, { recursive: true });
-      
+
       // Get filename and create destination path
       const filename = path.basename(fullPath);
       const destPath = path.join(discardedPath, filename);
-      
+
       // Move the file
       await fsAsync.rename(fullPath, destPath);
-      
-      res.json({ 
-        success: true, 
+
+      res.json({
+        success: true,
         message: 'Work item moved to discarded folder',
-        newPath: path.relative(path.join(process.cwd(), '..'), destPath)
+        newPath: path.relative(path.join(process.cwd(), '..'), destPath),
       });
     }
-    
+
     // Invalidate cache after successful deletion/move
-    const projectPath = fullPath.split(path.sep).slice(0, pathParts.lastIndexOf('plans')).join(path.sep);
+    const projectPath = fullPath
+      .split(path.sep)
+      .slice(0, pathParts.lastIndexOf('plans'))
+      .join(path.sep);
     const workspacePath = projectPath.split(path.sep).slice(0, -2).join(path.sep);
     invalidateCache(`workspace-light:${workspacePath}`);
     invalidateCache(`project-details:${projectPath}`);
     invalidateCache(`workspace:${workspacePath}`);
-    
   } catch (error) {
     console.error('Error deleting/discarding work item:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to delete/discard work item',
-      details: error.message 
+      details: error.message,
     });
   }
 });
@@ -3159,27 +3231,27 @@ app.post('/api/work-items/delete', async (req, res) => {
 // Claude API endpoints for jam sessions
 app.post('/api/claude/analyze-document', async (req, res) => {
   try {
-    const { content, workItemTitle, workItemDescription, userName, personaName, personaGender } = req.body;
-    
+    const { content, workItemTitle, workItemDescription, userName, personaName, personaGender } =
+      req.body;
+
     if (!content || !workItemTitle) {
       return res.status(400).json({ error: 'Content and work item title are required' });
     }
-    
+
     const result = await claudeService.analyzeDocument(
-      content, 
-      workItemTitle, 
-      workItemDescription, 
+      content,
+      workItemTitle,
+      workItemDescription,
       userName || 'there',
       personaName,
       personaGender
     );
     res.json(result);
-    
   } catch (error) {
     console.error('Error analyzing document:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to analyze document',
-      details: error.message 
+      details: error.message,
     });
   }
 });
@@ -3187,19 +3259,18 @@ app.post('/api/claude/analyze-document', async (req, res) => {
 app.post('/api/claude/analyze-work', async (req, res) => {
   try {
     const { workDescription } = req.body;
-    
+
     if (!workDescription) {
       return res.status(400).json({ error: 'Work description is required' });
     }
-    
+
     const result = await claudeService.analyzeWorkDescription(workDescription);
     res.json(result);
-    
   } catch (error) {
     console.error('Error analyzing work description:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to analyze work description',
-      details: error.message 
+      details: error.message,
     });
   }
 });
@@ -3207,40 +3278,52 @@ app.post('/api/claude/analyze-work', async (req, res) => {
 app.post('/api/claude/chat', async (req, res) => {
   try {
     const { messages, userMessage, persona, documentContent, workItem } = req.body;
-    
+
     if (!userMessage || !persona || !documentContent) {
-      return res.status(400).json({ error: 'User message, persona, and document content are required' });
+      return res
+        .status(400)
+        .json({ error: 'User message, persona, and document content are required' });
     }
-    
-    console.log('Chat endpoint - messages count:', messages?.length || 0, 'user message:', userMessage?.substring(0, 50));
-    
-    const result = await claudeService.chat(messages, userMessage, persona, documentContent, workItem);
-    
+
+    console.log(
+      'Chat endpoint - messages count:',
+      messages?.length || 0,
+      'user message:',
+      userMessage?.substring(0, 50)
+    );
+
+    const result = await claudeService.chat(
+      messages,
+      userMessage,
+      persona,
+      documentContent,
+      workItem
+    );
+
     // Validate the result before sending
     if (!result || typeof result !== 'object') {
       console.error('Invalid result from chat service:', result);
-      return res.status(500).json({ 
+      return res.status(500).json({
         error: 'Invalid response from chat service',
         type: 'message',
-        response: 'I encountered an error processing your message. Please try again.'
+        response: 'I encountered an error processing your message. Please try again.',
       });
     }
-    
-    console.log('Chat response:', { 
-      type: result.type, 
+
+    console.log('Chat response:', {
+      type: result.type,
       action: result.action,
       hasDocumentEdit: !!result.documentEdit,
       responseLength: result.response?.length,
-      documentEditLength: result.documentEdit?.length 
+      documentEditLength: result.documentEdit?.length,
     });
-    
+
     res.json(result);
-    
   } catch (error) {
     console.error('Error in chat:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to process chat message',
-      details: error.message 
+      details: error.message,
     });
   }
 });
@@ -3248,19 +3331,25 @@ app.post('/api/claude/chat', async (req, res) => {
 app.post('/api/claude/apply-changes', async (req, res) => {
   try {
     const { currentContent, previousSuggestion, persona, workItem } = req.body;
-    
+
     if (!currentContent || !previousSuggestion) {
-      return res.status(400).json({ error: 'Current content and previous suggestion are required' });
+      return res
+        .status(400)
+        .json({ error: 'Current content and previous suggestion are required' });
     }
-    
-    const result = await claudeService.applyChanges(currentContent, previousSuggestion, persona, workItem);
+
+    const result = await claudeService.applyChanges(
+      currentContent,
+      previousSuggestion,
+      persona,
+      workItem
+    );
     res.json(result);
-    
   } catch (error) {
     console.error('Error applying changes:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to apply changes',
-      details: error.message 
+      details: error.message,
     });
   }
 });
@@ -3272,16 +3361,15 @@ app.get('/api/repos/:projectPath/:repoName/status', async (req, res) => {
   try {
     const { projectPath, repoName } = req.params;
     const fullPath = `${decodeURIComponent(projectPath)}/${repoName}`;
-    
+
     // Use subscription manager to get status
     const status = await subscriptionManager.getRepoStatus(fullPath);
     res.json(status);
-    
   } catch (error) {
     console.error('Error getting repo status:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to get repository status',
-      message: error.message 
+      message: error.message,
     });
   }
 });
@@ -3291,34 +3379,34 @@ app.post('/api/repos/:projectPath/:repoName/rebase', async (req, res) => {
   try {
     const { projectPath, repoName } = req.params;
     const repoPath = path.join(decodeURIComponent(projectPath), 'repos', repoName);
-    
+
     // Check if directory exists
     await fsAsync.access(repoPath);
-    
+
     // Fetch latest from origin
     execSync('git fetch origin main', { cwd: repoPath });
-    
+
     // Get current branch
     const currentBranch = execSync('git rev-parse --abbrev-ref HEAD', {
       cwd: repoPath,
-      encoding: 'utf-8'
+      encoding: 'utf-8',
     }).trim();
-    
+
     if (currentBranch === 'main') {
       return res.status(400).json({ error: 'Cannot rebase main on itself' });
     }
-    
+
     // Rebase on origin/main
     try {
       execSync('git rebase origin/main', { cwd: repoPath });
-      
+
       // Force update subscription status
       const resourceId = `repo-status:${decodeURIComponent(projectPath)}/${repoName}`;
       subscriptionManager.forceCheckResources([resourceId]);
-      
-      res.json({ 
-        success: true, 
-        message: `Successfully rebased ${currentBranch} on main` 
+
+      res.json({
+        success: true,
+        message: `Successfully rebased ${currentBranch} on main`,
       });
     } catch (rebaseError) {
       // Abort rebase if it failed
@@ -3327,15 +3415,14 @@ app.post('/api/repos/:projectPath/:repoName/rebase', async (req, res) => {
       } catch (abortError) {
         // Ignore abort errors
       }
-      
+
       throw new Error(`Rebase failed: ${rebaseError.message}`);
     }
-    
   } catch (error) {
     console.error('Error rebasing repository:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to rebase repository',
-      message: error.message 
+      message: error.message,
     });
   }
 });
@@ -3346,18 +3433,18 @@ app.post('/api/repos/:projectPath/:repoName/reset', async (req, res) => {
     const { projectPath, repoName } = req.params;
     const { stashChanges = false } = req.body;
     const repoPath = path.join(decodeURIComponent(projectPath), 'repos', repoName);
-    
+
     // Check if directory exists
     await fsAsync.access(repoPath);
-    
+
     // Stash changes if requested
     if (stashChanges) {
       try {
-        const status = execSync('git status --porcelain', { 
-          cwd: repoPath, 
-          encoding: 'utf-8' 
+        const status = execSync('git status --porcelain', {
+          cwd: repoPath,
+          encoding: 'utf-8',
         });
-        
+
         if (status.trim()) {
           execSync('git stash push -m "Auto-stash before reset"', { cwd: repoPath });
         }
@@ -3365,16 +3452,16 @@ app.post('/api/repos/:projectPath/:repoName/reset', async (req, res) => {
         console.error('Error stashing changes:', stashError);
       }
     }
-    
+
     // Fetch latest
     execSync('git fetch origin main', { cwd: repoPath });
-    
+
     // Checkout main
     execSync('git checkout main', { cwd: repoPath });
-    
+
     // Reset to origin/main
     execSync('git reset --hard origin/main', { cwd: repoPath });
-    
+
     // Update claudeflow.settings.json to mark repo as available
     try {
       const projectDir = decodeURIComponent(projectPath);
@@ -3383,29 +3470,28 @@ app.post('/api/repos/:projectPath/:repoName/reset', async (req, res) => {
     } catch (err) {
       console.error('Error updating claudeflow.settings.json:', err);
     }
-    
+
     // Clear Claude Code history for this repo
     // This ensures fresh sessions when repo is reset
     const claudeHistoryCleared = await clearClaudeHistory(repoName);
     if (claudeHistoryCleared) {
       console.log(`Cleared Claude Code history for ${repoName}`);
     }
-    
+
     // Force update subscription status
     const resourceId = `repo-status:${decodeURIComponent(projectPath)}/${repoName}`;
     subscriptionManager.forceCheckResources([resourceId]);
-    
-    res.json({ 
-      success: true, 
+
+    res.json({
+      success: true,
       message: 'Successfully reset to main',
-      stashed: stashChanges 
+      stashed: stashChanges,
     });
-    
   } catch (error) {
     console.error('Error resetting repository:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to reset repository',
-      message: error.message 
+      message: error.message,
     });
   }
 });
@@ -3416,27 +3502,27 @@ app.post('/api/repos/:projectPath/clone', async (req, res) => {
     const { projectPath } = req.params;
     const { repoUrl, repoName: suggestedName } = req.body;
     const decodedProjectPath = decodeURIComponent(projectPath);
-    
+
     if (!repoUrl) {
       return res.status(400).json({ error: 'Repository URL is required' });
     }
-    
+
     // Extract repo name from URL if not provided
     let baseName = suggestedName;
     if (!baseName) {
       const urlParts = repoUrl.split('/');
       baseName = urlParts[urlParts.length - 1].replace(/\.git$/, '');
     }
-    
+
     // Find existing clones to determine next number
     const reposPath = path.join(decodedProjectPath, 'repos');
     await fsAsync.mkdir(reposPath, { recursive: true });
-    
+
     const repoDirs = await fsAsync.readdir(reposPath);
     let nextNumber = 1;
-    
+
     // Find all clones of this repo
-    repoDirs.forEach(dir => {
+    repoDirs.forEach((dir) => {
       const match = dir.match(new RegExp(`^${baseName}-(\\d+)$`));
       if (match) {
         const num = parseInt(match[1]);
@@ -3445,68 +3531,67 @@ app.post('/api/repos/:projectPath/clone', async (req, res) => {
         }
       }
     });
-    
+
     const newRepoName = `${baseName}-${nextNumber}`;
     const newRepoPath = path.join(reposPath, newRepoName);
-    
+
     console.log(`Cloning ${repoUrl} to ${newRepoPath}`);
-    
+
     // Clone the repository
     try {
       execSync(`git clone "${repoUrl}" "${newRepoName}"`, {
         cwd: reposPath,
-        stdio: 'pipe'
+        stdio: 'pipe',
       });
     } catch (cloneError) {
       console.error('Clone error:', cloneError);
-      return res.status(500).json({ 
+      return res.status(500).json({
         error: 'Failed to clone repository',
-        message: cloneError.message 
+        message: cloneError.message,
       });
     }
-    
+
     // Update REPOS.md if it exists
     const reposFilePath = path.join(decodedProjectPath, 'REPOS.md');
     try {
       let reposContent = await fsAsync.readFile(reposFilePath, 'utf-8');
-      
+
       // Add new clone to available clones section
       const availableSection = reposContent.match(/## Available clones\n([\s\S]*?)(?=\n##|$)/);
       if (availableSection) {
         const lines = availableSection[1].trim().split('\n');
         lines.push(`- ${newRepoName}: Available`);
-        
+
         reposContent = reposContent.replace(
           availableSection[0],
           `## Available clones\n\n${lines.join('\n')}\n`
         );
-        
+
         await fsAsync.writeFile(reposFilePath, reposContent);
       }
     } catch (err) {
       console.log('No REPOS.md file or error updating it:', err.message);
     }
-    
+
     // Invalidate cache
     invalidateCache(`project-details:${decodedProjectPath}`);
     invalidateCache(`workspace:`);
-    
+
     // Force update subscription status
     const resourceId = `repo-status:${decodedProjectPath}/${newRepoName}`;
     subscriptionManager.forceCheckResources([resourceId]);
-    
-    res.json({ 
-      success: true, 
+
+    res.json({
+      success: true,
       repoName: newRepoName,
       path: newRepoPath,
-      message: `Successfully cloned repository as ${newRepoName}` 
+      message: `Successfully cloned repository as ${newRepoName}`,
     });
-    
   } catch (error) {
     console.error('Error cloning repository:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to clone repository',
-      message: error.message 
+      message: error.message,
     });
   }
 });
@@ -3516,42 +3601,41 @@ app.delete('/api/repos/:projectPath/:repoName', async (req, res) => {
   try {
     const { projectPath, repoName } = req.params;
     const repoPath = path.join(decodeURIComponent(projectPath), 'repos', repoName);
-    
+
     // Check if directory exists
     await fsAsync.access(repoPath);
-    
+
     // Remove the directory
     await fsAsync.rm(repoPath, { recursive: true, force: true });
-    
+
     // Update REPOS.md to remove this clone
     const reposFilePath = path.join(decodeURIComponent(projectPath), 'REPOS.md');
     try {
       let reposContent = await fsAsync.readFile(reposFilePath, 'utf-8');
-      
+
       // Remove lines referencing this repo
       const lines = reposContent.split('\n');
-      const filteredLines = lines.filter(line => !line.includes(repoName));
-      
+      const filteredLines = lines.filter((line) => !line.includes(repoName));
+
       await fsAsync.writeFile(reposFilePath, filteredLines.join('\n'));
     } catch (err) {
       console.error('Error updating REPOS.md:', err);
       // Continue even if REPOS.md update fails
     }
-    
+
     // Invalidate cache
     invalidateCache(`project-details:${decodeURIComponent(projectPath)}`);
     invalidateCache(`workspace:`);
-    
-    res.json({ 
-      success: true, 
-      message: `Successfully deleted ${repoName}` 
+
+    res.json({
+      success: true,
+      message: `Successfully deleted ${repoName}`,
     });
-    
   } catch (error) {
     console.error('Error deleting repository:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to delete repository',
-      message: error.message 
+      message: error.message,
     });
   }
 });
@@ -3571,13 +3655,15 @@ async function clearClaudeHistory(repoName) {
       if (session.repoName === repoName) {
         // Clean up session
         await sessionManager.deleteSession(session.sessionId);
-        
+
         // Remove all SSE connections
         const connections = claudeCodeClients.get(session.sessionId);
         if (connections) {
           for (const [connId, conn] of connections.entries()) {
             try {
-              conn.res.write(`event: session-end\ndata: ${JSON.stringify({ message: 'Session ended due to repo reset' })}\n\n`);
+              conn.res.write(
+                `event: session-end\ndata: ${JSON.stringify({ message: 'Session ended due to repo reset' })}\n\n`
+              );
               conn.res.end();
             } catch (err) {
               // Connection might already be disconnected
@@ -3585,11 +3671,11 @@ async function clearClaudeHistory(repoName) {
           }
           claudeCodeClients.delete(session.sessionId);
         }
-        
+
         logger.info(`Ended active Claude session ${session.sessionId} for repo ${repoName}`);
       }
     }
-    
+
     return true;
   } catch (error) {
     logger.error('Error clearing Claude history:', error);
@@ -3605,99 +3691,115 @@ const SESSION_CREATION_DEBOUNCE_MS = 2000; // 2 seconds
 // Initialize Claude Code session
 app.post('/api/claude/code/start', async (req, res) => {
   const { projectId, projectPath, repoName, userName, userEmail, initialMode } = req.body;
-  
+
   // Create a unique key for this session request (needed for finally block)
   const requestKey = `${projectPath || 'unknown'}-${repoName || 'unknown'}-${userName || 'anonymous'}`;
-  
+
   try {
     logger.logClient('REQUEST', {
       method: 'POST',
       url: '/api/claude/code/start',
-      body: { projectId, projectPath, repoName, userName }
+      body: { projectId, projectPath, repoName, userName },
     });
-    
+
     if (!projectId || !projectPath || !repoName) {
       logger.logClient('RESPONSE', { status: 400, error: 'Missing required fields' });
       return res.status(400).json({ error: 'Project ID, path, and repo name are required' });
     }
-    
+
     const now = Date.now();
-    
+
     // Check if there's a recent request for the same session
     const existingRequest = sessionCreationRequests.get(requestKey);
-    if (existingRequest && (now - existingRequest.timestamp) < SESSION_CREATION_DEBOUNCE_MS) {
+    if (existingRequest && now - existingRequest.timestamp < SESSION_CREATION_DEBOUNCE_MS) {
       const timeSinceRequest = now - existingRequest.timestamp;
-      logger.debug(`Duplicate session request detected - returning existing session: ${existingRequest.sessionId} (${timeSinceRequest}ms ago)`);
-      logger.logEvent('CLAUDE_SESSION_DEDUPLICATED', 'Returning existing session for duplicate request', {
+      logger.debug(
+        `Duplicate session request detected - returning existing session: ${existingRequest.sessionId} (${timeSinceRequest}ms ago)`
+      );
+      logger.logEvent(
+        'CLAUDE_SESSION_DEDUPLICATED',
+        'Returning existing session for duplicate request',
+        {
+          sessionId: existingRequest.sessionId,
+          timeSinceRequest,
+          requestKey,
+        }
+      );
+      logger.logClient('RESPONSE', {
+        status: 200,
         sessionId: existingRequest.sessionId,
-        timeSinceRequest,
-        requestKey
+        duplicate: true,
       });
-      logger.logClient('RESPONSE', { status: 200, sessionId: existingRequest.sessionId, duplicate: true });
       return res.json({
         sessionId: existingRequest.sessionId,
         reservedRepo: repoName,
-        contextUsage: 0
+        contextUsage: 0,
       });
     }
-    
+
     // Check if there's already a session creation in progress for this key
     if (sessionCreationLocks.has(requestKey)) {
-      logger.debug(`Session creation already in progress for ${requestKey}, waiting briefly and retrying`);
-      
+      logger.debug(
+        `Session creation already in progress for ${requestKey}, waiting briefly and retrying`
+      );
+
       // Wait a short time and check cache again
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 50));
       const retryRequest = sessionCreationRequests.get(requestKey);
       if (retryRequest) {
         logger.logEvent('CLAUDE_SESSION_DEDUPLICATED', 'Returning session after brief wait', {
           sessionId: retryRequest.sessionId,
-          requestKey
+          requestKey,
         });
-        logger.logClient('RESPONSE', { status: 200, sessionId: retryRequest.sessionId, waitedForLock: true });
+        logger.logClient('RESPONSE', {
+          status: 200,
+          sessionId: retryRequest.sessionId,
+          waitedForLock: true,
+        });
         return res.json({
           sessionId: retryRequest.sessionId,
           reservedRepo: repoName,
-          contextUsage: 0
+          contextUsage: 0,
         });
       }
     }
-    
+
     // Set lock to prevent race conditions
     sessionCreationLocks.add(requestKey);
     logger.debug(`Acquired session creation lock for ${requestKey}`);
-    
+
     try {
       // Check if there's already an active session for this repo
       const allSessions = sessionManager.getAllSessions();
       for (const session of allSessions) {
         if (session.projectPath === projectPath && session.repoName === repoName) {
           logger.debug(`Found existing session for ${repoName}, reusing it`);
-          
+
           logger.logEvent('CLAUDE_SESSION_REUSED', 'Reusing existing Claude Code session', {
             sessionId: session.sessionId,
             repoName,
-            userName
+            userName,
           });
-          
-          logger.logClient('RESPONSE', { 
-            status: 200, 
+
+          logger.logClient('RESPONSE', {
+            status: 200,
             sessionId: session.sessionId,
             reservedRepo: repoName,
-            new: false  // Indicate this is an existing session
+            new: false, // Indicate this is an existing session
           });
-          
+
           // Store in deduplication cache
           sessionCreationRequests.set(requestKey, {
             sessionId: session.sessionId,
-            timestamp: now
+            timestamp: now,
           });
-          
+
           // Return the existing session
           return res.json({
             sessionId: session.sessionId,
             reservedRepo: repoName,
             contextUsage: 0,
-            new: false
+            new: false,
           });
         }
       }
@@ -3705,47 +3807,47 @@ app.post('/api/claude/code/start', async (req, res) => {
       // Error checking for existing sessions - log but continue with creating new session
       logger.error('Error checking for existing sessions:', error);
     }
-    
+
     const sessionId = `${projectId}-${repoName}-${crypto.randomUUID()}`;
-    
+
     // Use the specific repo requested by the user
     const reposPath = path.join(projectPath, 'repos');
     const repoPath = path.join(reposPath, repoName);
-    
+
     // Verify the repo exists
     try {
       await fsAsync.access(repoPath);
     } catch (err) {
       return res.status(404).json({ error: `Repository ${repoName} not found` });
     }
-    
+
     // Check if repo is clean and available
     const { exec } = require('child_process');
     const util = require('util');
     const execAsync = util.promisify(exec);
-    
+
     try {
       // Check if repo is clean
-      const { stdout: statusOutput } = await execAsync('git status --porcelain', { 
-        cwd: repoPath 
+      const { stdout: statusOutput } = await execAsync('git status --porcelain', {
+        cwd: repoPath,
       });
-      
+
       if (statusOutput.trim() !== '') {
         console.warn(`Repository ${repoName} has uncommitted changes but proceeding anyway`);
       }
     } catch (err) {
       console.error(`Error checking repo status for ${repoName}:`, err);
     }
-    
+
     const reservedRepo = repoName;
-    
+
     // Migrate from REPOS.md if needed
     try {
       await claudeFlowSettings.migrateFromReposMd(projectPath);
     } catch (err) {
       console.error('Error migrating from REPOS.md:', err);
     }
-    
+
     // Update claudeflow.settings.json to mark repo as reserved
     try {
       // First ensure the repo exists in settings
@@ -3753,12 +3855,12 @@ app.post('/api/claude/code/start', async (req, res) => {
       if (!settings.repositories[reservedRepo]) {
         await claudeFlowSettings.addRepository(projectPath, reservedRepo, {
           type: 'local',
-          description: 'Repository for Claude Code sessions'
+          description: 'Repository for Claude Code sessions',
         });
         // Reload settings after adding repository
         settings = await claudeFlowSettings.load(projectPath);
       }
-      
+
       // Check if it's already reserved by claude-code
       const repo = settings.repositories[reservedRepo];
       if (repo && repo.status === 'reserved' && repo.reservedBy === 'claude-code') {
@@ -3774,7 +3876,11 @@ app.post('/api/claude/code/start', async (req, res) => {
           // This can happen in race conditions with concurrent requests
           const updatedSettings = await claudeFlowSettings.load(projectPath);
           const updatedRepo = updatedSettings.repositories[reservedRepo];
-          if (updatedRepo && updatedRepo.status === 'reserved' && updatedRepo.reservedBy === 'claude-code') {
+          if (
+            updatedRepo &&
+            updatedRepo.status === 'reserved' &&
+            updatedRepo.reservedBy === 'claude-code'
+          ) {
             // Another concurrent request already reserved it for claude-code - that's fine
           } else {
             // This is an actual error - log it
@@ -3791,7 +3897,7 @@ app.post('/api/claude/code/start', async (req, res) => {
       logger.error('Repo was:', reservedRepo);
       // Continue anyway - don't fail the session start
     }
-    
+
     // Create session using session manager
     const session = sessionManager.createSession({
       sessionId,
@@ -3800,36 +3906,36 @@ app.post('/api/claude/code/start', async (req, res) => {
       repoName: reservedRepo,
       userName,
       userEmail,
-      initialMode
+      initialMode,
     });
-    
+
     logger.debug('Created session:', {
       sessionId,
       projectPath,
       reservedRepo,
-      greetingShown: session.greetingShown
+      greetingShown: session.greetingShown,
     });
-    
+
     logger.logEvent('CLAUDE_SESSION_CREATED', 'New Claude Code session', {
       sessionId,
       repoName: reservedRepo,
       userName,
-      projectPath
+      projectPath,
     });
-    
-    logger.logClient('RESPONSE', { 
-      status: 200, 
+
+    logger.logClient('RESPONSE', {
+      status: 200,
       sessionId,
       reservedRepo,
-      new: true 
+      new: true,
     });
-    
+
     // Store in deduplication cache
     sessionCreationRequests.set(requestKey, {
       sessionId,
-      timestamp: now
+      timestamp: now,
     });
-    
+
     // Clean up old cache entries (older than 5 minutes)
     const CACHE_CLEANUP_MS = 5 * 60 * 1000;
     for (const [key, value] of sessionCreationRequests.entries()) {
@@ -3837,19 +3943,18 @@ app.post('/api/claude/code/start', async (req, res) => {
         sessionCreationRequests.delete(key);
       }
     }
-    
+
     res.json({
       sessionId,
       reservedRepo,
       contextUsage: 0,
-      new: true
+      new: true,
     });
-    
   } catch (error) {
     console.error('Error starting Claude Code session:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to start session',
-      message: error.message 
+      message: error.message,
     });
   } finally {
     // Always remove the lock when done
@@ -3862,47 +3967,49 @@ app.post('/api/claude/code/start', async (req, res) => {
 app.post('/api/claude/code/message', async (req, res) => {
   try {
     const { sessionId, message, mode } = req.body;
-    
+
     logger.logClient('REQUEST', {
       method: 'POST',
       url: '/api/claude/code/message',
       sessionId,
       messageLength: message?.length || 0,
-      mode
+      mode,
     });
-    
+
     const session = sessionManager.getSession(sessionId);
     if (!session) {
       logger.logClient('RESPONSE', { status: 404, error: 'Session not found', sessionId });
       return res.status(404).json({ error: 'Session not found' });
     }
-    
+
     // Add user message to history
-    sessionManager.addMessage(sessionId, { 
-      role: 'user', 
+    sessionManager.addMessage(sessionId, {
+      role: 'user',
       content: message,
       timestamp: new Date().toISOString(),
-      mode
+      mode,
     });
-    
+
     // Create unique message ID
     const messageId = crypto.randomUUID();
-    
+
     // Send to all SSE connections for this session
     const connections = claudeCodeClients.get(sessionId);
     if (!connections || connections.size === 0) {
       logger.logClient('RESPONSE', { status: 503, error: 'No active connections', sessionId });
       return res.status(503).json({ error: 'No active connections for this session' });
     }
-    
+
     // Don't send a message-start event here - it creates an empty message
     // The actual assistant messages will be created by the onMessage callback
-    
-    console.log(`Processing message for session ${sessionId}, mode: ${mode}, connections: ${connections.size}`);
-    
+
+    console.log(
+      `Processing message for session ${sessionId}, mode: ${mode}, connections: ${connections.size}`
+    );
+
     // Process with Claude
     const claudeService = require('./claude-service');
-    
+
     // Define these variables outside try block so they're accessible in the finally section
     let pendingAssistantText = '';
     let toolExecutions = [];
@@ -3911,57 +4018,62 @@ app.post('/api/claude/code/message', async (req, res) => {
     let currentAssistantMessageId = null;
     let hasCompletedInitialMessage = false;
     let activeMessageId = null; // Track the actual message ID being streamed
-    
+
     try {
       // Check if we should use mock mode
       const useMockMode = req.headers['x-mock-mode'] === 'true' || !claudeService.isClaudeAvailable;
-      
+
       if (useMockMode) {
         // Simulate streaming response
         const mockResponse = `I'll help you with that. Let me ${mode === 'plan' ? 'create a plan' : 'get started'}...\n\nThis is a mock response for testing the Claude Code interface. In a real implementation, this would connect to the Claude API and provide actual assistance.`;
-        
+
         const words = mockResponse.split(' ');
         let currentChunk = '';
-        
+
         for (let i = 0; i < words.length; i++) {
           currentChunk += words[i] + ' ';
-          
+
           // Send chunk
           for (const [connId, conn] of connections.entries()) {
             try {
-              conn.res.write(`event: message-chunk\ndata: ${JSON.stringify({ 
-                messageId, 
-                chunk: words[i] + ' ' 
-              })}\n\n`);
+              conn.res.write(
+                `event: message-chunk\ndata: ${JSON.stringify({
+                  messageId,
+                  chunk: words[i] + ' ',
+                })}\n\n`
+              );
             } catch (err) {
               console.error(`Error sending chunk to connection ${connId}:`, err);
               connections.delete(connId);
             }
           }
-          
+
           // Simulate typing delay
-          await new Promise(resolve => setTimeout(resolve, 50));
+          await new Promise((resolve) => setTimeout(resolve, 50));
         }
-        
+
         // Add assistant message to history
-        sessionManager.addMessage(sessionId, { 
-          role: 'assistant', 
+        sessionManager.addMessage(sessionId, {
+          role: 'assistant',
           content: mockResponse,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
-        
+
         // Update context usage (mock calculation)
         const updatedSession = sessionManager.getSession(sessionId);
-        const estimatedTokens = updatedSession.messages.reduce((sum, msg) => 
-          sum + Math.ceil(msg.content.length / 4), 0
+        const estimatedTokens = updatedSession.messages.reduce(
+          (sum, msg) => sum + Math.ceil(msg.content.length / 4),
+          0
         );
         const contextUsage = Math.round((estimatedTokens / updatedSession.maxTokens) * 100);
         sessionManager.updateContextTokens(sessionId, estimatedTokens);
-        
+
         // Send context update
         for (const [connId, conn] of connections.entries()) {
           try {
-            conn.res.write(`event: context-update\ndata: ${JSON.stringify({ percentage: contextUsage })}\n\n`);
+            conn.res.write(
+              `event: context-update\ndata: ${JSON.stringify({ percentage: contextUsage })}\n\n`
+            );
           } catch (err) {
             console.error(`Error sending context update to connection ${connId}:`, err);
             connections.delete(connId);
@@ -3970,32 +4082,33 @@ app.post('/api/claude/code/message', async (req, res) => {
       } else {
         // Real Claude integration using the SDK
         console.log('Using Claude SDK for real response');
-        
+
         // Build context from session messages
         const contextMessages = session.messages.slice(-10); // Last 10 messages for context
-        const contextPrompt = contextMessages.map(msg => 
-          `${msg.role === 'user' ? 'Human' : 'Assistant'}: ${msg.content}`
-        ).join('\n\n');
-        
+        const contextPrompt = contextMessages
+          .map((msg) => `${msg.role === 'user' ? 'Human' : 'Assistant'}: ${msg.content}`)
+          .join('\n\n');
+
         // Create the full prompt
         const fullPrompt = `${contextPrompt}\n\nHuman: ${message}\n\nAssistant:`;
-        
+
         // Configure tools based on mode (for context in prompt)
         // In plan mode, only allow read-only tools (no writes, edits, or executions)
-        const tools = mode === 'plan' ? ['search', 'read'] : ['search', 'read', 'write', 'bash', 'todo'];
-        
+        const tools =
+          mode === 'plan' ? ['search', 'read'] : ['search', 'read', 'write', 'bash', 'todo'];
+
         // Don't send any thinking or progress messages
-        
+
         // Get the repo path for Claude to work in
         const repoPath = path.join(session.projectPath, 'repos', session.repoName);
-        
+
         // Process with Claude with progress updates
         console.log('=== CLAUDE REQUEST ===');
         console.log('Full prompt:', fullPrompt);
         console.log('Tools:', tools);
         console.log('Repo path:', repoPath);
         console.log('=====================');
-        
+
         logger.logClaude('REQUEST', {
           sessionId,
           messageId,
@@ -4003,297 +4116,323 @@ app.post('/api/claude/code/message', async (req, res) => {
           userMessage: message,
           promptLength: fullPrompt.length,
           tools,
-          repoPath
+          repoPath,
         });
-        
+
         console.log('About to call processClaudeCodeMessage...');
         let response;
-        
+
         try {
           response = await claudeService.processClaudeCodeMessage(
-          fullPrompt, 
-          tools, 
-          'opus', // Use opus model as preferred
-          repoPath,
-          // onProgress callback - don't send any progress messages
-          null,
-          // onToolExecution callback  
-          (toolExecution) => {
-            console.log('Tool execution received:', toolExecution);
-            
-            // Check if this is an update to an existing tool execution
-            if (toolExecution.isUpdate) {
-              const existingToolMessageId = toolExecutionToMessageId.get(toolExecution.id);
-              if (existingToolMessageId) {
-                // Update the existing tool message
-                sessionManager.updateMessage(sessionId, existingToolMessageId, {
-                  status: toolExecution.status,
-                  executionTime: toolExecution.executionTime,
-                  output: toolExecution.result
-                });
-                
-                // Send status update to clients
-                const currentConnections = claudeCodeClients.get(sessionId);
-                if (currentConnections) {
-                  for (const [connId, conn] of currentConnections.entries()) {
-                    try {
-                      conn.res.write(`event: tool-status\ndata: ${JSON.stringify({
-                        messageId: existingToolMessageId,
-                        status: toolExecution.status,
-                        executionTime: toolExecution.executionTime
-                      })}\n\n`);
-                    } catch (err) {
-                      console.error(`Error sending tool status to connection ${connId}:`, err);
-                      currentConnections.delete(connId);
-                    }
-                  }
-                }
-                
-                // Log tool execution end if complete
-                if (toolExecution.status === 'complete') {
-                  logger.logToolExecution('END', {
-                    sessionId,
-                    messageId,
-                    toolId: toolExecution.id,
-                    toolName: toolExecution.name,
+            fullPrompt,
+            tools,
+            'opus', // Use opus model as preferred
+            repoPath,
+            // onProgress callback - don't send any progress messages
+            null,
+            // onToolExecution callback
+            (toolExecution) => {
+              console.log('Tool execution received:', toolExecution);
+
+              // Check if this is an update to an existing tool execution
+              if (toolExecution.isUpdate) {
+                const existingToolMessageId = toolExecutionToMessageId.get(toolExecution.id);
+                if (existingToolMessageId) {
+                  // Update the existing tool message
+                  sessionManager.updateMessage(sessionId, existingToolMessageId, {
                     status: toolExecution.status,
                     executionTime: toolExecution.executionTime,
-                    result: toolExecution.result
+                    output: toolExecution.result,
                   });
-                }
-                
-                return; // Don't process as new tool
-              }
-            }
-            
-            // If we have pending assistant text, complete and save it as a message first
-            if (pendingAssistantText && currentAssistantMessageId && !hasCompletedInitialMessage) {
-              // Send message-end event
-              const currentConnections = claudeCodeClients.get(sessionId);
-              if (currentConnections) {
-                for (const [connId, conn] of currentConnections.entries()) {
-                  try {
-                    conn.res.write(`event: message-end\ndata: ${JSON.stringify({ 
-                      messageId: currentAssistantMessageId
-                    })}\n\n`);
-                  } catch (err) {
-                    console.error(`Error sending message-end to connection ${connId}:`, err);
-                    currentConnections.delete(connId);
-                  }
-                }
-              }
-              
-              // Save to session
-              sessionManager.addMessage(sessionId, {
-                id: currentAssistantMessageId,
-                role: 'assistant',
-                content: pendingAssistantText,
-                timestamp: new Date().toISOString(),
-                mode
-              });
-              
-              pendingAssistantText = '';
-              hasCompletedInitialMessage = true;
-              currentAssistantMessageId = null;
-            }
-            
-            // Format tool args for display
-            let displayArgs = '';
-            if (toolExecution.args) {
-              try {
-                const args = typeof toolExecution.args === 'string' ? JSON.parse(toolExecution.args) : toolExecution.args;
-                if (toolExecution.name === 'Read' && args.file_path) {
-                  displayArgs = args.file_path;
-                } else if (toolExecution.name === 'Write' && args.file_path) {
-                  displayArgs = args.file_path;
-                } else if (toolExecution.name === 'Bash' && args.command) {
-                  displayArgs = args.command;
-                } else {
-                  displayArgs = JSON.stringify(args, null, 2);
-                }
-              } catch (e) {
-                displayArgs = toolExecution.args;
-              }
-            }
-            
-            // Create a signature to detect duplicate tool executions
-            const toolSignature = `${toolExecution.name}-${displayArgs}`;
-            
-            // Check if we've already seen this exact tool execution
-            if (seenToolSignatures.has(toolSignature)) {
-              logger.debug(`Skipping duplicate tool execution: ${toolExecution.name}`);
-              return; // Skip duplicate
-            }
-            seenToolSignatures.add(toolSignature);
-            
-            // Create tool message
-            const toolMessageId = `${messageId}-tool-${toolExecution.id || Date.now()}`;
-            const toolMessage = {
-              id: toolMessageId,
-              role: 'tool',
-              name: toolExecution.name,
-              args: displayArgs,
-              status: toolExecution.status,
-              timestamp: new Date().toISOString(),
-              executionTime: toolExecution.executionTime
-            };
-            
-            // Add to session
-            sessionManager.addMessage(sessionId, toolMessage);
-            
-            // Store mapping of tool execution ID to message ID
-            if (toolExecution.id) {
-              toolExecutionToMessageId.set(toolExecution.id, toolMessageId);
-            }
-            
-            // Log tool execution start
-            logger.logToolExecution('START', {
-              sessionId,
-              messageId,
-              toolId: toolExecution.id,
-              toolName: toolExecution.name,
-              status: toolExecution.status,
-              args: displayArgs
-            });
-            
-            // Store for later reference
-            toolExecutions.push(toolExecution);
-            
-            const currentConnections = claudeCodeClients.get(sessionId);
-            if (currentConnections) {
-              for (const [connId, conn] of currentConnections.entries()) {
-                try {
-                  conn.res.write(`event: tool-execution\ndata: ${JSON.stringify({ 
-                    messageId,
-                    toolExecution: {
-                      ...toolExecution,
-                      args: displayArgs
+
+                  // Send status update to clients
+                  const currentConnections = claudeCodeClients.get(sessionId);
+                  if (currentConnections) {
+                    for (const [connId, conn] of currentConnections.entries()) {
+                      try {
+                        conn.res.write(
+                          `event: tool-status\ndata: ${JSON.stringify({
+                            messageId: existingToolMessageId,
+                            status: toolExecution.status,
+                            executionTime: toolExecution.executionTime,
+                          })}\n\n`
+                        );
+                      } catch (err) {
+                        console.error(`Error sending tool status to connection ${connId}:`, err);
+                        currentConnections.delete(connId);
+                      }
                     }
-                  })}\n\n`);
-                } catch (err) {
-                  console.error(`Error sending tool execution to connection ${connId}:`, err);
-                  currentConnections.delete(connId);
+                  }
+
+                  // Log tool execution end if complete
+                  if (toolExecution.status === 'complete') {
+                    logger.logToolExecution('END', {
+                      sessionId,
+                      messageId,
+                      toolId: toolExecution.id,
+                      toolName: toolExecution.name,
+                      status: toolExecution.status,
+                      executionTime: toolExecution.executionTime,
+                      result: toolExecution.result,
+                    });
+                  }
+
+                  return; // Don't process as new tool
                 }
               }
-            }
-          },
-          // onMessage callback
-          (messageType, content) => {
-            debugLog('Claude message event - raw params:', { messageType, content });
-            
-            // Fix: The SDK is passing the full message object as the first parameter
-            let actualMessageType = messageType;
-            let actualContent = content;
-            
-            // Check if messageType is actually the full message object
-            if (typeof messageType === 'object' && messageType !== null) {
-              // Extract the actual type and content from the message object
-              if (messageType.type) {
-                actualMessageType = messageType.type;
-                actualContent = messageType.content || content;
-              } else {
-                // Fallback - treat the whole object as content
-                actualMessageType = 'message';
-                actualContent = messageType;
-              }
-            }
-            
-            debugLog('Parsed message event:', { type: actualMessageType, content: actualContent });
-            
-            // Skip "result" type messages as they contain the full response that we've already streamed
-            if (actualMessageType === 'result') {
-              debugLog('Skipping result message - already handled through streaming');
-              return;
-            }
-            
-            // Handle content that might be an array of content blocks
-            let textContent = actualContent;
-            let skipMessage = false;
-            
-            if (Array.isArray(actualContent)) {
-              // Check for tool use blocks
-              const hasToolUse = actualContent.some(block => block && block.type === 'tool_use');
-              
-              if (hasToolUse) {
-                // Don't send tool use messages as regular messages
-                // They will be handled by tool execution events
-                debugLog('Skipping tool_use message - will be handled by tool execution events');
-                skipMessage = true;
-              } else {
-                // Extract text from content blocks
-                textContent = actualContent
-                  .filter(block => block && block.type === 'text')
-                  .map(block => block.text || '')
-                  .join('\n');
-                debugLog('Extracted text from content array:', textContent);
-              }
-            } else if (actualContent && typeof actualContent === 'object' && actualContent.type === 'text') {
-              textContent = actualContent.text;
-              debugLog('Extracted text from content object:', textContent);
-            } else if (typeof actualContent === 'string') {
-              textContent = actualContent;
-            } else {
-              debugLog('Unhandled content type:', typeof actualContent, actualContent);
-              textContent = '';
-            }
-            
-            // Only send message if we have text content and it's not a tool use
-            if (textContent && !skipMessage) {
-              // If this is the first assistant text, create a new message
-              if (!currentAssistantMessageId) {
-                currentAssistantMessageId = crypto.randomUUID();
-                activeMessageId = currentAssistantMessageId; // Track this as the active message
-                // Send message-start event
+
+              // If we have pending assistant text, complete and save it as a message first
+              if (
+                pendingAssistantText &&
+                currentAssistantMessageId &&
+                !hasCompletedInitialMessage
+              ) {
+                // Send message-end event
                 const currentConnections = claudeCodeClients.get(sessionId);
                 if (currentConnections) {
                   for (const [connId, conn] of currentConnections.entries()) {
                     try {
-                      conn.res.write(`event: message-start\ndata: ${JSON.stringify({ 
-                        id: currentAssistantMessageId,
-                        isGreeting: false,
-                        mode
-                      })}\n\n`);
+                      conn.res.write(
+                        `event: message-end\ndata: ${JSON.stringify({
+                          messageId: currentAssistantMessageId,
+                        })}\n\n`
+                      );
                     } catch (err) {
-                      console.error(`Error sending message-start to connection ${connId}:`, err);
+                      console.error(`Error sending message-end to connection ${connId}:`, err);
+                      currentConnections.delete(connId);
+                    }
+                  }
+                }
+
+                // Save to session
+                sessionManager.addMessage(sessionId, {
+                  id: currentAssistantMessageId,
+                  role: 'assistant',
+                  content: pendingAssistantText,
+                  timestamp: new Date().toISOString(),
+                  mode,
+                });
+
+                pendingAssistantText = '';
+                hasCompletedInitialMessage = true;
+                currentAssistantMessageId = null;
+              }
+
+              // Format tool args for display
+              let displayArgs = '';
+              if (toolExecution.args) {
+                try {
+                  const args =
+                    typeof toolExecution.args === 'string'
+                      ? JSON.parse(toolExecution.args)
+                      : toolExecution.args;
+                  if (toolExecution.name === 'Read' && args.file_path) {
+                    displayArgs = args.file_path;
+                  } else if (toolExecution.name === 'Write' && args.file_path) {
+                    displayArgs = args.file_path;
+                  } else if (toolExecution.name === 'Bash' && args.command) {
+                    displayArgs = args.command;
+                  } else {
+                    displayArgs = JSON.stringify(args, null, 2);
+                  }
+                } catch (e) {
+                  displayArgs = toolExecution.args;
+                }
+              }
+
+              // Create a signature to detect duplicate tool executions
+              const toolSignature = `${toolExecution.name}-${displayArgs}`;
+
+              // Check if we've already seen this exact tool execution
+              if (seenToolSignatures.has(toolSignature)) {
+                logger.debug(`Skipping duplicate tool execution: ${toolExecution.name}`);
+                return; // Skip duplicate
+              }
+              seenToolSignatures.add(toolSignature);
+
+              // Create tool message
+              const toolMessageId = `${messageId}-tool-${toolExecution.id || Date.now()}`;
+              const toolMessage = {
+                id: toolMessageId,
+                role: 'tool',
+                name: toolExecution.name,
+                args: displayArgs,
+                status: toolExecution.status,
+                timestamp: new Date().toISOString(),
+                executionTime: toolExecution.executionTime,
+              };
+
+              // Add to session
+              sessionManager.addMessage(sessionId, toolMessage);
+
+              // Store mapping of tool execution ID to message ID
+              if (toolExecution.id) {
+                toolExecutionToMessageId.set(toolExecution.id, toolMessageId);
+              }
+
+              // Log tool execution start
+              logger.logToolExecution('START', {
+                sessionId,
+                messageId,
+                toolId: toolExecution.id,
+                toolName: toolExecution.name,
+                status: toolExecution.status,
+                args: displayArgs,
+              });
+
+              // Store for later reference
+              toolExecutions.push(toolExecution);
+
+              const currentConnections = claudeCodeClients.get(sessionId);
+              if (currentConnections) {
+                for (const [connId, conn] of currentConnections.entries()) {
+                  try {
+                    conn.res.write(
+                      `event: tool-execution\ndata: ${JSON.stringify({
+                        messageId,
+                        toolExecution: {
+                          ...toolExecution,
+                          args: displayArgs,
+                        },
+                      })}\n\n`
+                    );
+                  } catch (err) {
+                    console.error(`Error sending tool execution to connection ${connId}:`, err);
+                    currentConnections.delete(connId);
+                  }
+                }
+              }
+            },
+            // onMessage callback
+            (messageType, content) => {
+              debugLog('Claude message event - raw params:', { messageType, content });
+
+              // Fix: The SDK is passing the full message object as the first parameter
+              let actualMessageType = messageType;
+              let actualContent = content;
+
+              // Check if messageType is actually the full message object
+              if (typeof messageType === 'object' && messageType !== null) {
+                // Extract the actual type and content from the message object
+                if (messageType.type) {
+                  actualMessageType = messageType.type;
+                  actualContent = messageType.content || content;
+                } else {
+                  // Fallback - treat the whole object as content
+                  actualMessageType = 'message';
+                  actualContent = messageType;
+                }
+              }
+
+              debugLog('Parsed message event:', {
+                type: actualMessageType,
+                content: actualContent,
+              });
+
+              // Skip "result" type messages as they contain the full response that we've already streamed
+              if (actualMessageType === 'result') {
+                debugLog('Skipping result message - already handled through streaming');
+                return;
+              }
+
+              // Handle content that might be an array of content blocks
+              let textContent = actualContent;
+              let skipMessage = false;
+
+              if (Array.isArray(actualContent)) {
+                // Check for tool use blocks
+                const hasToolUse = actualContent.some(
+                  (block) => block && block.type === 'tool_use'
+                );
+
+                if (hasToolUse) {
+                  // Don't send tool use messages as regular messages
+                  // They will be handled by tool execution events
+                  debugLog('Skipping tool_use message - will be handled by tool execution events');
+                  skipMessage = true;
+                } else {
+                  // Extract text from content blocks
+                  textContent = actualContent
+                    .filter((block) => block && block.type === 'text')
+                    .map((block) => block.text || '')
+                    .join('\n');
+                  debugLog('Extracted text from content array:', textContent);
+                }
+              } else if (
+                actualContent &&
+                typeof actualContent === 'object' &&
+                actualContent.type === 'text'
+              ) {
+                textContent = actualContent.text;
+                debugLog('Extracted text from content object:', textContent);
+              } else if (typeof actualContent === 'string') {
+                textContent = actualContent;
+              } else {
+                debugLog('Unhandled content type:', typeof actualContent, actualContent);
+                textContent = '';
+              }
+
+              // Only send message if we have text content and it's not a tool use
+              if (textContent && !skipMessage) {
+                // If this is the first assistant text, create a new message
+                if (!currentAssistantMessageId) {
+                  currentAssistantMessageId = crypto.randomUUID();
+                  activeMessageId = currentAssistantMessageId; // Track this as the active message
+                  // Send message-start event
+                  const currentConnections = claudeCodeClients.get(sessionId);
+                  if (currentConnections) {
+                    for (const [connId, conn] of currentConnections.entries()) {
+                      try {
+                        conn.res.write(
+                          `event: message-start\ndata: ${JSON.stringify({
+                            id: currentAssistantMessageId,
+                            isGreeting: false,
+                            mode,
+                          })}\n\n`
+                        );
+                      } catch (err) {
+                        console.error(`Error sending message-start to connection ${connId}:`, err);
+                        currentConnections.delete(connId);
+                      }
+                    }
+                  }
+                }
+
+                // Accumulate text
+                pendingAssistantText += textContent;
+
+                // Send as message chunk
+                const currentConnections = claudeCodeClients.get(sessionId);
+                if (currentConnections) {
+                  for (const [connId, conn] of currentConnections.entries()) {
+                    try {
+                      conn.res.write(
+                        `event: message-chunk\ndata: ${JSON.stringify({
+                          messageId: currentAssistantMessageId,
+                          chunk: textContent,
+                        })}\n\n`
+                      );
+                    } catch (err) {
+                      console.error(`Error sending message chunk to connection ${connId}:`, err);
                       currentConnections.delete(connId);
                     }
                   }
                 }
               }
-              
-              // Accumulate text
-              pendingAssistantText += textContent;
-              
-              // Send as message chunk
-              const currentConnections = claudeCodeClients.get(sessionId);
-              if (currentConnections) {
-                for (const [connId, conn] of currentConnections.entries()) {
-                  try {
-                    conn.res.write(`event: message-chunk\ndata: ${JSON.stringify({ 
-                      messageId: currentAssistantMessageId,
-                      chunk: textContent 
-                    })}\n\n`);
-                  } catch (err) {
-                    console.error(`Error sending message chunk to connection ${connId}:`, err);
-                    currentConnections.delete(connId);
-                  }
-                }
-              }
-            }
-          },
-          // isPlanMode parameter
-          mode === 'plan'
-        );
+            },
+            // isPlanMode parameter
+            mode === 'plan'
+          );
         } catch (err) {
           console.error('Error calling processClaudeCodeMessage:', err);
           throw err;
         }
-        
+
         console.log('processClaudeCodeMessage returned');
         console.log('Type of returned value:', typeof response);
         console.log('Is Promise?', response instanceof Promise);
         console.log('Constructor name:', response?.constructor?.name);
-        
+
         console.log('=== CLAUDE RESPONSE ===');
         console.log('Response type:', typeof response);
         console.log('Response is null?', response === null);
@@ -4303,22 +4442,33 @@ app.post('/api/claude/code/message', async (req, res) => {
           console.log('Response.text type:', typeof response.text);
           console.log('Response.text is object?', typeof response.text === 'object');
           console.log('Response.text constructor:', response.text?.constructor?.name);
-          console.log('Response.text value:', response.text ? (typeof response.text === 'string' ? response.text.substring(0, 100) + '...' : `[${typeof response.text}] ${JSON.stringify(response.text)}`) : 'null/undefined');
+          console.log(
+            'Response.text value:',
+            response.text
+              ? typeof response.text === 'string'
+                ? response.text.substring(0, 100) + '...'
+                : `[${typeof response.text}] ${JSON.stringify(response.text)}`
+              : 'null/undefined'
+          );
         }
         console.log('Response:', JSON.stringify(response, null, 2));
         console.log('======================');
-        
+
         // Check if response.text is actually a string before logging
         let logText = null;
         if (response.text) {
           if (typeof response.text === 'string') {
             logText = response.text.substring(0, 200) + '...';
           } else {
-            console.error('ERROR: response.text is not a string!', typeof response.text, response.text);
+            console.error(
+              'ERROR: response.text is not a string!',
+              typeof response.text,
+              response.text
+            );
             logText = String(response.text).substring(0, 200) + '...';
           }
         }
-        
+
         logger.logClaude('RESPONSE', {
           sessionId,
           messageId,
@@ -4327,32 +4477,33 @@ app.post('/api/claude/code/message', async (req, res) => {
           text: logText,
           textLength: response.text ? response.text.length : 0,
           toolExecutions: response.toolExecutions?.length || 0,
-          tokenUsage: response.tokenUsage
+          tokenUsage: response.tokenUsage,
         });
-        
+
         if (response.error) {
           throw new Error(response.error);
         }
-        
+
         // Stream the response
         console.log('About to stream response - response:', response);
         console.log('About to stream response - response.text type:', typeof response.text);
         console.log('About to stream response - response.text:', response.text);
-        
+
         // Debug: Check if response is actually the expected object
         if (!response || typeof response !== 'object') {
           console.error('ERROR: response is not an object!', typeof response, response);
           throw new Error('Invalid response from processClaudeCodeMessage');
         }
-        
-        const responseText = response.text || 'I apologize, but I was unable to generate a response.';
+
+        const responseText =
+          response.text || 'I apologize, but I was unable to generate a response.';
         console.log('ResponseText to stream type:', typeof responseText);
         console.log('ResponseText to stream:', responseText.substring(0, 100) + '...');
         console.log('PendingAssistantText:', pendingAssistantText.substring(0, 100) + '...');
         console.log('ResponseText length:', responseText.length);
         console.log('PendingAssistantText length:', pendingAssistantText.length);
         console.log('Are they equal?', responseText === pendingAssistantText);
-        
+
         // If we already sent assistant messages through onMessage callback, ignore the final response
         if (pendingAssistantText || hasCompletedInitialMessage) {
           console.log('Already sent assistant messages through streaming, ignoring response.text');
@@ -4366,24 +4517,26 @@ app.post('/api/claude/code/message', async (req, res) => {
           // Create a new message ID for the final response
           const finalMessageId = crypto.randomUUID();
           activeMessageId = finalMessageId; // Track this as the active message
-          
+
           // Send message-start event
           const currentConnections = claudeCodeClients.get(sessionId);
           if (currentConnections) {
             for (const [connId, conn] of currentConnections.entries()) {
               try {
-                conn.res.write(`event: message-start\ndata: ${JSON.stringify({ 
-                  id: finalMessageId,
-                  isGreeting: false,
-                  mode
-                })}\n\n`);
+                conn.res.write(
+                  `event: message-start\ndata: ${JSON.stringify({
+                    id: finalMessageId,
+                    isGreeting: false,
+                    mode,
+                  })}\n\n`
+                );
               } catch (err) {
                 console.error(`Error sending message-start to connection ${connId}:`, err);
                 currentConnections.delete(connId);
               }
             }
           }
-          
+
           // Stream the response
           const words = responseText.split(' ');
           for (let i = 0; i < words.length; i++) {
@@ -4391,52 +4544,60 @@ app.post('/api/claude/code/message', async (req, res) => {
             if (currentConnections) {
               for (const [connId, conn] of currentConnections.entries()) {
                 try {
-                  conn.res.write(`event: message-chunk\ndata: ${JSON.stringify({ 
-                    messageId: finalMessageId, 
-                    chunk: words[i] + ' ' 
-                  })}\n\n`);
+                  conn.res.write(
+                    `event: message-chunk\ndata: ${JSON.stringify({
+                      messageId: finalMessageId,
+                      chunk: words[i] + ' ',
+                    })}\n\n`
+                  );
                 } catch (err) {
                   console.error(`Error writing to connection ${connId}:`, err);
                   currentConnections.delete(connId);
                 }
               }
             }
-            
+
             // Small delay to simulate natural streaming
-            await new Promise(resolve => setTimeout(resolve, 20));
+            await new Promise((resolve) => setTimeout(resolve, 20));
           }
-          
+
           // Send message-end event
           if (currentConnections) {
             for (const [connId, conn] of currentConnections.entries()) {
               try {
-                conn.res.write(`event: message-end\ndata: ${JSON.stringify({ 
-                  messageId: finalMessageId
-                })}\n\n`);
+                conn.res.write(
+                  `event: message-end\ndata: ${JSON.stringify({
+                    messageId: finalMessageId,
+                  })}\n\n`
+                );
               } catch (err) {
                 console.error(`Error sending message-end to connection ${connId}:`, err);
                 currentConnections.delete(connId);
               }
             }
           }
-          
+
           // Save the final message
-          sessionManager.addMessage(sessionId, { 
+          sessionManager.addMessage(sessionId, {
             id: finalMessageId,
-            role: 'assistant', 
+            role: 'assistant',
             content: responseText,
             timestamp: new Date().toISOString(),
-            mode
+            mode,
           });
         }
-        
+
         // Send final tool execution summary if there were any
         if (response.toolExecutions && response.toolExecutions.length > 0) {
-          console.log('Sending final tool execution summary:', response.toolExecutions.length, 'tools');
-          
+          console.log(
+            'Sending final tool execution summary:',
+            response.toolExecutions.length,
+            'tools'
+          );
+
           // Track which tools we've already logged as complete
           const loggedToolIds = new Set();
-          
+
           // Update tool messages with their final status
           for (const completedTool of response.toolExecutions) {
             if (completedTool.id) {
@@ -4445,41 +4606,45 @@ app.post('/api/claude/code/message', async (req, res) => {
                 // Get the current message to check if already complete
                 const currentMessage = sessionManager.getMessage(sessionId, toolMessageId);
                 const wasAlreadyComplete = currentMessage && currentMessage.status === 'complete';
-                
+
                 // Update the tool message with completed status
                 sessionManager.updateMessage(sessionId, toolMessageId, {
                   status: completedTool.status || 'complete',
-                  executionTime: completedTool.executionTime
+                  executionTime: completedTool.executionTime,
                 });
-                logger.debug(`Updated tool message ${toolMessageId} to status: ${completedTool.status || 'complete'}`);
-                
+                logger.debug(
+                  `Updated tool message ${toolMessageId} to status: ${completedTool.status || 'complete'}`
+                );
+
                 // Only log tool execution end if not already logged
                 if (!wasAlreadyComplete && !loggedToolIds.has(completedTool.id)) {
                   logger.logToolExecution('END', {
                     sessionId,
                     messageId,
                     toolId: completedTool.id,
-                  toolName: completedTool.name,
-                  status: completedTool.status || 'complete',
-                  executionTime: completedTool.executionTime,
-                  result: completedTool.result
-                });
+                    toolName: completedTool.name,
+                    status: completedTool.status || 'complete',
+                    executionTime: completedTool.executionTime,
+                    result: completedTool.result,
+                  });
                   loggedToolIds.add(completedTool.id);
                 }
               }
             }
           }
-          
+
           const currentConnections = claudeCodeClients.get(sessionId);
           if (currentConnections) {
             for (const [connId, conn] of currentConnections.entries()) {
               try {
-                conn.res.write(`event: tool-summary\ndata: ${JSON.stringify({ 
-                  messageId,
-                  toolExecutions: response.toolExecutions,
-                  totalExecutions: response.toolExecutions.length,
-                  successfulExecutions: response.toolExecutions.filter(t => t.isSuccess).length
-                })}\n\n`);
+                conn.res.write(
+                  `event: tool-summary\ndata: ${JSON.stringify({
+                    messageId,
+                    toolExecutions: response.toolExecutions,
+                    totalExecutions: response.toolExecutions.length,
+                    successfulExecutions: response.toolExecutions.filter((t) => t.isSuccess).length,
+                  })}\n\n`
+                );
               } catch (err) {
                 console.error(`Error sending tool summary to connection ${connId}:`, err);
                 currentConnections.delete(connId);
@@ -4487,38 +4652,43 @@ app.post('/api/claude/code/message', async (req, res) => {
             }
           }
         }
-        
+
         // Message has already been added in the streaming section above
-        
+
         // Update context usage based on token usage
         if (response.tokenUsage) {
           // Calculate cumulative tokens for the session
           const currentSession = sessionManager.getSession(sessionId);
-          const newTokenTotal = (currentSession.contextTokens || 0) + response.tokenUsage.totalTokens;
+          const newTokenTotal =
+            (currentSession.contextTokens || 0) + response.tokenUsage.totalTokens;
           sessionManager.updateContextTokens(sessionId, newTokenTotal);
           const contextUsage = Math.round((newTokenTotal / currentSession.maxTokens) * 100);
-          
+
           // Send final token count with the message
           const currentConnections = claudeCodeClients.get(sessionId);
           if (currentConnections) {
             for (const [connId, conn] of currentConnections.entries()) {
               try {
-                conn.res.write(`event: token-update\ndata: ${JSON.stringify({ 
-                  messageId,
-                  inputTokens: response.tokenUsage.inputTokens,
-                  outputTokens: response.tokenUsage.outputTokens,
-                  totalTokens: response.tokenUsage.totalTokens,
-                  sessionTotal: newTokenTotal
-                })}\n\n`);
+                conn.res.write(
+                  `event: token-update\ndata: ${JSON.stringify({
+                    messageId,
+                    inputTokens: response.tokenUsage.inputTokens,
+                    outputTokens: response.tokenUsage.outputTokens,
+                    totalTokens: response.tokenUsage.totalTokens,
+                    sessionTotal: newTokenTotal,
+                  })}\n\n`
+                );
               } catch (err) {
                 console.error(`Error sending token update to connection ${connId}:`, err);
                 currentConnections.delete(connId);
               }
             }
-            
+
             for (const [connId, conn] of currentConnections.entries()) {
               try {
-                conn.res.write(`event: context-update\ndata: ${JSON.stringify({ percentage: contextUsage })}\n\n`);
+                conn.res.write(
+                  `event: context-update\ndata: ${JSON.stringify({ percentage: contextUsage })}\n\n`
+                );
               } catch (err) {
                 console.error(`Error sending context update to connection ${connId}:`, err);
                 currentConnections.delete(connId);
@@ -4529,72 +4699,77 @@ app.post('/api/claude/code/message', async (req, res) => {
       }
     } catch (error) {
       console.error('Error processing Claude message:', error);
-      
+
       // Create a new message ID for the error
       const errorMessageId = crypto.randomUUID();
       activeMessageId = errorMessageId; // Track this as the active message
-      
+
       // Send error message to connections
-      const errorMessage = error.message && error.message.includes('API Error:') 
-        ? error.message 
-        : `I apologize, but I encountered an error: ${error.message}`;
-      
+      const errorMessage =
+        error.message && error.message.includes('API Error:')
+          ? error.message
+          : `I apologize, but I encountered an error: ${error.message}`;
+
       const errorConnections = claudeCodeClients.get(sessionId);
       if (errorConnections) {
         // First send message-start for the error message
         for (const [connId, conn] of errorConnections.entries()) {
           try {
-            conn.res.write(`event: message-start\ndata: ${JSON.stringify({ 
-              id: errorMessageId,
-              isGreeting: false,
-              isError: true
-            })}\n\n`);
+            conn.res.write(
+              `event: message-start\ndata: ${JSON.stringify({
+                id: errorMessageId,
+                isGreeting: false,
+                isError: true,
+              })}\n\n`
+            );
           } catch (err) {
             console.error(`Error sending message-start to connection ${connId}:`, err);
             errorConnections.delete(connId);
           }
         }
-        
+
         // Then send the error content
         for (const [connId, conn] of errorConnections.entries()) {
           try {
-            conn.res.write(`event: message-chunk\ndata: ${JSON.stringify({ 
-              messageId: errorMessageId, 
-              chunk: errorMessage 
-            })}\n\n`);
+            conn.res.write(
+              `event: message-chunk\ndata: ${JSON.stringify({
+                messageId: errorMessageId,
+                chunk: errorMessage,
+              })}\n\n`
+            );
           } catch (err) {
             console.error(`Error sending error message to connection ${connId}:`, err);
             errorConnections.delete(connId);
           }
         }
       }
-      
+
       // Add error to session history
       sessionManager.addMessage(sessionId, {
         id: errorMessageId,
-        role: 'assistant', 
+        role: 'assistant',
         content: errorMessage,
         timestamp: new Date().toISOString(),
-        isError: true
+        isError: true,
       });
     }
-    
+
     // If we have pending assistant text that hasn't been completed, complete it now
     if (pendingAssistantText && currentAssistantMessageId && !hasCompletedInitialMessage) {
       console.log('Finalizing pending assistant text, messageId:', currentAssistantMessageId);
-      
+
       // Save to session
       sessionManager.addMessage(sessionId, {
         id: currentAssistantMessageId,
         role: 'assistant',
         content: pendingAssistantText,
         timestamp: new Date().toISOString(),
-        mode
+        mode,
       });
-      
+
       activeMessageId = currentAssistantMessageId; // Make sure we track this message
     }
-    
+
     // Send message end event for the active message
     if (activeMessageId) {
       console.log('Sending final message-end for activeMessageId:', activeMessageId);
@@ -4602,7 +4777,9 @@ app.post('/api/claude/code/message', async (req, res) => {
       if (finalConnections) {
         for (const [connId, conn] of finalConnections.entries()) {
           try {
-            conn.res.write(`event: message-end\ndata: ${JSON.stringify({ messageId: activeMessageId })}\n\n`);
+            conn.res.write(
+              `event: message-end\ndata: ${JSON.stringify({ messageId: activeMessageId })}\n\n`
+            );
           } catch (err) {
             console.error(`Error sending message-end to connection ${connId}:`, err);
             finalConnections.delete(connId);
@@ -4612,14 +4789,13 @@ app.post('/api/claude/code/message', async (req, res) => {
     } else {
       console.log('No activeMessageId to send message-end for');
     }
-    
+
     res.json({ success: true, messageId });
-    
   } catch (error) {
     console.error('Error processing Claude Code message:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to process message',
-      message: error.message 
+      message: error.message,
     });
   }
 });
@@ -4627,34 +4803,34 @@ app.post('/api/claude/code/message', async (req, res) => {
 // SSE endpoint for Claude Code streaming
 app.get('/api/claude/code/stream', (req, res) => {
   const { sessionId, connectionId } = req.query;
-  
+
   logger.logClient('REQUEST', {
     method: 'GET',
     url: '/api/claude/code/stream',
     sessionId,
-    connectionId
+    connectionId,
   });
-  
+
   if (!sessionId || !connectionId) {
     logger.logClient('RESPONSE', { status: 400, error: 'Session ID and connection ID required' });
     return res.status(400).json({ error: 'Session ID and connection ID required' });
   }
-  
+
   // Set SSE headers
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
-    'Connection': 'keep-alive',
-    'X-Accel-Buffering': 'no'
+    Connection: 'keep-alive',
+    'X-Accel-Buffering': 'no',
   });
-  
+
   // Initialize session connections map if needed
   if (!claudeCodeClients.has(sessionId)) {
     claudeCodeClients.set(sessionId, new Map());
   }
-  
+
   const sessionConnections = claudeCodeClients.get(sessionId);
-  
+
   // Clean up old connections from this session (older than 30 seconds)
   const now = Date.now();
   const staleConnectionIds = [];
@@ -4668,106 +4844,123 @@ app.get('/api/claude/code/stream', (req, res) => {
       }
     }
   }
-  
+
   // Remove stale connections
-  staleConnectionIds.forEach(connId => {
+  staleConnectionIds.forEach((connId) => {
     const staleConn = sessionConnections.get(connId);
     const age = staleConn ? now - staleConn.timestamp : 0;
     sessionConnections.delete(connId);
     logger.logEvent('CLAUDE_SSE_STALE_REMOVED', 'Removed stale connection', {
       sessionId,
       connectionId: connId,
-      age
+      age,
     });
   });
-  
+
   // Add new connection
   sessionConnections.set(connectionId, {
     res,
     timestamp: now,
-    lastHeartbeat: now
+    lastHeartbeat: now,
   });
-  
+
   // Send initial connection event
   res.write(`data: ${JSON.stringify({ type: 'connected' })}\n\n`);
-  
+
   logger.logEvent('CLAUDE_SSE_CONNECTED', 'Claude Code SSE client connected', {
     sessionId,
     connectionId,
     totalConnections: sessionConnections.size,
-    removedStale: staleConnectionIds.length
+    removedStale: staleConnectionIds.length,
   });
-  
+
   // Get session from session manager
   const session = sessionManager.getSession(sessionId);
-  
+
   if (!session) {
     logger.error('Session not found in SSE connection:', sessionId);
     res.write(`event: error\ndata: ${JSON.stringify({ error: 'Session not found' })}\n\n`);
     res.end();
     return;
   }
-  
+
   debugLog('SSE connection - session state:', {
     sessionId,
     connectionId,
     messageCount: session.messages.length,
     activeConnections: sessionConnections.size,
     greetingShown: session.greetingShown,
-    lastMessageCompleted: session.lastMessageCompleted
+    lastMessageCompleted: session.lastMessageCompleted,
   });
-  
+
   // Check if there are any existing messages to send to the new connection
   if (session.messages.length > 0) {
     debugLog(`Sending ${session.messages.length} existing messages to new connection`);
-    debugLog('Session messages:', session.messages.map(m => ({ id: m.id, role: m.role, content: m.content?.substring(0, 50) })));
-    
+    debugLog(
+      'Session messages:',
+      session.messages.map((m) => ({
+        id: m.id,
+        role: m.role,
+        content: m.content?.substring(0, 50),
+      }))
+    );
+
     // Use setImmediate to ensure events are sent after connection is established
     setImmediate(() => {
       // Send all existing messages to the new connection
       for (const message of session.messages) {
-        debugLog(`Processing message: role=${message.role}, id=${message.id}, content=${message.content?.substring(0, 30)}`);
+        debugLog(
+          `Processing message: role=${message.role}, id=${message.id}, content=${message.content?.substring(0, 30)}`
+        );
         if (message.role === 'assistant') {
           const messageId = message.id || crypto.randomUUID();
           debugLog(`Sending assistant message: ${messageId}`);
-          
+
           try {
             // Send message-start event
-            res.write(`event: message-start\ndata: ${JSON.stringify({ 
-              id: messageId,
-              type: 'assistant',
-              isGreeting: message.isGreeting || false,
-              mode: message.mode
-            })}\n\n`);
-            
+            res.write(
+              `event: message-start\ndata: ${JSON.stringify({
+                id: messageId,
+                type: 'assistant',
+                isGreeting: message.isGreeting || false,
+                mode: message.mode,
+              })}\n\n`
+            );
+
             // Send the complete message content
-            res.write(`event: message-chunk\ndata: ${JSON.stringify({ 
-              messageId: messageId, 
-              chunk: message.content
-            })}\n\n`);
-            
+            res.write(
+              `event: message-chunk\ndata: ${JSON.stringify({
+                messageId: messageId,
+                chunk: message.content,
+              })}\n\n`
+            );
+
             // Send message-complete event
-            res.write(`event: message-complete\ndata: ${JSON.stringify({ 
-              messageId: messageId 
-            })}\n\n`);
+            res.write(
+              `event: message-complete\ndata: ${JSON.stringify({
+                messageId: messageId,
+              })}\n\n`
+            );
           } catch (err) {
             debugLog('Error sending existing message:', err);
           }
         } else if (message.role === 'tool') {
           debugLog(`Sending tool message: ${message.id}`);
-          
+
           try {
             // Send tool execution event
-            res.write(`event: tool-execution\ndata: ${JSON.stringify({ 
-              messageId: message.id,
-              toolExecution: {
-                id: message.id,
-                name: message.name,
-                args: message.args,
-                status: message.status || 'complete',
-                executionTime: message.executionTime
-              }
-            })}\n\n`);
+            res.write(
+              `event: tool-execution\ndata: ${JSON.stringify({
+                messageId: message.id,
+                toolExecution: {
+                  id: message.id,
+                  name: message.name,
+                  args: message.args,
+                  status: message.status || 'complete',
+                  executionTime: message.executionTime,
+                },
+              })}\n\n`
+            );
           } catch (err) {
             debugLog('Error sending tool message:', err);
           }
@@ -4775,36 +4968,35 @@ app.get('/api/claude/code/stream', (req, res) => {
       }
     });
   }
-  
+
   // Check if we should show greeting (only if no messages exist)
   if (!session.greetingShown && session.messages.length === 0 && !session.greetingInProgress) {
     // Mark greeting as in progress to prevent duplicates
     sessionManager.setGreetingInProgress(sessionId, true);
-    
+
     // Generate greeting for new session immediately
     debugLog('Initiating greeting generation for new session');
-    
+
     // Generate greeting without delay
     (async () => {
       try {
-        
         const { userName, userEmail } = session;
         const { projectPath, repoName } = session;
-        
+
         debugLog('Greeting session data:', { userName, projectPath, repoName });
-        
+
         if (!projectPath || !repoName) {
           debugLog('Missing required path data for greeting:', { projectPath, repoName });
           throw new Error(`Missing path data: projectPath=${projectPath}, repoName=${repoName}`);
         }
-        
+
         // Get project info
         const projectName = path.basename(projectPath);
-        
+
         // Get the mode from the session
         const sessionMode = session.initialMode || 'default';
         const isPlanMode = sessionMode === 'plan';
-        
+
         // Create greeting prompt
         const greetingPrompt = `Generate a friendly, personalized greeting for a Claude Code session. Keep it brief (1-2 sentences), warm, and motivating.
 
@@ -4818,35 +5010,41 @@ Context:
 The greeting should:
 - Welcome the user by name (if available)
 - Mention the repository they're working in
-${isPlanMode ? '- Mention that you\'re in PLAN MODE where you can only read and analyze code, not make changes' : ''}
+${isPlanMode ? "- Mention that you're in PLAN MODE where you can only read and analyze code, not make changes" : ''}
 - Be encouraging and ready to help
 - End with something like "What would you like to ${isPlanMode ? 'explore or plan' : 'work on'}?" or similar
 - Feel fresh and not repetitive
 - Occasionally use relevant developer-friendly phrases or mild humor
 
-${isPlanMode ? `Important: Since we're in PLAN MODE, mention that you can:
+${
+  isPlanMode
+    ? `Important: Since we're in PLAN MODE, mention that you can:
 - Read files to understand the current state
 - Search for relevant code
 - Help plan changes
-- But cannot make edits or execute commands` : ''}
+- But cannot make edits or execute commands`
+    : ''
+}
 
 Examples of good greetings:
-${isPlanMode ? 
-`- "Hey Alex! Ready to explore the auth-service repo in plan mode? I can help you understand the codebase and plan your changes."
+${
+  isPlanMode
+    ? `- "Hey Alex! Ready to explore the auth-service repo in plan mode? I can help you understand the codebase and plan your changes."
 - "Good morning Sarah! I'm here to help you analyze the frontend-app repo. In plan mode, I'll read files and help you plan your approach."
-- "Welcome back, Jordan! Let's explore the api-gateway repo together. I'm in plan mode, so I'll help you understand the code and plan your next steps."` :
-`- "Hey Alex! Ready to dive into the auth-service repo? Let's build something great today!"
+- "Welcome back, Jordan! Let's explore the api-gateway repo together. I'm in plan mode, so I'll help you understand the code and plan your next steps."`
+    : `- "Hey Alex! Ready to dive into the auth-service repo? Let's build something great today!"
 - "Good morning Sarah! I see you're working on the frontend-app repo. What feature shall we tackle?"
-- "Welcome back, Jordan! Time to make some magic happen in the api-gateway repo. What's on the agenda?"`}
+- "Welcome back, Jordan! Time to make some magic happen in the api-gateway repo. What's on the agenda?"`
+}
 
 Generate a greeting now:`;
 
         const claudeService = require('./claude-service');
-        
+
         // Create a greeting message ID
         const greetingMessageId = crypto.randomUUID();
         debugLog(`Created greeting message ID: ${greetingMessageId}`);
-        
+
         // Get current connections
         const connections = claudeCodeClients.get(sessionId);
         if (!connections || connections.size === 0) {
@@ -4855,17 +5053,19 @@ Generate a greeting now:`;
           sessionManager.setGreetingInProgress(sessionId, false);
           return;
         }
-        
+
         debugLog(`Sending greeting to ${connections.size} connections for session ${sessionId}`);
-        
+
         // Send greeting start event to all active connections
         for (const [connId, conn] of connections.entries()) {
           try {
-            conn.res.write(`event: message-start\ndata: ${JSON.stringify({ 
-              id: greetingMessageId,
-              type: 'assistant',
-              isGreeting: true 
-            })}\n\n`);
+            conn.res.write(
+              `event: message-start\ndata: ${JSON.stringify({
+                id: greetingMessageId,
+                type: 'assistant',
+                isGreeting: true,
+              })}\n\n`
+            );
             debugLog(`Sent message-start to connection ${connId}`);
           } catch (err) {
             debugLog(`Error sending message-start to connection ${connId}:`, err);
@@ -4873,11 +5073,11 @@ Generate a greeting now:`;
             connections.delete(connId);
           }
         }
-        
+
         debugLog('Claude service available:', claudeService.isClaudeAvailable);
-        
+
         let greetingText = '';
-        
+
         if (claudeService.isClaudeAvailable) {
           // Get real greeting from Claude
           debugLog('Calling processClaudeCodeMessage for greeting');
@@ -4888,12 +5088,12 @@ Generate a greeting now:`;
             path.join(projectPath, 'repos', repoName),
             null, // No progress callback needed
             null, // No tool execution callback
-            null  // No message callback
+            null // No message callback
           );
-          
+
           debugLog('Greeting response:', greetingResponse);
           debugLog('Response text type:', typeof greetingResponse.text);
-          
+
           if (greetingResponse.text && typeof greetingResponse.text === 'string') {
             greetingText = greetingResponse.text;
           } else {
@@ -4904,23 +5104,27 @@ Generate a greeting now:`;
           // Fallback greeting when Claude is not available
           greetingText = `Hello${userName ? ' ' + userName : ''}! I'm ready to help you with the **${repoName}** repository. What would you like to work on today?`;
         }
-        
+
         // Send the complete greeting as a single chunk for reliability
         // Add a small delay to ensure message-start is processed first
-        await new Promise(resolve => setTimeout(resolve, 50));
-        
+        await new Promise((resolve) => setTimeout(resolve, 50));
+
         const currentConnections = claudeCodeClients.get(sessionId);
         if (currentConnections && currentConnections.size > 0) {
           debugLog(`Sending greeting to ${currentConnections.size} connections`);
-          
+
           for (const [connId, conn] of currentConnections.entries()) {
             try {
               // Send the complete text as one chunk
-              debugLog(`Sending chunk with messageId: ${greetingMessageId} to connection ${connId}`);
-              conn.res.write(`event: message-chunk\ndata: ${JSON.stringify({ 
-                messageId: greetingMessageId, 
-                chunk: greetingText
-              })}\n\n`);
+              debugLog(
+                `Sending chunk with messageId: ${greetingMessageId} to connection ${connId}`
+              );
+              conn.res.write(
+                `event: message-chunk\ndata: ${JSON.stringify({
+                  messageId: greetingMessageId,
+                  chunk: greetingText,
+                })}\n\n`
+              );
               debugLog(`Sent greeting chunk to connection ${connId}`);
             } catch (err) {
               debugLog(`Error sending greeting to connection ${connId}:`, err);
@@ -4930,30 +5134,34 @@ Generate a greeting now:`;
         } else {
           debugLog('No active connections to send greeting to');
           // Store the greeting message so it can be retrieved when client reconnects
-          const existingMessage = session.messages.find(m => m.role === 'assistant' && m.isGreeting);
+          const existingMessage = session.messages.find(
+            (m) => m.role === 'assistant' && m.isGreeting
+          );
           if (!existingMessage) {
             debugLog('Storing greeting message for later delivery');
           }
         }
-        
+
         // Add greeting to session messages with the same ID
-        sessionManager.addMessage(sessionId, { 
+        sessionManager.addMessage(sessionId, {
           id: greetingMessageId,
-          role: 'assistant', 
+          role: 'assistant',
           content: greetingText,
           isGreeting: true,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
-        
+
         // Send message complete event
         const finalConnections = claudeCodeClients.get(sessionId);
         if (finalConnections && finalConnections.size > 0) {
           debugLog(`Sending message-complete to ${finalConnections.size} connections`);
           for (const [connId, conn] of finalConnections.entries()) {
             try {
-              conn.res.write(`event: message-complete\ndata: ${JSON.stringify({ 
-                messageId: greetingMessageId 
-              })}\n\n`);
+              conn.res.write(
+                `event: message-complete\ndata: ${JSON.stringify({
+                  messageId: greetingMessageId,
+                })}\n\n`
+              );
               debugLog(`Sent message-complete to connection ${connId}`);
             } catch (err) {
               debugLog(`Error sending message-complete to connection ${connId}:`, err);
@@ -4961,20 +5169,18 @@ Generate a greeting now:`;
             }
           }
         }
-        
-        
+
         logger.logEvent('CLAUDE_GREETING_GENERATED', 'Greeting message sent', {
           sessionId,
           greetingLength: greetingText.length,
-          activeConnections: finalConnections?.size || 0
+          activeConnections: finalConnections?.size || 0,
         });
-        
+
         logger.writeClaudeLog('Greeting generation completed and marked');
-        
+
         // Mark greeting as completed
         sessionManager.setGreetingShown(sessionId, true);
         sessionManager.setGreetingInProgress(sessionId, false);
-        
       } catch (error) {
         debugLog('Error generating greeting:', error);
         debugLog('Error stack:', error.stack);
@@ -4986,7 +5192,7 @@ Generate a greeting now:`;
       }
     })();
   }
-  
+
   // Heartbeat to keep connection alive and detect dead connections
   const heartbeat = setInterval(() => {
     try {
@@ -5002,32 +5208,32 @@ Generate a greeting now:`;
       sessionConnections.delete(connectionId);
       logger.logEvent('CLAUDE_SSE_HEARTBEAT_FAILED', 'Connection failed during heartbeat', {
         sessionId,
-        connectionId
+        connectionId,
       });
     }
   }, 30000);
-  
+
   // Clean up on disconnect
   const cleanup = () => {
     clearInterval(heartbeat);
-    
+
     const connections = claudeCodeClients.get(sessionId);
     if (connections) {
       connections.delete(connectionId);
-      
+
       // If no more connections for this session, clean up the session map
       if (connections.size === 0) {
         claudeCodeClients.delete(sessionId);
       }
     }
-    
+
     logger.logEvent('CLAUDE_SSE_DISCONNECTED', 'Claude Code SSE client disconnected', {
       sessionId,
       connectionId,
-      remainingConnections: connections?.size || 0
+      remainingConnections: connections?.size || 0,
     });
   };
-  
+
   // Handle both 'close' and 'error' events
   req.on('close', cleanup);
   req.on('error', cleanup);
@@ -5039,16 +5245,16 @@ Generate a greeting now:`;
 app.post('/api/claude/code/cancel', async (req, res) => {
   try {
     const { sessionId, messageId } = req.body;
-    
+
     if (!sessionId || !messageId) {
       return res.status(400).json({ error: 'Session ID and message ID required' });
     }
-    
+
     const session = sessionManager.getSession(sessionId);
     if (!session) {
       return res.status(404).json({ error: 'Session not found' });
     }
-    
+
     // Send cancel event to all SSE connections
     const connections = claudeCodeClients.get(sessionId);
     if (connections) {
@@ -5061,13 +5267,13 @@ app.post('/api/claude/code/cancel', async (req, res) => {
         }
       }
     }
-    
+
     res.json({ success: true });
   } catch (error) {
     console.error('Error cancelling message:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to cancel message',
-      message: error.message 
+      message: error.message,
     });
   }
 });
@@ -5076,58 +5282,60 @@ app.post('/api/claude/code/cancel', async (req, res) => {
 app.post('/api/claude/code/end', async (req, res) => {
   try {
     const { sessionId } = req.body;
-    
+
     logger.logClient('REQUEST', {
       method: 'POST',
       url: '/api/claude/code/end',
-      sessionId
+      sessionId,
     });
-    
+
     console.log('=== END SESSION REQUEST ===');
     console.log('Session ID:', sessionId);
     console.log('All active sessions:', Array.from(sessionManager.getAllSessionIds()));
-    
+
     if (!sessionId) {
       return res.status(400).json({ error: 'Session ID required' });
     }
-    
+
     const session = sessionManager.getSession(sessionId);
     console.log('Session found:', !!session);
-    
+
     // If session not found in memory, try to recover from sessionId
     if (!session) {
       console.log('Session not found in memory, attempting recovery from sessionId:', sessionId);
-      
+
       // SessionId format: projectId-repoName-uuid
       const parts = sessionId.split('-');
       if (parts.length >= 3) {
         const projectId = parts[0];
         // Handle repo names that might contain hyphens
         const repoName = parts.slice(1, -1).join('-');
-        
+
         console.log('Recovered from sessionId:', { projectId, repoName });
-        
+
         // Try to find project path from workspace
         const workspacePath = '/home/dzearing/workspace';
         const projectsPath = path.join(workspacePath, 'projects');
-        
+
         try {
           const projectDirs = await fsAsync.readdir(projectsPath);
           for (const projectName of projectDirs) {
             const projectPath = path.join(projectsPath, projectName);
-            
+
             // Check if this project has the repo we're looking for
             const reposPath = path.join(projectPath, 'repos');
             try {
               const repoDirs = await fsAsync.readdir(reposPath);
               if (repoDirs.includes(repoName)) {
                 console.log('Found project path:', projectPath);
-                
+
                 // Release the repository
                 try {
                   await claudeFlowSettings.releaseRepository(projectPath, repoName);
-                  console.log(`Released repo ${repoName} back to available in claudeflow.settings.json (recovery mode)`);
-                  
+                  console.log(
+                    `Released repo ${repoName} back to available in claudeflow.settings.json (recovery mode)`
+                  );
+
                   res.json({ success: true, message: 'Session ended (recovered)' });
                   return;
                 } catch (err) {
@@ -5142,19 +5350,21 @@ app.post('/api/claude/code/end', async (req, res) => {
           console.error('Error during session recovery:', err);
         }
       }
-      
+
       return res.status(404).json({ error: 'Session not found and recovery failed' });
     }
-    
+
     // Clean up session
     sessionManager.deleteSession(sessionId);
-    
+
     // Remove all SSE connections
     const connections = claudeCodeClients.get(sessionId);
     if (connections) {
       for (const [connId, conn] of connections.entries()) {
         try {
-          conn.res.write(`event: session-end\ndata: ${JSON.stringify({ message: 'Session ended' })}\n\n`);
+          conn.res.write(
+            `event: session-end\ndata: ${JSON.stringify({ message: 'Session ended' })}\n\n`
+          );
           conn.res.end();
         } catch (err) {
           // Connection might already be disconnected
@@ -5162,19 +5372,19 @@ app.post('/api/claude/code/end', async (req, res) => {
       }
       claudeCodeClients.delete(sessionId);
     }
-    
+
     // Mark repo as available again in REPOS.md and clear Claude history
     console.log('Session cleanup:', {
       sessionId,
       repoName: session.repoName,
-      projectPath: session.projectPath
+      projectPath: session.projectPath,
     });
-    
+
     if (session.repoName && session.projectPath) {
       const repoPath = path.join(session.projectPath, 'repos', session.repoName);
-      
+
       console.log('Repo path:', repoPath);
-      
+
       // Clear Claude history for this repo
       try {
         await clearClaudeHistory(repoPath);
@@ -5182,16 +5392,21 @@ app.post('/api/claude/code/end', async (req, res) => {
       } catch (err) {
         console.error('Error clearing Claude history:', err);
       }
-      
+
       // Update claudeflow.settings.json
       try {
         console.log('About to release repository:', session.repoName);
         await claudeFlowSettings.releaseRepository(session.projectPath, session.repoName);
-        console.log(`Released repo ${session.repoName} back to available in claudeflow.settings.json`);
-        
+        console.log(
+          `Released repo ${session.repoName} back to available in claudeflow.settings.json`
+        );
+
         // Verify it was released
         const settings = await claudeFlowSettings.load(session.projectPath);
-        console.log('Verification - repo status after release:', settings.repositories[session.repoName]);
+        console.log(
+          'Verification - repo status after release:',
+          settings.repositories[session.repoName]
+        );
       } catch (err) {
         console.error('Error updating claudeflow.settings.json:', err);
         console.error('Full error:', err.stack);
@@ -5199,22 +5414,21 @@ app.post('/api/claude/code/end', async (req, res) => {
     } else {
       console.log('Warning: No reservedRepo or projectPath in session');
     }
-    
+
     logger.logEvent('CLAUDE_SESSION_ENDED', 'Claude Code session ended successfully', {
       sessionId,
       repoName: session.repoName,
-      projectPath: session.projectPath
+      projectPath: session.projectPath,
     });
-    
+
     logger.logClient('RESPONSE', { status: 200, success: true });
     res.json({ success: true, message: 'Session ended' });
-    
   } catch (error) {
     console.error('Error ending Claude Code session:', error);
     logger.logClient('RESPONSE', { status: 500, error: error.message });
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to end session',
-      message: error.message 
+      message: error.message,
     });
   }
 });
@@ -5223,20 +5437,20 @@ app.post('/api/claude/code/end', async (req, res) => {
 app.post('/api/feedback/screenshot', async (req, res) => {
   try {
     const { imageData, sessionId, repoName } = req.body;
-    
-    logger.logClient('REQUEST', { 
-      method: 'POST', 
+
+    logger.logClient('REQUEST', {
+      method: 'POST',
       url: '/api/feedback/screenshot',
-      sessionId 
+      sessionId,
     });
-    
+
     const result = await feedbackHandler.saveScreenshot(imageData, sessionId, repoName);
-    
-    logger.logClient('RESPONSE', { 
+
+    logger.logClient('RESPONSE', {
       status: result.success ? 200 : 400,
-      success: result.success 
+      success: result.success,
     });
-    
+
     if (result.success) {
       res.json(result);
     } else {
@@ -5244,9 +5458,9 @@ app.post('/api/feedback/screenshot', async (req, res) => {
     }
   } catch (error) {
     logger.error('Screenshot upload error:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Internal server error' 
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
     });
   }
 });
@@ -5254,21 +5468,21 @@ app.post('/api/feedback/screenshot', async (req, res) => {
 app.post('/api/feedback/submit', async (req, res) => {
   try {
     const feedbackData = req.body;
-    
-    logger.logClient('REQUEST', { 
-      method: 'POST', 
+
+    logger.logClient('REQUEST', {
+      method: 'POST',
       url: '/api/feedback/submit',
-      sessionId: feedbackData.sessionId 
+      sessionId: feedbackData.sessionId,
     });
-    
+
     const result = await feedbackHandler.saveFeedback(feedbackData);
-    
-    logger.logClient('RESPONSE', { 
+
+    logger.logClient('RESPONSE', {
       status: result.success ? 200 : 400,
       success: result.success,
-      feedbackId: result.feedbackId 
+      feedbackId: result.feedbackId,
     });
-    
+
     if (result.success) {
       res.json(result);
     } else {
@@ -5276,9 +5490,9 @@ app.post('/api/feedback/submit', async (req, res) => {
     }
   } catch (error) {
     logger.error('Feedback submission error:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Internal server error' 
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
     });
   }
 });
@@ -5289,12 +5503,12 @@ app.listen(PORT, async () => {
   console.log('  - client-messages.log: Client requests and responses');
   console.log('  - claude-messages.log: Claude API interactions');
   console.log('  - events.log: High-level system events');
-  
+
   logger.logEvent('SERVER_READY', `Server listening on port ${PORT}`, {
     port: PORT,
-    frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173'
+    frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
   });
-  
+
   // Check Claude availability on startup
   if (claudeService.isClaudeAvailable) {
     console.log('Claude Code SDK integrated and ready');
@@ -5305,41 +5519,41 @@ app.listen(PORT, async () => {
     console.log('   2. Login: claude login');
     console.log('   Or use mock mode for testing');
   }
-  
+
   // Clean up any orphaned Claude Code reservations on startup
   console.log('Checking for orphaned Claude Code reservations...');
   const workspacePath = '/home/dzearing/workspace';
   const projectsPath = path.join(workspacePath, 'projects');
-  
+
   try {
     const projectDirs = await fsAsync.readdir(projectsPath);
     for (const projectName of projectDirs) {
       if (projectName.startsWith('.')) continue;
-      
+
       const projectPath = path.join(projectsPath, projectName);
       const settingsPath = path.join(projectPath, 'claudeflow.settings.json');
-      
+
       try {
         // Check if settings file exists
         await fsAsync.access(settingsPath);
-        
+
         // Load settings
         const settings = await claudeFlowSettings.load(projectPath);
-        
+
         if (settings.repositories) {
           let hasOrphaned = false;
-          
+
           // Check for orphaned Claude Code reservations
           for (const [repoName, repo] of Object.entries(settings.repositories)) {
             if (repo.status === 'reserved' && repo.reservedBy === 'claude-code') {
               console.log(`Found orphaned Claude Code reservation: ${projectName}/${repoName}`);
-              
+
               // Release it
               await claudeFlowSettings.releaseRepository(projectPath, repoName);
               hasOrphaned = true;
             }
           }
-          
+
           if (hasOrphaned) {
             console.log(`Cleaned up orphaned reservations in ${projectName}`);
           }
@@ -5351,6 +5565,6 @@ app.listen(PORT, async () => {
   } catch (err) {
     console.error('Error cleaning up orphaned reservations:', err);
   }
-  
+
   console.log('Server startup complete');
 });

@@ -49,24 +49,24 @@ export async function runScript({
       const packageInfo = getPackageData(process.cwd());
       const packageName = packageInfo.packageJson.name || path.basename(process.cwd());
       const taskName = path.basename(scriptPath, '.js');
-      
+
       // Map common tools to task names
       const taskMap: Record<string, string> = {
-        'eslint': 'lint',
-        'tsc': 'build',
-        'jest': 'test',
-        'vitest': 'test',
-        'playwright': 'test',
+        eslint: 'lint',
+        tsc: 'build',
+        jest: 'test',
+        vitest: 'test',
+        playwright: 'test',
       };
-      
+
       const displayTask = taskMap[taskName] || taskName;
-      
+
       // Filter out flags and their values, and paths
       const displayArgs: string[] = [];
       for (let i = 0; i < args.length; i++) {
         const arg = args[i];
         if (!arg) continue;
-        
+
         if (arg.startsWith('--') || arg.startsWith('-')) {
           // Skip this arg and potentially the next if it's a value
           const nextArg = args[i + 1];
@@ -77,15 +77,10 @@ export async function runScript({
           displayArgs.push(arg);
         }
       }
-      
+
       const details = displayArgs.length > 0 ? chalk.dim(` (${displayArgs.join(' ')})`) : '';
-      
-      console.log(
-        chalk.cyan(`[${chalk.bold(displayTask)}]`) + 
-        ' ' + 
-        packageName + 
-        details
-      );
+
+      console.log(chalk.cyan(`[${chalk.bold(displayTask)}]`) + ' ' + packageName + details);
     } catch {
       // Fallback if package info can't be found
       console.log(chalk.gray(`[${chalk.bold(name)}] Running...`));

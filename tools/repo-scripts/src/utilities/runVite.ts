@@ -15,17 +15,17 @@ export async function runVite({
   additionalArgs = [],
 }: RunViteOptions): Promise<void> {
   const args = [];
-  
+
   if (command !== 'dev') {
     args.push(command);
   }
-  
+
   if (host) {
     args.push('--host');
   }
-  
+
   args.push(...additionalArgs);
-  
+
   return runScript({
     packageName: 'vite',
     args,

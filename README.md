@@ -5,6 +5,7 @@ A modern project management platform with AI-powered features, built as a monore
 ## Overview
 
 This monorepo contains:
+
 - **V1 Application** - Current production application (React + Express)
 - **V2 Packages** - Next-generation shared packages (coming soon)
 - **Development Tools** - CLI tools and shared configurations
@@ -63,32 +64,34 @@ pnpm dev:v1
 ```
 
 This starts:
+
 - Frontend: http://localhost:5173
 - Backend: http://localhost:3001
 
 ### Available Scripts
 
-| Command | Description |
-|---------|-------------|
-| `pnpm dev` | Interactive development menu |
-| `pnpm build` | Build all packages |
-| `pnpm test` | Run all tests |
-| `pnpm lint` | Lint all packages |
-| `pnpm typecheck` | TypeScript type checking |
-| `pnpm scaffold` | Create new package from template |
+| Command          | Description                      |
+| ---------------- | -------------------------------- |
+| `pnpm dev`       | Interactive development menu     |
+| `pnpm build`     | Build all packages               |
+| `pnpm test`      | Run all tests                    |
+| `pnpm lint`      | Lint all packages                |
+| `pnpm typecheck` | TypeScript type checking         |
+| `pnpm scaffold`  | Create new package from template |
 
 ### V1-Specific Scripts
 
-| Command | Description |
-|---------|-------------|
-| `pnpm dev:v1` | Start v1 development servers |
-| `pnpm build:v1` | Build v1 for production |
-| `pnpm lint:v1` | Lint v1 code |
-| `pnpm test:e2e` | Run v1 e2e tests |
+| Command         | Description                  |
+| --------------- | ---------------------------- |
+| `pnpm dev:v1`   | Start v1 development servers |
+| `pnpm build:v1` | Build v1 for production      |
+| `pnpm lint:v1`  | Lint v1 code                 |
+| `pnpm test:e2e` | Run v1 e2e tests             |
 
 ## Architecture
 
 This monorepo uses:
+
 - **pnpm** - Fast, efficient package manager with workspace support
 - **Lage** - Build orchestration for monorepos
 - **TypeScript** - With project references for fast builds

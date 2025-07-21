@@ -169,7 +169,7 @@ export async function main() {
       .command('dev')
       .description('Start development servers')
       .option('-p, --package <name>', 'start specific package')
-      .option('--no-open', 'don\'t open browser')
+      .option('--no-open', "don't open browser")
       .action(async (options) => {
         await errorHandler(devTask(options));
       });
@@ -204,7 +204,6 @@ export async function main() {
     }
 
     await program.parseAsync(process.argv);
-
   } catch (error) {
     errorHandler(Promise.reject(error));
   }
@@ -248,13 +247,14 @@ export const logger = {
 
   showBanner: () => {
     const banner = boxen(
-      chalk.bold.blue('Claude Flow Repo Scripts') + '\n' +
-      chalk.gray('Monorepo task runner and build tool'),
+      chalk.bold.blue('Claude Flow Repo Scripts') +
+        '\n' +
+        chalk.gray('Monorepo task runner and build tool'),
       {
         padding: 1,
         margin: 1,
         borderStyle: 'round',
-        borderColor: 'blue'
+        borderColor: 'blue',
       }
     );
     console.log(banner);
@@ -266,7 +266,7 @@ export const logger = {
 
   divider: () => {
     console.log(chalk.gray('─'.repeat(process.stdout.columns || 80)));
-  }
+  },
 };
 ```
 
@@ -283,7 +283,7 @@ export class TaskSpinner {
   constructor(text: string) {
     this.spinner = ora({
       text,
-      spinner: 'dots'
+      spinner: 'dots',
     });
   }
 
@@ -334,8 +334,8 @@ export function createTaskList(tasks: any[], options?: any) {
     rendererOptions: {
       showTimer: true,
       collapse: false,
-      showSubtasks: true
-    }
+      showSubtasks: true,
+    },
   });
 }
 ```
@@ -359,17 +359,14 @@ export async function errorHandler(promise: Promise<any>) {
 
 export function handleError(error: unknown) {
   logger.divider();
-  
+
   if (error instanceof Error) {
     // Format error message
-    const errorBox = boxen(
-      chalk.red.bold('Error: ') + error.message,
-      {
-        padding: 1,
-        borderStyle: 'round',
-        borderColor: 'red'
-      }
-    );
+    const errorBox = boxen(chalk.red.bold('Error: ') + error.message, {
+      padding: 1,
+      borderStyle: 'round',
+      borderColor: 'red',
+    });
     console.error(errorBox);
 
     // Show stack trace in debug mode
@@ -395,22 +392,22 @@ function showErrorHints(error: Error) {
   if (error.message.includes('ENOENT')) {
     hints.push('File or directory not found. Check if the path exists.');
   }
-  
+
   if (error.message.includes('EACCES')) {
     hints.push('Permission denied. Try running with appropriate permissions.');
   }
-  
+
   if (error.message.includes('npm') || error.message.includes('pnpm')) {
     hints.push('Package manager error. Try running "pnpm install" first.');
   }
-  
+
   if (error.message.includes('TypeScript')) {
     hints.push('TypeScript error. Run "repo-scripts typecheck" for details.');
   }
 
   if (hints.length > 0) {
     logger.section('Hints:');
-    hints.forEach(hint => logger.info(hint));
+    hints.forEach((hint) => logger.info(hint));
   }
 }
 ```
@@ -427,11 +424,7 @@ export interface ExecOptions extends Options {
   silent?: boolean;
 }
 
-export async function exec(
-  command: string,
-  args: string[] = [],
-  options: ExecOptions = {}
-) {
+export async function exec(command: string, args: string[] = [], options: ExecOptions = {}) {
   const { silent = false, ...execaOptions } = options;
 
   if (!silent) {
@@ -441,7 +434,7 @@ export async function exec(
   try {
     const result = await execa(command, args, {
       preferLocal: true,
-      ...execaOptions
+      ...execaOptions,
     });
 
     return result;
@@ -456,11 +449,7 @@ export async function exec(
 export async function execParallel(
   commands: Array<{ command: string; args?: string[]; options?: ExecOptions }>
 ) {
-  return Promise.all(
-    commands.map(({ command, args, options }) => 
-      exec(command, args, options)
-    )
-  );
+  return Promise.all(commands.map(({ command, args, options }) => exec(command, args, options)));
 }
 
 export function isCI(): boolean {
@@ -508,22 +497,22 @@ export async function buildTask(options: BuildOptions) {
     }
 
     // Create build tasks
-    const tasks = packages.map(pkg => ({
+    const tasks = packages.map((pkg) => ({
       title: `Building ${pkg.name}`,
       task: async (ctx: any, task: any) => {
         const startTime = Date.now();
-        
+
         await exec('pnpm', ['build'], {
           cwd: pkg.path,
           env: {
             ...process.env,
-            NO_CACHE: options.cache === false ? '1' : '0'
-          }
+            NO_CACHE: options.cache === false ? '1' : '0',
+          },
         });
 
         const duration = ((Date.now() - startTime) / 1000).toFixed(2);
         task.title = `Built ${pkg.name} in ${duration}s`;
-      }
+      },
     }));
 
     // Execute builds
@@ -535,7 +524,6 @@ export async function buildTask(options: BuildOptions) {
 
     // Show build summary
     showBuildSummary(packages);
-
   } catch (error) {
     spinner.fail('Build failed');
     throw error;
@@ -548,34 +536,34 @@ async function findPackages(packageName?: string) {
     const patterns = [
       `packages/apps/${packageName}/package.json`,
       `packages/shared/${packageName}/package.json`,
-      `packages/tools/${packageName}/package.json`
+      `packages/tools/${packageName}/package.json`,
     ];
-    
+
     const files = await glob(patterns, { ignore: ['**/node_modules/**'] });
-    return files.map(file => ({
+    return files.map((file) => ({
       name: path.basename(path.dirname(file)),
-      path: path.dirname(file)
+      path: path.dirname(file),
     }));
   }
 
   // Find all packages
   const files = await glob('packages/**/package.json', {
-    ignore: ['**/node_modules/**']
+    ignore: ['**/node_modules/**'],
   });
-  
-  return files.map(file => ({
+
+  return files.map((file) => ({
     name: path.basename(path.dirname(file)),
-    path: path.dirname(file)
+    path: path.dirname(file),
   }));
 }
 
 function showBuildSummary(packages: Array<{ name: string; path: string }>) {
   logger.section('Build Summary');
-  
-  const summary = packages.map(pkg => ({
+
+  const summary = packages.map((pkg) => ({
     Package: pkg.name,
     Path: path.relative(process.cwd(), pkg.path),
-    Status: '✓ Built'
+    Status: '✓ Built',
   }));
 
   logger.table(summary);
@@ -601,15 +589,15 @@ export async function testTask(options: TestOptions) {
   logger.section('Test Task');
 
   const args = ['test'];
-  
+
   if (options.watch && !isCI()) {
     args.push('--watch');
   }
-  
+
   if (options.coverage) {
     args.push('--coverage');
   }
-  
+
   if (options.updateSnapshots) {
     args.push('--update-snapshots');
   }
@@ -619,7 +607,7 @@ export async function testTask(options: TestOptions) {
 
   try {
     const result = await exec('pnpm', args, {
-      stdio: 'inherit'
+      stdio: 'inherit',
     });
 
     spinner.succeed('All tests passed!');
@@ -627,20 +615,19 @@ export async function testTask(options: TestOptions) {
     if (options.coverage) {
       logger.info('Coverage report generated at ./coverage');
     }
-
   } catch (error: any) {
     spinner.fail('Tests failed');
-    
+
     // Extract test failure summary
     if (error.stdout) {
       const failureMatch = error.stdout.match(/(\d+) failed/);
       const passMatch = error.stdout.match(/(\d+) passed/);
-      
+
       if (failureMatch && passMatch) {
         logger.error(`${failureMatch[1]} tests failed, ${passMatch[1]} passed`);
       }
     }
-    
+
     throw error;
   }
 }

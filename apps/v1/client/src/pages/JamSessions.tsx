@@ -17,24 +17,28 @@ export function JamSessions() {
   const [newSessionData, setNewSessionData] = useState({
     title: '',
     workItemId: '',
-    participantIds: [] as string[]
+    participantIds: [] as string[],
   });
-  
+
   // Clear header content on mount
   useEffect(() => {
     setHeaderContent(null);
   }, [setHeaderContent]);
-  
-  const activeSessions = jamSessions.filter(s => s.status === 'active');
+
+  const activeSessions = jamSessions.filter((s) => s.status === 'active');
   // No planned status for jam sessions - they are either active or completed
-  const completedSessions = jamSessions.filter(s => s.status === 'completed');
-  
+  const completedSessions = jamSessions.filter((s) => s.status === 'completed');
+
   const getSessionIcon = () => {
     return '💬'; // Default chat icon for all sessions
   };
 
   const handleCreateSession = () => {
-    if (newSessionData.title && newSessionData.workItemId && newSessionData.participantIds.length > 0) {
+    if (
+      newSessionData.title &&
+      newSessionData.workItemId &&
+      newSessionData.participantIds.length > 0
+    ) {
       const sessionId = startJamSession(
         newSessionData.workItemId,
         newSessionData.participantIds,
@@ -42,26 +46,26 @@ export function JamSessions() {
       );
       setShowNewSessionForm(false);
       setNewSessionData({ title: '', workItemId: '', participantIds: [] });
-      
+
       // Navigate to the new session
       navigate(`/jam-sessions/${sessionId}`);
     }
   };
 
   const toggleParticipant = (personaId: string) => {
-    setNewSessionData(prev => ({
+    setNewSessionData((prev) => ({
       ...prev,
       participantIds: prev.participantIds.includes(personaId)
-        ? prev.participantIds.filter(id => id !== personaId)
-        : [...prev.participantIds, personaId]
+        ? prev.participantIds.filter((id) => id !== personaId)
+        : [...prev.participantIds, personaId],
     }));
   };
-  
+
   const SessionCard = ({ session }: { session: JamSession }) => {
     const isSelected = selectedSession === session.id;
-    const participants = personas.filter(p => session.participantIds.includes(p.id));
+    const participants = personas.filter((p) => session.participantIds.includes(p.id));
     const relatedWorkItem = session.workItemId ? { id: session.workItemId } : null;
-    
+
     return (
       <div
         onClick={() => setSelectedSession(isSelected ? null : session.id)}
@@ -75,12 +79,8 @@ export function JamSessions() {
           <div className="flex items-center gap-3">
             <span className="text-2xl">{getSessionIcon()}</span>
             <div>
-              <h3 className={`text-lg font-semibold ${styles.headingColor}`}>
-                {session.title}
-              </h3>
-              <p className={`text-sm ${styles.mutedText}`}>
-                Jam Session
-              </p>
+              <h3 className={`text-lg font-semibold ${styles.headingColor}`}>{session.title}</h3>
+              <p className={`text-sm ${styles.mutedText}`}>Jam Session</p>
             </div>
           </div>
           {session.status === 'active' && (
@@ -90,37 +90,40 @@ export function JamSessions() {
             </span>
           )}
         </div>
-        
-        {session.summary && (
-          <p className={`${styles.textColor} mb-4`}>{session.summary}</p>
-        )}
-        
+
+        {session.summary && <p className={`${styles.textColor} mb-4`}>{session.summary}</p>}
+
         {relatedWorkItem && (
           <div className={`text-sm ${styles.mutedText} mb-3`}>
             Work Item ID: {relatedWorkItem.id}
           </div>
         )}
-        
+
         <div className="flex items-center gap-4 text-sm">
           <div className={`flex items-center gap-2 ${styles.mutedText}`}>
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+              />
             </svg>
             <span>{participants.length} participants</span>
           </div>
-          
+
           {/* Scheduled time - not implemented */}
-          
+
           {/* Duration - not implemented */}
         </div>
-        
+
         {isSelected && (
           <div className={`mt-4 pt-4 border-t ${styles.contentBorder}`}>
             <div className="space-y-3">
               <div>
                 <h4 className={`text-sm font-medium ${styles.headingColor} mb-2`}>Participants</h4>
                 <div className="flex flex-wrap gap-2">
-                  {participants.map(p => (
+                  {participants.map((p) => (
                     <span
                       key={p.id}
                       className={`
@@ -134,11 +137,11 @@ export function JamSessions() {
                   ))}
                 </div>
               </div>
-              
+
               {/* Notes - not implemented */}
-              
+
               {/* Action items - not implemented */}
-              
+
               {session.status === 'active' && (
                 <Button
                   onClick={(e) => {
@@ -158,7 +161,7 @@ export function JamSessions() {
       </div>
     );
   };
-  
+
   return (
     <div>
       <div className="flex justify-between items-start mb-6">
@@ -169,20 +172,21 @@ export function JamSessions() {
           </p>
         </div>
         {jamSessions.length > 0 && (
-          <Button
-            onClick={() => setShowNewSessionForm(!showNewSessionForm)}
-            variant="primary"
-          >
+          <Button onClick={() => setShowNewSessionForm(!showNewSessionForm)} variant="primary">
             Start new session
           </Button>
         )}
       </div>
-      
+
       {/* New Session Form */}
       {showNewSessionForm && (
-        <div className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-6 mb-6`}>
-          <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4`}>Start new jam session</h2>
-          
+        <div
+          className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-6 mb-6`}
+        >
+          <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4`}>
+            Start new jam session
+          </h2>
+
           <div className="space-y-4">
             <div>
               <label className={`block text-sm font-medium ${styles.textColor} mb-1`}>
@@ -191,7 +195,7 @@ export function JamSessions() {
               <input
                 type="text"
                 value={newSessionData.title}
-                onChange={(e) => setNewSessionData(prev => ({ ...prev, title: e.target.value }))}
+                onChange={(e) => setNewSessionData((prev) => ({ ...prev, title: e.target.value }))}
                 className={`
                   w-full px-3 py-2 ${styles.buttonRadius}
                   ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
@@ -200,14 +204,16 @@ export function JamSessions() {
                 placeholder="e.g., Review authentication flow"
               />
             </div>
-            
+
             <div>
               <label className={`block text-sm font-medium ${styles.textColor} mb-1`}>
                 Related work item
               </label>
               <select
                 value={newSessionData.workItemId}
-                onChange={(e) => setNewSessionData(prev => ({ ...prev, workItemId: e.target.value }))}
+                onChange={(e) =>
+                  setNewSessionData((prev) => ({ ...prev, workItemId: e.target.value }))
+                }
                 className={`
                   w-full px-3 py-2 ${styles.buttonRadius}
                   ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
@@ -215,23 +221,29 @@ export function JamSessions() {
                 `}
               >
                 <option value="">Select a work item</option>
-                {workItems.filter(w => w.status === 'active' || w.status === 'planned').map(item => (
-                  <option key={item.id} value={item.id}>{item.title}</option>
-                ))}
+                {workItems
+                  .filter((w) => w.status === 'active' || w.status === 'planned')
+                  .map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.title}
+                    </option>
+                  ))}
               </select>
             </div>
-            
+
             <div>
               <label className={`block text-sm font-medium ${styles.textColor} mb-2`}>
                 Participants
               </label>
               <div className="grid grid-cols-2 gap-2">
-                {personas.map(persona => (
+                {personas.map((persona) => (
                   <Button
                     key={persona.id}
                     type="button"
                     onClick={() => toggleParticipant(persona.id)}
-                    variant={newSessionData.participantIds.includes(persona.id) ? "primary" : "secondary"}
+                    variant={
+                      newSessionData.participantIds.includes(persona.id) ? 'primary' : 'secondary'
+                    }
                     size="sm"
                     className="text-sm"
                   >
@@ -240,11 +252,15 @@ export function JamSessions() {
                 ))}
               </div>
             </div>
-            
+
             <div className="flex gap-2 pt-2">
               <Button
                 onClick={handleCreateSession}
-                disabled={!newSessionData.title || !newSessionData.workItemId || newSessionData.participantIds.length === 0}
+                disabled={
+                  !newSessionData.title ||
+                  !newSessionData.workItemId ||
+                  newSessionData.participantIds.length === 0
+                }
                 variant="primary"
               >
                 Start session
@@ -262,74 +278,71 @@ export function JamSessions() {
           </div>
         </div>
       )}
-      
+
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-        <div className={`
+        <div
+          className={`
           ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius}
           ${styles.cardShadow} p-4 text-center
-        `}>
-          <div className={`text-3xl font-bold ${styles.headingColor}`}>
-            {activeSessions.length}
-          </div>
+        `}
+        >
+          <div className={`text-3xl font-bold ${styles.headingColor}`}>{activeSessions.length}</div>
           <div className={`text-sm ${styles.mutedText}`}>Active Sessions</div>
         </div>
-        <div className={`
+        <div
+          className={`
           ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius}
           ${styles.cardShadow} p-4 text-center
-        `}>
+        `}
+        >
           <div className={`text-3xl font-bold ${styles.headingColor}`}>
             {completedSessions.length}
           </div>
           <div className={`text-sm ${styles.mutedText}`}>Completed Sessions</div>
         </div>
       </div>
-      
+
       {/* Active Sessions */}
       {activeSessions.length > 0 && (
         <div className="mb-8">
-          <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4`}>
-            Active Sessions
-          </h2>
+          <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4`}>Active Sessions</h2>
           <div className="grid gap-4">
-            {activeSessions.map(session => (
+            {activeSessions.map((session) => (
               <SessionCard key={session.id} session={session} />
             ))}
           </div>
         </div>
       )}
-      
+
       {/* Planned Sessions - not implemented */}
-      
+
       {/* Completed Sessions */}
       {completedSessions.length > 0 && (
         <div className="mb-8">
-          <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4`}>
-            Past Sessions
-          </h2>
+          <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4`}>Past Sessions</h2>
           <div className="grid gap-4 opacity-75">
-            {completedSessions.map(session => (
+            {completedSessions.map((session) => (
               <SessionCard key={session.id} session={session} />
             ))}
           </div>
         </div>
       )}
-      
+
       {jamSessions.length === 0 && (
-        <div className={`
+        <div
+          className={`
           ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius}
           ${styles.cardShadow} p-12 text-center
-        `}>
+        `}
+        >
           <span className="text-6xl mb-4 block">💬</span>
           <h3 className={`text-lg font-medium ${styles.headingColor}`}>No jam sessions yet</h3>
           <p className={`mt-2 ${styles.mutedText}`}>
             Start your first collaborative session to brainstorm ideas and solve problems together.
           </p>
           <div className="mt-6">
-            <Button
-              onClick={() => setShowNewSessionForm(true)}
-              variant="primary"
-            >
+            <Button onClick={() => setShowNewSessionForm(true)} variant="primary">
               Start new session
             </Button>
           </div>
