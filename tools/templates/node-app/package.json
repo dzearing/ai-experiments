@@ -4,21 +4,23 @@
   "private": true,
   "description": "{{description}}",
   "type": "module",
+  "packageType": "node-app",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "scripts": {
-    "build": "tsc -b",
-    "dev": "tsc -b --watch",
+    "build": "repo-scripts build",
     "clean": "repo-scripts clean",
-    "lint": "eslint src/**/*.ts",
-    "lint:fix": "eslint src/**/*.ts --fix",
-    "test": "echo 'No tests configured'",
-    "typecheck": "tsc --noEmit"
+    "dev": "repo-scripts dev",
+    "lint": "repo-scripts lint",
+    "lint:fix": "repo-scripts lint-fix",
+    "test": "repo-scripts test",
+    "test:watch": "repo-scripts test-watch",
+    "typecheck": "repo-scripts typecheck"
   },
   "dependencies": {},
   "devDependencies": {
+    "@claude-flow/repo-scripts": "workspace:*",
     "@claude-flow/tsconfig": "workspace:*",
-    "@types/node": "^20.0.0",
-    "typescript": "~5.8.3"
+    "@types/node": "^20.0.0"
   }
 }

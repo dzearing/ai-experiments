@@ -6,6 +6,7 @@
   "files": [
     "base.json",
     "react.json",
+    "react-library.json",
     "node.json"
   ],
   "scripts": {}

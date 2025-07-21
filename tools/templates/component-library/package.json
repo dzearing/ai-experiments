@@ -4,6 +4,7 @@
   "private": true,
   "description": "{{description}}",
   "type": "module",
+  "packageType": "component-library",
   "main": "./lib/index.js",
   "module": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -18,18 +19,18 @@
     "lib"
   ],
   "scripts": {
-    "build": "tcm src && tsc -b && cp src/**/*.css lib/",
-    "build:storybook": "storybook build",
-    "dev": "concurrently \"tsc -b --watch\" \"tcm src --watch\"",
-    "dev:storybook": "storybook dev -p 6006",
-    "dev:storybook:host": "storybook dev -p 6006 --host 0.0.0.0",
+    "build": "repo-scripts build",
+    "build:storybook": "repo-scripts build-storybook",
     "clean": "repo-scripts clean",
-    "lint": "eslint src/**/*.{ts,tsx}",
-    "lint:fix": "eslint src/**/*.{ts,tsx} --fix",
-    "test": "echo 'No tests configured'",
-    "typecheck": "tcm src && tsc --noEmit",
-    "tcm": "tcm src",
-    "tcm:watch": "tcm src --watch"
+    "dev": "repo-scripts dev",
+    "dev:storybook": "repo-scripts dev-storybook",
+    "dev:storybook:wsl": "repo-scripts dev-storybook-wsl",
+    "dev:wsl": "repo-scripts dev-wsl",
+    "lint": "repo-scripts lint",
+    "lint:fix": "repo-scripts lint-fix",
+    "test": "repo-scripts test",
+    "test:watch": "repo-scripts test-watch",
+    "typecheck": "repo-scripts typecheck"
   },
   "dependencies": {
     "classnames": "^2.5.1"
@@ -39,25 +40,11 @@
     "react-dom": "^18.0.0 || ^19.0.0"
   },
   "devDependencies": {
+    "@claude-flow/repo-scripts": "workspace:*",
     "@claude-flow/tsconfig": "workspace:*",
-    "@chromatic-com/storybook": "^1.0.0",
-    "@storybook/addon-essentials": "^8.0.0",
-    "@storybook/addon-interactions": "^8.0.0",
-    "@storybook/addon-links": "^8.0.0",
-    "@storybook/blocks": "^8.0.0",
-    "@storybook/react": "^8.0.0",
-    "@storybook/react-vite": "^8.0.0",
-    "@storybook/test": "^8.0.0",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
-    "@vitejs/plugin-react": "^4.5.2",
-    "concurrently": "^8.2.0",
-    "eslint-plugin-storybook": "^0.12.0",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "storybook": "^8.0.0",
-    "typed-css-modules": "^0.9.1",
-    "typescript": "~5.8.3",
-    "vite": "^7.0.0"
+    "react-dom": "^19.1.0"
   }
 }

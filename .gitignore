@@ -38,4 +38,4 @@ test-results/
 temp/
 
 # Generated CSS module type definitions
-*.module.css.d.ts
+*.css.d.ts

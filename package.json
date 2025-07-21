@@ -30,5 +30,11 @@
     "typed-css-modules": "^0.9.1",
     "workspace-tools": "^0.38.4"
   },
+  "pnpm": {
+    "overrides": {
+      "glob@<9": "^11.0.0",
+      "inflight": "npm:@esm2cjs/inflight@^2.0.0"
+    }
+  },
   "packageManager": "pnpm@9.0.0"
 }

@@ -128,41 +128,43 @@ const scaffold: Task = {
       console.log(chalk.gray(`  Location: ${targetPath}`));
       console.log();
 
+      // Store the original cwd before changing directory
+      const originalCwd = process.cwd();
+      
       // Change to the new directory
       process.chdir(targetPath);
       console.log(chalk.blue('Installing dependencies...'));
       
       // Install dependencies
       const { execa } = await import('execa');
-      try {
-        await execa('pnpm', ['install'], { stdio: 'inherit' });
-        console.log(chalk.green('✓ Dependencies installed'));
-        console.log();
-
-        // Start dev server for react-app and component-library
-        if (templateType === 'react-app' || templateType === 'component-library') {
-          console.log(chalk.cyan('Starting development server...'));
-          console.log(chalk.gray('Press Ctrl+C to stop'));
-          console.log();
+      await execa('pnpm', ['install'], { stdio: 'inherit' });
+      console.log(chalk.green('✓ Dependencies installed'));
+      console.log();
+      
+      console.log(chalk.green('✨ Package created successfully!'));
+      console.log();
+      console.log(chalk.cyan('Next steps:'));
+      console.log(chalk.yellow(`  cd ${path.relative(originalCwd, targetPath)}`));
+      
+      switch (templateType) {
+        case 'component-library':
+          console.log(chalk.gray('  pnpm dev          # Start Storybook'));
+          console.log(chalk.gray('  pnpm build        # Build library'));
+          console.log(chalk.gray('  pnpm test         # Run tests'));
+          break;
           
-          await execa('pnpm', ['dev'], { stdio: 'inherit' });
-        } else {
-          // For node-app, just build it
-          console.log(chalk.blue('Building package...'));
-          await execa('pnpm', ['build'], { stdio: 'inherit' });
-          console.log(chalk.green('✓ Build complete'));
-          console.log();
-          console.log(chalk.cyan('Package is ready!'));
-          console.log(chalk.gray(`You can run it with: node lib/index.js`));
-        }
-      } catch (error) {
-        // If the dev server is stopped with Ctrl+C, this is normal
-        if (error && typeof error === 'object' && 'signal' in error && error.signal === 'SIGINT') {
-          console.log();
-          console.log(chalk.yellow('Development server stopped'));
-        } else {
-          throw error;
-        }
+        case 'react-app':
+          console.log(chalk.gray('  pnpm dev          # Start development server'));
+          console.log(chalk.gray('  pnpm dev:storybook # Start Storybook'));
+          console.log(chalk.gray('  pnpm build        # Build for production'));
+          console.log(chalk.gray('  pnpm test         # Run tests'));
+          break;
+          
+        case 'node-app':
+          console.log(chalk.gray('  pnpm dev          # Start TypeScript watch mode'));
+          console.log(chalk.gray('  pnpm build        # Build for production'));
+          console.log(chalk.gray('  pnpm test         # Run tests'));
+          break;
       }
 
       return { success: true };
