@@ -1,3 +1,10 @@
-import { node } from './lib/index.js';
+import js from '@eslint/js';
+import tseslint from 'typescript-eslint';
 
-export default node;
+export default tseslint.config(
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
+  {
+    ignores: ['**/dist/**', '**/lib/**', '**/node_modules/**', '**/*.d.ts'],
+  }
+);
