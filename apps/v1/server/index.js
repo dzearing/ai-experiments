@@ -25,7 +25,7 @@ logger.initializeLogs();
   try {
     await sessionManager.initialize();
     logger.info('Session manager initialized successfully');
-    
+
     await userProfileManager.initialize();
     logger.info('User profile manager initialized successfully');
   } catch (error) {
@@ -126,16 +126,16 @@ app.get('/api/user-profile', (req, res) => {
 app.post('/api/user-profile/workspace', async (req, res) => {
   try {
     const { workspaceRoot } = req.body;
-    
+
     if (!workspaceRoot) {
       return res.status(400).json({ error: 'workspaceRoot is required' });
     }
-    
+
     const profile = await userProfileManager.setWorkspaceRoot(workspaceRoot);
-    
+
     // Invalidate workspace cache when workspace changes
     invalidateCache('workspace:');
-    
+
     res.json(profile);
   } catch (error) {
     logger.error('Failed to update workspace root:', error);
@@ -146,11 +146,11 @@ app.post('/api/user-profile/workspace', async (req, res) => {
 app.post('/api/user-profile/preferences', async (req, res) => {
   try {
     const { preferences } = req.body;
-    
+
     if (!preferences || typeof preferences !== 'object') {
       return res.status(400).json({ error: 'preferences object is required' });
     }
-    
+
     const profile = await userProfileManager.updatePreferences(preferences);
     res.json(profile);
   } catch (error) {
@@ -5584,7 +5584,7 @@ app.listen(PORT, async () => {
     console.log('User profile not initialized yet, skipping orphaned reservation cleanup');
     return;
   }
-  
+
   if (!workspacePath) {
     console.log('No workspace root configured yet, skipping orphaned reservation cleanup');
     return;

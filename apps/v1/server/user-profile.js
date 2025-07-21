@@ -28,7 +28,7 @@ class UserProfileManager {
           this.profile = {
             workspaceRoot: null,
             lastUpdated: new Date().toISOString(),
-            preferences: {}
+            preferences: {},
           };
           await this.save();
           logger.info('Created new user profile');
@@ -46,11 +46,7 @@ class UserProfileManager {
 
   async save() {
     try {
-      await fsAsync.writeFile(
-        USER_PROFILE_PATH,
-        JSON.stringify(this.profile, null, 2),
-        'utf8'
-      );
+      await fsAsync.writeFile(USER_PROFILE_PATH, JSON.stringify(this.profile, null, 2), 'utf8');
       logger.info('User profile saved', { profile: this.profile });
     } catch (error) {
       logger.error('Failed to save user profile:', error);
@@ -66,7 +62,7 @@ class UserProfileManager {
     this.profile.workspaceRoot = workspaceRoot;
     this.profile.lastUpdated = new Date().toISOString();
     await this.save();
-    
+
     logger.logEvent('WORKSPACE_CHANGED', 'Workspace root updated', { workspaceRoot });
     return this.profile;
   }
