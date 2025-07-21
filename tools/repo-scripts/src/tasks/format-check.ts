@@ -15,7 +15,7 @@ const formatCheck: Task = {
         args: ['--check', '.', ...additionalArgs],
       });
       console.log(chalk.green('✓ All files are properly formatted'));
-    } catch (error) {
+    } catch {
       console.log(chalk.red('\n✗ Code formatting issues found'));
       console.log(chalk.yellow('\nRun the following command to fix formatting:'));
       console.log(chalk.cyan('  pnpm format\n'));

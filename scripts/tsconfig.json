@@ -1,9 +1,0 @@
-{
-  "extends": "@claude-flow/tsconfig/node.json",
-  "compilerOptions": {
-    "allowJs": true,
-    "checkJs": true
-  },
-  "include": ["**/*.js", "**/*.mjs", "**/*.ts", "**/*.json"],
-  "exclude": ["node_modules"]
-}

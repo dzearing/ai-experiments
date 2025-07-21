@@ -10,6 +10,9 @@ module.exports = {
     lint: {
       dependsOn: [],
     },
+    'lint:fix': {
+      dependsOn: [],
+    },
     'format:check': {
       dependsOn: [],
       cache: true,
