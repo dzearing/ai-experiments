@@ -21,15 +21,38 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   });
   const [projects, setProjects] = useState<WorkspaceProject[]>([]);
 
-  // Load workspace config from localStorage on mount
+  // Load workspace config from user profile on mount
   useEffect(() => {
-    const savedConfig = localStorage.getItem('workspaceConfig');
-    if (savedConfig) {
-      const config = JSON.parse(savedConfig) as WorkspaceConfig;
-      setWorkspace((prev) => ({ ...prev, config }));
-      loadWorkspaceData(config.path);
-    }
+    loadUserProfile();
   }, []);
+
+  const loadUserProfile = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/api/user-profile');
+      if (response.ok) {
+        const profile = await response.json();
+        if (profile.workspaceRoot) {
+          const config: WorkspaceConfig = {
+            path: profile.workspaceRoot,
+            name: profile.workspaceRoot.split('/').pop() || 'Workspace',
+          };
+          setWorkspace((prev) => ({ ...prev, config }));
+          loadWorkspaceData(profile.workspaceRoot);
+        }
+      } else {
+        console.error('Failed to load user profile');
+      }
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+      // Fall back to localStorage if server is not available
+      const savedConfig = localStorage.getItem('workspaceConfig');
+      if (savedConfig) {
+        const config = JSON.parse(savedConfig) as WorkspaceConfig;
+        setWorkspace((prev) => ({ ...prev, config }));
+        loadWorkspaceData(config.path);
+      }
+    }
+  };
 
   const loadWorkspaceData = async (path: string) => {
     setWorkspace((prev) => ({ ...prev, isLoading: true, error: null }));
@@ -181,7 +204,24 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       console.warn('Could not create workspace structure:', error);
     }
 
-    // Save to localStorage
+    // Save to user profile
+    try {
+      const profileResponse = await fetch('http://localhost:3000/api/user-profile/workspace', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ workspaceRoot: path }),
+      });
+
+      if (!profileResponse.ok) {
+        console.error('Failed to update user profile:', await profileResponse.text());
+      }
+    } catch (error) {
+      console.error('Error updating user profile:', error);
+    }
+
+    // Also save to localStorage as fallback
     localStorage.setItem('workspaceConfig', JSON.stringify(config));
 
     // Update state

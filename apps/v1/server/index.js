@@ -12,6 +12,7 @@ const fsAsync = fs.promises;
 const logger = require('./logger');
 const sessionManager = require('./session-manager');
 const feedbackHandler = require('./feedback-handler');
+const userProfileManager = require('./user-profile');
 
 // Load .env from parent directory
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
@@ -19,13 +20,16 @@ dotenv.config({ path: path.join(__dirname, '..', '.env') });
 // Initialize logging system
 logger.initializeLogs();
 
-// Initialize session manager on startup
+// Initialize managers on startup
 (async () => {
   try {
     await sessionManager.initialize();
     logger.info('Session manager initialized successfully');
+    
+    await userProfileManager.initialize();
+    logger.info('User profile manager initialized successfully');
   } catch (error) {
-    logger.error('Failed to initialize session manager:', error);
+    logger.error('Failed to initialize managers:', error);
     process.exit(1);
   }
 })();
@@ -106,6 +110,53 @@ function invalidateCache(pattern) {
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', claudeAvailable: true });
+});
+
+// User profile endpoints
+app.get('/api/user-profile', (req, res) => {
+  try {
+    const profile = userProfileManager.getProfile();
+    res.json(profile);
+  } catch (error) {
+    logger.error('Failed to get user profile:', error);
+    res.status(500).json({ error: 'Failed to get user profile' });
+  }
+});
+
+app.post('/api/user-profile/workspace', async (req, res) => {
+  try {
+    const { workspaceRoot } = req.body;
+    
+    if (!workspaceRoot) {
+      return res.status(400).json({ error: 'workspaceRoot is required' });
+    }
+    
+    const profile = await userProfileManager.setWorkspaceRoot(workspaceRoot);
+    
+    // Invalidate workspace cache when workspace changes
+    invalidateCache('workspace:');
+    
+    res.json(profile);
+  } catch (error) {
+    logger.error('Failed to update workspace root:', error);
+    res.status(500).json({ error: 'Failed to update workspace root' });
+  }
+});
+
+app.post('/api/user-profile/preferences', async (req, res) => {
+  try {
+    const { preferences } = req.body;
+    
+    if (!preferences || typeof preferences !== 'object') {
+      return res.status(400).json({ error: 'preferences object is required' });
+    }
+    
+    const profile = await userProfileManager.updatePreferences(preferences);
+    res.json(profile);
+  } catch (error) {
+    logger.error('Failed to update preferences:', error);
+    res.status(500).json({ error: 'Failed to update preferences' });
+  }
 });
 
 // SSE endpoint for real-time updates
@@ -5314,7 +5365,11 @@ app.post('/api/claude/code/end', async (req, res) => {
         console.log('Recovered from sessionId:', { projectId, repoName });
 
         // Try to find project path from workspace
-        const workspacePath = '/home/dzearing/workspace';
+        const workspacePath = userProfileManager.getWorkspaceRoot();
+        if (!workspacePath) {
+          console.error('No workspace root configured in user profile');
+          return res.status(400).json({ error: 'No workspace root configured' });
+        }
         const projectsPath = path.join(workspacePath, 'projects');
 
         try {
@@ -5522,7 +5577,18 @@ app.listen(PORT, async () => {
 
   // Clean up any orphaned Claude Code reservations on startup
   console.log('Checking for orphaned Claude Code reservations...');
-  const workspacePath = '/home/dzearing/workspace';
+  let workspacePath;
+  try {
+    workspacePath = userProfileManager.getWorkspaceRoot();
+  } catch (error) {
+    console.log('User profile not initialized yet, skipping orphaned reservation cleanup');
+    return;
+  }
+  
+  if (!workspacePath) {
+    console.log('No workspace root configured yet, skipping orphaned reservation cleanup');
+    return;
+  }
   const projectsPath = path.join(workspacePath, 'projects');
 
   try {
