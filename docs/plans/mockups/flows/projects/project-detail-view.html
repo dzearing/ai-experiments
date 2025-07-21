@@ -1,826 +1,856 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>E-commerce Platform - Claude Flow</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-        :root {
-            --bg-color: #f9fafb;
-            --card-bg: #ffffff;
-            --text-primary: #111827;
-            --text-secondary: #6b7280;
-            --text-muted: #9ca3af;
-            --border-color: #e5e7eb;
-            --primary-color: #3b82f6;
-            --primary-hover: #2563eb;
-            --success-color: #10b981;
-            --warning-color: #f59e0b;
-            --danger-color: #ef4444;
-            --purple-color: #8b5cf6;
-            --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
+      :root {
+        --bg-color: #f9fafb;
+        --card-bg: #ffffff;
+        --text-primary: #111827;
+        --text-secondary: #6b7280;
+        --text-muted: #9ca3af;
+        --border-color: #e5e7eb;
+        --primary-color: #3b82f6;
+        --primary-hover: #2563eb;
+        --success-color: #10b981;
+        --warning-color: #f59e0b;
+        --danger-color: #ef4444;
+        --purple-color: #8b5cf6;
+        --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
 
-        [data-theme="dark"] {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --text-primary: #f1f5f9;
-            --text-secondary: #94a3b8;
-            --text-muted: #64748b;
-            --border-color: #334155;
-            --shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
+      [data-theme='dark'] {
+        --bg-color: #0f172a;
+        --card-bg: #1e293b;
+        --text-primary: #f1f5f9;
+        --text-secondary: #94a3b8;
+        --text-muted: #64748b;
+        --border-color: #334155;
+        --shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      }
 
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            transition: all 0.3s ease;
-        }
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-primary);
+        transition: all 0.3s ease;
+      }
 
-        .header {
-            height: 64px;
-            background: var(--card-bg);
-            box-shadow: var(--shadow);
-            display: flex;
-            align-items: center;
-            padding: 0 24px;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
+      .header {
+        height: 64px;
+        background: var(--card-bg);
+        box-shadow: var(--shadow);
+        display: flex;
+        align-items: center;
+        padding: 0 24px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
 
-        .header h1 {
-            font-size: 20px;
-            font-weight: 600;
-            margin-right: auto;
-        }
+      .header h1 {
+        font-size: 20px;
+        font-weight: 600;
+        margin-right: auto;
+      }
 
-        .theme-toggle {
-            background: none;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 8px 12px;
-            color: var(--text-primary);
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s ease;
-        }
+      .theme-toggle {
+        background: none;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 8px 12px;
+        color: var(--text-primary);
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.2s ease;
+      }
 
-        .theme-toggle:hover {
-            background: var(--bg-color);
-        }
+      .theme-toggle:hover {
+        background: var(--bg-color);
+      }
 
-        .breadcrumb {
-            padding: 0 24px;
-            margin: 24px 0;
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
+      .breadcrumb {
+        padding: 0 24px;
+        margin: 24px 0;
+        color: var(--text-secondary);
+        font-size: 14px;
+      }
 
-        .breadcrumb a {
-            color: var(--text-secondary);
-            text-decoration: none;
-        }
+      .breadcrumb a {
+        color: var(--text-secondary);
+        text-decoration: none;
+      }
 
-        .breadcrumb .current {
-            color: var(--text-primary);
-        }
+      .breadcrumb .current {
+        color: var(--text-primary);
+      }
 
+      .project-header {
+        margin: 0 24px 24px;
+        background: var(--card-bg);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        padding: 20px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 40px;
+        align-items: center;
+      }
+
+      .project-info h2 {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+
+      .status-badge {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+        margin-bottom: 8px;
+      }
+
+      .status-active {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+
+      .project-description {
+        color: var(--text-secondary);
+        font-size: 14px;
+      }
+
+      .project-stats {
+        text-align: right;
+      }
+
+      .progress-label {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-bottom: 8px;
+      }
+
+      .progress-bar {
+        width: 200px;
+        height: 8px;
+        background: var(--border-color);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 12px;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: var(--primary-color);
+        width: 70%;
+        transition: width 0.5s ease;
+      }
+
+      .progress-value {
+        font-size: 20px;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+
+      .progress-text {
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+
+      .project-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 20px;
+      }
+
+      .btn {
+        padding: 10px 20px;
+        border-radius: 6px;
+        border: none;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-family: inherit;
+      }
+
+      .btn-primary {
+        background: var(--primary-color);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: var(--primary-hover);
+      }
+
+      .btn-secondary {
+        background: var(--card-bg);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+      }
+
+      .btn-secondary:hover {
+        background: var(--bg-color);
+      }
+
+      .tabs {
+        margin: 0 24px;
+        border-bottom: 1px solid var(--border-color);
+        position: relative;
+      }
+
+      .tab-list {
+        display: flex;
+        gap: 0;
+      }
+
+      .tab {
+        padding: 12px 20px;
+        background: none;
+        border: none;
+        font-size: 14px;
+        color: var(--text-secondary);
+        cursor: pointer;
+        position: relative;
+        font-family: inherit;
+        transition: color 0.2s ease;
+      }
+
+      .tab.active {
+        color: var(--primary-color);
+        font-weight: 500;
+      }
+
+      .tab.active::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 20px;
+        right: 20px;
+        height: 2px;
+        background: var(--primary-color);
+      }
+
+      .main-content {
+        display: grid;
+        grid-template-columns: 440px 500px 1fr;
+        gap: 20px;
+        padding: 24px;
+        margin: 0 auto;
+        max-width: 1440px;
+      }
+
+      .card {
+        background: var(--card-bg);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        padding: 20px;
+      }
+
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+
+      .card-title {
+        font-size: 16px;
+        font-weight: 600;
+      }
+
+      .pr-item,
+      .work-item,
+      .repo-item {
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: var(--bg-color);
+      }
+
+      .pr-item:hover,
+      .work-item:hover,
+      .repo-item:hover {
+        border-color: var(--primary-color);
+        transform: translateY(-1px);
+      }
+
+      .pr-status,
+      .work-status,
+      .repo-status {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 500;
+        float: right;
+      }
+
+      .status-ready {
+        background: #dcfce7;
+        color: #166534;
+      }
+
+      .status-draft {
+        background: #fef3c7;
+        color: #92400e;
+      }
+
+      .status-in-progress {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+
+      .status-todo {
+        background: #f3f4f6;
+        color: #6b7280;
+      }
+
+      .status-done {
+        background: #d1fae5;
+        color: #065f46;
+      }
+
+      .status-blocked {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+
+      .status-available {
+        background: #dcfce7;
+        color: #166534;
+      }
+
+      .status-in-use {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+
+      .status-claude {
+        background: #fef3c7;
+        color: #92400e;
+      }
+
+      .activity-timeline {
+        position: relative;
+        padding-left: 40px;
+      }
+
+      .activity-timeline::before {
+        content: '';
+        position: absolute;
+        left: 20px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: var(--border-color);
+      }
+
+      .activity-item {
+        position: relative;
+        margin-bottom: 40px;
+      }
+
+      .activity-dot {
+        position: absolute;
+        left: -32px;
+        top: 4px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+      }
+
+      .activity-dot.primary {
+        background: var(--primary-color);
+      }
+      .activity-dot.success {
+        background: var(--success-color);
+      }
+      .activity-dot.warning {
+        background: var(--warning-color);
+      }
+      .activity-dot.purple {
+        background: var(--purple-color);
+      }
+
+      .activity-title {
+        font-size: 13px;
+        font-weight: 500;
+        margin-bottom: 4px;
+      }
+
+      .activity-description {
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+
+      .filter-pills {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+
+      .filter-pill {
+        padding: 6px 16px;
+        border-radius: 14px;
+        font-size: 12px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-family: inherit;
+      }
+
+      .filter-pill.active {
+        background: var(--primary-color);
+        color: white;
+      }
+
+      .filter-pill:not(.active) {
+        background: var(--card-bg);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-color);
+      }
+
+      .filter-pill:not(.active):hover {
+        background: var(--bg-color);
+      }
+
+      .work-item.blocked {
+        background: #fef2f2;
+        border-color: #fecaca;
+      }
+
+      .work-item.done .work-title {
+        text-decoration: line-through;
+        color: var(--text-muted);
+      }
+
+      .work-title {
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 4px;
+      }
+
+      .work-meta {
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+
+      .repo-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        color: white;
+        margin-right: 12px;
+        vertical-align: middle;
+      }
+
+      .repo-info {
+        display: inline-block;
+        vertical-align: middle;
+      }
+
+      .repo-name {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+
+      .repo-branch {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-bottom: 4px;
+      }
+
+      .repo-changes {
+        font-size: 11px;
+        color: var(--text-muted);
+      }
+
+      .view-all {
+        text-align: center;
+        margin-top: 20px;
+      }
+
+      .view-all a {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-size: 13px;
+      }
+
+      .view-all a:hover {
+        text-decoration: underline;
+      }
+
+      @media (max-width: 1400px) {
+        .main-content {
+          grid-template-columns: 1fr;
+          gap: 20px;
+          max-width: 800px;
+        }
+      }
+
+      @media (max-width: 768px) {
         .project-header {
-            margin: 0 24px 24px;
-            background: var(--card-bg);
-            border-radius: 8px;
-            box-shadow: var(--shadow);
-            padding: 20px;
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 40px;
-            align-items: center;
-        }
-
-        .project-info h2 {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 500;
-            margin-bottom: 8px;
-        }
-
-        .status-active {
-            background: #dbeafe;
-            color: #1e40af;
-        }
-
-        .project-description {
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-
-        .project-stats {
-            text-align: right;
-        }
-
-        .progress-label {
-            font-size: 12px;
-            color: var(--text-secondary);
-            margin-bottom: 8px;
-        }
-
-        .progress-bar {
-            width: 200px;
-            height: 8px;
-            background: var(--border-color);
-            border-radius: 4px;
-            overflow: hidden;
-            margin-bottom: 12px;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: var(--primary-color);
-            width: 70%;
-            transition: width 0.5s ease;
-        }
-
-        .progress-value {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-
-        .progress-text {
-            font-size: 12px;
-            color: var(--text-secondary);
+          grid-template-columns: 1fr;
+          text-align: center;
         }
 
         .project-actions {
-            display: flex;
-            gap: 12px;
-            margin-top: 20px;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border-radius: 6px;
-            border: none;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-family: inherit;
-        }
-
-        .btn-primary {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-hover);
-        }
-
-        .btn-secondary {
-            background: var(--card-bg);
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
-        }
-
-        .btn-secondary:hover {
-            background: var(--bg-color);
-        }
-
-        .tabs {
-            margin: 0 24px;
-            border-bottom: 1px solid var(--border-color);
-            position: relative;
+          justify-content: center;
         }
 
         .tab-list {
-            display: flex;
-            gap: 0;
+          overflow-x: auto;
+          scrollbar-width: none;
         }
-
-        .tab {
-            padding: 12px 20px;
-            background: none;
-            border: none;
-            font-size: 14px;
-            color: var(--text-secondary);
-            cursor: pointer;
-            position: relative;
-            font-family: inherit;
-            transition: color 0.2s ease;
-        }
-
-        .tab.active {
-            color: var(--primary-color);
-            font-weight: 500;
-        }
-
-        .tab.active::after {
-            content: '';
-            position: absolute;
-            bottom: -1px;
-            left: 20px;
-            right: 20px;
-            height: 2px;
-            background: var(--primary-color);
-        }
-
-        .main-content {
-            display: grid;
-            grid-template-columns: 440px 500px 1fr;
-            gap: 20px;
-            padding: 24px;
-            margin: 0 auto;
-            max-width: 1440px;
-        }
-
-        .card {
-            background: var(--card-bg);
-            border-radius: 8px;
-            box-shadow: var(--shadow);
-            padding: 20px;
-        }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .card-title {
-            font-size: 16px;
-            font-weight: 600;
-        }
-
-        .pr-item, .work-item, .repo-item {
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 12px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            background: var(--bg-color);
-        }
-
-        .pr-item:hover, .work-item:hover, .repo-item:hover {
-            border-color: var(--primary-color);
-            transform: translateY(-1px);
-        }
-
-        .pr-status, .work-status, .repo-status {
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 500;
-            float: right;
-        }
-
-        .status-ready {
-            background: #dcfce7;
-            color: #166534;
-        }
-
-        .status-draft {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .status-in-progress {
-            background: #dbeafe;
-            color: #1e40af;
-        }
-
-        .status-todo {
-            background: #f3f4f6;
-            color: #6b7280;
-        }
-
-        .status-done {
-            background: #d1fae5;
-            color: #065f46;
-        }
-
-        .status-blocked {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        .status-available {
-            background: #dcfce7;
-            color: #166534;
-        }
-
-        .status-in-use {
-            background: #dbeafe;
-            color: #1e40af;
-        }
-
-        .status-claude {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .activity-timeline {
-            position: relative;
-            padding-left: 40px;
-        }
-
-        .activity-timeline::before {
-            content: '';
-            position: absolute;
-            left: 20px;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background: var(--border-color);
-        }
-
-        .activity-item {
-            position: relative;
-            margin-bottom: 40px;
-        }
-
-        .activity-dot {
-            position: absolute;
-            left: -32px;
-            top: 4px;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-        }
-
-        .activity-dot.primary { background: var(--primary-color); }
-        .activity-dot.success { background: var(--success-color); }
-        .activity-dot.warning { background: var(--warning-color); }
-        .activity-dot.purple { background: var(--purple-color); }
-
-        .activity-title {
-            font-size: 13px;
-            font-weight: 500;
-            margin-bottom: 4px;
-        }
-
-        .activity-description {
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-
-        .filter-pills {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .filter-pill {
-            padding: 6px 16px;
-            border-radius: 14px;
-            font-size: 12px;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-family: inherit;
-        }
-
-        .filter-pill.active {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        .filter-pill:not(.active) {
-            background: var(--card-bg);
-            color: var(--text-secondary);
-            border: 1px solid var(--border-color);
-        }
-
-        .filter-pill:not(.active):hover {
-            background: var(--bg-color);
-        }
-
-        .work-item.blocked {
-            background: #fef2f2;
-            border-color: #fecaca;
-        }
-
-        .work-item.done .work-title {
-            text-decoration: line-through;
-            color: var(--text-muted);
-        }
-
-        .work-title {
-            font-size: 14px;
-            font-weight: 500;
-            margin-bottom: 4px;
-        }
-
-        .work-meta {
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-
-        .repo-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            color: white;
-            margin-right: 12px;
-            vertical-align: middle;
-        }
-
-        .repo-info {
-            display: inline-block;
-            vertical-align: middle;
-        }
-
-        .repo-name {
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-
-        .repo-branch {
-            font-size: 12px;
-            color: var(--text-secondary);
-            margin-bottom: 4px;
-        }
-
-        .repo-changes {
-            font-size: 11px;
-            color: var(--text-muted);
-        }
-
-        .view-all {
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .view-all a {
-            color: var(--primary-color);
-            text-decoration: none;
-            font-size: 13px;
-        }
-
-        .view-all a:hover {
-            text-decoration: underline;
-        }
-
-        @media (max-width: 1400px) {
-            .main-content {
-                grid-template-columns: 1fr;
-                gap: 20px;
-                max-width: 800px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .project-header {
-                grid-template-columns: 1fr;
-                text-align: center;
-            }
-
-            .project-actions {
-                justify-content: center;
-            }
-
-            .tab-list {
-                overflow-x: auto;
-                scrollbar-width: none;
-            }
-        }
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <header class="header">
-        <h1>Claude Flow</h1>
-        <button class="theme-toggle" onclick="toggleTheme()">🌙 Dark Mode</button>
+      <h1>Claude Flow</h1>
+      <button class="theme-toggle" onclick="toggleTheme()">🌙 Dark Mode</button>
     </header>
 
     <nav class="breadcrumb">
-        <a href="#">Dashboard</a> / <a href="#">Projects</a> / <span class="current">E-commerce Platform</span>
+      <a href="#">Dashboard</a> / <a href="#">Projects</a> /
+      <span class="current">E-commerce Platform</span>
     </nav>
 
     <div class="project-header">
-        <div class="project-info">
-            <h2>E-commerce Platform</h2>
-            <span class="status-badge status-active">Active</span>
-            <p class="project-description">Modern e-commerce solution with React and Node.js</p>
-            <div class="project-actions">
-                <button class="btn btn-primary" onclick="startClaudeSession()">Start Claude Session</button>
-                <button class="btn btn-secondary">Edit</button>
-                <button class="btn btn-secondary">⋮</button>
-            </div>
+      <div class="project-info">
+        <h2>E-commerce Platform</h2>
+        <span class="status-badge status-active">Active</span>
+        <p class="project-description">Modern e-commerce solution with React and Node.js</p>
+        <div class="project-actions">
+          <button class="btn btn-primary" onclick="startClaudeSession()">
+            Start Claude Session
+          </button>
+          <button class="btn btn-secondary">Edit</button>
+          <button class="btn btn-secondary">⋮</button>
         </div>
-        <div class="project-stats">
-            <div class="progress-label">Overall Progress</div>
-            <div class="progress-bar">
-                <div class="progress-fill"></div>
-            </div>
-            <div class="progress-value">70%</div>
-            <div class="progress-text">14 of 20 tasks completed</div>
+      </div>
+      <div class="project-stats">
+        <div class="progress-label">Overall Progress</div>
+        <div class="progress-bar">
+          <div class="progress-fill"></div>
         </div>
+        <div class="progress-value">70%</div>
+        <div class="progress-text">14 of 20 tasks completed</div>
+      </div>
     </div>
 
     <nav class="tabs">
-        <div class="tab-list">
-            <button class="tab active" onclick="switchTab(this, 'overview')">Overview</button>
-            <button class="tab" onclick="switchTab(this, 'work-items')">Work Items</button>
-            <button class="tab" onclick="switchTab(this, 'claude-sessions')">Claude Sessions</button>
-            <button class="tab" onclick="switchTab(this, 'files')">Files</button>
-            <button class="tab" onclick="switchTab(this, 'team')">Team</button>
-            <button class="tab" onclick="switchTab(this, 'settings')">Settings</button>
-        </div>
+      <div class="tab-list">
+        <button class="tab active" onclick="switchTab(this, 'overview')">Overview</button>
+        <button class="tab" onclick="switchTab(this, 'work-items')">Work Items</button>
+        <button class="tab" onclick="switchTab(this, 'claude-sessions')">Claude Sessions</button>
+        <button class="tab" onclick="switchTab(this, 'files')">Files</button>
+        <button class="tab" onclick="switchTab(this, 'team')">Team</button>
+        <button class="tab" onclick="switchTab(this, 'settings')">Settings</button>
+      </div>
     </nav>
 
     <main class="main-content">
-        <!-- Left Column -->
-        <div class="left-column">
-            <!-- Pending PRs -->
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Pending PRs to Review</h3>
-                </div>
-                <div class="pr-item" onclick="openPR('#234')">
-                    <span class="pr-status status-ready">Ready</span>
-                    <div class="pr-title">#234 Add payment gateway integration</div>
-                    <div class="pr-meta">frontend • opened 2 hours ago by Mike Johnson</div>
-                </div>
-                <div class="pr-item" onclick="openPR('#233')">
-                    <span class="pr-status status-draft">Draft</span>
-                    <div class="pr-title">#233 Update API documentation</div>
-                    <div class="pr-meta">backend • opened 1 day ago by Sarah Chen</div>
-                </div>
-            </div>
-
-            <!-- Recent Activity -->
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Recent Activity</h3>
-                </div>
-                <div class="activity-timeline">
-                    <div class="activity-item">
-                        <div class="activity-dot primary"></div>
-                        <div class="activity-title">Claude session completed</div>
-                        <div class="activity-description">API design finalized • 2 hours ago</div>
-                    </div>
-                    <div class="activity-item">
-                        <div class="activity-dot success"></div>
-                        <div class="activity-title">Work item completed</div>
-                        <div class="activity-description">User authentication • 4 hours ago</div>
-                    </div>
-                    <div class="activity-item">
-                        <div class="activity-dot warning"></div>
-                        <div class="activity-title">New comment</div>
-                        <div class="activity-description">On "Database Schema" • 6 hours ago</div>
-                    </div>
-                    <div class="activity-item">
-                        <div class="activity-dot purple"></div>
-                        <div class="activity-title">File uploaded</div>
-                        <div class="activity-description">mockups.fig • 1 day ago</div>
-                    </div>
-                </div>
-            </div>
+      <!-- Left Column -->
+      <div class="left-column">
+        <!-- Pending PRs -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Pending PRs to Review</h3>
+          </div>
+          <div class="pr-item" onclick="openPR('#234')">
+            <span class="pr-status status-ready">Ready</span>
+            <div class="pr-title">#234 Add payment gateway integration</div>
+            <div class="pr-meta">frontend • opened 2 hours ago by Mike Johnson</div>
+          </div>
+          <div class="pr-item" onclick="openPR('#233')">
+            <span class="pr-status status-draft">Draft</span>
+            <div class="pr-title">#233 Update API documentation</div>
+            <div class="pr-meta">backend • opened 1 day ago by Sarah Chen</div>
+          </div>
         </div>
 
-        <!-- Center Column - Work Items -->
-        <div class="center-column">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Work Items</h3>
-                    <button class="btn btn-primary" onclick="createWorkItem()">+ New Item</button>
-                </div>
-
-                <div class="filter-pills">
-                    <button class="filter-pill active" onclick="filterWorkItems(this, 'all')">All (20)</button>
-                    <button class="filter-pill" onclick="filterWorkItems(this, 'todo')">To Do (4)</button>
-                    <button class="filter-pill" onclick="filterWorkItems(this, 'progress')">In Progress (2)</button>
-                    <button class="filter-pill" onclick="filterWorkItems(this, 'done')">Done (14)</button>
-                </div>
-
-                <div class="work-items">
-                    <div class="work-item" data-status="progress" onclick="openWorkItem('WI-156')">
-                        <span class="work-status status-in-progress">In Progress</span>
-                        <div class="work-title">Implement payment gateway integration</div>
-                        <div class="work-meta">#WI-156 • Assigned to Mike Johnson</div>
-                    </div>
-                    <div class="work-item" data-status="todo" onclick="openWorkItem('WI-157')">
-                        <span class="work-status status-todo">To Do</span>
-                        <div class="work-title">Add product search functionality</div>
-                        <div class="work-meta">#WI-157 • Unassigned</div>
-                    </div>
-                    <div class="work-item done" data-status="done" onclick="openWorkItem('WI-145')">
-                        <span class="work-status status-done">Done</span>
-                        <div class="work-title">Setup user authentication</div>
-                        <div class="work-meta">#WI-145 • Completed by Sarah Chen</div>
-                    </div>
-                    <div class="work-item blocked" data-status="blocked" onclick="openWorkItem('WI-158')">
-                        <span class="work-status status-blocked">Blocked</span>
-                        <div class="work-title">Deploy to staging environment</div>
-                        <div class="work-meta">#WI-158 • Blocked by infrastructure setup</div>
-                    </div>
-                </div>
-
-                <div class="view-all">
-                    <a href="#" onclick="viewAllWorkItems()">View all 20 items →</a>
-                </div>
+        <!-- Recent Activity -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Recent Activity</h3>
+          </div>
+          <div class="activity-timeline">
+            <div class="activity-item">
+              <div class="activity-dot primary"></div>
+              <div class="activity-title">Claude session completed</div>
+              <div class="activity-description">API design finalized • 2 hours ago</div>
             </div>
-        </div>
-
-        <!-- Right Column - Repositories -->
-        <div class="right-column">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Repository Clones</h3>
-                    <button class="btn btn-primary" onclick="addRepository()">+ Add Repo</button>
-                </div>
-
-                <div class="repo-item" onclick="openRepository('ecommerce-1')">
-                    <span class="repo-status status-in-use">In Use</span>
-                    <div class="repo-icon" style="background: var(--primary-color);">⚛</div>
-                    <div class="repo-info">
-                        <div class="repo-name">ecommerce-1</div>
-                        <div class="repo-branch">feature/payment-integration</div>
-                        <div class="repo-changes">3 staged, 2 unstaged • WI-156: Payment Gateway</div>
-                    </div>
-                </div>
-
-                <div class="repo-item" onclick="openRepository('ecommerce-2')">
-                    <span class="repo-status status-claude">Claude</span>
-                    <div class="repo-icon" style="background: var(--success-color);">⚙</div>
-                    <div class="repo-info">
-                        <div class="repo-name">ecommerce-2</div>
-                        <div class="repo-branch">main</div>
-                        <div class="repo-changes">No changes • Claude Session: API Design</div>
-                    </div>
-                </div>
-
-                <div class="repo-item" onclick="openRepository('ecommerce-3')">
-                    <span class="repo-status status-available">Available</span>
-                    <div class="repo-icon" style="background: var(--purple-color);">☁</div>
-                    <div class="repo-info">
-                        <div class="repo-name">ecommerce-3</div>
-                        <div class="repo-branch">feature/staging-env</div>
-                        <div class="repo-changes">1 staged, 0 unstaged • Available</div>
-                    </div>
-                </div>
-
-                <div class="repo-item" onclick="openRepository('ecommerce-4')">
-                    <span class="repo-status status-available">Available</span>
-                    <div class="repo-icon" style="background: var(--warning-color);">📱</div>
-                    <div class="repo-info">
-                        <div class="repo-name">ecommerce-4</div>
-                        <div class="repo-branch">develop</div>
-                        <div class="repo-changes">No changes • Available</div>
-                    </div>
-                </div>
+            <div class="activity-item">
+              <div class="activity-dot success"></div>
+              <div class="activity-title">Work item completed</div>
+              <div class="activity-description">User authentication • 4 hours ago</div>
             </div>
+            <div class="activity-item">
+              <div class="activity-dot warning"></div>
+              <div class="activity-title">New comment</div>
+              <div class="activity-description">On "Database Schema" • 6 hours ago</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-dot purple"></div>
+              <div class="activity-title">File uploaded</div>
+              <div class="activity-description">mockups.fig • 1 day ago</div>
+            </div>
+          </div>
         </div>
+      </div>
+
+      <!-- Center Column - Work Items -->
+      <div class="center-column">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Work Items</h3>
+            <button class="btn btn-primary" onclick="createWorkItem()">+ New Item</button>
+          </div>
+
+          <div class="filter-pills">
+            <button class="filter-pill active" onclick="filterWorkItems(this, 'all')">
+              All (20)
+            </button>
+            <button class="filter-pill" onclick="filterWorkItems(this, 'todo')">To Do (4)</button>
+            <button class="filter-pill" onclick="filterWorkItems(this, 'progress')">
+              In Progress (2)
+            </button>
+            <button class="filter-pill" onclick="filterWorkItems(this, 'done')">Done (14)</button>
+          </div>
+
+          <div class="work-items">
+            <div class="work-item" data-status="progress" onclick="openWorkItem('WI-156')">
+              <span class="work-status status-in-progress">In Progress</span>
+              <div class="work-title">Implement payment gateway integration</div>
+              <div class="work-meta">#WI-156 • Assigned to Mike Johnson</div>
+            </div>
+            <div class="work-item" data-status="todo" onclick="openWorkItem('WI-157')">
+              <span class="work-status status-todo">To Do</span>
+              <div class="work-title">Add product search functionality</div>
+              <div class="work-meta">#WI-157 • Unassigned</div>
+            </div>
+            <div class="work-item done" data-status="done" onclick="openWorkItem('WI-145')">
+              <span class="work-status status-done">Done</span>
+              <div class="work-title">Setup user authentication</div>
+              <div class="work-meta">#WI-145 • Completed by Sarah Chen</div>
+            </div>
+            <div class="work-item blocked" data-status="blocked" onclick="openWorkItem('WI-158')">
+              <span class="work-status status-blocked">Blocked</span>
+              <div class="work-title">Deploy to staging environment</div>
+              <div class="work-meta">#WI-158 • Blocked by infrastructure setup</div>
+            </div>
+          </div>
+
+          <div class="view-all">
+            <a href="#" onclick="viewAllWorkItems()">View all 20 items →</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column - Repositories -->
+      <div class="right-column">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Repository Clones</h3>
+            <button class="btn btn-primary" onclick="addRepository()">+ Add Repo</button>
+          </div>
+
+          <div class="repo-item" onclick="openRepository('ecommerce-1')">
+            <span class="repo-status status-in-use">In Use</span>
+            <div class="repo-icon" style="background: var(--primary-color)">⚛</div>
+            <div class="repo-info">
+              <div class="repo-name">ecommerce-1</div>
+              <div class="repo-branch">feature/payment-integration</div>
+              <div class="repo-changes">3 staged, 2 unstaged • WI-156: Payment Gateway</div>
+            </div>
+          </div>
+
+          <div class="repo-item" onclick="openRepository('ecommerce-2')">
+            <span class="repo-status status-claude">Claude</span>
+            <div class="repo-icon" style="background: var(--success-color)">⚙</div>
+            <div class="repo-info">
+              <div class="repo-name">ecommerce-2</div>
+              <div class="repo-branch">main</div>
+              <div class="repo-changes">No changes • Claude Session: API Design</div>
+            </div>
+          </div>
+
+          <div class="repo-item" onclick="openRepository('ecommerce-3')">
+            <span class="repo-status status-available">Available</span>
+            <div class="repo-icon" style="background: var(--purple-color)">☁</div>
+            <div class="repo-info">
+              <div class="repo-name">ecommerce-3</div>
+              <div class="repo-branch">feature/staging-env</div>
+              <div class="repo-changes">1 staged, 0 unstaged • Available</div>
+            </div>
+          </div>
+
+          <div class="repo-item" onclick="openRepository('ecommerce-4')">
+            <span class="repo-status status-available">Available</span>
+            <div class="repo-icon" style="background: var(--warning-color)">📱</div>
+            <div class="repo-info">
+              <div class="repo-name">ecommerce-4</div>
+              <div class="repo-branch">develop</div>
+              <div class="repo-changes">No changes • Available</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
 
     <script>
-        // Theme toggle functionality
-        function toggleTheme() {
-            const body = document.body;
-            const themeToggle = document.querySelector('.theme-toggle');
-            
-            if (body.getAttribute('data-theme') === 'dark') {
-                body.removeAttribute('data-theme');
-                themeToggle.textContent = '🌙 Dark Mode';
-                localStorage.setItem('theme', 'light');
-            } else {
-                body.setAttribute('data-theme', 'dark');
-                themeToggle.textContent = '☀️ Light Mode';
-                localStorage.setItem('theme', 'dark');
-            }
-        }
+      // Theme toggle functionality
+      function toggleTheme() {
+        const body = document.body;
+        const themeToggle = document.querySelector('.theme-toggle');
 
-        // Initialize theme from localStorage
-        function initTheme() {
-            const savedTheme = localStorage.getItem('theme');
-            const themeToggle = document.querySelector('.theme-toggle');
-            
-            if (savedTheme === 'dark') {
-                document.body.setAttribute('data-theme', 'dark');
-                themeToggle.textContent = '☀️ Light Mode';
-            }
+        if (body.getAttribute('data-theme') === 'dark') {
+          body.removeAttribute('data-theme');
+          themeToggle.textContent = '🌙 Dark Mode';
+          localStorage.setItem('theme', 'light');
+        } else {
+          body.setAttribute('data-theme', 'dark');
+          themeToggle.textContent = '☀️ Light Mode';
+          localStorage.setItem('theme', 'dark');
         }
+      }
 
-        // Tab switching functionality
-        function switchTab(tabElement, tabName) {
-            // Remove active class from all tabs
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            
-            // Add active class to clicked tab
-            tabElement.classList.add('active');
-            
-            // Here you would typically show/hide content based on the tab
-            console.log(`Switched to ${tabName} tab`);
+      // Initialize theme from localStorage
+      function initTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        const themeToggle = document.querySelector('.theme-toggle');
+
+        if (savedTheme === 'dark') {
+          document.body.setAttribute('data-theme', 'dark');
+          themeToggle.textContent = '☀️ Light Mode';
         }
+      }
 
-        // Filter work items
-        function filterWorkItems(filterElement, filterType) {
-            // Remove active class from all filters
-            document.querySelectorAll('.filter-pill').forEach(pill => pill.classList.remove('active'));
-            
-            // Add active class to clicked filter
-            filterElement.classList.add('active');
-            
-            // Show/hide work items based on filter
-            const workItems = document.querySelectorAll('.work-item');
-            workItems.forEach(item => {
-                const status = item.getAttribute('data-status');
-                if (filterType === 'all' || status === filterType) {
-                    item.style.display = 'block';
-                } else {
-                    item.style.display = 'none';
-                }
-            });
-        }
+      // Tab switching functionality
+      function switchTab(tabElement, tabName) {
+        // Remove active class from all tabs
+        document.querySelectorAll('.tab').forEach((tab) => tab.classList.remove('active'));
 
-        // Interactive functions
-        function startClaudeSession() {
-            alert('Starting Claude session for E-commerce Platform...');
-        }
+        // Add active class to clicked tab
+        tabElement.classList.add('active');
 
-        function createWorkItem() {
-            alert('Opening work item creation dialog...');
-        }
+        // Here you would typically show/hide content based on the tab
+        console.log(`Switched to ${tabName} tab`);
+      }
 
-        function addRepository() {
-            alert('Adding new repository clone...');
-        }
+      // Filter work items
+      function filterWorkItems(filterElement, filterType) {
+        // Remove active class from all filters
+        document
+          .querySelectorAll('.filter-pill')
+          .forEach((pill) => pill.classList.remove('active'));
 
-        function openPR(prNumber) {
-            alert(`Opening pull request ${prNumber}...`);
-        }
+        // Add active class to clicked filter
+        filterElement.classList.add('active');
 
-        function openWorkItem(workItemId) {
-            alert(`Opening work item ${workItemId}...`);
-        }
-
-        function openRepository(repoName) {
-            alert(`Opening repository ${repoName}...`);
-        }
-
-        function viewAllWorkItems() {
-            alert('Viewing all work items...');
-        }
-
-        // Progress bar animation
-        function animateProgress() {
-            const progressFill = document.querySelector('.progress-fill');
-            let width = 0;
-            const targetWidth = 70;
-            const interval = setInterval(() => {
-                if (width >= targetWidth) {
-                    clearInterval(interval);
-                } else {
-                    width += 2;
-                    progressFill.style.width = width + '%';
-                }
-            }, 50);
-        }
-
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            initTheme();
-            setTimeout(animateProgress, 500);
+        // Show/hide work items based on filter
+        const workItems = document.querySelectorAll('.work-item');
+        workItems.forEach((item) => {
+          const status = item.getAttribute('data-status');
+          if (filterType === 'all' || status === filterType) {
+            item.style.display = 'block';
+          } else {
+            item.style.display = 'none';
+          }
         });
+      }
 
-        // Add hover effects for better interactivity
-        document.addEventListener('mouseover', function(e) {
-            if (e.target.classList.contains('pr-item') || 
-                e.target.classList.contains('work-item') || 
-                e.target.classList.contains('repo-item')) {
-                e.target.style.transform = 'translateY(-2px)';
-            }
-        });
+      // Interactive functions
+      function startClaudeSession() {
+        alert('Starting Claude session for E-commerce Platform...');
+      }
 
-        document.addEventListener('mouseout', function(e) {
-            if (e.target.classList.contains('pr-item') || 
-                e.target.classList.contains('work-item') || 
-                e.target.classList.contains('repo-item')) {
-                e.target.style.transform = 'translateY(0)';
-            }
-        });
+      function createWorkItem() {
+        alert('Opening work item creation dialog...');
+      }
+
+      function addRepository() {
+        alert('Adding new repository clone...');
+      }
+
+      function openPR(prNumber) {
+        alert(`Opening pull request ${prNumber}...`);
+      }
+
+      function openWorkItem(workItemId) {
+        alert(`Opening work item ${workItemId}...`);
+      }
+
+      function openRepository(repoName) {
+        alert(`Opening repository ${repoName}...`);
+      }
+
+      function viewAllWorkItems() {
+        alert('Viewing all work items...');
+      }
+
+      // Progress bar animation
+      function animateProgress() {
+        const progressFill = document.querySelector('.progress-fill');
+        let width = 0;
+        const targetWidth = 70;
+        const interval = setInterval(() => {
+          if (width >= targetWidth) {
+            clearInterval(interval);
+          } else {
+            width += 2;
+            progressFill.style.width = width + '%';
+          }
+        }, 50);
+      }
+
+      // Initialize on page load
+      document.addEventListener('DOMContentLoaded', function () {
+        initTheme();
+        setTimeout(animateProgress, 500);
+      });
+
+      // Add hover effects for better interactivity
+      document.addEventListener('mouseover', function (e) {
+        if (
+          e.target.classList.contains('pr-item') ||
+          e.target.classList.contains('work-item') ||
+          e.target.classList.contains('repo-item')
+        ) {
+          e.target.style.transform = 'translateY(-2px)';
+        }
+      });
+
+      document.addEventListener('mouseout', function (e) {
+        if (
+          e.target.classList.contains('pr-item') ||
+          e.target.classList.contains('work-item') ||
+          e.target.classList.contains('repo-item')
+        ) {
+          e.target.style.transform = 'translateY(0)';
+        }
+      });
     </script>
-</body>
+  </body>
 </html>

@@ -1,772 +1,798 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Projects - Claude Flow</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        /* Light theme */
+        --bg-primary: #f9fafb;
+        --bg-secondary: #ffffff;
+        --bg-tertiary: #f3f4f6;
+        --text-primary: #111827;
+        --text-secondary: #6b7280;
+        --text-tertiary: #9ca3af;
+        --border-color: #e5e7eb;
+        --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        --blue-500: #3b82f6;
+        --blue-600: #2563eb;
+        --blue-50: #dbeafe;
+        --blue-700: #1e40af;
+        --green-500: #10b981;
+        --green-600: #059669;
+        --green-50: #d1fae5;
+        --green-800: #065f46;
+        --yellow-500: #f59e0b;
+        --yellow-50: #fef3c7;
+        --yellow-800: #92400e;
+        --gray-500: #9ca3af;
+        --gray-100: #f3f4f6;
+        --red-500: #ef4444;
+        --purple-500: #8b5cf6;
+        --indigo-500: #6366f1;
+        --amber-500: #fbbf24;
+      }
+
+      [data-theme='dark'] {
+        --bg-primary: #111827;
+        --bg-secondary: #1f2937;
+        --bg-tertiary: #374151;
+        --text-primary: #f9fafb;
+        --text-secondary: #d1d5db;
+        --text-tertiary: #6b7280;
+        --border-color: #374151;
+        --shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        min-height: 100vh;
+        transition:
+          background-color 0.3s ease,
+          color 0.3s ease;
+      }
+
+      /* Header */
+      .header {
+        background: var(--bg-secondary);
+        height: 64px;
+        box-shadow: var(--shadow);
+        display: flex;
+        align-items: center;
+        padding: 0 24px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        transition: background-color 0.3s ease;
+      }
+
+      .logo {
+        font-size: 20px;
+        font-weight: 600;
+        margin-right: 40px;
+      }
+
+      .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: var(--text-secondary);
+      }
+
+      .breadcrumb .current {
+        color: var(--text-primary);
+      }
+
+      .theme-toggle {
+        margin-left: auto;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 8px 12px;
+        cursor: pointer;
+        font-size: 14px;
+        color: var(--text-primary);
+        transition: all 0.3s ease;
+      }
+
+      .theme-toggle:hover {
+        background: var(--border-color);
+      }
+
+      /* Page Header */
+      .page-header {
+        padding: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .page-title h1 {
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+
+      .page-title p {
+        font-size: 16px;
+        color: var(--text-secondary);
+      }
+
+      .new-project-btn {
+        background: var(--blue-500);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 12px 24px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+      }
+
+      .new-project-btn:hover {
+        background: var(--blue-600);
+      }
+
+      /* Filter Bar */
+      .filter-bar {
+        background: var(--bg-secondary);
+        margin: 0 24px;
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        transition: background-color 0.3s ease;
+      }
+
+      .search-input {
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 8px 16px;
+        width: 400px;
+        font-size: 14px;
+        color: var(--text-primary);
+        transition: all 0.3s ease;
+      }
+
+      .search-input::placeholder {
+        color: var(--text-tertiary);
+      }
+
+      .search-input:focus {
+        outline: none;
+        border-color: var(--blue-500);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+
+      .filter-buttons {
+        display: flex;
+        gap: 8px;
+      }
+
+      .filter-btn {
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 6px 16px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+      }
+
+      .filter-btn.active {
+        background: var(--blue-500);
+        border-color: var(--blue-500);
+        color: white;
+      }
+
+      .filter-btn:hover:not(.active) {
+        background: var(--bg-tertiary);
+      }
+
+      .sort-dropdown {
+        margin-left: auto;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 6px 12px;
+        font-size: 13px;
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .sort-dropdown:hover {
+        background: var(--bg-tertiary);
+      }
+
+      /* Projects Grid */
+      .projects-grid {
+        padding: 24px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(456px, 1fr));
+        gap: 24px;
+        max-width: 1440px;
+        margin: 0 auto;
+      }
+
+      .project-card {
+        background: var(--bg-secondary);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        overflow: hidden;
+        height: 200px;
+        position: relative;
+      }
+
+      .project-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      }
+
+      .project-card.active .status-bar {
+        background: linear-gradient(90deg, var(--blue-500), var(--blue-600));
+      }
+
+      .project-card.completed .status-bar {
+        background: linear-gradient(90deg, var(--green-500), var(--green-600));
+      }
+
+      .project-card.at-risk .status-bar {
+        background: var(--yellow-500);
+      }
+
+      .project-card.planning .status-bar {
+        background: var(--gray-500);
+      }
+
+      .status-bar {
+        height: 8px;
+        width: 100%;
+      }
+
+      .card-content {
+        padding: 20px;
+        height: calc(100% - 8px);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .card-header {
+        margin-bottom: 16px;
+      }
+
+      .card-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+
+      .status-badges {
+        display: flex;
+        gap: 8px;
+      }
+
+      .status-badge {
+        border-radius: 10px;
+        padding: 4px 12px;
+        font-size: 11px;
+        font-weight: 500;
+      }
+
+      .status-badge.active {
+        background: var(--blue-50);
+        color: var(--blue-700);
+      }
+
+      .status-badge.completed {
+        background: var(--green-50);
+        color: var(--green-800);
+      }
+
+      .status-badge.at-risk {
+        background: var(--yellow-50);
+        color: var(--yellow-800);
+      }
+
+      .status-badge.planning {
+        background: var(--gray-100);
+        color: var(--text-secondary);
+      }
+
+      .card-description {
+        font-size: 14px;
+        color: var(--text-secondary);
+        margin-bottom: 16px;
+      }
+
+      .progress-section {
+        margin-bottom: 16px;
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 6px;
+        background: var(--border-color);
+        border-radius: 3px;
+        overflow: hidden;
+        margin-bottom: 8px;
+      }
+
+      .progress-fill {
+        height: 100%;
+        border-radius: 3px;
+        transition: width 0.3s ease;
+      }
+
+      .progress-fill.active {
+        background: var(--blue-500);
+      }
+
+      .progress-fill.completed {
+        background: var(--green-500);
+      }
+
+      .progress-fill.at-risk {
+        background: var(--yellow-500);
+      }
+
+      .progress-fill.planning {
+        background: var(--gray-500);
+      }
+
+      .progress-text {
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+
+      .card-footer {
+        margin-top: auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .team-avatars {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .avatar {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 10px;
+        font-weight: 600;
+      }
+
+      .avatar-more {
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+
+      .card-stats {
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+
+      /* Pagination */
+      .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        margin: 40px 0;
+      }
+
+      .pagination button {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 8px 16px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        color: var(--text-primary);
+      }
+
+      .pagination button:hover:not(.active) {
+        background: var(--bg-tertiary);
+      }
+
+      .pagination button.active {
+        background: var(--blue-500);
+        border-color: var(--blue-500);
+        color: white;
+      }
+
+      .pagination button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      /* Modal */
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .modal.show {
+        display: flex;
+      }
+
+      .modal-content {
+        background: var(--bg-secondary);
+        border-radius: 8px;
+        padding: 24px;
+        width: 90%;
+        max-width: 500px;
+        transition: background-color 0.3s ease;
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+      }
+
+      .modal-title {
+        font-size: 20px;
+        font-weight: 600;
+      }
+
+      .close-btn {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: var(--text-secondary);
+      }
+
+      .form-group {
+        margin-bottom: 16px;
+      }
+
+      .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+      }
+
+      .form-input,
+      .form-textarea {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-size: 14px;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        transition: all 0.3s ease;
+      }
+
+      .form-textarea {
+        height: 80px;
+        resize: vertical;
+      }
+
+      .form-input:focus,
+      .form-textarea:focus {
+        outline: none;
+        border-color: var(--blue-500);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+
+      .modal-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        margin-top: 24px;
+      }
+
+      .btn-secondary {
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 8px 16px;
+        font-size: 14px;
+        cursor: pointer;
+        color: var(--text-primary);
+        transition: all 0.2s ease;
+      }
+
+      .btn-secondary:hover {
+        background: var(--border-color);
+      }
+
+      .btn-primary {
+        background: var(--blue-500);
+        border: none;
+        border-radius: 6px;
+        padding: 8px 16px;
+        font-size: 14px;
+        color: white;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+      }
+
+      .btn-primary:hover {
+        background: var(--blue-600);
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .projects-grid {
+          grid-template-columns: 1fr;
+          padding: 16px;
         }
 
-        :root {
-            /* Light theme */
-            --bg-primary: #f9fafb;
-            --bg-secondary: #ffffff;
-            --bg-tertiary: #f3f4f6;
-            --text-primary: #111827;
-            --text-secondary: #6b7280;
-            --text-tertiary: #9ca3af;
-            --border-color: #e5e7eb;
-            --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            --blue-500: #3b82f6;
-            --blue-600: #2563eb;
-            --blue-50: #dbeafe;
-            --blue-700: #1e40af;
-            --green-500: #10b981;
-            --green-600: #059669;
-            --green-50: #d1fae5;
-            --green-800: #065f46;
-            --yellow-500: #f59e0b;
-            --yellow-50: #fef3c7;
-            --yellow-800: #92400e;
-            --gray-500: #9ca3af;
-            --gray-100: #f3f4f6;
-            --red-500: #ef4444;
-            --purple-500: #8b5cf6;
-            --indigo-500: #6366f1;
-            --amber-500: #fbbf24;
-        }
-
-        [data-theme="dark"] {
-            --bg-primary: #111827;
-            --bg-secondary: #1f2937;
-            --bg-tertiary: #374151;
-            --text-primary: #f9fafb;
-            --text-secondary: #d1d5db;
-            --text-tertiary: #6b7280;
-            --border-color: #374151;
-            --shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            min-height: 100vh;
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-
-        /* Header */
-        .header {
-            background: var(--bg-secondary);
-            height: 64px;
-            box-shadow: var(--shadow);
-            display: flex;
-            align-items: center;
-            padding: 0 24px;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            transition: background-color 0.3s ease;
-        }
-
-        .logo {
-            font-size: 20px;
-            font-weight: 600;
-            margin-right: 40px;
-        }
-
-        .breadcrumb {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-            color: var(--text-secondary);
-        }
-
-        .breadcrumb .current {
-            color: var(--text-primary);
-        }
-
-        .theme-toggle {
-            margin-left: auto;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 8px 12px;
-            cursor: pointer;
-            font-size: 14px;
-            color: var(--text-primary);
-            transition: all 0.3s ease;
-        }
-
-        .theme-toggle:hover {
-            background: var(--border-color);
-        }
-
-        /* Page Header */
-        .page-header {
-            padding: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .page-title h1 {
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .page-title p {
-            font-size: 16px;
-            color: var(--text-secondary);
-        }
-
-        .new-project-btn {
-            background: var(--blue-500);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            padding: 12px 24px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-
-        .new-project-btn:hover {
-            background: var(--blue-600);
-        }
-
-        /* Filter Bar */
         .filter-bar {
-            background: var(--bg-secondary);
-            margin: 0 24px;
-            border-radius: 8px;
-            box-shadow: var(--shadow);
-            padding: 16px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            transition: background-color 0.3s ease;
+          flex-direction: column;
+          align-items: stretch;
+          gap: 12px;
         }
 
         .search-input {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 8px 16px;
-            width: 400px;
-            font-size: 14px;
-            color: var(--text-primary);
-            transition: all 0.3s ease;
-        }
-
-        .search-input::placeholder {
-            color: var(--text-tertiary);
-        }
-
-        .search-input:focus {
-            outline: none;
-            border-color: var(--blue-500);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+          width: 100%;
         }
 
         .filter-buttons {
-            display: flex;
-            gap: 8px;
-        }
-
-        .filter-btn {
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 6px 16px;
-            font-size: 13px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            background: var(--bg-secondary);
-            color: var(--text-secondary);
-        }
-
-        .filter-btn.active {
-            background: var(--blue-500);
-            border-color: var(--blue-500);
-            color: white;
-        }
-
-        .filter-btn:hover:not(.active) {
-            background: var(--bg-tertiary);
+          flex-wrap: wrap;
         }
 
         .sort-dropdown {
-            margin-left: auto;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 6px 12px;
-            font-size: 13px;
-            color: var(--text-primary);
-            cursor: pointer;
-            transition: all 0.3s ease;
+          margin-left: 0;
+          align-self: flex-start;
         }
 
-        .sort-dropdown:hover {
-            background: var(--bg-tertiary);
+        .page-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 16px;
         }
-
-        /* Projects Grid */
-        .projects-grid {
-            padding: 24px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(456px, 1fr));
-            gap: 24px;
-            max-width: 1440px;
-            margin: 0 auto;
-        }
-
-        .project-card {
-            background: var(--bg-secondary);
-            border-radius: 8px;
-            box-shadow: var(--shadow);
-            cursor: pointer;
-            transition: all 0.2s ease;
-            overflow: hidden;
-            height: 200px;
-            position: relative;
-        }
-
-        .project-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-        }
-
-        .project-card.active .status-bar {
-            background: linear-gradient(90deg, var(--blue-500), var(--blue-600));
-        }
-
-        .project-card.completed .status-bar {
-            background: linear-gradient(90deg, var(--green-500), var(--green-600));
-        }
-
-        .project-card.at-risk .status-bar {
-            background: var(--yellow-500);
-        }
-
-        .project-card.planning .status-bar {
-            background: var(--gray-500);
-        }
-
-        .status-bar {
-            height: 8px;
-            width: 100%;
-        }
-
-        .card-content {
-            padding: 20px;
-            height: calc(100% - 8px);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .card-header {
-            margin-bottom: 16px;
-        }
-
-        .card-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .status-badges {
-            display: flex;
-            gap: 8px;
-        }
-
-        .status-badge {
-            border-radius: 10px;
-            padding: 4px 12px;
-            font-size: 11px;
-            font-weight: 500;
-        }
-
-        .status-badge.active {
-            background: var(--blue-50);
-            color: var(--blue-700);
-        }
-
-        .status-badge.completed {
-            background: var(--green-50);
-            color: var(--green-800);
-        }
-
-        .status-badge.at-risk {
-            background: var(--yellow-50);
-            color: var(--yellow-800);
-        }
-
-        .status-badge.planning {
-            background: var(--gray-100);
-            color: var(--text-secondary);
-        }
-
-        .card-description {
-            font-size: 14px;
-            color: var(--text-secondary);
-            margin-bottom: 16px;
-        }
-
-        .progress-section {
-            margin-bottom: 16px;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 6px;
-            background: var(--border-color);
-            border-radius: 3px;
-            overflow: hidden;
-            margin-bottom: 8px;
-        }
-
-        .progress-fill {
-            height: 100%;
-            border-radius: 3px;
-            transition: width 0.3s ease;
-        }
-
-        .progress-fill.active {
-            background: var(--blue-500);
-        }
-
-        .progress-fill.completed {
-            background: var(--green-500);
-        }
-
-        .progress-fill.at-risk {
-            background: var(--yellow-500);
-        }
-
-        .progress-fill.planning {
-            background: var(--gray-500);
-        }
-
-        .progress-text {
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-
-        .card-footer {
-            margin-top: auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .team-avatars {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .avatar {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 10px;
-            font-weight: 600;
-        }
-
-        .avatar-more {
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-
-        .card-stats {
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-
-        /* Pagination */
-        .pagination {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-            margin: 40px 0;
-        }
-
-        .pagination button {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 8px 16px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            color: var(--text-primary);
-        }
-
-        .pagination button:hover:not(.active) {
-            background: var(--bg-tertiary);
-        }
-
-        .pagination button.active {
-            background: var(--blue-500);
-            border-color: var(--blue-500);
-            color: white;
-        }
-
-        .pagination button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal.show {
-            display: flex;
-        }
-
-        .modal-content {
-            background: var(--bg-secondary);
-            border-radius: 8px;
-            padding: 24px;
-            width: 90%;
-            max-width: 500px;
-            transition: background-color 0.3s ease;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-        }
-
-        .modal-title {
-            font-size: 20px;
-            font-weight: 600;
-        }
-
-        .close-btn {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: var(--text-secondary);
-        }
-
-        .form-group {
-            margin-bottom: 16px;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
-
-        .form-input, .form-textarea {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-size: 14px;
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-            transition: all 0.3s ease;
-        }
-
-        .form-textarea {
-            height: 80px;
-            resize: vertical;
-        }
-
-        .form-input:focus, .form-textarea:focus {
-            outline: none;
-            border-color: var(--blue-500);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-            margin-top: 24px;
-        }
-
-        .btn-secondary {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 8px 16px;
-            font-size: 14px;
-            cursor: pointer;
-            color: var(--text-primary);
-            transition: all 0.2s ease;
-        }
-
-        .btn-secondary:hover {
-            background: var(--border-color);
-        }
-
-        .btn-primary {
-            background: var(--blue-500);
-            border: none;
-            border-radius: 6px;
-            padding: 8px 16px;
-            font-size: 14px;
-            color: white;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-
-        .btn-primary:hover {
-            background: var(--blue-600);
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .projects-grid {
-                grid-template-columns: 1fr;
-                padding: 16px;
-            }
-
-            .filter-bar {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 12px;
-            }
-
-            .search-input {
-                width: 100%;
-            }
-
-            .filter-buttons {
-                flex-wrap: wrap;
-            }
-
-            .sort-dropdown {
-                margin-left: 0;
-                align-self: flex-start;
-            }
-
-            .page-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 16px;
-            }
-        }
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <!-- Header -->
     <header class="header">
-        <div class="logo">Claude Flow</div>
-        <nav class="breadcrumb">
-            <span>Dashboard</span>
-            <span>/</span>
-            <span class="current">Projects</span>
-        </nav>
-        <button class="theme-toggle" onclick="toggleTheme()">🌙 Dark Mode</button>
+      <div class="logo">Claude Flow</div>
+      <nav class="breadcrumb">
+        <span>Dashboard</span>
+        <span>/</span>
+        <span class="current">Projects</span>
+      </nav>
+      <button class="theme-toggle" onclick="toggleTheme()">🌙 Dark Mode</button>
     </header>
 
     <!-- Page Header -->
     <section class="page-header">
-        <div class="page-title">
-            <h1>Projects</h1>
-            <p>Manage and track all your projects in one place</p>
-        </div>
-        <button class="new-project-btn" onclick="openModal()">+ New Project</button>
+      <div class="page-title">
+        <h1>Projects</h1>
+        <p>Manage and track all your projects in one place</p>
+      </div>
+      <button class="new-project-btn" onclick="openModal()">+ New Project</button>
     </section>
 
     <!-- Filter Bar -->
     <section class="filter-bar">
-        <input type="text" class="search-input" placeholder="🔍 Search projects..." onkeyup="filterProjects()">
-        
-        <div class="filter-buttons">
-            <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">All (15)</button>
-            <button class="filter-btn" data-filter="active" onclick="setFilter('active')">Active (12)</button>
-            <button class="filter-btn" data-filter="completed" onclick="setFilter('completed')">Completed (3)</button>
-        </div>
+      <input
+        type="text"
+        class="search-input"
+        placeholder="🔍 Search projects..."
+        onkeyup="filterProjects()"
+      />
 
-        <select class="sort-dropdown" onchange="sortProjects(this.value)">
-            <option value="recent">Sort: Recent</option>
-            <option value="name">Sort: Name</option>
-            <option value="progress">Sort: Progress</option>
-            <option value="status">Sort: Status</option>
-        </select>
+      <div class="filter-buttons">
+        <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">
+          All (15)
+        </button>
+        <button class="filter-btn" data-filter="active" onclick="setFilter('active')">
+          Active (12)
+        </button>
+        <button class="filter-btn" data-filter="completed" onclick="setFilter('completed')">
+          Completed (3)
+        </button>
+      </div>
+
+      <select class="sort-dropdown" onchange="sortProjects(this.value)">
+        <option value="recent">Sort: Recent</option>
+        <option value="name">Sort: Name</option>
+        <option value="progress">Sort: Progress</option>
+        <option value="status">Sort: Status</option>
+      </select>
     </section>
 
     <!-- Projects Grid -->
     <main class="projects-grid" id="projectsGrid">
-        <!-- Projects will be rendered here -->
+      <!-- Projects will be rendered here -->
     </main>
 
     <!-- Pagination -->
     <section class="pagination">
-        <button onclick="previousPage()" id="prevBtn">Previous</button>
-        <button class="active" onclick="goToPage(1)">1</button>
-        <button onclick="goToPage(2)">2</button>
-        <button onclick="goToPage(3)">3</button>
-        <button onclick="nextPage()" id="nextBtn">Next</button>
+      <button onclick="previousPage()" id="prevBtn">Previous</button>
+      <button class="active" onclick="goToPage(1)">1</button>
+      <button onclick="goToPage(2)">2</button>
+      <button onclick="goToPage(3)">3</button>
+      <button onclick="nextPage()" id="nextBtn">Next</button>
     </section>
 
     <!-- New Project Modal -->
     <div class="modal" id="projectModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">Create New Project</h2>
-                <button class="close-btn" onclick="closeModal()">&times;</button>
-            </div>
-            <form onsubmit="createProject(event)">
-                <div class="form-group">
-                    <label class="form-label">Project Name</label>
-                    <input type="text" class="form-input" id="projectName" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Description</label>
-                    <textarea class="form-textarea" id="projectDescription" placeholder="Brief project description..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Status</label>
-                    <select class="form-input" id="projectStatus">
-                        <option value="planning">Planning</option>
-                        <option value="active">Active</option>
-                        <option value="completed">Completed</option>
-                    </select>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
-                    <button type="submit" class="btn-primary">Create Project</button>
-                </div>
-            </form>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">Create New Project</h2>
+          <button class="close-btn" onclick="closeModal()">&times;</button>
         </div>
+        <form onsubmit="createProject(event)">
+          <div class="form-group">
+            <label class="form-label">Project Name</label>
+            <input type="text" class="form-input" id="projectName" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <textarea
+              class="form-textarea"
+              id="projectDescription"
+              placeholder="Brief project description..."
+            ></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select class="form-input" id="projectStatus">
+              <option value="planning">Planning</option>
+              <option value="active">Active</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
+            <button type="submit" class="btn-primary">Create Project</button>
+          </div>
+        </form>
+      </div>
     </div>
 
     <script>
-        // Sample project data
-        let projects = [
-            {
-                id: 1,
-                name: "E-commerce Platform",
-                description: "Modern e-commerce solution with React and Node.js",
-                status: "active",
-                progress: 70,
-                team: ["#fbbf24", "#8b5cf6", "#10b981"],
-                teamMore: 2,
-                tasks: "8 tasks • 3 in progress"
-            },
-            {
-                id: 2,
-                name: "Mobile App Redesign",
-                description: "Complete UI/UX overhaul for iOS and Android apps",
-                status: "active",
-                progress: 45,
-                team: ["#ef4444", "#3b82f6"],
-                teamMore: 0,
-                tasks: "12 tasks • 5 in progress"
-            },
-            {
-                id: 3,
-                name: "API Documentation",
-                description: "Comprehensive API docs with OpenAPI specs",
-                status: "completed",
-                progress: 100,
-                team: ["#6366f1", "#f59e0b"],
-                teamMore: 0,
-                tasks: "24 tasks • Completed"
-            },
-            {
-                id: 4,
-                name: "Data Migration Tool",
-                description: "ETL pipeline for legacy system migration",
-                status: "at-risk",
-                progress: 30,
-                team: ["#10b981", "#8b5cf6", "#ef4444"],
-                teamMore: 0,
-                tasks: "15 tasks • 2 blocked"
-            },
-            {
-                id: 5,
-                name: "Analytics Dashboard",
-                description: "Real-time analytics and reporting dashboard",
-                status: "active",
-                progress: 85,
-                team: ["#3b82f6", "#fbbf24", "#6366f1", "#10b981"],
-                teamMore: 0,
-                tasks: "6 tasks • 1 in review"
-            },
-            {
-                id: 6,
-                name: "Cloud Infrastructure",
-                description: "Kubernetes deployment and CI/CD setup",
-                status: "planning",
-                progress: 10,
-                team: ["#ef4444"],
-                teamMore: 0,
-                tasks: "3 tasks • Not started"
-            }
-        ];
+      // Sample project data
+      let projects = [
+        {
+          id: 1,
+          name: 'E-commerce Platform',
+          description: 'Modern e-commerce solution with React and Node.js',
+          status: 'active',
+          progress: 70,
+          team: ['#fbbf24', '#8b5cf6', '#10b981'],
+          teamMore: 2,
+          tasks: '8 tasks • 3 in progress',
+        },
+        {
+          id: 2,
+          name: 'Mobile App Redesign',
+          description: 'Complete UI/UX overhaul for iOS and Android apps',
+          status: 'active',
+          progress: 45,
+          team: ['#ef4444', '#3b82f6'],
+          teamMore: 0,
+          tasks: '12 tasks • 5 in progress',
+        },
+        {
+          id: 3,
+          name: 'API Documentation',
+          description: 'Comprehensive API docs with OpenAPI specs',
+          status: 'completed',
+          progress: 100,
+          team: ['#6366f1', '#f59e0b'],
+          teamMore: 0,
+          tasks: '24 tasks • Completed',
+        },
+        {
+          id: 4,
+          name: 'Data Migration Tool',
+          description: 'ETL pipeline for legacy system migration',
+          status: 'at-risk',
+          progress: 30,
+          team: ['#10b981', '#8b5cf6', '#ef4444'],
+          teamMore: 0,
+          tasks: '15 tasks • 2 blocked',
+        },
+        {
+          id: 5,
+          name: 'Analytics Dashboard',
+          description: 'Real-time analytics and reporting dashboard',
+          status: 'active',
+          progress: 85,
+          team: ['#3b82f6', '#fbbf24', '#6366f1', '#10b981'],
+          teamMore: 0,
+          tasks: '6 tasks • 1 in review',
+        },
+        {
+          id: 6,
+          name: 'Cloud Infrastructure',
+          description: 'Kubernetes deployment and CI/CD setup',
+          status: 'planning',
+          progress: 10,
+          team: ['#ef4444'],
+          teamMore: 0,
+          tasks: '3 tasks • Not started',
+        },
+      ];
 
-        let currentFilter = 'all';
-        let currentSort = 'recent';
-        let currentPage = 1;
-        let projectsPerPage = 6;
+      let currentFilter = 'all';
+      let currentSort = 'recent';
+      let currentPage = 1;
+      let projectsPerPage = 6;
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            renderProjects();
+      // Initialize
+      document.addEventListener('DOMContentLoaded', function () {
+        renderProjects();
+      });
+
+      function renderProjects() {
+        const grid = document.getElementById('projectsGrid');
+        const filteredProjects = getFilteredProjects();
+        const sortedProjects = getSortedProjects(filteredProjects);
+
+        grid.innerHTML = '';
+
+        sortedProjects.forEach((project) => {
+          const projectCard = createProjectCard(project);
+          grid.appendChild(projectCard);
         });
 
-        function renderProjects() {
-            const grid = document.getElementById('projectsGrid');
-            const filteredProjects = getFilteredProjects();
-            const sortedProjects = getSortedProjects(filteredProjects);
-            
-            grid.innerHTML = '';
-            
-            sortedProjects.forEach(project => {
-                const projectCard = createProjectCard(project);
-                grid.appendChild(projectCard);
-            });
-            
-            updateFilterCounts();
-        }
+        updateFilterCounts();
+      }
 
-        function createProjectCard(project) {
-            const card = document.createElement('div');
-            card.className = `project-card ${project.status}`;
-            card.onclick = () => openProject(project.id);
-            
-            const teamAvatars = project.team.map((color, index) => 
-                `<div class="avatar" style="background-color: ${color}">${String.fromCharCode(65 + index)}</div>`
-            ).join('');
-            
-            const teamMore = project.teamMore > 0 ? `<span class="avatar-more">+${project.teamMore} more</span>` : '';
-            
-            card.innerHTML = `
+      function createProjectCard(project) {
+        const card = document.createElement('div');
+        card.className = `project-card ${project.status}`;
+        card.onclick = () => openProject(project.id);
+
+        const teamAvatars = project.team
+          .map(
+            (color, index) =>
+              `<div class="avatar" style="background-color: ${color}">${String.fromCharCode(65 + index)}</div>`
+          )
+          .join('');
+
+        const teamMore =
+          project.teamMore > 0 ? `<span class="avatar-more">+${project.teamMore} more</span>` : '';
+
+        card.innerHTML = `
                 <div class="status-bar"></div>
                 <div class="card-content">
                     <div class="card-header">
@@ -792,194 +818,197 @@
                     </div>
                 </div>
             `;
-            
-            return card;
-        }
 
-        function getStatusLabel(status) {
-            const labels = {
-                'active': 'Active',
-                'completed': 'Completed',
-                'planning': 'Planning',
-                'at-risk': 'Active'
-            };
-            return labels[status] || 'Unknown';
-        }
+        return card;
+      }
 
-        function getFilteredProjects() {
-            if (currentFilter === 'all') return projects;
-            
-            return projects.filter(project => {
-                if (currentFilter === 'active') {
-                    return project.status === 'active' || project.status === 'at-risk';
-                }
-                return project.status === currentFilter;
-            });
-        }
+      function getStatusLabel(status) {
+        const labels = {
+          active: 'Active',
+          completed: 'Completed',
+          planning: 'Planning',
+          'at-risk': 'Active',
+        };
+        return labels[status] || 'Unknown';
+      }
 
-        function getSortedProjects(projectsList) {
-            const sorted = [...projectsList];
-            
-            switch (currentSort) {
-                case 'name':
-                    return sorted.sort((a, b) => a.name.localeCompare(b.name));
-                case 'progress':
-                    return sorted.sort((a, b) => b.progress - a.progress);
-                case 'status':
-                    return sorted.sort((a, b) => a.status.localeCompare(b.status));
-                case 'recent':
-                default:
-                    return sorted; // Keep original order for "recent"
-            }
-        }
+      function getFilteredProjects() {
+        if (currentFilter === 'all') return projects;
 
-        function updateFilterCounts() {
-            const allCount = projects.length;
-            const activeCount = projects.filter(p => p.status === 'active' || p.status === 'at-risk').length;
-            const completedCount = projects.filter(p => p.status === 'completed').length;
-            
-            document.querySelector('[data-filter="all"]').textContent = `All (${allCount})`;
-            document.querySelector('[data-filter="active"]').textContent = `Active (${activeCount})`;
-            document.querySelector('[data-filter="completed"]').textContent = `Completed (${completedCount})`;
-        }
+        return projects.filter((project) => {
+          if (currentFilter === 'active') {
+            return project.status === 'active' || project.status === 'at-risk';
+          }
+          return project.status === currentFilter;
+        });
+      }
 
-        function setFilter(filter) {
-            currentFilter = filter;
-            
-            // Update active button
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
-            
-            renderProjects();
-        }
+      function getSortedProjects(projectsList) {
+        const sorted = [...projectsList];
 
-        function sortProjects(sortBy) {
-            currentSort = sortBy;
-            renderProjects();
+        switch (currentSort) {
+          case 'name':
+            return sorted.sort((a, b) => a.name.localeCompare(b.name));
+          case 'progress':
+            return sorted.sort((a, b) => b.progress - a.progress);
+          case 'status':
+            return sorted.sort((a, b) => a.status.localeCompare(b.status));
+          case 'recent':
+          default:
+            return sorted; // Keep original order for "recent"
         }
+      }
 
-        function filterProjects() {
-            const searchTerm = document.querySelector('.search-input').value.toLowerCase();
-            const grid = document.getElementById('projectsGrid');
-            const cards = grid.querySelectorAll('.project-card');
-            
-            cards.forEach(card => {
-                const title = card.querySelector('.card-title').textContent.toLowerCase();
-                const description = card.querySelector('.card-description').textContent.toLowerCase();
-                
-                if (title.includes(searchTerm) || description.includes(searchTerm)) {
-                    card.style.display = 'block';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
+      function updateFilterCounts() {
+        const allCount = projects.length;
+        const activeCount = projects.filter(
+          (p) => p.status === 'active' || p.status === 'at-risk'
+        ).length;
+        const completedCount = projects.filter((p) => p.status === 'completed').length;
+
+        document.querySelector('[data-filter="all"]').textContent = `All (${allCount})`;
+        document.querySelector('[data-filter="active"]').textContent = `Active (${activeCount})`;
+        document.querySelector('[data-filter="completed"]').textContent =
+          `Completed (${completedCount})`;
+      }
+
+      function setFilter(filter) {
+        currentFilter = filter;
+
+        // Update active button
+        document.querySelectorAll('.filter-btn').forEach((btn) => {
+          btn.classList.remove('active');
+        });
+        document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+
+        renderProjects();
+      }
+
+      function sortProjects(sortBy) {
+        currentSort = sortBy;
+        renderProjects();
+      }
+
+      function filterProjects() {
+        const searchTerm = document.querySelector('.search-input').value.toLowerCase();
+        const grid = document.getElementById('projectsGrid');
+        const cards = grid.querySelectorAll('.project-card');
+
+        cards.forEach((card) => {
+          const title = card.querySelector('.card-title').textContent.toLowerCase();
+          const description = card.querySelector('.card-description').textContent.toLowerCase();
+
+          if (title.includes(searchTerm) || description.includes(searchTerm)) {
+            card.style.display = 'block';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      }
+
+      function openProject(id) {
+        alert(`Opening project ${id}`);
+      }
+
+      function openModal() {
+        document.getElementById('projectModal').classList.add('show');
+      }
+
+      function closeModal() {
+        document.getElementById('projectModal').classList.remove('show');
+        document.getElementById('projectName').value = '';
+        document.getElementById('projectDescription').value = '';
+        document.getElementById('projectStatus').value = 'planning';
+      }
+
+      function createProject(event) {
+        event.preventDefault();
+
+        const name = document.getElementById('projectName').value;
+        const description = document.getElementById('projectDescription').value;
+        const status = document.getElementById('projectStatus').value;
+
+        const newProject = {
+          id: projects.length + 1,
+          name,
+          description,
+          status,
+          progress: status === 'completed' ? 100 : Math.floor(Math.random() * 90),
+          team: ['#3b82f6'],
+          teamMore: 0,
+          tasks: '0 tasks • Just created',
+        };
+
+        projects.unshift(newProject);
+        renderProjects();
+        closeModal();
+      }
+
+      function toggleTheme() {
+        const body = document.body;
+        const button = document.querySelector('.theme-toggle');
+
+        if (body.hasAttribute('data-theme')) {
+          body.removeAttribute('data-theme');
+          button.textContent = '🌙 Dark Mode';
+        } else {
+          body.setAttribute('data-theme', 'dark');
+          button.textContent = '☀️ Light Mode';
         }
+      }
 
-        function openProject(id) {
-            alert(`Opening project ${id}`);
+      function previousPage() {
+        if (currentPage > 1) {
+          currentPage--;
+          updatePagination();
         }
+      }
 
-        function openModal() {
-            document.getElementById('projectModal').classList.add('show');
-        }
+      function nextPage() {
+        currentPage++;
+        updatePagination();
+      }
 
-        function closeModal() {
-            document.getElementById('projectModal').classList.remove('show');
-            document.getElementById('projectName').value = '';
-            document.getElementById('projectDescription').value = '';
-            document.getElementById('projectStatus').value = 'planning';
-        }
+      function goToPage(page) {
+        currentPage = page;
+        updatePagination();
+      }
 
-        function createProject(event) {
-            event.preventDefault();
-            
-            const name = document.getElementById('projectName').value;
-            const description = document.getElementById('projectDescription').value;
-            const status = document.getElementById('projectStatus').value;
-            
-            const newProject = {
-                id: projects.length + 1,
-                name,
-                description,
-                status,
-                progress: status === 'completed' ? 100 : Math.floor(Math.random() * 90),
-                team: ['#3b82f6'],
-                teamMore: 0,
-                tasks: "0 tasks • Just created"
-            };
-            
-            projects.unshift(newProject);
-            renderProjects();
-            closeModal();
-        }
-
-        function toggleTheme() {
-            const body = document.body;
-            const button = document.querySelector('.theme-toggle');
-            
-            if (body.hasAttribute('data-theme')) {
-                body.removeAttribute('data-theme');
-                button.textContent = '🌙 Dark Mode';
-            } else {
-                body.setAttribute('data-theme', 'dark');
-                button.textContent = '☀️ Light Mode';
-            }
-        }
-
-        function previousPage() {
-            if (currentPage > 1) {
-                currentPage--;
-                updatePagination();
-            }
-        }
-
-        function nextPage() {
-            currentPage++;
-            updatePagination();
-        }
-
-        function goToPage(page) {
-            currentPage = page;
-            updatePagination();
-        }
-
-        function updatePagination() {
-            document.querySelectorAll('.pagination button').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            const pageButtons = document.querySelectorAll('.pagination button');
-            if (pageButtons[currentPage]) {
-                pageButtons[currentPage].classList.add('active');
-            }
-            
-            // Update disabled states
-            const prevBtn = document.getElementById('prevBtn');
-            const nextBtn = document.getElementById('nextBtn');
-            
-            prevBtn.disabled = currentPage === 1;
-            nextBtn.disabled = currentPage === 3; // Assuming 3 pages max
-        }
-
-        // Close modal when clicking outside
-        document.getElementById('projectModal').addEventListener('click', function(event) {
-            if (event.target === this) {
-                closeModal();
-            }
+      function updatePagination() {
+        document.querySelectorAll('.pagination button').forEach((btn) => {
+          btn.classList.remove('active');
         });
 
-        // Keyboard shortcuts
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                closeModal();
-            }
-            if (event.key === 'n' && event.ctrlKey) {
-                event.preventDefault();
-                openModal();
-            }
-        });
+        const pageButtons = document.querySelectorAll('.pagination button');
+        if (pageButtons[currentPage]) {
+          pageButtons[currentPage].classList.add('active');
+        }
+
+        // Update disabled states
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+
+        prevBtn.disabled = currentPage === 1;
+        nextBtn.disabled = currentPage === 3; // Assuming 3 pages max
+      }
+
+      // Close modal when clicking outside
+      document.getElementById('projectModal').addEventListener('click', function (event) {
+        if (event.target === this) {
+          closeModal();
+        }
+      });
+
+      // Keyboard shortcuts
+      document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+          closeModal();
+        }
+        if (event.key === 'n' && event.ctrlKey) {
+          event.preventDefault();
+          openModal();
+        }
+      });
     </script>
-</body>
+  </body>
 </html>

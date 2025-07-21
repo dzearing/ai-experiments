@@ -1,0 +1,211 @@
+@import './styles/patterns.css';
+@import './styles/markdown-chat.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global styles */
+html {
+  scrollbar-gutter: stable;
+}
+
+/* Remove focus outline for mouse users, show for keyboard users */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Checkbox specific styles to prevent focus ring on click */
+input[type='checkbox']:focus:not(:focus-visible) {
+  box-shadow: none;
+  outline: none;
+}
+
+/* Dark mode body background */
+body {
+  @apply bg-white;
+}
+
+.dark body {
+  @apply bg-gray-900;
+}
+
+/* Animation keyframes */
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutToLeft {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+}
+
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutToRight {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+}
+
+/* Page transition animations */
+@layer utilities {
+  .scrollbar-gutter-stable {
+    scrollbar-gutter: stable;
+  }
+
+  .page-transition-enter {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  .page-transition-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+      opacity 300ms ease-out,
+      transform 300ms ease-out;
+  }
+
+  .page-transition-exit {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .page-transition-exit-active {
+    opacity: 0;
+    transform: translateY(-20px);
+    transition:
+      opacity 150ms ease-in,
+      transform 150ms ease-in;
+  }
+}
+
+/* Performance-optimized animations with more movement */
+@keyframes float-slow {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  25% {
+    transform: translate3d(60px, -40px, 0);
+  }
+  50% {
+    transform: translate3d(-40px, -20px, 0);
+  }
+  75% {
+    transform: translate3d(20px, 30px, 0);
+  }
+}
+
+@keyframes float-reverse {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  25% {
+    transform: translate3d(-50px, 30px, 0);
+  }
+  50% {
+    transform: translate3d(30px, -50px, 0);
+  }
+  75% {
+    transform: translate3d(-30px, -10px, 0);
+  }
+}
+
+.animate-float-slow {
+  animation: float-slow 12s infinite ease-in-out;
+}
+
+.animate-float-reverse {
+  animation: float-reverse 15s infinite ease-in-out;
+}
+
+/* Old animations kept for compatibility */
+.animate-blob-slow {
+  animation: float-slow 45s infinite ease-in-out;
+}
+
+.animate-blob-reverse {
+  animation: float-reverse 50s infinite ease-in-out;
+}
+
+.animation-delay-1000 {
+  animation-delay: 1s;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-3000 {
+  animation-delay: 3s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+.animation-delay-5000 {
+  animation-delay: 5s;
+}
+
+.animation-delay-6000 {
+  animation-delay: 6s;
+}
+
+.animation-delay-7000 {
+  animation-delay: 7s;
+}
+
+.animation-delay-8000 {
+  animation-delay: 8s;
+}
+
+.animation-delay-9000 {
+  animation-delay: 9s;
+}
+
+/* Toast animations */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}

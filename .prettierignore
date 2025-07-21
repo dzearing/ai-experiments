@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+**/node_modules
+
+# Build outputs
+dist/
+build/
+lib/
+coverage/
+.turbo/
+
+# Lock files
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Generated files
+*.d.ts
+*.d.ts.map
+*.js.map
+
+# Temp folders
+temp/
+tmp/
+.cache/
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+playwright-report/
+test-results/
+
+# Specific files to ignore
+**/*.min.js
+**/*.min.css

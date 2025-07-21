@@ -14,32 +14,33 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ 
-    variant = 'secondary', 
-    size = 'md', 
-    fullWidth = false, 
-    className = '', 
-    children, 
-    as: Component = 'button', 
-    ...props 
-  }, ref) => {
+  (
+    {
+      variant = 'secondary',
+      size = 'md',
+      fullWidth = false,
+      className = '',
+      children,
+      as: Component = 'button',
+      ...props
+    },
+    ref
+  ) => {
     const isIconButton = className.includes('icon-button');
-    
+
     // Build class list
     const classes = [
       styles.button,
       styles[variant],
       !isIconButton && variant !== 'circular' ? styles[size] : '',
       fullWidth ? styles.fullWidth : '',
-      className
-    ].filter(Boolean).join(' ');
-    
+      className,
+    ]
+      .filter(Boolean)
+      .join(' ');
+
     return (
-      <Component
-        ref={ref}
-        className={classes}
-        {...props}
-      >
+      <Component ref={ref} className={classes} {...props}>
         {children}
       </Component>
     );

@@ -1,53 +1,41 @@
 {
-  "name": "project-mgmt-ux",
+  "name": "@claude-flow/root",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview",
-    "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
-  },
-  "dependencies": {
-    "@mdxeditor/editor": "^3.39.0",
-    "@tailwindcss/typography": "^0.5.16",
-    "@tanstack/react-virtual": "^3.13.12",
-    "@types/marked": "^6.0.0",
-    "date-fns": "^4.1.0",
-    "diff": "^8.0.2",
-    "dom-to-image": "^2.6.0",
-    "eventsource": "^4.0.0",
-    "marked": "^16.0.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "react-router-dom": "^7.6.3",
-    "uuid": "^11.1.0"
+    "dev": "repo-scripts dev",
+    "build": "lage build",
+    "test": "lage test",
+    "lint": "lage lint",
+    "check": "pnpm format:check && lage build build:cjs bundle test lint api",
+    "check:verbose": "pnpm check --verbose --reporter adoLog",
+    "lint:fix": "lage lint:fix",
+    "typecheck": "lage typecheck",
+    "scaffold": "repo-scripts scaffold",
+    "dev:v1": "pnpm --filter @claude-flow/v1-client dev",
+    "build:v1": "pnpm --filter @claude-flow/v1-client build",
+    "lint:v1": "pnpm --filter @claude-flow/v1-client lint",
+    "test:e2e": "pnpm --filter @claude-flow/v1-client test:e2e",
+    "test:e2e:ui": "pnpm --filter @claude-flow/v1-client test:e2e:ui",
+    "format": "repo-scripts format",
+    "format:check": "repo-scripts format-check",
+    "postinstall": "lage build --to @claude-flow/repo-scripts"
   },
   "devDependencies": {
-    "@eslint/js": "^9.29.0",
-    "@playwright/test": "^1.53.2",
-    "@tailwindcss/forms": "^0.5.7",
-    "@tailwindcss/postcss": "^4.1.11",
-    "@types/diff": "^7.0.2",
-    "@types/dom-to-image": "^2.6.7",
-    "@types/node": "^24.0.10",
-    "@types/react": "^19.1.8",
-    "@types/react-dom": "^19.1.6",
-    "@types/uuid": "^10.0.0",
-    "@vitejs/plugin-react": "^4.5.2",
-    "autoprefixer": "^10.4.21",
-    "eslint": "^9.29.0",
-    "eslint-plugin-react-hooks": "^5.2.0",
-    "eslint-plugin-react-refresh": "^0.4.20",
-    "globals": "^16.2.0",
-    "postcss": "^8.5.6",
-    "tailwindcss": "^3.4.0",
-    "typescript": "~5.8.3",
-    "typescript-eslint": "^8.34.1",
-    "vite": "^7.0.0"
+    "@types/resolve": "^1.20.6",
+    "concurrently": "^8.2.0",
+    "lage": "^2.7.9",
+    "resolve": "^1.22.10",
+    "tinyglobby": "^0.2.14",
+    "typed-css-modules": "^0.9.1",
+    "workspace-tools": "^0.38.4"
   },
-  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+  "pnpm": {
+    "overrides": {
+      "glob@<9": "^11.0.0",
+      "inflight": "npm:@esm2cjs/inflight@^2.0.0"
+    }
+  },
+  "packageManager": "pnpm@9.0.0"
 }

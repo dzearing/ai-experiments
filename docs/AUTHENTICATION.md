@@ -65,7 +65,7 @@ GITHUB_CLIENT_SECRET=your-github-client-secret
 ### Signing In
 
 ```typescript
-import { useAuth } from "./contexts/AuthContext";
+import { useAuth } from './contexts/AuthContext';
 
 function MyComponent() {
   const { signInWithGitHub } = useAuth();
@@ -74,7 +74,7 @@ function MyComponent() {
     try {
       await signInWithGitHub();
     } catch (error) {
-      console.error("Sign in failed:", error);
+      console.error('Sign in failed:', error);
     }
   };
 }
@@ -83,7 +83,7 @@ function MyComponent() {
 ### Using GitHub API
 
 ```typescript
-import { useGitHub } from "./contexts/GitHubContext";
+import { useGitHub } from './contexts/GitHubContext';
 
 function RepositoryList() {
   const { listRepositories, isAuthenticated } = useGitHub();
@@ -92,7 +92,7 @@ function RepositoryList() {
     if (isAuthenticated) {
       const fetchRepos = async () => {
         const repos = await listRepositories({
-          sort: "updated",
+          sort: 'updated',
           per_page: 20,
         });
         setRepositories(repos);

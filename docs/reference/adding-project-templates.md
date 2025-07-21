@@ -48,7 +48,7 @@ Create `template.json` to define your template:
       "filter": "kebabCase"
     },
     {
-      "name": "displayName", 
+      "name": "displayName",
       "prompt": "Display name",
       "default": "{{name | pascalCase}}"
     },
@@ -65,12 +65,7 @@ Create `template.json` to define your template:
       "default": true
     }
   ],
-  "files": [
-    "package.json",
-    "tsconfig.json",
-    "README.md",
-    "src/index.ts"
-  ],
+  "files": ["package.json", "tsconfig.json", "README.md", "src/index.ts"],
   "conditionalFiles": [
     {
       "condition": "hasTests",
@@ -78,10 +73,7 @@ Create `template.json` to define your template:
     }
   ],
   "hooks": {
-    "postScaffold": [
-      "pnpm install",
-      "git add ."
-    ]
+    "postScaffold": ["pnpm install", "git add ."]
   }
 }
 ```
@@ -91,6 +83,7 @@ Create `template.json` to define your template:
 Use EJS syntax for variable substitution:
 
 **`package.json.ejs`**:
+
 ```json
 {
   "name": "@claude-flow/<%= name %>",
@@ -118,6 +111,7 @@ Use EJS syntax for variable substitution:
 ```
 
 **`tsconfig.json.ejs`**:
+
 ```json
 {
   "extends": "@claude-flow/tsconfig/<%= isReact ? 'react' : 'node' %>.json",
@@ -126,13 +120,12 @@ Use EJS syntax for variable substitution:
     "rootDir": "./src"
   },
   "include": ["src"],
-  "references": [
-    { "path": "../../packages/types" }
-  ]
+  "references": [{ "path": "../../packages/types" }]
 }
 ```
 
 **`src/index.ts.ejs`**:
+
 ```typescript
 /**
  * <%= displayName %>
@@ -154,14 +147,15 @@ export * from './utils';
 For files that should only be created based on user choices:
 
 **`vitest.config.ts.ejs`** (only if `hasTests` is true):
+
 ```typescript
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
     globals: true,
-    environment: '<%= isReact ? "jsdom" : "node" %>'
-  }
+    environment: '<%= isReact ? "jsdom" : "node" %>',
+  },
 });
 ```
 
@@ -180,10 +174,10 @@ These are automatically available in all templates:
 
 ```typescript
 interface TemplateVariable {
-  name: string;           // Variable name
-  prompt: string;         // Question to ask user
+  name: string; // Variable name
+  prompt: string; // Question to ask user
   type?: 'input' | 'confirm' | 'list' | 'number';
-  default?: any;          // Default value or function
+  default?: any; // Default value or function
   validate?: string | ((input: any) => boolean | string);
   filter?: string | ((input: any) => any);
   when?: string | ((answers: any) => boolean);
@@ -205,11 +199,13 @@ Available filters for transforming input:
 ## EJS Syntax Reference
 
 ### Basic Substitution
+
 ```ejs
 <%= variableName %>
 ```
 
 ### Conditional Content
+
 ```ejs
 <% if (condition) { %>
   Content when true
@@ -219,6 +215,7 @@ Available filters for transforming input:
 ```
 
 ### Loops
+
 ```ejs
 <% dependencies.forEach(dep => { %>
   "<%= dep %>": "workspace:*",
@@ -226,6 +223,7 @@ Available filters for transforming input:
 ```
 
 ### Filters in EJS
+
 ```ejs
 <%= name | pascalCase %>
 <%= description | upperCase %>
@@ -290,6 +288,7 @@ Run commands after scaffolding:
 ## Testing Your Template
 
 1. **Test locally**:
+
    ```bash
    cd tools/repo-scripts
    pnpm build
