@@ -8,7 +8,7 @@ module.exports = {
       dependsOn: ['build'],
     },
     lint: {
-      dependsOn: [],
+      dependsOn: ['^build'],
     },
     'lint:fix': {
       dependsOn: [],
