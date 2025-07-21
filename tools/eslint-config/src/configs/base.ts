@@ -1,12 +1,13 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
+import type { TSESLint } from '@typescript-eslint/utils';
 import { rules } from '../rules/index.js';
 
 /**
  * Base ESLint configuration shared by all environments.
  * Contains common TypeScript rules and custom plugins.
  */
-export const base = tseslint.config(
+export const base: TSESLint.FlatConfig.ConfigArray = tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
