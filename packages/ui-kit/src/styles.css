@@ -141,7 +141,7 @@ a:focus-visible {
 ul,
 ol {
   margin-bottom: 1em;
-  padding-left: 1.5em;
+  padding-inline-start: 1.5em;
 }
 
 ul ul,
@@ -165,10 +165,10 @@ code {
   font-family: var(--font-family-mono);
   font-size: 0.875em;
   padding: 0.125em 0.25em;
-  background-color: var(--color-body-background-soft10);
-  border: 1px solid var(--color-body-border);
+  background-color: var(--color-codeInline-background);
+  border: 1px solid var(--color-codeInline-border);
   border-radius: 3px;
-  color: var(--color-body-text);
+  color: var(--color-codeInline-text);
 }
 
 pre {
@@ -177,11 +177,11 @@ pre {
   line-height: var(--line-height-relaxed);
   padding: 1em;
   margin-bottom: 1em;
-  background-color: var(--color-body-background-soft10);
-  border: 1px solid var(--color-body-border);
+  background-color: var(--color-codeBlock-background);
+  border: 1px solid var(--color-codeBlock-border);
   border-radius: 4px;
   overflow-x: auto;
-  color: var(--color-body-text);
+  color: var(--color-codeBlock-text);
 }
 
 pre code {
@@ -194,9 +194,10 @@ pre code {
 /* Blockquote */
 blockquote {
   margin: 0 0 1em;
-  padding: 0.5em 0 0.5em 1.5em;
-  border-left: 4px solid var(--color-body-border-hard10);
-  color: var(--color-body-text-soft20);
+  padding-block: 0.5em;
+  padding-inline: 1.5em 0;
+  border-inline-start: 4px solid var(--color-body-border);
+  color: var(--color-body-text-disabled);
   font-style: italic;
 }
 
@@ -222,7 +223,7 @@ i {
 /* Small */
 small {
   font-size: var(--font-size-sm);
-  color: var(--color-body-text-soft20);
+  color: var(--color-body-text-disabled);
 }
 
 /* Mark */
@@ -325,8 +326,8 @@ select {
 
 input::placeholder,
 textarea::placeholder {
-  color: var(--color-body-text-soft40);
-  opacity: 1;
+  color: var(--color-body-text-disabled);
+  opacity: 0.6;
 }
 
 input:hover:not(:disabled),
@@ -360,10 +361,11 @@ textarea {
 /* Select specific */
 select {
   cursor: pointer;
-  padding-right: 2em;
-  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23666' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  padding-inline-end: 2em;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0.75em center;
+  background-position: inline-end 0.75em center;
   background-size: 12px;
 }
 
@@ -415,17 +417,17 @@ th,
 td {
   text-align: left;
   padding: 0.75em;
-  border-bottom: 1px solid var(--body-border);
+  border-bottom: 1px solid var(--color-body-border);
 }
 
 th {
   font-weight: var(--font-weight-semibold);
   color: var(--color-body-text);
-  background-color: var(--color-body-background-soft10);
+  background-color: var(--color-panel-background);
 }
 
 tbody tr:hover {
-  background-color: var(--color-body-background-soft10);
+  background-color: var(--color-panel-background);
 }
 
 /* ===================================================================
@@ -593,12 +595,12 @@ svg {
 
 @media print {
   body {
-    color: black;
-    background: white;
+    color: var(--color-body-text, black);
+    background: var(--color-body-background, white);
   }
 
   a {
-    color: black;
+    color: var(--color-body-text, black);
     text-decoration: underline;
   }
 

@@ -1,0 +1,98 @@
+/**
+ * Theme-aware color swatch component styles
+ * Uses design tokens exclusively - no hardcoded colors
+ */
+
+.theme-aware-color-swatch {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2);
+  border-radius: var(--radius-md);
+  background: var(--color-body-background);
+  border: 1px solid var(--color-body-border);
+  transition: all var(--transition-base);
+}
+
+.theme-aware-color-swatch:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-body-border-hover);
+}
+
+.swatch-preview {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  border: 2px solid;
+  transition: all var(--transition-base);
+}
+
+.swatch-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-body-text);
+  text-align: center;
+  max-width: 100px;
+  word-break: break-word;
+}
+
+.swatch-value {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  color: var(--color-body-text-soft20);
+  background: var(--color-body-background-soft10);
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--radius-xs);
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .swatch-preview {
+    width: 60px;
+    height: 60px;
+    font-size: var(--font-size-xl);
+  }
+  
+  .swatch-label {
+    font-size: var(--font-size-xs);
+  }
+}
+
+/* RTL Support */
+[dir="rtl"] .theme-aware-color-swatch {
+  direction: rtl;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .theme-aware-color-swatch {
+    border-width: 2px;
+  }
+  
+  .swatch-preview {
+    border-width: 3px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .theme-aware-color-swatch,
+  .swatch-preview {
+    transition: none;
+  }
+  
+  .theme-aware-color-swatch:hover {
+    transform: none;
+  }
+}

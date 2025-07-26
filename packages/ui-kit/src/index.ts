@@ -14,6 +14,11 @@ export {
   type ThemeChangeEvent,
 } from './scripts/theme-manager.js';
 
+// Export web components (framework-agnostic)
+export { ThemePreview } from './components/index';
+
+// Web component types are automatically available via TypeScript ambient declarations
+
 // Export utility functions
 export const UIKit = {
   /**

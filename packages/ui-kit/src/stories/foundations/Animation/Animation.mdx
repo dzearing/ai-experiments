@@ -1,0 +1,294 @@
+import { Meta, Source } from '@storybook/blocks';
+import * as AnimationStories from './Animation.stories';
+
+<Meta title="Foundations/Animation/Documentation" />
+
+# Animation System
+
+Our animation system provides a comprehensive set of tokens and utilities for creating consistent, performant, and accessible animations throughout your application.
+
+## Core Principles
+
+### 1. Purpose-Driven Animation
+Every animation should serve a clear purpose:
+- **Guide attention**: Direct users to important changes
+- **Provide feedback**: Confirm actions and state changes
+- **Create hierarchy**: Establish relationships between elements
+- **Enhance personality**: Add character while maintaining professionalism
+
+### 2. Performance First
+- Use CSS transforms and opacity for best performance
+- Avoid animating layout properties (width, height, top, left)
+- Leverage hardware acceleration with `will-change` when necessary
+- Keep animations under 300ms for optimal perceived performance
+
+### 3. Accessibility by Default
+All animations automatically respect user preferences:
+```css
+@media (prefers-reduced-motion: reduce) {
+  /* All durations become 1ms */
+  /* All easings become linear */
+  /* All delays are removed */
+}
+```
+
+## Token Reference
+
+### Duration Tokens
+
+Duration tokens control how long animations take to complete:
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `--duration-instant` | 100ms | Hover effects, focus states |
+| `--duration-fast` | 200ms | Closing, collapsing, fading out |
+| `--duration-normal` | 300ms | Opening, expanding, sliding in |
+| `--duration-slow` | 500ms | Page transitions, complex animations |
+| `--duration-deliberate` | 700ms | Emphasis animations, celebrations |
+| `--duration-sluggish` | 1000ms | Loading states, background animations |
+
+### Semantic Duration Tokens
+
+Use these context-specific tokens for common UI patterns:
+
+```css
+/* Interactive states */
+--duration-hover: var(--duration-instant);
+--duration-focus: var(--duration-instant);
+
+/* Content transitions */
+--duration-expand: var(--duration-normal);
+--duration-collapse: var(--duration-fast);
+--duration-fade-in: var(--duration-fast);
+--duration-fade-out: var(--duration-fast);
+--duration-slide-in: var(--duration-normal);
+--duration-slide-out: var(--duration-fast);
+
+/* Modal and overlay animations */
+--duration-modal-in: var(--duration-normal);
+--duration-modal-out: var(--duration-fast);
+
+/* Page-level transitions */
+--duration-page-transition: var(--duration-slow);
+```
+
+### Easing Functions
+
+Easing functions control the acceleration curve of animations:
+
+| Token | Cubic Bezier | Usage |
+|-------|--------------|-------|
+| `--easing-linear` | linear | Continuous animations (spinners, progress) |
+| `--easing-ease` | cubic-bezier(0.4, 0, 0.2, 1) | Default, general purpose |
+| `--easing-ease-in` | cubic-bezier(0.4, 0, 1, 1) | Exit animations |
+| `--easing-ease-out` | cubic-bezier(0, 0, 0.2, 1) | Enter animations |
+| `--easing-ease-in-out` | cubic-bezier(0.4, 0, 0.2, 1) | Move animations |
+| `--easing-bounce` | cubic-bezier(0.68, -0.55, 0.265, 1.55) | Playful emphasis |
+| `--easing-sharp` | cubic-bezier(0.4, 0, 0.6, 1) | Quick, responsive |
+| `--easing-smooth` | cubic-bezier(0.45, 0, 0.55, 1) | Gentle, refined |
+
+### Semantic Easing Tokens
+
+```css
+--easing-default: var(--easing-ease);
+--easing-enter: var(--easing-ease-out);
+--easing-exit: var(--easing-ease-in);
+--easing-move: var(--easing-ease-in-out);
+```
+
+### Delay Tokens
+
+Use delays to sequence animations:
+
+```css
+--delay-none: 0ms;
+--delay-short: 100ms;
+--delay-medium: 200ms;
+--delay-long: 400ms;
+--delay-stagger: 50ms; /* For list items */
+```
+
+### Pre-composed Transitions
+
+Common transition combinations ready to use:
+
+```css
+/* Animates all properties */
+--transition-all: all var(--duration-fast) var(--easing-default);
+
+/* Color changes only */
+--transition-colors: 
+  background-color var(--duration-fast) var(--easing-default),
+  border-color var(--duration-fast) var(--easing-default),
+  color var(--duration-fast) var(--easing-default),
+  fill var(--duration-fast) var(--easing-default),
+  stroke var(--duration-fast) var(--easing-default);
+
+/* Specific properties */
+--transition-opacity: opacity var(--duration-fast) var(--easing-default);
+--transition-transform: transform var(--duration-normal) var(--easing-default);
+--transition-shadow: box-shadow var(--duration-fast) var(--easing-default);
+```
+
+## Usage Examples
+
+### Basic Hover Effect
+
+<Source
+  language="css"
+  code={`
+.button {
+  transition: var(--transition-colors);
+}
+
+.button:hover {
+  background-color: var(--color-buttonPrimary-background-hover);
+  color: var(--color-buttonPrimary-text-hover);
+}
+  `}
+/>
+
+### Entrance Animation
+
+<Source
+  language="css"
+  code={`
+.modal {
+  animation: slide-in-up var(--duration-modal-in) var(--easing-enter);
+}
+
+.modal.closing {
+  animation: fade-out var(--duration-modal-out) var(--easing-exit);
+}
+  `}
+/>
+
+### Staggered List Animation
+
+<Source
+  language="css"
+  code={`
+.list-item {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fade-in var(--duration-normal) var(--easing-enter) forwards;
+  animation-delay: calc(var(--index) * var(--delay-stagger));
+}
+  `}
+/>
+
+### Complex State Transition
+
+<Source
+  language="css"
+  code={`
+.card {
+  transition: 
+    transform var(--duration-normal) var(--easing-default),
+    box-shadow var(--duration-fast) var(--easing-default);
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.card:active {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+  `}
+/>
+
+## Best Practices
+
+### Do's
+- ✅ Use tokens consistently
+- ✅ Keep animations under 300ms for UI feedback
+- ✅ Use `transform` and `opacity` for performance
+- ✅ Test with reduced motion enabled
+- ✅ Provide visual feedback for all interactions
+- ✅ Use appropriate easing for context (enter vs exit)
+
+### Don'ts
+- ❌ Create custom durations outside the system
+- ❌ Animate multiple properties when one suffices
+- ❌ Use animations without purpose
+- ❌ Ignore accessibility preferences
+- ❌ Animate layout properties (width, height)
+- ❌ Chain animations longer than 1 second
+
+## Keyframe Animations
+
+The system includes pre-defined keyframes for common patterns:
+
+### Fade Animations
+- `fade-in`: Opacity 0 → 1
+- `fade-out`: Opacity 1 → 0
+
+### Slide Animations
+- `slide-in-up`: Slide from bottom with fade
+- `slide-in-down`: Slide from top with fade
+- `slide-in-left`: Slide from left with fade
+- `slide-in-right`: Slide from right with fade
+
+### Scale Animations
+- `scale-in`: Scale 0 → 1 with fade
+- `scale-out`: Scale 1 → 0 with fade
+
+### Utility Animations
+- `spin`: 360° rotation (loopable)
+- `pulse`: Opacity pulse (loopable)
+- `bounce`: Vertical bounce (loopable)
+
+## JavaScript Integration
+
+When controlling animations from JavaScript:
+
+```javascript
+// Respect user preferences
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Use CSS custom properties for dynamic values
+element.style.setProperty('--animation-distance', '100px');
+element.style.setProperty('--animation-duration', 'var(--duration-normal)');
+
+// Trigger reflow for animation restart
+element.classList.remove('animate');
+void element.offsetWidth; // Trigger reflow
+element.classList.add('animate');
+```
+
+## Performance Guidelines
+
+1. **Prefer CSS animations** over JavaScript when possible
+2. **Use `will-change`** sparingly and remove after animation
+3. **Batch DOM updates** to avoid layout thrashing
+4. **Throttle scroll-based animations** with Intersection Observer
+5. **Test on lower-end devices** to ensure smooth performance
+
+## Accessibility Checklist
+
+- [ ] All animations respect `prefers-reduced-motion`
+- [ ] Focus indicators remain visible during animations
+- [ ] Content is accessible before and after animation
+- [ ] No flashing or strobing effects
+- [ ] Animation doesn't interfere with screen readers
+- [ ] Essential information isn't conveyed through animation alone
+
+## Platform Considerations
+
+### Web
+- Use CSS animations and transitions
+- Leverage GPU acceleration with transforms
+- Consider battery life on mobile devices
+
+### React Native
+- Map duration tokens to Animated API
+- Use native driver for transforms and opacity
+- Consider gesture-driven animations
+
+### Desktop (Electron)
+- Match native OS animation speeds
+- Respect system-wide animation preferences
+- Use subtle animations to feel native

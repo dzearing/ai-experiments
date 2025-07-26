@@ -344,7 +344,7 @@ export const surfaces: SurfaceDefinition[] = [
         args: {
           color1: { ref: 'info.100' },
           color2: { ref: 'body.background' },
-          ratio: 0.7,
+          ratio: 0.3,
         },
       },
       text: {
@@ -379,7 +379,7 @@ export const surfaces: SurfaceDefinition[] = [
         args: {
           color1: { ref: 'success.100' },
           color2: { ref: 'body.background' },
-          ratio: 0.7,
+          ratio: 0.3,
         },
       },
       text: {
@@ -414,7 +414,7 @@ export const surfaces: SurfaceDefinition[] = [
         args: {
           color1: { ref: 'warning.100' },
           color2: { ref: 'body.background' },
-          ratio: 0.7,
+          ratio: 0.3,
         },
       },
       text: {
@@ -449,7 +449,7 @@ export const surfaces: SurfaceDefinition[] = [
         args: {
           color1: { ref: 'error.100' },
           color2: { ref: 'body.background' },
-          ratio: 0.7,
+          ratio: 0.3,
         },
       },
       text: {

@@ -10,7 +10,7 @@
 .story-container h3 {
   font-size: var(--font-size-h5);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text);
+  color: var(--color-body-text);
   margin: var(--spacing-xl) 0 var(--spacing-md) 0;
 }
 
@@ -24,8 +24,8 @@
   flex-direction: column;
   gap: var(--spacing-sm);
   padding: var(--spacing-md);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background: var(--color-panel-background);
+  border: 1px solid var(--color-panel-border);
   border-radius: var(--radius-md);
   margin-bottom: var(--spacing-md);
 }
@@ -40,7 +40,7 @@
 .type-specimen-name {
   font-size: var(--font-size-body);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text);
+  color: var(--color-body-text);
   margin: 0;
   min-width: 120px;
 }
@@ -48,8 +48,8 @@
 .type-specimen-var {
   font-family: var(--font-family-mono);
   font-size: var(--font-size-code);
-  color: var(--color-text-secondary);
-  background: var(--color-surface-variant);
+  color: var(--color-body-text-soft10);
+  background: var(--color-panel-background-soft10);
   padding: var(--spacing-2xs) var(--spacing-xs);
   border-radius: var(--radius-sm);
 }
@@ -57,12 +57,12 @@
 .type-specimen-metrics {
   font-family: var(--font-family-mono);
   font-size: var(--font-size-caption);
-  color: var(--color-text-muted);
+  color: var(--color-body-text-soft20);
 }
 
 .type-specimen-sample {
   margin: 0;
-  color: var(--color-text);
+  color: var(--color-body-text);
   line-height: var(--line-height-normal);
 }
 
@@ -72,8 +72,8 @@
   flex-direction: column;
   gap: var(--spacing-sm);
   padding: var(--spacing-md);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background: var(--color-panel-background);
+  border: 1px solid var(--color-panel-border);
   border-radius: var(--radius-md);
 }
 
@@ -86,28 +86,28 @@
 .weight-value {
   font-weight: var(--font-weight-bold);
   font-size: var(--font-size-h6);
-  color: var(--color-text);
+  color: var(--color-body-text);
   min-width: 50px;
 }
 
 .weight-var {
   font-family: var(--font-family-mono);
   font-size: var(--font-size-code);
-  color: var(--color-text-secondary);
-  background: var(--color-surface-variant);
+  color: var(--color-body-text-soft10);
+  background: var(--color-panel-background-soft10);
   padding: var(--spacing-2xs) var(--spacing-xs);
   border-radius: var(--radius-sm);
 }
 
 .weight-usage {
   font-size: var(--font-size-caption);
-  color: var(--color-text-muted);
+  color: var(--color-body-text-soft20);
 }
 
 .weight-sample {
   margin: 0;
   font-size: var(--font-size-lg);
-  color: var(--color-text);
+  color: var(--color-body-text);
 }
 
 /* Line Height Styles */
@@ -116,59 +116,59 @@
   flex-direction: column;
   gap: var(--spacing-md);
   padding: var(--spacing-lg);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background: var(--color-panel-background);
+  border: 1px solid var(--color-panel-border);
   border-radius: var(--radius-md);
 }
 
 .line-height-info h4 {
   font-size: var(--font-size-h6);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text);
+  color: var(--color-body-text);
   margin: 0 0 var(--spacing-xs) 0;
 }
 
 .line-height-info code {
   font-family: var(--font-family-mono);
   font-size: var(--font-size-code);
-  color: var(--color-text-secondary);
-  background: var(--color-surface-variant);
+  color: var(--color-body-text-soft10);
+  background: var(--color-panel-background-soft10);
   padding: var(--spacing-2xs) var(--spacing-xs);
   border-radius: var(--radius-sm);
 }
 
 .line-height-description {
   font-size: var(--font-size-caption);
-  color: var(--color-text-muted);
+  color: var(--color-body-text-soft20);
   margin: var(--spacing-xs) 0 0 0;
 }
 
 .line-height-sample {
   margin: 0;
-  color: var(--color-text);
+  color: var(--color-body-text);
   max-width: 600px;
 }
 
 /* Font Family Styles */
 .font-family-specimen {
   padding: var(--spacing-lg);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background: var(--color-panel-background);
+  border: 1px solid var(--color-panel-border);
   border-radius: var(--radius-md);
 }
 
 .font-family-specimen h4 {
   font-size: var(--font-size-h6);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text);
+  color: var(--color-body-text);
   margin: 0 0 var(--spacing-sm) 0;
 }
 
 .font-family-specimen code {
   font-family: var(--font-family-mono);
   font-size: var(--font-size-code);
-  color: var(--color-text-secondary);
-  background: var(--color-surface-variant);
+  color: var(--color-body-text-soft10);
+  background: var(--color-panel-background-soft10);
   padding: var(--spacing-2xs) var(--spacing-xs);
   border-radius: var(--radius-sm);
   display: inline-block;
@@ -178,7 +178,7 @@
 .font-family-specimen p {
   margin: 0;
   line-height: var(--line-height-relaxed);
-  color: var(--color-text);
+  color: var(--color-body-text);
 }
 
 .font-family-specimen p code {
@@ -188,8 +188,8 @@
 /* Responsive Demo Styles */
 .responsive-demo {
   padding: var(--spacing-lg);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background: var(--color-panel-background);
+  border: 1px solid var(--color-panel-border);
   border-radius: var(--radius-md);
 }
 
@@ -211,24 +211,24 @@
 .responsive-table td {
   text-align: left;
   padding: var(--spacing-sm);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-panel-border);
 }
 
 .responsive-table th {
   font-weight: var(--font-weight-semibold);
-  background: var(--color-surface-variant);
+  background: var(--color-panel-background-soft10);
 }
 
 .responsive-example {
   margin-top: var(--spacing-lg);
   padding: var(--spacing-lg);
-  background: var(--color-background);
-  border: 1px solid var(--color-border);
+  background: var(--color-body-background);
+  border: 1px solid var(--color-panel-border);
   border-radius: var(--radius-md);
   text-align: center;
 }
 
 .responsive-example h1 {
   margin: 0 0 var(--spacing-md) 0;
-  color: var(--color-text);
+  color: var(--color-body-text);
 }

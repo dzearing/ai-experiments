@@ -10,11 +10,11 @@ Welcome to the Claude Flow UI Kit - a framework-agnostic foundation for building
 
 The UI Kit provides:
 
-- 🎨 **8 Built-in Themes** - Each with light and dark modes
+- 🎨 **15 Built-in Themes** - Each with light and dark modes (30 total variations)
 - 🔧 **CSS Variables** - Comprehensive design tokens for colors, typography, spacing, and more
 - 📐 **CSS Reset** - Consistent cross-browser baseline
 - 🚀 **Zero JS Runtime** - Pure CSS approach (except for theme initialization)
-- ♿ **Accessible** - WCAG compliant color contrasts and motion preferences
+- ♿ **Accessible** - WCAG AA/AAA compliant color contrasts and motion preferences
 - 📱 **Responsive** - Mobile-first design tokens
 - 🎯 **Framework Agnostic** - Works with React, Vue, Angular, or vanilla JS
 
@@ -26,16 +26,42 @@ The UI Kit provides:
 pnpm add @claude-flow/ui-kit
 ```
 
-### 2. Add to Your HTML
+### 2. Import in Your Application
+
+#### Option A: HTML (Vanilla JS)
 
 ```html
 <head>
-  <!-- CSS Reset, Variables, and Themes -->
+  <!-- CSS Reset, Variables, and Base Styles -->
   <link rel="stylesheet" href="node_modules/@claude-flow/ui-kit/dist/styles.css" />
 
   <!-- Theme initialization (prevents flash of wrong theme) -->
   <script src="node_modules/@claude-flow/ui-kit/dist/theme-init.js"></script>
 </head>
+```
+
+#### Option B: JavaScript Module Import
+
+```javascript
+// Import CSS in your entry point
+import '@claude-flow/ui-kit/styles.css';
+
+// Import theme manager for programmatic control
+import { themeManager } from '@claude-flow/ui-kit';
+```
+
+#### Option C: React/TypeScript
+
+```typescript
+// In your App.tsx or index.tsx
+import '@claude-flow/ui-kit/styles.css';
+import { themeManager, type Theme } from '@claude-flow/ui-kit';
+
+// Initialize on mount
+useEffect(() => {
+  // Theme is auto-initialized, but you can manually control it
+  themeManager.setTheme('ocean');
+}, []);
 ```
 
 ### 3. Use CSS Variables
@@ -47,6 +73,107 @@ pnpm add @claude-flow/ui-kit
   border-radius: var(--radius-md);
   font-size: var(--font-size-body);
   transition: all var(--duration-fast) var(--easing-ease);
+}
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+}
+```
+
+## Theme Switching
+
+### JavaScript API
+
+```javascript
+// Using the global theme API (available after theme-init.js loads)
+window.__claudeFlowTheme.loadTheme('ocean', 'dark');
+
+// Or use the imported theme manager
+import { themeManager } from '@claude-flow/ui-kit';
+
+// Switch theme
+themeManager.setTheme('sunset');
+
+// Switch mode (light/dark/auto)
+themeManager.setMode('dark');
+
+// Toggle between light and dark
+window.__claudeFlowTheme.toggleThemeType();
+
+// Listen for theme changes
+themeManager.on('themechange', (event) => {
+  console.log(`Theme changed to ${event.theme} (${event.mode})`);
+});
+```
+
+### React Example
+
+```tsx
+import React, { useState, useEffect } from 'react';
+import { themeManager, type ThemeChangeEvent } from '@claude-flow/ui-kit';
+
+export function ThemeSwitcher() {
+  const [currentTheme, setCurrentTheme] = useState(themeManager.currentTheme);
+  const [currentMode, setCurrentMode] = useState(themeManager.currentMode);
+
+  useEffect(() => {
+    // Listen for theme changes
+    const handleThemeChange = (event: ThemeChangeEvent) => {
+      setCurrentTheme(event.theme);
+      setCurrentMode(event.mode);
+    };
+
+    themeManager.on('themechange', handleThemeChange);
+    return () => themeManager.off('themechange', handleThemeChange);
+  }, []);
+
+  return (
+    <div>
+      <select 
+        value={currentTheme} 
+        onChange={(e) => themeManager.setTheme(e.target.value)}
+      >
+        {themeManager.themes.map(theme => (
+          <option key={theme.id} value={theme.id}>
+            {theme.name}
+          </option>
+        ))}
+      </select>
+
+      <button onClick={() => themeManager.setMode('light')}>Light</button>
+      <button onClick={() => themeManager.setMode('dark')}>Dark</button>
+      <button onClick={() => themeManager.setMode('auto')}>Auto</button>
+    </div>
+  );
+}
+```
+
+### TypeScript Types
+
+```typescript
+import type { Theme, ThemeMode, ThemePreferences } from '@claude-flow/ui-kit';
+
+// Theme interface
+interface Theme {
+  id: string;
+  name: string;
+  description: string;
+  colors: {
+    primary: string;
+    secondary: string;
+  };
+}
+
+// Theme mode options
+type ThemeMode = 'light' | 'dark' | 'auto';
+
+// Stored preferences
+interface ThemePreferences {
+  theme: string;
+  mode: ThemeMode;
+  timestamp: number;
 }
 ```
 
@@ -66,7 +193,7 @@ CSS variables enable instant theme switching without JavaScript frameworks or re
 
 ### 4. **Accessibility Built-in**
 
-- All color combinations meet WCAG AA standards
+- All color combinations meet WCAG AA standards (High Contrast theme meets AAA)
 - Respects `prefers-reduced-motion`
 - Semantic HTML encouraged through reset styles
 
@@ -74,14 +201,14 @@ CSS variables enable instant theme switching without JavaScript frameworks or re
 
 - Comprehensive documentation
 - Interactive examples
-- TypeScript support
-- Visual theme creator
+- Full TypeScript support
+- Visual theme explorer
 
 ## What's Included
 
 ### Design Tokens
 
-- **Colors** - 10-shade scales for all color types
+- **Colors** - 10-shade scales for all color types with semantic aliases
 - **Typography** - Modular scale, weights, and line heights
 - **Spacing** - 8px based system from 2px to 128px
 - **Animation** - Consistent durations and easings
@@ -89,25 +216,77 @@ CSS variables enable instant theme switching without JavaScript frameworks or re
 - **Shadows** - Elevation system
 - **Layout** - Breakpoints and containers
 
-### Themes
+### Available Themes
 
-Each theme provides a complete design system:
+Each theme provides a complete design system with light and dark modes:
 
 1. **Default** - Clean and professional
-2. **Corporate** - Business-focused
-3. **Vibrant** - Bold and energetic
-4. **Minimal** - Simple and understated
-5. **Nature** - Earth tones
-6. **Ocean** - Cool blues
-7. **Sunset** - Warm oranges
-8. **Monochrome** - Grayscale only
+2. **Ocean** - Cool blues and aquas
+3. **Forest** - Natural greens and earth tones
+4. **Sunset** - Warm oranges and purples
+5. **Corporate** - Business-focused design
+6. **Vibrant** - Bold and energetic
+7. **Minimal** - Simple and understated
+8. **Nature** - Earth tones
+9. **Monochrome** - Grayscale only
+10. **High Contrast** - Maximum readability (AAA)
+11. **Midnight** - Deep blues and purples
+12. **Spring** - Fresh pastels
+13. **Autumn** - Warm fall colors
+14. **Arctic** - Cool, crisp palette
+15. **Retro** - 80s inspired
+
+## Advanced Usage
+
+### Preloading Themes
+
+```javascript
+// Preload themes for instant switching
+window.__claudeFlowTheme.preloadThemes(['ocean', 'sunset', 'forest']);
+
+// Or preload specific mode combinations
+window.__claudeFlowTheme.preloadThemes([
+  { name: 'ocean', type: 'dark' },
+  { name: 'sunset', type: 'light' }
+]);
+```
+
+### Custom CSS with Tokens
+
+```css
+/* Use color scales directly */
+.custom-gradient {
+  background: linear-gradient(
+    to right,
+    var(--color-primary-400),
+    var(--color-primary-600)
+  );
+}
+
+/* Responsive spacing */
+.responsive-padding {
+  padding: var(--spacing-sm);
+}
+
+@media (min-width: 768px) {
+  .responsive-padding {
+    padding: var(--spacing-md);
+  }
+}
+
+/* Dark mode overrides */
+[data-theme-type="dark"] .special-element {
+  background: var(--color-surface-elevated);
+  border-color: var(--color-border-subtle);
+}
+```
 
 ## Navigation
 
 Use the sidebar to explore:
 
 - **Foundations** - Deep dive into each design token category
-- **Theming** - Theme showcase and creation tools
+- **Theming** - Interactive theme explorer and switcher
 - **Examples** - Integration guides for different frameworks
 
 Happy building! 🚀

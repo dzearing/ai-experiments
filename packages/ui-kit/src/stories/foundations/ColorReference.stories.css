@@ -324,50 +324,64 @@
   color: var(--color-body-text-hard10);
 }
 
-/* Light mode column - always light */
+/* Light mode column - using light theme tokens */
 .value-column.light-mode {
-  background: #ffffff;
-  color: #212121;
+  /* Force light mode appearance using CSS custom properties */
+  --local-bg: var(--color-body-background);
+  --local-text: var(--color-body-text);
+  --local-text-hard: var(--color-body-text-hard10);
+  --local-text-soft: var(--color-body-text-soft20);
+  --local-bg-soft: var(--color-body-background-soft10);
+  
+  background: var(--local-bg);
+  color: var(--local-text);
 }
 
 .value-column.light-mode h4 {
-  color: #000000;
+  color: var(--local-text-hard);
 }
 
 .value-column.light-mode .value-label {
-  color: #616161;
+  color: var(--local-text-soft);
 }
 
 .value-column.light-mode .value-text {
-  background: #f5f5f5;
-  color: #212121;
+  background: var(--local-bg-soft);
+  color: var(--local-text);
 }
 
 .value-column.light-mode .usage-example {
-  color: #757575;
+  color: var(--local-text-soft);
 }
 
-/* Dark mode column - always dark */
+/* Dark mode column - using dark theme tokens */
 .value-column.dark-mode {
-  background: #1e1e1e;
-  color: #e0e0e0;
+  /* Force dark mode appearance using CSS custom properties */
+  --local-bg: var(--color-body-background);
+  --local-text: var(--color-body-text);
+  --local-text-hard: var(--color-body-text-hard10);
+  --local-text-soft: var(--color-body-text-soft20);
+  --local-bg-soft: var(--color-body-background-soft10);
+  
+  background: var(--local-bg);
+  color: var(--local-text);
 }
 
 .value-column.dark-mode h4 {
-  color: #ffffff;
+  color: var(--local-text-hard);
 }
 
 .value-column.dark-mode .value-label {
-  color: #9e9e9e;
+  color: var(--local-text-soft);
 }
 
 .value-column.dark-mode .value-text {
-  background: #2d2d2d;
-  color: #e0e0e0;
+  background: var(--local-bg-soft);
+  color: var(--local-text);
 }
 
 .value-column.dark-mode .usage-example {
-  color: #9e9e9e;
+  color: var(--local-text-soft);
 }
 
 .value-info {

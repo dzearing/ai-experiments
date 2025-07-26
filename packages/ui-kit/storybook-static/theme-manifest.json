@@ -1,0 +1,214 @@
+{
+  "generated": "2025-07-25T23:32:55.235Z",
+  "themes": [
+    {
+      "id": "default",
+      "name": "Default",
+      "description": "Clean and professional design with blue primary colors",
+      "accessibility": {
+        "targetLevel": "AA"
+      },
+      "files": {
+        "light": "default-light.css",
+        "dark": "default-dark.css"
+      }
+    },
+    {
+      "id": "ocean",
+      "name": "Ocean",
+      "description": "Cool blues and aquas inspired by the sea",
+      "accessibility": {
+        "targetLevel": "AA"
+      },
+      "files": {
+        "light": "ocean-light.css",
+        "dark": "ocean-dark.css"
+      }
+    },
+    {
+      "id": "forest",
+      "name": "Forest",
+      "description": "Natural greens and earth tones",
+      "accessibility": {
+        "targetLevel": "AA"
+      },
+      "files": {
+        "light": "forest-light.css",
+        "dark": "forest-dark.css"
+      }
+    },
+    {
+      "id": "sunset",
+      "name": "Sunset",
+      "description": "Warm oranges and purples",
+      "accessibility": {
+        "targetLevel": "AA"
+      },
+      "files": {
+        "light": "sunset-light.css",
+        "dark": "sunset-dark.css"
+      }
+    },
+    {
+      "id": "corporate",
+      "name": "Corporate",
+      "description": "Professional business-focused design",
+      "accessibility": {
+        "targetLevel": "AA"
+      },
+      "files": {
+        "light": "corporate-light.css",
+        "dark": "corporate-dark.css"
+      }
+    },
+    {
+      "id": "vibrant",
+      "name": "Vibrant",
+      "description": "Bold and energetic colors",
+      "accessibility": {
+        "targetLevel": "AA"
+      },
+      "files": {
+        "light": "vibrant-light.css",
+        "dark": "vibrant-dark.css"
+      }
+    },
+    {
+      "id": "minimal",
+      "name": "Minimal",
+      "description": "Simple and understated design",
+      "accessibility": {
+        "targetLevel": "AA"
+      },
+      "files": {
+        "light": "minimal-light.css",
+        "dark": "minimal-dark.css"
+      }
+    },
+    {
+      "id": "nature",
+      "name": "Nature",
+      "description": "Earth tones and natural colors",
+      "accessibility": {
+        "targetLevel": "AA"
+      },
+      "files": {
+        "light": "nature-light.css",
+        "dark": "nature-dark.css"
+      }
+    },
+    {
+      "id": "monochrome",
+      "name": "Monochrome",
+      "description": "Grayscale only design",
+      "accessibility": {
+        "targetLevel": "AA"
+      },
+      "files": {
+        "light": "monochrome-light.css",
+        "dark": "monochrome-dark.css"
+      }
+    },
+    {
+      "id": "high-contrast",
+      "name": "High Contrast",
+      "description": "Maximum readability with AAA compliance",
+      "accessibility": {
+        "targetLevel": "AAA"
+      },
+      "files": {
+        "light": "high-contrast-light.css",
+        "dark": "high-contrast-dark.css"
+      }
+    },
+    {
+      "id": "midnight",
+      "name": "Midnight",
+      "description": "Deep blues and purples for night owls",
+      "accessibility": {
+        "targetLevel": "AA"
+      },
+      "files": {
+        "light": "midnight-light.css",
+        "dark": "midnight-dark.css"
+      }
+    },
+    {
+      "id": "spring",
+      "name": "Spring",
+      "description": "Fresh pastels and bright accents",
+      "accessibility": {
+        "targetLevel": "AA"
+      },
+      "files": {
+        "light": "spring-light.css",
+        "dark": "spring-dark.css"
+      }
+    },
+    {
+      "id": "autumn",
+      "name": "Autumn",
+      "description": "Warm fall colors",
+      "accessibility": {
+        "targetLevel": "AA"
+      },
+      "files": {
+        "light": "autumn-light.css",
+        "dark": "autumn-dark.css"
+      }
+    },
+    {
+      "id": "arctic",
+      "name": "Arctic",
+      "description": "Cool, crisp ice-inspired palette",
+      "accessibility": {
+        "targetLevel": "AA"
+      },
+      "files": {
+        "light": "arctic-light.css",
+        "dark": "arctic-dark.css"
+      }
+    },
+    {
+      "id": "retro",
+      "name": "Retro",
+      "description": "80s inspired neon and pastels",
+      "accessibility": {
+        "targetLevel": "AA"
+      },
+      "files": {
+        "light": "retro-light.css",
+        "dark": "retro-dark.css"
+      }
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0",
+    "totalTokens": 1150,
+    "surfaces": [
+      "body",
+      "panel",
+      "panelRaised",
+      "panelElevated",
+      "panelFloating",
+      "buttonPrimary",
+      "buttonSecondary",
+      "buttonNeutral",
+      "buttonDanger",
+      "buttonSuccess",
+      "input",
+      "noticeInfo",
+      "noticeSuccess",
+      "noticeWarning",
+      "noticeDanger",
+      "codeBlock",
+      "codeInline",
+      "dialog",
+      "modal",
+      "tooltip",
+      "menu",
+      "overlay",
+      "overlayDark"
+    ]
+  }
+}

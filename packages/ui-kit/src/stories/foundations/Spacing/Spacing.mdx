@@ -1,0 +1,183 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Foundations/Spacing/Overview" />
+
+# Spacing System
+
+Our spacing system is built on an **8px grid** that creates consistent visual rhythm throughout the interface. This mathematical approach ensures harmonious relationships between elements and improves overall design coherence.
+
+## Core Principles
+
+### 1. The 8px Grid
+Every spacing value is a multiple of 8px (our base unit). This creates predictable, scalable spacing that works across different screen sizes and contexts.
+
+### 2. Consistent Token Usage
+Always use design tokens (`var(--spacing-*)`) instead of arbitrary pixel values. This ensures:
+- **Maintainability**: Update spacing globally by changing token values
+- **Consistency**: Same spacing relationships across all components
+- **Scalability**: Easy to adjust for different themes or brands
+
+### 3. Contextual Spacing
+Different contexts require different spacing approaches:
+- **Micro spacing** (2-8px): For tight element relationships
+- **Component spacing** (8-24px): For internal component structure
+- **Layout spacing** (32-128px): For page sections and major divisions
+
+## Token Reference
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `--spacing-0` | 0 | No spacing |
+| `--spacing-px` | 1px | Minimal separation |
+| `--spacing-2xs` | 2px | Hairline spacing |
+| `--spacing-xs` | 4px | Icon gaps, inline elements |
+| `--spacing-sm` | 8px | Related content, small gaps |
+| `--spacing-md` | 16px | Standard padding, medium gaps |
+| `--spacing-lg` | 24px | Content groups, card padding |
+| `--spacing-xl` | 32px | Section spacing, modal padding |
+| `--spacing-2xl` | 48px | Large sections |
+| `--spacing-3xl` | 64px | Major divisions |
+| `--spacing-4xl` | 96px | Hero sections |
+| `--spacing-5xl` | 128px | Maximum spacing |
+
+## Component-Specific Tokens
+
+Pre-defined spacing for common components ensures consistency:
+
+```css
+--spacing-button-x: var(--spacing-md);    /* 16px horizontal */
+--spacing-button-y: var(--spacing-sm);    /* 8px vertical */
+--spacing-input-x: var(--spacing-md);     /* 16px horizontal */
+--spacing-input-y: var(--spacing-sm);     /* 8px vertical */
+--spacing-card: var(--spacing-lg);        /* 24px all sides */
+--spacing-modal: var(--spacing-xl);       /* 32px all sides */
+--spacing-section: var(--spacing-3xl);    /* 64px between sections */
+```
+
+## Gap Utilities
+
+For flexbox and grid layouts:
+
+```css
+--gap-xs: var(--spacing-xs);   /* 4px */
+--gap-sm: var(--spacing-sm);   /* 8px */
+--gap-md: var(--spacing-md);   /* 16px */
+--gap-lg: var(--spacing-lg);   /* 24px */
+--gap-xl: var(--spacing-xl);   /* 32px */
+```
+
+## Responsive Spacing
+
+Spacing adapts to screen size for optimal layouts:
+
+### Container Padding
+```css
+--container-padding-mobile: var(--spacing-md);    /* 16px */
+--container-padding-tablet: var(--spacing-lg);    /* 24px */
+--container-padding-desktop: var(--spacing-xl);   /* 32px */
+```
+
+### Breakpoint Adjustments
+```css
+/* Mobile (<640px) */
+--spacing-section: var(--spacing-2xl);   /* 48px */
+--spacing-modal: var(--spacing-lg);      /* 24px */
+--spacing-card: var(--spacing-md);       /* 16px */
+
+/* Large screens (>1920px) */
+--spacing-section: var(--spacing-4xl);   /* 96px */
+--container-padding-desktop: var(--spacing-2xl);  /* 48px */
+```
+
+## Common Patterns
+
+### 1. Card Layouts
+```css
+.card {
+  padding: var(--spacing-card);
+}
+
+.card-header {
+  padding: var(--spacing-md);
+  gap: var(--spacing-sm);
+}
+
+.card-content {
+  padding: var(--spacing-lg);
+  gap: var(--spacing-md);
+}
+```
+
+### 2. Form Spacing
+```css
+.form {
+  gap: var(--spacing-lg);
+}
+
+.form-group {
+  gap: var(--spacing-xs);
+}
+
+.form-actions {
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-xl);
+}
+```
+
+### 3. Content Sections
+```css
+.section {
+  padding: var(--spacing-section) 0;
+}
+
+.section-header {
+  margin-bottom: var(--spacing-xl);
+}
+
+.section-content {
+  gap: var(--spacing-lg);
+}
+```
+
+## Best Practices
+
+### DO:
+- ✅ Use spacing tokens consistently
+- ✅ Apply larger spacing to create hierarchy
+- ✅ Test spacing with different content lengths
+- ✅ Consider touch targets on mobile (minimum 44px)
+- ✅ Use logical properties for RTL support
+
+### DON'T:
+- ❌ Use arbitrary pixel values
+- ❌ Mix spacing systems (px, rem, em)
+- ❌ Create custom spacing values
+- ❌ Use percentages for consistent spacing
+- ❌ Forget about responsive adjustments
+
+## Accessibility Considerations
+
+1. **Touch Targets**: Ensure interactive elements have adequate spacing (minimum 44x44px)
+2. **Reading Flow**: Use appropriate line spacing for readability
+3. **Visual Hierarchy**: Larger spacing between sections helps users understand content structure
+4. **Focus Indicators**: Account for focus outline spacing in interactive elements
+
+## Migration Guide
+
+When updating existing code:
+
+```css
+/* Old */
+margin: 12px;
+padding: 20px 16px;
+
+/* New */
+margin: var(--spacing-md);
+padding: var(--spacing-lg) var(--spacing-md);
+```
+
+## Related Resources
+
+- [Layout System](/?path=/docs/foundations-layout--docs)
+- [Typography](/?path=/docs/foundations-typography--docs)
+- [Color System](/?path=/docs/foundations-color-system--docs)

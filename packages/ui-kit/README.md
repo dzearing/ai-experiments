@@ -1,6 +1,18 @@
 # @claude-flow/ui-kit
 
-Framework-agnostic UI foundation with CSS variables, themes, and design tokens.
+A comprehensive, framework-agnostic design system built on CSS variables, featuring a surface-based color system, multiple themes, and extensive design tokens for building consistent, accessible user interfaces.
+
+## Table of Contents
+
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Surface-Based Color System](#surface-based-color-system)
+- [Design Tokens](#design-tokens)
+- [Theme System](#theme-system)
+- [Internationalization](#internationalization)
+- [Best Practices](#best-practices)
+- [Migration Guide](#migration-guide)
+- [Browser Support](#browser-support)
 
 ## Installation
 
@@ -36,64 +48,261 @@ pnpm add @claude-flow/ui-kit
 
 For build tools, you can automate this inlining process during your build step.
 
-### 2. Use CSS Variables
+### 2. Use Design Tokens
 
 ```css
-/* Your component styles */
-.button {
-  background-color: var(--color-primary);
-  padding: var(--spacing-sm) var(--spacing-md);
+/* Component using surface-based tokens */
+.card {
+  background: var(--color-raised-background);
+  color: var(--color-raised-text);
+  border: 1px solid var(--color-raised-border);
+  padding: var(--spacing-lg);
   border-radius: var(--radius-md);
-  font-size: var(--font-size-body);
-  transition: all var(--duration-fast) var(--easing-ease);
+  box-shadow: var(--shadow-sm);
 }
 
-.button:hover {
-  background-color: var(--color-primary-hover);
+.card-title {
+  color: var(--color-raised-textHard10); /* Emphasized text */
+  font-size: var(--font-size-h4);
+  font-weight: var(--font-weight-semibold);
+  margin-block-end: var(--spacing-md);
+}
+
+.card-subtitle {
+  color: var(--color-raised-textSoft20); /* Muted text */
+  font-size: var(--font-size-body);
 }
 ```
 
-## Features
+## Surface-Based Color System
 
-- 🎨 **8 Built-in Themes** - Light and dark modes for each
-- 🔧 **CSS Variables** - Comprehensive design tokens
-- 📐 **CSS Reset** - Consistent cross-browser baseline
-- 🚀 **Zero JS Runtime** - Pure CSS (except theme init)
-- ♿ **Accessible** - WCAG compliant color contrasts
-- 📱 **Responsive** - Mobile-first design tokens
-- 🎯 **Framework Agnostic** - Works with any framework
+Our design system uses a revolutionary surface-based approach to colors, ensuring perfect contrast ratios and accessibility compliance across all theme variations.
+
+### Understanding Surfaces
+
+A **surface** is a distinct visual context where content appears. Each surface defines a complete set of foreground colors that are guaranteed to meet WCAG contrast requirements with their background.
+
+### Token Pattern
+
+Every color token follows this pattern:
+
+```
+--color-[surface]-[concept]-[state]
+```
+
+- **Surface**: The background context (e.g., `body`, `raised`, `buttonPrimary`)
+- **Concept**: The element type (e.g., `text`, `background`, `border`, `link`)
+- **State**: Optional interaction state (e.g., `hover`, `active`, `disabled`)
+
+### Example Usage
+
+```css
+/* Primary button using surface tokens */
+.button-primary {
+  background: var(--color-buttonPrimary-background);
+  color: var(--color-buttonPrimary-text);
+  border: 1px solid var(--color-buttonPrimary-border);
+}
+
+.button-primary:hover {
+  background: var(--color-buttonPrimary-backgroundHover);
+  color: var(--color-buttonPrimary-textHover);
+}
+
+/* Error notification */
+.notification-error {
+  background: var(--color-noticeDanger-background);
+  color: var(--color-noticeDanger-text);
+  border-inline-start: 4px solid var(--color-noticeDanger-border);
+}
+```
+
+### Soft/Hard Variants
+
+Instead of arbitrary number scales, we use semantic contrast modifiers:
+
+- **Soft**: Reduces contrast for subtle elements
+  - `textSoft10` = 10% less contrast
+  - `textSoft20` = 20% less contrast (replaces "muted")
+  - `textSoft30` = 30% less contrast
+
+- **Hard**: Increases contrast for emphasis
+  - `textHard10` = 10% more contrast (replaces "heading")
+  - `textHard20` = 20% more contrast
+
+```css
+.content {
+  color: var(--color-body-text); /* Base text */
+}
+
+.content-muted {
+  color: var(--color-body-textSoft20); /* Muted text */
+}
+
+.content-heading {
+  color: var(--color-body-textHard10); /* Emphasized text */
+}
+```
+
+### Available Surfaces
+
+#### Base Surfaces
+- `body` - Main application background
+- `raised` - Cards and elevated panels
+- `overlay` - Modals and dialogs
+
+#### Action Surfaces
+- `buttonPrimary` - Primary actions
+- `buttonSecondary` - Secondary actions
+- `buttonDanger` - Destructive actions
+- `buttonSuccess` - Positive actions
+- `buttonNeutral` - Default buttons
+
+#### Notification Surfaces
+- `noticeInfo` - Informational messages
+- `noticeSuccess` - Success feedback
+- `noticeWarning` - Warnings
+- `noticeDanger` - Errors
+
+#### Specialized Surfaces
+- `codeBlock` - Code block backgrounds
+- `codeInline` - Inline code
+- `tooltip` - Tooltip backgrounds
+- `menu` - Dropdown menus
 
 ## Design Tokens
 
-### Colors
-
-- Primary, Secondary, Neutral scales (50-900)
-- Semantic colors (success, warning, error)
-- Automatic dark mode variants
-
 ### Typography
 
-- Modular type scale (display to caption)
-- Font weights (300-700)
-- Line heights (tight, normal, relaxed)
+```css
+/* Font Families */
+--font-family         /* System font stack */
+--font-family-mono    /* Monospace font stack */
+--font-family-serif   /* Serif font stack */
+
+/* Font Sizes - Modular Scale (1.2 ratio) */
+--font-size-2xs       /* 0.694rem */
+--font-size-xs        /* 0.833rem */
+--font-size-sm        /* 0.875rem */
+--font-size-base      /* 1rem */
+--font-size-md        /* 1.2rem */
+--font-size-lg        /* 1.44rem */
+--font-size-xl        /* 1.728rem */
+--font-size-2xl       /* 2.074rem */
+--font-size-3xl       /* 2.488rem */
+--font-size-4xl       /* 2.986rem */
+
+/* Semantic Sizes */
+--font-size-display   /* Display headings */
+--font-size-h1        /* H1 headings */
+--font-size-body      /* Body text */
+--font-size-caption   /* Small text */
+--font-size-code      /* Code text */
+
+/* Font Weights */
+--font-weight-light      /* 300 */
+--font-weight-regular    /* 400 */
+--font-weight-medium     /* 500 */
+--font-weight-semibold   /* 600 */
+--font-weight-bold       /* 700 */
+
+/* Line Heights */
+--line-height-none       /* 1 */
+--line-height-tight      /* 1.2 */
+--line-height-snug       /* 1.375 */
+--line-height-normal     /* 1.5 */
+--line-height-relaxed    /* 1.625 */
+--line-height-loose      /* 1.75 */
+```
 
 ### Spacing
 
-- 8px based scale (2xs to 3xl)
-- Consistent rhythm and hierarchy
+Based on an 8px grid system:
+
+```css
+/* Base Spacing Scale */
+--spacing-0        /* 0 */
+--spacing-px       /* 1px */
+--spacing-2xs      /* 2px */
+--spacing-xs       /* 4px */
+--spacing-sm       /* 8px */
+--spacing-md       /* 16px */
+--spacing-lg       /* 24px */
+--spacing-xl       /* 32px */
+--spacing-2xl      /* 48px */
+--spacing-3xl      /* 64px */
+--spacing-4xl      /* 96px */
+--spacing-5xl      /* 128px */
+
+/* Component Spacing */
+--spacing-button-x    /* Horizontal button padding */
+--spacing-button-y    /* Vertical button padding */
+--spacing-input-x     /* Input field padding */
+--spacing-card        /* Card content padding */
+--spacing-modal       /* Modal padding */
+--spacing-section     /* Section spacing */
+```
 
 ### Animation
 
-- Duration scale (instant to deliberate)
-- Easing functions (ease, ease-in, ease-out)
-- Respects prefers-reduced-motion
+```css
+/* Durations */
+--duration-instant      /* 0ms */
+--duration-fast         /* 150ms */
+--duration-normal       /* 300ms */
+--duration-slow         /* 500ms */
+--duration-deliberate   /* 700ms */
 
-### Corners (Border Radius)
+/* Easing Functions */
+--easing-linear        /* linear */
+--easing-ease          /* ease */
+--easing-ease-in       /* ease-in */
+--easing-ease-out      /* ease-out */
+--easing-ease-in-out   /* ease-in-out */
+--easing-bounce        /* Custom bounce curve */
+```
 
-- Scale from sharp to pill (none to full)
-- Component-specific recommendations
+### Shadows
 
-## Theme Management
+```css
+--shadow-xs      /* Subtle shadow */
+--shadow-sm      /* Small shadow */
+--shadow-md      /* Medium shadow */
+--shadow-lg      /* Large shadow */
+--shadow-xl      /* Extra large shadow */
+--shadow-inner   /* Inner shadow */
+--shadow-none    /* No shadow */
+```
+
+### Border Radius
+
+```css
+--radius-none    /* 0 */
+--radius-sm      /* 0.125rem */
+--radius-md      /* 0.25rem */
+--radius-lg      /* 0.5rem */
+--radius-xl      /* 0.75rem */
+--radius-2xl     /* 1rem */
+--radius-3xl     /* 1.5rem */
+--radius-full    /* 9999px */
+```
+
+## Theme System
+
+### Built-in Themes
+
+The UI Kit includes 8 professionally designed themes, each with light and dark modes:
+
+- **Default** - Clean and modern
+- **Ocean** - Cool blues and aquas
+- **Sunset** - Warm oranges and purples
+- **Nature** - Earthy greens and browns
+- **Minimal** - Black, white, and grays
+- **Vibrant** - Bold and colorful
+- **Corporate** - Professional blues
+- **Monochrome** - Single color variations
+
+### Theme Management API
 
 ```typescript
 import { ThemeManager } from '@claude-flow/ui-kit';
@@ -101,56 +310,260 @@ import { ThemeManager } from '@claude-flow/ui-kit';
 // Initialize theme manager
 const themeManager = new ThemeManager();
 
-// Get current theme
-const currentTheme = themeManager.currentTheme;
+// Get current theme and mode
+const currentTheme = themeManager.currentTheme; // e.g., 'ocean'
+const currentMode = themeManager.currentMode;   // 'light' | 'dark' | 'auto'
 
 // Change theme
-themeManager.setTheme('ocean');
+themeManager.setTheme('sunset');
 
-// Toggle dark mode
+// Change mode
 themeManager.setMode('dark');
+themeManager.setMode('auto'); // Follows system preference
 
-// Listen for theme changes
-themeManager.on('themeChange', (theme) => {
-  console.log('Theme changed to:', theme);
+// Listen for changes
+themeManager.on('themeChange', ({ theme, mode }) => {
+  console.log(`Theme changed to ${theme} (${mode} mode)`);
+});
+
+// Get all available themes
+const themes = themeManager.getAvailableThemes();
+
+// Check if a theme exists
+if (themeManager.hasTheme('custom-theme')) {
+  themeManager.setTheme('custom-theme');
+}
+```
+
+### Custom Theme Creation
+
+Create custom themes using the theme generator:
+
+```typescript
+import { generateTheme } from '@claude-flow/ui-kit/theme-generator';
+
+const customTheme = generateTheme({
+  id: 'my-theme',
+  name: 'My Custom Theme',
+  description: 'A theme for my brand',
+  colors: {
+    primary: '#6200EA',
+    secondary: '#03DAC6', // Optional - computed if not provided
+    accent: '#FF0266',     // Optional - computed if not provided
+    neutral: '#37474F'     // Optional - derived from primary
+  },
+  accessibility: {
+    targetLevel: 'AA',     // 'AA' | 'AAA'
+    enforceLevel: true,    // Auto-adjust colors for compliance
+    largeTextLevel: 'AA'   // Lower requirement for large text
+  },
+  config: {
+    saturation: 10,        // Boost saturation by 10%
+    temperature: -5,       // Slightly cooler
+    contrastBoost: 15      // Increase contrast between elements
+  }
 });
 ```
 
-## Development
+## Internationalization
 
-```bash
-# Install dependencies
-pnpm install
+### RTL/LTR Support
 
-# Start Storybook (view all tokens and themes)
-pnpm dev
+The UI Kit uses CSS logical properties for seamless RTL/LTR support:
 
-# Build for production
-pnpm build
+```css
+/* Use logical properties instead of physical ones */
+.component {
+  /* ❌ Avoid */
+  margin-left: var(--spacing-md);
+  padding-right: var(--spacing-lg);
+  
+  /* ✅ Preferred */
+  margin-inline-start: var(--spacing-md);
+  padding-inline-end: var(--spacing-lg);
+}
 
-# Run tests
-pnpm test
-
-# Type checking
-pnpm typecheck
+/* Border radius with logical properties */
+.card {
+  border-start-start-radius: var(--radius-lg);
+  border-start-end-radius: var(--radius-lg);
+}
 ```
 
-## Storybook Documentation
+### Direction-Aware Utilities
 
-The UI Kit comes with comprehensive Storybook documentation:
+```css
+/* Automatically flips in RTL */
+.icon-arrow {
+  transform: rotate(0deg);
+}
 
-- **Foundations** - Interactive guides for all design tokens
-- **Theme Showcase** - Preview all themes
-- **Theme Creator** - Build custom themes with visual tools
-- **Integration Examples** - Framework-specific guides
-- **Accessibility** - Contrast checkers and guidelines
+[dir="rtl"] .icon-arrow {
+  transform: rotate(180deg);
+}
+
+/* Use CSS logical values */
+.text-start {
+  text-align: start; /* left in LTR, right in RTL */
+}
+
+.float-end {
+  float: inline-end; /* right in LTR, left in RTL */
+}
+```
+
+## Best Practices
+
+### 1. Always Use Complete Surface Sets
+
+```css
+/* ✅ Good - Using colors from the same surface */
+.alert-error {
+  background: var(--color-noticeDanger-background);
+  color: var(--color-noticeDanger-text);
+  border: 1px solid var(--color-noticeDanger-border);
+}
+
+/* ❌ Bad - Mixing colors from different surfaces */
+.alert-error {
+  background: var(--color-noticeDanger-background);
+  color: var(--color-body-text); /* May not have proper contrast! */
+}
+```
+
+### 2. Leverage Semantic Tokens
+
+```css
+/* ✅ Good - Using semantic spacing */
+.form-group {
+  margin-block-end: var(--spacing-lg);
+}
+
+.form-label {
+  margin-block-end: var(--spacing-xs);
+}
+
+/* ❌ Bad - Using arbitrary values */
+.form-group {
+  margin-bottom: 20px; /* Not aligned with design system */
+}
+```
+
+### 3. Respect Motion Preferences
+
+```css
+/* ✅ Good - Respecting user preferences */
+.animated {
+  transition: transform var(--duration-normal) var(--easing-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animated {
+    transition: none;
+  }
+}
+```
+
+### 4. Use Logical Properties for I18n
+
+```css
+/* ✅ Good - Works in both LTR and RTL */
+.sidebar {
+  width: var(--sidebar-width);
+  border-inline-end: 1px solid var(--color-body-border);
+  padding-inline: var(--spacing-lg);
+}
+
+/* ❌ Bad - Only works in LTR */
+.sidebar {
+  border-right: 1px solid var(--color-body-border);
+  padding-left: var(--spacing-lg);
+  padding-right: var(--spacing-lg);
+}
+```
+
+### 5. Maintain Contrast Ratios
+
+```css
+/* ✅ Good - Using soft/hard variants for hierarchy */
+.content {
+  color: var(--color-body-text);
+}
+
+.content-muted {
+  color: var(--color-body-textSoft20);
+}
+
+.content-emphasis {
+  color: var(--color-body-textHard10);
+}
+```
+
+## Migration Guide
+
+### From Traditional Color Systems
+
+If you're migrating from a traditional numbered color system (e.g., `color-gray-500`), use this mapping:
+
+| Old Pattern | New Surface-Based Pattern | Purpose |
+|------------|---------------------------|---------|
+| `--color-gray-50` | `--color-body-backgroundSoft20` | Subtle backgrounds |
+| `--color-gray-100` | `--color-body-backgroundSoft10` | Light backgrounds |
+| `--color-gray-200` | `--color-raised-background` | Card backgrounds |
+| `--color-gray-500` | `--color-body-textSoft20` | Muted text |
+| `--color-gray-700` | `--color-body-textSoft10` | Secondary text |
+| `--color-gray-900` | `--color-body-text` | Primary text |
+| `--color-primary-500` | `--color-body-link` | Links |
+| `--color-primary-600` | `--color-buttonPrimary-background` | Primary buttons |
+| `--color-danger-600` | `--color-buttonDanger-background` | Danger buttons |
+| `--color-danger-100` | `--color-noticeDanger-background` | Error backgrounds |
+
+### From Physical to Logical Properties
+
+| Physical Property | Logical Property | Notes |
+|------------------|------------------|-------|
+| `margin-left` | `margin-inline-start` | Start side margin |
+| `margin-right` | `margin-inline-end` | End side margin |
+| `padding-top` | `padding-block-start` | Block start padding |
+| `padding-bottom` | `padding-block-end` | Block end padding |
+| `left` | `inset-inline-start` | Positioning |
+| `right` | `inset-inline-end` | Positioning |
+| `text-align: left` | `text-align: start` | Text alignment |
+| `float: right` | `float: inline-end` | Floating |
+| `border-left` | `border-inline-start` | Borders |
+
+### Step-by-Step Migration
+
+1. **Audit Current Usage**
+   ```bash
+   # Find hardcoded colors
+   grep -r "#[0-9a-fA-F]\{3,6\}" src/
+   
+   # Find physical properties
+   grep -r "margin-left\|margin-right\|padding-left\|padding-right" src/
+   ```
+
+2. **Replace Colors with Surface Tokens**
+   - Identify the surface context (body, button, card, etc.)
+   - Replace color values with appropriate surface tokens
+   - Test contrast ratios remain compliant
+
+3. **Update to Logical Properties**
+   - Replace physical properties with logical equivalents
+   - Test in both LTR and RTL modes
+
+4. **Verify Theme Compatibility**
+   - Test all themes in both light and dark modes
+   - Ensure no hardcoded colors remain
 
 ## Browser Support
 
-- Chrome/Edge (latest)
-- Firefox (latest)
-- Safari (latest)
-- CSS Variables required (no IE11)
+- Chrome/Edge 88+ (latest - 2 versions)
+- Firefox 85+ (latest - 2 versions)
+- Safari 14+ (latest - 2 versions)
+- CSS Variables (Custom Properties) required
+- CSS Logical Properties required
+- No Internet Explorer support
 
 ## License
 
