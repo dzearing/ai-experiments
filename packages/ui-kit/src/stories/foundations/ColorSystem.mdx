@@ -1,0 +1,221 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Foundations/Color System/Overview" />
+
+# Surface-Based Color System
+
+Our color system is built on the concept of **surfaces** - distinct visual contexts that group related colors together to ensure proper contrast and consistency.
+
+## The Four-Part Pattern
+
+Every color token follows this structure:
+
+```
+--[domain]-[surface]-[concept]-[state]
+```
+
+<div className="token-breakdown">
+  <div className="token-part">
+    <h3>1. Domain</h3>
+    <p>The token namespace</p>
+    <code>color</code>
+    <code>font</code>
+    <code>spacing</code>
+  </div>
+  <div className="token-part">
+    <h3>2. Surface</h3>
+    <p>The background context</p>
+    <code>body</code>
+    <code>buttonPrimary</code>
+    <code>noticeDanger</code>
+  </div>
+  <div className="token-part">
+    <h3>3. Concept</h3>
+    <p>The visual element</p>
+    <code>text</code>
+    <code>background</code>
+    <code>border</code>
+    <code>link</code>
+  </div>
+  <div className="token-part">
+    <h3>4. State</h3>
+    <p>Interaction state (optional)</p>
+    <code>hover</code>
+    <code>active</code>
+    <code>disabled</code>
+  </div>
+</div>
+
+## Understanding Soft/Hard Scale
+
+<div className="contrast-scale">
+  <div className="scale-item soft">
+    <h4>Soft = Less Contrast</h4>
+    <div className="example">
+      <span style={{ color: 'var(--color-body-textSoft30, #9e9e9e)' }}>textSoft30</span>
+      <span style={{ color: 'var(--color-body-textSoft20, #757575)' }}>textSoft20</span>
+      <span style={{ color: 'var(--color-body-textSoft10, #616161)' }}>textSoft10</span>
+    </div>
+    <p>Use for: muted text, subtle borders, disabled states</p>
+  </div>
+
+<div className="scale-item base">
+  <h4>Base = Default</h4>
+  <div className="example">
+    <span style={{ color: 'var(--color-body-text, #212121)' }}>text</span>
+  </div>
+  <p>Use for: primary content</p>
+</div>
+
+  <div className="scale-item hard">
+    <h4>Hard = More Contrast</h4>
+    <div className="example">
+      <span style={{ color: 'var(--color-body-textHard10, #000000)' }}>textHard10</span>
+      <span style={{ color: 'var(--color-body-textHard20, #000000)' }}>textHard20</span>
+    </div>
+    <p>Use for: headings, emphasis</p>
+  </div>
+</div>
+
+## Surface Examples
+
+### Body Surface
+
+The main application background and its associated colors.
+
+See the **Body Surface** story in the sidebar for an interactive example.
+
+### Button Surfaces
+
+Action surfaces for different button types.
+
+See the **Button Surfaces** story in the sidebar for an interactive example.
+
+### Notification Surfaces
+
+Contextual surfaces for alerts and notices.
+
+See the **Notification Surfaces** story in the sidebar for an interactive example.
+
+## Usage Examples
+
+### ✅ Correct Usage
+
+Colors from the same surface work together:
+
+```css
+.card {
+  background: var(--color-panelRaised-background);
+  color: var(--color-panelRaised-text);
+  border: 1px solid var(--color-panelRaised-border);
+}
+
+.error-alert {
+  background: var(--color-noticeDanger-background);
+  color: var(--color-noticeDanger-text);
+  border: 1px solid var(--color-noticeDanger-border);
+}
+```
+
+### ❌ Incorrect Usage
+
+Don't mix colors from different surfaces:
+
+```css
+/* Bad - May not have proper contrast */
+.card {
+  background: var(--color-panelRaised-background);
+  color: var(--color-body-text); /* Wrong surface! */
+  border: 1px solid var(--color-noticeDanger-border); /* Wrong surface! */
+}
+```
+
+## Accessibility
+
+All surface combinations meet WCAG AA standards:
+
+- **Normal text**: 4.5:1 contrast ratio
+- **Large text**: 3:1 contrast ratio
+- **AAA compliance**: 7:1 for enhanced accessibility
+
+See the **Contrast Checker** story in the sidebar for an interactive tool.
+
+## Dark Mode
+
+Each surface adapts intelligently to dark mode:
+
+See the **Dark Mode Comparison** story in the sidebar to compare light and dark modes.
+
+<style>
+  {`
+  .token-breakdown {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin: 2rem 0;
+  }
+  
+  .token-part {
+    padding: 1rem;
+    border: 1px solid var(--color-body-border, #e0e0e0);
+    border-radius: 8px;
+    background: var(--color-panelRaised-background, #fafafa);
+  }
+  
+  .token-part h3 {
+    margin-top: 0;
+    color: var(--color-body-textHard10, #000000);
+  }
+  
+  .token-part code {
+    display: block;
+    margin: 0.25rem 0;
+    color: var(--color-codeInline-text, #d6336c);
+    background: var(--color-codeInline-background, #f5f5f5);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+  }
+  
+  .contrast-scale {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin: 2rem 0;
+  }
+  
+  .scale-item {
+    padding: 1.5rem;
+    border-radius: 8px;
+    text-align: center;
+  }
+  
+  .scale-item.soft {
+    background: var(--color-body-backgroundSoft10, #fafafa);
+  }
+  
+  .scale-item.base {
+    background: var(--color-body-background, #f5f5f5);
+  }
+  
+  .scale-item.hard {
+    background: var(--color-body-backgroundHard10, #eeeeee);
+  }
+  
+  .scale-item h4 {
+    margin-top: 0;
+  }
+  
+  .scale-item .example {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 1rem 0;
+  }
+  
+  .scale-item .example span {
+    font-size: 1.125rem;
+    font-weight: 500;
+  }
+`}
+</style>

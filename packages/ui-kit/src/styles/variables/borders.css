@@ -1,0 +1,67 @@
+/**
+ * Border Variables
+ * 
+ * Border widths, radius (corners), and styles
+ */
+
+:root {
+  /* Border Widths */
+  --border-width-0: 0;
+  --border-width-thin: 1px;
+  --border-width-medium: 2px;
+  --border-width-thick: 4px;
+  --border-width-heavy: 8px;
+
+  /* Semantic Border Widths */
+  --border-width-default: var(--border-width-thin);
+  --border-width-focus: var(--border-width-medium);
+  --border-width-divider: var(--border-width-thin);
+
+  /* Border Radius (Corners) */
+  --radius-none: 0;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-3xl: 24px;
+  --radius-full: 9999px;
+
+  /* Component-specific Radius */
+  --radius-button: var(--radius-md);
+  --radius-input: var(--radius-md);
+  --radius-card: var(--radius-lg);
+  --radius-modal: var(--radius-xl);
+  --radius-tooltip: var(--radius-md);
+  --radius-badge: var(--radius-full);
+  --radius-chip: var(--radius-full);
+  --radius-avatar: var(--radius-full);
+  --radius-image: var(--radius-md);
+
+  /* Border Styles */
+  --border-style-none: none;
+  --border-style-solid: solid;
+  --border-style-dashed: dashed;
+  --border-style-dotted: dotted;
+
+  /* Outline Widths */
+  --outline-width-thin: 1px;
+  --outline-width-medium: 2px;
+  --outline-width-thick: 4px;
+
+  /* Outline Offsets */
+  --outline-offset-0: 0;
+  --outline-offset-1: 1px;
+  --outline-offset-2: 2px;
+  --outline-offset-4: 4px;
+
+  /* Focus Ring */
+  --focus-ring-width: var(--border-width-medium);
+  --focus-ring-color: var(--color-primary);
+  --focus-ring-offset: var(--outline-offset-2);
+
+  /* Divider Styles */
+  --divider-width: var(--border-width-thin);
+  --divider-color: var(--color-border);
+  --divider-style: var(--border-style-solid);
+}

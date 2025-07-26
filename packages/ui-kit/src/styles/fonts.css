@@ -1,0 +1,86 @@
+/**
+ * Font Face Definitions
+ * 
+ * Segoe UI Web fonts for Microsoft properties
+ * Using official Microsoft Web CDN
+ */
+
+/* Segoe UI Web Light */
+@font-face {
+  font-family: 'Segoe UI Web';
+  src:
+    url('https://res-1.cdn.office.net/files/fabric/assets/fonts/segoeui-westeuropean/segoeui-light.woff2')
+      format('woff2'),
+    url('https://res-1.cdn.office.net/files/fabric/assets/fonts/segoeui-westeuropean/segoeui-light.woff')
+      format('woff');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Segoe UI Web Regular */
+@font-face {
+  font-family: 'Segoe UI Web';
+  src:
+    url('https://res-1.cdn.office.net/files/fabric/assets/fonts/segoeui-westeuropean/segoeui-regular.woff2')
+      format('woff2'),
+    url('https://res-1.cdn.office.net/files/fabric/assets/fonts/segoeui-westeuropean/segoeui-regular.woff')
+      format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Segoe UI Web Semibold */
+@font-face {
+  font-family: 'Segoe UI Web';
+  src:
+    url('https://res-1.cdn.office.net/files/fabric/assets/fonts/segoeui-westeuropean/segoeui-semibold.woff2')
+      format('woff2'),
+    url('https://res-1.cdn.office.net/files/fabric/assets/fonts/segoeui-westeuropean/segoeui-semibold.woff')
+      format('woff');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Segoe UI Web Bold */
+@font-face {
+  font-family: 'Segoe UI Web';
+  src:
+    url('https://res-1.cdn.office.net/files/fabric/assets/fonts/segoeui-westeuropean/segoeui-bold.woff2')
+      format('woff2'),
+    url('https://res-1.cdn.office.net/files/fabric/assets/fonts/segoeui-westeuropean/segoeui-bold.woff')
+      format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Segoe UI Web Black */
+@font-face {
+  font-family: 'Segoe UI Web';
+  src:
+    url('https://res-1.cdn.office.net/files/fabric/assets/fonts/segoeui-westeuropean/segoeui-black.woff2')
+      format('woff2'),
+    url('https://res-1.cdn.office.net/files/fabric/assets/fonts/segoeui-westeuropean/segoeui-black.woff')
+      format('woff');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Monospace fonts use system fonts for better readability
+ * The font stack in typography.css prioritizes:
+ * - SF Mono (macOS)
+ * - Monaco (macOS classic)
+ * - Inconsolata (if installed)
+ * - Fira Code/Mono (if installed)
+ * - Roboto Mono (common on Android/Material)
+ * - Source Code Pro (Adobe, common)
+ * - Ubuntu Mono (Ubuntu)
+ * - DejaVu Sans Mono (Linux)
+ * - Menlo (macOS)
+ * - Consolas (Windows)
+ * - Courier New (fallback)
+ */

@@ -1,0 +1,108 @@
+/**
+ * Spacing Variables
+ * 
+ * Based on an 8px grid system for consistent rhythm
+ * Use these for padding, margin, gap, and positioning
+ */
+
+:root {
+  /* Base spacing unit */
+  --spacing-base: 8px;
+
+  /* Spacing Scale */
+  --spacing-0: 0;
+  --spacing-px: 1px;
+  --spacing-2xs: calc(var(--spacing-base) * 0.25); /* 2px */
+  --spacing-xs: calc(var(--spacing-base) * 0.5); /* 4px */
+  --spacing-sm: calc(var(--spacing-base) * 1); /* 8px */
+  --spacing-md: calc(var(--spacing-base) * 2); /* 16px */
+  --spacing-lg: calc(var(--spacing-base) * 3); /* 24px */
+  --spacing-xl: calc(var(--spacing-base) * 4); /* 32px */
+  --spacing-2xl: calc(var(--spacing-base) * 6); /* 48px */
+  --spacing-3xl: calc(var(--spacing-base) * 8); /* 64px */
+  --spacing-4xl: calc(var(--spacing-base) * 12); /* 96px */
+  --spacing-5xl: calc(var(--spacing-base) * 16); /* 128px */
+
+  /* Component-specific spacing */
+  --spacing-button-x: var(--spacing-md);
+  --spacing-button-y: var(--spacing-sm);
+  --spacing-input-x: var(--spacing-md);
+  --spacing-input-y: var(--spacing-sm);
+  --spacing-card: var(--spacing-lg);
+  --spacing-modal: var(--spacing-xl);
+  --spacing-section: var(--spacing-3xl);
+
+  /* Gap spacing for flexbox/grid */
+  --gap-xs: var(--spacing-xs);
+  --gap-sm: var(--spacing-sm);
+  --gap-md: var(--spacing-md);
+  --gap-lg: var(--spacing-lg);
+  --gap-xl: var(--spacing-xl);
+
+  /* Container spacing */
+  --container-padding-mobile: var(--spacing-md);
+  --container-padding-tablet: var(--spacing-lg);
+  --container-padding-desktop: var(--spacing-xl);
+
+  /* Max widths */
+  --max-width-xs: 20rem; /* 320px */
+  --max-width-sm: 24rem; /* 384px */
+  --max-width-md: 28rem; /* 448px */
+  --max-width-lg: 32rem; /* 512px */
+  --max-width-xl: 36rem; /* 576px */
+  --max-width-2xl: 42rem; /* 672px */
+  --max-width-3xl: 48rem; /* 768px */
+  --max-width-4xl: 56rem; /* 896px */
+  --max-width-5xl: 64rem; /* 1024px */
+  --max-width-6xl: 72rem; /* 1152px */
+  --max-width-7xl: 80rem; /* 1280px */
+  --max-width-full: 100%;
+
+  /* Container max widths */
+  --container-sm: 640px;
+  --container-md: 768px;
+  --container-lg: 1024px;
+  --container-xl: 1280px;
+  --container-2xl: 1536px;
+
+  /* Heights */
+  --height-header: 64px;
+  --height-footer: 80px;
+  --height-input: 40px;
+  --height-button: 40px;
+  --height-button-sm: 32px;
+  --height-button-lg: 48px;
+
+  /* Z-index scale */
+  --z-index-negative: -1;
+  --z-index-0: 0;
+  --z-index-10: 10;
+  --z-index-20: 20;
+  --z-index-30: 30;
+  --z-index-40: 40;
+  --z-index-50: 50;
+  --z-index-dropdown: 1000;
+  --z-index-sticky: 1020;
+  --z-index-fixed: 1030;
+  --z-index-modal-backdrop: 1040;
+  --z-index-modal: 1050;
+  --z-index-popover: 1060;
+  --z-index-tooltip: 1070;
+  --z-index-notification: 1080;
+}
+
+/* Responsive spacing adjustments */
+@media (max-width: 640px) {
+  :root {
+    --spacing-section: var(--spacing-2xl);
+    --spacing-modal: var(--spacing-lg);
+    --spacing-card: var(--spacing-md);
+  }
+}
+
+@media (min-width: 1920px) {
+  :root {
+    --spacing-section: var(--spacing-4xl);
+    --container-padding-desktop: var(--spacing-2xl);
+  }
+}

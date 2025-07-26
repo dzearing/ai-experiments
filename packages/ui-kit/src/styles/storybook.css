@@ -1,0 +1,98 @@
+/**
+ * Storybook-specific styles
+ * This file loads the base styles needed for Storybook
+ */
+
+/* CSS Reset - Must come first */
+@import './reset.css';
+
+/* Font Face Definitions */
+@import './fonts.css';
+
+/* Design Token Variables */
+@import './variables/colors.css';
+@import './variables/typography.css';
+@import './variables/spacing.css';
+@import './variables/animation.css';
+@import './variables/borders.css';
+@import './variables/shadows.css';
+@import './variables/layout.css';
+
+/* Base styles for Storybook container */
+.sb-show-main {
+  font-family: var(--font-family);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-normal);
+}
+
+/* Docs container layout fixes */
+.sbdocs-wrapper {
+  padding: 2rem;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Override Storybook's row-reverse to fix TOC positioning */
+.sbdocs.sbdocs-wrapper {
+  flex-direction: row !important;
+}
+
+/* Fix table of contents positioning */
+.sbdocs-toc--wrapper {
+  position: sticky;
+  top: 2rem;
+  max-height: calc(100vh - 4rem);
+  overflow-y: auto;
+  margin-right: 2rem;
+  padding-left: 1rem;
+  order: -1; /* Ensure TOC appears on the left */
+}
+
+/* Responsive layout for docs pages */
+@media (max-width: 1200px) {
+  .sbdocs-content {
+    max-width: 100%;
+  }
+  
+  .sbdocs-toc--wrapper {
+    display: none;
+  }
+}
+
+/* Ensure content has proper spacing on smaller screens */
+@media (max-width: 800px) {
+  .sbdocs-wrapper {
+    padding: 1rem;
+  }
+  
+  .sbdocs-content {
+    padding: 0;
+    margin: 0;
+  }
+  
+  /* Ensure MDX content doesn't overflow */
+  .sbdocs-content pre {
+    overflow-x: auto;
+    max-width: 100%;
+  }
+  
+  .sbdocs-content table {
+    display: block;
+    overflow-x: auto;
+    max-width: 100%;
+  }
+}
+
+/* Fix for main content area */
+.sbdocs {
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.sbdocs-content {
+  flex: 1;
+  min-width: 0; /* Prevent flex child from overflowing */
+  padding: 0 2rem;
+}
+
+/* Theme files will be loaded dynamically via theme-loader.ts */

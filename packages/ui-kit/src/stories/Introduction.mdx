@@ -1,0 +1,113 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Introduction" />
+
+# Claude Flow UI Kit
+
+Welcome to the Claude Flow UI Kit - a framework-agnostic foundation for building consistent, themeable user interfaces.
+
+## Overview
+
+The UI Kit provides:
+
+- 🎨 **8 Built-in Themes** - Each with light and dark modes
+- 🔧 **CSS Variables** - Comprehensive design tokens for colors, typography, spacing, and more
+- 📐 **CSS Reset** - Consistent cross-browser baseline
+- 🚀 **Zero JS Runtime** - Pure CSS approach (except for theme initialization)
+- ♿ **Accessible** - WCAG compliant color contrasts and motion preferences
+- 📱 **Responsive** - Mobile-first design tokens
+- 🎯 **Framework Agnostic** - Works with React, Vue, Angular, or vanilla JS
+
+## Quick Start
+
+### 1. Installation
+
+```bash
+pnpm add @claude-flow/ui-kit
+```
+
+### 2. Add to Your HTML
+
+```html
+<head>
+  <!-- CSS Reset, Variables, and Themes -->
+  <link rel="stylesheet" href="node_modules/@claude-flow/ui-kit/dist/styles.css" />
+
+  <!-- Theme initialization (prevents flash of wrong theme) -->
+  <script src="node_modules/@claude-flow/ui-kit/dist/theme-init.js"></script>
+</head>
+```
+
+### 3. Use CSS Variables
+
+```css
+.button {
+  background-color: var(--color-primary);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-body);
+  transition: all var(--duration-fast) var(--easing-ease);
+}
+```
+
+## Design Principles
+
+### 1. **Semantic First**
+
+Every design token has meaning. Colors aren't just "blue-500" but have semantic purposes like `--color-primary` or `--color-success`.
+
+### 2. **Scalable Systems**
+
+Our scales (colors, spacing, typography) follow mathematical progressions for visual harmony.
+
+### 3. **Performance Focused**
+
+CSS variables enable instant theme switching without JavaScript frameworks or re-renders.
+
+### 4. **Accessibility Built-in**
+
+- All color combinations meet WCAG AA standards
+- Respects `prefers-reduced-motion`
+- Semantic HTML encouraged through reset styles
+
+### 5. **Developer Experience**
+
+- Comprehensive documentation
+- Interactive examples
+- TypeScript support
+- Visual theme creator
+
+## What's Included
+
+### Design Tokens
+
+- **Colors** - 10-shade scales for all color types
+- **Typography** - Modular scale, weights, and line heights
+- **Spacing** - 8px based system from 2px to 128px
+- **Animation** - Consistent durations and easings
+- **Borders** - Radius scale and border utilities
+- **Shadows** - Elevation system
+- **Layout** - Breakpoints and containers
+
+### Themes
+
+Each theme provides a complete design system:
+
+1. **Default** - Clean and professional
+2. **Corporate** - Business-focused
+3. **Vibrant** - Bold and energetic
+4. **Minimal** - Simple and understated
+5. **Nature** - Earth tones
+6. **Ocean** - Cool blues
+7. **Sunset** - Warm oranges
+8. **Monochrome** - Grayscale only
+
+## Navigation
+
+Use the sidebar to explore:
+
+- **Foundations** - Deep dive into each design token category
+- **Theming** - Theme showcase and creation tools
+- **Examples** - Integration guides for different frameworks
+
+Happy building! 🚀

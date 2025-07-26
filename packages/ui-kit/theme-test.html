@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Theme Token Test</title>
+  <link rel="stylesheet" href="./dist/styles.css">
+  <link rel="stylesheet" href="./dist/themes/ocean-light.css">
+  <link rel="stylesheet" href="./dist/themes/ocean-dark.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    .container {
+      display: flex;
+      gap: 20px;
+    }
+    .theme-box {
+      flex: 1;
+      padding: 20px;
+      border-radius: 8px;
+      border: 2px solid var(--color-body-border);
+    }
+    .token-test {
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 4px;
+    }
+    .bg-test {
+      background-color: var(--color-body-background);
+      color: var(--color-body-text);
+    }
+    .panel-test {
+      background-color: var(--color-panel-background);
+      color: var(--color-panel-text);
+      border: 1px solid var(--color-panel-border);
+    }
+    .button-test {
+      background-color: var(--color-buttonPrimary-background);
+      color: var(--color-buttonPrimary-text);
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .code {
+      font-family: monospace;
+      font-size: 12px;
+      margin-top: 5px;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <h1>Theme Token Test</h1>
+  <div class="container">
+    <div class="theme-box" data-theme="ocean" data-theme-type="light">
+      <h2>Light Mode</h2>
+      <div class="token-test bg-test">
+        <div>Body Background & Text</div>
+        <div class="code">--color-body-background: <span id="light-body-bg"></span></div>
+        <div class="code">--color-body-text: <span id="light-body-text"></span></div>
+      </div>
+      <div class="token-test panel-test">
+        <div>Panel Surface</div>
+        <div class="code">--color-panel-background: <span id="light-panel-bg"></span></div>
+      </div>
+      <button class="button-test">Primary Button</button>
+      <div class="code">--color-buttonPrimary-background: <span id="light-button-bg"></span></div>
+    </div>
+
+    <div class="theme-box" data-theme="ocean" data-theme-type="dark">
+      <h2>Dark Mode</h2>
+      <div class="token-test bg-test">
+        <div>Body Background & Text</div>
+        <div class="code">--color-body-background: <span id="dark-body-bg"></span></div>
+        <div class="code">--color-body-text: <span id="dark-body-text"></span></div>
+      </div>
+      <div class="token-test panel-test">
+        <div>Panel Surface</div>
+        <div class="code">--color-panel-background: <span id="dark-panel-bg"></span></div>
+      </div>
+      <button class="button-test">Primary Button</button>
+      <div class="code">--color-buttonPrimary-background: <span id="dark-button-bg"></span></div>
+    </div>
+  </div>
+
+  <script>
+    // Function to get computed token value
+    function getTokenValue(element, token) {
+      const computed = getComputedStyle(element);
+      return computed.getPropertyValue(token);
+    }
+
+    // Test light mode
+    const lightBox = document.querySelector('[data-theme-type="light"]');
+    document.getElementById('light-body-bg').textContent = getTokenValue(lightBox, '--color-body-background');
+    document.getElementById('light-body-text').textContent = getTokenValue(lightBox, '--color-body-text');
+    document.getElementById('light-panel-bg').textContent = getTokenValue(lightBox, '--color-panel-background');
+    document.getElementById('light-button-bg').textContent = getTokenValue(lightBox, '--color-buttonPrimary-background');
+
+    // Test dark mode
+    const darkBox = document.querySelector('[data-theme-type="dark"]');
+    document.getElementById('dark-body-bg').textContent = getTokenValue(darkBox, '--color-body-background');
+    document.getElementById('dark-body-text').textContent = getTokenValue(darkBox, '--color-body-text');
+    document.getElementById('dark-panel-bg').textContent = getTokenValue(darkBox, '--color-panel-background');
+    document.getElementById('dark-button-bg').textContent = getTokenValue(darkBox, '--color-buttonPrimary-background');
+
+    // Log all results
+    console.log('Light mode tokens:', {
+      bodyBg: getTokenValue(lightBox, '--color-body-background'),
+      bodyText: getTokenValue(lightBox, '--color-body-text'),
+      panelBg: getTokenValue(lightBox, '--color-panel-background'),
+      buttonBg: getTokenValue(lightBox, '--color-buttonPrimary-background')
+    });
+
+    console.log('Dark mode tokens:', {
+      bodyBg: getTokenValue(darkBox, '--color-body-background'),
+      bodyText: getTokenValue(darkBox, '--color-body-text'),
+      panelBg: getTokenValue(darkBox, '--color-panel-background'),
+      buttonBg: getTokenValue(darkBox, '--color-buttonPrimary-background')
+    });
+  </script>
+</body>
+</html>

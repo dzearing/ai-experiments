@@ -1,0 +1,114 @@
+/**
+ * Typography Variables
+ * 
+ * Font families, sizes, weights, and line heights
+ * Using a modular scale based on 1.2 ratio (minor third)
+ */
+
+:root {
+  /* Font Families */
+  --font-family:
+    'Segoe UI Web', 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', 'Helvetica Neue',
+    sans-serif;
+  --font-family-mono:
+    'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'Fira Mono', 'Roboto Mono', 'Source Code Pro',
+    'Ubuntu Mono', 'DejaVu Sans Mono', 'Menlo', 'Consolas', 'Courier New', monospace;
+  --font-family-serif: 'Georgia', 'Times New Roman', serif;
+
+  /* Font Sizes - Modular Scale (1.2 ratio) */
+  --font-size-2xs: 0.694rem; /* 11.1px */
+  --font-size-xs: 0.833rem; /* 13.3px */
+  --font-size-sm: 0.875rem; /* 14px */
+  --font-size-base: 1rem; /* 16px - browser default */
+  --font-size-md: 1.2rem; /* 19.2px */
+  --font-size-lg: 1.44rem; /* 23px */
+  --font-size-xl: 1.728rem; /* 27.6px */
+  --font-size-2xl: 2.074rem; /* 33.2px */
+  --font-size-3xl: 2.488rem; /* 39.8px */
+  --font-size-4xl: 2.986rem; /* 47.8px */
+
+  /* Semantic Font Sizes */
+  --font-size-display: var(--font-size-4xl);
+  --font-size-h1: var(--font-size-3xl);
+  --font-size-h2: var(--font-size-2xl);
+  --font-size-h3: var(--font-size-xl);
+  --font-size-h4: var(--font-size-lg);
+  --font-size-h5: var(--font-size-md);
+  --font-size-h6: var(--font-size-base);
+  --font-size-body: var(--font-size-sm);
+  --font-size-caption: var(--font-size-xs);
+  --font-size-code: var(--font-size-sm); /* Increased from xs for better readability */
+
+  /* Font Weights */
+  --font-weight-light: 300;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Line Heights */
+  --line-height-none: 1;
+  --line-height-tight: 1.2;
+  --line-height-snug: 1.375;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.625;
+  --line-height-loose: 1.75;
+  --line-height-code: 1.5; /* Specific line height for code readability */
+
+  /* Letter Spacing */
+  --letter-spacing-tighter: -0.05em;
+  --letter-spacing-tight: -0.025em;
+  --letter-spacing-normal: 0;
+  --letter-spacing-wide: 0.025em;
+  --letter-spacing-wider: 0.05em;
+  --letter-spacing-widest: 0.1em;
+
+  /* Text Transform */
+  --text-transform-none: none;
+  --text-transform-uppercase: uppercase;
+  --text-transform-lowercase: lowercase;
+  --text-transform-capitalize: capitalize;
+
+  /* Text Decoration */
+  --text-decoration-none: none;
+  --text-decoration-underline: underline;
+  --text-decoration-line-through: line-through;
+
+  /* List Style Types */
+  --list-style-none: none;
+  --list-style-disc: disc;
+  --list-style-decimal: decimal;
+
+  /* Responsive Font Size Multipliers */
+  --font-scale-mobile: 0.9;
+  --font-scale-tablet: 0.95;
+  --font-scale-desktop: 1;
+  --font-scale-large: 1.1;
+}
+
+/* Responsive typography adjustments */
+@media (max-width: 640px) {
+  :root {
+    --font-size-display: calc(var(--font-size-4xl) * var(--font-scale-mobile));
+    --font-size-h1: calc(var(--font-size-3xl) * var(--font-scale-mobile));
+    --font-size-h2: calc(var(--font-size-2xl) * var(--font-scale-mobile));
+    --font-size-h3: calc(var(--font-size-xl) * var(--font-scale-mobile));
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  :root {
+    --font-size-display: calc(var(--font-size-4xl) * var(--font-scale-tablet));
+    --font-size-h1: calc(var(--font-size-3xl) * var(--font-scale-tablet));
+    --font-size-h2: calc(var(--font-size-2xl) * var(--font-scale-tablet));
+  }
+}
+
+@media (min-width: 1920px) {
+  :root {
+    --font-size-display: calc(var(--font-size-4xl) * var(--font-scale-large));
+    --font-size-h1: calc(var(--font-size-3xl) * var(--font-scale-large));
+    --font-size-h2: calc(var(--font-size-2xl) * var(--font-scale-large));
+    --font-size-body: calc(var(--font-size-sm) * var(--font-scale-large));
+  }
+}

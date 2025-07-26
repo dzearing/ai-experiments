@@ -64,6 +64,22 @@ const build: Task = {
           destDir: 'lib',
         });
         break;
+
+      case 'ui-kit':
+        // Run vite build for ui-kit
+        await runVite({
+          command: 'build',
+          additionalArgs,
+        });
+        // Run postbuild script if it exists
+        if (packageJson.scripts?.postbuild) {
+          await runScript({
+            packageName: 'node',
+            args: [packageJson.scripts.postbuild.replace('node ', '')],
+            quiet: true,
+          });
+        }
+        break;
     }
   },
 };

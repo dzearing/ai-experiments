@@ -1,0 +1,73 @@
+/**
+ * Shadow Variables
+ * 
+ * Elevation and depth through consistent shadows
+ */
+
+:root {
+  /* Shadow Colors */
+  --shadow-color: 0deg 0% 0%;
+  --shadow-opacity-light: 0.1;
+  --shadow-opacity-medium: 0.15;
+  --shadow-opacity-dark: 0.2;
+
+  /* Elevation Scale */
+  --shadow-none: none;
+
+  --shadow-xs: 0 1px 2px 0 hsl(var(--shadow-color) / var(--shadow-opacity-light));
+
+  --shadow-sm:
+    0 1px 3px 0 hsl(var(--shadow-color) / var(--shadow-opacity-light)),
+    0 1px 2px -1px hsl(var(--shadow-color) / var(--shadow-opacity-light));
+
+  --shadow-md:
+    0 4px 6px -1px hsl(var(--shadow-color) / var(--shadow-opacity-light)),
+    0 2px 4px -2px hsl(var(--shadow-color) / var(--shadow-opacity-light));
+
+  --shadow-lg:
+    0 10px 15px -3px hsl(var(--shadow-color) / var(--shadow-opacity-light)),
+    0 4px 6px -4px hsl(var(--shadow-color) / var(--shadow-opacity-light));
+
+  --shadow-xl:
+    0 20px 25px -5px hsl(var(--shadow-color) / var(--shadow-opacity-light)),
+    0 8px 10px -6px hsl(var(--shadow-color) / var(--shadow-opacity-light));
+
+  --shadow-2xl: 0 25px 50px -12px hsl(var(--shadow-color) / var(--shadow-opacity-medium));
+
+  /* Inner Shadows */
+  --shadow-inner-sm: inset 0 1px 2px 0 hsl(var(--shadow-color) / var(--shadow-opacity-light));
+
+  --shadow-inner-md: inset 0 2px 4px 0 hsl(var(--shadow-color) / var(--shadow-opacity-light));
+
+  /* Component Shadows */
+  --shadow-button: var(--shadow-sm);
+  --shadow-button-hover: var(--shadow-md);
+  --shadow-card: var(--shadow-md);
+  --shadow-card-hover: var(--shadow-lg);
+  --shadow-dropdown: var(--shadow-lg);
+  --shadow-modal: var(--shadow-xl);
+  --shadow-popover: var(--shadow-lg);
+  --shadow-tooltip: var(--shadow-md);
+
+  /* Focus Shadow */
+  --shadow-focus: 0 0 0 3px hsl(var(--color-primary) / 0.2);
+
+  /* Text Shadow */
+  --text-shadow-sm: 0 1px 2px hsl(var(--shadow-color) / var(--shadow-opacity-dark));
+  --text-shadow-md: 0 2px 4px hsl(var(--shadow-color) / var(--shadow-opacity-dark));
+  --text-shadow-lg: 0 4px 8px hsl(var(--shadow-color) / var(--shadow-opacity-dark));
+}
+
+/* Dark mode shadow adjustments */
+[data-theme][data-mode='dark'] {
+  --shadow-color: 0deg 0% 100%;
+  --shadow-opacity-light: 0.05;
+  --shadow-opacity-medium: 0.1;
+  --shadow-opacity-dark: 0.15;
+
+  /* Stronger shadows for dark mode */
+  --shadow-card: var(--shadow-lg);
+  --shadow-card-hover: var(--shadow-xl);
+  --shadow-dropdown: var(--shadow-xl);
+  --shadow-modal: var(--shadow-2xl);
+}

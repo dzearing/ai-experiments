@@ -1,0 +1,55 @@
+/**
+ * Layout Variables
+ * 
+ * Breakpoints, container sizes, and grid settings
+ */
+
+:root {
+  /* Breakpoints */
+  --breakpoint-xs: 0;
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+
+  /* Container Max Widths */
+  --container-xs: 100%;
+  --container-sm: 640px;
+  --container-md: 768px;
+  --container-lg: 1024px;
+  --container-xl: 1280px;
+  --container-2xl: 1536px;
+
+  /* Grid Settings */
+  --grid-columns: 12;
+  --grid-gap-mobile: var(--spacing-sm);
+  --grid-gap-tablet: var(--spacing-md);
+  --grid-gap-desktop: var(--spacing-lg);
+
+  /* Aspect Ratios */
+  --aspect-square: 1 / 1;
+  --aspect-video: 16 / 9;
+  --aspect-video-vertical: 9 / 16;
+  --aspect-photo: 4 / 3;
+  --aspect-photo-vertical: 3 / 4;
+  --aspect-cinema: 21 / 9;
+
+  /* Common Layout Dimensions */
+  --sidebar-width: 280px;
+  --sidebar-width-collapsed: 64px;
+  --header-height: 64px;
+  --footer-height: 80px;
+  --toolbar-height: 48px;
+
+  /* Content Widths */
+  --content-width-narrow: 65ch;
+  --content-width-medium: 80ch;
+  --content-width-wide: 100ch;
+
+  /* Viewport Units Fallbacks */
+  --vh: 1vh;
+  --vw: 1vw;
+  --vmin: 1vmin;
+  --vmax: 1vmax;
+}

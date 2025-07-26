@@ -1,0 +1,50 @@
+{
+  "name": "@claude-flow/ui-kit",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Framework-agnostic UI foundation with CSS variables, themes, and design tokens",
+  "type": "module",
+  "packageType": "ui-kit",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./styles.css": "./dist/styles.css",
+    "./theme-init.js": "./dist/theme-init.js"
+  },
+  "files": [
+    "dist",
+    "fonts"
+  ],
+  "scripts": {
+    "build": "repo-scripts build && node scripts/build-css.js && tsx scripts/build-themes.tsx",
+    "build:css": "node scripts/build-css.js",
+    "build:storybook": "repo-scripts build-storybook",
+    "clean": "repo-scripts clean",
+    "dev": "repo-scripts dev-storybook",
+    "dev:storybook": "repo-scripts dev-storybook",
+    "dev:storybook:wsl": "repo-scripts dev-storybook-wsl",
+    "dev:wsl": "repo-scripts dev-storybook-wsl",
+    "lint": "repo-scripts lint",
+    "lint:fix": "repo-scripts lint-fix",
+    "test": "repo-scripts test",
+    "test:watch": "repo-scripts test-watch",
+    "typecheck": "repo-scripts typecheck",
+    "format": "repo-scripts format",
+    "format:check": "repo-scripts format-check"
+  },
+  "devDependencies": {
+    "@claude-flow/repo-scripts": "workspace:*",
+    "@claude-flow/tsconfig": "workspace:*",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "tsx": "^4.20.3",
+    "vitest": "^3.2.4"
+  }
+}

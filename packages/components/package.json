@@ -1,0 +1,53 @@
+{
+  "name": "@claude-flow/components",
+  "version": "0.0.1",
+  "private": true,
+  "description": "React component library built on Claude Flow UI Kit",
+  "type": "module",
+  "packageType": "component-library",
+  "main": "./lib/index.js",
+  "module": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js"
+    },
+    "./styles.global.css": "./lib/styles.global.css"
+  },
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "build": "repo-scripts build",
+    "build:storybook": "repo-scripts build-storybook",
+    "clean": "repo-scripts clean",
+    "dev": "repo-scripts dev",
+    "dev:storybook": "repo-scripts dev-storybook",
+    "dev:storybook:wsl": "repo-scripts dev-storybook-wsl",
+    "dev:wsl": "repo-scripts dev-wsl",
+    "lint": "repo-scripts lint",
+    "lint:fix": "repo-scripts lint-fix",
+    "test": "repo-scripts test",
+    "test:watch": "repo-scripts test-watch",
+    "typecheck": "repo-scripts typecheck",
+    "format": "repo-scripts format",
+    "format:check": "repo-scripts format-check"
+  },
+  "dependencies": {
+    "@claude-flow/ui-kit": "workspace:*",
+    "classnames": "^2.5.1"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@claude-flow/repo-scripts": "workspace:*",
+    "@claude-flow/tsconfig": "workspace:*",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  }
+}

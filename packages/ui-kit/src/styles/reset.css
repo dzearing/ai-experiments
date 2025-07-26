@@ -1,0 +1,282 @@
+/**
+ * Modern CSS Reset
+ * Based on best practices from normalize.css and modern-normalize
+ */
+
+/* Box sizing rules */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Remove default margin and padding */
+* {
+  margin: 0;
+  padding: 0;
+}
+
+/* Set core root defaults */
+html {
+  /* Prevent font size adjustments after orientation changes */
+  -webkit-text-size-adjust: 100%;
+  /* Smooth scrolling for same-page links */
+  scroll-behavior: smooth;
+  /* Stable scrollbar to prevent layout shift */
+  scrollbar-gutter: stable;
+}
+
+/* Set core body defaults */
+body {
+  min-height: 100vh;
+  font-family: var(--font-family);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-normal);
+  color: var(--color-body-text);
+  background-color: var(--color-body-background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Remove list styles on ul, ol elements */
+ul,
+ol {
+  list-style: none;
+}
+
+/* A elements that don't have a class get default styles */
+a:not([class]) {
+  text-decoration: none;
+  text-decoration-skip-ink: auto;
+  color: var(--color-body-link);
+  font-weight: var(--font-weight-medium, 500);
+  transition: text-decoration 0.2s;
+}
+
+/* Show underline on hover and focus */
+a:not([class]):hover,
+a:not([class]):focus {
+  text-decoration: underline;
+}
+
+/* Make images easier to work with */
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Inherit fonts for inputs and buttons */
+input,
+button,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+/* Remove all animations, transitions and smooth scroll for people that prefer not to see them */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Tables */
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+/* Remove default button styles */
+button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: inherit;
+}
+
+/* Remove default fieldset styles */
+fieldset {
+  border: none;
+}
+
+/* Remove default blockquote styles */
+blockquote,
+q {
+  quotes: none;
+}
+
+/* Remove focus outline for mouse users, show for keyboard users */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Headings */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  color: var(--color-body-text);
+}
+
+h1 {
+  font-size: var(--font-size-h1);
+}
+
+h2 {
+  font-size: var(--font-size-h2);
+}
+
+h3 {
+  font-size: var(--font-size-h3);
+}
+
+h4 {
+  font-size: var(--font-size-h4);
+}
+
+h5 {
+  font-size: var(--font-size-h5);
+}
+
+h6 {
+  font-size: var(--font-size-h6);
+}
+
+/* Code blocks */
+pre,
+code,
+kbd,
+samp {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-code);
+  line-height: var(--line-height-code);
+  letter-spacing: 0.025em; /* Slight spacing for better character distinction */
+}
+
+/* Strong and emphasis */
+strong,
+b {
+  font-weight: var(--font-weight-bold);
+}
+
+/* Small text */
+small {
+  font-size: var(--font-size-caption);
+}
+
+/* Subscript and superscript */
+sub,
+sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+sub {
+  bottom: -0.25em;
+}
+
+sup {
+  top: -0.5em;
+}
+
+/* Horizontal rule */
+hr {
+  height: 0;
+  color: inherit;
+  border-top-width: 1px;
+  border-color: var(--color-body-border);
+}
+
+/* Summary element */
+summary {
+  display: list-item;
+  cursor: pointer;
+}
+
+/* Hidden attribute */
+[hidden] {
+  display: none !important;
+}
+
+/* Dialog */
+dialog {
+  padding: 0;
+  border: none;
+  background-color: var(--color-dialog-background);
+  color: var(--color-dialog-text);
+}
+
+/* Progress and meter */
+progress,
+meter {
+  vertical-align: baseline;
+}
+
+/* ===============================================
+   Code Block Styling with Proper Contrast
+   =============================================== */
+
+/* Inline code */
+code {
+  color: var(--color-codeInline-text);
+  background-color: var(--color-codeInline-background);
+  padding: 0.125em 0.25em;
+  border-radius: var(--radius-sm, 3px);
+  font-size: 0.875em;
+}
+
+/* Code blocks */
+pre {
+  background-color: var(--color-codeBlock-background);
+  border: 1px solid var(--color-codeBlock-border);
+  border-radius: var(--radius-md, 6px);
+  padding: 1rem;
+  overflow-x: auto;
+  line-height: var(--line-height-code);
+}
+
+/* Code within pre blocks */
+pre code {
+  color: var(--color-codeBlock-text);
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+  font-size: inherit;
+}
+
+/* Keyboard input */
+kbd {
+  color: var(--color-body-text);
+  background-color: var(--color-body-backgroundSoft10);
+  border: 1px solid var(--color-body-border);
+  border-radius: var(--radius-sm, 3px);
+  padding: 0.125em 0.25em;
+  font-size: 0.875em;
+  box-shadow: inset 0 -1px 0 var(--color-body-borderSoft10);
+}
+
+/* Sample output */
+samp {
+  color: var(--color-codeBlock-text);
+  background-color: var(--color-codeBlock-background);
+  padding: 0.125em 0.25em;
+  border-radius: var(--radius-sm, 3px);
+}

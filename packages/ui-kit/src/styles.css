@@ -1,0 +1,623 @@
+/**
+ * Base Styles for Claude Flow UI Kit
+ * 
+ * This file contains:
+ * - CSS reset and normalization
+ * - Base element styling
+ * - Font definitions (Segoe UI)
+ * - Utility classes
+ * 
+ * This file is imported by all theme CSS files and provides
+ * the foundation for the design system.
+ */
+
+/* ===================================================================
+   CSS Reset / Normalize
+   =================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+/* Prevent font size inflation */
+html {
+  -moz-text-size-adjust: none;
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
+}
+
+/* Set core defaults */
+html:focus-within {
+  scroll-behavior: smooth;
+}
+
+/* Import CSS Variables */
+@import './styles/fonts.css';
+@import './styles/variables/typography.css';
+@import './styles/variables/spacing.css';
+@import './styles/variables/animation.css';
+@import './styles/variables/borders.css';
+@import './styles/variables/shadows.css';
+@import './styles/variables/layout.css';
+@import './styles/variables/colors.css';
+
+/* ===================================================================
+   Base Elements
+   =================================================================== */
+
+/* Body */
+body {
+  min-height: 100vh;
+  font-family: var(--font-family);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-normal);
+  color: var(--color-body-text);
+  background-color: var(--color-body-background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Headings */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  color: var(--color-body-text);
+  margin-bottom: 0.5em;
+}
+
+h1 {
+  font-size: var(--font-size-h1);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-tight);
+}
+
+h2 {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-tight);
+}
+
+h3 {
+  font-size: var(--font-size-h3);
+}
+
+h4 {
+  font-size: var(--font-size-h4);
+}
+
+h5 {
+  font-size: var(--font-size-h5);
+}
+
+h6 {
+  font-size: var(--font-size-h6);
+}
+
+/* Paragraphs */
+p {
+  margin-bottom: 1em;
+  color: var(--color-body-text);
+}
+
+p:last-child {
+  margin-bottom: 0;
+}
+
+/* Links */
+a {
+  color: var(--color-body-link);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  transition: color 150ms ease-in-out;
+}
+
+a:hover {
+  color: var(--color-body-link-hover);
+  text-decoration-thickness: 2px;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Lists */
+ul,
+ol {
+  margin-bottom: 1em;
+  padding-left: 1.5em;
+}
+
+ul ul,
+ol ol,
+ul ol,
+ol ul {
+  margin-bottom: 0;
+}
+
+li {
+  margin-bottom: 0.25em;
+  color: var(--color-body-text);
+}
+
+li:last-child {
+  margin-bottom: 0;
+}
+
+/* Code */
+code {
+  font-family: var(--font-family-mono);
+  font-size: 0.875em;
+  padding: 0.125em 0.25em;
+  background-color: var(--color-body-background-soft10);
+  border: 1px solid var(--color-body-border);
+  border-radius: 3px;
+  color: var(--color-body-text);
+}
+
+pre {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-relaxed);
+  padding: 1em;
+  margin-bottom: 1em;
+  background-color: var(--color-body-background-soft10);
+  border: 1px solid var(--color-body-border);
+  border-radius: 4px;
+  overflow-x: auto;
+  color: var(--color-body-text);
+}
+
+pre code {
+  padding: 0;
+  background-color: transparent;
+  border: none;
+  font-size: inherit;
+}
+
+/* Blockquote */
+blockquote {
+  margin: 0 0 1em;
+  padding: 0.5em 0 0.5em 1.5em;
+  border-left: 4px solid var(--color-body-border-hard10);
+  color: var(--color-body-text-soft20);
+  font-style: italic;
+}
+
+/* Horizontal Rule */
+hr {
+  height: 0;
+  margin: 2em 0;
+  border: 0;
+  border-top: 1px solid var(--color-body-border);
+}
+
+/* Strong, Em */
+strong,
+b {
+  font-weight: var(--font-weight-semibold);
+}
+
+em,
+i {
+  font-style: italic;
+}
+
+/* Small */
+small {
+  font-size: var(--font-size-sm);
+  color: var(--color-body-text-soft20);
+}
+
+/* Mark */
+mark {
+  background-color: var(--color-noticeWarning-background);
+  color: var(--color-noticeWarning-text);
+  padding: 0.125em 0.25em;
+  border-radius: 2px;
+}
+
+/* ===================================================================
+   Form Elements
+   =================================================================== */
+
+/* Buttons */
+button {
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  line-height: 1;
+  padding: 0.5em 1em;
+  border: 1px solid var(--color-buttonNeutral-border);
+  border-radius: 4px;
+  background-color: var(--color-buttonNeutral-background);
+  color: var(--color-buttonNeutral-text);
+  cursor: pointer;
+  transition: all 150ms ease-in-out;
+  white-space: nowrap;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+}
+
+button:hover:not(:disabled) {
+  background-color: var(--color-buttonNeutral-background-hover);
+  border-color: var(--color-buttonNeutral-border-hover);
+  color: var(--color-buttonNeutral-text-hover);
+}
+
+button:active:not(:disabled) {
+  background-color: var(--color-buttonNeutral-background-active);
+  border-color: var(--color-buttonNeutral-border-active);
+  transform: translateY(1px);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Button Variants */
+button.primary {
+  background-color: var(--color-buttonPrimary-background);
+  border-color: var(--color-buttonPrimary-border);
+  color: var(--color-buttonPrimary-text);
+}
+
+button.primary:hover:not(:disabled) {
+  background-color: var(--color-buttonPrimary-background-hover);
+  border-color: var(--color-buttonPrimary-border-hover);
+  color: var(--color-buttonPrimary-text-hover);
+}
+
+button.primary:active:not(:disabled) {
+  background-color: var(--color-buttonPrimary-background-active);
+  border-color: var(--color-buttonPrimary-border-active);
+}
+
+/* Inputs */
+input[type='text'],
+input[type='email'],
+input[type='password'],
+input[type='number'],
+input[type='search'],
+input[type='tel'],
+input[type='url'],
+input[type='date'],
+input[type='time'],
+input[type='datetime-local'],
+textarea,
+select {
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+  padding: 0.5em 0.75em;
+  border: 1px solid var(--color-input-border);
+  border-radius: 4px;
+  background-color: var(--color-input-background);
+  color: var(--color-input-text);
+  width: 100%;
+  transition: all 150ms ease-in-out;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-body-text-soft40);
+  opacity: 1;
+}
+
+input:hover:not(:disabled),
+textarea:hover:not(:disabled),
+select:hover:not(:disabled) {
+  border-color: var(--color-input-border-hover);
+}
+
+input:focus:not(:disabled),
+textarea:focus:not(:disabled),
+select:focus:not(:disabled) {
+  outline: none;
+  border-color: var(--color-input-border-focus);
+  box-shadow: var(--color-input-shadow);
+}
+
+input:disabled,
+textarea:disabled,
+select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: var(--color-input-background-disabled);
+}
+
+/* Textarea specific */
+textarea {
+  min-height: 5em;
+  resize: vertical;
+}
+
+/* Select specific */
+select {
+  cursor: pointer;
+  padding-right: 2em;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23666' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75em center;
+  background-size: 12px;
+}
+
+/* Checkbox and Radio */
+input[type='checkbox'],
+input[type='radio'] {
+  width: 1em;
+  height: 1em;
+  margin: 0 0.5em 0 0;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+/* Labels */
+label {
+  display: inline-block;
+  font-weight: var(--font-weight-medium);
+  margin-bottom: 0.25em;
+  color: var(--color-body-text);
+}
+
+/* Fieldset */
+fieldset {
+  min-width: 0;
+  padding: 1em;
+  margin: 0 0 1em;
+  border: 1px solid var(--color-body-border);
+  border-radius: 4px;
+}
+
+legend {
+  font-weight: var(--font-weight-semibold);
+  padding: 0 0.5em;
+  color: var(--color-body-text);
+}
+
+/* ===================================================================
+   Tables
+   =================================================================== */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1em;
+  font-size: var(--font-size-base);
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.75em;
+  border-bottom: 1px solid var(--body-border);
+}
+
+th {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-body-text);
+  background-color: var(--color-body-background-soft10);
+}
+
+tbody tr:hover {
+  background-color: var(--color-body-background-soft10);
+}
+
+/* ===================================================================
+   Media Elements
+   =================================================================== */
+
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* ===================================================================
+   Utility Classes
+   =================================================================== */
+
+/* Theme Transitioning */
+.theme-transitioning,
+.theme-transitioning * {
+  transition: none !important;
+}
+
+/* Text Utilities */
+.text-xs {
+  font-size: var(--font-size-xs);
+}
+.text-sm {
+  font-size: var(--font-size-sm);
+}
+.text-base {
+  font-size: var(--font-size-base);
+}
+.text-lg {
+  font-size: var(--font-size-lg);
+}
+.text-xl {
+  font-size: var(--font-size-xl);
+}
+.text-2xl {
+  font-size: var(--font-size-2xl);
+}
+.text-3xl {
+  font-size: var(--font-size-3xl);
+}
+.text-4xl {
+  font-size: var(--font-size-4xl);
+}
+.text-5xl {
+  font-size: var(--font-size-5xl);
+}
+
+.font-light {
+  font-weight: var(--font-weight-light);
+}
+.font-normal {
+  font-weight: var(--font-weight-regular);
+}
+.font-medium {
+  font-weight: var(--font-weight-medium);
+}
+.font-semibold {
+  font-weight: var(--font-weight-semibold);
+}
+.font-bold {
+  font-weight: var(--font-weight-bold);
+}
+
+.text-left {
+  text-align: left;
+}
+.text-center {
+  text-align: center;
+}
+.text-right {
+  text-align: right;
+}
+.text-justify {
+  text-align: justify;
+}
+
+/* Spacing Utilities */
+.m-0 {
+  margin: 0;
+}
+.p-0 {
+  padding: 0;
+}
+
+/* Display Utilities */
+.hidden {
+  display: none;
+}
+.block {
+  display: block;
+}
+.inline {
+  display: inline;
+}
+.inline-block {
+  display: inline-block;
+}
+.flex {
+  display: flex;
+}
+.inline-flex {
+  display: inline-flex;
+}
+.grid {
+  display: grid;
+}
+
+/* Position Utilities */
+.relative {
+  position: relative;
+}
+.absolute {
+  position: absolute;
+}
+.fixed {
+  position: fixed;
+}
+.sticky {
+  position: sticky;
+}
+
+/* Overflow */
+.overflow-auto {
+  overflow: auto;
+}
+.overflow-hidden {
+  overflow: hidden;
+}
+.overflow-visible {
+  overflow: visible;
+}
+.overflow-scroll {
+  overflow: scroll;
+}
+
+/* Screen Reader Only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Focus Visible Only */
+.focus-visible:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ===================================================================
+   Print Styles
+   =================================================================== */
+
+@media print {
+  body {
+    color: black;
+    background: white;
+  }
+
+  a {
+    color: black;
+    text-decoration: underline;
+  }
+
+  @page {
+    margin: 2cm;
+  }
+}
+
+/* ===================================================================
+   Reduced Motion
+   =================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

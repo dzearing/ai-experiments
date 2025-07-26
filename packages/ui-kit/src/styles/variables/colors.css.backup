@@ -1,0 +1,592 @@
+/**
+ * Domain-Based Color System
+ * 
+ * Pattern: --[domain]-[component]-[state]
+ * 
+ * Domains:
+ * - color: All color-related tokens
+ * - font: Typography tokens (size, weight, family, etc.)
+ * - spacing: Margin, padding, gap tokens
+ * - duration: Animation and transition timings
+ * - radius: Border radius tokens
+ * - shadow: Box shadow tokens
+ * 
+ * Color Pattern: --color-[surface]-[concept]-[state]
+ * 
+ * - Surface: The context (body, panel, primaryButton, etc.)
+ * - Concept: The visual concept (text, link, border, background, etc.)
+ * - State: Optional interaction state (hover, active, disabled, etc.)
+ * 
+ * Examples:
+ * - --color-body-text
+ * - --color-body-textSoft10
+ * - --color-body-link-hover
+ * - --color-primaryButton-background
+ * - --color-primaryButton-background-hover
+ * - --color-dangerNotice-border
+ * 
+ * Every surface implements the same set of concepts
+ * for predictability and consistency.
+ */
+
+:root {
+  /* ===============================================
+     Color Domain - Surface Definitions
+     =============================================== */
+  
+  /* Base surfaces */
+  --color-body-background: #ffffff;
+  
+  /* Panel surface (same as body - text must work on body background) */
+  --color-panel-background: #ffffff;
+  --color-panel-backgroundSoft10: #fafafa;
+  --color-panel-backgroundHard10: #f5f5f5;
+  --color-panel-text: #212121;
+  --color-panel-textSoft10: #424242;
+  --color-panel-textSoft20: #616161;
+  --color-panel-textSoft30: #757575;
+  --color-panel-textSoft40: #9e9e9e;
+  --color-panel-textHard10: #000000;
+  --color-panel-link: #1976d2;
+  --color-panel-link-hover: #1565c0;
+  --color-panel-link-visited: #7b1fa2;
+  --color-panel-border: #e0e0e0;
+  --color-panel-borderSoft10: #eeeeee;
+  --color-panel-borderSoft20: #f5f5f5;
+  --color-panel-borderHard10: #bdbdbd;
+  --color-panel-borderHard20: #9e9e9e;
+  --color-panel-icon: #616161;
+  --color-panel-iconSoft20: #9e9e9e;
+  --color-panel-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  --color-panel-shadowSoft: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --color-panel-shadowHard: 0 2px 4px rgba(0, 0, 0, 0.16);
+  
+  /* Panel Raised surface */
+  --color-panelRaised-background: #fafafa;
+  --color-panelRaised-backgroundSoft10: #f5f5f5;
+  --color-panelRaised-backgroundHard10: #eeeeee;
+  --color-panelRaised-text: #212121;
+  --color-panelRaised-textSoft10: #424242;
+  --color-panelRaised-textSoft20: #616161;
+  --color-panelRaised-textSoft30: #757575;
+  --color-panelRaised-textSoft40: #9e9e9e;
+  --color-panelRaised-textHard10: #000000;
+  --color-panelRaised-link: #1976d2;
+  --color-panelRaised-link-hover: #1565c0;
+  --color-panelRaised-link-visited: #7b1fa2;
+  --color-panelRaised-border: #e0e0e0;
+  --color-panelRaised-borderSoft10: #eeeeee;
+  --color-panelRaised-borderSoft20: #f5f5f5;
+  --color-panelRaised-borderHard10: #bdbdbd;
+  --color-panelRaised-borderHard20: #9e9e9e;
+  --color-panelRaised-icon: #616161;
+  --color-panelRaised-iconSoft20: #9e9e9e;
+  --color-panelRaised-shadow: 0 2px 4px rgba(0, 0, 0, 0.10);
+  --color-panelRaised-shadowSoft: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --color-panelRaised-shadowHard: 0 3px 6px rgba(0, 0, 0, 0.12);
+  --color-panelElevated-background: #f8f8f8;
+  --color-panelFloating-background: #f5f5f5;
+  --color-overlay-background: #ffffff;
+  --color-overlayDark-background: rgba(0, 0, 0, 0.5);
+  
+  /* Button surfaces */
+  --color-primaryButton-background: #1976d2;
+  --color-primaryButton-background-hover: #1565c0;
+  --color-primaryButton-background-active: #0d47a1;
+  --color-primaryButton-background-disabled: #90caf9;
+  
+  --color-dangerButton-background: #d32f2f;
+  --color-dangerButton-background-hover: #c62828;
+  --color-dangerButton-background-active: #b71c1c;
+  --color-dangerButton-background-disabled: #ef9a9a;
+  
+  --color-successButton-background: #43a047;
+  --color-successButton-background-hover: #388e3c;
+  --color-successButton-background-active: #2e7d32;
+  --color-successButton-background-disabled: #a5d6a7;
+  
+  --color-neutralButton-background: #e0e0e0;
+  --color-neutralButton-background-hover: #d0d0d0;
+  --color-neutralButton-background-active: #bdbdbd;
+  --color-neutralButton-background-disabled: #f5f5f5;
+  
+  /* Notification surfaces */
+  --color-infoNotice-background: #e3f2fd;
+  --color-successNotice-background: #e8f5e9;
+  --color-warningNotice-background: #fff3e0;
+  --color-dangerNotice-background: #ffebee;
+  
+  /* Code surfaces */
+  --color-codeBlock-background: #f8f8f8;
+  --color-codeInline-background: #f5f5f5;
+  
+  /* Input surfaces */
+  --color-input-background: #ffffff;
+  --color-input-background-hover: #fafafa;
+  --color-input-background-focus: #ffffff;
+  --color-input-background-disabled: #f5f5f5;
+  --color-input-background-readonly: #fafafa;
+  --color-input-background-error: #fff5f5;
+  
+  /* Dialog surfaces */
+  --color-dialog-background: #ffffff;
+  --color-modal-background: #ffffff;
+  --color-tooltip-background: #424242;
+  --color-menu-background: #ffffff;
+  
+  /* ===============================================
+     Color Domain - Body Surface Elements
+     =============================================== */
+  
+  /* Text */
+  --color-body-text: #212121;
+  --color-body-text-soft10: #424242;
+  --color-body-text-soft20: #616161;
+  --color-body-text-soft30: #757575;
+  --color-body-text-soft40: #9e9e9e;
+  --color-body-text-hard10: #000000;
+  
+  /* Text states */
+  --color-body-text-hover: var(--color-body-text-hard10);
+  --color-body-text-disabled: var(--color-body-text-soft40);
+  --color-body-text-selected: #1976d2;
+  --color-body-text-error: #d32f2f;
+  
+  /* Links */
+  --color-body-link: #1976d2;
+  --color-body-link-hover: #1565c0;
+  --color-body-link-active: #0d47a1;
+  --color-body-link-visited: #7c4dff;
+  --color-body-link-disabled: var(--color-body-text-soft40);
+  
+  /* Borders */
+  --color-body-border: #e0e0e0;
+  --color-body-border-soft10: #eeeeee;
+  --color-body-border-soft20: #f5f5f5;
+  --color-body-border-hard10: #bdbdbd;
+  --color-body-border-hard20: #9e9e9e;
+  
+  /* Border states */
+  --color-body-border-hover: var(--color-body-border-hard10);
+  --color-body-border-focus: var(--color-body-link);
+  --color-body-border-error: #f44336;
+  --color-body-border-success: #4caf50;
+  --color-body-border-disabled: var(--color-body-border-soft20);
+  
+  /* Backgrounds */
+  --color-body-background: #f5f5f5;
+  --color-body-background-soft10: #fafafa;
+  --color-body-background-hard10: #eeeeee;
+  
+  /* Background states */
+  --color-body-background-hover: var(--color-body-background-hard10);
+  --color-body-background-selected: #e3f2fd;
+  --color-body-background-selected-hover: #bbdefb;
+  --color-body-background-disabled: #fafafa;
+  
+  /* Icons */
+  --color-body-icon: var(--color-body-text);
+  --color-body-icon-soft20: var(--color-body-text-soft20);
+  --color-body-icon-disabled: var(--color-body-text-soft40);
+  
+  /* Shadows */
+  --color-body-shadow: rgba(0, 0, 0, 0.1);
+  --color-body-shadow-soft: rgba(0, 0, 0, 0.05);
+  --color-body-shadow-hard: rgba(0, 0, 0, 0.2);
+  
+  /* ===============================================
+     Color Domain - Panel Surfaces
+     =============================================== */
+  
+  /* Panel Raised */
+  --color-panelRaised-text: var(--color-body-text);
+  --color-panelRaised-text-soft10: var(--color-body-text-soft10);
+  --color-panelRaised-text-soft20: var(--color-body-text-soft20);
+  --color-panelRaised-text-hard10: var(--color-body-text-hard10);
+  --color-panelRaised-link: var(--color-body-link);
+  --color-panelRaised-border: #e0e0e0;
+  --color-panelRaised-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  
+  /* Panel Elevated */
+  --color-panelElevated-text: var(--color-body-text);
+  --color-panelElevated-text-soft10: var(--color-body-text-soft10);
+  --color-panelElevated-text-soft20: var(--color-body-text-soft20);
+  --color-panelElevated-text-hard10: var(--color-body-text-hard10);
+  --color-panelElevated-link: var(--color-body-link);
+  --color-panelElevated-border: #d0d0d0;
+  --color-panelElevated-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  
+  /* Panel Floating */
+  --color-panelFloating-text: var(--color-body-text);
+  --color-panelFloating-text-soft10: var(--color-body-text-soft10);
+  --color-panelFloating-text-soft20: var(--color-body-text-soft20);
+  --color-panelFloating-text-hard10: var(--color-body-text-hard10);
+  --color-panelFloating-link: var(--color-body-link);
+  --color-panelFloating-border: #bdbdbd;
+  --color-panelFloating-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  
+  /* ===============================================
+     Color Domain - Button Surfaces
+     =============================================== */
+  
+  /* Primary Button */
+  --color-primaryButton-text: #ffffff;
+  --color-primaryButton-text-disabled: rgba(255, 255, 255, 0.5);
+  --color-primaryButton-icon: #ffffff;
+  --color-primaryButton-border: rgba(255, 255, 255, 0.2);
+  
+  /* Danger Button */
+  --color-dangerButton-text: #ffffff;
+  --color-dangerButton-text-disabled: rgba(255, 255, 255, 0.5);
+  --color-dangerButton-icon: #ffffff;
+  --color-dangerButton-border: rgba(255, 255, 255, 0.2);
+  
+  /* Success Button */
+  --color-successButton-text: #ffffff;
+  --color-successButton-text-disabled: rgba(255, 255, 255, 0.5);
+  --color-successButton-icon: #ffffff;
+  
+  /* Neutral Button */
+  --color-neutralButton-text: #212121;
+  --color-neutralButton-text-disabled: #9e9e9e;
+  --color-neutralButton-icon: #616161;
+  --color-neutralButton-border: #bdbdbd;
+  
+  /* ===============================================
+     Color Domain - Notification Surfaces
+     =============================================== */
+  
+  /* Info Notice */
+  --color-infoNotice-text: #0d47a1;
+  --color-infoNotice-text-hard10: #1565c0;
+  --color-infoNotice-link: #0d47a1;
+  --color-infoNotice-link-hover: #1565c0;
+  --color-infoNotice-icon: #1976d2;
+  --color-infoNotice-border: #90caf9;
+  
+  /* Success Notice */
+  --color-successNotice-text: #1b5e20;
+  --color-successNotice-text-hard10: #2e7d32;
+  --color-successNotice-link: #1b5e20;
+  --color-successNotice-link-hover: #2e7d32;
+  --color-successNotice-icon: #43a047;
+  --color-successNotice-border: #81c784;
+  
+  /* Warning Notice */
+  --color-warningNotice-text: #e65100;
+  --color-warningNotice-text-hard10: #f57c00;
+  --color-warningNotice-link: #e65100;
+  --color-warningNotice-link-hover: #f57c00;
+  --color-warningNotice-icon: #ff9800;
+  --color-warningNotice-border: #ffb74d;
+  
+  /* Danger Notice */
+  --color-dangerNotice-text: #b71c1c;
+  --color-dangerNotice-text-hard10: #d32f2f;
+  --color-dangerNotice-link: #b71c1c;
+  --color-dangerNotice-link-hover: #d32f2f;
+  --color-dangerNotice-icon: #f44336;
+  --color-dangerNotice-border: #ef9a9a;
+  
+  /* ===============================================
+     Color Domain - Code Surfaces
+     =============================================== */
+  
+  /* Code Block */
+  --color-codeBlock-text: #24292e;
+  --color-codeBlock-text-soft20: #6a737d;
+  --color-codeBlock-text-soft10: #586069;
+  --color-codeBlock-link: #0366d6;
+  --color-codeBlock-link-hover: #0056b3;
+  --color-codeBlock-border: #e1e4e8;
+  --color-codeBlock-background: #ffffff;
+  
+  /* Inline Code */
+  --color-codeInline-text: #d6336c;
+  --color-codeInline-border: #e0e0e0;
+  
+  /* ===============================================
+     Color Domain - Input Surfaces
+     =============================================== */
+  
+  --color-input-text: #212121;
+  --color-input-text-placeholder: #9e9e9e;
+  --color-input-border: #d0d0d0;
+  --color-input-border-hover: #bdbdbd;
+  --color-input-border-focus: var(--color-body-link);
+  --color-input-icon: #616161;
+  --color-input-background: transparent;
+  
+  --color-input-shadow-focus: 0 0 0 2px rgba(25, 118, 210, 0.2);
+  
+  /* Input states */
+  --color-input-text-disabled: #9e9e9e;
+  --color-input-text-placeholder-disabled: #bdbdbd;
+  --color-input-border-disabled: #e0e0e0;
+  --color-input-icon-disabled: #bdbdbd;
+  
+  --color-input-text-readonly: #424242;
+  --color-input-border-readonly: #e0e0e0;
+  --color-input-icon-readonly: #757575;
+  
+  --color-input-border-error: #f44336;
+  --color-input-border-error-focus: #d32f2f;
+  --color-input-shadow-error: 0 0 0 2px rgba(244, 67, 54, 0.2);
+  --color-input-icon-error: #f44336;
+  
+  /* ===============================================
+     Color Domain - Dialog Surfaces
+     =============================================== */
+  
+  --color-dialog-text: var(--color-body-text);
+  --color-dialog-text-soft10: var(--color-body-text-soft10);
+  --color-dialog-text-soft20: var(--color-body-text-soft20);
+  --color-dialog-text-hard10: var(--color-body-text-hard10);
+  --color-dialog-link: var(--color-body-link);
+  --color-dialog-border: var(--color-body-border);
+  --color-dialog-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  
+  --color-modal-text: var(--color-body-text);
+  --color-modal-text-soft20: var(--color-body-text-soft20);
+  --color-modal-text-hard10: var(--color-body-text-hard10);
+  --color-modal-link: var(--color-body-link);
+  --color-modal-border: var(--color-body-border);
+  --color-modal-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  
+  /* Backdrop */
+  --color-backdrop-background: rgba(0, 0, 0, 0.5);
+  --color-backdrop-background-blur: rgba(255, 255, 255, 0.9);
+  --color-backdrop-text: #ffffff;
+  --color-backdrop-icon: #ffffff;
+  
+  /* Tooltip */
+  --color-tooltip-text: #ffffff;
+  --color-tooltip-text-soft10: rgba(255, 255, 255, 0.8);
+  
+  /* Menu */
+  --color-menu-text: var(--color-body-text);
+  --color-menu-text-soft20: var(--color-body-text-soft20);
+  --color-menu-text-selected: var(--color-body-text-selected);
+  --color-menu-link: var(--color-body-link);
+  --color-menu-border: var(--color-body-border);
+  --color-menu-background-hover: var(--color-body-background-hover);
+  --color-menu-background-selected: var(--color-body-background-selected);
+  --color-menu-shadow: var(--color-body-shadow);
+  
+  /* Selection */
+  --color-selection-background: var(--color-body-link);
+  --color-selection-text: #ffffff;
+}
+
+/* ===============================================
+   Dark Mode
+   =============================================== */
+
+[data-theme][data-mode="dark"] {
+  /* Surface redefinitions */
+  --color-body-background: #121212;
+  
+  /* Panel surface - dark mode */
+  --color-panel-background: #121212;
+  --color-panel-backgroundSoft10: #1a1a1a;
+  --color-panel-backgroundHard10: #0a0a0a;
+  --color-panel-text: #e0e0e0;
+  --color-panel-textSoft10: #bdbdbd;
+  --color-panel-textSoft20: #9e9e9e;
+  --color-panel-textSoft30: #757575;
+  --color-panel-textSoft40: #616161;
+  --color-panel-textHard10: #ffffff;
+  --color-panel-link: #64b5f6;
+  --color-panel-link-hover: #42a5f5;
+  --color-panel-link-visited: #ba68c8;
+  --color-panel-border: #2d2d2d;
+  --color-panel-borderSoft10: #252525;
+  --color-panel-borderSoft20: #1e1e1e;
+  --color-panel-borderHard10: #424242;
+  --color-panel-borderHard20: #616161;
+  --color-panel-icon: #9e9e9e;
+  --color-panel-iconSoft20: #757575;
+  --color-panel-shadow: 0 2px 4px rgba(0, 0, 0, 0.30);
+  --color-panel-shadowSoft: 0 1px 3px rgba(0, 0, 0, 0.20);
+  --color-panel-shadowHard: 0 3px 6px rgba(0, 0, 0, 0.40);
+  
+  /* Panel Raised - dark mode */
+  --color-panelRaised-background: #1e1e1e;
+  --color-panelRaised-backgroundSoft10: #252525;
+  --color-panelRaised-backgroundHard10: #1a1a1a;
+  --color-panelRaised-text: #e0e0e0;
+  --color-panelRaised-textSoft10: #bdbdbd;
+  --color-panelRaised-textSoft20: #9e9e9e;
+  --color-panelRaised-textSoft30: #757575;
+  --color-panelRaised-textSoft40: #616161;
+  --color-panelRaised-textHard10: #ffffff;
+  --color-panelRaised-link: #64b5f6;
+  --color-panelRaised-link-hover: #42a5f5;
+  --color-panelRaised-link-visited: #ba68c8;
+  --color-panelRaised-border: #333333;
+  --color-panelRaised-borderSoft10: #2d2d2d;
+  --color-panelRaised-borderSoft20: #252525;
+  --color-panelRaised-borderHard10: #424242;
+  --color-panelRaised-borderHard20: #616161;
+  --color-panelRaised-icon: #9e9e9e;
+  --color-panelRaised-iconSoft20: #757575;
+  --color-panelRaised-shadow: 0 2px 4px rgba(0, 0, 0, 0.30);
+  --color-panelRaised-shadowSoft: 0 1px 3px rgba(0, 0, 0, 0.20);
+  --color-panelRaised-shadowHard: 0 3px 6px rgba(0, 0, 0, 0.40);
+  --color-panelElevated-background: #252525;
+  --color-panelFloating-background: #2d2d2d;
+  --color-overlay-background: #1e1e1e;
+  --color-overlayDark-background: rgba(0, 0, 0, 0.8);
+  
+  /* Keep button surfaces mostly the same but adjust disabled states */
+  --color-primaryButton-background-disabled: #1565c0;
+  --color-dangerButton-background-disabled: #c62828;
+  --color-successButton-background-disabled: #388e3c;
+  
+  --color-neutralButton-background: #424242;
+  --color-neutralButton-background-hover: #4a4a4a;
+  --color-neutralButton-background-active: #525252;
+  --color-neutralButton-background-disabled: #2d2d2d;
+  
+  /* Notification surfaces (subtle but visible) */
+  --color-infoNotice-background: #1e3a5f;
+  --color-successNotice-background: #1e3a1e;
+  --color-warningNotice-background: #4a342a;
+  --color-dangerNotice-background: #3d1f1f;
+  
+  /* Code surfaces */
+  --color-codeBlock-background: #1a1a1a;
+  --color-codeInline-background: #2d2d2d;
+  
+  /* Input surfaces */
+  --color-input-background: #1e1e1e;
+  --color-input-background-hover: #252525;
+  --color-input-background-focus: #1e1e1e;
+  --color-input-background-disabled: #1a1a1a;
+  --color-input-background-readonly: #1a1a1a;
+  --color-input-background-error: #2d1a1a;
+  
+  /* Dialog surfaces */
+  --color-dialog-background: #2d2d2d;
+  --color-modal-background: #353535;
+  --color-tooltip-background: #616161;
+  --color-menu-background: #1e1e1e;
+  
+  /* Body surface colors adjusted for dark mode */
+  --color-body-text: #ffffff;
+  --color-body-text-soft10: #e0e0e0;
+  --color-body-text-soft20: #bdbdbd;
+  --color-body-text-soft30: #9e9e9e;
+  --color-body-text-soft40: #757575;
+  --color-body-text-hard10: #ffffff;
+  
+  /* Text states for dark mode */
+  --color-body-text-hover: var(--color-body-text-hard10);
+  --color-body-text-disabled: var(--color-body-text-soft40);
+  --color-body-text-selected: #4fc3f7;
+  --color-body-text-error: #ef5350;
+  
+  --color-body-link: #4fc3f7;
+  --color-body-link-hover: #81d4fa;
+  --color-body-link-active: #29b6f6;
+  --color-body-link-visited: #b39ddb;
+  
+  --color-body-border: #424242;
+  --color-body-border-soft10: #353535;
+  --color-body-border-soft20: #2d2d2d;
+  --color-body-border-hard10: #616161;
+  --color-body-border-hard20: #757575;
+  
+  --color-body-background: #2d2d2d;
+  --color-body-background-soft10: #242424;
+  --color-body-background-hard10: #353535;
+  
+  --color-body-background-hover: var(--color-body-background-hard10);
+  --color-body-background-selected: #1976d2;
+  --color-body-background-selected-hover: #1565c0;
+  
+  /* Panel surface adjustments */
+  --color-panelRaised-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --color-panelElevated-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  --color-panelFloating-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  
+  /* Notification text colors (on dark backgrounds) */
+  --color-infoNotice-text: #90caf9;
+  --color-infoNotice-text-hard10: #bbdefb;
+  --color-infoNotice-link: #bbdefb;
+  --color-infoNotice-link-hover: #e3f2fd;
+  --color-infoNotice-border: #283593;
+  
+  --color-successNotice-text: #a5d6a7;
+  --color-successNotice-text-hard10: #c8e6c9;
+  --color-successNotice-link: #c8e6c9;
+  --color-successNotice-link-hover: #e8f5e9;
+  --color-successNotice-border: #2e7d32;
+  
+  --color-warningNotice-text: #ffcc80;
+  --color-warningNotice-text-hard10: #ffe0b2;
+  --color-warningNotice-link: #ffe0b2;
+  --color-warningNotice-link-hover: #fff3e0;
+  --color-warningNotice-border: #5d4037;
+  
+  --color-dangerNotice-text: #ef9a9a;
+  --color-dangerNotice-text-hard10: #ffcdd2;
+  --color-dangerNotice-link: #ffcdd2;
+  --color-dangerNotice-link-hover: #ffebee;
+  --color-dangerNotice-border: #5d1f1f;
+  
+  /* Code surface adjustments */
+  --color-codeBlock-text: #e0e0e0;
+  --color-codeBlock-text-soft20: #9e9e9e;
+  --color-codeBlock-text-soft10: #bdbdbd;
+  --color-codeBlock-link: #4fc3f7;
+  --color-codeBlock-border: #424242;
+  --color-codeBlock-background: #2d2d2d;
+  
+  --color-codeInline-text: #f48fb1;
+  --color-codeInline-border: #424242;
+  
+  /* Input surface adjustments */
+  --color-input-text: #ffffff;
+  --color-input-text-placeholder: #757575;
+  --color-input-border: #424242;
+  --color-input-border-hover: #525252;
+  --color-input-border-focus: var(--color-body-link);
+  --color-input-icon: #9e9e9e;
+  
+  --color-input-shadow-focus: 0 0 0 2px rgba(79, 195, 247, 0.3);
+  
+  --color-input-text-disabled: #757575;
+  --color-input-text-placeholder-disabled: #616161;
+  --color-input-border-disabled: #353535;
+  --color-input-icon-disabled: #616161;
+  
+  --color-input-text-readonly: #bdbdbd;
+  --color-input-border-readonly: #353535;
+  
+  --color-input-border-error: #ef5350;
+  --color-input-border-error-focus: #f44336;
+  --color-input-shadow-error: 0 0 0 2px rgba(239, 83, 80, 0.3);
+  --color-input-icon-error: #ef5350;
+  
+  /* Dialog surface adjustments */
+  --color-dialog-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --color-modal-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+  
+  /* Special surface adjustments */
+  --color-neutralButton-text: #ffffff;
+  --color-neutralButton-text-disabled: #757575;
+  --color-neutralButton-icon: #e0e0e0;
+  --color-neutralButton-border: #757575;
+  
+  --color-menu-shadow: rgba(0, 0, 0, 0.4);
+  
+  /* Selection colors */
+  --color-selection-background: var(--color-body-link);
+  --color-selection-text: #121212;
+  
+  /* Backdrop */
+  --color-backdrop-background: rgba(0, 0, 0, 0.8);
+  --color-backdrop-background-blur: rgba(18, 18, 18, 0.95);
+}
+

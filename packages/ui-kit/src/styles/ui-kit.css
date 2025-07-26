@@ -1,0 +1,102 @@
+/**
+ * Claude Flow UI Kit - Complete Styles
+ * 
+ * This file includes all styles in the correct order
+ * Use this for Storybook and development
+ */
+
+/* CSS Reset - Must come first */
+@import './reset.css';
+
+/* Font Face Definitions */
+@import './fonts.css';
+
+/* Design Token Variables */
+@import './variables/colors.css';
+@import './variables/typography.css';
+@import './variables/spacing.css';
+@import './variables/animation.css';
+@import './variables/borders.css';
+@import './variables/shadows.css';
+@import './variables/layout.css';
+
+/* Theme files are generated during build and loaded dynamically */
+
+/* Utility Classes */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Focus Visible Utilities */
+.focus-visible:focus {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* Theme Application Helper */
+[data-theme] {
+  color: var(--color-body-text);
+  background-color: var(--color-body-background);
+  font-family: var(--font-family);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-normal);
+}
+
+/* Smooth transitions when theme changes */
+[data-theme] * {
+  transition: var(--transition-colors);
+}
+
+/* Disable transitions on theme change to prevent flash */
+[data-theme].theme-transitioning * {
+  transition: none !important;
+}
+
+/* Print Styles */
+@media print {
+  * {
+    background: transparent !important;
+    color: black !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  a,
+  a:visited {
+    text-decoration: underline;
+  }
+
+  pre,
+  blockquote {
+    border: 1px solid #999;
+    page-break-inside: avoid;
+  }
+
+  img {
+    page-break-inside: avoid;
+  }
+
+  @page {
+    margin: 0.5cm;
+  }
+
+  p,
+  h2,
+  h3 {
+    orphans: 3;
+    widows: 3;
+  }
+
+  h2,
+  h3 {
+    page-break-after: avoid;
+  }
+}
