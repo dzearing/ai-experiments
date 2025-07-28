@@ -238,6 +238,7 @@ The server processes screenshots:
 Uploads a screenshot for feedback.
 
 **Request:**
+
 ```json
 {
   "imageData": "data:image/png;base64,...",
@@ -247,6 +248,7 @@ Uploads a screenshot for feedback.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -255,6 +257,7 @@ Uploads a screenshot for feedback.
 ```
 
 **Error Response:**
+
 ```json
 {
   "success": false,
@@ -267,6 +270,7 @@ Uploads a screenshot for feedback.
 Submits complete feedback with all context.
 
 **Request:**
+
 ```json
 {
   "expectedBehavior": "Claude should have understood the request",
@@ -284,6 +288,7 @@ Submits complete feedback with all context.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -327,12 +332,8 @@ Complete feedback records are saved as JSON files:
   ],
   "screenshotPath": "feedback/screenshots/hello-world-1-xxx-123.png",
   "serverLogs": {
-    "claudeMessages": [
-      "[2024-01-15T10:29:30.000Z] Claude response received..."
-    ],
-    "events": [
-      "[2024-01-15T10:29:00.000Z] CLAUDE_MESSAGE_RECEIVED..."
-    ],
+    "claudeMessages": ["[2024-01-15T10:29:30.000Z] Claude response received..."],
+    "events": ["[2024-01-15T10:29:00.000Z] CLAUDE_MESSAGE_RECEIVED..."],
     "errors": []
   }
 }
@@ -363,79 +364,79 @@ describe('Feedback Feature', () => {
   test('should capture screenshot when feedback is initiated', async ({ page }) => {
     await page.goto('/projects/test-project/claude-code/hello-world-1');
     await page.waitForSelector('[data-testid="message-complete"]');
-    
+
     // Intercept screenshot upload
-    const screenshotPromise = page.waitForRequest(req => 
+    const screenshotPromise = page.waitForRequest((req) =>
       req.url().includes('/api/feedback/screenshot')
     );
-    
+
     await page.click('text=Leave feedback');
     const screenshotReq = await screenshotPromise;
-    
+
     expect(screenshotReq.postData()).toContain('data:image/png;base64');
   });
 
   test('should handle screenshot capture failure gracefully', async ({ page }) => {
     await page.goto('/projects/test-project/claude-code/hello-world-1');
-    
+
     // Mock dom-to-image to fail
     await page.addScriptTag({
       content: `
         window.domtoimage = {
           toPng: () => Promise.reject(new Error('Capture failed'))
         };
-      `
+      `,
     });
-    
+
     await page.click('text=Leave feedback');
     await page.fill('textarea[placeholder*="expect"]', 'Test expectation');
     await page.fill('textarea[placeholder*="actually"]', 'Test actual');
     await page.click('text=Submit Feedback');
-    
+
     // Should still succeed without screenshot
     await expect(page.locator('text=Feedback Submitted')).toBeVisible();
   });
 
   test('should include message history in feedback', async ({ page }) => {
     await page.goto('/projects/test-project/claude-code/hello-world-1');
-    
+
     // Send a message
     await page.fill('[data-testid="claude-input"]', 'Test message');
     await page.keyboard.press('Enter');
     await page.waitForSelector('[data-testid="message-complete"]');
-    
+
     // Intercept feedback submission
-    const feedbackPromise = page.waitForRequest(req => 
+    const feedbackPromise = page.waitForRequest((req) =>
       req.url().includes('/api/feedback/submit')
     );
-    
+
     await page.click('text=Leave feedback');
     await page.fill('textarea[placeholder*="expect"]', 'Test');
     await page.fill('textarea[placeholder*="actually"]', 'Test');
     await page.click('text=Submit Feedback');
-    
+
     const feedbackReq = await feedbackPromise;
     const data = JSON.parse(feedbackReq.postData());
-    
+
     expect(data.messages).toHaveLength(2); // Greeting + user message
     expect(data.messageId).toBeDefined();
   });
 
   test('should handle session-level feedback', async ({ page }) => {
     await page.goto('/projects/test-project/claude-code/hello-world-1');
-    
-    const feedbackPromise = page.waitForRequest(req => 
+
+    const feedbackPromise = page.waitForRequest((req) =>
       req.url().includes('/api/feedback/submit')
     );
-    
+
     await page.click('button:has-text("Leave feedback")');
     await page.fill('textarea[placeholder*="expect"]', 'Session test');
     await page.fill('textarea[placeholder*="actually"]', 'Session test');
     await page.click('text=Submit Feedback');
-    
+
     const feedbackReq = await feedbackPromise;
     const data = JSON.parse(feedbackReq.postData());
-    
+
     expect(data.messageId).toBeUndefined(); // No specific message
   });
 });
@@ -506,11 +507,13 @@ describe('Feedback Feature', () => {
 To add feedback capability to a new component:
 
 1. Import the FeedbackLink component:
+
    ```typescript
    import { FeedbackLink } from './components/FeedbackLink';
    ```
 
 2. Add the link to your component:
+
    ```typescript
    <FeedbackLink
      sessionId={sessionId}
@@ -530,13 +533,12 @@ const fs = require('fs');
 const path = require('path');
 
 const reportsDir = path.join(__dirname, 'feedback/reports');
-const reports = fs.readdirSync(reportsDir)
-  .map(file => JSON.parse(fs.readFileSync(path.join(reportsDir, file))));
+const reports = fs
+  .readdirSync(reportsDir)
+  .map((file) => JSON.parse(fs.readFileSync(path.join(reportsDir, file))));
 
 // Filter by session, date, error type, etc.
-const sessionReports = reports.filter(r => 
-  r.context.sessionId === 'specific-session-id'
-);
+const sessionReports = reports.filter((r) => r.context.sessionId === 'specific-session-id');
 ```
 
 ### Extending the Feedback System
@@ -556,6 +558,7 @@ The feedback system is designed to be extensible:
 
 **Symptom**: "Screenshot capture failed" in console
 **Causes**:
+
 - Large DOM size
 - Cross-origin images
 - Browser security restrictions
@@ -566,6 +569,7 @@ The feedback system is designed to be extensible:
 
 **Symptom**: Dialog stays open, no confirmation
 **Causes**:
+
 - Network timeout
 - Server error
 - Large payload
@@ -576,6 +580,7 @@ The feedback system is designed to be extensible:
 
 **Symptom**: serverLogs field is empty or incomplete
 **Causes**:
+
 - Log rotation
 - SessionId mismatch
 - Timing issues

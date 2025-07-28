@@ -1,0 +1,28 @@
+{
+  "name": "@claude-flow/{{name}}",
+  "version": "1.0.0",
+  "private": true,
+  "description": "{{description}}",
+  "type": "module",
+  "packageType": "node-app",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "scripts": {
+    "build": "repo-scripts build",
+    "clean": "repo-scripts clean",
+    "dev": "repo-scripts dev",
+    "lint": "repo-scripts lint",
+    "lint:fix": "repo-scripts lint-fix",
+    "test": "repo-scripts test",
+    "test:watch": "repo-scripts test-watch",
+    "typecheck": "repo-scripts typecheck",
+    "format": "repo-scripts format",
+    "format:check": "repo-scripts format-check"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@claude-flow/repo-scripts": "workspace:*",
+    "@claude-flow/tsconfig": "workspace:*",
+    "@types/node": "^20.0.0"
+  }
+}

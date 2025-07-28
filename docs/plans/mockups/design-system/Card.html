@@ -1,717 +1,753 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Card Component Design System</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            background: #ffffff;
-            color: #111827;
-            transition: all 0.3s ease;
-            line-height: 1.5;
-        }
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        background: #ffffff;
+        color: #111827;
+        transition: all 0.3s ease;
+        line-height: 1.5;
+      }
 
-        body.dark {
-            background: #0f172a;
-            color: #f8fafc;
-        }
+      body.dark {
+        background: #0f172a;
+        color: #f8fafc;
+      }
 
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 3rem;
+      }
+
+      .header h1 {
+        font-size: 2rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+      }
+
+      .theme-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: #f3f4f6;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      body.dark .theme-toggle {
+        background: #374151;
+        border-color: #4b5563;
+      }
+
+      .theme-toggle:hover {
+        background: #e5e7eb;
+      }
+
+      body.dark .theme-toggle:hover {
+        background: #4b5563;
+      }
+
+      .section {
+        margin-bottom: 3rem;
+      }
+
+      .section-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #374151;
+      }
+
+      body.dark .section-title {
+        color: #f3f4f6;
+      }
+
+      .subsection {
+        margin-bottom: 2rem;
+      }
+
+      .subsection-title {
+        font-size: 1rem;
+        font-weight: 500;
+        margin-bottom: 1rem;
+        color: #6b7280;
+      }
+
+      body.dark .subsection-title {
+        color: #9ca3af;
+      }
+
+      /* Card Base Styles */
+      .card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      body.dark .card {
+        background: #1f2937;
+        border-color: #374151;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .card:hover {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        transform: translateY(-1px);
+      }
+
+      body.dark .card:hover {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+      }
+
+      /* Interactive Card Styles */
+      .card.interactive {
+        cursor: pointer;
+      }
+
+      .card.interactive:hover {
+        border-color: #3b82f6;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+      }
+
+      .card.interactive:active {
+        transform: translateY(0);
+      }
+
+      /* Card Header */
+      .card-header {
+        padding: 1rem 1.25rem;
+        background: #f3f4f6;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      body.dark .card-header {
+        background: #374151;
+        border-color: #4b5563;
+      }
+
+      .card-header h3 {
+        font-size: 1rem;
+        font-weight: 600;
+      }
+
+      .card-header .status {
+        font-size: 0.875rem;
+        color: #6b7280;
+      }
+
+      body.dark .card-header .status {
+        color: #9ca3af;
+      }
+
+      /* Card Content */
+      .card-content {
+        padding: 1.25rem;
+      }
+
+      .card-title {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+      }
+
+      .card-description {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-bottom: 1rem;
+      }
+
+      body.dark .card-description {
+        color: #9ca3af;
+      }
+
+      .card-meta {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-bottom: 0.25rem;
+      }
+
+      body.dark .card-meta {
+        color: #9ca3af;
+      }
+
+      /* Card Footer */
+      .card-footer {
+        padding: 0.75rem 1.25rem;
+        background: #f9fafb;
+        border-top: 1px solid #e5e7eb;
+      }
+
+      body.dark .card-footer {
+        background: #111827;
+        border-color: #374151;
+      }
+
+      .card-link {
+        color: #3b82f6;
+        text-decoration: none;
+        font-size: 0.75rem;
+        font-weight: 500;
+      }
+
+      body.dark .card-link {
+        color: #60a5fa;
+      }
+
+      .card-link:hover {
+        text-decoration: underline;
+      }
+
+      /* Grid Layouts */
+      .card-grid {
+        display: grid;
+        gap: 1.5rem;
+      }
+
+      .grid-2 {
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      }
+
+      .grid-3 {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      }
+
+      .grid-4 {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      }
+
+      /* Colored Cards */
+      .card.card-primary {
+        border-top: 4px solid #3b82f6;
+      }
+
+      .card.card-success {
+        border-top: 4px solid #10b981;
+      }
+
+      .card.card-warning {
+        border-top: 4px solid #f59e0b;
+      }
+
+      .card.card-danger {
+        border-top: 4px solid #ef4444;
+      }
+
+      /* Compact Cards */
+      .card.compact .card-content {
+        padding: 1rem;
+      }
+
+      .card.compact .card-header {
+        padding: 0.75rem 1rem;
+      }
+
+      .card.compact .card-footer {
+        padding: 0.5rem 1rem;
+      }
+
+      /* Action Buttons */
+      .card-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+      }
+
+      .btn {
+        padding: 0.5rem 1rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.375rem;
+        background: #ffffff;
+        color: #374151;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      body.dark .btn {
+        background: #374151;
+        border-color: #4b5563;
+        color: #f3f4f6;
+      }
+
+      .btn:hover {
+        background: #f3f4f6;
+      }
+
+      body.dark .btn:hover {
+        background: #4b5563;
+      }
+
+      .btn.btn-primary {
+        background: #3b82f6;
+        border-color: #3b82f6;
+        color: #ffffff;
+      }
+
+      .btn.btn-primary:hover {
+        background: #2563eb;
+      }
+
+      /* Responsive Design */
+      @media (max-width: 768px) {
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
+          padding: 1rem;
         }
 
-        .header {
-            text-align: center;
-            margin-bottom: 3rem;
-        }
-
-        .header h1 {
-            font-size: 2rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-        }
-
-        .theme-toggle {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            background: #f3f4f6;
-            border: 1px solid #e5e7eb;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        body.dark .theme-toggle {
-            background: #374151;
-            border-color: #4b5563;
-        }
-
-        .theme-toggle:hover {
-            background: #e5e7eb;
-        }
-
-        body.dark .theme-toggle:hover {
-            background: #4b5563;
-        }
-
-        .section {
-            margin-bottom: 3rem;
-        }
-
-        .section-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: #374151;
-        }
-
-        body.dark .section-title {
-            color: #f3f4f6;
-        }
-
-        .subsection {
-            margin-bottom: 2rem;
-        }
-
-        .subsection-title {
-            font-size: 1rem;
-            font-weight: 500;
-            margin-bottom: 1rem;
-            color: #6b7280;
-        }
-
-        body.dark .subsection-title {
-            color: #9ca3af;
-        }
-
-        /* Card Base Styles */
-        .card {
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
-            border-radius: 0.5rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            transition: all 0.2s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        body.dark .card {
-            background: #1f2937;
-            border-color: #374151;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-
-        .card:hover {
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-            transform: translateY(-1px);
-        }
-
-        body.dark .card:hover {
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-        }
-
-        /* Interactive Card Styles */
-        .card.interactive {
-            cursor: pointer;
-        }
-
-        .card.interactive:hover {
-            border-color: #3b82f6;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
-        }
-
-        .card.interactive:active {
-            transform: translateY(0);
-        }
-
-        /* Card Header */
-        .card-header {
-            padding: 1rem 1.25rem;
-            background: #f3f4f6;
-            border-bottom: 1px solid #e5e7eb;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        body.dark .card-header {
-            background: #374151;
-            border-color: #4b5563;
-        }
-
-        .card-header h3 {
-            font-size: 1rem;
-            font-weight: 600;
-        }
-
-        .card-header .status {
-            font-size: 0.875rem;
-            color: #6b7280;
-        }
-
-        body.dark .card-header .status {
-            color: #9ca3af;
-        }
-
-        /* Card Content */
-        .card-content {
-            padding: 1.25rem;
-        }
-
-        .card-title {
-            font-size: 1rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-
-        .card-description {
-            font-size: 0.875rem;
-            color: #6b7280;
-            margin-bottom: 1rem;
-        }
-
-        body.dark .card-description {
-            color: #9ca3af;
-        }
-
-        .card-meta {
-            font-size: 0.875rem;
-            color: #6b7280;
-            margin-bottom: 0.25rem;
-        }
-
-        body.dark .card-meta {
-            color: #9ca3af;
-        }
-
-        /* Card Footer */
-        .card-footer {
-            padding: 0.75rem 1.25rem;
-            background: #f9fafb;
-            border-top: 1px solid #e5e7eb;
-        }
-
-        body.dark .card-footer {
-            background: #111827;
-            border-color: #374151;
-        }
-
-        .card-link {
-            color: #3b82f6;
-            text-decoration: none;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-
-        body.dark .card-link {
-            color: #60a5fa;
-        }
-
-        .card-link:hover {
-            text-decoration: underline;
-        }
-
-        /* Grid Layouts */
         .card-grid {
-            display: grid;
-            gap: 1.5rem;
+          grid-template-columns: 1fr;
         }
+      }
 
-        .grid-2 {
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        }
+      /* Animation Classes */
+      .fade-in {
+        animation: fadeIn 0.3s ease-in;
+      }
 
-        .grid-3 {
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
         }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
 
-        .grid-4 {
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        }
+      .pulse {
+        animation: pulse 2s infinite;
+      }
 
-        /* Colored Cards */
-        .card.card-primary {
-            border-top: 4px solid #3b82f6;
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
         }
+        50% {
+          transform: scale(1.02);
+        }
+      }
 
-        .card.card-success {
-            border-top: 4px solid #10b981;
-        }
+      /* Loading State */
+      .card.loading {
+        pointer-events: none;
+        opacity: 0.7;
+      }
 
-        .card.card-warning {
-            border-top: 4px solid #f59e0b;
-        }
+      .card.loading::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+        animation: shimmer 1.5s infinite;
+      }
 
-        .card.card-danger {
-            border-top: 4px solid #ef4444;
+      @keyframes shimmer {
+        0% {
+          transform: translateX(-100%);
         }
+        100% {
+          transform: translateX(100%);
+        }
+      }
 
-        /* Compact Cards */
-        .card.compact .card-content {
-            padding: 1rem;
-        }
+      /* Demo specific styles */
+      .demo-notification {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        background: #3b82f6;
+        color: white;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+        z-index: 1000;
+      }
 
-        .card.compact .card-header {
-            padding: 0.75rem 1rem;
-        }
-
-        .card.compact .card-footer {
-            padding: 0.5rem 1rem;
-        }
-
-        /* Action Buttons */
-        .card-actions {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 1rem;
-        }
-
-        .btn {
-            padding: 0.5rem 1rem;
-            border: 1px solid #e5e7eb;
-            border-radius: 0.375rem;
-            background: #ffffff;
-            color: #374151;
-            font-size: 0.875rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        body.dark .btn {
-            background: #374151;
-            border-color: #4b5563;
-            color: #f3f4f6;
-        }
-
-        .btn:hover {
-            background: #f3f4f6;
-        }
-
-        body.dark .btn:hover {
-            background: #4b5563;
-        }
-
-        .btn.btn-primary {
-            background: #3b82f6;
-            border-color: #3b82f6;
-            color: #ffffff;
-        }
-
-        .btn.btn-primary:hover {
-            background: #2563eb;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .container {
-                padding: 1rem;
-            }
-            
-            .card-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Animation Classes */
-        .fade-in {
-            animation: fadeIn 0.3s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .pulse {
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-        }
-
-        /* Loading State */
-        .card.loading {
-            pointer-events: none;
-            opacity: 0.7;
-        }
-
-        .card.loading::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-            animation: shimmer 1.5s infinite;
-        }
-
-        @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
-
-        /* Demo specific styles */
-        .demo-notification {
-            position: fixed;
-            top: 1rem;
-            right: 1rem;
-            background: #3b82f6;
-            color: white;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            transform: translateX(100%);
-            transition: transform 0.3s ease;
-            z-index: 1000;
-        }
-
-        .demo-notification.show {
-            transform: translateX(0);
-        }
+      .demo-notification.show {
+        transform: translateX(0);
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <div class="header">
-            <h1>Card Component Design System</h1>
-            <button class="theme-toggle" onclick="toggleTheme()">
-                <span id="theme-icon">🌙</span>
-                <span id="theme-text">Dark Mode</span>
-            </button>
+      <div class="header">
+        <h1>Card Component Design System</h1>
+        <button class="theme-toggle" onclick="toggleTheme()">
+          <span id="theme-icon">🌙</span>
+          <span id="theme-text">Dark Mode</span>
+        </button>
+      </div>
+
+      <!-- Basic Cards Section -->
+      <div class="section">
+        <h2 class="section-title">Basic Cards</h2>
+
+        <div class="subsection">
+          <h3 class="subsection-title">Simple Card</h3>
+          <div class="card">
+            <div class="card-content">
+              <h3 class="card-title">Card Title</h3>
+              <p class="card-description">
+                Card description text that provides additional context and information.
+              </p>
+            </div>
+          </div>
         </div>
 
-        <!-- Basic Cards Section -->
-        <div class="section">
-            <h2 class="section-title">Basic Cards</h2>
-            
-            <div class="subsection">
-                <h3 class="subsection-title">Simple Card</h3>
-                <div class="card">
-                    <div class="card-content">
-                        <h3 class="card-title">Card Title</h3>
-                        <p class="card-description">Card description text that provides additional context and information.</p>
-                    </div>
-                </div>
+        <div class="subsection">
+          <h3 class="subsection-title">Interactive Card</h3>
+          <div class="card interactive" onclick="handleCardClick('interactive')">
+            <div class="card-content">
+              <h3 class="card-title">Click Me</h3>
+              <p class="card-description">
+                This card has hover effects and can be clicked for interaction.
+              </p>
             </div>
+          </div>
+        </div>
+      </div>
 
-            <div class="subsection">
-                <h3 class="subsection-title">Interactive Card</h3>
-                <div class="card interactive" onclick="handleCardClick('interactive')">
-                    <div class="card-content">
-                        <h3 class="card-title">Click Me</h3>
-                        <p class="card-description">This card has hover effects and can be clicked for interaction.</p>
-                    </div>
-                </div>
+      <!-- Cards with Headers and Footers -->
+      <div class="section">
+        <h2 class="section-title">Cards with Headers and Footers</h2>
+
+        <div class="subsection">
+          <h3 class="subsection-title">Project Card</h3>
+          <div class="card">
+            <div class="card-header">
+              <h3>Project Alpha</h3>
+              <span class="status">Active</span>
             </div>
+            <div class="card-content">
+              <p class="card-meta">8 tasks • 3 members</p>
+              <p class="card-meta">Due in 5 days</p>
+            </div>
+            <div class="card-footer">
+              <a href="#" class="card-link" onclick="handleCardClick('project'); return false;"
+                >View Details →</a
+              >
+            </div>
+          </div>
         </div>
 
-        <!-- Cards with Headers and Footers -->
-        <div class="section">
-            <h2 class="section-title">Cards with Headers and Footers</h2>
-            
-            <div class="subsection">
-                <h3 class="subsection-title">Project Card</h3>
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Project Alpha</h3>
-                        <span class="status">Active</span>
-                    </div>
-                    <div class="card-content">
-                        <p class="card-meta">8 tasks • 3 members</p>
-                        <p class="card-meta">Due in 5 days</p>
-                    </div>
-                    <div class="card-footer">
-                        <a href="#" class="card-link" onclick="handleCardClick('project'); return false;">View Details →</a>
-                    </div>
-                </div>
+        <div class="subsection">
+          <h3 class="subsection-title">Card with Actions</h3>
+          <div class="card">
+            <div class="card-header">
+              <h3>Task Management</h3>
+              <span class="status">In Progress</span>
             </div>
+            <div class="card-content">
+              <p class="card-description">
+                Manage and track your team's tasks efficiently with our comprehensive task
+                management system.
+              </p>
+              <div class="card-actions">
+                <button class="btn btn-primary" onclick="handleAction('primary')">
+                  Primary Action
+                </button>
+                <button class="btn" onclick="handleAction('secondary')">Secondary</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-            <div class="subsection">
-                <h3 class="subsection-title">Card with Actions</h3>
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Task Management</h3>
-                        <span class="status">In Progress</span>
-                    </div>
-                    <div class="card-content">
-                        <p class="card-description">Manage and track your team's tasks efficiently with our comprehensive task management system.</p>
-                        <div class="card-actions">
-                            <button class="btn btn-primary" onclick="handleAction('primary')">Primary Action</button>
-                            <button class="btn" onclick="handleAction('secondary')">Secondary</button>
-                        </div>
-                    </div>
-                </div>
+      <!-- Different Card Layouts -->
+      <div class="section">
+        <h2 class="section-title">Card Layouts</h2>
+
+        <div class="subsection">
+          <h3 class="subsection-title">Two Column Grid</h3>
+          <div class="card-grid grid-2">
+            <div class="card card-primary">
+              <div class="card-content">
+                <h3 class="card-title">Development</h3>
+                <p class="card-description">
+                  Frontend and backend development tasks for the current sprint.
+                </p>
+                <p class="card-meta">12 tasks remaining</p>
+              </div>
             </div>
+            <div class="card card-success">
+              <div class="card-content">
+                <h3 class="card-title">Testing</h3>
+                <p class="card-description">
+                  Quality assurance and testing phase for completed features.
+                </p>
+                <p class="card-meta">3 tests pending</p>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- Different Card Layouts -->
-        <div class="section">
-            <h2 class="section-title">Card Layouts</h2>
-            
-            <div class="subsection">
-                <h3 class="subsection-title">Two Column Grid</h3>
-                <div class="card-grid grid-2">
-                    <div class="card card-primary">
-                        <div class="card-content">
-                            <h3 class="card-title">Development</h3>
-                            <p class="card-description">Frontend and backend development tasks for the current sprint.</p>
-                            <p class="card-meta">12 tasks remaining</p>
-                        </div>
-                    </div>
-                    <div class="card card-success">
-                        <div class="card-content">
-                            <h3 class="card-title">Testing</h3>
-                            <p class="card-description">Quality assurance and testing phase for completed features.</p>
-                            <p class="card-meta">3 tests pending</p>
-                        </div>
-                    </div>
-                </div>
+        <div class="subsection">
+          <h3 class="subsection-title">Three Column Grid</h3>
+          <div class="card-grid grid-3">
+            <div class="card card-primary compact">
+              <div class="card-content">
+                <h3 class="card-title">To Do</h3>
+                <p class="card-meta">5 items</p>
+              </div>
             </div>
-
-            <div class="subsection">
-                <h3 class="subsection-title">Three Column Grid</h3>
-                <div class="card-grid grid-3">
-                    <div class="card card-primary compact">
-                        <div class="card-content">
-                            <h3 class="card-title">To Do</h3>
-                            <p class="card-meta">5 items</p>
-                        </div>
-                    </div>
-                    <div class="card card-warning compact">
-                        <div class="card-content">
-                            <h3 class="card-title">In Progress</h3>
-                            <p class="card-meta">3 items</p>
-                        </div>
-                    </div>
-                    <div class="card card-success compact">
-                        <div class="card-content">
-                            <h3 class="card-title">Complete</h3>
-                            <p class="card-meta">8 items</p>
-                        </div>
-                    </div>
-                </div>
+            <div class="card card-warning compact">
+              <div class="card-content">
+                <h3 class="card-title">In Progress</h3>
+                <p class="card-meta">3 items</p>
+              </div>
             </div>
-
-            <div class="subsection">
-                <h3 class="subsection-title">Four Column Grid</h3>
-                <div class="card-grid grid-4">
-                    <div class="card card-primary compact">
-                        <div class="card-content">
-                            <h3 class="card-title">Backlog</h3>
-                            <p class="card-meta">15</p>
-                        </div>
-                    </div>
-                    <div class="card card-warning compact">
-                        <div class="card-content">
-                            <h3 class="card-title">Sprint</h3>
-                            <p class="card-meta">8</p>
-                        </div>
-                    </div>
-                    <div class="card card-success compact">
-                        <div class="card-content">
-                            <h3 class="card-title">Review</h3>
-                            <p class="card-meta">4</p>
-                        </div>
-                    </div>
-                    <div class="card card-danger compact">
-                        <div class="card-content">
-                            <h3 class="card-title">Blocked</h3>
-                            <p class="card-meta">2</p>
-                        </div>
-                    </div>
-                </div>
+            <div class="card card-success compact">
+              <div class="card-content">
+                <h3 class="card-title">Complete</h3>
+                <p class="card-meta">8 items</p>
+              </div>
             </div>
+          </div>
         </div>
 
-        <!-- Interactive Examples -->
-        <div class="section">
-            <h2 class="section-title">Interactive Examples</h2>
-            
-            <div class="subsection">
-                <h3 class="subsection-title">Animated Cards</h3>
-                <div class="card-grid grid-3">
-                    <div class="card interactive fade-in" onclick="animateCard(this, 'pulse')">
-                        <div class="card-content">
-                            <h3 class="card-title">Pulse Animation</h3>
-                            <p class="card-description">Click to see pulse effect</p>
-                        </div>
-                    </div>
-                    <div class="card interactive fade-in" onclick="animateCard(this, 'loading')">
-                        <div class="card-content">
-                            <h3 class="card-title">Loading State</h3>
-                            <p class="card-description">Click to simulate loading</p>
-                        </div>
-                    </div>
-                    <div class="card interactive fade-in" onclick="animateCard(this, 'fade')">
-                        <div class="card-content">
-                            <h3 class="card-title">Fade Effect</h3>
-                            <p class="card-description">Click for fade animation</p>
-                        </div>
-                    </div>
-                </div>
+        <div class="subsection">
+          <h3 class="subsection-title">Four Column Grid</h3>
+          <div class="card-grid grid-4">
+            <div class="card card-primary compact">
+              <div class="card-content">
+                <h3 class="card-title">Backlog</h3>
+                <p class="card-meta">15</p>
+              </div>
             </div>
+            <div class="card card-warning compact">
+              <div class="card-content">
+                <h3 class="card-title">Sprint</h3>
+                <p class="card-meta">8</p>
+              </div>
+            </div>
+            <div class="card card-success compact">
+              <div class="card-content">
+                <h3 class="card-title">Review</h3>
+                <p class="card-meta">4</p>
+              </div>
+            </div>
+            <div class="card card-danger compact">
+              <div class="card-content">
+                <h3 class="card-title">Blocked</h3>
+                <p class="card-meta">2</p>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
+
+      <!-- Interactive Examples -->
+      <div class="section">
+        <h2 class="section-title">Interactive Examples</h2>
+
+        <div class="subsection">
+          <h3 class="subsection-title">Animated Cards</h3>
+          <div class="card-grid grid-3">
+            <div class="card interactive fade-in" onclick="animateCard(this, 'pulse')">
+              <div class="card-content">
+                <h3 class="card-title">Pulse Animation</h3>
+                <p class="card-description">Click to see pulse effect</p>
+              </div>
+            </div>
+            <div class="card interactive fade-in" onclick="animateCard(this, 'loading')">
+              <div class="card-content">
+                <h3 class="card-title">Loading State</h3>
+                <p class="card-description">Click to simulate loading</p>
+              </div>
+            </div>
+            <div class="card interactive fade-in" onclick="animateCard(this, 'fade')">
+              <div class="card-content">
+                <h3 class="card-title">Fade Effect</h3>
+                <p class="card-description">Click for fade animation</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Demo Notification -->
     <div class="demo-notification" id="notification">
-        <span id="notification-text">Action completed!</span>
+      <span id="notification-text">Action completed!</span>
     </div>
 
     <script>
-        // Theme Management
-        function toggleTheme() {
-            const body = document.body;
-            const themeIcon = document.getElementById('theme-icon');
-            const themeText = document.getElementById('theme-text');
-            
-            body.classList.toggle('dark');
-            
-            if (body.classList.contains('dark')) {
-                themeIcon.textContent = '☀️';
-                themeText.textContent = 'Light Mode';
-                localStorage.setItem('theme', 'dark');
-            } else {
-                themeIcon.textContent = '🌙';
-                themeText.textContent = 'Dark Mode';
-                localStorage.setItem('theme', 'light');
-            }
-        }
+      // Theme Management
+      function toggleTheme() {
+        const body = document.body;
+        const themeIcon = document.getElementById('theme-icon');
+        const themeText = document.getElementById('theme-text');
 
-        // Load saved theme
-        function loadTheme() {
-            const savedTheme = localStorage.getItem('theme');
-            if (savedTheme === 'dark') {
-                toggleTheme();
-            }
-        }
+        body.classList.toggle('dark');
 
-        // Card Interactions
-        function handleCardClick(type) {
-            showNotification(`${type} card clicked!`);
+        if (body.classList.contains('dark')) {
+          themeIcon.textContent = '☀️';
+          themeText.textContent = 'Light Mode';
+          localStorage.setItem('theme', 'dark');
+        } else {
+          themeIcon.textContent = '🌙';
+          themeText.textContent = 'Dark Mode';
+          localStorage.setItem('theme', 'light');
         }
+      }
 
-        function handleAction(type) {
-            showNotification(`${type} action executed!`);
+      // Load saved theme
+      function loadTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+          toggleTheme();
         }
+      }
 
-        // Animations
-        function animateCard(card, animationType) {
-            // Remove any existing animation classes
-            card.classList.remove('pulse', 'loading', 'fade-in');
-            
-            switch(animationType) {
-                case 'pulse':
-                    card.classList.add('pulse');
-                    setTimeout(() => {
-                        card.classList.remove('pulse');
-                    }, 2000);
-                    showNotification('Pulse animation triggered!');
-                    break;
-                    
-                case 'loading':
-                    card.classList.add('loading');
-                    setTimeout(() => {
-                        card.classList.remove('loading');
-                        showNotification('Loading complete!');
-                    }, 2000);
-                    showNotification('Loading started...');
-                    break;
-                    
-                case 'fade':
-                    card.style.opacity = '0.3';
-                    setTimeout(() => {
-                        card.style.opacity = '1';
-                    }, 500);
-                    showNotification('Fade animation triggered!');
-                    break;
-            }
-        }
+      // Card Interactions
+      function handleCardClick(type) {
+        showNotification(`${type} card clicked!`);
+      }
 
-        // Notification System
-        function showNotification(message) {
-            const notification = document.getElementById('notification');
-            const notificationText = document.getElementById('notification-text');
-            
-            notificationText.textContent = message;
-            notification.classList.add('show');
-            
+      function handleAction(type) {
+        showNotification(`${type} action executed!`);
+      }
+
+      // Animations
+      function animateCard(card, animationType) {
+        // Remove any existing animation classes
+        card.classList.remove('pulse', 'loading', 'fade-in');
+
+        switch (animationType) {
+          case 'pulse':
+            card.classList.add('pulse');
             setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
-        }
+              card.classList.remove('pulse');
+            }, 2000);
+            showNotification('Pulse animation triggered!');
+            break;
 
-        // Keyboard Navigation
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 't' || e.key === 'T') {
-                toggleTheme();
-            }
-        });
-
-        // Intersection Observer for fade-in animations
-        function setupScrollAnimations() {
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('fade-in');
-                    }
-                });
-            }, { threshold: 0.1 });
-
-            document.querySelectorAll('.card').forEach(card => {
-                observer.observe(card);
-            });
-        }
-
-        // Add hover sound effects (optional)
-        function addHoverEffects() {
-            document.querySelectorAll('.card.interactive').forEach(card => {
-                card.addEventListener('mouseenter', function() {
-                    this.style.transform = 'translateY(-2px) scale(1.02)';
-                });
-                
-                card.addEventListener('mouseleave', function() {
-                    this.style.transform = 'translateY(0) scale(1)';
-                });
-            });
-        }
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            loadTheme();
-            setupScrollAnimations();
-            addHoverEffects();
-            
-            // Show welcome message
+          case 'loading':
+            card.classList.add('loading');
             setTimeout(() => {
-                showNotification('Welcome! Press "T" to toggle theme.');
-            }, 1000);
-        });
+              card.classList.remove('loading');
+              showNotification('Loading complete!');
+            }, 2000);
+            showNotification('Loading started...');
+            break;
 
-        // Add click ripple effect
-        function addRippleEffect(e) {
-            const card = e.currentTarget;
-            const ripple = document.createElement('span');
-            const rect = card.getBoundingClientRect();
-            const size = 60;
-            const x = e.clientX - rect.left - size / 2;
-            const y = e.clientY - rect.top - size / 2;
-            
-            ripple.style.cssText = `
+          case 'fade':
+            card.style.opacity = '0.3';
+            setTimeout(() => {
+              card.style.opacity = '1';
+            }, 500);
+            showNotification('Fade animation triggered!');
+            break;
+        }
+      }
+
+      // Notification System
+      function showNotification(message) {
+        const notification = document.getElementById('notification');
+        const notificationText = document.getElementById('notification-text');
+
+        notificationText.textContent = message;
+        notification.classList.add('show');
+
+        setTimeout(() => {
+          notification.classList.remove('show');
+        }, 3000);
+      }
+
+      // Keyboard Navigation
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 't' || e.key === 'T') {
+          toggleTheme();
+        }
+      });
+
+      // Intersection Observer for fade-in animations
+      function setupScrollAnimations() {
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('fade-in');
+              }
+            });
+          },
+          { threshold: 0.1 }
+        );
+
+        document.querySelectorAll('.card').forEach((card) => {
+          observer.observe(card);
+        });
+      }
+
+      // Add hover sound effects (optional)
+      function addHoverEffects() {
+        document.querySelectorAll('.card.interactive').forEach((card) => {
+          card.addEventListener('mouseenter', function () {
+            this.style.transform = 'translateY(-2px) scale(1.02)';
+          });
+
+          card.addEventListener('mouseleave', function () {
+            this.style.transform = 'translateY(0) scale(1)';
+          });
+        });
+      }
+
+      // Initialize
+      document.addEventListener('DOMContentLoaded', function () {
+        loadTheme();
+        setupScrollAnimations();
+        addHoverEffects();
+
+        // Show welcome message
+        setTimeout(() => {
+          showNotification('Welcome! Press "T" to toggle theme.');
+        }, 1000);
+      });
+
+      // Add click ripple effect
+      function addRippleEffect(e) {
+        const card = e.currentTarget;
+        const ripple = document.createElement('span');
+        const rect = card.getBoundingClientRect();
+        const size = 60;
+        const x = e.clientX - rect.left - size / 2;
+        const y = e.clientY - rect.top - size / 2;
+
+        ripple.style.cssText = `
                 position: absolute;
                 border-radius: 50%;
                 background: rgba(59, 130, 246, 0.3);
@@ -723,20 +759,20 @@
                 height: ${size}px;
                 pointer-events: none;
             `;
-            
-            card.style.position = 'relative';
-            card.style.overflow = 'hidden';
-            card.appendChild(ripple);
-            
-            setTimeout(() => {
-                ripple.remove();
-            }, 600);
-        }
 
-        // Add ripple effect to interactive cards
-        document.addEventListener('DOMContentLoaded', function() {
-            const style = document.createElement('style');
-            style.textContent = `
+        card.style.position = 'relative';
+        card.style.overflow = 'hidden';
+        card.appendChild(ripple);
+
+        setTimeout(() => {
+          ripple.remove();
+        }, 600);
+      }
+
+      // Add ripple effect to interactive cards
+      document.addEventListener('DOMContentLoaded', function () {
+        const style = document.createElement('style');
+        style.textContent = `
                 @keyframes ripple {
                     to {
                         transform: scale(4);
@@ -744,12 +780,12 @@
                     }
                 }
             `;
-            document.head.appendChild(style);
-            
-            document.querySelectorAll('.card.interactive').forEach(card => {
-                card.addEventListener('click', addRippleEffect);
-            });
+        document.head.appendChild(style);
+
+        document.querySelectorAll('.card.interactive').forEach((card) => {
+          card.addEventListener('click', addRippleEffect);
         });
+      });
     </script>
-</body>
+  </body>
 </html>

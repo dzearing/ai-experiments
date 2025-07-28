@@ -1,113 +1,129 @@
-# Project Management UX
+# Claude Flow Monorepo
 
-A modern project management interface with AI-powered work item creation.
+A modern project management platform with AI-powered features, built as a monorepo to support gradual migration from v1 to v2 architecture.
 
-## Features
+## Overview
 
-- **AI-Powered Work Item Creation**: Describe your idea and let Claude break it down into actionable tasks
-- **Multi-step Creation Process**: Clean, focused UI for creating work items
-- **Master-Detail Task View**: Review and refine generated tasks before creating work items
-- **Theme Support**: Multiple beautiful themes to choose from
-- **Responsive Design**: Works great on desktop and mobile
+This monorepo contains:
 
-## Getting Started
+- **V1 Application** - Current production application (React + Express)
+- **V2 Packages** - Next-generation shared packages (coming soon)
+- **Development Tools** - CLI tools and shared configurations
+
+## Quick Start
+
+```bash
+# Install dependencies
+pnpm install
+
+# Start development (interactive menu)
+pnpm dev
+
+# Run specific commands
+pnpm build        # Build all packages
+pnpm test         # Run all tests
+pnpm lint         # Lint all packages
+```
+
+## Repository Structure
+
+```
+/
+├── apps/
+│   ├── v1/                 # Current production application
+│   │   ├── client/         # React frontend
+│   │   └── server/         # Express backend
+│   └── v2/                 # Future v2 applications
+├── packages/               # Shared packages
+│   ├── tsconfig/          # Shared TypeScript configurations
+│   └── eslint-config/     # Shared ESLint configurations
+├── tools/
+│   └── repo-scripts/      # CLI development tools
+├── docs/                  # Documentation
+│   ├── getting-started.md # Developer onboarding
+│   └── guides/            # Development guides
+└── temp/                  # Temporary files (logs, sessions)
+```
+
+## Development
 
 ### Prerequisites
 
 - Node.js 18+
-- npm or yarn
+- pnpm 9.0.0+ (will be auto-installed via corepack)
 
-### Installation
-
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Start the development server:
-   ```bash
-   npm run dev
-   ```
-
-### Running with AI Features
-
-To use the AI-powered work item creation, you need to run both the frontend and the mock server.
-
-#### Option 1: Using the start script (Recommended)
+### Running V1 Application
 
 ```bash
-./start-dev.sh
+# Interactive menu
+pnpm dev
+# Select "V1 Application (port 3000)"
+
+# Or directly
+pnpm dev:v1
 ```
 
-This will start both servers automatically.
+This starts:
 
-#### Option 2: Manual setup
-
-1. **Terminal 1 - Start the mock server:**
-   ```bash
-   cd server
-   npm install  # First time only
-   npm run mock
-   ```
-   The server will run on http://localhost:3000
-
-2. **Terminal 2 - Start the frontend:**
-   ```bash
-   npm run dev
-   ```
-   The frontend will run on http://localhost:5173
-
-3. Navigate to Work Items and click "Create with AI"
-
-#### Using real Claude integration
-
-Instead of the mock server, you can use real Claude:
-```bash
-cd server
-cp .env.example .env
-# Add your ANTHROPIC_API_KEY to .env
-npm start
-```
-
-#### Troubleshooting
-
-If you get "Failed to fetch" errors:
-- Ensure the mock server is running on port 3000
-- Check that no other service is using port 3000
-- Try accessing http://localhost:3000/api/health directly
-
-## Development
-
-### Project Structure
-
-```
-src/
-├── components/     # Reusable UI components
-├── contexts/       # React contexts (App, Theme)
-├── pages/          # Page components
-├── types/          # TypeScript type definitions
-└── hooks/          # Custom React hooks
-
-server/
-├── index.js        # Real Claude integration server
-├── mock-server.js  # Mock server for testing
-└── README.md       # Server documentation
-```
+- Frontend: http://localhost:5173
+- Backend: http://localhost:3001
 
 ### Available Scripts
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run lint` - Run ESLint
-- `npm run preview` - Preview production build
+| Command          | Description                      |
+| ---------------- | -------------------------------- |
+| `pnpm dev`       | Interactive development menu     |
+| `pnpm build`     | Build all packages               |
+| `pnpm test`      | Run all tests                    |
+| `pnpm lint`      | Lint all packages                |
+| `pnpm typecheck` | TypeScript type checking         |
+| `pnpm scaffold`  | Create new package from template |
 
-### Technologies
+### V1-Specific Scripts
 
-- React 19
-- TypeScript
-- Vite
-- Tailwind CSS
-- React Router
-- Express (server)
-- Claude Code SDK
+| Command         | Description                  |
+| --------------- | ---------------------------- |
+| `pnpm dev:v1`   | Start v1 development servers |
+| `pnpm build:v1` | Build v1 for production      |
+| `pnpm lint:v1`  | Lint v1 code                 |
+| `pnpm test:e2e` | Run v1 e2e tests             |
+
+## Architecture
+
+This monorepo uses:
+
+- **pnpm** - Fast, efficient package manager with workspace support
+- **Lage** - Build orchestration for monorepos
+- **TypeScript** - With project references for fast builds
+- **Shared Configurations** - Consistent TypeScript and ESLint settings
+
+## Migration Strategy
+
+We're following a gradual migration approach from v1 to v2:
+
+1. **Phase 0** ✅ - Repository restructure (complete)
+2. **Phase 1** ✅ - Infrastructure setup (complete)
+3. **Phase 2** 🚧 - Core package development
+4. **Phase 3** - V2 application development
+5. **Phase 4** - Routing & integration
+6. **Phase 5** - Gradual user migration
+
+See [migration guide](docs/guides/migration/migration-v1-to-v2.md) for details.
+
+## Documentation
+
+- [Getting Started](docs/getting-started.md) - New developer onboarding
+- [Development Workflow](docs/guides/development/development-workflow.md) - Daily development practices
+- [Architecture Decisions](docs/guides/architecture/architecture-decisions.md) - Key design choices
+- [V1 Application](apps/v1/README.md) - V1-specific documentation
+
+## Contributing
+
+1. Create a feature branch
+2. Make your changes
+3. Run `pnpm lint` and `pnpm test`
+4. Submit a pull request
+
+## License
+
+[License information here]

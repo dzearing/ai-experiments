@@ -13,6 +13,8 @@ node_modules
 dist
 dist-ssr
 *.local
+lib
+lib-commonjs
 
 # Editor directories and files
 .vscode/*
@@ -34,3 +36,6 @@ test-results/
 
 # Temporary files (logs, sessions, feedback)
 temp/
+
+# Generated CSS module type definitions
+*.css.d.ts

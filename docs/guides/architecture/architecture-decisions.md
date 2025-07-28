@@ -7,6 +7,7 @@ This document captures the key architectural decisions made for the Claude Flow 
 **Decision**: Use pnpm instead of npm or yarn
 
 **Rationale**:
+
 - **Disk efficiency**: Uses hard links, saving gigabytes of disk space
 - **Speed**: Faster installations due to efficient caching
 - **Strictness**: Prevents phantom dependencies (using packages not in package.json)
@@ -14,6 +15,7 @@ This document captures the key architectural decisions made for the Claude Flow 
 - **Security**: Better dependency isolation between packages
 
 **Trade-offs**:
+
 - Requires global installation
 - Less familiar to some developers
 - Some tools have compatibility issues
@@ -23,6 +25,7 @@ This document captures the key architectural decisions made for the Claude Flow 
 **Decision**: Use Lage instead of Turborepo, Nx, or Rush
 
 **Rationale**:
+
 - **Simplicity**: Minimal configuration, just define task dependencies
 - **Microsoft backing**: Created and maintained by Microsoft
 - **Performance**: Efficient caching and parallel execution
@@ -30,17 +33,19 @@ This document captures the key architectural decisions made for the Claude Flow 
 - **Integration**: Works seamlessly with existing npm scripts
 
 **Configuration simplicity**:
+
 ```javascript
 // Entire Lage config - that's it!
 module.exports = {
   pipeline: {
-    build: { dependsOn: ["^build"] },
-    test: { dependsOn: ["build"] }
-  }
+    build: { dependsOn: ['^build'] },
+    test: { dependsOn: ['build'] },
+  },
 };
 ```
 
 **Trade-offs**:
+
 - Fewer features than Nx (no affected detection, generators)
 - Less ecosystem than Turborepo
 - Documentation could be more extensive
@@ -50,12 +55,14 @@ module.exports = {
 **Decision**: Use TypeScript project references for inter-package dependencies
 
 **Rationale**:
+
 - **Build performance**: Incremental compilation only rebuilds changed packages
 - **Type safety**: Ensures correct build order
 - **IDE support**: Better "go to definition" across packages
 - **Declaration maps**: Debugging original TS source from compiled code
 
 **Trade-offs**:
+
 - More complex tsconfig setup
 - Requires `composite: true` in all packages
 - Build output structure is more rigid
@@ -65,12 +72,14 @@ module.exports = {
 **Decision**: Create a custom ESLint plugin for repo-specific rules
 
 **Rationale**:
+
 - **Enforce conventions**: Rules like `no-direct-api-calls` enforce architecture
 - **Prevent mistakes**: `max-file-lines` keeps files manageable
 - **Module boundaries**: Prevent improper cross-package imports
 - **Custom to our needs**: Rules specific to our architecture patterns
 
 **Trade-offs**:
+
 - Maintenance burden
 - Learning curve for new developers
 - Need to document custom rules
@@ -80,23 +89,27 @@ module.exports = {
 **Decision**: Use explicit task files instead of CLI arguments
 
 **Before**:
+
 ```bash
 repo-scripts test --coverage --watch --reporter=verbose
 ```
 
 **After**:
+
 ```bash
 pnpm test:coverage
 pnpm test:watch
 ```
 
 **Rationale**:
+
 - **Discoverability**: All commands visible in package.json
 - **Type safety**: Each task can have its own types
 - **Simplicity**: No complex argument parsing
 - **Documentation**: Each file can be well-documented
 
 **Trade-offs**:
+
 - More files to maintain
 - Less flexibility for one-off variations
 
@@ -105,12 +118,14 @@ pnpm test:watch
 **Decision**: Build custom scaffolding instead of using Nx generators or Plop
 
 **Rationale**:
+
 - **Control**: Exactly what we need, nothing more
 - **Templates**: EJS templates are simple and powerful
 - **Integration**: Tightly integrated with our conventions
 - **Evolution**: Can evolve with our needs
 
 **Trade-offs**:
+
 - Need to maintain our own system
 - No ecosystem of community templates
 
@@ -119,12 +134,14 @@ pnpm test:watch
 **Decision**: Run v1 and v2 side-by-side rather than big-bang migration
 
 **Rationale**:
+
 - **Risk mitigation**: Can roll back instantly
 - **Gradual adoption**: Migrate features one at a time
 - **User choice**: Users can opt-in when ready
 - **Learning opportunity**: Learn from v2 usage before full migration
 
 **Trade-offs**:
+
 - Maintain two systems temporarily
 - Additional complexity in routing
 - Potential user confusion
@@ -134,6 +151,7 @@ pnpm test:watch
 **Decision**: Separate packages by concern, not by technical layer
 
 **Structure**:
+
 ```
 packages/
 ├── design-system/      # UI concern
@@ -143,6 +161,7 @@ packages/
 ```
 
 **Not**:
+
 ```
 packages/
 ├── components/         # All UI components
@@ -151,6 +170,7 @@ packages/
 ```
 
 **Rationale**:
+
 - **Cohesion**: Related code stays together
 - **Independence**: Packages can evolve separately
 - **Clarity**: Clear ownership and purpose
@@ -161,12 +181,14 @@ packages/
 **Decision**: Vitest for unit tests, Playwright for E2E
 
 **Rationale**:
+
 - **Vitest**: Fast, Jest-compatible, great DX
 - **Playwright**: Modern, reliable, great debugging
 - **Separation**: Clear distinction between test types
 - **Performance**: Both are notably fast
 
 **Trade-offs**:
+
 - Two test runners to learn
 - Vitest is less mature than Jest
 - Playwright requires more setup than Cypress
@@ -176,6 +198,7 @@ packages/
 **Decision**: Shared configs as packages, local overrides allowed
 
 **Rationale**:
+
 - **Consistency**: Base rules apply everywhere
 - **Flexibility**: Packages can override when needed
 - **Opt-in**: Packages choose which tools to use
@@ -186,12 +209,14 @@ packages/
 **Decision**: Use CSS Modules instead of styled-components or emotion
 
 **Rationale**:
+
 - **Performance**: No runtime overhead
 - **Simplicity**: Just CSS, no new abstractions
 - **Debugging**: Standard browser DevTools work
 - **Bundle size**: Smaller bundles without CSS-in-JS runtime
 
 **Trade-offs**:
+
 - Less dynamic styling capability
 - Need build-time CSS processing
 - Type safety requires additional setup
@@ -201,6 +226,7 @@ packages/
 **Decision**: Group by application version (v1/v2) at the top level
 
 **Rationale**:
+
 - **Clarity**: Immediately clear which version you're working on
 - **Migration**: Easy to remove v1 when deprecated
 - **Isolation**: V1 and v2 can have different tooling
@@ -211,6 +237,7 @@ packages/
 **Decision**: All tool dependencies in scripts package, not in individual packages
 
 **Rationale**:
+
 - **Consistency**: All packages use same tool versions
 - **Maintenance**: Update tools in one place
 - **Size**: Smaller individual packages
@@ -221,10 +248,12 @@ packages/
 **Decision**: Explicit task files for different environments
 
 **Files**:
+
 - `build.ts` - Development build
 - `build-prod.ts` - Production build
 
 **Rationale**:
+
 - **Clarity**: Obvious which build you're running
 - **Type safety**: Each can have specific options
 - **Simplicity**: No conditional logic based on NODE_ENV

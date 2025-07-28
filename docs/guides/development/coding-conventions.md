@@ -25,10 +25,10 @@ This guide defines the coding standards and conventions for the Claude Flow mono
 
 ```typescript
 // ❌ Avoid: Deeply nested structures
-src/components/forms/inputs/text/validated/EmailInput.tsx
+src / components / forms / inputs / text / validated / EmailInput.tsx;
 
 // ✅ Prefer: Flatter structure
-src/components/EmailInput/EmailInput.tsx
+src / components / EmailInput / EmailInput.tsx;
 ```
 
 ### File Length
@@ -55,15 +55,15 @@ src/components/EmailInput/EmailInput.tsx
 
 ```typescript
 // ❌ Avoid: Default exports
-export default function Button() { }
+export default function Button() {}
 
-// ❌ Avoid: Multiple unrelated exports  
-export function Button() { }
-export function Card() { }
+// ❌ Avoid: Multiple unrelated exports
+export function Button() {}
+export function Card() {}
 
 // ✅ Good: Single named export with related types
-export interface ButtonProps { }
-export function Button(props: ButtonProps) { }
+export interface ButtonProps {}
+export function Button(props: ButtonProps) {}
 
 // ✅ Good: Re-export pattern
 export { Button } from './Button';
@@ -77,7 +77,6 @@ export type { ButtonProps } from './Button';
 3. **Tree shaking**: Better support for dead code elimination
 4. **Clarity**: Import statements clearly show what's being imported
 
-
 ## TypeScript Conventions
 
 **Core Principle: Always prefer specific types. Fall back to `unknown` only when the type is truly unknown.**
@@ -86,7 +85,10 @@ export type { ButtonProps } from './Button';
 
 ```typescript
 // ✅ Interfaces for objects, types for unions/aliases
-interface User { id: string; name: string; }
+interface User {
+  id: string;
+  name: string;
+}
 type Status = 'pending' | 'active' | 'completed';
 
 // ❌ NEVER use 'any'
@@ -103,9 +105,11 @@ const parsed: unknown = JSON.parse(input); // External data
 
 ```typescript
 // Examples of proper typing
-function updateUser(user: User): Promise<User> { }
+function updateUser(user: User): Promise<User> {}
 type ApiResponse = SuccessResponse | ErrorResponse;
-function identity<T>(value: T): T { return value; }
+function identity<T>(value: T): T {
+  return value;
+}
 
 // Use unknown for truly unknown data (with validation)
 const parsed: unknown = JSON.parse(input);
@@ -131,21 +135,25 @@ import { User } from './types'; // Wrong!
 
 ```typescript
 // ✅ Use descriptive names for complex generics
-interface ApiResponse<TData, TError = Error> { }
+interface ApiResponse<TData, TError = Error> {}
 
 // ✅ Single letters OK for simple cases
-function identity<T>(value: T): T { return value; }
+function identity<T>(value: T): T {
+  return value;
+}
 ```
 
 ### Enums vs Object Maps
 
 ```typescript
 // ❌ Avoid enums (increase bundle size)
-enum Status { Pending = 'pending' }
+enum Status {
+  Pending = 'pending',
+}
 
 // ✅ Use object maps
 const Status = { Pending: 'pending', Active: 'active' } as const;
-type Status = typeof Status[keyof typeof Status];
+type Status = (typeof Status)[keyof typeof Status];
 ```
 
 ## React Conventions
@@ -196,7 +204,7 @@ function Card({ title, description = 'No description' }: CardProps) { }
 ```typescript
 // ✅ Colocate state, derive when possible
 const [todos, setTodos] = useState<Todo[]>([]);
-const completedTodos = todos.filter(t => t.completed);
+const completedTodos = todos.filter((t) => t.completed);
 
 // ✅ Type contexts properly
 const ThemeContext = createContext<Theme | null>(null);
@@ -219,7 +227,7 @@ async function fetchUser(id: string): Promise<User> {
 // ✅ Centralize API calls
 export const userService = {
   getUser: (id: string) => api.get<User>(`/users/${id}`),
-  updateUser: (id: string, data: Partial<User>) => api.patch(`/users/${id}`, data)
+  updateUser: (id: string, data: Partial<User>) => api.patch(`/users/${id}`, data),
 };
 ```
 
@@ -228,7 +236,10 @@ export const userService = {
 ```typescript
 // ✅ Custom error classes
 export class ApiError extends Error {
-  constructor(message: string, public statusCode: number) {
+  constructor(
+    message: string,
+    public statusCode: number
+  ) {
     super(message);
   }
 }
@@ -274,17 +285,25 @@ import { debounce } from 'lodash-es';
 
 ## CSS and Styling
 
+- use css modules
+- scope things within a @layer "base" or "overrides"
+- use classnames alias "cx" to conditionalize classnames.
+
 ```typescript
-// ✅ Use CSS modules
+// ✅ Use CSS modules and scope things within base layer or overrides layer.
 import styles from './Button.module.css';
-<button className={styles.primary}>Click</button>
+import cx from 'classnames'
+<button className={cx(styles.root, isCircular && styles.circular)}>Click</button>
 ```
 
 ```css
-/* ✅ BEM-like naming */
-.button { }
-.button--primary { }
-.button__icon { }
+/* css modules only. */
+@layer base {
+  .root {
+  }
+  .circular {
+  }
+}
 ```
 
 ## Documentation
@@ -298,7 +317,7 @@ const search = useMemo(() => debounce(searchUsers, 300), [searchUsers]);
  * Formats a date string according to user's locale
  * @example formatDate(new Date(), { style: 'short' }) // "1/1/24"
  */
-export function formatDate(date: Date, options?: FormatOptions): string { }
+export function formatDate(date: Date, options?: FormatOptions): string {}
 ```
 
 ## Git Conventions

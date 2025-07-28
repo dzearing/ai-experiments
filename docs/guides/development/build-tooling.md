@@ -13,29 +13,29 @@ Lage orchestrates builds across the monorepo, managing task dependencies and cac
 module.exports = {
   pipeline: {
     build: {
-      dependsOn: ["^build"],        // Build dependencies first
-      outputs: ["dist/**", "lib/**"], // Cache these outputs
-      cache: true                    // Enable caching
+      dependsOn: ['^build'], // Build dependencies first
+      outputs: ['dist/**', 'lib/**'], // Cache these outputs
+      cache: true, // Enable caching
     },
     test: {
-      dependsOn: ["build"],         // Run after build
-      outputs: [],                  // No outputs to cache
-      cache: true                   // Cache test results
+      dependsOn: ['build'], // Run after build
+      outputs: [], // No outputs to cache
+      cache: true, // Cache test results
     },
     lint: {
       outputs: [],
-      cache: true
+      cache: true,
     },
     typecheck: {
-      dependsOn: ["^build"],        // Needs dependency types
-      outputs: ["*.tsbuildinfo"],   // Cache TS build info
-      cache: true
+      dependsOn: ['^build'], // Needs dependency types
+      outputs: ['*.tsbuildinfo'], // Cache TS build info
+      cache: true,
     },
     dev: {
-      cache: false,                 // Never cache dev server
-      persistent: true              // Long-running process
-    }
-  }
+      cache: false, // Never cache dev server
+      persistent: true, // Long-running process
+    },
+  },
 };
 ```
 
@@ -48,11 +48,13 @@ module.exports = {
 ### Caching
 
 Lage caches based on:
+
 - Input file hashes
-- Dependencies' output hashes  
+- Dependencies' output hashes
 - Task configuration
 
 Clear cache with:
+
 ```bash
 lage clean
 # or
@@ -64,6 +66,7 @@ rm -rf node_modules/.cache/lage
 ### Base Configurations
 
 **`configs/tsconfig/base.json`**:
+
 ```json
 {
   "compilerOptions": {
@@ -86,6 +89,7 @@ rm -rf node_modules/.cache/lage
 ```
 
 **`configs/tsconfig/react.json`**:
+
 ```json
 {
   "extends": "./base.json",
@@ -97,6 +101,7 @@ rm -rf node_modules/.cache/lage
 ```
 
 **`configs/tsconfig/node.json`**:
+
 ```json
 {
   "extends": "./base.json",
@@ -130,6 +135,7 @@ Enable incremental builds across packages:
 ```
 
 Build with references:
+
 ```bash
 tsc --build
 
@@ -142,6 +148,7 @@ tsc --build --force
 ### Base Rules
 
 **`configs/eslint-config/base.js`**:
+
 ```javascript
 module.exports = {
   parser: '@typescript-eslint/parser',
@@ -150,26 +157,32 @@ module.exports = {
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
     'plugin:import/recommended',
-    'plugin:import/typescript'
+    'plugin:import/typescript',
   ],
   rules: {
     // TypeScript
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     '@typescript-eslint/no-explicit-any': 'error',
-    '@typescript-eslint/no-unused-vars': ['error', { 
-      argsIgnorePattern: '^_',
-      varsIgnorePattern: '^_'
-    }],
-    
+    '@typescript-eslint/no-unused-vars': [
+      'error',
+      {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+      },
+    ],
+
     // Imports
-    'import/order': ['error', {
-      groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
-      'newlines-between': 'always',
-      alphabetize: { order: 'asc' }
-    }],
+    'import/order': [
+      'error',
+      {
+        groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
+        'newlines-between': 'always',
+        alphabetize: { order: 'asc' },
+      },
+    ],
     'import/no-cycle': 'error',
-    'import/no-unused-modules': 'error'
-  }
+    'import/no-unused-modules': 'error',
+  },
 };
 ```
 
@@ -178,26 +191,27 @@ module.exports = {
 Located in `tools/eslint-plugin/`:
 
 **`no-direct-api-calls`**:
+
 ```typescript
 // Enforces using data providers instead of direct API calls
 export default {
   create(context) {
     return {
       CallExpression(node) {
-        if (node.callee.name === 'fetch' || 
-            node.callee.name === 'axios') {
+        if (node.callee.name === 'fetch' || node.callee.name === 'axios') {
           context.report({
             node,
-            message: 'Use data providers instead of direct API calls'
+            message: 'Use data providers instead of direct API calls',
           });
         }
-      }
+      },
     };
-  }
+  },
 };
 ```
 
 **`enforce-module-boundaries`**:
+
 ```typescript
 // Prevents invalid cross-package imports
 export default {
@@ -206,16 +220,16 @@ export default {
       ImportDeclaration(node) {
         const importPath = node.source.value;
         const currentPackage = getPackageName(context.filename);
-        
+
         if (isInvalidImport(currentPackage, importPath)) {
           context.report({
             node,
-            message: `Invalid import from ${importPath}`
+            message: `Invalid import from ${importPath}`,
           });
         }
-      }
+      },
     };
-  }
+  },
 };
 ```
 
@@ -242,6 +256,7 @@ tools/repo-scripts/src/templates/
 ### Template Manifest
 
 **`template.json`**:
+
 ```json
 {
   "name": "web-app",
@@ -258,11 +273,7 @@ tools/repo-scripts/src/templates/
       "default": "3000"
     }
   ],
-  "files": [
-    "package.json",
-    "tsconfig.json",
-    "src/index.tsx"
-  ]
+  "files": ["package.json", "tsconfig.json", "src/index.tsx"]
 }
 ```
 
@@ -271,6 +282,7 @@ tools/repo-scripts/src/templates/
 Uses EJS for variable substitution:
 
 **`package.json.ejs`**:
+
 ```json
 {
   "name": "@claude-flow/<%= name %>",
@@ -290,16 +302,16 @@ Uses EJS for variable substitution:
 export async function scaffold(template: string, name: string) {
   // Load template manifest
   const manifest = await loadManifest(template);
-  
+
   // Collect variables
   const variables = await collectVariables(manifest, { name });
-  
+
   // Process templates
   for (const file of manifest.files) {
     const content = await processTemplate(file, variables);
     await writeFile(targetPath, content);
   }
-  
+
   // Run post-scaffold hooks
   await runHooks(manifest.hooks);
 }
@@ -312,6 +324,7 @@ export async function scaffold(template: string, name: string) {
 Each task is a separate file with specific responsibilities:
 
 **`dev-interactive.ts`**:
+
 ```typescript
 import inquirer from 'inquirer';
 import { runTask } from '../utils/task-runner';
@@ -330,9 +343,9 @@ export async function devInteractive() {
         { name: 'V1 Server (port 3001)', value: 'v1-server' },
         { name: 'V1 Web + Server', value: 'v1-all' },
         { name: 'Everything (all services)', value: 'all' },
-        { name: 'Storybook (port 6006)', value: 'storybook' }
-      ]
-    }
+        { name: 'Storybook (port 6006)', value: 'storybook' },
+      ],
+    },
   ]);
 
   switch (choice) {
@@ -348,6 +361,7 @@ export async function devInteractive() {
 ```
 
 **`build.ts`**:
+
 ```typescript
 import { runTask } from '../utils/task-runner';
 
@@ -362,6 +376,7 @@ if (require.main === module) {
 ```
 
 **`test-coverage.ts`**:
+
 ```typescript
 import { runTask } from '../utils/task-runner';
 
@@ -399,7 +414,7 @@ require(taskFile);
     // Interactive development
     "dev": "repo-scripts dev-interactive",
     "dev:all": "concurrently \"npm:v1:dev\" \"npm:v2:dev\"",
-    
+
     // Task-based commands
     "build": "repo-scripts build",
     "build:prod": "repo-scripts build-prod",
@@ -408,10 +423,10 @@ require(taskFile);
     "test:watch": "repo-scripts test-watch",
     "lint": "repo-scripts lint",
     "lint:fix": "repo-scripts lint-fix",
-    
+
     // Scaffolding
     "scaffold": "repo-scripts scaffold",
-    
+
     // V1/V2 specific
     "v1:dev": "cd apps/v1 && npm run dev",
     "v2:dev": "lage dev --scope '@claude-flow/v2-*'"
@@ -447,19 +462,19 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': resolve(__dirname, './src')
-    }
+      '@': resolve(__dirname, './src'),
+    },
   },
   server: {
     port: 4000,
     proxy: {
-      '/api': 'http://localhost:4001'
-    }
+      '/api': 'http://localhost:4001',
+    },
   },
   build: {
     outDir: 'dist',
-    sourcemap: true
-  }
+    sourcemap: true,
+  },
 });
 ```
 
@@ -479,9 +494,9 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],
-      exclude: ['**/*.d.ts', '**/*.test.ts']
-    }
-  }
+      exclude: ['**/*.d.ts', '**/*.test.ts'],
+    },
+  },
 });
 ```
 
@@ -496,12 +511,12 @@ export default defineConfig({
   use: {
     baseURL: process.env.BASE_URL || 'http://localhost:4000',
     trace: 'on-first-retry',
-    screenshot: 'only-on-failure'
+    screenshot: 'only-on-failure',
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    { name: 'firefox', use: { ...devices['Desktop Firefox'] } }
-  ]
+    { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
+  ],
 });
 ```
 
@@ -526,7 +541,7 @@ jobs:
         with:
           node-version: 18
           cache: 'pnpm'
-      
+
       - run: pnpm install
       - run: pnpm build
       - run: pnpm test
@@ -546,24 +561,28 @@ jobs:
 ### Common Issues
 
 **Build cache stale**:
+
 ```bash
 lage clean
 pnpm build
 ```
 
 **TypeScript errors after refactor**:
+
 ```bash
 # Rebuild project references
 tsc --build --force
 ```
 
 **Module not found errors**:
+
 ```bash
 # Ensure packages are built
 pnpm build --filter '@claude-flow/*'
 ```
 
 **Lage not running tasks**:
+
 ```bash
 # Check task dependencies
 lage info build

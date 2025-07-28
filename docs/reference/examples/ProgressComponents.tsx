@@ -13,47 +13,34 @@ interface ProgressSpinnerProps {
   label?: string;
 }
 
-export function ProgressSpinner({ 
-  size = 'md', 
+export function ProgressSpinner({
+  size = 'md',
   color = 'currentColor',
   className = '',
-  label = 'Loading'
+  label = 'Loading',
 }: ProgressSpinnerProps) {
   const sizeMap = {
     sm: 16,
     md: 24,
-    lg: 32
+    lg: 32,
   };
-  
+
   const dimension = sizeMap[size];
-  
+
   return (
-    <div 
+    <div
       className={`${styles.spinner} ${styles[size]} ${className}`}
       role="progressbar"
       aria-label={label}
     >
-      <svg 
-        width={dimension} 
-        height={dimension} 
+      <svg
+        width={dimension}
+        height={dimension}
         viewBox="0 0 24 24"
         xmlns="http://www.w3.org/2000/svg"
       >
-        <circle
-          className={styles.track}
-          cx="12"
-          cy="12"
-          r="10"
-          strokeWidth="2"
-        />
-        <circle
-          className={styles.progress}
-          cx="12"
-          cy="12"
-          r="10"
-          strokeWidth="2"
-          stroke={color}
-        />
+        <circle className={styles.track} cx="12" cy="12" r="10" strokeWidth="2" />
+        <circle className={styles.progress} cx="12" cy="12" r="10" strokeWidth="2" stroke={color} />
       </svg>
     </div>
   );
@@ -79,7 +66,7 @@ export function DurationCounter({
   prefix = '',
   suffix = '',
   live = true,
-  className = ''
+  className = '',
 }: DurationCounterProps) {
   const [duration, setDuration] = useState(0);
   const intervalRef = useRef<NodeJS.Timer>();
@@ -116,10 +103,10 @@ export function DurationCounter({
     switch (format) {
       case 'mm:ss':
         return `${String(minutes).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
-      
+
       case 'hh:mm:ss':
         return `${String(hours).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
-      
+
       case 'human':
       default:
         if (hours > 0) {
@@ -133,12 +120,14 @@ export function DurationCounter({
   };
 
   return (
-    <span 
+    <span
       className={`${styles.counter} ${className}`}
       role="timer"
       aria-live={live ? 'polite' : 'off'}
     >
-      {prefix}{formatDuration(duration)}{suffix}
+      {prefix}
+      {formatDuration(duration)}
+      {suffix}
     </span>
   );
 }
@@ -165,12 +154,12 @@ export function ProgressBar({
   variant = 'default',
   indeterminate = false,
   showPercentage = false,
-  className = ''
+  className = '',
 }: ProgressBarProps) {
   const percentage = Math.min(100, Math.max(0, (value / max) * 100));
-  
+
   return (
-    <div 
+    <div
       className={`${styles.progressBar} ${styles[size]} ${className}`}
       role="progressbar"
       aria-valuenow={indeterminate ? undefined : value}
@@ -179,7 +168,7 @@ export function ProgressBar({
       aria-label={label}
     >
       <div className={styles.track}>
-        <div 
+        <div
           className={`${styles.fill} ${styles[variant]} ${indeterminate ? styles.indeterminate : ''}`}
           style={!indeterminate ? { width: `${percentage}%` } : undefined}
         />
@@ -214,46 +203,33 @@ export function Toast({
   variant = 'default',
   action,
   closable = true,
-  onClose
+  onClose,
 }: ToastProps) {
   const icons = {
     success: '✓',
     error: '✕',
     warning: '!',
     info: 'i',
-    default: null
+    default: null,
   };
 
   return (
     <div className={`${styles.toast} ${styles[variant]}`}>
-      {icons[variant] && (
-        <div className={styles.icon}>
-          {icons[variant]}
-        </div>
-      )}
-      
+      {icons[variant] && <div className={styles.icon}>{icons[variant]}</div>}
+
       <div className={styles.content}>
         <div className={styles.title}>{title}</div>
-        {description && (
-          <div className={styles.description}>{description}</div>
-        )}
+        {description && <div className={styles.description}>{description}</div>}
       </div>
-      
+
       {action && (
-        <button
-          className={styles.action}
-          onClick={action.onClick}
-        >
+        <button className={styles.action} onClick={action.onClick}>
           {action.label}
         </button>
       )}
-      
+
       {closable && (
-        <button
-          className={styles.close}
-          onClick={onClose}
-          aria-label="Close"
-        >
+        <button className={styles.close} onClick={onClose} aria-label="Close">
           ✕
         </button>
       )}
@@ -271,9 +247,9 @@ export function ExampleUsage() {
   // Simulate progress
   useEffect(() => {
     const interval = setInterval(() => {
-      setProgress(p => Math.min(100, p + 10));
+      setProgress((p) => Math.min(100, p + 10));
     }, 1000);
-    
+
     return () => clearInterval(interval);
   }, []);
 
@@ -293,20 +269,9 @@ export function ExampleUsage() {
       <div>
         <h3>Duration Counters</h3>
         <div className="flex flex-col gap-2">
-          <DurationCounter 
-            startTime={startTime} 
-            format="human" 
-            prefix="Elapsed: "
-          />
-          <DurationCounter 
-            startTime={startTime} 
-            format="mm:ss"
-            prefix="Timer: "
-          />
-          <DurationCounter 
-            startTime={startTime} 
-            format="hh:mm:ss"
-          />
+          <DurationCounter startTime={startTime} format="human" prefix="Elapsed: " />
+          <DurationCounter startTime={startTime} format="mm:ss" prefix="Timer: " />
+          <DurationCounter startTime={startTime} format="hh:mm:ss" />
         </div>
       </div>
 
@@ -314,26 +279,10 @@ export function ExampleUsage() {
       <div>
         <h3>Progress Bars</h3>
         <div className="space-y-2">
-          <ProgressBar 
-            value={progress} 
-            showPercentage 
-            label="Upload progress"
-          />
-          <ProgressBar 
-            value={75} 
-            variant="success" 
-            size="sm"
-          />
-          <ProgressBar 
-            value={50} 
-            variant="warning" 
-            size="lg"
-          />
-          <ProgressBar 
-            indeterminate 
-            variant="default"
-            label="Loading..."
-          />
+          <ProgressBar value={progress} showPercentage label="Upload progress" />
+          <ProgressBar value={75} variant="success" size="sm" />
+          <ProgressBar value={50} variant="warning" size="lg" />
+          <ProgressBar indeterminate variant="default" label="Loading..." />
         </div>
       </div>
 
@@ -341,19 +290,15 @@ export function ExampleUsage() {
       <div>
         <h3>Toast Notifications</h3>
         <div className="space-y-2">
-          <Toast
-            id="1"
-            title="Changes saved"
-            variant="success"
-          />
+          <Toast id="1" title="Changes saved" variant="success" />
           <Toast
             id="2"
             title="Error occurred"
             description="Failed to save changes. Please try again."
             variant="error"
             action={{
-              label: "Retry",
-              onClick: () => console.log('Retry')
+              label: 'Retry',
+              onClick: () => console.log('Retry'),
             }}
           />
         </div>

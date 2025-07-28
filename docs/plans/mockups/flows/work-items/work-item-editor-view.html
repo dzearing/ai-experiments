@@ -1,1014 +1,1074 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Work Item Editor - Claude Flow</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            background-color: var(--bg-main);
-            color: var(--text-primary);
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        background-color: var(--bg-main);
+        color: var(--text-primary);
+        transition:
+          background-color 0.3s ease,
+          color 0.3s ease;
+      }
 
-        /* Theme Variables */
-        :root {
-            --bg-main: #f9fafb;
-            --bg-card: #ffffff;
-            --bg-input: #f9fafb;
-            --bg-hover: #f3f4f6;
-            --text-primary: #111827;
-            --text-secondary: #6b7280;
-            --border: #e5e7eb;
-            --primary: #3b82f6;
-            --success: #10b981;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-        }
+      /* Theme Variables */
+      :root {
+        --bg-main: #f9fafb;
+        --bg-card: #ffffff;
+        --bg-input: #f9fafb;
+        --bg-hover: #f3f4f6;
+        --text-primary: #111827;
+        --text-secondary: #6b7280;
+        --border: #e5e7eb;
+        --primary: #3b82f6;
+        --success: #10b981;
+        --danger: #ef4444;
+        --warning: #f59e0b;
+        --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+      }
 
-        [data-theme="dark"] {
-            --bg-main: #0f172a;
-            --bg-card: #1e293b;
-            --bg-input: #334155;
-            --bg-hover: #475569;
-            --text-primary: #f1f5f9;
-            --text-secondary: #94a3b8;
-            --border: #475569;
-            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3);
-        }
+      [data-theme='dark'] {
+        --bg-main: #0f172a;
+        --bg-card: #1e293b;
+        --bg-input: #334155;
+        --bg-hover: #475569;
+        --text-primary: #f1f5f9;
+        --text-secondary: #94a3b8;
+        --border: #475569;
+        --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3);
+      }
 
-        /* Header */
-        .header {
-            background: var(--bg-card);
-            height: 64px;
-            display: flex;
-            align-items: center;
-            padding: 0 24px;
-            box-shadow: var(--shadow);
-            position: relative;
-            z-index: 1000;
-        }
+      /* Header */
+      .header {
+        background: var(--bg-card);
+        height: 64px;
+        display: flex;
+        align-items: center;
+        padding: 0 24px;
+        box-shadow: var(--shadow);
+        position: relative;
+        z-index: 1000;
+      }
 
-        .header-brand {
-            font-size: 20px;
-            font-weight: 600;
-            margin-right: 32px;
-        }
+      .header-brand {
+        font-size: 20px;
+        font-weight: 600;
+        margin-right: 32px;
+      }
 
-        .breadcrumb {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text-secondary);
-            font-size: 14px;
-            flex: 1;
-        }
+      .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--text-secondary);
+        font-size: 14px;
+        flex: 1;
+      }
 
-        .breadcrumb-current {
-            color: var(--text-primary);
-        }
+      .breadcrumb-current {
+        color: var(--text-primary);
+      }
 
-        .save-status {
-            color: var(--success);
-            font-size: 13px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
+      .save-status {
+        color: var(--success);
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
 
-        .theme-toggle {
-            margin-left: 16px;
-            padding: 8px;
-            border: none;
-            background: none;
-            cursor: pointer;
-            border-radius: 4px;
-            font-size: 16px;
-        }
+      .theme-toggle {
+        margin-left: 16px;
+        padding: 8px;
+        border: none;
+        background: none;
+        cursor: pointer;
+        border-radius: 4px;
+        font-size: 16px;
+      }
 
-        .theme-toggle:hover {
-            background: var(--bg-hover);
-        }
+      .theme-toggle:hover {
+        background: var(--bg-hover);
+      }
 
-        /* Main Container */
-        .main-container {
-            max-width: 1440px;
-            margin: 24px auto;
-            padding: 0 24px;
-        }
+      /* Main Container */
+      .main-container {
+        max-width: 1440px;
+        margin: 24px auto;
+        padding: 0 24px;
+      }
 
-        .editor-card {
-            background: var(--bg-card);
-            border-radius: 8px;
-            box-shadow: var(--shadow);
-            overflow: hidden;
-        }
+      .editor-card {
+        background: var(--bg-card);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
 
-        /* Editor Header */
-        .editor-header {
-            padding: 24px;
-        }
+      /* Editor Header */
+      .editor-header {
+        padding: 24px;
+      }
 
-        .title-input {
-            width: 100%;
-            max-width: 800px;
-            height: 48px;
-            padding: 0 16px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            background: var(--bg-input);
-            font-size: 18px;
-            font-weight: 500;
-            color: var(--text-primary);
-            margin-bottom: 16px;
-        }
+      .title-input {
+        width: 100%;
+        max-width: 800px;
+        height: 48px;
+        padding: 0 16px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--bg-input);
+        font-size: 18px;
+        font-weight: 500;
+        color: var(--text-primary);
+        margin-bottom: 16px;
+      }
 
-        .title-input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
+      .title-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
 
-        .meta-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-        }
+      .meta-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+      }
 
-        .badge {
-            padding: 4px 12px;
-            border-radius: 14px;
-            font-size: 12px;
-            font-weight: 500;
-        }
+      .badge {
+        padding: 4px 12px;
+        border-radius: 14px;
+        font-size: 12px;
+        font-weight: 500;
+      }
 
-        .badge-priority-high {
-            background: #fee2e2;
-            color: #991b1b;
-        }
+      .badge-priority-high {
+        background: #fee2e2;
+        color: #991b1b;
+      }
 
-        .badge-status {
-            background: #dbeafe;
-            color: #1e40af;
-        }
+      .badge-status {
+        background: #dbeafe;
+        color: #1e40af;
+      }
 
-        .badge-points {
-            background: #e0e7ff;
-            color: #4338ca;
-        }
+      .badge-points {
+        background: #e0e7ff;
+        color: #4338ca;
+      }
 
-        .meta-text {
-            font-size: 12px;
-            color: var(--text-secondary);
+      .meta-text {
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+
+      .action-buttons {
+        display: flex;
+        gap: 12px;
+        margin-top: 24px;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        padding: 8px 16px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .btn-primary {
+        background: var(--primary);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: #2563eb;
+      }
+
+      .btn-secondary {
+        background: var(--bg-card);
+        color: var(--text-primary);
+        border: 1px solid var(--border);
+      }
+
+      .btn-secondary:hover {
+        background: var(--bg-hover);
+      }
+
+      .btn-success {
+        background: linear-gradient(135deg, var(--success), #059669);
+        color: white;
+      }
+
+      .btn-success:hover {
+        opacity: 0.9;
+      }
+
+      /* Tabs */
+      .tabs {
+        border-bottom: 1px solid var(--border);
+        padding: 0 24px;
+      }
+
+      .tab-list {
+        display: flex;
+        gap: 32px;
+      }
+
+      .tab {
+        padding: 12px 0;
+        border-bottom: 2px solid transparent;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.2s ease;
+        position: relative;
+      }
+
+      .tab.active {
+        color: var(--primary);
+        border-bottom-color: var(--primary);
+      }
+
+      .tab:hover:not(.active) {
+        color: var(--text-primary);
+      }
+
+      /* Content Area */
+      .content-area {
+        padding: 32px 24px;
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 32px;
+      }
+
+      .main-content {
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+      }
+
+      .field-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .field-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .field-textarea {
+        width: 100%;
+        min-height: 120px;
+        padding: 16px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--bg-input);
+        font-size: 14px;
+        color: var(--text-primary);
+        font-family: inherit;
+        resize: vertical;
+      }
+
+      .field-textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+
+      .criteria-list {
+        list-style: none;
+        padding: 16px;
+        background: var(--bg-input);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        min-height: 160px;
+      }
+
+      .criteria-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 16px;
+        padding: 8px;
+        border-radius: 4px;
+      }
+
+      .criteria-item:hover {
+        background: var(--bg-hover);
+      }
+
+      .criteria-checkbox {
+        margin-top: 2px;
+        cursor: pointer;
+      }
+
+      .criteria-text {
+        flex: 1;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .criteria-completed {
+        text-decoration: line-through;
+        opacity: 0.7;
+      }
+
+      /* Sidebar */
+      .sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .sidebar-section {
+        background: var(--bg-input);
+        border-radius: 6px;
+        padding: 16px;
+      }
+
+      .sidebar-title {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 12px;
+      }
+
+      .assignee-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: #fbbf24;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        color: #78350f;
+      }
+
+      .assignee-details h4 {
+        font-size: 15px;
+        font-weight: 500;
+        margin-bottom: 4px;
+      }
+
+      .assignee-details p {
+        font-size: 13px;
+        color: var(--text-secondary);
+      }
+
+      .change-btn {
+        margin-left: auto;
+        color: var(--primary);
+        text-decoration: none;
+        font-size: 13px;
+        cursor: pointer;
+      }
+
+      .labels-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .label {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 500;
+      }
+
+      .label-frontend {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+
+      .label-backend {
+        background: #e0e7ff;
+        color: #4338ca;
+      }
+
+      .label-search {
+        background: #dcfce7;
+        color: #065f46;
+      }
+
+      .add-label {
+        width: 24px;
+        height: 24px;
+        border-radius: 12px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 14px;
+      }
+
+      .dropdown-field {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--bg-card);
+        font-size: 14px;
+        cursor: pointer;
+      }
+
+      .source-section {
+        background: #fef3c7;
+        border: 1px solid #f59e0b;
+      }
+
+      .source-content {
+        background: var(--bg-card);
+        border-radius: 6px;
+        padding: 12px;
+        margin-top: 8px;
+      }
+
+      .source-content p {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-bottom: 4px;
+      }
+
+      .source-link {
+        color: var(--primary);
+        text-decoration: none;
+        font-size: 12px;
+      }
+
+      /* Floating Action */
+      .floating-action {
+        position: fixed;
+        bottom: 32px;
+        right: 32px;
+        background: #8b5cf6;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 24px;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+        box-shadow: var(--shadow);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        z-index: 1000;
+      }
+
+      .floating-action:hover {
+        background: #7c3aed;
+      }
+
+      /* Validation */
+      .field-error {
+        border-color: var(--danger);
+      }
+
+      .error-message {
+        color: var(--danger);
+        font-size: 12px;
+        margin-top: 4px;
+      }
+
+      /* Responsive */
+      @media (max-width: 1024px) {
+        .content-area {
+          grid-template-columns: 1fr;
+          gap: 24px;
         }
 
         .action-buttons {
-            display: flex;
-            gap: 12px;
-            margin-top: 24px;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            padding: 8px 16px;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #2563eb;
-        }
-
-        .btn-secondary {
-            background: var(--bg-card);
-            color: var(--text-primary);
-            border: 1px solid var(--border);
-        }
-
-        .btn-secondary:hover {
-            background: var(--bg-hover);
-        }
-
-        .btn-success {
-            background: linear-gradient(135deg, var(--success), #059669);
-            color: white;
-        }
-
-        .btn-success:hover {
-            opacity: 0.9;
-        }
-
-        /* Tabs */
-        .tabs {
-            border-bottom: 1px solid var(--border);
-            padding: 0 24px;
+          flex-direction: column;
         }
 
         .tab-list {
-            display: flex;
-            gap: 32px;
+          overflow-x: auto;
+          white-space: nowrap;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .main-container {
+          padding: 0 16px;
+          margin: 16px auto;
         }
 
-        .tab {
-            padding: 12px 0;
-            border-bottom: 2px solid transparent;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s ease;
-            position: relative;
+        .editor-header {
+          padding: 16px;
         }
 
-        .tab.active {
-            color: var(--primary);
-            border-bottom-color: var(--primary);
-        }
-
-        .tab:hover:not(.active) {
-            color: var(--text-primary);
-        }
-
-        /* Content Area */
         .content-area {
-            padding: 32px 24px;
-            display: grid;
-            grid-template-columns: 1fr 400px;
-            gap: 32px;
+          padding: 16px;
         }
 
-        .main-content {
-            display: flex;
-            flex-direction: column;
-            gap: 32px;
+        .meta-info {
+          flex-direction: column;
+          align-items: flex-start;
         }
-
-        .field-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .field-label {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .field-textarea {
-            width: 100%;
-            min-height: 120px;
-            padding: 16px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            background: var(--bg-input);
-            font-size: 14px;
-            color: var(--text-primary);
-            font-family: inherit;
-            resize: vertical;
-        }
-
-        .field-textarea:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        .criteria-list {
-            list-style: none;
-            padding: 16px;
-            background: var(--bg-input);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            min-height: 160px;
-        }
-
-        .criteria-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            margin-bottom: 16px;
-            padding: 8px;
-            border-radius: 4px;
-        }
-
-        .criteria-item:hover {
-            background: var(--bg-hover);
-        }
-
-        .criteria-checkbox {
-            margin-top: 2px;
-            cursor: pointer;
-        }
-
-        .criteria-text {
-            flex: 1;
-            font-size: 14px;
-            line-height: 1.5;
-        }
-
-        .criteria-completed {
-            text-decoration: line-through;
-            opacity: 0.7;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .sidebar-section {
-            background: var(--bg-input);
-            border-radius: 6px;
-            padding: 16px;
-        }
-
-        .sidebar-title {
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 12px;
-        }
-
-        .assignee-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .avatar {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: #fbbf24;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            color: #78350f;
-        }
-
-        .assignee-details h4 {
-            font-size: 15px;
-            font-weight: 500;
-            margin-bottom: 4px;
-        }
-
-        .assignee-details p {
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
-
-        .change-btn {
-            margin-left: auto;
-            color: var(--primary);
-            text-decoration: none;
-            font-size: 13px;
-            cursor: pointer;
-        }
-
-        .labels-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .label {
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 500;
-        }
-
-        .label-frontend {
-            background: #dbeafe;
-            color: #1e40af;
-        }
-
-        .label-backend {
-            background: #e0e7ff;
-            color: #4338ca;
-        }
-
-        .label-search {
-            background: #dcfce7;
-            color: #065f46;
-        }
-
-        .add-label {
-            width: 24px;
-            height: 24px;
-            border-radius: 12px;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .dropdown-field {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            background: var(--bg-card);
-            font-size: 14px;
-            cursor: pointer;
-        }
-
-        .source-section {
-            background: #fef3c7;
-            border: 1px solid #f59e0b;
-        }
-
-        .source-content {
-            background: var(--bg-card);
-            border-radius: 6px;
-            padding: 12px;
-            margin-top: 8px;
-        }
-
-        .source-content p {
-            font-size: 12px;
-            color: var(--text-secondary);
-            margin-bottom: 4px;
-        }
-
-        .source-link {
-            color: var(--primary);
-            text-decoration: none;
-            font-size: 12px;
-        }
-
-        /* Floating Action */
-        .floating-action {
-            position: fixed;
-            bottom: 32px;
-            right: 32px;
-            background: #8b5cf6;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 24px;
-            border: none;
-            cursor: pointer;
-            font-size: 14px;
-            box-shadow: var(--shadow);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            z-index: 1000;
-        }
-
-        .floating-action:hover {
-            background: #7c3aed;
-        }
-
-        /* Validation */
-        .field-error {
-            border-color: var(--danger);
-        }
-
-        .error-message {
-            color: var(--danger);
-            font-size: 12px;
-            margin-top: 4px;
-        }
-
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .content-area {
-                grid-template-columns: 1fr;
-                gap: 24px;
-            }
-            
-            .action-buttons {
-                flex-direction: column;
-            }
-            
-            .tab-list {
-                overflow-x: auto;
-                white-space: nowrap;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .main-container {
-                padding: 0 16px;
-                margin: 16px auto;
-            }
-            
-            .editor-header {
-                padding: 16px;
-            }
-            
-            .content-area {
-                padding: 16px;
-            }
-            
-            .meta-info {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-        }
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <!-- Header -->
     <header class="header">
-        <div class="header-brand">Claude Flow</div>
-        <nav class="breadcrumb">
-            <span>Projects</span>
-            <span>/</span>
-            <span>E-commerce Platform</span>
-            <span>/</span>
-            <span>Work Items</span>
-            <span>/</span>
-            <span class="breadcrumb-current">#WI-157</span>
-        </nav>
-        <div class="save-status">
-            <span>✓</span>
-            <span id="saveStatus">Saved</span>
-        </div>
-        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
-            🌙
-        </button>
+      <div class="header-brand">Claude Flow</div>
+      <nav class="breadcrumb">
+        <span>Projects</span>
+        <span>/</span>
+        <span>E-commerce Platform</span>
+        <span>/</span>
+        <span>Work Items</span>
+        <span>/</span>
+        <span class="breadcrumb-current">#WI-157</span>
+      </nav>
+      <div class="save-status">
+        <span>✓</span>
+        <span id="saveStatus">Saved</span>
+      </div>
+      <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">🌙</button>
     </header>
 
     <!-- Main Container -->
     <main class="main-container">
-        <div class="editor-card">
-            <!-- Editor Header -->
-            <div class="editor-header">
-                <input 
-                    type="text" 
-                    class="title-input" 
-                    value="Add product search functionality"
-                    placeholder="Work item title..."
-                    id="titleInput"
-                    oninput="onTitleChange()"
-                >
-                
-                <div class="meta-info">
-                    <select class="badge badge-priority-high" onchange="onPriorityChange(this.value)">
-                        <option value="high">High</option>
-                        <option value="medium">Medium</option>
-                        <option value="low">Low</option>
-                    </select>
-                    
-                    <select class="badge badge-status" onchange="onStatusChange(this.value)">
-                        <option value="todo">To Do</option>
-                        <option value="in-progress" selected>In Progress</option>
-                        <option value="review">In Review</option>
-                        <option value="done">Done</option>
-                    </select>
-                    
-                    <input type="number" class="badge badge-points" value="5" min="1" max="21" placeholder="Points">
-                    
-                    <span class="meta-text">Created 2 days ago by Sarah Chen</span>
-                    <span class="meta-text">•</span>
-                    <span class="meta-text">Last updated 5 minutes ago</span>
-                </div>
+      <div class="editor-card">
+        <!-- Editor Header -->
+        <div class="editor-header">
+          <input
+            type="text"
+            class="title-input"
+            value="Add product search functionality"
+            placeholder="Work item title..."
+            id="titleInput"
+            oninput="onTitleChange()"
+          />
 
-                <div class="action-buttons">
-                    <button class="btn btn-primary" onclick="requestReview()">Request Review</button>
-                    <button class="btn btn-secondary" onclick="convertItem()">Convert</button>
-                    <button class="btn btn-secondary" onclick="archiveItem()">Archive</button>
-                    <button class="btn btn-success" onclick="saveChanges()" id="saveBtn">Save Changes</button>
-                </div>
+          <div class="meta-info">
+            <select class="badge badge-priority-high" onchange="onPriorityChange(this.value)">
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+
+            <select class="badge badge-status" onchange="onStatusChange(this.value)">
+              <option value="todo">To Do</option>
+              <option value="in-progress" selected>In Progress</option>
+              <option value="review">In Review</option>
+              <option value="done">Done</option>
+            </select>
+
+            <input
+              type="number"
+              class="badge badge-points"
+              value="5"
+              min="1"
+              max="21"
+              placeholder="Points"
+            />
+
+            <span class="meta-text">Created 2 days ago by Sarah Chen</span>
+            <span class="meta-text">•</span>
+            <span class="meta-text">Last updated 5 minutes ago</span>
+          </div>
+
+          <div class="action-buttons">
+            <button class="btn btn-primary" onclick="requestReview()">Request Review</button>
+            <button class="btn btn-secondary" onclick="convertItem()">Convert</button>
+            <button class="btn btn-secondary" onclick="archiveItem()">Archive</button>
+            <button class="btn btn-success" onclick="saveChanges()" id="saveBtn">
+              Save Changes
+            </button>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+          <div class="tab-list">
+            <div class="tab active" onclick="switchTab('details')">Details</div>
+            <div class="tab" onclick="switchTab('activity')">Activity</div>
+            <div class="tab" onclick="switchTab('attachments')">Attachments</div>
+            <div class="tab" onclick="switchTab('related')">Related Items</div>
+            <div class="tab" onclick="switchTab('insights')">AI Insights</div>
+          </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area">
+          <!-- Main Content -->
+          <div class="main-content">
+            <!-- Description -->
+            <div class="field-group">
+              <label class="field-label" for="description">Description</label>
+              <textarea
+                class="field-textarea"
+                id="description"
+                placeholder="Describe the work item..."
+                oninput="onDescriptionChange()"
+              >
+Implement a comprehensive search functionality for the product catalog that allows users to search by product name, description, category, and tags. The search should support filters for price range, availability, ratings, and other product attributes. Results should be paginated and sortable by relevance, price, or date added.</textarea
+              >
             </div>
 
-            <!-- Tabs -->
-            <div class="tabs">
-                <div class="tab-list">
-                    <div class="tab active" onclick="switchTab('details')">Details</div>
-                    <div class="tab" onclick="switchTab('activity')">Activity</div>
-                    <div class="tab" onclick="switchTab('attachments')">Attachments</div>
-                    <div class="tab" onclick="switchTab('related')">Related Items</div>
-                    <div class="tab" onclick="switchTab('insights')">AI Insights</div>
-                </div>
+            <!-- Acceptance Criteria -->
+            <div class="field-group">
+              <label class="field-label">Acceptance Criteria</label>
+              <ul class="criteria-list" id="criteriaList">
+                <li class="criteria-item">
+                  <input
+                    type="checkbox"
+                    class="criteria-checkbox"
+                    checked
+                    onchange="updateCriteria(this)"
+                  />
+                  <span class="criteria-text criteria-completed"
+                    >Search bar prominently displayed on product pages</span
+                  >
+                </li>
+                <li class="criteria-item">
+                  <input
+                    type="checkbox"
+                    class="criteria-checkbox"
+                    checked
+                    onchange="updateCriteria(this)"
+                  />
+                  <span class="criteria-text criteria-completed"
+                    >Real-time search suggestions as user types (min 3 characters)</span
+                  >
+                </li>
+                <li class="criteria-item">
+                  <input
+                    type="checkbox"
+                    class="criteria-checkbox"
+                    onchange="updateCriteria(this)"
+                  />
+                  <span class="criteria-text"
+                    >Filter panel with price range, categories, ratings, availability</span
+                  >
+                </li>
+                <li class="criteria-item">
+                  <input
+                    type="checkbox"
+                    class="criteria-checkbox"
+                    onchange="updateCriteria(this)"
+                  />
+                  <span class="criteria-text"
+                    >Search results display product cards with image, name, price</span
+                  >
+                </li>
+                <li class="criteria-item">
+                  <input
+                    type="checkbox"
+                    class="criteria-checkbox"
+                    onchange="updateCriteria(this)"
+                  />
+                  <span class="criteria-text">Pagination with 20 products per page</span>
+                </li>
+                <li class="criteria-item">
+                  <input
+                    type="checkbox"
+                    class="criteria-checkbox"
+                    onchange="updateCriteria(this)"
+                  />
+                  <span class="criteria-text"
+                    >Sort options: Relevance, Price (Low-High, High-Low), Newest</span
+                  >
+                </li>
+                <li class="criteria-item">
+                  <input
+                    type="checkbox"
+                    class="criteria-checkbox"
+                    onchange="updateCriteria(this)"
+                  />
+                  <span class="criteria-text">Mobile responsive design</span>
+                </li>
+              </ul>
+              <button class="btn btn-secondary" onclick="addCriteria()" style="margin-top: 8px">
+                Add Criteria
+              </button>
             </div>
 
-            <!-- Content Area -->
-            <div class="content-area">
-                <!-- Main Content -->
-                <div class="main-content">
-                    <!-- Description -->
-                    <div class="field-group">
-                        <label class="field-label" for="description">Description</label>
-                        <textarea 
-                            class="field-textarea" 
-                            id="description"
-                            placeholder="Describe the work item..."
-                            oninput="onDescriptionChange()"
-                        >Implement a comprehensive search functionality for the product catalog that allows users to search by product name, description, category, and tags. The search should support filters for price range, availability, ratings, and other product attributes. Results should be paginated and sortable by relevance, price, or date added.</textarea>
-                    </div>
-
-                    <!-- Acceptance Criteria -->
-                    <div class="field-group">
-                        <label class="field-label">Acceptance Criteria</label>
-                        <ul class="criteria-list" id="criteriaList">
-                            <li class="criteria-item">
-                                <input type="checkbox" class="criteria-checkbox" checked onchange="updateCriteria(this)">
-                                <span class="criteria-text criteria-completed">Search bar prominently displayed on product pages</span>
-                            </li>
-                            <li class="criteria-item">
-                                <input type="checkbox" class="criteria-checkbox" checked onchange="updateCriteria(this)">
-                                <span class="criteria-text criteria-completed">Real-time search suggestions as user types (min 3 characters)</span>
-                            </li>
-                            <li class="criteria-item">
-                                <input type="checkbox" class="criteria-checkbox" onchange="updateCriteria(this)">
-                                <span class="criteria-text">Filter panel with price range, categories, ratings, availability</span>
-                            </li>
-                            <li class="criteria-item">
-                                <input type="checkbox" class="criteria-checkbox" onchange="updateCriteria(this)">
-                                <span class="criteria-text">Search results display product cards with image, name, price</span>
-                            </li>
-                            <li class="criteria-item">
-                                <input type="checkbox" class="criteria-checkbox" onchange="updateCriteria(this)">
-                                <span class="criteria-text">Pagination with 20 products per page</span>
-                            </li>
-                            <li class="criteria-item">
-                                <input type="checkbox" class="criteria-checkbox" onchange="updateCriteria(this)">
-                                <span class="criteria-text">Sort options: Relevance, Price (Low-High, High-Low), Newest</span>
-                            </li>
-                            <li class="criteria-item">
-                                <input type="checkbox" class="criteria-checkbox" onchange="updateCriteria(this)">
-                                <span class="criteria-text">Mobile responsive design</span>
-                            </li>
-                        </ul>
-                        <button class="btn btn-secondary" onclick="addCriteria()" style="margin-top: 8px;">Add Criteria</button>
-                    </div>
-
-                    <!-- Technical Details -->
-                    <div class="field-group">
-                        <label class="field-label" for="technical">Technical Details</label>
-                        <textarea 
-                            class="field-textarea" 
-                            id="technical"
-                            placeholder="Technical implementation details..."
-                            oninput="onTechnicalChange()"
-                        >• Use Elasticsearch for full-text search capabilities
+            <!-- Technical Details -->
+            <div class="field-group">
+              <label class="field-label" for="technical">Technical Details</label>
+              <textarea
+                class="field-textarea"
+                id="technical"
+                placeholder="Technical implementation details..."
+                oninput="onTechnicalChange()"
+              >
+• Use Elasticsearch for full-text search capabilities
 • Implement debouncing for search input (300ms delay)  
 • Cache search results for 5 minutes
-• Add analytics tracking for search terms</textarea>
-                    </div>
-                </div>
-
-                <!-- Sidebar -->
-                <div class="sidebar">
-                    <!-- Assignee -->
-                    <div class="sidebar-section">
-                        <div class="sidebar-title">Assignee</div>
-                        <div class="assignee-info">
-                            <div class="avatar">SC</div>
-                            <div class="assignee-details">
-                                <h4>Sarah Chen</h4>
-                                <p>Frontend Developer</p>
-                            </div>
-                            <a href="#" class="change-btn">Change</a>
-                        </div>
-                    </div>
-
-                    <!-- Labels -->
-                    <div class="sidebar-section">
-                        <div class="sidebar-title">Labels</div>
-                        <div class="labels-container">
-                            <span class="label label-frontend">frontend</span>
-                            <span class="label label-backend">backend</span>
-                            <span class="label label-search">search</span>
-                            <button class="add-label" onclick="addLabel()">+</button>
-                        </div>
-                    </div>
-
-                    <!-- Sprint -->
-                    <div class="sidebar-section">
-                        <div class="sidebar-title">Sprint</div>
-                        <select class="dropdown-field">
-                            <option>Sprint 4: E-commerce MVP</option>
-                            <option>Sprint 5: User Experience</option>
-                            <option>Backlog</option>
-                        </select>
-                    </div>
-
-                    <!-- Due Date -->
-                    <div class="sidebar-section">
-                        <div class="sidebar-title">Due Date</div>
-                        <input type="date" class="dropdown-field" value="2024-12-15">
-                        <div style="margin-top: 8px; font-size: 12px; color: var(--warning);">In 5 days</div>
-                    </div>
-
-                    <!-- Source -->
-                    <div class="sidebar-section source-section">
-                        <div class="sidebar-title">Source: User Feedback</div>
-                        <div class="source-content">
-                            <p>Generated from feedback #FB-234</p>
-                            <p>"Search is hard to find and doesn't work well"</p>
-                            <a href="#" class="source-link">View →</a>
-                        </div>
-                    </div>
-                </div>
+• Add analytics tracking for search terms</textarea
+              >
             </div>
+          </div>
+
+          <!-- Sidebar -->
+          <div class="sidebar">
+            <!-- Assignee -->
+            <div class="sidebar-section">
+              <div class="sidebar-title">Assignee</div>
+              <div class="assignee-info">
+                <div class="avatar">SC</div>
+                <div class="assignee-details">
+                  <h4>Sarah Chen</h4>
+                  <p>Frontend Developer</p>
+                </div>
+                <a href="#" class="change-btn">Change</a>
+              </div>
+            </div>
+
+            <!-- Labels -->
+            <div class="sidebar-section">
+              <div class="sidebar-title">Labels</div>
+              <div class="labels-container">
+                <span class="label label-frontend">frontend</span>
+                <span class="label label-backend">backend</span>
+                <span class="label label-search">search</span>
+                <button class="add-label" onclick="addLabel()">+</button>
+              </div>
+            </div>
+
+            <!-- Sprint -->
+            <div class="sidebar-section">
+              <div class="sidebar-title">Sprint</div>
+              <select class="dropdown-field">
+                <option>Sprint 4: E-commerce MVP</option>
+                <option>Sprint 5: User Experience</option>
+                <option>Backlog</option>
+              </select>
+            </div>
+
+            <!-- Due Date -->
+            <div class="sidebar-section">
+              <div class="sidebar-title">Due Date</div>
+              <input type="date" class="dropdown-field" value="2024-12-15" />
+              <div style="margin-top: 8px; font-size: 12px; color: var(--warning)">In 5 days</div>
+            </div>
+
+            <!-- Source -->
+            <div class="sidebar-section source-section">
+              <div class="sidebar-title">Source: User Feedback</div>
+              <div class="source-content">
+                <p>Generated from feedback #FB-234</p>
+                <p>"Search is hard to find and doesn't work well"</p>
+                <a href="#" class="source-link">View →</a>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
     </main>
 
     <!-- Floating Action -->
     <button class="floating-action" onclick="requestAIReview()">
-        <span>🤖</span>
-        <span>Request AI Review</span>
+      <span>🤖</span>
+      <span>Request AI Review</span>
     </button>
 
     <script>
-        // State management
-        let isDirty = false;
-        let autosaveTimer = null;
+      // State management
+      let isDirty = false;
+      let autosaveTimer = null;
 
-        // Theme management
-        function toggleTheme() {
-            const body = document.body;
-            const themeToggle = document.querySelector('.theme-toggle');
-            
-            if (body.getAttribute('data-theme') === 'dark') {
-                body.removeAttribute('data-theme');
-                themeToggle.textContent = '🌙';
-                localStorage.setItem('theme', 'light');
-            } else {
-                body.setAttribute('data-theme', 'dark');
-                themeToggle.textContent = '☀️';
-                localStorage.setItem('theme', 'dark');
-            }
+      // Theme management
+      function toggleTheme() {
+        const body = document.body;
+        const themeToggle = document.querySelector('.theme-toggle');
+
+        if (body.getAttribute('data-theme') === 'dark') {
+          body.removeAttribute('data-theme');
+          themeToggle.textContent = '🌙';
+          localStorage.setItem('theme', 'light');
+        } else {
+          body.setAttribute('data-theme', 'dark');
+          themeToggle.textContent = '☀️';
+          localStorage.setItem('theme', 'dark');
+        }
+      }
+
+      // Initialize theme
+      function initTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+          document.body.setAttribute('data-theme', 'dark');
+          document.querySelector('.theme-toggle').textContent = '☀️';
+        }
+      }
+
+      // Form validation
+      function validateForm() {
+        const title = document.getElementById('titleInput').value.trim();
+        const description = document.getElementById('description').value.trim();
+
+        let isValid = true;
+
+        // Validate title
+        if (!title) {
+          document.getElementById('titleInput').classList.add('field-error');
+          isValid = false;
+        } else {
+          document.getElementById('titleInput').classList.remove('field-error');
         }
 
-        // Initialize theme
-        function initTheme() {
-            const savedTheme = localStorage.getItem('theme');
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            
-            if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-                document.body.setAttribute('data-theme', 'dark');
-                document.querySelector('.theme-toggle').textContent = '☀️';
-            }
+        // Validate description
+        if (!description) {
+          document.getElementById('description').classList.add('field-error');
+          isValid = false;
+        } else {
+          document.getElementById('description').classList.remove('field-error');
         }
 
-        // Form validation
-        function validateForm() {
-            const title = document.getElementById('titleInput').value.trim();
-            const description = document.getElementById('description').value.trim();
-            
-            let isValid = true;
-            
-            // Validate title
-            if (!title) {
-                document.getElementById('titleInput').classList.add('field-error');
-                isValid = false;
-            } else {
-                document.getElementById('titleInput').classList.remove('field-error');
-            }
-            
-            // Validate description
-            if (!description) {
-                document.getElementById('description').classList.add('field-error');
-                isValid = false;
-            } else {
-                document.getElementById('description').classList.remove('field-error');
-            }
-            
-            return isValid;
+        return isValid;
+      }
+
+      // Save status management
+      function updateSaveStatus(status) {
+        const saveStatus = document.getElementById('saveStatus');
+        const saveBtn = document.getElementById('saveBtn');
+
+        switch (status) {
+          case 'saving':
+            saveStatus.textContent = 'Saving...';
+            saveStatus.style.color = 'var(--warning)';
+            saveBtn.disabled = true;
+            break;
+          case 'saved':
+            saveStatus.textContent = 'Saved';
+            saveStatus.style.color = 'var(--success)';
+            saveBtn.disabled = false;
+            isDirty = false;
+            break;
+          case 'dirty':
+            saveStatus.textContent = 'Unsaved changes';
+            saveStatus.style.color = 'var(--warning)';
+            saveBtn.disabled = false;
+            isDirty = true;
+            break;
+          case 'error':
+            saveStatus.textContent = 'Save failed';
+            saveStatus.style.color = 'var(--danger)';
+            saveBtn.disabled = false;
+            break;
+        }
+      }
+
+      // Auto-save functionality
+      function triggerAutosave() {
+        if (autosaveTimer) {
+          clearTimeout(autosaveTimer);
         }
 
-        // Save status management
-        function updateSaveStatus(status) {
-            const saveStatus = document.getElementById('saveStatus');
-            const saveBtn = document.getElementById('saveBtn');
-            
-            switch (status) {
-                case 'saving':
-                    saveStatus.textContent = 'Saving...';
-                    saveStatus.style.color = 'var(--warning)';
-                    saveBtn.disabled = true;
-                    break;
-                case 'saved':
-                    saveStatus.textContent = 'Saved';
-                    saveStatus.style.color = 'var(--success)';
-                    saveBtn.disabled = false;
-                    isDirty = false;
-                    break;
-                case 'dirty':
-                    saveStatus.textContent = 'Unsaved changes';
-                    saveStatus.style.color = 'var(--warning)';
-                    saveBtn.disabled = false;
-                    isDirty = true;
-                    break;
-                case 'error':
-                    saveStatus.textContent = 'Save failed';
-                    saveStatus.style.color = 'var(--danger)';
-                    saveBtn.disabled = false;
-                    break;
-            }
-        }
+        updateSaveStatus('dirty');
 
-        // Auto-save functionality
-        function triggerAutosave() {
-            if (autosaveTimer) {
-                clearTimeout(autosaveTimer);
-            }
-            
-            updateSaveStatus('dirty');
-            
-            autosaveTimer = setTimeout(() => {
-                if (validateForm()) {
-                    autoSave();
-                }
-            }, 2000);
-        }
+        autosaveTimer = setTimeout(() => {
+          if (validateForm()) {
+            autoSave();
+          }
+        }, 2000);
+      }
 
-        function autoSave() {
-            updateSaveStatus('saving');
-            
-            // Simulate API call
-            setTimeout(() => {
-                updateSaveStatus('saved');
-            }, 500);
-        }
+      function autoSave() {
+        updateSaveStatus('saving');
 
-        // Event handlers
-        function onTitleChange() {
-            triggerAutosave();
-        }
+        // Simulate API call
+        setTimeout(() => {
+          updateSaveStatus('saved');
+        }, 500);
+      }
 
-        function onDescriptionChange() {
-            triggerAutosave();
-        }
+      // Event handlers
+      function onTitleChange() {
+        triggerAutosave();
+      }
 
-        function onTechnicalChange() {
-            triggerAutosave();
-        }
+      function onDescriptionChange() {
+        triggerAutosave();
+      }
 
-        function onPriorityChange(value) {
-            triggerAutosave();
-        }
+      function onTechnicalChange() {
+        triggerAutosave();
+      }
 
-        function onStatusChange(value) {
-            triggerAutosave();
-        }
+      function onPriorityChange(value) {
+        triggerAutosave();
+      }
 
-        function updateCriteria(checkbox) {
-            const text = checkbox.nextElementSibling;
-            if (checkbox.checked) {
-                text.classList.add('criteria-completed');
-            } else {
-                text.classList.remove('criteria-completed');
-            }
-            triggerAutosave();
-        }
+      function onStatusChange(value) {
+        triggerAutosave();
+      }
 
-        function addCriteria() {
-            const criteriaText = prompt('Enter acceptance criteria:');
-            if (criteriaText && criteriaText.trim()) {
-                const criteriaList = document.getElementById('criteriaList');
-                const li = document.createElement('li');
-                li.className = 'criteria-item';
-                li.innerHTML = `
+      function updateCriteria(checkbox) {
+        const text = checkbox.nextElementSibling;
+        if (checkbox.checked) {
+          text.classList.add('criteria-completed');
+        } else {
+          text.classList.remove('criteria-completed');
+        }
+        triggerAutosave();
+      }
+
+      function addCriteria() {
+        const criteriaText = prompt('Enter acceptance criteria:');
+        if (criteriaText && criteriaText.trim()) {
+          const criteriaList = document.getElementById('criteriaList');
+          const li = document.createElement('li');
+          li.className = 'criteria-item';
+          li.innerHTML = `
                     <input type="checkbox" class="criteria-checkbox" onchange="updateCriteria(this)">
                     <span class="criteria-text">${criteriaText.trim()}</span>
                 `;
-                criteriaList.appendChild(li);
-                triggerAutosave();
-            }
+          criteriaList.appendChild(li);
+          triggerAutosave();
         }
+      }
 
-        function addLabel() {
-            const labelText = prompt('Enter label name:');
-            if (labelText && labelText.trim()) {
-                const labelsContainer = document.querySelector('.labels-container');
-                const addButton = labelsContainer.querySelector('.add-label');
-                
-                const span = document.createElement('span');
-                span.className = 'label label-frontend';
-                span.textContent = labelText.trim();
-                
-                labelsContainer.insertBefore(span, addButton);
-                triggerAutosave();
-            }
+      function addLabel() {
+        const labelText = prompt('Enter label name:');
+        if (labelText && labelText.trim()) {
+          const labelsContainer = document.querySelector('.labels-container');
+          const addButton = labelsContainer.querySelector('.add-label');
+
+          const span = document.createElement('span');
+          span.className = 'label label-frontend';
+          span.textContent = labelText.trim();
+
+          labelsContainer.insertBefore(span, addButton);
+          triggerAutosave();
         }
+      }
 
-        // Tab management
-        function switchTab(tabName) {
-            // Update active tab
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            
-            // Here you would typically load different content based on the tab
-            console.log('Switched to tab:', tabName);
-        }
-
-        // Action handlers
-        function saveChanges() {
-            if (validateForm()) {
-                updateSaveStatus('saving');
-                
-                // Simulate API call
-                setTimeout(() => {
-                    updateSaveStatus('saved');
-                    alert('Work item saved successfully!');
-                }, 1000);
-            } else {
-                alert('Please fill in all required fields');
-            }
-        }
-
-        function requestReview() {
-            if (isDirty) {
-                const proceed = confirm('You have unsaved changes. Save before requesting review?');
-                if (proceed) {
-                    saveChanges();
-                    setTimeout(() => {
-                        alert('Review request sent!');
-                    }, 1500);
-                }
-            } else {
-                alert('Review request sent!');
-            }
-        }
-
-        function convertItem() {
-            const options = ['Epic', 'Bug', 'Task', 'Spike'];
-            const choice = prompt(`Convert to:\n${options.map((opt, i) => `${i + 1}. ${opt}`).join('\n')}\n\nEnter number:`);
-            
-            if (choice && options[parseInt(choice) - 1]) {
-                alert(`Converting to ${options[parseInt(choice) - 1]}...`);
-            }
-        }
-
-        function archiveItem() {
-            const confirm = window.confirm('Are you sure you want to archive this work item?');
-            if (confirm) {
-                alert('Work item archived');
-            }
-        }
-
-        function requestAIReview() {
-            alert('AI review requested! You will receive insights shortly.');
-        }
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            if (e.ctrlKey || e.metaKey) {
-                switch (e.key) {
-                    case 's':
-                        e.preventDefault();
-                        saveChanges();
-                        break;
-                    case 'Enter':
-                        if (e.shiftKey) {
-                            e.preventDefault();
-                            requestReview();
-                        }
-                        break;
-                }
-            }
+      // Tab management
+      function switchTab(tabName) {
+        // Update active tab
+        document.querySelectorAll('.tab').forEach((tab) => {
+          tab.classList.remove('active');
         });
+        event.target.classList.add('active');
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            initTheme();
-            
-            // Simulate initial data load
+        // Here you would typically load different content based on the tab
+        console.log('Switched to tab:', tabName);
+      }
+
+      // Action handlers
+      function saveChanges() {
+        if (validateForm()) {
+          updateSaveStatus('saving');
+
+          // Simulate API call
+          setTimeout(() => {
             updateSaveStatus('saved');
-        });
+            alert('Work item saved successfully!');
+          }, 1000);
+        } else {
+          alert('Please fill in all required fields');
+        }
+      }
 
-        // Prevent accidental navigation
-        window.addEventListener('beforeunload', (e) => {
-            if (isDirty) {
+      function requestReview() {
+        if (isDirty) {
+          const proceed = confirm('You have unsaved changes. Save before requesting review?');
+          if (proceed) {
+            saveChanges();
+            setTimeout(() => {
+              alert('Review request sent!');
+            }, 1500);
+          }
+        } else {
+          alert('Review request sent!');
+        }
+      }
+
+      function convertItem() {
+        const options = ['Epic', 'Bug', 'Task', 'Spike'];
+        const choice = prompt(
+          `Convert to:\n${options.map((opt, i) => `${i + 1}. ${opt}`).join('\n')}\n\nEnter number:`
+        );
+
+        if (choice && options[parseInt(choice) - 1]) {
+          alert(`Converting to ${options[parseInt(choice) - 1]}...`);
+        }
+      }
+
+      function archiveItem() {
+        const confirm = window.confirm('Are you sure you want to archive this work item?');
+        if (confirm) {
+          alert('Work item archived');
+        }
+      }
+
+      function requestAIReview() {
+        alert('AI review requested! You will receive insights shortly.');
+      }
+
+      // Keyboard shortcuts
+      document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey || e.metaKey) {
+          switch (e.key) {
+            case 's':
+              e.preventDefault();
+              saveChanges();
+              break;
+            case 'Enter':
+              if (e.shiftKey) {
                 e.preventDefault();
-                e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
-            }
-        });
+                requestReview();
+              }
+              break;
+          }
+        }
+      });
+
+      // Initialize
+      document.addEventListener('DOMContentLoaded', () => {
+        initTheme();
+
+        // Simulate initial data load
+        updateSaveStatus('saved');
+      });
+
+      // Prevent accidental navigation
+      window.addEventListener('beforeunload', (e) => {
+        if (isDirty) {
+          e.preventDefault();
+          e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+        }
+      });
     </script>
-</body>
+  </body>
 </html>

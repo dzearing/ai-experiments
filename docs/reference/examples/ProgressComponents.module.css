@@ -9,12 +9,12 @@
     display: inline-flex;
     animation: spin 1.4s linear infinite;
   }
-  
+
   .track {
     fill: none;
     stroke: var(--color-muted, #e5e7eb);
   }
-  
+
   .progress {
     fill: none;
     stroke-dasharray: 80px, 200px;
@@ -25,16 +25,27 @@
 }
 
 @layer variants {
-  .spinner.sm { width: 16px; height: 16px; }
-  .spinner.md { width: 24px; height: 24px; }
-  .spinner.lg { width: 32px; height: 32px; }
+  .spinner.sm {
+    width: 16px;
+    height: 16px;
+  }
+  .spinner.md {
+    width: 24px;
+    height: 24px;
+  }
+  .spinner.lg {
+    width: 32px;
+    height: 32px;
+  }
 }
 
 @layer animations {
   @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+      transform: rotate(360deg);
+    }
   }
-  
+
   @keyframes dash {
     0% {
       stroke-dasharray: 1px, 200px;
@@ -71,7 +82,7 @@
     gap: 0.5rem;
     width: 100%;
   }
-  
+
   .track {
     flex: 1;
     background-color: var(--color-muted, #e5e7eb);
@@ -79,14 +90,14 @@
     overflow: hidden;
     position: relative;
   }
-  
+
   .fill {
     height: 100%;
     background-color: var(--color-primary, #3b82f6);
     transition: width 300ms ease-out;
     border-radius: 9999px;
   }
-  
+
   .percentage {
     font-size: 0.875rem;
     color: var(--color-text-muted, #6b7280);
@@ -97,15 +108,27 @@
 
 @layer variants {
   /* Size variants */
-  .progressBar.sm .track { height: 4px; }
-  .progressBar.md .track { height: 8px; }
-  .progressBar.lg .track { height: 12px; }
-  
+  .progressBar.sm .track {
+    height: 4px;
+  }
+  .progressBar.md .track {
+    height: 8px;
+  }
+  .progressBar.lg .track {
+    height: 12px;
+  }
+
   /* Color variants */
-  .fill.success { background-color: #10b981; }
-  .fill.warning { background-color: #f59e0b; }
-  .fill.danger { background-color: #ef4444; }
-  
+  .fill.success {
+    background-color: #10b981;
+  }
+  .fill.warning {
+    background-color: #f59e0b;
+  }
+  .fill.danger {
+    background-color: #ef4444;
+  }
+
   /* Indeterminate animation */
   .fill.indeterminate {
     width: 30% !important;
@@ -115,8 +138,12 @@
 
 @layer animations {
   @keyframes indeterminate {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(400%); }
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(400%);
+    }
   }
 }
 
@@ -129,19 +156,19 @@
     grid-template-columns: auto 1fr auto auto;
     align-items: start;
     gap: 0.75rem;
-    
+
     background: var(--color-background, #ffffff);
     border: 1px solid var(--color-border, #e5e7eb);
     border-radius: 0.5rem;
     padding: 1rem;
-    box-shadow: 
+    box-shadow:
       0 10px 15px -3px rgb(0 0 0 / 0.1),
       0 4px 6px -4px rgb(0 0 0 / 0.1);
-    
+
     min-width: 300px;
     max-width: 420px;
   }
-  
+
   .icon {
     width: 20px;
     height: 20px;
@@ -152,25 +179,25 @@
     font-weight: bold;
     font-size: 0.75rem;
   }
-  
+
   .content {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
   }
-  
+
   .title {
     font-weight: 600;
     font-size: 0.875rem;
     line-height: 1.25rem;
   }
-  
+
   .description {
     font-size: 0.875rem;
     line-height: 1.25rem;
     color: var(--color-text-muted, #6b7280);
   }
-  
+
   .action {
     appearance: none;
     background: none;
@@ -182,11 +209,11 @@
     cursor: pointer;
     text-decoration: underline;
   }
-  
+
   .action:hover {
     color: var(--color-primary-hover, #2563eb);
   }
-  
+
   .close {
     appearance: none;
     background: none;
@@ -201,7 +228,7 @@
     cursor: pointer;
     border-radius: 0.25rem;
   }
-  
+
   .close:hover {
     background-color: var(--color-muted, #f3f4f6);
   }
@@ -213,40 +240,40 @@
     border-color: #10b981;
     background-color: #f0fdf4;
   }
-  
+
   .toast.success .icon {
     background-color: #10b981;
     color: white;
   }
-  
+
   /* Error variant */
   .toast.error {
     border-color: #ef4444;
     background-color: #fef2f2;
   }
-  
+
   .toast.error .icon {
     background-color: #ef4444;
     color: white;
   }
-  
+
   /* Warning variant */
   .toast.warning {
     border-color: #f59e0b;
     background-color: #fffbeb;
   }
-  
+
   .toast.warning .icon {
     background-color: #f59e0b;
     color: white;
   }
-  
+
   /* Info variant */
   .toast.info {
     border-color: #3b82f6;
     background-color: #eff6ff;
   }
-  
+
   .toast.info .icon {
     background-color: #3b82f6;
     color: white;
@@ -262,35 +289,35 @@
     background: var(--color-background-dark, #1f2937);
     border-color: var(--color-border-dark, #374151);
   }
-  
+
   :global(.dark) .track {
     background-color: var(--color-muted-dark, #374151);
   }
-  
+
   :global(.dark) .description {
     color: var(--color-text-muted-dark, #9ca3af);
   }
-  
+
   :global(.dark) .percentage {
     color: var(--color-text-muted-dark, #9ca3af);
   }
-  
+
   /* Dark mode toast variants */
   :global(.dark) .toast.success {
     background-color: #064e3b;
     border-color: #10b981;
   }
-  
+
   :global(.dark) .toast.error {
     background-color: #7f1d1d;
     border-color: #ef4444;
   }
-  
+
   :global(.dark) .toast.warning {
     background-color: #78350f;
     border-color: #f59e0b;
   }
-  
+
   :global(.dark) .toast.info {
     background-color: #1e3a8a;
     border-color: #3b82f6;
@@ -306,7 +333,7 @@
   .fill {
     animation: none !important;
   }
-  
+
   .fill:not(.indeterminate) {
     transition: none !important;
   }

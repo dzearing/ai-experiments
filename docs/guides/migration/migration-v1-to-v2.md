@@ -14,17 +14,18 @@ This document outlines the strategy for migrating from the existing v1 architect
 
 ## Port Allocation
 
-| Application | Development | Production | Purpose |
-|------------|-------------|------------|---------|
-| V1 Web     | 3000        | 3000       | Existing React app |
-| V1 Server  | 3001        | 3001       | Existing Express server |
-| V2 Web     | 4000        | 4000       | New architecture web app |
-| V2 Server  | 4001        | 4001       | New architecture server |
-| Storybook  | 6006        | N/A        | Component development |
+| Application | Development | Production | Purpose                  |
+| ----------- | ----------- | ---------- | ------------------------ |
+| V1 Web      | 3000        | 3000       | Existing React app       |
+| V1 Server   | 3001        | 3001       | Existing Express server  |
+| V2 Web      | 4000        | 4000       | New architecture web app |
+| V2 Server   | 4001        | 4001       | New architecture server  |
+| Storybook   | 6006        | N/A        | Component development    |
 
 ## Migration Phases
 
 ### Phase 0: Repository Restructure
+
 **Goal**: Reorganize without breaking v1
 
 1. Create new directory structure
@@ -34,6 +35,7 @@ This document outlines the strategy for migrating from the existing v1 architect
 5. Set up CI/CD for new structure
 
 **Success Criteria**:
+
 - [ ] All v1 npm scripts work (`npm run dev`, `npm run build`, `npm run test`)
 - [ ] V1 development server starts on correct ports
 - [ ] V1 production build completes successfully
@@ -42,10 +44,12 @@ This document outlines the strategy for migrating from the existing v1 architect
 - [ ] No regression in user functionality
 - [ ] Documentation updated for new structure
 
-### Phase 1: Infrastructure Setup  
+### Phase 1: Infrastructure Setup
+
 **Goal**: Establish v2 development foundation
 
 Parallel tasks (agent-based execution):
+
 - Initialize pnpm workspace
 - Setup Lage build orchestration
 - Create shared TypeScript/ESLint configs
@@ -53,6 +57,7 @@ Parallel tasks (agent-based execution):
 - Set up shared tooling packages
 
 **Success Criteria**:
+
 - [ ] `pnpm install` works from root
 - [ ] `yarn dev` shows interactive menu
 - [ ] All repo-scripts commands work:
@@ -67,9 +72,11 @@ Parallel tasks (agent-based execution):
 - [ ] Developer documentation complete
 
 ### Phase 2: Core Package Development
+
 **Goal**: Build reusable v2 packages
 
 Parallel package development:
+
 - Design system with Storybook
 - Data bus for WebSocket management
 - Shared TypeScript types
@@ -77,6 +84,7 @@ Parallel package development:
 - WebSocket client library
 
 **Success Criteria**:
+
 - [ ] Each package has:
   - [ ] `pnpm dev` for development mode
   - [ ] `pnpm build` producing ESM in `lib/` folder
@@ -92,6 +100,7 @@ Parallel package development:
 - [ ] All packages use ESM by default
 
 ### Phase 3: V2 Application Development
+
 **Goal**: Create v2 apps with feature parity
 
 1. Scaffold v2 web and server applications
@@ -104,6 +113,7 @@ Parallel package development:
 4. Performance benchmarking
 
 **Success Criteria**:
+
 - [ ] V2 applications have:
   - [ ] `pnpm dev` starts on correct ports (4000/4001)
   - [ ] `pnpm build` creates optimized `dist/` bundles
@@ -126,6 +136,7 @@ Parallel package development:
   - [ ] Bundle size documented
 
 ### Phase 4: Routing & Integration
+
 **Goal**: Enable side-by-side operation
 
 1. Configure nginx for intelligent routing
@@ -135,6 +146,7 @@ Parallel package development:
 5. Build migration utilities
 
 **Nginx routing strategy**:
+
 ```nginx
 # Route based on feature flags or user preferences
 location / {
@@ -146,6 +158,7 @@ location / {
 ```
 
 **Success Criteria**:
+
 - [ ] Routing infrastructure:
   - [ ] Nginx config tested and deployed
   - [ ] Version switching via cookie works
@@ -171,6 +184,7 @@ location / {
   - [ ] `scripts/migrate-data.js` tested
 
 ### Phase 5: Gradual Migration
+
 **Goal**: Safely transition users to v2
 
 1. Enable v2 for internal testing
@@ -180,11 +194,13 @@ location / {
 5. Full migration when stable
 
 **Rollback procedures**:
+
 - Cookie-based version switching
 - Data compatibility layer
 - Quick reversion capability
 
 **Success Criteria**:
+
 - [ ] Internal testing phase:
   - [ ] Team using v2 for daily work
   - [ ] All blocking issues resolved
@@ -212,19 +228,22 @@ location / {
 ## Shared Resources Strategy
 
 ### Data Sharing
+
 ```
 shared/
 ├── data/          # SQLite databases, JSON files
-├── sessions/      # User session files  
+├── sessions/      # User session files
 └── config/        # Shared configuration
 ```
 
 Both v1 and v2 access the same data directories, ensuring:
+
 - User sessions persist across versions
 - Data changes are immediately visible
 - No synchronization needed
 
 ### Configuration Sharing
+
 - Environment variables loaded by both versions
 - Shared secrets and API keys
 - Feature flags accessible to both
@@ -232,19 +251,20 @@ Both v1 and v2 access the same data directories, ensuring:
 ## Migration Scripts
 
 ### Root-level utilities
+
 - `scripts/start-v1.sh` - Start v1 application
-- `scripts/start-v2.sh` - Start v2 application  
+- `scripts/start-v2.sh` - Start v2 application
 - `scripts/start-all.sh` - Start both versions
 - `scripts/migrate-data.js` - Data transformation utilities
 
 ## Risks and Mitigation
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| Data corruption | High | Extensive testing, backups |
+| Risk                   | Impact | Mitigation                    |
+| ---------------------- | ------ | ----------------------------- |
+| Data corruption        | High   | Extensive testing, backups    |
 | Performance regression | Medium | Benchmarking, gradual rollout |
-| Feature mismatch | Medium | E2E tests, feature flags |
-| User confusion | Low | Clear communication, training |
+| Feature mismatch       | Medium | E2E tests, feature flags      |
+| User confusion         | Low    | Clear communication, training |
 
 ## Success Metrics
 
@@ -257,6 +277,7 @@ Both v1 and v2 access the same data directories, ensuring:
 ## Timeline
 
 This migration follows agent-based phases rather than fixed timelines:
+
 - Phases can execute in parallel where possible
 - Each phase completes when success criteria are met
 - No artificial deadlines that compromise quality
@@ -264,6 +285,7 @@ This migration follows agent-based phases rather than fixed timelines:
 ## Post-Migration Cleanup
 
 Once v2 is stable and v1 is deprecated:
+
 1. Remove `apps/v1/` directory
 2. Remove v1-specific scripts
 3. Simplify nginx configuration
