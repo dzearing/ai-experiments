@@ -63,10 +63,10 @@ const tokenDomains = {
         name: 'Scale/Type',
         tokens: {
           family: ['(default)', 'mono', 'serif'],
-          size: ['smallest', 'small30', 'small20', 'small10', 'normal', 'large10', 'large20', 'large30', 'large40', 'large50', 'largest', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'body', 'caption', 'code'],
-          weight: ['light', 'regular', 'medium', 'semibold', 'bold'],
-          lineHeight: ['tightest', 'tight10', 'tight5', 'normal', 'loose5', 'loose10', 'loosest', 'code'],
-          letterSpacing: ['tightest', 'tight10', 'normal', 'wide10', 'wide20', 'widest']
+          size: ['(default)', 'smallest', 'small30', 'small20', 'small10', 'large10', 'large20', 'large30', 'large40', 'large50', 'largest', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'body', 'caption', 'code'],
+          weight: ['(default)', 'light', 'medium', 'semibold', 'bold'],
+          lineHeight: ['(default)', 'tightest', 'tight10', 'tight20', 'loose5', 'loose10', 'loosest', 'code'],
+          letterSpacing: ['(default)', 'tightest', 'tight10', 'wide10', 'wide20', 'widest']
         }
       }
     ]
@@ -81,7 +81,7 @@ const tokenDomains = {
       },
       {
         name: 'Scale',
-        tokens: ['none', 'softest', 'soft10', 'normal', 'hard10', 'hard20', 'hardest', 'focus', 'button', 'buttonHover', 'card', 'cardHover', 'dropdown', 'modal', 'popover', 'tooltip', 'innerSoft', 'innerNormal']
+        tokens: ['(default)', 'none', 'softest', 'soft10', 'hard10', 'hard20', 'hardest', 'focus', 'button', 'buttonHover', 'card', 'cardHover', 'dropdown', 'modal', 'popover', 'tooltip', 'innerSoft', 'inner']
       }
     ]
   },
@@ -91,7 +91,7 @@ const tokenDomains = {
     categories: [
       {
         name: 'Scale',
-        tokens: ['none', 'px', 'smallest', 'small20', 'small10', 'small5', 'normal', 'large5', 'large10', 'large20', 'large30', 'large40', 'large50', 'large60', 'large70', 'largest']
+        tokens: ['(default)', 'none', 'px', 'smallest', 'small20', 'small10', 'small5', 'large5', 'large10', 'large20', 'large30', 'large40', 'large50', 'large60', 'large70', 'largest']
       },
       {
         name: 'Component',
@@ -110,8 +110,8 @@ const tokenDomains = {
       {
         name: 'Scale',
         tokens: {
-          width: ['thinnest', 'normal', 'thick10', 'thickest', 'default', 'focus', 'divider'],
-          radius: ['none', 'smallest', 'small10', 'normal', 'large10', 'large20', 'large30', 'full', 'button', 'input', 'card', 'modal', 'tooltip', 'badge', 'chip', 'avatar', 'image']
+          width: ['(default)', 'thinnest', 'thick10', 'thickest', 'default', 'focus', 'divider'],
+          radius: ['(default)', 'none', 'smallest', 'small10', 'large10', 'large20', 'large30', 'full', 'button', 'input', 'card', 'modal', 'tooltip', 'badge', 'chip', 'avatar', 'image']
         }
       }
     ]
@@ -127,9 +127,9 @@ const tokenDomains = {
       {
         name: 'Scale/Value',
         tokens: {
-          duration: ['fastest', 'fast20', 'fast10', 'normal', 'slow10', 'slow20', 'slowest', 'hover', 'focus', 'expand', 'collapse', 'fadeIn', 'fadeOut', 'slideIn', 'slideOut', 'modalIn', 'modalOut', 'pageTransition'],
-          easing: ['linear', 'ease', 'easeIn', 'easeOut', 'easeInOut', 'bounce', 'sharp', 'smooth', 'default', 'enter', 'exit', 'move'],
-          delay: ['none', 'fast10', 'normal', 'slow10', 'slow20', 'stagger']
+          duration: ['(default)', 'fastest', 'fast20', 'fast10', 'slow10', 'slow20', 'slowest', 'hover', 'focus', 'expand', 'collapse', 'fadeIn', 'fadeOut', 'slideIn', 'slideOut', 'modalIn', 'modalOut', 'pageTransition'],
+          easing: ['default', 'linear', 'ease', 'easeIn', 'easeOut', 'easeInOut', 'bounce', 'sharp', 'smooth', 'enter', 'exit', 'move'],
+          delay: ['(default)', 'none', 'fast10', 'slow10', 'slow20', 'stagger']
         }
       }
     ]
@@ -155,22 +155,45 @@ const TokenBrowser = () => {
       initialTokens['State'] = '';
     } else if (selectedDomain === 'typography') {
       initialTokens['Category'] = 'size';
-      initialTokens['Scale/Type'] = 'normal';
+      initialTokens['Scale/Type'] = '(default)';
     } else if (selectedDomain === 'shadow') {
       initialTokens['Type'] = 'box';
-      initialTokens['Scale'] = 'normal';
+      initialTokens['Scale'] = '(default)';
     } else if (selectedDomain === 'spacing') {
-      initialTokens['Scale'] = 'normal';
+      initialTokens['Scale'] = '(default)';
     } else if (selectedDomain === 'border') {
       initialTokens['Type'] = 'radius';
-      initialTokens['Scale'] = 'normal';
+      initialTokens['Scale'] = '(default)';
     } else if (selectedDomain === 'animation') {
       initialTokens['Type'] = 'duration';
-      initialTokens['Scale/Value'] = 'normal';
+      initialTokens['Scale/Value'] = '(default)';
     }
     
     setSelectedTokens(initialTokens);
   }, [selectedDomain]);
+
+  // Helper to handle token selection with dependent reset
+  const handleTokenSelect = (categoryName: string, tokenValue: string) => {
+    const newTokens = { ...selectedTokens, [categoryName]: tokenValue };
+    
+    // Reset dependent selections when parent changes
+    if (selectedDomain === 'typography' && categoryName === 'Category') {
+      // Reset Scale/Type when Category changes
+      const defaultScale = tokenDomains.typography.categories[1].tokens[tokenValue]?.[0] || '(default)';
+      newTokens['Scale/Type'] = defaultScale;
+    } else if (selectedDomain === 'shadow' && categoryName === 'Type') {
+      // Reset Scale when Type changes
+      newTokens['Scale'] = '(default)';
+    } else if (selectedDomain === 'border' && categoryName === 'Type') {
+      // Reset Scale when Type changes
+      newTokens['Scale'] = '(default)';
+    } else if (selectedDomain === 'animation' && categoryName === 'Type') {
+      // Reset Scale/Value when Type changes
+      newTokens['Scale/Value'] = '(default)';
+    }
+    
+    setSelectedTokens(newTokens);
+  };
 
   // Build the token name based on selections
   const buildTokenName = () => {
@@ -186,11 +209,11 @@ const TokenBrowser = () => {
       if (category === 'family') {
         return scale === '(default)' ? `--font-family` : `--font-${category}-${scale}`;
       } else if (category === 'lineHeight') {
-        return `--line-height-${scale}`;
+        return scale === '(default)' ? `--line-height` : `--line-height-${scale}`;
       } else if (category === 'letterSpacing') {
-        return `--letter-spacing-${scale}`;
+        return scale === '(default)' ? `--letter-spacing` : `--letter-spacing-${scale}`;
       } else {
-        return `--font-${category}-${scale}`;
+        return scale === '(default)' ? `--font-${category}` : `--font-${category}-${scale}`;
       }
     } else if (selectedDomain === 'shadow') {
       const type = selectedTokens['Type'] || 'box';
@@ -198,20 +221,20 @@ const TokenBrowser = () => {
       
       if (type === 'box') {
         if (scale.startsWith('inner')) {
-          return `--shadow-${scale}`;
+          return scale === 'inner' ? `--shadow-inner` : `--shadow-${scale}`;
         }
-        return `--shadow-${scale}`;
+        return scale === '(default)' ? `--shadow` : `--shadow-${scale}`;
       } else if (type === 'text') {
         // Map text shadow scales to new naming
         const textShadowMap: Record<string, string> = {
           'softest': 'soft',
-          'normal': 'normal',
+          '(default)': '',
           'hardest': 'hard'
         };
         const mappedScale = textShadowMap[scale] || scale;
-        return `--textShadow-${mappedScale}`;
+        return mappedScale === '' ? `--textShadow` : `--textShadow-${mappedScale}`;
       } else if (type === 'inner') {
-        return `--shadow-${scale}`;
+        return scale === '(default)' ? `--shadow-inner` : `--shadow-${scale}`;
       }
     } else if (selectedDomain === 'spacing') {
       const scale = selectedTokens['Scale'];
@@ -220,22 +243,22 @@ const TokenBrowser = () => {
       if (component) {
         return `--spacing-${component}`;
       } else {
-        return `--spacing-${scale}`;
+        return scale === '(default)' ? `--spacing` : `--spacing-${scale}`;
       }
     } else if (selectedDomain === 'border') {
       const type = selectedTokens['Type'] || 'radius';
       const scale = selectedTokens['Scale'] || 'normal';
       
       if (type === 'width') {
-        return `--border-${type}-${scale}`;
+        return scale === '(default)' ? `--border-${type}` : `--border-${type}-${scale}`;
       } else {
-        return `--radius-${scale}`;
+        return scale === '(default)' ? `--radius` : `--radius-${scale}`;
       }
     } else if (selectedDomain === 'animation') {
       const type = selectedTokens['Type'] || 'duration';
       const value = selectedTokens['Scale/Value'] || 'normal';
       
-      return `--${type}-${value}`;
+      return value === '(default)' ? `--${type}` : `--${type}-${value}`;
     }
     
     return '--unknown-token';
@@ -334,9 +357,9 @@ const TokenBrowser = () => {
               className="typography-sample"
               style={{
                 fontSize: category === 'size' ? `var(${tokenName})` : 'var(--font-size-lg)',
-                fontWeight: category === 'weight' ? `var(${tokenName})` : 'var(--font-weight-regular)',
+                fontWeight: category === 'weight' ? `var(${tokenName})` : 'var(--font-weight)',
                 fontFamily: 'var(--font-family)',
-                lineHeight: 'var(--line-height-normal)',
+                lineHeight: 'var(--line-height)',
                 color: 'var(--color-body-text)',
               }}
             >
@@ -346,9 +369,9 @@ const TokenBrowser = () => {
               className="typography-sample"
               style={{
                 fontSize: category === 'size' ? `var(${tokenName})` : 'var(--font-size-base)',
-                fontWeight: category === 'weight' ? `var(${tokenName})` : 'var(--font-weight-regular)',
+                fontWeight: category === 'weight' ? `var(${tokenName})` : 'var(--font-weight)',
                 fontFamily: 'var(--font-family)',
-                lineHeight: 'var(--line-height-normal)',
+                lineHeight: 'var(--line-height)',
                 color: 'var(--color-body-text)',
               }}
             >
@@ -516,7 +539,7 @@ const TokenBrowser = () => {
               <div 
                 className="animation-box"
                 style={{
-                  animation: `slideInRight var(--duration-normal) var(${tokenName}) infinite alternate`,
+                  animation: `slideInRight var(--duration) var(${tokenName}) infinite alternate`,
                 }}
               >
                 Easing
@@ -536,7 +559,7 @@ const TokenBrowser = () => {
                   key={index}
                   className="animation-box small"
                   style={{
-                    animation: `fadeIn var(--duration-normal) var(--easing-default) infinite alternate`,
+                    animation: `fadeIn var(--duration) var(--easing-default) infinite alternate`,
                     animationDelay: `calc(var(${tokenName}) * ${index})`,
                   }}
                 >
@@ -609,7 +632,7 @@ const TokenBrowser = () => {
                               <button
                                 key={token}
                                 className={`selection-item ${selectedTokens[category.name] === token ? 'selected' : ''}`}
-                                onClick={() => setSelectedTokens({ ...selectedTokens, [category.name]: token })}
+                                onClick={() => handleTokenSelect(category.name, token)}
                               >
                                 {token || '(default)'}
                               </button>
@@ -618,8 +641,8 @@ const TokenBrowser = () => {
                             // Handle concept groups with variants (for color domain)
                             return (
                               <div key={token.base} className="concept-group">
-                                <div className="concept-row">
-                                  {token.variants.length > 0 && (
+                                {token.variants.length > 0 ? (
+                                  <div className="concept-row expandable">
                                     <button
                                       className="expand-toggle"
                                       onClick={() => {
@@ -648,21 +671,28 @@ const TokenBrowser = () => {
                                         />
                                       </svg>
                                     </button>
-                                  )}
+                                    <button
+                                      className={`selection-item ${selectedTokens[category.name] === token.base ? 'selected' : ''} has-variants`}
+                                      onClick={() => handleTokenSelect(category.name, token.base)}
+                                    >
+                                      {token.base}
+                                    </button>
+                                  </div>
+                                ) : (
                                   <button
-                                    className={`selection-item ${selectedTokens[category.name] === token.base ? 'selected' : ''} ${token.variants.length > 0 ? 'has-variants' : ''}`}
-                                    onClick={() => setSelectedTokens({ ...selectedTokens, [category.name]: token.base })}
+                                    className={`selection-item ${selectedTokens[category.name] === token.base ? 'selected' : ''}`}
+                                    onClick={() => handleTokenSelect(category.name, token.base)}
                                   >
                                     {token.base}
                                   </button>
-                                </div>
+                                )}
                                 {expandedConcepts.has(token.base) && (
                                   <div className="concept-variants">
                                     {token.variants.map((variant) => (
                                       <button
                                         key={variant}
                                         className={`selection-item variant ${selectedTokens[category.name] === variant ? 'selected' : ''}`}
-                                        onClick={() => setSelectedTokens({ ...selectedTokens, [category.name]: variant })}
+                                        onClick={() => handleTokenSelect(category.name, variant)}
                                       >
                                         {variant}
                                       </button>

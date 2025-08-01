@@ -7,20 +7,20 @@
 :root {
   /* Border Widths */
   --border-width-thinnest: 1px;
-  --border-width-normal: 2px;
+  --border-width: 2px;
   --border-width-thick10: 4px;
   --border-width-thickest: 8px;
 
   /* Semantic Border Widths */
   --border-width-default: var(--border-width-thinnest);
-  --border-width-focus: var(--border-width-normal);
+  --border-width-focus: var(--border-width);
   --border-width-divider: var(--border-width-thinnest);
 
   /* Border Radius (Corners) */
   --radius-none: 0;
   --radius-smallest: 2px;
   --radius-small10: 4px;
-  --radius-normal: 8px;
+  --radius: 8px;
   --radius-large10: 12px;
   --radius-large20: 16px;
   --radius-large30: 24px;
@@ -29,7 +29,7 @@
   /* Component-specific Radius */
   --radius-button: var(--radius-small10);
   --radius-input: var(--radius-small10);
-  --radius-card: var(--radius-normal);
+  --radius-card: var(--radius);
   --radius-modal: var(--radius-large10);
   --radius-tooltip: var(--radius-small10);
   --radius-badge: var(--radius-full);
@@ -39,7 +39,7 @@
 
   /* Outline Widths */
   --outline-width-thin: 1px;
-  --outline-width-normal: 2px;
+  --outline-width: 2px;
   --outline-width-thick: 4px;
 
   /* Outline Offsets */
@@ -49,7 +49,7 @@
   --outline-offset-4: 4px;
 
   /* Focus Ring */
-  --focusRing-width: var(--border-width-normal);
+  --focusRing-width: var(--border-width);
   --focusRing-color: var(--color-primary);
   --focusRing-offset: var(--outline-offset-2);
 

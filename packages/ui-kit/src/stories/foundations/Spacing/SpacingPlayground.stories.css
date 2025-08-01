@@ -299,7 +299,7 @@
   border: 2px solid var(--color-panel-border);
   border-radius: var(--radius-md);
   overflow: hidden;
-  transition: width var(--duration-medium) var(--ease-default);
+  transition: width var(--duration-slow10) var(--ease-default);
   box-shadow: var(--shadow-lg);
 }
 

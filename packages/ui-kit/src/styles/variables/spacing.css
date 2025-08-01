@@ -16,7 +16,7 @@
   --spacing-small20: calc(var(--spacing-base) * 1); /* 4px */
   --spacing-small10: calc(var(--spacing-base) * 2); /* 8px */
   --spacing-small5: calc(var(--spacing-base) * 3); /* 12px */
-  --spacing-normal: calc(var(--spacing-base) * 4); /* 16px - standard spacing */
+  --spacing: calc(var(--spacing-base) * 4); /* 16px - standard spacing */
   --spacing-large5: calc(var(--spacing-base) * 5); /* 20px */
   --spacing-large10: calc(var(--spacing-base) * 6); /* 24px */
   --spacing-large20: calc(var(--spacing-base) * 8); /* 32px */
@@ -28,9 +28,9 @@
   --spacing-largest: calc(var(--spacing-base) * 32); /* 128px */
 
   /* Component-specific spacing */
-  --spacing-buttonX: var(--spacing-normal);
+  --spacing-buttonX: var(--spacing);
   --spacing-buttonY: var(--spacing-small10);
-  --spacing-inputX: var(--spacing-normal);
+  --spacing-inputX: var(--spacing);
   --spacing-inputY: var(--spacing-small10);
   --spacing-card: var(--spacing-large10);
   --spacing-modal: var(--spacing-large20);
@@ -39,12 +39,12 @@
   /* Gap spacing for flexbox/grid */
   --gap-small20: var(--spacing-small20);
   --gap-small10: var(--spacing-small10);
-  --gap-normal: var(--spacing-small5);
+  --gap: var(--spacing-small5);
   --gap-large10: var(--spacing-large5);
   --gap-large20: var(--spacing-large10);
 
   /* Container spacing */
-  --container-paddingMobile: var(--spacing-normal);
+  --container-paddingMobile: var(--spacing);
   --container-paddingTablet: var(--spacing-large10);
   --container-paddingDesktop: var(--spacing-large20);
 
@@ -52,7 +52,7 @@
   --maxWidth-smallest: 20rem; /* 320px */
   --maxWidth-small20: 24rem; /* 384px */
   --maxWidth-small10: 28rem; /* 448px */
-  --maxWidth-normal: 32rem; /* 512px */
+  --maxWidth: 32rem; /* 512px */
   --maxWidth-large10: 36rem; /* 576px */
   --maxWidth-large20: 42rem; /* 672px */
   --maxWidth-large30: 48rem; /* 768px */
@@ -100,7 +100,7 @@
   :root {
     --spacing-section: var(--spacing-large20);
     --spacing-modal: var(--spacing-large10);
-    --spacing-card: var(--spacing-normal);
+    --spacing-card: var(--spacing);
   }
 }
 

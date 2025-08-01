@@ -1277,7 +1277,7 @@ pre.example-code {
   padding: var(--spacing-xl);
   border-radius: var(--radius-md);
   position: relative;
-  transition: all var(--duration-normal) var(--easing-default);
+  transition: all var(--duration) var(--easing-default);
 }
 
 .elevation-layer span {

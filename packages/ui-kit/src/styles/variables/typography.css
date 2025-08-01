@@ -20,7 +20,7 @@
   --font-size-small30: 0.75rem; /* 12px */
   --font-size-small20: 0.833rem; /* 13.3px */
   --font-size-small10: 0.875rem; /* 14px */
-  --font-size-normal: 1rem; /* 16px - browser default */
+  --font-size: 1rem; /* 16px - browser default */
   --font-size-large10: 1.2rem; /* 19.2px */
   --font-size-large20: 1.44rem; /* 23px */
   --font-size-large30: 1.728rem; /* 27.6px */
@@ -35,14 +35,14 @@
   --font-size-h3: var(--font-size-large30);
   --font-size-h4: var(--font-size-large20);
   --font-size-h5: var(--font-size-large10);
-  --font-size-h6: var(--font-size-normal);
+  --font-size-h6: var(--font-size);
   --font-size-body: var(--font-size-small10);
   --font-size-caption: var(--font-size-small20);
   --font-size-code: var(--font-size-small10); /* Increased from xs for better readability */
 
   /* Font Weights */
   --font-weight-light: 300;
-  --font-weight-regular: 400;
+  --font-weight: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
@@ -50,8 +50,8 @@
   /* Line Heights */
   --line-height-tightest: 1;
   --line-height-tight10: 1.2;
-  --line-height-tight5: 1.375;
-  --line-height-normal: 1.5;
+  --line-height-tight20: 1.375;
+  --line-height: 1.5;
   --line-height-loose5: 1.625;
   --line-height-loose10: 1.75;
   --line-height-loosest: 2;
@@ -60,7 +60,7 @@
   /* Letter Spacing */
   --letter-spacing-tightest: -0.05em;
   --letter-spacing-tight10: -0.025em;
-  --letter-spacing-normal: 0;
+  --letter-spacing: 0;
   --letter-spacing-wide10: 0.025em;
   --letter-spacing-wide20: 0.05em;
   --letter-spacing-widest: 0.1em;

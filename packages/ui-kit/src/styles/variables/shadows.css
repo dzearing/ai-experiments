@@ -20,7 +20,7 @@
     0 1px 3px 0 hsl(var(--shadow-color) / var(--shadow-opacityLight)),
     0 1px 2px -1px hsl(var(--shadow-color) / var(--shadow-opacityLight));
 
-  --shadow-normal:
+  --shadow:
     0 4px 6px -1px hsl(var(--shadow-color) / var(--shadow-opacityLight)),
     0 2px 4px -2px hsl(var(--shadow-color) / var(--shadow-opacityLight));
 
@@ -37,24 +37,24 @@
   /* Inner Shadows */
   --shadow-innerSoft: inset 0 1px 2px 0 hsl(var(--shadow-color) / var(--shadow-opacityLight));
 
-  --shadow-innerNormal: inset 0 2px 4px 0 hsl(var(--shadow-color) / var(--shadow-opacityLight));
+  --shadow-inner: inset 0 2px 4px 0 hsl(var(--shadow-color) / var(--shadow-opacityLight));
 
   /* Component Shadows */
   --shadow-button: var(--shadow-soft10);
-  --shadow-buttonHover: var(--shadow-normal);
-  --shadow-card: var(--shadow-normal);
+  --shadow-buttonHover: var(--shadow);
+  --shadow-card: var(--shadow);
   --shadow-cardHover: var(--shadow-hard10);
   --shadow-dropdown: var(--shadow-hard10);
   --shadow-modal: var(--shadow-hard20);
   --shadow-popover: var(--shadow-hard10);
-  --shadow-tooltip: var(--shadow-normal);
+  --shadow-tooltip: var(--shadow);
 
   /* Focus Shadow */
   --shadow-focus: 0 0 0 3px hsl(var(--color-primary) / 0.2);
 
   /* Text Shadow */
   --textShadow-soft: 0 1px 2px hsl(var(--shadow-color) / var(--shadow-opacityDark));
-  --textShadow-normal: 0 2px 4px hsl(var(--shadow-color) / var(--shadow-opacityDark));
+  --textShadow: 0 2px 4px hsl(var(--shadow-color) / var(--shadow-opacityDark));
   --textShadow-hard: 0 4px 8px hsl(var(--shadow-color) / var(--shadow-opacityDark));
 }
 

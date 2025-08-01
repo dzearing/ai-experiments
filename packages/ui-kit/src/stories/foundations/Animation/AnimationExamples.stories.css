@@ -11,7 +11,7 @@ h3 {
 }
 
 h4 {
-  margin: 0 0 var(--spacing-normal) 0;
+  margin: 0 0 var(--spacing) 0;
   font-size: var(--font-size-normal);
   color: var(--color-body-text);
 }
@@ -30,14 +30,14 @@ h4 {
 .loading-example {
   background: var(--color-panel-background);
   border: 1px solid var(--color-panel-border);
-  border-radius: var(--radius-normal);
+  border-radius: var(--radius);
   padding: var(--spacing-large10);
 }
 
 /* Skeleton Screen */
 .skeleton-card {
   display: flex;
-  gap: var(--spacing-normal);
+  gap: var(--spacing);
 }
 
 .skeleton-avatar {
@@ -69,7 +69,7 @@ h4 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--spacing-normal);
+  gap: var(--spacing);
   padding: var(--spacing-large20) 0;
 }
 
@@ -95,7 +95,7 @@ h4 {
   background: var(--color-panel-background-hover);
   border-radius: var(--radius-small10);
   overflow: hidden;
-  margin-top: var(--spacing-normal);
+  margin-top: var(--spacing);
 }
 
 .progress-fill {
@@ -103,7 +103,7 @@ h4 {
   width: 0;
   background: var(--color-buttonPrimary-background);
   border-radius: var(--radius-small10);
-  transition: width var(--duration-normal) var(--easing-default);
+  transition: width var(--duration) var(--easing-default);
 }
 
 .progress-fill.loading {
@@ -130,7 +130,7 @@ h4 {
 .micro-example {
   background: var(--color-panel-background);
   border: 1px solid var(--color-panel-border);
-  border-radius: var(--radius-normal);
+  border-radius: var(--radius);
   padding: var(--spacing-large10);
   text-align: center;
 }
@@ -144,7 +144,7 @@ h4 {
   border: 2px solid var(--color-panel-border);
   border-radius: var(--radius-full);
   cursor: pointer;
-  transition: all var(--duration-normal) var(--easing-default);
+  transition: all var(--duration) var(--easing-default);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -154,7 +154,7 @@ h4 {
   width: 24px;
   height: 24px;
   fill: var(--color-panel-text-disabled);
-  transition: all var(--duration-normal) var(--easing-default);
+  transition: all var(--duration) var(--easing-default);
 }
 
 .like-button:hover {
@@ -163,7 +163,7 @@ h4 {
 
 .like-button.liked .like-icon {
   fill: #e91e63;
-  animation: like-bounce var(--duration-normal) var(--easing-bounce);
+  animation: like-bounce var(--duration) var(--easing-bounce);
 }
 
 .like-burst {
@@ -215,12 +215,12 @@ h4 {
   display: flex;
   align-items: center;
   gap: var(--spacing-small20);
-  padding: var(--spacing-small10) var(--spacing-normal);
+  padding: var(--spacing-small10) var(--spacing);
   background: var(--color-buttonNeutral-background);
   border: 1px solid var(--color-buttonNeutral-border);
   border-radius: var(--radius-small10);
   cursor: pointer;
-  transition: all var(--duration-normal) var(--easing-default);
+  transition: all var(--duration) var(--easing-default);
 }
 
 .save-icon {
@@ -229,13 +229,13 @@ h4 {
   fill: none;
   stroke: var(--color-buttonNeutral-text);
   stroke-width: 2;
-  transition: all var(--duration-normal) var(--easing-default);
+  transition: all var(--duration) var(--easing-default);
 }
 
 .save-button.saved .save-icon {
   fill: var(--color-buttonPrimary-background);
   stroke: var(--color-buttonPrimary-background);
-  animation: save-bounce var(--duration-normal) var(--easing-bounce);
+  animation: save-bounce var(--duration) var(--easing-bounce);
 }
 
 @keyframes save-bounce {
@@ -251,12 +251,12 @@ h4 {
 }
 
 .copy-button {
-  padding: var(--spacing-small10) var(--spacing-normal);
+  padding: var(--spacing-small10) var(--spacing);
   background: var(--color-buttonNeutral-background);
   border: 1px solid var(--color-buttonNeutral-border);
   border-radius: var(--radius-small10);
   cursor: pointer;
-  transition: all var(--duration-normal) var(--easing-default);
+  transition: all var(--duration) var(--easing-default);
   overflow: hidden;
   position: relative;
 }
@@ -267,7 +267,7 @@ h4 {
 }
 
 .copy-text.copied {
-  animation: copy-feedback var(--duration-normal) var(--easing-default);
+  animation: copy-feedback var(--duration) var(--easing-default);
 }
 
 @keyframes copy-feedback {
@@ -282,7 +282,7 @@ h4 {
 }
 
 .demo-controls {
-  margin-bottom: var(--spacing-normal);
+  margin-bottom: var(--spacing);
 }
 
 .toggle-label {
@@ -314,12 +314,12 @@ h4 {
 }
 
 .nav-button {
-  padding: var(--spacing-small10) var(--spacing-normal);
+  padding: var(--spacing-small10) var(--spacing);
   background: var(--color-buttonNeutral-background);
   border: 1px solid var(--color-buttonNeutral-border);
   border-radius: var(--radius-small10);
   cursor: pointer;
-  transition: all var(--duration-normal) var(--easing-default);
+  transition: all var(--duration) var(--easing-default);
 }
 
 .nav-button:hover:not(:disabled) {
@@ -343,7 +343,7 @@ h4 {
   height: 400px;
   background: var(--color-panel-background);
   border: 1px solid var(--color-panel-border);
-  border-radius: var(--radius-normal);
+  border-radius: var(--radius);
   overflow: hidden;
 }
 
@@ -451,20 +451,20 @@ h4 {
 
 /* Entering animations for title */
 .page-content.active.entering-from-right .page-title {
-  animation: stagger-enter-from-right var(--duration-normal) var(--easing-default) both;
+  animation: stagger-enter-from-right var(--duration) var(--easing-default) both;
 }
 
 .page-content.active.entering-from-left .page-title {
-  animation: stagger-enter-from-left var(--duration-normal) var(--easing-default) both;
+  animation: stagger-enter-from-left var(--duration) var(--easing-default) both;
 }
 
 /* Exiting animations for title */
 .page-content.exiting.exiting-to-left .page-title {
-  animation: stagger-exit-to-left var(--duration-normal) var(--easing-default) both;
+  animation: stagger-exit-to-left var(--duration) var(--easing-default) both;
 }
 
 .page-content.exiting.exiting-to-right .page-title {
-  animation: stagger-exit-to-right var(--duration-normal) var(--easing-default) both;
+  animation: stagger-exit-to-right var(--duration) var(--easing-default) both;
 }
 
 /* Content wrapper animations */
@@ -555,7 +555,7 @@ h4 {
 .page-items {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-normal);
+  gap: var(--spacing);
   margin-bottom: var(--spacing-large20);
 }
 
@@ -563,7 +563,7 @@ h4 {
   display: flex;
   align-items: center;
   gap: var(--spacing-small10);
-  padding: var(--spacing-normal);
+  padding: var(--spacing);
   background: var(--color-panelRaised-background);
   border: 1px solid var(--color-panelRaised-border);
   border-radius: var(--radius-small10);
@@ -590,7 +590,7 @@ h4 {
   border: 1px solid var(--color-buttonPrimary-border);
   border-radius: var(--radius-small10);
   cursor: pointer;
-  transition: all var(--duration-normal) var(--easing-default);
+  transition: all var(--duration) var(--easing-default);
 }
 
 .page-action:hover {
@@ -600,7 +600,7 @@ h4 {
 
 .animation-info {
   margin-top: var(--spacing-large10);
-  padding: var(--spacing-normal);
+  padding: var(--spacing);
   background: var(--color-panelRaised-background);
   border: 1px solid var(--color-panelRaised-border);
   border-radius: var(--radius-small10);
@@ -629,7 +629,7 @@ h4 {
 
 .modal-triggers {
   display: flex;
-  gap: var(--spacing-normal);
+  gap: var(--spacing);
 }
 
 /* Modal Overlay */
@@ -657,7 +657,7 @@ h4 {
 }
 
 .modal h2 {
-  margin: 0 0 var(--spacing-normal) 0;
+  margin: 0 0 var(--spacing) 0;
 }
 
 .modal-actions {
@@ -670,12 +670,12 @@ h4 {
 /* Dialog */
 .dialog {
   background: var(--color-dialog-background);
-  border-radius: var(--radius-normal);
+  border-radius: var(--radius);
   padding: var(--spacing-large10);
   max-width: 400px;
   width: 90%;
   box-shadow: var(--shadow-xl);
-  animation: scale-in var(--duration-normal) var(--easing-bounce);
+  animation: scale-in var(--duration) var(--easing-bounce);
 }
 
 .dialog h3 {
@@ -696,7 +696,7 @@ h4 {
 
 .list-controls {
   display: flex;
-  gap: var(--spacing-normal);
+  gap: var(--spacing);
   margin-bottom: var(--spacing-large10);
 }
 
@@ -711,13 +711,13 @@ h4 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--spacing-normal);
+  padding: var(--spacing);
   background: var(--color-panel-background);
   border: 1px solid var(--color-panel-border);
   border-radius: var(--radius-small10);
   opacity: 0;
   transform: translateX(-20px);
-  animation: slide-in-left var(--duration-normal) var(--easing-enter) forwards;
+  animation: slide-in-left var(--duration) var(--easing-enter) forwards;
   animation-delay: calc(var(--index) * var(--delay-stagger));
 }
 
@@ -730,7 +730,7 @@ h4 {
   border-radius: var(--radius-small10);
   font-size: var(--font-size-lg);
   cursor: pointer;
-  transition: all var(--duration-normal) var(--easing-default);
+  transition: all var(--duration) var(--easing-default);
 }
 
 .remove-button:hover {
@@ -752,7 +752,7 @@ h4 {
 .gesture-example {
   background: var(--color-panel-background);
   border: 1px solid var(--color-panel-border);
-  border-radius: var(--radius-normal);
+  border-radius: var(--radius);
   padding: var(--spacing-large10);
 }
 
@@ -765,7 +765,7 @@ h4 {
 
 .swipe-item {
   position: relative;
-  padding: var(--spacing-normal);
+  padding: var(--spacing);
   background: var(--color-panelRaised-background);
   border: 1px solid var(--color-panelRaised-border);
   border-radius: var(--radius-small10);
@@ -811,13 +811,13 @@ h4 {
 .drag-item {
   display: flex;
   align-items: center;
-  gap: var(--spacing-normal);
-  padding: var(--spacing-normal);
+  gap: var(--spacing);
+  padding: var(--spacing);
   background: var(--color-panelRaised-background);
   border: 1px solid var(--color-panelRaised-border);
   border-radius: var(--radius-small10);
   cursor: move;
-  transition: all var(--duration-normal) var(--easing-default);
+  transition: all var(--duration) var(--easing-default);
   user-select: none;
 }
 

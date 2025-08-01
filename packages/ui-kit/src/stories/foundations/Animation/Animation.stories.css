@@ -10,11 +10,11 @@
   background-color: var(--color-buttonPrimary-background);
   color: var(--color-buttonPrimary-text);
   border: 1px solid var(--color-buttonPrimary-border);
-  border-radius: var(--radius-normal);
+  border-radius: var(--radius);
   font-size: var(--font-size-normal);
   font-weight: var(--font-weight-medium);
   cursor: pointer;
-  transition: all var(--duration-normal) var(--easing-default);
+  transition: all var(--duration) var(--easing-default);
   margin-bottom: var(--spacing-large10);
 }
 
@@ -38,17 +38,17 @@
 .duration-list {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-normal);
+  gap: var(--spacing);
 }
 
 .duration-item {
   display: flex;
   align-items: center;
   gap: var(--spacing-large10);
-  padding: var(--spacing-normal);
+  padding: var(--spacing);
   background: var(--color-panel-background);
   border: 1px solid var(--color-panel-border);
-  border-radius: var(--radius-normal);
+  border-radius: var(--radius);
 }
 
 .duration-info {
@@ -85,7 +85,7 @@
   position: relative;
   overflow: hidden;
   cursor: pointer;
-  transition: all var(--duration-normal) var(--easing-default);
+  transition: all var(--duration) var(--easing-default);
 }
 
 .duration-box:hover {
@@ -134,19 +134,19 @@
 .easing-list {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-normal);
+  gap: var(--spacing);
 }
 
 .easing-item {
   display: flex;
   align-items: center;
   gap: var(--spacing-large10);
-  padding: var(--spacing-normal);
+  padding: var(--spacing);
   background: var(--color-panel-background);
   border: 1px solid var(--color-panel-border);
-  border-radius: var(--radius-normal);
+  border-radius: var(--radius);
   cursor: pointer;
-  transition: all var(--duration-normal) var(--easing-default);
+  transition: all var(--duration) var(--easing-default);
 }
 
 .easing-item:hover {
@@ -229,8 +229,8 @@
 .animation-card {
   background: var(--color-panel-background);
   border: 1px solid var(--color-panel-border);
-  border-radius: var(--radius-normal);
-  padding: var(--spacing-normal);
+  border-radius: var(--radius);
+  padding: var(--spacing);
   display: flex;
   flex-direction: column;
   gap: var(--spacing-small10);
@@ -265,11 +265,11 @@
 
 /* Apply animations */
 .animation-element.fade-in {
-  animation: fade-in var(--duration-normal) var(--easing-enter);
+  animation: fade-in var(--duration) var(--easing-enter);
 }
 
 .animation-element.fade-out {
-  animation: fade-out var(--duration-normal) var(--easing-exit);
+  animation: fade-out var(--duration) var(--easing-exit);
 }
 
 .animation-element.slide-in-up {
@@ -289,11 +289,11 @@
 }
 
 .animation-element.scale-in {
-  animation: scale-in var(--duration-normal) var(--easing-bounce);
+  animation: scale-in var(--duration) var(--easing-bounce);
 }
 
 .animation-element.scale-out {
-  animation: scale-out var(--duration-normal) var(--easing-exit);
+  animation: scale-out var(--duration) var(--easing-exit);
 }
 
 .animation-element.spin {
@@ -316,7 +316,7 @@
   border-radius: var(--radius-small10);
   font-size: var(--font-size-small10);
   cursor: pointer;
-  transition: all var(--duration-normal) var(--easing-default);
+  transition: all var(--duration) var(--easing-default);
 }
 
 .animation-trigger:hover {
@@ -342,17 +342,17 @@
 .transition-list {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-normal);
+  gap: var(--spacing);
 }
 
 .transition-item {
   display: flex;
   align-items: center;
   gap: var(--spacing-large10);
-  padding: var(--spacing-normal);
+  padding: var(--spacing);
   background: var(--color-panel-background);
   border: 1px solid var(--color-panel-border);
-  border-radius: var(--radius-normal);
+  border-radius: var(--radius);
 }
 
 .transition-info {
@@ -381,7 +381,7 @@
   justify-content: center;
   background: var(--color-panelRaised-background);
   border: 1px solid var(--color-panelRaised-border);
-  border-radius: var(--radius-normal);
+  border-radius: var(--radius);
   font-weight: var(--font-weight-medium);
   cursor: pointer;
   user-select: none;
@@ -389,7 +389,7 @@
 
 /* Transition variations */
 .transition-box.hover-all {
-  transition: all var(--duration-normal) var(--easing-default);
+  transition: all var(--duration) var(--easing-default);
 }
 
 .transition-box.hover-all.hovered {
@@ -443,7 +443,7 @@
 .accessibility-info {
   background: var(--color-noticeInfo-background);
   border: 1px solid var(--color-noticeInfo-border);
-  border-radius: var(--radius-normal);
+  border-radius: var(--radius);
   padding: var(--spacing-large10);
 }
 
@@ -474,13 +474,13 @@
   height: 100px;
   background: var(--color-buttonPrimary-background);
   color: var(--color-buttonPrimary-text);
-  border-radius: var(--radius-normal);
+  border-radius: var(--radius);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: var(--font-weight-medium);
   transform: translateX(0);
-  transition: transform var(--duration-normal) var(--easing-default);
+  transition: transform var(--duration) var(--easing-default);
 }
 
 .motion-test-box.animating {
@@ -498,7 +498,7 @@
 .stagger-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--spacing-normal);
+  gap: var(--spacing);
   width: 100%;
   max-width: 400px;
 }
@@ -507,7 +507,7 @@
   aspect-ratio: 1;
   background: var(--color-panel-background);
   border: 1px solid var(--color-panel-border);
-  border-radius: var(--radius-normal);
+  border-radius: var(--radius);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -520,7 +520,7 @@
 }
 
 .stagger-item.animating {
-  animation: stagger-in var(--duration-normal) var(--easing-enter) forwards;
+  animation: stagger-in var(--duration) var(--easing-enter) forwards;
   animation-delay: calc(var(--index) * var(--delay-stagger));
 }
 

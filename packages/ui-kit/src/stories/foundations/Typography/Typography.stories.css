@@ -12,7 +12,7 @@
   font-size: var(--font-size-large20);
   font-weight: var(--font-weight-semibold);
   color: var(--color-body-text);
-  margin: var(--spacing-large30) 0 var(--spacing-normal) 0;
+  margin: var(--spacing-large30) 0 var(--spacing) 0;
 }
 
 .story-container h3:first-child {
@@ -24,17 +24,17 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-small10);
-  padding: var(--spacing-normal);
+  padding: var(--spacing);
   background: var(--color-panel-background);
   border: 1px solid var(--color-panel-border);
-  border-radius: var(--radius-normal);
-  margin-bottom: var(--spacing-normal);
+  border-radius: var(--radius);
+  margin-bottom: var(--spacing);
 }
 
 .type-specimen-info {
   display: flex;
   align-items: baseline;
-  gap: var(--spacing-normal);
+  gap: var(--spacing);
   flex-wrap: wrap;
 }
 
@@ -72,16 +72,16 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-small10);
-  padding: var(--spacing-normal);
+  padding: var(--spacing);
   background: var(--color-panel-background);
   border: 1px solid var(--color-panel-border);
-  border-radius: var(--radius-normal);
+  border-radius: var(--radius);
 }
 
 .weight-specimen-info {
   display: flex;
   align-items: center;
-  gap: var(--spacing-normal);
+  gap: var(--spacing);
 }
 
 .weight-value {
@@ -115,11 +115,11 @@
 .line-height-example {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-normal);
+  gap: var(--spacing);
   padding: var(--spacing-large10);
   background: var(--color-panel-background);
   border: 1px solid var(--color-panel-border);
-  border-radius: var(--radius-normal);
+  border-radius: var(--radius);
 }
 
 .line-height-info h4 {
@@ -155,7 +155,7 @@
   padding: var(--spacing-large10);
   background: var(--color-panel-background);
   border: 1px solid var(--color-panel-border);
-  border-radius: var(--radius-normal);
+  border-radius: var(--radius);
 }
 
 .font-family-specimen h4 {
@@ -173,7 +173,7 @@
   padding: var(--spacing-smallest) var(--spacing-small20);
   border-radius: var(--radius-small10);
   display: inline-block;
-  margin-bottom: var(--spacing-normal);
+  margin-bottom: var(--spacing);
 }
 
 .font-family-specimen p {
@@ -191,7 +191,7 @@
   padding: var(--spacing-large10);
   background: var(--color-panel-background);
   border: 1px solid var(--color-panel-border);
-  border-radius: var(--radius-normal);
+  border-radius: var(--radius);
 }
 
 .responsive-demo h3 {
@@ -199,7 +199,7 @@
 }
 
 .responsive-table {
-  margin: var(--spacing-normal) 0;
+  margin: var(--spacing) 0;
   overflow-x: auto;
 }
 
@@ -225,11 +225,11 @@
   padding: var(--spacing-large10);
   background: var(--color-body-background);
   border: 1px solid var(--color-panel-border);
-  border-radius: var(--radius-normal);
+  border-radius: var(--radius);
   text-align: center;
 }
 
 .responsive-example h1 {
-  margin: 0 0 var(--spacing-normal) 0;
+  margin: 0 0 var(--spacing) 0;
   color: var(--color-body-text);
 }
