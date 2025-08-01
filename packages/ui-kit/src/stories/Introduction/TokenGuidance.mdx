@@ -1,0 +1,211 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Token Guidance" />
+
+# Token Guidance
+
+Design tokens are the foundation of the Claude Flow UI Kit. They provide a consistent, scalable way to manage design decisions across your application.
+
+## What are Design Tokens?
+
+Design tokens are named values that represent the visual design atoms of a design system — they are the smallest pieces of a design that can be systematically applied across your product.
+
+## Token Anatomy
+
+Every token in our system follows a consistent naming pattern:
+
+```
+--[domain]-[component]-[2ndComponent]-[etc]
+```
+
+Components within a token name:
+- Multi-word components are camelCased (e.g., `easeIn`, not `ease-in`)
+- Each component provides semantic context for the token's purpose
+
+Let's break this down:
+
+### 1. Domain
+The category of design property:
+- `color` - Color values for all UI elements
+- `spacing` - Consistent spacing units (padding, margin, gap)
+- `font` - Typography properties (size, weight, family)
+- `radius` - Border radius values
+- `shadow` - Box shadow effects
+- `border` - Border widths and styles
+- `duration` - Animation durations
+- `easing` - Animation timing functions
+
+### 2. Surface (for colors)
+The context where the color is applied:
+- `body` - Main page background
+- `panel` - Card and container surfaces
+- `button` - Interactive button elements
+- `input` - Form input fields
+- `dialog` - Modal and dialog surfaces
+- And many more...
+
+### 3. Concept/Scale
+The specific property or scale value:
+- For colors: `background`, `text`, `border`, `shadow`, etc.
+- For typography: Scale values follow patterns like `normal`, `small10`, `small20`, `smallest`, `large10`, `large20`, `largest`
+- For spacing: Consistent scale from `smallest` to `largest` with intermediate steps
+- For shadows: `softest`, `soft10`, `normal`, `hard10`, `hard20`, `hardest`
+- For borders: `thinnest`, `normal`, `thick10`, `thickest`
+
+### 4. State (optional)
+Interactive states:
+- `hover` - Mouse hover state
+- `active` - Active/pressed state
+- `focus` - Keyboard focus state
+- `disabled` - Disabled state
+
+## Examples
+
+### Color Token
+```css
+--color-buttonPrimary-background-hover
+```
+- **Domain**: `color`
+- **Surface**: `buttonPrimary`
+- **Concept**: `background`
+- **State**: `hover`
+
+### Spacing Token
+```css
+--spacing-large10
+```
+- **Domain**: `spacing`
+- **Scale**: `large10` (10% larger than normal)
+
+### Typography Token
+```css
+--font-size-h1
+```
+- **Domain**: `font`
+- **Property**: `size`
+- **Semantic**: `h1`
+
+### Animation Token
+```css
+--duration-fadeIn
+```
+- **Domain**: `duration`
+- **Type**: `fadeIn` (camelCased multi-word component)
+
+### Easing Token
+```css
+--easing-easeInOut
+```
+- **Domain**: `easing`
+- **Type**: `easeInOut` (camelCased multi-word component)
+
+## Token Categories
+
+### Color Tokens
+Our color system provides semantic color tokens that adapt to light and dark modes automatically. Colors are organized by surface (where they're used) and concept (what they style).
+
+### Typography Tokens
+Typography tokens include font families, sizes (using a modular scale with predictable naming: `smallest`, `small30`, `small20`, `small10`, `normal`, `large10`, `large20`, `large30`, `large40`, `large50`, `largest`), weights, line heights, and letter spacing values.
+
+### Spacing Tokens
+Based on a 4px grid system, spacing tokens ensure consistent rhythm throughout your UI. They follow a predictable scale: `--spacing-smallest` (2px) through `--spacing-largest` (128px), with intermediate values like `--spacing-small10`, `--spacing-normal`, `--spacing-large10`, etc.
+
+### Shadow Tokens
+Elevation is communicated through a consistent shadow system, from subtle `--shadow-softest` to dramatic `--shadow-hardest`, with intermediate values like `--shadow-soft10`, `--shadow-normal`, `--shadow-hard10`, `--shadow-hard20`.
+
+### Border Tokens
+Border tokens include widths (`--border-width-thinnest` to `--border-width-thickest`) and radius values (`--radius-smallest` to `--radius-full`), following a consistent naming pattern.
+
+## Best Practices
+
+### 1. Use Semantic Tokens
+Always prefer semantic tokens over raw values:
+```css
+/* ✅ Good */
+.button {
+  background: var(--color-buttonPrimary-background);
+  padding: var(--spacing-buttonY) var(--spacing-buttonX);
+}
+
+/* ❌ Avoid */
+.button {
+  background: #007bff;
+  padding: 8px 16px;
+}
+```
+
+### 2. Respect the Scale
+Use tokens from the established scale rather than arbitrary values:
+```css
+/* ✅ Good */
+.card {
+  margin-bottom: var(--spacing-large10);
+}
+
+/* ❌ Avoid */
+.card {
+  margin-bottom: 23px;
+}
+```
+
+### 3. Consider Context
+Choose tokens that match the semantic meaning:
+```css
+/* ✅ Good - uses input-specific tokens */
+.form-field {
+  background: var(--color-input-background);
+  border: 1px solid var(--color-input-border);
+}
+
+/* ❌ Avoid - uses generic tokens */
+.form-field {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+```
+
+### 4. Handle States Properly
+Always define interactive states using state-specific tokens:
+```css
+.button {
+  background: var(--color-buttonPrimary-background);
+  
+  &:hover {
+    background: var(--color-buttonPrimary-background-hover);
+  }
+  
+  &:active {
+    background: var(--color-buttonPrimary-background-active);
+  }
+  
+  &:disabled {
+    background: var(--color-buttonPrimary-background-disabled);
+  }
+}
+```
+
+## Interactive Token Browser
+
+Explore all available tokens using our [interactive Token Browser](/story/foundations-token-browser--default). You can:
+- Switch between different token domains
+- See live previews of each token
+- Copy token names for use in your code
+- Understand the relationships between tokens
+
+## Migration Guide
+
+If you're migrating from hardcoded values to design tokens:
+
+1. **Audit Current Styles**: Identify all hardcoded values
+2. **Map to Tokens**: Find the appropriate semantic token
+3. **Test Themes**: Ensure your UI works across all themes
+4. **Document Exceptions**: If you must use custom values, document why
+
+## Token Stability
+
+We follow semantic versioning for our tokens:
+- **Major**: Breaking changes (token removal or rename)
+- **Minor**: New tokens added
+- **Patch**: Token value adjustments
+
+Subscribe to our changelog to stay updated on token changes.

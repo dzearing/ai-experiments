@@ -46,7 +46,7 @@ Created comprehensive documentation for:
 - Real-world examples (loading states, micro-interactions, page transitions)
 
 #### **Spacing System** (`/src/stories/foundations/Spacing/`)
-- 8px grid system documentation
+- 4px grid system documentation
 - Visual token reference (0 to 5xl)
 - Component spacing patterns
 - Responsive spacing examples
@@ -158,7 +158,7 @@ import { ThemeProvider } from '@claude-flow/ui-kit-react';
 2. **Never use hardcoded values**: All colors, spacing, animations from tokens
 3. **Use logical properties**: For RTL/LTR support
 4. **Respect user preferences**: Motion, color scheme, contrast
-5. **Follow the 8px grid**: All spacing values are multiples of 8
+5. **Follow the 4px grid**: All spacing values are multiples of 4
 
 ## Remaining Tasks
 

@@ -93,8 +93,7 @@
 .border-line {
   width: 100%;
   height: 0;
-  border-bottom: var(--border-width-thin) solid var(--color-border);
-  border-bottom-color: var(--color-primary);
+  /* Border properties will be set inline by the component */
 }
 
 /* Border Radius Visuals */
@@ -418,7 +417,7 @@
 .placeholder-box {
   padding: var(--spacing-xl);
   background: var(--color-surface-secondary);
-  border: var(--border-width-medium) var(--border-style-dashed) var(--color-border);
+  border: var(--border-width-medium) dashed var(--color-border);
   border-radius: var(--radius-md);
   color: var(--color-body-text-soft40);
   font-size: var(--font-size-sm);
@@ -427,7 +426,7 @@
 .focus-indicator {
   padding: var(--spacing-md);
   background: var(--color-surface-primary);
-  border: var(--border-width-medium) var(--border-style-dotted) var(--color-primary);
+  border: var(--border-width-medium) dotted var(--color-primary);
   border-radius: var(--radius-md);
   color: var(--color-body-text);
   font-size: var(--font-size-sm);
@@ -496,7 +495,7 @@
   background: var(--color-surface-primary);
   font-size: var(--font-size-md);
   color: var(--color-body-text);
-  transition: all var(--transition-medium);
+  transition: all var(--duration-normal) var(--easing-default);
 }
 
 .demo-code {
@@ -599,7 +598,7 @@
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-medium);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all var(--duration-fast) var(--easing-default);
 }
 
 .outline-button:hover {
@@ -690,7 +689,7 @@
   border-radius: var(--radius-button);
   font-size: var(--font-size-md);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all var(--duration-fast) var(--easing-default);
 }
 
 .focus-default:focus,
@@ -721,7 +720,7 @@
   border: var(--border-width-thin) solid var(--color-border);
   border-radius: var(--radius-card);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all var(--duration-fast) var(--easing-default);
 }
 
 .focus-card:hover {

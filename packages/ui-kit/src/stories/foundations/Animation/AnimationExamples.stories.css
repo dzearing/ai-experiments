@@ -6,38 +6,38 @@
 
 /* Common styles */
 h3 {
-  margin: 0 0 var(--spacing-lg) 0;
+  margin: 0 0 var(--spacing-large10) 0;
   color: var(--color-body-text);
 }
 
 h4 {
-  margin: 0 0 var(--spacing-md) 0;
-  font-size: var(--font-size-base);
+  margin: 0 0 var(--spacing-normal) 0;
+  font-size: var(--font-size-normal);
   color: var(--color-body-text);
 }
 
 /* Loading States Demo */
 .loading-states-demo {
-  margin-bottom: var(--spacing-2xl);
+  margin-bottom: var(--spacing-large40);
 }
 
 .loading-examples {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: var(--spacing-lg);
+  gap: var(--spacing-large10);
 }
 
 .loading-example {
   background: var(--color-panel-background);
   border: 1px solid var(--color-panel-border);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-lg);
+  border-radius: var(--radius-normal);
+  padding: var(--spacing-large10);
 }
 
 /* Skeleton Screen */
 .skeleton-card {
   display: flex;
-  gap: var(--spacing-md);
+  gap: var(--spacing-normal);
 }
 
 .skeleton-avatar {
@@ -51,7 +51,7 @@ h4 {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-small10);
 }
 
 .skeleton-line {
@@ -61,7 +61,7 @@ h4 {
 }
 
 .pulse {
-  animation: pulse var(--duration-sluggish) var(--easing-ease-in-out) infinite;
+  animation: pulse var(--duration-slow20) var(--easing-ease-in-out) infinite;
 }
 
 /* Spinner */
@@ -69,8 +69,8 @@ h4 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--spacing-md);
-  padding: var(--spacing-xl) 0;
+  gap: var(--spacing-normal);
+  padding: var(--spacing-large20) 0;
 }
 
 .spinner {
@@ -84,7 +84,7 @@ h4 {
 
 .spinner-container p {
   margin: 0;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-small10);
   color: var(--color-panel-text-disabled);
 }
 
@@ -93,16 +93,16 @@ h4 {
   width: 100%;
   height: 8px;
   background: var(--color-panel-background-hover);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small10);
   overflow: hidden;
-  margin-top: var(--spacing-md);
+  margin-top: var(--spacing-normal);
 }
 
 .progress-fill {
   height: 100%;
   width: 0;
   background: var(--color-buttonPrimary-background);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small10);
   transition: width var(--duration-normal) var(--easing-default);
 }
 
@@ -118,20 +118,20 @@ h4 {
 
 /* Micro-interactions Demo */
 .micro-interactions-demo {
-  margin-bottom: var(--spacing-2xl);
+  margin-bottom: var(--spacing-large40);
 }
 
 .micro-examples {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--spacing-lg);
+  gap: var(--spacing-large10);
 }
 
 .micro-example {
   background: var(--color-panel-background);
   border: 1px solid var(--color-panel-border);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-lg);
+  border-radius: var(--radius-normal);
+  padding: var(--spacing-large10);
   text-align: center;
 }
 
@@ -144,7 +144,7 @@ h4 {
   border: 2px solid var(--color-panel-border);
   border-radius: var(--radius-full);
   cursor: pointer;
-  transition: var(--transition-all);
+  transition: all var(--duration-normal) var(--easing-default);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -154,7 +154,7 @@ h4 {
   width: 24px;
   height: 24px;
   fill: var(--color-panel-text-disabled);
-  transition: var(--transition-all);
+  transition: all var(--duration-normal) var(--easing-default);
 }
 
 .like-button:hover {
@@ -185,7 +185,7 @@ h4 {
   height: 100%;
   border: 2px solid #e91e63;
   border-radius: var(--radius-full);
-  animation: burst var(--duration-slow) var(--easing-ease-out);
+  animation: burst var(--duration-slow10) var(--easing-default);
 }
 
 @keyframes like-bounce {
@@ -208,19 +208,19 @@ h4 {
 .save-items {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-small10);
 }
 
 .save-button {
   display: flex;
   align-items: center;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-sm) var(--spacing-md);
+  gap: var(--spacing-small20);
+  padding: var(--spacing-small10) var(--spacing-normal);
   background: var(--color-buttonNeutral-background);
   border: 1px solid var(--color-buttonNeutral-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small10);
   cursor: pointer;
-  transition: var(--transition-all);
+  transition: all var(--duration-normal) var(--easing-default);
 }
 
 .save-icon {
@@ -229,7 +229,7 @@ h4 {
   fill: none;
   stroke: var(--color-buttonNeutral-text);
   stroke-width: 2;
-  transition: var(--transition-all);
+  transition: all var(--duration-normal) var(--easing-default);
 }
 
 .save-button.saved .save-icon {
@@ -247,16 +247,16 @@ h4 {
 .copy-items {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-small10);
 }
 
 .copy-button {
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--spacing-small10) var(--spacing-normal);
   background: var(--color-buttonNeutral-background);
   border: 1px solid var(--color-buttonNeutral-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small10);
   cursor: pointer;
-  transition: var(--transition-all);
+  transition: all var(--duration-normal) var(--easing-default);
   overflow: hidden;
   position: relative;
 }
@@ -278,19 +278,19 @@ h4 {
 
 /* Page Transitions Demo */
 .page-transitions-demo {
-  margin-bottom: var(--spacing-2xl);
+  margin-bottom: var(--spacing-large40);
 }
 
 .demo-controls {
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-normal);
 }
 
 .toggle-label {
   display: inline-flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-small10);
   cursor: pointer;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-small10);
   color: var(--color-body-text);
 }
 
@@ -301,30 +301,30 @@ h4 {
 }
 
 .demo-description {
-  color: var(--color-text-secondary);
-  margin-bottom: var(--spacing-lg);
-  font-size: var(--font-size-sm);
+  color: var(--color-body-text-soft20);
+  margin-bottom: var(--spacing-large10);
+  font-size: var(--font-size-small10);
   min-height: 2.5em; /* Prevent layout shift when text changes */
 }
 
 .page-nav {
   display: flex;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-lg);
+  gap: var(--spacing-small10);
+  margin-bottom: var(--spacing-large10);
 }
 
 .nav-button {
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--spacing-small10) var(--spacing-normal);
   background: var(--color-buttonNeutral-background);
   border: 1px solid var(--color-buttonNeutral-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small10);
   cursor: pointer;
-  transition: var(--transition-all);
+  transition: all var(--duration-normal) var(--easing-default);
 }
 
 .nav-button:hover:not(:disabled) {
-  background: var(--color-buttonNeutral-backgroundHover);
-  border-color: var(--color-buttonNeutral-borderHover);
+  background: var(--color-buttonNeutral-background-hover);
+  border-color: var(--color-buttonNeutral-border-hover);
 }
 
 .nav-button.active {
@@ -343,14 +343,14 @@ h4 {
   height: 400px;
   background: var(--color-panel-background);
   border: 1px solid var(--color-panel-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-normal);
   overflow: hidden;
 }
 
 .page-content {
   position: absolute;
   inset: 0;
-  padding: var(--spacing-xl);
+  padding: var(--spacing-large20);
   opacity: 0;
   pointer-events: none;
   transform: translateX(0);
@@ -365,11 +365,11 @@ h4 {
 
 /* Entering animations - pages coming into view */
 .page-content.active.entering-from-right {
-  animation: enter-from-right var(--duration-sluggish) var(--easing-ease-out) both;
+  animation: enter-from-right var(--duration-slow10) var(--easing-default) both;
 }
 
 .page-content.active.entering-from-left {
-  animation: enter-from-left var(--duration-sluggish) var(--easing-ease-out) both;
+  animation: enter-from-left var(--duration-slow10) var(--easing-default) both;
 }
 
 /* Exiting state - ensure page is visible before animating out */
@@ -381,11 +381,11 @@ h4 {
 
 /* Exiting animations - pages leaving view */
 .page-content.exiting.exiting-to-left {
-  animation: exit-to-left var(--duration-sluggish) var(--easing-ease-out) both;
+  animation: exit-to-left var(--duration-slow10) var(--easing-default) both;
 }
 
 .page-content.exiting.exiting-to-right {
-  animation: exit-to-right var(--duration-sluggish) var(--easing-ease-out) both;
+  animation: exit-to-right var(--duration-slow10) var(--easing-default) both;
 }
 
 /* Keyframe animations */
@@ -435,7 +435,7 @@ h4 {
 
 /* Staggered content animations - Title */
 .page-content .page-title {
-  margin: 0 0 var(--spacing-lg) 0;
+  margin: 0 0 var(--spacing-large10) 0;
   opacity: 0;
 }
 
@@ -451,20 +451,20 @@ h4 {
 
 /* Entering animations for title */
 .page-content.active.entering-from-right .page-title {
-  animation: stagger-enter-from-right var(--duration-normal) var(--easing-ease-out) both;
+  animation: stagger-enter-from-right var(--duration-normal) var(--easing-default) both;
 }
 
 .page-content.active.entering-from-left .page-title {
-  animation: stagger-enter-from-left var(--duration-normal) var(--easing-ease-out) both;
+  animation: stagger-enter-from-left var(--duration-normal) var(--easing-default) both;
 }
 
 /* Exiting animations for title */
 .page-content.exiting.exiting-to-left .page-title {
-  animation: stagger-exit-to-left var(--duration-normal) var(--easing-ease-out) both;
+  animation: stagger-exit-to-left var(--duration-normal) var(--easing-default) both;
 }
 
 .page-content.exiting.exiting-to-right .page-title {
-  animation: stagger-exit-to-right var(--duration-normal) var(--easing-ease-out) both;
+  animation: stagger-exit-to-right var(--duration-normal) var(--easing-default) both;
 }
 
 /* Content wrapper animations */
@@ -485,20 +485,20 @@ h4 {
 
 /* Entering animations for content wrapper */
 .page-content.active.entering-from-right .page-content-wrapper {
-  animation: stagger-enter-from-right var(--duration-deliberate) var(--easing-ease-out) var(--delay-short) both;
+  animation: stagger-enter-from-right var(--duration-deliberate) var(--easing-default) var(--delay-fast10) both;
 }
 
 .page-content.active.entering-from-left .page-content-wrapper {
-  animation: stagger-enter-from-left var(--duration-deliberate) var(--easing-ease-out) var(--delay-short) both;
+  animation: stagger-enter-from-left var(--duration-deliberate) var(--easing-default) var(--delay-fast10) both;
 }
 
 /* Exiting animations for content wrapper */
 .page-content.exiting.exiting-to-left .page-content-wrapper {
-  animation: stagger-exit-to-left var(--duration-deliberate) var(--easing-ease-out) var(--delay-short) both;
+  animation: stagger-exit-to-left var(--duration-deliberate) var(--easing-default) var(--delay-fast10) both;
 }
 
 .page-content.exiting.exiting-to-right .page-content-wrapper {
-  animation: stagger-exit-to-right var(--duration-deliberate) var(--easing-ease-out) var(--delay-short) both;
+  animation: stagger-exit-to-right var(--duration-deliberate) var(--easing-default) var(--delay-fast10) both;
 }
 
 /* Staggered keyframes */
@@ -548,30 +548,30 @@ h4 {
 }
 
 .page-content .page-subtitle {
-  color: var(--color-text-secondary);
-  margin-bottom: var(--spacing-xl);
+  color: var(--color-body-text-soft20);
+  margin-bottom: var(--spacing-large20);
 }
 
 .page-items {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-xl);
+  gap: var(--spacing-normal);
+  margin-bottom: var(--spacing-large20);
 }
 
 .page-item {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-md);
+  gap: var(--spacing-small10);
+  padding: var(--spacing-normal);
   background: var(--color-panelRaised-background);
   border: 1px solid var(--color-panelRaised-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small10);
 }
 
 .item-icon {
   color: var(--color-accent);
-  font-size: var(--fontSize-lg);
+  font-size: var(--font-size-large10);
 }
 
 .item-text {
@@ -580,17 +580,17 @@ h4 {
 }
 
 .page-footer {
-  margin-top: var(--spacing-xl);
+  margin-top: var(--spacing-large20);
 }
 
 .page-action {
-  padding: var(--spacing-sm) var(--spacing-lg);
+  padding: var(--spacing-small10) var(--spacing-large10);
   background: var(--color-buttonPrimary-background);
   color: var(--color-buttonPrimary-text);
   border: 1px solid var(--color-buttonPrimary-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small10);
   cursor: pointer;
-  transition: var(--transition-all);
+  transition: all var(--duration-normal) var(--easing-default);
 }
 
 .page-action:hover {
@@ -599,37 +599,37 @@ h4 {
 }
 
 .animation-info {
-  margin-top: var(--spacing-lg);
-  padding: var(--spacing-md);
+  margin-top: var(--spacing-large10);
+  padding: var(--spacing-normal);
   background: var(--color-panelRaised-background);
   border: 1px solid var(--color-panelRaised-border);
-  border-radius: var(--radius-sm);
-  font-size: var(--fontSize-sm);
+  border-radius: var(--radius-small10);
+  font-size: var(--font-size-small10);
 }
 
 .animation-info p {
-  margin-bottom: var(--spacing-sm);
-  font-weight: var(--fontWeight-medium);
+  margin-bottom: var(--spacing-small10);
+  font-weight: var(--font-weight-medium);
 }
 
 .animation-info ul {
   margin: 0;
-  padding-left: var(--spacing-lg);
-  color: var(--color-text-secondary);
+  padding-left: var(--spacing-large10);
+  color: var(--color-body-text-soft20);
 }
 
 .animation-info li {
-  margin-bottom: var(--spacing-xs);
+  margin-bottom: var(--spacing-small20);
 }
 
 /* Modal & Dialog Demo */
 .modal-dialog-demo {
-  margin-bottom: var(--spacing-2xl);
+  margin-bottom: var(--spacing-large40);
 }
 
 .modal-triggers {
   display: flex;
-  gap: var(--spacing-md);
+  gap: var(--spacing-normal);
 }
 
 /* Modal Overlay */
@@ -648,8 +648,8 @@ h4 {
 /* Modal */
 .modal {
   background: var(--color-modal-background);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-xl);
+  border-radius: var(--radius-large10);
+  padding: var(--spacing-large20);
   max-width: 500px;
   width: 90%;
   box-shadow: var(--shadow-2xl);
@@ -657,21 +657,21 @@ h4 {
 }
 
 .modal h2 {
-  margin: 0 0 var(--spacing-md) 0;
+  margin: 0 0 var(--spacing-normal) 0;
 }
 
 .modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: var(--spacing-sm);
-  margin-top: var(--spacing-lg);
+  gap: var(--spacing-small10);
+  margin-top: var(--spacing-large10);
 }
 
 /* Dialog */
 .dialog {
   background: var(--color-dialog-background);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-lg);
+  border-radius: var(--radius-normal);
+  padding: var(--spacing-large10);
   max-width: 400px;
   width: 90%;
   box-shadow: var(--shadow-xl);
@@ -679,31 +679,31 @@ h4 {
 }
 
 .dialog h3 {
-  margin: 0 0 var(--spacing-sm) 0;
+  margin: 0 0 var(--spacing-small10) 0;
 }
 
 .dialog-actions {
   display: flex;
   justify-content: flex-end;
-  gap: var(--spacing-sm);
-  margin-top: var(--spacing-lg);
+  gap: var(--spacing-small10);
+  margin-top: var(--spacing-large10);
 }
 
 /* List Animations Demo */
 .list-animations-demo {
-  margin-bottom: var(--spacing-2xl);
+  margin-bottom: var(--spacing-large40);
 }
 
 .list-controls {
   display: flex;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
+  gap: var(--spacing-normal);
+  margin-bottom: var(--spacing-large10);
 }
 
 .animated-list {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-small10);
   animation: fade-in var(--duration-fast) var(--easing-enter);
 }
 
@@ -711,10 +711,10 @@ h4 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--spacing-md);
+  padding: var(--spacing-normal);
   background: var(--color-panel-background);
   border: 1px solid var(--color-panel-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small10);
   opacity: 0;
   transform: translateX(-20px);
   animation: slide-in-left var(--duration-normal) var(--easing-enter) forwards;
@@ -727,10 +727,10 @@ h4 {
   background: var(--color-buttonDanger-background);
   color: var(--color-buttonDanger-text);
   border: 1px solid var(--color-buttonDanger-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small10);
   font-size: var(--font-size-lg);
   cursor: pointer;
-  transition: var(--transition-all);
+  transition: all var(--duration-normal) var(--easing-default);
 }
 
 .remove-button:hover {
@@ -740,35 +740,35 @@ h4 {
 
 /* Gesture Feedback Demo */
 .gesture-feedback-demo {
-  margin-bottom: var(--spacing-2xl);
+  margin-bottom: var(--spacing-large40);
 }
 
 .gesture-examples {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: var(--spacing-lg);
+  gap: var(--spacing-large10);
 }
 
 .gesture-example {
   background: var(--color-panel-background);
   border: 1px solid var(--color-panel-border);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-lg);
+  border-radius: var(--radius-normal);
+  padding: var(--spacing-large10);
 }
 
 /* Swipe Actions */
 .swipe-list {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-small10);
 }
 
 .swipe-item {
   position: relative;
-  padding: var(--spacing-md);
+  padding: var(--spacing-normal);
   background: var(--color-panelRaised-background);
   border: 1px solid var(--color-panelRaised-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small10);
   cursor: pointer;
   overflow: hidden;
   transition: transform var(--duration-fast) var(--easing-default);
@@ -805,19 +805,19 @@ h4 {
 .drag-list {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-small10);
 }
 
 .drag-item {
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
-  padding: var(--spacing-md);
+  gap: var(--spacing-normal);
+  padding: var(--spacing-normal);
   background: var(--color-panelRaised-background);
   border: 1px solid var(--color-panelRaised-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small10);
   cursor: move;
-  transition: var(--transition-all);
+  transition: all var(--duration-normal) var(--easing-default);
   user-select: none;
 }
 

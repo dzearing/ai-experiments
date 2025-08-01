@@ -162,8 +162,56 @@ const r = class r {
   }
 };
 r.STORAGE_KEY = "claude-flow-theme", r.DEFAULT_THEME = "default", r.DEFAULT_MODE = "auto";
-let d = r;
-const i = new d(), s = {
+let s = r;
+const h = new s();
+class a extends HTMLElement {
+  constructor() {
+    super(), this.themeStylesheet = null, this.baseStylesheet = null, this.shadow = this.attachShadow({ mode: "open" });
+  }
+  static get observedAttributes() {
+    return ["theme", "mode"];
+  }
+  connectedCallback() {
+    this.loadTheme();
+  }
+  attributeChangedCallback(e, t, n) {
+    t !== n && (e === "theme" || e === "mode") && this.loadTheme();
+  }
+  async loadTheme() {
+    const e = this.getAttribute("theme") || "default", t = this.getAttribute("mode") || "light";
+    this.shadow.innerHTML = "";
+    const n = document.createElement("div");
+    n.setAttribute("data-theme", e), n.setAttribute("data-theme-type", t), n.className = "theme-preview-wrapper", this.baseStylesheet || (this.baseStylesheet = document.createElement("link"), this.baseStylesheet.rel = "stylesheet", this.baseStylesheet.href = "/styles.css"), this.themeStylesheet && this.themeStylesheet.remove(), this.themeStylesheet = document.createElement("link"), this.themeStylesheet.rel = "stylesheet", this.themeStylesheet.href = `/themes/${e}-${t}.css`;
+    const i = document.createElement("style");
+    i.textContent = `
+      :host {
+        display: block;
+      }
+      
+      .theme-preview-wrapper {
+        /* Ensure the wrapper takes full space */
+        width: 100%;
+        height: 100%;
+        /* Apply base styles that would normally be on body */
+        font-family: var(--font-family);
+        font-size: var(--font-size-body);
+        line-height: var(--line-height-normal);
+        color: var(--color-body-text);
+        background-color: var(--color-body-background);
+      }
+      
+      /* Reset any inherited styles */
+      .theme-preview-wrapper * {
+        all: initial;
+        font-family: inherit;
+      }
+    `;
+    const d = document.createElement("slot");
+    n.appendChild(d), this.shadow.appendChild(this.baseStylesheet.cloneNode()), this.shadow.appendChild(this.themeStylesheet), this.shadow.appendChild(i), this.shadow.appendChild(n);
+  }
+}
+typeof window < "u" && !customElements.get("theme-preview") && customElements.define("theme-preview", a);
+const c = {
   /**
    * Initialize the UI kit (applies theme from localStorage)
    */
@@ -216,7 +264,8 @@ const i = new d(), s = {
   }
 };
 export {
-  d as ThemeManager,
-  s as UIKit,
-  i as themeManager
+  s as ThemeManager,
+  a as ThemePreview,
+  c as UIKit,
+  h as themeManager
 };

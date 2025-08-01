@@ -39,6 +39,10 @@ interface ResolutionContext {
   colors: GeneratedTheme['colors'];
   surfaces: Map<string, SurfaceTokens>;
   backgroundLevels: Record<string, { light: string; dark: string }>;
+  currentSurface?: {
+    name: string;
+    tokens: Partial<SurfaceTokens>;
+  };
   adjustments?: Array<{
     surface: string;
     token: string;
@@ -84,11 +88,20 @@ function generateSurfaceTokenSet(
 ): SurfaceTokens {
   const tokens: SurfaceTokens = {} as SurfaceTokens;
 
+  // Set current surface context for self-references
+  const contextWithCurrent = {
+    ...context,
+    currentSurface: {
+      name: surface.name,
+      tokens: tokens
+    }
+  };
+
   // Generate base tokens
-  tokens.background = resolveColor(surface.base.background, context);
+  tokens.background = resolveColor(surface.base.background, contextWithCurrent);
   
   // Generate text with contrast validation
-  const rawText = resolveColor(surface.base.text, context);
+  const rawText = resolveColor(surface.base.text, contextWithCurrent);
   tokens.text = validateAndAdjustContrast(
     rawText,
     tokens.background,
@@ -96,13 +109,13 @@ function generateSurfaceTokenSet(
     'normal',
     surface.name,
     'text',
-    context
+    contextWithCurrent
   );
   
-  tokens.border = resolveColor(surface.base.border, context);
+  tokens.border = resolveColor(surface.base.border, contextWithCurrent);
 
   if (surface.base.link) {
-    const rawLink = resolveColor(surface.base.link, context);
+    const rawLink = resolveColor(surface.base.link, contextWithCurrent);
     tokens.link = validateAndAdjustContrast(
       rawLink,
       tokens.background,
@@ -110,12 +123,12 @@ function generateSurfaceTokenSet(
       'normal',
       surface.name,
       'link',
-      context
+      contextWithCurrent
     );
   }
 
   if (surface.base.icon) {
-    const rawIcon = resolveColor(surface.base.icon, context);
+    const rawIcon = resolveColor(surface.base.icon, contextWithCurrent);
     tokens.icon = validateAndAdjustContrast(
       rawIcon,
       tokens.background,
@@ -123,14 +136,14 @@ function generateSurfaceTokenSet(
       'ui',
       surface.name,
       'icon',
-      context
+      contextWithCurrent
     );
   }
 
   // linkVisited defaults to link if not explicitly defined
   if (surface.base.link) {
     if (surface.base.linkVisited) {
-      const rawLinkVisited = resolveColor(surface.base.linkVisited, context);
+      const rawLinkVisited = resolveColor(surface.base.linkVisited, contextWithCurrent);
       tokens.linkVisited = validateAndAdjustContrast(
         rawLinkVisited,
         tokens.background,
@@ -138,7 +151,7 @@ function generateSurfaceTokenSet(
         'normal',
         surface.name,
         'linkVisited',
-        context
+        contextWithCurrent
       );
     } else {
       // Default linkVisited to the same as link
@@ -152,16 +165,16 @@ function generateSurfaceTokenSet(
 
   // Generate variants
   if (surface.variants) {
-    generateVariants(tokens, surface.variants, context);
+    generateVariants(tokens, surface.variants, contextWithCurrent);
   }
 
   // Generate state variations
   if (surface.states) {
-    generateStates(tokens, surface.states, surface.name, context);
+    generateStates(tokens, surface.states, surface.name, contextWithCurrent);
   }
 
   // Generate additional common variations
-  generateCommonVariations(tokens, surface, context);
+  generateCommonVariations(tokens, surface, contextWithCurrent);
 
   return tokens;
 }
@@ -219,6 +232,16 @@ function resolveColorReference(ref: string, context: ResolutionContext): string 
   if (parts.length >= 2) {
     const [surfaceName, ...tokenPath] = parts;
     if (surfaceName) {
+      // Check if this is a self-reference to the current surface being generated
+      if (context.currentSurface && surfaceName === context.currentSurface.name) {
+        const tokenName = tokenPath.join('.');
+        const value = context.currentSurface.tokens[tokenName as keyof SurfaceTokens];
+        if (typeof value === 'string') {
+          return value;
+        }
+      }
+      
+      // Otherwise, look in already-generated surfaces
       const surface = context.surfaces.get(surfaceName);
       if (surface && tokenPath.length > 0) {
         const tokenName = tokenPath.join('.');
@@ -406,10 +429,53 @@ function generateVariants(
   // Soft variants (reduced contrast)
   if (variants?.soft) {
     for (const percentage of variants.soft) {
-      // Text soft variants
+      // Text soft variants - ensure minimum contrast
       if (tokens.text) {
         const key = `textSoft${percentage}` as keyof SurfaceTokens;
-        tokens[key] = mix(tokens.text, tokens.background, percentage / 100);
+        // Mix the text with background
+        const mixedColor = mix(tokens.text, tokens.background, percentage / 100);
+        
+        // For soft30 and above, ensure AA compliance (4.5:1)
+        // For lower percentages, allow lower contrast but ensure readability
+        // For themes targeting AAA, all soft variants should meet AAA
+        const themeTargetLevel = context.theme.accessibility.targetLevel || 'AA';
+        const minContrastLevel = themeTargetLevel === 'AAA' ? 'AAA' : (percentage >= 30 ? 'AA' : 'relaxed');
+        
+        // Check contrast and adjust if needed
+        if (minContrastLevel !== 'relaxed' && !meetsContrast(mixedColor, tokens.background, minContrastLevel, 'normal')) {
+          // If contrast is too low, adjust the color
+          // In dark mode, lighten; in light mode, darken
+          let adjustedColor = mixedColor;
+          let adjustment = 5;
+          const maxAdjustment = 50;
+          
+          while (!meetsContrast(adjustedColor, tokens.background, minContrastLevel, 'normal') && adjustment <= maxAdjustment) {
+            adjustedColor = context.mode === 'dark' 
+              ? lighten(mixedColor, adjustment)
+              : darken(mixedColor, adjustment);
+            adjustment += 5;
+          }
+          
+          tokens[key] = adjustedColor;
+        } else if (minContrastLevel === 'relaxed') {
+          // For lower soft variants, ensure at least 3:1 contrast
+          let adjustedColor = mixedColor;
+          
+          // Simple check - if the color is too close to background, adjust it
+          const rgb1 = parseColor(mixedColor);
+          const rgb2 = parseColor(tokens.background);
+          const colorDiff = Math.abs(rgb1.r - rgb2.r) + Math.abs(rgb1.g - rgb2.g) + Math.abs(rgb1.b - rgb2.b);
+          
+          if (colorDiff < 100) { // Colors are too similar
+            adjustedColor = context.mode === 'dark'
+              ? lighten(mixedColor, 20)
+              : darken(mixedColor, 20);
+          }
+          
+          tokens[key] = adjustedColor;
+        } else {
+          tokens[key] = mixedColor;
+        }
       }
 
       // Background soft variants

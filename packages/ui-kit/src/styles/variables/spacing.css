@@ -1,108 +1,112 @@
 /**
  * Spacing Variables
  * 
- * Based on an 8px grid system for consistent rhythm
+ * Based on a 4px grid system for consistent rhythm
  * Use these for padding, margin, gap, and positioning
  */
 
 :root {
   /* Base spacing unit */
-  --spacing-base: 8px;
+  --spacing-base: 4px;
 
   /* Spacing Scale */
-  --spacing-0: 0;
+  --spacing-none: 0;
   --spacing-px: 1px;
-  --spacing-2xs: calc(var(--spacing-base) * 0.25); /* 2px */
-  --spacing-xs: calc(var(--spacing-base) * 0.5); /* 4px */
-  --spacing-sm: calc(var(--spacing-base) * 1); /* 8px */
-  --spacing-md: calc(var(--spacing-base) * 2); /* 16px */
-  --spacing-lg: calc(var(--spacing-base) * 3); /* 24px */
-  --spacing-xl: calc(var(--spacing-base) * 4); /* 32px */
-  --spacing-2xl: calc(var(--spacing-base) * 6); /* 48px */
-  --spacing-3xl: calc(var(--spacing-base) * 8); /* 64px */
-  --spacing-4xl: calc(var(--spacing-base) * 12); /* 96px */
-  --spacing-5xl: calc(var(--spacing-base) * 16); /* 128px */
+  --spacing-smallest: calc(var(--spacing-base) * 0.5); /* 2px */
+  --spacing-small20: calc(var(--spacing-base) * 1); /* 4px */
+  --spacing-small10: calc(var(--spacing-base) * 2); /* 8px */
+  --spacing-small5: calc(var(--spacing-base) * 3); /* 12px */
+  --spacing-normal: calc(var(--spacing-base) * 4); /* 16px - standard spacing */
+  --spacing-large5: calc(var(--spacing-base) * 5); /* 20px */
+  --spacing-large10: calc(var(--spacing-base) * 6); /* 24px */
+  --spacing-large20: calc(var(--spacing-base) * 8); /* 32px */
+  --spacing-large30: calc(var(--spacing-base) * 10); /* 40px */
+  --spacing-large40: calc(var(--spacing-base) * 12); /* 48px */
+  --spacing-large50: calc(var(--spacing-base) * 16); /* 64px */
+  --spacing-large60: calc(var(--spacing-base) * 20); /* 80px */
+  --spacing-large70: calc(var(--spacing-base) * 24); /* 96px */
+  --spacing-largest: calc(var(--spacing-base) * 32); /* 128px */
 
   /* Component-specific spacing */
-  --spacing-button-x: var(--spacing-md);
-  --spacing-button-y: var(--spacing-sm);
-  --spacing-input-x: var(--spacing-md);
-  --spacing-input-y: var(--spacing-sm);
-  --spacing-card: var(--spacing-lg);
-  --spacing-modal: var(--spacing-xl);
-  --spacing-section: var(--spacing-3xl);
+  --spacing-buttonX: var(--spacing-normal);
+  --spacing-buttonY: var(--spacing-small10);
+  --spacing-inputX: var(--spacing-normal);
+  --spacing-inputY: var(--spacing-small10);
+  --spacing-card: var(--spacing-large10);
+  --spacing-modal: var(--spacing-large20);
+  --spacing-section: var(--spacing-large40);
 
   /* Gap spacing for flexbox/grid */
-  --gap-xs: var(--spacing-xs);
-  --gap-sm: var(--spacing-sm);
-  --gap-md: var(--spacing-md);
-  --gap-lg: var(--spacing-lg);
-  --gap-xl: var(--spacing-xl);
+  --gap-small20: var(--spacing-small20);
+  --gap-small10: var(--spacing-small10);
+  --gap-normal: var(--spacing-small5);
+  --gap-large10: var(--spacing-large5);
+  --gap-large20: var(--spacing-large10);
 
   /* Container spacing */
-  --container-padding-mobile: var(--spacing-md);
-  --container-padding-tablet: var(--spacing-lg);
-  --container-padding-desktop: var(--spacing-xl);
+  --container-paddingMobile: var(--spacing-normal);
+  --container-paddingTablet: var(--spacing-large10);
+  --container-paddingDesktop: var(--spacing-large20);
 
   /* Max widths */
-  --max-width-xs: 20rem; /* 320px */
-  --max-width-sm: 24rem; /* 384px */
-  --max-width-md: 28rem; /* 448px */
-  --max-width-lg: 32rem; /* 512px */
-  --max-width-xl: 36rem; /* 576px */
-  --max-width-2xl: 42rem; /* 672px */
-  --max-width-3xl: 48rem; /* 768px */
-  --max-width-4xl: 56rem; /* 896px */
-  --max-width-5xl: 64rem; /* 1024px */
-  --max-width-6xl: 72rem; /* 1152px */
-  --max-width-7xl: 80rem; /* 1280px */
-  --max-width-full: 100%;
+  --maxWidth-smallest: 20rem; /* 320px */
+  --maxWidth-small20: 24rem; /* 384px */
+  --maxWidth-small10: 28rem; /* 448px */
+  --maxWidth-normal: 32rem; /* 512px */
+  --maxWidth-large10: 36rem; /* 576px */
+  --maxWidth-large20: 42rem; /* 672px */
+  --maxWidth-large30: 48rem; /* 768px */
+  --maxWidth-large40: 56rem; /* 896px */
+  --maxWidth-large50: 64rem; /* 1024px */
+  --maxWidth-large60: 72rem; /* 1152px */
+  --maxWidth-largest: 80rem; /* 1280px */
+  --maxWidth-full: 100%;
 
   /* Container max widths */
-  --container-sm: 640px;
-  --container-md: 768px;
-  --container-lg: 1024px;
-  --container-xl: 1280px;
-  --container-2xl: 1536px;
+  --container-small: 640px;
+  --container-medium: 768px;
+  --container-large: 1024px;
+  --container-larger: 1280px;
+  --container-largest: 1536px;
 
   /* Heights */
   --height-header: 64px;
   --height-footer: 80px;
   --height-input: 40px;
   --height-button: 40px;
-  --height-button-sm: 32px;
-  --height-button-lg: 48px;
+  --height-buttonSmall: 32px;
+  --height-buttonLarge: 48px;
 
   /* Z-index scale */
-  --z-index-negative: -1;
-  --z-index-0: 0;
-  --z-index-10: 10;
-  --z-index-20: 20;
-  --z-index-30: 30;
-  --z-index-40: 40;
-  --z-index-50: 50;
-  --z-index-dropdown: 1000;
-  --z-index-sticky: 1020;
-  --z-index-fixed: 1030;
-  --z-index-modal-backdrop: 1040;
-  --z-index-modal: 1050;
-  --z-index-popover: 1060;
-  --z-index-tooltip: 1070;
-  --z-index-notification: 1080;
+  --zIndex-negative: -1;
+  --zIndex-base: 0;
+  --zIndex-raised10: 10;
+  --zIndex-raised20: 20;
+  --zIndex-raised30: 30;
+  --zIndex-raised40: 40;
+  --zIndex-raised50: 50;
+  --zIndex-dropdown: 1000;
+  --zIndex-sticky: 1020;
+  --zIndex-fixed: 1030;
+  --zIndex-modalBackdrop: 1040;
+  --zIndex-modal: 1050;
+  --zIndex-popover: 1060;
+  --zIndex-tooltip: 1070;
+  --zIndex-notification: 1080;
 }
 
 /* Responsive spacing adjustments */
 @media (max-width: 640px) {
   :root {
-    --spacing-section: var(--spacing-2xl);
-    --spacing-modal: var(--spacing-lg);
-    --spacing-card: var(--spacing-md);
+    --spacing-section: var(--spacing-large20);
+    --spacing-modal: var(--spacing-large10);
+    --spacing-card: var(--spacing-normal);
   }
 }
 
 @media (min-width: 1920px) {
   :root {
-    --spacing-section: var(--spacing-4xl);
-    --container-padding-desktop: var(--spacing-2xl);
+    --spacing-section: var(--spacing-large50);
+    --container-paddingDesktop: var(--spacing-large30);
   }
 }

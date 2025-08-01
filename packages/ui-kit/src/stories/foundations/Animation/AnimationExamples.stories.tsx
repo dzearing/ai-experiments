@@ -164,7 +164,7 @@ const PageTransitionsDemo: React.FC = () => {
         setTimeout(() => {
           setIsTransitioning(false);
           setPreviousPage(-1);
-        }, 1100); // duration-sluggish (1000ms) + buffer
+        }, 500); // duration-slow10 (400ms) + buffer
       }
     };
 
@@ -186,7 +186,7 @@ const PageTransitionsDemo: React.FC = () => {
     setTimeout(() => {
       setIsTransitioning(false);
       setPreviousPage(-1);
-    }, 1100); // duration-sluggish (1000ms) + buffer
+    }, 500); // duration-slow10 (400ms) + buffer
   };
 
   // Mock content for each page

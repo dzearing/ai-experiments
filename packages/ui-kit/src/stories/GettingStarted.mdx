@@ -1,0 +1,338 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Getting Started" />
+
+# Getting Started
+
+Welcome to the Claude Flow UI Kit! This guide will help you integrate our design system into your project.
+
+## Installation
+
+The UI Kit is available as an npm package:
+
+```bash
+npm install @claude-flow/ui-kit
+```
+
+Or with pnpm:
+
+```bash
+pnpm add @claude-flow/ui-kit
+```
+
+## CSS Integration
+
+### 1. Inline Critical CSS (Recommended for Performance)
+
+To prevent flash of unstyled content (FOUC) and ensure themes are applied immediately, inline the critical CSS in your HTML `<head>`:
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <!-- Inline critical theme CSS for immediate rendering -->
+  <style>
+    /* Copy the contents of @claude-flow/ui-kit/dist/critical.css here */
+    :root { /* Base tokens */ }
+    [data-theme="default"] { /* Default theme */ }
+    /* ... other critical styles ... */
+  </style>
+  
+  <!-- Load full CSS asynchronously -->
+  <link rel="preload" href="/path/to/ui-kit/styles.css" as="style">
+  <link rel="stylesheet" href="/path/to/ui-kit/styles.css" media="print" onload="this.media='all'">
+</head>
+<body>
+  <!-- Your app -->
+</body>
+</html>
+```
+
+**Important**: Never import theme CSS in JavaScript/React components as this delays theme application until after JS parsing and execution!
+
+### 2. Build-Time Inlining
+
+For build tools like Vite, Webpack, or Next.js, configure your build to inline critical CSS:
+
+```javascript
+// vite.config.js
+export default {
+  css: {
+    transformer: 'lightningcss',
+    lightningcss: {
+      drafts: {
+        customMedia: true
+      }
+    }
+  },
+  build: {
+    cssCodeSplit: false, // Include CSS in HTML
+  }
+}
+```
+
+```javascript
+// next.config.js
+module.exports = {
+  experimental: {
+    optimizeCss: true,
+    craCompat: true,
+  },
+}
+```
+
+### 3. Server-Side Rendering (SSR)
+
+For SSR applications, inject the theme CSS during server rendering:
+
+```javascript
+// Express example
+app.get('/', (req, res) => {
+  const theme = req.cookies.theme || 'default';
+  const mode = req.cookies.colorMode || 'light';
+  
+  res.send(`
+    <!DOCTYPE html>
+    <html data-theme="${theme}" data-color-mode="${mode}">
+    <head>
+      <style>${criticalCSS}</style>
+      <link rel="stylesheet" href="/ui-kit/styles.css">
+    </head>
+    <body>
+      <div id="root">${appHtml}</div>
+    </body>
+    </html>
+  `);
+});
+```
+
+### 4. Setting Up Themes
+
+Apply themes using data attributes on the root element:
+
+```html
+<!-- Set theme and color mode -->
+<html data-theme="default" data-color-mode="light">
+```
+
+**Best Practice**: Store theme preference and apply it before first paint:
+
+```html
+<head>
+  <script>
+    // Run immediately to prevent flash
+    (function() {
+      const savedTheme = localStorage.getItem('theme') || 'default';
+      const savedMode = localStorage.getItem('colorMode') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      document.documentElement.setAttribute('data-color-mode', savedMode);
+    })();
+  </script>
+  <style>/* Inlined critical CSS */</style>
+</head>
+```
+
+### 5. Enabling Dark Mode
+
+Dark mode can be toggled by changing the `data-color-mode` attribute:
+
+```javascript
+// Toggle dark mode
+document.documentElement.setAttribute('data-color-mode', 'dark');
+
+// Toggle light mode
+document.documentElement.setAttribute('data-color-mode', 'light');
+
+// Use system preference
+const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+document.documentElement.setAttribute('data-color-mode', prefersDark ? 'dark' : 'light');
+```
+
+## Design Tokens
+
+Once the CSS is imported, you can use our design tokens throughout your styles:
+
+```css
+.my-component {
+  /* Colors */
+  background: var(--color-panel-background);
+  color: var(--color-panel-text);
+  border: 1px solid var(--color-panel-border);
+  
+  /* Spacing */
+  padding: var(--spacing-normal);
+  margin-bottom: var(--spacing-large10);
+  
+  /* Typography */
+  font-size: var(--font-size-normal);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-normal);
+  
+  /* Borders & Radius */
+  border-radius: var(--radius-normal);
+  
+  /* Shadows */
+  box-shadow: var(--shadow-md);
+  
+  /* Animation */
+  transition: all var(--duration-normal) var(--easing-default);
+}
+```
+
+## TypeScript Support
+
+If you're using TypeScript, you can import type definitions for better IDE support:
+
+```typescript
+import type { Theme, ColorToken, SpacingToken } from '@claude-flow/ui-kit';
+```
+
+## Framework Integration
+
+### React
+
+**DO NOT import CSS in React components!** Instead:
+
+1. **For Next.js**, use `_document.js`:
+```jsx
+// pages/_document.js
+import { Html, Head, Main, NextScript } from 'next/document';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
+const criticalCSS = readFileSync(
+  join(process.cwd(), 'node_modules/@claude-flow/ui-kit/dist/critical.css'),
+  'utf8'
+);
+
+export default function Document() {
+  return (
+    <Html data-theme="default" data-color-mode="light">
+      <Head>
+        <style dangerouslySetInnerHTML={{ __html: criticalCSS }} />
+        <link rel="stylesheet" href="/_next/static/css/ui-kit.css" />
+      </Head>
+      <body>
+        <Main />
+        <NextScript />
+      </body>
+    </Html>
+  );
+}
+```
+
+2. **For Vite/CRA**, modify your `index.html`:
+```html
+<!DOCTYPE html>
+<html data-theme="default" data-color-mode="light">
+<head>
+  <style>/* Paste critical CSS here */</style>
+  <link rel="stylesheet" href="/ui-kit/styles.css">
+</head>
+<body>
+  <div id="root"></div>
+</body>
+</html>
+```
+
+### Vue
+
+**For Nuxt.js**, use `app.html`:
+```html
+<!DOCTYPE html>
+<html {{ HTML_ATTRS }} data-theme="default" data-color-mode="light">
+<head {{ HEAD_ATTRS }}>
+  {{ HEAD }}
+  <style>/* Inline critical CSS here */</style>
+</head>
+<body {{ BODY_ATTRS }}>
+  {{ APP }}
+</body>
+</html>
+```
+
+**For Vue CLI**, modify `public/index.html`:
+```html
+<!DOCTYPE html>
+<html data-theme="default" data-color-mode="light">
+<head>
+  <script>
+    // Apply saved theme before paint
+    const theme = localStorage.getItem('theme') || 'default';
+    const mode = localStorage.getItem('colorMode') || 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.setAttribute('data-color-mode', mode);
+  </script>
+  <style>/* Critical CSS */</style>
+  <link rel="stylesheet" href="<%= BASE_URL %>ui-kit.css">
+</head>
+<body>
+  <div id="app"></div>
+</body>
+</html>
+```
+
+## Common Mistakes to Avoid
+
+### ❌ DON'T: Import CSS in JavaScript
+```javascript
+// This delays theme application!
+import '@claude-flow/ui-kit/dist/styles.css';
+import React from 'react';
+```
+
+### ❌ DON'T: Load CSS after JavaScript
+```html
+<body>
+  <div id="root"></div>
+  <script src="/app.js"></script>
+  <!-- CSS loads after JS = bad! -->
+  <link rel="stylesheet" href="/styles.css">
+</body>
+```
+
+### ❌ DON'T: Apply theme via JavaScript on load
+```javascript
+// This causes a flash!
+window.addEventListener('DOMContentLoaded', () => {
+  document.body.className = 'theme-default';
+});
+```
+
+### ✅ DO: Inline critical CSS and apply theme immediately
+```html
+<html data-theme="default" data-color-mode="light">
+<head>
+  <script>
+    // Apply saved preferences before paint
+    const theme = localStorage.getItem('theme') || 'default';
+    const mode = localStorage.getItem('colorMode') || 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.setAttribute('data-color-mode', mode);
+  </script>
+  <style>/* Critical CSS inlined here */</style>
+</head>
+```
+
+## Browser Support
+
+The UI Kit CSS uses modern CSS features and is tested on:
+
+- Chrome/Edge (latest)
+- Firefox (latest)
+- Safari (latest)
+- iOS Safari (latest)
+- Chrome Android (latest)
+
+## Next Steps
+
+- Explore the [Token Browser](/story/introduction-token-browser--default) to see all available design tokens
+- Check out the [Theme Explorer](/story/foundations-theme-explorer--default) to preview different themes
+- Browse the [Foundations](/story/foundations-typography--type-scale) section for detailed documentation
+- View [Component Examples](/story/foundations-animation-examples--animation-showcase) for implementation patterns
+
+## Need Help?
+
+- Check our [GitHub repository](https://github.com/claude-flow/ui-kit) for issues and discussions
+- Refer to the [API documentation](https://docs.claude-flow.com) for detailed technical reference
+- Join our [Discord community](https://discord.gg/claude-flow) for support and updates

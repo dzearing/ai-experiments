@@ -10,7 +10,7 @@ export const themeDefinitions: ThemeDefinition[] = [
   {
     id: 'default',
     name: 'Default',
-    description: 'Clean and professional design with blue primary colors',
+    description: 'Clean and professional',
     colors: {
       primary: '#1976d2', // Material Blue 700
     },
@@ -43,17 +43,19 @@ export const themeDefinitions: ThemeDefinition[] = [
     name: 'Forest',
     description: 'Natural greens and earth tones',
     colors: {
-      primary: '#22c55e', // Green 500
-      secondary: '#84cc16', // Lime 500
-      accent: '#a16207', // Amber 700
+      primary: '#307e39', // Muted forest green
+      secondary: '#6b5d54', // Muddy brown
+      accent: '#5c4a3d', // Dark muddy brown
+      neutral: '#5a5651', // Muddy gray-brown
     },
     accessibility: {
       targetLevel: 'AA',
       enforceLevel: true,
     },
     config: {
-      saturation: 5,
-      temperature: 5, // Slightly warmer
+      saturation: -25, // Moderate desaturation
+      temperature: 0, // Neutral temperature
+      contrastBoost: 5, // Slight boost for readability
     },
   },
 
@@ -143,6 +145,7 @@ export const themeDefinitions: ThemeDefinition[] = [
       enforceLevel: true,
     },
     config: {
+      saturation: -25, // More muted earth tones
       temperature: 10,
     },
   },
@@ -244,8 +247,8 @@ export const themeDefinitions: ThemeDefinition[] = [
     name: 'Arctic',
     description: 'Cool, crisp ice-inspired palette',
     colors: {
-      primary: '#0ea5e9', // Sky 500
-      secondary: '#06b6d4', // Cyan 500
+      primary: '#0284c7', // Sky 600 (less saturated)
+      secondary: '#0891b2', // Cyan 600 (less saturated)
       accent: '#e0f2fe', // Sky 100
       neutral: '#cbd5e1', // Slate 300
     },
@@ -255,7 +258,7 @@ export const themeDefinitions: ThemeDefinition[] = [
     },
     config: {
       temperature: -30, // Very cool
-      saturation: -20,
+      saturation: -35, // Much more muted
     },
   },
 

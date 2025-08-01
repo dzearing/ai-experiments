@@ -4,12 +4,12 @@ import { Meta } from '@storybook/blocks';
 
 # Spacing System
 
-Our spacing system is built on an **8px grid** that creates consistent visual rhythm throughout the interface. This mathematical approach ensures harmonious relationships between elements and improves overall design coherence.
+Our spacing system is built on a **4px grid** that creates consistent visual rhythm throughout the interface. This mathematical approach ensures harmonious relationships between elements and improves overall design coherence.
 
 ## Core Principles
 
-### 1. The 8px Grid
-Every spacing value is a multiple of 8px (our base unit). This creates predictable, scalable spacing that works across different screen sizes and contexts.
+### 1. The 4px Grid
+Every spacing value is a multiple of 4px (our base unit). This creates predictable, scalable spacing that works across different screen sizes and contexts.
 
 ### 2. Consistent Token Usage
 Always use design tokens (`var(--spacing-*)`) instead of arbitrary pixel values. This ensures:
@@ -32,26 +32,27 @@ Different contexts require different spacing approaches:
 | `--spacing-2xs` | 2px | Hairline spacing |
 | `--spacing-xs` | 4px | Icon gaps, inline elements |
 | `--spacing-sm` | 8px | Related content, small gaps |
-| `--spacing-md` | 16px | Standard padding, medium gaps |
-| `--spacing-lg` | 24px | Content groups, card padding |
-| `--spacing-xl` | 32px | Section spacing, modal padding |
-| `--spacing-2xl` | 48px | Large sections |
-| `--spacing-3xl` | 64px | Major divisions |
-| `--spacing-4xl` | 96px | Hero sections |
-| `--spacing-5xl` | 128px | Maximum spacing |
+| `--spacing-md` | 12px | Compact padding, medium gaps |
+| `--spacing-base-default` | 16px | Standard padding, default spacing |
+| `--spacing-lg` | 20px | Content groups, card padding |
+| `--spacing-xl` | 24px | Section spacing, modal padding |
+| `--spacing-2xl` | 32px | Large sections |
+| `--spacing-3xl` | 40px | Major divisions |
+| `--spacing-4xl` | 48px | Hero sections |
+| `--spacing-5xl` | 64px | Maximum spacing |
 
 ## Component-Specific Tokens
 
 Pre-defined spacing for common components ensures consistency:
 
 ```css
---spacing-button-x: var(--spacing-md);    /* 16px horizontal */
+--spacing-button-x: var(--spacing-base-default);    /* 16px horizontal */
 --spacing-button-y: var(--spacing-sm);    /* 8px vertical */
---spacing-input-x: var(--spacing-md);     /* 16px horizontal */
+--spacing-input-x: var(--spacing-base-default);     /* 16px horizontal */
 --spacing-input-y: var(--spacing-sm);     /* 8px vertical */
 --spacing-card: var(--spacing-lg);        /* 24px all sides */
---spacing-modal: var(--spacing-xl);       /* 32px all sides */
---spacing-section: var(--spacing-3xl);    /* 64px between sections */
+--spacing-modal: var(--spacing-2xl);       /* 32px all sides */
+--spacing-section: var(--spacing-4xl);    /* 48px between sections */
 ```
 
 ## Gap Utilities
@@ -61,9 +62,9 @@ For flexbox and grid layouts:
 ```css
 --gap-xs: var(--spacing-xs);   /* 4px */
 --gap-sm: var(--spacing-sm);   /* 8px */
---gap-md: var(--spacing-md);   /* 16px */
---gap-lg: var(--spacing-lg);   /* 24px */
---gap-xl: var(--spacing-xl);   /* 32px */
+--gap-md: var(--spacing-md);   /* 12px */
+--gap-lg: var(--spacing-lg);   /* 20px */
+--gap-xl: var(--spacing-xl);   /* 24px */
 ```
 
 ## Responsive Spacing
@@ -72,21 +73,21 @@ Spacing adapts to screen size for optimal layouts:
 
 ### Container Padding
 ```css
---container-padding-mobile: var(--spacing-md);    /* 16px */
---container-padding-tablet: var(--spacing-lg);    /* 24px */
---container-padding-desktop: var(--spacing-xl);   /* 32px */
+--container-padding-mobile: var(--spacing-base-default);    /* 16px */
+--container-padding-tablet: var(--spacing-xl);    /* 24px */
+--container-padding-desktop: var(--spacing-2xl);   /* 32px */
 ```
 
 ### Breakpoint Adjustments
 ```css
 /* Mobile (<640px) */
---spacing-section: var(--spacing-2xl);   /* 48px */
---spacing-modal: var(--spacing-lg);      /* 24px */
---spacing-card: var(--spacing-md);       /* 16px */
+--spacing-section: var(--spacing-2xl);   /* 32px */
+--spacing-modal: var(--spacing-xl);      /* 24px */
+--spacing-card: var(--spacing-base-default);       /* 16px */
 
 /* Large screens (>1920px) */
---spacing-section: var(--spacing-4xl);   /* 96px */
---container-padding-desktop: var(--spacing-2xl);  /* 48px */
+--spacing-section: var(--spacing-5xl);   /* 64px */
+--container-padding-desktop: var(--spacing-3xl);  /* 40px */
 ```
 
 ## Common Patterns
@@ -172,8 +173,8 @@ margin: 12px;
 padding: 20px 16px;
 
 /* New */
-margin: var(--spacing-md);
-padding: var(--spacing-lg) var(--spacing-md);
+margin: var(--spacing-base-default);
+padding: var(--spacing-lg) var(--spacing-base-default);
 ```
 
 ## Related Resources

@@ -1,0 +1,136 @@
+/* Theme Explorer Styles */
+.theme-explorer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100vh;
+  padding: 1.5rem;
+  padding-bottom: 120px; /* Space for fixed footer */
+  color: var(--color-body-text);
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+/* Explorer Header */
+.explorer-header {
+  margin-bottom: 1.5rem;
+}
+
+.explorer-header h2 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.5rem;
+  color: var(--color-body-text-hard10);
+}
+
+.explorer-header p {
+  margin: 0;
+  color: var(--color-body-text-soft30);
+  font-size: 0.875rem;
+}
+
+/* Themes Grid */
+.themes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+  row-gap: 1.5rem;
+  column-gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Theme Card Container */
+.theme-card-container {
+  width: 100%;
+  transition: opacity 0.3s ease;
+}
+
+/* Current Theme Info */
+.current-theme-info {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 1.5rem;
+  background-color: var(--color-panel-background, #ffffff);
+  border-top: 1px solid var(--color-panel-border, #e0e0e0);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  transition: background-color 300ms ease-out, 
+              border-color 300ms ease-out,
+              box-shadow 300ms ease-out;
+}
+
+/* Gradient overlay as pseudo-element for smooth transitions */
+.current-theme-info::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    color-mix(in srgb, var(--color-buttonPrimary-background, #1976d2) 25%, transparent) 0%, 
+    transparent 50%
+  );
+  pointer-events: none;
+  z-index: -1;
+}
+
+.current-theme-info h2 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.125rem;
+  color: var(--color-body-text-hard10);
+}
+
+.active-theme-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.active-theme-details p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-body-text);
+}
+
+.theme-note {
+  color: var(--color-body-text-soft30);
+  font-size: 0.875rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .themes-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .themes-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1rem;
+  }
+  
+  .theme-card-container {
+    height: 400px;
+  }
+}
+
+@media (max-width: 600px) {
+  .theme-explorer {
+    padding: 1rem;
+  }
+  
+  .themes-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .explorer-header h2 {
+    font-size: 1.25rem;
+  }
+}

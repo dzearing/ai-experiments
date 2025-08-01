@@ -7,32 +7,33 @@
 
 :root {
   /* Duration Scale */
-  --duration-instant: 100ms;
-  --duration-fast: 200ms;
+  --duration-fastest: 100ms;
+  --duration-fast20: 150ms;
+  --duration-fast10: 200ms;
   --duration-normal: 300ms;
-  --duration-slow: 500ms;
-  --duration-deliberate: 700ms;
-  --duration-sluggish: 1000ms;
+  --duration-slow10: 400ms;
+  --duration-slow20: 600ms;
+  --duration-slowest: 1000ms;
 
   /* Semantic Durations */
-  --duration-hover: var(--duration-instant);
-  --duration-focus: var(--duration-instant);
+  --duration-hover: var(--duration-fastest);
+  --duration-focus: var(--duration-fastest);
   --duration-expand: var(--duration-normal);
-  --duration-collapse: var(--duration-fast);
-  --duration-fade-in: var(--duration-fast);
-  --duration-fade-out: var(--duration-fast);
-  --duration-slide-in: var(--duration-normal);
-  --duration-slide-out: var(--duration-fast);
-  --duration-modal-in: var(--duration-normal);
-  --duration-modal-out: var(--duration-fast);
-  --duration-page-transition: var(--duration-slow);
+  --duration-collapse: var(--duration-fast10);
+  --duration-fadeIn: var(--duration-normal);
+  --duration-fadeOut: var(--duration-normal);
+  --duration-slideIn: var(--duration-normal);
+  --duration-slideOut: var(--duration-fast10);
+  --duration-modalIn: var(--duration-normal);
+  --duration-modalOut: var(--duration-fast10);
+  --duration-pageTransition: var(--duration-slow10);
 
   /* Easing Functions */
   --easing-linear: linear;
   --easing-ease: cubic-bezier(0.4, 0, 0.2, 1);
-  --easing-ease-in: cubic-bezier(0.4, 0, 1, 1);
-  --easing-ease-out: cubic-bezier(0, 0, 0.2, 1);
-  --easing-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --easing-easeIn: cubic-bezier(0.4, 0, 1, 1);
+  --easing-easeOut: cubic-bezier(0, 0, 0.2, 1);
+  --easing-easeInOut: cubic-bezier(0.4, 0, 0.2, 1);
 
   /* Specialized Easings */
   --easing-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
@@ -41,15 +42,16 @@
 
   /* Semantic Easings */
   --easing-default: var(--easing-ease);
-  --easing-enter: var(--easing-ease-out);
-  --easing-exit: var(--easing-ease-in);
-  --easing-move: var(--easing-ease-in-out);
+  --easing-enter: var(--easing-easeOut);
+  --easing-exit: var(--easing-easeIn);
+  --easing-move: var(--easing-easeInOut);
 
   /* Delays */
   --delay-none: 0ms;
-  --delay-short: 100ms;
-  --delay-medium: 200ms;
-  --delay-long: 400ms;
+  --delay-fast10: 50ms;
+  --delay-normal: 100ms;
+  --delay-slow10: 200ms;
+  --delay-slow20: 400ms;
   --delay-stagger: 50ms;
 
   /* Animation Fill Modes */
@@ -73,29 +75,19 @@
   --origin-bottom-right: bottom right;
   --origin-bottom-left: bottom left;
 
-  /* Common Transitions */
-  --transition-all: all var(--duration-fast) var(--easing-default);
-  --transition-colors:
-    background-color var(--duration-fast) var(--easing-default),
-    border-color var(--duration-fast) var(--easing-default),
-    color var(--duration-fast) var(--easing-default),
-    fill var(--duration-fast) var(--easing-default),
-    stroke var(--duration-fast) var(--easing-default);
-  --transition-opacity: opacity var(--duration-fast) var(--easing-default);
-  --transition-transform: transform var(--duration-normal) var(--easing-default);
-  --transition-shadow: box-shadow var(--duration-fast) var(--easing-default);
 }
 
 /* Reduced motion preferences */
 @media (prefers-reduced-motion: reduce) {
   :root {
     /* Set all durations to near-instant */
-    --duration-instant: 1ms;
-    --duration-fast: 1ms;
+    --duration-fastest: 1ms;
+    --duration-fast20: 1ms;
+    --duration-fast10: 1ms;
     --duration-normal: 1ms;
-    --duration-slow: 1ms;
-    --duration-deliberate: 1ms;
-    --duration-sluggish: 1ms;
+    --duration-slow10: 1ms;
+    --duration-slow20: 1ms;
+    --duration-slowest: 1ms;
 
     /* Use linear easing for reduced motion */
     --easing-default: var(--easing-linear);
@@ -104,15 +96,16 @@
     --easing-move: var(--easing-linear);
 
     /* Remove delays */
-    --delay-short: 0ms;
-    --delay-medium: 0ms;
-    --delay-long: 0ms;
+    --delay-fast10: 0ms;
+    --delay-normal: 0ms;
+    --delay-slow10: 0ms;
+    --delay-slow20: 0ms;
     --delay-stagger: 0ms;
   }
 }
 
 /* Keyframe Animations */
-@keyframes fade-in {
+@keyframes fadeIn {
   from {
     opacity: 0;
   }
@@ -121,7 +114,7 @@
   }
 }
 
-@keyframes fade-out {
+@keyframes fadeOut {
   from {
     opacity: 1;
   }
@@ -130,7 +123,7 @@
   }
 }
 
-@keyframes slide-in-up {
+@keyframes slideInUp {
   from {
     transform: translateY(100%);
     opacity: 0;
@@ -141,7 +134,7 @@
   }
 }
 
-@keyframes slide-in-down {
+@keyframes slideInDown {
   from {
     transform: translateY(-100%);
     opacity: 0;
@@ -152,7 +145,7 @@
   }
 }
 
-@keyframes slide-in-left {
+@keyframes slideInLeft {
   from {
     transform: translateX(-100%);
     opacity: 0;
@@ -163,7 +156,7 @@
   }
 }
 
-@keyframes slide-in-right {
+@keyframes slideInRight {
   from {
     transform: translateX(100%);
     opacity: 0;
@@ -174,7 +167,7 @@
   }
 }
 
-@keyframes scale-in {
+@keyframes scaleIn {
   from {
     transform: scale(0);
     opacity: 0;
@@ -185,7 +178,7 @@
   }
 }
 
-@keyframes scale-out {
+@keyframes scaleOut {
   from {
     transform: scale(1);
     opacity: 1;

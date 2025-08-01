@@ -286,11 +286,15 @@ export interface ThemeTokens {
   '--color-panel-background-hard20': string;
   '--color-panel-background-soft10': string;
   '--color-panel-background-soft20': string;
+  '--color-panel-background-soft30': string;
+  '--color-panel-background-soft40': string;
   '--color-panel-border': string;
   '--color-panel-border-hard10': string;
   '--color-panel-border-hard20': string;
   '--color-panel-border-soft10': string;
   '--color-panel-border-soft20': string;
+  '--color-panel-border-soft30': string;
+  '--color-panel-border-soft40': string;
   '--color-panel-icon': string;
   '--color-panel-icon-active': string;
   '--color-panel-icon-disabled': string;
@@ -307,6 +311,8 @@ export interface ThemeTokens {
   '--color-panel-text-hard20': string;
   '--color-panel-text-soft10': string;
   '--color-panel-text-soft20': string;
+  '--color-panel-text-soft30': string;
+  '--color-panel-text-soft40': string;
   '--color-panelElevated-background': string;
   '--color-panelElevated-border': string;
   '--color-panelElevated-icon': string;

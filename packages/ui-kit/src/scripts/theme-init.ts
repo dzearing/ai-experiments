@@ -61,7 +61,7 @@ interface ThemeAPI {
   const STORAGE_KEY = 'claude-flow-theme';
   const DEFAULT_THEME = 'default';
   const DEFAULT_TYPE: ThemeType = 'auto';
-  const THEME_BASE_PATH = '@claude-flow/ui-kit/dist/themes/';
+  const THEME_BASE_PATH = '/themes/';
 
   // Track loaded theme files
   const loadedThemeFiles = new Set<string>();

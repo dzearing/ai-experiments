@@ -7,7 +7,7 @@ const meta = {
   parameters: {
     docs: {
       description: {
-        component: 'Comprehensive spacing system based on an 8px grid for consistent rhythm and visual hierarchy.',
+        component: 'Comprehensive spacing system based on a 4px grid for consistent rhythm and visual hierarchy.'
       },
     },
   },
@@ -51,9 +51,9 @@ export const SpacingScale: Story = {
   render: () => (
     <div className="story-container">
       <div className="spacing-intro">
-        <h3>8px Grid System</h3>
+        <h3>4px Grid System</h3>
         <p>
-          Our spacing system is based on an 8px grid, providing consistent rhythm throughout the interface.
+          Our spacing system is based on a 4px grid, providing consistent rhythm throughout the interface.
           Each spacing token is a multiple of the base unit, creating harmonious relationships between elements.
         </p>
       </div>
@@ -63,14 +63,15 @@ export const SpacingScale: Story = {
         <SpacingToken name="px" cssVar="--spacing-px" description="Minimal 1px spacing" />
         <SpacingToken name="2xs" cssVar="--spacing-2xs" description="2px - Hairline spacing" />
         <SpacingToken name="xs" cssVar="--spacing-xs" description="4px - Extra small" />
-        <SpacingToken name="sm" cssVar="--spacing-sm" description="8px - Small (1x base)" />
-        <SpacingToken name="md" cssVar="--spacing-md" description="16px - Medium (2x base)" />
-        <SpacingToken name="lg" cssVar="--spacing-lg" description="24px - Large (3x base)" />
-        <SpacingToken name="xl" cssVar="--spacing-xl" description="32px - Extra large (4x base)" />
-        <SpacingToken name="2xl" cssVar="--spacing-2xl" description="48px - 2X large (6x base)" />
-        <SpacingToken name="3xl" cssVar="--spacing-3xl" description="64px - 3X large (8x base)" />
-        <SpacingToken name="4xl" cssVar="--spacing-4xl" description="96px - 4X large (12x base)" />
-        <SpacingToken name="5xl" cssVar="--spacing-5xl" description="128px - 5X large (16x base)" />
+        <SpacingToken name="sm" cssVar="--spacing-sm" description="8px - Small (2x base)" />
+        <SpacingToken name="md" cssVar="--spacing-md" description="12px - Medium (3x base)" />
+        <SpacingToken name="base-default" cssVar="--spacing-base-default" description="16px - Standard (4x base)" />
+        <SpacingToken name="lg" cssVar="--spacing-lg" description="20px - Large (5x base)" />
+        <SpacingToken name="xl" cssVar="--spacing-xl" description="24px - Extra large (6x base)" />
+        <SpacingToken name="2xl" cssVar="--spacing-2xl" description="32px - 2X large (8x base)" />
+        <SpacingToken name="3xl" cssVar="--spacing-3xl" description="40px - 3X large (10x base)" />
+        <SpacingToken name="4xl" cssVar="--spacing-4xl" description="48px - 4X large (12x base)" />
+        <SpacingToken name="5xl" cssVar="--spacing-5xl" description="64px - 5X large (16x base)" />
       </div>
     </div>
   ),
@@ -146,7 +147,7 @@ export const CommonPatterns: Story = {
           </div>
           
           <div className="gap-demo">
-            <h5>Medium Gap (16px)</h5>
+            <h5>Medium Gap (12px)</h5>
             <div className="gap-container" style={{ gap: 'var(--gap-md)' }}>
               <div className="gap-item">Item</div>
               <div className="gap-item">Item</div>
@@ -156,7 +157,7 @@ export const CommonPatterns: Story = {
           </div>
           
           <div className="gap-demo">
-            <h5>Large Gap (24px)</h5>
+            <h5>Large Gap (20px)</h5>
             <div className="gap-container" style={{ gap: 'var(--gap-lg)' }}>
               <div className="gap-item">Item</div>
               <div className="gap-item">Item</div>
@@ -225,31 +226,31 @@ export const ResponsiveSpacing: Story = {
             <tbody>
               <tr>
                 <td><code>--container-padding</code></td>
-                <td>16px (md)</td>
-                <td>24px (lg)</td>
-                <td>32px (xl)</td>
-                <td>48px (2xl)</td>
+                <td>16px (base-default)</td>
+                <td>24px (xl)</td>
+                <td>32px (2xl)</td>
+                <td>40px (3xl)</td>
               </tr>
               <tr>
                 <td><code>--spacing-section</code></td>
-                <td>48px (2xl)</td>
-                <td>64px (3xl)</td>
-                <td>64px (3xl)</td>
-                <td>96px (4xl)</td>
+                <td>32px (2xl)</td>
+                <td>48px (4xl)</td>
+                <td>48px (4xl)</td>
+                <td>64px (5xl)</td>
               </tr>
               <tr>
                 <td><code>--spacing-modal</code></td>
-                <td>24px (lg)</td>
-                <td>32px (xl)</td>
-                <td>32px (xl)</td>
-                <td>32px (xl)</td>
+                <td>24px (xl)</td>
+                <td>32px (2xl)</td>
+                <td>32px (2xl)</td>
+                <td>32px (2xl)</td>
               </tr>
               <tr>
                 <td><code>--spacing-card</code></td>
-                <td>16px (md)</td>
-                <td>24px (lg)</td>
-                <td>24px (lg)</td>
-                <td>24px (lg)</td>
+                <td>16px (base-default)</td>
+                <td>24px (xl)</td>
+                <td>24px (xl)</td>
+                <td>24px (xl)</td>
               </tr>
             </tbody>
           </table>

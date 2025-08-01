@@ -1,5 +1,5 @@
 (function() {
-  const m = "claude-flow-theme", s = "default", A = "auto", f = "@claude-flow/ui-kit/dist/themes/", i = /* @__PURE__ */ new Set();
+  const m = "claude-flow-theme", s = "default", A = "auto", f = "/themes/", i = /* @__PURE__ */ new Set();
   function h() {
     return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   }
@@ -9,7 +9,7 @@
   function u() {
     return document.documentElement.getAttribute("data-default-theme") || s;
   }
-  async function c(e, n) {
+  async function r(e, n) {
     const t = `${e}-${n}`;
     if (i.has(t))
       return !0;
@@ -35,10 +35,10 @@
       }, 50);
     });
   }
-  async function r(e, n, t) {
+  async function c(e, n, t) {
     t = t || document.documentElement;
     const a = F(n);
-    if (!await c(e, a) && e !== s && (console.warn("Falling back to default theme"), await c(s, a), e = s), T(e, a, t), t === document.documentElement) {
+    if (!await r(e, a) && e !== s && (console.warn("Falling back to default theme"), await r(s, a), e = s), T(e, a, t), t === document.documentElement) {
       try {
         const l = {
           theme: e,
@@ -69,7 +69,7 @@
       console.warn("Failed to read theme preferences:", o);
     }
     const t = (n == null ? void 0 : n.theme) || e, a = n == null ? void 0 : n.type;
-    await r(t, a);
+    await c(t, a);
   }
   const p = u(), g = h();
   document.documentElement.setAttribute("data-theme", p), document.documentElement.setAttribute("data-theme-type", g);
@@ -85,7 +85,7 @@
         );
         if (!t.type || t.type === "auto") {
           const a = h(), o = t.theme || u();
-          await c(o, a), T(o, a);
+          await r(o, a), T(o, a);
           const d = {
             theme: o,
             type: a,
@@ -104,17 +104,17 @@
   async function k(e) {
     const n = [];
     for (const t of e)
-      typeof t == "string" ? (n.push(c(t, "light")), n.push(c(t, "dark"))) : n.push(c(t.name, t.type));
+      typeof t == "string" ? (n.push(r(t, "light")), n.push(r(t, "dark"))) : n.push(r(t.name, t.type));
     await Promise.all(n);
   }
   const L = {
     // Main theme loading function (type is optional, uses system default)
-    loadTheme: r,
+    loadTheme: c,
     // Preload themes for instant switching
     preloadThemes: k,
     // Apply theme to specific element
     applyThemeToElement: function(e, n, t) {
-      return r(n, t, e);
+      return c(n, t, e);
     },
     // Get current theme
     getTheme: function(e) {
@@ -127,12 +127,12 @@
     // Set theme type only (light/dark/auto)
     setThemeType: function(e) {
       const n = this.getTheme();
-      return r(n || s, e);
+      return c(n || s, e);
     },
     // Toggle between light and dark
     toggleThemeType: async function() {
       const n = this.getThemeType() === "light" ? "dark" : "light", t = this.getTheme();
-      return r(t || s, n);
+      return c(t || s, n);
     },
     // Check if theme file is loaded
     isThemeFileLoaded: function(e, n) {
@@ -153,7 +153,7 @@
     // Reset to default
     reset: function() {
       const e = u();
-      return r(e, A);
+      return c(e, A);
     }
   };
   window.__claudeFlowTheme = L, window.loadTheme = L.loadTheme;

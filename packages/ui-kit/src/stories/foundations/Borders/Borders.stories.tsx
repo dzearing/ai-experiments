@@ -38,7 +38,11 @@ const BorderToken: React.FC<BorderTokenProps> = ({ name, cssVar, description, ty
           <div className="border-width-visual">
             <div 
               className="border-line" 
-              style={{ borderBottomWidth: `var(${cssVar})` }}
+              style={{ 
+                borderBottomWidth: `var(${cssVar})`,
+                borderBottomStyle: 'solid',
+                borderBottomColor: 'var(--color-primary)'
+              }}
             />
           </div>
         );
@@ -90,12 +94,6 @@ export const BorderWidths: Story = {
       </div>
 
       <div className="border-tokens-grid">
-        <BorderToken 
-          name="0" 
-          cssVar="--border-width-0" 
-          description="No border"
-          type="width"
-        />
         <BorderToken 
           name="Thin" 
           cssVar="--border-width-thin" 
@@ -248,215 +246,6 @@ export const BorderRadius: Story = {
           <div className="radius-example">
             <div className="example-avatar">AV</div>
             <code>--radius-avatar</code>
-          </div>
-        </div>
-      </div>
-    </div>
-  ),
-};
-
-export const BorderStyles: Story = {
-  render: () => (
-    <div className="story-container">
-      <h3>Border Styles</h3>
-      <p>Different border styles convey different meanings and create visual variety.</p>
-
-      <div className="border-styles-grid">
-        <div className="style-example">
-          <h4>None</h4>
-          <div className="style-box" style={{ borderStyle: 'var(--border-style-none)' }}>
-            No visible border
-          </div>
-          <code>--border-style-none</code>
-        </div>
-        <div className="style-example">
-          <h4>Solid</h4>
-          <div className="style-box" style={{ borderStyle: 'var(--border-style-solid)' }}>
-            Solid line border
-          </div>
-          <code>--border-style-solid</code>
-        </div>
-        <div className="style-example">
-          <h4>Dashed</h4>
-          <div className="style-box" style={{ borderStyle: 'var(--border-style-dashed)' }}>
-            Dashed line border
-          </div>
-          <code>--border-style-dashed</code>
-        </div>
-        <div className="style-example">
-          <h4>Dotted</h4>
-          <div className="style-box" style={{ borderStyle: 'var(--border-style-dotted)' }}>
-            Dotted line border
-          </div>
-          <code>--border-style-dotted</code>
-        </div>
-      </div>
-
-      <div className="style-use-cases">
-        <h4>Common Use Cases</h4>
-        <div className="use-case-grid">
-          <div className="use-case-item">
-            <div className="divider-example horizontal">
-              <span>Section 1</span>
-              <hr />
-              <span>Section 2</span>
-            </div>
-            <p>Horizontal dividers</p>
-          </div>
-          <div className="use-case-item">
-            <div className="divider-example vertical">
-              <span>Left</span>
-              <div className="vertical-divider"></div>
-              <span>Right</span>
-            </div>
-            <p>Vertical dividers</p>
-          </div>
-          <div className="use-case-item">
-            <div className="placeholder-box">
-              Drag files here
-            </div>
-            <p>Drop zones (dashed)</p>
-          </div>
-          <div className="use-case-item">
-            <div className="focus-indicator">
-              Keyboard focus
-            </div>
-            <p>Focus indicators (dotted)</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  ),
-};
-
-interface InteractiveBorderDemoProps {
-  title: string;
-  description: string;
-}
-
-const InteractiveBorderDemo: React.FC<InteractiveBorderDemoProps> = ({ title, description }) => {
-  const [borderWidth, setBorderWidth] = React.useState('--border-width-thin');
-  const [borderRadius, setBorderRadius] = React.useState('--radius-md');
-  const [borderStyle, setBorderStyle] = React.useState('--border-style-solid');
-  const [borderColor, setBorderColor] = React.useState('--color-border');
-
-  return (
-    <div className="interactive-border-demo">
-      <h4>{title}</h4>
-      <p>{description}</p>
-      
-      <div className="demo-controls">
-        <div className="control-group">
-          <label>Width:</label>
-          <select value={borderWidth} onChange={(e) => setBorderWidth(e.target.value)}>
-            <option value="--border-width-0">None</option>
-            <option value="--border-width-thin">Thin</option>
-            <option value="--border-width-medium">Medium</option>
-            <option value="--border-width-thick">Thick</option>
-            <option value="--border-width-heavy">Heavy</option>
-          </select>
-        </div>
-        
-        <div className="control-group">
-          <label>Radius:</label>
-          <select value={borderRadius} onChange={(e) => setBorderRadius(e.target.value)}>
-            <option value="--radius-none">None</option>
-            <option value="--radius-sm">SM</option>
-            <option value="--radius-md">MD</option>
-            <option value="--radius-lg">LG</option>
-            <option value="--radius-xl">XL</option>
-            <option value="--radius-2xl">2XL</option>
-            <option value="--radius-full">Full</option>
-          </select>
-        </div>
-        
-        <div className="control-group">
-          <label>Style:</label>
-          <select value={borderStyle} onChange={(e) => setBorderStyle(e.target.value)}>
-            <option value="--border-style-solid">Solid</option>
-            <option value="--border-style-dashed">Dashed</option>
-            <option value="--border-style-dotted">Dotted</option>
-          </select>
-        </div>
-      </div>
-      
-      <div className="demo-preview">
-        <div 
-          className="preview-box"
-          style={{
-            borderWidth: `var(${borderWidth})`,
-            borderRadius: `var(${borderRadius})`,
-            borderStyle: `var(${borderStyle})`,
-            borderColor: `var(${borderColor})`,
-          }}
-        >
-          Interactive Border Demo
-        </div>
-      </div>
-      
-      <div className="demo-code">
-        <code>
-          {`border: var(${borderWidth}) var(${borderStyle}) var(${borderColor});
-border-radius: var(${borderRadius});`}
-        </code>
-      </div>
-    </div>
-  );
-};
-
-export const InteractiveBorders: Story = {
-  render: () => (
-    <div className="story-container">
-      <h3>Interactive Border Explorer</h3>
-      <p>Experiment with different border combinations to see how they work together.</p>
-      
-      <InteractiveBorderDemo 
-        title="Border Playground"
-        description="Adjust the controls to see different border combinations"
-      />
-      
-      <div className="common-patterns">
-        <h4>Common Border Patterns</h4>
-        <div className="pattern-grid">
-          <div className="pattern-card">
-            <div className="pattern-example input-pattern">
-              <input type="text" placeholder="Default input" />
-            </div>
-            <h5>Input Field</h5>
-            <code>border: var(--border-width-thin) solid var(--color-border)</code>
-            <code>border-radius: var(--radius-input)</code>
-          </div>
-          
-          <div className="pattern-card">
-            <div className="pattern-example card-pattern">
-              <div className="card-content">
-                <h5>Card with border</h5>
-                <p>Card content here</p>
-              </div>
-            </div>
-            <h5>Bordered Card</h5>
-            <code>border: var(--border-width-thin) solid var(--color-border)</code>
-            <code>border-radius: var(--radius-card)</code>
-          </div>
-          
-          <div className="pattern-card">
-            <div className="pattern-example button-pattern">
-              <button className="outline-button">Outline Button</button>
-            </div>
-            <h5>Outline Button</h5>
-            <code>border: var(--border-width-medium) solid var(--color-primary)</code>
-            <code>border-radius: var(--radius-button)</code>
-          </div>
-          
-          <div className="pattern-card">
-            <div className="pattern-example avatar-pattern">
-              <div className="avatar-border">
-                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%23ddd'/><text x='50%' y='50%' text-anchor='middle' dy='.3em' fill='%23999' font-size='40'>U</text></svg>" alt="User" />
-              </div>
-            </div>
-            <h5>Avatar Border</h5>
-            <code>border: var(--border-width-thick) solid var(--color-surface)</code>
-            <code>border-radius: var(--radius-avatar)</code>
           </div>
         </div>
       </div>

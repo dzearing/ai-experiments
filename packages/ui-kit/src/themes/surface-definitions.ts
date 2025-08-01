@@ -108,7 +108,7 @@ export const surfaces: SurfaceDefinition[] = [
       shadow: '0 1px 3px rgba(0, 0, 0, 0.12)',
     },
     variants: {
-      soft: [10, 20],
+      soft: [10, 20, 30, 40],
       hard: [10, 20],
     },
   },
@@ -340,11 +340,24 @@ export const surfaces: SurfaceDefinition[] = [
     name: 'noticeInfo',
     base: {
       background: {
-        fn: 'mix',
+        fn: 'auto',
         args: {
-          color1: { ref: 'info.100' },
-          color2: { ref: 'body.background' },
-          ratio: 0.3,
+          light: {
+            fn: 'mix',
+            args: {
+              color1: { ref: 'info.100' },
+              color2: { ref: 'body.background' },
+              ratio: 0.3,
+            },
+          },
+          dark: {
+            fn: 'mix',
+            args: {
+              color1: { ref: 'info.900' },
+              color2: { ref: 'body.background' },
+              ratio: 0.7,
+            },
+          },
         },
       },
       text: {
@@ -375,11 +388,24 @@ export const surfaces: SurfaceDefinition[] = [
     name: 'noticeSuccess',
     base: {
       background: {
-        fn: 'mix',
+        fn: 'auto',
         args: {
-          color1: { ref: 'success.100' },
-          color2: { ref: 'body.background' },
-          ratio: 0.3,
+          light: {
+            fn: 'mix',
+            args: {
+              color1: { ref: 'success.100' },
+              color2: { ref: 'body.background' },
+              ratio: 0.3,
+            },
+          },
+          dark: {
+            fn: 'mix',
+            args: {
+              color1: { ref: 'success.900' },
+              color2: { ref: 'body.background' },
+              ratio: 0.7,
+            },
+          },
         },
       },
       text: {
@@ -410,11 +436,24 @@ export const surfaces: SurfaceDefinition[] = [
     name: 'noticeWarning',
     base: {
       background: {
-        fn: 'mix',
+        fn: 'auto',
         args: {
-          color1: { ref: 'warning.100' },
-          color2: { ref: 'body.background' },
-          ratio: 0.3,
+          light: {
+            fn: 'mix',
+            args: {
+              color1: { ref: 'warning.100' },
+              color2: { ref: 'body.background' },
+              ratio: 0.3,
+            },
+          },
+          dark: {
+            fn: 'mix',
+            args: {
+              color1: { ref: 'warning.900' },
+              color2: { ref: 'body.background' },
+              ratio: 0.7,
+            },
+          },
         },
       },
       text: {
@@ -445,11 +484,24 @@ export const surfaces: SurfaceDefinition[] = [
     name: 'noticeDanger',
     base: {
       background: {
-        fn: 'mix',
+        fn: 'auto',
         args: {
-          color1: { ref: 'error.100' },
-          color2: { ref: 'body.background' },
-          ratio: 0.3,
+          light: {
+            fn: 'mix',
+            args: {
+              color1: { ref: 'error.100' },
+              color2: { ref: 'body.background' },
+              ratio: 0.3,
+            },
+          },
+          dark: {
+            fn: 'mix',
+            args: {
+              color1: { ref: 'error.900' },
+              color2: { ref: 'body.background' },
+              ratio: 0.7,
+            },
+          },
         },
       },
       text: {

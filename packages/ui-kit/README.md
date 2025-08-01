@@ -217,7 +217,7 @@ Instead of arbitrary number scales, we use semantic contrast modifiers:
 
 ### Spacing
 
-Based on an 8px grid system:
+Based on a 4px grid system:
 
 ```css
 /* Base Spacing Scale */
@@ -226,13 +226,14 @@ Based on an 8px grid system:
 --spacing-2xs      /* 2px */
 --spacing-xs       /* 4px */
 --spacing-sm       /* 8px */
---spacing-md       /* 16px */
---spacing-lg       /* 24px */
---spacing-xl       /* 32px */
---spacing-2xl      /* 48px */
---spacing-3xl      /* 64px */
---spacing-4xl      /* 96px */
---spacing-5xl      /* 128px */
+--spacing-md       /* 12px */
+--spacing-base-default /* 16px */
+--spacing-lg       /* 20px */
+--spacing-xl       /* 24px */
+--spacing-2xl      /* 32px */
+--spacing-3xl      /* 40px */
+--spacing-4xl      /* 48px */
+--spacing-5xl      /* 64px */
 
 /* Component Spacing */
 --spacing-button-x    /* Horizontal button padding */

@@ -17,7 +17,7 @@ Our animation system provides consistent timing, easing, and motion patterns thr
 
 1. **Purpose-driven**: Every animation should have a clear purpose
 2. **Performance**: Animations should be smooth and not impact performance
-3. **Accessibility**: All animations respect \`prefers-reduced-motion\`
+3. **Accessibility**: All animations respect \\\`prefers-reduced-motion\\\`
 4. **Consistency**: Use predefined tokens for timing and easing
 5. **Subtlety**: Less is more - animations should enhance, not distract
 
@@ -25,7 +25,6 @@ Our animation system provides consistent timing, easing, and motion patterns thr
 
 - **Duration tokens**: Control animation timing (\`--duration-*\`)
 - **Easing tokens**: Define acceleration curves (\`--easing-*\`)
-- **Transition tokens**: Pre-composed transitions (\`--transition-*\`)
 - **Delay tokens**: Control animation sequencing (\`--delay-*\`)
         `,
       },
@@ -38,7 +37,7 @@ type Story = StoryObj<typeof meta>;
 
 // Duration Scale Demo
 const DurationDemo: React.FC = () => {
-  const [animating, setAnimating] = useState(false);
+  const [animatingItems, setAnimatingItems] = useState<Set<string>>(new Set());
   const durations = [
     { name: 'instant', value: '100ms', use: 'Hover states, focus rings' },
     { name: 'fast', value: '200ms', use: 'Closing, collapsing, fading out' },
@@ -49,8 +48,24 @@ const DurationDemo: React.FC = () => {
   ];
 
   const triggerAnimation = () => {
-    setAnimating(true);
-    setTimeout(() => setAnimating(false), 1500);
+    // Trigger all animations
+    const allNames = new Set(durations.map(d => d.name));
+    setAnimatingItems(allNames);
+    setTimeout(() => setAnimatingItems(new Set()), 1500);
+  };
+
+  const triggerSingleAnimation = (name: string, durationMs: string) => {
+    // Trigger individual animation
+    setAnimatingItems(prev => new Set(prev).add(name));
+    // Parse duration value and add buffer time
+    const duration = parseInt(durationMs);
+    setTimeout(() => {
+      setAnimatingItems(prev => {
+        const next = new Set(prev);
+        next.delete(name);
+        return next;
+      });
+    }, duration + 100); // Add 100ms buffer
   };
 
   return (
@@ -66,7 +81,19 @@ const DurationDemo: React.FC = () => {
               <span className="duration-value">{duration.value}</span>
               <p className="duration-use">{duration.use}</p>
             </div>
-            <div className={`duration-box ${animating ? 'animating' : ''}`} style={{ '--duration': `var(--duration-${duration.name})` } as React.CSSProperties}>
+            <div 
+              className={`duration-box ${animatingItems.has(duration.name) ? 'animating' : ''}`} 
+              style={{ '--duration': `var(--duration-${duration.name})` } as React.CSSProperties}
+              onClick={() => triggerSingleAnimation(duration.name, duration.value)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  triggerSingleAnimation(duration.name, duration.value);
+                }
+              }}
+            >
               <div className="duration-indicator" />
             </div>
           </div>
@@ -78,7 +105,7 @@ const DurationDemo: React.FC = () => {
 
 // Easing Functions Demo
 const EasingDemo: React.FC = () => {
-  const [animating, setAnimating] = useState(false);
+  const [animatingItems, setAnimatingItems] = useState<Set<string>>(new Set());
   const easings = [
     { name: 'linear', description: 'Constant speed' },
     { name: 'ease', description: 'Default easing' },
@@ -91,8 +118,22 @@ const EasingDemo: React.FC = () => {
   ];
 
   const triggerAnimation = () => {
-    setAnimating(true);
-    setTimeout(() => setAnimating(false), 1500);
+    // Trigger all animations
+    const allNames = new Set(easings.map(e => e.name));
+    setAnimatingItems(allNames);
+    setTimeout(() => setAnimatingItems(new Set()), 1500);
+  };
+
+  const triggerSingleAnimation = (name: string) => {
+    // Trigger individual animation
+    setAnimatingItems(prev => new Set(prev).add(name));
+    setTimeout(() => {
+      setAnimatingItems(prev => {
+        const next = new Set(prev);
+        next.delete(name);
+        return next;
+      });
+    }, 1500);
   };
 
   return (
@@ -102,14 +143,26 @@ const EasingDemo: React.FC = () => {
       </button>
       <div className="easing-list">
         {easings.map((easing) => (
-          <div key={easing.name} className="easing-item">
+          <div 
+            key={easing.name} 
+            className="easing-item"
+            onClick={() => triggerSingleAnimation(easing.name)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                triggerSingleAnimation(easing.name);
+              }
+            }}
+          >
             <div className="easing-info">
               <h4>--easing-{easing.name}</h4>
               <p>{easing.description}</p>
             </div>
             <div className="easing-track">
               <div 
-                className={`easing-ball ${animating ? 'animating' : ''}`} 
+                className={`easing-ball ${animatingItems.has(easing.name) ? 'animating' : ''}`} 
                 style={{ '--easing': `var(--easing-${easing.name})` } as React.CSSProperties}
               />
             </div>
@@ -161,61 +214,6 @@ const CommonAnimationsDemo: React.FC = () => {
               Play
             </button>
             <code className="animation-code">@keyframes {animation.name}</code>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-// Transition Properties Demo
-const TransitionDemo: React.FC = () => {
-  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
-
-  const transitions = [
-    { 
-      name: 'all', 
-      description: 'All animatable properties',
-      demo: 'hover-all'
-    },
-    { 
-      name: 'colors', 
-      description: 'Background, border, text colors',
-      demo: 'hover-colors'
-    },
-    { 
-      name: 'opacity', 
-      description: 'Opacity only',
-      demo: 'hover-opacity'
-    },
-    { 
-      name: 'transform', 
-      description: 'Transform properties',
-      demo: 'hover-transform'
-    },
-    { 
-      name: 'shadow', 
-      description: 'Box shadow',
-      demo: 'hover-shadow'
-    },
-  ];
-
-  return (
-    <div className="transition-demo">
-      <div className="transition-list">
-        {transitions.map((transition) => (
-          <div key={transition.name} className="transition-item">
-            <div className="transition-info">
-              <h4>--transition-{transition.name}</h4>
-              <p>{transition.description}</p>
-            </div>
-            <div 
-              className={`transition-box ${transition.demo} ${hoveredItem === transition.name ? 'hovered' : ''}`}
-              onMouseEnter={() => setHoveredItem(transition.name)}
-              onMouseLeave={() => setHoveredItem(null)}
-            >
-              Hover Me
-            </div>
           </div>
         ))}
       </div>
@@ -328,17 +326,6 @@ export const CommonAnimations: Story = {
     docs: {
       description: {
         story: 'Pre-defined keyframe animations for common UI patterns. These can be applied using CSS animation property.',
-      },
-    },
-  },
-};
-
-export const TransitionProperties: Story = {
-  render: () => <TransitionDemo />,
-  parameters: {
-    docs: {
-      description: {
-        story: 'Pre-composed transition properties for common state changes. These combine duration and easing for specific property groups.',
       },
     },
   },

@@ -19,6 +19,20 @@ const preview: Preview = {
     docs: {
       toc: true,
     },
+    options: {
+      storySort: {
+        order: [
+          'Overview',
+          'Getting Started', 
+          'Theme Explorer',
+          'Token Guidance',
+          'Token Browser',
+          'Foundations',
+          'Theming',
+          '*'
+        ],
+      },
+    },
     backgrounds: {
       default: 'light',
       values: [
