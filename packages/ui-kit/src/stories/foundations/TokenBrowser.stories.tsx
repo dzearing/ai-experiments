@@ -62,7 +62,7 @@ const tokenDomains = {
       {
         name: 'Scale/Type',
         tokens: {
-          family: ['', 'mono', 'serif'],
+          family: ['(default)', 'mono', 'serif'],
           size: ['smallest', 'small30', 'small20', 'small10', 'normal', 'large10', 'large20', 'large30', 'large40', 'large50', 'largest', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'body', 'caption', 'code'],
           weight: ['light', 'regular', 'medium', 'semibold', 'bold'],
           lineHeight: ['tightest', 'tight10', 'tight5', 'normal', 'loose5', 'loose10', 'loosest', 'code'],
@@ -184,7 +184,7 @@ const TokenBrowser = () => {
       const scale = selectedTokens['Scale/Type'] || 'base';
       
       if (category === 'family') {
-        return scale ? `--font-${category}-${scale}` : `--font-${category}`;
+        return scale === '(default)' ? `--font-family` : `--font-${category}-${scale}`;
       } else if (category === 'lineHeight') {
         return `--line-height-${scale}`;
       } else if (category === 'letterSpacing') {
@@ -337,6 +337,7 @@ const TokenBrowser = () => {
                 fontWeight: category === 'weight' ? `var(${tokenName})` : 'var(--font-weight-regular)',
                 fontFamily: 'var(--font-family)',
                 lineHeight: 'var(--line-height-normal)',
+                color: 'var(--color-body-text)',
               }}
             >
               The quick brown fox jumps over the lazy dog
@@ -348,6 +349,7 @@ const TokenBrowser = () => {
                 fontWeight: category === 'weight' ? `var(${tokenName})` : 'var(--font-weight-regular)',
                 fontFamily: 'var(--font-family)',
                 lineHeight: 'var(--line-height-normal)',
+                color: 'var(--color-body-text)',
               }}
             >
               ABCDEFGHIJKLMNOPQRSTUVWXYZ<br />
@@ -364,6 +366,7 @@ const TokenBrowser = () => {
               style={{
                 fontFamily: `var(${tokenName})`,
                 fontSize: 'var(--font-size-lg)',
+                color: 'var(--color-body-text)',
               }}
             >
               {selectedTokens['Scale/Type'] === 'mono'
@@ -608,7 +611,7 @@ const TokenBrowser = () => {
                                 className={`selection-item ${selectedTokens[category.name] === token ? 'selected' : ''}`}
                                 onClick={() => setSelectedTokens({ ...selectedTokens, [category.name]: token })}
                               >
-                                {token || 'base'}
+                                {token || '(default)'}
                               </button>
                             );
                           } else {

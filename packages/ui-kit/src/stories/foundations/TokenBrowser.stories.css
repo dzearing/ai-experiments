@@ -43,15 +43,22 @@
 
 .domain-dropdown {
   min-width: 150px;
-  padding: 0.5rem 0.75rem;
+  padding: 0.5rem 2.5rem 0.5rem 0.75rem;
   font-size: 0.875rem;
   font-weight: 500;
   background: var(--color-body-background);
   color: var(--color-body-text);
   border: 1px solid var(--color-body-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-small10);
   cursor: pointer;
   transition: all 0.2s;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='none' stroke='%23666' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 12px;
 }
 
 .domain-dropdown:hover {
@@ -341,6 +348,8 @@
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 1rem;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .value-label {
@@ -355,6 +364,10 @@
   background: var(--color-body-background-soft10);
   padding: 0.25rem 0.5rem;
   border-radius: 3px;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+  display: block;
 }
 
 /* Color Preview (existing) */
@@ -386,6 +399,7 @@
 
 .typography-sample {
   transition: all 0.2s;
+  color: var(--color-body-text);
 }
 
 .typography-sample.line-height-demo {
@@ -564,6 +578,7 @@
   background: var(--color-body-background);
   color: var(--color-body-text);
   border-color: var(--color-body-border);
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='none' stroke='%23aaa' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
 }
 
 [data-mode='dark'] .browser-selection {
