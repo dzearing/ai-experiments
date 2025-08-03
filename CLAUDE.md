@@ -209,3 +209,9 @@ The project follows a phased migration from V1 to V2:
 - Phase 3-5: Future V2 development and migration
 
 See `/docs/guides/migration/migration-v1-to-v2.md` for details.
+
+## Development Validation Practices
+
+- **UI Change Validation**: 
+  - Any time you make UI changes, validate you actually fixed the issue by running the playwright mcp server and screenshotting your work and validating the results are true. 
+  - If the results are not accurate, fix the issues before reporting them as fixed.
