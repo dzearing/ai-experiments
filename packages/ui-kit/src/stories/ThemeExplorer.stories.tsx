@@ -49,11 +49,11 @@ const getThemeCardStyles = () => `
       ),
       var(--color-panel-background);
     border: 2px solid var(--color-panel-border);
-    border-radius: var(--radius-normal);
+    border-radius: var(--radius);
     padding: var(--spacing-large20);
-    transition: background var(--duration-normal) var(--easing-default),
-                border-color var(--duration-normal) var(--easing-default),
-                box-shadow var(--duration-normal) var(--easing-default);
+    transition: background var(--duration) var(--easing-default),
+                border-color var(--duration) var(--easing-default),
+                box-shadow var(--duration) var(--easing-default);
     cursor: pointer;
     overflow: hidden;
   }
@@ -66,7 +66,7 @@ const getThemeCardStyles = () => `
       ),
       var(--color-panel-background);
     border-color: var(--color-panel-border-hard10);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-hard10);
   }
   
   .theme-content.active {
@@ -81,8 +81,8 @@ const getThemeCardStyles = () => `
     height: 20px;
     background: var(--color-buttonPrimary-background);
     color: var(--color-buttonPrimary-text);
-    padding: 0 var(--spacing-normal);
-    border-radius: 0 0 0 var(--radius-normal);
+    padding: 0 var(--spacing);
+    border-radius: 0 0 0 var(--radius);
     font-size: var(--font-size-smallest);
     font-weight: var(--font-weight-medium);
     text-transform: uppercase;
@@ -95,7 +95,7 @@ const getThemeCardStyles = () => `
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--spacing-normal);
+    margin-bottom: var(--spacing);
     width: 100%;
   }
   
@@ -132,8 +132,8 @@ const getThemeCardStyles = () => `
     border: 1px solid var(--color-panel-border);
     border-radius: 12px;
     cursor: pointer;
-    transition: background-color var(--duration-normal) var(--easing-default),
-                border-color var(--duration-normal) var(--easing-default);
+    transition: background-color var(--duration) var(--easing-default),
+                border-color var(--duration) var(--easing-default);
   }
   
   .toggle-switch.dark {
@@ -149,7 +149,7 @@ const getThemeCardStyles = () => `
     height: 18px;
     background: var(--color-panel-background);
     border-radius: 50%;
-    transition: transform var(--duration-normal) var(--easing-default);
+    transition: transform var(--duration) var(--easing-default);
     box-shadow: var(--shadow-sm);
   }
   
@@ -161,7 +161,7 @@ const getThemeCardStyles = () => `
   .theme-description {
     font-size: var(--font-size-small20);
     color: var(--color-panel-text-soft30);
-    margin: 0 0 var(--spacing-normal) 0;
+    margin: 0 0 var(--spacing) 0;
     line-height: var(--line-height-normal);
   }
   
@@ -169,13 +169,13 @@ const getThemeCardStyles = () => `
     background: var(--color-body-background);
     border: 1px solid var(--color-body-border);
     border-radius: var(--radius-small10);
-    padding: var(--spacing-normal);
+    padding: var(--spacing);
   }
   
   .preview-components {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-normal);
+    gap: var(--spacing);
     align-items: stretch;
   }
   
@@ -188,14 +188,14 @@ const getThemeCardStyles = () => `
 
   .preview-button {
     height: 36px;
-    padding: 0 var(--spacing-normal);
+    padding: 0 var(--spacing);
     border: none;
     border-radius: var(--radius-small10);
     font-size: var(--font-size-small10);
     cursor: pointer;
-    transition: background-color var(--duration-normal) var(--easing-default),
-                color var(--duration-normal) var(--easing-default),
-                box-shadow var(--duration-normal) var(--easing-default);
+    transition: background-color var(--duration) var(--easing-default),
+                color var(--duration) var(--easing-default),
+                box-shadow var(--duration) var(--easing-default);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -285,15 +285,15 @@ const getThemeCardStyles = () => `
   
   .preview-input {
     height: 36px;
-    padding: 0 var(--spacing-normal);
+    padding: 0 var(--spacing);
     background: var(--color-input-background);
     color: var(--color-input-text);
     border: 1px solid var(--color-input-border);
     border-radius: var(--radius-small10);
     font-size: var(--font-size-small10);
-    transition: background-color var(--duration-normal) var(--easing-default),
-                border-color var(--duration-normal) var(--easing-default),
-                outline var(--duration-normal) var(--easing-default);
+    transition: background-color var(--duration) var(--easing-default),
+                border-color var(--duration) var(--easing-default),
+                outline var(--duration) var(--easing-default);
     width: 100%;
     box-sizing: border-box;
   }
@@ -321,7 +321,7 @@ const getThemeCardStyles = () => `
     border: 1px solid var(--color-panel-border);
     border-radius: 4px;
     outline: none;
-    transition: opacity var(--duration-normal) var(--easing-default);
+    transition: opacity var(--duration) var(--easing-default);
     box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
   }
   
@@ -333,8 +333,8 @@ const getThemeCardStyles = () => `
     background: var(--color-buttonPrimary-background);
     border-radius: 50%;
     cursor: pointer;
-    transition: background-color var(--duration-normal) var(--easing-default),
-                transform var(--duration-normal) var(--easing-default);
+    transition: background-color var(--duration) var(--easing-default),
+                transform var(--duration) var(--easing-default);
   }
   
   .preview-slider::-moz-range-thumb {
@@ -344,8 +344,8 @@ const getThemeCardStyles = () => `
     border-radius: 50%;
     cursor: pointer;
     border: none;
-    transition: background-color var(--duration-normal) var(--easing-default),
-                transform var(--duration-normal) var(--easing-default);
+    transition: background-color var(--duration) var(--easing-default),
+                transform var(--duration) var(--easing-default);
   }
   
   .preview-slider:hover::-webkit-slider-thumb {
@@ -360,7 +360,7 @@ const getThemeCardStyles = () => `
   
   .preview-spinner-progress {
     display: flex;
-    gap: var(--spacing-normal);
+    gap: var(--spacing);
     align-items: center;
   }
 
@@ -393,8 +393,8 @@ const getThemeCardStyles = () => `
     height: 100%;
     background: var(--color-buttonPrimary-background);
     border-radius: 3px;
-    transition: width var(--duration-normal) var(--easing-default),
-                background-color var(--duration-normal) var(--easing-default);
+    transition: width var(--duration) var(--easing-default),
+                background-color var(--duration) var(--easing-default);
     position: relative;
     overflow: hidden;
   }

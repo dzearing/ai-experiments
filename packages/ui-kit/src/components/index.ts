@@ -1,5 +1,5 @@
 /**
- * UI Kit Web Components
+ * UI Kit Components
  * 
  * Framework-agnostic web components for the UI Kit design system
  */

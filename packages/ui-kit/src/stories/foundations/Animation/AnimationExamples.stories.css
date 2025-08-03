@@ -141,7 +141,6 @@ h4 {
   width: 48px;
   height: 48px;
   background: transparent;
-  border: 2px solid var(--color-panel-border);
   border-radius: var(--radius-full);
   cursor: pointer;
   transition: all var(--duration) var(--easing-default);
@@ -217,7 +216,6 @@ h4 {
   gap: var(--spacing-small20);
   padding: var(--spacing-small10) var(--spacing);
   background: var(--color-buttonNeutral-background);
-  border: 1px solid var(--color-buttonNeutral-border);
   border-radius: var(--radius-small10);
   cursor: pointer;
   transition: all var(--duration) var(--easing-default);
@@ -253,7 +251,6 @@ h4 {
 .copy-button {
   padding: var(--spacing-small10) var(--spacing);
   background: var(--color-buttonNeutral-background);
-  border: 1px solid var(--color-buttonNeutral-border);
   border-radius: var(--radius-small10);
   cursor: pointer;
   transition: all var(--duration) var(--easing-default);
@@ -726,7 +723,6 @@ h4 {
   height: 32px;
   background: var(--color-buttonDanger-background);
   color: var(--color-buttonDanger-text);
-  border: 1px solid var(--color-buttonDanger-border);
   border-radius: var(--radius-small10);
   font-size: var(--font-size-lg);
   cursor: pointer;

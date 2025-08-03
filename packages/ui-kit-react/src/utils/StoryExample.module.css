@@ -1,0 +1,85 @@
+/* Story Example Container - matches Storybook's built-in example styling */
+.container {
+  position: relative;
+  background: var(--color-body-background);
+  border: 1px solid var(--color-body-border);
+  border-radius: var(--radius-small10);
+  overflow: hidden;
+}
+
+/* Content wrapper for non-iframe examples */
+.content {
+  padding: var(--spacing-large10);
+  background: var(--color-body-background);
+}
+
+/* Iframe container specific styles */
+.iframeContainer {
+  background: var(--color-body-background);
+}
+
+/* Iframe styles */
+.iframe {
+  width: 100%;
+  height: 200px;
+  border: none;
+  display: block;
+  background: var(--color-body-background);
+  border-radius: var(--radius-small10);
+}
+
+/* Iframe label */
+.iframeLabel {
+  position: absolute;
+  top: var(--spacing-small20);
+  right: var(--spacing-small20);
+  background: var(--color-panel-background);
+  border: 1px solid var(--color-panel-border);
+  border-radius: var(--radius-small10);
+  padding: var(--spacing-small20) var(--spacing-small10);
+  font-size: var(--font-size-small10);
+  color: var(--color-body-text);
+  opacity: 0.7;
+  pointer-events: none;
+  z-index: 1;
+  font-family: ui-monospace, 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', 'Courier New', monospace;
+}
+
+/* Theme support */
+[data-theme-type="dark"] .container {
+  background: var(--color-body-background);
+  border-color: var(--color-body-border);
+}
+
+[data-theme-type="dark"] .content {
+  background: var(--color-body-background);
+}
+
+[data-theme-type="dark"] .iframe {
+  background: var(--color-body-background);
+}
+
+[data-theme-type="dark"] .iframeLabel {
+  background: var(--color-panel-background);
+  border-color: var(--color-panel-border);
+  color: var(--color-body-text);
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .container {
+    border-width: 2px;
+  }
+  
+  .iframeLabel {
+    border-width: 2px;
+    opacity: 1;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .iframe {
+    /* No transitions for iframe */
+  }
+}

@@ -14,7 +14,10 @@
       "import": "./dist/index.js"
     },
     "./styles.css": "./dist/styles.css",
-    "./theme-init.js": "./dist/theme-init.js"
+    "./dist/styles.css": "./dist/styles.css",
+    "./theme-init.js": "./dist/theme-init.js",
+    "./dist/theme-init.js": "./dist/theme-init.js",
+    "./dist/storybook/theme-loader": "./dist/storybook/theme-loader.js"
   },
   "files": [
     "dist",
@@ -42,6 +45,7 @@
     "@claude-flow/tsconfig": "workspace:*",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
+    "postcss-nesting": "^13.0.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "tsx": "^4.20.3",

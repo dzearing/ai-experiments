@@ -1,0 +1,7 @@
+/* Import base UI Kit styles */
+@import '@claude-flow/ui-kit/styles.css';
+
+/* Global styles for component library */
+@layer base {
+  /* Add any global component library styles here */
+}

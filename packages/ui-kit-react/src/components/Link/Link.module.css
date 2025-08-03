@@ -1,0 +1,142 @@
+.link {
+  text-decoration: none;
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--easing-default),
+              text-decoration-color var(--duration-fast) var(--easing-default);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-small20);
+  text-underline-offset: 2px;
+}
+
+/* Variants */
+.primary {
+  color: var(--color-link);
+  text-decoration-color: transparent;
+}
+
+.primary:hover {
+  color: var(--color-link-hover);
+  text-decoration: underline;
+  text-decoration-color: var(--color-link-hover);
+}
+
+.primary:active {
+  color: var(--color-link-active);
+}
+
+.primary.active {
+  color: var(--color-link-active);
+  font-weight: var(--font-weight-medium);
+}
+
+.subtle {
+  color: var(--color-text-secondary);
+  text-decoration-color: transparent;
+}
+
+.subtle:hover {
+  color: var(--color-text);
+  text-decoration: underline;
+  text-decoration-color: var(--color-text);
+}
+
+.subtle:active {
+  color: var(--color-text);
+}
+
+.subtle.active {
+  color: var(--color-text);
+  font-weight: var(--font-weight-medium);
+}
+
+.inline {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: currentColor;
+}
+
+.inline:hover {
+  text-decoration-thickness: 2px;
+}
+
+.inline:active {
+  opacity: 0.8;
+}
+
+/* Sizes */
+.small {
+  font-size: var(--font-size-small10);
+  line-height: var(--line-height-small);
+}
+
+.medium {
+  font-size: var(--font-size-normal);
+  line-height: var(--line-height-normal);
+}
+
+.large {
+  font-size: var(--font-size-large10);
+  line-height: var(--line-height-large);
+}
+
+/* External icon */
+.external {
+  /* External link styling */
+}
+
+.externalIcon {
+  display: inline-flex;
+  align-items: center;
+  opacity: 0.7;
+  transition: opacity var(--duration-fast) var(--easing-default);
+}
+
+.link:hover .externalIcon {
+  opacity: 1;
+}
+
+/* Focus */
+.link:focus-visible {
+  outline: var(--focusRing-width) solid var(--focusRing-color);
+  outline-offset: var(--focusRing-offset);
+  border-radius: var(--radius-small20);
+}
+
+/* Visited state for primary links */
+.primary:visited {
+  color: var(--color-link-visited);
+}
+
+.primary:visited:hover {
+  color: var(--color-link-visited-hover);
+}
+
+/* RTL Support */
+[dir="rtl"] .externalIcon svg {
+  transform: scaleX(-1);
+}
+
+/* High contrast */
+@media (prefers-contrast: high) {
+  .link {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+  }
+  
+  .link:hover {
+    text-decoration-thickness: 2px;
+  }
+  
+  .link:focus-visible {
+    outline-width: 3px;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .link {
+    transition: none;
+  }
+}

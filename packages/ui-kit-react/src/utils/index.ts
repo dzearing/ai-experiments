@@ -1,1 +1,2 @@
-export { cn } from './cn';
+export { StoryExample } from './StoryExample';
+export type { StoryExampleProps } from './StoryExample';

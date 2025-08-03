@@ -1,0 +1,99 @@
+.container {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-small10);
+}
+
+.container.center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  width: 100%;
+}
+
+/* Dots container */
+.dots {
+  display: inline-flex;
+  gap: var(--spacing-small20);
+}
+
+/* Individual dot */
+.dot {
+  display: inline-block;
+  background: currentColor;
+  border-radius: var(--radius-full);
+  opacity: 0.6;
+  animation: dotBounce 1.4s ease-in-out infinite;
+}
+
+.dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.dot:nth-child(4) {
+  animation-delay: 0.6s;
+}
+
+.dot:nth-child(5) {
+  animation-delay: 0.8s;
+}
+
+/* Sizes */
+.small .dot {
+  width: 8px;
+  height: 8px;
+}
+
+.medium .dot {
+  width: 10px;
+  height: 10px;
+}
+
+.large .dot {
+  width: 12px;
+  height: 12px;
+}
+
+/* Variants */
+.default {
+  color: var(--color-primary);
+}
+
+.primary {
+  color: var(--color-primary);
+}
+
+.success {
+  color: var(--color-success);
+}
+
+.danger {
+  color: var(--color-error);
+}
+
+/* Label */
+.label {
+  font-size: var(--font-size-small10);
+  color: var(--color-body-text-soft20);
+  text-align: center;
+}
+
+/* Animation */
+@keyframes dotBounce {
+  0%, 60%, 100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-10px);
+  }
+}

@@ -1,0 +1,157 @@
+.container {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--spacing);
+  flex-direction: column;
+}
+
+.labelRight {
+  flex-direction: row;
+  align-items: center;
+}
+
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Label */
+.label {
+  font-size: var(--font-size-normal);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-normal);
+  color: var(--color-body-text);
+  cursor: pointer;
+  user-select: none;
+}
+
+.disabled .label {
+  cursor: not-allowed;
+}
+
+/* Switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+
+/* Sizes */
+.small {
+  width: 36px;
+  height: 20px;
+}
+
+.medium {
+  width: 44px;
+  height: 24px;
+}
+
+.large {
+  width: 52px;
+  height: 28px;
+}
+
+/* Input (hidden) */
+.input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+}
+
+/* Slider track */
+.slider {
+  position: absolute;
+  inset: 0;
+  background: var(--color-body-border);
+  border-radius: 999px;
+  transition: all var(--duration) var(--easing-default);
+}
+
+.input:hover:not(:disabled) ~ .slider {
+  background: var(--color-body-border-hover);
+}
+
+.input:checked ~ .slider {
+  background: var(--color-primaryButton-background);
+}
+
+.input:checked:hover:not(:disabled) ~ .slider {
+  background: var(--color-primaryButton-background-hover);
+}
+
+.input:focus ~ .slider {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--color-primary-soft10);
+}
+
+.input:disabled ~ .slider {
+  cursor: not-allowed;
+}
+
+/* Thumb */
+.thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  background: white;
+  border-radius: 50%;
+  transition: transform var(--duration) var(--easing-bounce);
+  box-shadow: var(--shadow-small10);
+}
+
+.small .thumb {
+  width: 16px;
+  height: 16px;
+}
+
+.medium .thumb {
+  width: 20px;
+  height: 20px;
+}
+
+.large .thumb {
+  width: 24px;
+  height: 24px;
+}
+
+/* Move thumb when checked */
+.input:checked ~ .slider .thumb {
+  transform: translateX(100%);
+}
+
+.small .input:checked ~ .slider .thumb {
+  transform: translateX(16px);
+}
+
+.medium .input:checked ~ .slider .thumb {
+  transform: translateX(20px);
+}
+
+.large .input:checked ~ .slider .thumb {
+  transform: translateX(24px);
+}
+
+/* Error state */
+.error .slider {
+  background: var(--color-error-soft20);
+  border: 1px solid var(--color-error);
+}
+
+.error .input:checked ~ .slider {
+  background: var(--color-error);
+}
+
+/* Helper text */
+.helperText {
+  font-size: var(--font-size-small10);
+  line-height: var(--line-height-normal);
+  color: var(--color-body-text-soft40);
+  margin-top: var(--spacing-small5);
+  width: 100%;
+}
+
+.errorText {
+  color: var(--color-error);
+}

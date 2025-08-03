@@ -1,0 +1,1 @@
+export { DancingDots, type DancingDotsProps } from './DancingDots';

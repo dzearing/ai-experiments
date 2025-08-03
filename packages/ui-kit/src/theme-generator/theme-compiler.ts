@@ -285,7 +285,51 @@ export function generateCSS(theme: GeneratedTheme): string {
       if (typeof value === 'string') {
         // Convert camelCase to kebab-case for CSS variables
         const kebabTokenName = tokenName.replace(/([A-Z])/g, '-$1').toLowerCase();
-        lines.push(`  --color-${surfaceName}-${kebabTokenName}: ${value};`);
+        
+        // Special handling for body surface hover/active states
+        // Use the same colors as neutral button for consistency
+        if (surfaceName === 'body' && (tokenName === 'backgroundHover' || tokenName === 'backgroundActive' || 
+            tokenName === 'textHover' || tokenName === 'textActive')) {
+          // Look up the neutral button color from the theme
+          const neutralSurface = theme.surfaces['buttonNeutral'];
+          if (neutralSurface) {
+            let neutralColor: string | undefined;
+            
+            if (tokenName === 'backgroundHover') {
+              neutralColor = neutralSurface.backgroundHover;
+            } else if (tokenName === 'backgroundActive') {
+              neutralColor = neutralSurface.backgroundActive;
+            } else if (tokenName === 'textHover') {
+              neutralColor = neutralSurface.textHover;
+            } else if (tokenName === 'textActive') {
+              neutralColor = neutralSurface.textActive;
+            }
+            
+            if (neutralColor) {
+              lines.push(`  --color-${surfaceName}-${kebabTokenName}: ${neutralColor};`);
+            } else {
+              // Fallback - use the base value for text, translucent overlay for background
+              if (tokenName.startsWith('text')) {
+                lines.push(`  --color-${surfaceName}-${kebabTokenName}: ${value};`);
+              } else {
+                const opacity = tokenName === 'backgroundHover' ? '0.08' : '0.12';
+                const overlayColor = theme.mode === 'light' ? '0, 0, 0' : '255, 255, 255';
+                lines.push(`  --color-${surfaceName}-${kebabTokenName}: rgba(${overlayColor}, ${opacity});`);
+              }
+            }
+          } else {
+            // Fallback
+            if (tokenName.startsWith('text')) {
+              lines.push(`  --color-${surfaceName}-${kebabTokenName}: ${value};`);
+            } else {
+              const opacity = tokenName === 'backgroundHover' ? '0.08' : '0.12';
+              const overlayColor = theme.mode === 'light' ? '0, 0, 0' : '255, 255, 255';
+              lines.push(`  --color-${surfaceName}-${kebabTokenName}: rgba(${overlayColor}, ${opacity});`);
+            }
+          }
+        } else {
+          lines.push(`  --color-${surfaceName}-${kebabTokenName}: ${value};`);
+        }
       }
     }
     lines.push('');

@@ -1,6 +1,5 @@
 import { base } from './base.js';
 import tseslint from 'typescript-eslint';
-import type { TSESLint } from '@typescript-eslint/utils';
 import reactPlugin from 'eslint-plugin-react';
 import reactHooksPlugin from 'eslint-plugin-react-hooks';
 import reactRefreshPlugin from 'eslint-plugin-react-refresh';
@@ -10,7 +9,7 @@ import globals from 'globals';
  * ESLint configuration for React applications.
  * Extends the base configuration with React-specific rules and browser globals.
  */
-export const react: TSESLint.FlatConfig.ConfigArray = tseslint.config(...base, {
+export const react = tseslint.config(...base, {
   files: ['**/*.{ts,tsx,js,jsx}'],
   plugins: {
     react: reactPlugin,

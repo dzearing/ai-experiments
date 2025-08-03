@@ -90,7 +90,7 @@ const MicroInteractionsDemo: React.FC = () => {
         <div className="micro-example">
           <h4>Like Button</h4>
           <button 
-            className={`like-button ${liked ? 'liked' : ''}`}
+            className={`icon-button like-button ${liked ? 'liked' : ''}`}
             onClick={() => setLiked(!liked)}
             aria-label={liked ? 'Unlike' : 'Like'}
           >
@@ -107,7 +107,7 @@ const MicroInteractionsDemo: React.FC = () => {
             {[1, 2, 3].map(id => (
               <button
                 key={id}
-                className={`save-button ${savedItems.includes(id) ? 'saved' : ''}`}
+                className={`icon-button save-button ${savedItems.includes(id) ? 'saved' : ''}`}
                 onClick={() => toggleSave(id)}
               >
                 <svg viewBox="0 0 24 24" className="save-icon">
@@ -394,7 +394,7 @@ const ListAnimationsDemo: React.FC = () => {
             >
               <span>Item {item}</span>
               <button
-                className="remove-button"
+                className="icon-button remove-button"
                 onClick={() => removeItem(item)}
                 aria-label={`Remove item ${item}`}
               >

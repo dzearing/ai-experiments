@@ -1,0 +1,73 @@
+.container {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-small10);
+}
+
+.container.center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  width: 100%;
+}
+
+/* Pulse */
+.pulse {
+  background: currentColor;
+  border-radius: var(--radius-full);
+  animation: pulseScale 1.2s ease-in-out infinite;
+}
+
+/* Sizes */
+.small {
+  width: 20px;
+  height: 20px;
+}
+
+.medium {
+  width: 40px;
+  height: 40px;
+}
+
+.large {
+  width: 60px;
+  height: 60px;
+}
+
+/* Variants */
+.default {
+  color: var(--color-primary);
+}
+
+.primary {
+  color: var(--color-primary);
+}
+
+.success {
+  color: var(--color-success);
+}
+
+.danger {
+  color: var(--color-error);
+}
+
+/* Label */
+.label {
+  font-size: var(--font-size-small10);
+  color: var(--color-body-text-soft20);
+  text-align: center;
+}
+
+/* Animation */
+@keyframes pulseScale {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}

@@ -96,3 +96,370 @@
 }
 
 /* Theme files will be loaded dynamically via theme-loader.ts */
+
+/* Theme-aware styling for Storybook docs */
+/* Apply theme to the docs iframe */
+#storybook-docs,
+#storybook-preview-iframe {
+  background-color: var(--color-body-background, #ffffff);
+}
+
+[data-theme-type="dark"] #storybook-docs,
+[data-theme-type="dark"] #storybook-preview-iframe {
+  background-color: var(--color-body-background, #121212);
+}
+/* Base theme styles for docs */
+.sbdocs,
+.sbdocs-wrapper,
+.sbdocs-content,
+.docs-story {
+  background-color: var(--color-body-background, #ffffff);
+  color: var(--color-body-text, #262626);
+}
+
+/* Explicit light mode */
+[data-theme-type="light"] .sbdocs,
+[data-theme-type="light"] .sbdocs-wrapper,
+[data-theme-type="light"] .sbdocs-content,
+[data-theme-type="light"] .docs-story {
+  background-color: var(--color-body-background, #ffffff);
+  color: var(--color-body-text, #262626);
+}
+
+/* Dark mode */
+[data-theme-type="dark"] .sbdocs,
+[data-theme-type="dark"] .sbdocs-wrapper,
+[data-theme-type="dark"] .sbdocs-content,
+[data-theme-type="dark"] .docs-story {
+  background-color: var(--color-body-background, #121212);
+  color: var(--color-body-text, #e0e0e0);
+}
+
+/* Theme-aware headings */
+.sbdocs h1,
+.sbdocs h2,
+.sbdocs h3,
+.sbdocs h4,
+.sbdocs h5,
+.sbdocs h6 {
+  color: var(--color-body-text);
+}
+
+[data-theme-type="light"] .sbdocs h1,
+[data-theme-type="light"] .sbdocs h2,
+[data-theme-type="light"] .sbdocs h3,
+[data-theme-type="light"] .sbdocs h4,
+[data-theme-type="light"] .sbdocs h5,
+[data-theme-type="light"] .sbdocs h6 {
+  color: var(--color-body-text, #262626);
+}
+
+[data-theme-type="dark"] .sbdocs h1,
+[data-theme-type="dark"] .sbdocs h2,
+[data-theme-type="dark"] .sbdocs h3,
+[data-theme-type="dark"] .sbdocs h4,
+[data-theme-type="dark"] .sbdocs h5,
+[data-theme-type="dark"] .sbdocs h6 {
+  color: var(--color-body-text, #e0e0e0);
+}
+
+/* Theme-aware links */
+[data-theme-type="dark"] .sbdocs a {
+  color: var(--color-body-link, #4db8ff);
+}
+
+[data-theme-type="dark"] .sbdocs a:hover {
+  color: var(--color-body-link-hover, #66c2ff);
+}
+
+/* Theme-aware code blocks */
+[data-theme-type="dark"] .sbdocs code {
+  background-color: var(--color-codeInline-background, #2a2a2a);
+  border-color: var(--color-codeInline-border, #3a3a3a);
+  color: var(--color-codeInline-text, #e0e0e0);
+}
+
+[data-theme-type="dark"] .sbdocs pre {
+  background-color: var(--color-codeBlock-background, #1e1e1e);
+  border-color: var(--color-codeBlock-border, #3a3a3a);
+  color: var(--color-codeBlock-text, #e0e0e0);
+}
+
+/* Theme-aware tables */
+[data-theme-type="dark"] .sbdocs table {
+  border-color: var(--color-body-border, #3a3a3a);
+}
+
+[data-theme-type="dark"] .sbdocs th,
+[data-theme-type="dark"] .sbdocs td {
+  border-color: var(--color-body-border, #3a3a3a);
+}
+
+[data-theme-type="dark"] .sbdocs th {
+  background-color: var(--color-panel-background, #2a2a2a);
+  color: var(--color-body-text, #e0e0e0);
+}
+
+[data-theme-type="dark"] .sbdocs tbody tr:hover {
+  background-color: var(--color-panel-background, #2a2a2a);
+}
+
+/* Theme-aware blockquotes */
+[data-theme-type="dark"] .sbdocs blockquote {
+  border-color: var(--color-body-border, #3a3a3a);
+  color: var(--color-body-text-disabled, #999999);
+}
+
+/* Theme-aware table of contents */
+/* Base TOC styles - override Storybook defaults */
+.sbdocs-toc--wrapper,
+.sbdocs-toc--wrapper * {
+  color: var(--color-body-text) !important;
+}
+
+.sbdocs-toc--wrapper h2,
+.sbdocs-toc--wrapper .toc-list-item h2 {
+  color: var(--color-body-textHard10, var(--color-body-text)) !important;
+}
+
+.sbdocs-toc--wrapper a,
+.sbdocs-toc--wrapper .toc-list-item > a,
+.sbdocs-toc--wrapper .toc-list-item > a *,
+.sbdocs-toc--wrapper [class*="toc-list-item"] > a,
+.sbdocs-toc--wrapper [class*="toc-list-item"] > a * {
+  color: var(--color-body-text) !important;
+  text-decoration: none !important;
+  opacity: 1 !important;
+}
+
+.sbdocs-toc--wrapper a:hover,
+.sbdocs-toc--wrapper .toc-list-item > a:hover,
+.sbdocs-toc--wrapper .toc-list-item > a:hover *,
+.sbdocs-toc--wrapper [class*="toc-list-item"] > a:hover,
+.sbdocs-toc--wrapper [class*="toc-list-item"] > a:hover * {
+  color: var(--color-body-link) !important;
+  opacity: 1 !important;
+}
+
+/* Light mode TOC */
+[data-theme-type="light"] .sbdocs-toc--wrapper {
+  color: var(--color-body-text, #262626);
+}
+
+[data-theme-type="light"] .sbdocs-toc--wrapper h2 {
+  color: var(--color-body-text, #262626);
+}
+
+[data-theme-type="light"] .sbdocs-toc--wrapper a {
+  color: var(--color-body-text, #262626);
+  opacity: 1;
+}
+
+[data-theme-type="light"] .sbdocs-toc--wrapper a:hover {
+  color: var(--color-body-link, #0066cc);
+  opacity: 1;
+}
+
+/* Dark mode TOC */
+[data-theme-type="dark"] .sbdocs-toc--wrapper {
+  color: var(--color-body-text, #e0e0e0);
+}
+
+[data-theme-type="dark"] .sbdocs-toc--wrapper h2 {
+  color: var(--color-body-text, #e0e0e0);
+}
+
+[data-theme-type="dark"] .sbdocs-toc--wrapper a {
+  color: var(--color-body-text, #e0e0e0);
+  opacity: 1;
+}
+
+[data-theme-type="dark"] .sbdocs-toc--wrapper a:hover {
+  color: var(--color-body-link, #4db8ff);
+  opacity: 1;
+}
+
+/* Override any CSS-in-JS generated classes for TOC */
+[class*="css-"] .toc-list-item > a,
+[class*="css-"] .toc-list-item > a *,
+div[class*="css-"] .toc-list-item > a,
+div[class*="css-"] .toc-list-item > a *,
+.sbdocs-toc--wrapper [class*="css-"] a,
+.sbdocs-toc--wrapper [class*="css-"] a *,
+.sbdocs-toc--wrapper div[class*="css-"] a,
+.sbdocs-toc--wrapper div[class*="css-"] a * {
+  color: var(--color-body-text) !important;
+  text-decoration: none !important;
+}
+
+[class*="css-"] .toc-list-item > a:hover,
+[class*="css-"] .toc-list-item > a:hover *,
+div[class*="css-"] .toc-list-item > a:hover,
+div[class*="css-"] .toc-list-item > a:hover *,
+.sbdocs-toc--wrapper [class*="css-"] a:hover,
+.sbdocs-toc--wrapper [class*="css-"] a:hover *,
+.sbdocs-toc--wrapper div[class*="css-"] a:hover,
+.sbdocs-toc--wrapper div[class*="css-"] a:hover * {
+  color: var(--color-body-link) !important;
+}
+
+/* Specific override for the exact issue shown in the screenshot */
+.css-q7khkg .toc-list-item > a,
+.css-q7khkg .toc-list-item > a f,
+.css-q7khkg .toc-list-item > a *,
+[class*="css-"] .toc-list-item > a f {
+  color: var(--color-body-text) !important;
+  text-decoration: none !important;
+}
+
+/* Ensure proper contrast for all text */
+[data-theme-type="dark"] .sbdocs p,
+[data-theme-type="dark"] .sbdocs li,
+[data-theme-type="dark"] .sbdocs span {
+  color: var(--color-body-text, #e0e0e0);
+}
+
+/* Theme-aware code blocks - Storybook's docblock-source */
+[data-theme-type="dark"] .docblock-source {
+  background-color: var(--color-codeBlock-background, #1e1e1e) !important;
+  border-color: var(--color-codeBlock-border, #3a3a3a) !important;
+}
+
+[data-theme-type="dark"] .docblock-source pre {
+  background-color: transparent !important;
+  color: var(--color-codeBlock-text, #e0e0e0) !important;
+}
+
+/* Syntax highlighting for all modes */
+/* Base token styles for light mode */
+.docblock-source .token.plain-text,
+.prismjs .token.plain-text {
+  color: var(--color-codeBlock-text, #262626) !important;
+}
+
+.docblock-source .token.comment,
+.prismjs .token.comment {
+  color: #008000 !important;
+}
+
+.docblock-source .token.string,
+.prismjs .token.string {
+  color: #a31515 !important;
+}
+
+.docblock-source .token.keyword,
+.prismjs .token.keyword {
+  color: #0000ff !important;
+}
+
+.docblock-source .token.function,
+.prismjs .token.function {
+  color: #795e26 !important;
+}
+
+.docblock-source .token.number,
+.prismjs .token.number {
+  color: #098658 !important;
+}
+
+.docblock-source .token.operator,
+.prismjs .token.operator {
+  color: #000000 !important;
+}
+
+.docblock-source .token.punctuation,
+.prismjs .token.punctuation {
+  color: #000000 !important;
+}
+
+.docblock-source .token.tag,
+.prismjs .token.tag {
+  color: #0000ff !important;
+}
+
+.docblock-source .token.attr-name,
+.docblock-source .token.class-name,
+.prismjs .token.attr-name,
+.prismjs .token.class-name {
+  color: #a31515 !important;
+}
+
+.docblock-source .token.attr-value,
+.prismjs .token.attr-value {
+  color: #0000ff !important;
+}
+
+/* Syntax highlighting in dark mode */
+[data-theme-type="dark"] .docblock-source .token,
+[data-theme-type="dark"] .docblock-source .prism-code,
+[data-theme-type="dark"] .prismjs .token {
+  color: var(--color-codeBlock-text, #e0e0e0) !important;
+}
+
+[data-theme-type="dark"] .docblock-source .token.plain-text,
+[data-theme-type="dark"] .prismjs .token.plain-text {
+  color: var(--color-codeBlock-text, #e0e0e0) !important;
+}
+
+[data-theme-type="dark"] .docblock-source .token.comment,
+[data-theme-type="dark"] .prismjs .token.comment {
+  color: #6a9955 !important;
+}
+
+[data-theme-type="dark"] .docblock-source .token.string,
+[data-theme-type="dark"] .prismjs .token.string {
+  color: #ce9178 !important;
+}
+
+[data-theme-type="dark"] .docblock-source .token.keyword,
+[data-theme-type="dark"] .prismjs .token.keyword {
+  color: #569cd6 !important;
+}
+
+[data-theme-type="dark"] .docblock-source .token.function,
+[data-theme-type="dark"] .prismjs .token.function {
+  color: #dcdcaa !important;
+}
+
+[data-theme-type="dark"] .docblock-source .token.number,
+[data-theme-type="dark"] .prismjs .token.number {
+  color: #b5cea8 !important;
+}
+
+[data-theme-type="dark"] .docblock-source .token.operator,
+[data-theme-type="dark"] .prismjs .token.operator {
+  color: #d4d4d4 !important;
+}
+
+[data-theme-type="dark"] .docblock-source .token.punctuation,
+[data-theme-type="dark"] .prismjs .token.punctuation {
+  color: #d4d4d4 !important;
+}
+
+[data-theme-type="dark"] .docblock-source .token.tag,
+[data-theme-type="dark"] .prismjs .token.tag {
+  color: #569cd6 !important;
+}
+
+[data-theme-type="dark"] .docblock-source .token.attr-name,
+[data-theme-type="dark"] .docblock-source .token.class-name,
+[data-theme-type="dark"] .prismjs .token.attr-name,
+[data-theme-type="dark"] .prismjs .token.class-name {
+  color: #9cdcfe !important;
+}
+
+[data-theme-type="dark"] .docblock-source .token.attr-value,
+[data-theme-type="dark"] .prismjs .token.attr-value {
+  color: #ce9178 !important;
+}
+
+/* Ensure all text in code blocks is visible */
+.prismjs,
+.prismjs * {
+  color: var(--color-codeBlock-text, #262626);
+}
+
+[data-theme-type="dark"] .prismjs,
+[data-theme-type="dark"] .prismjs * {
+  color: var(--color-codeBlock-text, #e0e0e0);
+}

@@ -1,0 +1,96 @@
+.stack {
+  display: flex;
+  box-sizing: border-box;
+}
+
+/* Direction */
+.vertical {
+  flex-direction: column;
+}
+
+.horizontal {
+  flex-direction: row;
+}
+
+/* Gap sizes */
+.gap-none {
+  gap: 0;
+}
+
+.gap-small {
+  gap: var(--spacing-small10);
+}
+
+.gap-medium {
+  gap: var(--spacing);
+}
+
+.gap-large {
+  gap: var(--spacing-large10);
+}
+
+.gap-xlarge {
+  gap: var(--spacing-large20);
+}
+
+/* Alignment (cross-axis) */
+.align-start {
+  align-items: flex-start;
+}
+
+.align-center {
+  align-items: center;
+}
+
+.align-end {
+  align-items: flex-end;
+}
+
+.align-stretch {
+  align-items: stretch;
+}
+
+/* Justification (main-axis) */
+.justify-start {
+  justify-content: flex-start;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.justify-end {
+  justify-content: flex-end;
+}
+
+.justify-space-between {
+  justify-content: space-between;
+}
+
+.justify-space-around {
+  justify-content: space-around;
+}
+
+.justify-space-evenly {
+  justify-content: space-evenly;
+}
+
+/* Wrap */
+.wrap {
+  flex-wrap: wrap;
+}
+
+/* RTL Support */
+[dir="rtl"] .horizontal {
+  direction: rtl;
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  /* No specific high contrast styles needed for layout component */
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  /* No animations to reduce */
+}

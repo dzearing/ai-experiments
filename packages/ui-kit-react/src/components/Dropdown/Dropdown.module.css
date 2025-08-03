@@ -1,0 +1,199 @@
+.container {
+  display: inline-flex;
+  flex-direction: column;
+  gap: var(--spacing-small10);
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+/* Label */
+.label {
+  font-size: var(--font-size-normal);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-body-text);
+  display: block;
+}
+
+.required {
+  color: var(--color-error);
+  margin-left: var(--spacing-small5);
+}
+
+/* Dropdown */
+.dropdown {
+  position: relative;
+  width: 100%;
+}
+
+/* Button */
+.button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-small5);
+  background: var(--color-input-background);
+  border: 1px solid var(--color-input-border);
+  border-radius: var(--radius-input);
+  font-family: inherit;
+  font-size: var(--font-size-normal);
+  line-height: var(--line-height-normal);
+  color: var(--color-body-text);
+  cursor: pointer;
+  transition: all var(--duration) var(--easing-default);
+  text-align: left;
+}
+
+/* Sizes - matching Input and Button heights */
+.small {
+  padding: calc(var(--spacing-small10) - 1px) var(--spacing-small10) calc(var(--spacing-small10) - 1px) var(--spacing);
+  font-size: var(--font-size-small10);
+}
+
+.medium {
+  padding: calc(var(--spacing-small10) - 1px) var(--spacing-small10) calc(var(--spacing-small10) - 1px) var(--spacing-large10);
+}
+
+.large {
+  padding: calc(var(--spacing) - 1px) var(--spacing) calc(var(--spacing) - 1px) var(--spacing-large20);
+  font-size: var(--font-size-large10);
+}
+
+/* States */
+.button:hover:not(:disabled) {
+  background: var(--color-input-background-hover);
+  border-color: var(--color-input-border-hover);
+}
+
+.button:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-soft10);
+}
+
+.open {
+  border-color: var(--color-primary);
+}
+
+.error {
+  background: var(--color-error-soft10);
+  border-color: var(--color-error);
+}
+
+.error:hover:not(:disabled) {
+  background: var(--color-error-soft20);
+  border-color: var(--color-error);
+}
+
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Value */
+.value {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Icon */
+.icon {
+  flex-shrink: 0;
+  transition: transform var(--duration) var(--easing-default);
+  color: var(--color-body-text-soft40);
+}
+
+.open .icon {
+  transform: rotate(180deg);
+}
+
+/* Menu */
+.menu {
+  max-height: 300px;
+  overflow-y: auto;
+  background: var(--color-panel-background);
+  border: 1px solid var(--color-panel-border);
+  border-radius: var(--radius-medium10);
+  box-shadow: var(--shadow-large10);
+  z-index: 1000;
+  animation: slideDown var(--duration) var(--easing-bounce);
+}
+
+/* Option */
+.option {
+  width: 100%;
+  padding: var(--spacing-small10) var(--spacing-large10);
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: var(--font-size-normal);
+  line-height: var(--line-height-normal);
+  color: var(--color-body-text);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--duration) var(--easing-default);
+}
+
+.option:hover:not(:disabled) {
+  background: var(--color-body-background-hover);
+}
+
+.option:active:not(:disabled) {
+  background: var(--color-body-background-active);
+}
+
+.option.selected {
+  background: var(--color-primaryButton-background);
+  color: var(--color-primaryButton-text);
+  font-weight: var(--font-weight-semibold);
+}
+
+.option.selected:hover:not(:disabled) {
+  background: var(--color-primaryButton-background-hover);
+}
+
+.option.selected:active:not(:disabled) {
+  background: var(--color-primaryButton-background-active);
+}
+
+.option.focused {
+  background: var(--color-body-background-hover);
+  outline: none;
+}
+
+.option.focused.selected {
+  background: var(--color-primaryButton-background-hover);
+}
+
+.optionDisabled {
+  color: var(--color-body-text-soft60);
+  cursor: not-allowed;
+}
+
+/* Helper text */
+.helperText {
+  font-size: var(--font-size-small10);
+  line-height: var(--line-height-normal);
+  color: var(--color-body-text-soft40);
+  margin-top: var(--spacing-small5);
+}
+
+.errorText {
+  color: var(--color-error);
+}
+
+/* Animation */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

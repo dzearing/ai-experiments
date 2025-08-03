@@ -90,8 +90,14 @@ export const surfaces: SurfaceDefinition[] = [
       hard: [10, 20],
     },
     states: {
-      hover: { lightness: { light: -3, dark: 3 } },
-      active: { lightness: { light: -5, dark: 5 } },
+      hover: { 
+        // Use translucent overlay instead of lightness adjustment
+        // This works better on colored surfaces like banners
+        lightness: { light: -3, dark: 3 }  // Fallback for now
+      },
+      active: { 
+        lightness: { light: -5, dark: 5 }  // Fallback for now
+      },
       disabled: { opacity: 0.5 },
     },
   },

@@ -56,6 +56,9 @@ const preview: Preview = {
       return Story();
     },
   ],
+  docs: {
+    toc: true,
+  },
   globalTypes: {
     theme: {
       name: 'Theme',

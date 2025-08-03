@@ -1,0 +1,1 @@
+export { Pulse, type PulseProps } from './Pulse';

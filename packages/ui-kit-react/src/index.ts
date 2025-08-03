@@ -1,22 +1,5 @@
-/**
- * @claude-flow/ui-kit-react
- * 
- * React components and hooks for the Claude Flow UI Kit design system
- */
+// Import styles from @claude-flow/ui-kit
+import '@claude-flow/ui-kit/styles.css';
 
-// Components
+// Export all components
 export * from './components';
-
-// Hooks
-export * from './hooks';
-
-// Utilities
-export * from './utils';
-
-// Re-export types from ui-kit for convenience
-export type { 
-  Theme, 
-  ThemeMode, 
-  ThemeChangeEvent,
-  ThemePreferences 
-} from '@claude-flow/ui-kit';

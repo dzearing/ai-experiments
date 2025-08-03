@@ -1,0 +1,239 @@
+/**
+ * Button Shapes Stories Styles
+ */
+
+.button-shapes-showcase {
+  padding: var(--spacing-large10);
+  max-width: 1200px;
+}
+
+/* Base button styles for demo */
+.button {
+  padding: var(--spacing-small10) var(--spacing-large10);
+  font-size: var(--font-size-normal);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--duration) var(--easing-default);
+  border: 1px solid var(--color-buttonNeutral-border);
+  background: var(--color-buttonNeutral-background);
+  color: var(--color-buttonNeutral-text);
+}
+
+.button:hover {
+  background: var(--color-buttonNeutral-background-hover);
+}
+
+.button-primary {
+  background: var(--color-buttonPrimary-background);
+  color: var(--color-buttonPrimary-text);
+  border: 1px solid var(--color-buttonPrimary-border);
+}
+
+.button-primary:hover {
+  background: var(--color-buttonPrimary-background-hover);
+}
+
+.button-danger {
+  background: var(--color-buttonDanger-background);
+  color: var(--color-buttonDanger-text);
+  border: 1px solid var(--color-buttonDanger-border);
+}
+
+.button-danger:hover {
+  background: var(--color-buttonDanger-background-hover);
+}
+
+.button-success {
+  background: var(--color-buttonSuccess-background);
+  color: var(--color-buttonSuccess-text);
+  border: 1px solid var(--color-buttonSuccess-border);
+}
+
+.button-success:hover {
+  background: var(--color-buttonSuccess-background-hover);
+}
+
+.button-neutral {
+  background: var(--color-buttonNeutral-background);
+  color: var(--color-buttonNeutral-text);
+  border: 1px solid var(--color-buttonNeutral-border);
+}
+
+.button-large {
+  padding: var(--spacing) var(--spacing-large20);
+  font-size: var(--font-size-large10);
+}
+
+/* Shape comparison section */
+.shape-comparison {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--spacing-large20);
+  margin-top: var(--spacing-large10);
+}
+
+.shape-variant {
+  background: var(--color-panel-background);
+  border: 1px solid var(--color-panel-border);
+  border-radius: var(--radius);
+  padding: var(--spacing-large10);
+}
+
+.shape-variant h4 {
+  margin: 0 0 var(--spacing-small10) 0;
+  color: var(--color-body-text);
+}
+
+.shape-variant p {
+  margin: 0 0 var(--spacing) 0;
+  font-size: var(--font-size-small10);
+  color: var(--color-body-text-soft20);
+}
+
+.button-examples {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-small10);
+}
+
+/* Button group examples */
+.group-examples {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-large10);
+  margin-top: var(--spacing-large10);
+}
+
+.group-example {
+  background: var(--color-panel-background);
+  border: 1px solid var(--color-panel-border);
+  border-radius: var(--radius);
+  padding: var(--spacing-large10);
+}
+
+.group-example h4 {
+  margin: 0 0 var(--spacing) 0;
+  color: var(--color-body-text);
+}
+
+.button-group {
+  display: inline-flex;
+  gap: 0;
+}
+
+.button-group > * {
+  margin-right: -1px;
+}
+
+.button-group > *:hover {
+  z-index: 1;
+}
+
+/* Real world examples */
+.real-world-examples {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-large20);
+  margin-top: var(--spacing-large10);
+}
+
+.example-card {
+  background: var(--color-panel-background);
+  border: 1px solid var(--color-panel-border);
+  border-radius: var(--radius);
+  padding: var(--spacing-large10);
+  text-align: center;
+}
+
+.example-card h4 {
+  margin: 0 0 var(--spacing) 0;
+  color: var(--color-body-text);
+}
+
+.social-buttons {
+  display: flex;
+  gap: var(--spacing);
+  justify-content: center;
+}
+
+.toolbar {
+  display: inline-flex;
+  gap: var(--spacing-small20);
+  padding: var(--spacing-small10);
+  background: var(--color-panelRaised-background);
+  border: 1px solid var(--color-panelRaised-border);
+  border-radius: var(--radius-small10);
+}
+
+/* Guidelines section */
+.shape-guidelines {
+  padding: var(--spacing-large10);
+  max-width: 1200px;
+}
+
+.guideline-section {
+  margin-bottom: var(--spacing-large40);
+}
+
+.guideline-section h3 {
+  margin: 0 0 var(--spacing-large10) 0;
+  color: var(--color-body-text);
+}
+
+.guideline-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--spacing-large20);
+}
+
+.guideline-card {
+  background: var(--color-panel-background);
+  border: 1px solid var(--color-panel-border);
+  border-radius: var(--radius);
+  padding: var(--spacing-large10);
+}
+
+.shape-demo {
+  margin-bottom: var(--spacing);
+  text-align: center;
+}
+
+.guideline-card h4 {
+  margin: 0 0 var(--spacing) 0;
+  color: var(--color-body-text);
+}
+
+.guideline-card ul {
+  margin: 0;
+  padding-left: var(--spacing-large10);
+  color: var(--color-body-text-soft20);
+}
+
+.guideline-card li {
+  margin-bottom: var(--spacing-small10);
+}
+
+.implementation-example {
+  background: var(--color-panel-background);
+  border: 1px solid var(--color-panel-border);
+  border-radius: var(--radius);
+  padding: var(--spacing-large10);
+}
+
+.implementation-example h4 {
+  margin: 0 0 var(--spacing) 0;
+  color: var(--color-body-text);
+}
+
+.code-block {
+  display: block;
+  white-space: pre;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-small10);
+  background: var(--color-codeBlock-background);
+  color: var(--color-codeBlock-text);
+  padding: var(--spacing);
+  border-radius: var(--radius-small10);
+  border: 1px solid var(--color-codeBlock-border);
+  overflow-x: auto;
+}

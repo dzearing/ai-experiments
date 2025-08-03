@@ -1,0 +1,100 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-small10);
+  width: 100%;
+}
+
+/* Track */
+.track {
+  position: relative;
+  width: 100%;
+  background: var(--color-body-background-soft20);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+/* Sizes */
+.small {
+  height: 4px;
+}
+
+.medium {
+  height: 8px;
+}
+
+.large {
+  height: 12px;
+}
+
+/* Bar */
+.bar {
+  height: 100%;
+  position: relative;
+  transition: width var(--duration-slow10) var(--easing-default);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 var(--spacing-small10);
+}
+
+/* Variants */
+.primary .bar {
+  background: var(--color-primary);
+}
+
+.success .bar {
+  background: var(--color-success);
+}
+
+.warning .bar {
+  background: var(--color-warning);
+}
+
+.error .bar {
+  background: var(--color-error);
+}
+
+/* Indeterminate animation */
+.indeterminate {
+  width: 30% !important;
+  animation: indeterminate 1.5s infinite ease-in-out;
+}
+
+@keyframes indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
+}
+
+/* Label */
+.label {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-body-text);
+  white-space: nowrap;
+}
+
+.label-outside {
+  text-align: right;
+}
+
+.label-inside {
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Label sizes */
+.label-small {
+  font-size: var(--font-size-small5);
+}
+
+.label-medium {
+  font-size: var(--font-size-small10);
+}
+
+.label-large {
+  font-size: var(--font-size-normal);
+}
