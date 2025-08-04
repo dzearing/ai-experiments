@@ -24,8 +24,6 @@
   --duration-fadeOut: var(--duration);
   --duration-slideIn: var(--duration);
   --duration-slideOut: var(--duration-fast10);
-  --duration-modalIn: var(--duration);
-  --duration-modalOut: var(--duration-fast10);
   --duration-pageTransition: var(--duration-slow10);
 
   /* Easing Functions */

@@ -106,9 +106,9 @@ Colors from the same surface work together:
 
 ```css
 .card {
-  background: var(--color-panelRaised-background);
-  color: var(--color-panelRaised-text);
-  border: 1px solid var(--color-panelRaised-border);
+  background: var(--color-panel-background);
+  color: var(--color-panel-text);
+  border: 1px solid var(--color-panel-border);
 }
 
 .error-alert {
@@ -125,7 +125,7 @@ Don't mix colors from different surfaces:
 ```css
 /* Bad - May not have proper contrast */
 .card {
-  background: var(--color-panelRaised-background);
+  background: var(--color-panel-background);
   color: var(--color-body-text); /* Wrong surface! */
   border: 1px solid var(--color-noticeDanger-border); /* Wrong surface! */
 }
@@ -160,7 +160,7 @@ See the **Dark Mode Comparison** story in the sidebar to compare light and dark 
     padding: 1rem;
     border: 1px solid var(--color-body-border);
     border-radius: 8px;
-    background: var(--color-panelRaised-background);
+    background: var(--color-panel-background);
   }
   
   .token-part h3 {
@@ -171,8 +171,8 @@ See the **Dark Mode Comparison** story in the sidebar to compare light and dark 
   .token-part code {
     display: block;
     margin: 0.25rem 0;
-    color: var(--color-codeInline-text);
-    background: var(--color-codeInline-background);
+    color: var(--color-body-text);
+    background: var(--color-body-background-soft10);
     padding: 0.25rem 0.5rem;
     border-radius: 4px;
     font-size: 0.875rem;

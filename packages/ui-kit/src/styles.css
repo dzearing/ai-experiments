@@ -174,10 +174,10 @@
     font-family: var(--font-family-mono);
     font-size: 0.875em;
     padding: 0.125em 0.25em;
-    background-color: var(--color-codeInline-background);
-    border: 1px solid var(--color-codeInline-border);
+    background-color: var(--color-body-background-soft10);
+    border: 1px solid var(--color-body-border);
     border-radius: 3px;
-    color: var(--color-codeInline-text);
+    color: var(--color-body-text);
   }
 
   pre {
@@ -186,11 +186,11 @@
     line-height: var(--line-height-relaxed);
     padding: 1em;
     margin-bottom: 1em;
-    background-color: var(--color-codeBlock-background);
-    border: 1px solid var(--color-codeBlock-border);
+    background-color: var(--color-body-background-soft10);
+    border: 1px solid var(--color-body-border);
     border-radius: 4px;
     overflow-x: auto;
-    color: var(--color-codeBlock-text);
+    color: var(--color-body-text);
   }
 
   pre code {

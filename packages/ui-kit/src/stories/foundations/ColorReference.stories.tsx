@@ -23,9 +23,6 @@ const TokenBuilder = () => {
   const surfaces = [
     'body',
     'panel',
-    'panelRaised',
-    'panelElevated',
-    'panelFloating',
     'buttonPrimary',
     'buttonDanger',
     'buttonSuccess',
@@ -34,17 +31,10 @@ const TokenBuilder = () => {
     'noticeSuccess',
     'noticeWarning',
     'noticeDanger',
-    'codeBlock',
-    'codeInline',
     'input',
     'inputFocus',
     'inputError',
     'inputDisabled',
-    'dialog',
-    'dialogElevated',
-    'modal',
-    'tooltip',
-    'menu',
   ];
 
   // Concept groups with base and variants (ordered from softest to hardest)

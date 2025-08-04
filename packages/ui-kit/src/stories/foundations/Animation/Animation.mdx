@@ -64,9 +64,9 @@ Use these context-specific tokens for common UI patterns:
 --duration-slide-in: var(--duration-normal);
 --duration-slide-out: var(--duration-fast);
 
-/* Modal and overlay animations */
---duration-modal-in: var(--duration-normal);
---duration-modal-out: var(--duration-fast);
+/* Panel and elevated content animations */
+--duration-panel-in: var(--duration-normal);
+--duration-panel-out: var(--duration-fast);
 
 /* Page-level transitions */
 --duration-page-transition: var(--duration-slow);
@@ -153,12 +153,12 @@ Common transition combinations ready to use:
 <Source
   language="css"
   code={`
-.modal {
-  animation: slide-in-up var(--duration-modal-in) var(--easing-enter);
+.panel-elevated {
+  animation: slide-in-up var(--duration-panel-in) var(--easing-enter);
 }
 
-.modal.closing {
-  animation: fade-out var(--duration-modal-out) var(--easing-exit);
+.panel-elevated.closing {
+  animation: fade-out var(--duration-panel-out) var(--easing-exit);
 }
   `}
 />

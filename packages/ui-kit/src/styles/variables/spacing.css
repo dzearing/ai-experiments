@@ -33,7 +33,6 @@
   --spacing-inputX: var(--spacing);
   --spacing-inputY: var(--spacing-small10);
   --spacing-card: var(--spacing-large10);
-  --spacing-modal: var(--spacing-large20);
   --spacing-section: var(--spacing-large40);
 
   /* Gap spacing for flexbox/grid */
@@ -99,7 +98,6 @@
 @media (max-width: 640px) {
   :root {
     --spacing-section: var(--spacing-large20);
-    --spacing-modal: var(--spacing-large10);
     --spacing-card: var(--spacing);
   }
 }

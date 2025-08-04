@@ -30,8 +30,6 @@
   --radius-button: var(--radius-small10);
   --radius-input: var(--radius-small10);
   --radius-card: var(--radius);
-  --radius-modal: var(--radius-large10);
-  --radius-tooltip: var(--radius-small10);
   --radius-badge: var(--radius-full);
   --radius-chip: var(--radius-full);
   --radius-avatar: var(--radius-full);

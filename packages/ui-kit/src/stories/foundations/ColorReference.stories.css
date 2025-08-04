@@ -903,8 +903,8 @@
   display: block;
   font-family: var(--font-family-mono);
   font-size: 0.875rem;
-  color: var(--color-codeInline-text);
-  background: var(--color-codeInline-background);
+  color: var(--color-body-text);
+  background: var(--color-body-background-soft10);
   padding: 0.5rem;
   border-radius: 4px;
   margin-bottom: 0.5rem;

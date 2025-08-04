@@ -116,8 +116,8 @@
   font-family: var(--font-family-mono);
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--color-codeInline-text);
-  background: var(--color-codeInline-background);
+  color: var(--color-body-text);
+  background: var(--color-body-background-soft10);
   padding: 0.375rem 0.75rem;
   border-radius: 4px;
   word-break: break-word;
@@ -570,15 +570,15 @@
 }
 
 .usage-code {
-  background: var(--color-codeBlock-background);
-  border: 1px solid var(--color-codeBlock-border);
+  background: var(--color-body-background-soft10);
+  border: 1px solid var(--color-body-border);
   border-radius: 6px;
   padding: 0.75rem;
   overflow-x: auto;
 }
 
 .usage-code code {
-  color: var(--color-codeBlock-text);
+  color: var(--color-body-text);
   font-family: var(--font-family-mono);
   font-size: 0.75rem;
 }

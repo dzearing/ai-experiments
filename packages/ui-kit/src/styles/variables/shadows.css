@@ -45,9 +45,7 @@
   --shadow-card: var(--shadow);
   --shadow-cardHover: var(--shadow-hard10);
   --shadow-dropdown: var(--shadow-hard10);
-  --shadow-modal: var(--shadow-hard20);
   --shadow-popover: var(--shadow-hard10);
-  --shadow-tooltip: var(--shadow);
 
   /* Focus Shadow */
   --shadow-focus: 0 0 0 3px hsl(var(--color-primary) / 0.2);
@@ -69,5 +67,4 @@
   --shadow-card: var(--shadow-hard10);
   --shadow-cardHover: var(--shadow-hard20);
   --shadow-dropdown: var(--shadow-hard20);
-  --shadow-modal: var(--shadow-hardest);
 }

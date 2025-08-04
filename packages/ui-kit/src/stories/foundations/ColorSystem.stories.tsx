@@ -537,8 +537,8 @@ export const NotificationSurfaces: StoryObj = {
 export const PanelSurfaces: StoryObj = {
   render: () => (
     <div className="surface-comparison">
-      <h2>Panel Elevation Levels</h2>
-      <p>Panels use subtle background and shadow differences to create visual hierarchy. Choose the right elevation based on content importance and context.</p>
+      <h2>Panel Surface</h2>
+      <p>The panel surface provides a clean background for content containers, cards, and other UI elements that need separation from the main page background.</p>
 
       <div className="comparison-grid">
         <theme-preview theme="default" mode="light">
@@ -546,58 +546,18 @@ export const PanelSurfaces: StoryObj = {
             <h3>Light Mode</h3>
             <div className="panels-showcase">
             <div className="panel-example panel-level-0">
-              <h4>Level 0 - Base Panel (<code>--panel</code>)</h4>
-              <p><strong>When to use:</strong> Content that sits directly on the page background</p>
+              <h4>Panel Surface (<code>--panel</code>)</h4>
+              <p><strong>When to use:</strong> Content containers that need subtle separation from the page background</p>
               <ul className="panel-usage-list">
-                <li>Inline content sections</li>
-                <li>Form groups</li>
-                <li>Basic containers</li>
-                <li>Table cells</li>
-              </ul>
-              <div className="panel-real-world">
-                <strong>Example:</strong> Page sections, content dividers
-              </div>
-            </div>
-
-            <div className="panel-example panel-level-1">
-              <h4>Level 1 - Raised Panel (<code>--panelRaised</code>)</h4>
-              <p><strong>When to use:</strong> Content that needs subtle separation from the background</p>
-              <ul className="panel-usage-list">
-                <li>Cards in a grid or list</li>
+                <li>Content cards and containers</li>
                 <li>Sidebar panels</li>
+                <li>Form sections</li>
+                <li>Table containers</li>
+                <li>List items</li>
                 <li>Comment threads</li>
-                <li>Basic modal dialogs</li>
               </ul>
               <div className="panel-real-world">
-                <strong>Example:</strong> Product cards, user profiles, comments
-              </div>
-            </div>
-
-            <div className="panel-example panel-level-2">
-              <h4>Level 2 - Elevated Panel (<code>--panelElevated</code>)</h4>
-              <p><strong>When to use:</strong> Important content that needs to stand out</p>
-              <ul className="panel-usage-list">
-                <li>Featured cards</li>
-                <li>Important notifications</li>
-                <li>Action panels</li>
-                <li>Dropdown menus</li>
-              </ul>
-              <div className="panel-real-world">
-                <strong>Example:</strong> Featured products, priority alerts, context menus
-              </div>
-            </div>
-
-            <div className="panel-example panel-level-3">
-              <h4>Level 3 - Floating Panel (<code>--panelFloating</code>)</h4>
-              <p><strong>When to use:</strong> Overlaying content that requires immediate attention</p>
-              <ul className="panel-usage-list">
-                <li>Modal dialogs</li>
-                <li>Popovers</li>
-                <li>Floating action menus</li>
-                <li>Toast notifications</li>
-              </ul>
-              <div className="panel-real-world">
-                <strong>Example:</strong> Confirmation modals, floating toolbars, system messages
+                <strong>Example:</strong> Cards, panels, content sections
               </div>
             </div>
 
@@ -607,17 +567,17 @@ export const PanelSurfaces: StoryObj = {
                 <div className="practice-item">
                   <strong>Do:</strong>
                   <ul>
-                    <li>Use consistent elevation within similar components</li>
-                    <li>Increase elevation for temporary/overlay content</li>
-                    <li>Match elevation to interaction importance</li>
+                    <li>Use panel surface for content grouping</li>
+                    <li>Combine with shadows for elevation effects</li>
+                    <li>Ensure sufficient contrast with body background</li>
                   </ul>
                 </div>
                 <div className="practice-item">
                   <strong>Don't:</strong>
                   <ul>
-                    <li>Mix elevation levels randomly</li>
-                    <li>Use high elevation for decorative elements</li>
-                    <li>Create too many elevation layers</li>
+                    <li>Overuse panels - maintain visual hierarchy</li>
+                    <li>Use panels for purely decorative purposes</li>
+                    <li>Stack too many panel levels</li>
                   </ul>
                 </div>
               </div>
@@ -626,14 +586,11 @@ export const PanelSurfaces: StoryObj = {
             <div className="panel-stack">
               <h4>Visual Hierarchy Example</h4>
               <div className="panel-layer panel-level-0">
-                <span>Page Background</span>
+                <span>Page Background (Body Surface)</span>
                 <div className="panel-layer panel-level-1">
-                  <span>Content Card</span>
-                  <div className="panel-layer panel-level-2">
-                    <span>Dropdown Menu</span>
-                    <div className="panel-layer panel-level-3">
-                      <span>Modal Dialog</span>
-                    </div>
+                  <span>Content Container (Panel Surface)</span>
+                  <div className="panel-layer elevated-layer">
+                    <span>Elevated Content (with shadows)</span>
                   </div>
                 </div>
               </div>
@@ -647,58 +604,18 @@ export const PanelSurfaces: StoryObj = {
             <h3>Dark Mode</h3>
             <div className="panels-showcase">
             <div className="panel-example panel-level-0">
-              <h4>Level 0 - Base Panel (<code>--panel</code>)</h4>
-              <p><strong>When to use:</strong> Content that sits directly on the page background</p>
+              <h4>Panel Surface (<code>--panel</code>)</h4>
+              <p><strong>When to use:</strong> Content containers that need subtle separation from the page background</p>
               <ul className="panel-usage-list">
-                <li>Inline content sections</li>
-                <li>Form groups</li>
-                <li>Basic containers</li>
-                <li>Table cells</li>
-              </ul>
-              <div className="panel-real-world">
-                <strong>Example:</strong> Page sections, content dividers
-              </div>
-            </div>
-
-            <div className="panel-example panel-level-1">
-              <h4>Level 1 - Raised Panel (<code>--panelRaised</code>)</h4>
-              <p><strong>When to use:</strong> Content that needs subtle separation from the background</p>
-              <ul className="panel-usage-list">
-                <li>Cards in a grid or list</li>
+                <li>Content cards and containers</li>
                 <li>Sidebar panels</li>
+                <li>Form sections</li>
+                <li>Table containers</li>
+                <li>List items</li>
                 <li>Comment threads</li>
-                <li>Basic modal dialogs</li>
               </ul>
               <div className="panel-real-world">
-                <strong>Example:</strong> Product cards, user profiles, comments
-              </div>
-            </div>
-
-            <div className="panel-example panel-level-2">
-              <h4>Level 2 - Elevated Panel (<code>--panelElevated</code>)</h4>
-              <p><strong>When to use:</strong> Important content that needs to stand out</p>
-              <ul className="panel-usage-list">
-                <li>Featured cards</li>
-                <li>Important notifications</li>
-                <li>Action panels</li>
-                <li>Dropdown menus</li>
-              </ul>
-              <div className="panel-real-world">
-                <strong>Example:</strong> Featured products, priority alerts, context menus
-              </div>
-            </div>
-
-            <div className="panel-example panel-level-3">
-              <h4>Level 3 - Floating Panel (<code>--panelFloating</code>)</h4>
-              <p><strong>When to use:</strong> Overlaying content that requires immediate attention</p>
-              <ul className="panel-usage-list">
-                <li>Modal dialogs</li>
-                <li>Popovers</li>
-                <li>Floating action menus</li>
-                <li>Toast notifications</li>
-              </ul>
-              <div className="panel-real-world">
-                <strong>Example:</strong> Confirmation modals, floating toolbars, system messages
+                <strong>Example:</strong> Cards, panels, content sections
               </div>
             </div>
 
@@ -708,17 +625,17 @@ export const PanelSurfaces: StoryObj = {
                 <div className="practice-item">
                   <strong>Do:</strong>
                   <ul>
-                    <li>Use consistent elevation within similar components</li>
-                    <li>Increase elevation for temporary/overlay content</li>
-                    <li>Match elevation to interaction importance</li>
+                    <li>Use panel surface for content grouping</li>
+                    <li>Combine with shadows for elevation effects</li>
+                    <li>Ensure sufficient contrast with body background</li>
                   </ul>
                 </div>
                 <div className="practice-item">
                   <strong>Don't:</strong>
                   <ul>
-                    <li>Mix elevation levels randomly</li>
-                    <li>Use high elevation for decorative elements</li>
-                    <li>Create too many elevation layers</li>
+                    <li>Overuse panels - maintain visual hierarchy</li>
+                    <li>Use panels for purely decorative purposes</li>
+                    <li>Stack too many panel levels</li>
                   </ul>
                 </div>
               </div>
@@ -727,14 +644,11 @@ export const PanelSurfaces: StoryObj = {
             <div className="panel-stack">
               <h4>Visual Hierarchy Example</h4>
               <div className="panel-layer panel-level-0">
-                <span>Page Background</span>
+                <span>Page Background (Body Surface)</span>
                 <div className="panel-layer panel-level-1">
-                  <span>Content Card</span>
-                  <div className="panel-layer panel-level-2">
-                    <span>Dropdown Menu</span>
-                    <div className="panel-layer panel-level-3">
-                      <span>Modal Dialog</span>
-                    </div>
+                  <span>Content Container (Panel Surface)</span>
+                  <div className="panel-layer elevated-layer">
+                    <span>Elevated Content (with shadows)</span>
                   </div>
                 </div>
               </div>
@@ -863,19 +777,17 @@ export const InputSurfaces: StoryObj = {
   ),
 };
 
-// Dialog and overlay surfaces story
-export const DialogOverlaySurfaces: StoryObj = {
+// Elevated content surfaces story
+export const ElevatedSurfaces: StoryObj = {
   render: () => {
     const [showModal, setShowModal] = React.useState(false);
-    const [showDialog, setShowDialog] = React.useState(false);
-    const [showTooltip, setShowTooltip] = React.useState(false);
     const [showDropdown, setShowDropdown] = React.useState(false);
 
     return (
       <div className="surface-comparison">
-        <h2>Dialog & Overlay Surfaces</h2>
+        <h2>Elevated Content Surfaces</h2>
         <p>
-          Interactive examples showing modal dialogs, overlays, tooltips, and floating surfaces with proper elevation and shadows.
+          Examples showing how panel surfaces can be elevated using shadows and positioning for overlays, dropdowns, and modal content.
         </p>
 
         <div className="comparison-grid">
@@ -888,17 +800,6 @@ export const DialogOverlaySurfaces: StoryObj = {
                   <button className="button button-primary" onClick={() => setShowModal(true)}>
                     Show Modal
                   </button>
-                  <button className="button button-neutral" onClick={() => setShowDialog(true)}>
-                    Show Dialog
-                  </button>
-                  <div className="tooltip-trigger" onMouseEnter={() => setShowTooltip(true)} onMouseLeave={() => setShowTooltip(false)}>
-                    <button className="button button-neutral">Hover for Tooltip</button>
-                    {showTooltip && (
-                      <div className="tooltip-popup">
-                        This is a tooltip with helpful information
-                      </div>
-                    )}
-                  </div>
                   <div className="dropdown-trigger">
                     <button className="button button-neutral" onClick={() => setShowDropdown(!showDropdown)}>
                       Dropdown Menu
@@ -925,10 +826,10 @@ export const DialogOverlaySurfaces: StoryObj = {
                         <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
                       </div>
                       <div className="modal-body">
-                        <p>This is a modal dialog with the highest elevation level. It sits above all other content with a semi-transparent backdrop.</p>
+                        <p>This modal uses panel surface with high elevation shadows to appear above all other content.</p>
                         <div className="modal-specs">
-                          <code>--color-modal-background</code>
-                          <code>--color-modal-shadow</code>
+                          <code>background: var(--color-panel-background)</code>
+                          <code>box-shadow: var(--shadow-2xl)</code>
                         </div>
                       </div>
                       <div className="modal-footer">
@@ -939,39 +840,20 @@ export const DialogOverlaySurfaces: StoryObj = {
                   </div>
                 )}
 
-                {/* Dialog Example */}
-                {showDialog && (
-                  <div className="dialog-container">
-                    <div className="dialog-backdrop" onClick={() => setShowDialog(false)}></div>
-                    <div className="dialog-content">
-                      <h4>Confirmation Dialog</h4>
-                      <p>Are you sure you want to proceed with this action?</p>
-                      <div className="dialog-actions">
-                        <button className="button button-neutral" onClick={() => setShowDialog(false)}>No</button>
-                        <button className="button button-danger" onClick={() => setShowDialog(false)}>Yes, Delete</button>
-                      </div>
-                      <div className="dialog-specs">
-                        <code>--color-dialog-background</code>
-                        <code>--color-dialog-shadow</code>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 {/* Surface Examples */}
                 <div className="surface-examples">
                   <h4>Elevation Hierarchy</h4>
                   <div className="elevation-stack">
                     <div className="elevation-layer base-layer">
-                      <span>Base Content</span>
+                      <span>Body Surface (Base)</span>
                       <div className="elevation-layer raised-layer">
-                        <span>Card/Panel</span>
+                        <span>Panel Surface</span>
                         <div className="elevation-layer elevated-layer">
-                          <span>Dropdown Menu</span>
+                          <span>Elevated Panel (shadow-lg)</span>
                           <div className="elevation-layer floating-layer">
-                            <span>Tooltip</span>
+                            <span>Floating Panel (shadow-xl)</span>
                             <div className="elevation-layer modal-layer">
-                              <span>Modal</span>
+                              <span>Modal (shadow-2xl)</span>
                             </div>
                           </div>
                         </div>
@@ -982,29 +864,22 @@ export const DialogOverlaySurfaces: StoryObj = {
 
                 {/* Static Examples */}
                 <div className="static-examples">
-                  <h4>Common Overlay Components</h4>
+                  <h4>Common Elevated Components</h4>
                   
-                  <div className="example-item">
-                    <div className="tooltip-static">
-                      Tooltip Example
-                    </div>
-                    <code>--color-tooltip-background</code>
-                  </div>
-
                   <div className="example-item">
                     <div className="dropdown-static">
                       <div className="menu-item">Menu Item 1</div>
                       <div className="menu-item active">Active Item</div>
                       <div className="menu-item">Menu Item 3</div>
                     </div>
-                    <code>--color-menu-background</code>
+                    <code>Panel surface + shadow-lg</code>
                   </div>
 
                   <div className="example-item">
                     <div className="toast-notification">
                       <strong>Success!</strong> Your changes have been saved.
                     </div>
-                    <code>--color-noticeSuccess-background</code>
+                    <code>Notice surface + shadow-md</code>
                   </div>
                 </div>
               </div>
@@ -1018,10 +893,6 @@ export const DialogOverlaySurfaces: StoryObj = {
                 {/* Same interactive components but in dark mode context */}
                 <div className="dialog-controls">
                   <button className="button button-primary">Show Modal</button>
-                  <button className="button button-neutral">Show Dialog</button>
-                  <div className="tooltip-trigger">
-                    <button className="button button-neutral">Hover for Tooltip</button>
-                  </div>
                   <div className="dropdown-trigger">
                     <button className="button button-neutral">Dropdown Menu</button>
                   </div>
@@ -1032,15 +903,15 @@ export const DialogOverlaySurfaces: StoryObj = {
                   <h4>Elevation Hierarchy</h4>
                   <div className="elevation-stack">
                     <div className="elevation-layer base-layer">
-                      <span>Base Content</span>
+                      <span>Body Surface (Base)</span>
                       <div className="elevation-layer raised-layer">
-                        <span>Card/Panel</span>
+                        <span>Panel Surface</span>
                         <div className="elevation-layer elevated-layer">
-                          <span>Dropdown Menu</span>
+                          <span>Elevated Panel (shadow-lg)</span>
                           <div className="elevation-layer floating-layer">
-                            <span>Tooltip</span>
+                            <span>Floating Panel (shadow-xl)</span>
                             <div className="elevation-layer modal-layer">
-                              <span>Modal</span>
+                              <span>Modal (shadow-2xl)</span>
                             </div>
                           </div>
                         </div>
@@ -1051,29 +922,22 @@ export const DialogOverlaySurfaces: StoryObj = {
 
                 {/* Static Examples */}
                 <div className="static-examples">
-                  <h4>Common Overlay Components</h4>
+                  <h4>Common Elevated Components</h4>
                   
-                  <div className="example-item">
-                    <div className="tooltip-static">
-                      Tooltip Example
-                    </div>
-                    <code>--color-tooltip-background</code>
-                  </div>
-
                   <div className="example-item">
                     <div className="dropdown-static">
                       <div className="menu-item">Menu Item 1</div>
                       <div className="menu-item active">Active Item</div>
                       <div className="menu-item">Menu Item 3</div>
                     </div>
-                    <code>--color-menu-background</code>
+                    <code>Panel surface + shadow-lg</code>
                   </div>
 
                   <div className="example-item">
                     <div className="toast-notification">
                       <strong>Success!</strong> Your changes have been saved.
                     </div>
-                    <code>--color-noticeSuccess-background</code>
+                    <code>Notice surface + shadow-md</code>
                   </div>
                 </div>
               </div>

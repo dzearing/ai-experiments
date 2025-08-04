@@ -35,7 +35,7 @@ Different contexts require different spacing approaches:
 | `--spacing-md` | 12px | Compact padding, medium gaps |
 | `--spacing-base-default` | 16px | Standard padding, default spacing |
 | `--spacing-lg` | 20px | Content groups, card padding |
-| `--spacing-xl` | 24px | Section spacing, modal padding |
+| `--spacing-xl` | 24px | Section spacing, panel padding |
 | `--spacing-2xl` | 32px | Large sections |
 | `--spacing-3xl` | 40px | Major divisions |
 | `--spacing-4xl` | 48px | Hero sections |
@@ -51,7 +51,7 @@ Pre-defined spacing for common components ensures consistency:
 --spacing-input-x: var(--spacing-base-default);     /* 16px horizontal */
 --spacing-input-y: var(--spacing-sm);     /* 8px vertical */
 --spacing-card: var(--spacing-lg);        /* 24px all sides */
---spacing-modal: var(--spacing-2xl);       /* 32px all sides */
+--spacing-panel-large: var(--spacing-2xl); /* 32px all sides */
 --spacing-section: var(--spacing-4xl);    /* 48px between sections */
 ```
 
@@ -82,7 +82,7 @@ Spacing adapts to screen size for optimal layouts:
 ```css
 /* Mobile (<640px) */
 --spacing-section: var(--spacing-2xl);   /* 32px */
---spacing-modal: var(--spacing-xl);      /* 24px */
+--spacing-panel-large: var(--spacing-xl); /* 24px */
 --spacing-card: var(--spacing-base-default);       /* 16px */
 
 /* Large screens (>1920px) */

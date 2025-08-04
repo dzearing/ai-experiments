@@ -174,15 +174,15 @@
 
 /* Theme-aware code blocks */
 [data-theme-type="dark"] .sbdocs code {
-  background-color: var(--color-codeInline-background, #2a2a2a);
-  border-color: var(--color-codeInline-border, #3a3a3a);
-  color: var(--color-codeInline-text, #e0e0e0);
+  background-color: var(--color-body-background-soft10, #2a2a2a);
+  border-color: var(--color-body-border, #3a3a3a);
+  color: var(--color-body-text, #e0e0e0);
 }
 
 [data-theme-type="dark"] .sbdocs pre {
-  background-color: var(--color-codeBlock-background, #1e1e1e);
-  border-color: var(--color-codeBlock-border, #3a3a3a);
-  color: var(--color-codeBlock-text, #e0e0e0);
+  background-color: var(--color-body-background-soft10, #1e1e1e);
+  border-color: var(--color-body-border, #3a3a3a);
+  color: var(--color-body-text, #e0e0e0);
 }
 
 /* Theme-aware tables */
@@ -321,20 +321,20 @@ div[class*="css-"] .toc-list-item > a:hover *,
 
 /* Theme-aware code blocks - Storybook's docblock-source */
 [data-theme-type="dark"] .docblock-source {
-  background-color: var(--color-codeBlock-background, #1e1e1e) !important;
-  border-color: var(--color-codeBlock-border, #3a3a3a) !important;
+  background-color: var(--color-body-background-soft10, #1e1e1e) !important;
+  border-color: var(--color-body-border, #3a3a3a) !important;
 }
 
 [data-theme-type="dark"] .docblock-source pre {
   background-color: transparent !important;
-  color: var(--color-codeBlock-text, #e0e0e0) !important;
+  color: var(--color-body-text, #e0e0e0) !important;
 }
 
 /* Syntax highlighting for all modes */
 /* Base token styles for light mode */
 .docblock-source .token.plain-text,
 .prismjs .token.plain-text {
-  color: var(--color-codeBlock-text, #262626) !important;
+  color: var(--color-body-text, #262626) !important;
 }
 
 .docblock-source .token.comment,
@@ -393,12 +393,12 @@ div[class*="css-"] .toc-list-item > a:hover *,
 [data-theme-type="dark"] .docblock-source .token,
 [data-theme-type="dark"] .docblock-source .prism-code,
 [data-theme-type="dark"] .prismjs .token {
-  color: var(--color-codeBlock-text, #e0e0e0) !important;
+  color: var(--color-body-text, #e0e0e0) !important;
 }
 
 [data-theme-type="dark"] .docblock-source .token.plain-text,
 [data-theme-type="dark"] .prismjs .token.plain-text {
-  color: var(--color-codeBlock-text, #e0e0e0) !important;
+  color: var(--color-body-text, #e0e0e0) !important;
 }
 
 [data-theme-type="dark"] .docblock-source .token.comment,
@@ -456,10 +456,10 @@ div[class*="css-"] .toc-list-item > a:hover *,
 /* Ensure all text in code blocks is visible */
 .prismjs,
 .prismjs * {
-  color: var(--color-codeBlock-text, #262626);
+  color: var(--color-body-text, #262626);
 }
 
 [data-theme-type="dark"] .prismjs,
 [data-theme-type="dark"] .prismjs * {
-  color: var(--color-codeBlock-text, #e0e0e0);
+  color: var(--color-body-text, #e0e0e0);
 }

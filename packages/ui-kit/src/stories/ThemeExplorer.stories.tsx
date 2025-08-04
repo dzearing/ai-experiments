@@ -262,12 +262,12 @@ const getThemeCardStyles = () => `
   }
   
   .preview-surface {
-    background: var(--color-panelRaised-background);
-    border: 1px solid var(--color-panelRaised-border);
+    background: var(--color-panel-background);
+    border: 1px solid var(--color-panel-border);
     border-radius: var(--radius-small10);
     padding: var(--spacing-small10);
     font-size: var(--font-size-small20);
-    color: var(--color-panelRaised-text);
+    color: var(--color-panel-text);
   }
   
   .preview-input-group {

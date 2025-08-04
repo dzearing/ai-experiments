@@ -124,26 +124,26 @@ async function buildTokenMetadata() {
       shadow: {
         types: ['box', 'text', 'inner'],
         scales: {
-          box: ['(default)', 'none', 'softest', 'soft10', 'hard10', 'hard20', 'hardest', 'focus', 'button', 'buttonHover', 'card', 'cardHover', 'dropdown', 'modal', 'popover', 'tooltip', 'innerSoft', 'inner'],
+          box: ['(default)', 'none', 'softest', 'soft10', 'hard10', 'hard20', 'hardest', 'focus', 'button', 'buttonHover', 'card', 'cardHover', 'dropdown', 'popover', 'innerSoft', 'inner'],
           text: ['(default)', 'softest', 'hardest'],
           inner: ['(default)', 'soft', 'hard']
         }
       },
       spacing: {
         scales: ['(default)', 'none', 'px', 'smallest', 'small20', 'small10', 'small5', 'large5', 'large10', 'large20', 'large30', 'large40', 'large50', 'large60', 'large70', 'largest'],
-        components: ['buttonX', 'buttonY', 'inputX', 'inputY', 'card', 'modal', 'section']
+        components: ['buttonX', 'buttonY', 'inputX', 'inputY', 'card', 'section']
       },
       border: {
         types: ['width', 'radius'],
         scales: {
           width: ['(default)', 'thinnest', 'thick10', 'thickest', 'default', 'focus', 'divider'],
-          radius: ['(default)', 'none', 'smallest', 'small10', 'large10', 'large20', 'large30', 'full', 'button', 'input', 'card', 'modal', 'tooltip', 'badge', 'chip', 'avatar', 'image']
+          radius: ['(default)', 'none', 'smallest', 'small10', 'large10', 'large20', 'large30', 'full', 'button', 'input', 'card', 'badge', 'chip', 'avatar', 'image']
         }
       },
       animation: {
         types: ['duration', 'easing', 'delay'],
         scales: {
-          duration: ['(default)', 'fastest', 'fast20', 'fast10', 'slow10', 'slow20', 'slowest', 'hover', 'focus', 'expand', 'collapse', 'fadeIn', 'fadeOut', 'slideIn', 'slideOut', 'modalIn', 'modalOut', 'pageTransition', 'deliberate'],
+          duration: ['(default)', 'fastest', 'fast20', 'fast10', 'slow10', 'slow20', 'slowest', 'hover', 'focus', 'expand', 'collapse', 'fadeIn', 'fadeOut', 'slideIn', 'slideOut', 'pageTransition', 'deliberate'],
           easing: ['default', 'linear', 'ease', 'easeIn', 'easeOut', 'easeInOut', 'bounce', 'sharp', 'smooth', 'enter', 'exit', 'move'],
           delay: ['(default)', 'none', 'fast10', 'slow10', 'slow20', 'stagger']
         }
