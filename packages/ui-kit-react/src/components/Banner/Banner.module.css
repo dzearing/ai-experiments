@@ -26,27 +26,27 @@
 
 /* Variants */
 .error {
-  background: var(--color-noticeDanger-background);
-  border-color: var(--color-noticeDanger-border);
-  color: var(--color-noticeDanger-text);
+  background: var(--color-dangerSoft-background);
+  border-color: var(--color-dangerSoft-border);
+  color: var(--color-dangerSoft-text);
 }
 
 .warning {
-  background: var(--color-noticeWarning-background);
-  border-color: var(--color-noticeWarning-border);
-  color: var(--color-noticeWarning-text);
+  background: var(--color-warningSoft-background);
+  border-color: var(--color-warningSoft-border);
+  color: var(--color-warningSoft-text);
 }
 
 .info {
-  background: var(--color-noticeInfo-background);
-  border-color: var(--color-noticeInfo-border);
-  color: var(--color-noticeInfo-text);
+  background: var(--color-infoSoft-background);
+  border-color: var(--color-infoSoft-border);
+  color: var(--color-infoSoft-text);
 }
 
 .success {
-  background: var(--color-noticeSuccess-background);
-  border-color: var(--color-noticeSuccess-border);
-  color: var(--color-noticeSuccess-text);
+  background: var(--color-successSoft-background);
+  border-color: var(--color-successSoft-border);
+  color: var(--color-successSoft-text);
 }
 
 /* Layout */
@@ -87,19 +87,19 @@
 
 /* Icon colors */
 .error .icon {
-  color: var(--color-noticeDanger-icon);
+  color: var(--color-dangerSoft-icon);
 }
 
 .warning .icon {
-  color: var(--color-noticeWarning-icon);
+  color: var(--color-warningSoft-icon);
 }
 
 .info .icon {
-  color: var(--color-noticeInfo-icon);
+  color: var(--color-infoSoft-icon);
 }
 
 .success .icon {
-  color: var(--color-noticeSuccess-icon);
+  color: var(--color-successSoft-icon);
 }
 
 

@@ -36,19 +36,19 @@
 
 /* Variants */
 .primary {
-  background: var(--color-buttonPrimary-background);
-  color: var(--color-buttonPrimary-text);
-  border-color: var(--color-buttonPrimary-border);
+  background: var(--color-primary-background);
+  color: var(--color-primary-text);
+  border-color: var(--color-primary-border);
 }
 
 .primary:hover:not(:disabled) {
-  background: var(--color-buttonPrimary-background-hover);
-  border-color: var(--color-buttonPrimary-border-hover);
+  background: var(--color-primary-background-hover);
+  border-color: var(--color-primary-border-hover);
 }
 
 .primary:active:not(:disabled) {
-  background: var(--color-buttonPrimary-background-active);
-  border-color: var(--color-buttonPrimary-border-active);
+  background: var(--color-primary-background-active);
+  border-color: var(--color-primary-border-active);
 }
 
 .outline {
@@ -127,51 +127,51 @@
 }
 
 .neutral {
-  background: var(--color-buttonNeutral-background);
-  color: var(--color-buttonNeutral-text);
+  background: var(--color-neutral-background);
+  color: var(--color-neutral-text);
   border-color: transparent;
 }
 
 .neutral:hover:not(:disabled) {
-  background: var(--color-buttonNeutral-background-hover);
-  color: var(--color-buttonNeutral-text-hover);
+  background: var(--color-neutral-background-hover);
+  color: var(--color-neutral-text-hover);
 }
 
 .neutral:active:not(:disabled) {
-  background: var(--color-buttonNeutral-background-active);
-  color: var(--color-buttonNeutral-text-active);
+  background: var(--color-neutral-background-active);
+  color: var(--color-neutral-text-active);
 }
 
 .danger {
-  background: var(--color-buttonDanger-background);
-  color: var(--color-buttonDanger-text);
-  border-color: var(--color-buttonDanger-border);
+  background: var(--color-danger-background);
+  color: var(--color-danger-text);
+  border-color: var(--color-danger-border);
 }
 
 .danger:hover:not(:disabled) {
-  background: var(--color-buttonDanger-background-hover);
-  border-color: var(--color-buttonDanger-border-hover);
+  background: var(--color-danger-background-hover);
+  border-color: var(--color-danger-border-hover);
 }
 
 .danger:active:not(:disabled) {
-  background: var(--color-buttonDanger-background-active);
-  border-color: var(--color-buttonDanger-border-active);
+  background: var(--color-danger-background-active);
+  border-color: var(--color-danger-border-active);
 }
 
 .success {
-  background: var(--color-buttonSuccess-background);
-  color: var(--color-buttonSuccess-text);
-  border-color: var(--color-buttonSuccess-border);
+  background: var(--color-success-background);
+  color: var(--color-success-text);
+  border-color: var(--color-success-border);
 }
 
 .success:hover:not(:disabled) {
-  background: var(--color-buttonSuccess-background-hover);
-  border-color: var(--color-buttonSuccess-border-hover);
+  background: var(--color-success-background-hover);
+  border-color: var(--color-success-border-hover);
 }
 
 .success:active:not(:disabled) {
-  background: var(--color-buttonSuccess-background-active);
-  border-color: var(--color-buttonSuccess-border-active);
+  background: var(--color-success-background-active);
+  border-color: var(--color-success-border-active);
 }
 
 /* Sizes */

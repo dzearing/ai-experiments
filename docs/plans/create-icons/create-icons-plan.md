@@ -39,13 +39,25 @@ packages/ui-kit-icons/
 └── README.md
 ```
 
-Build tasks in `tools/repo-scripts/src/tasks/`:
-```
-tools/repo-scripts/src/tasks/
-├── optimize-icons.ts      # SVG optimization task
-├── generate-icons.ts      # Generate React components from SVGs
-└── build-icons.ts         # Build icon package (calls other tasks)
-```
+## Development Experience
+
+### Local Development with Storybook
+
+Running `pnpm dev` in the ui-kit-icons package will start Storybook, providing:
+
+1. **Icon Catalog**: Browse all icons with search and filtering
+2. **Interactive Controls**: Adjust size, colors, and view different states
+3. **Copy Import**: Click any icon to copy its import statement
+4. **Category Views**: Browse icons organized by their categories
+5. **Theme Testing**: See how icons adapt to light/dark themes
+6. **Documentation**: Usage examples and guidelines
+
+### Hot Reload Workflow
+
+During development, the package supports hot reloading:
+- Adding new SVGs triggers automatic component generation
+- Changes to SVGs are reflected immediately in Storybook
+- Component updates happen without manual rebuilds
 
 ## Icon Categories and Initial Set
 
@@ -176,20 +188,35 @@ export const SaveIcon = createIcon(svgContent, 'SaveIcon');
 
 ### 3. Theme Integration
 
-#### Color Token Updates for ui-kit
+#### Surface-Based Color Approach
+Icons inherit their color from the surface they're placed on, using existing color tokens:
+
 ```css
-/* Add to ui-kit color tokens */
+/* Icons use existing surface-specific tokens */
 :root {
-  /* Icon-specific color contexts */
-  --color-icon-primary: var(--color-text);
-  --color-icon-secondary: var(--color-text-secondary);
-  --color-icon-disabled: var(--color-text-disabled);
-  --color-icon-success: var(--color-success);
-  --color-icon-warning: var(--color-warning);
-  --color-icon-error: var(--color-error);
-  --color-icon-info: var(--color-info);
-  --color-icon-interactive: var(--color-primary);
-  --color-icon-interactive-hover: var(--color-primary-hover);
+  /* Body surface */
+  --color-body-text: ...;
+  --color-body-text-secondary: ...;
+  --color-body-icon: var(--color-body-text);
+  --color-body-icon-secondary: var(--color-body-text-secondary);
+  
+  /* Card surface */
+  --color-card-text: ...;
+  --color-card-icon: var(--color-card-text);
+  
+  /* Panel surface */
+  --color-panel-text: ...;
+  --color-panel-icon: var(--color-panel-text);
+  
+  /* Interactive states (shared across surfaces) */
+  --color-interactive: var(--color-primary);
+  --color-interactive-hover: var(--color-primary-hover);
+  
+  /* Semantic colors (shared across surfaces) */
+  --color-success: ...;
+  --color-warning: ...;
+  --color-error: ...;
+  --color-info: ...;
 }
 ```
 
@@ -198,17 +225,23 @@ export const SaveIcon = createIcon(svgContent, 'SaveIcon');
 // Example usage in ui-kit-react
 import { SaveIcon } from '@claude-flow/ui-kit-icons';
 
-// Simple usage
-<SaveIcon />
+// Icons automatically adapt to their surface
+<div className="surface-body">
+  <SaveIcon className="text-body-icon" />
+</div>
 
-// With custom size and styling
-<SaveIcon 
-  size={20} 
-  className="text-icon-primary hover:text-icon-interactive-hover"
-/>
+<div className="surface-card">
+  <SaveIcon className="text-card-icon" />
+</div>
 
-// With accessibility title
-<SaveIcon title="Save document" />
+// Interactive states
+<button className="text-body-icon hover:text-interactive-hover">
+  <SaveIcon size={20} />
+</button>
+
+// Semantic colors work across all surfaces
+<SaveIcon className="text-success" /> // Success state
+<SaveIcon className="text-error" />   // Error state
 ```
 
 ### 4. Build Process
@@ -398,12 +431,187 @@ export const EditorToolbar = () => (
 
 ## Documentation
 
-### 1. Storybook Stories
+### 1. Storybook Configuration
 
-- Icon gallery showing all available icons
-- Interactive size and color controls
-- Theme switching demonstration
-- Copy-to-clipboard for import statements
+#### Package Scripts
+```json
+{
+  "scripts": {
+    "build": "pnpm repo-scripts build",
+    "dev": "pnpm storybook",
+    "storybook": "storybook dev -p 6007",
+    "build-storybook": "storybook build"
+  }
+}
+```
+
+#### Icon Catalog Story
+```tsx
+// src/stories/IconCatalog.stories.tsx
+import type { Meta, StoryObj } from '@storybook/react';
+import * as Icons from '../index';
+import { useState } from 'react';
+
+const meta: Meta = {
+  title: 'Icons/Catalog',
+  parameters: {
+    layout: 'padded',
+  },
+};
+
+export default meta;
+
+export const AllIcons: StoryObj = {
+  render: () => {
+    const [size, setSize] = useState(24);
+    const [search, setSearch] = useState('');
+    const [copied, setCopied] = useState<string | null>(null);
+    
+    const iconEntries = Object.entries(Icons)
+      .filter(([name]) => name !== 'IconProps')
+      .filter(([name]) => name.toLowerCase().includes(search.toLowerCase()));
+    
+    const copyImport = (name: string) => {
+      navigator.clipboard.writeText(`import { ${name} } from '@claude-flow/ui-kit-icons';`);
+      setCopied(name);
+      setTimeout(() => setCopied(null), 2000);
+    };
+    
+    return (
+      <div>
+        <div className="sticky top-0 bg-background p-4 border-b">
+          <div className="flex gap-4 items-center">
+            <input
+              type="text"
+              placeholder="Search icons..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="px-3 py-2 border rounded"
+            />
+            <label className="flex items-center gap-2">
+              Size:
+              <input
+                type="range"
+                min="16"
+                max="48"
+                value={size}
+                onChange={(e) => setSize(Number(e.target.value))}
+              />
+              <span>{size}px</span>
+            </label>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-4 p-4">
+          {iconEntries.map(([name, Icon]) => (
+            <button
+              key={name}
+              onClick={() => copyImport(name)}
+              className="flex flex-col items-center gap-2 p-4 rounded hover:bg-muted transition-colors"
+            >
+              <Icon size={size} />
+              <span className="text-xs text-muted-foreground">
+                {name.replace('Icon', '')}
+              </span>
+              {copied === name && (
+                <span className="text-xs text-success">Copied!</span>
+              )}
+            </button>
+          ))}
+        </div>
+        
+        <div className="p-4 text-sm text-muted-foreground">
+          {iconEntries.length} icons • Click to copy import
+        </div>
+      </div>
+    );
+  },
+};
+
+export const IconShowcase: StoryObj = {
+  render: () => {
+    const [selectedIcon, setSelectedIcon] = useState<string>('SaveIcon');
+    const Icon = Icons[selectedIcon as keyof typeof Icons] as React.ComponentType<Icons.IconProps>;
+    
+    return (
+      <div className="space-y-8">
+        <select
+          value={selectedIcon}
+          onChange={(e) => setSelectedIcon(e.target.value)}
+          className="px-3 py-2 border rounded"
+        >
+          {Object.keys(Icons)
+            .filter(name => name !== 'IconProps')
+            .map(name => (
+              <option key={name} value={name}>{name}</option>
+            ))}
+        </select>
+        
+        <div className="grid grid-cols-3 gap-8">
+          <div>
+            <h3 className="font-semibold mb-4">Sizes</h3>
+            <div className="space-y-4">
+              {[16, 20, 24, 32, 48].map(size => (
+                <div key={size} className="flex items-center gap-4">
+                  <Icon size={size} />
+                  <span className="text-sm text-muted-foreground">{size}px</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <div>
+            <h3 className="font-semibold mb-4">Colors</h3>
+            <div className="space-y-4">
+              <Icon className="text-primary" />
+              <Icon className="text-success" />
+              <Icon className="text-warning" />
+              <Icon className="text-error" />
+              <Icon className="text-muted-foreground" />
+            </div>
+          </div>
+          
+          <div>
+            <h3 className="font-semibold mb-4">States</h3>
+            <div className="space-y-4">
+              <button className="flex items-center gap-2 hover:text-primary transition-colors">
+                <Icon size={20} />
+                <span>Hover me</span>
+              </button>
+              <button className="flex items-center gap-2 opacity-50" disabled>
+                <Icon size={20} />
+                <span>Disabled</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  },
+};
+```
+
+#### Category Stories
+```tsx
+// src/stories/IconCategories.stories.tsx
+export const ActionIcons: StoryObj = {
+  render: () => <IconGrid category="actions" />,
+};
+
+export const NavigationIcons: StoryObj = {
+  render: () => <IconGrid category="navigation" />,
+};
+
+export const EditorIcons: StoryObj = {
+  render: () => <IconGrid category="editor" />,
+};
+
+// Helper component
+const IconGrid = ({ category }: { category: string }) => {
+  // Filter icons by category based on naming convention
+  // Render grid with category-specific icons
+};
+```
 
 ### 2. README Documentation
 
@@ -412,31 +620,91 @@ export const EditorToolbar = () => (
 - Contribution guidelines
 - Icon design principles
 
+## Implementation Strategy with Parallel Agents
+
+### SVG Creation with Sub-agents
+
+To accelerate icon creation while maintaining consistency, we'll use parallel sub-agents with shared design specifications:
+
+```typescript
+// Shared design system for all agents
+const ICON_DESIGN_SYSTEM = {
+  viewBox: "0 0 24 24",
+  strokeWidth: 2,
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+  fill: "none",
+  stroke: "currentColor",
+  style: "Modern, minimal, consistent line weights"
+};
+```
+
+#### Agent Task Distribution
+
+1. **Action Icons Agent**
+   ```
+   Create SVG icons for: save, edit, delete, add, remove, copy, paste, 
+   cut, undo, redo, search, filter, refresh, sync, download, upload, 
+   share, export
+   ```
+
+2. **Navigation Icons Agent**
+   ```
+   Create SVG icons for: arrow-up, arrow-down, arrow-left, arrow-right,
+   chevron-up, chevron-down, chevron-left, chevron-right, menu, close,
+   home, back, forward, expand, collapse
+   ```
+
+3. **Editor Icons Agent**
+   ```
+   Create SVG icons for: bold, italic, underline, strikethrough,
+   heading-1, heading-2, heading-3, list-bullet, list-ordered, 
+   list-task, quote, code, code-block, link, image, table, 
+   indent, outdent
+   ```
+
+4. **Status & UI Icons Agent**
+   ```
+   Create SVG icons for: check, check-circle, x, x-circle, warning,
+   warning-triangle, info, info-circle, error, error-circle, loading,
+   spinner, settings, gear, user, folder, file, bell, star
+   ```
+
+Each agent receives:
+- The design system specifications
+- Example SVGs for style reference
+- Specific icon requirements
+- Output format template
+
+### Parallel Implementation Plan
+
+```bash
+# Launch all icon creation agents in parallel
+pnpm claude-code task "Create action icons following design system" --subagent-type general-purpose &
+pnpm claude-code task "Create navigation icons following design system" --subagent-type general-purpose &
+pnpm claude-code task "Create editor icons following design system" --subagent-type general-purpose &
+pnpm claude-code task "Create status/UI icons following design system" --subagent-type general-purpose &
+```
+
 ## Timeline and Phases
 
-### Phase 1: Foundation (Week 1)
+### Phase 1: Foundation & Parallel Icon Creation (Day 1-2)
 - [ ] Set up package structure
-- [ ] Create build scripts
-- [ ] Implement base Icon component
-- [ ] Add 10-15 essential icons
+- [ ] Implement createIcon helper and TypeScript types
+- [ ] Launch parallel agents for SVG creation
+- [ ] Set up build system integration
 
-### Phase 2: Core Icons (Week 2)
-- [ ] Add all Priority 1 icons
-- [ ] Set up Storybook
-- [ ] Implement theme integration
-- [ ] Create documentation
+### Phase 2: Component Generation & Storybook (Day 3)
+- [ ] Generate React components from SVGs
+- [ ] Set up Storybook with icon catalog
+- [ ] Implement search and filtering
+- [ ] Add copy-to-clipboard functionality
 
-### Phase 3: Integration (Week 3)
+### Phase 3: Integration & Polish (Day 4-5)
 - [ ] Update ui-kit color tokens
-- [ ] Integrate with ui-kit-react components
-- [ ] Add IconButton component
-- [ ] Migration guide for existing icons
-
-### Phase 4: Polish (Week 4)
-- [ ] Complete icon set
+- [ ] Test theme integration
 - [ ] Performance optimization
-- [ ] Accessibility audit
-- [ ] Release preparation
+- [ ] Documentation and examples
 
 ## Success Criteria
 

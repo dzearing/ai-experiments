@@ -7,9 +7,9 @@
 /* Common Styles */
 .trigger-button {
   padding: 0.75rem 1.5rem;
-  background-color: var(--color-buttonPrimary-background);
-  color: var(--color-buttonPrimary-text);
-  border: 1px solid var(--color-buttonPrimary-border);
+  background-color: var(--color-primary-background);
+  color: var(--color-primary-text);
+  border: 1px solid var(--color-primary-border);
   border-radius: var(--radius);
   font-size: var(--font-size-normal);
   font-weight: var(--font-weight-medium);
@@ -19,8 +19,8 @@
 }
 
 .trigger-button:hover {
-  background-color: var(--color-buttonPrimary-background-hover);
-  border-color: var(--color-buttonPrimary-border-hover);
+  background-color: var(--color-primary-background-hover);
+  border-color: var(--color-primary-border-hover);
   transform: translateY(-1px);
 }
 
@@ -95,7 +95,7 @@
 }
 
 .duration-box:focus {
-  outline: 2px solid var(--color-buttonPrimary-background);
+  outline: 2px solid var(--color-primary-background);
   outline-offset: 2px;
 }
 
@@ -106,7 +106,7 @@
   transform: translateY(-50%);
   width: 4px;
   height: 40px;
-  background: var(--color-buttonPrimary-background);
+  background: var(--color-primary-background);
   border-radius: var(--radius-smallest);
   transition: none;
 }
@@ -156,7 +156,7 @@
 }
 
 .easing-item:focus {
-  outline: 2px solid var(--color-buttonPrimary-background);
+  outline: 2px solid var(--color-primary-background);
   outline-offset: 2px;
 }
 
@@ -195,7 +195,7 @@
   transform: translateY(-50%);
   width: 40px;
   height: 40px;
-  background: var(--color-buttonPrimary-background);
+  background: var(--color-primary-background);
   border-radius: 50%;
   transition: none;
 }
@@ -258,7 +258,7 @@
 .animation-element {
   width: 60px;
   height: 60px;
-  background: var(--color-buttonPrimary-background);
+  background: var(--color-primary-background);
   border-radius: var(--radius-small10);
   position: relative;
 }
@@ -310,9 +310,9 @@
 
 .animation-trigger {
   padding: var(--spacing-small20) var(--spacing-small10);
-  background: var(--color-buttonNeutral-background);
-  color: var(--color-buttonNeutral-text);
-  border: 1px solid var(--color-buttonNeutral-border);
+  background: var(--color-neutral-background);
+  color: var(--color-neutral-text);
+  border: 1px solid var(--color-neutral-border);
   border-radius: var(--radius-small10);
   font-size: var(--font-size-small10);
   cursor: pointer;
@@ -320,8 +320,8 @@
 }
 
 .animation-trigger:hover {
-  background: var(--color-buttonNeutral-background-hover);
-  border-color: var(--color-buttonNeutral-border-hover);
+  background: var(--color-neutral-background-hover);
+  border-color: var(--color-neutral-border-hover);
 }
 
 .animation-code {
@@ -393,8 +393,8 @@
 }
 
 .transition-box.hover-all.hovered {
-  background: var(--color-buttonPrimary-background);
-  color: var(--color-buttonPrimary-text);
+  background: var(--color-primary-background);
+  color: var(--color-primary-text);
   transform: scale(1.05);
   box-shadow: var(--shadow-lg);
 }
@@ -404,9 +404,9 @@
 }
 
 .transition-box.hover-colors.hovered {
-  background: var(--color-buttonPrimary-background);
-  color: var(--color-buttonPrimary-text);
-  border-color: var(--color-buttonPrimary-border);
+  background: var(--color-primary-background);
+  color: var(--color-primary-text);
+  border-color: var(--color-primary-border);
 }
 
 .transition-box.hover-opacity {
@@ -472,8 +472,8 @@
 .motion-test-box {
   width: 200px;
   height: 100px;
-  background: var(--color-buttonPrimary-background);
-  color: var(--color-buttonPrimary-text);
+  background: var(--color-primary-background);
+  color: var(--color-primary-text);
   border-radius: var(--radius);
   display: flex;
   align-items: center;

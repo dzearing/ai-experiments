@@ -60,8 +60,8 @@
   font-family: var(--font-family-mono);
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--color-codeInline-text);
-  background: var(--color-codeInline-background);
+  color: var(--color-body-text);
+  background: var(--color-body-background-soft10);
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
   word-break: break-all;
@@ -298,8 +298,8 @@
   font-family: var(--font-family-mono);
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--color-codeInline-text);
-  background: var(--color-codeInline-background);
+  color: var(--color-body-text);
+  background: var(--color-body-background-soft10);
   padding: 0.375rem 0.75rem;
   border-radius: 6px;
   word-break: break-all;
@@ -454,15 +454,15 @@
 }
 
 .usage-code {
-  background: var(--color-codeBlock-background);
-  border: 1px solid var(--color-codeBlock-border);
+  background: var(--color-body-background-soft10);
+  border: 1px solid var(--color-body-border);
   border-radius: 6px;
   padding: 0.75rem;
   overflow-x: auto;
 }
 
 .usage-code code {
-  color: var(--color-codeBlock-text);
+  color: var(--color-body-text);
   font-family: var(--font-family-mono);
   font-size: 0.75rem;
 }
@@ -495,7 +495,7 @@
 }
 
 [data-mode='dark'] .builder-table th {
-  color: var(--color-panelRaised-text-hard10);
+  color: var(--color-panel-text-hard10);
 }
 
 [data-mode='dark'] .builder-table td {
@@ -504,11 +504,11 @@
 }
 
 [data-mode='dark'] .column-header {
-  color: var(--color-panelRaised-text-hard10);
+  color: var(--color-panel-text-hard10);
 }
 
 [data-mode='dark'] .column-title {
-  color: var(--color-panelRaised-text-hard10);
+  color: var(--color-panel-text-hard10);
 }
 
 [data-mode='dark'] .selection-item {
@@ -533,27 +533,27 @@
 }
 
 [data-mode='dark'] .token-name {
-  background: var(--color-codeInline-background);
-  color: var(--color-codeInline-text);
+  background: var(--color-body-background-soft10);
+  color: var(--color-body-text);
 }
 
 [data-mode='dark'] .value-column {
-  background: var(--color-panelRaised-background);
-  color: var(--color-panelRaised-text);
-  border-color: var(--color-panelRaised-border);
+  background: var(--color-panel-background);
+  color: var(--color-panel-text);
+  border-color: var(--color-panel-border);
 }
 
 [data-mode='dark'] .value-info {
-  color: var(--color-panelRaised-text);
+  color: var(--color-panel-text);
 }
 
 [data-mode='dark'] .value-label {
-  color: var(--color-panelRaised-text-soft20);
+  color: var(--color-panel-text-soft20);
 }
 
 [data-mode='dark'] .value-text {
-  background: var(--color-panelRaised-background-hard10);
-  color: var(--color-panelRaised-text);
+  background: var(--color-panel-background-hard10);
+  color: var(--color-panel-text);
 }
 
 [data-mode='dark'] .usage-section {
@@ -565,12 +565,12 @@
 }
 
 [data-mode='dark'] .usage-code {
-  background: var(--color-codeBlock-background);
-  border-color: var(--color-codeBlock-border);
+  background: var(--color-body-background-soft10);
+  border-color: var(--color-body-border);
 }
 
 [data-mode='dark'] .usage-code code {
-  color: var(--color-codeBlock-text);
+  color: var(--color-body-text);
 }
 
 /* Responsive Design for Token Builder */
@@ -763,8 +763,8 @@
 .pattern-example code {
   font-family: var(--font-family-mono);
   font-size: 1rem;
-  color: var(--color-codeInline-text);
-  background: var(--color-codeInline-background);
+  color: var(--color-body-text);
+  background: var(--color-body-background-soft10);
   padding: 0.5rem 0.75rem;
   border-radius: 4px;
   display: inline-block;
@@ -951,21 +951,21 @@
 }
 
 [data-mode='dark'] .component-group {
-  background: var(--color-panelRaised-background);
+  background: var(--color-panel-background);
 }
 
 [data-mode='dark'] .pattern-example {
-  background: var(--color-panelRaised-background);
+  background: var(--color-panel-background);
 }
 
 [data-mode='dark'] .coverage-matrix th {
-  background: var(--color-panelElevated-background);
+  background: var(--color-panel-background);
 }
 
 [data-mode='dark'] .scale-item {
-  background: var(--color-panelRaised-background);
+  background: var(--color-panel-background);
 }
 
 [data-mode='dark'] .state-example {
-  background: var(--color-panelRaised-background);
+  background: var(--color-panel-background);
 }

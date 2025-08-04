@@ -24,7 +24,7 @@
     "fonts"
   ],
   "scripts": {
-    "build": "repo-scripts build && node scripts/build-css.js && tsx scripts/build-themes.tsx",
+    "build": "repo-scripts build && node scripts/build-css.js && tsx scripts/build-themes.tsx && tsx scripts/build-token-metadata.tsx",
     "build:css": "node scripts/build-css.js",
     "build:storybook": "repo-scripts build-storybook",
     "clean": "repo-scripts clean",

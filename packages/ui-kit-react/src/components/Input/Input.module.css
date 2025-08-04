@@ -12,7 +12,7 @@
 }
 
 .required {
-  color: var(--color-error);
+  color: var(--color-danger-background);
   margin-left: var(--spacing-small20);
 }
 
@@ -54,7 +54,7 @@
 
 .input:focus {
   background: var(--color-input-background-focus);
-  border-color: var(--color-primary);
+  border-color: var(--color-primary-background);
   box-shadow: 0 0 0 3px var(--color-primary-soft10);
 }
 
@@ -82,27 +82,27 @@
 
 /* States */
 .error {
-  border-color: var(--color-error);
-  background: var(--color-error-soft10);
+  border-color: var(--color-danger-background);
+  background: var(--color-danger-soft10);
 }
 
 .error:hover:not(:disabled):not(:focus) {
-  background: var(--color-error-soft20);
-  border-color: var(--color-error);
+  background: var(--color-danger-soft20);
+  border-color: var(--color-danger-background);
 }
 
 .error:focus {
-  background: var(--color-error-soft10);
-  border-color: var(--color-error);
-  box-shadow: 0 0 0 3px var(--color-error-soft10);
+  background: var(--color-danger-soft10);
+  border-color: var(--color-danger-background);
+  box-shadow: 0 0 0 3px var(--color-danger-soft10);
 }
 
 .success {
-  border-color: var(--color-success);
+  border-color: var(--color-success-background);
 }
 
 .success:focus {
-  border-color: var(--color-success);
+  border-color: var(--color-success-background);
   box-shadow: 0 0 0 3px var(--color-success-soft10);
 }
 
@@ -149,7 +149,7 @@
 }
 
 .errorText {
-  color: var(--color-error);
+  color: var(--color-danger-background);
 }
 
 /* Full width */

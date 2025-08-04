@@ -14,49 +14,49 @@
   font-weight: var(--font-weight-medium);
   cursor: pointer;
   transition: all var(--duration) var(--easing-default);
-  border: 1px solid var(--color-buttonNeutral-border);
-  background: var(--color-buttonNeutral-background);
-  color: var(--color-buttonNeutral-text);
+  border: 1px solid var(--color-neutral-border);
+  background: var(--color-neutral-background);
+  color: var(--color-neutral-text);
 }
 
 .button:hover {
-  background: var(--color-buttonNeutral-background-hover);
+  background: var(--color-neutral-background-hover);
 }
 
 .button-primary {
-  background: var(--color-buttonPrimary-background);
-  color: var(--color-buttonPrimary-text);
-  border: 1px solid var(--color-buttonPrimary-border);
+  background: var(--color-primary-background);
+  color: var(--color-primary-text);
+  border: 1px solid var(--color-primary-border);
 }
 
 .button-primary:hover {
-  background: var(--color-buttonPrimary-background-hover);
+  background: var(--color-primary-background-hover);
 }
 
 .button-danger {
-  background: var(--color-buttonDanger-background);
-  color: var(--color-buttonDanger-text);
-  border: 1px solid var(--color-buttonDanger-border);
+  background: var(--color-danger-background);
+  color: var(--color-danger-text);
+  border: 1px solid var(--color-danger-border);
 }
 
 .button-danger:hover {
-  background: var(--color-buttonDanger-background-hover);
+  background: var(--color-danger-background-hover);
 }
 
 .button-success {
-  background: var(--color-buttonSuccess-background);
-  color: var(--color-buttonSuccess-text);
-  border: 1px solid var(--color-buttonSuccess-border);
+  background: var(--color-success-background);
+  color: var(--color-success-text);
+  border: 1px solid var(--color-success-border);
 }
 
 .button-success:hover {
-  background: var(--color-buttonSuccess-background-hover);
+  background: var(--color-success-background-hover);
 }
 
 .button-neutral {
-  background: var(--color-buttonNeutral-background);
-  color: var(--color-buttonNeutral-text);
-  border: 1px solid var(--color-buttonNeutral-border);
+  background: var(--color-neutral-background);
+  color: var(--color-neutral-text);
+  border: 1px solid var(--color-neutral-border);
 }
 
 .button-large {
@@ -160,8 +160,8 @@
   display: inline-flex;
   gap: var(--spacing-small20);
   padding: var(--spacing-small10);
-  background: var(--color-panelRaised-background);
-  border: 1px solid var(--color-panelRaised-border);
+  background: var(--color-panel-background);
+  border: 1px solid var(--color-panel-border);
   border-radius: var(--radius-small10);
 }
 
@@ -230,10 +230,10 @@
   white-space: pre;
   font-family: var(--font-family-mono);
   font-size: var(--font-size-small10);
-  background: var(--color-codeBlock-background);
-  color: var(--color-codeBlock-text);
+  background: var(--color-body-background-soft10);
+  color: var(--color-body-text);
   padding: var(--spacing);
   border-radius: var(--radius-small10);
-  border: 1px solid var(--color-codeBlock-border);
+  border: 1px solid var(--color-body-border);
   overflow-x: auto;
 }

@@ -77,7 +77,7 @@ h4 {
   width: 40px;
   height: 40px;
   border: 3px solid var(--color-panel-border);
-  border-top-color: var(--color-buttonPrimary-background);
+  border-top-color: var(--color-primary-background);
   border-radius: var(--radius-full);
   animation: spin var(--duration-deliberate) var(--easing-linear) infinite;
 }
@@ -101,7 +101,7 @@ h4 {
 .progress-fill {
   height: 100%;
   width: 0;
-  background: var(--color-buttonPrimary-background);
+  background: var(--color-primary-background);
   border-radius: var(--radius-small10);
   transition: width var(--duration) var(--easing-default);
 }
@@ -215,7 +215,7 @@ h4 {
   align-items: center;
   gap: var(--spacing-small20);
   padding: var(--spacing-small10) var(--spacing);
-  background: var(--color-buttonNeutral-background);
+  background: var(--color-neutral-background);
   border-radius: var(--radius-small10);
   cursor: pointer;
   transition: all var(--duration) var(--easing-default);
@@ -225,14 +225,14 @@ h4 {
   width: 20px;
   height: 20px;
   fill: none;
-  stroke: var(--color-buttonNeutral-text);
+  stroke: var(--color-neutral-text);
   stroke-width: 2;
   transition: all var(--duration) var(--easing-default);
 }
 
 .save-button.saved .save-icon {
-  fill: var(--color-buttonPrimary-background);
-  stroke: var(--color-buttonPrimary-background);
+  fill: var(--color-primary-background);
+  stroke: var(--color-primary-background);
   animation: save-bounce var(--duration) var(--easing-bounce);
 }
 
@@ -250,7 +250,7 @@ h4 {
 
 .copy-button {
   padding: var(--spacing-small10) var(--spacing);
-  background: var(--color-buttonNeutral-background);
+  background: var(--color-neutral-background);
   border-radius: var(--radius-small10);
   cursor: pointer;
   transition: all var(--duration) var(--easing-default);
@@ -312,22 +312,22 @@ h4 {
 
 .nav-button {
   padding: var(--spacing-small10) var(--spacing);
-  background: var(--color-buttonNeutral-background);
-  border: 1px solid var(--color-buttonNeutral-border);
+  background: var(--color-neutral-background);
+  border: 1px solid var(--color-neutral-border);
   border-radius: var(--radius-small10);
   cursor: pointer;
   transition: all var(--duration) var(--easing-default);
 }
 
 .nav-button:hover:not(:disabled) {
-  background: var(--color-buttonNeutral-background-hover);
-  border-color: var(--color-buttonNeutral-border-hover);
+  background: var(--color-neutral-background-hover);
+  border-color: var(--color-neutral-border-hover);
 }
 
 .nav-button.active {
-  background: var(--color-buttonPrimary-background);
-  color: var(--color-buttonPrimary-text);
-  border-color: var(--color-buttonPrimary-border);
+  background: var(--color-primary-background);
+  color: var(--color-primary-text);
+  border-color: var(--color-primary-border);
 }
 
 .nav-button:disabled {
@@ -582,17 +582,17 @@ h4 {
 
 .page-action {
   padding: var(--spacing-small10) var(--spacing-large10);
-  background: var(--color-buttonPrimary-background);
-  color: var(--color-buttonPrimary-text);
-  border: 1px solid var(--color-buttonPrimary-border);
+  background: var(--color-primary-background);
+  color: var(--color-primary-text);
+  border: 1px solid var(--color-primary-border);
   border-radius: var(--radius-small10);
   cursor: pointer;
   transition: all var(--duration) var(--easing-default);
 }
 
 .page-action:hover {
-  background: var(--color-buttonPrimary-backgroundHover);
-  border-color: var(--color-buttonPrimary-borderHover);
+  background: var(--color-primary-background-hover);
+  border-color: var(--color-primary-border-hover);
 }
 
 .animation-info {

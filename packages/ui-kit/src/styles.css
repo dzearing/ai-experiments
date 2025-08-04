@@ -254,10 +254,10 @@
     font-weight: var(--font-weight-medium);
     line-height: 1;
     padding: 0.5em 1em;
-    border: 1px solid var(--color-buttonNeutral-border);
+    border: 1px solid var(--color-neutral-border);
     border-radius: 4px;
-    background-color: var(--color-buttonNeutral-background);
-    color: var(--color-buttonNeutral-text);
+    background-color: var(--color-neutral-background);
+    color: var(--color-neutral-text);
     cursor: pointer;
     transition: all 150ms ease-in-out;
     white-space: nowrap;
@@ -269,14 +269,14 @@
   }
 
   button:hover:not(:disabled) {
-    background-color: var(--color-buttonNeutral-background-hover);
-    border-color: var(--color-buttonNeutral-border-hover);
-    color: var(--color-buttonNeutral-text-hover);
+    background-color: var(--color-neutral-background-hover);
+    border-color: var(--color-neutral-border-hover);
+    color: var(--color-neutral-text-hover);
   }
 
   button:active:not(:disabled) {
-    background-color: var(--color-buttonNeutral-background-active);
-    border-color: var(--color-buttonNeutral-border-active);
+    background-color: var(--color-neutral-background-active);
+    border-color: var(--color-neutral-border-active);
     transform: translateY(1px);
   }
 
@@ -292,20 +292,20 @@
 
   /* Button Variants */
   button.primary {
-    background-color: var(--color-buttonPrimary-background);
-    border-color: var(--color-buttonPrimary-border);
-    color: var(--color-buttonPrimary-text);
+    background-color: var(--color-primary-background);
+    border-color: var(--color-primary-border);
+    color: var(--color-primary-text);
   }
 
   button.primary:hover:not(:disabled) {
-    background-color: var(--color-buttonPrimary-background-hover);
-    border-color: var(--color-buttonPrimary-border-hover);
-    color: var(--color-buttonPrimary-text-hover);
+    background-color: var(--color-primary-background-hover);
+    border-color: var(--color-primary-border-hover);
+    color: var(--color-primary-text-hover);
   }
 
   button.primary:active:not(:disabled) {
-    background-color: var(--color-buttonPrimary-background-active);
-    border-color: var(--color-buttonPrimary-border-active);
+    background-color: var(--color-primary-background-active);
+    border-color: var(--color-primary-border-active);
   }
   /* Inputs */
   input[type='text'],

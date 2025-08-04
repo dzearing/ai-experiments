@@ -98,7 +98,7 @@ function generateColorScales(definition: ThemeDefinition): GeneratedTheme['color
   }
 
   // Generate semantic color scales
-  const successScale = generateColorScale('#10b981', definition.config); // Emerald
+  const successScale = generateColorScale('#22c55e', definition.config); // Green 500 - proper success green
   const warningScale = generateColorScale('#f59e0b', definition.config); // Amber
   const errorScale = generateColorScale('#ef4444', definition.config); // Red
   const infoScale = generateColorScale('#3b82f6', definition.config); // Blue
@@ -190,32 +190,32 @@ function enforceAccessibility(
     { foreground: 'body.text', background: 'body.background', usage: 'Body text' },
     { foreground: 'body.link', background: 'body.background', usage: 'Body links' },
     {
-      foreground: 'buttonPrimary.text',
-      background: 'buttonPrimary.background',
+      foreground: 'primary.text',
+      background: 'primary.background',
       usage: 'Primary button',
       textSize: 'ui' as const,
     },
     {
-      foreground: 'buttonNeutral.text',
-      background: 'buttonNeutral.background',
+      foreground: 'neutral.text',
+      background: 'neutral.background',
       usage: 'Neutral button',
       textSize: 'ui' as const,
     },
     { foreground: 'input.text', background: 'input.background', usage: 'Input text' },
-    { foreground: 'noticeInfo.text', background: 'noticeInfo.background', usage: 'Info notice' },
+    { foreground: 'infoSoft.text', background: 'infoSoft.background', usage: 'Info notice' },
     {
-      foreground: 'noticeSuccess.text',
-      background: 'noticeSuccess.background',
+      foreground: 'successSoft.text',
+      background: 'successSoft.background',
       usage: 'Success notice',
     },
     {
-      foreground: 'noticeWarning.text',
-      background: 'noticeWarning.background',
+      foreground: 'warningSoft.text',
+      background: 'warningSoft.background',
       usage: 'Warning notice',
     },
     {
-      foreground: 'noticeDanger.text',
-      background: 'noticeDanger.background',
+      foreground: 'dangerSoft.text',
+      background: 'dangerSoft.background',
       usage: 'Danger notice',
     },
   ];
@@ -290,8 +290,8 @@ export function generateCSS(theme: GeneratedTheme): string {
         // Use the same colors as neutral button for consistency
         if (surfaceName === 'body' && (tokenName === 'backgroundHover' || tokenName === 'backgroundActive' || 
             tokenName === 'textHover' || tokenName === 'textActive')) {
-          // Look up the neutral button color from the theme
-          const neutralSurface = theme.surfaces['buttonNeutral'];
+          // Look up the neutral color from the theme
+          const neutralSurface = theme.surfaces['neutral'];
           if (neutralSurface) {
             let neutralColor: string | undefined;
             

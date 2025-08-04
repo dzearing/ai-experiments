@@ -3,6 +3,9 @@ import type { Meta } from '@storybook/react';
 import './TokenBrowser.stories.css';
 import '../../components/ThemePreview.js';
 
+// Import token metadata
+import tokenMetadata from '../../../dist/token-metadata.json';
+
 export default {
   title: 'Token Browser',
   parameters: {
@@ -17,7 +20,7 @@ export default {
   },
 } as Meta;
 
-// Token domain configurations
+// Transform metadata to the expected format
 const tokenDomains = {
   color: {
     label: 'Color',
@@ -25,29 +28,15 @@ const tokenDomains = {
     categories: [
       {
         name: 'Surface',
-        tokens: [
-          'body', 'panel', 'panelRaised', 'panelElevated', 'panelFloating',
-          'buttonPrimary', 'buttonDanger', 'buttonSuccess', 'buttonNeutral',
-          'noticeInfo', 'noticeSuccess', 'noticeWarning', 'noticeDanger',
-          'codeBlock', 'codeInline', 'input', 'inputFocus', 'inputError',
-          'inputDisabled', 'dialog', 'dialogElevated', 'modal', 'tooltip', 'menu'
-        ]
+        tokens: tokenMetadata.color.surfaces
       },
       {
         name: 'Concept',
-        tokens: [
-          { base: 'background', variants: ['backgroundSoft10', 'backgroundHard10'] },
-          { base: 'border', variants: ['borderSoft20', 'borderSoft10', 'borderHard10', 'borderHard20'] },
-          { base: 'icon', variants: ['iconSoft20'] },
-          { base: 'link', variants: [] },
-          { base: 'linkVisited', variants: [] },
-          { base: 'shadow', variants: ['shadowSoft', 'shadowHard'] },
-          { base: 'text', variants: ['textSoft40', 'textSoft30', 'textSoft20', 'textSoft10', 'textHard10'] },
-        ]
+        tokens: tokenMetadata.color.concepts
       },
       {
         name: 'State',
-        tokens: ['', 'hover', 'active', 'focus', 'disabled']
+        tokens: tokenMetadata.color.states
       }
     ]
   },
@@ -57,17 +46,11 @@ const tokenDomains = {
     categories: [
       {
         name: 'Category',
-        tokens: ['family', 'size', 'weight', 'lineHeight', 'letterSpacing']
+        tokens: tokenMetadata.typography.categories
       },
       {
         name: 'Scale/Type',
-        tokens: {
-          family: ['(default)', 'mono', 'serif'],
-          size: ['(default)', 'smallest', 'small30', 'small20', 'small10', 'large10', 'large20', 'large30', 'large40', 'large50', 'largest', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'body', 'caption', 'code'],
-          weight: ['(default)', 'light', 'medium', 'semibold', 'bold'],
-          lineHeight: ['(default)', 'tightest', 'tight10', 'tight20', 'loose5', 'loose10', 'loosest', 'code'],
-          letterSpacing: ['(default)', 'tightest', 'tight10', 'wide10', 'wide20', 'widest']
-        }
+        tokens: tokenMetadata.typography.scales
       }
     ]
   },
@@ -77,11 +60,11 @@ const tokenDomains = {
     categories: [
       {
         name: 'Type',
-        tokens: ['box', 'text', 'inner']
+        tokens: tokenMetadata.shadow.types
       },
       {
         name: 'Scale',
-        tokens: ['(default)', 'none', 'softest', 'soft10', 'hard10', 'hard20', 'hardest', 'focus', 'button', 'buttonHover', 'card', 'cardHover', 'dropdown', 'modal', 'popover', 'tooltip', 'innerSoft', 'inner']
+        tokens: tokenMetadata.shadow.scales
       }
     ]
   },
@@ -91,11 +74,11 @@ const tokenDomains = {
     categories: [
       {
         name: 'Scale',
-        tokens: ['(default)', 'none', 'px', 'smallest', 'small20', 'small10', 'small5', 'large5', 'large10', 'large20', 'large30', 'large40', 'large50', 'large60', 'large70', 'largest']
+        tokens: tokenMetadata.spacing.scales
       },
       {
         name: 'Component',
-        tokens: ['buttonX', 'buttonY', 'inputX', 'inputY', 'card', 'modal', 'section']
+        tokens: tokenMetadata.spacing.components
       }
     ]
   },
@@ -105,14 +88,11 @@ const tokenDomains = {
     categories: [
       {
         name: 'Type',
-        tokens: ['width', 'radius']
+        tokens: tokenMetadata.border.types
       },
       {
         name: 'Scale',
-        tokens: {
-          width: ['(default)', 'thinnest', 'thick10', 'thickest', 'default', 'focus', 'divider'],
-          radius: ['(default)', 'none', 'smallest', 'small10', 'large10', 'large20', 'large30', 'full', 'button', 'input', 'card', 'modal', 'tooltip', 'badge', 'chip', 'avatar', 'image']
-        }
+        tokens: tokenMetadata.border.scales
       }
     ]
   },
@@ -122,15 +102,11 @@ const tokenDomains = {
     categories: [
       {
         name: 'Type',
-        tokens: ['duration', 'easing', 'delay']
+        tokens: tokenMetadata.animation.types
       },
       {
         name: 'Scale/Value',
-        tokens: {
-          duration: ['(default)', 'fastest', 'fast20', 'fast10', 'slow10', 'slow20', 'slowest', 'hover', 'focus', 'expand', 'collapse', 'fadeIn', 'fadeOut', 'slideIn', 'slideOut', 'modalIn', 'modalOut', 'pageTransition'],
-          easing: ['default', 'linear', 'ease', 'easeIn', 'easeOut', 'easeInOut', 'bounce', 'sharp', 'smooth', 'enter', 'exit', 'move'],
-          delay: ['(default)', 'none', 'fast10', 'slow10', 'slow20', 'stagger']
-        }
+        tokens: tokenMetadata.animation.scales
       }
     ]
   }

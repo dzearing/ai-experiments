@@ -66,19 +66,19 @@
 
 /* Variants */
 .default {
-  color: var(--color-primary);
+  color: var(--color-primary-background);
 }
 
 .primary {
-  color: var(--color-primary);
+  color: var(--color-primary-background);
 }
 
 .success {
-  color: var(--color-success);
+  color: var(--color-success-background);
 }
 
 .danger {
-  color: var(--color-error);
+  color: var(--color-danger-background);
 }
 
 /* Label */

@@ -119,50 +119,50 @@
 }
 
 .button-primary {
-  background: var(--color-buttonPrimary-background);
-  color: var(--color-buttonPrimary-text);
+  background: var(--color-primary-background);
+  color: var(--color-primary-text);
 }
 
 .button-primary:hover {
-  background: var(--color-buttonPrimary-background-hover);
+  background: var(--color-primary-background-hover);
 }
 
 .button-primary:active {
-  background: var(--color-buttonPrimary-background-active);
+  background: var(--color-primary-background-active);
 }
 
 .button-primary:disabled {
-  background: var(--color-buttonPrimary-background-disabled);
+  background: var(--color-primary-background-disabled);
   cursor: not-allowed;
   opacity: 0.7;
 }
 
 .button-danger {
-  background: var(--color-buttonDanger-background);
-  color: var(--color-buttonDanger-text);
+  background: var(--color-danger-background);
+  color: var(--color-danger-text);
 }
 
 .button-danger:hover {
-  background: var(--color-buttonDanger-background-hover);
+  background: var(--color-danger-background-hover);
 }
 
 .button-success {
-  background: var(--color-buttonSuccess-background);
-  color: var(--color-buttonSuccess-text);
+  background: var(--color-success-background);
+  color: var(--color-success-text);
 }
 
 .button-success:hover {
-  background: var(--color-buttonSuccess-background-hover);
+  background: var(--color-success-background-hover);
 }
 
 .button-neutral {
-  background: var(--color-buttonNeutral-background);
-  color: var(--color-buttonNeutral-text);
-  border: 1px solid var(--color-buttonNeutral-border);
+  background: var(--color-neutral-background);
+  color: var(--color-neutral-text);
+  border: 1px solid var(--color-neutral-border);
 }
 
 .button-neutral:hover {
-  background: var(--color-buttonNeutral-background-hover);
+  background: var(--color-neutral-background-hover);
 }
 
 .button-info {
@@ -250,7 +250,7 @@
 .notification-specs code {
   font-size: 0.625rem;
   padding: 0.125rem 0.25rem;
-  background: var(--color-codeInline-background);
+  background: var(--color-body-background-soft10);
   border-radius: 3px;
 }
 
@@ -408,15 +408,15 @@
 }
 
 .example-card {
-  background: var(--color-panelRaised-background);
+  background: var(--color-panel-background);
   padding: 1rem;
   border-radius: 4px;
-  color: var(--color-raised-text);
+  color: var(--color-panel-text);
 }
 
 .example-card h4 {
   margin: 0 0 0.5rem 0;
-  color: var(--color-raised-text-hard10);
+  color: var(--color-panel-text-hard10);
 }
 
 .example-card p {
@@ -424,11 +424,11 @@
 }
 
 .example-card .muted {
-  color: var(--color-raised-text-soft20);
+  color: var(--color-panel-text-soft20);
 }
 
 .example-card a {
-  color: var(--color-raised-link);
+  color: var(--color-body-link);
   font-weight: var(--font-weight-medium, 500);
   text-decoration: none;
   transition: text-decoration 0.2s;
@@ -436,7 +436,7 @@
 
 .example-card a:hover,
 .example-card a:focus {
-  color: var(--color-raised-link-hover);
+  color: var(--color-body-link-hover);
   text-decoration: underline;
 }
 
@@ -458,14 +458,14 @@
 }
 
 .example-code {
-  background: var(--color-codeBlock-background);
+  background: var(--color-body-background-soft10);
   padding: 1rem;
   border-radius: 4px;
-  border: 1px solid var(--color-codeBlock-border);
+  border: 1px solid var(--color-body-border);
 }
 
 .example-code code {
-  color: var(--color-codeBlock-text);
+  color: var(--color-body-text);
   font-family: var(--font-family-mono);
 }
 
@@ -484,17 +484,17 @@
 }
 
 .example-component.card {
-  background: var(--color-panelRaised-background);
-  color: var(--color-raised-text);
+  background: var(--color-panel-background);
+  color: var(--color-panel-text);
   padding: 1.5rem;
   border-radius: 8px;
-  border: 1px solid var(--color-raised-border);
+  border: 1px solid var(--color-panel-border);
   max-width: 400px;
 }
 
 .card-title {
   margin: 0 0 0.5rem 0;
-  color: var(--color-raised-text-hard10);
+  color: var(--color-panel-text-hard10);
 }
 
 .card-body {
@@ -503,7 +503,7 @@
 
 .card-meta {
   margin: 0 0 1rem 0;
-  color: var(--color-raised-text-soft20);
+  color: var(--color-panel-text-soft20);
   font-size: 14px;
 }
 
@@ -558,13 +558,13 @@
 }
 
 pre.example-code {
-  background: var(--color-codeBlock-background);
-  color: var(--color-codeBlock-text);
+  background: var(--color-body-background-soft10);
+  color: var(--color-body-text);
   padding: 1rem;
   border-radius: 4px;
   overflow-x: auto;
   font-size: 14px;
-  border: 1px solid var(--color-codeBlock-border);
+  border: 1px solid var(--color-body-border);
 }
 
 /* Surface comparison layout */
@@ -752,8 +752,8 @@ pre.example-code {
 .panel-specs code {
   font-size: 0.75rem;
   padding: 0.25rem 0.5rem;
-  background: var(--color-codeInline-background);
-  color: var(--color-codeInline-text);
+  background: var(--color-body-background-soft10);
+  color: var(--color-body-text);
   border-radius: 3px;
 }
 
@@ -770,21 +770,21 @@ pre.example-code {
 }
 
 .panel-level-1 {
-  background: var(--color-panelRaised-background);
-  color: var(--color-panelRaised-text);
-  box-shadow: var(--color-panelRaised-shadow);
+  background: var(--color-panel-background);
+  color: var(--color-panel-text);
+  box-shadow: var(--shadow-sm);
 }
 
 .panel-level-2 {
-  background: var(--color-panelElevated-background);
-  color: var(--color-panelElevated-text);
-  box-shadow: var(--color-panelElevated-shadow);
+  background: var(--color-panel-background);
+  color: var(--color-panel-text);
+  box-shadow: var(--shadow-md);
 }
 
 .panel-level-3 {
-  background: var(--color-panelFloating-background);
-  color: var(--color-panelFloating-text);
-  box-shadow: var(--color-panelFloating-shadow);
+  background: var(--color-panel-background);
+  color: var(--color-panel-text);
+  box-shadow: var(--shadow-lg);
 }
 
 
@@ -867,8 +867,8 @@ pre.example-code {
 .input-specs code {
   font-size: 0.75rem;
   padding: 0.125rem 0.375rem;
-  background: var(--color-codeInline-background);
-  color: var(--color-codeInline-text);
+  background: var(--color-body-background-soft10);
+  color: var(--color-body-text);
   border-radius: 3px;
 }
 
@@ -940,15 +940,15 @@ pre.example-code {
 .input-form-example {
   margin-top: 1rem;
   padding: 1rem;
-  background: var(--color-panelRaised-background);
+  background: var(--color-panel-background);
   border-radius: 6px;
-  box-shadow: var(--color-panelRaised-shadow);
+  box-shadow: var(--shadow-sm);
 }
 
 .input-form-example h4 {
   margin: 0 0 1rem 0;
   font-size: 1rem;
-  color: var(--color-panelRaised-text-hard10);
+  color: var(--color-panel-text-hard10);
 }
 
 .form-field {
@@ -964,7 +964,7 @@ pre.example-code {
   margin-bottom: 0.25rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--color-panelRaised-text);
+  color: var(--color-panel-text);
 }
 
 .form-field input,
@@ -1048,15 +1048,15 @@ pre.example-code {
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--color-overlayDark-background);
+  background: rgba(0, 0, 0, 0.5);
   cursor: pointer;
 }
 
 .modal-content {
   position: relative;
-  background: var(--color-modal-background);
-  border-radius: var(--radius-modal);
-  box-shadow: var(--color-modal-shadow);
+  background: var(--color-panel-background);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
   max-width: 500px;
   width: 100%;
   max-height: 90vh;
@@ -1070,19 +1070,19 @@ pre.example-code {
   align-items: center;
   justify-content: space-between;
   padding: var(--spacing-lg);
-  border-bottom: 1px solid var(--color-modal-border);
+  border-bottom: 1px solid var(--color-panel-border);
 }
 
 .modal-header h3 {
   margin: 0;
-  color: var(--color-modal-text-hard10);
+  color: var(--color-panel-text-hard10);
 }
 
 .modal-close {
   background: none;
   border: none;
   font-size: var(--font-size-2xl);
-  color: var(--color-modal-text-soft20);
+  color: var(--color-panel-text-soft20);
   cursor: pointer;
   padding: 0;
   width: 32px;
@@ -1095,8 +1095,8 @@ pre.example-code {
 }
 
 .modal-close:hover {
-  background: var(--color-modal-background-soft10);
-  color: var(--color-modal-text);
+  background: var(--color-panel-background-soft10);
+  color: var(--color-panel-text);
 }
 
 .modal-body {
@@ -1107,7 +1107,7 @@ pre.example-code {
 
 .modal-body p {
   margin: 0 0 var(--spacing-md) 0;
-  color: var(--color-modal-text);
+  color: var(--color-panel-text);
 }
 
 .modal-specs {
@@ -1121,7 +1121,7 @@ pre.example-code {
   gap: var(--spacing-md);
   justify-content: flex-end;
   padding: var(--spacing-lg);
-  border-top: 1px solid var(--color-modal-border);
+  border-top: 1px solid var(--color-panel-border);
 }
 
 /* Dialog styles */
@@ -1144,15 +1144,15 @@ pre.example-code {
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--color-overlay-background);
+  background: rgba(0, 0, 0, 0.3);
   cursor: pointer;
 }
 
 .dialog-content {
   position: relative;
-  background: var(--color-dialog-background);
+  background: var(--color-panel-background);
   border-radius: var(--radius-lg);
-  box-shadow: var(--color-dialog-shadow);
+  box-shadow: var(--shadow-lg);
   padding: var(--spacing-xl);
   max-width: 400px;
   width: 100%;
@@ -1160,12 +1160,12 @@ pre.example-code {
 
 .dialog-content h4 {
   margin: 0 0 var(--spacing-md) 0;
-  color: var(--color-dialog-text-hard10);
+  color: var(--color-panel-text-hard10);
 }
 
 .dialog-content p {
   margin: 0 0 var(--spacing-lg) 0;
-  color: var(--color-dialog-text);
+  color: var(--color-panel-text);
 }
 
 .dialog-actions {
@@ -1177,7 +1177,7 @@ pre.example-code {
 .dialog-specs {
   margin-top: var(--spacing-lg);
   padding-top: var(--spacing-lg);
-  border-top: 1px solid var(--color-dialog-border);
+  border-top: 1px solid var(--color-panel-border);
   display: flex;
   gap: var(--spacing-sm);
 }
@@ -1195,10 +1195,10 @@ pre.example-code {
   transform: translateX(-50%);
   margin-bottom: var(--spacing-sm);
   padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--color-tooltip-background);
-  color: var(--color-tooltip-text);
-  border-radius: var(--radius-tooltip);
-  box-shadow: var(--color-tooltip-shadow);
+  background: var(--color-body-text);
+  color: var(--color-body-background);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
   font-size: var(--font-size-sm);
   white-space: nowrap;
   z-index: 800;
@@ -1211,7 +1211,7 @@ pre.example-code {
   left: 50%;
   transform: translateX(-50%);
   border: 6px solid transparent;
-  border-top-color: var(--color-tooltip-background);
+  border-top-color: var(--color-body-text);
 }
 
 /* Dropdown styles */
@@ -1226,24 +1226,24 @@ pre.example-code {
   left: 0;
   margin-top: var(--spacing-xs);
   min-width: 200px;
-  background: var(--color-menu-background);
-  border: 1px solid var(--color-menu-border);
+  background: var(--color-panel-background);
+  border: 1px solid var(--color-panel-border);
   border-radius: var(--radius-md);
-  box-shadow: var(--color-menu-shadow);
+  box-shadow: var(--shadow-lg);
   overflow: hidden;
   z-index: 700;
 }
 
 .menu-item {
   padding: var(--spacing-sm) var(--spacing-md);
-  color: var(--color-menu-text);
+  color: var(--color-panel-text);
   cursor: pointer;
   transition: all var(--duration-fast) var(--easing-default);
 }
 
 .menu-item:hover {
-  background: var(--color-menu-background-hover);
-  color: var(--color-menu-text-hover);
+  background: var(--color-panel-background-hover);
+  color: var(--color-panel-text-hover);
 }
 
 .menu-item.active {
@@ -1253,7 +1253,7 @@ pre.example-code {
 
 .menu-divider {
   height: 1px;
-  background: var(--color-menu-border);
+  background: var(--color-panel-border);
   margin: var(--spacing-xs) 0;
 }
 
@@ -1297,25 +1297,25 @@ pre.example-code {
 }
 
 .raised-layer {
-  background: var(--color-panelRaised-background);
+  background: var(--color-panel-background);
   box-shadow: var(--shadow-sm);
   margin: var(--spacing-lg) 0 0 var(--spacing-lg);
 }
 
 .elevated-layer {
-  background: var(--color-panelElevated-background);
+  background: var(--color-panel-background);
   box-shadow: var(--shadow-md);
   margin: var(--spacing-lg) 0 0 var(--spacing-lg);
 }
 
 .floating-layer {
-  background: var(--color-panelFloating-background);
+  background: var(--color-panel-background);
   box-shadow: var(--shadow-lg);
   margin: var(--spacing-lg) 0 0 var(--spacing-lg);
 }
 
 .modal-layer {
-  background: var(--color-modal-background);
+  background: var(--color-panel-background);
   box-shadow: var(--shadow-2xl);
   margin: var(--spacing-lg) 0 0 var(--spacing-lg);
 }
@@ -1343,17 +1343,17 @@ pre.example-code {
 .tooltip-static {
   display: inline-block;
   padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--color-tooltip-background);
-  color: var(--color-tooltip-text);
-  border-radius: var(--radius-tooltip);
+  background: var(--color-body-text);
+  color: var(--color-body-background);
+  border-radius: var(--radius-sm);
   box-shadow: var(--shadow-md);
   font-size: var(--font-size-sm);
 }
 
 .dropdown-static {
   display: inline-block;
-  background: var(--color-menu-background);
-  border: 1px solid var(--color-menu-border);
+  background: var(--color-panel-background);
+  border: 1px solid var(--color-panel-border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);
   overflow: hidden;
@@ -1429,8 +1429,8 @@ pre.example-code {
 .color-info code {
   font-family: var(--font-family-mono);
   font-size: var(--font-size-sm);
-  color: var(--color-codeInline-text);
-  background: var(--color-codeInline-background);
+  color: var(--color-body-text);
+  background: var(--color-body-background-soft10);
   padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: var(--radius-sm);
   align-self: flex-start;
@@ -1470,8 +1470,8 @@ pre.example-code {
 }
 
 .elevated-layer {
-  background: var(--color-panelElevated-background);
-  border: 1px solid var(--color-panelElevated-border);
+  background: var(--color-panel-background);
+  border: 1px solid var(--color-panel-border);
   box-shadow: var(--shadow-md);
   margin-top: var(--spacing-md);
 }
@@ -1662,15 +1662,15 @@ pre.example-code {
 .body-content-showcase code {
   font-family: var(--font-family-mono);
   font-size: var(--font-size-code);
-  color: var(--color-codeInline-text);
-  background: var(--color-codeInline-background);
+  color: var(--color-body-text);
+  background: var(--color-body-background-soft10);
   padding: 0.125em 0.25em;
   border-radius: 3px;
 }
 
 .body-content-showcase pre {
-  background: var(--color-codeBlock-background);
-  border: 1px solid var(--color-codeBlock-border);
+  background: var(--color-body-background-soft10);
+  border: 1px solid var(--color-body-border);
   border-radius: 6px;
   padding: 1rem;
   overflow-x: auto;
@@ -1678,7 +1678,7 @@ pre.example-code {
 }
 
 .body-content-showcase pre code {
-  color: var(--color-codeBlock-text);
+  color: var(--color-body-text);
   background: transparent;
   padding: 0;
   font-size: var(--font-size-code);

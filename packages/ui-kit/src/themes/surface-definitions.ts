@@ -119,78 +119,21 @@ export const surfaces: SurfaceDefinition[] = [
     },
   },
 
-  // Raised panel
+  // Primary surface (buttons, checkboxes, switches, etc.)
   {
-    name: 'panelRaised',
-    base: {
-      background: { ref: 'surface.+1' },
-      text: { ref: 'body.text' },
-      border: {
-        fn: 'auto',
-        args: {
-          light: { ref: 'neutral.200' },
-          dark: { ref: 'neutral.800' },
-        },
-      },
-      link: { ref: 'body.link' },
-      icon: { ref: 'body.icon' },
-      shadow: '0 2px 4px rgba(0, 0, 0, 0.10)',
-    },
-  },
-
-  // Elevated panel
-  {
-    name: 'panelElevated',
-    base: {
-      background: { ref: 'surface.+2' },
-      text: { ref: 'body.text' },
-      border: {
-        fn: 'adjust',
-        args: {
-          color: { ref: 'body.border' },
-          lightness: { light: -10, dark: 10 },
-        },
-      },
-      link: { ref: 'body.link' },
-      icon: { ref: 'body.icon' },
-      shadow: '0 3px 6px rgba(0, 0, 0, 0.12)',
-    },
-  },
-
-  // Floating panel (highest elevation)
-  {
-    name: 'panelFloating',
-    base: {
-      background: { ref: 'surface.+3' },
-      text: { ref: 'body.text' },
-      border: {
-        fn: 'adjust',
-        args: {
-          color: { ref: 'body.border' },
-          lightness: { light: -20, dark: 20 },
-        },
-      },
-      link: { ref: 'body.link' },
-      icon: { ref: 'body.icon' },
-      shadow: '0 4px 8px rgba(0, 0, 0, 0.15)',
-    },
-  },
-
-  // Primary button
-  {
-    name: 'buttonPrimary',
+    name: 'primary',
     base: {
       background: { ref: 'primary.600' },
       text: {
         fn: 'contrast',
         args: {
-          against: 'buttonPrimary.background',
+          against: 'primary.background',
           prefer: '#ffffff',
           textSize: 'ui',
         },
       },
       border: 'transparent',
-      icon: { ref: 'buttonPrimary.text' },
+      icon: { ref: 'primary.text' },
     },
     states: {
       hover: { lightness: -10 },
@@ -199,29 +142,9 @@ export const surfaces: SurfaceDefinition[] = [
     },
   },
 
-  // Secondary button
+  // Neutral surface (default buttons, unselected states, etc.)
   {
-    name: 'buttonSecondary',
-    base: {
-      background: 'transparent',
-      text: { ref: 'primary.600' },
-      border: { ref: 'primary.600' },
-      icon: { ref: 'buttonSecondary.text' },
-    },
-    states: {
-      hover: {
-        mix: { color: 'primary.600', ratio: 0.1 },
-      },
-      active: {
-        mix: { color: 'primary.600', ratio: 0.15 },
-      },
-      disabled: { opacity: 0.6 },
-    },
-  },
-
-  // Neutral button
-  {
-    name: 'buttonNeutral',
+    name: 'neutral',
     base: {
       background: {
         fn: 'auto',
@@ -233,7 +156,7 @@ export const surfaces: SurfaceDefinition[] = [
       text: {
         fn: 'contrast',
         args: {
-          against: 'buttonNeutral.background',
+          against: 'neutral.background',
           prefer: { ref: 'body.text' },
           textSize: 'ui',
         },
@@ -245,7 +168,7 @@ export const surfaces: SurfaceDefinition[] = [
           dark: { ref: 'neutral.600' },
         },
       },
-      icon: { ref: 'buttonNeutral.text' },
+      icon: { ref: 'neutral.text' },
     },
     states: {
       hover: { lightness: { light: -5, dark: 5 } },
@@ -254,21 +177,21 @@ export const surfaces: SurfaceDefinition[] = [
     },
   },
 
-  // Danger button
+  // Danger surface (destructive actions)
   {
-    name: 'buttonDanger',
+    name: 'danger',
     base: {
       background: { ref: 'error.600' },
       text: {
         fn: 'contrast',
         args: {
-          against: 'buttonDanger.background',
+          against: 'danger.background',
           prefer: '#ffffff',
           textSize: 'ui',
         },
       },
       border: 'transparent',
-      icon: { ref: 'buttonDanger.text' },
+      icon: { ref: 'danger.text' },
     },
     states: {
       hover: { lightness: -10 },
@@ -277,21 +200,21 @@ export const surfaces: SurfaceDefinition[] = [
     },
   },
 
-  // Success button
+  // Success surface (positive actions)
   {
-    name: 'buttonSuccess',
+    name: 'success',
     base: {
       background: { ref: 'success.600' },
       text: {
         fn: 'contrast',
         args: {
-          against: 'buttonSuccess.background',
+          against: 'success.background',
           prefer: '#ffffff',
           textSize: 'ui',
         },
       },
       border: 'transparent',
-      icon: { ref: 'buttonSuccess.text' },
+      icon: { ref: 'success.text' },
     },
     states: {
       hover: { lightness: -10 },
@@ -341,9 +264,9 @@ export const surfaces: SurfaceDefinition[] = [
     },
   },
 
-  // Notifications
+  // Info soft surface (banners, alerts)
   {
-    name: 'noticeInfo',
+    name: 'infoSoft',
     base: {
       background: {
         fn: 'auto',
@@ -391,7 +314,7 @@ export const surfaces: SurfaceDefinition[] = [
   },
 
   {
-    name: 'noticeSuccess',
+    name: 'successSoft',
     base: {
       background: {
         fn: 'auto',
@@ -439,7 +362,7 @@ export const surfaces: SurfaceDefinition[] = [
   },
 
   {
-    name: 'noticeWarning',
+    name: 'warningSoft',
     base: {
       background: {
         fn: 'auto',
@@ -487,7 +410,7 @@ export const surfaces: SurfaceDefinition[] = [
   },
 
   {
-    name: 'noticeDanger',
+    name: 'dangerSoft',
     base: {
       background: {
         fn: 'auto',
@@ -534,159 +457,6 @@ export const surfaces: SurfaceDefinition[] = [
     },
   },
 
-  // Code surfaces
-  {
-    name: 'codeBlock',
-    base: {
-      background: {
-        fn: 'auto',
-        args: {
-          light: { ref: 'neutral.50' },
-          dark: { ref: 'neutral.900' },
-        },
-      },
-      text: {
-        fn: 'contrast',
-        args: {
-          against: 'codeBlock.background',
-          prefer: { ref: 'body.text' },
-        },
-      },
-      border: {
-        fn: 'auto',
-        args: {
-          light: { ref: 'neutral.200' },
-          dark: { ref: 'neutral.800' },
-        },
-      },
-    },
-    variants: {
-      soft: [10, 20],
-    },
-  },
-
-  {
-    name: 'codeInline',
-    base: {
-      background: {
-        fn: 'auto',
-        args: {
-          light: { ref: 'primary.50' },
-          dark: { ref: 'primary.950' },
-        },
-      },
-      text: {
-        fn: 'auto',
-        args: {
-          light: { ref: 'primary.700' },
-          dark: { ref: 'primary.300' },
-        },
-      },
-      border: {
-        fn: 'auto',
-        args: {
-          light: { ref: 'primary.200' },
-          dark: { ref: 'primary.800' },
-        },
-      },
-    },
-  },
-
-  // Dialog/Modal surfaces
-  {
-    name: 'dialog',
-    base: {
-      background: { ref: 'panel.background' },
-      text: { ref: 'body.text' },
-      border: { ref: 'body.border' },
-      shadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
-    },
-  },
-
-  {
-    name: 'modal',
-    base: {
-      background: { ref: 'panel.background' },
-      text: { ref: 'body.text' },
-      border: { ref: 'body.border' },
-      shadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-    },
-  },
-
-  // Tooltip
-  {
-    name: 'tooltip',
-    base: {
-      background: {
-        fn: 'auto',
-        args: {
-          light: { ref: 'neutral.800' },
-          dark: { ref: 'neutral.200' },
-        },
-      },
-      text: {
-        fn: 'contrast',
-        args: {
-          against: 'tooltip.background',
-          prefer: '#ffffff',
-        },
-      },
-      border: 'transparent',
-      shadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
-    },
-    variants: {
-      soft: [10, 20],
-    },
-  },
-
-  // Menu/Dropdown
-  {
-    name: 'menu',
-    base: {
-      background: { ref: 'panelFloating.background' },
-      text: { ref: 'body.text' },
-      border: { ref: 'body.border' },
-      link: { ref: 'body.link' },
-      icon: { ref: 'body.icon' },
-      shadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-    },
-    states: {
-      hover: {
-        mix: { color: 'primary.500', ratio: 0.1 },
-      },
-    },
-  },
-
-  // Overlay/Backdrop
-  {
-    name: 'overlay',
-    base: {
-      background: {
-        fn: 'auto',
-        args: {
-          light: 'rgba(255, 255, 255, 0.95)',
-          dark: 'rgba(0, 0, 0, 0.85)',
-        },
-      },
-      text: { ref: 'body.text' },
-      border: 'transparent',
-    },
-  },
-
-  {
-    name: 'overlayDark',
-    base: {
-      background: {
-        fn: 'auto',
-        args: {
-          light: 'rgba(0, 0, 0, 0.5)',
-          dark: 'rgba(0, 0, 0, 0.8)',
-        },
-      },
-      text: '#ffffff',
-      border: 'transparent',
-    },
-  },
 ];
 
 /**

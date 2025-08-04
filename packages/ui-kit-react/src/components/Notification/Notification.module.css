@@ -87,7 +87,7 @@
   right: -2px;
   width: 8px;
   height: 8px;
-  background: var(--color-primary);
+  background: var(--color-primary-background);
   border-radius: var(--radius-full);
   border: 2px solid var(--color-panel-background);
 }

@@ -44,7 +44,7 @@
 
 /* Circle stroke */
 .circle {
-  stroke: var(--color-primary);
+  stroke: var(--color-primary-background);
   stroke-dasharray: 62.83;
   stroke-dashoffset: 47.12;
   stroke-linecap: round;
