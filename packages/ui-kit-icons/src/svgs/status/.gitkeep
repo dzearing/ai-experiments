@@ -1,0 +1,2 @@
+# This file ensures the status directory is tracked in git
+# SVG files for status icons (check, error, warning, info, etc.) will be placed here

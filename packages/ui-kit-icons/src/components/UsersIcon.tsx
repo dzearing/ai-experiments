@@ -1,0 +1,10 @@
+import { createIcon } from '../utils/createIcon';
+
+// Generated from: src/svgs/misc/users.svg
+// To update this icon, modify the SVG file and run: pnpm generate-icons
+const svgContent = `<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+  <path d="m22 21v-2a4 4 0 0 0-3-3.87" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+
+export const UsersIcon = createIcon(svgContent, 'UsersIcon');

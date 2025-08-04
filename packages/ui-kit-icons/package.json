@@ -1,0 +1,55 @@
+{
+  "name": "@claude-flow/ui-kit-icons",
+  "version": "0.0.1",
+  "private": true,
+  "description": "SVG icon library for the Claude Flow design system.",
+  "type": "module",
+  "packageType": "component-library",
+  "main": "./lib/index.js",
+  "module": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js"
+    },
+    "./svgs/*": "./src/svgs/*.svg",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "src/svgs"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "node scripts/generate-icons.js && repo-scripts build",
+    "build:storybook": "repo-scripts build-storybook",
+    "clean": "repo-scripts clean",
+    "dev": "repo-scripts dev-storybook",
+    "dev:storybook": "repo-scripts dev-storybook",
+    "dev:storybook:wsl": "repo-scripts dev-storybook-wsl",
+    "generate-icons": "node scripts/generate-icons.js",
+    "lint": "repo-scripts lint",
+    "lint:fix": "repo-scripts lint-fix",
+    "test": "repo-scripts test",
+    "test:watch": "repo-scripts test-watch",
+    "typecheck": "repo-scripts typecheck",
+    "format": "repo-scripts format",
+    "format:check": "repo-scripts format-check"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@claude-flow/repo-scripts": "workspace:*",
+    "@claude-flow/tsconfig": "workspace:*",
+    "@claude-flow/ui-kit": "workspace:*",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "glob": "^11.0.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "svgo": "^3.3.2"
+  }
+}
