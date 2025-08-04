@@ -215,3 +215,71 @@ See `/docs/guides/migration/migration-v1-to-v2.md` for details.
 - **UI Change Validation**: 
   - Any time you make UI changes, validate you actually fixed the issue by running the playwright mcp server and screenshotting your work and validating the results are true. 
   - If the results are not accurate, fix the issues before reporting them as fixed.
+
+## Design Token Usage
+
+The project uses a surface-based design token system. 
+
+**Quick References:**
+- `/docs/guides/TOKEN_CHEATSHEET.md` - Quick reference for common tokens
+- `/docs/guides/COMPONENT_TOKEN_MAPPING.md` - Which tokens to use for each component
+- `/packages/ui-kit/README.md` - Complete token system documentation
+
+### Common Token Examples
+
+```css
+/* Text Colors - ALWAYS use these instead of hardcoded colors */
+--color-body-text                /* Primary text */
+--color-body-textSoft10          /* Secondary text (10% less contrast) */
+--color-body-textSoft20          /* Tertiary text (20% less contrast) */
+--color-body-link                /* Links */
+
+/* Backgrounds */
+--color-body-background          /* Main background */
+--color-panel-background         /* Card/panel background */
+--color-buttonPrimary-background /* Primary button */
+
+/* Spacing - Based on 4px grid */
+--spacing-small10                /* 8px */
+--spacing                        /* 16px - DEFAULT */
+--spacing-large10                /* 24px */
+--spacing-buttonX                /* Button horizontal padding */
+--spacing-card                   /* Card padding */
+
+/* Typography */
+--font-size                      /* 14px - body text */
+--font-size-h3                   /* 24px - headings */
+--font-weight-medium             /* 500 */
+--line-height-normal             /* 1.5 */
+
+/* Other Common Tokens */
+--radius-button                  /* Button border radius */
+--shadow-card                    /* Card shadow */
+--duration-normal                /* 200ms - animations */
+```
+
+### Important Token Guidelines
+
+1. **NEVER use hardcoded colors** - Always use design tokens
+2. **Use surface-based colors** - They ensure accessibility automatically
+3. **Follow the 4px spacing grid** - Use spacing tokens for all margins/padding
+4. **Check the Token Browser** - Run Storybook to see all available tokens
+5. **Soft = less contrast, Hard = more contrast** - e.g., `textSoft10` is lighter than `text`
+
+### Example Usage
+
+```css
+/* ❌ WRONG - Never use hardcoded values */
+.button {
+  background: #1976d2;
+  color: white;
+  padding: 8px 16px;
+}
+
+/* ✅ CORRECT - Use design tokens */
+.button {
+  background: var(--color-buttonPrimary-background);
+  color: var(--color-buttonPrimary-text);
+  padding: var(--spacing-buttonY) var(--spacing-buttonX);
+}
+```
