@@ -1,402 +1,332 @@
-# SegmentedControl
+# SegmentedControl Component Plan
 
-## Component Name and Description
-SegmentedControl is an input primitive that provides a set of mutually exclusive options presented as connected segments, similar to radio buttons but with a tab-like appearance.
+## Overview
 
-## Use Cases
-- View mode selection (list/grid/chart)
-- Filter categories
-- Settings with limited options
-- Navigation between related views
-- Time period selection
-- Sort order controls
+### Description
+A segmented control is a UI component that displays a group of options where only one option can be selected at a time. It's similar to radio buttons but presented as connected buttons in a single row, providing a more compact and visually cohesive interface for mutually exclusive choices.
 
-## API/Props Interface
+### Visual Design Mockups
+- [Default State](./mockups/segmented-control-default.html)
+- [Interactive States](./mockups/segmented-control-interactive.html)
+- [Responsive Behavior](./mockups/segmented-control-responsive.html)
+- [Dark Mode](./mockups/segmented-control-dark.html)
+- [All Variants](./mockups/segmented-control-variants.html)
+
+### Key Features
+- Single selection from multiple options
+- Smooth animated selection indicator
+- Full keyboard navigation support
+- Responsive design with overflow handling
+- Icon and text support
+- Multiple size variants
+- Accessible with proper ARIA attributes
+
+### Use Cases
+- View mode switching (e.g., List/Grid/Map views)
+- Tab-like navigation within a component
+- Filter controls (e.g., All/Active/Completed)
+- Time period selection (e.g., Day/Week/Month/Year)
+- Display preference toggles
+- Settings options selection
+
+## API Design
+
+### Props Interface
+
+| Prop Name | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| **Required Props** |
+| options | `SegmentOption[]` | ✓ | - | Array of options to display |
+| value | `string` | ✓ | - | Currently selected value |
+| onChange | `(value: string) => void` | ✓ | - | Handler called when selection changes |
+| **Optional Props** |
+| size | `'small' \| 'medium' \| 'large'` | - | `'medium'` | Size of the control |
+| fullWidth | `boolean` | - | `false` | Whether control should fill container width |
+| disabled | `boolean` | - | `false` | Disable entire control |
+| name | `string` | - | - | Name for form integration |
+| ariaLabel | `string` | - | - | Accessible label for the control |
+| ariaLabelledBy | `string` | - | - | ID of element that labels the control |
+| className | `string` | - | - | Additional CSS classes |
+| **Visual Options** |
+| variant | `'pills' \| 'square' \| 'underline'` | - | `'pills'` | Visual style variant |
+| color | `'primary' \| 'secondary' \| 'neutral'` | - | `'primary'` | Color scheme |
+| showDividers | `boolean` | - | `true` | Show dividers between segments |
+| **Event Handlers** |
+| onFocus | `(event: FocusEvent) => void` | - | - | Focus event handler |
+| onBlur | `(event: FocusEvent) => void` | - | - | Blur event handler |
+
+### SegmentOption Interface
 
 ```typescript
-interface SegmentedControlProps {
-  /** Currently selected value */
-  value?: string;
-  
-  /** Default selected value */
-  defaultValue?: string;
-  
-  /** Available segments */
-  segments: SegmentOption[];
-  
-  /** Control name for form submission */
-  name?: string;
-  
-  /** Control size */
-  size?: 'sm' | 'md' | 'lg';
-  
-  /** Visual variant */
-  variant?: 'default' | 'filled' | 'outlined';
-  
-  /** Orientation */
-  orientation?: 'horizontal' | 'vertical';
-  
-  /** Full width segments */
-  fullWidth?: boolean;
-  
-  /** Disabled state */
-  disabled?: boolean;
-  
-  /** Required selection */
-  required?: boolean;
-  
-  /** Event handlers */
-  onChange?: (value: string) => void;
-  onFocus?: (event: React.FocusEvent) => void;
-  onBlur?: (event: React.FocusEvent) => void;
-  
-  /** ARIA attributes */
-  'aria-label'?: string;
-  'aria-labelledby'?: string;
-  'aria-describedby'?: string;
-}
-
 interface SegmentOption {
-  /** Segment value */
   value: string;
-  
-  /** Segment label */
   label: string;
-  
-  /** Optional icon */
-  icon?: React.ReactNode;
-  
-  /** Optional description */
-  description?: string;
-  
-  /** Disabled state for individual segment */
+  icon?: ReactNode;
   disabled?: boolean;
-  
-  /** Badge or count */
-  badge?: string | number;
-  
-  /** Custom content */
-  content?: React.ReactNode;
+  tooltip?: string;
+  ariaLabel?: string;
 }
 ```
 
-## Sub-components
+### CSS Classes & Theming
+*Implementation will follow guidelines in [component-implementation-guide.md](./component-implementation-guide.md)*
 
-### SegmentedControl.Segment
-Individual segment component with label, icon, and badge support.
+- Component-specific classes needed:
+  - Variants: `.variant-pills`, `.variant-square`, `.variant-underline`
+  - States: `.selected`, `.disabled`, `.focused`
+  - Elements: `.container`, `.option`, `.indicator`, `.divider`
+- Special styling considerations:
+  - Smooth sliding animation for selection indicator
+  - Consistent spacing between segments
+  - Proper contrast ratios for accessibility
+  - Responsive behavior for small screens
 
-### SegmentedControl.Indicator
-Visual indicator that slides between selected segments.
+## Dependencies
 
-## Usage Examples
+### External Dependencies
+- [x] None
 
-### Basic Segmented Control
-```html
-<div class="segmented-control" 
-     data-variant="default" 
-     data-size="md"
-     role="radiogroup"
-     aria-label="View mode">
-  
-  <input type="radio" 
-         id="view-list" 
-         name="view-mode" 
-         value="list"
-         class="segment-input sr-only"
-         checked>
-  <label for="view-list" class="segment-label">
-    <span class="segment-icon">📋</span>
-    <span class="segment-text">List</span>
-  </label>
-  
-  <input type="radio" 
-         id="view-grid" 
-         name="view-mode" 
-         value="grid"
-         class="segment-input sr-only">
-  <label for="view-grid" class="segment-label">
-    <span class="segment-icon">🔲</span>
-    <span class="segment-text">Grid</span>
-  </label>
-  
-  <input type="radio" 
-         id="view-chart" 
-         name="view-mode" 
-         value="chart"
-         class="segment-input sr-only">
-  <label for="view-chart" class="segment-label">
-    <span class="segment-icon">📊</span>
-    <span class="segment-text">Chart</span>
-  </label>
-  
-  <div class="segment-indicator" aria-hidden="true"></div>
-</div>
-```
+### Internal Dependencies
+- [x] Design tokens from `@claude-flow/ui-kit`
+- [x] Utilities: `mergeProps` utility for prop merging
+- [ ] Components: None
+- [ ] Hooks: None
 
-### Time Period Selector
-```html
-<div class="segmented-control" 
-     data-variant="filled" 
-     data-size="sm"
-     role="radiogroup"
-     aria-label="Time period">
-  
-  <input type="radio" 
-         id="period-day" 
-         name="time-period" 
-         value="day"
-         class="segment-input sr-only">
-  <label for="period-day" class="segment-label">
-    <span class="segment-text">Day</span>
-  </label>
-  
-  <input type="radio" 
-         id="period-week" 
-         name="time-period" 
-         value="week"
-         class="segment-input sr-only"
-         checked>
-  <label for="period-week" class="segment-label">
-    <span class="segment-text">Week</span>
-  </label>
-  
-  <input type="radio" 
-         id="period-month" 
-         name="time-period" 
-         value="month"
-         class="segment-input sr-only">
-  <label for="period-month" class="segment-label">
-    <span class="segment-text">Month</span>
-  </label>
-  
-  <input type="radio" 
-         id="period-year" 
-         name="time-period" 
-         value="year"
-         class="segment-input sr-only">
-  <label for="period-year" class="segment-label">
-    <span class="segment-text">Year</span>
-  </label>
-  
-  <div class="segment-indicator" aria-hidden="true"></div>
-</div>
-```
+## Dependent Components
 
-### Filter Control with Badges
-```html
-<div class="segmented-control" 
-     data-variant="outlined" 
-     data-size="md"
-     role="radiogroup"
-     aria-label="Filter tasks">
-  
-  <input type="radio" 
-         id="filter-all" 
-         name="task-filter" 
-         value="all"
-         class="segment-input sr-only"
-         checked>
-  <label for="filter-all" class="segment-label">
-    <span class="segment-text">All</span>
-    <span class="segment-badge">24</span>
-  </label>
-  
-  <input type="radio" 
-         id="filter-active" 
-         name="task-filter" 
-         value="active"
-         class="segment-input sr-only">
-  <label for="filter-active" class="segment-label">
-    <span class="segment-text">Active</span>
-    <span class="segment-badge">12</span>
-  </label>
-  
-  <input type="radio" 
-         id="filter-completed" 
-         name="task-filter" 
-         value="completed"
-         class="segment-input sr-only">
-  <label for="filter-completed" class="segment-label">
-    <span class="segment-text">Completed</span>
-    <span class="segment-badge">8</span>
-  </label>
-  
-  <input type="radio" 
-         id="filter-archived" 
-         name="task-filter" 
-         value="archived"
-         class="segment-input sr-only">
-  <label for="filter-archived" class="segment-label">
-    <span class="segment-text">Archived</span>
-    <span class="segment-badge">4</span>
-  </label>
-  
-  <div class="segment-indicator" aria-hidden="true"></div>
-</div>
-```
+### Direct Dependents
+Components that will directly import and use this component:
+- Filter components - For switching between filter views
+- View switchers - For toggling between list/grid/card views
+- Navigation bars - For section navigation
+- Settings panels - For preference selection
 
-### Vertical Segmented Control
-```html
-<div class="segmented-control" 
-     data-variant="default" 
-     data-orientation="vertical"
-     data-size="md"
-     role="radiogroup"
-     aria-label="Navigation">
-  
-  <input type="radio" 
-         id="nav-dashboard" 
-         name="navigation" 
-         value="dashboard"
-         class="segment-input sr-only"
-         checked>
-  <label for="nav-dashboard" class="segment-label">
-    <span class="segment-icon">🏠</span>
-    <span class="segment-text">Dashboard</span>
-  </label>
-  
-  <input type="radio" 
-         id="nav-projects" 
-         name="navigation" 
-         value="projects"
-         class="segment-input sr-only">
-  <label for="nav-projects" class="segment-label">
-    <span class="segment-icon">📂</span>
-    <span class="segment-text">Projects</span>
-  </label>
-  
-  <input type="radio" 
-         id="nav-team" 
-         name="navigation" 
-         value="team"
-         class="segment-input sr-only">
-  <label for="nav-team" class="segment-label">
-    <span class="segment-icon">👥</span>
-    <span class="segment-text">Team</span>
-  </label>
-  
-  <input type="radio" 
-         id="nav-settings" 
-         name="navigation" 
-         value="settings"
-         class="segment-input sr-only">
-  <label for="nav-settings" class="segment-label">
-    <span class="segment-icon">⚙️</span>
-    <span class="segment-text">Settings</span>
-  </label>
-  
-  <div class="segment-indicator" aria-hidden="true"></div>
-</div>
-```
+### Indirect Dependents
+Components that may benefit from patterns established here:
+- TabList - Similar selection pattern
+- RadioGroup - Similar single-selection behavior
+- ToggleButtonGroup - Similar visual structure
 
-### Full Width Control
-```html
-<div class="segmented-control" 
-     data-variant="filled" 
-     data-size="lg"
-     data-full-width="true"
-     role="radiogroup"
-     aria-label="Account type">
-  
-  <input type="radio" 
-         id="account-personal" 
-         name="account-type" 
-         value="personal"
-         class="segment-input sr-only"
-         checked>
-  <label for="account-personal" class="segment-label">
-    <span class="segment-text">Personal</span>
-    <span class="segment-description">For individual use</span>
-  </label>
-  
-  <input type="radio" 
-         id="account-team" 
-         name="account-type" 
-         value="team"
-         class="segment-input sr-only">
-  <label for="account-team" class="segment-label">
-    <span class="segment-text">Team</span>
-    <span class="segment-description">For small teams</span>
-  </label>
-  
-  <input type="radio" 
-         id="account-enterprise" 
-         name="account-type" 
-         value="enterprise"
-         class="segment-input sr-only">
-  <label for="account-enterprise" class="segment-label">
-    <span class="segment-text">Enterprise</span>
-    <span class="segment-description">For large organizations</span>
-  </label>
-  
-  <div class="segment-indicator" aria-hidden="true"></div>
-</div>
-```
+## Internal Architecture
 
-### Disabled States
-```html
-<div class="segmented-control" 
-     data-variant="outlined"
-     role="radiogroup"
-     aria-label="Sort order">
-  
-  <input type="radio" 
-         id="sort-asc" 
-         name="sort-order" 
-         value="asc"
-         class="segment-input sr-only"
-         checked>
-  <label for="sort-asc" class="segment-label">
-    <span class="segment-text">Ascending</span>
-  </label>
-  
-  <input type="radio" 
-         id="sort-desc" 
-         name="sort-order" 
-         value="desc"
-         class="segment-input sr-only">
-  <label for="sort-desc" class="segment-label">
-    <span class="segment-text">Descending</span>
-  </label>
-  
-  <input type="radio" 
-         id="sort-custom" 
-         name="sort-order" 
-         value="custom"
-         class="segment-input sr-only"
-         disabled>
-  <label for="sort-custom" class="segment-label disabled">
-    <span class="segment-text">Custom</span>
-    <span class="segment-description">Coming soon</span>
-  </label>
-  
-  <div class="segment-indicator" aria-hidden="true"></div>
-</div>
-```
+### Sub-components
+Internal components that won't be exported but help organize the implementation:
+- `SegmentedControlOption` - Individual segment button
+- `SelectionIndicator` - Animated selection background
 
-## Accessibility Notes
-- Use `role="radiogroup"` for the container and radio inputs for segments
-- Provide clear group labels using `aria-label` or `aria-labelledby`
-- Support keyboard navigation with arrow keys between segments
-- Use Space or Enter to select a segment
-- Ensure sufficient color contrast for all states including selected and focus
-- Provide visual focus indicators for keyboard users
-- Test with screen readers to verify proper state announcements
-- Use semantic HTML with hidden radio inputs for form submission
+### Hooks
+Custom hooks this component needs:
+- `useSegmentedControl` - Manages selection state and keyboard navigation
+- `useIndicatorPosition` - Calculates position/size for sliding indicator
+
+### Utilities
+Helper functions or utilities:
+- `calculateIndicatorStyle` - Computes CSS properties for indicator animation
+- `getEnabledOptions` - Filters out disabled options for navigation
 
 ## Performance Considerations
-- Use CSS transforms for smooth indicator animations
-- Implement proper event delegation for segment selection
-- Cache segment configurations to avoid unnecessary re-renders
-- Use CSS containment for complex segmented control layouts
-- Minimize DOM updates by using CSS-only state changes
-- Consider using intersection observer for visibility optimizations
-- Use stable references for event handlers to prevent re-renders
 
-## Related Components
-- **RadioGroup**: For form-based radio selection
-- **ToggleButton**: For multi-selection toggle buttons
-- **Tabs**: For content panel navigation
-- **ButtonGroup**: For action button grouping
-- **Select**: For dropdown selection
-- **Switch**: For binary on/off controls
+### Rendering Strategy
+- [x] Frequent re-renders expected (selection changes)
+- [x] Animation/transition heavy (sliding indicator)
+- [ ] Static component
+- [ ] Large lists or data sets
+- [ ] Async data loading
+
+### Optimization Approaches
+- **Memoization**: 
+  - [x] Component memoization with `React.memo`
+  - [x] Expensive calculations with `useMemo` (indicator position)
+  - [x] Event handlers with `useCallback`
+  - Memoize option rendering to prevent unnecessary re-renders
+
+- **Lazy Loading**:
+  - [ ] Not applicable for this component
+
+- **Initial Render**:
+  - [x] All options render immediately
+  - [x] Indicator positioned on selected option
+  - [ ] No deferred content
+  - [x] CSS transitions handle animation smoothly
+
+### Bundle Size Impact
+- Estimated size: ~3-4KB minified
+- No external dependencies
+- CSS can be tree-shaken if not used
+
+## Accessibility
+
+### ARIA Requirements
+- [x] Role attributes: `role="radiogroup"` on container
+- [x] `role="radio"` on each option
+- [x] `aria-checked` state on options
+- [x] `aria-label` or `aria-labelledby` on group
+- [x] `aria-disabled` for disabled options/group
+
+### Keyboard Navigation
+- [x] Tab to focus the control
+- [x] Arrow keys to navigate between options
+- [x] Space/Enter to select focused option
+- [x] Home/End keys to jump to first/last option
+- [x] Skip disabled options during navigation
+
+### Screen Reader Support
+- [x] Announce group label and selected option
+- [x] Announce option count and position
+- [x] State changes announced when selection changes
+- [x] Disabled state properly communicated
+
+## Testing Strategy
+
+### Unit Tests
+- [x] **Props validation** - All prop combinations work correctly
+- [x] **State management** - Selection state updates properly
+- [x] **Event handling** - onChange fires with correct value
+- [x] **Edge cases** - No options, all disabled, single option
+- [x] **Accessibility** - ARIA attributes, keyboard navigation
+
+### Integration Tests
+- [x] **Form integration** - Works with form libraries
+- [x] **Controlled/Uncontrolled** - Both modes supported
+- [x] **Theme integration** - Respects design tokens
+- [x] **Responsive behavior** - Handles container resize
+
+### Visual Regression Tests
+- [x] **All variants** - Default, pills, underline
+- [x] **States** - Hover, focus, selected, disabled
+- [x] **Themes** - Light/dark mode
+- [x] **Sizes** - Small, medium, large
+- [x] **With icons** - Icon-only and icon+text
+
+## Storybook Stories
+
+### Essential Stories
+- [x] **Default** - Basic 3-option example with pills variant
+- [x] **Playground** - All props interactive
+- [x] **Sizes** - Small, medium, large examples
+- [x] **Variants** - All visual variants
+
+### Interaction Stories
+- [x] **With Icons** - Icon and text combinations
+- [x] **Controlled** - External state management
+- [x] **Form Integration** - Within a form context
+- [x] **Full Width** - Responsive full-width mode
+
+### Edge Case Stories
+- [x] **Many Options** - Overflow behavior
+- [x] **Single Option** - Edge case handling
+- [x] **All Disabled** - Fully disabled state
+- [x] **Long Labels** - Text truncation handling
+
+### Composition Stories
+- [x] **View Switcher** - List/Grid/Map example
+- [x] **Filter Control** - All/Active/Archived
+- [x] **Time Period** - Day/Week/Month/Year
+
+## Similar Components in Open Source
+
+### Prior Art Research
+- **Material-UI ToggleButtonGroup** - [Link](https://mui.com/material-ui/react-toggle-button/)
+  - Good: Smooth animations, accessible
+  - Avoid: Complex API for simple use cases
+  - Adopt: Keyboard navigation pattern
+
+- **Ant Design Segmented** - [Link](https://ant.design/components/segmented)
+  - Good: Clean API, nice animations
+  - Avoid: Limited customization
+  - Adopt: Option structure
+
+- **Chakra UI Tabs** - [Link](https://chakra-ui.com/docs/components/tabs)
+  - Good: Excellent accessibility
+  - Avoid: Separate tab/panel structure
+  - Adopt: ARIA implementation
+
+- **Mantine SegmentedControl** - [Link](https://mantine.dev/core/segmented-control/)
+  - Good: Simple API, good defaults
+  - Avoid: Heavy styling dependencies
+  - Adopt: Size variants approach
+
+### API Comparison
+| Library | Prop Name | Our Equivalent | Notes |
+|---------|-----------|----------------|-------|
+| MUI | value/onChange | value/onChange | Same pattern |
+| Ant | options | options | Same structure |
+| Mantine | data | options | We use clearer name |
+| Chakra | defaultIndex | - | We use value-based |
+
+## Relationship to Other Components
+
+### Potential Overlaps
+- **RadioGroup** - Both provide single selection, but SegmentedControl is more compact and visual
+- **Tabs** - Similar appearance, but Tabs manage content panels while SegmentedControl is just selection
+- **ToggleButtonGroup** - Could share implementation, but ToggleButtonGroup allows multiple selection
+
+### Composition Opportunities
+- Can be used within Toolbar components for view switching
+- Often paired with filtered lists or data tables
+- Works well in app headers for navigation
+
+### Shared Patterns
+- Shares keyboard navigation with RadioGroup
+- Could extract selection indicator animation for reuse
+- Similar focus management to other form controls
+
+## Implementation Checklist
+
+### Phase 1: Foundation
+- [ ] Basic component structure with options
+- [ ] CSS module with design tokens
+- [ ] Single selection logic
+- [ ] Basic unit tests
+
+### Phase 2: Features
+- [ ] Keyboard navigation
+- [ ] Selection indicator animation
+- [ ] All size and variant props
+- [ ] ARIA attributes
+
+### Phase 3: Polish
+- [ ] Smooth animations
+- [ ] Full Storybook stories
+- [ ] Complete test coverage
+- [ ] Edge case handling
+
+### Phase 4: Integration
+- [ ] Documentation and examples
+- [ ] Performance optimization
+- [ ] Use in real components
+- [ ] Gather feedback
+
+## Open Questions
+
+### Design Decisions
+- [ ] Should we support multi-line labels or always truncate?
+- [ ] How should overflow be handled on mobile - scroll or wrap?
+- [ ] Should the indicator animation be customizable?
+
+### Technical Considerations
+- [ ] Use CSS transitions or JavaScript for indicator animation?
+- [ ] How to handle dynamic width changes smoothly?
+- [ ] Support for RTL languages?
+
+### Future Enhancements
+- [ ] Multi-select variant (becomes ToggleButtonGroup)
+- [ ] Async option loading
+- [ ] Custom option rendering
+- [ ] Dropdown variant for many options
+
+## Notes
+
+### Implementation Notes
+- Use CSS Grid or Flexbox for equal-width segments
+- Indicator should use transform for smooth animation
+- Consider using ResizeObserver for dynamic sizing
+- Ensure touch targets meet accessibility guidelines (44x44px)
+
+### Migration Notes
+- If replacing existing toggle controls, ensure value prop compatibility
+- Consider providing a codemod for common migrations
+
+### Security Considerations
+- Sanitize any HTML in option labels if supporting rich content
+- No direct DOM manipulation that could introduce XSS

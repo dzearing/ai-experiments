@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SegmentedControl - Responsive Behavior</title>
+    <!-- Import UI Kit styles -->
+    <link rel="stylesheet" href="../../../../../ui-kit/dist/styles.css">
+    <link rel="stylesheet" href="../../../../../ui-kit/dist/themes/default-light.css">
+    <style>
+        
+        /* Apply theme */
+        body {
+            font-family: var(--font-family);
+            padding: var(--spacing-large30) var(--spacing-large5);
+            background: var(--color-body-background);
+            color: var(--color-body-text);
+            line-height: var(--line-height);
+        }
+
+        /* Base reset */
+        button {
+            font: inherit;
+            cursor: pointer;
+            border: none;
+            background: none;
+        }
+        
+        .demo-section {
+            max-width: var(--maxWidth-largest);
+            margin: 0 auto;
+        }
+        
+        .demo-section h2 {
+            margin-bottom: var(--spacing-large20);
+            font-size: var(--font-size-h3);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-body-text);
+        }
+        
+        .demo-section h3 {
+            margin: var(--spacing-large30) 0 var(--spacing);
+            font-size: var(--font-size-large10);
+            font-weight: var(--font-weight-medium);
+            color: var(--color-body-textSoft10);
+        }
+        
+        .demo-section h3:first-of-type {
+            margin-top: 0;
+        }
+        
+        /* Container demos */
+        .container-demo {
+            margin: var(--spacing-large10) 0;
+            padding: var(--spacing-large10);
+            background: var(--color-panel-background);
+            border-radius: var(--radius);
+            border: 1px solid var(--color-border);
+            box-shadow: var(--shadow-card);
+            resize: horizontal;
+            overflow: auto;
+            min-width: 240px;
+            max-width: 100%;
+        }
+        
+        .container-label {
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft10);
+            margin-bottom: var(--spacing);
+            user-select: none;
+        }
+        
+        /* SegmentedControl Styles - Pills by default */
+        .segmented-control {
+            display: inline-flex;
+            position: relative;
+            padding: 2px;
+            background: transparent;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-full);
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.12), inset 0 1px 2px rgba(0, 0, 0, 0.24);
+            max-width: 100%;
+        }
+        
+        .segmented-control-options {
+            display: flex;
+            gap: var(--spacing-smallest);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .segmented-control-option {
+            position: relative;
+            padding: calc(var(--spacing-buttonY) - 2px) var(--spacing-buttonX);
+            border: none;
+            background: transparent;
+            color: var(--color-body-text);
+            font-family: inherit;
+            font-size: var(--font-size);
+            font-weight: var(--font-weight-medium);
+            cursor: pointer;
+            transition: all var(--duration-fast10) var(--easing-default);
+            border-radius: var(--radius-full);
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-small10);
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            min-width: 0;
+        }
+        
+        .segmented-control-option:hover:not(.selected):not(:disabled) {
+            color: var(--color-body-textHard10);
+            background: var(--color-body-backgroundSoft20);
+        }
+        
+        .segmented-control-option:active:not(.selected):not(:disabled) {
+            background: var(--color-body-backgroundHard10);
+        }
+        
+        .segmented-control-option:focus-visible {
+            outline: 2px solid var(--color-primary);
+            outline-offset: 2px;
+        }
+        
+        .segmented-control-option.selected {
+            color: var(--color-primary-text);
+            z-index: 2;
+        }
+        
+        /* Sliding indicator */
+        .segmented-control-indicator {
+            position: absolute;
+            top: 2px;
+            bottom: 2px;
+            left: 2px;
+            background: var(--color-primary-background);
+            border-radius: var(--radius-full);
+            transition: transform var(--duration-fast10) var(--easing-default), 
+                        width var(--duration-fast10) var(--easing-default);
+            z-index: 0;
+            box-shadow: var(--shadow-button);
+        }
+        
+        /* Full width variant */
+        .segmented-control.full-width {
+            display: flex;
+            width: 100%;
+        }
+        
+        .segmented-control.full-width .segmented-control-options {
+            flex: 1;
+        }
+        
+        .segmented-control.full-width .segmented-control-option {
+            flex: 1;
+            justify-content: center;
+        }
+        
+        /* Overflow handling */
+        .segmented-control.scrollable {
+            overflow-x: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--color-body-textSoft20) transparent;
+        }
+        
+        .segmented-control.scrollable::-webkit-scrollbar {
+            height: 6px;
+        }
+        
+        .segmented-control.scrollable::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .segmented-control.scrollable::-webkit-scrollbar-thumb {
+            background: var(--color-body-textSoft20);
+            border-radius: 3px;
+        }
+        
+        .segmented-control.scrollable .segmented-control-options {
+            flex-wrap: nowrap;
+        }
+        
+        /* Truncate text */
+        .segmented-control.truncate .segmented-control-option {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        /* Responsive demo grid */
+        .responsive-grid {
+            display: grid;
+            gap: var(--spacing-large10);
+            margin: var(--spacing-large10) 0;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        }
+        
+        .device-frame {
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius);
+            padding: var(--spacing-large10);
+            background: var(--color-panel-background);
+            box-shadow: var(--shadow-card);
+        }
+        
+        .device-label {
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft10);
+            margin-bottom: var(--spacing);
+            text-align: center;
+            font-weight: var(--font-weight-medium);
+        }
+        
+        /* Icons */
+        .icon {
+            width: 1rem;
+            height: 1rem;
+            fill: currentColor;
+            flex-shrink: 0;
+        }
+        
+        /* Mobile styles */
+        @media (max-width: 480px) {
+            .segmented-control-option {
+                padding: var(--spacing-small10) var(--spacing-small5);
+                font-size: var(--font-size-small10);
+            }
+            
+            .hide-label-mobile .segmented-control-option span {
+                display: none;
+            }
+        }
+        
+        .instruction-text {
+            margin-bottom: var(--spacing);
+            color: var(--color-body-textSoft10);
+            font-size: var(--font-size);
+        }
+    </style>
+</head>
+<body data-theme="default" data-theme-type="light">
+    <div class="demo-section">
+        <h2>SegmentedControl - Responsive Behavior</h2>
+        
+        <h3>Resizable Container Demo</h3>
+        <p class="instruction-text">
+            Drag the corner of these containers to resize and see responsive behavior
+        </p>
+        
+        <div class="container-demo" style="width: 600px;">
+            <div class="container-label">Default behavior - wraps to container width</div>
+            <div class="segmented-control" role="radiogroup">
+                <div class="segmented-control-indicator"></div>
+                <div class="segmented-control-options">
+                    <button class="segmented-control-option selected" role="radio">
+                        Overview
+                    </button>
+                    <button class="segmented-control-option" role="radio">
+                        Analytics
+                    </button>
+                    <button class="segmented-control-option" role="radio">
+                        Reports
+                    </button>
+                    <button class="segmented-control-option" role="radio">
+                        Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="container-demo" style="width: 600px;">
+            <div class="container-label">Full width - segments stretch equally</div>
+            <div class="segmented-control full-width" role="radiogroup">
+                <div class="segmented-control-indicator"></div>
+                <div class="segmented-control-options">
+                    <button class="segmented-control-option" role="radio">
+                        Overview
+                    </button>
+                    <button class="segmented-control-option selected" role="radio">
+                        Analytics
+                    </button>
+                    <button class="segmented-control-option" role="radio">
+                        Reports
+                    </button>
+                    <button class="segmented-control-option" role="radio">
+                        Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="container-demo" style="width: 400px;">
+            <div class="container-label">Scrollable with many options</div>
+            <div class="segmented-control scrollable" role="radiogroup">
+                <div class="segmented-control-indicator"></div>
+                <div class="segmented-control-options">
+                    <button class="segmented-control-option selected" role="radio">
+                        Today
+                    </button>
+                    <button class="segmented-control-option" role="radio">
+                        Yesterday
+                    </button>
+                    <button class="segmented-control-option" role="radio">
+                        This Week
+                    </button>
+                    <button class="segmented-control-option" role="radio">
+                        Last Week
+                    </button>
+                    <button class="segmented-control-option" role="radio">
+                        This Month
+                    </button>
+                    <button class="segmented-control-option" role="radio">
+                        Last Month
+                    </button>
+                    <button class="segmented-control-option" role="radio">
+                        This Year
+                    </button>
+                    <button class="segmented-control-option" role="radio">
+                        All Time
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <h3>Device-Specific Examples</h3>
+        <div class="responsive-grid">
+            <div class="device-frame" style="max-width: 375px;">
+                <div class="device-label">Mobile (375px)</div>
+                <div class="segmented-control full-width" role="radiogroup">
+                    <div class="segmented-control-indicator"></div>
+                    <div class="segmented-control-options">
+                        <button class="segmented-control-option selected" role="radio">
+                            All
+                        </button>
+                        <button class="segmented-control-option" role="radio">
+                            Active
+                        </button>
+                        <button class="segmented-control-option" role="radio">
+                            Done
+                        </button>
+                    </div>
+                </div>
+                
+                <div style="margin-top: var(--spacing);">
+                    <div class="segmented-control hide-label-mobile" role="radiogroup">
+                        <div class="segmented-control-indicator"></div>
+                        <div class="segmented-control-options">
+                            <button class="segmented-control-option selected" role="radio" aria-label="List view">
+                                <svg class="icon" viewBox="0 0 20 20">
+                                    <path d="M3 4h14v2H3V4zm0 5h14v2H3V9zm0 5h14v2H3v-2z"/>
+                                </svg>
+                                <span>List</span>
+                            </button>
+                            <button class="segmented-control-option" role="radio" aria-label="Grid view">
+                                <svg class="icon" viewBox="0 0 20 20">
+                                    <path d="M3 3h6v6H3V3zm8 0h6v6h-6V3zM3 11h6v6H3v-6zm8 0h6v6h-6v-6z"/>
+                                </svg>
+                                <span>Grid</span>
+                            </button>
+                            <button class="segmented-control-option" role="radio" aria-label="Map view">
+                                <svg class="icon" viewBox="0 0 20 20">
+                                    <path d="M10 2a1 1 0 011 1v6.586l2.293-2.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 9.586V3a1 1 0 011-1z"/>
+                                    <path d="M3 12a1 1 0 011-1h12a1 1 0 011 1v4a1 1 0 01-1 1H4a1 1 0 01-1-1v-4z"/>
+                                </svg>
+                                <span>Map</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="device-frame" style="max-width: 768px;">
+                <div class="device-label">Tablet (768px)</div>
+                <div class="segmented-control" role="radiogroup">
+                    <div class="segmented-control-indicator"></div>
+                    <div class="segmented-control-options">
+                        <button class="segmented-control-option selected" role="radio">
+                            Dashboard
+                        </button>
+                        <button class="segmented-control-option" role="radio">
+                            Projects
+                        </button>
+                        <button class="segmented-control-option" role="radio">
+                            Team
+                        </button>
+                        <button class="segmented-control-option" role="radio">
+                            Calendar
+                        </button>
+                        <button class="segmented-control-option" role="radio">
+                            Reports
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <h3>Text Overflow Handling</h3>
+        <div class="container-demo" style="width: 300px;">
+            <div class="container-label">Truncated text in constrained space</div>
+            <div class="segmented-control full-width truncate" role="radiogroup">
+                <div class="segmented-control-indicator"></div>
+                <div class="segmented-control-options">
+                    <button class="segmented-control-option selected" role="radio" title="Very Long Option Name That Truncates">
+                        Very Long Option Name That Truncates
+                    </button>
+                    <button class="segmented-control-option" role="radio" title="Another Long Option">
+                        Another Long Option
+                    </button>
+                    <button class="segmented-control-option" role="radio" title="Short">
+                        Short
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <h3>Adaptive Layout</h3>
+        <div class="container-demo" style="width: 100%; max-width: 800px;">
+            <div class="container-label">Adapts based on container width</div>
+            <div id="adaptive-demo">
+                <!-- Will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Initialize all segmented controls
+        function initializeSegmentedControl(control) {
+            const indicator = control.querySelector('.segmented-control-indicator');
+            const options = control.querySelectorAll('.segmented-control-option');
+            
+            if (!indicator || options.length === 0) return;
+            
+            // Position indicator on selected option
+            function updateIndicator(selectedOption) {
+                if (!selectedOption || !indicator) return;
+                
+                const controlRect = control.getBoundingClientRect();
+                const optionRect = selectedOption.getBoundingClientRect();
+                
+                // Calculate position relative to the control
+                const left = optionRect.left - controlRect.left - parseFloat(getComputedStyle(control).paddingLeft);
+                const width = optionRect.width;
+                
+                indicator.style.transform = `translateX(${left}px)`;
+                indicator.style.width = `${width}px`;
+            }
+            
+            // Initialize indicator position
+            const initialSelected = control.querySelector('.segmented-control-option.selected');
+            if (initialSelected) {
+                setTimeout(() => updateIndicator(initialSelected), 0);
+            }
+            
+            // Handle option clicks
+            options.forEach(option => {
+                option.addEventListener('click', () => {
+                    if (option.disabled) return;
+                    
+                    // Update selected states
+                    options.forEach(opt => {
+                        opt.classList.remove('selected');
+                        opt.setAttribute('aria-checked', 'false');
+                    });
+                    
+                    option.classList.add('selected');
+                    option.setAttribute('aria-checked', 'true');
+                    
+                    // Update indicator
+                    updateIndicator(option);
+                });
+            });
+            
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                const selected = control.querySelector('.segmented-control-option.selected');
+                if (selected) {
+                    updateIndicator(selected);
+                }
+            });
+        }
+        
+        // Initialize all controls on page load
+        document.querySelectorAll('.segmented-control').forEach(initializeSegmentedControl);
+        
+        // Adaptive demo
+        const adaptiveDemo = document.getElementById('adaptive-demo');
+        
+        function updateAdaptiveDemo() {
+            const width = adaptiveDemo.offsetWidth;
+            
+            if (width < 400) {
+                adaptiveDemo.innerHTML = `
+                    <div class="segmented-control full-width" role="radiogroup">
+                        <div class="segmented-control-indicator"></div>
+                        <div class="segmented-control-options">
+                            <button class="segmented-control-option selected" role="radio">
+                                <svg class="icon" viewBox="0 0 20 20">
+                                    <path d="M3 4h14v2H3V4zm0 5h14v2H3V9zm0 5h14v2H3v-2z"/>
+                                </svg>
+                            </button>
+                            <button class="segmented-control-option" role="radio">
+                                <svg class="icon" viewBox="0 0 20 20">
+                                    <path d="M3 3h6v6H3V3zm8 0h6v6h-6V3zM3 11h6v6H3v-6zm8 0h6v6h-6v-6z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <p style="margin-top: var(--spacing-small10); font-size: var(--font-size-small10); color: var(--color-body-textSoft10);">
+                        Icon-only mode at < 400px
+                    </p>
+                `;
+            } else if (width < 600) {
+                adaptiveDemo.innerHTML = `
+                    <div class="segmented-control full-width" role="radiogroup">
+                        <div class="segmented-control-indicator"></div>
+                        <div class="segmented-control-options">
+                            <button class="segmented-control-option selected" role="radio">
+                                List
+                            </button>
+                            <button class="segmented-control-option" role="radio">
+                                Grid
+                            </button>
+                        </div>
+                    </div>
+                    <p style="margin-top: var(--spacing-small10); font-size: var(--font-size-small10); color: var(--color-body-textSoft10);">
+                        Simplified options at 400-600px
+                    </p>
+                `;
+            } else {
+                adaptiveDemo.innerHTML = `
+                    <div class="segmented-control" role="radiogroup">
+                        <div class="segmented-control-indicator"></div>
+                        <div class="segmented-control-options">
+                            <button class="segmented-control-option selected" role="radio">
+                                <svg class="icon" viewBox="0 0 20 20">
+                                    <path d="M3 4h14v2H3V4zm0 5h14v2H3V9zm0 5h14v2H3v-2z"/>
+                                </svg>
+                                List View
+                            </button>
+                            <button class="segmented-control-option" role="radio">
+                                <svg class="icon" viewBox="0 0 20 20">
+                                    <path d="M3 3h6v6H3V3zm8 0h6v6h-6V3zM3 11h6v6H3v-6zm8 0h6v6h-6v-6z"/>
+                                </svg>
+                                Grid View
+                            </button>
+                        </div>
+                    </div>
+                    <p style="margin-top: var(--spacing-small10); font-size: var(--font-size-small10); color: var(--color-body-textSoft10);">
+                        Full labels with icons at > 600px
+                    </p>
+                `;
+            }
+            
+            // Re-initialize controls in the adaptive demo
+            setTimeout(() => {
+                adaptiveDemo.querySelectorAll('.segmented-control').forEach(initializeSegmentedControl);
+            }, 0);
+        }
+        
+        // Initial update
+        updateAdaptiveDemo();
+        
+        // Update on resize
+        const resizeObserver = new ResizeObserver(() => {
+            updateAdaptiveDemo();
+        });
+        resizeObserver.observe(adaptiveDemo.parentElement);
+    </script>
+</body>
+</html>
