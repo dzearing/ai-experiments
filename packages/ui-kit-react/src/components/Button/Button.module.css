@@ -55,7 +55,7 @@
   /* Add inner shadow for contrast on primary buttons */
   outline: 2px solid var(--color-body-outline);
   outline-offset: -2px;
-  box-shadow: 0 0 0 3px white inset;
+  box-shadow: 0 0 0 2px white inset;
 }
 
 .outline {
@@ -147,7 +147,7 @@
   /* Add inner shadow for contrast on neutral buttons */
   outline: 2px solid var(--color-body-outline);
   outline-offset: -2px;
-  box-shadow: 0 0 0 3px white inset;
+  box-shadow: 0 0 0 2px white inset;
 }
 
 .danger {
@@ -170,7 +170,7 @@
   /* Add inner shadow for contrast on danger buttons */
   outline: 2px solid var(--color-body-outline);
   outline-offset: -2px;
-  box-shadow: 0 0 0 3px white inset;
+  box-shadow: 0 0 0 2px white inset;
 }
 
 .success {
@@ -193,7 +193,7 @@
   /* Add inner shadow for contrast on success buttons */
   outline: 2px solid var(--color-body-outline);
   outline-offset: -2px;
-  box-shadow: 0 0 0 3px white inset;
+  box-shadow: 0 0 0 2px white inset;
 }
 
 /* Sizes */

@@ -91,7 +91,7 @@
   background: var(--color-primary-background-hover);
 }
 
-.input:focus ~ .slider {
+.input:focus-visible ~ .slider {
   /* 2px internal focus border to match other components */
   outline: 2px solid var(--color-body-outline);
   outline-offset: -2px;

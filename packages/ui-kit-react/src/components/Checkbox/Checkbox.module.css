@@ -46,6 +46,13 @@
   border-color: var(--color-primary-border);
 }
 
+.input:checked:focus-visible ~ .checkbox {
+  /* Add inner shadow for contrast on checked checkboxes */
+  outline: 2px solid var(--color-body-outline);
+  outline-offset: -2px;
+  box-shadow: 0 0 0 1px white inset;
+}
+
 .input:checked:hover:not(:disabled) ~ .checkbox {
   background: var(--color-primary-background-hover);
   border-color: var(--color-primary-border-hover);
@@ -81,6 +88,13 @@
 .input:indeterminate ~ .checkbox {
   background: var(--color-primary-background);
   border-color: var(--color-primary-border);
+}
+
+.input:indeterminate:focus-visible ~ .checkbox {
+  /* Add inner shadow for contrast on indeterminate checkboxes */
+  outline: 2px solid var(--color-body-outline);
+  outline-offset: -2px;
+  box-shadow: 0 0 0 1px white inset;
 }
 
 .input:indeterminate ~ .checkbox .indeterminateIcon {

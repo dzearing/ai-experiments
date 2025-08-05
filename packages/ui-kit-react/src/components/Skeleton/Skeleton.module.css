@@ -1,5 +1,5 @@
 .root {
-  background: var(--color-body-background-soft20);
+  background: var(--color-body-backgroundSoft10);
   position: relative;
   overflow: hidden;
 }
