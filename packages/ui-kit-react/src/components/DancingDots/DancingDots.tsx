@@ -1,7 +1,8 @@
 import React from 'react';
 import styles from './DancingDots.module.css';
+import cx from 'clsx';
 
-export interface DancingDotsProps {
+export interface DancingDotsProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Dots size */
   size?: 'small' | 'medium' | 'large';
   /** Dots color variant */
@@ -12,8 +13,6 @@ export interface DancingDotsProps {
   label?: string;
   /** Center in container */
   center?: boolean;
-  /** Additional CSS class */
-  className?: string;
 }
 
 export const DancingDots: React.FC<DancingDotsProps> = ({
@@ -23,25 +22,22 @@ export const DancingDots: React.FC<DancingDotsProps> = ({
   label,
   center = false,
   className,
+  ...props
 }) => {
-  const containerClasses = [
-    styles.container,
+  const containerClasses = cx(
+    styles.root,
     center && styles.center,
-    className,
-  ]
-    .filter(Boolean)
-    .join(' ');
+    className
+  );
 
-  const dotsClasses = [
+  const dotsClasses = cx(
     styles.dots,
     styles[size],
-    styles[variant],
-  ]
-    .filter(Boolean)
-    .join(' ');
+    styles[variant]
+  );
 
   return (
-    <div className={containerClasses}>
+    <div className={containerClasses} {...props}>
       <div className={dotsClasses} role="status" aria-label={label || 'Loading'}>
         {Array.from({ length: count }, (_, i) => (
           <span key={i} className={styles.dot} />

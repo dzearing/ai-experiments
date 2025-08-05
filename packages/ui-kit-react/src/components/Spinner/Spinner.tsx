@@ -1,15 +1,14 @@
 import React from 'react';
 import styles from './Spinner.module.css';
+import cx from 'clsx';
 
-export interface SpinnerProps {
+export interface SpinnerProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Spinner size */
   size?: 'small' | 'medium' | 'large';
   /** Loading text */
   label?: string;
   /** Center in container */
   center?: boolean;
-  /** Additional CSS class */
-  className?: string;
 }
 
 export const Spinner: React.FC<SpinnerProps> = ({
@@ -17,24 +16,21 @@ export const Spinner: React.FC<SpinnerProps> = ({
   label,
   center = false,
   className,
+  ...props
 }) => {
-  const containerClasses = [
-    styles.container,
+  const containerClasses = cx(
+    styles.root,
     center && styles.center,
-    className,
-  ]
-    .filter(Boolean)
-    .join(' ');
+    className
+  );
 
-  const spinnerClasses = [
+  const spinnerClasses = cx(
     styles.spinner,
-    styles[size],
-  ]
-    .filter(Boolean)
-    .join(' ');
+    styles[size]
+  );
 
   return (
-    <div className={containerClasses}>
+    <div className={containerClasses} {...props}>
       <svg 
         className={spinnerClasses} 
         viewBox="0 0 24 24" 

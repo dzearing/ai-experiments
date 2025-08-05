@@ -463,3 +463,24 @@ div[class*="css-"] .toc-list-item > a:hover *,
 [data-theme-type="dark"] .prismjs * {
   color: var(--color-body-text, #e0e0e0);
 }
+
+/* Remove borders from prismjs code blocks */
+.prismjs {
+  border: none !important;
+}
+
+/* Override code block container backgrounds */
+/* Target the direct div child of sbdocs that contains the code blocks */
+.sbdocs > div {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Ensure docblock-source container has the proper background */
+.docblock-source {
+  background-color: #f6f8fa !important;
+}
+
+[data-theme-type="dark"] .docblock-source {
+  background-color: var(--color-body-background-soft10, #1e1e1e) !important;
+}

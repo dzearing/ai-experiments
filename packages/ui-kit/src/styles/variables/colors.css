@@ -11,8 +11,8 @@
 
 /* Special variables that aren't surface-based */
 :root {
-  /* Focus ring tokens */
-  --focus-ring-color: var(--color-body-link, #1976d2);
+  /* Focus ring tokens (legacy - use surface-specific outline tokens instead) */
+  --focus-ring-color: var(--color-body-outline, #1976d2);
   --focus-ring-offset: 2px;
   
   /* These are defined by themes but we provide fallbacks */

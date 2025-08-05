@@ -1,4 +1,4 @@
-.container {
+.root {
   display: inline-flex;
   flex-direction: column;
   gap: var(--spacing-small10);
@@ -42,7 +42,10 @@
   line-height: var(--line-height-normal);
   color: var(--color-body-text);
   cursor: pointer;
-  transition: all var(--duration) var(--easing-default);
+  transition: 
+    background-color var(--duration) var(--easing-default),
+    border-color var(--duration) var(--easing-default),
+    color var(--duration) var(--easing-default);
   text-align: left;
 }
 
@@ -62,15 +65,19 @@
 }
 
 /* States */
-.button:hover:not(:disabled) {
+.button:hover:not(:disabled):not(:focus):not(.menuOpen) {
   background: var(--color-input-background-hover);
   border-color: var(--color-input-border-hover);
 }
 
-.button:focus {
-  outline: none;
-  border-color: var(--color-primary-background);
-  box-shadow: 0 0 0 3px var(--color-primary-soft10);
+.button:focus,
+.button.menuOpen {
+  background: var(--color-infoSoft-background);
+  border-color: transparent;
+  /* 2px internal focus border to match other components */
+  outline: 2px solid var(--color-infoSoft-outline);
+  outline-offset: -2px;
+  box-shadow: 0 0 0 3px white inset;
 }
 
 .open {
@@ -78,13 +85,24 @@
 }
 
 .error {
-  background: var(--color-danger-soft10);
-  border-color: var(--color-danger-background);
+  background: var(--color-dangerSoft-background);
+  border-color: var(--color-dangerSoft-border);
+  color: var(--color-dangerSoft-text);
 }
 
-.error:hover:not(:disabled) {
-  background: var(--color-danger-soft20);
-  border-color: var(--color-danger-background);
+.error:hover:not(:disabled):not(:focus):not(.menuOpen) {
+  background: var(--color-dangerSoft-background-hover);
+  border-color: var(--color-dangerSoft-border-hover);
+}
+
+.error:focus,
+.error.menuOpen {
+  background: var(--color-dangerSoft-background);
+  border-color: transparent;
+  /* 2px internal focus border using danger color */
+  outline: 2px solid var(--color-dangerSoft-outline);
+  outline-offset: -2px;
+  box-shadow: 0 0 0 3px white inset;
 }
 
 .disabled {
@@ -121,6 +139,13 @@
   box-shadow: var(--shadow-large10);
   z-index: 1000;
   animation: slideDown var(--duration) var(--easing-bounce);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.menuAbove {
+  animation: slideUp var(--duration) var(--easing-bounce);
 }
 
 /* Option */
@@ -135,7 +160,7 @@
   color: var(--color-body-text);
   text-align: left;
   cursor: pointer;
-  transition: background var(--duration) var(--easing-default);
+  display: block;
 }
 
 .option:hover:not(:disabled) {
@@ -183,7 +208,7 @@
 }
 
 .errorText {
-  color: var(--color-error);
+  color: var(--color-body-textDanger);
 }
 
 /* Animation */
@@ -191,6 +216,17 @@
   from {
     opacity: 0;
     transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
   to {
     opacity: 1;

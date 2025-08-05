@@ -1,5 +1,6 @@
 import React from 'react';
 import styles from './Checkbox.module.css';
+import cx from 'clsx';
 
 export interface CheckboxProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type' | 'size'> {
   /** Checkbox size */
@@ -20,6 +21,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
       error = false,
       indeterminate = false,
       className,
+      style,
       id,
       disabled,
       ...props
@@ -37,18 +39,16 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
 
     const checkboxId = id || `checkbox-${Math.random().toString(36).substr(2, 9)}`;
 
-    const containerClasses = [
-      styles.container,
+    const containerClasses = cx(
+      styles.root,
       styles[size],
       error && styles.error,
       disabled && styles.disabled,
-      className,
-    ]
-      .filter(Boolean)
-      .join(' ');
+      className
+    );
 
     return (
-      <label htmlFor={checkboxId} className={containerClasses}>
+      <label htmlFor={checkboxId} className={containerClasses} style={style} id={id}>
         <input
           ref={mergedRef}
           type="checkbox"

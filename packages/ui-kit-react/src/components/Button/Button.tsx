@@ -1,6 +1,7 @@
 import React from 'react';
 import styles from './Button.module.css';
 import { Spinner } from '../Spinner';
+import cx from 'clsx';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   /** Button variant */
@@ -31,17 +32,15 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) => {
-    const classes = [
-      styles.button,
+    const classes = cx(
+      styles.root,
       styles[variant],
       styles[size],
       shape && styles[shape],
       fullWidth && styles.fullWidth,
       loading && styles.loading,
-      className,
-    ]
-      .filter(Boolean)
-      .join(' ');
+      className
+    );
 
     return (
       <button

@@ -1,11 +1,11 @@
-.container {
+.root {
   display: inline-flex;
   flex-direction: column;
   align-items: center;
   gap: var(--spacing-small10);
 }
 
-.container.center {
+.root.center {
   display: flex;
   justify-content: center;
   align-items: center;

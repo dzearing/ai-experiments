@@ -19,6 +19,11 @@ Note: the `surface` component defines the background color group - the `concept`
 --color-body-link                  /* Link color */
 --color-body-link-hover            /* Link hover state */
 
+/* Semantic Text Colors (guaranteed contrast) */
+--color-body-textSuccess           /* Success text (green) */
+--color-body-textWarning           /* Warning text (yellow/amber) */
+--color-body-textDanger            /* Error/danger text (red) */
+
 /* Backgrounds */
 --color-body-background            /* Main background */
 --color-panel-background           /* Card/panel background */
@@ -38,13 +43,16 @@ Note: the `surface` component defines the background color group - the `concept`
 --color-buttonNeutral-background   /* Secondary button */
 --color-buttonDanger-background    /* Destructive action */
 
-/* States & Feedback */
+/* States & Feedback (Soft Backgrounds) */
 --color-successSoft-background     /* Success message background */
 --color-successSoft-text           /* Success message text */
 --color-dangerSoft-background      /* Error background */
 --color-dangerSoft-text            /* Error text */
 --color-warningSoft-background     /* Warning background */
 --color-infoSoft-background        /* Info background */
+
+/* Note: For error/warning/success text on regular surfaces, use:
+   --color-[surface]-textDanger, textWarning, textSuccess */
 ```
 
 ## 📏 Spacing Tokens
@@ -204,6 +212,16 @@ Note: the `surface` component defines the background color group - the `concept`
 .secondary-text {
   color: var(--color-body-textSoft10);
   font-size: var(--font-size-small10);
+}
+
+.error-text {
+  color: var(--color-body-textDanger);
+  font-size: var(--font-size-small10);
+}
+
+.success-text {
+  color: var(--color-body-textSuccess);
+  font-weight: var(--font-weight-medium);
 }
 ```
 

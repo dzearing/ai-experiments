@@ -67,16 +67,16 @@ export function parseMarkdown(content: string): string {
       // Code blocks
       .replace(
         /<pre>/g,
-        '<pre class="bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md p-4 my-3 overflow-x-auto">'
+        '<pre class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md p-4 my-3 overflow-x-auto">'
       )
-      .replace(/<code>/g, '<code class="text-sm text-gray-800 dark:text-gray-200">')
+      .replace(/<code>/g, '<code class="text-sm text-gray-900 dark:text-gray-100">')
       // Inline code
       .replace(/<code([^>]*)>/g, (match, attrs) => {
         // Check if this is inside a pre tag by looking for class attribute
         if (attrs && attrs.includes('class=')) {
           return match; // Already has classes, likely in a pre block
         }
-        return '<code class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded text-sm font-mono">';
+        return '<code class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded text-sm font-mono">';
       })
       // Lists
       .replace(/<ul>/g, '<ul class="list-disc ml-6 my-2 space-y-1">')

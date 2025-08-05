@@ -1,7 +1,8 @@
 import React from 'react';
 import styles from './Pulse.module.css';
+import cx from 'clsx';
 
-export interface PulseProps {
+export interface PulseProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Pulse size */
   size?: 'small' | 'medium' | 'large';
   /** Pulse color variant */
@@ -10,8 +11,6 @@ export interface PulseProps {
   label?: string;
   /** Center in container */
   center?: boolean;
-  /** Additional CSS class */
-  className?: string;
 }
 
 export const Pulse: React.FC<PulseProps> = ({
@@ -20,25 +19,22 @@ export const Pulse: React.FC<PulseProps> = ({
   label,
   center = false,
   className,
+  ...props
 }) => {
-  const containerClasses = [
-    styles.container,
+  const containerClasses = cx(
+    styles.root,
     center && styles.center,
-    className,
-  ]
-    .filter(Boolean)
-    .join(' ');
+    className
+  );
 
-  const pulseClasses = [
+  const pulseClasses = cx(
     styles.pulse,
     styles[size],
-    styles[variant],
-  ]
-    .filter(Boolean)
-    .join(' ');
+    styles[variant]
+  );
 
   return (
-    <div className={containerClasses}>
+    <div className={containerClasses} {...props}>
       <div className={pulseClasses} role="status" aria-label={label || 'Loading'} />
       {label && <span className={styles.label}>{label}</span>}
     </div>

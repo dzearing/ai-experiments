@@ -163,6 +163,59 @@ function generateSurfaceTokenSet(
     tokens.shadow = surface.base.shadow;
   }
 
+  // Generate semantic text tokens
+  if (surface.base.textSuccess) {
+    const rawTextSuccess = resolveColor(surface.base.textSuccess, contextWithCurrent);
+    tokens.textSuccess = validateAndAdjustContrast(
+      rawTextSuccess,
+      tokens.background,
+      context.theme.accessibility.targetLevel || 'AA',
+      'normal',
+      surface.name,
+      'textSuccess',
+      contextWithCurrent
+    );
+  }
+
+  if (surface.base.textWarning) {
+    const rawTextWarning = resolveColor(surface.base.textWarning, contextWithCurrent);
+    tokens.textWarning = validateAndAdjustContrast(
+      rawTextWarning,
+      tokens.background,
+      context.theme.accessibility.targetLevel || 'AA',
+      'normal',
+      surface.name,
+      'textWarning',
+      contextWithCurrent
+    );
+  }
+
+  if (surface.base.textDanger) {
+    const rawTextDanger = resolveColor(surface.base.textDanger, contextWithCurrent);
+    tokens.textDanger = validateAndAdjustContrast(
+      rawTextDanger,
+      tokens.background,
+      context.theme.accessibility.targetLevel || 'AA',
+      'normal',
+      surface.name,
+      'textDanger',
+      contextWithCurrent
+    );
+  }
+
+  if (surface.base.outline) {
+    const rawOutline = resolveColor(surface.base.outline, contextWithCurrent);
+    tokens.outline = validateAndAdjustContrast(
+      rawOutline,
+      tokens.background,
+      context.theme.accessibility.targetLevel || 'AA',
+      'ui',
+      surface.name,
+      'outline',
+      contextWithCurrent
+    );
+  }
+
   // Generate variants
   if (surface.variants) {
     generateVariants(tokens, surface.variants, contextWithCurrent);
@@ -539,8 +592,8 @@ function generateStates(
 ): void {
   // Link states - define ALL states even if they reference base
   if (tokens.link) {
-    const bgHover = tokens.backgroundHover || tokens.background;
-    tokens.linkHover = states?.hover
+    const bgHover = tokens['background-hover'] || tokens.background;
+    tokens['link-hover'] = states?.hover
       ? validateAndAdjustContrast(
           applyStateModifier(tokens.link, states.hover, bgHover, context.mode, context),
           bgHover,
@@ -552,8 +605,8 @@ function generateStates(
         )
       : tokens.link;
       
-    const bgActive = tokens.backgroundActive || tokens.background;
-    tokens.linkActive = states?.active
+    const bgActive = tokens['background-active'] || tokens.background;
+    tokens['link-active'] = states?.active
       ? validateAndAdjustContrast(
           applyStateModifier(tokens.link, states.active, bgActive, context.mode),
           bgActive,
@@ -565,8 +618,8 @@ function generateStates(
         )
       : tokens.link;
       
-    const bgFocus = tokens.backgroundFocus || tokens.background;
-    tokens.linkFocus = states?.focus
+    const bgFocus = tokens['background-focus'] || tokens.background;
+    tokens['link-focus'] = states?.focus
       ? validateAndAdjustContrast(
           applyStateModifier(tokens.link, states.focus, bgFocus, context.mode, context),
           bgFocus,
@@ -578,8 +631,8 @@ function generateStates(
         )
       : tokens.link;
       
-    const bgDisabled = tokens.backgroundDisabled || tokens.background;
-    tokens.linkDisabled = states?.disabled
+    const bgDisabled = tokens['background-disabled'] || tokens.background;
+    tokens['link-disabled'] = states?.disabled
       ? validateAndAdjustContrast(
           applyStateModifier(tokens.link, states.disabled, bgDisabled, undefined, context),
           bgDisabled,
@@ -595,20 +648,20 @@ function generateStates(
   // Background states - define ALL states even if they reference base
   if (tokens.background) {
     // Always define all state variants, even if not in surface definition
-    tokens.backgroundHover = states?.hover 
+    tokens['background-hover'] = states?.hover 
       ? applyStateModifier(tokens.background, states.hover, tokens.background, context.mode, context)
       : tokens.background;
       
     // Active builds on hover state for smooth progression
-    tokens.backgroundActive = states?.active
-      ? applyRelativeStateModifier(tokens.backgroundHover || tokens.background, states.active, states.hover, tokens.background, context.mode, context)
+    tokens['background-active'] = states?.active
+      ? applyRelativeStateModifier(tokens['background-hover'] || tokens.background, states.active, states.hover, tokens.background, context.mode, context)
       : tokens.background;
       
-    tokens.backgroundFocus = states?.focus
+    tokens['background-focus'] = states?.focus
       ? applyStateModifier(tokens.background, states.focus, tokens.background, context.mode, context)
       : tokens.background;
       
-    tokens.backgroundDisabled = states?.disabled
+    tokens['background-disabled'] = states?.disabled
       ? applyStateModifier(tokens.background, states.disabled, tokens.background, undefined, context)
       : tokens.background;
   }
@@ -616,8 +669,8 @@ function generateStates(
   // Text states - define ALL states even if they reference base
   if (tokens.text) {
     // For each state, validate contrast against the corresponding background state
-    const bgHover = tokens.backgroundHover || tokens.background;
-    tokens.textHover = states?.hover
+    const bgHover = tokens['background-hover'] || tokens.background;
+    tokens['text-hover'] = states?.hover
       ? validateAndAdjustContrast(
           applyStateModifier(tokens.text, states.hover, bgHover, undefined, context),
           bgHover,
@@ -629,8 +682,8 @@ function generateStates(
         )
       : tokens.text;
       
-    const bgActive = tokens.backgroundActive || tokens.background;
-    tokens.textActive = states?.active
+    const bgActive = tokens['background-active'] || tokens.background;
+    tokens['text-active'] = states?.active
       ? validateAndAdjustContrast(
           applyStateModifier(tokens.text, states.active, bgActive, undefined, context),
           bgActive,
@@ -642,8 +695,8 @@ function generateStates(
         )
       : tokens.text;
       
-    const bgFocus = tokens.backgroundFocus || tokens.background;
-    tokens.textFocus = states?.focus
+    const bgFocus = tokens['background-focus'] || tokens.background;
+    tokens['text-focus'] = states?.focus
       ? validateAndAdjustContrast(
           applyStateModifier(tokens.text, states.focus, bgFocus, undefined, context),
           bgFocus,
@@ -655,8 +708,8 @@ function generateStates(
         )
       : tokens.text;
       
-    const bgDisabled = tokens.backgroundDisabled || tokens.background;
-    tokens.textDisabled = states?.disabled
+    const bgDisabled = tokens['background-disabled'] || tokens.background;
+    tokens['text-disabled'] = states?.disabled
       ? validateAndAdjustContrast(
           applyStateModifier(tokens.text, states.disabled, bgDisabled, undefined, context),
           bgDisabled,
@@ -671,39 +724,39 @@ function generateStates(
 
   // Border states - define ALL states even if they reference base
   if (tokens.border) {
-    tokens.borderHover = states?.hover
+    tokens['border-hover'] = states?.hover
       ? applyStateModifier(tokens.border, states.hover, tokens.background, undefined, context)
       : tokens.border;
       
-    tokens.borderActive = states?.active
+    tokens['border-active'] = states?.active
       ? applyStateModifier(tokens.border, states.active, tokens.background, undefined, context)
       : tokens.border;
       
     // Focus border often uses primary color for accessibility
-    tokens.borderFocus = states?.focus
+    tokens['border-focus'] = states?.focus
       ? context.colors.primary[context.mode === 'light' ? '500' : '400']
       : tokens.border;
       
-    tokens.borderDisabled = states?.disabled
+    tokens['border-disabled'] = states?.disabled
       ? applyStateModifier(tokens.border, states.disabled, tokens.background, undefined, context)
       : tokens.border;
   }
 
   // Icon states - define ALL states even if they reference base
   if (tokens.icon) {
-    tokens.iconHover = states?.hover
+    tokens['icon-hover'] = states?.hover
       ? applyStateModifier(tokens.icon, states.hover, tokens.background, undefined, context)
       : tokens.icon;
       
-    tokens.iconActive = states?.active
+    tokens['icon-active'] = states?.active
       ? applyStateModifier(tokens.icon, states.active, tokens.background, undefined, context)
       : tokens.icon;
       
-    tokens.iconFocus = states?.focus
+    tokens['icon-focus'] = states?.focus
       ? applyStateModifier(tokens.icon, states.focus, tokens.background, undefined, context)
       : tokens.icon;
       
-    tokens.iconDisabled = states?.disabled
+    tokens['icon-disabled'] = states?.disabled
       ? applyStateModifier(tokens.icon, states.disabled, tokens.background, undefined, context)
       : tokens.icon;
   }
@@ -825,17 +878,17 @@ function generateCommonVariations(
   // Icon states - define ALL states even if they reference base
   if (tokens.icon) {
     // Always define all icon state variants
-    if (!tokens.iconHover) {
-      tokens.iconHover = tokens.icon;
+    if (!tokens['icon-hover']) {
+      tokens['icon-hover'] = tokens.icon;
     }
-    if (!tokens.iconActive) {
-      tokens.iconActive = tokens.icon;
+    if (!tokens['icon-active']) {
+      tokens['icon-active'] = tokens.icon;
     }
-    if (!tokens.iconFocus) {
-      tokens.iconFocus = tokens.icon;
+    if (!tokens['icon-focus']) {
+      tokens['icon-focus'] = tokens.icon;
     }
-    if (!tokens.iconDisabled) {
-      tokens.iconDisabled = mix(tokens.icon, tokens.background, 0.5);
+    if (!tokens['icon-disabled']) {
+      tokens['icon-disabled'] = mix(tokens.icon, tokens.background, 0.5);
     }
     
     // Icon variations
@@ -862,38 +915,38 @@ function generateCommonVariations(
   // Generate linkVisited states if linkVisited is defined
   if (tokens.linkVisited && surface.states) {
     // Generate states for linkVisited
-    tokens.linkVisitedHover = surface.states.hover
+    tokens['linkVisited-hover'] = surface.states.hover
       ? validateAndAdjustContrast(
           applyStateModifier(tokens.linkVisited, surface.states.hover, tokens.background, context.mode, context),
           tokens.background,
           context.theme.accessibility.targetLevel || 'AA',
           'normal',
           surface.name,
-          'linkVisitedHover',
+          'linkVisited-hover',
           context
         )
       : tokens.linkVisited;
     
-    tokens.linkVisitedActive = surface.states.active
+    tokens['linkVisited-active'] = surface.states.active
       ? validateAndAdjustContrast(
           applyStateModifier(tokens.linkVisited, surface.states.active, tokens.background, context.mode, context),
           tokens.background,
           context.theme.accessibility.targetLevel || 'AA',
           'normal',
           surface.name,
-          'linkVisitedActive',
+          'linkVisited-active',
           context
         )
       : tokens.linkVisited;
     
-    tokens.linkVisitedFocus = surface.states.focus
+    tokens['linkVisited-focus'] = surface.states.focus
       ? validateAndAdjustContrast(
           applyStateModifier(tokens.linkVisited, surface.states.focus, tokens.background, context.mode, context),
           tokens.background,
           context.theme.accessibility.targetLevel || 'AA',
           'normal',
           surface.name,
-          'linkVisitedFocus',
+          'linkVisited-focus',
           context
         )
       : tokens.linkVisited;

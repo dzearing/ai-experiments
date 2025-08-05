@@ -1,5 +1,6 @@
 import React from 'react';
 import styles from './Stack.module.css';
+import cx from 'clsx';
 
 export interface StackProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Direction of the stack */
@@ -28,15 +29,15 @@ export const Stack = React.forwardRef<HTMLDivElement, StackProps>(
     children,
     ...props 
   }, ref) => {
-    const classes = [
-      styles.stack,
+    const classes = cx(
+      styles.root,
       styles[direction],
       styles[`gap-${gap}`],
       styles[`align-${align}`],
       styles[`justify-${justify}`],
       wrap && styles.wrap,
-      className,
-    ].filter(Boolean).join(' ');
+      className
+    );
 
     return (
       <Component

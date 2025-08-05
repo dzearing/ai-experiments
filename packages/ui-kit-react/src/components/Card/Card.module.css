@@ -1,4 +1,4 @@
-.card {
+.root {
   background: var(--color-card-background);
   border-radius: var(--radius-medium10);
   display: flex;

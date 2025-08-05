@@ -699,7 +699,7 @@ export const ToolExecution = memo(function ToolExecution({
                             {isExpanded && items.length > 10 && (
                               <button
                                 onClick={() => setIsExpanded(false)}
-                                className={`text-xs ${styles.primaryText} hover:underline mt-2`}
+                                className={`text-xs ${styles.primaryText || 'text-blue-600 dark:text-blue-400'} hover:underline mt-2`}
                               >
                                 Show less
                               </button>
@@ -734,7 +734,7 @@ export const ToolExecution = memo(function ToolExecution({
               {outputInfo.hasMore && name !== 'LS' && (
                 <button
                   onClick={() => setIsExpanded(!isExpanded)}
-                  className={`text-xs ${styles.primaryText} hover:underline mt-1`}
+                  className={`text-xs ${styles.primaryText || 'text-blue-600 dark:text-blue-400'} hover:underline mt-1`}
                 >
                   {isExpanded ? 'Show less' : `… +${outputInfo.moreCount} lines (ctrl+r to expand)`}
                 </button>

@@ -1,8 +1,10 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { CloseIcon } from '@claude-flow/ui-kit-icons';
 import styles from './Dialog.module.css';
+import cx from 'clsx';
 
-export interface DialogProps {
+export interface DialogProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Dialog open state */
   open: boolean;
   /** Close handler */
@@ -19,8 +21,6 @@ export interface DialogProps {
   size?: 'small' | 'medium' | 'large';
   /** Show close button */
   showCloseButton?: boolean;
-  /** Additional CSS class */
-  className?: string;
 }
 
 export const Dialog: React.FC<DialogProps> = ({
@@ -33,6 +33,7 @@ export const Dialog: React.FC<DialogProps> = ({
   size = 'medium',
   showCloseButton = true,
   className,
+  ...props
 }) => {
   // Handle escape key
   useEffect(() => {
@@ -61,13 +62,11 @@ export const Dialog: React.FC<DialogProps> = ({
 
   if (!open) return null;
 
-  const dialogClasses = [
-    styles.dialog,
+  const dialogClasses = cx(
+    styles.root,
     styles[size],
-    className,
-  ]
-    .filter(Boolean)
-    .join(' ');
+    className
+  );
 
   return createPortal(
     <>
@@ -79,6 +78,7 @@ export const Dialog: React.FC<DialogProps> = ({
           aria-modal="true"
           aria-labelledby={title ? 'dialog-title' : undefined}
           aria-describedby={description ? 'dialog-description' : undefined}
+          {...props}
         >
           {(title || showCloseButton) && (
             <div className={styles.header}>
@@ -89,9 +89,7 @@ export const Dialog: React.FC<DialogProps> = ({
                   onClick={onClose}
                   aria-label="Close dialog"
                 >
-                  <svg className={styles.closeIcon} viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
+                  <CloseIcon className={styles.closeIcon} />
                 </button>
               )}
             </div>

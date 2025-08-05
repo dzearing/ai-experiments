@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Block Visibility Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 2rem;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        
+        /* Light mode */
+        body.light {
+            background-color: white;
+            color: #111827;
+        }
+        
+        /* Dark mode */
+        body.dark {
+            background-color: #1f2937;
+            color: #f3f4f6;
+        }
+        
+        /* OLD CODE BLOCK STYLING (PROBLEMATIC) */
+        .old-code-block {
+            background-color: #f3f4f6; /* bg-gray-100 */
+            color: #1f2937; /* text-gray-800 */
+            border: 1px solid #e5e7eb; /* border-gray-200 */
+            padding: 1rem;
+            border-radius: 0.375rem;
+            margin: 1rem 0;
+            font-family: monospace;
+            overflow-x: auto;
+        }
+        
+        body.dark .old-code-block {
+            background-color: #1f2937; /* bg-gray-800 */
+            color: #e5e7eb; /* text-gray-200 */
+            border-color: #374151; /* border-gray-700 */
+        }
+        
+        /* NEW CODE BLOCK STYLING (FIXED) */
+        .new-code-block {
+            background-color: #f9fafb; /* bg-gray-50 */
+            color: #111827; /* text-gray-900 */
+            border: 1px solid #e5e7eb; /* border-gray-200 */
+            padding: 1rem;
+            border-radius: 0.375rem;
+            margin: 1rem 0;
+            font-family: monospace;
+            overflow-x: auto;
+        }
+        
+        body.dark .new-code-block {
+            background-color: #111827; /* bg-gray-900 */
+            color: #f3f4f6; /* text-gray-100 */
+            border-color: #374151; /* border-gray-700 */
+        }
+        
+        /* Toggle button */
+        .toggle-button {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.5rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        body.dark .toggle-button {
+            background-color: #374151;
+            border-color: #4b5563;
+            color: white;
+        }
+        
+        .toggle-button:hover {
+            background-color: #f3f4f6;
+        }
+        
+        body.dark .toggle-button:hover {
+            background-color: #4b5563;
+        }
+        
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        @media (max-width: 768px) {
+            .comparison {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        h1, h2 {
+            margin-bottom: 1rem;
+        }
+        
+        .section {
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body class="light">
+    <button class="toggle-button" onclick="toggleTheme()">Toggle Theme</button>
+    
+    <h1>Code Block Visibility Test</h1>
+    
+    <div class="comparison">
+        <div class="section">
+            <h2>OLD (Problematic) Styling</h2>
+            <p>In light mode, the text color (gray-800) on background (gray-100) creates poor contrast:</p>
+            <pre class="old-code-block">function showCode() {
+    // This text might be hard to read in light mode
+    // due to gray-800 text on gray-100 background
+    console.log("Hello, World!");
+    return true;
+}</pre>
+        </div>
+        
+        <div class="section">
+            <h2>NEW (Fixed) Styling</h2>
+            <p>Better contrast with gray-900 text on gray-50 background:</p>
+            <pre class="new-code-block">function showCode() {
+    // This text should be much more readable
+    // with gray-900 text on gray-50 background
+    console.log("Hello, World!");
+    return true;
+}</pre>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>Inline Code Examples</h2>
+        <p>Old inline code: <code style="padding: 0.125rem 0.375rem; background-color: #f3f4f6; color: #1f2937; border-radius: 0.25rem; font-family: monospace;">const oldCode = true;</code></p>
+        <p>New inline code: <code style="padding: 0.125rem 0.375rem; background-color: #f3f4f6; color: #111827; border-radius: 0.25rem; font-family: monospace;">const newCode = true;</code></p>
+    </div>
+    
+    <script>
+        function toggleTheme() {
+            const body = document.body;
+            if (body.classList.contains('light')) {
+                body.classList.remove('light');
+                body.classList.add('dark');
+            } else {
+                body.classList.remove('dark');
+                body.classList.add('light');
+            }
+        }
+    </script>
+</body>
+</html>

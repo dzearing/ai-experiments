@@ -1,4 +1,4 @@
-.link {
+.root {
   text-decoration: none;
   cursor: pointer;
   transition: color var(--duration-fast) var(--easing-default),
@@ -93,15 +93,19 @@
   transition: opacity var(--duration-fast) var(--easing-default);
 }
 
-.link:hover .externalIcon {
+.root:hover .externalIcon {
   opacity: 1;
 }
 
 /* Focus */
-.link:focus-visible {
-  outline: var(--focusRing-width) solid var(--focusRing-color);
-  outline-offset: var(--focusRing-offset);
+.root:focus-visible {
+  /* 2px internal focus border with padding for inline element */
+  outline: 2px solid var(--color-body-outline);
+  outline-offset: -2px;
   border-radius: var(--radius-small20);
+  /* Add small padding to ensure focus ring is visible */
+  padding: 2px 4px;
+  margin: -2px -4px;
 }
 
 /* Visited state for primary links */
@@ -120,23 +124,25 @@
 
 /* High contrast */
 @media (prefers-contrast: high) {
-  .link {
+  .root {
     text-decoration: underline;
     text-decoration-thickness: 1px;
   }
   
-  .link:hover {
+  .root:hover {
     text-decoration-thickness: 2px;
   }
   
-  .link:focus-visible {
-    outline-width: 3px;
+  .root:focus-visible {
+    /* Keep 2px internal border for consistency, high contrast will make it more visible */
+    outline: 2px solid var(--color-body-outline);
+    outline-offset: -2px;
   }
 }
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  .link {
+  .root {
     transition: none;
   }
 }

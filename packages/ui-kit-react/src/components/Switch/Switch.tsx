@@ -1,5 +1,6 @@
 import React from 'react';
 import styles from './Switch.module.css';
+import cx from 'clsx';
 
 export interface SwitchProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type' | 'size'> {
   /** Switch label */
@@ -12,40 +13,36 @@ export interface SwitchProps extends Omit<React.InputHTMLAttributes<HTMLInputEle
   helperText?: string;
   /** Show label on the right side */
   labelRight?: boolean;
-  /** Additional CSS class */
-  className?: string;
 }
 
-export const Switch: React.FC<SwitchProps> = ({
-  label,
-  size = 'medium',
-  error = false,
-  helperText,
-  labelRight = true,
-  className,
-  disabled,
-  ...inputProps
-}) => {
-  const containerClasses = [
-    styles.container,
+export const Switch = React.forwardRef<HTMLInputElement, SwitchProps>((
+  {
+    label,
+    size = 'medium',
+    error = false,
+    helperText,
+    labelRight = true,
+    className,
+    disabled,
+    ...inputProps
+  }, ref) => {
+  const containerClasses = cx(
+    styles.root,
     labelRight && styles.labelRight,
     disabled && styles.disabled,
-    className,
-  ]
-    .filter(Boolean)
-    .join(' ');
+    className
+  );
 
-  const switchClasses = [
+  const switchClasses = cx(
     styles.switch,
     styles[size],
-    error && styles.error,
-  ]
-    .filter(Boolean)
-    .join(' ');
+    error && styles.error
+  );
 
   const switchElement = (
     <label className={switchClasses}>
       <input
+        ref={ref}
         type="checkbox"
         className={styles.input}
         disabled={disabled}
@@ -64,20 +61,34 @@ export const Switch: React.FC<SwitchProps> = ({
   return (
     <div className={containerClasses}>
       {label && !labelRight && (
-        <span className={styles.label}>{label}</span>
+        <div className={styles.labelWrapper}>
+          <span className={styles.label}>{label}</span>
+          {helperText && (
+            <div className={cx(
+              styles.helperText,
+              error && styles.errorText
+            )}>
+              {helperText}
+            </div>
+          )}
+        </div>
       )}
       {switchElement}
       {label && labelRight && (
-        <span className={styles.label}>{label}</span>
-      )}
-      {helperText && (
-        <div className={[
-          styles.helperText,
-          error && styles.errorText,
-        ].filter(Boolean).join(' ')}>
-          {helperText}
+        <div className={styles.labelWrapper}>
+          <span className={styles.label}>{label}</span>
+          {helperText && (
+            <div className={cx(
+              styles.helperText,
+              error && styles.errorText
+            )}>
+              {helperText}
+            </div>
+          )}
         </div>
       )}
     </div>
   );
-};
+});
+
+Switch.displayName = 'Switch';

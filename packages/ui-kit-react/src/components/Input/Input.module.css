@@ -1,4 +1,4 @@
-.field {
+.root {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-small20);
@@ -12,7 +12,7 @@
 }
 
 .required {
-  color: var(--color-danger-background);
+  color: var(--color-body-textDanger);
   margin-left: var(--spacing-small20);
 }
 
@@ -38,7 +38,10 @@
   border: 1px solid var(--color-input-border);
   border-radius: var(--radius-input);
   outline: none;
-  transition: all var(--duration) var(--easing-default);
+  transition: 
+    background-color var(--duration) var(--easing-default),
+    border-color var(--duration) var(--easing-default),
+    color var(--duration) var(--easing-default);
 }
 
 .input::placeholder {
@@ -54,8 +57,11 @@
 
 .input:focus {
   background: var(--color-input-background-focus);
-  border-color: var(--color-primary-background);
-  box-shadow: 0 0 0 3px var(--color-primary-soft10);
+  border-color: transparent;
+  /* 2px internal focus border to match button style */
+  outline: 2px solid var(--color-input-outline);
+  outline-offset: -2px;
+  box-shadow: 0 0 0 3px white inset;
 }
 
 .input:disabled {
@@ -92,9 +98,12 @@
 }
 
 .error:focus {
-  background: var(--color-danger-soft10);
+  background: var(--color-dangerSoft-background);
+  /* Use dangerSoft surface outline for consistency */
   border-color: var(--color-danger-background);
-  box-shadow: 0 0 0 3px var(--color-danger-soft10);
+  outline: 2px solid var(--color-dangerSoft-outline);
+  outline-offset: -2px;
+  box-shadow: 0 0 0 3px white inset;
 }
 
 .success {
@@ -102,8 +111,12 @@
 }
 
 .success:focus {
+  /* Use successSoft surface for consistent success state */
+  background: var(--color-successSoft-background);
   border-color: var(--color-success-background);
-  box-shadow: 0 0 0 3px var(--color-success-soft10);
+  outline: 2px solid var(--color-successSoft-outline);
+  outline-offset: -2px;
+  box-shadow: 0 0 0 3px white inset;
 }
 
 /* Icons */
@@ -149,7 +162,7 @@
 }
 
 .errorText {
-  color: var(--color-danger-background);
+  color: var(--color-body-textDanger);
 }
 
 /* Full width */

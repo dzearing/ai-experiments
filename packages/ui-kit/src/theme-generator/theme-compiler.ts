@@ -283,52 +283,52 @@ export function generateCSS(theme: GeneratedTheme): string {
   for (const [surfaceName, tokens] of Object.entries(theme.surfaces)) {
     for (const [tokenName, value] of Object.entries(tokens)) {
       if (typeof value === 'string') {
-        // Convert camelCase to kebab-case for CSS variables
-        const kebabTokenName = tokenName.replace(/([A-Z])/g, '-$1').toLowerCase();
+        // Token names are already in the correct format (e.g., 'background-hover')
+        // No need to convert camelCase to kebab-case
         
         // Special handling for body surface hover/active states
         // Use the same colors as neutral button for consistency
-        if (surfaceName === 'body' && (tokenName === 'backgroundHover' || tokenName === 'backgroundActive' || 
-            tokenName === 'textHover' || tokenName === 'textActive')) {
+        if (surfaceName === 'body' && (tokenName === 'background-hover' || tokenName === 'background-active' || 
+            tokenName === 'text-hover' || tokenName === 'text-active')) {
           // Look up the neutral color from the theme
           const neutralSurface = theme.surfaces['neutral'];
           if (neutralSurface) {
             let neutralColor: string | undefined;
             
-            if (tokenName === 'backgroundHover') {
-              neutralColor = neutralSurface.backgroundHover;
-            } else if (tokenName === 'backgroundActive') {
-              neutralColor = neutralSurface.backgroundActive;
-            } else if (tokenName === 'textHover') {
-              neutralColor = neutralSurface.textHover;
-            } else if (tokenName === 'textActive') {
-              neutralColor = neutralSurface.textActive;
+            if (tokenName === 'background-hover') {
+              neutralColor = neutralSurface['background-hover'];
+            } else if (tokenName === 'background-active') {
+              neutralColor = neutralSurface['background-active'];
+            } else if (tokenName === 'text-hover') {
+              neutralColor = neutralSurface['text-hover'];
+            } else if (tokenName === 'text-active') {
+              neutralColor = neutralSurface['text-active'];
             }
             
             if (neutralColor) {
-              lines.push(`  --color-${surfaceName}-${kebabTokenName}: ${neutralColor};`);
+              lines.push(`  --color-${surfaceName}-${tokenName}: ${neutralColor};`);
             } else {
               // Fallback - use the base value for text, translucent overlay for background
               if (tokenName.startsWith('text')) {
-                lines.push(`  --color-${surfaceName}-${kebabTokenName}: ${value};`);
+                lines.push(`  --color-${surfaceName}-${tokenName}: ${value};`);
               } else {
-                const opacity = tokenName === 'backgroundHover' ? '0.08' : '0.12';
+                const opacity = tokenName === 'background-hover' ? '0.08' : '0.12';
                 const overlayColor = theme.mode === 'light' ? '0, 0, 0' : '255, 255, 255';
-                lines.push(`  --color-${surfaceName}-${kebabTokenName}: rgba(${overlayColor}, ${opacity});`);
+                lines.push(`  --color-${surfaceName}-${tokenName}: rgba(${overlayColor}, ${opacity});`);
               }
             }
           } else {
             // Fallback
             if (tokenName.startsWith('text')) {
-              lines.push(`  --color-${surfaceName}-${kebabTokenName}: ${value};`);
+              lines.push(`  --color-${surfaceName}-${tokenName}: ${value};`);
             } else {
-              const opacity = tokenName === 'backgroundHover' ? '0.08' : '0.12';
+              const opacity = tokenName === 'background-hover' ? '0.08' : '0.12';
               const overlayColor = theme.mode === 'light' ? '0, 0, 0' : '255, 255, 255';
-              lines.push(`  --color-${surfaceName}-${kebabTokenName}: rgba(${overlayColor}, ${opacity});`);
+              lines.push(`  --color-${surfaceName}-${tokenName}: rgba(${overlayColor}, ${opacity});`);
             }
           }
         } else {
-          lines.push(`  --color-${surfaceName}-${kebabTokenName}: ${value};`);
+          lines.push(`  --color-${surfaceName}-${tokenName}: ${value};`);
         }
       }
     }

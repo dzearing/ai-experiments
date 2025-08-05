@@ -1,7 +1,9 @@
 import React from 'react';
+import { ChevronDownIcon } from '@claude-flow/ui-kit-icons';
 import styles from './Panel.module.css';
+import cx from 'clsx';
 
-export interface PanelProps {
+export interface PanelProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> {
   /** Panel title */
   title?: React.ReactNode;
   /** Panel actions (shown in header) */
@@ -22,8 +24,6 @@ export interface PanelProps {
   onCollapsedChange?: (collapsed: boolean) => void;
   /** Panel content */
   children: React.ReactNode;
-  /** Additional CSS class */
-  className?: string;
 }
 
 export const Panel: React.FC<PanelProps> = ({
@@ -38,6 +38,7 @@ export const Panel: React.FC<PanelProps> = ({
   onCollapsedChange,
   children,
   className,
+  ...props
 }) => {
   const [internalCollapsed, setInternalCollapsed] = React.useState(defaultCollapsed);
   const isCollapsed = controlledCollapsed !== undefined ? controlledCollapsed : internalCollapsed;
@@ -49,23 +50,19 @@ export const Panel: React.FC<PanelProps> = ({
     onCollapsedChange?.(!isCollapsed);
   };
 
-  const panelClasses = [
-    styles.panel,
+  const panelClasses = cx(
+    styles.root,
     bordered && styles.bordered,
-    className,
-  ]
-    .filter(Boolean)
-    .join(' ');
+    className
+  );
 
-  const contentClasses = [
+  const contentClasses = cx(
     styles.content,
-    styles[`padding-${padding}`],
-  ]
-    .filter(Boolean)
-    .join(' ');
+    styles[`padding-${padding}`]
+  );
 
   return (
-    <div className={panelClasses}>
+    <div className={panelClasses} {...props}>
       {(title || actions || collapsible) && (
         <div className={styles.header}>
           {collapsible && (
@@ -76,22 +73,10 @@ export const Panel: React.FC<PanelProps> = ({
               aria-expanded={!isCollapsed}
               aria-label={isCollapsed ? 'Expand panel' : 'Collapse panel'}
             >
-              <svg
-                className={[styles.collapseIcon, isCollapsed && styles.collapsed].filter(Boolean).join(' ')}
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M4 6L8 10L12 6"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              <ChevronDownIcon 
+                className={cx(styles.collapseIcon, isCollapsed && styles.collapsed)}
+                size={16}
+              />
             </button>
           )}
           {title && (

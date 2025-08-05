@@ -1,7 +1,8 @@
 import React from 'react';
 import styles from './Card.module.css';
+import cx from 'clsx';
 
-export interface CardProps {
+export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Card header content */
   header?: React.ReactNode;
   /** Card footer content */
@@ -12,12 +13,8 @@ export interface CardProps {
   variant?: 'default' | 'bordered' | 'elevated';
   /** Card content */
   children: React.ReactNode;
-  /** Custom class name */
-  className?: string;
-  /** Custom styles */
-  style?: React.CSSProperties;
   /** Click handler - makes card interactive */
-  onClick?: () => void;
+  onClick?: React.MouseEventHandler<HTMLDivElement | HTMLButtonElement>;
 }
 
 export const Card = React.forwardRef<HTMLDivElement, CardProps>(
@@ -26,30 +23,52 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
     footer,
     padding = 'medium',
     variant = 'default',
-    onClick,
     children,
     className,
-    style,
+    onClick,
+    ...props
   }, ref) => {
-    const cardClasses = [
-      styles.card,
+    const cardClasses = cx(
+      styles.root,
       styles[variant],
       styles[`padding-${padding}`],
       onClick && styles.clickable,
-      className,
-    ]
-      .filter(Boolean)
-      .join(' ');
+      className
+    );
 
-    const Component = onClick ? 'button' : 'div';
+    if (onClick) {
+      return (
+        <button 
+          ref={ref as any}
+          className={cardClasses}
+          onClick={onClick as React.MouseEventHandler<HTMLButtonElement>}
+          type="button"
+          {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}
+        >
+          {header && (
+            <div className={styles.header}>
+              {header}
+            </div>
+          )}
+          
+          <div className={styles.content}>
+            {children}
+          </div>
+          
+          {footer && (
+            <div className={styles.footer}>
+              {footer}
+            </div>
+          )}
+        </button>
+      );
+    }
 
     return (
-      <Component 
-        ref={ref as any}
+      <div 
+        ref={ref}
         className={cardClasses}
-        onClick={onClick}
-        type={onClick ? 'button' : undefined}
-        style={style}
+        {...props}
       >
         {header && (
           <div className={styles.header}>
@@ -66,7 +85,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
             {footer}
           </div>
         )}
-      </Component>
+      </div>
     );
   }
 );

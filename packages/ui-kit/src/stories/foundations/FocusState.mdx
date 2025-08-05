@@ -1,0 +1,189 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Foundations/Focus State" />
+
+# Focus State
+
+Focus indicators are critical for keyboard navigation and accessibility. They show users which element is currently active and ready to receive input.
+
+## Principles
+
+### 1. Always Visible
+Focus indicators must be clearly visible against any background. Never remove focus indicators with `outline: none` without providing an alternative.
+
+### 2. Consistent Behavior
+Focus indicators should behave consistently across all interactive elements in your application.
+
+### 3. WCAG Compliance
+Focus indicators must meet WCAG 2.1 Level AA requirements:
+- **3:1 contrast ratio** against adjacent colors
+- **2px minimum width** for the focus indicator
+- Clearly distinguishable from hover states
+
+## Implementation Patterns
+
+### Standard Focus Ring
+
+Most interactive elements should use the standard focus ring approach:
+
+```css
+.button:focus-visible {
+  outline: 2px solid var(--color-[surface]-outline);
+  outline-offset: 2px;
+}
+```
+
+### Integrated Focus Style
+
+For elements where an outline would disrupt the design, use an integrated approach:
+
+```css
+.input:focus {
+  border-color: var(--color-[surface]-outline);
+  box-shadow: 0 0 0 3px var(--color-[surface]-outline-soft20);
+}
+```
+
+### High Contrast Focus
+
+For elements that need extra emphasis or in high-contrast themes:
+
+```css
+.critical-action:focus-visible {
+  outline: 3px solid var(--color-[surface]-outline);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px var(--color-[surface]-outline-soft20);
+}
+```
+
+## Token Usage
+
+### Outline Tokens
+
+Each surface provides an outline token that ensures proper contrast:
+
+- `--color-body-outline` - For elements on body background
+- `--color-panel-outline` - For elements on panel background
+- `--color-primary-outline` - For elements on primary background
+- etc.
+
+### Special Tokens
+
+For consistent focus styling across themes:
+
+- `--focus-ring-color` - Legacy token (prefer surface-specific outline)
+- `--focus-ring-offset` - Standard offset for focus rings (2px)
+
+## Best Practices
+
+### Do's
+
+✅ **Use `:focus-visible`** for better UX
+```css
+/* Good - Only shows focus ring for keyboard navigation */
+.button:focus-visible {
+  outline: 2px solid var(--color-body-outline);
+}
+```
+
+✅ **Maintain adequate spacing** with outline-offset
+```css
+/* Good - Provides breathing room */
+.card:focus-visible {
+  outline: 2px solid var(--color-panel-outline);
+  outline-offset: 2px;
+}
+```
+
+✅ **Use surface-appropriate tokens**
+```css
+/* Good - Uses correct surface token */
+.panel-button:focus-visible {
+  outline: 2px solid var(--color-panel-outline);
+}
+```
+
+### Don'ts
+
+❌ **Never remove focus indicators** without replacement
+```css
+/* Bad - Removes accessibility */
+.button:focus {
+  outline: none;
+}
+```
+
+❌ **Don't use color alone** to indicate focus
+```css
+/* Bad - Not accessible for colorblind users */
+.button:focus {
+  background: var(--color-primary-background);
+}
+```
+
+❌ **Avoid thin or low-contrast** focus indicators
+```css
+/* Bad - May not meet WCAG requirements */
+.button:focus {
+  outline: 1px solid rgba(0, 0, 0, 0.2);
+}
+```
+
+## Examples by Component Type
+
+### Buttons
+```css
+.button:focus-visible {
+  outline: 2px solid var(--color-body-outline);
+  outline-offset: 2px;
+}
+```
+
+### Form Inputs
+```css
+.input:focus {
+  border-color: var(--color-input-outline);
+  box-shadow: 0 0 0 3px var(--color-input-outline-soft20);
+  outline: none; /* Border provides focus indication */
+}
+```
+
+### Links
+```css
+.link:focus-visible {
+  outline: 2px solid var(--color-body-outline);
+  outline-offset: 2px;
+  border-radius: 2px; /* Rounds the focus ring */
+}
+```
+
+### Cards and Clickable Containers
+```css
+.card-interactive:focus-visible {
+  outline: 2px solid var(--color-panel-outline);
+  outline-offset: -2px; /* Inside the card boundary */
+}
+```
+
+## Keyboard Navigation Tips
+
+1. **Tab Order**: Ensure logical tab order with proper HTML structure
+2. **Skip Links**: Provide skip links for repetitive navigation
+3. **Focus Trapping**: Trap focus in modals and overlays
+4. **Focus Management**: Return focus to trigger element when closing overlays
+
+## Testing Focus States
+
+1. **Keyboard Testing**: Navigate using only Tab, Shift+Tab, Enter, and Space
+2. **Screen Reader**: Test with screen readers to ensure focus is announced
+3. **Contrast Check**: Verify 3:1 contrast ratio for focus indicators
+4. **Browser Testing**: Test across browsers as focus-visible support varies
+
+## Theme Considerations
+
+The outline tokens automatically adjust for:
+- **Light/Dark modes**: Ensuring visibility in both themes
+- **High Contrast**: Meeting AAA requirements when needed
+- **Surface colors**: Adapting to different background colors
+
+Always use the semantic outline tokens rather than hardcoding colors to ensure your focus states work across all themes and color modes.

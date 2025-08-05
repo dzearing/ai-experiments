@@ -84,6 +84,37 @@ export const surfaces: SurfaceDefinition[] = [
           dark: { ref: 'neutral.400' },
         },
       },
+      textSuccess: {
+        fn: 'contrast',
+        args: {
+          against: 'body.background',
+          prefer: { ref: 'success.600' },
+          strategy: 'vibrant',
+        },
+      },
+      textWarning: {
+        fn: 'contrast',
+        args: {
+          against: 'body.background',
+          prefer: { ref: 'warning.600' },
+          strategy: 'vibrant',
+        },
+      },
+      textDanger: {
+        fn: 'contrast',
+        args: {
+          against: 'body.background',
+          prefer: { ref: 'error.600' },
+          strategy: 'vibrant',
+        },
+      },
+      outline: {
+        fn: 'auto',
+        args: {
+          light: { ref: 'primary.500' },
+          dark: { ref: 'primary.400' },
+        },
+      },
     },
     variants: {
       soft: [10, 20, 30, 40],
@@ -112,6 +143,7 @@ export const surfaces: SurfaceDefinition[] = [
       link: { ref: 'body.link' },
       icon: { ref: 'body.icon' },
       shadow: '0 1px 3px rgba(0, 0, 0, 0.12)',
+      outline: { ref: 'body.outline' },
     },
     variants: {
       soft: [10, 20, 30, 40],
@@ -134,6 +166,14 @@ export const surfaces: SurfaceDefinition[] = [
       },
       border: 'transparent',
       icon: { ref: 'primary.text' },
+      outline: {
+        fn: 'contrast',
+        args: {
+          against: 'primary.background',
+          prefer: '#ffffff',
+          textSize: 'ui',
+        },
+      },
     },
     states: {
       hover: { lightness: -10 },
@@ -169,6 +209,7 @@ export const surfaces: SurfaceDefinition[] = [
         },
       },
       icon: { ref: 'neutral.text' },
+      outline: { ref: 'body.outline' },
     },
     states: {
       hover: { lightness: { light: -5, dark: 5 } },
@@ -192,6 +233,14 @@ export const surfaces: SurfaceDefinition[] = [
       },
       border: 'transparent',
       icon: { ref: 'danger.text' },
+      outline: {
+        fn: 'contrast',
+        args: {
+          against: 'danger.background',
+          prefer: '#ffffff',
+          textSize: 'ui',
+        },
+      },
     },
     states: {
       hover: { lightness: -10 },
@@ -215,6 +264,14 @@ export const surfaces: SurfaceDefinition[] = [
       },
       border: 'transparent',
       icon: { ref: 'success.text' },
+      outline: {
+        fn: 'contrast',
+        args: {
+          against: 'success.background',
+          prefer: '#ffffff',
+          textSize: 'ui',
+        },
+      },
     },
     states: {
       hover: { lightness: -10 },
@@ -250,6 +307,7 @@ export const surfaces: SurfaceDefinition[] = [
         },
       },
       shadow: '0 0 0 3px transparent',
+      outline: { ref: 'body.outline' },
     },
     states: {
       hover: {
@@ -310,6 +368,7 @@ export const surfaces: SurfaceDefinition[] = [
           dark: { ref: 'info.400' },
         },
       },
+      outline: { ref: 'body.outline' },
     },
   },
 
@@ -358,6 +417,7 @@ export const surfaces: SurfaceDefinition[] = [
           dark: { ref: 'success.400' },
         },
       },
+      outline: { ref: 'body.outline' },
     },
   },
 
@@ -406,6 +466,7 @@ export const surfaces: SurfaceDefinition[] = [
           dark: { ref: 'warning.400' },
         },
       },
+      outline: { ref: 'body.outline' },
     },
   },
 
@@ -454,6 +515,7 @@ export const surfaces: SurfaceDefinition[] = [
           dark: { ref: 'error.400' },
         },
       },
+      outline: { ref: 'body.outline' },
     },
   },
 

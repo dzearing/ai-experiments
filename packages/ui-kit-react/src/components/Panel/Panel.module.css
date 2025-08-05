@@ -1,4 +1,4 @@
-.panel {
+.root {
   background: var(--color-panel-background);
   border-radius: var(--radius-large10);
   overflow: hidden;

@@ -105,8 +105,8 @@ Every color token follows this pattern:
 }
 
 .button-primary:hover {
-  background: var(--color-buttonPrimary-backgroundHover);
-  color: var(--color-buttonPrimary-textHover);
+  background: var(--color-buttonPrimary-background-hover);
+  color: var(--color-buttonPrimary-text-hover);
 }
 
 /* Error notification */

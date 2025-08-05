@@ -1,7 +1,8 @@
 import React from 'react';
 import styles from './Skeleton.module.css';
+import cx from 'clsx';
 
-export interface SkeletonProps {
+export interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Width of the skeleton */
   width?: string | number;
   /** Height of the skeleton */
@@ -12,10 +13,6 @@ export interface SkeletonProps {
   animation?: 'pulse' | 'wave' | 'none';
   /** Number of lines for text variant */
   lines?: number;
-  /** Additional CSS class */
-  className?: string;
-  /** Inline styles */
-  style?: React.CSSProperties;
 }
 
 export const Skeleton: React.FC<SkeletonProps> = ({
@@ -26,15 +23,14 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   lines = 1,
   className,
   style,
+  ...props
 }) => {
-  const skeletonClasses = [
-    styles.skeleton,
+  const skeletonClasses = cx(
+    styles.root,
     styles[variant],
     animation !== 'none' && styles[animation],
-    className,
-  ]
-    .filter(Boolean)
-    .join(' ');
+    className
+  );
 
   const skeletonStyle: React.CSSProperties = {
     ...style,
@@ -44,7 +40,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
 
   if (variant === 'text' && lines > 1) {
     return (
-      <div className={styles.textContainer} style={{ width: skeletonStyle.width }}>
+      <div className={styles.textContainer} style={{ width: skeletonStyle.width }} {...props}>
         {Array.from({ length: lines }, (_, index) => (
           <div
             key={index}
@@ -65,6 +61,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
       style={skeletonStyle}
       aria-label="Loading..."
       role="status"
+      {...props}
     >
       <span className={styles.visuallyHidden}>Loading...</span>
     </div>

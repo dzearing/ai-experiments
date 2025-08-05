@@ -1,18 +1,26 @@
-.container {
+.root {
   display: inline-flex;
   align-items: flex-start;
   gap: var(--spacing);
-  flex-direction: column;
+  flex-direction: row;
 }
 
 .labelRight {
   flex-direction: row;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Label wrapper */
+.labelWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-small20);
+  flex: 1;
 }
 
 /* Label */
@@ -23,6 +31,7 @@
   color: var(--color-body-text);
   cursor: pointer;
   user-select: none;
+  white-space: nowrap;
 }
 
 .disabled .label {
@@ -34,6 +43,7 @@
   position: relative;
   display: inline-block;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 /* Sizes */
@@ -82,8 +92,9 @@
 }
 
 .input:focus ~ .slider {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--color-primary-soft10);
+  /* 2px internal focus border to match other components */
+  outline: 2px solid var(--color-body-outline);
+  outline-offset: -2px;
 }
 
 .input:disabled ~ .slider {
@@ -95,7 +106,7 @@
   position: absolute;
   top: 2px;
   left: 2px;
-  background: white;
+  background: var(--color-body-background);
   border-radius: 50%;
   transition: transform var(--duration) var(--easing-bounce);
   box-shadow: var(--shadow-small10);
@@ -135,12 +146,14 @@
 
 /* Error state */
 .error .slider {
-  background: var(--color-danger-soft20);
-  border: 1px solid var(--color-danger-background);
+  background: var(--color-dangerSoft-background);
+  outline: 1px solid var(--color-dangerSoft-border);
+  outline-offset: -1px;
 }
 
 .error .input:checked ~ .slider {
   background: var(--color-danger-background);
+  outline: 1px solid var(--color-danger-border);
 }
 
 /* Helper text */
@@ -148,10 +161,8 @@
   font-size: var(--font-size-small10);
   line-height: var(--line-height-normal);
   color: var(--color-body-text-soft40);
-  margin-top: var(--spacing-small5);
-  width: 100%;
 }
 
 .errorText {
-  color: var(--color-danger-background);
+  color: var(--color-body-textDanger);
 }

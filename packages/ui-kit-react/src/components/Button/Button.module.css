@@ -1,4 +1,4 @@
-.button {
+.root {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -18,18 +18,18 @@
     background-color var(--duration-fast) var(--easing-default),
     border-color var(--duration-fast) var(--easing-default),
     color var(--duration-fast) var(--easing-default),
-    transform var(--duration-fast) var(--easing-default),
-    box-shadow var(--duration) var(--easing-default);
+    transform var(--duration-fast) var(--easing-default);
   position: relative;
   overflow: hidden;
 }
 
-.button:focus-visible {
-  outline: var(--focusRing-width) solid var(--focusRing-color);
-  outline-offset: var(--focusRing-offset);
+.root:focus-visible {
+  /* Internal 2px focus border contained within component boundaries */
+  outline: 2px solid var(--color-body-outline);
+  outline-offset: -2px;
 }
 
-.button:disabled {
+.root:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
@@ -49,6 +49,13 @@
 .primary:active:not(:disabled) {
   background: var(--color-primary-background-active);
   border-color: var(--color-primary-border-active);
+}
+
+.primary:focus-visible {
+  /* Add inner shadow for contrast on primary buttons */
+  outline: 2px solid var(--color-body-outline);
+  outline-offset: -2px;
+  box-shadow: 0 0 0 3px white inset;
 }
 
 .outline {
@@ -85,9 +92,6 @@
   background: rgba(255, 255, 255, 0.14);
 }
 
-.outline:focus-visible {
-  outline-offset: 2px;
-}
 
 .inline {
   background: transparent;
@@ -122,9 +126,6 @@
   background: rgba(255, 255, 255, 0.14);
 }
 
-.inline:focus-visible {
-  outline-offset: 2px;
-}
 
 .neutral {
   background: var(--color-neutral-background);
@@ -140,6 +141,13 @@
 .neutral:active:not(:disabled) {
   background: var(--color-neutral-background-active);
   color: var(--color-neutral-text-active);
+}
+
+.neutral:focus-visible {
+  /* Add inner shadow for contrast on neutral buttons */
+  outline: 2px solid var(--color-body-outline);
+  outline-offset: -2px;
+  box-shadow: 0 0 0 3px white inset;
 }
 
 .danger {
@@ -158,6 +166,13 @@
   border-color: var(--color-danger-border-active);
 }
 
+.danger:focus-visible {
+  /* Add inner shadow for contrast on danger buttons */
+  outline: 2px solid var(--color-body-outline);
+  outline-offset: -2px;
+  box-shadow: 0 0 0 3px white inset;
+}
+
 .success {
   background: var(--color-success-background);
   color: var(--color-success-text);
@@ -172,6 +187,13 @@
 .success:active:not(:disabled) {
   background: var(--color-success-background-active);
   border-color: var(--color-success-border-active);
+}
+
+.success:focus-visible {
+  /* Add inner shadow for contrast on success buttons */
+  outline: 2px solid var(--color-body-outline);
+  outline-offset: -2px;
+  box-shadow: 0 0 0 3px white inset;
 }
 
 /* Sizes */

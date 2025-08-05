@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { Dropdown } from './Dropdown';
+import { Button } from '../Button';
 import React from 'react';
 
 const meta: Meta<typeof Dropdown> = {
@@ -27,6 +28,84 @@ const defaultOptions = [
   { value: 'grape', label: 'Grape' },
   { value: 'strawberry', label: 'Strawberry' },
 ];
+
+export const Controlled: Story = {
+  name: 'Controlled Example',
+  render: () => {
+    const [selectedFruit, setSelectedFruit] = React.useState<string>('');
+    
+    // Define options locally for this example
+    const fruitOptions = [
+      { value: 'apple', label: 'Apple' },
+      { value: 'banana', label: 'Banana' },
+      { value: 'orange', label: 'Orange' },
+      { value: 'grape', label: 'Grape' },
+      { value: 'strawberry', label: 'Strawberry' },
+    ];
+    
+    // Find the label for the selected value
+    const selectedLabel = fruitOptions.find(opt => opt.value === selectedFruit)?.label;
+    
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'flex-start', width: '300px' }}>
+        <Dropdown
+          label="Favorite Fruit (Controlled)"
+          options={fruitOptions}
+          value={selectedFruit}
+          onChange={setSelectedFruit}
+          placeholder="Select a fruit"
+        />
+        <p style={{ margin: 0, fontSize: '14px', color: '#666' }}>
+          This dropdown is controlled - its value is managed by the parent component.
+          <br />
+          Current value: {selectedFruit || '(none selected)'}
+          <br />
+          Display label: {selectedLabel || '(none selected)'}
+        </p>
+        <Button 
+          onClick={() => setSelectedFruit('banana')}
+          variant="neutral"
+        >
+          Set to Banana
+        </Button>
+      </div>
+    );
+  },
+};
+
+export const Uncontrolled: Story = {
+  name: 'Uncontrolled Example',
+  render: () => {
+    const dropdownRef = React.useRef<HTMLSelectElement>(null);
+    
+    const handleGetValue = () => {
+      const value = dropdownRef.current?.value;
+      const label = defaultOptions.find(opt => opt.value === value)?.label;
+      alert(`Selected: ${label || '(none)'}`);
+    };
+    
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'flex-start', width: '300px' }}>
+        <Dropdown
+          ref={dropdownRef}
+          label="Favorite Fruit (Uncontrolled)"
+          options={defaultOptions}
+          defaultValue="orange"
+          placeholder="Select a fruit"
+        />
+        <Button 
+          onClick={handleGetValue}
+          variant="primary"
+        >
+          Get Value
+        </Button>
+        <p style={{ margin: 0, fontSize: '14px', color: '#666' }}>
+          This dropdown is uncontrolled - it manages its own state internally using defaultValue.
+        </p>
+      </div>
+    );
+  },
+};
 
 export const DropdownUsage: Story = {
   render: () => {

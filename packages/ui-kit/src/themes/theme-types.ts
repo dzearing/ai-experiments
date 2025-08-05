@@ -186,6 +186,10 @@ export interface SurfaceDefinition {
     link?: ColorComputation;
     linkVisited?: ColorComputation; // Separate concept from link, not a state
     icon?: ColorComputation;
+    textSuccess?: ColorComputation; // Success text color
+    textWarning?: ColorComputation; // Warning text color
+    textDanger?: ColorComputation; // Danger/error text color
+    outline?: ColorComputation; // Focus outline color
     shadow?: string; // CSS shadow value
   };
 
@@ -331,42 +335,50 @@ export interface SurfaceTokens {
   borderHard20?: string;
 
   link?: string;
-  linkHover?: string;
-  linkActive?: string;
-  linkFocus?: string;
-  linkDisabled?: string;
+  'link-hover'?: string;
+  'link-active'?: string;
+  'link-focus'?: string;
+  'link-disabled'?: string;
 
   linkVisited?: string;
-  linkVisitedHover?: string;
-  linkVisitedActive?: string;
-  linkVisitedFocus?: string;
+  'linkVisited-hover'?: string;
+  'linkVisited-active'?: string;
+  'linkVisited-focus'?: string;
 
   icon?: string;
   iconSoft20?: string;
-  iconHover?: string;
-  iconActive?: string;
-  iconFocus?: string;
-  iconDisabled?: string;
+  'icon-hover'?: string;
+  'icon-active'?: string;
+  'icon-focus'?: string;
+  'icon-disabled'?: string;
 
   shadow?: string;
   shadowSoft?: string;
   shadowHard?: string;
 
+  // Semantic text concepts
+  textSuccess?: string;
+  textWarning?: string;
+  textDanger?: string;
+
+  // Focus outline
+  outline?: string;
+
   // State variations
-  backgroundHover?: string;
-  backgroundActive?: string;
-  backgroundFocus?: string;
-  backgroundDisabled?: string;
+  'background-hover'?: string;
+  'background-active'?: string;
+  'background-focus'?: string;
+  'background-disabled'?: string;
 
-  textHover?: string;
-  textActive?: string;
-  textFocus?: string;
-  textDisabled?: string;
+  'text-hover'?: string;
+  'text-active'?: string;
+  'text-focus'?: string;
+  'text-disabled'?: string;
 
-  borderHover?: string;
-  borderActive?: string;
-  borderFocus?: string;
-  borderDisabled?: string;
+  'border-hover'?: string;
+  'border-active'?: string;
+  'border-focus'?: string;
+  'border-disabled'?: string;
 }
 
 /**

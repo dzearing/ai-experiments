@@ -1,0 +1,398 @@
+/* Focus Demo Styles */
+.focus-demo-container {
+  padding: var(--spacing-large20);
+  max-width: 800px;
+}
+
+.focus-demo-section {
+  margin-bottom: var(--spacing-large30);
+}
+
+.focus-demo-section h3 {
+  color: var(--color-body-text);
+  font-size: var(--font-size-h4);
+  margin-bottom: var(--spacing);
+}
+
+.focus-demo-section p {
+  color: var(--color-body-textSoft10);
+  margin-bottom: var(--spacing-large10);
+}
+
+.focus-demo-row {
+  display: flex;
+  gap: var(--spacing);
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.focus-demo-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing);
+  max-width: 400px;
+}
+
+/* Standard Buttons */
+.focus-demo-button {
+  padding: var(--spacing-buttonY) var(--spacing-buttonX);
+  border: none;
+  border-radius: var(--radius-button);
+  font-size: var(--font-size);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--easing-standard);
+  background: var(--color-primary-background);
+  color: var(--color-primary-text);
+}
+
+.focus-demo-button:hover {
+  background: var(--color-primary-background-hover);
+}
+
+.focus-demo-button:focus-visible {
+  /* 2px internal focus border contained within component */
+  outline: 2px solid var(--color-body-outline);
+  outline-offset: -2px;
+  box-shadow: 0 0 0 3px white inset;
+}
+
+.focus-demo-button-secondary {
+  background: var(--color-neutral-background);
+  color: var(--color-neutral-text);
+  border: 1px solid var(--color-neutral-border);
+}
+
+.focus-demo-button-secondary:hover {
+  background: var(--color-neutral-background-hover);
+}
+
+.focus-demo-button-secondary:focus-visible {
+  /* 2px internal focus border for secondary buttons */
+  outline: 2px solid var(--color-body-outline);
+  outline-offset: -2px;
+}
+
+.focus-demo-button-danger {
+  background: var(--color-danger-background);
+  color: var(--color-danger-text);
+}
+
+.focus-demo-button-danger:hover {
+  background: var(--color-danger-background-hover);
+}
+
+.focus-demo-button-danger:focus-visible {
+  /* 2px internal focus border with danger color */
+  outline: 2px solid var(--color-body-outline);
+  outline-offset: -2px;
+  box-shadow: 0 0 0 3px white inset;
+}
+
+/* Form Inputs */
+.focus-demo-input,
+.focus-demo-textarea,
+.focus-demo-select {
+  padding: var(--spacing-small10) var(--spacing);
+  background: var(--color-input-background);
+  border: 1px solid var(--color-input-border);
+  border-radius: var(--radius-input);
+  font-size: var(--font-size);
+  color: var(--color-input-text);
+  transition: all var(--duration-normal) var(--easing-standard);
+}
+
+.focus-demo-input:focus,
+.focus-demo-textarea:focus,
+.focus-demo-select:focus {
+  /* 2px internal focus border to match all components */
+  outline: 2px solid var(--color-input-outline);
+  outline-offset: -2px;
+  border-color: transparent;
+}
+
+.focus-demo-textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+
+/* Cards */
+.focus-demo-card {
+  background: var(--color-panel-background);
+  border: 1px solid var(--color-panel-border);
+  border-radius: var(--radius-card);
+  padding: var(--spacing-card);
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--easing-standard);
+  flex: 1;
+  min-width: 250px;
+}
+
+.focus-demo-card h4 {
+  margin: 0 0 var(--spacing-small10) 0;
+  color: var(--color-panel-text);
+}
+
+.focus-demo-card p {
+  margin: 0;
+  color: var(--color-panel-textSoft10);
+  font-size: var(--font-size-small10);
+}
+
+.focus-demo-card:hover {
+  box-shadow: var(--shadow-hard10);
+}
+
+.focus-demo-card:focus-visible {
+  /* 2px internal focus border for cards */
+  outline: 2px solid var(--color-panel-outline);
+  outline-offset: -2px;
+}
+
+.focus-demo-card-elevated {
+  background: var(--color-body-background);
+  box-shadow: var(--shadow);
+}
+
+/* Links */
+.focus-demo-link {
+  color: var(--color-body-link);
+  text-decoration: none;
+}
+
+.focus-demo-link:hover {
+  text-decoration: underline;
+  color: var(--color-body-link-hover);
+}
+
+.focus-demo-link:focus-visible {
+  /* 2px internal focus border with padding for inline element */
+  outline: 2px solid var(--color-body-outline);
+  outline-offset: -2px;
+  border-radius: var(--radius-small20);
+  padding: 2px 4px;
+  margin: -2px -4px;
+}
+
+/* Custom Focus Styles */
+.focus-demo-custom {
+  padding: var(--spacing-buttonY) var(--spacing-buttonX);
+  border: 2px solid var(--color-neutral-border);
+  border-radius: var(--radius-button);
+  background: var(--color-neutral-background);
+  color: var(--color-neutral-text);
+  font-size: var(--font-size);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--easing-standard);
+}
+
+.focus-demo-custom-glow:focus-visible {
+  outline: none;
+  /* 2px internal with glow effect */
+  box-shadow: inset 0 0 0 2px var(--color-body-outline),
+              0 0 10px var(--color-primary-backgroundSoft20);
+}
+
+.focus-demo-custom-thick:focus-visible {
+  outline: none;
+  /* Thicker 4px internal focus border */
+  box-shadow: inset 0 0 0 4px var(--color-body-outline);
+}
+
+.focus-demo-custom-animated:focus-visible {
+  outline: none;
+  /* 2px internal animated focus border */
+  box-shadow: inset 0 0 0 2px var(--color-body-outline);
+  animation: focus-pulse-internal 1s ease-in-out infinite;
+}
+
+@keyframes focus-pulse-internal {
+  0%, 100% { box-shadow: inset 0 0 0 2px var(--color-body-outline); }
+  50% { box-shadow: inset 0 0 0 4px var(--color-body-outline); }
+}
+
+/* Guidelines */
+.focus-demo-guidelines {
+  background: var(--color-panel-background);
+  border: 1px solid var(--color-panel-border);
+  border-radius: var(--radius);
+  padding: var(--spacing-large10);
+  margin-top: var(--spacing-large20);
+}
+
+.focus-demo-guidelines ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.focus-demo-guidelines li {
+  padding: var(--spacing-small10) 0;
+  color: var(--color-panel-text);
+}
+
+.focus-demo-guidelines code {
+  background: var(--color-panel-backgroundSoft10);
+  padding: 2px 6px;
+  border-radius: var(--radius-small20);
+  font-size: var(--font-size-small10);
+  color: var(--color-panel-text);
+}
+
+/* Contrast Comparison */
+.focus-contrast-container {
+  padding: var(--spacing-large20);
+  max-width: 800px;
+}
+
+.focus-contrast-section {
+  margin-bottom: var(--spacing-large30);
+}
+
+.focus-contrast-section h3 {
+  color: var(--color-body-text);
+  font-size: var(--font-size-h4);
+  margin-bottom: var(--spacing-large10);
+}
+
+.focus-contrast-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-large10);
+}
+
+.focus-contrast-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing);
+  padding: var(--spacing-large10);
+  background: var(--color-panel-background);
+  border: 1px solid var(--color-panel-border);
+  border-radius: var(--radius);
+}
+
+.focus-contrast-item span {
+  font-size: var(--font-size-small10);
+  font-weight: var(--font-weight-medium);
+}
+
+.focus-contrast-good span {
+  color: var(--color-body-textSuccess);
+}
+
+.focus-contrast-bad span {
+  color: var(--color-body-textDanger);
+}
+
+.focus-contrast-button {
+  padding: var(--spacing-buttonY) var(--spacing-buttonX);
+  border: 1px solid var(--color-neutral-border);
+  border-radius: var(--radius-button);
+  background: var(--color-neutral-background);
+  color: var(--color-neutral-text);
+  cursor: pointer;
+}
+
+/* Good examples */
+.focus-contrast-button:focus-visible {
+  outline: none;
+  /* 2px internal focus border - good contrast */
+  box-shadow: inset 0 0 0 2px var(--color-body-outline);
+}
+
+.focus-contrast-button-offset:focus-visible {
+  outline: none;
+  /* 2px internal with extra inner padding */
+  box-shadow: inset 0 0 0 1px var(--color-body-background),
+              inset 0 0 0 2px var(--color-body-outline);
+}
+
+.focus-contrast-button-thick:focus-visible {
+  outline: none;
+  /* 3px internal focus border for better visibility */
+  box-shadow: inset 0 0 0 3px var(--color-body-outline);
+}
+
+/* Bad examples */
+.focus-contrast-button-thin:focus-visible {
+  outline: none;
+  /* Only 1px - too thin for good visibility */
+  box-shadow: inset 0 0 0 1px var(--color-body-outline);
+}
+
+.focus-contrast-button-lowcontrast:focus-visible {
+  outline: none;
+  /* Low contrast color - poor visibility */
+  box-shadow: inset 0 0 0 2px var(--color-body-borderSoft40);
+}
+
+.focus-contrast-button-coloronly:focus-visible {
+  outline: none;
+  background: var(--color-primary-background);
+  color: var(--color-primary-text);
+}
+
+/* Focus Management Demo */
+.focus-management-container {
+  padding: var(--spacing-large20);
+  min-height: 400px;
+}
+
+.focus-management-container h3 {
+  color: var(--color-body-text);
+  margin-bottom: var(--spacing);
+}
+
+.focus-management-container p {
+  color: var(--color-body-textSoft10);
+  margin-bottom: var(--spacing-large10);
+}
+
+.focus-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--color-backdrop-background);
+  z-index: 1000;
+}
+
+.focus-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--color-panel-background);
+  border: 1px solid var(--color-panel-border);
+  border-radius: var(--radius-dialog);
+  padding: var(--spacing-large20);
+  box-shadow: var(--shadow-modal);
+  z-index: 1001;
+  min-width: 400px;
+  max-width: 90vw;
+}
+
+.focus-dialog h3 {
+  margin: 0 0 var(--spacing) 0;
+  color: var(--color-panel-text);
+}
+
+.focus-dialog p {
+  color: var(--color-panel-textSoft10);
+  margin-bottom: var(--spacing-large10);
+}
+
+.focus-dialog .focus-demo-input {
+  width: 100%;
+  margin-bottom: var(--spacing);
+}
+
+.focus-dialog-actions {
+  display: flex;
+  gap: var(--spacing);
+  justify-content: flex-end;
+  margin-top: var(--spacing-large10);
+}

@@ -304,8 +304,8 @@ const getThemeCardStyles = () => `
   
   .preview-input:focus {
     outline: none;
-    border-color: var(--color-input-borderFocus);
-    background: var(--color-input-backgroundFocus);
+    border-color: var(--color-input-border-focus);
+    background: var(--color-input-background-focus);
   }
   
   .preview-slider-group {
@@ -349,12 +349,12 @@ const getThemeCardStyles = () => `
   }
   
   .preview-slider:hover::-webkit-slider-thumb {
-    background: var(--color-buttonPrimary-backgroundHover);
+    background: var(--color-buttonPrimary-background-hover);
     transform: scale(1.1);
   }
   
   .preview-slider:hover::-moz-range-thumb {
-    background: var(--color-buttonPrimary-backgroundHover);
+    background: var(--color-buttonPrimary-background-hover);
     transform: scale(1.1);
   }
   

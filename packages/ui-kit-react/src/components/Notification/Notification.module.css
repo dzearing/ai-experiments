@@ -1,4 +1,4 @@
-.notification {
+.root {
   display: flex;
   align-items: flex-start;
   gap: var(--spacing-small10);

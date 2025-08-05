@@ -20,6 +20,65 @@ const meta: Meta<typeof Switch> = {
 export default meta;
 type Story = StoryObj<typeof Switch>;
 
+export const Controlled: Story = {
+  name: 'Controlled Example',
+  render: () => {
+    const [isEnabled, setIsEnabled] = React.useState(false);
+    
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'flex-start' }}>
+        <Switch
+          label="Enable feature"
+          checked={isEnabled}
+          onChange={(e) => setIsEnabled(e.target.checked)}
+        />
+        <p style={{ margin: 0, fontSize: '14px', color: '#666' }}>
+          This switch is controlled - its checked state is managed by the parent component.
+          <br />
+          Current value: {isEnabled ? 'ON' : 'OFF'}
+        </p>
+      </div>
+    );
+  },
+};
+
+export const Uncontrolled: Story = {
+  name: 'Uncontrolled Example',
+  render: () => {
+    const switchRef = React.useRef<HTMLInputElement>(null);
+    
+    const handleGetValue = () => {
+      alert(`Switch is ${switchRef.current?.checked ? 'ON' : 'OFF'}`);
+    };
+    
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'flex-start' }}>
+        <Switch
+          ref={switchRef}
+          label="Auto-save"
+          defaultChecked
+        />
+        <button 
+          onClick={handleGetValue}
+          style={{ 
+            padding: '8px 16px',
+            background: 'var(--color-primary-background)',
+            color: 'var(--color-primary-text)',
+            border: 'none',
+            borderRadius: 'var(--radius-button)',
+            cursor: 'pointer'
+          }}
+        >
+          Get Value
+        </button>
+        <p style={{ margin: 0, fontSize: '14px', color: '#666' }}>
+          This switch is uncontrolled - it manages its own state internally using defaultChecked.
+        </p>
+      </div>
+    );
+  },
+};
+
 export const SwitchUsage: Story = {
   render: () => {
     const [checked, setChecked] = React.useState(false);

@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { Input } from './Input';
+import { Button } from '../Button/Button';
+import React from 'react';
 
 const meta: Meta<typeof Input> = {
   title: 'Components/Input',
@@ -18,6 +20,76 @@ const meta: Meta<typeof Input> = {
 
 export default meta;
 type Story = StoryObj<typeof Input>;
+
+export const Controlled: Story = {
+  name: 'Controlled Example',
+  render: () => {
+    const [value, setValue] = React.useState('');
+    const [error, setError] = React.useState(false);
+    const [errorMessage, setErrorMessage] = React.useState('');
+    
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newValue = e.target.value;
+      setValue(newValue);
+      
+      // Example validation
+      if (newValue && !newValue.includes('@')) {
+        setError(true);
+        setErrorMessage('Please enter a valid email address');
+      } else {
+        setError(false);
+        setErrorMessage('');
+      }
+    };
+    
+    return (
+      <div style={{ width: '300px' }}>
+        <Input
+          label="Email (Controlled)"
+          placeholder="Enter your email"
+          type="email"
+          value={value}
+          onChange={handleChange}
+          error={error}
+          errorMessage={errorMessage}
+          helperText="This input is controlled - its value and error state are managed by the parent"
+        />
+        <p style={{ marginTop: '1rem', fontSize: '14px', color: '#666' }}>
+          Current value: {value || '(empty)'}
+        </p>
+      </div>
+    );
+  },
+};
+
+export const Uncontrolled: Story = {
+  name: 'Uncontrolled Example',
+  render: () => {
+    const inputRef = React.useRef<HTMLInputElement>(null);
+    
+    const handleSubmit = () => {
+      alert(`Submitted value: ${inputRef.current?.value || '(empty)'}`);
+    };
+    
+    return (
+      <div style={{ width: '300px' }}>
+        <Input
+          ref={inputRef}
+          label="Name (Uncontrolled)"
+          placeholder="Enter your name"
+          helperText="This input is uncontrolled - it manages its own state internally"
+        />
+        <Button 
+          onClick={handleSubmit}
+          variant="primary"
+          style={{ marginTop: '1rem' }}
+        >
+          Get Value
+        </Button>
+      </div>
+    );
+  },
+};
 
 // Icons for examples
 const SearchIcon = () => (

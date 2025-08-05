@@ -1,5 +1,6 @@
 import React from 'react';
 import styles from './Input.module.css';
+import cx from 'clsx';
 
 export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
   /** Input size */
@@ -38,6 +39,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
       label,
       required,
       className,
+      style,
       id,
       ...props
     },
@@ -45,27 +47,28 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ) => {
     const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
 
-    const inputClasses = [
+    const inputClasses = cx(
       styles.input,
       styles[size],
       error && styles.error,
       success && styles.success,
       fullWidth && styles.fullWidth,
       leftIcon && styles.hasLeftIcon,
-      rightIcon && styles.hasRightIcon,
-      className,
-    ]
-      .filter(Boolean)
-      .join(' ');
+      rightIcon && styles.hasRightIcon
+    );
 
-    const wrapperClasses = [
+    const wrapperClasses = cx(
       styles.wrapper,
+      fullWidth && styles.fullWidth
+    );
+    
+    const rootClasses = cx(
+      styles.root,
       fullWidth && styles.fullWidth,
-    ]
-      .filter(Boolean)
-      .join(' ');
+      className
+    );
 
-    const input = (
+    const inputElement = (
       <div className={wrapperClasses}>
         {leftIcon && <span className={styles.leftIcon}>{leftIcon}</span>}
         <input
@@ -82,19 +85,16 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
       </div>
     );
 
-    if (!label && !helperText && !errorMessage) {
-      return input;
-    }
-
+    // Always wrap in root div for consistent prop handling
     return (
-      <div className={styles.field}>
+      <div className={rootClasses} style={style} id={id}>
         {label && (
           <label htmlFor={inputId} className={styles.label}>
             {label}
             {required && <span className={styles.required}>*</span>}
           </label>
         )}
-        {input}
+        {inputElement}
         {errorMessage && (
           <span id={`${inputId}-error`} className={styles.errorText}>
             {errorMessage}

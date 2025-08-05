@@ -1,4 +1,4 @@
-.container {
+.root {
   display: inline-flex;
   align-items: center;
   cursor: pointer;
@@ -36,8 +36,9 @@
 }
 
 .input:focus-visible ~ .checkbox {
-  outline: var(--focusRing-width) solid var(--focusRing-color);
-  outline-offset: var(--focusRing-offset);
+  /* 2px internal focus border to match other components */
+  outline: 2px solid var(--color-body-outline);
+  outline-offset: -2px;
 }
 
 .input:checked ~ .checkbox {
@@ -159,5 +160,7 @@
 }
 
 .error .input:focus-visible ~ .checkbox {
-  outline-color: var(--color-danger-background);
+  /* 2px internal focus border using danger color */
+  outline: 2px solid var(--color-danger-outline);
+  outline-offset: -2px;
 }

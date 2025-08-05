@@ -20,6 +20,65 @@ const meta: Meta<typeof Checkbox> = {
 export default meta;
 type Story = StoryObj<typeof Checkbox>;
 
+export const Controlled: Story = {
+  name: 'Controlled Example',
+  render: () => {
+    const [checked, setChecked] = React.useState(false);
+    
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'flex-start' }}>
+        <Checkbox
+          label="I agree to receive marketing emails"
+          checked={checked}
+          onChange={(e) => setChecked(e.target.checked)}
+        />
+        <p style={{ margin: 0, fontSize: '14px', color: '#666' }}>
+          This checkbox is controlled - its checked state is managed by the parent component.
+          <br />
+          Current value: {checked ? 'checked' : 'unchecked'}
+        </p>
+      </div>
+    );
+  },
+};
+
+export const Uncontrolled: Story = {
+  name: 'Uncontrolled Example',
+  render: () => {
+    const checkboxRef = React.useRef<HTMLInputElement>(null);
+    
+    const handleGetValue = () => {
+      alert(`Checkbox is ${checkboxRef.current?.checked ? 'checked' : 'unchecked'}`);
+    };
+    
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'flex-start' }}>
+        <Checkbox
+          ref={checkboxRef}
+          label="Subscribe to newsletter"
+          defaultChecked
+        />
+        <button 
+          onClick={handleGetValue}
+          style={{ 
+            padding: '8px 16px',
+            background: 'var(--color-primary-background)',
+            color: 'var(--color-primary-text)',
+            border: 'none',
+            borderRadius: 'var(--radius-button)',
+            cursor: 'pointer'
+          }}
+        >
+          Get Value
+        </button>
+        <p style={{ margin: 0, fontSize: '14px', color: '#666' }}>
+          This checkbox is uncontrolled - it manages its own state internally using defaultChecked.
+        </p>
+      </div>
+    );
+  },
+};
+
 export const CheckboxUsage: Story = {
   args: {
     label: 'Accept terms and conditions',

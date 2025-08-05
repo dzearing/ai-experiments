@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dropdown Scroll Test</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      height: 200vh; /* Make page scrollable */
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    .spacer {
+      height: 500px;
+      background: #f0f0f0;
+      margin: 20px 0;
+      padding: 20px;
+      border-radius: 8px;
+    }
+    
+    .test-area {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    iframe {
+      width: 100%;
+      height: 800px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Dropdown Scroll Position Test</h1>
+    
+    <div class="spacer">
+      <p>Scroll down to see the dropdown component...</p>
+    </div>
+    
+    <div class="test-area">
+      <h2>Dropdown Component (in iframe)</h2>
+      <p>The dropdown should appear correctly positioned when scrolled:</p>
+      <iframe src="http://localhost:6006/?path=/story/components-dropdown--controlled"></iframe>
+    </div>
+    
+    <div class="spacer">
+      <p>Additional space to test scrolling behavior</p>
+    </div>
+  </div>
+</body>
+</html>

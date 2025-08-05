@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { Button } from './Button';
+import React from 'react';
 
 const meta: Meta<typeof Button> = {
   title: 'Components/Button',
@@ -27,11 +28,67 @@ const meta: Meta<typeof Button> = {
 export default meta;
 type Story = StoryObj<typeof Button>;
 
+export const Controlled: Story = {
+  name: 'Controlled Example',
+  render: () => {
+    const [isLoading, setIsLoading] = React.useState(false);
+    
+    const handleClick = () => {
+      setIsLoading(true);
+      // Simulate an async operation
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 2000);
+    };
+    
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'flex-start' }}>
+        <Button 
+          variant="primary" 
+          onClick={handleClick} 
+          loading={isLoading}
+        >
+          {isLoading ? 'Processing...' : 'Click Me'}
+        </Button>
+        <p style={{ margin: 0, fontSize: '14px', color: '#666' }}>
+          This button is controlled - its loading state is managed by the parent component.
+        </p>
+      </div>
+    );
+  },
+};
+
+export const Uncontrolled: Story = {
+  name: 'Uncontrolled Example',
+  render: () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'flex-start' }}>
+      <Button 
+        variant="primary"
+        onClick={() => alert('Button clicked!')}
+      >
+        Click Me
+      </Button>
+      <p style={{ margin: 0, fontSize: '14px', color: '#666' }}>
+        This button is uncontrolled - it simply triggers an action when clicked.
+      </p>
+    </div>
+  ),
+};
+
 export const Default: Story = {
   args: {
     children: 'Button',
     variant: 'primary',
     size: 'medium',
+  },
+  parameters: {
+    docs: {
+      source: {
+        code: `<Button variant="primary" size="medium">
+  Button
+</Button>`,
+      },
+    },
   },
 };
 

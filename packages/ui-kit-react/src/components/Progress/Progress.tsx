@@ -1,7 +1,8 @@
 import React from 'react';
 import styles from './Progress.module.css';
+import cx from 'clsx';
 
-export interface ProgressProps {
+export interface ProgressProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Current progress value (0-100) */
   value: number;
   /** Maximum value */
@@ -16,8 +17,6 @@ export interface ProgressProps {
   labelPosition?: 'inside' | 'outside';
   /** Indeterminate state (loading) */
   indeterminate?: boolean;
-  /** Additional CSS class */
-  className?: string;
 }
 
 export const Progress: React.FC<ProgressProps> = ({
@@ -29,42 +28,35 @@ export const Progress: React.FC<ProgressProps> = ({
   labelPosition = 'outside',
   indeterminate = false,
   className,
+  ...props
 }) => {
   const percentage = Math.min(Math.max((value / max) * 100, 0), 100);
   const label = `${Math.round(percentage)}%`;
 
-  const containerClasses = [
-    styles.container,
-    className,
-  ]
-    .filter(Boolean)
-    .join(' ');
+  const containerClasses = cx(
+    styles.root,
+    className
+  );
 
-  const trackClasses = [
+  const trackClasses = cx(
     styles.track,
     styles[size],
-    styles[variant],
-  ]
-    .filter(Boolean)
-    .join(' ');
+    styles[variant]
+  );
 
-  const barClasses = [
+  const barClasses = cx(
     styles.bar,
-    indeterminate && styles.indeterminate,
-  ]
-    .filter(Boolean)
-    .join(' ');
+    indeterminate && styles.indeterminate
+  );
 
-  const labelClasses = [
+  const labelClasses = cx(
     styles.label,
     styles[`label-${labelPosition}`],
-    styles[`label-${size}`],
-  ]
-    .filter(Boolean)
-    .join(' ');
+    styles[`label-${size}`]
+  );
 
   return (
-    <div className={containerClasses}>
+    <div className={containerClasses} {...props}>
       {showLabel && labelPosition === 'outside' && (
         <div className={labelClasses}>{label}</div>
       )}

@@ -1,4 +1,4 @@
-.container {
+.root {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-small10);

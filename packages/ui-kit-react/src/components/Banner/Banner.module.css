@@ -1,4 +1,4 @@
-.banner {
+.root {
   position: fixed;
   top: 0;
   left: 0;
@@ -106,7 +106,7 @@
 
 /* Responsive */
 @media (max-width: 600px) {
-  .banner {
+  .root {
     min-height: 32px;
   }
   
@@ -184,18 +184,16 @@
 
 /* High contrast mode support */
 @media (prefers-contrast: high) {
-  .banner {
+  .root {
     border-bottom-width: 2px;
   }
   
-  .dismiss:focus-visible {
-    outline-width: 3px;
-  }
+  /* Focus styles handled by Button component */
 }
 
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
-  .banner {
+  .root {
     transition: none;
   }
   

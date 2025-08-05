@@ -1,5 +1,6 @@
 import React from 'react';
 import styles from './Link.module.css';
+import cx from 'clsx';
 
 export interface LinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
   /** Visual style variant */
@@ -24,14 +25,14 @@ export const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(
     rel,
     ...props 
   }, ref) => {
-    const classes = [
-      styles.link,
+    const classes = cx(
+      styles.root,
       styles[variant],
       styles[size],
       external && styles.external,
       active && styles.active,
-      className,
-    ].filter(Boolean).join(' ');
+      className
+    );
 
     // Ensure security for external links
     const finalRel = external 
