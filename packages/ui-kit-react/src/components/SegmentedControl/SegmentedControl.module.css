@@ -1,0 +1,415 @@
+/* Base container - Pills by default */
+.container {
+  display: inline-flex;
+  position: relative;
+  padding: 4px;
+  background: var(--color-panel-backgroundSoft10);
+  border: 1px solid var(--color-panel-border);
+  border-radius: var(--radius-full);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+  transition: opacity var(--duration-fast10) var(--easing-default);
+  overflow: hidden;
+}
+
+/* Options container */
+.options {
+  display: flex;
+  gap: var(--spacing-smallest);
+  position: relative;
+}
+
+/* Individual option button */
+.option {
+  position: relative;
+  padding: calc(var(--spacing-buttonY) - 4px) var(--spacing-buttonX);
+  border: none;
+  background: transparent;
+  color: var(--color-body-text);
+  font-family: inherit;
+  font-size: var(--font-size);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-small10);
+  transition: all var(--duration-fast10) var(--easing-default);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  min-width: 0;
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+/* Icon-only option */
+.option.iconOnly {
+  padding: calc(var(--spacing-buttonY) - 4px);
+  aspect-ratio: 1;
+  min-width: auto;
+}
+
+.option:hover:not(.selected):not(.optionDisabled) {
+  /* No background on hover, bold text is handled by labelBold visibility */
+}
+
+.option:active:not(.selected):not(.optionDisabled) {
+  /* Keep subtle feedback on click */
+  opacity: 0.8;
+}
+
+.option:focus-visible {
+  outline: 2px solid var(--color-primary-border-focus);
+  outline-offset: 2px;
+}
+
+.option.selected {
+  color: var(--color-primary-text);
+  z-index: 2;
+}
+
+.option.optionDisabled {
+  color: var(--color-body-textSoft20);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Selection indicator */
+.indicator {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  background: var(--color-primary-background);
+  border-radius: var(--radius-full);
+  transition: transform var(--duration-fast10) var(--easing-default), 
+              width var(--duration-fast10) var(--easing-default);
+  box-shadow: var(--shadow-button);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Icon and label */
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: inherit;
+}
+
+.icon > svg {
+  width: 16px;
+  height: 16px;
+  color: currentColor;
+  fill: currentColor;
+  stroke: currentColor;
+}
+
+/* Label wrapper for layout preservation */
+.labelWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Regular label - positioned absolute */
+.label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: var(--font-weight-medium);
+  color: inherit;
+}
+
+/* Bold label for width reservation - this sets the width */
+.labelBold {
+  display: block;
+  font-weight: var(--font-weight-semibold);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  visibility: hidden;
+  pointer-events: none;
+  color: inherit;
+}
+
+/* Show bold text on hover */
+.option:hover:not(.optionDisabled) .label {
+  font-weight: var(--font-weight-semibold);
+}
+
+.option:hover:not(.optionDisabled) .labelBold {
+  visibility: visible;
+}
+
+/* Show bold text for selected */
+.option.selected .label {
+  font-weight: var(--font-weight-semibold);
+  color: inherit;
+}
+
+.option.selected .labelBold {
+  visibility: visible;
+  color: inherit;
+}
+
+/* Color variant overrides for selected labels */
+.color-secondary .option.selected .label,
+.color-secondary .option.selected .labelBold {
+  color: inherit;
+}
+
+.color-neutral .option.selected .label,
+.color-neutral .option.selected .labelBold {
+  color: inherit;
+}
+
+/* Divider */
+.divider {
+  width: 1px;
+  height: 50%;
+  background: var(--color-panel-borderSoft10);
+  opacity: 0.3;
+  pointer-events: none;
+  align-self: center;
+  flex-shrink: 0;
+}
+
+/* Variant: Square */
+.variant-square.container {
+  background: var(--color-panel-backgroundSoft10);
+  border: none;
+  padding: 4px;
+  border-radius: var(--radius-large10);
+  box-shadow: var(--shadow-inner);
+}
+
+.variant-square .option {
+  border-radius: var(--radius);
+  padding: calc(var(--spacing-buttonY) - 4px) var(--spacing-buttonX);
+}
+
+.variant-square .indicator {
+  border-radius: var(--radius);
+  top: 0;
+  bottom: 0;
+  left: 0;
+}
+
+/* Variant: Underline */
+.variant-underline.container {
+  background: transparent;
+  padding: 0;
+  gap: 0;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
+  border-bottom: 1px solid var(--color-panel-border);
+}
+
+.variant-underline .options {
+  gap: var(--spacing-large10);
+}
+
+.variant-underline .option {
+  border-radius: 0;
+  padding: var(--spacing-buttonY) 0;
+  background: transparent;
+}
+
+.variant-underline .option.selected {
+  color: var(--color-primary);
+}
+
+.variant-underline .indicator {
+  height: 4px;
+  bottom: -2px;
+  top: auto;
+  left: 0;
+  border-radius: var(--radius-full);
+  box-shadow: none;
+}
+
+.variant-underline .divider {
+  display: none;
+}
+
+/* Size: Small */
+.size-small .option {
+  padding: calc(var(--spacing-small20) - 4px) var(--spacing-small5);
+  font-size: var(--font-size-small10);
+}
+
+.size-small .option.iconOnly {
+  padding: calc(var(--spacing-small20) - 4px);
+}
+
+.size-small .icon > svg {
+  width: 14px;
+  height: 14px;
+  color: currentColor;
+  fill: currentColor;
+  stroke: currentColor;
+}
+
+.size-small.variant-square .option {
+  padding: calc(var(--spacing-small20) - 4px) var(--spacing-small5);
+}
+
+.size-small.variant-underline .option {
+  padding: var(--spacing-small20) 0;
+}
+
+/* Size: Large */
+.size-large .option {
+  padding: calc(var(--spacing-small5) - 4px) var(--spacing-large5);
+  font-size: var(--font-size-large10);
+}
+
+.size-large .option.iconOnly {
+  padding: calc(var(--spacing-small5) - 4px);
+}
+
+.size-large .icon > svg {
+  width: 20px;
+  height: 20px;
+  color: currentColor;
+  fill: currentColor;
+  stroke: currentColor;
+}
+
+.size-large.variant-square .option {
+  padding: calc(var(--spacing-small5) - 4px) var(--spacing-large5);
+}
+
+.size-large.variant-underline .option {
+  padding: var(--spacing-small5) 0;
+}
+
+/* Color: Secondary */
+.color-secondary .indicator {
+  background: var(--color-success-background);
+}
+
+.color-secondary .option.selected {
+  color: var(--color-success-text);
+}
+
+.color-secondary .option:focus-visible {
+  outline-color: var(--color-success-border-focus);
+}
+
+.color-secondary.variant-underline .option.selected {
+  color: var(--color-success);
+}
+
+/* Color: Neutral */
+.color-neutral .indicator {
+  background: var(--color-neutral-background);
+}
+
+.color-neutral .option.selected {
+  color: var(--color-neutral-text);
+}
+
+.color-neutral .option:focus-visible {
+  outline-color: var(--color-neutral-border-focus);
+}
+
+.color-neutral.variant-underline .option.selected {
+  color: var(--color-body-text);
+}
+
+/* Full width */
+.fullWidth {
+  display: flex;
+  width: 100%;
+}
+
+.fullWidth .options {
+  flex: 1;
+  width: 100%;
+}
+
+.fullWidth .option {
+  flex: 1;
+  justify-content: center;
+}
+
+/* Disabled state */
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.disabled .option {
+  cursor: not-allowed;
+}
+
+/* Focus management */
+.focused {
+  outline-offset: -2px;
+}
+
+/* Responsive behavior */
+@media (max-width: 640px) {
+  .container {
+    max-width: 100%;
+  }
+  
+  .options {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .options::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* RTL support */
+[dir="rtl"] .container {
+  direction: rtl;
+}
+
+[dir="rtl"] .options {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .divider {
+  right: auto;
+  left: calc(var(--spacing-smallest) / -2);
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .container {
+    border-width: 2px;
+  }
+  
+  .indicator {
+    border: 2px solid currentColor;
+  }
+  
+  .option.selected {
+    font-weight: var(--font-weight-bold);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .indicator,
+  .option {
+    transition: none;
+  }
+}

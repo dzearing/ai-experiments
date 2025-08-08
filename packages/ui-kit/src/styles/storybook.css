@@ -319,6 +319,148 @@ div[class*="css-"] .toc-list-item > a:hover *,
   color: var(--color-body-text, #e0e0e0);
 }
 
+/* Props table/pane dark mode styles */
+/* ArgsTable container */
+[data-theme-type="dark"] .docblock-argstable,
+[data-theme-type="dark"] [class*="argstable"] {
+  background-color: var(--color-panel-background, #1a1a1a) !important;
+  border-color: var(--color-panel-border, #3a3a3a) !important;
+}
+
+/* Props table headers and cells */
+[data-theme-type="dark"] .docblock-argstable th,
+[data-theme-type="dark"] .docblock-argstable td,
+[data-theme-type="dark"] [class*="argstable"] th,
+[data-theme-type="dark"] [class*="argstable"] td,
+[data-theme-type="dark"] .css-v2ifgj tbody > tr > *,
+[data-theme-type="dark"] [class*="css-"] tbody > tr > * {
+  color: var(--color-body-text, #e0e0e0) !important;
+  border-color: var(--color-panel-border, #3a3a3a) !important;
+}
+
+/* Props table headers specifically */
+[data-theme-type="dark"] .docblock-argstable thead th,
+[data-theme-type="dark"] [class*="argstable"] thead th {
+  background-color: var(--color-panel-backgroundSoft10, #2a2a2a) !important;
+  color: var(--color-body-textHard10, #f0f0f0) !important;
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Prop names in the table */
+[data-theme-type="dark"] .docblock-argstable .css-1kyxreq,
+[data-theme-type="dark"] .docblock-argstable [class*="ArgRow-name"],
+[data-theme-type="dark"] .docblock-argstable strong,
+[data-theme-type="dark"] [class*="argstable"] strong {
+  color: var(--color-body-textHard10, #f0f0f0) !important;
+}
+
+/* Prop descriptions */
+[data-theme-type="dark"] .docblock-argstable [class*="ArgRow-description"],
+[data-theme-type="dark"] .docblock-argstable td:nth-child(2),
+[data-theme-type="dark"] [class*="argstable"] td:nth-child(2) {
+  color: var(--color-body-textSoft10, #b0b0b0) !important;
+}
+
+/* Prop types */
+[data-theme-type="dark"] .docblock-argstable code,
+[data-theme-type="dark"] .docblock-argstable [class*="ArgRow-type"],
+[data-theme-type="dark"] [class*="argstable"] code {
+  background-color: var(--color-panel-backgroundSoft10, #2a2a2a) !important;
+  color: var(--color-primary, #4db8ff) !important;
+  border-color: var(--color-panel-border, #3a3a3a) !important;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+/* Default values */
+[data-theme-type="dark"] .docblock-argstable [class*="ArgRow-default"],
+[data-theme-type="dark"] .docblock-argstable td:nth-child(3),
+[data-theme-type="dark"] [class*="argstable"] td:nth-child(3) {
+  color: var(--color-success, #4ade80) !important;
+}
+
+/* Required indicator */
+[data-theme-type="dark"] .docblock-argstable [class*="ArgRow-required"],
+[data-theme-type="dark"] [class*="argstable"] .css-gu3hnt {
+  color: var(--color-danger, #f87171) !important;
+}
+
+/* Expandable rows hover state */
+[data-theme-type="dark"] .docblock-argstable tbody tr:hover,
+[data-theme-type="dark"] [class*="argstable"] tbody tr:hover {
+  background-color: var(--color-panel-backgroundHover, #252525) !important;
+}
+
+/* Controls/inputs in the props table */
+[data-theme-type="dark"] .docblock-argstable input,
+[data-theme-type="dark"] .docblock-argstable select,
+[data-theme-type="dark"] .docblock-argstable textarea,
+[data-theme-type="dark"] [class*="argstable"] input,
+[data-theme-type="dark"] [class*="argstable"] select,
+[data-theme-type="dark"] [class*="argstable"] textarea {
+  background-color: var(--color-input-background, #2a2a2a) !important;
+  color: var(--color-input-text, #e0e0e0) !important;
+  border-color: var(--color-input-border, #3a3a3a) !important;
+}
+
+/* Boolean toggles */
+[data-theme-type="dark"] .docblock-argstable [role="switch"],
+[data-theme-type="dark"] [class*="argstable"] [role="switch"] {
+  background-color: var(--color-panel-backgroundSoft10, #2a2a2a) !important;
+  border-color: var(--color-panel-border, #3a3a3a) !important;
+}
+
+[data-theme-type="dark"] .docblock-argstable [role="switch"][aria-checked="true"],
+[data-theme-type="dark"] [class*="argstable"] [role="switch"][aria-checked="true"] {
+  background-color: var(--color-primary, #4db8ff) !important;
+}
+
+/* Override problematic CSS-in-JS classes for props table */
+[data-theme-type="dark"] .css-v2ifgj tbody > tr > td,
+[data-theme-type="dark"] .css-v2ifgj.css-v2ifgj tbody > tr > *,
+[data-theme-type="dark"] [class*="css-"][class*="css-"] tbody > tr > td {
+  color: var(--color-body-text, #e0e0e0) !important;
+  background-color: transparent !important;
+  border-color: var(--color-panel-border, #3a3a3a) !important;
+}
+
+/* Ensure proper styling for specific table elements */
+[data-theme-type="dark"] .css-v2ifgj tbody > tr > td:first-child,
+[data-theme-type="dark"] [class*="css-"] tbody > tr > td:first-child {
+  color: var(--color-body-textHard10, #f0f0f0) !important;
+  font-weight: var(--font-weight-medium);
+}
+
+[data-theme-type="dark"] .css-v2ifgj tbody > tr > td:nth-child(2),
+[data-theme-type="dark"] [class*="css-"] tbody > tr > td:nth-child(2) {
+  color: var(--color-body-textSoft10, #b0b0b0) !important;
+}
+
+[data-theme-type="dark"] .css-v2ifgj tbody > tr > td code,
+[data-theme-type="dark"] [class*="css-"] tbody > tr > td code {
+  background-color: var(--color-panel-backgroundSoft10, #2a2a2a) !important;
+  color: var(--color-primary, #4db8ff) !important;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+/* Show code button dark mode fix */
+[data-theme-type="dark"] .docblock-code-toggle,
+[data-theme-type="dark"] .css-1fdphfk,
+[data-theme-type="dark"] button[class*="docblock-code-toggle"] {
+  background-color: var(--color-panel-background, #2a2a2a) !important;
+  color: var(--color-body-text, #e0e0e0) !important;
+  border-color: var(--color-panel-border, #3a3a3a) !important;
+}
+
+[data-theme-type="dark"] .docblock-code-toggle:hover,
+[data-theme-type="dark"] .css-1fdphfk:hover,
+[data-theme-type="dark"] button[class*="docblock-code-toggle"]:hover {
+  background-color: var(--color-panel-backgroundHover, #333333) !important;
+  color: var(--color-body-textHard10, #f0f0f0) !important;
+  border-color: var(--color-panel-borderHard10, #4a4a4a) !important;
+}
+
 /* Theme-aware code blocks - Storybook's docblock-source */
 [data-theme-type="dark"] .docblock-source {
   background-color: var(--color-body-background-soft10, #1e1e1e) !important;

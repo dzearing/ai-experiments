@@ -8,6 +8,13 @@ Quick reference for design tokens in Claude Flow. For complete documentation, se
 
 #### Common Surface Colors
 
+**Important:** Surface names map directly to component types:
+- `primary` surface = Primary buttons, checkboxes, switches
+- `neutral` surface = Secondary buttons, default states
+- `danger` surface = Destructive buttons/actions
+- `success` surface = Success buttons/states
+- `*Soft` surfaces = Banner/alert backgrounds (e.g., `successSoft`, `dangerSoft`)
+
 Note: the `surface` component defines the background color group - the `concept` defines things within that group which will work together in that `state`. We can guarantee that the body text will work on the body background. However you must NOT mix and match surfaces - you should not use primary background with body text. Mixing different values from different surfaces risks creating contrast issues.
 
 
@@ -27,29 +34,45 @@ Note: the `surface` component defines the background color group - the `concept`
 /* Backgrounds */
 --color-body-background            /* Main background */
 --color-panel-background           /* Card/panel background */
---color-panelRaised-background     /* Elevated panel */
---color-overlay-background         /* Modal/dialog overlay */
+
+/* Icons */
+--color-body-icon                  /* Default icon color */
+--color-body-iconSoft20            /* Softer icon variant */
+--color-primary-icon               /* Icon on primary surface */
+--color-neutral-icon               /* Icon on neutral surface */
 
 /* Borders */
 --color-body-border                /* Default border */
 --color-body-borderSoft10          /* Subtle border */
+--color-panel-border               /* Panel border */
 --color-input-border               /* Input field border */
 --color-input-border-focus         /* Focused input border */
 
-/* Buttons */
---color-buttonPrimary-background   /* Primary button background */
---color-buttonPrimary-text         /* Primary button text */
---color-buttonPrimary-background-hover
---color-buttonNeutral-background   /* Secondary button */
---color-buttonDanger-background    /* Destructive action */
+/* Component Surfaces */
+--color-primary-background         /* Primary button background */
+--color-primary-text               /* Primary button text */
+--color-primary-border             /* Primary button border */
+--color-primary-background-hover   /* Primary hover state */
+--color-neutral-background         /* Secondary button/default */
+--color-neutral-text               /* Secondary button text */
+--color-danger-background          /* Destructive actions */
+--color-danger-text                /* Destructive button text */
+--color-success-background         /* Success actions */
+--color-success-text               /* Success button text */
 
-/* States & Feedback (Soft Backgrounds) */
+/* States & Feedback (Soft Surfaces) */
 --color-successSoft-background     /* Success message background */
 --color-successSoft-text           /* Success message text */
+--color-successSoft-border         /* Success message border */
 --color-dangerSoft-background      /* Error background */
 --color-dangerSoft-text            /* Error text */
+--color-dangerSoft-border          /* Error border */
 --color-warningSoft-background     /* Warning background */
+--color-warningSoft-text           /* Warning text */
+--color-warningSoft-border         /* Warning border */
 --color-infoSoft-background        /* Info background */
+--color-infoSoft-text              /* Info text */
+--color-infoSoft-border            /* Info border */
 
 /* Note: For error/warning/success text on regular surfaces, use:
    --color-[surface]-textDanger, textWarning, textSuccess */
@@ -127,6 +150,7 @@ Note: the `surface` component defines the background color group - the `concept`
 --shadow-card          /* Card elevation */
 --shadow-modal         /* Modal/dialog elevation */
 --shadow-tooltip       /* Tooltip elevation */
+--color-panel-shadow   /* Panel shadow (surface-specific) */
 ```
 
 ## 🔄 Border Radius
@@ -170,8 +194,8 @@ Note: the `surface` component defines the background color group - the `concept`
 ### Button Styling
 ```css
 .button-primary {
-  background: var(--color-buttonPrimary-background);
-  color: var(--color-buttonPrimary-text);
+  background: var(--color-primary-background);
+  color: var(--color-primary-text);
   padding: var(--spacing-buttonY) var(--spacing-buttonX);
   border-radius: var(--radius-button);
   font-weight: var(--font-weight-medium);
@@ -179,7 +203,7 @@ Note: the `surface` component defines the background color group - the `concept`
 }
 
 .button-primary:hover {
-  background: var(--color-buttonPrimary-background-hover);
+  background: var(--color-primary-background-hover);
 }
 ```
 
@@ -237,8 +261,9 @@ Note: the `surface` component defines the background color group - the `concept`
 }
 
 .input:focus {
+  background: var(--color-input-background-focus);
   border-color: var(--color-input-border-focus);
-  outline: 2px solid var(--color-input-border-focus);
+  outline: 2px solid var(--color-input-outline);
   outline-offset: 2px;
 }
 ```

@@ -17,6 +17,7 @@ export { Skeleton } from './Skeleton';
 export { Panel } from './Panel';
 export { Link } from './Link';
 export { Stack } from './Stack';
+export { SegmentedControl } from './SegmentedControl';
 
 // Export types
 export type { BannerProps } from './Banner';
@@ -37,3 +38,4 @@ export type { SkeletonProps } from './Skeleton';
 export type { PanelProps } from './Panel';
 export type { LinkProps } from './Link';
 export type { StackProps } from './Stack';
+export type { SegmentedControlProps, SegmentOption } from './SegmentedControl';
