@@ -23,18 +23,16 @@ const TokenBuilder = () => {
   const surfaces = [
     'body',
     'panel',
-    'buttonPrimary',
-    'buttonDanger',
-    'buttonSuccess',
-    'buttonNeutral',
-    'noticeInfo',
-    'noticeSuccess',
-    'noticeWarning',
-    'noticeDanger',
+    'primary',
+    'danger',
+    'success',
+    'warning',
+    'neutral',
+    'infoSoft',
+    'successSoft',
+    'warningSoft',
+    'dangerSoft',
     'input',
-    'inputFocus',
-    'inputError',
-    'inputDisabled',
   ];
 
   // Concept groups with base and variants (ordered from softest to hardest)

@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UI Kit Component Plans & Mockups</title>
+  <link rel="stylesheet" href="assets/styles.css">
+  
+  <!-- Set ui-kit assets base path -->
+  <script>
+    // Set the general assets path for all UI Kit resources
+    window.__uiKitBasePath = '/assets/';
+  </script>
+  
+  <script type="module" src="assets/theme.js"></script>
+  <script type="module" src="assets/theme-switcher.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: var(--spacing);
+      background: var(--color-body-background);
+      font-family: var(--font-family);
+      color: var(--color-body-text);
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: var(--font-size-h2);
+      font-weight: var(--font-weight-bold);
+      margin-bottom: var(--spacing);
+      color: var(--color-body-text);
+    }
+
+    h2 {
+      font-size: var(--font-size-h3);
+      font-weight: var(--font-weight-semibold);
+      margin-top: var(--spacing-large10);
+      margin-bottom: var(--spacing);
+      color: var(--color-body-text);
+      padding-bottom: var(--spacing-small20);
+      border-bottom: var(--border-width) solid var(--color-body-border);
+    }
+
+    .category {
+      background: var(--color-panel-background);
+      border: var(--border-width) solid var(--color-panel-border);
+      border-radius: var(--radius);
+      margin-bottom: var(--spacing-small20);
+      overflow: hidden;
+    }
+
+    .category-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--spacing-small20) var(--spacing);
+      cursor: pointer;
+      user-select: none;
+      transition: background var(--duration-fast) var(--easing-standard);
+    }
+
+    .category-header:hover {
+      background: var(--color-panel-background-hover);
+    }
+
+    .category-title {
+      font-size: var(--font-size-large10);
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-panel-text);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-small20);
+    }
+
+    .category-chevron {
+      width: 16px;
+      height: 16px;
+      transition: transform var(--duration-fast) var(--easing-standard);
+    }
+
+    .category.collapsed .category-chevron {
+      transform: rotate(-90deg);
+    }
+
+    .category-count {
+      font-size: var(--font-size-small10);
+      color: var(--color-body-textSoft20);
+      font-weight: var(--font-weight-normal);
+    }
+
+    .category-content {
+      padding: 0 var(--spacing) var(--spacing);
+      max-height: 2000px;
+      overflow: hidden;
+      transition: max-height var(--duration-normal) var(--easing-standard), padding var(--duration-normal) var(--easing-standard);
+    }
+
+    .category.collapsed .category-content {
+      max-height: 0;
+      padding: 0 var(--spacing);
+    }
+
+    .component-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-small20);
+    }
+
+    .component-item {
+      background: var(--color-panelRaised-background);
+      border: var(--border-width) solid var(--color-panelRaised-border);
+      border-radius: var(--radius-small10);
+      padding: var(--spacing-small20) var(--spacing-small10);
+      transition: background var(--duration-fast) var(--easing-standard);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-small10);
+    }
+
+    .component-item:hover {
+      background: var(--color-panelRaised-background-hover);
+    }
+
+    .component-name {
+      font-weight: var(--font-weight-medium);
+      font-size: var(--font-size);
+      color: var(--color-body-text);
+      flex-shrink: 0;
+      min-width: 180px;
+    }
+
+    .component-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-small20);
+    }
+
+    .link-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: var(--radius-large20);
+      text-decoration: none;
+      font-size: var(--font-size-smallest);
+      font-weight: var(--font-weight-medium);
+      transition: filter var(--duration-fast) var(--easing-standard);
+      height: 20px;
+      line-height: 1;
+    }
+
+    .link-badge:hover {
+      filter: brightness(1.05);
+    }
+
+    .link-badge.plan {
+      background: var(--color-infoSoft-background);
+      color: var(--color-infoSoft-text);
+    }
+
+    .link-badge.mockup {
+      background: var(--color-successSoft-background);
+      color: var(--color-successSoft-text);
+    }
+
+    .stats {
+      display: flex;
+      gap: var(--spacing-large10);
+      margin-bottom: var(--spacing);
+      padding: var(--spacing-small20) var(--spacing);
+      background: var(--color-panel-background);
+      border: var(--border-width) solid var(--color-panel-border);
+      border-radius: var(--radius);
+    }
+
+    .stat {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .stat-value {
+      font-size: var(--font-size-h4);
+      font-weight: var(--font-weight-bold);
+      color: var(--color-body-link);
+    }
+
+    .stat-label {
+      font-size: var(--font-size-smallest);
+      color: var(--color-body-textSoft10);
+    }
+
+    .empty-state {
+      padding: var(--spacing);
+      text-align: center;
+      color: var(--color-body-textSoft20);
+      font-style: italic;
+    }
+
+    .toggle-all {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-small20);
+      padding: var(--spacing-small20) var(--spacing-small10);
+      background: var(--color-neutral-background);
+      border: var(--border-width) solid var(--color-neutral-border);
+      border-radius: var(--radius-small10);
+      color: var(--color-neutral-text);
+      font-size: var(--font-size-small10);
+      font-weight: var(--font-weight-medium);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--easing-standard);
+      margin-left: var(--spacing);
+    }
+
+    .toggle-all:hover {
+      background: var(--color-neutral-background-hover);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎨 UI Kit Component Plans & Mockups <button class="toggle-all" id="toggle-all">Collapse All</button></h1>
+    
+    <div class="stats">
+      <div class="stat">
+        <span class="stat-value" id="total-components">0</span>
+        <span class="stat-label">Components</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value" id="total-plans">0</span>
+        <span class="stat-label">Plans</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value" id="total-mockups">0</span>
+        <span class="stat-label">Mockups</span>
+      </div>
+    </div>
+
+    <div id="content">
+      <!-- Content will be dynamically generated -->
+    </div>
+  </div>
+
+  <script>
+    // Component data structure with new folder organization
+    const components = {
+      'Chat Components': [
+        {
+          name: 'AI Persona Indicator',
+          folder: 'ai-persona-indicator',
+          plans: ['plan.md'],
+          mockups: ['mockup.html']
+        },
+        {
+          name: 'Chat Bubble',
+          folder: 'chat-bubble',
+          plans: ['plan.md'],
+          mockups: ['mockup.html']
+        },
+        {
+          name: 'Chat Error Boundary',
+          folder: 'chat-error-boundary',
+          plans: ['plan.md'],
+          mockups: []
+        },
+        {
+          name: 'Chat Message Group',
+          folder: 'chat-message-group',
+          plans: ['plan.md'],
+          mockups: ['mockup.html']
+        },
+        {
+          name: 'Chat Split Fork',
+          folder: 'chat-split-fork',
+          plans: ['plan.md'],
+          mockups: ['mockup.html']
+        },
+        {
+          name: 'Chat Summary Card',
+          folder: 'chat-summary-card',
+          plans: ['plan.md'],
+          mockups: []
+        },
+        {
+          name: 'Code Diff Visualizer',
+          folder: 'code-diff-visualizer',
+          plans: ['plan.md'],
+          mockups: ['mockup.html']
+        },
+        {
+          name: 'Code Graph Visualizer',
+          folder: 'code-graph-visualizer',
+          plans: ['plan.md'],
+          mockups: []
+        },
+        {
+          name: 'Conversation List',
+          folder: 'conversation-list',
+          plans: ['plan.md'],
+          mockups: []
+        },
+        {
+          name: 'File Attachment',
+          folder: 'file-attachment',
+          plans: ['plan.md'],
+          mockups: ['mockup.html']
+        },
+        {
+          name: 'File Tree Visualizer',
+          folder: 'file-tree-visualizer',
+          plans: ['plan.md'],
+          mockups: ['mockup.html']
+        },
+        {
+          name: 'Image Paste Handler',
+          folder: 'image-paste-handler',
+          plans: ['plan.md'],
+          mockups: []
+        },
+        {
+          name: 'Mention Autocomplete',
+          folder: 'mention-autocomplete',
+          plans: ['plan.md'],
+          mockups: []
+        },
+        {
+          name: 'Multi Chat Dashboard',
+          folder: 'multi-chat-dashboard',
+          plans: ['plan.md'],
+          mockups: ['mockup.html']
+        },
+        {
+          name: 'Prompt History',
+          folder: 'prompt-history',
+          plans: ['plan.md'],
+          mockups: []
+        },
+        {
+          name: 'Search Results Visualizer',
+          folder: 'search-results-visualizer',
+          plans: ['plan.md'],
+          mockups: ['mockup.html']
+        },
+        {
+          name: 'Smart Prompt Input',
+          folder: 'smart-prompt-input',
+          plans: ['plan.md'],
+          mockups: ['mockup.html']
+        },
+        {
+          name: 'Streaming Text',
+          folder: 'streaming-text',
+          plans: ['plan.md'],
+          mockups: ['mockup.html']
+        },
+        {
+          name: 'Text Paste Handler',
+          folder: 'text-paste-handler',
+          plans: ['plan.md'],
+          mockups: []
+        },
+        {
+          name: 'Tool Execution Container',
+          folder: 'tool-execution-container',
+          plans: ['plan.md'],
+          mockups: ['mockup.html', 'mockup-default.html']
+        },
+        {
+          name: 'Typing Indicator',
+          folder: 'typing-indicator',
+          plans: ['plan.md'],
+          mockups: ['mockup.html']
+        }
+      ],
+      'List Components': [
+        {
+          name: 'Chat List',
+          folder: 'chat-list',
+          plans: ['plan.md'],
+          mockups: ['mockup.html']
+        },
+        {
+          name: 'Virtualized List',
+          folder: 'virtualized-list',
+          plans: ['plan.md'],
+          mockups: []
+        },
+        {
+          name: 'Tree View',
+          folder: 'tree-view',
+          plans: ['mockup-plan.md'],
+          mockups: []
+        }
+      ],
+      'Form Components': [
+        {
+          name: 'Segmented Control',
+          folder: 'segmented-control',
+          plans: [],
+          mockups: [
+            'mockup-default.html',
+            'mockup-dark.html',
+            'mockup-interactive.html',
+            'mockup-responsive.html',
+            'mockup-variants.html'
+          ]
+        }
+      ]
+    };
+
+    // Render the component list
+    function renderComponents() {
+      const contentEl = document.getElementById('content');
+      let totalComponents = 0;
+      let totalPlans = 0;
+      let totalMockups = 0;
+
+      let html = '';
+
+      for (const [category, items] of Object.entries(components)) {
+        const categoryKey = category.toLowerCase().replace(/\s+/g, '-');
+        const categoryId = `category-${categoryKey}`;
+        
+        html += `<div class="category" id="${categoryId}">`;
+        html += `<div class="category-header" onclick="toggleCategory('${categoryId}')">`;
+        html += `<div class="category-title">`;
+        html += `<svg class="category-chevron" viewBox="0 0 16 16" fill="currentColor">`;
+        html += `<path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`;
+        html += `</svg>`;
+        html += `${category}`;
+        html += `<span class="category-count">(${items.length})</span>`;
+        html += `</div>`;
+        html += `</div>`;
+        html += `<div class="category-content">`;
+        html += `<div class="component-list">`;
+
+        if (items.length === 0) {
+          html += `<div class="empty-state">No components yet</div>`;
+        } else {
+          for (const item of items) {
+            totalComponents++;
+            totalPlans += item.plans.length;
+            totalMockups += item.mockups.length;
+
+            html += `<div class="component-item">`;
+            html += `<div class="component-name">${item.name}</div>`;
+            html += `<div class="component-links">`;
+
+            // Add plan links
+            for (const plan of item.plans) {
+              const planLabel = plan === 'plan.md' ? 'Plan' : plan.replace('.md', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+              html += `<a href="plans/${categoryKey}/${item.folder}/${plan}" class="link-badge plan">📋 ${planLabel}</a>`;
+            }
+
+            // Add mockup links
+            for (const mockup of item.mockups) {
+              let mockupLabel;
+              if (mockup === 'mockup.html') {
+                mockupLabel = 'Mockup';
+              } else {
+                // Handle names like 'mockup-default.html', 'mockup-dark.html', etc.
+                mockupLabel = mockup.replace('mockup-', '').replace('.html', '').replace(/-/g, ' ');
+                // Capitalize each word
+                mockupLabel = mockupLabel.split(' ').map(word => 
+                  word.charAt(0).toUpperCase() + word.slice(1)
+                ).join(' ');
+                mockupLabel = 'Mockup: ' + mockupLabel;
+              }
+              html += `<a href="plans/${categoryKey}/${item.folder}/${mockup}" class="link-badge mockup">🎨 ${mockupLabel}</a>`;
+            }
+
+            if (item.plans.length === 0 && item.mockups.length === 0) {
+              html += `<span class="empty-state">No resources yet</span>`;
+            }
+
+            html += `</div>`;
+            html += `</div>`;
+          }
+        }
+
+        html += `</div>`;
+        html += `</div>`;
+        html += `</div>`;
+      }
+
+      contentEl.innerHTML = html;
+
+      // Update stats
+      document.getElementById('total-components').textContent = totalComponents;
+      document.getElementById('total-plans').textContent = totalPlans;
+      document.getElementById('total-mockups').textContent = totalMockups;
+    }
+
+    // Toggle category collapse
+    function toggleCategory(categoryId) {
+      const category = document.getElementById(categoryId);
+      if (category) {
+        category.classList.toggle('collapsed');
+      }
+    }
+
+    // Toggle all categories
+    let allCollapsed = false;
+    document.getElementById('toggle-all').addEventListener('click', function() {
+      allCollapsed = !allCollapsed;
+      const categories = document.querySelectorAll('.category');
+      categories.forEach(cat => {
+        if (allCollapsed) {
+          cat.classList.add('collapsed');
+        } else {
+          cat.classList.remove('collapsed');
+        }
+      });
+      this.textContent = allCollapsed ? 'Expand All' : 'Collapse All';
+    });
+
+    // Initial render
+    renderComponents();
+  </script>
+</body>
+</html>

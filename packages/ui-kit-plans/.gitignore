@@ -1,0 +1,13 @@
+# Symlinked assets from ui-kit
+/assets
+
+# Dependencies
+node_modules
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.idea
+.vscode/*.local

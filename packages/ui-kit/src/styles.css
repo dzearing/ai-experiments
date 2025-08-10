@@ -5,17 +5,35 @@
  * - CSS reset and normalization
  * - Base element styling
  * - Font definitions (Segoe UI)
- * - Utility classes
  * 
  * This file is imported by all theme CSS files and provides
  * the foundation for the design system.
  */
 
 /* ===================================================================
+   Layer Order Declaration - MUST be first
+   =================================================================== */
+
+@layer reset, base, overrides, app;
+
+/* ===================================================================
+   Import CSS Variables - These define the design tokens
+   =================================================================== */
+
+@import './styles/fonts.css';
+@import './styles/variables/typography.css';
+@import './styles/variables/spacing.css';
+@import './styles/variables/animation.css';
+@import './styles/variables/borders.css';
+@import './styles/variables/shadows.css';
+@import './styles/variables/layout.css';
+@import './styles/variables/colors.css';
+
+/* ===================================================================
    CSS Reset / Normalize
    =================================================================== */
 
-@layer base {
+@layer reset {
   *,
   *::before,
   *::after {
@@ -38,29 +56,11 @@
   html:focus-within {
     scroll-behavior: smooth;
   }
-}
 
-/* Import CSS Variables */
-@import './styles/fonts.css';
-@import './styles/variables/typography.css';
-@import './styles/variables/spacing.css';
-@import './styles/variables/animation.css';
-@import './styles/variables/borders.css';
-@import './styles/variables/shadows.css';
-@import './styles/variables/layout.css';
-@import './styles/variables/colors.css';
+  /* ===================================================================
+     Base Elements
+     =================================================================== */
 
-/* ===================================================================
-   Layer Order Declaration
-   =================================================================== */
-
-@layer base, overrides;
-
-/* ===================================================================
-   Base Elements
-   =================================================================== */
-
-@layer base {
   /* Body */
   body {
     min-height: 100vh;
@@ -120,7 +120,6 @@
   /* Paragraphs */
   p {
     margin-bottom: 1em;
-    color: var(--color-body-text);
   }
 
   p:last-child {
@@ -472,9 +471,9 @@
     }
   }
 
-  /* ===================================================================
-     Reduced Motion
-     =================================================================== */
+/* ===================================================================
+   Reduced Motion - In reset layer
+   =================================================================== */
 
   @media (prefers-reduced-motion: reduce) {
     *,
@@ -486,150 +485,33 @@
       scroll-behavior: auto !important;
     }
   }
-} /* End @layer base */
 
 /* ===================================================================
-   Utility Classes
+   Special Classes
    =================================================================== */
 
-/* Theme Transitioning */
-.theme-transitioning,
-.theme-transitioning * {
-  transition: none !important;
-}
+  /* Theme Transitioning */
+  .theme-transitioning,
+  .theme-transitioning * {
+    transition: none !important;
+  }
 
-/* Text Utilities */
-.text-xs {
-  font-size: var(--font-size-xs);
-}
-.text-sm {
-  font-size: var(--font-size-sm);
-}
-.text-base {
-  font-size: var(--font-size-base);
-}
-.text-lg {
-  font-size: var(--font-size-lg);
-}
-.text-xl {
-  font-size: var(--font-size-xl);
-}
-.text-2xl {
-  font-size: var(--font-size-2xl);
-}
-.text-3xl {
-  font-size: var(--font-size-3xl);
-}
-.text-4xl {
-  font-size: var(--font-size-4xl);
-}
-.text-5xl {
-  font-size: var(--font-size-5xl);
-}
+  /* Screen Reader Only */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
 
-.font-light {
-  font-weight: var(--font-weight-light);
-}
-.font-normal {
-  font-weight: var(--font-weight-regular);
-}
-.font-medium {
-  font-weight: var(--font-weight-medium);
-}
-.font-semibold {
-  font-weight: var(--font-weight-semibold);
-}
-.font-bold {
-  font-weight: var(--font-weight-bold);
-}
-
-.text-left {
-  text-align: left;
-}
-.text-center {
-  text-align: center;
-}
-.text-right {
-  text-align: right;
-}
-.text-justify {
-  text-align: justify;
-}
-
-/* Spacing Utilities */
-.m-0 {
-  margin: 0;
-}
-.p-0 {
-  padding: 0;
-}
-
-/* Display Utilities */
-.hidden {
-  display: none;
-}
-.block {
-  display: block;
-}
-.inline {
-  display: inline;
-}
-.inline-block {
-  display: inline-block;
-}
-.flex {
-  display: flex;
-}
-.inline-flex {
-  display: inline-flex;
-}
-.grid {
-  display: grid;
-}
-
-/* Position Utilities */
-.relative {
-  position: relative;
-}
-.absolute {
-  position: absolute;
-}
-.fixed {
-  position: fixed;
-}
-.sticky {
-  position: sticky;
-}
-
-/* Overflow */
-.overflow-auto {
-  overflow: auto;
-}
-.overflow-hidden {
-  overflow: hidden;
-}
-.overflow-visible {
-  overflow: visible;
-}
-.overflow-scroll {
-  overflow: scroll;
-}
-
-/* Screen Reader Only */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
-}
-
-/* Focus Visible Only */
-.focus-visible:focus:not(:focus-visible) {
-  outline: none;
+  /* Focus Visible Only */
+  .focus-visible:focus:not(:focus-visible) {
+    outline: none;
+  }
 }
 

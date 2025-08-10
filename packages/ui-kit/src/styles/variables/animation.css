@@ -10,7 +10,7 @@
   --duration-fastest: 100ms;
   --duration-fast20: 150ms;
   --duration-fast10: 200ms;
-  --duration: 300ms;
+  --duration-normal: 300ms;
   --duration-slow10: 400ms;
   --duration-slow20: 600ms;
   --duration-slowest: 1000ms;
@@ -18,11 +18,11 @@
   /* Semantic Durations */
   --duration-hover: var(--duration-fastest);
   --duration-focus: var(--duration-fastest);
-  --duration-expand: var(--duration);
+  --duration-expand: var(--duration-normal);
   --duration-collapse: var(--duration-fast10);
-  --duration-fadeIn: var(--duration);
-  --duration-fadeOut: var(--duration);
-  --duration-slideIn: var(--duration);
+  --duration-fadeIn: var(--duration-normal);
+  --duration-fadeOut: var(--duration-normal);
+  --duration-slideIn: var(--duration-normal);
   --duration-slideOut: var(--duration-fast10);
   --duration-pageTransition: var(--duration-slow10);
 
@@ -82,7 +82,7 @@
     --duration-fastest: 1ms;
     --duration-fast20: 1ms;
     --duration-fast10: 1ms;
-    --duration: 1ms;
+    --duration-normal: 1ms;
     --duration-slow10: 1ms;
     --duration-slow20: 1ms;
     --duration-slowest: 1ms;

@@ -1,0 +1,13 @@
+{
+  "name": "@claude-flow/ui-kit-plans",
+  "version": "0.1.0",
+  "private": true,
+  "description": "UI Kit component plans and mockups",
+  "scripts": {
+    "dev": "npx http-server . -p 8080 -c-1",
+    "postinstall": "node scripts/setup-assets.js"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}

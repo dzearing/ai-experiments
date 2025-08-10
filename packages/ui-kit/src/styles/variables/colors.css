@@ -7,6 +7,9 @@
  * 
  * Theme tokens follow the pattern: --color-[surface]-[concept]-[state]
  * and are defined in the generated theme files in dist/themes/
+ * 
+ * Gradient tokens follow the pattern: --gradient-[surface]-[intent]
+ * and provide subtle overlays that work with all surface foreground tokens
  */
 
 /* Special variables that aren't surface-based */
@@ -18,4 +21,54 @@
   /* These are defined by themes but we provide fallbacks */
   --color-selection-background: var(--color-body-link, #1976d2);
   --color-selection-text: var(--color-body-background, #ffffff);
+  
+  /* 
+   * Gradient Token Fallbacks
+   * 
+   * These gradients are designed as subtle overlays that maintain
+   * accessibility with all body surface foreground tokens.
+   * 
+   * Usage example:
+   *   background: var(--gradient-body-primary), var(--color-body-background);
+   * 
+   * The gradients use color-mix() for smooth transitions and browser compatibility.
+   * All gradients fade to transparent to ensure text remains readable.
+   */
+  
+  /* Primary gradient - for emphasis and brand identity */
+  --gradient-body-primary: linear-gradient(135deg, 
+    color-mix(in srgb, #1976d2 25%, transparent) 0%, 
+    transparent 50%
+  );
+  
+  /* Success gradient - for positive states and confirmations */
+  --gradient-body-success: linear-gradient(135deg,
+    color-mix(in srgb, #22c55e 20%, transparent) 0%,
+    transparent 50%
+  );
+  
+  /* Warning gradient - for caution states */
+  --gradient-body-warning: linear-gradient(135deg,
+    color-mix(in srgb, #f59e0b 20%, transparent) 0%,
+    transparent 60%
+  );
+  
+  /* Danger gradient - for error states and destructive actions */
+  --gradient-body-danger: linear-gradient(135deg,
+    color-mix(in srgb, #ef4444 20%, transparent) 0%,
+    transparent 60%
+  );
+  
+  /* Info gradient - for informational states */
+  --gradient-body-info: linear-gradient(135deg,
+    color-mix(in srgb, #3b82f6 20%, transparent) 0%,
+    transparent 50%
+  );
+  
+  /* Accent gradient - decorative gradient with dual colors */
+  --gradient-body-accent: linear-gradient(135deg,
+    color-mix(in srgb, #1976d2 15%, transparent) 0%,
+    color-mix(in srgb, #9333ea 10%, transparent) 50%,
+    transparent 100%
+  );
 }

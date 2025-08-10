@@ -21,7 +21,7 @@ const getThemeCardStyles = () => `
   }
   
   button {
-    font-family: var(--font-family);
+    font-family: inherit;
     line-height: 1;
     cursor: pointer;
     white-space: nowrap;
@@ -31,8 +31,8 @@ const getThemeCardStyles = () => `
   }
   
   input {
-    font-family: var(--font-family);
-    line-height: var(--line-height-normal);
+    font-family: inherit;
+    line-height: var(--line-height);
     margin: 0;
   }
   
@@ -43,35 +43,29 @@ const getThemeCardStyles = () => `
   .theme-content {
     position: relative;
     background: 
-      linear-gradient(135deg, 
-        color-mix(in srgb, var(--color-buttonPrimary-background) 25%, transparent) 0%, 
-        transparent 50%
-      ),
+      var(--gradient-body-primary),
       var(--color-panel-background);
     border: 2px solid var(--color-panel-border);
     border-radius: var(--radius);
     padding: var(--spacing-large20);
-    transition: background var(--duration) var(--easing-default),
-                border-color var(--duration) var(--easing-default),
-                box-shadow var(--duration) var(--easing-default);
+    transition: background var(--duration-normal) var(--easing-default),
+                border-color var(--duration-normal) var(--easing-default),
+                box-shadow var(--duration-normal) var(--easing-default);
     cursor: pointer;
     overflow: hidden;
   }
   
   .theme-content:hover {
     background: 
-      linear-gradient(135deg, 
-        color-mix(in srgb, var(--color-buttonPrimary-background) 30%, transparent) 0%, 
-        transparent 50%
-      ),
+      var(--gradient-body-accent),
       var(--color-panel-background);
-    border-color: var(--color-panel-border-hard10);
-    box-shadow: var(--shadow-hard10);
+    border-color: var(--color-panel-border-hover);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   }
   
   .theme-content.active {
-    border-color: var(--color-buttonPrimary-background);
-    box-shadow: 0 0 0 3px var(--color-buttonPrimary-background-soft20);
+    border-color: var(--color-primary-background);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary-background) 20%, transparent);
   }
   
   .active-badge {
@@ -79,8 +73,8 @@ const getThemeCardStyles = () => `
     top: 0;
     right: 0;
     height: 20px;
-    background: var(--color-buttonPrimary-background);
-    color: var(--color-buttonPrimary-text);
+    background: var(--color-primary-background);
+    color: var(--color-primary-text);
     padding: 0 var(--spacing);
     border-radius: 0 0 0 var(--radius);
     font-size: var(--font-size-smallest);
@@ -121,24 +115,24 @@ const getThemeCardStyles = () => `
   
   .toggle-label {
     font-size: var(--font-size-small20);
-    color: var(--color-panel-text-soft30);
+    color: var(--color-panel-textSoft20);
   }
   
   .toggle-switch {
     position: relative;
     width: 48px;
     height: 24px;
-    background: var(--color-panel-background-soft20);
-    border: 1px solid var(--color-panel-border);
+    background: var(--color-neutral-background);
+    border: 1px solid var(--color-neutral-border);
     border-radius: 12px;
     cursor: pointer;
-    transition: background-color var(--duration) var(--easing-default),
-                border-color var(--duration) var(--easing-default);
+    transition: background-color var(--duration-normal) var(--easing-default),
+                border-color var(--duration-normal) var(--easing-default);
   }
   
   .toggle-switch.dark {
-    background: var(--color-buttonPrimary-background);
-    border-color: var(--color-buttonPrimary-border);
+    background: var(--color-primary-background);
+    border-color: var(--color-primary-border);
   }
   
   .toggle-slider {
@@ -147,20 +141,21 @@ const getThemeCardStyles = () => `
     left: 2px;
     width: 18px;
     height: 18px;
-    background: var(--color-panel-background);
+    background: var(--color-neutral-text);
     border-radius: 50%;
-    transition: transform var(--duration) var(--easing-default);
-    box-shadow: var(--shadow-sm);
+    transition: transform var(--duration-normal) var(--easing-default),
+                background var(--duration-normal) var(--easing-default);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   }
   
   .toggle-switch.dark .toggle-slider {
     transform: translateX(24px);
-    background: var(--color-buttonPrimary-text);
+    background: var(--color-primary-text);
   }
   
   .theme-description {
     font-size: var(--font-size-small20);
-    color: var(--color-panel-text-soft30);
+    color: var(--color-panel-textSoft20);
     margin: 0 0 var(--spacing) 0;
     line-height: var(--line-height-normal);
   }
@@ -193,9 +188,9 @@ const getThemeCardStyles = () => `
     border-radius: var(--radius-small10);
     font-size: var(--font-size-small10);
     cursor: pointer;
-    transition: background-color var(--duration) var(--easing-default),
-                color var(--duration) var(--easing-default),
-                box-shadow var(--duration) var(--easing-default);
+    transition: background-color var(--duration-normal) var(--easing-default),
+                color var(--duration-normal) var(--easing-default),
+                box-shadow var(--duration-normal) var(--easing-default);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -203,51 +198,51 @@ const getThemeCardStyles = () => `
   }
   
   .preview-button-primary {
-    background: var(--color-buttonPrimary-background) !important;
-    color: var(--color-buttonPrimary-text) !important;
+    background: var(--color-primary-background) !important;
+    color: var(--color-primary-text) !important;
   }
   
   .preview-button-primary:hover {
-    background: var(--color-buttonPrimary-background-hover) !important;
-    color: var(--color-buttonPrimary-text-hover) !important;
+    background: var(--color-primary-background-hover) !important;
+    color: var(--color-primary-text-hover) !important;
   }
   
   .preview-button-primary:active {
-    background: var(--color-buttonPrimary-background-active) !important;
-    color: var(--color-buttonPrimary-text-active) !important;
+    background: var(--color-primary-background-active) !important;
+    color: var(--color-primary-text-active) !important;
   }
   
   .preview-button-neutral {
-    background: var(--color-buttonNeutral-background) !important;
-    color: var(--color-buttonNeutral-text) !important;
+    background: var(--color-neutral-background) !important;
+    color: var(--color-neutral-text) !important;
   }
   
   .preview-button-neutral:hover {
-    background: var(--color-buttonNeutral-background-hover) !important;
-    color: var(--color-buttonNeutral-text-hover) !important;
+    background: var(--color-neutral-background-hover) !important;
+    color: var(--color-neutral-text-hover) !important;
   }
   
   .preview-button-neutral:active {
-    background: var(--color-buttonNeutral-background-active) !important;
-    color: var(--color-buttonNeutral-text-active) !important;
+    background: var(--color-neutral-background-active) !important;
+    color: var(--color-neutral-text-active) !important;
   }
   
   .preview-button-outline {
     background: transparent !important;
-    color: var(--color-buttonSecondary-text) !important;
-    border: 1px solid var(--color-buttonSecondary-border) !important;
+    color: var(--color-neutral-text) !important;
+    border: 1px solid var(--color-neutral-border) !important;
   }
   
   .preview-button-outline:hover {
-    background: var(--color-panel-background-soft10) !important;
-    color: var(--color-buttonSecondary-text) !important;
-    border-color: var(--color-buttonSecondary-border-hover) !important;
+    background: var(--color-panel-background) !important;
+    color: var(--color-neutral-text-hover) !important;
+    border-color: var(--color-neutral-border-hover) !important;
   }
   
   .preview-button-outline:active {
-    background: var(--color-panel-background-soft20) !important;
-    color: var(--color-buttonSecondary-text) !important;
-    border-color: var(--color-buttonSecondary-border-active) !important;
+    background: var(--color-panel-background) !important;
+    color: var(--color-neutral-text-active) !important;
+    border-color: var(--color-neutral-border-active) !important;
   }
   
   .preview-link {
@@ -291,15 +286,15 @@ const getThemeCardStyles = () => `
     border: 1px solid var(--color-input-border);
     border-radius: var(--radius-small10);
     font-size: var(--font-size-small10);
-    transition: background-color var(--duration) var(--easing-default),
-                border-color var(--duration) var(--easing-default),
-                outline var(--duration) var(--easing-default);
+    transition: background-color var(--duration-normal) var(--easing-default),
+                border-color var(--duration-normal) var(--easing-default),
+                outline var(--duration-normal) var(--easing-default);
     width: 100%;
     box-sizing: border-box;
   }
   
   .preview-input::placeholder {
-    color: var(--color-input-text-soft30);
+    color: var(--color-input-textSoft20);
   }
   
   .preview-input:focus {
@@ -317,11 +312,11 @@ const getThemeCardStyles = () => `
     height: 8px;
     -webkit-appearance: none;
     appearance: none;
-    background: var(--color-panel-background-soft30);
+    background: var(--color-panel-background);
     border: 1px solid var(--color-panel-border);
     border-radius: 4px;
     outline: none;
-    transition: opacity var(--duration) var(--easing-default);
+    transition: opacity var(--duration-normal) var(--easing-default);
     box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
   }
   
@@ -330,31 +325,31 @@ const getThemeCardStyles = () => `
     appearance: none;
     width: 18px;
     height: 18px;
-    background: var(--color-buttonPrimary-background);
+    background: var(--color-primary-background);
     border-radius: 50%;
     cursor: pointer;
-    transition: background-color var(--duration) var(--easing-default),
-                transform var(--duration) var(--easing-default);
+    transition: background-color var(--duration-normal) var(--easing-default),
+                transform var(--duration-normal) var(--easing-default);
   }
   
   .preview-slider::-moz-range-thumb {
     width: 18px;
     height: 18px;
-    background: var(--color-buttonPrimary-background);
+    background: var(--color-primary-background);
     border-radius: 50%;
     cursor: pointer;
     border: none;
-    transition: background-color var(--duration) var(--easing-default),
-                transform var(--duration) var(--easing-default);
+    transition: background-color var(--duration-normal) var(--easing-default),
+                transform var(--duration-normal) var(--easing-default);
   }
   
   .preview-slider:hover::-webkit-slider-thumb {
-    background: var(--color-buttonPrimary-background-hover);
+    background: var(--color-primary-background-hover);
     transform: scale(1.1);
   }
   
   .preview-slider:hover::-moz-range-thumb {
-    background: var(--color-buttonPrimary-background-hover);
+    background: var(--color-primary-background-hover);
     transform: scale(1.1);
   }
   
@@ -368,7 +363,7 @@ const getThemeCardStyles = () => `
     width: 24px;
     height: 24px;
     border: 3px solid var(--color-panel-border);
-    border-top-color: var(--color-buttonPrimary-background);
+    border-top-color: var(--color-primary-background);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
     flex-shrink: 0;
@@ -381,7 +376,7 @@ const getThemeCardStyles = () => `
   .preview-progress-bar {
     flex: 1;
     height: 8px;
-    background: var(--color-panel-background-soft30);
+    background: var(--color-panel-background);
     border: 1px solid var(--color-panel-border);
     border-radius: 4px;
     overflow: hidden;
@@ -391,10 +386,10 @@ const getThemeCardStyles = () => `
   
   .preview-progress-fill {
     height: 100%;
-    background: var(--color-buttonPrimary-background);
+    background: var(--color-primary-background);
     border-radius: 3px;
-    transition: width var(--duration) var(--easing-default),
-                background-color var(--duration) var(--easing-default);
+    transition: width var(--duration-normal) var(--easing-default),
+                background-color var(--duration-normal) var(--easing-default);
     position: relative;
     overflow: hidden;
   }

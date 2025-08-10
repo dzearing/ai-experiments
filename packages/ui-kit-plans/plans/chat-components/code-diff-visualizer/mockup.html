@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Diff Visualizer Mockup</title>
+    <!-- UI Kit Styles -->
+    <link rel="stylesheet" href="../../../assets/styles.css">
+    
+    <!-- Set theme base path for mockups -->
+    <script>
+        window.__uiKitBasePath = '../../../assets/';
+    </script>    
+    <!-- Theme Scripts (ES modules) -->
+    <script type="module" src="../../../assets/theme.js"></script>
+    <script type="module" src="../../../assets/theme-switcher.js"></script>
+    
+    <style>
+        /* Component-specific tokens not in ui-kit */
+        :root {
+            /* Missing syntax highlighting colors */
+            --color-syntax-keyword: var(--color-info-text);
+            --color-syntax-string: var(--color-success-textSoft10);
+            --color-syntax-comment: var(--color-body-textSoft20);
+            --color-syntax-function: var(--color-warning-text);
+            --color-syntax-type: var(--color-primary-text);
+            
+            /* Missing diff background colors with transparency */
+            --color-diff-add-background: rgba(40, 167, 69, 0.15);
+            --color-diff-delete-background: rgba(220, 53, 69, 0.15);
+            
+            /* Missing inline diff colors */
+            --color-inline-add-background: rgba(40, 167, 69, 0.2);
+            --color-inline-delete-background: rgba(220, 53, 69, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--color-body-background);
+            color: var(--color-body-text);
+            padding: var(--spacing);
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            margin-bottom: var(--spacing);
+            font-size: 24px;
+        }
+
+        h2 {
+            margin: 24px 0 16px;
+            font-size: 18px;
+            color: var(--color-body-textSoft20);
+        }
+
+        /* View Mode Selector */
+        .view-selector {
+            display: flex;
+            gap: var(--spacing-small10);
+            margin-bottom: var(--spacing);
+            background: var(--color-panel-background);
+            padding: var(--spacing-small10);
+            border-radius: var(--radius);
+        }
+
+        .view-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--color-border);
+            background: white;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .view-btn.active {
+            background: var(--color-body-text);
+            color: var(--color-body-background);
+            border-color: var(--color-body-text);
+        }
+
+        /* Diff Container */
+        .diff-container {
+            background: var(--color-body-background);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            margin-bottom: var(--spacing);
+        }
+
+        .diff-header {
+            background: var(--color-panel-background);
+            padding: var(--spacing-small10) var(--spacing);
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .diff-stats {
+            display: flex;
+            gap: var(--spacing);
+            font-size: 13px;
+        }
+
+        .stat-add {
+            color: var(--color-success-text);
+        }
+
+        .stat-delete {
+            color: var(--color-danger-text);
+        }
+
+        /* Unified View */
+        .diff-unified {
+            font-family: var(--font-family-mono);
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .diff-line {
+            display: flex;
+            min-height: 20px;
+        }
+
+        .line-number {
+            width: 40px;
+            padding: 0 8px;
+            text-align: right;
+            color: var(--color-body-textSoft20);
+            background: var(--color-panel-background);
+            border-right: 1px solid var(--color-border);
+            user-select: none;
+        }
+
+        .line-content {
+            flex: 1;
+            padding: 0 var(--spacing-small10);
+            white-space: pre;
+            overflow-x: auto;
+        }
+
+        .line-add {
+            background: var(--color-success-background);
+        }
+
+        .line-add .line-content::before {
+            content: '+';
+            color: var(--color-success-text);
+            margin-right: 8px;
+        }
+
+        .line-delete {
+            background: var(--color-danger-background);
+        }
+
+        .line-delete .line-content::before {
+            content: '-';
+            color: var(--color-danger-text);
+            margin-right: 8px;
+        }
+
+        .line-context {
+            color: var(--color-body-textSoft20);
+        }
+
+        .line-context .line-content::before {
+            content: ' ';
+            margin-right: 8px;
+        }
+
+        /* Split View */
+        .diff-split {
+            display: flex;
+            font-family: var(--font-family-mono);
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .diff-side {
+            flex: 1;
+            overflow-x: auto;
+        }
+
+        .diff-side.old {
+            border-right: 1px solid var(--color-border);
+        }
+
+        .side-header {
+            background: var(--color-panel-background);
+            padding: 4px 8px;
+            font-size: 12px;
+            font-weight: 500;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        /* Inline Diff */
+        .diff-inline {
+            font-family: var(--font-family-mono);
+            font-size: 13px;
+            line-height: 1.6;
+            padding: var(--spacing);
+        }
+
+        .inline-add {
+            background: var(--color-successSoft-background);
+            color: var(--color-success-text);
+            padding: 2px 4px;
+            border-radius: 3px;
+            text-decoration: none;
+        }
+
+        .inline-delete {
+            background: var(--color-dangerSoft-background);
+            color: var(--color-danger-text);
+            padding: 2px 4px;
+            border-radius: 3px;
+            text-decoration: line-through;
+        }
+
+        /* Collapse/Expand */
+        .collapse-section {
+            background: var(--color-panel-background);
+            padding: 4px var(--spacing);
+            text-align: center;
+            color: var(--color-body-textSoft20);
+            font-size: 12px;
+            cursor: pointer;
+            border-top: 1px solid var(--color-border);
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .collapse-section:hover {
+            background: var(--color-neutral-background);
+        }
+
+        /* Navigation */
+        .diff-nav {
+            position: sticky;
+            top: 0;
+            background: white;
+            border-bottom: 1px solid var(--color-border);
+            padding: var(--spacing-small10);
+            display: flex;
+            gap: var(--spacing-small10);
+            z-index: 10;
+        }
+
+        .nav-btn {
+            padding: 4px 8px;
+            border: 1px solid var(--color-border);
+            background: white;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .nav-btn:hover {
+            background: var(--color-panel-background);
+        }
+
+        /* Syntax Highlighting (simplified) */
+        .keyword {
+            color: var(--color-primary-text);
+            font-weight: 500;
+        }
+
+        .string {
+            color: var(--color-danger-text);
+        }
+
+        .comment {
+            color: var(--color-success-text);
+            font-style: italic;
+        }
+
+        .function {
+            color: var(--color-warning-text);
+        }
+
+        .type {
+            color: var(--color-info-text);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Code Diff Visualizer</h1>
+
+        <div class="view-selector">
+            <button class="view-btn active" onclick="showView('unified')">Unified</button>
+            <button class="view-btn" onclick="showView('split')">Split</button>
+            <button class="view-btn" onclick="showView('inline')">Inline</button>
+        </div>
+
+        <!-- Unified View -->
+        <h2>Unified View</h2>
+        <div class="diff-container" id="unified-view">
+            <div class="diff-header">
+                <div class="file-info">
+                    📄 components/Button.tsx
+                </div>
+                <div class="diff-stats">
+                    <span class="stat-add">+5</span>
+                    <span class="stat-delete">-2</span>
+                </div>
+            </div>
+            
+            <div class="diff-nav">
+                <button class="nav-btn">⬆ Previous</button>
+                <button class="nav-btn">⬇ Next</button>
+                <button class="nav-btn">↕ Expand All</button>
+            </div>
+
+            <div class="diff-unified">
+                <div class="diff-line line-context">
+                    <span class="line-number">10</span>
+                    <span class="line-number">10</span>
+                    <span class="line-content"><span class="keyword">import</span> React <span class="keyword">from</span> <span class="string">'react'</span>;</span>
+                </div>
+                <div class="diff-line line-context">
+                    <span class="line-number">11</span>
+                    <span class="line-number">11</span>
+                    <span class="line-content"><span class="keyword">import</span> { ButtonProps } <span class="keyword">from</span> <span class="string">'./types'</span>;</span>
+                </div>
+                <div class="diff-line line-delete">
+                    <span class="line-number">12</span>
+                    <span class="line-number">-</span>
+                    <span class="line-content"><span class="keyword">export function</span> <span class="function">Button</span>({ onClick, children }) {</span>
+                </div>
+                <div class="diff-line line-add">
+                    <span class="line-number">-</span>
+                    <span class="line-number">12</span>
+                    <span class="line-content"><span class="keyword">export function</span> <span class="function">Button</span>({ onClick, children, variant = <span class="string">'primary'</span> }: <span class="type">ButtonProps</span>) {</span>
+                </div>
+                <div class="diff-line line-add">
+                    <span class="line-number">-</span>
+                    <span class="line-number">13</span>
+                    <span class="line-content">  <span class="keyword">const</span> className = `btn btn-${variant}`;</span>
+                </div>
+                <div class="diff-line line-add">
+                    <span class="line-number">-</span>
+                    <span class="line-number">14</span>
+                    <span class="line-content"></span>
+                </div>
+                <div class="diff-line line-context">
+                    <span class="line-number">13</span>
+                    <span class="line-number">15</span>
+                    <span class="line-content">  <span class="keyword">return</span> (</span>
+                </div>
+                <div class="diff-line line-delete">
+                    <span class="line-number">14</span>
+                    <span class="line-number">-</span>
+                    <span class="line-content">    &lt;button className=<span class="string">"btn"</span> onClick={onClick}&gt;</span>
+                </div>
+                <div class="diff-line line-add">
+                    <span class="line-number">-</span>
+                    <span class="line-number">16</span>
+                    <span class="line-content">    &lt;button className={className} onClick={onClick}&gt;</span>
+                </div>
+                <div class="diff-line line-context">
+                    <span class="line-number">15</span>
+                    <span class="line-number">17</span>
+                    <span class="line-content">      {children}</span>
+                </div>
+                <div class="diff-line line-context">
+                    <span class="line-number">16</span>
+                    <span class="line-number">18</span>
+                    <span class="line-content">    &lt;/button&gt;</span>
+                </div>
+                <div class="diff-line line-context">
+                    <span class="line-number">17</span>
+                    <span class="line-number">19</span>
+                    <span class="line-content">  );</span>
+                </div>
+                <div class="diff-line line-context">
+                    <span class="line-number">18</span>
+                    <span class="line-number">20</span>
+                    <span class="line-content">}</span>
+                </div>
+            </div>
+
+            <div class="collapse-section">
+                ⋯ 42 unchanged lines hidden ⋯
+            </div>
+        </div>
+
+        <!-- Split View -->
+        <h2>Split View</h2>
+        <div class="diff-container" id="split-view" style="display: none;">
+            <div class="diff-header">
+                <div class="file-info">
+                    📄 components/Button.tsx
+                </div>
+                <div class="diff-stats">
+                    <span class="stat-add">+5</span>
+                    <span class="stat-delete">-2</span>
+                </div>
+            </div>
+
+            <div class="diff-split">
+                <div class="diff-side old">
+                    <div class="side-header">Old Version</div>
+                    <div class="diff-line line-context">
+                        <span class="line-number">10</span>
+                        <span class="line-content"><span class="keyword">import</span> React <span class="keyword">from</span> <span class="string">'react'</span>;</span>
+                    </div>
+                    <div class="diff-line line-context">
+                        <span class="line-number">11</span>
+                        <span class="line-content"><span class="keyword">import</span> { ButtonProps } <span class="keyword">from</span> <span class="string">'./types'</span>;</span>
+                    </div>
+                    <div class="diff-line line-delete">
+                        <span class="line-number">12</span>
+                        <span class="line-content"><span class="keyword">export function</span> <span class="function">Button</span>({ onClick, children }) {</span>
+                    </div>
+                    <div class="diff-line">
+                        <span class="line-number"></span>
+                        <span class="line-content" style="background: var(--color-body-backgroundSoft10);"></span>
+                    </div>
+                    <div class="diff-line">
+                        <span class="line-number"></span>
+                        <span class="line-content" style="background: var(--color-body-backgroundSoft10);"></span>
+                    </div>
+                    <div class="diff-line line-context">
+                        <span class="line-number">13</span>
+                        <span class="line-content">  <span class="keyword">return</span> (</span>
+                    </div>
+                    <div class="diff-line line-delete">
+                        <span class="line-number">14</span>
+                        <span class="line-content">    &lt;button className=<span class="string">"btn"</span> onClick={onClick}&gt;</span>
+                    </div>
+                </div>
+
+                <div class="diff-side new">
+                    <div class="side-header">New Version</div>
+                    <div class="diff-line line-context">
+                        <span class="line-number">10</span>
+                        <span class="line-content"><span class="keyword">import</span> React <span class="keyword">from</span> <span class="string">'react'</span>;</span>
+                    </div>
+                    <div class="diff-line line-context">
+                        <span class="line-number">11</span>
+                        <span class="line-content"><span class="keyword">import</span> { ButtonProps } <span class="keyword">from</span> <span class="string">'./types'</span>;</span>
+                    </div>
+                    <div class="diff-line line-add">
+                        <span class="line-number">12</span>
+                        <span class="line-content"><span class="keyword">export function</span> <span class="function">Button</span>({ onClick, children, variant = <span class="string">'primary'</span> }: <span class="type">ButtonProps</span>) {</span>
+                    </div>
+                    <div class="diff-line line-add">
+                        <span class="line-number">13</span>
+                        <span class="line-content">  <span class="keyword">const</span> className = `btn btn-${variant}`;</span>
+                    </div>
+                    <div class="diff-line line-add">
+                        <span class="line-number">14</span>
+                        <span class="line-content"></span>
+                    </div>
+                    <div class="diff-line line-context">
+                        <span class="line-number">15</span>
+                        <span class="line-content">  <span class="keyword">return</span> (</span>
+                    </div>
+                    <div class="diff-line line-add">
+                        <span class="line-number">16</span>
+                        <span class="line-content">    &lt;button className={className} onClick={onClick}&gt;</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inline View -->
+        <h2>Inline View</h2>
+        <div class="diff-container" id="inline-view" style="display: none;">
+            <div class="diff-header">
+                <div class="file-info">
+                    📄 components/Button.tsx
+                </div>
+                <div class="diff-stats">
+                    <span class="stat-add">+5</span>
+                    <span class="stat-delete">-2</span>
+                </div>
+            </div>
+
+            <div class="diff-inline">
+                <div>import React from 'react';</div>
+                <div>import { ButtonProps } from './types';</div>
+                <div>
+                    export function Button({ onClick, children<span class="inline-delete"></span><span class="inline-add">, variant = 'primary'</span> }<span class="inline-add">: ButtonProps</span>) {
+                </div>
+                <div class="inline-add">  const className = `btn btn-${variant}`;</div>
+                <div class="inline-add"></div>
+                <div>  return (</div>
+                <div>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&lt;button className=<span class="inline-delete">"btn"</span><span class="inline-add">{className}</span> onClick={onClick}&gt;
+                </div>
+                <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{children}</div>
+                <div>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/button&gt;</div>
+                <div>  );</div>
+                <div>}</div>
+            </div>
+        </div>
+
+        <!-- Large Diff Example -->
+        <h2>Large File with Multiple Changes</h2>
+        <div class="diff-container">
+            <div class="diff-header">
+                <div class="file-info">
+                    📄 services/api.ts
+                </div>
+                <div class="diff-stats">
+                    <span class="stat-add">+24</span>
+                    <span class="stat-delete">-8</span>
+                </div>
+            </div>
+
+            <div class="diff-unified">
+                <div class="collapse-section">
+                    ⋯ 156 unchanged lines hidden ⋯
+                </div>
+                
+                <div class="diff-line line-context">
+                    <span class="line-number">157</span>
+                    <span class="line-number">157</span>
+                    <span class="line-content"><span class="keyword">export async function</span> <span class="function">fetchUser</span>(id: <span class="type">string</span>) {</span>
+                </div>
+                <div class="diff-line line-add">
+                    <span class="line-number">-</span>
+                    <span class="line-number">158</span>
+                    <span class="line-content">  <span class="comment">// Add request caching</span></span>
+                </div>
+                <div class="diff-line line-add">
+                    <span class="line-number">-</span>
+                    <span class="line-number">159</span>
+                    <span class="line-content">  <span class="keyword">const</span> cached = cache.get(`user-${id}`);</span>
+                </div>
+                <div class="diff-line line-add">
+                    <span class="line-number">-</span>
+                    <span class="line-number">160</span>
+                    <span class="line-content">  <span class="keyword">if</span> (cached) <span class="keyword">return</span> cached;</span>
+                </div>
+                <div class="diff-line line-add">
+                    <span class="line-number">-</span>
+                    <span class="line-number">161</span>
+                    <span class="line-content"></span>
+                </div>
+                
+                <div class="collapse-section">
+                    ⋯ 89 unchanged lines hidden ⋯
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showView(viewType) {
+            // Hide all views
+            document.getElementById('unified-view').style.display = 'none';
+            document.getElementById('split-view').style.display = 'none';
+            document.getElementById('inline-view').style.display = 'none';
+            
+            // Show selected view
+            document.getElementById(viewType + '-view').style.display = 'block';
+            
+            // Update buttons
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>

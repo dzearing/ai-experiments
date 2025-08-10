@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SegmentedControl - Interactive States</title>
+    <!-- UI Kit Styles -->
+    <link rel="stylesheet" href="../../../assets/styles.css">
+    
+    <!-- Set ui-kit assets base path -->
+    <script>
+        window.__uiKitBasePath = '../../../assets/';
+    </script>
+    
+    <!-- Theme Scripts (ES modules) -->
+    <script type="module" src="../../../assets/theme.js"></script>
+    <script type="module" src="../../../assets/theme-switcher.js"></script>
+    <style>
+        
+        /* Apply theme */
+        body {
+            font-family: var(--font-family);
+            padding: var(--spacing-large30);
+            background: var(--color-body-background);
+            color: var(--color-body-text);
+            line-height: var(--line-height);
+        }
+
+        /* Base reset */
+        button {
+            font: inherit;
+            cursor: pointer;
+            border: none;
+            background: none;
+        }
+        
+        .demo-section {
+            max-width: var(--maxWidth-large60);
+            margin: 0 auto;
+        }
+        
+        .demo-section h2 {
+            margin-bottom: var(--spacing-large20);
+            font-size: var(--font-size-h3);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-body-text);
+        }
+        
+        .demo-section h3 {
+            margin: var(--spacing-large20) 0 var(--spacing);
+            font-size: var(--font-size-large10);
+            font-weight: var(--font-weight-medium);
+            color: var(--color-body-textSoft10);
+        }
+        
+        .state-grid {
+            display: grid;
+            grid-template-columns: 140px 1fr;
+            gap: var(--spacing-large10);
+            align-items: center;
+            row-gap: var(--spacing-large10);
+        }
+        
+        .state-label {
+            text-align: right;
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft10);
+            font-weight: var(--font-weight-medium);
+        }
+        
+        /* SegmentedControl Styles - Pills by default */
+        .segmented-control {
+            display: inline-flex;
+            position: relative;
+            padding: var(--spacing-smallest, 2px);
+            background: transparent;
+            border: 1px solid var(--color-body-border);
+            border-radius: 50%;
+            box-shadow: var(--shadow-soft10);
+        }
+        
+        .segmented-control-options {
+            display: flex;
+            gap: var(--spacing-smallest, 2px);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .segmented-control-option {
+            position: relative;
+            padding: calc(var(--spacing-buttonY) - 2px) var(--spacing-buttonX);
+            border: none;
+            background: transparent;
+            color: var(--color-body-text);
+            font-family: inherit;
+            font-size: var(--font-size);
+            font-weight: var(--font-weight-medium);
+            cursor: pointer;
+            transition: all var(--duration-fast10) var(--easing-default);
+            border-radius: 50%;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-small10);
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .segmented-control-option:hover:not(.selected):not(:disabled) {
+            color: var(--color-body-text);
+            background: var(--color-panel-background);
+        }
+        
+        .segmented-control-option:active:not(.selected):not(:disabled) {
+            background: var(--color-panel-background);
+        }
+        
+        .segmented-control-option:focus-visible {
+            outline: 2px solid var(--color-primary-background);
+            outline-offset: 2px;
+        }
+        
+        .segmented-control-option.selected {
+            color: var(--color-primary-text);
+            z-index: 2;
+        }
+        
+        .segmented-control-option:disabled {
+            color: var(--color-body-textSoft20);
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Sliding indicator */
+        .segmented-control-indicator {
+            position: absolute;
+            top: var(--spacing-smallest, 2px);
+            bottom: var(--spacing-smallest, 2px);
+            left: var(--spacing-smallest, 2px);
+            background: var(--color-primary-background);
+            border-radius: 50%;
+            transition: transform var(--duration-fast10) var(--easing-default), 
+                        width var(--duration-fast10) var(--easing-default);
+            z-index: 0;
+            box-shadow: var(--shadow-button);
+        }
+        
+        /* State demonstrations */
+        .hover-demo .segmented-control-option:first-child {
+            color: var(--color-body-text);
+            background: var(--color-panel-background);
+        }
+        
+        .active-demo .segmented-control-option:first-child {
+            background: var(--color-panel-background);
+        }
+        
+        .focus-demo .segmented-control-option:nth-child(2) {
+            outline: 2px solid var(--color-primary-background);
+            outline-offset: 2px;
+        }
+        
+        .disabled-demo .segmented-control {
+            opacity: 0.6;
+        }
+        
+        .disabled-demo .segmented-control-option {
+            color: var(--color-body-textSoft20);
+            cursor: not-allowed;
+        }
+        
+        /* Animated demo */
+        @keyframes slide-indicator {
+            0%, 100% { 
+                transform: translateX(0); 
+                width: 90px;
+            }
+            33% { 
+                transform: translateX(98px); 
+                width: 90px;
+            }
+            66% { 
+                transform: translateX(196px); 
+                width: 90px;
+            }
+        }
+        
+        .animated-demo .segmented-control-indicator {
+            animation: slide-indicator 4s var(--easing-default) infinite;
+            width: 90px;
+        }
+        
+        /* Interactive demo styles */
+        .interactive-demo {
+            margin: var(--spacing-large20) 0;
+            padding: var(--spacing-large10);
+            background: var(--color-panel-background);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-card);
+        }
+        
+        .interactive-controls {
+            display: flex;
+            gap: var(--spacing-large10);
+            margin-top: var(--spacing-large10);
+            padding-top: var(--spacing-large10);
+            border-top: 1px solid var(--color-panel-border);
+        }
+        
+        .interactive-controls label {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+            font-size: var(--font-size-small10);
+            cursor: pointer;
+            color: var(--color-body-textSoft10);
+        }
+        
+        .interactive-controls input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body data-theme="default" data-theme-type="light">
+    <div class="demo-section">
+        <h2>SegmentedControl - Interactive States</h2>
+        
+        <div class="state-grid">
+            <div class="state-label">Default</div>
+            <div class="segmented-control" role="radiogroup">
+                <div class="segmented-control-indicator" style="width: 90px; transform: translateX(0);"></div>
+                <div class="segmented-control-options">
+                    <button class="segmented-control-option selected" role="radio" aria-checked="true">
+                        Option 1
+                    </button>
+                    <button class="segmented-control-option" role="radio" aria-checked="false">
+                        Option 2
+                    </button>
+                    <button class="segmented-control-option" role="radio" aria-checked="false">
+                        Option 3
+                    </button>
+                </div>
+            </div>
+            
+            <div class="state-label">Hover</div>
+            <div class="segmented-control hover-demo" role="radiogroup">
+                <div class="segmented-control-indicator" style="width: 90px; transform: translateX(98px);"></div>
+                <div class="segmented-control-options">
+                    <button class="segmented-control-option" role="radio" aria-checked="false">
+                        Option 1
+                    </button>
+                    <button class="segmented-control-option selected" role="radio" aria-checked="true">
+                        Option 2
+                    </button>
+                    <button class="segmented-control-option" role="radio" aria-checked="false">
+                        Option 3
+                    </button>
+                </div>
+            </div>
+            
+            <div class="state-label">Active (Pressed)</div>
+            <div class="segmented-control active-demo" role="radiogroup">
+                <div class="segmented-control-indicator" style="width: 90px; transform: translateX(98px);"></div>
+                <div class="segmented-control-options">
+                    <button class="segmented-control-option" role="radio" aria-checked="false">
+                        Option 1
+                    </button>
+                    <button class="segmented-control-option selected" role="radio" aria-checked="true">
+                        Option 2
+                    </button>
+                    <button class="segmented-control-option" role="radio" aria-checked="false">
+                        Option 3
+                    </button>
+                </div>
+            </div>
+            
+            <div class="state-label">Focus</div>
+            <div class="segmented-control focus-demo" role="radiogroup">
+                <div class="segmented-control-indicator" style="width: 90px; transform: translateX(0);"></div>
+                <div class="segmented-control-options">
+                    <button class="segmented-control-option selected" role="radio" aria-checked="true">
+                        Option 1
+                    </button>
+                    <button class="segmented-control-option" role="radio" aria-checked="false">
+                        Option 2
+                    </button>
+                    <button class="segmented-control-option" role="radio" aria-checked="false">
+                        Option 3
+                    </button>
+                </div>
+            </div>
+            
+            <div class="state-label">Disabled Group</div>
+            <div class="segmented-control disabled-demo" role="radiogroup" aria-disabled="true">
+                <div class="segmented-control-indicator" style="width: 90px; transform: translateX(0);"></div>
+                <div class="segmented-control-options">
+                    <button class="segmented-control-option selected" role="radio" aria-checked="true" disabled>
+                        Option 1
+                    </button>
+                    <button class="segmented-control-option" role="radio" aria-checked="false" disabled>
+                        Option 2
+                    </button>
+                    <button class="segmented-control-option" role="radio" aria-checked="false" disabled>
+                        Option 3
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <h3>Animated Indicator Transition</h3>
+        <div class="segmented-control animated-demo" role="radiogroup">
+            <div class="segmented-control-indicator"></div>
+            <div class="segmented-control-options">
+                <button class="segmented-control-option" role="radio" aria-checked="false">
+                    Option 1
+                </button>
+                <button class="segmented-control-option" role="radio" aria-checked="false">
+                    Option 2
+                </button>
+                <button class="segmented-control-option" role="radio" aria-checked="false">
+                    Option 3
+                </button>
+            </div>
+        </div>
+        
+        <div class="interactive-demo">
+            <h3>Interactive Demo</h3>
+            <p style="margin-bottom: var(--spacing); color: var(--color-body-textSoft10);">
+                Click on different options to see the smooth indicator animation
+            </p>
+            
+            <div class="segmented-control" role="radiogroup" id="interactive-control">
+                <div class="segmented-control-indicator" id="indicator"></div>
+                <div class="segmented-control-options">
+                    <button class="segmented-control-option selected" role="radio" aria-checked="true">
+                        List
+                    </button>
+                    <button class="segmented-control-option" role="radio" aria-checked="false">
+                        Grid
+                    </button>
+                    <button class="segmented-control-option" role="radio" aria-checked="false">
+                        Map
+                    </button>
+                    <button class="segmented-control-option" role="radio" aria-checked="false">
+                        Calendar
+                    </button>
+                </div>
+            </div>
+            
+            <div class="interactive-controls">
+                <label>
+                    <input type="checkbox" id="disable-control">
+                    Disable control
+                </label>
+                <label>
+                    <input type="checkbox" id="disable-third">
+                    Disable "Map" option
+                </label>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Interactive demo functionality
+        const control = document.getElementById('interactive-control');
+        const indicator = document.getElementById('indicator');
+        const options = control.querySelectorAll('.segmented-control-option');
+        const disableControl = document.getElementById('disable-control');
+        const disableThird = document.getElementById('disable-third');
+        
+        function updateIndicator(selectedOption) {
+            if (!selectedOption || !indicator) return;
+            
+            const controlRect = control.getBoundingClientRect();
+            const optionRect = selectedOption.getBoundingClientRect();
+            
+            // Calculate position relative to the control
+            const left = optionRect.left - controlRect.left - parseFloat(getComputedStyle(control).paddingLeft);
+            const width = optionRect.width;
+            
+            indicator.style.transform = `translateX(${left}px)`;
+            indicator.style.width = `${width}px`;
+        }
+        
+        // Initialize indicator position
+        const initialSelected = control.querySelector('.segmented-control-option.selected');
+        if (initialSelected) {
+            setTimeout(() => updateIndicator(initialSelected), 0);
+        }
+        
+        options.forEach((option) => {
+            option.addEventListener('click', () => {
+                if (!option.disabled && !control.getAttribute('aria-disabled')) {
+                    // Update selected states
+                    options.forEach(opt => {
+                        opt.classList.remove('selected');
+                        opt.setAttribute('aria-checked', 'false');
+                    });
+                    option.classList.add('selected');
+                    option.setAttribute('aria-checked', 'true');
+                    
+                    // Update indicator
+                    updateIndicator(option);
+                }
+            });
+        });
+        
+        disableControl.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                control.setAttribute('aria-disabled', 'true');
+                control.style.opacity = '0.6';
+                options.forEach(opt => {
+                    opt.disabled = true;
+                    opt.style.cursor = 'not-allowed';
+                });
+            } else {
+                control.removeAttribute('aria-disabled');
+                control.style.opacity = '1';
+                options.forEach(opt => {
+                    opt.disabled = false;
+                    opt.style.cursor = 'pointer';
+                });
+                // Restore third option state
+                if (disableThird.checked) {
+                    options[2].disabled = true;
+                }
+                // Update indicator position
+                updateIndicator(control.querySelector('.segmented-control-option.selected'));
+            }
+        });
+        
+        disableThird.addEventListener('change', (e) => {
+            if (!disableControl.checked) {
+                options[2].disabled = e.target.checked;
+                if (e.target.checked && options[2].classList.contains('selected')) {
+                    // Select first option if current is disabled
+                    options[0].click();
+                } else {
+                    // Update indicator position
+                    updateIndicator(control.querySelector('.segmented-control-option.selected'));
+                }
+            }
+        });
+    </script>
+</body>
+</html>

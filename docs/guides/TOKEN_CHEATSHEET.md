@@ -13,7 +13,8 @@ Quick reference for design tokens in Claude Flow. For complete documentation, se
 - `neutral` surface = Secondary buttons, default states
 - `danger` surface = Destructive buttons/actions
 - `success` surface = Success buttons/states
-- `*Soft` surfaces = Banner/alert backgrounds (e.g., `successSoft`, `dangerSoft`)
+- `warning` surface = Warning buttons/actions (caution state)
+- `*Soft` surfaces = Banner/alert backgrounds (e.g., `successSoft`, `dangerSoft`, `warningSoft`)
 
 Note: the `surface` component defines the background color group - the `concept` defines things within that group which will work together in that `state`. We can guarantee that the body text will work on the body background. However you must NOT mix and match surfaces - you should not use primary background with body text. Mixing different values from different surfaces risks creating contrast issues.
 
@@ -59,6 +60,10 @@ Note: the `surface` component defines the background color group - the `concept`
 --color-danger-text                /* Destructive button text */
 --color-success-background         /* Success actions */
 --color-success-text               /* Success button text */
+--color-warning-background         /* Warning/caution actions */
+--color-warning-text               /* Warning button text */
+--color-warning-border             /* Warning button border */
+--color-warning-background-hover   /* Warning hover state */
 
 /* States & Feedback (Soft Surfaces) */
 --color-successSoft-background     /* Success message background */
@@ -76,6 +81,37 @@ Note: the `surface` component defines the background color group - the `concept`
 
 /* Note: For error/warning/success text on regular surfaces, use:
    --color-[surface]-textDanger, textWarning, textSuccess */
+```
+
+## 🌈 Gradient Tokens
+
+### Pattern: `--gradient-[surface]-[intent]`
+
+Gradients provide subtle overlays that maintain accessibility with all surface foreground tokens.
+
+```css
+/* Body Surface Gradients */
+--gradient-body-primary     /* Primary brand gradient (25% opacity) */
+--gradient-body-success     /* Success state gradient (20% opacity) */
+--gradient-body-warning     /* Warning state gradient (20% opacity) */
+--gradient-body-danger      /* Error/danger gradient (20% opacity) */
+--gradient-body-info        /* Informational gradient (20% opacity) */
+--gradient-body-accent      /* Decorative dual-color gradient */
+
+/* Usage Example */
+.card-with-gradient {
+  background: 
+    var(--gradient-body-primary),
+    var(--color-body-background);
+  /* All body foreground tokens remain accessible */
+}
+
+/* Gradient Properties:
+   - Direction: 135deg (consistent diagonal)
+   - Opacity: 15-25% to maintain text readability
+   - Fade: All gradients fade to transparent
+   - Browser Support: Uses color-mix() for smooth transitions
+*/
 ```
 
 ## 📏 Spacing Tokens
@@ -131,7 +167,7 @@ Note: the `surface` component defines the background color group - the `concept`
 
 /* Line Heights */
 --line-height-tight    /* 1.2 */
---line-height-normal   /* 1.5 - DEFAULT */
+--line-height          /* 1.5 - DEFAULT */
 --line-height-relaxed  /* 1.75 */
 ```
 
@@ -163,7 +199,7 @@ Note: the `surface` component defines the background color group - the `concept`
 --radius-large10       /* 8px */
 --radius-large20       /* 12px */
 --radius-large30       /* 16px */
---radius-circle        /* 50% */
+/* For circles use: 50% or --radius-full */
 
 /* Component Radius */
 --radius-button        /* Button corners */
@@ -176,14 +212,16 @@ Note: the `surface` component defines the background color group - the `concept`
 
 ```css
 /* Durations */
---duration-instant     /* 0ms */
---duration-fast        /* 100ms */
---duration-normal      /* 200ms - DEFAULT */
---duration-slow        /* 300ms */
---duration-slower      /* 500ms */
+--duration-fastest     /* 100ms */
+--duration-fast20      /* 150ms */
+--duration-fast10      /* 200ms */
+--duration-normal      /* 300ms */
+--duration-slow10      /* 400ms */
+--duration-slow20      /* 600ms */
+--duration-slowest     /* 1000ms */
 
 /* Easings */
---easing-standard      /* cubic-bezier(0.4, 0, 0.2, 1) */
+--easing-default       /* cubic-bezier(0.4, 0, 0.2, 1) */
 --easing-decelerate    /* cubic-bezier(0, 0, 0.2, 1) */
 --easing-accelerate    /* cubic-bezier(0.4, 0, 1, 1) */
 --easing-bounce        /* Custom bounce effect */
@@ -199,7 +237,7 @@ Note: the `surface` component defines the background color group - the `concept`
   padding: var(--spacing-buttonY) var(--spacing-buttonX);
   border-radius: var(--radius-button);
   font-weight: var(--font-weight-medium);
-  transition: all var(--duration-normal) var(--easing-standard);
+  transition: all var(--duration-normal) var(--easing-default);
 }
 
 .button-primary:hover {
@@ -230,7 +268,7 @@ Note: the `surface` component defines the background color group - the `concept`
 .body-text {
   color: var(--color-body-text);
   font-size: var(--font-size);
-  line-height: var(--line-height-normal);
+  line-height: var(--line-height);
 }
 
 .secondary-text {

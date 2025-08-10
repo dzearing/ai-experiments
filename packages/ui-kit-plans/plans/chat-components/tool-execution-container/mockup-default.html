@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tool Execution Container - Mockup</title>
+    
+    <!-- UI Kit Styles -->
+    <link rel="stylesheet" href="../../../assets/styles.css">
+    
+    <!-- Set theme base path for mockups -->
+    <script>
+        window.__uiKitBasePath = '../../../assets/';
+    </script>    
+    <!-- Theme Scripts (ES modules) -->
+    <script type="module" src="../../../assets/theme.js"></script>
+    <script type="module" src="../../../assets/theme-switcher.js"></script>
+    
+    <style>
+        /* Component-specific styles using ui-kit tokens */
+        body {
+            font-size: var(--font-size);
+            line-height: var(--line-height);
+            color: var(--color-body-text);
+            background: var(--color-body-background);
+            padding: var(--spacing-large10);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .demo-section {
+            background: var(--color-panel-background);
+            border-radius: var(--radius-large20);
+            padding: var(--spacing-large10);
+            margin-bottom: var(--spacing-large10);
+            box-shadow: var(--shadow-card);
+        }
+
+        .demo-title {
+            font-size: var(--font-size-h4);
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing);
+        }
+
+        .demo-description {
+            color: var(--color-body-textSoft10);
+            margin-bottom: var(--spacing);
+            font-size: var(--font-size-small10);
+        }
+
+        /* Tool Container Component */
+        .tool-container {
+            background: var(--color-body-background);
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius-large10);
+            margin-bottom: var(--spacing);
+            overflow: hidden;
+            transition: all var(--duration-normal);
+        }
+
+        .tool-container:hover {
+            box-shadow: var(--shadow-soft10);
+        }
+
+        .tool-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--spacing-small10) var(--spacing);
+            cursor: pointer;
+            user-select: none;
+            transition: background var(--duration-normal);
+        }
+
+        .tool-header:hover {
+            background: var(--color-panel-background);
+        }
+
+        .tool-info {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+        }
+
+        .tool-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size);
+        }
+
+        .tool-name {
+            font-weight: var(--font-weight-medium);
+            font-size: var(--font-size);
+            color: var(--color-body-text);
+        }
+
+        .tool-summary {
+            color: var(--color-body-textSoft10);
+            font-size: var(--font-size-small10);
+        }
+
+        .tool-status {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-indicator.running {
+            background: var(--color-warning-background);
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.success {
+            background: var(--color-success-background);
+        }
+
+        .status-indicator.error {
+            background: var(--color-danger-background);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .expand-icon {
+            color: var(--color-body-textSoft20);
+            transition: transform var(--duration-normal);
+        }
+
+        .expand-icon.expanded {
+            transform: rotate(90deg);
+        }
+
+        .tool-progress {
+            height: 3px;
+            background: var(--color-body-backgroundSoft10);
+            margin: 0 var(--spacing);
+            margin-bottom: var(--spacing-small10);
+            border-radius: 50%;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--color-info-background);
+            border-radius: 50%;
+            animation: progress 2s ease-in-out infinite;
+        }
+
+        @keyframes progress {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+
+        .tool-details {
+            padding: var(--spacing);
+            border-top: 1px solid var(--color-body-border);
+        }
+
+        .tool-step {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--spacing-small10);
+            margin-bottom: var(--spacing);
+        }
+
+        .step-icon {
+            width: 16px;
+            height: 16px;
+            margin-top: 2px;
+            flex-shrink: 0;
+            color: var(--color-success-text);
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-description {
+            font-size: var(--font-size-small10);
+            color: var(--color-body-text);
+            margin-bottom: var(--spacing-small20);
+        }
+
+        .step-visualizer {
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius-small10);
+            padding: var(--spacing-small10);
+            font-family: var(--font-family-mono);
+            font-size: var(--font-size-small20);
+            color: var(--color-body-textSoft10);
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .timestamp {
+            color: var(--color-body-textSoft20);
+            font-size: var(--font-size-small20);
+        }
+
+        .mode-toggle {
+            display: flex;
+            gap: var(--spacing-small10);
+            margin-bottom: var(--spacing);
+        }
+
+        .mode-btn {
+            padding: var(--spacing-small20) var(--spacing-small10);
+            border: 1px solid var(--color-body-border);
+            background: var(--color-body-background);
+            border-radius: var(--radius-small10);
+            font-size: var(--font-size-small10);
+            cursor: pointer;
+            transition: all var(--duration-normal);
+        }
+
+        .mode-btn.active {
+            background: var(--color-infoSoft-background);
+            border-color: var(--color-infoSoft-border);
+            color: var(--color-infoSoft-text);
+        }
+
+        .interrupt-btn {
+            padding: var(--spacing-small20) var(--spacing-small10);
+            background: var(--color-dangerSoft-background);
+            color: var(--color-danger-text);
+            border: 1px solid var(--color-danger-border);
+            border-radius: var(--radius-small10);
+            font-size: var(--font-size-small20);
+            cursor: pointer;
+            transition: all var(--duration-normal);
+        }
+
+        .interrupt-btn:hover {
+            background: var(--color-danger-background);
+        }
+
+        /* Loading state */
+        .loading-icon {
+            animation: rotate 1s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Main Demo Section -->
+        <div class="demo-section">
+            <h2 class="demo-title">Tool Execution Container</h2>
+            <p class="demo-description">Displays tool executions with summary/expanded modes and real-time progress tracking</p>
+            
+            <div class="mode-toggle">
+                <button class="mode-btn active">Summary Mode</button>
+                <button class="mode-btn">Expanded Mode</button>
+            </div>
+
+            <!-- Running Tool -->
+            <div class="tool-container">
+                <div class="tool-header">
+                    <div class="tool-info">
+                        <span class="tool-icon">🔍</span>
+                        <span class="tool-name">Search Codebase</span>
+                        <span class="tool-summary">Searching for "useState" across 142 files...</span>
+                    </div>
+                    <div class="tool-status">
+                        <span class="status-indicator running"></span>
+                        <span class="expand-icon">▶</span>
+                    </div>
+                </div>
+                <div class="tool-progress">
+                    <div class="progress-bar"></div>
+                </div>
+            </div>
+
+            <!-- Completed Tool -->
+            <div class="tool-container">
+                <div class="tool-header">
+                    <div class="tool-info">
+                        <span class="tool-icon">📝</span>
+                        <span class="tool-name">File Operations</span>
+                        <span class="tool-summary">Modified 3 files, created 1 new file</span>
+                    </div>
+                    <div class="tool-status">
+                        <span class="status-indicator success"></span>
+                        <span class="timestamp">2.3s</span>
+                        <span class="expand-icon">▶</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expanded Tool with Details -->
+            <div class="tool-container">
+                <div class="tool-header">
+                    <div class="tool-info">
+                        <span class="tool-icon">⚙️</span>
+                        <span class="tool-name">Code Analysis</span>
+                        <span class="tool-summary">Analyzing component dependencies</span>
+                    </div>
+                    <div class="tool-status">
+                        <span class="status-indicator success"></span>
+                        <span class="timestamp">1.8s</span>
+                        <span class="expand-icon expanded">▶</span>
+                    </div>
+                </div>
+                
+                <div class="tool-details">
+                    <div class="tool-step">
+                        <span class="step-icon">✓</span>
+                        <div class="step-content">
+                            <div class="step-description">Read package.json</div>
+                            <div class="step-visualizer">
+{
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "typescript": "^5.0.0"
+  }
+}</div>
+                        </div>
+                    </div>
+
+                    <div class="tool-step">
+                        <span class="step-icon">✓</span>
+                        <div class="step-content">
+                            <div class="step-description">Analyzed component imports</div>
+                            <div class="step-visualizer">Found 23 component imports across 8 files
+- Button: 5 imports
+- Card: 3 imports
+- Modal: 2 imports</div>
+                        </div>
+                    </div>
+
+                    <div class="tool-step">
+                        <span class="step-icon">✓</span>
+                        <div class="step-content">
+                            <div class="step-description">Generated dependency graph</div>
+                            <div class="step-visualizer">App.tsx
+├── components/Header.tsx
+│   └── components/Logo.tsx
+├── components/Main.tsx
+│   ├── components/Card.tsx
+│   └── components/Button.tsx
+└── components/Footer.tsx</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Running Tool with Interrupt -->
+            <div class="tool-container">
+                <div class="tool-header">
+                    <div class="tool-info">
+                        <span class="tool-icon">🌐</span>
+                        <span class="tool-name">Web Fetch</span>
+                        <span class="tool-summary">Fetching documentation from 5 sources...</span>
+                    </div>
+                    <div class="tool-status">
+                        <button class="interrupt-btn">Interrupt</button>
+                        <span class="status-indicator running"></span>
+                        <span class="expand-icon expanded">▶</span>
+                    </div>
+                </div>
+                <div class="tool-progress">
+                    <div class="progress-bar" style="width: 40%;"></div>
+                </div>
+                
+                <div class="tool-details">
+                    <div class="tool-step">
+                        <span class="step-icon">✓</span>
+                        <div class="step-content">
+                            <div class="step-description">Fetched React documentation</div>
+                            <span class="timestamp">0.8s</span>
+                        </div>
+                    </div>
+
+                    <div class="tool-step">
+                        <span class="step-icon loading-icon">⟳</span>
+                        <div class="step-content">
+                            <div class="step-description">Fetching TypeScript documentation...</div>
+                            <span class="timestamp">1.2s</span>
+                        </div>
+                    </div>
+
+                    <div class="tool-step">
+                        <span class="step-icon" style="color: var(--color-body-textSoft20);">⏸</span>
+                        <div class="step-content">
+                            <div class="step-description" style="color: var(--color-body-textSoft20);">Pending: Material-UI documentation</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error State -->
+            <div class="tool-container">
+                <div class="tool-header">
+                    <div class="tool-info">
+                        <span class="tool-icon">⚠️</span>
+                        <span class="tool-name">Build Project</span>
+                        <span class="tool-summary" style="color: var(--color-danger-text);">Build failed with 2 errors</span>
+                    </div>
+                    <div class="tool-status">
+                        <span class="status-indicator error"></span>
+                        <span class="timestamp">5.2s</span>
+                        <span class="expand-icon">▶</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Multiple Tools Running -->
+        <div class="demo-section">
+            <h2 class="demo-title">Multiple Tools Execution</h2>
+            <p class="demo-description">Shows how multiple tools appear when executing in sequence or parallel</p>
+
+            <div class="tool-container">
+                <div class="tool-header">
+                    <div class="tool-info">
+                        <span class="tool-icon">📊</span>
+                        <span class="tool-name">Batch Operations</span>
+                        <span class="tool-summary">Running 4 tools in parallel...</span>
+                    </div>
+                    <div class="tool-status">
+                        <span class="status-indicator running"></span>
+                        <span class="expand-icon">▶</span>
+                    </div>
+                </div>
+                <div class="tool-progress">
+                    <div class="progress-bar" style="width: 75%;"></div>
+                </div>
+            </div>
+
+            <div style="margin-left: var(--spacing-large10);">
+                <div class="tool-container">
+                    <div class="tool-header">
+                        <div class="tool-info">
+                            <span class="tool-icon">✓</span>
+                            <span class="tool-name">Sub-task: Read Files</span>
+                            <span class="tool-summary">Read 12 files</span>
+                        </div>
+                        <div class="tool-status">
+                            <span class="status-indicator success"></span>
+                            <span class="timestamp">0.3s</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tool-container">
+                    <div class="tool-header">
+                        <div class="tool-info">
+                            <span class="tool-icon">⟳</span>
+                            <span class="tool-name">Sub-task: Process Data</span>
+                            <span class="tool-summary">Processing...</span>
+                        </div>
+                        <div class="tool-status">
+                            <span class="status-indicator running"></span>
+                        </div>
+                    </div>
+                    <div class="tool-progress">
+                        <div class="progress-bar" style="width: 60%;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Toggle expand/collapse
+        document.querySelectorAll('.tool-header').forEach(header => {
+            header.addEventListener('click', (e) => {
+                // Don't toggle if clicking on buttons
+                if (e.target.tagName === 'BUTTON') return;
+                
+                const container = header.parentElement;
+                const expandIcon = header.querySelector('.expand-icon');
+                const details = container.querySelector('.tool-details');
+                
+                if (expandIcon) {
+                    expandIcon.classList.toggle('expanded');
+                }
+                
+                if (details) {
+                    details.style.display = details.style.display === 'none' ? 'block' : 'none';
+                }
+            });
+        });
+
+        // Mode toggle
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>

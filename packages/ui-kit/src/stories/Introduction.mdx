@@ -35,8 +35,8 @@ pnpm add @claude-flow/ui-kit
   <!-- CSS Reset, Variables, and Base Styles -->
   <link rel="stylesheet" href="node_modules/@claude-flow/ui-kit/dist/styles.css" />
 
-  <!-- Theme initialization (prevents flash of wrong theme) -->
-  <script src="node_modules/@claude-flow/ui-kit/dist/theme-init.js"></script>
+  <!-- Theme engine (auto-initializes, prevents FOUC) -->
+  <script type="module" src="node_modules/@claude-flow/ui-kit/dist/theme.js"></script>
 </head>
 ```
 
@@ -88,23 +88,23 @@ useEffect(() => {
 
 ```javascript
 // Using the global theme API (available after theme-init.js loads)
-window.__claudeFlowTheme.loadTheme('ocean', 'dark');
+window.__uiKitTheme.setTheme({ theme: 'ocean', mode: 'dark' });
 
-// Or use the imported theme manager
-import { themeManager } from '@claude-flow/ui-kit';
+// Or use the imported API
+import { setTheme, toggleMode, subscribe } from '@claude-flow/ui-kit';
 
 // Switch theme
-themeManager.setTheme('sunset');
+await setTheme({ theme: 'sunset' });
 
 // Switch mode (light/dark/auto)
-themeManager.setMode('dark');
+await setTheme({ mode: 'dark' });
 
 // Toggle between light and dark
-window.__claudeFlowTheme.toggleThemeType();
+await toggleMode();
 
 // Listen for theme changes
-themeManager.on('themechange', (event) => {
-  console.log(`Theme changed to ${event.theme} (${event.mode})`);
+const unsubscribe = subscribe((event) => {
+  console.log(`Theme changed to ${event.theme} (${event.effectiveMode})`);
 });
 ```
 
@@ -112,7 +112,7 @@ themeManager.on('themechange', (event) => {
 
 ```tsx
 import React, { useState, useEffect } from 'react';
-import { themeManager, type ThemeChangeEvent } from '@claude-flow/ui-kit';
+import { getTheme, setTheme, subscribe, type ThemeChangeEvent } from '@claude-flow/ui-kit';
 
 export function ThemeSwitcher() {
   const [currentTheme, setCurrentTheme] = useState(themeManager.currentTheme);

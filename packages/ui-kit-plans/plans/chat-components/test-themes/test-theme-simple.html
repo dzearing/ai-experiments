@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Theme Test</title>
+    
+    <!-- UI Kit Styles -->
+    <link rel="stylesheet" href="../../../assets/styles.css">
+    
+    <!-- Set theme base path for mockups -->
+    <script>
+        window.__uiKitBasePath = '../../../assets/';
+    </script>    
+    <!-- Theme Scripts (ES modules) -->
+    <script type="module" src="../../../assets/theme.js"></script>
+    <script type="module" src="../../../assets/theme-switcher.js"></script>
+    
+    <style>
+        body {
+            font-family: var(--font-family, system-ui);
+            padding: var(--spacing-large20);
+            transition: all var(--duration-normal) var(--easing-default);
+        }
+        
+        .test-box {
+            padding: var(--spacing-large20);
+            background: var(--color-body-background);
+            color: var(--color-body-text);
+            border: 2px solid var(--color-body-border);
+            border-radius: var(--radius-large10);
+            margin: var(--spacing) 0;
+        }
+        
+        .status {
+            font-family: var(--font-family-mono, monospace);
+            padding: var(--spacing);
+            background: var(--color-panel-background);
+            border-radius: var(--radius-small10);
+            margin: var(--spacing) 0;
+        }
+        
+        [data-theme-type="dark"] .status {
+            background: var(--color-panel-background);
+        }
+        
+        h1 { 
+            color: var(--color-body-text);
+        }
+        
+        .controls {
+            display: flex;
+            gap: var(--spacing);
+            margin: var(--spacing) 0;
+        }
+        
+        button {
+            padding: var(--spacing-buttonY) var(--spacing-buttonX);
+            cursor: pointer;
+            background: var(--color-neutral-background);
+            color: var(--color-neutral-text);
+            border: 1px solid var(--color-neutral-border);
+            border-radius: var(--radius-button);
+            font-weight: var(--font-weight-medium);
+            transition: all var(--duration-fast10) var(--easing-default);
+        }
+        
+        button:hover {
+            background: var(--color-neutral-background-hover);
+        }
+    </style>
+</head>
+<body>
+    <h1>Simple Theme Test</h1>
+    
+    <div class="test-box">
+        <p>This box should change appearance when you switch themes or toggle dark/light mode.</p>
+        <p>The theme controls are in the top-right corner.</p>
+    </div>
+    
+    <div class="status">
+        <div>Current Theme: <span id="theme">-</span></div>
+        <div>Current Mode: <span id="mode">-</span></div>
+        <div>Data Attributes:</div>
+        <div>- data-theme: <span id="attr-theme">-</span></div>
+        <div>- data-theme-type: <span id="attr-type">-</span></div>
+        <div>Loaded CSS: <span id="loaded">-</span></div>
+    </div>
+    
+    <div class="controls">
+        <button onclick="testOcean()">Set Ocean Theme</button>
+        <button onclick="testDark()">Set Dark Mode</button>
+        <button onclick="testLight()">Set Light Mode</button>
+        <button onclick="checkStatus()">Check Status</button>
+    </div>
+    
+    <script>
+        function checkStatus() {
+            const config = window.getTheme ? window.getTheme() : null;
+            document.getElementById('theme').textContent = config ? config.theme : 'N/A';
+            document.getElementById('mode').textContent = config ? config.mode : 'N/A';
+            document.getElementById('attr-theme').textContent = document.documentElement.getAttribute('data-theme') || 'none';
+            document.getElementById('attr-type').textContent = document.documentElement.getAttribute('data-theme-type') || 'none';
+            
+            // Check loaded CSS files
+            const links = Array.from(document.querySelectorAll('link[data-theme-file]'));
+            const loaded = links.map(l => l.getAttribute('data-theme-file')).join(', ');
+            document.getElementById('loaded').textContent = loaded || 'none';
+        }
+        
+        async function testOcean() {
+            console.log('Setting theme to ocean...');
+            if (window.setTheme) {
+                await window.setTheme({ theme: 'ocean' });
+                checkStatus();
+            }
+        }
+        
+        async function testDark() {
+            console.log('Setting mode to dark...');
+            if (window.setTheme) {
+                await window.setTheme({ mode: 'dark' });
+                checkStatus();
+            }
+        }
+        
+        async function testLight() {
+            console.log('Setting mode to light...');
+            if (window.setTheme) {
+                await window.setTheme({ mode: 'light' });
+                checkStatus();
+            }
+        }
+        
+        // Check status on load
+        window.addEventListener('DOMContentLoaded', () => {
+            checkStatus();
+            console.log('Page loaded, checking for stored preferences...');
+            const stored = localStorage.getItem('mockup-theme-preferences');
+            console.log('Stored preferences:', stored);
+        });
+        
+        // Update on theme changes
+        window.addEventListener('themechange', () => {
+            console.log('Theme changed event fired');
+            checkStatus();
+        });
+    </script>
+</body>
+</html>

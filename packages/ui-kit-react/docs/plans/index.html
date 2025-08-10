@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UI Kit Component Plans & Mockups</title>
+    <style>
+        :root {
+            --color-primary: #2563eb;
+            --color-primary-hover: #1d4ed8;
+            --color-text: #1f2937;
+            --color-text-muted: #6b7280;
+            --color-bg: #ffffff;
+            --color-bg-subtle: #f9fafb;
+            --color-border: #e5e7eb;
+            --radius: 8px;
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            color: var(--color-text);
+            background: var(--color-bg-subtle);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            background: var(--color-bg);
+            border-bottom: 1px solid var(--color-border);
+            margin-bottom: 2rem;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--color-text-muted);
+            font-size: 1.125rem;
+        }
+
+        .search-box {
+            margin: 2rem 0;
+            padding: 1rem;
+            background: var(--color-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 0.75rem;
+            font-size: 1rem;
+            border: 1px solid var(--color-border);
+            border-radius: calc(var(--radius) / 2);
+            outline: none;
+        }
+
+        .search-box input:focus {
+            border-color: var(--color-primary);
+        }
+
+        .category {
+            margin-bottom: 2rem;
+            background: var(--color-bg);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .category-header {
+            padding: 1.25rem;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
+            color: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .category-header h2 {
+            font-size: 1.5rem;
+        }
+
+        .category-count {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.25rem 0.75rem;
+            border-radius: 100px;
+            font-size: 0.875rem;
+        }
+
+        .component-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        .component-card {
+            background: var(--color-bg-subtle);
+            border: 1px solid var(--color-border);
+            border-radius: calc(var(--radius) / 2);
+            padding: 1rem;
+            transition: all 0.2s;
+        }
+
+        .component-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        .component-name {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--color-primary);
+        }
+
+        .component-links {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.75rem;
+        }
+
+        .component-links a {
+            color: var(--color-primary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            padding: 0.25rem 0.75rem;
+            border: 1px solid var(--color-primary);
+            border-radius: calc(var(--radius) / 2);
+            transition: all 0.2s;
+        }
+
+        .component-links a:hover {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--color-bg);
+            padding: 1.5rem;
+            border-radius: var(--radius);
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--color-primary);
+        }
+
+        .stat-label {
+            color: var(--color-text-muted);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .collapsible {
+            display: none;
+        }
+
+        .category.expanded .collapsible {
+            display: block;
+        }
+
+        .toggle-icon {
+            transition: transform 0.2s;
+        }
+
+        .category.expanded .toggle-icon {
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>UI Kit Component Library</h1>
+        <p class="subtitle">Component Plans & Mockups</p>
+    </header>
+
+    <div class="container">
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">200+</div>
+                <div class="stat-label">Components</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">15</div>
+                <div class="stat-label">Categories</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">100%</div>
+                <div class="stat-label">Documented</div>
+            </div>
+        </div>
+
+        <div class="search-box">
+            <input type="text" id="search" placeholder="Search components...">
+        </div>
+
+        <div class="category expanded">
+            <div class="category-header" onclick="toggleCategory(this)">
+                <h2>Core Components</h2>
+                <span class="category-count">11 components</span>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="collapsible">
+                <div class="component-grid">
+                    <div class="component-card">
+                        <div class="component-name">Badge</div>
+                        <div class="component-links">
+                            <a href="core-components/badge/plan.md">Plan</a>
+                            <a href="core-components/badge/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Button</div>
+                        <div class="component-links">
+                            <a href="core-components/button/plan.md">Plan</a>
+                            <a href="core-components/button/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Chip</div>
+                        <div class="component-links">
+                            <a href="core-components/chip/plan.md">Plan</a>
+                            <a href="core-components/chip/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Heading</div>
+                        <div class="component-links">
+                            <a href="core-components/heading/plan.md">Plan</a>
+                            <a href="core-components/heading/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Icon</div>
+                        <div class="component-links">
+                            <a href="core-components/icon/plan.md">Plan</a>
+                            <a href="core-components/icon/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Icon Button</div>
+                        <div class="component-links">
+                            <a href="core-components/icon-button/plan.md">Plan</a>
+                            <a href="core-components/icon-button/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Input</div>
+                        <div class="component-links">
+                            <a href="core-components/input/plan.md">Plan</a>
+                            <a href="core-components/input/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Label</div>
+                        <div class="component-links">
+                            <a href="core-components/label/plan.md">Plan</a>
+                            <a href="core-components/label/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Loading Button</div>
+                        <div class="component-links">
+                            <a href="core-components/loading-button/plan.md">Plan</a>
+                            <a href="core-components/loading-button/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Text</div>
+                        <div class="component-links">
+                            <a href="core-components/text/plan.md">Plan</a>
+                            <a href="core-components/text/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Toggle Button</div>
+                        <div class="component-links">
+                            <a href="core-components/toggle-button/plan.md">Plan</a>
+                            <a href="core-components/toggle-button/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="category">
+            <div class="category-header" onclick="toggleCategory(this)">
+                <h2>Layout Components</h2>
+                <span class="category-count">16 components</span>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="collapsible">
+                <div class="component-grid">
+                    <div class="component-card">
+                        <div class="component-name">Aspect Ratio</div>
+                        <div class="component-links">
+                            <a href="layout-components/aspect-ratio/plan.md">Plan</a>
+                            <a href="layout-components/aspect-ratio/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Box</div>
+                        <div class="component-links">
+                            <a href="layout-components/box/plan.md">Plan</a>
+                            <a href="layout-components/box/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Center</div>
+                        <div class="component-links">
+                            <a href="layout-components/center/plan.md">Plan</a>
+                            <a href="layout-components/center/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Columns</div>
+                        <div class="component-links">
+                            <a href="layout-components/columns/plan.md">Plan</a>
+                            <a href="layout-components/columns/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Container</div>
+                        <div class="component-links">
+                            <a href="layout-components/container/plan.md">Plan</a>
+                            <a href="layout-components/container/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Flex</div>
+                        <div class="component-links">
+                            <a href="layout-components/flex/plan.md">Plan</a>
+                            <a href="layout-components/flex/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Flexbox</div>
+                        <div class="component-links">
+                            <a href="layout-components/flexbox/plan.md">Plan</a>
+                            <a href="layout-components/flexbox/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Float</div>
+                        <div class="component-links">
+                            <a href="layout-components/float/plan.md">Plan</a>
+                            <a href="layout-components/float/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Grid</div>
+                        <div class="component-links">
+                            <a href="layout-components/grid/plan.md">Plan</a>
+                            <a href="layout-components/grid/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Masonry</div>
+                        <div class="component-links">
+                            <a href="layout-components/masonry/plan.md">Plan</a>
+                            <a href="layout-components/masonry/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Resizable Panel</div>
+                        <div class="component-links">
+                            <a href="layout-components/resizable-panel/plan.md">Plan</a>
+                            <a href="layout-components/resizable-panel/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Scroll View</div>
+                        <div class="component-links">
+                            <a href="layout-components/scroll-view/plan.md">Plan</a>
+                            <a href="layout-components/scroll-view/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Spacer</div>
+                        <div class="component-links">
+                            <a href="layout-components/spacer/plan.md">Plan</a>
+                            <a href="layout-components/spacer/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Split View</div>
+                        <div class="component-links">
+                            <a href="layout-components/split-view/plan.md">Plan</a>
+                            <a href="layout-components/split-view/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Stack</div>
+                        <div class="component-links">
+                            <a href="layout-components/stack/plan.md">Plan</a>
+                            <a href="layout-components/stack/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Sticky</div>
+                        <div class="component-links">
+                            <a href="layout-components/sticky/plan.md">Plan</a>
+                            <a href="layout-components/sticky/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="category">
+            <div class="category-header" onclick="toggleCategory(this)">
+                <h2>Form Components</h2>
+                <span class="category-count">17 components</span>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="collapsible">
+                <div class="component-grid">
+                    <div class="component-card">
+                        <div class="component-name">Autocomplete Input</div>
+                        <div class="component-links">
+                            <a href="form-components/autocomplete-input/plan.md">Plan</a>
+                            <a href="form-components/autocomplete-input/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">File Input</div>
+                        <div class="component-links">
+                            <a href="form-components/file-input/plan.md">Plan</a>
+                            <a href="form-components/file-input/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Form Error</div>
+                        <div class="component-links">
+                            <a href="form-components/form-error/plan.md">Plan</a>
+                            <a href="form-components/form-error/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Form Field</div>
+                        <div class="component-links">
+                            <a href="form-components/form-field/plan.md">Plan</a>
+                            <a href="form-components/form-field/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Form Helper Text</div>
+                        <div class="component-links">
+                            <a href="form-components/form-helper-text/plan.md">Plan</a>
+                            <a href="form-components/form-helper-text/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Form Label</div>
+                        <div class="component-links">
+                            <a href="form-components/form-label/plan.md">Plan</a>
+                            <a href="form-components/form-label/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Number Input</div>
+                        <div class="component-links">
+                            <a href="form-components/number-input/plan.md">Plan</a>
+                            <a href="form-components/number-input/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Password Input</div>
+                        <div class="component-links">
+                            <a href="form-components/password-input/plan.md">Plan</a>
+                            <a href="form-components/password-input/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Pin Input</div>
+                        <div class="component-links">
+                            <a href="form-components/pin-input/plan.md">Plan</a>
+                            <a href="form-components/pin-input/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Range Slider</div>
+                        <div class="component-links">
+                            <a href="form-components/range-slider/plan.md">Plan</a>
+                            <a href="form-components/range-slider/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Rating Input</div>
+                        <div class="component-links">
+                            <a href="form-components/rating-input/plan.md">Plan</a>
+                            <a href="form-components/rating-input/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Search Input</div>
+                        <div class="component-links">
+                            <a href="form-components/search-input/plan.md">Plan</a>
+                            <a href="form-components/search-input/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Slider Input</div>
+                        <div class="component-links">
+                            <a href="form-components/slider-input/plan.md">Plan</a>
+                            <a href="form-components/slider-input/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Tag Input</div>
+                        <div class="component-links">
+                            <a href="form-components/tag-input/plan.md">Plan</a>
+                            <a href="form-components/tag-input/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Text Area</div>
+                        <div class="component-links">
+                            <a href="form-components/text-area/plan.md">Plan</a>
+                            <a href="form-components/text-area/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Text Area Field</div>
+                        <div class="component-links">
+                            <a href="form-components/text-area-field/plan.md">Plan</a>
+                            <a href="form-components/text-area-field/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Text Field</div>
+                        <div class="component-links">
+                            <a href="form-components/text-field/plan.md">Plan</a>
+                            <a href="form-components/text-field/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="category">
+            <div class="category-header" onclick="toggleCategory(this)">
+                <h2>Navigation Components</h2>
+                <span class="category-count">17 components</span>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="collapsible">
+                <div class="component-grid">
+                    <div class="component-card">
+                        <div class="component-name">Bottom Navigation</div>
+                        <div class="component-links">
+                            <a href="navigation-components/bottom-navigation/plan.md">Plan</a>
+                            <a href="navigation-components/bottom-navigation/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Breadcrumb</div>
+                        <div class="component-links">
+                            <a href="navigation-components/breadcrumb/plan.md">Plan</a>
+                            <a href="navigation-components/breadcrumb/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Breadcrumb Collapsed</div>
+                        <div class="component-links">
+                            <a href="navigation-components/breadcrumb-collapsed/plan.md">Plan</a>
+                            <a href="navigation-components/breadcrumb-collapsed/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Command Bar</div>
+                        <div class="component-links">
+                            <a href="navigation-components/command-bar/plan.md">Plan</a>
+                            <a href="navigation-components/command-bar/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Command Palette</div>
+                        <div class="component-links">
+                            <a href="navigation-components/command-palette/plan.md">Plan</a>
+                            <a href="navigation-components/command-palette/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Context Menu</div>
+                        <div class="component-links">
+                            <a href="navigation-components/context-menu/plan.md">Plan</a>
+                            <a href="navigation-components/context-menu/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">History Navigation</div>
+                        <div class="component-links">
+                            <a href="navigation-components/history-navigation/plan.md">Plan</a>
+                            <a href="navigation-components/history-navigation/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Mega Menu</div>
+                        <div class="component-links">
+                            <a href="navigation-components/mega-menu/plan.md">Plan</a>
+                            <a href="navigation-components/mega-menu/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Navigation Drawer</div>
+                        <div class="component-links">
+                            <a href="navigation-components/navigation-drawer/plan.md">Plan</a>
+                            <a href="navigation-components/navigation-drawer/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Navigation Rail</div>
+                        <div class="component-links">
+                            <a href="navigation-components/navigation-rail/plan.md">Plan</a>
+                            <a href="navigation-components/navigation-rail/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Navigation Search</div>
+                        <div class="component-links">
+                            <a href="navigation-components/navigation-search/plan.md">Plan</a>
+                            <a href="navigation-components/navigation-search/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Path Bar</div>
+                        <div class="component-links">
+                            <a href="navigation-components/path-bar/plan.md">Plan</a>
+                            <a href="navigation-components/path-bar/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Tab</div>
+                        <div class="component-links">
+                            <a href="navigation-components/tab/plan.md">Plan</a>
+                            <a href="navigation-components/tab/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Tab List</div>
+                        <div class="component-links">
+                            <a href="navigation-components/tab-list/plan.md">Plan</a>
+                            <a href="navigation-components/tab-list/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Tab Navigation</div>
+                        <div class="component-links">
+                            <a href="navigation-components/tab-navigation/plan.md">Plan</a>
+                            <a href="navigation-components/tab-navigation/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Tab Panel</div>
+                        <div class="component-links">
+                            <a href="navigation-components/tab-panel/plan.md">Plan</a>
+                            <a href="navigation-components/tab-panel/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Vertical Tabs</div>
+                        <div class="component-links">
+                            <a href="navigation-components/vertical-tabs/plan.md">Plan</a>
+                            <a href="navigation-components/vertical-tabs/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="category">
+            <div class="category-header" onclick="toggleCategory(this)">
+                <h2>Feedback Components</h2>
+                <span class="category-count">24 components</span>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="collapsible">
+                <div class="component-grid">
+                    <div class="component-card">
+                        <div class="component-name">Alert</div>
+                        <div class="component-links">
+                            <a href="feedback-components/alert/plan.md">Plan</a>
+                            <a href="feedback-components/alert/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Alert Dialog</div>
+                        <div class="component-links">
+                            <a href="feedback-components/alert-dialog/plan.md">Plan</a>
+                            <a href="feedback-components/alert-dialog/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Announcement</div>
+                        <div class="component-links">
+                            <a href="feedback-components/announcement/plan.md">Plan</a>
+                            <a href="feedback-components/announcement/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Banner</div>
+                        <div class="component-links">
+                            <a href="feedback-components/banner/plan.md">Plan</a>
+                            <a href="feedback-components/banner/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Error Message</div>
+                        <div class="component-links">
+                            <a href="feedback-components/error-message/plan.md">Plan</a>
+                            <a href="feedback-components/error-message/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Help Tooltip</div>
+                        <div class="component-links">
+                            <a href="feedback-components/help-tooltip/plan.md">Plan</a>
+                            <a href="feedback-components/help-tooltip/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Info Message</div>
+                        <div class="component-links">
+                            <a href="feedback-components/info-message/plan.md">Plan</a>
+                            <a href="feedback-components/info-message/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Loading Button</div>
+                        <div class="component-links">
+                            <a href="feedback-components/loading-button/plan.md">Plan</a>
+                            <a href="feedback-components/loading-button/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Loading Overlay</div>
+                        <div class="component-links">
+                            <a href="feedback-components/loading-overlay/plan.md">Plan</a>
+                            <a href="feedback-components/loading-overlay/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Notification Center</div>
+                        <div class="component-links">
+                            <a href="feedback-components/notification-center/plan.md">Plan</a>
+                            <a href="feedback-components/notification-center/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Progress Bar</div>
+                        <div class="component-links">
+                            <a href="feedback-components/progress-bar/plan.md">Plan</a>
+                            <a href="feedback-components/progress-bar/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Progress Ring</div>
+                        <div class="component-links">
+                            <a href="feedback-components/progress-ring/plan.md">Plan</a>
+                            <a href="feedback-components/progress-ring/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Progress Steps</div>
+                        <div class="component-links">
+                            <a href="feedback-components/progress-steps/plan.md">Plan</a>
+                            <a href="feedback-components/progress-steps/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Pulse Loader</div>
+                        <div class="component-links">
+                            <a href="feedback-components/pulse-loader/plan.md">Plan</a>
+                            <a href="feedback-components/pulse-loader/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Skeleton Loader</div>
+                        <div class="component-links">
+                            <a href="feedback-components/skeleton-loader/plan.md">Plan</a>
+                            <a href="feedback-components/skeleton-loader/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Snackbar</div>
+                        <div class="component-links">
+                            <a href="feedback-components/snackbar/plan.md">Plan</a>
+                            <a href="feedback-components/snackbar/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Status Bar</div>
+                        <div class="component-links">
+                            <a href="feedback-components/status-bar/plan.md">Plan</a>
+                            <a href="feedback-components/status-bar/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Status Indicator</div>
+                        <div class="component-links">
+                            <a href="feedback-components/status-indicator/plan.md">Plan</a>
+                            <a href="feedback-components/status-indicator/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Step Indicator</div>
+                        <div class="component-links">
+                            <a href="feedback-components/step-indicator/plan.md">Plan</a>
+                            <a href="feedback-components/step-indicator/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Success Message</div>
+                        <div class="component-links">
+                            <a href="feedback-components/success-message/plan.md">Plan</a>
+                            <a href="feedback-components/success-message/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Toast</div>
+                        <div class="component-links">
+                            <a href="feedback-components/toast/plan.md">Plan</a>
+                            <a href="feedback-components/toast/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Tour</div>
+                        <div class="component-links">
+                            <a href="feedback-components/tour/plan.md">Plan</a>
+                            <a href="feedback-components/tour/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Validation Message</div>
+                        <div class="component-links">
+                            <a href="feedback-components/validation-message/plan.md">Plan</a>
+                            <a href="feedback-components/validation-message/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Warning Message</div>
+                        <div class="component-links">
+                            <a href="feedback-components/warning-message/plan.md">Plan</a>
+                            <a href="feedback-components/warning-message/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-name">Wave Loader</div>
+                        <div class="component-links">
+                            <a href="feedback-components/wave-loader/plan.md">Plan</a>
+                            <a href="feedback-components/wave-loader/mockup.html">Mockup</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Continue with remaining categories... -->
+
+    </div>
+
+    <script>
+        function toggleCategory(header) {
+            const category = header.parentElement;
+            category.classList.toggle('expanded');
+        }
+
+        // Search functionality
+        const searchInput = document.getElementById('search');
+        searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const cards = document.querySelectorAll('.component-card');
+            
+            cards.forEach(card => {
+                const name = card.querySelector('.component-name').textContent.toLowerCase();
+                if (name.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Expand categories with matching components
+            document.querySelectorAll('.category').forEach(category => {
+                const hasVisibleCards = Array.from(category.querySelectorAll('.component-card'))
+                    .some(card => card.style.display !== 'none');
+                if (hasVisibleCards && searchTerm) {
+                    category.classList.add('expanded');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

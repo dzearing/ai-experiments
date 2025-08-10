@@ -172,6 +172,22 @@ export interface StateModifier {
 }
 
 /**
+ * Gradient definition for a surface
+ */
+export interface GradientDefinition {
+  /** Gradient direction in degrees (default: 135) */
+  direction?: number;
+  
+  /** Gradient stops */
+  stops: Array<{
+    /** Color at this stop (can reference surface colors) */
+    color: ColorComputation | 'transparent';
+    /** Position percentage (0-100) */
+    position: number;
+  }>;
+}
+
+/**
  * Surface definition for generating surface-specific tokens
  */
 export interface SurfaceDefinition {
@@ -191,6 +207,17 @@ export interface SurfaceDefinition {
     textDanger?: ColorComputation; // Danger/error text color
     outline?: ColorComputation; // Focus outline color
     shadow?: string; // CSS shadow value
+  };
+
+  /** Gradient definitions for this surface */
+  gradients?: {
+    primary?: GradientDefinition;
+    success?: GradientDefinition;
+    warning?: GradientDefinition;
+    danger?: GradientDefinition;
+    info?: GradientDefinition;
+    accent?: GradientDefinition;
+    [key: string]: GradientDefinition | undefined; // Allow custom gradient names
   };
 
   /** Variant generation configuration */
@@ -315,16 +342,12 @@ export interface SurfaceTokens {
   background: string;
   backgroundSoft10?: string;
   backgroundSoft20?: string;
-  backgroundSoft30?: string;
-  backgroundSoft40?: string;
   backgroundHard10?: string;
   backgroundHard20?: string;
 
   text: string;
   textSoft10?: string;
   textSoft20?: string;
-  textSoft30?: string;
-  textSoft40?: string;
   textHard10?: string;
   textHard20?: string;
 
@@ -346,7 +369,10 @@ export interface SurfaceTokens {
   'linkVisited-focus'?: string;
 
   icon?: string;
+  iconSoft10?: string;
   iconSoft20?: string;
+  iconHard10?: string;
+  iconHard20?: string;
   'icon-hover'?: string;
   'icon-active'?: string;
   'icon-focus'?: string;

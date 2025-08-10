@@ -18,7 +18,7 @@
 
 .showcase-section p {
   margin: 0 0 var(--spacing-large10) 0;
-  color: var(--color-body-text-soft20);
+  color: var(--color-body-textSoft20);
 }
 
 .button-row {
@@ -73,7 +73,7 @@
 .usage-card ul {
   margin: 0;
   padding-left: var(--spacing-large10);
-  color: var(--color-body-text-soft20);
+  color: var(--color-body-textSoft20);
 }
 
 .usage-card li {
@@ -85,7 +85,7 @@
   white-space: pre;
   font-family: var(--font-family-mono);
   font-size: var(--font-size-small10);
-  background: var(--color-body-background-soft10);
+  background: var(--color-body-backgroundSoft10);
   color: var(--color-body-text);
   padding: var(--spacing);
   border-radius: var(--radius-small10);
@@ -115,7 +115,7 @@
 .shape-example p {
   margin: 0 0 var(--spacing) 0;
   font-size: var(--font-size-small10);
-  color: var(--color-body-text-soft20);
+  color: var(--color-body-textSoft20);
 }
 
 /* Size and shape grid */
@@ -135,5 +135,5 @@
 .size-shape-row .label {
   width: 60px;
   font-size: var(--font-size-small10);
-  color: var(--color-body-text-soft20);
+  color: var(--color-body-textSoft20);
 }

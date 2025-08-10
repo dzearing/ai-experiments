@@ -24,6 +24,10 @@ interface TokenMetadata {
     }>;
     states: string[];
   };
+  gradient: {
+    surfaces: string[];
+    intents: string[];
+  };
   typography: {
     categories: string[];
     scales: Record<string, string[]>;
@@ -110,6 +114,10 @@ async function buildTokenMetadata() {
         surfaces: surfaceNames,
         concepts,
         states: ['', 'hover', 'active', 'focus', 'disabled']
+      },
+      gradient: {
+        surfaces: ['body'], // Currently only body surface has gradients
+        intents: ['primary', 'success', 'warning', 'danger', 'info', 'accent']
       },
       typography: {
         categories: ['family', 'size', 'weight', 'lineHeight', 'letterSpacing'],

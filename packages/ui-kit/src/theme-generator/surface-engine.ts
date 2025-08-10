@@ -479,103 +479,137 @@ function generateVariants(
   variants: SurfaceDefinition['variants'],
   context: ResolutionContext
 ): void {
-  // Soft variants (reduced contrast)
+  // Soft variants (reduced contrast, moves toward background)
   if (variants?.soft) {
     for (const percentage of variants.soft) {
-      // Text soft variants - ensure minimum contrast
+      // Text soft variants - progressively more transparent appearance
       if (tokens.text) {
         const key = `textSoft${percentage}` as keyof SurfaceTokens;
-        // Mix the text with background
+        // Mix text with background to create semi-transparent effect
         const mixedColor = mix(tokens.text, tokens.background, percentage / 100);
         
-        // For soft30 and above, ensure AA compliance (4.5:1)
-        // For lower percentages, allow lower contrast but ensure readability
-        // For themes targeting AAA, all soft variants should meet AAA
-        const themeTargetLevel = context.theme.accessibility.targetLevel || 'AA';
-        const minContrastLevel = themeTargetLevel === 'AAA' ? 'AAA' : (percentage >= 30 ? 'AA' : 'relaxed');
+        // Ensure minimum readability
+        const rgb1 = parseColor(mixedColor);
+        const rgb2 = parseColor(tokens.background);
+        const colorDiff = Math.abs(rgb1.r - rgb2.r) + Math.abs(rgb1.g - rgb2.g) + Math.abs(rgb1.b - rgb2.b);
         
-        // Check contrast and adjust if needed
-        if (minContrastLevel !== 'relaxed' && !meetsContrast(mixedColor, tokens.background, minContrastLevel, 'normal')) {
-          // If contrast is too low, adjust the color
-          // In dark mode, lighten; in light mode, darken
-          let adjustedColor = mixedColor;
-          let adjustment = 5;
-          const maxAdjustment = 50;
-          
-          while (!meetsContrast(adjustedColor, tokens.background, minContrastLevel, 'normal') && adjustment <= maxAdjustment) {
-            adjustedColor = context.mode === 'dark' 
-              ? lighten(mixedColor, adjustment)
-              : darken(mixedColor, adjustment);
-            adjustment += 5;
-          }
-          
-          tokens[key] = adjustedColor;
-        } else if (minContrastLevel === 'relaxed') {
-          // For lower soft variants, ensure at least 3:1 contrast
-          let adjustedColor = mixedColor;
-          
-          // Simple check - if the color is too close to background, adjust it
-          const rgb1 = parseColor(mixedColor);
-          const rgb2 = parseColor(tokens.background);
-          const colorDiff = Math.abs(rgb1.r - rgb2.r) + Math.abs(rgb1.g - rgb2.g) + Math.abs(rgb1.b - rgb2.b);
-          
-          if (colorDiff < 100) { // Colors are too similar
-            adjustedColor = context.mode === 'dark'
-              ? lighten(mixedColor, 20)
-              : darken(mixedColor, 20);
-          }
-          
+        // If too close to background, apply minimum difference
+        if (colorDiff < 50) {
+          const adjustedColor = context.mode === 'dark'
+            ? lighten(mixedColor, 10)
+            : darken(mixedColor, 10);
           tokens[key] = adjustedColor;
         } else {
           tokens[key] = mixedColor;
         }
       }
 
-      // Background soft variants
+      // Background soft variants - move towards neutral background (less contrast)
       if (tokens.background) {
         const key = `backgroundSoft${percentage}` as keyof SurfaceTokens;
-        const baseColor =
-          context.mode === 'light'
-            ? darken(tokens.background, percentage * 0.5)
-            : lighten(tokens.background, percentage * 0.5);
-        tokens[key] = baseColor;
+        // In light mode, make lighter (toward white/neutral)
+        // In dark mode, make darker (toward black/neutral)
+        const amount = percentage * 0.3; // Subtle change
+        tokens[key] = context.mode === 'light'
+          ? lighten(tokens.background, amount)
+          : darken(tokens.background, amount);
       }
 
-      // Border soft variants
-      if (tokens.border) {
+      // Border soft variants - fade toward background
+      if (tokens.border && tokens.border !== 'transparent') {
         const key = `borderSoft${percentage}` as keyof SurfaceTokens;
+        // Mix border with background
         tokens[key] = mix(tokens.border, tokens.background, percentage / 100);
+      }
+
+      // Icon soft variants - similar to text
+      if (tokens.icon) {
+        const key = `iconSoft${percentage}` as keyof SurfaceTokens;
+        const mixedColor = mix(tokens.icon, tokens.background, percentage / 100);
+        
+        // Ensure minimum visibility
+        const rgb1 = parseColor(mixedColor);
+        const rgb2 = parseColor(tokens.background);
+        const colorDiff = Math.abs(rgb1.r - rgb2.r) + Math.abs(rgb1.g - rgb2.g) + Math.abs(rgb1.b - rgb2.b);
+        
+        if (colorDiff < 50) {
+          const adjustedColor = context.mode === 'dark'
+            ? lighten(mixedColor, 10)
+            : darken(mixedColor, 10);
+          tokens[key] = adjustedColor;
+        } else {
+          tokens[key] = mixedColor;
+        }
       }
     }
   }
 
-  // Hard variants (increased contrast)
+  // Hard variants (increased contrast, moves away from background)
   if (variants?.hard) {
     for (const percentage of variants.hard) {
-      // Text hard variants
+      // Text hard variants - progressively bolder
       if (tokens.text) {
         const key = `textHard${percentage}` as keyof SurfaceTokens;
-        const amount = percentage * 0.5;
-        tokens[key] =
-          context.mode === 'light' ? darken(tokens.text, amount) : lighten(tokens.text, amount);
+        // In light mode, text gets darker (toward black)
+        // In dark mode, text gets lighter (toward white)
+        const amount = percentage * 0.8; // More aggressive than soft
+        
+        // Leave room for pure black/white
+        const baseRgb = parseColor(tokens.text);
+        let adjustedColor: string;
+        
+        if (context.mode === 'light') {
+          // Don't go pure black, leave room
+          const maxDarken = Math.min(amount, 100 - ((255 - baseRgb.r) / 2.55));
+          adjustedColor = darken(tokens.text, maxDarken);
+        } else {
+          // Don't go pure white, leave room
+          const maxLighten = Math.min(amount, (baseRgb.r / 2.55));
+          adjustedColor = lighten(tokens.text, maxLighten);
+        }
+        
+        tokens[key] = adjustedColor;
       }
 
-      // Background hard variants
+      // Background hard variants - move away from neutral background (more contrast)
       if (tokens.background) {
         const key = `backgroundHard${percentage}` as keyof SurfaceTokens;
+        // In light mode, background gets darker (away from white)
+        // In dark mode, background gets lighter (away from black)
         const amount = percentage * 0.5;
-        tokens[key] =
-          context.mode === 'light'
-            ? lighten(tokens.background, amount)
-            : darken(tokens.background, amount);
+        tokens[key] = context.mode === 'light'
+          ? darken(tokens.background, amount)
+          : lighten(tokens.background, amount);
       }
 
-      // Border hard variants
-      if (tokens.border) {
+      // Border hard variants - more prominent (higher contrast)
+      if (tokens.border && tokens.border !== 'transparent') {
         const key = `borderHard${percentage}` as keyof SurfaceTokens;
-        const amount = percentage * 0.5;
-        tokens[key] =
-          context.mode === 'light' ? darken(tokens.border, amount) : lighten(tokens.border, amount);
+        // Make border stand out more from background - move away from background color
+        const amount = percentage * 0.8;
+        tokens[key] = context.mode === 'light'
+          ? darken(tokens.border, amount)
+          : lighten(tokens.border, amount);
+      }
+
+      // Icon hard variants - similar to text
+      if (tokens.icon) {
+        const key = `iconHard${percentage}` as keyof SurfaceTokens;
+        const amount = percentage * 0.8;
+        
+        // Similar logic to text - don't go pure black/white
+        const baseRgb = parseColor(tokens.icon);
+        let adjustedColor: string;
+        
+        if (context.mode === 'light') {
+          const maxDarken = Math.min(amount, 100 - ((255 - baseRgb.r) / 2.55));
+          adjustedColor = darken(tokens.icon, maxDarken);
+        } else {
+          const maxLighten = Math.min(amount, (baseRgb.r / 2.55));
+          adjustedColor = lighten(tokens.icon, maxLighten);
+        }
+        
+        tokens[key] = adjustedColor;
       }
     }
   }
@@ -890,32 +924,55 @@ function generateCommonVariations(
     if (!tokens['icon-disabled']) {
       tokens['icon-disabled'] = mix(tokens.icon, tokens.background, 0.5);
     }
-    
-    // Icon variations
-    if (!tokens.iconSoft20) {
-      tokens.iconSoft20 = mix(tokens.icon, tokens.background, 0.2);
-    }
   }
 
-  // Shadow variations
-  if (tokens.shadow && !tokens.shadowSoft) {
-    tokens.shadowSoft = tokens.shadow.replace(/[\d.]+\)$/, (m) => {
-      const opacity = parseFloat(m);
-      return `${opacity * 0.7})`;
-    });
+  // Shadow variations - ensure all are defined
+  if (!tokens.shadow) {
+    // Default shadow if not defined
+    tokens.shadow = context.mode === 'light' 
+      ? '0 1px 3px rgba(0, 0, 0, 0.12)'
+      : '0 1px 3px rgba(0, 0, 0, 0.24)';
   }
-  if (tokens.shadow && !tokens.shadowHard) {
-    tokens.shadowHard = tokens.shadow.replace(/[\d.]+\)$/, (m) => {
-      const opacity = parseFloat(m);
-      return `${opacity * 1.3})`;
-    });
+  
+  // Generate soft shadow (lighter)
+  if (!tokens.shadowSoft) {
+    const shadowMatch = tokens.shadow.match(/rgba\([^)]+,\s*([\d.]+)\)/);
+    if (shadowMatch && shadowMatch[1]) {
+      const opacity = parseFloat(shadowMatch[1]);
+      tokens.shadowSoft = tokens.shadow.replace(
+        /rgba\([^)]+,\s*[\d.]+\)/g,
+        (match) => match.replace(/[\d.]+\)$/, `${opacity * 0.6})`)
+      );
+    } else {
+      // Fallback for non-rgba shadows
+      tokens.shadowSoft = context.mode === 'light'
+        ? '0 1px 2px rgba(0, 0, 0, 0.08)'
+        : '0 1px 2px rgba(0, 0, 0, 0.16)';
+    }
+  }
+  
+  // Generate hard shadow (darker/stronger)
+  if (!tokens.shadowHard) {
+    const shadowMatch = tokens.shadow.match(/rgba\([^)]+,\s*([\d.]+)\)/);
+    if (shadowMatch && shadowMatch[1]) {
+      const opacity = parseFloat(shadowMatch[1]);
+      tokens.shadowHard = tokens.shadow.replace(
+        /rgba\([^)]+,\s*[\d.]+\)/g,
+        (match) => match.replace(/[\d.]+\)$/, `${Math.min(opacity * 1.5, 0.8)})`)
+      );
+    } else {
+      // Fallback for non-rgba shadows
+      tokens.shadowHard = context.mode === 'light'
+        ? '0 2px 6px rgba(0, 0, 0, 0.2)'
+        : '0 2px 6px rgba(0, 0, 0, 0.4)';
+    }
   }
 
 
   // Generate linkVisited states if linkVisited is defined
   if (tokens.linkVisited && surface.states) {
     // Generate states for linkVisited
-    tokens['linkVisited-hover'] = surface.states.hover
+    tokens['linkVisited-hover'] = surface.states.hover && tokens.background
       ? validateAndAdjustContrast(
           applyStateModifier(tokens.linkVisited, surface.states.hover, tokens.background, context.mode, context),
           tokens.background,
@@ -927,7 +984,7 @@ function generateCommonVariations(
         )
       : tokens.linkVisited;
     
-    tokens['linkVisited-active'] = surface.states.active
+    tokens['linkVisited-active'] = surface.states.active && tokens.background
       ? validateAndAdjustContrast(
           applyStateModifier(tokens.linkVisited, surface.states.active, tokens.background, context.mode, context),
           tokens.background,
@@ -939,7 +996,7 @@ function generateCommonVariations(
         )
       : tokens.linkVisited;
     
-    tokens['linkVisited-focus'] = surface.states.focus
+    tokens['linkVisited-focus'] = surface.states.focus && tokens.background
       ? validateAndAdjustContrast(
           applyStateModifier(tokens.linkVisited, surface.states.focus, tokens.background, context.mode, context),
           tokens.background,

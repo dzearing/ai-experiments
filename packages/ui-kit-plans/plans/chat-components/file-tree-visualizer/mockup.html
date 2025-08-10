@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Tree Visualizer Mockup</title>
+    <!-- UI Kit Styles -->
+    <link rel="stylesheet" href="../../../assets/styles.css">
+    
+    <!-- Set theme base path for mockups -->
+    <script>
+        window.__uiKitBasePath = '../../../assets/';
+    </script>    
+    <!-- Theme Scripts (ES modules) -->
+    <script type="module" src="../../../assets/theme.js"></script>
+    <script type="module" src="../../../assets/theme-switcher.js"></script>
+    
+    <style>
+        /* Component-specific tokens not in ui-kit */
+        :root {
+            /* Highlight color using warningSoft for search results */
+            --color-text-highlight: var(--color-warningSoft-background);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background: var(--color-body-background);
+            color: var(--color-body-text);
+            padding: var(--spacing);
+            line-height: var(--line-height);
+            font-size: var(--font-size);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            margin-bottom: var(--spacing);
+            font-size: var(--font-size-h3);
+            font-weight: var(--font-weight-semibold);
+        }
+
+        .demo-section {
+            margin-bottom: var(--spacing-large20);
+        }
+
+        h2 {
+            margin-bottom: var(--spacing);
+            font-size: var(--font-size-h4);
+            color: var(--color-body-textSoft10);
+            font-weight: var(--font-weight-medium);
+        }
+
+        /* File Tree Container */
+        .file-tree-container {
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius-large10);
+            overflow: hidden;
+            max-width: 400px;
+        }
+
+        /* Search Box */
+        .tree-search {
+            padding: var(--spacing-small10);
+            border-bottom: 1px solid var(--color-body-border);
+            background: var(--color-body-background);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: var(--spacing-small20) var(--spacing-small10);
+            border: 1px solid var(--color-input-border);
+            border-radius: var(--radius-input);
+            font-size: var(--font-size-small10);
+            background: var(--color-input-background);
+            color: var(--color-input-text);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--color-input-border-focus);
+            box-shadow: 0 0 0 2px var(--color-primary-background);
+        }
+
+        /* Tree Actions */
+        .tree-actions {
+            padding: var(--spacing-small10);
+            border-bottom: 1px solid var(--color-body-border);
+            display: flex;
+            gap: var(--spacing-small10);
+            background: var(--color-body-background);
+        }
+
+        .action-btn {
+            padding: var(--spacing-small20) var(--spacing-small10);
+            border: 1px solid var(--color-body-border);
+            background: var(--color-button-background);
+            border-radius: var(--radius-button);
+            font-size: var(--font-size-small20);
+            cursor: pointer;
+            color: var(--color-button-text);
+            transition: all var(--duration-normal);
+        }
+
+        .action-btn:hover {
+            background: var(--color-neutral-background-hover);
+        }
+
+        /* File Tree */
+        .file-tree {
+            padding: var(--spacing-small10);
+            font-size: var(--font-size-small10);
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .tree-node {
+            user-select: none;
+            position: relative;
+        }
+
+        .tree-item {
+            display: flex;
+            align-items: center;
+            padding: var(--spacing-small20) var(--spacing-small10);
+            cursor: pointer;
+            border-radius: var(--radius-small10);
+            gap: var(--spacing-small10);
+            position: relative;
+        }
+
+        .tree-item:hover {
+            background: var(--color-neutral-background-hover);
+        }
+
+        .tree-item.selected {
+            background: var(--color-infoSoft-background);
+            font-weight: var(--font-weight-medium);
+        }
+
+        .tree-item.focused {
+            outline: 2px solid var(--color-infoSoft-border);
+            outline-offset: -2px;
+        }
+
+        /* Indentation with tree lines */
+        .tree-item.indent-1 { padding-left: calc(var(--spacing) * 1.5); }
+        .tree-item.indent-2 { padding-left: calc(var(--spacing) * 2.5); }
+        .tree-item.indent-3 { padding-left: calc(var(--spacing) * 3.5); }
+        .tree-item.indent-4 { padding-left: calc(var(--spacing) * 4.5); }
+
+        /* Tree structure lines */
+        .tree-item::before {
+            content: '';
+            position: absolute;
+            border-left: 1px dotted var(--color-body-borderSoft10);
+            height: 100%;
+            left: 8px;
+            top: -50%;
+        }
+
+        .tree-item.indent-1::before {
+            left: calc(var(--spacing) + 8px);
+        }
+
+        .tree-item.indent-2::before {
+            left: calc(var(--spacing) * 2 + 8px);
+        }
+
+        .tree-item.indent-3::before {
+            left: calc(var(--spacing) * 3 + 8px);
+        }
+
+        .tree-item::after {
+            content: '';
+            position: absolute;
+            border-top: 1px dotted var(--color-body-borderSoft10);
+            width: 12px;
+            left: 8px;
+            top: 50%;
+        }
+
+        .tree-item.indent-1::after {
+            left: calc(var(--spacing) + 8px);
+        }
+
+        .tree-item.indent-2::after {
+            left: calc(var(--spacing) * 2 + 8px);
+        }
+
+        .tree-item.indent-3::after {
+            left: calc(var(--spacing) * 3 + 8px);
+        }
+
+        .tree-item.last::before {
+            height: 50%;
+            top: 0;
+        }
+
+        .tree-item.root::before,
+        .tree-item.root::after {
+            display: none;
+        }
+
+        /* Icons */
+        .tree-icon {
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Tree expand/collapse box */
+        .tree-toggle {
+            width: 14px;
+            height: 14px;
+            border: 1px solid var(--color-body-border);
+            background: var(--color-panel-background);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: var(--font-size-smallest);
+            line-height: 1;
+            font-weight: var(--font-weight-bold);
+            color: var(--color-body-textSoft10);
+            border-radius: var(--radius-small20);
+            transition: all var(--duration-fast10);
+        }
+
+        .tree-toggle:hover {
+            background: var(--color-neutral-background-hover);
+            border-color: var(--color-body-border);
+            color: var(--color-body-text);
+        }
+
+        .tree-toggle.expanded::before {
+            content: '−';
+        }
+
+        .tree-toggle.collapsed::before {
+            content: '+';
+        }
+
+        .tree-spacer {
+            width: 14px;
+            height: 14px;
+        }
+
+        .file-icon {
+            opacity: 0.7;
+        }
+
+        .folder-icon {
+            color: var(--color-warning-text);
+        }
+
+        /* File Name */
+        .file-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Badges and Indicators */
+        .file-badge {
+            padding: var(--spacing-small20);
+            border-radius: var(--radius-small10);
+            font-size: var(--font-size-smallest);
+            font-weight: var(--font-weight-semibold);
+            text-transform: uppercase;
+        }
+
+        .badge-new {
+            background: var(--color-successSoft-background);
+            color: var(--color-successSoft-text);
+            border: 1px solid var(--color-successSoft-border);
+        }
+
+        .badge-modified {
+            background: var(--color-warningSoft-background);
+            color: var(--color-warningSoft-text);
+            border: 1px solid var(--color-warningSoft-border);
+        }
+
+        /* File size */
+        .file-size {
+            font-size: var(--font-size-smallest);
+            color: var(--color-body-textSoft20);
+            margin-left: auto;
+        }
+
+        /* Tree stats */
+        .tree-stats {
+            padding: var(--spacing-small10);
+            border-top: 1px solid var(--color-body-border);
+            background: var(--color-body-background);
+            display: flex;
+            justify-content: space-between;
+            font-size: var(--font-size-small20);
+            color: var(--color-body-textSoft10);
+        }
+
+        /* Compact tree */
+        .compact-tree .tree-item {
+            padding: var(--spacing-small30) var(--spacing-small10);
+        }
+
+        .compact-tree .file-size,
+        .compact-tree .file-badge {
+            display: none;
+        }
+
+        /* Highlight for search */
+        .highlight {
+            background: var(--color-text-highlight);
+            padding: var(--spacing-small20);
+            border-radius: var(--radius-small20);
+        }
+
+        /* Context menu */
+        .context-menu {
+            position: absolute;
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius-large10);
+            box-shadow: var(--shadow-card);
+            padding: var(--spacing-small10);
+            display: none;
+            z-index: 1000;
+            min-width: 150px;
+        }
+
+        .context-menu-item {
+            padding: var(--spacing-small20) var(--spacing-small10);
+            cursor: pointer;
+            border-radius: var(--radius-small10);
+            font-size: var(--font-size-small10);
+        }
+
+        .context-menu-item:hover {
+            background: var(--color-neutral-background-hover);
+        }
+
+        .context-menu-separator {
+            height: 1px;
+            background: var(--color-body-border);
+            margin: var(--spacing-small20) 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>File Tree Visualizer Component</h1>
+
+        <!-- Standard View -->
+        <div class="demo-section">
+            <h2>Standard File Tree</h2>
+            <div class="file-tree-container">
+                <div class="tree-search">
+                    <input type="text" class="search-input" placeholder="Search files...">
+                </div>
+
+                <div class="tree-actions">
+                    <button class="action-btn">Expand All</button>
+                    <button class="action-btn">Collapse All</button>
+                    <button class="action-btn">Refresh</button>
+                </div>
+
+                <div class="file-tree">
+                    <div class="tree-node">
+                        <div class="tree-item root">
+                            <span class="tree-icon tree-toggle expanded"></span>
+                            <span class="tree-icon folder-icon">📁</span>
+                            <span class="file-name">src</span>
+                        </div>
+                        
+                        <div class="tree-node">
+                            <div class="tree-item indent-1">
+                                <span class="tree-icon tree-toggle expanded"></span>
+                                <span class="tree-icon folder-icon">📁</span>
+                                <span class="file-name">components</span>
+                            </div>
+                            
+                            <div class="tree-item indent-2">
+                                <span class="tree-icon tree-spacer"></span>
+                                <span class="tree-icon file-icon">📄</span>
+                                <span class="file-name">Button.tsx</span>
+                                <span class="file-size">2.1 KB</span>
+                            </div>
+                            
+                            <div class="tree-item indent-2">
+                                <span class="tree-icon tree-spacer"></span>
+                                <span class="tree-icon file-icon">📄</span>
+                                <span class="file-name">Card.tsx</span>
+                                <span class="badge-modified file-badge">M</span>
+                                <span class="file-size">1.8 KB</span>
+                            </div>
+                            
+                            <div class="tree-item indent-2 last selected">
+                                <span class="tree-icon tree-spacer"></span>
+                                <span class="tree-icon file-icon">📄</span>
+                                <span class="file-name">Modal.tsx</span>
+                                <span class="file-size">3.2 KB</span>
+                            </div>
+                        </div>
+                        
+                        <div class="tree-node">
+                            <div class="tree-item indent-1">
+                                <span class="tree-icon tree-toggle collapsed"></span>
+                                <span class="tree-icon folder-icon">📁</span>
+                                <span class="file-name">utils</span>
+                            </div>
+                        </div>
+                        
+                        <div class="tree-node">
+                            <div class="tree-item indent-1">
+                                <span class="tree-icon tree-toggle expanded"></span>
+                                <span class="tree-icon folder-icon">📁</span>
+                                <span class="file-name">hooks</span>
+                            </div>
+                            
+                            <div class="tree-item indent-2">
+                                <span class="tree-icon tree-spacer"></span>
+                                <span class="tree-icon file-icon">📄</span>
+                                <span class="file-name">useAuth.ts</span>
+                                <span class="badge-new file-badge">NEW</span>
+                                <span class="file-size">1.5 KB</span>
+                            </div>
+                            
+                            <div class="tree-item indent-2 last">
+                                <span class="tree-icon tree-spacer"></span>
+                                <span class="tree-icon file-icon">📄</span>
+                                <span class="file-name">useTheme.ts</span>
+                                <span class="file-size">0.8 KB</span>
+                            </div>
+                        </div>
+                        
+                        <div class="tree-item indent-1">
+                            <span class="tree-icon tree-spacer"></span>
+                            <span class="tree-icon file-icon">📄</span>
+                            <span class="file-name">App.tsx</span>
+                            <span class="file-size">4.5 KB</span>
+                        </div>
+                        
+                        <div class="tree-item indent-1 last">
+                            <span class="tree-icon tree-spacer"></span>
+                            <span class="tree-icon file-icon">📄</span>
+                            <span class="file-name">index.tsx</span>
+                            <span class="file-size">0.5 KB</span>
+                        </div>
+                    </div>
+                    
+                    <div class="tree-node">
+                        <div class="tree-item root">
+                            <span class="tree-icon tree-toggle collapsed"></span>
+                            <span class="tree-icon folder-icon">📁</span>
+                            <span class="file-name">public</span>
+                        </div>
+                    </div>
+                    
+                    <div class="tree-node">
+                        <div class="tree-item root">
+                            <span class="tree-icon tree-spacer"></span>
+                            <span class="tree-icon file-icon">📄</span>
+                            <span class="file-name">package.json</span>
+                            <span class="file-size">1.2 KB</span>
+                        </div>
+                    </div>
+                    
+                    <div class="tree-node">
+                        <div class="tree-item root last">
+                            <span class="tree-icon tree-spacer"></span>
+                            <span class="tree-icon file-icon">📄</span>
+                            <span class="file-name">tsconfig.json</span>
+                            <span class="file-size">0.8 KB</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tree-stats">
+                    <span>12 files, 3 folders</span>
+                    <span>Total: 24.6 KB</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Results View -->
+        <div class="demo-section">
+            <h2>Search Results (Highlighted)</h2>
+            <div class="file-tree-container">
+                <div class="tree-search">
+                    <input type="text" class="search-input" value="use" placeholder="Search files...">
+                </div>
+
+                <div class="file-tree">
+                    <div class="tree-node">
+                        <div class="tree-item root">
+                            <span class="tree-icon tree-toggle expanded"></span>
+                            <span class="tree-icon folder-icon">📁</span>
+                            <span class="file-name">src</span>
+                        </div>
+                        
+                        <div class="tree-node">
+                            <div class="tree-item indent-1">
+                                <span class="tree-icon tree-toggle expanded"></span>
+                                <span class="tree-icon folder-icon">📁</span>
+                                <span class="file-name">hooks</span>
+                            </div>
+                            
+                            <div class="tree-item indent-2">
+                                <span class="tree-icon tree-spacer"></span>
+                                <span class="tree-icon file-icon">📄</span>
+                                <span class="file-name"><span class="highlight">use</span>Auth.ts</span>
+                                <span class="file-size">1.5 KB</span>
+                            </div>
+                            
+                            <div class="tree-item indent-2 last">
+                                <span class="tree-icon tree-spacer"></span>
+                                <span class="tree-icon file-icon">📄</span>
+                                <span class="file-name"><span class="highlight">use</span>Theme.ts</span>
+                                <span class="file-size">0.8 KB</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tree-stats">
+                    <span>2 results found</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compact Mode -->
+        <div class="demo-section">
+            <h2>Compact Mode</h2>
+            <div class="file-tree-container compact-tree">
+                <div class="file-tree">
+                    <div class="tree-node">
+                        <div class="tree-item root">
+                            <span class="tree-icon tree-toggle collapsed"></span>
+                            <span class="tree-icon folder-icon">📁</span>
+                            <span class="file-name">src</span>
+                        </div>
+                    </div>
+                    <div class="tree-node">
+                        <div class="tree-item root">
+                            <span class="tree-icon tree-toggle expanded"></span>
+                            <span class="tree-icon folder-icon">📁</span>
+                            <span class="file-name">components</span>
+                        </div>
+                        <div class="tree-item indent-1">
+                            <span class="tree-icon tree-spacer"></span>
+                            <span class="tree-icon file-icon">📄</span>
+                            <span class="file-name">Button.tsx</span>
+                        </div>
+                        <div class="tree-item indent-1">
+                            <span class="tree-icon tree-spacer"></span>
+                            <span class="tree-icon file-icon">📄</span>
+                            <span class="file-name">Card.tsx</span>
+                        </div>
+                        <div class="tree-item indent-1 last">
+                            <span class="tree-icon tree-spacer"></span>
+                            <span class="tree-icon file-icon">📄</span>
+                            <span class="file-name">Modal.tsx</span>
+                        </div>
+                    </div>
+                    <div class="tree-item root">
+                        <span class="tree-icon tree-spacer"></span>
+                        <span class="tree-icon file-icon">📄</span>
+                        <span class="file-name">App.tsx</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Example with Context Menu -->
+        <div class="demo-section">
+            <h2>Interactive Mode (Right-click for context menu)</h2>
+            <div class="file-tree-container">
+                <div class="file-tree">
+                    <div class="tree-node">
+                        <div class="tree-item root" oncontextmenu="showContextMenu(event); return false;">
+                            <span class="tree-icon tree-toggle expanded"></span>
+                            <span class="tree-icon folder-icon">📁</span>
+                            <span class="file-name">src</span>
+                        </div>
+                        
+                        <div class="tree-item indent-1" oncontextmenu="showContextMenu(event); return false;">
+                            <span class="tree-icon tree-spacer"></span>
+                            <span class="tree-icon file-icon">📄</span>
+                            <span class="file-name">App.tsx</span>
+                            <span class="file-size">4.5 KB</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Context Menu (hidden by default) -->
+        <div class="context-menu" id="contextMenu">
+            <div class="context-menu-item">New File</div>
+            <div class="context-menu-item">New Folder</div>
+            <div class="context-menu-separator"></div>
+            <div class="context-menu-item">Rename</div>
+            <div class="context-menu-item">Delete</div>
+            <div class="context-menu-separator"></div>
+            <div class="context-menu-item">Copy Path</div>
+            <div class="context-menu-item">Open in Explorer</div>
+        </div>
+    </div>
+
+    <script>
+        // Interactive functionality
+        document.querySelectorAll('.tree-toggle').forEach(toggle => {
+            toggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (toggle.classList.contains('expanded')) {
+                    toggle.classList.remove('expanded');
+                    toggle.classList.add('collapsed');
+                } else {
+                    toggle.classList.remove('collapsed');
+                    toggle.classList.add('expanded');
+                }
+            });
+        });
+
+        // Context menu
+        function showContextMenu(event) {
+            const menu = document.getElementById('contextMenu');
+            menu.style.display = 'block';
+            menu.style.left = event.pageX + 'px';
+            menu.style.top = event.pageY + 'px';
+        }
+
+        document.addEventListener('click', () => {
+            document.getElementById('contextMenu').style.display = 'none';
+        });
+
+        // File selection
+        document.querySelectorAll('.tree-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.tree-item.selected').forEach(selected => {
+                    selected.classList.remove('selected');
+                });
+                item.classList.add('selected');
+            });
+        });
+    </script>
+</body>
+</html>

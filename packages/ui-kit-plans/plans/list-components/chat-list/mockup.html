@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat List - Default View</title>
+  
+  <!-- UI Kit Styles -->
+  <link rel="stylesheet" href="../../../assets/styles.css">
+  
+  <!-- Set ui-kit assets base path -->
+  <script>
+    window.__uiKitBasePath = '../../../assets/';
+  </script>
+  
+  <!-- Theme Scripts (ES modules) -->
+  <script type="module" src="../../../assets/theme.js"></script>
+  <script type="module" src="../../../assets/theme-switcher.js"></script>
+  <style>
+    :root {
+      /* Component-specific tokens */
+      --chat-avatar-size: var(--spacing-large20);
+      --chat-message-gap: var(--spacing-small10);
+      --chat-bubble-padding: var(--spacing-small20) var(--spacing);
+      --chat-actions-size: var(--spacing-large10);
+    }
+
+    body {
+      margin: 0;
+      padding: var(--spacing-large10);
+      background: var(--color-body-background);
+      font-family: var(--font-family);
+      min-height: 100vh;
+    }
+
+    .demo-container {
+      max-width: 800px;
+      margin: 0 auto;
+      height: 600px;
+      display: flex;
+      flex-direction: column;
+      background: var(--color-panel-background);
+      border: 1px solid var(--color-panel-border);
+      border-radius: var(--radius-large10);
+      overflow: hidden;
+    }
+
+    .chat-header {
+      padding: var(--spacing) var(--spacing-large10);
+      border-bottom: 1px solid var(--color-panel-border);
+      background: var(--color-panel-background);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing);
+    }
+
+    .chat-header__title {
+      flex: 1;
+      font-size: var(--font-size-large10);
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-body-text);
+    }
+
+    .chat-header__status {
+      font-size: var(--font-size-small10);
+      color: var(--color-body-textSoft10);
+    }
+
+    .chat-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--spacing);
+      position: relative;
+      scroll-behavior: smooth;
+    }
+
+    /* Virtual scroll container */
+    .virtual-scroller {
+      position: relative;
+      min-height: 100%;
+    }
+
+    /* Chat message - positioned absolutely for virtualization */
+    .chat-message {
+      position: absolute;
+      width: 100%;
+      display: flex;
+      gap: var(--spacing-small20);
+      padding: var(--chat-message-gap) 0;
+      transform: translateY(var(--item-y));
+      transition: transform var(--duration-normal) var(--easing-default);
+      will-change: transform;
+    }
+
+    /* User messages */
+    .chat-message--user {
+      flex-direction: row;
+    }
+
+    /* Assistant messages */
+    .chat-message--assistant {
+      flex-direction: row-reverse;
+    }
+
+    .chat-message--assistant .chat-message__content {
+      background: var(--color-panel-background);
+      border: 1px solid var(--color-panel-border);
+      border-radius: var(--radius);
+      padding: var(--chat-bubble-padding);
+    }
+
+    /* Avatar */
+    .chat-message__avatar {
+      width: var(--chat-avatar-size);
+      height: var(--chat-avatar-size);
+      border-radius: 50%;
+      background: var(--color-infoSoft-background);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--font-size-small10);
+    }
+
+    /* Content area */
+    .chat-message__content {
+      flex: 1;
+      min-width: 0;
+      max-width: 70%;
+    }
+
+    .chat-message__header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: var(--spacing-smallest);
+      align-items: baseline;
+    }
+
+    .chat-message__author {
+      font-weight: var(--font-weight-medium);
+      color: var(--color-body-text);
+      font-size: var(--font-size-small10);
+    }
+
+    .chat-message__time {
+      font-size: var(--font-size-small20);
+      color: var(--color-body-textSoft20);
+    }
+
+    .chat-message__body {
+      color: var(--color-body-text);
+      line-height: var(--line-height);
+      word-wrap: break-word;
+    }
+
+    /* Code blocks in messages */
+    .chat-message__body pre {
+      background: var(--color-panel-background);
+      border: 1px solid var(--color-panel-border);
+      border-radius: var(--radius-small10);
+      padding: var(--spacing-small20);
+      margin: var(--spacing-small20) 0;
+      overflow-x: auto;
+    }
+
+    .chat-message__body code {
+      font-family: var(--font-family-mono);
+      font-size: var(--font-size-small10);
+      color: var(--color-body-textSoft10);
+    }
+
+    /* Actions (on hover) */
+    .chat-message__actions {
+      opacity: 0;
+      transition: opacity var(--duration-fast10);
+      display: flex;
+      gap: var(--spacing-smallest);
+      margin-top: var(--spacing-smallest);
+    }
+
+    .chat-message:hover .chat-message__actions {
+      opacity: 1;
+    }
+
+    .chat-message__action {
+      width: var(--chat-actions-size);
+      height: var(--chat-actions-size);
+      background: var(--color-neutral-background);
+      border: 1px solid var(--color-neutral-border);
+      border-radius: var(--radius-small10);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--font-size-small20);
+      transition: background var(--duration-fast10);
+    }
+
+    .chat-message__action:hover {
+      background: var(--color-neutral-background-hover);
+    }
+
+    /* Typing indicator */
+    .typing-indicator {
+      display: flex;
+      gap: var(--spacing-small20);
+      padding: var(--spacing-small20);
+      margin-top: var(--spacing);
+    }
+
+    .typing-indicator span {
+      width: var(--spacing-small10);
+      height: var(--spacing-small10);
+      background: var(--color-body-textSoft20);
+      border-radius: 50%;
+      animation: typing 1.4s infinite;
+    }
+
+    .typing-indicator span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .typing-indicator span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes typing {
+      0%, 60%, 100% {
+        transform: translateY(0);
+        opacity: 0.5;
+      }
+      30% {
+        transform: translateY(calc(var(--spacing-small10) * -1));
+        opacity: 1;
+      }
+    }
+
+    /* Chat input */
+    .chat-input-container {
+      padding: var(--spacing);
+      border-top: 1px solid var(--color-panel-border);
+      background: var(--color-panel-background);
+      display: flex;
+      gap: var(--spacing-small20);
+    }
+
+    .chat-input {
+      flex: 1;
+      background: var(--color-input-background);
+      border: 1px solid var(--color-input-border);
+      border-radius: var(--radius-input);
+      padding: var(--spacing-inputY) var(--spacing-inputX);
+      font-size: var(--font-size);
+      color: var(--color-input-text);
+      resize: none;
+      font-family: var(--font-family);
+      line-height: var(--line-height);
+    }
+
+    .chat-input:focus {
+      outline: 2px solid var(--color-input-outline);
+      outline-offset: 2px;
+      border-color: var(--color-input-border-focus);
+    }
+
+    .chat-input::placeholder {
+      color: var(--color-body-textSoft20);
+    }
+
+    .send-button {
+      background: var(--color-primary-background);
+      color: var(--color-primary-text);
+      border: 1px solid var(--color-primary-border);
+      border-radius: var(--radius-button);
+      padding: var(--spacing-buttonY) var(--spacing-buttonX);
+      font-weight: var(--font-weight-medium);
+      cursor: pointer;
+      transition: background var(--duration-fast10);
+    }
+
+    .send-button:hover {
+      background: var(--color-primary-background-hover);
+    }
+
+    .send-button:active {
+      background: var(--color-primary-background);
+    }
+
+    /* Entrance animation */
+    @keyframes slideInUp {
+      from {
+        opacity: 0;
+        transform: translateY(calc(var(--item-y) + var(--spacing-large5)));
+      }
+      to {
+        opacity: 1;
+        transform: translateY(var(--item-y));
+      }
+    }
+
+    .chat-message.entering {
+      animation: slideInUp var(--duration-normal) var(--easing-default);
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-container">
+    <div class="chat-header">
+      <div class="chat-header__title">Chat Demo</div>
+      <div class="chat-header__status">3 participants</div>
+    </div>
+
+    <div class="chat-list">
+      <div class="virtual-scroller" style="height: 800px;">
+        <!-- Virtualized messages with absolute positioning -->
+        <div class="chat-message chat-message--user" style="--item-y: 0px;">
+          <div class="chat-message__avatar">👤</div>
+          <div class="chat-message__content">
+            <div class="chat-message__header">
+              <span class="chat-message__author">Alex Johnson</span>
+              <span class="chat-message__time">10:23 AM</span>
+            </div>
+            <div class="chat-message__body">
+              Hey team! I've been working on the virtualized list component. The performance improvements are looking great - we can now handle thousands of messages smoothly.
+            </div>
+            <div class="chat-message__actions">
+              <button class="chat-message__action" aria-label="Edit">✏️</button>
+              <button class="chat-message__action" aria-label="Reply">↩️</button>
+              <button class="chat-message__action" aria-label="React">😊</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-message chat-message--assistant" style="--item-y: 120px;">
+          <div class="chat-message__avatar">🤖</div>
+          <div class="chat-message__content">
+            <div class="chat-message__header">
+              <span class="chat-message__author">Assistant</span>
+              <span class="chat-message__time">10:24 AM</span>
+            </div>
+            <div class="chat-message__body">
+              That's excellent! The virtualization approach with element recycling should provide significant performance benefits. Here's a quick example of the recycling pattern:
+              <pre><code>class ComponentRecycler {
+  acquire(key) {
+    return this.pool.pop() || this.create();
+  }
+  
+  release(component) {
+    this.pool.push(component);
+  }
+}</code></pre>
+            </div>
+            <div class="chat-message__actions">
+              <button class="chat-message__action" aria-label="Copy">📋</button>
+              <button class="chat-message__action" aria-label="Reply">↩️</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-message chat-message--user" style="--item-y: 320px;">
+          <div class="chat-message__avatar">👩</div>
+          <div class="chat-message__content">
+            <div class="chat-message__header">
+              <span class="chat-message__author">Sarah Chen</span>
+              <span class="chat-message__time">10:25 AM</span>
+            </div>
+            <div class="chat-message__body">
+              Looks great! How does it handle dynamic heights? That's been a challenge with other virtualization libraries.
+            </div>
+            <div class="chat-message__actions">
+              <button class="chat-message__action" aria-label="Edit">✏️</button>
+              <button class="chat-message__action" aria-label="Reply">↩️</button>
+              <button class="chat-message__action" aria-label="React">😊</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-message chat-message--user entering" style="--item-y: 420px;">
+          <div class="chat-message__avatar">👤</div>
+          <div class="chat-message__content">
+            <div class="chat-message__header">
+              <span class="chat-message__author">Alex Johnson</span>
+              <span class="chat-message__time">10:26 AM</span>
+            </div>
+            <div class="chat-message__body">
+              We're using a measurement cache with ResizeObserver. Each message height is measured once and cached, then we update positions using transforms for smooth scrolling.
+            </div>
+            <div class="chat-message__actions">
+              <button class="chat-message__action" aria-label="Edit">✏️</button>
+              <button class="chat-message__action" aria-label="Reply">↩️</button>
+              <button class="chat-message__action" aria-label="React">😊</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Typing indicator -->
+        <div class="typing-indicator" style="position: absolute; --item-y: 540px; transform: translateY(var(--item-y));">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-input-container">
+      <textarea 
+        class="chat-input" 
+        placeholder="Type a message..."
+        rows="1"
+      ></textarea>
+      <button class="send-button">Send</button>
+    </div>
+  </div>
+
+  <script>
+    // Simulate new message animation
+    setTimeout(() => {
+      const messages = document.querySelectorAll('.chat-message');
+      messages.forEach(msg => {
+        if (msg.classList.contains('entering')) {
+          setTimeout(() => msg.classList.remove('entering'), 200);
+        }
+      });
+    }, 100);
+
+    // Auto-resize textarea
+    const textarea = document.querySelector('.chat-input');
+    textarea.addEventListener('input', () => {
+      textarea.style.height = 'auto';
+      textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+    });
+  </script>
+</body>
+</html>

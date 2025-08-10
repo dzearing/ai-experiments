@@ -13,7 +13,7 @@
   font-size: var(--font-size-normal);
   font-weight: var(--font-weight-medium);
   cursor: pointer;
-  transition: all var(--duration) var(--easing-default);
+  transition: all var(--duration-normal) var(--easing-default);
   border: 1px solid var(--color-neutral-border);
   background: var(--color-neutral-background);
   color: var(--color-neutral-text);
@@ -87,7 +87,7 @@
 .shape-variant p {
   margin: 0 0 var(--spacing) 0;
   font-size: var(--font-size-small10);
-  color: var(--color-body-text-soft20);
+  color: var(--color-body-textSoft20);
 }
 
 .button-examples {
@@ -206,7 +206,7 @@
 .guideline-card ul {
   margin: 0;
   padding-left: var(--spacing-large10);
-  color: var(--color-body-text-soft20);
+  color: var(--color-body-textSoft20);
 }
 
 .guideline-card li {
@@ -230,7 +230,7 @@
   white-space: pre;
   font-family: var(--font-family-mono);
   font-size: var(--font-size-small10);
-  background: var(--color-body-background-soft10);
+  background: var(--color-body-backgroundSoft10);
   color: var(--color-body-text);
   padding: var(--spacing);
   border-radius: var(--radius-small10);

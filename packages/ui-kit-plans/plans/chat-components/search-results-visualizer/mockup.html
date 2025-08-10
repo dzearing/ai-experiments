@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Results Visualizer Mockup</title>
+    <!-- UI Kit Styles -->
+    <link rel="stylesheet" href="../../../assets/styles.css">
+    
+    <!-- Set theme base path for mockups -->
+    <script>
+        window.__uiKitBasePath = '../../../assets/';
+    </script>    
+    <!-- Theme Scripts (ES modules) -->
+    <script type="module" src="../../../assets/theme.js"></script>
+    <script type="module" src="../../../assets/theme-switcher.js"></script>
+    
+    <style>
+        /* Component-specific tokens not in ui-kit */
+        :root {
+            /* Missing styling for file diffs and search highlighting */
+            --color-search-line-border: var(--color-body-borderSoft10);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background: var(--color-body-background);
+            color: var(--color-body-text);
+            padding: var(--spacing);
+            line-height: var(--line-height);
+            font-size: var(--font-size);
+        }
+
+        .container {
+            max-width: calc(var(--spacing) * 56);
+            margin: 0 auto;
+        }
+
+        h1 {
+            margin-bottom: var(--spacing);
+            font-size: var(--font-size-h3);
+            font-weight: var(--font-weight-semibold);
+        }
+
+        h2 {
+            margin: var(--spacing-large10) 0 var(--spacing);
+            font-size: var(--font-size-h4);
+            color: var(--color-body-textSoft10);
+            font-weight: var(--font-weight-medium);
+        }
+
+        /* Search Container */
+        .search-container {
+            background: var(--color-panel-background);
+            border-radius: var(--radius-large10);
+            padding: var(--spacing);
+            margin-bottom: var(--spacing);
+        }
+
+        /* Search Header */
+        .search-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing);
+        }
+
+        .search-query {
+            font-size: var(--font-size-large10);
+            font-weight: var(--font-weight-medium);
+        }
+
+        .search-stats {
+            display: flex;
+            gap: var(--spacing);
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft20);
+        }
+
+        /* Filter Bar */
+        .filter-bar {
+            display: flex;
+            gap: var(--spacing-small10);
+            margin-bottom: var(--spacing);
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: var(--spacing-small20) var(--spacing-small10);
+            border: 1px solid var(--color-body-border);
+            background: var(--color-body-background);
+            border-radius: var(--radius-button);
+            font-size: var(--font-size-small20);
+            cursor: pointer;
+            color: var(--color-button-text);
+            transition: all var(--duration-normal);
+        }
+
+        .filter-btn.active {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border-color: var(--color-primary-border);
+        }
+
+        /* Search Results */
+        .search-results {
+            background: var(--color-body-background);
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius-large10);
+            overflow: hidden;
+        }
+
+        /* File Group */
+        .file-group {
+            border-bottom: 1px solid var(--color-body-border);
+        }
+
+        .file-group:last-child {
+            border-bottom: none;
+        }
+
+        .file-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-small10) var(--spacing);
+            background: var(--color-panel-background);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .file-header:hover {
+            background: var(--color-panel-backgroundSoft10);
+        }
+
+        .file-path {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+            color: var(--color-primary-text);
+            font-size: var(--font-size-small10);
+            font-weight: var(--font-weight-medium);
+        }
+
+        .match-count {
+            padding: var(--spacing-small30) var(--spacing-small20);
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border-radius: var(--radius-badge);
+            font-size: var(--font-size-small30);
+        }
+
+        /* Search Match */
+        .search-match {
+            padding: var(--spacing-small10) var(--spacing);
+            border-bottom: 1px solid var(--color-search-line-border);
+            font-family: var(--font-family-mono);
+            font-size: var(--font-size-small20);
+            cursor: pointer;
+        }
+
+        .search-match:hover {
+            background: var(--color-panel-background);
+        }
+
+        .search-match:last-child {
+            border-bottom: none;
+        }
+
+        .match-line-number {
+            display: inline-block;
+            width: calc(var(--spacing) * 3);
+            color: var(--color-body-textSoft20);
+            text-align: right;
+            margin-right: var(--spacing);
+        }
+
+        .match-text {
+            color: var(--color-body-text);
+        }
+
+        .highlight {
+            background: var(--color-warning-background);
+            color: var(--color-warning-text);
+            padding: var(--spacing-small20);
+            border-radius: var(--radius-small20);
+            font-weight: 600;
+        }
+
+        /* Context Lines */
+        .context-line {
+            color: var(--color-body-textSoft20);
+            padding-left: calc(var(--spacing) * 4);
+            font-size: var(--font-size-small30);
+        }
+
+        /* Relevance Score */
+        .relevance-score {
+            display: inline-flex;
+            gap: var(--spacing-small20);
+            margin-left: var(--spacing-small10);
+        }
+
+        .relevance-dot {
+            width: var(--spacing-small20);
+            height: var(--spacing-small20);
+            background: var(--color-warning-text);
+            border-radius: 50%;
+        }
+
+        .relevance-dot.empty {
+            background: var(--color-body-border);
+        }
+
+        /* Navigation */
+        .search-nav {
+            display: flex;
+            justify-content: space-between;
+            padding: var(--spacing-small10) var(--spacing);
+            background: var(--color-panel-background);
+            border-top: 1px solid var(--color-body-border);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: var(--spacing-small10);
+        }
+
+        .nav-btn {
+            padding: var(--spacing-small20) var(--spacing-small10);
+            border: 1px solid var(--color-body-border);
+            background: var(--color-body-background);
+            border-radius: var(--radius-button);
+            font-size: var(--font-size-small20);
+            cursor: pointer;
+            transition: background var(--duration-normal);
+        }
+
+        .nav-btn:hover:not(:disabled) {
+            background: var(--color-panel-background);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Grouped by Relevance */
+        .relevance-group {
+            margin-bottom: var(--spacing);
+        }
+
+        .relevance-header {
+            padding: var(--spacing-small10);
+            background: var(--color-panel-background);
+            font-size: var(--font-size-small10);
+            font-weight: var(--font-weight-medium);
+        }
+
+        /* Compact View */
+        .compact-result {
+            display: flex;
+            padding: var(--spacing-small10) var(--spacing);
+            border-bottom: 1px solid var(--color-body-border);
+            font-size: var(--font-size-small20);
+            cursor: pointer;
+        }
+
+        .compact-result:hover {
+            background: var(--color-panel-background);
+        }
+
+        .compact-file {
+            color: var(--color-primary-text);
+            min-width: calc(var(--spacing) * 12);
+        }
+
+        .compact-match {
+            color: var(--color-body-textSoft10);
+            font-family: var(--font-family-mono);
+        }
+
+        /* Loading */
+        .loading {
+            padding: var(--spacing-large20);
+            text-align: center;
+            color: var(--color-body-textSoft20);
+        }
+
+        .spinner {
+            display: inline-block;
+            width: var(--spacing-large5);
+            height: var(--spacing-large5);
+            border: var(--spacing-small20) solid var(--color-body-border);
+            border-top-color: var(--color-primary-text);
+            border-radius: 50%;
+            animation: spin var(--duration-slow) linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Search Results Visualizer</h1>
+
+        <!-- Grouped by File -->
+        <h2>Grouped by File</h2>
+        <div class="search-container">
+            <div class="search-header">
+                <div class="search-query">Search: "useState"</div>
+                <div class="search-stats">
+                    <span>23 results</span>
+                    <span>8 files</span>
+                    <span>0.42s</span>
+                </div>
+            </div>
+
+            <div class="filter-bar">
+                <button class="filter-btn active">All Files</button>
+                <button class="filter-btn">TypeScript</button>
+                <button class="filter-btn">JavaScript</button>
+                <button class="filter-btn">Components</button>
+                <button class="filter-btn">Hooks</button>
+            </div>
+
+            <div class="search-results">
+                <div class="file-group">
+                    <div class="file-header">
+                        <div class="file-path">
+                            📄 src/components/SearchBar.tsx
+                        </div>
+                        <span class="match-count">5</span>
+                    </div>
+                    
+                    <div class="search-match">
+                        <span class="match-line-number">42:</span>
+                        <span class="match-text">const [search, setSearch] = <span class="highlight">useState</span>("")</span>
+                    </div>
+                    
+                    <div class="search-match">
+                        <span class="match-line-number">45:</span>
+                        <span class="match-text">const [isLoading, setIsLoading] = <span class="highlight">useState</span>(false)</span>
+                    </div>
+
+                    <div class="search-match">
+                        <span class="match-line-number">48:</span>
+                        <span class="match-text">const [results, setResults] = <span class="highlight">useState</span>&lt;Result[]&gt;([])</span>
+                        <div class="context-line">// Initialize empty results array</div>
+                        <div class="context-line">useEffect(() => {</div>
+                    </div>
+                </div>
+
+                <div class="file-group">
+                    <div class="file-header">
+                        <div class="file-path">
+                            📄 src/hooks/useAuth.ts
+                        </div>
+                        <span class="match-count">3</span>
+                    </div>
+                    
+                    <div class="search-match">
+                        <span class="match-line-number">15:</span>
+                        <span class="match-text">const [user, setUser] = <span class="highlight">useState</span>&lt;User | null&gt;(null)</span>
+                    </div>
+                    
+                    <div class="search-match">
+                        <span class="match-line-number">16:</span>
+                        <span class="match-text">const [isAuthenticated, setIsAuthenticated] = <span class="highlight">useState</span>(false)</span>
+                    </div>
+                </div>
+
+                <div class="file-group">
+                    <div class="file-header">
+                        <div class="file-path">
+                            📄 src/App.tsx
+                        </div>
+                        <span class="match-count">2</span>
+                    </div>
+                    
+                    <div class="search-match">
+                        <span class="match-line-number">8:</span>
+                        <span class="match-text">const [theme, setTheme] = <span class="highlight">useState</span>('light')</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="search-nav">
+                <div class="nav-buttons">
+                    <button class="nav-btn" disabled>Previous</button>
+                    <button class="nav-btn">Next</button>
+                </div>
+                <div class="search-stats">
+                    Showing 1-10 of 23
+                </div>
+            </div>
+        </div>
+
+        <!-- Grouped by Relevance -->
+        <h2>Grouped by Relevance</h2>
+        <div class="search-container">
+            <div class="search-header">
+                <div class="search-query">Search: "authentication"</div>
+                <div class="search-stats">
+                    <span>15 results</span>
+                    <span>6 files</span>
+                    <span>0.38s</span>
+                </div>
+            </div>
+
+            <div class="search-results">
+                <div class="relevance-group">
+                    <div class="relevance-header">
+                        High Relevance
+                        <span class="relevance-score">
+                            <span class="relevance-dot"></span>
+                            <span class="relevance-dot"></span>
+                            <span class="relevance-dot"></span>
+                        </span>
+                    </div>
+                    
+                    <div class="search-match">
+                        <span class="file-path" style="font-size: var(--font-size-small30); margin-right: var(--spacing-small10);">useAuth.ts</span>
+                        <span class="match-line-number">23:</span>
+                        <span class="match-text">// Handle <span class="highlight">authentication</span> logic</span>
+                    </div>
+                    
+                    <div class="search-match">
+                        <span class="file-path" style="font-size: var(--font-size-small30); margin-right: var(--spacing-small10);">auth.service.ts</span>
+                        <span class="match-line-number">45:</span>
+                        <span class="match-text">export class <span class="highlight">Authentication</span>Service {</span>
+                    </div>
+                </div>
+
+                <div class="relevance-group">
+                    <div class="relevance-header">
+                        Medium Relevance
+                        <span class="relevance-score">
+                            <span class="relevance-dot"></span>
+                            <span class="relevance-dot"></span>
+                            <span class="relevance-dot empty"></span>
+                        </span>
+                    </div>
+                    
+                    <div class="search-match">
+                        <span class="file-path" style="font-size: var(--font-size-small30); margin-right: var(--spacing-small10);">Login.tsx</span>
+                        <span class="match-line-number">67:</span>
+                        <span class="match-text">// Redirect after <span class="highlight">authentication</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compact View -->
+        <h2>Compact View</h2>
+        <div class="search-container">
+            <div class="search-header">
+                <div class="search-query">Search: "import React"</div>
+                <div class="search-stats">
+                    <span>42 results</span>
+                </div>
+            </div>
+
+            <div class="search-results">
+                <div class="compact-result">
+                    <span class="compact-file">Button.tsx:1</span>
+                    <span class="compact-match"><span class="highlight">import React</span> from 'react'</span>
+                </div>
+                <div class="compact-result">
+                    <span class="compact-file">Card.tsx:1</span>
+                    <span class="compact-match"><span class="highlight">import React</span> from 'react'</span>
+                </div>
+                <div class="compact-result">
+                    <span class="compact-file">Modal.tsx:1</span>
+                    <span class="compact-match"><span class="highlight">import React</span>, { useState } from 'react'</span>
+                </div>
+                <div class="compact-result">
+                    <span class="compact-file">Header.tsx:1</span>
+                    <span class="compact-match"><span class="highlight">import React</span> from 'react'</span>
+                </div>
+                <div class="compact-result">
+                    <span class="compact-file">Footer.tsx:1</span>
+                    <span class="compact-match"><span class="highlight">import React</span> from 'react'</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <h2>Loading State</h2>
+        <div class="search-container">
+            <div class="search-header">
+                <div class="search-query">Search: "database connection"</div>
+            </div>
+            <div class="loading">
+                <div class="spinner"></div>
+                <div style="margin-top: var(--spacing);">Searching...</div>
+            </div>
+        </div>
+
+        <!-- No Results -->
+        <h2>No Results</h2>
+        <div class="search-container">
+            <div class="search-header">
+                <div class="search-query">Search: "xyzabc123"</div>
+                <div class="search-stats">
+                    <span>0 results</span>
+                    <span>0.12s</span>
+                </div>
+            </div>
+            <div class="search-results">
+                <div style="padding: var(--spacing-large20); text-align: center; color: var(--color-body-textSoft20);">
+                    <div style="font-size: var(--font-size-h3); margin-bottom: var(--spacing-small10);">🔍</div>
+                    <div>No results found for "xyzabc123"</div>
+                    <div style="font-size: var(--font-size-small20); margin-top: var(--spacing-small10);">Try adjusting your search terms</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Toggle file groups
+        document.querySelectorAll('.file-header').forEach(header => {
+            header.addEventListener('click', () => {
+                const group = header.parentElement;
+                const matches = group.querySelectorAll('.search-match');
+                matches.forEach(match => {
+                    match.style.display = match.style.display === 'none' ? 'block' : 'none';
+                });
+            });
+        });
+
+        // Filter buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>

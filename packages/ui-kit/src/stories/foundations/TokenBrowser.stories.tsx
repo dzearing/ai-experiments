@@ -40,6 +40,20 @@ const tokenDomains = {
       }
     ]
   },
+  gradient: {
+    label: 'Gradient',
+    description: 'Gradient overlays that maintain accessibility with surface foreground tokens',
+    categories: [
+      {
+        name: 'Surface',
+        tokens: tokenMetadata.gradient?.surfaces || ['body']
+      },
+      {
+        name: 'Intent',
+        tokens: tokenMetadata.gradient?.intents || ['primary', 'success', 'warning', 'danger', 'info', 'accent']
+      }
+    ]
+  },
   typography: {
     label: 'Typography',
     description: 'Font families, sizes, weights, and text properties',
@@ -235,6 +249,11 @@ const TokenBrowser = () => {
       const value = selectedTokens['Scale/Value'] || 'normal';
       
       return value === '(default)' ? `--${type}` : `--${type}-${value}`;
+    } else if (selectedDomain === 'gradient') {
+      const surface = selectedTokens['Surface'] || 'body';
+      const intent = selectedTokens['Intent'] || 'primary';
+      
+      return `--gradient-${surface}-${intent}`;
     }
     
     return '--unknown-token';
@@ -515,7 +534,7 @@ const TokenBrowser = () => {
               <div 
                 className="animation-box"
                 style={{
-                  animation: `slideInRight var(--duration) var(${tokenName}) infinite alternate`,
+                  animation: `slideInRight var(--duration-normal) var(${tokenName}) infinite alternate`,
                 }}
               >
                 Easing
@@ -535,7 +554,7 @@ const TokenBrowser = () => {
                   key={index}
                   className="animation-box small"
                   style={{
-                    animation: `fadeIn var(--duration) var(--easing-default) infinite alternate`,
+                    animation: `fadeIn var(--duration-normal) var(--easing-default) infinite alternate`,
                     animationDelay: `calc(var(${tokenName}) * ${index})`,
                   }}
                 >
@@ -549,6 +568,25 @@ const TokenBrowser = () => {
           </div>
         );
       }
+    } else if (selectedDomain === 'gradient') {
+      return (
+        <div className="gradient-preview">
+          <div
+            className="gradient-swatch-large"
+            style={{
+              background: `var(${tokenName}), var(--color-panel-background)`,
+            }}
+          >
+            <div className="gradient-text">
+              <h3>Gradient Preview</h3>
+              <p>This gradient overlays the background while maintaining text readability</p>
+            </div>
+          </div>
+          <p className="gradient-description">
+            Subtle overlay gradient for visual emphasis
+          </p>
+        </div>
+      );
     }
     
     return null;

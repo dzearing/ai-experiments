@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Split/Fork Mockup</title>
+    <!-- UI Kit Styles -->
+    <link rel="stylesheet" href="../../../assets/styles.css">
+    
+    <!-- Set theme base path for mockups -->
+    <script>
+        window.__uiKitBasePath = '../../../assets/';
+    </script>    
+    <!-- Theme Scripts (ES modules) -->
+    <script type="module" src="../../../assets/theme.js"></script>
+    <script type="module" src="../../../assets/theme-switcher.js"></script>
+    
+    <style>
+        /* Component-specific tokens not in ui-kit */
+        :root {
+            /* Split marker colors for visual distinction */
+            --color-split-marker-1: var(--color-success-background);
+            --color-split-marker-2: var(--color-primary-background);  
+            --color-split-marker-3: var(--color-warning-background);
+            --color-split-marker-default: var(--color-danger-background);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background: var(--color-body-background);
+            color: var(--color-body-text);
+            padding: var(--spacing);
+            line-height: var(--line-height);
+            font-size: var(--font-size);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            margin-bottom: var(--spacing);
+            font-size: var(--font-size-h3);
+            font-weight: var(--font-weight-semibold);
+        }
+
+        h2 {
+            margin: var(--spacing-large20) 0 var(--spacing);
+            font-size: var(--font-size-h4);
+            color: var(--color-body-textSoft10);
+            font-weight: var(--font-weight-medium);
+        }
+
+        /* Modal Container */
+        .modal {
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius-large20);
+            box-shadow: var(--shadow-hard20);
+            max-width: 900px;
+            margin: 0 auto var(--spacing-large20);
+        }
+
+        .modal-header {
+            padding: var(--spacing);
+            border-bottom: 1px solid var(--color-body-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: var(--font-size-h4);
+            font-weight: var(--font-weight-semibold);
+        }
+
+        .close-btn {
+            width: 24px;
+            height: 24px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: var(--font-size-h4);
+            color: var(--color-body-textSoft20);
+        }
+
+        .modal-body {
+            padding: var(--spacing);
+        }
+
+        .modal-footer {
+            padding: var(--spacing);
+            border-top: 1px solid var(--color-body-border);
+            display: flex;
+            justify-content: flex-end;
+            gap: var(--spacing-small10);
+        }
+
+        .btn {
+            padding: var(--spacing-small10) var(--spacing);
+            border: 1px solid var(--color-button-border);
+            border-radius: var(--radius-button);
+            font-size: var(--font-size);
+            cursor: pointer;
+            background: var(--color-button-background);
+            color: var(--color-button-text);
+        }
+
+        .btn-primary {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border-color: var(--color-primary-border);
+        }
+
+        /* Timeline View */
+        .timeline-container {
+            position: relative;
+            padding: var(--spacing) 0;
+        }
+
+        .timeline-track {
+            height: 60px;
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius-large10);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .message-block {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 40px;
+            background: var(--color-body-background);
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius-small10);
+            display: flex;
+            align-items: center;
+            padding: 0 var(--spacing-small10);
+            font-size: var(--font-size-small20);
+            cursor: pointer;
+        }
+
+        .message-block:hover {
+            background: var(--color-infoSoft-background);
+            z-index: 10;
+        }
+
+        .message-block.user {
+            background: var(--color-infoSoft-background);
+        }
+
+        .message-block.assistant {
+            background: var(--color-successSoft-background);
+        }
+
+        .split-marker {
+            position: absolute;
+            top: -10px;
+            bottom: -10px;
+            width: 3px;
+            background: var(--color-split-marker-default);
+            cursor: ew-resize;
+            z-index: 20;
+        }
+
+        .split-marker::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 12px;
+            height: 30px;
+            background: var(--color-split-marker-default);
+            border-radius: var(--radius-small10);
+        }
+
+        .split-marker-label {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--color-split-marker-default);
+            color: var(--color-body-background);
+            padding: var(--spacing-small20) var(--spacing-small10);
+            border-radius: var(--radius-small10);
+            font-size: var(--font-size-smallest);
+            white-space: nowrap;
+        }
+
+        /* Branch Preview */
+        .branch-preview {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing);
+            margin-top: var(--spacing-large10);
+        }
+
+        .branch-card {
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius-large10);
+            padding: var(--spacing);
+        }
+
+        .branch-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing);
+        }
+
+        .branch-name {
+            font-weight: var(--font-weight-semibold);
+            font-size: var(--font-size);
+        }
+
+        .branch-input {
+            width: 100%;
+            padding: var(--spacing-small20) var(--spacing-small10);
+            border: 1px solid var(--color-input-border);
+            border-radius: var(--radius-input);
+            font-size: var(--font-size-small10);
+            margin-bottom: var(--spacing-small10);
+            background: var(--color-input-background);
+            color: var(--color-input-text);
+        }
+
+        .branch-messages {
+            background: var(--color-body-background);
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius-large10);
+            padding: var(--spacing-small10);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .message-item {
+            padding: var(--spacing-small20) var(--spacing-small10);
+            margin-bottom: var(--spacing-small20);
+            border-radius: var(--radius-small10);
+            font-size: var(--font-size-small20);
+        }
+
+        .message-item.shared {
+            background: var(--color-warningSoft-background);
+        }
+
+        .message-item.unique {
+            background: var(--color-infoSoft-background);
+        }
+
+        /* Fork Visualization */
+        .fork-diagram {
+            padding: var(--spacing);
+            background: var(--color-panel-background);
+            border-radius: var(--radius-large10);
+            margin-bottom: var(--spacing);
+        }
+
+        .fork-tree {
+            font-family: var(--font-family-mono);
+            font-size: var(--font-size-small10);
+            line-height: var(--line-height-relaxed);
+            color: var(--color-body-textSoft10);
+        }
+
+        .fork-node {
+            padding-left: 20px;
+        }
+
+        .fork-branch {
+            color: var(--color-body-text);
+            font-weight: var(--font-weight-semibold);
+        }
+
+        /* Split Options */
+        .split-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing);
+            margin-bottom: var(--spacing);
+        }
+
+        .option-card {
+            padding: var(--spacing);
+            border: 2px solid var(--color-body-border);
+            border-radius: var(--radius-large10);
+            cursor: pointer;
+            text-align: center;
+            transition: all var(--duration-normal);
+        }
+
+        .option-card:hover {
+            border-color: var(--color-primary-border);
+            background: var(--color-infoSoft-background);
+        }
+
+        .option-card.selected {
+            border-color: var(--color-primary-border);
+            background: var(--color-infoSoft-background);
+        }
+
+        .option-icon {
+            font-size: var(--font-size-h3);
+            margin-bottom: var(--spacing-small10);
+        }
+
+        .option-title {
+            font-weight: var(--font-weight-semibold);
+            font-size: var(--font-size);
+            margin-bottom: var(--spacing-small20);
+        }
+
+        .option-desc {
+            font-size: var(--font-size-small20);
+            color: var(--color-body-textSoft20);
+        }
+
+        /* Tags */
+        .tag-input-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-small20);
+            padding: var(--spacing-small20);
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius-input);
+            background: var(--color-body-background);
+            min-height: 36px;
+        }
+
+        .tag {
+            padding: var(--spacing-small20) var(--spacing-small10);
+            background: var(--color-neutral-background);
+            color: var(--color-neutral-text);
+            border-radius: var(--radius-small10);
+            font-size: var(--font-size-small20);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small20);
+        }
+
+        .tag-remove {
+            cursor: pointer;
+            opacity: 0.7;
+        }
+
+        .tag-remove:hover {
+            opacity: 1;
+        }
+
+        /* AI Suggestions */
+        .ai-suggestions {
+            background: var(--color-infoSoft-background);
+            border: 1px solid var(--color-infoSoft-border);
+            border-radius: var(--radius-large10);
+            padding: var(--spacing);
+            margin-bottom: var(--spacing);
+        }
+
+        .suggestion-header {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+            margin-bottom: var(--spacing-small10);
+            font-weight: var(--font-weight-semibold);
+            font-size: var(--font-size);
+        }
+
+        .suggestion-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-small10);
+        }
+
+        .suggestion-item {
+            background: var(--color-body-background);
+            padding: var(--spacing-small10);
+            border-radius: var(--radius-large10);
+            font-size: var(--font-size-small10);
+            cursor: pointer;
+            transition: background var(--duration-normal);
+        }
+
+        .suggestion-item:hover {
+            background: var(--color-infoSoft-background);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Chat Split/Fork Component</h1>
+
+        <!-- Split Modal -->
+        <h2>Split Conversation Modal</h2>
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Split Conversation</div>
+                <button class="close-btn">✕</button>
+            </div>
+            
+            <div class="modal-body">
+                <!-- Split Options -->
+                <div style="margin-bottom: var(--spacing-large10);">
+                    <h3 style="font-size: var(--font-size); margin-bottom: var(--spacing);">Choose Split Method</h3>
+                    <div class="split-options">
+                        <div class="option-card selected">
+                            <div class="option-icon">🎯</div>
+                            <div class="option-title">By Topic</div>
+                            <div class="option-desc">AI detects different topics</div>
+                        </div>
+                        <div class="option-card">
+                            <div class="option-icon">⏱️</div>
+                            <div class="option-title">By Time</div>
+                            <div class="option-desc">Split at time boundaries</div>
+                        </div>
+                        <div class="option-card">
+                            <div class="option-icon">✂️</div>
+                            <div class="option-title">Manual</div>
+                            <div class="option-desc">Choose split points</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Suggestions -->
+                <div class="ai-suggestions">
+                    <div class="suggestion-header">
+                        <span>🤖</span>
+                        <span>AI Detected Topics</span>
+                    </div>
+                    <div class="suggestion-list">
+                        <div class="suggestion-item">
+                            <strong>Authentication Implementation</strong> - Messages 1-15
+                        </div>
+                        <div class="suggestion-item">
+                            <strong>Database Schema Design</strong> - Messages 16-28
+                        </div>
+                        <div class="suggestion-item">
+                            <strong>API Documentation</strong> - Messages 29-42
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline View -->
+                <div style="margin-bottom: var(--spacing-large10);">
+                    <h3 style="font-size: var(--font-size); margin-bottom: var(--spacing);">Select Split Point</h3>
+                    <div class="timeline-container">
+                        <div class="timeline-track">
+                            <div class="message-block user" style="left: 5%; width: 60px;">User: Hi</div>
+                            <div class="message-block assistant" style="left: 15%; width: 80px;">AI: Hello!</div>
+                            <div class="message-block user" style="left: 28%; width: 100px;">User: I need help</div>
+                            <div class="message-block assistant" style="left: 42%; width: 90px;">AI: Sure!</div>
+                            <div class="split-marker" style="left: 55%;">
+                                <div class="split-marker-label">Split here</div>
+                            </div>
+                            <div class="message-block user" style="left: 60%; width: 80px;">User: Thanks</div>
+                            <div class="message-block assistant" style="left: 72%; width: 100px;">AI: You're welcome</div>
+                            <div class="message-block user" style="left: 85%; width: 70px;">User: Bye</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Branch Preview -->
+                <h3 style="font-size: var(--font-size); margin-bottom: var(--spacing);">Preview Branches</h3>
+                <div class="branch-preview">
+                    <div class="branch-card">
+                        <div class="branch-header">
+                            <span class="branch-name">Branch A</span>
+                            <span style="font-size: var(--font-size-small20); color: var(--color-body-textSoft20);">15 messages</span>
+                        </div>
+                        <input type="text" class="branch-input" placeholder="Branch name..." value="Authentication Implementation">
+                        <input type="text" class="branch-input" placeholder="Description..." value="OAuth2 setup and user management">
+                        <div class="branch-messages">
+                            <div class="message-item shared">Context: Project setup</div>
+                            <div class="message-item unique">Implement OAuth2 flow</div>
+                            <div class="message-item unique">Setup JWT tokens</div>
+                            <div class="message-item unique">Create user model</div>
+                        </div>
+                        <div class="tag-input-container" style="margin-top: var(--spacing-small10);">
+                            <div class="tag">
+                                Backend
+                                <span class="tag-remove">×</span>
+                            </div>
+                            <div class="tag">
+                                Auth
+                                <span class="tag-remove">×</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="branch-card">
+                        <div class="branch-header">
+                            <span class="branch-name">Branch B</span>
+                            <span style="font-size: var(--font-size-small20); color: var(--color-body-textSoft20);">13 messages</span>
+                        </div>
+                        <input type="text" class="branch-input" placeholder="Branch name..." value="Database Schema">
+                        <input type="text" class="branch-input" placeholder="Description..." value="Design and implement database structure">
+                        <div class="branch-messages">
+                            <div class="message-item shared">Context: Project setup</div>
+                            <div class="message-item unique">Design user table</div>
+                            <div class="message-item unique">Create migrations</div>
+                            <div class="message-item unique">Setup indexes</div>
+                        </div>
+                        <div class="tag-input-container" style="margin-top: var(--spacing-small10);">
+                            <div class="tag">
+                                Database
+                                <span class="tag-remove">×</span>
+                            </div>
+                            <div class="tag">
+                                Schema
+                                <span class="tag-remove">×</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn">Cancel</button>
+                <button class="btn">Save as Draft</button>
+                <button class="btn btn-primary">Create Branches</button>
+            </div>
+        </div>
+
+        <!-- Fork Visualization -->
+        <h2>Fork Visualization</h2>
+        <div class="fork-diagram">
+            <div class="fork-tree">
+                <div>Original Chat</div>
+                <div class="fork-node">│</div>
+                <div class="fork-node">├─● Message 1: Project requirements</div>
+                <div class="fork-node">├─● Message 2: Technical approach</div>
+                <div class="fork-node">├─● Message 3: Architecture discussion</div>
+                <div class="fork-node">├─● <span style="background: var(--color-warningSoft-background); padding: var(--spacing-small20) var(--spacing-small10);">Fork Point</span></div>
+                <div class="fork-node">│</div>
+                <div class="fork-node">├─── <span class="fork-branch">Branch A: "Frontend Implementation"</span></div>
+                <div class="fork-node">│    ├─● Message 4a: React components</div>
+                <div class="fork-node">│    ├─● Message 5a: State management</div>
+                <div class="fork-node">│    └─● Message 6a: UI styling</div>
+                <div class="fork-node">│</div>
+                <div class="fork-node">└─── <span class="fork-branch">Branch B: "Backend Implementation"</span></div>
+                <div class="fork-node">     ├─● Message 4b: API design</div>
+                <div class="fork-node">     ├─● Message 5b: Database schema</div>
+                <div class="fork-node">     └─● Message 6b: Authentication</div>
+            </div>
+        </div>
+
+        <!-- Multiple Split Points -->
+        <h2>Multiple Split Points</h2>
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Create Multiple Branches</div>
+                <button class="close-btn">✕</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="timeline-container">
+                    <div class="timeline-track" style="height: 80px;">
+                        <div class="message-block user" style="left: 5%; width: 60px;">Start</div>
+                        <div class="message-block assistant" style="left: 12%; width: 70px;">Response</div>
+                        <div class="split-marker" style="left: 25%; background: var(--color-split-marker-1);">
+                            <div class="split-marker-label" style="background: var(--color-split-marker-1);">Split 1</div>
+                        </div>
+                        <div class="message-block user" style="left: 30%; width: 80px;">Question</div>
+                        <div class="message-block assistant" style="left: 40%; width: 90px;">Answer</div>
+                        <div class="split-marker" style="left: 55%; background: var(--color-split-marker-2);">
+                            <div class="split-marker-label" style="background: var(--color-split-marker-2);">Split 2</div>
+                        </div>
+                        <div class="message-block user" style="left: 65%; width: 70px;">Follow-up</div>
+                        <div class="split-marker" style="left: 78%; background: var(--color-split-marker-3);">
+                            <div class="split-marker-label" style="background: var(--color-split-marker-3);">Split 3</div>
+                        </div>
+                        <div class="message-block assistant" style="left: 85%; width: 80px;">Conclusion</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: var(--spacing-large10);">
+                    <h3 style="font-size: var(--font-size); margin-bottom: var(--spacing);">Resulting Branches</h3>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--spacing-small10);">
+                        <div style="background: var(--color-success-background); padding: var(--spacing-small10); border-radius: var(--radius-small10);">
+                            <div style="font-weight: var(--font-weight-semibold); font-size: var(--font-size-small10);">Branch 1</div>
+                            <div style="font-size: var(--font-size-smallest); color: var(--color-body-textSoft20);">3 messages</div>
+                        </div>
+                        <div style="background: var(--color-info-background); padding: var(--spacing-small10); border-radius: var(--radius-small10);">
+                            <div style="font-weight: var(--font-weight-semibold); font-size: var(--font-size-small10);">Branch 2</div>
+                            <div style="font-size: var(--font-size-smallest); color: var(--color-body-textSoft20);">4 messages</div>
+                        </div>
+                        <div style="background: var(--color-warning-background); padding: var(--spacing-small10); border-radius: var(--radius-small10);">
+                            <div style="font-weight: var(--font-weight-semibold); font-size: var(--font-size-small10);">Branch 3</div>
+                            <div style="font-size: var(--font-size-small30); color: var(--color-body-textSoft20);">2 messages</div>
+                        </div>
+                        <div style="background: var(--color-primary-background); padding: var(--spacing-small10); border-radius: var(--radius-small10);">
+                            <div style="font-weight: var(--font-weight-semibold); font-size: var(--font-size-small10);">Branch 4</div>
+                            <div style="font-size: var(--font-size-small30); color: var(--color-body-textSoft20);">2 messages</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn">Cancel</button>
+                <button class="btn btn-primary">Create 4 Branches</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Option card selection
+        document.querySelectorAll('.option-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+            });
+        });
+
+        // Draggable split marker (mock)
+        let isDragging = false;
+        document.querySelectorAll('.split-marker').forEach(marker => {
+            marker.addEventListener('mousedown', () => {
+                isDragging = true;
+                marker.style.cursor = 'grabbing';
+            });
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+            document.querySelectorAll('.split-marker').forEach(marker => {
+                marker.style.cursor = 'ew-resize';
+            });
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                // In real implementation, would update marker position
+            }
+        });
+
+        // Tag removal
+        document.querySelectorAll('.tag-remove').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.target.parentElement.remove();
+            });
+        });
+    </script>
+</body>
+</html>

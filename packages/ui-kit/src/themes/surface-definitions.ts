@@ -14,27 +14,27 @@ import type { SurfaceDefinition, BackgroundLevels } from './theme-types.js';
 export const backgroundLevels: BackgroundLevels = {
   '-2': {
     light: 'hsl(220, 15%, 93%)', // Deepest recess
-    dark: 'hsl(220, 15%, 4%)',
+    dark: 'hsl(220, 15%, 10%)',
   },
   '-1': {
     light: 'hsl(220, 15%, 95%)', // Recessed
-    dark: 'hsl(220, 15%, 6%)',
+    dark: 'hsl(220, 15%, 12%)',
   },
   '0': {
     light: 'hsl(0, 0%, 100%)', // Pure white/black
-    dark: 'hsl(0, 0%, 0%)',
+    dark: 'hsl(220, 15%, 9%)',
   },
   '+1': {
     light: 'hsl(220, 15%, 98%)', // Slightly raised
-    dark: 'hsl(220, 15%, 8%)',
+    dark: 'hsl(220, 15%, 14%)',
   },
   '+2': {
     light: 'hsl(220, 15%, 96%)', // Elevated
-    dark: 'hsl(220, 15%, 11%)',
+    dark: 'hsl(220, 15%, 17%)',
   },
   '+3': {
     light: 'hsl(220, 15%, 94%)', // Floating
-    dark: 'hsl(220, 15%, 15%)',
+    dark: 'hsl(220, 15%, 20%)',
   },
 };
 
@@ -55,11 +55,10 @@ export const surfaces: SurfaceDefinition[] = [
         },
       },
       text: {
-        fn: 'contrast',
+        fn: 'auto',
         args: {
-          against: 'body.background',
-          prefer: { ref: 'neutral.900' },
-          strategy: 'auto',
+          light: { ref: 'neutral.800' }, // Not pure black to leave room for hard variants
+          dark: '#d0d0d0', // Not pure white to leave room for hard variants
         },
       },
       border: {
@@ -84,6 +83,7 @@ export const surfaces: SurfaceDefinition[] = [
           dark: { ref: 'neutral.400' },
         },
       },
+      shadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
       textSuccess: {
         fn: 'contrast',
         args: {
@@ -116,8 +116,141 @@ export const surfaces: SurfaceDefinition[] = [
         },
       },
     },
+    gradients: {
+      primary: {
+        direction: 135,
+        stops: [
+          {
+            color: {
+              fn: 'mix',
+              args: {
+                color1: { ref: 'primary.600' },
+                color2: 'transparent',
+                ratio: 0.25, // 25% primary, 75% transparent
+              },
+            },
+            position: 0,
+          },
+          {
+            color: 'transparent',
+            position: 50,
+          },
+        ],
+      },
+      success: {
+        direction: 135,
+        stops: [
+          {
+            color: {
+              fn: 'mix',
+              args: {
+                color1: { ref: 'success.600' },
+                color2: 'transparent',
+                ratio: 0.20, // 20% success, 80% transparent
+              },
+            },
+            position: 0,
+          },
+          {
+            color: 'transparent',
+            position: 50,
+          },
+        ],
+      },
+      warning: {
+        direction: 135,
+        stops: [
+          {
+            color: {
+              fn: 'mix',
+              args: {
+                color1: { ref: 'warning.600' },
+                color2: 'transparent',
+                ratio: 0.20, // 20% warning, 80% transparent
+              },
+            },
+            position: 0,
+          },
+          {
+            color: 'transparent',
+            position: 60,
+          },
+        ],
+      },
+      danger: {
+        direction: 135,
+        stops: [
+          {
+            color: {
+              fn: 'mix',
+              args: {
+                color1: { ref: 'error.600' },
+                color2: 'transparent',
+                ratio: 0.20, // 20% danger, 80% transparent
+              },
+            },
+            position: 0,
+          },
+          {
+            color: 'transparent',
+            position: 60,
+          },
+        ],
+      },
+      info: {
+        direction: 135,
+        stops: [
+          {
+            color: {
+              fn: 'mix',
+              args: {
+                color1: { ref: 'info.600' },
+                color2: 'transparent',
+                ratio: 0.20, // 20% info, 80% transparent
+              },
+            },
+            position: 0,
+          },
+          {
+            color: 'transparent',
+            position: 50,
+          },
+        ],
+      },
+      accent: {
+        direction: 135,
+        stops: [
+          {
+            color: {
+              fn: 'mix',
+              args: {
+                color1: { ref: 'primary.600' },
+                color2: 'transparent',
+                ratio: 0.15, // 15% primary, 85% transparent
+              },
+            },
+            position: 0,
+          },
+          {
+            color: {
+              fn: 'mix',
+              args: {
+                color1: { ref: 'accent.600' },
+                color2: 'transparent',
+                ratio: 0.10, // 10% accent, 90% transparent
+              },
+            },
+            position: 50,
+          },
+          {
+            color: 'transparent',
+            position: 100,
+          },
+        ],
+      },
+    },
     variants: {
-      soft: [10, 20, 30, 40],
+      soft: [10, 20],
       hard: [10, 20],
     },
     states: {
@@ -146,7 +279,7 @@ export const surfaces: SurfaceDefinition[] = [
       outline: { ref: 'body.outline' },
     },
     variants: {
-      soft: [10, 20, 30, 40],
+      soft: [10, 20],
       hard: [10, 20],
     },
   },
@@ -160,20 +293,30 @@ export const surfaces: SurfaceDefinition[] = [
         fn: 'contrast',
         args: {
           against: 'primary.background',
-          prefer: '#ffffff',
+          prefer: {
+            fn: 'auto',
+            args: {
+              light: '#fafafa', // Slightly off-white
+              dark: '#f0f0f0', // Slightly off-white
+            },
+          },
           textSize: 'ui',
         },
       },
       border: 'transparent',
       icon: { ref: 'primary.text' },
+      shadow: '0 2px 4px rgba(0, 0, 0, 0.15)',
       outline: {
-        fn: 'contrast',
+        fn: 'auto',
         args: {
-          against: 'primary.background',
-          prefer: '#ffffff',
-          textSize: 'ui',
+          light: { ref: 'primary.500' },
+          dark: { ref: 'primary.400' },
         },
       },
+    },
+    variants: {
+      soft: [10, 20],
+      hard: [10, 20],
     },
     states: {
       hover: { lightness: -10 },
@@ -209,7 +352,12 @@ export const surfaces: SurfaceDefinition[] = [
         },
       },
       icon: { ref: 'neutral.text' },
+      shadow: '0 1px 3px rgba(0, 0, 0, 0.12)',
       outline: { ref: 'body.outline' },
+    },
+    variants: {
+      soft: [10, 20],
+      hard: [10, 20],
     },
     states: {
       hover: { lightness: { light: -5, dark: 5 } },
@@ -227,20 +375,30 @@ export const surfaces: SurfaceDefinition[] = [
         fn: 'contrast',
         args: {
           against: 'danger.background',
-          prefer: '#ffffff',
+          prefer: {
+            fn: 'auto',
+            args: {
+              light: '#fafafa',
+              dark: '#f0f0f0',
+            },
+          },
           textSize: 'ui',
         },
       },
       border: 'transparent',
       icon: { ref: 'danger.text' },
+      shadow: '0 2px 4px rgba(0, 0, 0, 0.15)',
       outline: {
-        fn: 'contrast',
+        fn: 'auto',
         args: {
-          against: 'danger.background',
-          prefer: '#ffffff',
-          textSize: 'ui',
+          light: { ref: 'error.500' },
+          dark: { ref: 'error.400' },
         },
       },
+    },
+    variants: {
+      soft: [10, 20],
+      hard: [10, 20],
     },
     states: {
       hover: { lightness: -10 },
@@ -258,20 +416,65 @@ export const surfaces: SurfaceDefinition[] = [
         fn: 'contrast',
         args: {
           against: 'success.background',
-          prefer: '#ffffff',
+          prefer: '#fafafa',
           textSize: 'ui',
         },
       },
       border: 'transparent',
       icon: { ref: 'success.text' },
+      shadow: '0 2px 4px rgba(0, 0, 0, 0.15)',
       outline: {
+        fn: 'auto',
+        args: {
+          light: { ref: 'success.500' },
+          dark: { ref: 'success.400' },
+        },
+      },
+    },
+    variants: {
+      soft: [10, 20],
+      hard: [10, 20],
+    },
+    states: {
+      hover: { lightness: -10 },
+      active: { lightness: -15 },
+      disabled: { opacity: 0.6 },
+    },
+  },
+
+  // Warning surface (caution actions)
+  {
+    name: 'warning',
+    base: {
+      background: { ref: 'warning.600' },
+      text: {
         fn: 'contrast',
         args: {
-          against: 'success.background',
-          prefer: '#ffffff',
+          against: 'warning.background',
+          prefer: {
+            fn: 'auto',
+            args: {
+              light: '#fafafa',
+              dark: '#f0f0f0',
+            },
+          },
           textSize: 'ui',
         },
       },
+      border: 'transparent',
+      icon: { ref: 'warning.text' },
+      shadow: '0 2px 4px rgba(0, 0, 0, 0.15)',
+      outline: {
+        fn: 'auto',
+        args: {
+          light: { ref: 'warning.500' },
+          dark: { ref: 'warning.400' },
+        },
+      },
+    },
+    variants: {
+      soft: [10, 20],
+      hard: [10, 20],
     },
     states: {
       hover: { lightness: -10 },
@@ -308,6 +511,10 @@ export const surfaces: SurfaceDefinition[] = [
       },
       shadow: '0 0 0 3px transparent',
       outline: { ref: 'body.outline' },
+    },
+    variants: {
+      soft: [10, 20],
+      hard: [10, 20],
     },
     states: {
       hover: {
@@ -350,8 +557,8 @@ export const surfaces: SurfaceDefinition[] = [
       text: {
         fn: 'auto',
         args: {
-          light: { ref: 'info.800' },
-          dark: { ref: 'info.200' },
+          light: { ref: 'info.700' },
+          dark: { ref: 'info.300' },
         },
       },
       border: {
@@ -368,7 +575,12 @@ export const surfaces: SurfaceDefinition[] = [
           dark: { ref: 'info.400' },
         },
       },
+      shadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
       outline: { ref: 'body.outline' },
+    },
+    variants: {
+      soft: [10, 20],
+      hard: [10, 20],
     },
   },
 
@@ -399,8 +611,8 @@ export const surfaces: SurfaceDefinition[] = [
       text: {
         fn: 'auto',
         args: {
-          light: { ref: 'success.800' },
-          dark: { ref: 'success.200' },
+          light: { ref: 'success.700' },
+          dark: { ref: 'success.300' },
         },
       },
       border: {
@@ -417,7 +629,12 @@ export const surfaces: SurfaceDefinition[] = [
           dark: { ref: 'success.400' },
         },
       },
+      shadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
       outline: { ref: 'body.outline' },
+    },
+    variants: {
+      soft: [10, 20],
+      hard: [10, 20],
     },
   },
 
@@ -448,8 +665,8 @@ export const surfaces: SurfaceDefinition[] = [
       text: {
         fn: 'auto',
         args: {
-          light: { ref: 'warning.800' },
-          dark: { ref: 'warning.200' },
+          light: { ref: 'warning.700' },
+          dark: { ref: 'warning.300' },
         },
       },
       border: {
@@ -466,7 +683,12 @@ export const surfaces: SurfaceDefinition[] = [
           dark: { ref: 'warning.400' },
         },
       },
+      shadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
       outline: { ref: 'body.outline' },
+    },
+    variants: {
+      soft: [10, 20],
+      hard: [10, 20],
     },
   },
 
@@ -497,8 +719,8 @@ export const surfaces: SurfaceDefinition[] = [
       text: {
         fn: 'auto',
         args: {
-          light: { ref: 'error.800' },
-          dark: { ref: 'error.200' },
+          light: { ref: 'error.700' },
+          dark: { ref: 'error.300' },
         },
       },
       border: {
@@ -515,7 +737,12 @@ export const surfaces: SurfaceDefinition[] = [
           dark: { ref: 'error.400' },
         },
       },
+      shadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
       outline: { ref: 'body.outline' },
+    },
+    variants: {
+      soft: [10, 20],
+      hard: [10, 20],
     },
   },
 

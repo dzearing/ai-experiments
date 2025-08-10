@@ -39,12 +39,13 @@ type Story = StoryObj<typeof meta>;
 const DurationDemo: React.FC = () => {
   const [animatingItems, setAnimatingItems] = useState<Set<string>>(new Set());
   const durations = [
-    { name: 'instant', value: '100ms', use: 'Hover states, focus rings' },
-    { name: 'fast', value: '200ms', use: 'Closing, collapsing, fading out' },
+    { name: 'fastest', value: '100ms', use: 'Hover states, focus rings' },
+    { name: 'fast20', value: '150ms', use: 'Quick transitions' },
+    { name: 'fast10', value: '200ms', use: 'Closing, collapsing, fading out' },
     { name: 'normal', value: '300ms', use: 'Opening, expanding, sliding in' },
-    { name: 'slow', value: '500ms', use: 'Page transitions, complex animations' },
-    { name: 'deliberate', value: '700ms', use: 'Emphasis animations' },
-    { name: 'sluggish', value: '1000ms', use: 'Loading states, background animations' },
+    { name: 'slow10', value: '400ms', use: 'Deliberate transitions' },
+    { name: 'slow20', value: '600ms', use: 'Page transitions, complex animations' },
+    { name: 'slowest', value: '1000ms', use: 'Loading states, background animations' },
   ];
 
   const triggerAnimation = () => {

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theme Toggle Test</title>
+    
+    <!-- UI Kit Styles -->
+    <link rel="stylesheet" href="../../../assets/styles.css">
+    
+    <!-- Set theme base path for mockups -->
+    <script>
+        window.__uiKitBasePath = '../../../assets/';
+    </script>    
+    <!-- Theme Scripts (ES modules) -->
+    <script type="module" src="../../../assets/theme.js"></script>
+    <script type="module" src="../../../assets/theme-switcher.js"></script>
+    
+    <style>
+        body {
+            font-family: var(--font-family, system-ui);
+            color: var(--color-body-text);
+            background: var(--color-body-background);
+            padding: var(--spacing-large20);
+            transition: all var(--duration-normal) var(--easing-default);
+        }
+        
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .test-card {
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-large10);
+            padding: var(--spacing-large10);
+            margin-bottom: var(--spacing-large10);
+            box-shadow: var(--shadow-card);
+        }
+        
+        h1 {
+            color: var(--color-body-text);
+            margin-bottom: var(--spacing);
+        }
+        
+        p {
+            color: var(--color-body-textSoft10);
+            line-height: var(--line-height-relaxed);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: var(--spacing);
+            margin-top: var(--spacing);
+        }
+        
+        button {
+            padding: var(--spacing-buttonY) var(--spacing-buttonX);
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border: none;
+            border-radius: var(--radius-button);
+            cursor: pointer;
+            transition: all var(--duration-fast10) var(--easing-default);
+        }
+        
+        button:hover {
+            background: var(--color-primary-background-hover);
+        }
+        
+        .status {
+            padding: var(--spacing-small10);
+            background: var(--color-infoSoft-background);
+            color: var(--color-infoSoft-text);
+            border-radius: var(--radius-small10);
+            margin-top: var(--spacing);
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-card">
+            <h1>Theme Toggle Test Page</h1>
+            <p>This page tests the theme toggle functionality. Use the controls in the top-right corner to switch between themes and light/dark modes.</p>
+            
+            <div class="button-group">
+                <button onclick="testTheme('ocean')">Test Ocean Theme</button>
+                <button onclick="testTheme('sunset')">Test Sunset Theme</button>
+                <button onclick="testMode()">Toggle Mode</button>
+            </div>
+            
+            <div class="status">
+                Current Theme: <span id="current-theme">-</span><br>
+                Current Mode: <span id="current-mode">-</span>
+            </div>
+        </div>
+        
+        <div class="test-card">
+            <h2>Color Variations</h2>
+            <p>This card demonstrates how different themes affect the color scheme.</p>
+            <p style="color: var(--color-body-link);">This is a link color</p>
+            <p style="color: var(--color-body-textSuccess);">This is success text</p>
+            <p style="color: var(--color-body-textWarning);">This is warning text</p>
+            <p style="color: var(--color-body-textDanger);">This is danger text</p>
+        </div>
+    </div>
+    
+    <script>
+        function updateStatus() {
+            document.getElementById('current-theme').textContent = window.getTheme ? window.getTheme() : 'N/A';
+            document.getElementById('current-mode').textContent = window.getMode ? window.getMode() : 'N/A';
+        }
+        
+        function testTheme(theme) {
+            if (window.setTheme) {
+                window.setTheme(theme).then(() => updateStatus());
+            }
+        }
+        
+        function testMode() {
+            if (window.toggleMode) {
+                window.toggleMode().then(() => updateStatus());
+            }
+        }
+        
+        // Update status on load and theme changes
+        window.addEventListener('DOMContentLoaded', updateStatus);
+        window.addEventListener('themechange', updateStatus);
+    </script>
+</body>
+</html>

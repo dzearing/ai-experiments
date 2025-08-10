@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Theme API Test</title>
+  
+  <!-- Include the theme engine -->
+  <script type="module" src="./dist/theme.js"></script>
+  <!-- Include the theme switcher for demo -->
+  <script type="module" src="./dist/theme-switcher.js"></script>
+  
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 2rem;
+      margin: 0;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    
+    [data-theme-type="dark"] {
+      background: #1a1a1a;
+      color: #ffffff;
+    }
+    
+    [data-theme-type="light"] {
+      background: #ffffff;
+      color: #000000;
+    }
+    
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    .controls {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+    
+    select, button {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      border: 1px solid currentColor;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    
+    .info {
+      background: rgba(0, 0, 0, 0.1);
+      padding: 1rem;
+      border-radius: 4px;
+      margin-bottom: 1rem;
+    }
+    
+    [data-theme-type="dark"] .info {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .log {
+      background: rgba(0, 0, 0, 0.05);
+      padding: 1rem;
+      border-radius: 4px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    [data-theme-type="dark"] .log {
+      background: rgba(255, 255, 255, 0.05);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>UI Kit Theme API Test</h1>
+    
+    <div class="controls">
+      <select id="theme-selector">
+        <option value="default">Default</option>
+        <option value="ocean">Ocean</option>
+        <option value="sunset">Sunset</option>
+        <option value="nature">Nature</option>
+        <option value="minimal">Minimal</option>
+        <option value="vibrant">Vibrant</option>
+        <option value="corporate">Corporate</option>
+        <option value="monochrome">Monochrome</option>
+      </select>
+      
+      <button id="toggle-mode">Toggle Light/Dark</button>
+      <button id="auto-mode">Auto Mode</button>
+      <button id="get-all">Get All Themes</button>
+    </div>
+    
+    <div class="info">
+      <strong>Current Theme:</strong> <span id="current-theme">-</span><br>
+      <strong>Theme Type:</strong> <span id="current-type">-</span><br>
+      <strong>Stored in localStorage:</strong> <span id="stored-prefs">-</span>
+    </div>
+    
+    <h2>Event Log</h2>
+    <div class="log" id="log"></div>
+  </div>
+  
+  <script>
+    const $ = id => document.getElementById(id);
+    const log = msg => {
+      const timestamp = new Date().toLocaleTimeString();
+      $('log').textContent = `[${timestamp}] ${msg}\n` + $('log').textContent;
+    };
+    
+    // Update display
+    function updateDisplay() {
+      const theme = window.getTheme ? window.getTheme() : 'not available';
+      const mode = window.getMode ? window.getMode() : 'not available';
+      const type = document.documentElement.getAttribute('data-theme-type');
+      const stored = localStorage.getItem('claude-flow-theme');
+      
+      $('current-theme').textContent = theme;
+      $('current-type').textContent = `${type} (mode: ${mode})`;
+      $('stored-prefs').textContent = stored ? JSON.parse(stored).theme + ' (' + JSON.parse(stored).type + ')' : 'none';
+      
+      // Update selector
+      if (window.getTheme) {
+        $('theme-selector').value = window.getTheme() || 'default';
+      }
+    }
+    
+    // Test the new API
+    async function testNewAPI() {
+      log('Testing new props-based API...');
+      
+      // Test loadTheme with object
+      log('Testing loadTheme({ theme: "ocean" })');
+      await window.loadTheme({ theme: 'ocean' });
+      await new Promise(r => setTimeout(r, 500));
+      
+      log('Testing loadTheme({ mode: "dark" })');
+      await window.loadTheme({ mode: 'dark' });
+      await new Promise(r => setTimeout(r, 500));
+      
+      log('Testing setTheme("default")');
+      await window.setTheme('default');
+      await new Promise(r => setTimeout(r, 500));
+      
+      log('API test complete');
+    }
+    
+    // Wait for theme API to be available
+    function waitForAPI() {
+      if (window.loadTheme && window.getTheme && window.getAllThemes) {
+        log('Theme API is available');
+        updateDisplay();
+        setupEventHandlers();
+        testNewAPI();
+      } else {
+        log('Waiting for Theme API...');
+        setTimeout(waitForAPI, 100);
+      }
+    }
+    
+    function setupEventHandlers() {
+      // Theme selector - now using setTheme
+      $('theme-selector').addEventListener('change', async (e) => {
+        log(`Setting theme: ${e.target.value}`);
+        const result = await window.setTheme(e.target.value);
+        log(`Theme set: ${result}`);
+        updateDisplay();
+      });
+      
+      // Toggle mode - now much simpler!
+      $('toggle-mode').addEventListener('click', async () => {
+        log('Toggling mode...');
+        const result = await window.toggleMode();
+        log(`Mode toggled: ${result}`);
+        updateDisplay();
+      });
+      
+      // Auto mode - using setMode
+      $('auto-mode').addEventListener('click', async () => {
+        log('Setting auto mode');
+        await window.setMode('auto');
+        updateDisplay();
+      });
+      
+      // Get all themes
+      $('get-all').addEventListener('click', async () => {
+        log('Fetching all themes...');
+        try {
+          const themes = await window.getAllThemes();
+          log('Available themes:\n' + JSON.stringify(themes, null, 2));
+        } catch (e) {
+          log('Error getting themes: ' + e.message);
+        }
+      });
+      
+      // Listen for theme changes
+      window.addEventListener('themechange', (event) => {
+        log(`Theme change event: ${JSON.stringify(event.detail)}`);
+        updateDisplay();
+      });
+      
+      // Listen for storage changes (from other tabs)
+      window.addEventListener('storage', (event) => {
+        if (event.key === 'claude-flow-theme') {
+          log(`Storage change from another tab: ${event.newValue}`);
+          updateDisplay();
+        }
+      });
+    }
+    
+    // Start
+    waitForAPI();
+  </script>
+</body>
+</html>

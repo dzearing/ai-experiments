@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIPersonaIndicator - Fixed Mockup</title>
+    
+    <!-- UI Kit Styles -->
+    <link rel="stylesheet" href="../../../assets/styles.css">
+    
+    <!-- Set theme base path for mockups -->
+    <script>
+        window.__uiKitBasePath = '../../../assets/';
+    </script>    
+    <!-- Theme Scripts (ES modules) -->
+    <script type="module" src="../../../assets/theme.js"></script>
+    <script type="module" src="../../../assets/theme-switcher.js"></script>
+    
+    <style>
+        /* Component-specific styles using ui-kit tokens */
+        /* Persona Gradients - These are component-specific and not in ui-kit */
+        :root {
+            --gradient-claude: linear-gradient(135deg, var(--color-primary-background) 0%, var(--color-primary-background) 100%);
+            --gradient-gpt: linear-gradient(135deg, var(--color-success-background) 0%, var(--color-success-background) 100%);
+            --gradient-gemini: linear-gradient(135deg, var(--color-primary-background) 0%, var(--color-primary-background) 100%);
+            --gradient-custom: linear-gradient(135deg, var(--color-neutral-background) 0%, var(--color-neutral-backgroundSoft10) 100%);
+            --gradient-ai-default: linear-gradient(135deg, var(--color-primary-background) 0%, var(--color-primary-background) 50%, var(--color-success-background) 100%);
+        }
+
+        body {
+            /* font-family is already set by ui-kit */
+            font-size: var(--font-size);
+            line-height: var(--line-height);
+            color: var(--color-body-text);
+            background: var(--color-body-background);
+            padding: var(--spacing-large10);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .demo-section {
+            background: var(--color-panel-background);
+            border-radius: var(--radius-large20);
+            padding: var(--spacing-large10);
+            margin-bottom: var(--spacing-large10);
+            box-shadow: var(--shadow-card);
+        }
+
+        .demo-title {
+            font-size: var(--font-size-h4);
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing);
+        }
+
+        .demo-description {
+            color: var(--color-body-textSoft10);
+            margin-bottom: var(--spacing);
+            font-size: var(--font-size-small10);
+        }
+
+        /* AIPersonaIndicator Component Styles */
+        .persona-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+            padding: var(--spacing-small20) var(--spacing-small10);
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: 999px;
+            cursor: pointer;
+            transition: all var(--duration-normal) var(--easing-default);
+        }
+
+        .persona-indicator:hover {
+            background: var(--color-panel-background);
+            box-shadow: var(--shadow-soft10);
+        }
+
+        .persona-indicator--active {
+            border-color: var(--color-primary-border);
+            background: var(--color-panel-background);
+        }
+
+        /* Avatar */
+        .persona-indicator__avatar {
+            width: var(--spacing-large10);
+            height: var(--spacing-large10);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size-small20);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-primary-text);
+        }
+
+        .persona-indicator--claude .persona-indicator__avatar {
+            background: var(--gradient-claude);
+        }
+
+        .persona-indicator--gpt .persona-indicator__avatar {
+            background: var(--gradient-gpt);
+        }
+
+        .persona-indicator--gemini .persona-indicator__avatar {
+            background: var(--gradient-gemini);
+        }
+
+        .persona-indicator--custom .persona-indicator__avatar {
+            background: var(--gradient-custom);
+        }
+
+        /* Name */
+        .persona-indicator__name {
+            font-weight: var(--font-weight-medium);
+            color: var(--color-body-text);
+        }
+
+        /* Status */
+        .persona-indicator__status {
+            width: var(--spacing-small10);
+            height: var(--spacing-small10);
+            border-radius: 50%;
+            background: var(--color-success-background);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .persona-indicator__status--offline {
+            background: var(--color-body-textSoft20);
+            animation: none;
+        }
+
+        /* Dropdown */
+        .persona-dropdown {
+            position: absolute;
+            top: calc(100% + var(--spacing-small10));
+            left: 0;
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius-large10);
+            box-shadow: var(--shadow-hard10);
+            min-width: 280px;
+            padding: var(--spacing-small10);
+            z-index: 1000;
+        }
+
+        .persona-option {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+            padding: var(--spacing-small10);
+            border-radius: var(--radius-small10);
+            cursor: pointer;
+            transition: background var(--duration-normal);
+        }
+
+        .persona-option:hover {
+            background: var(--color-body-background);
+        }
+
+        .persona-option--selected {
+            background: var(--color-infoSoft-background);
+        }
+
+        .persona-option__avatar {
+            width: var(--spacing-large20);
+            height: var(--spacing-large20);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-primary-text);
+        }
+
+        .persona-option__avatar--claude,
+        .persona-card__avatar--claude {
+            background: var(--gradient-claude);
+        }
+
+        .persona-option__avatar--gpt,
+        .persona-card__avatar--gpt {
+            background: var(--gradient-gpt);
+        }
+
+        .persona-option__avatar--gemini,
+        .persona-card__avatar--gemini {
+            background: var(--gradient-gemini);
+        }
+
+        .persona-option__avatar--custom,
+        .persona-card__avatar--custom {
+            background: var(--gradient-custom);
+        }
+
+        .persona-option__info {
+            flex: 1;
+        }
+
+        .persona-option__name {
+            font-weight: var(--font-weight-medium);
+            color: var(--color-body-text);
+        }
+
+        .persona-option__description {
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft10);
+        }
+
+        .persona-option__badge {
+            padding: var(--spacing-small20) var(--spacing-small10);
+            background: var(--color-success-background);
+            color: var(--color-success-text);
+            border-radius: var(--radius-small10);
+            font-size: var(--font-size-smallest);
+            font-weight: var(--font-weight-semibold);
+        }
+
+        /* Chat Header Integration */
+        .chat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--spacing);
+            background: var(--color-panel-background);
+            border-bottom: 1px solid var(--color-body-border);
+        }
+
+        .chat-header__title {
+            font-size: var(--font-size-large10);
+            font-weight: var(--font-weight-semibold);
+        }
+
+        /* Compact Version */
+        .persona-indicator--compact {
+            padding: var(--spacing-small20) var(--spacing-small10);
+        }
+
+        .persona-indicator--compact .persona-indicator__avatar {
+            width: var(--spacing-large5);
+            height: var(--spacing-large5);
+            font-size: var(--font-size-smallest);
+        }
+
+        .persona-indicator--compact .persona-indicator__name {
+            font-size: var(--font-size-small10);
+        }
+
+        /* Icon Only */
+        .persona-indicator--icon-only {
+            padding: var(--spacing-small10);
+            border-radius: var(--radius-large10);
+        }
+
+        .persona-indicator--icon-only .persona-indicator__avatar {
+            width: var(--spacing-large10);
+            height: var(--spacing-large10);
+            font-size: var(--font-size);
+        }
+
+        /* Grid Layout */
+        .persona-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: var(--gap);
+            margin-top: var(--spacing);
+        }
+
+        /* Card Style */
+        .persona-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--spacing-small10);
+            padding: var(--spacing);
+            background: var(--color-panel-background);
+            border: 2px solid var(--color-body-border);
+            border-radius: var(--radius-large10);
+            cursor: pointer;
+            transition: all var(--duration-normal);
+        }
+
+        .persona-card:hover {
+            border-color: var(--color-primary-border);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-card);
+        }
+
+        .persona-card--active {
+            border-color: var(--color-primary-border);
+            background: var(--color-panel-background);
+        }
+
+        .persona-card__avatar {
+            width: var(--spacing-section);
+            height: var(--spacing-section);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size-large10);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-primary-text);
+        }
+
+        .persona-card__name {
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-body-text);
+        }
+
+        .persona-card__capabilities {
+            display: flex;
+            gap: var(--spacing-small20);
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .capability-chip {
+            padding: var(--spacing-small20) var(--spacing-small10);
+            background: var(--color-body-background);
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius-small10);
+            font-size: var(--font-size-smallest);
+            color: var(--color-body-textSoft10);
+        }
+
+        /* Loading State */
+        .persona-indicator--loading .persona-indicator__avatar {
+            animation: rotate var(--duration-slow20) linear infinite;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Basic Persona Indicators -->
+        <div class="demo-section">
+            <h2 class="demo-title">AI Persona Indicators</h2>
+            <p class="demo-description">Shows which AI model is currently active</p>
+            
+            <div style="display: flex; gap: var(--spacing); flex-wrap: wrap;">
+                <div class="persona-indicator persona-indicator--claude persona-indicator--active">
+                    <div class="persona-indicator__avatar">C</div>
+                    <span class="persona-indicator__name">Claude</span>
+                    <div class="persona-indicator__status"></div>
+                </div>
+                
+                <div class="persona-indicator persona-indicator--gpt">
+                    <div class="persona-indicator__avatar">G</div>
+                    <span class="persona-indicator__name">GPT-4</span>
+                    <div class="persona-indicator__status"></div>
+                </div>
+                
+                <div class="persona-indicator persona-indicator--gemini">
+                    <div class="persona-indicator__avatar">✦</div>
+                    <span class="persona-indicator__name">Gemini</span>
+                    <div class="persona-indicator__status"></div>
+                </div>
+                
+                <div class="persona-indicator persona-indicator--custom">
+                    <div class="persona-indicator__avatar">🤖</div>
+                    <span class="persona-indicator__name">Custom AI</span>
+                    <div class="persona-indicator__status persona-indicator__status--offline"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- In Chat Header -->
+        <div class="demo-section">
+            <h2 class="demo-title">Chat Header Integration</h2>
+            <p class="demo-description">Persona selector integrated in chat interface</p>
+            
+            <div class="chat-header">
+                <h3 class="chat-header__title">New Conversation</h3>
+                <div style="position: relative;">
+                    <div class="persona-indicator persona-indicator--claude persona-indicator--active">
+                        <div class="persona-indicator__avatar">C</div>
+                        <span class="persona-indicator__name">Claude 3 Opus</span>
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" style="opacity: 0.5;">
+                            <path d="M3 5L6 8L9 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    
+                    <!-- Dropdown Menu -->
+                    <div class="persona-dropdown">
+                        <div class="persona-option persona-option--selected">
+                            <div class="persona-option__avatar persona-option__avatar--claude">C</div>
+                            <div class="persona-option__info">
+                                <div class="persona-option__name">Claude 3 Opus</div>
+                                <div class="persona-option__description">Most capable, best for complex tasks</div>
+                            </div>
+                            <div class="persona-option__badge">Active</div>
+                        </div>
+                        
+                        <div class="persona-option">
+                            <div class="persona-option__avatar persona-option__avatar--claude">C</div>
+                            <div class="persona-option__info">
+                                <div class="persona-option__name">Claude 3 Sonnet</div>
+                                <div class="persona-option__description">Balanced performance and speed</div>
+                            </div>
+                        </div>
+                        
+                        <div class="persona-option">
+                            <div class="persona-option__avatar persona-option__avatar--gpt">G</div>
+                            <div class="persona-option__info">
+                                <div class="persona-option__name">GPT-4 Turbo</div>
+                                <div class="persona-option__description">Latest GPT model with vision</div>
+                            </div>
+                        </div>
+                        
+                        <div class="persona-option">
+                            <div class="persona-option__avatar persona-option__avatar--gemini">✦</div>
+                            <div class="persona-option__info">
+                                <div class="persona-option__name">Gemini Pro</div>
+                                <div class="persona-option__description">Google's multimodal AI</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Size Variations -->
+        <div class="demo-section">
+            <h2 class="demo-title">Size Variations</h2>
+            <p class="demo-description">Different sizes for various UI contexts</p>
+            
+            <div style="display: flex; gap: var(--spacing-large10); align-items: center; flex-wrap: wrap;">
+                <!-- Compact -->
+                <div>
+                    <p style="font-size: var(--font-size-small10); color: var(--color-body-textSoft10); margin-bottom: var(--spacing-small10);">Compact</p>
+                    <div class="persona-indicator persona-indicator--claude persona-indicator--compact">
+                        <div class="persona-indicator__avatar">C</div>
+                        <span class="persona-indicator__name">Claude</span>
+                    </div>
+                </div>
+                
+                <!-- Default -->
+                <div>
+                    <p style="font-size: var(--font-size-small10); color: var(--color-body-textSoft10); margin-bottom: var(--spacing-small10);">Default</p>
+                    <div class="persona-indicator persona-indicator--gpt">
+                        <div class="persona-indicator__avatar">G</div>
+                        <span class="persona-indicator__name">GPT-4</span>
+                        <div class="persona-indicator__status"></div>
+                    </div>
+                </div>
+                
+                <!-- Icon Only -->
+                <div>
+                    <p style="font-size: var(--font-size-small10); color: var(--color-body-textSoft10); margin-bottom: var(--spacing-small10);">Icon Only</p>
+                    <div class="persona-indicator persona-indicator--gemini persona-indicator--icon-only">
+                        <div class="persona-indicator__avatar">✦</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Persona Selection Grid -->
+        <div class="demo-section">
+            <h2 class="demo-title">Persona Selection Grid</h2>
+            <p class="demo-description">Card-based selection for onboarding or settings</p>
+            
+            <div class="persona-grid">
+                <div class="persona-card persona-card--active">
+                    <div class="persona-card__avatar persona-card__avatar--claude">C</div>
+                    <div class="persona-card__name">Claude 3</div>
+                    <div class="persona-card__capabilities">
+                        <span class="capability-chip">Creative</span>
+                        <span class="capability-chip">Coding</span>
+                        <span class="capability-chip">Analysis</span>
+                    </div>
+                </div>
+                
+                <div class="persona-card">
+                    <div class="persona-card__avatar persona-card__avatar--gpt">G</div>
+                    <div class="persona-card__name">GPT-4</div>
+                    <div class="persona-card__capabilities">
+                        <span class="capability-chip">General</span>
+                        <span class="capability-chip">Vision</span>
+                        <span class="capability-chip">Plugins</span>
+                    </div>
+                </div>
+                
+                <div class="persona-card">
+                    <div class="persona-card__avatar persona-card__avatar--gemini">✦</div>
+                    <div class="persona-card__name">Gemini</div>
+                    <div class="persona-card__capabilities">
+                        <span class="capability-chip">Search</span>
+                        <span class="capability-chip">Multi-modal</span>
+                    </div>
+                </div>
+                
+                <div class="persona-card">
+                    <div class="persona-card__avatar persona-card__avatar--custom">+</div>
+                    <div class="persona-card__name">Add Custom</div>
+                    <div class="persona-card__capabilities">
+                        <span class="capability-chip">Configure</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- States -->
+        <div class="demo-section">
+            <h2 class="demo-title">Persona States</h2>
+            <p class="demo-description">Different states and status indicators</p>
+            
+            <div style="display: flex; flex-direction: column; gap: var(--spacing);">
+                <!-- Active/Online -->
+                <div style="display: flex; gap: var(--spacing); align-items: center;">
+                    <div class="persona-indicator persona-indicator--claude persona-indicator--active">
+                        <div class="persona-indicator__avatar">C</div>
+                        <span class="persona-indicator__name">Claude (Active)</span>
+                        <div class="persona-indicator__status"></div>
+                    </div>
+                    <span style="font-size: var(--font-size-small10); color: var(--color-body-textSoft10);">Currently responding</span>
+                </div>
+                
+                <!-- Loading/Switching -->
+                <div style="display: flex; gap: var(--spacing); align-items: center;">
+                    <div class="persona-indicator persona-indicator--gpt persona-indicator--loading">
+                        <div class="persona-indicator__avatar">⟳</div>
+                        <span class="persona-indicator__name">Switching...</span>
+                    </div>
+                    <span style="font-size: var(--font-size-small10); color: var(--color-body-textSoft10);">Loading GPT-4</span>
+                </div>
+                
+                <!-- Offline/Unavailable -->
+                <div style="display: flex; gap: var(--spacing); align-items: center;">
+                    <div class="persona-indicator persona-indicator--custom" style="opacity: 0.5;">
+                        <div class="persona-indicator__avatar">🤖</div>
+                        <span class="persona-indicator__name">Custom AI</span>
+                        <div class="persona-indicator__status persona-indicator__status--offline"></div>
+                    </div>
+                    <span style="font-size: var(--font-size-small10); color: var(--color-body-textSoft10);">Unavailable</span>
+                </div>
+                
+                <!-- Rate Limited -->
+                <div style="display: flex; gap: var(--spacing); align-items: center;">
+                    <div class="persona-indicator persona-indicator--gemini" style="border-color: var(--color-warningSoft-border);">
+                        <div class="persona-indicator__avatar">✦</div>
+                        <span class="persona-indicator__name">Gemini</span>
+                        <div class="persona-indicator__status" style="background: var(--color-warningSoft-background);"></div>
+                    </div>
+                    <span style="font-size: var(--font-size-small10); color: var(--color-warningSoft-text);">Rate limit: 2 min</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inline Usage -->
+        <div class="demo-section">
+            <h2 class="demo-title">Inline Persona Indicators</h2>
+            <p class="demo-description">Used within messages to show which AI responded</p>
+            
+            <div style="background: var(--color-panel-background); padding: var(--spacing); border-radius: var(--radius-large10);">
+                <div style="display: flex; align-items: center; gap: var(--spacing-small10); margin-bottom: var(--spacing-small10);">
+                    <div class="persona-indicator persona-indicator--claude persona-indicator--compact">
+                        <div class="persona-indicator__avatar">C</div>
+                        <span class="persona-indicator__name">Claude</span>
+                    </div>
+                    <span style="font-size: var(--font-size-small10); color: var(--color-body-textSoft10);">2 minutes ago</span>
+                </div>
+                <p style="color: var(--color-body-text);">I can help you with that React component. Here's an optimized version...</p>
+            </div>
+            
+            <div style="background: var(--color-panel-background); padding: var(--spacing); border-radius: var(--radius-large10); margin-top: var(--spacing-small10);">
+                <div style="display: flex; align-items: center; gap: var(--spacing-small10); margin-bottom: var(--spacing-small10);">
+                    <div class="persona-indicator persona-indicator--gpt persona-indicator--compact">
+                        <div class="persona-indicator__avatar">G</div>
+                        <span class="persona-indicator__name">GPT-4</span>
+                    </div>
+                    <span style="font-size: var(--font-size-small10); color: var(--color-body-textSoft10);">Just now</span>
+                </div>
+                <p style="color: var(--color-body-text);">Additionally, you might want to consider using useMemo for performance...</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

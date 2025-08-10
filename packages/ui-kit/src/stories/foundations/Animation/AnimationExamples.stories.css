@@ -103,7 +103,7 @@ h4 {
   width: 0;
   background: var(--color-primary-background);
   border-radius: var(--radius-small10);
-  transition: width var(--duration) var(--easing-default);
+  transition: width var(--duration-normal) var(--easing-default);
 }
 
 .progress-fill.loading {
@@ -143,7 +143,7 @@ h4 {
   background: transparent;
   border-radius: var(--radius-full);
   cursor: pointer;
-  transition: all var(--duration) var(--easing-default);
+  transition: all var(--duration-normal) var(--easing-default);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -153,7 +153,7 @@ h4 {
   width: 24px;
   height: 24px;
   fill: var(--color-panel-text-disabled);
-  transition: all var(--duration) var(--easing-default);
+  transition: all var(--duration-normal) var(--easing-default);
 }
 
 .like-button:hover {
@@ -162,7 +162,7 @@ h4 {
 
 .like-button.liked .like-icon {
   fill: #e91e63;
-  animation: like-bounce var(--duration) var(--easing-bounce);
+  animation: like-bounce var(--duration-normal) var(--easing-bounce);
 }
 
 .like-burst {
@@ -218,7 +218,7 @@ h4 {
   background: var(--color-neutral-background);
   border-radius: var(--radius-small10);
   cursor: pointer;
-  transition: all var(--duration) var(--easing-default);
+  transition: all var(--duration-normal) var(--easing-default);
 }
 
 .save-icon {
@@ -227,13 +227,13 @@ h4 {
   fill: none;
   stroke: var(--color-neutral-text);
   stroke-width: 2;
-  transition: all var(--duration) var(--easing-default);
+  transition: all var(--duration-normal) var(--easing-default);
 }
 
 .save-button.saved .save-icon {
   fill: var(--color-primary-background);
   stroke: var(--color-primary-background);
-  animation: save-bounce var(--duration) var(--easing-bounce);
+  animation: save-bounce var(--duration-normal) var(--easing-bounce);
 }
 
 @keyframes save-bounce {
@@ -253,7 +253,7 @@ h4 {
   background: var(--color-neutral-background);
   border-radius: var(--radius-small10);
   cursor: pointer;
-  transition: all var(--duration) var(--easing-default);
+  transition: all var(--duration-normal) var(--easing-default);
   overflow: hidden;
   position: relative;
 }
@@ -264,7 +264,7 @@ h4 {
 }
 
 .copy-text.copied {
-  animation: copy-feedback var(--duration) var(--easing-default);
+  animation: copy-feedback var(--duration-normal) var(--easing-default);
 }
 
 @keyframes copy-feedback {
@@ -316,7 +316,7 @@ h4 {
   border: 1px solid var(--color-neutral-border);
   border-radius: var(--radius-small10);
   cursor: pointer;
-  transition: all var(--duration) var(--easing-default);
+  transition: all var(--duration-normal) var(--easing-default);
 }
 
 .nav-button:hover:not(:disabled) {
@@ -448,20 +448,20 @@ h4 {
 
 /* Entering animations for title */
 .page-content.active.entering-from-right .page-title {
-  animation: stagger-enter-from-right var(--duration) var(--easing-default) both;
+  animation: stagger-enter-from-right var(--duration-normal) var(--easing-default) both;
 }
 
 .page-content.active.entering-from-left .page-title {
-  animation: stagger-enter-from-left var(--duration) var(--easing-default) both;
+  animation: stagger-enter-from-left var(--duration-normal) var(--easing-default) both;
 }
 
 /* Exiting animations for title */
 .page-content.exiting.exiting-to-left .page-title {
-  animation: stagger-exit-to-left var(--duration) var(--easing-default) both;
+  animation: stagger-exit-to-left var(--duration-normal) var(--easing-default) both;
 }
 
 .page-content.exiting.exiting-to-right .page-title {
-  animation: stagger-exit-to-right var(--duration) var(--easing-default) both;
+  animation: stagger-exit-to-right var(--duration-normal) var(--easing-default) both;
 }
 
 /* Content wrapper animations */
@@ -587,7 +587,7 @@ h4 {
   border: 1px solid var(--color-primary-border);
   border-radius: var(--radius-small10);
   cursor: pointer;
-  transition: all var(--duration) var(--easing-default);
+  transition: all var(--duration-normal) var(--easing-default);
 }
 
 .page-action:hover {
@@ -672,7 +672,7 @@ h4 {
   max-width: 400px;
   width: 90%;
   box-shadow: var(--shadow-xl);
-  animation: scale-in var(--duration) var(--easing-bounce);
+  animation: scale-in var(--duration-normal) var(--easing-bounce);
 }
 
 .dialog h3 {
@@ -714,7 +714,7 @@ h4 {
   border-radius: var(--radius-small10);
   opacity: 0;
   transform: translateX(-20px);
-  animation: slide-in-left var(--duration) var(--easing-enter) forwards;
+  animation: slide-in-left var(--duration-normal) var(--easing-enter) forwards;
   animation-delay: calc(var(--index) * var(--delay-stagger));
 }
 
@@ -726,7 +726,7 @@ h4 {
   border-radius: var(--radius-small10);
   font-size: var(--font-size-lg);
   cursor: pointer;
-  transition: all var(--duration) var(--easing-default);
+  transition: all var(--duration-normal) var(--easing-default);
 }
 
 .remove-button:hover {
@@ -813,7 +813,7 @@ h4 {
   border: 1px solid var(--color-panel-border);
   border-radius: var(--radius-small10);
   cursor: move;
-  transition: all var(--duration) var(--easing-default);
+  transition: all var(--duration-normal) var(--easing-default);
   user-select: none;
 }
 

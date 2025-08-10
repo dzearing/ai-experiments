@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatBubble - Default State</title>
+    
+    <!-- UI Kit Styles -->
+    <link rel="stylesheet" href="../../../assets/styles.css">
+    
+    <!-- Set ui-kit assets base path for mockups -->
+    <script>
+        // Set the general assets path for all UI Kit resources
+        window.__uiKitBasePath = '../../../assets/';
+    </script>
+    
+    <!-- Theme Scripts (ES modules) -->
+    <script type="module" src="../../../assets/theme.js"></script>
+    <script type="module" src="../../../assets/theme-switcher.js"></script>
+    
+    <style>
+        /* Component-specific avatar gradients */
+        :root {
+            --avatar-gradient-default: linear-gradient(135deg, var(--color-primary-background) 0%, var(--color-info-background) 50%, var(--color-success-background) 100%);
+            --avatar-gradient-user: linear-gradient(135deg, var(--color-info-background) 0%, var(--color-info-background) 50%, var(--color-infoSoft-background) 100%);
+            --avatar-gradient-assistant: linear-gradient(135deg, var(--color-primary-background) 0%, var(--color-info-background) 50%, var(--color-success-background) 100%);
+            --avatar-gradient-system: linear-gradient(135deg, var(--color-warning-background) 0%, var(--color-warning-background) 50%, var(--color-warningSoft-background) 100%);
+        }
+
+        /* Component-specific styles using ui-kit tokens */
+        body {
+            /* font-family is already set by ui-kit */
+            font-size: var(--font-size);
+            line-height: var(--line-height);
+            color: var(--color-body-text);
+            background: var(--color-body-background);
+            padding: var(--spacing-large20);
+        }
+
+        .demo-container {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-large20);
+        }
+
+        .demo-section {
+            background: var(--color-panel-background);
+            border-radius: var(--radius-large10);
+            padding: var(--spacing-large10);
+            box-shadow: var(--shadow-card);
+        }
+
+        .demo-title {
+            font-size: var(--font-size-h4);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-body-text);
+            margin-bottom: var(--spacing);
+        }
+
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing);
+        }
+
+        /* ChatBubble Component Styles */
+        .chat-bubble {
+            display: flex;
+            gap: var(--spacing-small20);
+            max-width: 70%;
+            animation: slideIn var(--duration-normal) var(--easing-default);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Alignment variants */
+        .chat-bubble--user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .chat-bubble--assistant {
+            align-self: flex-start;
+        }
+
+        .chat-bubble--system {
+            align-self: center;
+            max-width: 90%;
+        }
+
+        /* Avatar - With vibrant gradients (component-specific) */
+        .chat-bubble__avatar {
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--avatar-gradient-default);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size-small10);
+            font-weight: var(--font-weight-medium);
+            color: var(--color-primary-text);
+        }
+
+        .chat-bubble--user .chat-bubble__avatar {
+            background: var(--avatar-gradient-user);
+            color: var(--color-primary-text);
+        }
+
+        .chat-bubble--assistant .chat-bubble__avatar {
+            background: var(--avatar-gradient-assistant);
+            color: var(--color-primary-text);
+        }
+
+        .chat-bubble--system .chat-bubble__avatar {
+            width: 24px;
+            height: 24px;
+            background: var(--avatar-gradient-system);
+            color: var(--color-primary-text);
+        }
+
+        /* Message container */
+        .chat-bubble__message {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-small5);
+            flex: 1;
+        }
+
+        /* Bubble content */
+        .chat-bubble__content {
+            position: relative;
+            padding: var(--spacing-small20) var(--spacing);
+            border-radius: var(--radius-large20);
+            background: var(--color-panel-background);
+            color: var(--color-body-text);
+            word-wrap: break-word;
+        }
+
+        .chat-bubble--user .chat-bubble__content {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border-bottom-right-radius: var(--radius-small10);
+        }
+
+        .chat-bubble--assistant .chat-bubble__content {
+            background: var(--color-panel-background);
+            color: var(--color-body-text);
+            border: 1px solid var(--color-body-border);
+            border-bottom-left-radius: var(--radius-small10);
+        }
+
+        .chat-bubble--system .chat-bubble__content {
+            background: var(--color-warningSoft-background);
+            color: var(--color-warningSoft-text);
+            border: 1px solid var(--color-warningSoft-border);
+            text-align: center;
+            font-size: var(--font-size-small10);
+        }
+
+        /* Message text */
+        .chat-bubble__text {
+            margin: 0;
+        }
+
+        /* Code block - needs custom token as it's missing from ui-kit */
+        .chat-bubble__code {
+            margin: var(--spacing-small10) 0;
+            padding: var(--spacing-small20);
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius);
+            font-family: var(--font-family-mono);
+            font-size: var(--font-size-small10);
+            overflow-x: auto;
+        }
+
+        .chat-bubble--user .chat-bubble__code {
+            background: rgba(var(--color-primary-background-rgb), 0.1);
+            border-color: var(--color-primary-border);
+            color: var(--color-primary-text);
+        }
+
+        /* Metadata */
+        .chat-bubble__metadata {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+            padding: 0 var(--spacing-small10);
+        }
+
+        .chat-bubble--user .chat-bubble__metadata {
+            justify-content: flex-end;
+        }
+
+        .chat-bubble__timestamp {
+            font-size: var(--font-size-small20);
+            color: var(--color-body-textSoft20);
+        }
+
+        .chat-bubble__status {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small5);
+            font-size: var(--font-size-small20);
+            color: var(--color-body-textSoft20);
+        }
+
+        .chat-bubble__status svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* Actions overlay */
+        .chat-bubble__actions {
+            position: absolute;
+            top: var(--spacing-small10);
+            right: var(--spacing-small10);
+            display: flex;
+            gap: var(--spacing-small5);
+            padding: var(--spacing-small5);
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius-small10);
+            box-shadow: var(--shadow-hard10);
+            opacity: 0;
+            visibility: hidden;
+            transition: all var(--duration-fast10) var(--easing-default);
+        }
+
+        .chat-bubble__content:hover .chat-bubble__actions {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .action-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            background: transparent;
+            border: none;
+            border-radius: var(--radius-button);
+            color: var(--color-body-textSoft10);
+            cursor: pointer;
+            transition: all var(--duration-fast10) var(--easing-default);
+        }
+
+        .action-button:hover {
+            background: var(--color-neutral-background);
+            color: var(--color-body-text);
+        }
+
+        .action-button svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Error state */
+        .chat-bubble--error .chat-bubble__content {
+            background: var(--color-dangerSoft-background);
+            color: var(--color-dangerSoft-text);
+            border: 1px solid var(--color-dangerSoft-border);
+        }
+
+        .chat-bubble__error-message {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+            margin-top: var(--spacing-small10);
+            font-size: var(--font-size-small10);
+        }
+
+        .retry-button {
+            padding: var(--spacing-small5) var(--spacing-small20);
+            background: var(--color-danger-background);
+            color: var(--color-danger-text);
+            border: none;
+            border-radius: var(--radius-button);
+            font-size: var(--font-size-small10);
+            font-weight: var(--font-weight-medium);
+            cursor: pointer;
+            transition: all var(--duration-fast10) var(--easing-default);
+        }
+
+        .retry-button:hover {
+            background: var(--color-danger-background-hover);
+        }
+
+        /* Thread indicator */
+        .chat-bubble__thread {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+            margin-top: var(--spacing-small10);
+            padding: var(--spacing-small5) var(--spacing-small20);
+            background: transparent;
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius-button);
+            color: var(--color-body-text);
+            font-size: var(--font-size-small10);
+            cursor: pointer;
+            transition: all var(--duration-fast10) var(--easing-default);
+        }
+
+        .chat-bubble__thread:hover {
+            background: var(--color-neutral-background);
+        }
+
+        /* Reactions */
+        .chat-bubble__reactions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-small5);
+            margin-top: var(--spacing-small10);
+        }
+
+        .reaction-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-small5);
+            padding: var(--spacing-small5) var(--spacing-small10);
+            background: var(--color-neutral-background);
+            border: 1px solid var(--color-neutral-border);
+            border-radius: 50%;
+            font-size: var(--font-size-small10);
+            cursor: pointer;
+            transition: all var(--duration-fast10) var(--easing-default);
+        }
+
+        .reaction-chip:hover {
+            background: var(--color-neutral-background-hover);
+        }
+
+        .reaction-chip--active {
+            background: var(--color-infoSoft-background);
+            border-color: var(--color-infoSoft-border);
+            color: var(--color-infoSoft-text);
+        }
+
+        /* Typing indicator dots */
+        .typing-dots {
+            display: inline-flex;
+            gap: var(--spacing-small5);
+            padding: var(--spacing-small10) 0;
+        }
+
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            background: var(--color-body-textSoft20);
+            border-radius: 50%;
+            animation: pulse 1.4s infinite;
+        }
+
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes pulse {
+            0%, 60%, 100% {
+                opacity: 0.3;
+                transform: scale(1);
+            }
+            30% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <!-- User Message -->
+        <div class="demo-section">
+            <h2 class="demo-title">User Message</h2>
+            <div class="chat-container">
+                <div class="chat-bubble chat-bubble--user">
+                    <div class="chat-bubble__avatar">JD</div>
+                    <div class="chat-bubble__message">
+                        <div class="chat-bubble__content">
+                            <p class="chat-bubble__text">Can you help me understand how React hooks work? I'm particularly confused about useEffect and its dependency array.</p>
+                        </div>
+                        <div class="chat-bubble__metadata">
+                            <span class="chat-bubble__timestamp">2:34 PM</span>
+                            <span class="chat-bubble__status">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                                Read
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assistant Message -->
+        <div class="demo-section">
+            <h2 class="demo-title">Assistant Message</h2>
+            <div class="chat-container">
+                <div class="chat-bubble chat-bubble--assistant">
+                    <div class="chat-bubble__avatar">AI</div>
+                    <div class="chat-bubble__message">
+                        <div class="chat-bubble__content">
+                            <div class="chat-bubble__actions">
+                                <button class="action-button" aria-label="Copy message">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M8 2a1 1 0 000 2h2a1 1 0 100-2H8z" />
+                                        <path d="M3 5a2 2 0 012-2 1 1 0 000 2H5a2 2 0 00-2 2v6h2V7h8v6h2V7a2 2 0 00-2-2h-1a1 1 0 100-2h1a4 4 0 014 4v8a2 2 0 01-2 2H5a2 2 0 01-2-2V5z" />
+                                    </svg>
+                                </button>
+                                <button class="action-button" aria-label="More options">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <p class="chat-bubble__text">I'd be happy to explain React hooks! Let me break down <strong>useEffect</strong> and its dependency array for you:</p>
+                            <p class="chat-bubble__text">The <code>useEffect</code> hook lets you perform side effects in function components. It serves the same purpose as <code>componentDidMount</code>, <code>componentDidUpdate</code>, and <code>componentWillUnmount</code> in React class components.</p>
+                            <pre class="chat-bubble__code">useEffect(() => {
+  // This is the effect function
+  console.log('Component rendered or updated');
+  
+  // Cleanup function (optional)
+  return () => {
+    console.log('Cleanup');
+  };
+}, [dependency1, dependency2]); // Dependency array</pre>
+                            <p class="chat-bubble__text">The dependency array controls when the effect runs:
+• Empty array <code>[]</code>: Runs once after initial render
+• With dependencies: Runs when any dependency changes
+• No array: Runs after every render</p>
+                        </div>
+                        <div class="chat-bubble__metadata">
+                            <span class="chat-bubble__timestamp">2:35 PM</span>
+                        </div>
+                        <div class="chat-bubble__reactions">
+                            <button class="reaction-chip reaction-chip--active">
+                                👍 <span>1</span>
+                            </button>
+                            <button class="reaction-chip">
+                                💡
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Message -->
+        <div class="demo-section">
+            <h2 class="demo-title">System Message</h2>
+            <div class="chat-container">
+                <div class="chat-bubble chat-bubble--system">
+                    <div class="chat-bubble__avatar">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="chat-bubble__message">
+                        <div class="chat-bubble__content">
+                            <p class="chat-bubble__text">Context window limit approaching. Consider starting a new conversation for optimal performance.</p>
+                        </div>
+                        <div class="chat-bubble__metadata">
+                            <span class="chat-bubble__timestamp">2:40 PM</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error State -->
+        <div class="demo-section">
+            <h2 class="demo-title">Error State</h2>
+            <div class="chat-container">
+                <div class="chat-bubble chat-bubble--assistant chat-bubble--error">
+                    <div class="chat-bubble__avatar">AI</div>
+                    <div class="chat-bubble__message">
+                        <div class="chat-bubble__content">
+                            <p class="chat-bubble__text">Failed to generate response</p>
+                            <div class="chat-bubble__error-message">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                </svg>
+                                <span>Network error occurred</span>
+                                <button class="retry-button">Retry</button>
+                            </div>
+                        </div>
+                        <div class="chat-bubble__metadata">
+                            <span class="chat-bubble__timestamp">2:41 PM</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Typing Indicator -->
+        <div class="demo-section">
+            <h2 class="demo-title">Typing Indicator</h2>
+            <div class="chat-container">
+                <div class="chat-bubble chat-bubble--assistant">
+                    <div class="chat-bubble__avatar">AI</div>
+                    <div class="chat-bubble__message">
+                        <div class="chat-bubble__content">
+                            <div class="typing-dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Thread Indicator -->
+        <div class="demo-section">
+            <h2 class="demo-title">Message with Thread</h2>
+            <div class="chat-container">
+                <div class="chat-bubble chat-bubble--user">
+                    <div class="chat-bubble__avatar">JD</div>
+                    <div class="chat-bubble__message">
+                        <div class="chat-bubble__content">
+                            <p class="chat-bubble__text">What about custom hooks? When should I create my own?</p>
+                        </div>
+                        <div class="chat-bubble__metadata">
+                            <span class="chat-bubble__timestamp">2:42 PM</span>
+                        </div>
+                        <button class="chat-bubble__thread">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M2 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 002 2H4a2 2 0 01-2-2V5zm3 1h6v4H5V6zm6 6H5v2h6v-2z" clip-rule="evenodd" />
+                                <path d="M15 7h1a2 2 0 012 2v5.5a1.5 1.5 0 01-3 0V7z" />
+                            </svg>
+                            <span>3 replies</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Multiple Messages -->
+        <div class="demo-section">
+            <h2 class="demo-title">Conversation Flow</h2>
+            <div class="chat-container">
+                <div class="chat-bubble chat-bubble--user">
+                    <div class="chat-bubble__avatar">JD</div>
+                    <div class="chat-bubble__message">
+                        <div class="chat-bubble__content">
+                            <p class="chat-bubble__text">Can you show me a practical example?</p>
+                        </div>
+                        <div class="chat-bubble__metadata">
+                            <span class="chat-bubble__timestamp">2:43 PM</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-bubble chat-bubble--assistant">
+                    <div class="chat-bubble__avatar">AI</div>
+                    <div class="chat-bubble__message">
+                        <div class="chat-bubble__content">
+                            <p class="chat-bubble__text">Of course! Here's a custom hook for fetching data:</p>
+                            <pre class="chat-bubble__code">function useFetch(url) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        setData(data);
+      } catch (error) {
+        setError(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [url]);
+
+  return { data, loading, error };
+}</pre>
+                        </div>
+                        <div class="chat-bubble__metadata">
+                            <span class="chat-bubble__timestamp">2:43 PM</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-bubble chat-bubble--user">
+                    <div class="chat-bubble__avatar">JD</div>
+                    <div class="chat-bubble__message">
+                        <div class="chat-bubble__content">
+                            <p class="chat-bubble__text">Perfect! That makes sense now. Thank you!</p>
+                        </div>
+                        <div class="chat-bubble__metadata">
+                            <span class="chat-bubble__timestamp">2:44 PM</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

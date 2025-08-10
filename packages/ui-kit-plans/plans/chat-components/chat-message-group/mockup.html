@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatMessageGroup - Improved Mockup</title>
+    
+    <!-- UI Kit Styles -->
+    <link rel="stylesheet" href="../../../assets/styles.css">
+    
+    <!-- Set theme base path for mockups -->
+    <script>
+        window.__uiKitBasePath = '../../../assets/';
+    </script>    
+    <!-- Theme Scripts (ES modules) -->
+    <script type="module" src="../../../assets/theme.js"></script>
+    <script type="module" src="../../../assets/theme-switcher.js"></script>
+    
+    <style>
+        /* Component-specific avatar gradients */
+        :root {
+            --avatar-gradient-assistant: linear-gradient(135deg, var(--color-primary-background) 0%, var(--color-primary-background) 100%);
+        }
+
+        /* Component-specific styles using ui-kit tokens */
+        body {
+            font-size: var(--font-size);
+            line-height: var(--line-height);
+            color: var(--color-body-text);
+            background: var(--color-body-background);
+            padding: var(--spacing-large10);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .demo-section {
+            background: var(--color-panel-background);
+            border-radius: var(--radius-large20);
+            padding: var(--spacing-large10);
+            margin-bottom: var(--spacing-large10);
+            box-shadow: var(--shadow-card);
+        }
+
+        .demo-title {
+            font-size: var(--font-size-h4);
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing);
+        }
+
+        .demo-description {
+            color: var(--color-body-textSoft10);
+            margin-bottom: var(--spacing);
+            font-size: var(--font-size-small10);
+        }
+
+        /* Chat Container */
+        .chat-container {
+            background: var(--color-body-background);
+            border-radius: var(--radius-large10);
+            padding: var(--spacing);
+            min-height: 400px;
+        }
+
+        /* ChatMessageGroup Component Styles */
+        .message-group {
+            margin-bottom: var(--spacing-large20);
+            display: flex;
+            gap: var(--spacing);
+        }
+
+        .message-group--user {
+            flex-direction: row-reverse;
+        }
+
+        .message-group--system {
+            justify-content: center;
+        }
+
+        /* Avatar - Only shown once per group */
+        .message-group__avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--avatar-gradient-assistant);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--color-primary-text);
+            font-size: var(--font-size-small20);
+            font-weight: var(--font-weight-semibold);
+            flex-shrink: 0;
+            align-self: flex-start;
+            margin-top: var(--spacing-small20);
+        }
+
+        .message-group--user .message-group__avatar {
+            background: var(--color-primary-background);
+        }
+
+        /* Messages Container */
+        .message-group__messages {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            flex: 1;
+            max-width: 70%;
+        }
+
+        .message-group--user .message-group__messages {
+            align-items: flex-end;
+            max-width: 60%;
+        }
+
+        .message-group--system .message-group__messages {
+            max-width: 80%;
+        }
+
+        /* Sender Name */
+        .message-group__sender {
+            font-size: var(--font-size-small20);
+            font-weight: var(--font-weight-medium);
+            color: var(--color-body-textSoft10);
+            margin-bottom: var(--spacing-small20);
+        }
+
+        /* Message Bubble - Contains all consecutive messages */
+        .message-bubble {
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius-large10);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .message-group--user .message-bubble {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border: none;
+            border-top-right-radius: var(--radius-small10);
+        }
+
+        .message-group--assistant .message-bubble {
+            border-top-left-radius: var(--radius-small10);
+        }
+
+        .message-group--system .message-bubble {
+            background: var(--color-warningSoft-background);
+            color: var(--color-warningSoft-text);
+            border: 1px solid var(--color-warningSoft-border);
+            text-align: center;
+        }
+
+        /* Individual Message within bubble */
+        .message {
+            padding: var(--spacing) var(--spacing);
+            position: relative;
+        }
+
+        /* Subtle divider between consecutive messages */
+        .message + .message {
+            border-top: 1px solid var(--color-body-borderSoft10);
+            padding-top: var(--spacing);
+        }
+
+        .message-group--user .message + .message {
+            border-top-color: var(--color-infoSoft-border);
+        }
+
+        /* Message content styles */
+        .message p {
+            margin: 0 0 var(--spacing-small10) 0;
+        }
+
+        .message p:last-child {
+            margin-bottom: 0;
+        }
+
+        .message ul, .message ol {
+            margin: var(--spacing-small10) 0;
+            padding-left: var(--spacing-large10);
+        }
+
+        .message li {
+            margin-bottom: var(--spacing-small20);
+        }
+
+        /* Code blocks */
+        .message pre {
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius);
+            padding: var(--spacing);
+            margin: var(--spacing) 0;
+            font-family: var(--font-family-mono);
+            font-size: var(--font-size-small10);
+            overflow-x: auto;
+        }
+
+        .message-group--user .message pre {
+            background: var(--color-infoSoft-background);
+            border-color: var(--color-infoSoft-border);
+        }
+
+        .message code {
+            background: var(--color-neutral-background);
+            padding: var(--spacing-small20) var(--spacing-small10);
+            border-radius: var(--radius-small10);
+            font-family: var(--font-family-mono);
+            font-size: var(--font-size-small10);
+        }
+
+        .message pre code {
+            background: none;
+            padding: 0;
+            border-radius: 0;
+        }
+
+        /* Tables */
+        .message table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: var(--spacing) 0;
+            font-size: var(--font-size-small10);
+        }
+
+        .message th,
+        .message td {
+            padding: var(--spacing-small10) var(--spacing);
+            text-align: left;
+            border: 1px solid var(--color-body-border);
+        }
+
+        .message th {
+            background: var(--color-neutral-background);
+            font-weight: var(--font-weight-semibold);
+        }
+
+        .message-group--user .message th {
+            background: var(--color-infoSoft-background);
+        }
+
+        /* Headers in messages */
+        .message h1, .message h2, .message h3, .message h4 {
+            margin: var(--spacing) 0 var(--spacing-small10) 0;
+            font-weight: var(--font-weight-semibold);
+        }
+
+        .message h1:first-child,
+        .message h2:first-child,
+        .message h3:first-child,
+        .message h4:first-child {
+            margin-top: 0;
+        }
+
+        .message h1 { font-size: var(--font-size-h3); }
+        .message h2 { font-size: var(--font-size-h4); }
+        .message h3 { font-size: var(--font-size-h5); }
+        .message h4 { font-size: var(--font-size); font-weight: var(--font-weight-bold); }
+
+        /* Blockquotes */
+        .message blockquote {
+            border-left: var(--spacing-small20) solid var(--color-primary-background);
+            padding-left: var(--spacing);
+            margin: var(--spacing) 0;
+            color: var(--color-body-textSoft10);
+            font-style: italic;
+        }
+
+        /* Timestamp - Only shown once per group */
+        .message-group__timestamp {
+            font-size: var(--font-size-smallest);
+            color: var(--color-body-textSoft20);
+            margin-top: var(--spacing-small20);
+        }
+
+        .message-group--user .message-group__timestamp {
+            text-align: right;
+        }
+
+        /* Reactions */
+        .message-group__reactions {
+            display: flex;
+            gap: var(--spacing-small20);
+            margin-top: var(--spacing-small10);
+        }
+
+        .reaction {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-small20);
+            padding: var(--spacing-small20) var(--spacing-small10);
+            background: var(--color-neutral-background);
+            border: 1px solid var(--color-neutral-border);
+            border-radius: 50%;
+            font-size: var(--font-size-small10);
+            cursor: pointer;
+            transition: all var(--duration-fast10) var(--easing-default);
+        }
+
+        .reaction:hover {
+            background: var(--color-neutral-background-hover);
+        }
+
+        .reaction--active {
+            background: var(--color-infoSoft-background);
+            border-color: var(--color-infoSoft-border);
+        }
+
+        /* Loading state */
+        .message-group--loading .message-bubble {
+            background: var(--color-panel-background);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        @keyframes bounce {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-10px);
+            }
+        }
+
+        /* Horizontal rule */
+        .message hr {
+            border: none;
+            border-top: 1px solid var(--color-body-border);
+            margin: var(--spacing) 0;
+        }
+
+        /* Links */
+        .message a {
+            color: var(--color-body-link);
+            text-decoration: underline;
+        }
+
+        .message a:hover {
+            color: var(--color-body-link-hover);
+        }
+
+        .message-group--user .message a {
+            color: var(--color-primary-text);
+            opacity: 0.9;
+        }
+
+        .message-group--user .message a:hover {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Consecutive User Messages -->
+        <div class="demo-section">
+            <h2 class="demo-title">Consecutive User Messages</h2>
+            <p class="demo-description">Multiple user messages grouped with subtle dividers</p>
+            
+            <div class="chat-container">
+                <!-- User message group with multiple consecutive messages -->
+                <div class="message-group message-group--user">
+                    <div class="message-group__avatar">JD</div>
+                    <div class="message-group__messages">
+                        <div class="message-bubble">
+                            <div class="message">
+                                Can you help me understand React hooks?
+                            </div>
+                            <div class="message">
+                                I'm particularly confused about useEffect and its dependency array.
+                            </div>
+                            <div class="message">
+                                Also, when should I use useCallback vs useMemo? They seem similar but I'm not sure about the differences.
+                            </div>
+                        </div>
+                        <div class="message-group__timestamp">2:34 PM</div>
+                    </div>
+                </div>
+
+                <!-- Assistant response with full markdown content -->
+                <div class="message-group message-group--assistant">
+                    <div class="message-group__avatar">AI</div>
+                    <div class="message-group__messages">
+                        <div class="message-group__sender">Claude</div>
+                        <div class="message-bubble">
+                            <div class="message">
+                                <h3>React Hooks Overview</h3>
+                                
+                                <p>I'd be happy to explain React hooks! Let me break down these concepts for you.</p>
+                                
+                                <h4>1. useEffect Hook</h4>
+                                <p>The <code>useEffect</code> hook lets you perform side effects in function components. It combines the functionality of <code>componentDidMount</code>, <code>componentDidUpdate</code>, and <code>componentWillUnmount</code>.</p>
+                                
+                                <pre><code>useEffect(() => {
+  // Effect code runs after render
+  console.log('Component rendered or updated');
+  
+  // Optional cleanup function
+  return () => {
+    console.log('Cleanup before re-run or unmount');
+  };
+}, [dependencies]); // Dependency array</code></pre>
+
+                                <h4>2. Dependency Array</h4>
+                                <p>The dependency array controls when the effect runs:</p>
+                                <ul>
+                                    <li><strong>Empty array <code>[]</code></strong>: Runs once after initial render (like componentDidMount)</li>
+                                    <li><strong>With dependencies <code>[value1, value2]</code></strong>: Runs when any dependency changes</li>
+                                    <li><strong>No array</strong>: Runs after every render (usually not recommended)</li>
+                                </ul>
+
+                                <h4>3. useCallback vs useMemo</h4>
+                                <p>Both optimize performance but serve different purposes:</p>
+                                
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Hook</th>
+                                            <th>Purpose</th>
+                                            <th>Returns</th>
+                                            <th>Use Case</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><code>useCallback</code></td>
+                                            <td>Memoize functions</td>
+                                            <td>Memoized function</td>
+                                            <td>Prevent child re-renders</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>useMemo</code></td>
+                                            <td>Memoize values</td>
+                                            <td>Memoized value</td>
+                                            <td>Expensive calculations</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+
+                                <h4>Example: useCallback</h4>
+                                <pre><code>const handleClick = useCallback(() => {
+  console.log(count);
+}, [count]); // Recreated only when count changes</code></pre>
+
+                                <h4>Example: useMemo</h4>
+                                <pre><code>const expensiveValue = useMemo(() => {
+  return computeExpensiveValue(a, b);
+}, [a, b]); // Recalculated only when a or b change</code></pre>
+
+                                <blockquote>
+                                    <p><strong>Pro tip:</strong> Don't optimize prematurely. Use these hooks when you actually encounter performance issues, not as a default.</p>
+                                </blockquote>
+
+                                <p>Would you like me to provide more specific examples or dive deeper into any of these concepts?</p>
+                            </div>
+                        </div>
+                        <div class="message-group__timestamp">2:35 PM</div>
+                        <div class="message-group__reactions">
+                            <button class="reaction reaction--active">👍 2</button>
+                            <button class="reaction">💡</button>
+                            <button class="reaction">📌</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Follow-up user messages -->
+                <div class="message-group message-group--user">
+                    <div class="message-group__avatar">JD</div>
+                    <div class="message-group__messages">
+                        <div class="message-bubble">
+                            <div class="message">
+                                This is really helpful! Thanks for the detailed explanation.
+                            </div>
+                            <div class="message">
+                                One more question: what about custom hooks?
+                            </div>
+                            <div class="message">
+                                When should I create my own vs using built-in ones?
+                            </div>
+                        </div>
+                        <div class="message-group__timestamp">2:37 PM</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Complex Markdown Content -->
+        <div class="demo-section">
+            <h2 class="demo-title">Rich Markdown Response</h2>
+            <p class="demo-description">Assistant response with complex markdown formatting</p>
+            
+            <div class="chat-container">
+                <div class="message-group message-group--user">
+                    <div class="message-group__avatar">SM</div>
+                    <div class="message-group__messages">
+                        <div class="message-bubble">
+                            <div class="message">
+                                Can you explain the different HTTP methods and when to use them?
+                            </div>
+                        </div>
+                        <div class="message-group__timestamp">3:15 PM</div>
+                    </div>
+                </div>
+
+                <div class="message-group message-group--assistant">
+                    <div class="message-group__avatar">AI</div>
+                    <div class="message-group__messages">
+                        <div class="message-group__sender">Claude</div>
+                        <div class="message-bubble">
+                            <div class="message">
+                                <h2>HTTP Methods (REST API Verbs)</h2>
+                                
+                                <p>HTTP methods define the type of action to perform on a resource. Here's a comprehensive guide:</p>
+                                
+                                <h3>Primary Methods</h3>
+                                
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Method</th>
+                                            <th>Purpose</th>
+                                            <th>Request Body</th>
+                                            <th>Idempotent</th>
+                                            <th>Safe</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><strong>GET</strong></td>
+                                            <td>Retrieve data</td>
+                                            <td>No</td>
+                                            <td>Yes</td>
+                                            <td>Yes</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>POST</strong></td>
+                                            <td>Create new resource</td>
+                                            <td>Yes</td>
+                                            <td>No</td>
+                                            <td>No</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>PUT</strong></td>
+                                            <td>Update/Replace entire resource</td>
+                                            <td>Yes</td>
+                                            <td>Yes</td>
+                                            <td>No</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>PATCH</strong></td>
+                                            <td>Partial update</td>
+                                            <td>Yes</td>
+                                            <td>No*</td>
+                                            <td>No</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>DELETE</strong></td>
+                                            <td>Remove resource</td>
+                                            <td>Optional</td>
+                                            <td>Yes</td>
+                                            <td>No</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+
+                                <hr>
+
+                                <h3>Examples with a User API</h3>
+
+                                <h4>GET - Retrieve Users</h4>
+                                <pre><code>// Get all users
+GET /api/users
+
+// Get specific user
+GET /api/users/123
+
+// Query parameters
+GET /api/users?status=active&sort=name</code></pre>
+
+                                <h4>POST - Create New User</h4>
+                                <pre><code>POST /api/users
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "role": "admin"
+}</code></pre>
+
+                                <h4>PUT - Replace Entire User</h4>
+                                <pre><code>PUT /api/users/123
+Content-Type: application/json
+
+{
+  "name": "John Smith",
+  "email": "john.smith@example.com",
+  "role": "user",
+  "status": "active"
+}
+// All fields must be provided</code></pre>
+
+                                <h4>PATCH - Partial Update</h4>
+                                <pre><code>PATCH /api/users/123
+Content-Type: application/json
+
+{
+  "email": "newemail@example.com"
+}
+// Only updates specified fields</code></pre>
+
+                                <h4>DELETE - Remove User</h4>
+                                <pre><code>DELETE /api/users/123</code></pre>
+
+                                <hr>
+
+                                <h3>Additional Methods</h3>
+                                
+                                <ul>
+                                    <li><strong>HEAD</strong>: Like GET but returns only headers (check if resource exists)</li>
+                                    <li><strong>OPTIONS</strong>: Returns allowed methods for a resource (CORS preflight)</li>
+                                    <li><strong>CONNECT</strong>: Establishes tunnel (used for HTTPS through proxy)</li>
+                                    <li><strong>TRACE</strong>: Debugging - echoes received request</li>
+                                </ul>
+
+                                <blockquote>
+                                    <p><strong>Note on Idempotency:</strong> An idempotent operation produces the same result regardless of how many times it's performed. This is crucial for API reliability.</p>
+                                </blockquote>
+
+                                <h3>Best Practices</h3>
+                                
+                                <ol>
+                                    <li>Use <strong>GET</strong> for data retrieval only - never for modifications</li>
+                                    <li>Use <strong>POST</strong> for creating resources when the server assigns the ID</li>
+                                    <li>Use <strong>PUT</strong> when the client specifies the resource ID</li>
+                                    <li>Prefer <strong>PATCH</strong> for partial updates to reduce bandwidth</li>
+                                    <li>Always return appropriate status codes:
+                                        <ul>
+                                            <li>200 OK - Success</li>
+                                            <li>201 Created - Resource created</li>
+                                            <li>204 No Content - Success with no body</li>
+                                            <li>400 Bad Request - Client error</li>
+                                            <li>404 Not Found - Resource doesn't exist</li>
+                                            <li>500 Internal Server Error - Server error</li>
+                                        </ul>
+                                    </li>
+                                </ol>
+
+                                <p>Need clarification on any specific method or use case?</p>
+                            </div>
+                        </div>
+                        <div class="message-group__timestamp">3:16 PM</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Message -->
+        <div class="demo-section">
+            <h2 class="demo-title">System Messages</h2>
+            <p class="demo-description">System notifications and alerts</p>
+            
+            <div class="chat-container">
+                <div class="message-group message-group--system">
+                    <div class="message-group__messages">
+                        <div class="message-bubble">
+                            <div class="message">
+                                Context window limit approaching. Consider starting a new conversation for optimal performance.
+                            </div>
+                        </div>
+                        <div class="message-group__timestamp">4:00 PM</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div class="demo-section">
+            <h2 class="demo-title">Loading State</h2>
+            <p class="demo-description">Message being generated</p>
+            
+            <div class="chat-container">
+                <div class="message-group message-group--assistant message-group--loading">
+                    <div class="message-group__avatar">AI</div>
+                    <div class="message-group__messages">
+                        <div class="message-group__sender">Claude</div>
+                        <div class="message-bubble">
+                            <div class="message">
+                                <span style="display: inline-flex; gap: var(--spacing-small20);">
+                                    <span style="width: 8px; height: 8px; background: var(--color-body-textSoft20); border-radius: 50%; animation: bounce 1.4s infinite;"></span>
+                                    <span style="width: 8px; height: 8px; background: var(--color-body-textSoft20); border-radius: 50%; animation: bounce 1.4s infinite; animation-delay: 0.2s;"></span>
+                                    <span style="width: 8px; height: 8px; background: var(--color-body-textSoft20); border-radius: 50%; animation: bounce 1.4s infinite; animation-delay: 0.4s;"></span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

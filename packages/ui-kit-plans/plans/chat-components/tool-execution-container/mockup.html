@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tool Execution Container - Mockup</title>
+    
+    <!-- UI Kit Styles -->
+    <link rel="stylesheet" href="../../../assets/styles.css">
+    
+    <!-- Set theme base path for mockups -->
+    <script>
+        window.__uiKitBasePath = '../../../assets/';
+    </script>    
+    <!-- Theme Scripts (ES modules) -->
+    <script type="module" src="../../../assets/theme.js"></script>
+    <script type="module" src="../../../assets/theme-switcher.js"></script>
+    
+    <style>
+        /* Component-specific styles using ui-kit tokens */
+        body {
+            font-size: var(--font-size);
+            line-height: var(--line-height);
+            color: var(--color-body-text);
+            background: var(--color-body-background);
+            padding: var(--spacing-large10);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .demo-section {
+            background: var(--color-panel-background);
+            border-radius: var(--radius-large20);
+            padding: var(--spacing-large10);
+            margin-bottom: var(--spacing-large10);
+            box-shadow: var(--shadow-card);
+        }
+
+        .demo-title {
+            font-size: var(--font-size-h4);
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing);
+        }
+
+        .demo-description {
+            color: var(--color-body-textSoft10);
+            margin-bottom: var(--spacing);
+            font-size: var(--font-size-small10);
+        }
+
+        /* Tool Execution Container Styles */
+        .tool-container {
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius-large10);
+            padding: var(--spacing);
+            margin-bottom: var(--spacing);
+            box-shadow: var(--shadow-soft10);
+        }
+
+        .tool-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--spacing-small10);
+            margin: calc(var(--spacing) * -1);
+            margin-bottom: var(--spacing-small10);
+            cursor: pointer;
+            user-select: none;
+            border-radius: var(--radius-small10);
+            transition: background var(--duration-normal);
+        }
+
+        .tool-header:hover {
+            background: var(--color-panel-background);
+        }
+
+        .tool-info {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+        }
+
+        .tool-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tool-name {
+            font-weight: var(--font-weight-semibold);
+            font-size: var(--font-size);
+            color: var(--color-body-text);
+        }
+
+        .tool-summary {
+            color: var(--color-body-textSoft10);
+            font-size: var(--font-size-small10);
+        }
+
+        .tool-status {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small20);
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-indicator.running {
+            background: var(--color-warning-background);
+            animation: pulse 1.5s infinite;
+        }
+
+        .status-indicator.success {
+            background: var(--color-success-background);
+        }
+
+        .status-indicator.error {
+            background: var(--color-danger-background);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .expand-icon {
+            transition: transform 0.2s;
+        }
+
+        .expand-icon.expanded {
+            transform: rotate(90deg);
+        }
+
+        .tool-progress {
+            height: 4px;
+            background: var(--color-body-backgroundSoft10);
+            border-radius: 50%;
+            margin: var(--spacing-small10) 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--color-primary-background);
+            width: 60%;
+            animation: progress 2s ease-in-out infinite;
+            border-radius: 50%;
+        }
+
+        @keyframes progress {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+
+        .tool-details {
+            margin-top: var(--spacing);
+            padding-top: var(--spacing);
+            border-top: 1px solid var(--color-body-border);
+        }
+
+        .tool-step {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--spacing-small10);
+            margin-bottom: var(--spacing);
+            padding-left: var(--spacing-large10);
+        }
+
+        .step-icon {
+            width: 16px;
+            height: 16px;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-description {
+            font-size: var(--font-size-small10);
+            margin-bottom: var(--spacing-small20);
+            color: var(--color-body-text);
+        }
+
+        .step-visualizer {
+            background: var(--color-body-background);
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius-small10);
+            padding: var(--spacing-small10);
+            font-family: var(--font-family-mono);
+            font-size: var(--font-size-small20);
+            color: var(--color-body-textSoft10);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .timestamp {
+            color: var(--color-body-textSoft20);
+            font-size: var(--font-size-small20);
+        }
+
+        .mode-toggle {
+            display: flex;
+            gap: var(--spacing-small10);
+            margin-bottom: var(--spacing);
+        }
+
+        .mode-btn {
+            padding: var(--spacing-small20) var(--spacing-small10);
+            border: 1px solid var(--color-body-border);
+            background: var(--color-body-background);
+            border-radius: var(--radius-small10);
+            font-size: var(--font-size-small10);
+            cursor: pointer;
+            transition: all var(--duration-normal);
+        }
+
+        .mode-btn.active {
+            background: var(--color-infoSoft-background);
+            border-color: var(--color-infoSoft-border);
+            color: var(--color-infoSoft-text);
+        }
+
+        .interrupt-btn {
+            padding: var(--spacing-small20) var(--spacing-small10);
+            background: var(--color-danger-background);
+            color: var(--color-danger-text);
+            border: 1px solid var(--color-danger-background);
+            border-radius: var(--radius-small10);
+            font-size: var(--font-size-small20);
+            cursor: pointer;
+            transition: all var(--duration-normal);
+        }
+
+        .interrupt-btn:hover {
+            background: var(--color-danger-background);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Mode Toggle Section -->
+        <div class="demo-section">
+            <h2 class="demo-title">Tool Execution Container</h2>
+            <p class="demo-description">Displays tool executions with summary/expanded modes and progress tracking</p>
+            
+            <div class="mode-toggle">
+                <button class="mode-btn active">Summary Mode</button>
+                <button class="mode-btn">Expanded Mode</button>
+            </div>
+        </div>
+
+        <!-- Tools in Summary Mode -->
+        <div class="demo-section">
+            <h3 class="demo-title">Summary Mode</h3>
+            <p class="demo-description">Compact view showing current status and brief summary</p>
+            
+            <div class="tool-container">
+            <div class="tool-header">
+                <div class="tool-info">
+                    <span class="tool-icon">🔍</span>
+                    <span class="tool-name">Search Codebase</span>
+                    <span class="tool-summary">Searching for "useState" across 142 files...</span>
+                </div>
+                <div class="tool-status">
+                    <span class="status-indicator running"></span>
+                    <span class="expand-icon">▶</span>
+                </div>
+            </div>
+            <div class="tool-progress">
+                <div class="progress-bar"></div>
+            </div>
+            </div>
+
+            <!-- Completed Tool -->
+            <div class="tool-container">
+            <div class="tool-header">
+                <div class="tool-info">
+                    <span class="tool-icon">📝</span>
+                    <span class="tool-name">File Operations</span>
+                    <span class="tool-summary">Modified 3 files, created 1 new file</span>
+                </div>
+                <div class="tool-status">
+                    <span class="status-indicator success"></span>
+                    <span class="timestamp">2.3s</span>
+                    <span class="expand-icon">▶</span>
+                </div>
+            </div>
+            </div>
+        </div>
+
+        <!-- Expanded Mode Example -->
+        <div class="demo-section">
+            <h3 class="demo-title">Expanded Mode</h3>
+            <p class="demo-description">Detailed view with step-by-step execution and visualizers</p>
+            
+        <div class="tool-container">
+            <div class="tool-header">
+                <div class="tool-info">
+                    <span class="tool-icon">⚙️</span>
+                    <span class="tool-name">Code Analysis</span>
+                    <span class="tool-summary">Analyzing component dependencies</span>
+                </div>
+                <div class="tool-status">
+                    <span class="status-indicator success"></span>
+                    <span class="timestamp">1.8s</span>
+                    <span class="expand-icon expanded">▶</span>
+                </div>
+            </div>
+            
+            <div class="tool-details">
+                <div class="tool-step">
+                    <span class="step-icon">✓</span>
+                    <div class="step-content">
+                        <div class="step-description">Read package.json</div>
+                        <div class="step-visualizer">
+                            {
+                              "dependencies": {
+                                "react": "^18.2.0",
+                                "react-dom": "^18.2.0",
+                                "typescript": "^5.0.0"
+                              }
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tool-step">
+                    <span class="step-icon">✓</span>
+                    <div class="step-content">
+                        <div class="step-description">Analyzed component imports</div>
+                        <div class="step-visualizer">
+                            Found 23 component imports across 8 files
+                            - Button: 5 imports
+                            - Card: 3 imports
+                            - Modal: 2 imports
+                            ...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tool-step">
+                    <span class="step-icon">✓</span>
+                    <div class="step-content">
+                        <div class="step-description">Generated dependency graph</div>
+                        <div class="step-visualizer">
+                            App.tsx
+                            ├── components/Header.tsx
+                            │   └── components/Logo.tsx
+                            ├── components/Main.tsx
+                            │   ├── components/Card.tsx
+                            │   └── components/Button.tsx
+                            └── components/Footer.tsx
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+
+        <!-- States Section -->
+        <div class="demo-section">
+            <h3 class="demo-title">Tool States</h3>
+            <p class="demo-description">Different execution states with real-time updates</p>
+
+            <!-- Running Tool with Interrupt -->
+        <div class="tool-container">
+            <div class="tool-header">
+                <div class="tool-info">
+                    <span class="tool-icon">🌐</span>
+                    <span class="tool-name">Web Fetch</span>
+                    <span class="tool-summary">Fetching documentation from 5 sources...</span>
+                </div>
+                <div class="tool-status">
+                    <button class="interrupt-btn">Interrupt</button>
+                    <span class="status-indicator running"></span>
+                    <span class="expand-icon expanded">▶</span>
+                </div>
+            </div>
+            <div class="tool-progress">
+                <div class="progress-bar"></div>
+            </div>
+            
+            <div class="tool-details">
+                <div class="tool-step">
+                    <span class="step-icon">✓</span>
+                    <div class="step-content">
+                        <div class="step-description">Fetched React documentation</div>
+                        <div class="timestamp">0.8s</div>
+                    </div>
+                </div>
+
+                <div class="tool-step">
+                    <span class="step-icon">⏳</span>
+                    <div class="step-content">
+                        <div class="step-description">Fetching TypeScript documentation...</div>
+                        <div class="timestamp">1.2s</div>
+                    </div>
+                </div>
+
+                <div class="tool-step">
+                    <span class="step-icon">⏸</span>
+                    <div class="step-content">
+                        <div class="step-description">Pending: Material-UI documentation</div>
+                    </div>
+                </div>
+            </div>
+            </div>
+
+            <!-- Error State -->
+        <div class="tool-container">
+            <div class="tool-header">
+                <div class="tool-info">
+                    <span class="tool-icon">⚠️</span>
+                    <span class="tool-name">Build Project</span>
+                    <span class="tool-summary">Build failed with 2 errors</span>
+                </div>
+                <div class="tool-status">
+                    <span class="status-indicator error"></span>
+                    <span class="timestamp">5.2s</span>
+                    <span class="expand-icon">▶</span>
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Toggle expand/collapse
+        document.querySelectorAll('.tool-header').forEach(header => {
+            header.addEventListener('click', () => {
+                const container = header.parentElement;
+                const expandIcon = header.querySelector('.expand-icon');
+                const details = container.querySelector('.tool-details');
+                
+                if (expandIcon) {
+                    expandIcon.classList.toggle('expanded');
+                }
+                
+                if (details) {
+                    details.style.display = details.style.display === 'none' ? 'block' : 'none';
+                }
+            });
+        });
+
+        // Mode toggle
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>

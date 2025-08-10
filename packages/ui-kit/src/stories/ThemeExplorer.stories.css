@@ -22,12 +22,12 @@
 .explorer-header h2 {
   margin: 0 0 0.5rem 0;
   font-size: 1.5rem;
-  color: var(--color-body-text-hard10);
+  color: var(--color-body-text);
 }
 
 .explorer-header p {
   margin: 0;
-  color: var(--color-body-text-soft30);
+  color: var(--color-body-textSoft20);
   font-size: 0.875rem;
 }
 
@@ -71,10 +71,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, 
-    color-mix(in srgb, var(--color-buttonPrimary-background, #1976d2) 25%, transparent) 0%, 
-    transparent 50%
-  );
+  background: var(--gradient-body-primary);
   pointer-events: none;
   z-index: -1;
 }
@@ -82,7 +79,7 @@
 .current-theme-info h2 {
   margin: 0 0 0.75rem 0;
   font-size: 1.125rem;
-  color: var(--color-body-text-hard10);
+  color: var(--color-body-text);
 }
 
 .active-theme-details {
@@ -98,7 +95,7 @@
 }
 
 .theme-note {
-  color: var(--color-body-text-soft30);
+  color: var(--color-body-textSoft20);
   font-size: 0.875rem;
 }
 

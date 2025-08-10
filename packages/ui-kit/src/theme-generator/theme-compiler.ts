@@ -335,6 +335,17 @@ export function generateCSS(theme: GeneratedTheme): string {
     lines.push('');
   }
 
+  // Add gradient tokens for body surface
+  lines.push('  /* Gradient tokens */');
+  // Use color-mix for better browser support and smooth transitions
+  lines.push(`  --gradient-body-primary: linear-gradient(135deg, color-mix(in srgb, ${theme.colors.primary[600]} 25%, transparent) 0%, transparent 50%);`);
+  lines.push(`  --gradient-body-success: linear-gradient(135deg, color-mix(in srgb, ${theme.colors.success[600]} 20%, transparent) 0%, transparent 50%);`);
+  lines.push(`  --gradient-body-warning: linear-gradient(135deg, color-mix(in srgb, ${theme.colors.warning[600]} 20%, transparent) 0%, transparent 60%);`);
+  lines.push(`  --gradient-body-danger: linear-gradient(135deg, color-mix(in srgb, ${theme.colors.error[600]} 20%, transparent) 0%, transparent 60%);`);
+  lines.push(`  --gradient-body-info: linear-gradient(135deg, color-mix(in srgb, ${theme.colors.info[600]} 20%, transparent) 0%, transparent 50%);`);
+  lines.push(`  --gradient-body-accent: linear-gradient(135deg, color-mix(in srgb, ${theme.colors.primary[600]} 15%, transparent) 0%, color-mix(in srgb, ${theme.colors.accent[600]} 10%, transparent) 50%, transparent 100%);`);
+  lines.push('');
+
   // Add special tokens
   lines.push('  /* Special tokens */');
   lines.push(`  --color-selection-background: ${theme.special.selection.background};`);

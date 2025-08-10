@@ -22,9 +22,14 @@ pnpm add @claude-flow/ui-kit
 
 ## Quick Start
 
-### 1. Add Styles and Theme Init
+### 1. Add Styles and Theme Engine
 
-⚠️ **CRITICAL**: The theme-init.js script MUST be inlined directly in your HTML `<head>` to prevent flash of unstyled content (FOUC). Loading it as an external file will cause the page to render with the default theme before switching to the user's preference.
+The UI Kit provides a clean, symmetric theme architecture:
+
+- **`src/theme.ts`** → **`dist/theme.js`** - Core theme engine (auto-initializes, handles persistence, system detection)
+- **`src/theme-switcher.ts`** → **`dist/theme-switcher.js`** - Optional UI controls for demos/mockups
+
+Both files are built as ES modules that can be imported in HTML.
 
 ```html
 <!-- index.html -->
@@ -32,23 +37,31 @@ pnpm add @claude-flow/ui-kit
   <!-- CSS Reset, Variables, and Themes -->
   <link rel="stylesheet" href="node_modules/@claude-flow/ui-kit/dist/styles.css" />
 
-  <!-- ❌ WRONG - Will cause flash of unstyled content -->
-  <!-- <script src="node_modules/@claude-flow/ui-kit/dist/theme-init.js"></script> -->
-
-  <!-- ✅ CORRECT - Inline the script to prevent FOUC -->
-  <script>
-    /* Copy the contents of node_modules/@claude-flow/ui-kit/dist/theme-init.js here */
-    (function () {
-      'use strict';
-      // ... theme initialization code ...
-    })();
-  </script>
+  <!-- Theme Engine (auto-initializes, prevents FOUC) -->
+  <script type="module" src="node_modules/@claude-flow/ui-kit/dist/theme.js"></script>
+  
+  <!-- Optional: Theme Switcher UI for demos/development -->
+  <!-- <script type="module" src="node_modules/@claude-flow/ui-kit/dist/theme-switcher.js"></script> -->
 </head>
 ```
 
-For build tools, you can automate this inlining process during your build step.
+The theme engine auto-initializes and prevents FOUC by immediately applying stored preferences or system defaults.
 
-### 2. Use Design Tokens
+### 2. Configuration (Optional)
+
+If your assets are not in the default location, you can configure the base path for UI Kit assets:
+
+```html
+<script>
+  // Set the base path for all UI Kit assets (themes, fonts, icons, etc.)
+  // This should be set before loading the theme engine
+  window.__uiKitBasePath = '/path/to/ui-kit/assets/';
+</script>
+```
+
+The theme engine will automatically use this path to load theme CSS files from `${__uiKitBasePath}themes/`. If not specified, it will use smart defaults based on your file structure.
+
+### 3. Use Design Tokens
 
 ```css
 /* Component using surface-based tokens */
@@ -248,11 +261,13 @@ Based on a 4px grid system:
 
 ```css
 /* Durations */
---duration-instant      /* 0ms */
---duration-fast         /* 150ms */
+--duration-fastest      /* 100ms */
+--duration-fast20       /* 150ms */
+--duration-fast10       /* 200ms */
 --duration-normal       /* 300ms */
---duration-slow         /* 500ms */
---duration-deliberate   /* 700ms */
+--duration-slow10       /* 400ms */
+--duration-slow20       /* 600ms */
+--duration-slowest      /* 1000ms */
 
 /* Easing Functions */
 --easing-linear        /* linear */
@@ -305,35 +320,102 @@ The UI Kit includes 8 professionally designed themes, each with light and dark m
 
 ### Theme Management API
 
-```typescript
-import { ThemeManager } from '@claude-flow/ui-kit';
+The UI Kit provides both a simple window-based API and a more advanced TypeScript API for theme management.
 
-// Initialize theme manager
-const themeManager = new ThemeManager();
+#### Simple Window API (Recommended for Easy Integration)
+
+After including the theme script, you have access to the global `__uiKitTheme` API. Theme preferences are persisted in localStorage under the key `ui-kit-theme`.
+
+```javascript
+// Get current theme configuration
+const config = window.__uiKitTheme.getTheme(); 
+// Returns: { theme: 'ocean', mode: 'dark' }
+
+// Change theme only (keeps current mode)
+await window.__uiKitTheme.setTheme({ theme: 'ocean' });
+
+// Change mode only (keeps current theme)  
+await window.__uiKitTheme.setTheme({ mode: 'dark' });  // Options: 'light', 'dark', 'auto'
+
+// Change both theme and mode
+await window.__uiKitTheme.setTheme({ theme: 'sunset', mode: 'light' });
+
+// Toggle between light and dark modes
+await window.__uiKitTheme.toggleMode();
+
+// Get all available themes
+const themes = await window.__uiKitTheme.getAvailableThemes();
+// Returns: [
+//   { id: 'default', name: 'Default', modes: ['light', 'dark'] },
+//   { id: 'ocean', name: 'Ocean', modes: ['light', 'dark'] },
+//   ...
+// ]
+
+// Listen for theme changes (including from other tabs)
+window.addEventListener('themechange', (event) => {
+  console.log('Theme changed:', event.detail);
+  // event.detail = { theme: 'ocean', type: 'dark', requestedType: 'auto' }
+});
+```
+
+#### Easy Theme Switcher for Demos
+
+For development and demos, use the built-in theme switcher:
+
+```html
+<!-- Automatically adds theme controls to the page -->
+<script type="module" src="node_modules/@claude-flow/ui-kit/dist/theme-switcher.js"></script>
+```
+
+Or customize it:
+
+```html
+<script type="module">
+  import { createThemeSwitcher } from '@claude-flow/ui-kit/dist/theme-switcher.js';
+  
+  createThemeSwitcher({
+    position: 'top-left', // 'top-right', 'bottom-left', 'bottom-right'
+    compact: true        // Smaller, vertical layout
+  });
+</script>
+```
+
+#### Advanced TypeScript API
+
+For more complex applications, you can use the TypeScript API:
+
+```typescript
+// Import from the built module or from the package
+import { setTheme, getTheme, toggleMode, reset, subscribe, getAvailableThemes } from '@claude-flow/ui-kit/dist/theme.js';
+// or 
+import { setTheme, getTheme, toggleMode, reset, subscribe, getAvailableThemes } from '@claude-flow/ui-kit';
 
 // Get current theme and mode
-const currentTheme = themeManager.currentTheme; // e.g., 'ocean'
-const currentMode = themeManager.currentMode;   // 'light' | 'dark' | 'auto'
+const config = getTheme(); // { theme: 'ocean', mode: 'dark' }
 
 // Change theme
-themeManager.setTheme('sunset');
+await setTheme({ theme: 'sunset' });
 
 // Change mode
-themeManager.setMode('dark');
-themeManager.setMode('auto'); // Follows system preference
+await setTheme({ mode: 'dark' });
+await setTheme({ mode: 'auto' }); // Follows system preference
+
+// Toggle between light and dark
+await toggleMode();
 
 // Listen for changes
-themeManager.on('themeChange', ({ theme, mode }) => {
-  console.log(`Theme changed to ${theme} (${mode} mode)`);
+const unsubscribe = subscribe(({ theme, mode, effectiveMode }) => {
+  console.log(`Theme changed to ${theme} (${effectiveMode} mode)`);
 });
 
 // Get all available themes
-const themes = themeManager.getAvailableThemes();
+const themes = await getAvailableThemes();
 
-// Check if a theme exists
-if (themeManager.hasTheme('custom-theme')) {
-  themeManager.setTheme('custom-theme');
-}
+// Reset to defaults
+await reset();
+
+// Cleanup listener
+unsubscribe();
 ```
 
 ### Custom Theme Creation

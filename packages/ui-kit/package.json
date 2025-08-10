@@ -15,8 +15,13 @@
     },
     "./styles.css": "./dist/styles.css",
     "./dist/styles.css": "./dist/styles.css",
-    "./theme-init.js": "./dist/theme-init.js",
-    "./dist/theme-init.js": "./dist/theme-init.js",
+    "./theme.js": "./dist/theme.js",
+    "./theme-switcher.js": "./dist/theme-switcher.js",
+    "./dist/theme.js": "./dist/theme.js",
+    "./dist/theme-switcher.js": "./dist/theme-switcher.js",
+    "./globals": {
+      "types": "./dist/globals.d.ts"
+    },
     "./dist/storybook/theme-loader": "./dist/storybook/theme-loader.js"
   },
   "files": [
@@ -24,7 +29,7 @@
     "fonts"
   ],
   "scripts": {
-    "build": "repo-scripts build && node scripts/build-css.js && tsx scripts/build-themes.tsx && tsx scripts/build-token-metadata.tsx",
+    "build": "repo-scripts build && vite build && node scripts/build-css.js && tsx scripts/build-themes.tsx && tsx scripts/build-token-metadata.tsx",
     "build:css": "node scripts/build-css.js",
     "build:storybook": "repo-scripts build-storybook",
     "clean": "repo-scripts clean",

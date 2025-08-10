@@ -1,0 +1,466 @@
+/* Gradient Showcase Styles */
+.gradient-showcase {
+  padding: var(--spacing-large20);
+  background: var(--color-body-background);
+  color: var(--color-body-text);
+  min-height: 100vh;
+}
+
+.showcase-header {
+  text-align: center;
+  margin-bottom: var(--spacing-large20);
+  padding-bottom: var(--spacing-large20);
+  border-bottom: 1px solid var(--color-body-border);
+}
+
+.showcase-header h1 {
+  font-size: var(--font-size-h1);
+  color: var(--color-body-textHard10);
+  margin: 0 0 var(--spacing) 0;
+}
+
+.showcase-description {
+  font-size: var(--font-size-large10);
+  color: var(--color-body-textSoft10);
+  max-width: 800px;
+  margin: 0 auto;
+  line-height: var(--line-height-relaxed);
+}
+
+.showcase-description code {
+  background: var(--color-codeInline-background);
+  color: var(--color-codeInline-text);
+  padding: 2px 6px;
+  border-radius: var(--radius-small20);
+  font-family: var(--font-family-mono);
+  font-size: 0.9em;
+}
+
+/* Gradient Grid */
+.gradient-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: var(--spacing-large10);
+  margin-bottom: var(--spacing-large20);
+}
+
+.gradient-card {
+  background: var(--color-panel-background);
+  border: 1px solid var(--color-panel-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: transform var(--duration-normal), box-shadow var(--duration-normal);
+}
+
+.gradient-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-large10);
+}
+
+.gradient-preview {
+  height: 150px;
+  padding: var(--spacing-large10);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.gradient-name {
+  font-size: var(--font-size-large10);
+  font-weight: var(--font-weight-semibold);
+  margin: 0 0 var(--spacing-small10) 0;
+  color: var(--color-body-text);
+}
+
+.gradient-token {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-small10);
+  color: var(--color-body-textSoft20);
+  background: var(--color-body-background);
+  padding: var(--spacing-small20) var(--spacing-small10);
+  border-radius: var(--radius-small20);
+}
+
+.gradient-info {
+  padding: var(--spacing);
+  background: var(--color-body-background);
+}
+
+.gradient-description {
+  margin: 0 0 var(--spacing-small10) 0;
+  color: var(--color-body-text);
+  font-size: var(--font-size);
+}
+
+.gradient-usage {
+  margin: 0;
+  font-size: var(--font-size-small10);
+  color: var(--color-body-textSoft20);
+}
+
+.gradient-usage strong {
+  color: var(--color-body-textSoft10);
+}
+
+/* Usage Examples */
+.usage-examples {
+  margin-bottom: var(--spacing-large20);
+}
+
+.usage-examples h2 {
+  font-size: var(--font-size-h2);
+  color: var(--color-body-textHard10);
+  margin: 0 0 var(--spacing-large10) 0;
+}
+
+.example-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-large10);
+}
+
+.example-card {
+  padding: var(--spacing-large10);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-body-border);
+  transition: transform var(--duration-normal), box-shadow var(--duration-normal);
+}
+
+.example-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-large10);
+}
+
+.example-card h3 {
+  margin: var(--spacing) 0 var(--spacing-small10) 0;
+  color: var(--color-body-text);
+  font-size: var(--font-size-large10);
+}
+
+.example-card p {
+  margin: 0;
+  color: var(--color-body-textSoft10);
+  line-height: var(--line-height-normal);
+}
+
+.gradient-primary-example {
+  background: 
+    var(--gradient-body-primary),
+    var(--color-panel-background);
+}
+
+.gradient-success-example {
+  background: 
+    var(--gradient-body-success),
+    var(--color-successSoft-background);
+}
+
+.gradient-warning-example {
+  background: 
+    var(--gradient-body-warning),
+    var(--color-warningSoft-background);
+}
+
+.gradient-danger-example {
+  background: 
+    var(--gradient-body-danger),
+    var(--color-dangerSoft-background);
+}
+
+.gradient-info-example {
+  background: 
+    var(--gradient-body-info),
+    var(--color-infoSoft-background);
+}
+
+.gradient-accent-example {
+  background: 
+    var(--gradient-body-accent),
+    var(--color-panel-background);
+}
+
+.success-icon,
+.warning-icon,
+.danger-icon,
+.info-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-large10);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--spacing-small10);
+}
+
+.success-icon {
+  background: var(--color-success-background);
+  color: var(--color-success-text);
+}
+
+.warning-icon {
+  background: var(--color-warning-background);
+  color: var(--color-warning-text);
+}
+
+.danger-icon {
+  background: var(--color-danger-background);
+  color: var(--color-danger-text);
+}
+
+.info-icon {
+  background: var(--color-info-background);
+  color: var(--color-info-text);
+}
+
+.example-button {
+  margin-top: var(--spacing);
+  padding: var(--spacing-buttonY) var(--spacing-buttonX);
+  background: var(--color-primary-background);
+  color: var(--color-primary-text);
+  border: none;
+  border-radius: var(--radius-button);
+  font-size: var(--font-size);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: background var(--duration-normal);
+}
+
+.example-button:hover {
+  background: var(--color-primary-background-hover);
+}
+
+.example-button-accent {
+  margin-top: var(--spacing);
+  padding: var(--spacing-buttonY) var(--spacing-buttonX);
+  background: var(--gradient-body-accent), var(--color-primary-background);
+  color: var(--color-primary-text);
+  border: none;
+  border-radius: var(--radius-button);
+  font-size: var(--font-size);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: transform var(--duration-normal), box-shadow var(--duration-normal);
+}
+
+.example-button-accent:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-large10);
+}
+
+/* Implementation Guide */
+.implementation-guide {
+  margin-bottom: var(--spacing-large20);
+}
+
+.implementation-guide h2 {
+  font-size: var(--font-size-h2);
+  color: var(--color-body-textHard10);
+  margin: 0 0 var(--spacing-large10) 0;
+}
+
+.code-examples {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: var(--spacing-large10);
+}
+
+.code-block {
+  background: var(--color-codeBlock-background);
+  border: 1px solid var(--color-codeBlock-border);
+  border-radius: var(--radius);
+  padding: var(--spacing);
+}
+
+.code-block h4 {
+  margin: 0 0 var(--spacing) 0;
+  color: var(--color-codeBlock-text);
+  font-size: var(--font-size);
+  font-weight: var(--font-weight-semibold);
+}
+
+.code-block pre {
+  margin: 0;
+  padding: var(--spacing);
+  background: var(--color-body-background);
+  border-radius: var(--radius-small10);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-small10);
+  line-height: var(--line-height-relaxed);
+  overflow-x: auto;
+  color: var(--color-codeBlock-text);
+}
+
+/* Accessibility Notes */
+.accessibility-notes {
+  margin-bottom: var(--spacing-large20);
+}
+
+.accessibility-notes h2 {
+  font-size: var(--font-size-h2);
+  color: var(--color-body-textHard10);
+  margin: 0 0 var(--spacing-large10) 0;
+}
+
+.note-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-large10);
+}
+
+.note-card {
+  padding: var(--spacing);
+  background: var(--color-infoSoft-background);
+  border: 1px solid var(--color-infoSoft-border);
+  border-radius: var(--radius);
+  border-left: 4px solid var(--color-info-background);
+}
+
+.note-card h4 {
+  margin: 0 0 var(--spacing-small10) 0;
+  color: var(--color-infoSoft-text);
+  font-size: var(--font-size);
+  font-weight: var(--font-weight-semibold);
+}
+
+.note-card p {
+  margin: 0;
+  color: var(--color-infoSoft-text);
+  font-size: var(--font-size-small10);
+  line-height: var(--line-height-normal);
+}
+
+/* Interactive Demo */
+.interactive-demo {
+  padding: var(--spacing-large20);
+  background: var(--color-body-background);
+}
+
+.interactive-demo h2 {
+  font-size: var(--font-size-h2);
+  color: var(--color-body-textHard10);
+  margin: 0 0 var(--spacing-small10) 0;
+  text-align: center;
+}
+
+.interactive-demo > p {
+  text-align: center;
+  color: var(--color-body-textSoft10);
+  margin: 0 0 var(--spacing-large20) 0;
+}
+
+.interactive-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-large10);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.interactive-card {
+  padding: var(--spacing-large20);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-body-border);
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--easing-default);
+}
+
+.interactive-card h3 {
+  margin: 0 0 var(--spacing-small10) 0;
+  color: var(--color-body-text);
+  font-size: var(--font-size-large10);
+}
+
+.interactive-card p {
+  margin: 0;
+  color: var(--color-body-textSoft20);
+  font-size: var(--font-size-small10);
+}
+
+.interactive-card.gradient-primary {
+  background: 
+    var(--gradient-body-primary),
+    var(--color-panel-background);
+}
+
+.interactive-card.gradient-primary:hover {
+  background: 
+    var(--gradient-body-accent),
+    var(--color-panel-background);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-large20);
+}
+
+.interactive-card.gradient-success {
+  background: 
+    var(--gradient-body-success),
+    var(--color-panel-background);
+}
+
+.interactive-card.gradient-success:hover {
+  background: 
+    var(--gradient-body-success),
+    var(--color-successSoft-background);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-large20);
+}
+
+.interactive-card.gradient-warning {
+  background: 
+    var(--gradient-body-warning),
+    var(--color-panel-background);
+}
+
+.interactive-card.gradient-warning:hover {
+  background: 
+    var(--gradient-body-warning),
+    var(--color-warningSoft-background);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-large20);
+}
+
+.interactive-card.gradient-danger {
+  background: 
+    var(--gradient-body-danger),
+    var(--color-panel-background);
+}
+
+.interactive-card.gradient-danger:hover {
+  background: 
+    var(--gradient-body-danger),
+    var(--color-dangerSoft-background);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-large20);
+}
+
+.interactive-card.gradient-info {
+  background: 
+    var(--gradient-body-info),
+    var(--color-panel-background);
+}
+
+.interactive-card.gradient-info:hover {
+  background: 
+    var(--gradient-body-info),
+    var(--color-infoSoft-background);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-large20);
+}
+
+.interactive-card.gradient-accent {
+  background: 
+    var(--gradient-body-accent),
+    var(--color-panel-background);
+}
+
+.interactive-card.gradient-accent:hover {
+  background: 
+    var(--gradient-body-primary),
+    var(--color-panel-background);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-large20);
+}

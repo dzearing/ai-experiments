@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIPersonaIndicator - Fixed Mockup</title>
+    
+    <!-- UI Kit Styles -->
+    <link rel="stylesheet" href="../../../../../../ui-kit/dist/styles.css">
+    
+    <!-- Theme Toggle Script -->
+    <script src="./theme-toggle-script.js"></script>
+    
+    <!-- Theme Init Script (MUST be inlined to prevent FOUC) -->
+    <script>
+    (function() {
+      const m = "claude-flow-theme", s = "default", A = "auto", f = "../../../../../../ui-kit/dist/themes/", i = /* @__PURE__ */ new Set();
+      function h() {
+        return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      }
+      function F(e) {
+        return !e || e === "auto" ? h() : e;
+      }
+      function u() {
+        return document.documentElement.getAttribute("data-default-theme") || s;
+      }
+      async function r(e, n) {
+        const t = `${e}-${n}`;
+        if (i.has(t))
+          return !0;
+        try {
+          if (document.querySelector(
+            `link[data-theme-file="${t}"]`
+          ))
+            return i.add(t), !0;
+          const o = document.createElement("link");
+          return o.rel = "stylesheet", o.href = `${f}${t}.css`, o.setAttribute("data-theme-file", t), document.head.appendChild(o), i.add(t), new Promise((d) => {
+            o.onload = () => d(!0), o.onerror = () => {
+              i.delete(t), console.error(`Failed to load theme file: ${t}`), d(!1);
+            };
+          });
+        } catch (a) {
+          return console.error(`Failed to load theme "${e}" (${n}):`, a), !1;
+        }
+      }
+      function T(e, n, t) {
+        t = t || document.documentElement, t.classList.add("theme-transitioning"), t.setAttribute("data-theme", e), t.setAttribute("data-theme-type", n), requestAnimationFrame(() => {
+          setTimeout(() => {
+            t.classList.remove("theme-transitioning");
+          }, 50);
+        });
+      }
+      async function c(e, n, t) {
+        t = t || document.documentElement;
+        const a = F(n);
+        if (!await r(e, a) && e !== s && (console.warn("Falling back to default theme"), await r(s, a), e = s), T(e, a, t), t === document.documentElement) {
+          try {
+            const l = {
+              theme: e,
+              type: n || "auto",
+              timestamp: Date.now()
+            };
+            localStorage.setItem(m, JSON.stringify(l));
+          } catch (l) {
+            console.warn("Failed to save theme preferences:", l);
+          }
+          const d = {
+            theme: e,
+            type: a,
+            requestedType: n || "auto"
+          };
+          window.dispatchEvent(new CustomEvent("themechange", { detail: d }));
+        }
+        return !0;
+      }
+      async function y() {
+        const e = u();
+        let n = null;
+        try {
+          const o = localStorage.getItem(m);
+          o && (n = JSON.parse(o));
+        } catch (o) {
+          console.warn("Failed to read theme preferences:", o);
+        }
+        const t = (n == null ? void 0 : n.theme) || e, a = n == null ? void 0 : n.type;
+        await c(t, a);
+      }
+      const p = u(), g = h();
+      document.documentElement.setAttribute("data-theme", p), document.documentElement.setAttribute("data-theme-type", g);
+      const w = `${p}-${g}`;
+      document.querySelector(
+        `link[data-theme-file="${w}"]`
+      ) && i.add(w);
+      function E() {
+        if (window.matchMedia) {
+          const e = window.matchMedia("(prefers-color-scheme: dark)"), n = async function() {
+            const t = JSON.parse(
+              localStorage.getItem(m) || "{}"
+            );
+            if (!t.type || t.type === "auto") {
+              const a = h(), o = t.theme || u();
+              await r(o, a), T(o, a);
+              const d = {
+                theme: o,
+                type: a,
+                requestedType: "auto",
+                reason: "system-change"
+              };
+              window.dispatchEvent(new CustomEvent("themechange", { detail: d }));
+            }
+          };
+          e.addEventListener ? e.addEventListener("change", n) : "addListener" in e && e.addListener(n);
+        }
+      }
+      document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", function() {
+        y(), E();
+      }) : (y(), E());
+      window.__claudeFlowTheme = {
+        loadTheme: c,
+        getTheme: function(e) {
+          return e = e || document.documentElement, e.getAttribute("data-theme");
+        },
+        getThemeType: function(e) {
+          return e = e || document.documentElement, e.getAttribute("data-theme-type");
+        }
+      };
+    })();
+    </script>
+    
+    <style>
+        /* Component-specific styles using ui-kit tokens */
+        /* Persona Gradients - These are component-specific and not in ui-kit */
+        :root {
+            --gradient-claude: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
+            --gradient-gpt: linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%);
+            --gradient-gemini: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+            --gradient-custom: linear-gradient(135deg, #dc2626 0%, #f59e0b 50%, #fbbf24 100%);
+            --gradient-ai-default: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+        }
+
+        body {
+            /* font-family is already set by ui-kit */
+            font-size: var(--font-size);
+            line-height: var(--line-height);
+            color: var(--color-body-text);
+            background: var(--color-body-background);
+            padding: var(--spacing-large10);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .demo-section {
+            background: var(--color-panel-background);
+            border-radius: var(--radius-large20);
+            padding: var(--spacing-large10);
+            margin-bottom: var(--spacing-large10);
+            box-shadow: var(--shadow-card);
+        }
+
+        .demo-title {
+            font-size: var(--font-size-h4);
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing);
+        }
+
+        .demo-description {
+            color: var(--color-body-textSoft10);
+            margin-bottom: var(--spacing);
+            font-size: var(--font-size-small10);
+        }
+
+        /* AIPersonaIndicator Component Styles */
+        .persona-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+            padding: var(--spacing-xs) var(--spacing-md);
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .persona-indicator:hover {
+            background: var(--color-surface-elevated);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .persona-indicator--active {
+            border-color: currentColor;
+            background: var(--color-surface-elevated);
+        }
+
+        /* Avatar */
+        .persona-indicator__avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: var(--radius-full);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .persona-indicator--claude .persona-indicator__avatar {
+            background: var(--gradient-claude);
+        }
+
+        .persona-indicator--gpt .persona-indicator__avatar {
+            background: var(--gradient-gpt);
+        }
+
+        .persona-indicator--gemini .persona-indicator__avatar {
+            background: var(--gradient-gemini);
+        }
+
+        .persona-indicator--custom .persona-indicator__avatar {
+            background: var(--gradient-custom);
+        }
+
+        /* Name */
+        .persona-indicator__name {
+            font-weight: 500;
+            color: var(--color-text);
+        }
+
+        /* Status */
+        .persona-indicator__status {
+            width: 8px;
+            height: 8px;
+            border-radius: var(--radius-full);
+            background: var(--color-success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .persona-indicator__status--offline {
+            background: var(--color-text-softer);
+            animation: none;
+        }
+
+        /* Dropdown */
+        .persona-dropdown {
+            position: absolute;
+            top: calc(100% + var(--spacing-small10));
+            left: 0;
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius-large10);
+            box-shadow: var(--shadow-hard10);
+            min-width: 280px;
+            padding: var(--spacing-small10);
+            z-index: 1000;
+        }
+
+        .persona-option {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+            padding: var(--spacing-small10);
+            border-radius: var(--radius-small10);
+            cursor: pointer;
+            transition: background var(--duration-normal);
+        }
+
+        .persona-option:hover {
+            background: var(--color-panel-background);
+        }
+
+        .persona-option--selected {
+            background: var(--color-infoSoft-background);
+        }
+
+        .persona-option__avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size);
+            font-weight: var(--font-weight-semibold);
+            color: white;
+        }
+
+        .persona-option__info {
+            flex: 1;
+        }
+
+        .persona-option__name {
+            font-weight: var(--font-weight-medium);
+            color: var(--color-body-text);
+        }
+
+        .persona-option__description {
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft10);
+        }
+
+        .persona-option__badge {
+            padding: 2px 6px;
+            background: var(--color-success-background);
+            color: var(--color-success-text);
+            border-radius: var(--radius-small10);
+            font-size: var(--font-size-smallest);
+            font-weight: var(--font-weight-semibold);
+        }
+
+        /* Chat Header Integration */
+        .chat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--spacing);
+            background: var(--color-panel-background);
+            border-bottom: 1px solid var(--color-body-border);
+        }
+
+        .chat-header__title {
+            font-size: var(--font-size-large10);
+            font-weight: var(--font-weight-semibold);
+        }
+
+        /* Compact Version */
+        .persona-indicator--compact {
+            padding: var(--spacing-small20) var(--spacing-small10);
+        }
+
+        .persona-indicator--compact .persona-indicator__avatar {
+            width: 20px;
+            height: 20px;
+            font-size: var(--font-size-smallest);
+        }
+
+        .persona-indicator--compact .persona-indicator__name {
+            font-size: var(--font-size-small10);
+        }
+
+        /* Icon Only */
+        .persona-indicator--icon-only {
+            padding: var(--spacing-small10);
+            border-radius: var(--radius-large10);
+        }
+
+        .persona-indicator--icon-only .persona-indicator__avatar {
+            width: 28px;
+            height: 28px;
+            font-size: var(--font-size);
+        }
+
+        /* Grid Layout */
+        .persona-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: var(--spacing-small10);
+            margin-top: var(--spacing);
+        }
+
+        /* Card Style */
+        .persona-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--spacing-small10);
+            padding: var(--spacing);
+            background: var(--color-panel-background);
+            border: 2px solid var(--color-body-border);
+            border-radius: var(--radius-large10);
+            cursor: pointer;
+            transition: all var(--duration-normal);
+        }
+
+        .persona-card:hover {
+            border-color: currentColor;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-card);
+        }
+
+        .persona-card--active {
+            border-color: currentColor;
+            background: var(--color-panel-background);
+        }
+
+        .persona-card__avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size-large10);
+            font-weight: var(--font-weight-semibold);
+            color: white;
+        }
+
+        .persona-card__name {
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-body-text);
+        }
+
+        .persona-card__capabilities {
+            display: flex;
+            gap: var(--spacing-small20);
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .capability-chip {
+            padding: 2px 6px;
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius-small10);
+            font-size: var(--font-size-smallest);
+            color: var(--color-body-textSoft10);
+        }
+
+        /* Loading State */
+        .persona-indicator--loading .persona-indicator__avatar {
+            animation: rotate 1s linear infinite;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Basic Persona Indicators -->
+        <div class="demo-section">
+            <h2 class="demo-title">AI Persona Indicators</h2>
+            <p class="demo-description">Shows which AI model is currently active</p>
+            
+            <div style="display: flex; gap: var(--spacing); flex-wrap: wrap;">
+                <div class="persona-indicator persona-indicator--claude persona-indicator--active">
+                    <div class="persona-indicator__avatar">C</div>
+                    <span class="persona-indicator__name">Claude</span>
+                    <div class="persona-indicator__status"></div>
+                </div>
+                
+                <div class="persona-indicator persona-indicator--gpt">
+                    <div class="persona-indicator__avatar">G</div>
+                    <span class="persona-indicator__name">GPT-4</span>
+                    <div class="persona-indicator__status"></div>
+                </div>
+                
+                <div class="persona-indicator persona-indicator--gemini">
+                    <div class="persona-indicator__avatar">✦</div>
+                    <span class="persona-indicator__name">Gemini</span>
+                    <div class="persona-indicator__status"></div>
+                </div>
+                
+                <div class="persona-indicator persona-indicator--custom">
+                    <div class="persona-indicator__avatar">🤖</div>
+                    <span class="persona-indicator__name">Custom AI</span>
+                    <div class="persona-indicator__status persona-indicator__status--offline"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- In Chat Header -->
+        <div class="demo-section">
+            <h2 class="demo-title">Chat Header Integration</h2>
+            <p class="demo-description">Persona selector integrated in chat interface</p>
+            
+            <div class="chat-header">
+                <h3 class="chat-header__title">New Conversation</h3>
+                <div style="position: relative;">
+                    <div class="persona-indicator persona-indicator--claude persona-indicator--active">
+                        <div class="persona-indicator__avatar">C</div>
+                        <span class="persona-indicator__name">Claude 3 Opus</span>
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" style="opacity: 0.5;">
+                            <path d="M3 5L6 8L9 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    
+                    <!-- Dropdown Menu -->
+                    <div class="persona-dropdown">
+                        <div class="persona-option persona-option--selected">
+                            <div class="persona-option__avatar" style="background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);">C</div>
+                            <div class="persona-option__info">
+                                <div class="persona-option__name">Claude 3 Opus</div>
+                                <div class="persona-option__description">Most capable, best for complex tasks</div>
+                            </div>
+                            <div class="persona-option__badge">Active</div>
+                        </div>
+                        
+                        <div class="persona-option">
+                            <div class="persona-option__avatar" style="background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);">C</div>
+                            <div class="persona-option__info">
+                                <div class="persona-option__name">Claude 3 Sonnet</div>
+                                <div class="persona-option__description">Balanced performance and speed</div>
+                            </div>
+                        </div>
+                        
+                        <div class="persona-option">
+                            <div class="persona-option__avatar" style="background: linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%);">G</div>
+                            <div class="persona-option__info">
+                                <div class="persona-option__name">GPT-4 Turbo</div>
+                                <div class="persona-option__description">Latest GPT model with vision</div>
+                            </div>
+                        </div>
+                        
+                        <div class="persona-option">
+                            <div class="persona-option__avatar" style="background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);">✦</div>
+                            <div class="persona-option__info">
+                                <div class="persona-option__name">Gemini Pro</div>
+                                <div class="persona-option__description">Google's multimodal AI</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Size Variations -->
+        <div class="demo-section">
+            <h2 class="demo-title">Size Variations</h2>
+            <p class="demo-description">Different sizes for various UI contexts</p>
+            
+            <div style="display: flex; gap: var(--spacing-large10); align-items: center; flex-wrap: wrap;">
+                <!-- Compact -->
+                <div>
+                    <p style="font-size: var(--font-size-small10); color: var(--color-body-textSoft10); margin-bottom: var(--spacing-small10);">Compact</p>
+                    <div class="persona-indicator persona-indicator--claude persona-indicator--compact">
+                        <div class="persona-indicator__avatar">C</div>
+                        <span class="persona-indicator__name">Claude</span>
+                    </div>
+                </div>
+                
+                <!-- Default -->
+                <div>
+                    <p style="font-size: var(--font-size-small10); color: var(--color-body-textSoft10); margin-bottom: var(--spacing-small10);">Default</p>
+                    <div class="persona-indicator persona-indicator--gpt">
+                        <div class="persona-indicator__avatar">G</div>
+                        <span class="persona-indicator__name">GPT-4</span>
+                        <div class="persona-indicator__status"></div>
+                    </div>
+                </div>
+                
+                <!-- Icon Only -->
+                <div>
+                    <p style="font-size: var(--font-size-small10); color: var(--color-body-textSoft10); margin-bottom: var(--spacing-small10);">Icon Only</p>
+                    <div class="persona-indicator persona-indicator--gemini persona-indicator--icon-only">
+                        <div class="persona-indicator__avatar">✦</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Persona Selection Grid -->
+        <div class="demo-section">
+            <h2 class="demo-title">Persona Selection Grid</h2>
+            <p class="demo-description">Card-based selection for onboarding or settings</p>
+            
+            <div class="persona-grid">
+                <div class="persona-card persona-card--active">
+                    <div class="persona-card__avatar" style="background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);">C</div>
+                    <div class="persona-card__name">Claude 3</div>
+                    <div class="persona-card__capabilities">
+                        <span class="capability-chip">Creative</span>
+                        <span class="capability-chip">Coding</span>
+                        <span class="capability-chip">Analysis</span>
+                    </div>
+                </div>
+                
+                <div class="persona-card">
+                    <div class="persona-card__avatar" style="background: linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%);">G</div>
+                    <div class="persona-card__name">GPT-4</div>
+                    <div class="persona-card__capabilities">
+                        <span class="capability-chip">General</span>
+                        <span class="capability-chip">Vision</span>
+                        <span class="capability-chip">Plugins</span>
+                    </div>
+                </div>
+                
+                <div class="persona-card">
+                    <div class="persona-card__avatar" style="background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);">✦</div>
+                    <div class="persona-card__name">Gemini</div>
+                    <div class="persona-card__capabilities">
+                        <span class="capability-chip">Search</span>
+                        <span class="capability-chip">Multi-modal</span>
+                    </div>
+                </div>
+                
+                <div class="persona-card">
+                    <div class="persona-card__avatar" style="background: linear-gradient(135deg, #dc2626 0%, #f59e0b 50%, #fbbf24 100%);">+</div>
+                    <div class="persona-card__name">Add Custom</div>
+                    <div class="persona-card__capabilities">
+                        <span class="capability-chip">Configure</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- States -->
+        <div class="demo-section">
+            <h2 class="demo-title">Persona States</h2>
+            <p class="demo-description">Different states and status indicators</p>
+            
+            <div style="display: flex; flex-direction: column; gap: var(--spacing);">
+                <!-- Active/Online -->
+                <div style="display: flex; gap: var(--spacing); align-items: center;">
+                    <div class="persona-indicator persona-indicator--claude persona-indicator--active">
+                        <div class="persona-indicator__avatar">C</div>
+                        <span class="persona-indicator__name">Claude (Active)</span>
+                        <div class="persona-indicator__status"></div>
+                    </div>
+                    <span style="font-size: var(--font-size-small10); color: var(--color-body-textSoft10);">Currently responding</span>
+                </div>
+                
+                <!-- Loading/Switching -->
+                <div style="display: flex; gap: var(--spacing); align-items: center;">
+                    <div class="persona-indicator persona-indicator--gpt persona-indicator--loading">
+                        <div class="persona-indicator__avatar">⟳</div>
+                        <span class="persona-indicator__name">Switching...</span>
+                    </div>
+                    <span style="font-size: var(--font-size-small10); color: var(--color-body-textSoft10);">Loading GPT-4</span>
+                </div>
+                
+                <!-- Offline/Unavailable -->
+                <div style="display: flex; gap: var(--spacing); align-items: center;">
+                    <div class="persona-indicator persona-indicator--custom" style="opacity: 0.5;">
+                        <div class="persona-indicator__avatar">🤖</div>
+                        <span class="persona-indicator__name">Custom AI</span>
+                        <div class="persona-indicator__status persona-indicator__status--offline"></div>
+                    </div>
+                    <span style="font-size: var(--font-size-small10); color: var(--color-body-textSoft10);">Unavailable</span>
+                </div>
+                
+                <!-- Rate Limited -->
+                <div style="display: flex; gap: var(--spacing); align-items: center;">
+                    <div class="persona-indicator persona-indicator--gemini" style="border-color: var(--color-warning);">
+                        <div class="persona-indicator__avatar">✦</div>
+                        <span class="persona-indicator__name">Gemini</span>
+                        <div class="persona-indicator__status" style="background: var(--color-warning);"></div>
+                    </div>
+                    <span style="font-size: var(--font-size-small); color: var(--color-warning);">Rate limit: 2 min</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inline Usage -->
+        <div class="demo-section">
+            <h2 class="demo-title">Inline Persona Indicators</h2>
+            <p class="demo-description">Used within messages to show which AI responded</p>
+            
+            <div style="background: var(--color-surface); padding: var(--spacing-md); border-radius: var(--radius-md);">
+                <div style="display: flex; align-items: center; gap: var(--spacing-small10); margin-bottom: var(--spacing-small10);">
+                    <div class="persona-indicator persona-indicator--claude persona-indicator--compact">
+                        <div class="persona-indicator__avatar">C</div>
+                        <span class="persona-indicator__name">Claude</span>
+                    </div>
+                    <span style="font-size: var(--font-size-small10); color: var(--color-body-textSoft10);">2 minutes ago</span>
+                </div>
+                <p style="color: var(--color-text);">I can help you with that React component. Here's an optimized version...</p>
+            </div>
+            
+            <div style="background: var(--color-panel-background); padding: var(--spacing); border-radius: var(--radius-large10); margin-top: var(--spacing-small10);">
+                <div style="display: flex; align-items: center; gap: var(--spacing-small10); margin-bottom: var(--spacing-small10);">
+                    <div class="persona-indicator persona-indicator--gpt persona-indicator--compact">
+                        <div class="persona-indicator__avatar">G</div>
+                        <span class="persona-indicator__name">GPT-4</span>
+                    </div>
+                    <span style="font-size: var(--font-size-small); color: var(--color-text-soft);">Just now</span>
+                </div>
+                <p style="color: var(--color-text);">Additionally, you might want to consider using useMemo for performance...</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

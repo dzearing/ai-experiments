@@ -82,7 +82,8 @@ export function initializeThemes() {
   
   // Load theme init script
   const script = document.createElement('script');
-  script.src = '/theme-init.js';
+  script.src = '/theme.js';
+  script.type = 'module';
   script.async = true;
   document.head.appendChild(script);
   

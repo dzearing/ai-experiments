@@ -495,7 +495,7 @@
   background: var(--color-surface-primary);
   font-size: var(--font-size-md);
   color: var(--color-body-text);
-  transition: all var(--duration) var(--easing-default);
+  transition: all var(--duration-normal) var(--easing-default);
 }
 
 .demo-code {

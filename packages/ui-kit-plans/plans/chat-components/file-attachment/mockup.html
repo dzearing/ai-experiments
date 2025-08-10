@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FileAttachment - Fixed Mockup</title>
+    
+    <!-- UI Kit Styles -->
+    <link rel="stylesheet" href="../../../assets/styles.css">
+    
+    <!-- Set theme base path for mockups -->
+    <script>
+        window.__uiKitBasePath = '../../../assets/';
+    </script>    
+    <!-- Theme Scripts (ES modules) -->
+    <script type="module" src="../../../assets/theme.js"></script>
+    <script type="module" src="../../../assets/theme-switcher.js"></script>
+    
+    <style>
+        /* Component-specific file type colors */
+        :root {
+            /* File Type Colors - Component specific */
+            --color-pdf: var(--color-danger-background);
+            --color-image: var(--color-info-background);
+            --color-document: var(--color-infoBright-background);
+            --color-code: var(--color-info-background);
+            --color-archive: var(--color-neutral-background);
+        }
+
+        body {
+            font-family: var(--font-family);
+            font-size: var(--font-size);
+            line-height: var(--line-height);
+            color: var(--color-body-text);
+            background: var(--color-body-background);
+            padding: var(--spacing-large10);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .demo-section {
+            background: var(--color-panel-background);
+            border-radius: var(--radius-large10);
+            padding: var(--spacing-large10);
+            margin-bottom: var(--spacing-large10);
+            box-shadow: var(--shadow-card);
+        }
+
+        .demo-title {
+            font-size: var(--font-size-h4);
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing);
+        }
+
+        .demo-description {
+            color: var(--color-body-textSoft10);
+            margin-bottom: var(--spacing);
+            font-size: var(--font-size-small10);
+        }
+
+        /* FileAttachment Component Styles */
+        .file-attachment {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+            padding: var(--spacing-small10);
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius);
+            margin: var(--spacing-small20) 0;
+            transition: all var(--duration-normal) var(--easing-default);
+            cursor: pointer;
+        }
+
+        .file-attachment:hover {
+            background: var(--color-panel-background);
+            box-shadow: var(--shadow-soft10);
+            transform: translateY(-1px);
+        }
+
+        /* File Icon */
+        .file-attachment__icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-small10);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: var(--font-size-large20);
+            color: var(--color-primary-text);
+        }
+
+        .file-attachment__icon--pdf {
+            background: var(--color-pdf);
+        }
+
+        .file-attachment__icon--image {
+            background: var(--color-image);
+        }
+
+        .file-attachment__icon--document {
+            background: var(--color-document);
+        }
+
+        .file-attachment__icon--code {
+            background: var(--color-code);
+        }
+
+        .file-attachment__icon--archive {
+            background: var(--color-archive);
+        }
+
+        /* File Info */
+        .file-attachment__info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-attachment__name {
+            font-weight: var(--font-weight-medium);
+            color: var(--color-body-text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-attachment__meta {
+            display: flex;
+            gap: var(--spacing-small10);
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft10);
+        }
+
+        /* File Actions */
+        .file-attachment__actions {
+            display: flex;
+            gap: var(--spacing-small20);
+        }
+
+        .file-action {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-small10);
+            border: 1px solid var(--color-body-border);
+            background: var(--color-panel-background);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all var(--duration-normal) var(--easing-default);
+        }
+
+        .file-action:hover {
+            background: var(--color-primary-background);
+            border-color: var(--color-primary-border);
+            color: var(--color-primary-text);
+        }
+
+        /* Upload Progress */
+        .file-attachment--uploading {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .file-attachment__progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: var(--color-primary-background);
+            transition: width var(--duration-slow) var(--easing-default);
+        }
+
+        .file-attachment__status {
+            color: var(--color-primary-text);
+            font-size: var(--font-size-small10);
+        }
+
+        /* Error State */
+        .file-attachment--error {
+            border-color: var(--color-danger-border);
+            background: var(--color-dangerSoft-background);
+        }
+
+        .file-attachment--error .file-attachment__status {
+            color: var(--color-danger-text);
+        }
+
+        /* Success State */
+        .file-attachment--success .file-attachment__status {
+            color: var(--color-success-text);
+        }
+
+        /* Image Preview */
+        .file-attachment--image {
+            height: 120px;
+        }
+
+        .file-attachment__preview {
+            width: 100px;
+            height: 100px;
+            border-radius: var(--radius-small10);
+            object-fit: cover;
+            border: 1px solid var(--color-body-border);
+        }
+
+        /* Attachment Grid */
+        .attachment-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: var(--spacing-small10);
+            margin-top: var(--spacing);
+        }
+
+        /* Inline Attachments */
+        .inline-attachments {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-small10);
+            margin-top: var(--spacing-small10);
+        }
+
+        .inline-attachment {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-small20);
+            padding: var(--spacing-small20) var(--spacing-small10);
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius-small10);
+            font-size: var(--font-size-small10);
+        }
+
+        .inline-attachment__icon {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+
+        /* Chat Context */
+        .chat-message {
+            display: flex;
+            gap: var(--spacing-small10);
+            margin-bottom: var(--spacing);
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size-small10);
+            font-weight: var(--font-weight-semibold);
+        }
+
+        .message-content {
+            flex: 1;
+            background: var(--color-panel-background);
+            padding: var(--spacing);
+            border-radius: var(--radius);
+        }
+
+        .message-text {
+            margin-bottom: var(--spacing-small10);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Basic File Attachments -->
+        <div class="demo-section">
+            <h2 class="demo-title">File Attachments in Chat</h2>
+            <p class="demo-description">Common file types with appropriate icons and metadata</p>
+            
+            <div class="chat-message">
+                <div class="avatar">You</div>
+                <div class="message-content">
+                    <div class="message-text">Here are the files you requested:</div>
+                    
+                    <div class="attachment-grid">
+                        <!-- PDF File -->
+                        <div class="file-attachment">
+                            <div class="file-attachment__icon file-attachment__icon--pdf">📄</div>
+                            <div class="file-attachment__info">
+                                <div class="file-attachment__name">project-proposal.pdf</div>
+                                <div class="file-attachment__meta">
+                                    <span>2.4 MB</span>
+                                    <span>PDF Document</span>
+                                </div>
+                            </div>
+                            <div class="file-attachment__actions">
+                                <button class="file-action" title="Download">⬇</button>
+                                <button class="file-action" title="Preview">👁</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Image File -->
+                        <div class="file-attachment">
+                            <div class="file-attachment__icon file-attachment__icon--image">🖼</div>
+                            <div class="file-attachment__info">
+                                <div class="file-attachment__name">mockup-design.png</div>
+                                <div class="file-attachment__meta">
+                                    <span>856 KB</span>
+                                    <span>PNG Image</span>
+                                </div>
+                            </div>
+                            <div class="file-attachment__actions">
+                                <button class="file-action" title="Download">⬇</button>
+                                <button class="file-action" title="Preview">👁</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Code File -->
+                        <div class="file-attachment">
+                            <div class="file-attachment__icon file-attachment__icon--code">{'</>'}</div>
+                            <div class="file-attachment__info">
+                                <div class="file-attachment__name">AppContext.tsx</div>
+                                <div class="file-attachment__meta">
+                                    <span>18.3 KB</span>
+                                    <span>TypeScript</span>
+                                </div>
+                            </div>
+                            <div class="file-attachment__actions">
+                                <button class="file-action" title="Download">⬇</button>
+                                <button class="file-action" title="View Code">{'</>'}</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Document File -->
+                        <div class="file-attachment">
+                            <div class="file-attachment__icon file-attachment__icon--document">📝</div>
+                            <div class="file-attachment__info">
+                                <div class="file-attachment__name">meeting-notes.docx</div>
+                                <div class="file-attachment__meta">
+                                    <span>145 KB</span>
+                                    <span>Word Document</span>
+                                </div>
+                            </div>
+                            <div class="file-attachment__actions">
+                                <button class="file-action" title="Download">⬇</button>
+                                <button class="file-action" title="Open">📂</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload States -->
+        <div class="demo-section">
+            <h2 class="demo-title">Upload States</h2>
+            <p class="demo-description">Different states during file upload process</p>
+            
+            <!-- Uploading -->
+            <div class="file-attachment file-attachment--uploading">
+                <div class="file-attachment__icon file-attachment__icon--archive">📦</div>
+                <div class="file-attachment__info">
+                    <div class="file-attachment__name">archive.zip</div>
+                    <div class="file-attachment__meta">
+                        <span class="file-attachment__status">Uploading... 45%</span>
+                        <span>5.2 MB of 11.5 MB</span>
+                    </div>
+                </div>
+                <div class="file-attachment__progress" style="width: 45%"></div>
+            </div>
+            
+            <!-- Success -->
+            <div class="file-attachment file-attachment--success" style="margin-top: var(--spacing-sm);">
+                <div class="file-attachment__icon file-attachment__icon--image">✅</div>
+                <div class="file-attachment__info">
+                    <div class="file-attachment__name">photo.jpg</div>
+                    <div class="file-attachment__meta">
+                        <span class="file-attachment__status">✓ Upload complete</span>
+                        <span>1.2 MB</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Error -->
+            <div class="file-attachment file-attachment--error" style="margin-top: var(--spacing-sm);">
+                <div class="file-attachment__icon file-attachment__icon--document">⚠️</div>
+                <div class="file-attachment__info">
+                    <div class="file-attachment__name">large-file.psd</div>
+                    <div class="file-attachment__meta">
+                        <span class="file-attachment__status">Upload failed - File too large</span>
+                    </div>
+                </div>
+                <div class="file-attachment__actions">
+                    <button class="file-action" title="Retry">🔄</button>
+                    <button class="file-action" title="Remove">✕</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Image Attachments with Preview -->
+        <div class="demo-section">
+            <h2 class="demo-title">Image Attachments with Previews</h2>
+            <p class="demo-description">Visual previews for image files</p>
+            
+            <div class="chat-message">
+                <div class="avatar">AI</div>
+                <div class="message-content">
+                    <div class="message-text">I've analyzed the screenshots you provided:</div>
+                    
+                    <div class="attachment-grid">
+                        <div class="file-attachment file-attachment--image">
+                            <img class="file-attachment__preview" 
+                                 src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%234f46e5'/%3E%3Ctext x='50' y='50' text-anchor='middle' dy='.3em' fill='white' font-family='sans-serif'%3EUI%3C/text%3E%3C/svg%3E" 
+                                 alt="UI Screenshot">
+                            <div class="file-attachment__info">
+                                <div class="file-attachment__name">dashboard-screenshot.png</div>
+                                <div class="file-attachment__meta">
+                                    <span>1920×1080</span>
+                                    <span>342 KB</span>
+                                </div>
+                            </div>
+                            <div class="file-attachment__actions">
+                                <button class="file-action" title="Fullscreen">⛶</button>
+                            </div>
+                        </div>
+                        
+                        <div class="file-attachment file-attachment--image">
+                            <img class="file-attachment__preview" 
+                                 src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%2310b981'/%3E%3Ctext x='50' y='50' text-anchor='middle' dy='.3em' fill='white' font-family='sans-serif'%3EChart%3C/text%3E%3C/svg%3E" 
+                                 alt="Chart">
+                            <div class="file-attachment__info">
+                                <div class="file-attachment__name">analytics-chart.svg</div>
+                                <div class="file-attachment__meta">
+                                    <span>Vector Image</span>
+                                    <span>28 KB</span>
+                                </div>
+                            </div>
+                            <div class="file-attachment__actions">
+                                <button class="file-action" title="Edit">✏️</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inline Attachments -->
+        <div class="demo-section">
+            <h2 class="demo-title">Inline Attachments</h2>
+            <p class="demo-description">Compact attachment display for message inputs</p>
+            
+            <div style="background: var(--color-surface); padding: var(--spacing-md); border-radius: var(--radius-md); border: 1px solid var(--color-border);">
+                <textarea style="width: 100%; border: none; background: transparent; resize: none; outline: none; font-family: inherit; font-size: inherit;" 
+                          rows="2" placeholder="Type a message...">Please review these files and let me know your thoughts.</textarea>
+                
+                <div class="inline-attachments">
+                    <div class="inline-attachment">
+                        <span class="inline-attachment__icon">📄</span>
+                        <span>report.pdf</span>
+                        <button style="background: none; border: none; cursor: pointer; padding: 0; margin-left: var(--spacing-xs);">✕</button>
+                    </div>
+                    <div class="inline-attachment">
+                        <span class="inline-attachment__icon">🖼</span>
+                        <span>chart.png</span>
+                        <button style="background: none; border: none; cursor: pointer; padding: 0; margin-left: var(--spacing-xs);">✕</button>
+                    </div>
+                    <div class="inline-attachment">
+                        <span class="inline-attachment__icon">{'</>'}</span>
+                        <span>code.js</span>
+                        <button style="background: none; border: none; cursor: pointer; padding: 0; margin-left: var(--spacing-xs);">✕</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Multiple Files -->
+        <div class="demo-section">
+            <h2 class="demo-title">Batch File Upload</h2>
+            <p class="demo-description">Handling multiple file uploads</p>
+            
+            <div style="background: var(--color-surface); padding: var(--spacing-md); border-radius: var(--radius-md); border: 2px dashed var(--color-border); text-align: center;">
+                <div style="padding: var(--spacing-lg); color: var(--color-text-soft);">
+                    <div style="font-size: 32px; margin-bottom: var(--spacing-sm);">📁</div>
+                    <div style="font-weight: 500; margin-bottom: var(--spacing-xs);">Drop files here or click to browse</div>
+                    <div style="font-size: var(--font-size-small);">Maximum file size: 10 MB</div>
+                </div>
+                
+                <div style="border-top: 1px solid var(--color-border); margin-top: var(--spacing-md); padding-top: var(--spacing-md); text-align: left;">
+                    <div style="font-weight: 500; margin-bottom: var(--spacing-sm); color: var(--color-text);">Uploading 3 files...</div>
+                    
+                    <div class="file-attachment file-attachment--uploading" style="margin-bottom: var(--spacing-sm);">
+                        <div class="file-attachment__icon file-attachment__icon--pdf">📄</div>
+                        <div class="file-attachment__info">
+                            <div class="file-attachment__name">document1.pdf</div>
+                            <div class="file-attachment__meta">
+                                <span class="file-attachment__status">Uploading... 100%</span>
+                            </div>
+                        </div>
+                        <div class="file-attachment__progress" style="width: 100%"></div>
+                    </div>
+                    
+                    <div class="file-attachment file-attachment--uploading" style="margin-bottom: var(--spacing-sm);">
+                        <div class="file-attachment__icon file-attachment__icon--image">🖼</div>
+                        <div class="file-attachment__info">
+                            <div class="file-attachment__name">image.jpg</div>
+                            <div class="file-attachment__meta">
+                                <span class="file-attachment__status">Uploading... 60%</span>
+                            </div>
+                        </div>
+                        <div class="file-attachment__progress" style="width: 60%"></div>
+                    </div>
+                    
+                    <div class="file-attachment file-attachment--uploading" style="margin-bottom: var(--spacing-sm);">
+                        <div class="file-attachment__icon file-attachment__icon--code">{'</>'}</div>
+                        <div class="file-attachment__info">
+                            <div class="file-attachment__name">script.py</div>
+                            <div class="file-attachment__meta">
+                                <span class="file-attachment__status">Queued</span>
+                            </div>
+                        </div>
+                        <div class="file-attachment__progress" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

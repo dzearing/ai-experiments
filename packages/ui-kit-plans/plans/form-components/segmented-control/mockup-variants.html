@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SegmentedControl - All Variants</title>
+    <!-- UI Kit Styles -->
+    <link rel="stylesheet" href="../../../assets/styles.css">
+    
+    <!-- Set ui-kit assets base path -->
+    <script>
+        window.__uiKitBasePath = '../../../assets/';
+    </script>
+    
+    <!-- Theme Scripts (ES modules) -->
+    <script type="module" src="../../../assets/theme.js"></script>
+    <script type="module" src="../../../assets/theme-switcher.js"></script>
+    <style>
+        /* Apply theme */
+        body {
+            font-family: var(--font-family);
+            padding: var(--spacing-large30);
+            background: var(--color-body-background);
+            color: var(--color-body-text);
+            line-height: var(--line-height);
+        }
+        
+        .demo-section {
+            max-width: var(--maxWidth-large60);
+            margin: 0 auto;
+        }
+        
+        .demo-section h2 {
+            margin-bottom: var(--spacing-large20);
+            font-size: var(--font-size-h3);
+            font-weight: var(--font-weight-semibold);
+        }
+        
+        .demo-section h3 {
+            margin: var(--spacing-large30) 0 var(--spacing-large10);
+            font-size: var(--font-size-large10);
+            font-weight: var(--font-weight-medium);
+            color: var(--color-body-textSoft10);
+        }
+        
+        .demo-section h3:first-of-type {
+            margin-top: 0;
+        }
+        
+        .variant-group {
+            margin: var(--spacing-large10) 0;
+            padding: var(--spacing-large10);
+            background: var(--color-panel-background);
+            border-radius: var(--radius);
+            border: 1px solid var(--color-panel-border);
+            box-shadow: var(--shadow-card);
+        }
+        
+        .variant-label {
+            font-size: var(--font-size);
+            font-weight: var(--font-weight-medium);
+            color: var(--color-body-textSoft10);
+            margin-bottom: var(--spacing);
+        }
+        
+        .variant-row {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-large10);
+            margin: var(--spacing) 0;
+            flex-wrap: wrap;
+        }
+        
+        .code-example {
+            margin-top: var(--spacing);
+            padding: var(--spacing-small5);
+            background: var(--color-panel-backgroundSoft10);
+            border-radius: var(--radius-small10);
+            font-family: var(--font-family-mono);
+            font-size: var(--font-size-small30);
+            color: var(--color-body-textSoft10);
+        }
+        
+        /* Base SegmentedControl - Pills by default */
+        .segmented-control {
+            display: inline-flex;
+            position: relative;
+            padding: var(--spacing-smallest, 2px);
+            background: transparent;
+            border: 1px solid var(--color-body-border);
+            border-radius: 50%;
+            box-shadow: var(--shadow-soft10);
+        }
+        
+        .segmented-control-options {
+            display: flex;
+            gap: var(--spacing-smallest, 2px);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .segmented-control-option {
+            position: relative;
+            padding: calc(var(--spacing-buttonY) - 2px) var(--spacing-buttonX);
+            border: none;
+            background: transparent;
+            color: var(--color-body-text);
+            font-family: inherit;
+            font-size: var(--font-size);
+            font-weight: var(--font-weight-medium);
+            cursor: pointer;
+            border-radius: 50%;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-small10);
+            transition: all var(--duration-fast10) var(--easing-default);
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .segmented-control-option:hover:not(.selected):not(:disabled) {
+            color: var(--color-body-text);
+            background: var(--color-panel-background);
+        }
+        
+        .segmented-control-option:active:not(.selected):not(:disabled) {
+            background: var(--color-panel-background);
+        }
+        
+        .segmented-control-option:focus-visible {
+            outline: 2px solid var(--color-primary-background);
+            outline-offset: 2px;
+        }
+        
+        .segmented-control-option.selected {
+            color: var(--color-primary-text);
+            z-index: 2;
+        }
+        
+        .segmented-control-option:disabled {
+            color: var(--color-body-textSoft20);
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .segmented-control-indicator {
+            position: absolute;
+            top: var(--spacing-smallest, 2px);
+            bottom: var(--spacing-smallest, 2px);
+            left: var(--spacing-smallest, 2px);
+            background: var(--color-primary-background);
+            border-radius: 50%;
+            transition: transform var(--duration-fast10) var(--easing-default), 
+                        width var(--duration-fast10) var(--easing-default);
+            box-shadow: var(--shadow-button);
+            z-index: 0;
+        }
+        
+        /* Variant: Square */
+        .variant-square .segmented-control {
+            background: var(--color-panel-backgroundSoft10);
+            border: none;
+            padding: var(--spacing-smallest, 2px);
+            border-radius: var(--radius-button);
+            box-shadow: var(--shadow-soft10);
+        }
+        
+        .variant-square .segmented-control-option {
+            border-radius: calc(var(--radius-button) - 2px);
+            padding: var(--spacing-buttonY) var(--spacing-buttonX);
+        }
+        
+        .variant-square .segmented-control-indicator {
+            border-radius: calc(var(--radius-button) - 2px);
+            top: var(--spacing-smallest, 2px);
+            bottom: var(--spacing-smallest, 2px);
+            left: var(--spacing-smallest, 2px);
+        }
+        
+        /* Variant: Underline */
+        .variant-underline .segmented-control {
+            background: transparent;
+            padding: 0;
+            gap: 0;
+            border-radius: 0;
+            box-shadow: none;
+            border-bottom: 1px solid var(--color-body-border);
+        }
+        
+        .variant-underline .segmented-control-options {
+            gap: var(--spacing-large10);
+        }
+        
+        .variant-underline .segmented-control-option {
+            border-radius: 0;
+            padding: var(--spacing-buttonY) 0;
+            background: transparent !important;
+        }
+        
+        .variant-underline .segmented-control-option.selected {
+            color: var(--color-primary-background);
+        }
+        
+        .variant-underline .segmented-control-indicator {
+            height: 2px;
+            bottom: -1px;
+            top: auto;
+            left: 0;
+            border-radius: 1px 1px 0 0;
+        }
+        
+        /* Size variants */
+        .size-small .segmented-control-option {
+            padding: var(--spacing-small20) var(--spacing-small5);
+            font-size: var(--font-size-small10);
+        }
+        
+        .size-large .segmented-control-option {
+            padding: var(--spacing-small5) var(--spacing-large5);
+            font-size: var(--font-size-large10);
+        }
+        
+        /* Color variants */
+        .color-secondary .segmented-control-indicator {
+            background: var(--color-success-background);
+        }
+        
+        .color-neutral .segmented-control-indicator {
+            background: var(--color-body-text);
+        }
+        
+        /* Icons */
+        .icon {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+            flex-shrink: 0;
+        }
+        
+        .size-small .icon {
+            width: 14px;
+            height: 14px;
+        }
+        
+        .size-large .icon {
+            width: 20px;
+            height: 20px;
+        }
+        
+        /* Full width */
+        .full-width .segmented-control {
+            display: flex;
+            width: 100%;
+        }
+        
+        .full-width .segmented-control-options {
+            flex: 1;
+        }
+        
+        .full-width .segmented-control-option {
+            flex: 1;
+            justify-content: center;
+        }
+        
+        /* Custom style */
+        .custom-style .segmented-control {
+            background: var(--gradient-body-accent, linear-gradient(135deg, var(--color-primary-background) 0%, var(--color-success-background) 100%));
+            padding: var(--spacing-smallest, 2px);
+        }
+        
+        .custom-style .segmented-control-indicator {
+            background: var(--color-panel-background);
+        }
+        
+        .custom-style .segmented-control-option {
+            color: var(--color-panel-background);
+            font-weight: var(--font-weight-semibold);
+        }
+        
+        .custom-style .segmented-control-option.selected {
+            color: var(--color-primary-background);
+        }
+        
+        /* Scrollable container */
+        .scrollable-container {
+            overflow-x: auto;
+            max-width: 400px;
+            padding: var(--spacing-smallest, 2px);
+            background: var(--color-panel-background);
+            border-radius: var(--radius);
+        }
+        
+        .scrollable-container .segmented-control {
+            background: transparent;
+            padding: 0;
+            box-shadow: none;
+        }
+    </style>
+</head>
+<body data-theme="default" data-theme-type="light">
+    <div class="demo-section">
+        <h2>SegmentedControl - All Variants</h2>
+        
+        <h3>Visual Variants</h3>
+        
+        <div class="variant-group">
+            <div class="variant-label">Default Variant (Pills)</div>
+            <div class="segmented-control" role="radiogroup">
+                <div class="segmented-control-indicator"></div>
+                <div class="segmented-control-options">
+                    <button class="segmented-control-option selected" role="radio" aria-checked="true">
+                        Option 1
+                    </button>
+                    <button class="segmented-control-option" role="radio" aria-checked="false">
+                        Option 2
+                    </button>
+                    <button class="segmented-control-option" role="radio" aria-checked="false">
+                        Option 3
+                    </button>
+                </div>
+            </div>
+            <div class="code-example">variant="pills" (default)</div>
+        </div>
+        
+        <div class="variant-group variant-square">
+            <div class="variant-label">Square Variant</div>
+            <div class="segmented-control" role="radiogroup">
+                <div class="segmented-control-indicator"></div>
+                <div class="segmented-control-options">
+                    <button class="segmented-control-option" role="radio" aria-checked="false">
+                        Option 1
+                    </button>
+                    <button class="segmented-control-option selected" role="radio" aria-checked="true">
+                        Option 2
+                    </button>
+                    <button class="segmented-control-option" role="radio" aria-checked="false">
+                        Option 3
+                    </button>
+                </div>
+            </div>
+            <div class="code-example">variant="square"</div>
+        </div>
+        
+        <div class="variant-group variant-underline">
+            <div class="variant-label">Underline Variant</div>
+            <div class="segmented-control" role="radiogroup">
+                <div class="segmented-control-indicator"></div>
+                <div class="segmented-control-options">
+                    <button class="segmented-control-option" role="radio" aria-checked="false">
+                        Option 1
+                    </button>
+                    <button class="segmented-control-option" role="radio" aria-checked="false">
+                        Option 2
+                    </button>
+                    <button class="segmented-control-option selected" role="radio" aria-checked="true">
+                        Option 3
+                    </button>
+                </div>
+            </div>
+            <div class="code-example">variant="underline"</div>
+        </div>
+        
+        <h3>Size Variants</h3>
+        
+        <div class="variant-group">
+            <div class="variant-row">
+                <div class="size-small">
+                    <div class="variant-label">Small</div>
+                    <div class="segmented-control" role="radiogroup">
+                        <div class="segmented-control-indicator"></div>
+                        <div class="segmented-control-options">
+                            <button class="segmented-control-option selected" role="radio" aria-checked="true">
+                                Small
+                            </button>
+                            <button class="segmented-control-option" role="radio" aria-checked="false">
+                                Size
+                            </button>
+                            <button class="segmented-control-option" role="radio" aria-checked="false">
+                                Demo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="variant-label">Medium (Default)</div>
+                    <div class="segmented-control" role="radiogroup">
+                        <div class="segmented-control-indicator"></div>
+                        <div class="segmented-control-options">
+                            <button class="segmented-control-option selected" role="radio" aria-checked="true">
+                                Medium
+                            </button>
+                            <button class="segmented-control-option" role="radio" aria-checked="false">
+                                Size
+                            </button>
+                            <button class="segmented-control-option" role="radio" aria-checked="false">
+                                Demo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="size-large">
+                    <div class="variant-label">Large</div>
+                    <div class="segmented-control" role="radiogroup">
+                        <div class="segmented-control-indicator"></div>
+                        <div class="segmented-control-options">
+                            <button class="segmented-control-option selected" role="radio" aria-checked="true">
+                                Large
+                            </button>
+                            <button class="segmented-control-option" role="radio" aria-checked="false">
+                                Size
+                            </button>
+                            <button class="segmented-control-option" role="radio" aria-checked="false">
+                                Demo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <h3>Color Variants</h3>
+        
+        <div class="variant-group">
+            <div class="variant-row">
+                <div>
+                    <div class="variant-label">Primary (Default)</div>
+                    <div class="segmented-control" role="radiogroup">
+                        <div class="segmented-control-indicator"></div>
+                        <div class="segmented-control-options">
+                            <button class="segmented-control-option selected" role="radio" aria-checked="true">
+                                Primary
+                            </button>
+                            <button class="segmented-control-option" role="radio" aria-checked="false">
+                                Color
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="color-secondary">
+                    <div class="variant-label">Secondary</div>
+                    <div class="segmented-control" role="radiogroup">
+                        <div class="segmented-control-indicator"></div>
+                        <div class="segmented-control-options">
+                            <button class="segmented-control-option selected" role="radio" aria-checked="true">
+                                Secondary
+                            </button>
+                            <button class="segmented-control-option" role="radio" aria-checked="false">
+                                Color
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="color-neutral">
+                    <div class="variant-label">Neutral</div>
+                    <div class="segmented-control" role="radiogroup">
+                        <div class="segmented-control-indicator"></div>
+                        <div class="segmented-control-options">
+                            <button class="segmented-control-option selected" role="radio" aria-checked="true">
+                                Neutral
+                            </button>
+                            <button class="segmented-control-option" role="radio" aria-checked="false">
+                                Color
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <h3>Content Variations</h3>
+        
+        <div class="variant-group">
+            <div class="variant-label">Text Only</div>
+            <div class="segmented-control" role="radiogroup">
+                <div class="segmented-control-indicator"></div>
+                <div class="segmented-control-options">
+                    <button class="segmented-control-option selected" role="radio" aria-checked="true">
+                        View
+                    </button>
+                    <button class="segmented-control-option" role="radio" aria-checked="false">
+                        Edit
+                    </button>
+                    <button class="segmented-control-option" role="radio" aria-checked="false">
+                        Share
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="variant-group">
+            <div class="variant-label">Icon + Text</div>
+            <div class="segmented-control" role="radiogroup">
+                <div class="segmented-control-indicator"></div>
+                <div class="segmented-control-options">
+                    <button class="segmented-control-option selected" role="radio" aria-checked="true">
+                        <svg class="icon" viewBox="0 0 20 20">
+                            <path d="M3 4h14v2H3V4zm0 5h14v2H3V9zm0 5h14v2H3v-2z"/>
+                        </svg>
+                        List
+                    </button>
+                    <button class="segmented-control-option" role="radio" aria-checked="false">
+                        <svg class="icon" viewBox="0 0 20 20">
+                            <path d="M3 3h6v6H3V3zm8 0h6v6h-6V3zM3 11h6v6H3v-6zm8 0h6v6h-6v-6z"/>
+                        </svg>
+                        Grid
+                    </button>
+                    <button class="segmented-control-option" role="radio" aria-checked="false">
+                        <svg class="icon" viewBox="0 0 20 20">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                        Cards
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="variant-group">
+            <div class="variant-label">Icon Only</div>
+            <div class="segmented-control" role="radiogroup">
+                <div class="segmented-control-indicator"></div>
+                <div class="segmented-control-options">
+                    <button class="segmented-control-option selected" role="radio" aria-checked="true" aria-label="List view">
+                        <svg class="icon" viewBox="0 0 20 20">
+                            <path d="M3 4h14v2H3V4zm0 5h14v2H3V9zm0 5h14v2H3v-2z"/>
+                        </svg>
+                    </button>
+                    <button class="segmented-control-option" role="radio" aria-checked="false" aria-label="Grid view">
+                        <svg class="icon" viewBox="0 0 20 20">
+                            <path d="M3 3h6v6H3V3zm8 0h6v6h-6V3zM3 11h6v6H3v-6zm8 0h6v6h-6v-6z"/>
+                        </svg>
+                    </button>
+                    <button class="segmented-control-option" role="radio" aria-checked="false" aria-label="Calendar view">
+                        <svg class="icon" viewBox="0 0 20 20">
+                            <path d="M17 3h-1V1h-2v2H6V1H4v2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V8h14v9zM5 10h2v2H5v-2zm4 0h2v2H9v-2zm4 0h2v2h-2v-2z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <h3>Layout Variations</h3>
+        
+        <div class="variant-group full-width">
+            <div class="variant-label">Full Width</div>
+            <div class="segmented-control" role="radiogroup">
+                <div class="segmented-control-indicator"></div>
+                <div class="segmented-control-options">
+                    <button class="segmented-control-option" role="radio" aria-checked="false">
+                        Option 1
+                    </button>
+                    <button class="segmented-control-option selected" role="radio" aria-checked="true">
+                        Option 2
+                    </button>
+                    <button class="segmented-control-option" role="radio" aria-checked="false">
+                        Option 3
+                    </button>
+                </div>
+            </div>
+            <div class="code-example">fullWidth={true}</div>
+        </div>
+        
+        <h3>Special Cases</h3>
+        
+        <div class="variant-group">
+            <div class="variant-label">With Disabled Options</div>
+            <div class="segmented-control" role="radiogroup">
+                <div class="segmented-control-indicator"></div>
+                <div class="segmented-control-options">
+                    <button class="segmented-control-option selected" role="radio" aria-checked="true">
+                        Active
+                    </button>
+                    <button class="segmented-control-option" role="radio" aria-checked="false">
+                        Normal
+                    </button>
+                    <button class="segmented-control-option" role="radio" aria-checked="false" disabled>
+                        Disabled
+                    </button>
+                    <button class="segmented-control-option" role="radio" aria-checked="false">
+                        Normal
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="variant-group">
+            <div class="variant-label">Many Options</div>
+            <div class="scrollable-container">
+                <div class="segmented-control" role="radiogroup">
+                    <div class="segmented-control-indicator"></div>
+                    <div class="segmented-control-options">
+                        <button class="segmented-control-option selected" role="radio" aria-checked="true">
+                            Monday
+                        </button>
+                        <button class="segmented-control-option" role="radio" aria-checked="false">
+                            Tuesday
+                        </button>
+                        <button class="segmented-control-option" role="radio" aria-checked="false">
+                            Wednesday
+                        </button>
+                        <button class="segmented-control-option" role="radio" aria-checked="false">
+                            Thursday
+                        </button>
+                        <button class="segmented-control-option" role="radio" aria-checked="false">
+                            Friday
+                        </button>
+                        <button class="segmented-control-option" role="radio" aria-checked="false">
+                            Saturday
+                        </button>
+                        <button class="segmented-control-option" role="radio" aria-checked="false">
+                            Sunday
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <h3>Custom Styled Example</h3>
+        
+        <div class="variant-group custom-style">
+            <div class="variant-label">Custom Gradient Style</div>
+            <div class="segmented-control" role="radiogroup">
+                <div class="segmented-control-indicator"></div>
+                <div class="segmented-control-options">
+                    <button class="segmented-control-option" role="radio" aria-checked="false">
+                        Creative
+                    </button>
+                    <button class="segmented-control-option selected" role="radio" aria-checked="true">
+                        Professional
+                    </button>
+                    <button class="segmented-control-option" role="radio" aria-checked="false">
+                        Casual
+                    </button>
+                </div>
+            </div>
+            <div class="code-example">Custom CSS classes applied</div>
+        </div>
+    </div>
+    
+    <script>
+        // Initialize all segmented controls
+        document.querySelectorAll('.segmented-control').forEach(initializeSegmentedControl);
+        
+        function initializeSegmentedControl(control) {
+            const indicator = control.querySelector('.segmented-control-indicator');
+            const optionsContainer = control.querySelector('.segmented-control-options');
+            const options = control.querySelectorAll('.segmented-control-option');
+            
+            // Position indicator on selected option
+            function updateIndicator(selectedOption) {
+                if (!selectedOption || !indicator) return;
+                
+                const containerRect = optionsContainer.getBoundingClientRect();
+                const optionRect = selectedOption.getBoundingClientRect();
+                
+                // Calculate position relative to the control
+                const controlRect = control.getBoundingClientRect();
+                const left = optionRect.left - controlRect.left - parseFloat(getComputedStyle(control).paddingLeft || 0);
+                const width = optionRect.width;
+                
+                indicator.style.transform = `translateX(${left}px)`;
+                indicator.style.width = `${width}px`;
+            }
+            
+            // Initialize indicator position
+            const initialSelected = control.querySelector('.segmented-control-option.selected');
+            if (initialSelected) {
+                // Use setTimeout to ensure layout is complete
+                setTimeout(() => updateIndicator(initialSelected), 0);
+            }
+            
+            // Handle option clicks
+            options.forEach(option => {
+                option.addEventListener('click', () => {
+                    if (option.disabled) return;
+                    
+                    // Update selected states
+                    options.forEach(opt => {
+                        opt.classList.remove('selected');
+                        opt.setAttribute('aria-checked', 'false');
+                    });
+                    
+                    option.classList.add('selected');
+                    option.setAttribute('aria-checked', 'true');
+                    
+                    // Update indicator
+                    updateIndicator(option);
+                });
+            });
+            
+            // Handle window resize
+            let resizeTimeout;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(() => {
+                    const selected = control.querySelector('.segmented-control-option.selected');
+                    if (selected) {
+                        updateIndicator(selected);
+                    }
+                }, 100);
+            });
+        }
+    </script>
+</body>
+</html>
