@@ -5,7 +5,7 @@
   padding: var(--spacing-small10) var(--spacing);
   background: var(--color-panel-background);
   border: 1px solid var(--color-panel-border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-container);
   transition: all var(--duration) var(--easing-default);
   text-align: left;
   width: 100%;
@@ -88,7 +88,7 @@
   width: 8px;
   height: 8px;
   background: var(--color-primary-background);
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-round);
   border: 2px solid var(--color-panel-background);
 }
 

@@ -37,7 +37,7 @@
 .focus-demo-button {
   padding: var(--spacing-buttonY) var(--spacing-buttonX);
   border: none;
-  border-radius: var(--radius-button);
+  border-radius: var(--radius-interactive);
   font-size: var(--font-size);
   font-weight: var(--font-weight-medium);
   cursor: pointer;
@@ -96,15 +96,15 @@
   padding: var(--spacing-small10) var(--spacing);
   background: var(--color-input-background);
   border: 1px solid var(--color-input-border);
-  border-radius: var(--radius-input);
+  border-radius: var(--radius-interactive);
   font-size: var(--font-size);
   color: var(--color-input-text);
   transition: all var(--duration-normal) var(--easing-standard);
 }
 
-.focus-demo-input:focus,
-.focus-demo-textarea:focus,
-.focus-demo-select:focus {
+.focus-demo-input:focus-visible,
+.focus-demo-textarea:focus-visible,
+.focus-demo-select:focus-visible {
   /* 2px internal focus border to match all components */
   outline: 2px solid var(--color-input-outline);
   outline-offset: -2px;
@@ -120,7 +120,7 @@
 .focus-demo-card {
   background: var(--color-panel-background);
   border: 1px solid var(--color-panel-border);
-  border-radius: var(--radius-card);
+  border-radius: var(--radius-container);
   padding: var(--spacing-card);
   cursor: pointer;
   transition: all var(--duration-normal) var(--easing-standard);
@@ -178,7 +178,7 @@
 .focus-demo-custom {
   padding: var(--spacing-buttonY) var(--spacing-buttonX);
   border: 2px solid var(--color-neutral-border);
-  border-radius: var(--radius-button);
+  border-radius: var(--radius-interactive);
   background: var(--color-neutral-background);
   color: var(--color-neutral-text);
   font-size: var(--font-size);
@@ -216,7 +216,7 @@
 .focus-demo-guidelines {
   background: var(--color-panel-background);
   border: 1px solid var(--color-panel-border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-medium);
   padding: var(--spacing-large10);
   margin-top: var(--spacing-large20);
 }
@@ -270,7 +270,7 @@
   padding: var(--spacing-large10);
   background: var(--color-panel-background);
   border: 1px solid var(--color-panel-border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-medium);
 }
 
 .focus-contrast-item span {
@@ -289,7 +289,7 @@
 .focus-contrast-button {
   padding: var(--spacing-buttonY) var(--spacing-buttonX);
   border: 1px solid var(--color-neutral-border);
-  border-radius: var(--radius-button);
+  border-radius: var(--radius-interactive);
   background: var(--color-neutral-background);
   color: var(--color-neutral-text);
   cursor: pointer;

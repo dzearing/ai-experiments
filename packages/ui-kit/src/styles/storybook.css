@@ -185,7 +185,47 @@
   color: var(--color-body-text, #e0e0e0);
 }
 
-/* Theme-aware tables */
+/* Base table styles for MDX documentation */
+.sbdocs table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--spacing-lg, 20px) 0;
+  font-size: var(--font-size, 14px);
+  border: 1px solid var(--color-body-border, #e5e5e5);
+}
+
+.sbdocs th,
+.sbdocs td {
+  padding: var(--spacing-sm, 8px) var(--spacing-md, 12px);
+  text-align: left;
+  border: 1px solid var(--color-body-border, #e5e5e5);
+}
+
+.sbdocs th {
+  background-color: var(--color-body-backgroundSoft10, #f5f5f5);
+  color: var(--color-body-textHard10, #1a1a1a);
+  font-weight: var(--font-weight-semibold, 600);
+}
+
+.sbdocs td {
+  color: var(--color-body-text, #262626);
+}
+
+.sbdocs td code,
+.sbdocs th code {
+  background-color: var(--color-body-backgroundSoft10, #f0f0f0);
+  color: var(--color-primary, #0066cc);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.9em;
+  font-family: var(--font-family-mono, 'Courier New', monospace);
+}
+
+.sbdocs tbody tr:hover {
+  background-color: var(--color-body-backgroundSoft5, #fafafa);
+}
+
+/* Dark theme table overrides */
 [data-theme-type="dark"] .sbdocs table {
   border-color: var(--color-body-border, #3a3a3a);
 }
@@ -198,6 +238,16 @@
 [data-theme-type="dark"] .sbdocs th {
   background-color: var(--color-panel-background, #2a2a2a);
   color: var(--color-body-text, #e0e0e0);
+}
+
+[data-theme-type="dark"] .sbdocs td {
+  color: var(--color-body-text, #e0e0e0);
+}
+
+[data-theme-type="dark"] .sbdocs td code,
+[data-theme-type="dark"] .sbdocs th code {
+  background-color: var(--color-panel-backgroundSoft10, #2a2a2a);
+  color: var(--color-primary, #4db8ff);
 }
 
 [data-theme-type="dark"] .sbdocs tbody tr:hover {

@@ -6,7 +6,7 @@
 AIPersonaIndicator is a component that displays which AI persona or assistant is currently active in the conversation. It provides visual indication of the AI's identity, capabilities, and current state through avatars, names, and status indicators.
 
 ### Visual Design Mockups
-- [Default State](./mockups/ai-persona-indicator-default.html)
+- [Default State](./mockups/mock-ai-persona-indicator.html)
 
 ### Key Features
 - AI persona identification with avatar and name

@@ -6,7 +6,7 @@
 ChatMessageGroup is a container component that groups consecutive messages from the same sender to create a more visually cohesive chat experience. It manages the shared avatar, sender name, timestamp, and provides consistent spacing between grouped messages.
 
 ### Visual Design Mockups
-- [Default State](./mockups/chat-message-group-default.html)
+- [Default State](./mockups/mock-chat-message-group.html)
 
 ### Key Features
 - Groups consecutive messages from the same sender

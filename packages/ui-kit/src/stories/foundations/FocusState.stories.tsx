@@ -72,11 +72,14 @@ export const Interactive: StoryObj = {
       <section className="focus-demo-section focus-demo-guidelines">
         <h3>Focus State Guidelines</h3>
         <ul>
-          <li>✅ Use <code>:focus-visible</code> for keyboard-only focus</li>
-          <li>✅ Use 2px internal borders with <code>box-shadow: inset 0 0 0 2px</code></li>
+          <li>✅ <strong>Principle 1:</strong> Always visible when interacting via keyboard</li>
+          <li>✅ <strong>Principle 2:</strong> Prefer focus outlines inside render area to avoid clipping</li>
+          <li>✅ Use <code>:focus-visible</code> for keyboard-only focus (no focus on mouse/touch)</li>
+          <li>✅ Use 2px internal borders with <code>outline-offset: -2px</code> or <code>box-shadow: inset</code></li>
           <li>✅ Keep focus indicators within component boundaries</li>
           <li>✅ Add inner white shadow for contrast on filled buttons</li>
           <li>✅ Maintain 3:1 contrast ratio for focus indicators</li>
+          <li>❌ Don't show focus rectangles on mouse/touch interaction</li>
           <li>❌ Don't use external outlines that can be clipped by overflow</li>
           <li>❌ Don't rely on color alone for focus indication</li>
         </ul>

@@ -75,7 +75,7 @@
   position: absolute;
   inset: 0;
   background: var(--color-body-border);
-  border-radius: 999px;
+  border-radius: var(--radius-round);
   transition: all var(--duration) var(--easing-default);
 }
 
@@ -107,7 +107,7 @@
   top: 2px;
   left: 2px;
   background: var(--color-body-background);
-  border-radius: 50%;
+  border-radius: var(--radius-round);
   transition: transform var(--duration) var(--easing-bounce);
   box-shadow: var(--shadow-small10);
 }

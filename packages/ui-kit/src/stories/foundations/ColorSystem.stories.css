@@ -269,7 +269,7 @@
 }
 
 .notification-info a:hover,
-.notification-info a:focus {
+.notification-info a:focus-visible {
   color: var(--color-noticeInfo-link-hover);
   text-decoration: underline;
 }
@@ -289,7 +289,7 @@
 }
 
 .notification-success a:hover,
-.notification-success a:focus {
+.notification-success a:focus-visible {
   color: var(--color-noticeSuccess-link-hover);
   text-decoration: underline;
 }
@@ -309,7 +309,7 @@
 }
 
 .notification-warning a:hover,
-.notification-warning a:focus {
+.notification-warning a:focus-visible {
   color: var(--color-noticeWarning-link-hover);
   text-decoration: underline;
 }
@@ -329,7 +329,7 @@
 }
 
 .notification-danger a:hover,
-.notification-danger a:focus {
+.notification-danger a:focus-visible {
   color: var(--color-noticeDanger-link-hover);
   text-decoration: underline;
 }
@@ -435,7 +435,7 @@
 }
 
 .example-card a:hover,
-.example-card a:focus {
+.example-card a:focus-visible {
   color: var(--color-body-link-hover);
   text-decoration: underline;
 }
@@ -541,7 +541,7 @@
   border-color: var(--color-body-border-hover);
 }
 
-.form-input:focus {
+.form-input:focus-visible {
   outline: none;
   border-color: var(--color-body-border-focus);
 }
@@ -926,7 +926,7 @@ pre.example-code {
   border-color: var(--color-noticeDanger-border);
 }
 
-.input-error:focus {
+.input-error:focus-visible {
   border-color: var(--color-noticeDanger-border);
   box-shadow: var(--color-input-shadow);
 }
@@ -990,8 +990,8 @@ pre.example-code {
   border-color: var(--color-inputHover-border);
 }
 
-.form-field input:focus,
-.form-field textarea:focus {
+.form-field input:focus-visible,
+.form-field textarea:focus-visible {
   outline: none;
   background: var(--color-input-background-focus);
   border-color: var(--color-inputFocus-border);
@@ -1003,7 +1003,7 @@ pre.example-code {
   border-color: var(--color-noticeDanger-border);
 }
 
-.form-field.error input:focus {
+.form-field.error input:focus-visible {
   border-color: var(--color-noticeDanger-border);
   box-shadow: var(--color-input-shadow);
 }
@@ -1645,7 +1645,7 @@ pre.example-code {
 }
 
 .body-content-showcase a:hover,
-.body-content-showcase a:focus {
+.body-content-showcase a:focus-visible {
   color: var(--color-body-link-hover);
   text-decoration: underline;
 }

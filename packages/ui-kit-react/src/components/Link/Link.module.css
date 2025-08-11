@@ -102,7 +102,7 @@
   /* 2px internal focus border with padding for inline element */
   outline: 2px solid var(--color-body-outline);
   outline-offset: -2px;
-  border-radius: var(--radius-small20);
+  border-radius: var(--radius-slight);
   /* Add small padding to ensure focus ring is visible */
   padding: 2px 4px;
   margin: -2px -4px;

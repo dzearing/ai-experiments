@@ -16,7 +16,7 @@
 /* Pulse */
 .pulse {
   background: currentColor;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-round);
   animation: pulseScale 1.2s ease-in-out infinite;
 }
 

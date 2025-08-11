@@ -159,7 +159,7 @@
   background: currentColor;
   color: var(--color-background);
   border: 1px solid transparent;
-  border-radius: var(--radius-small10);
+  border-radius: var(--radius-interactive);
   font-size: var(--font-size-small10);
   font-weight: var(--font-weight-medium);
   cursor: pointer;

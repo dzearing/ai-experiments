@@ -203,7 +203,7 @@ export const BorderRadius: Story = {
         />
         <BorderToken 
           name="Full" 
-          cssVar="--radius-full" 
+          cssVar="--radius-round" 
           description="Fully rounded (9999px)"
           type="radius"
         />
@@ -214,18 +214,18 @@ export const BorderRadius: Story = {
         <div className="component-radius-grid">
           <div className="radius-example">
             <button className="example-button">Button</button>
-            <code>--radius-button</code>
+            <code>--radius-interactive</code>
           </div>
           <div className="radius-example">
             <input className="example-input" placeholder="Input field" />
-            <code>--radius-input</code>
+            <code>--radius-interactive</code>
           </div>
           <div className="radius-example">
             <div className="example-card">
               <h5>Card</h5>
               <p>Card content</p>
             </div>
-            <code>--radius-card</code>
+            <code>--radius-container</code>
           </div>
           <div className="radius-example">
             <div className="example-modal">Modal Dialog</div>

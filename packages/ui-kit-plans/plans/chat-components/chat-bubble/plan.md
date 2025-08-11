@@ -6,7 +6,7 @@
 A versatile message bubble component for displaying chat messages with support for different senders (user, AI, system), rich content types (text, code, images), timestamps, and interaction states. Forms the core visual element of chat interfaces.
 
 ### Visual Design Mockups
-- [Default State](./mockups/chat-bubble-default.html)
+- [Default State](./mockups/mock-chat-bubble.html)
 - [Interactive States](./mockups/chat-bubble-interactive.html)
 - [Content Types](./mockups/chat-bubble-content-types.html)
 - [Dark Mode](./mockups/chat-bubble-dark.html)

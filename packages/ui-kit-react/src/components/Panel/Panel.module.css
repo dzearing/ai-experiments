@@ -1,6 +1,6 @@
 .root {
   background: var(--color-panel-background);
-  border-radius: var(--radius-large10);
+  border-radius: var(--radius-container);
   overflow: hidden;
 }
 
@@ -27,7 +27,7 @@
   padding: 0;
   background: transparent;
   border: none;
-  border-radius: var(--radius-small10);
+  border-radius: var(--radius-small);
   cursor: pointer;
   transition: all var(--duration) var(--easing-default);
   flex-shrink: 0;

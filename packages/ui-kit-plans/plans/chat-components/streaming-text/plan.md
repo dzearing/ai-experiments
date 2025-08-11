@@ -6,7 +6,7 @@
 StreamingText is a component that displays text content as it streams in real-time, creating a typewriter-like effect for AI responses. It handles cursor blinking, smooth character rendering, and provides visual feedback during streaming states.
 
 ### Visual Design Mockups
-- [Default State](./mockups/streaming-text-default.html)
+- [Default State](./mockups/mock-streaming-text.html)
 
 ### Key Features
 - Real-time character-by-character text streaming

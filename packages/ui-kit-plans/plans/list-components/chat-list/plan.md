@@ -6,7 +6,7 @@
 A high-performance virtualized chat list component that efficiently renders thousands of messages with dynamic heights, smooth animations, and bottom-anchored scrolling behavior typical of chat applications.
 
 ### Visual Design Mockups
-- [Default Chat View](./mockups/chat-list-default.html)
+- [Default Chat View](./mockups/mock-chat-list.html)
 - [Message States](./mockups/chat-list-states.html)
 - [Animations Demo](./mockups/chat-list-animations.html)
 - [Mobile View](./mockups/chat-list-mobile.html)

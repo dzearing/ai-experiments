@@ -124,7 +124,7 @@
 
 .interactive-card {
   background: var(--color-surface-primary);
-  border-radius: var(--radius-card);
+  border-radius: var(--radius-container);
   padding: var(--spacing-xl);
   box-shadow: var(--shadow-card);
   transition: all var(--transition-medium);
@@ -206,7 +206,7 @@
   background: var(--color-primary);
   color: var(--color-primary-contrast);
   border: none;
-  border-radius: var(--radius-button);
+  border-radius: var(--radius-interactive);
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-medium);
   box-shadow: var(--shadow-button);
@@ -226,7 +226,7 @@
 
 .elevation-card {
   background: var(--color-surface-primary);
-  border-radius: var(--radius-card);
+  border-radius: var(--radius-container);
   padding: var(--spacing-lg);
   box-shadow: var(--shadow-card);
   transition: all var(--transition-medium);
@@ -254,7 +254,7 @@
 .elevation-fab {
   width: 56px;
   height: 56px;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-round);
   background: var(--color-primary);
   color: var(--color-primary-contrast);
   display: flex;
@@ -309,7 +309,7 @@
   background: var(--color-primary);
   color: var(--color-primary-contrast);
   border: none;
-  border-radius: var(--radius-button);
+  border-radius: var(--radius-interactive);
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-medium);
   box-shadow: var(--shadow-button);
@@ -323,7 +323,7 @@
 
 .shadow-example-card {
   background: var(--color-surface-primary);
-  border-radius: var(--radius-card);
+  border-radius: var(--radius-container);
   padding: var(--spacing-lg);
   box-shadow: var(--shadow-card);
 }
@@ -433,18 +433,13 @@
   cursor: pointer;
 }
 
-.focus-button:focus,
-.focus-input:focus {
+.focus-button:focus-visible,
+.focus-input:focus-visible {
   outline: none;
   box-shadow: var(--shadow-focus);
   border-color: var(--color-primary);
 }
 
-.focus-button:focus-visible,
-.focus-input:focus-visible {
-  outline: none;
-  box-shadow: var(--shadow-focus);
-}
 
 .focus-states-grid {
   display: grid;
@@ -472,7 +467,7 @@
 .button-focused-visible {
   padding: var(--spacing-sm) var(--spacing-lg);
   border: var(--border-width-thin) solid var(--color-border);
-  border-radius: var(--radius-button);
+  border-radius: var(--radius-interactive);
   background: var(--color-surface-primary);
   color: var(--color-body-text);
   font-size: var(--font-size-md);

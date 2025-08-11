@@ -145,7 +145,7 @@ async function buildTokenMetadata() {
         types: ['width', 'radius'],
         scales: {
           width: ['(default)', 'thinnest', 'thick10', 'thickest', 'default', 'focus', 'divider'],
-          radius: ['(default)', 'none', 'smallest', 'small10', 'large10', 'large20', 'large30', 'full', 'button', 'input', 'card', 'badge', 'chip', 'avatar', 'image']
+          radius: ['slight', 'small', 'medium', 'large', 'xlarge', 'round', 'interactive', 'floating', 'container', 'modal']
         }
       },
       animation: {

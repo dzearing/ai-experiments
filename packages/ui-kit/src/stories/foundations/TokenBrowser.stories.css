@@ -50,7 +50,7 @@
   background: var(--color-body-background);
   color: var(--color-body-text);
   border: 1px solid var(--color-body-border);
-  border-radius: var(--radius-small10);
+  border-radius: var(--radius-small);
   cursor: pointer;
   transition: all 0.2s;
   appearance: none;
@@ -67,7 +67,7 @@
   box-shadow: 0 2px 4px var(--color-body-shadow);
 }
 
-.domain-dropdown:focus {
+.domain-dropdown:focus-visible {
   outline: none;
   border-color: var(--color-buttonPrimary-background);
   box-shadow: 0 0 0 3px var(--color-buttonPrimary-background);
@@ -102,7 +102,6 @@
 
 .selection-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   gap: 1rem;
   padding: 1rem 1.5rem;
@@ -110,6 +109,14 @@
   border-radius: 8px 8px 0 0;
   border-bottom: 1px solid var(--color-body-border);
   flex-shrink: 0;
+}
+
+.token-info {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
 }
 
 .selected-token-name {
@@ -120,10 +127,16 @@
   background: var(--color-body-backgroundSoft10);
   padding: 0.375rem 0.75rem;
   border-radius: 4px;
-  word-break: break-word;
-  overflow-wrap: break-word;
-  flex-shrink: 1;
-  min-width: 0;
+  flex-shrink: 0;
+}
+
+.token-description {
+  font-size: 0.875rem;
+  color: var(--color-body-textSoft20);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
 }
 
 /* Browser Table */
@@ -747,7 +760,7 @@
   width: 100%;
   max-width: 400px;
   height: 200px;
-  border-radius: var(--radius);
+  border-radius: var(--radius-medium);
   border: 1px solid var(--color-body-border);
   display: flex;
   align-items: center;

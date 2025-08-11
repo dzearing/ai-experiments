@@ -8,11 +8,11 @@ Focus indicators are critical for keyboard navigation and accessibility. They sh
 
 ## Principles
 
-### 1. Always Visible
-Focus indicators must be clearly visible against any background. Never remove focus indicators with `outline: none` without providing an alternative.
+### 1. Always Visible When Interacting via Keyboard
+Focus indicators must be clearly visible when users navigate with keyboard (Tab, Shift+Tab, arrow keys), but should NOT appear during mouse or touch interactions. Use `:focus-visible` to achieve keyboard-only focus.
 
-### 2. Consistent Behavior
-Focus indicators should behave consistently across all interactive elements in your application.
+### 2. Prefer Focus Outlines Inside Render Area
+Focus indicators should be rendered within the component's boundaries to prevent clipping by parent containers with `overflow: hidden`. Use negative `outline-offset` or `box-shadow: inset` for internal borders.
 
 ### 3. WCAG Compliance
 Focus indicators must meet WCAG 2.1 Level AA requirements:
@@ -22,25 +22,25 @@ Focus indicators must meet WCAG 2.1 Level AA requirements:
 
 ## Implementation Patterns
 
-### Standard Focus Ring
+### Standard Focus Ring (Internal)
 
-Most interactive elements should use the standard focus ring approach:
+Most interactive elements should use an internal focus ring to avoid clipping:
 
 ```css
 .button:focus-visible {
   outline: 2px solid var(--color-[surface]-outline);
-  outline-offset: 2px;
+  outline-offset: -2px; /* Internal to avoid clipping */
 }
 ```
 
 ### Integrated Focus Style
 
-For elements where an outline would disrupt the design, use an integrated approach:
+For form inputs and elements where an outline would disrupt the design, use an integrated approach:
 
 ```css
-.input:focus {
+.input:focus-visible {
   border-color: var(--color-[surface]-outline);
-  box-shadow: 0 0 0 3px var(--color-[surface]-outline-soft20);
+  box-shadow: inset 0 0 0 2px var(--color-[surface]-outline);
 }
 ```
 
@@ -51,8 +51,8 @@ For elements that need extra emphasis or in high-contrast themes:
 ```css
 .critical-action:focus-visible {
   outline: 3px solid var(--color-[surface]-outline);
-  outline-offset: 2px;
-  box-shadow: 0 0 0 5px var(--color-[surface]-outline-soft20);
+  outline-offset: -3px; /* Thicker internal border */
+  box-shadow: inset 0 0 0 1px var(--color-[surface]-background);
 }
 ```
 
@@ -86,12 +86,12 @@ For consistent focus styling across themes:
 }
 ```
 
-✅ **Maintain adequate spacing** with outline-offset
+✅ **Use internal focus borders** to prevent clipping
 ```css
-/* Good - Provides breathing room */
+/* Good - Internal border won't be clipped */
 .card:focus-visible {
   outline: 2px solid var(--color-panel-outline);
-  outline-offset: 2px;
+  outline-offset: -2px;
 }
 ```
 
@@ -135,16 +135,15 @@ For consistent focus styling across themes:
 ```css
 .button:focus-visible {
   outline: 2px solid var(--color-body-outline);
-  outline-offset: 2px;
+  outline-offset: -2px; /* Internal to avoid clipping */
 }
 ```
 
 ### Form Inputs
 ```css
-.input:focus {
-  border-color: var(--color-input-outline);
-  box-shadow: 0 0 0 3px var(--color-input-outline-soft20);
-  outline: none; /* Border provides focus indication */
+.input:focus-visible {
+  outline: 2px solid var(--color-input-outline);
+  outline-offset: -2px; /* Internal focus border */
 }
 ```
 
@@ -152,7 +151,7 @@ For consistent focus styling across themes:
 ```css
 .link:focus-visible {
   outline: 2px solid var(--color-body-outline);
-  outline-offset: 2px;
+  outline-offset: -2px; /* Internal to stay within bounds */
   border-radius: 2px; /* Rounds the focus ring */
 }
 ```

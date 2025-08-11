@@ -6,7 +6,7 @@
 TypingIndicator is a visual component that displays an animated indication when someone is typing in a chat conversation. It features customizable dot animations, timing patterns, and supports multiple typing states for different user types.
 
 ### Visual Design Mockups
-- [Default State](./mockups/typing-indicator-default.html)
+- [Default State](./mockups/mock-typing-indicator.html)
 
 ### Key Features
 - Animated typing dots with customizable patterns

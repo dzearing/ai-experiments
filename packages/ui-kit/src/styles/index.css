@@ -47,8 +47,8 @@
     border: 0;
   }
 
-  /* Focus Visible */
-  .focus-visible:focus {
+  /* Focus Visible - Only show focus for keyboard navigation */
+  .focus-visible:focus-visible {
     outline: var(--focus-ring-width) solid var(--focus-ring-color);
     outline-offset: var(--focus-ring-offset);
   }

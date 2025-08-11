@@ -8,15 +8,15 @@
 .text {
   height: 1em;
   margin: 0.125em 0;
-  border-radius: var(--radius-small10);
+  border-radius: var(--radius-small);
 }
 
 .rectangular {
-  border-radius: var(--radius-medium10);
+  border-radius: var(--radius-container);
 }
 
 .circular {
-  border-radius: 50%;
+  border-radius: var(--radius-round);
 }
 
 /* Animations */

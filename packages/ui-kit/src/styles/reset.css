@@ -56,7 +56,7 @@ a:not([class]) {
 
 /* Show underline on hover and focus */
 a:not([class]):hover,
-a:not([class]):focus {
+a:not([class]):focus-visible {
   text-decoration: underline;
 }
 

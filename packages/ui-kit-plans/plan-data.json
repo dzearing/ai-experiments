@@ -1,0 +1,166 @@
+{
+  "categories": {
+    "Chat Components": [
+      {
+        "name": "AI Persona Indicator",
+        "folder": "ai-persona-indicator",
+        "plans": ["plan.md"],
+        "mockups": ["mockups/mock-ai-persona-indicator.html"]
+      },
+      {
+        "name": "Chat Bubble",
+        "folder": "chat-bubble",
+        "plans": ["plan.md"],
+        "mockups": ["mockups/mock-chat-bubble.html"]
+      },
+      {
+        "name": "Chat Error Boundary",
+        "folder": "chat-error-boundary",
+        "plans": ["plan.md"],
+        "mockups": []
+      },
+      {
+        "name": "Chat Message Group",
+        "folder": "chat-message-group",
+        "plans": ["plan.md"],
+        "mockups": ["mockups/mock-chat-message-group.html"]
+      },
+      {
+        "name": "Chat Split Fork",
+        "folder": "chat-split-fork",
+        "plans": ["plan.md"],
+        "mockups": ["mockups/mock-chat-split-fork.html"]
+      },
+      {
+        "name": "Chat Summary Card",
+        "folder": "chat-summary-card",
+        "plans": ["plan.md"],
+        "mockups": []
+      },
+      {
+        "name": "Code Diff Visualizer",
+        "folder": "code-diff-visualizer",
+        "plans": ["plan.md"],
+        "mockups": ["mockups/mock-code-diff-visualizer.html"]
+      },
+      {
+        "name": "Code Graph Visualizer",
+        "folder": "code-graph-visualizer",
+        "plans": ["plan.md"],
+        "mockups": []
+      },
+      {
+        "name": "Conversation List",
+        "folder": "conversation-list",
+        "plans": ["plan.md"],
+        "mockups": []
+      },
+      {
+        "name": "File Attachment",
+        "folder": "file-attachment",
+        "plans": ["plan.md"],
+        "mockups": ["mockups/mock-file-attachment.html"]
+      },
+      {
+        "name": "File Tree Visualizer",
+        "folder": "file-tree-visualizer",
+        "plans": ["plan.md"],
+        "mockups": ["mockups/mock-file-tree-visualizer.html"]
+      },
+      {
+        "name": "Image Paste Handler",
+        "folder": "image-paste-handler",
+        "plans": ["plan.md"],
+        "mockups": []
+      },
+      {
+        "name": "Mention Autocomplete",
+        "folder": "mention-autocomplete",
+        "plans": ["plan.md"],
+        "mockups": []
+      },
+      {
+        "name": "Multi Chat Dashboard",
+        "folder": "multi-chat-dashboard",
+        "plans": ["plan.md"],
+        "mockups": ["mockups/mock-multi-chat-dashboard.html"]
+      },
+      {
+        "name": "Prompt History",
+        "folder": "prompt-history",
+        "plans": ["plan.md"],
+        "mockups": []
+      },
+      {
+        "name": "Search Results Visualizer",
+        "folder": "search-results-visualizer",
+        "plans": ["plan.md"],
+        "mockups": ["mockups/mock-search-results-visualizer.html"]
+      },
+      {
+        "name": "Smart Prompt Input",
+        "folder": "smart-prompt-input",
+        "plans": ["plan.md"],
+        "mockups": ["mockups/mock-smart-prompt-input.html"]
+      },
+      {
+        "name": "Streaming Text",
+        "folder": "streaming-text",
+        "plans": ["plan.md"],
+        "mockups": ["mockups/mock-streaming-text.html"]
+      },
+      {
+        "name": "Text Paste Handler",
+        "folder": "text-paste-handler",
+        "plans": ["plan.md"],
+        "mockups": []
+      },
+      {
+        "name": "Tool Execution Container",
+        "folder": "tool-execution-container",
+        "plans": ["plan.md"],
+        "mockups": ["mockups/mock-tool-execution-container.html", "mockups/mock-tool-execution-container-default.html"]
+      },
+      {
+        "name": "Typing Indicator",
+        "folder": "typing-indicator",
+        "plans": ["plan.md"],
+        "mockups": ["mockups/mock-typing-indicator.html"]
+      }
+    ],
+    "List Components": [
+      {
+        "name": "Chat List",
+        "folder": "chat-list",
+        "plans": ["plan.md"],
+        "mockups": ["mockups/mock-chat-list.html"]
+      },
+      {
+        "name": "Virtualized List",
+        "folder": "virtualized-list",
+        "plans": ["plan.md"],
+        "mockups": []
+      },
+      {
+        "name": "Tree View",
+        "folder": "tree-view",
+        "plans": ["mockup-plan.md"],
+        "mockups": []
+      }
+    ],
+    "Form Components": [
+      {
+        "name": "Segmented Control",
+        "folder": "segmented-control",
+        "plans": [],
+        "mockups": [
+          "mockups/mock-segmented-control-default.html",
+          "mockups/mock-segmented-control-dark.html",
+          "mockups/mock-segmented-control-interactive.html",
+          "mockups/mock-segmented-control-responsive.html",
+          "mockups/mock-segmented-control-variants.html"
+        ]
+      }
+    ]
+  }
+}

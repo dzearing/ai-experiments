@@ -12,7 +12,7 @@
   cursor: pointer;
   user-select: none;
   border: 1px solid transparent;
-  border-radius: var(--radius-button);
+  border-radius: var(--radius-interactive);
   outline: none;
   transition: 
     background-color var(--duration-fast) var(--easing-default),
@@ -231,7 +231,7 @@
 }
 
 .pill {
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-round);
   padding-left: var(--spacing-large20);
   padding-right: var(--spacing-large20);
 }

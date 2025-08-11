@@ -16,24 +16,19 @@
   --border-width-focus: var(--border-width);
   --border-width-divider: var(--border-width-thinnest);
 
-  /* Border Radius (Corners) */
-  --radius-none: 0;
-  --radius-smallest: 2px;
-  --radius-small10: 4px;
-  --radius: 8px;
-  --radius-large10: 12px;
-  --radius-large20: 16px;
-  --radius-large30: 24px;
-  --radius-full: 9999px;
+  /* Core Radius Values */
+  --radius-slight: 2px;
+  --radius-small: 4px;
+  --radius-medium: 8px;
+  --radius-large: 12px;
+  --radius-xlarge: 16px;
+  --radius-round: 9999px;
 
-  /* Component-specific Radius */
-  --radius-button: var(--radius-small10);
-  --radius-input: var(--radius-small10);
-  --radius-card: var(--radius);
-  --radius-badge: var(--radius-full);
-  --radius-chip: var(--radius-full);
-  --radius-avatar: var(--radius-full);
-  --radius-image: var(--radius-small10);
+  /* Semantic Radius Aliases */
+  --radius-interactive: var(--radius-small); /* Buttons, inputs, selects, chips */
+  --radius-floating: var(--radius-small);    /* Tooltips, popovers, context menus */
+  --radius-container: var(--radius-medium);  /* Cards, panels, list items */
+  --radius-modal: var(--radius-large);       /* Dialogs, sheets, modals */
 
   /* Outline Widths */
   --outline-width-thin: 1px;

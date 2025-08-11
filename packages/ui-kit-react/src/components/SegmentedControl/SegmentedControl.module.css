@@ -5,7 +5,7 @@
   padding: 4px;
   background: var(--color-panel-backgroundSoft10);
   border: 1px solid var(--color-panel-border);
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-round);
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
   transition: opacity var(--duration-fast10) var(--easing-default);
   overflow: hidden;
@@ -29,7 +29,7 @@
   font-size: var(--font-size);
   font-weight: var(--font-weight-medium);
   cursor: pointer;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-round);
   white-space: nowrap;
   display: flex;
   align-items: center;
@@ -83,7 +83,7 @@
   bottom: 0;
   left: 0;
   background: var(--color-primary-background);
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-round);
   transition: transform var(--duration-fast10) var(--easing-default), 
               width var(--duration-fast10) var(--easing-default);
   box-shadow: var(--shadow-button);
@@ -189,17 +189,17 @@
   background: var(--color-panel-backgroundSoft10);
   border: none;
   padding: 4px;
-  border-radius: var(--radius-large10);
+  border-radius: var(--radius-container);
   box-shadow: var(--shadow-inner);
 }
 
 .variant-square .option {
-  border-radius: var(--radius);
+  border-radius: var(--radius-interactive);
   padding: calc(var(--spacing-buttonY) - 4px) var(--spacing-buttonX);
 }
 
 .variant-square .indicator {
-  border-radius: var(--radius);
+  border-radius: var(--radius-interactive);
   top: 0;
   bottom: 0;
   left: 0;
@@ -235,7 +235,7 @@
   bottom: -2px;
   top: auto;
   left: 0;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-round);
   box-shadow: none;
 }
 

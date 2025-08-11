@@ -46,7 +46,7 @@ const getThemeCardStyles = () => `
       var(--gradient-body-primary),
       var(--color-panel-background);
     border: 2px solid var(--color-panel-border);
-    border-radius: var(--radius);
+    border-radius: var(--radius-container);
     padding: var(--spacing-large20);
     transition: background var(--duration-normal) var(--easing-default),
                 border-color var(--duration-normal) var(--easing-default),
@@ -76,7 +76,7 @@ const getThemeCardStyles = () => `
     background: var(--color-primary-background);
     color: var(--color-primary-text);
     padding: 0 var(--spacing);
-    border-radius: 0 0 0 var(--radius);
+    border-radius: 0 0 0 var(--radius-medium);
     font-size: var(--font-size-smallest);
     font-weight: var(--font-weight-medium);
     text-transform: uppercase;
@@ -163,7 +163,7 @@ const getThemeCardStyles = () => `
   .theme-preview {
     background: var(--color-body-background);
     border: 1px solid var(--color-body-border);
-    border-radius: var(--radius-small10);
+    border-radius: var(--radius-container);
     padding: var(--spacing);
   }
   
@@ -185,7 +185,7 @@ const getThemeCardStyles = () => `
     height: 36px;
     padding: 0 var(--spacing);
     border: none;
-    border-radius: var(--radius-small10);
+    border-radius: var(--radius-interactive);
     font-size: var(--font-size-small10);
     cursor: pointer;
     transition: background-color var(--duration-normal) var(--easing-default),
@@ -259,7 +259,7 @@ const getThemeCardStyles = () => `
   .preview-surface {
     background: var(--color-panel-background);
     border: 1px solid var(--color-panel-border);
-    border-radius: var(--radius-small10);
+    border-radius: var(--radius-container);
     padding: var(--spacing-small10);
     font-size: var(--font-size-small20);
     color: var(--color-panel-text);
@@ -284,7 +284,7 @@ const getThemeCardStyles = () => `
     background: var(--color-input-background);
     color: var(--color-input-text);
     border: 1px solid var(--color-input-border);
-    border-radius: var(--radius-small10);
+    border-radius: var(--radius-interactive);
     font-size: var(--font-size-small10);
     transition: background-color var(--duration-normal) var(--easing-default),
                 border-color var(--duration-normal) var(--easing-default),

@@ -6,7 +6,7 @@
 FileAttachment is a component that displays uploaded files within chat messages, providing preview, download, and management capabilities. It supports various file types with appropriate icons, thumbnails, and metadata display.
 
 ### Visual Design Mockups
-- [Default State](./mockups/file-attachment-default.html)
+- [Default State](./mockups/mock-file-attachment.html)
 
 ### Key Features
 - File type detection and appropriate icon display

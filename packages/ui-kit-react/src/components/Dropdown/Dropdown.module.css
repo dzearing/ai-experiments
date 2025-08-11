@@ -36,7 +36,7 @@
   gap: var(--spacing-small5);
   background: var(--color-input-background);
   border: 1px solid var(--color-input-border);
-  border-radius: var(--radius-input);
+  border-radius: var(--radius-interactive);
   font-family: inherit;
   font-size: var(--font-size-normal);
   line-height: var(--line-height-normal);
@@ -135,7 +135,7 @@
   overflow-y: auto;
   background: var(--color-panel-background);
   border: 1px solid var(--color-panel-border);
-  border-radius: var(--radius-medium10);
+  border-radius: var(--radius-container);
   box-shadow: var(--shadow-large10);
   z-index: 1000;
   animation: slideDown var(--duration) var(--easing-bounce);

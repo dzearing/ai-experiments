@@ -26,7 +26,7 @@
   height: 20px;
   background: var(--color-input-background);
   border: 2px solid var(--color-input-border);
-  border-radius: var(--radius-small10);
+  border-radius: var(--radius-slight);
   transition: all var(--duration) var(--easing-default);
 }
 
@@ -79,7 +79,7 @@
   width: 10px;
   height: 2px;
   background: var(--color-primary-text);
-  border-radius: 1px;
+  border-radius: var(--radius-slight);
   opacity: 0;
   transform: scale(0);
   transition: all var(--duration) var(--easing-default);

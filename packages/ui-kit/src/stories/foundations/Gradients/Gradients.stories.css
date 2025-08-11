@@ -47,7 +47,7 @@
 .gradient-card {
   background: var(--color-panel-background);
   border: 1px solid var(--color-panel-border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-medium);
   overflow: hidden;
   transition: transform var(--duration-normal), box-shadow var(--duration-normal);
 }
@@ -123,7 +123,7 @@
 
 .example-card {
   padding: var(--spacing-large10);
-  border-radius: var(--radius);
+  border-radius: var(--radius-medium);
   border: 1px solid var(--color-body-border);
   transition: transform var(--duration-normal), box-shadow var(--duration-normal);
 }
@@ -222,7 +222,7 @@
   background: var(--color-primary-background);
   color: var(--color-primary-text);
   border: none;
-  border-radius: var(--radius-button);
+  border-radius: var(--radius-interactive);
   font-size: var(--font-size);
   font-weight: var(--font-weight-medium);
   cursor: pointer;
@@ -239,7 +239,7 @@
   background: var(--gradient-body-accent), var(--color-primary-background);
   color: var(--color-primary-text);
   border: none;
-  border-radius: var(--radius-button);
+  border-radius: var(--radius-interactive);
   font-size: var(--font-size);
   font-weight: var(--font-weight-medium);
   cursor: pointer;
@@ -271,7 +271,7 @@
 .code-block {
   background: var(--color-codeBlock-background);
   border: 1px solid var(--color-codeBlock-border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-medium);
   padding: var(--spacing);
 }
 
@@ -286,7 +286,7 @@
   margin: 0;
   padding: var(--spacing);
   background: var(--color-body-background);
-  border-radius: var(--radius-small10);
+  border-radius: var(--radius-small);
   font-family: var(--font-family-mono);
   font-size: var(--font-size-small10);
   line-height: var(--line-height-relaxed);
@@ -315,7 +315,7 @@
   padding: var(--spacing);
   background: var(--color-infoSoft-background);
   border: 1px solid var(--color-infoSoft-border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-medium);
   border-left: 4px solid var(--color-info-background);
 }
 
@@ -362,7 +362,7 @@
 
 .interactive-card {
   padding: var(--spacing-large20);
-  border-radius: var(--radius);
+  border-radius: var(--radius-medium);
   border: 1px solid var(--color-body-border);
   text-align: center;
   cursor: pointer;

@@ -115,7 +115,7 @@
     .component-item {
       background: var(--color-panelRaised-background);
       border: var(--border-width) solid var(--color-panelRaised-border);
-      border-radius: var(--radius-small10);
+      border-radius: var(--radius-small);
       padding: var(--spacing-small20) var(--spacing-small10);
       transition: background var(--duration-fast) var(--easing-standard);
       display: flex;
@@ -209,7 +209,7 @@
       padding: var(--spacing-small20) var(--spacing-small10);
       background: var(--color-neutral-background);
       border: var(--border-width) solid var(--color-neutral-border);
-      border-radius: var(--radius-small10);
+      border-radius: var(--radius-small);
       color: var(--color-neutral-text);
       font-size: var(--font-size-small10);
       font-weight: var(--font-weight-medium);
@@ -248,171 +248,29 @@
   </div>
 
   <script>
-    // Component data structure with new folder organization
-    const components = {
-      'Chat Components': [
-        {
-          name: 'AI Persona Indicator',
-          folder: 'ai-persona-indicator',
-          plans: ['plan.md'],
-          mockups: ['mockup.html']
-        },
-        {
-          name: 'Chat Bubble',
-          folder: 'chat-bubble',
-          plans: ['plan.md'],
-          mockups: ['mockup.html']
-        },
-        {
-          name: 'Chat Error Boundary',
-          folder: 'chat-error-boundary',
-          plans: ['plan.md'],
-          mockups: []
-        },
-        {
-          name: 'Chat Message Group',
-          folder: 'chat-message-group',
-          plans: ['plan.md'],
-          mockups: ['mockup.html']
-        },
-        {
-          name: 'Chat Split Fork',
-          folder: 'chat-split-fork',
-          plans: ['plan.md'],
-          mockups: ['mockup.html']
-        },
-        {
-          name: 'Chat Summary Card',
-          folder: 'chat-summary-card',
-          plans: ['plan.md'],
-          mockups: []
-        },
-        {
-          name: 'Code Diff Visualizer',
-          folder: 'code-diff-visualizer',
-          plans: ['plan.md'],
-          mockups: ['mockup.html']
-        },
-        {
-          name: 'Code Graph Visualizer',
-          folder: 'code-graph-visualizer',
-          plans: ['plan.md'],
-          mockups: []
-        },
-        {
-          name: 'Conversation List',
-          folder: 'conversation-list',
-          plans: ['plan.md'],
-          mockups: []
-        },
-        {
-          name: 'File Attachment',
-          folder: 'file-attachment',
-          plans: ['plan.md'],
-          mockups: ['mockup.html']
-        },
-        {
-          name: 'File Tree Visualizer',
-          folder: 'file-tree-visualizer',
-          plans: ['plan.md'],
-          mockups: ['mockup.html']
-        },
-        {
-          name: 'Image Paste Handler',
-          folder: 'image-paste-handler',
-          plans: ['plan.md'],
-          mockups: []
-        },
-        {
-          name: 'Mention Autocomplete',
-          folder: 'mention-autocomplete',
-          plans: ['plan.md'],
-          mockups: []
-        },
-        {
-          name: 'Multi Chat Dashboard',
-          folder: 'multi-chat-dashboard',
-          plans: ['plan.md'],
-          mockups: ['mockup.html']
-        },
-        {
-          name: 'Prompt History',
-          folder: 'prompt-history',
-          plans: ['plan.md'],
-          mockups: []
-        },
-        {
-          name: 'Search Results Visualizer',
-          folder: 'search-results-visualizer',
-          plans: ['plan.md'],
-          mockups: ['mockup.html']
-        },
-        {
-          name: 'Smart Prompt Input',
-          folder: 'smart-prompt-input',
-          plans: ['plan.md'],
-          mockups: ['mockup.html']
-        },
-        {
-          name: 'Streaming Text',
-          folder: 'streaming-text',
-          plans: ['plan.md'],
-          mockups: ['mockup.html']
-        },
-        {
-          name: 'Text Paste Handler',
-          folder: 'text-paste-handler',
-          plans: ['plan.md'],
-          mockups: []
-        },
-        {
-          name: 'Tool Execution Container',
-          folder: 'tool-execution-container',
-          plans: ['plan.md'],
-          mockups: ['mockup.html', 'mockup-default.html']
-        },
-        {
-          name: 'Typing Indicator',
-          folder: 'typing-indicator',
-          plans: ['plan.md'],
-          mockups: ['mockup.html']
+    // Global variable to hold components data
+    let components = {};
+
+    // Load components data from JSON file
+    async function loadComponentsData() {
+      try {
+        const response = await fetch('./plan-data.json');
+        if (!response.ok) {
+          throw new Error(`Failed to load plan-data.json: ${response.status}`);
         }
-      ],
-      'List Components': [
-        {
-          name: 'Chat List',
-          folder: 'chat-list',
-          plans: ['plan.md'],
-          mockups: ['mockup.html']
-        },
-        {
-          name: 'Virtualized List',
-          folder: 'virtualized-list',
-          plans: ['plan.md'],
-          mockups: []
-        },
-        {
-          name: 'Tree View',
-          folder: 'tree-view',
-          plans: ['mockup-plan.md'],
-          mockups: []
-        }
-      ],
-      'Form Components': [
-        {
-          name: 'Segmented Control',
-          folder: 'segmented-control',
-          plans: [],
-          mockups: [
-            'mockup-default.html',
-            'mockup-dark.html',
-            'mockup-interactive.html',
-            'mockup-responsive.html',
-            'mockup-variants.html'
-          ]
-        }
-      ]
-    };
+        const data = await response.json();
+        components = data.categories || {};
+        renderComponents();
+      } catch (error) {
+        console.error('Error loading components data:', error);
+        document.getElementById('content').innerHTML = `
+          <div class="empty-state" style="padding: var(--spacing-large20); text-align: center; color: var(--color-danger-text);">
+            Failed to load components data: ${error.message}<br>
+            Please ensure plan-data.json exists and is valid.
+          </div>
+        `;
+      }
+    }
 
     // Render the component list
     function renderComponents() {
@@ -520,8 +378,8 @@
       this.textContent = allCollapsed ? 'Expand All' : 'Collapse All';
     });
 
-    // Initial render
-    renderComponents();
+    // Initial load and render
+    loadComponentsData();
   </script>
 </body>
 </html>

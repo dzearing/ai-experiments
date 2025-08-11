@@ -10,7 +10,7 @@
   position: relative;
   width: 100%;
   background: var(--color-body-background-soft20);
-  border-radius: 999px;
+  border-radius: var(--radius-round);
   overflow: hidden;
 }
 

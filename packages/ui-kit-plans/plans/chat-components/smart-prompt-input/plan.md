@@ -6,7 +6,7 @@
 A sophisticated multi-line text input component designed for AI chat interfaces, featuring auto-resize, mentions, file attachments, prompt history, and keyboard shortcuts. It provides a rich editing experience optimized for conversational AI interactions.
 
 ### Visual Design Mockups
-- [Default State](./mockups/smart-prompt-input-default.html)
+- [Default State](./mockups/mock-smart-prompt-input.html)
 - [Active with Suggestions](./mockups/smart-prompt-input-active.html)
 - [With Attachments](./mockups/smart-prompt-input-attachments.html)
 - [Mobile Responsive](./mockups/smart-prompt-input-mobile.html)

@@ -1,6 +1,6 @@
 .root {
   background: var(--color-card-background);
-  border-radius: var(--radius-medium10);
+  border-radius: var(--radius-container);
   display: flex;
   flex-direction: column;
   overflow: hidden;

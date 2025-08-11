@@ -153,7 +153,9 @@ const TokenBrowser = () => {
       initialTokens['Scale'] = '(default)';
     } else if (selectedDomain === 'border') {
       initialTokens['Type'] = 'radius';
-      initialTokens['Scale'] = '(default)';
+      // For radius, select the first available scale since there's no (default)
+      const radiusScales = tokenMetadata.border?.scales?.radius || [];
+      initialTokens['Scale'] = radiusScales[0] || 'slight';
     } else if (selectedDomain === 'animation') {
       initialTokens['Type'] = 'duration';
       initialTokens['Scale/Value'] = '(default)';
@@ -176,7 +178,12 @@ const TokenBrowser = () => {
       newTokens['Scale'] = '(default)';
     } else if (selectedDomain === 'border' && categoryName === 'Type') {
       // Reset Scale when Type changes
-      newTokens['Scale'] = '(default)';
+      if (tokenValue === 'radius') {
+        const radiusScales = tokenMetadata.border?.scales?.radius || [];
+        newTokens['Scale'] = radiusScales[0] || 'slight';
+      } else {
+        newTokens['Scale'] = '(default)';
+      }
     } else if (selectedDomain === 'animation' && categoryName === 'Type') {
       // Reset Scale/Value when Type changes
       newTokens['Scale/Value'] = '(default)';
@@ -237,12 +244,13 @@ const TokenBrowser = () => {
       }
     } else if (selectedDomain === 'border') {
       const type = selectedTokens['Type'] || 'radius';
-      const scale = selectedTokens['Scale'] || 'normal';
+      const scale = selectedTokens['Scale'] || 'slight';
       
       if (type === 'width') {
         return scale === '(default)' ? `--border-${type}` : `--border-${type}-${scale}`;
       } else {
-        return scale === '(default)' ? `--radius` : `--radius-${scale}`;
+        // For radius, always include the scale since there's no default
+        return `--radius-${scale}`;
       }
     } else if (selectedDomain === 'animation') {
       const type = selectedTokens['Type'] || 'duration';
@@ -260,6 +268,30 @@ const TokenBrowser = () => {
   };
 
   const tokenName = buildTokenName();
+
+  // Get description for the current token
+  const getTokenDescription = () => {
+    if (selectedDomain === 'border' && selectedTokens['Type'] === 'radius') {
+      const scale = selectedTokens['Scale'] || '(default)';
+      const descriptions: Record<string, string> = {
+        'slight': 'Use for subtle softening where sharp corners feel too harsh',
+        'small': 'Use for interactive elements like buttons and inputs',
+        'medium': 'Use for content containers like cards and panels',
+        'large': 'Use for prominent overlays like modals and dialogs',
+        'xlarge': 'Use for hero sections or large feature cards',
+        'round': 'Use for circular elements and pill-shaped buttons',
+        'interactive': 'Use for any element users can click or type into',
+        'floating': 'Use for elements that appear above other content',
+        'container': 'Use for sections that group related content',
+        'modal': 'Use for full-screen overlays and important dialogs',
+        'pill': 'Use for badges, avatars, and toggle switches'
+      };
+      return descriptions[scale] || '';
+    }
+    return '';
+  };
+
+  const tokenDescription = getTokenDescription();
 
   // Get the computed value for the token
   useEffect(() => {
@@ -619,7 +651,12 @@ const TokenBrowser = () => {
                 ))}
               </select>
             </div>
-            <code className="selected-token-name">{tokenName}</code>
+            <div className="token-info">
+              <code className="selected-token-name">{tokenName}</code>
+              {tokenDescription && (
+                <span className="token-description">{tokenDescription}</span>
+              )}
+            </div>
           </div>
           <table className="browser-table">
             <thead>

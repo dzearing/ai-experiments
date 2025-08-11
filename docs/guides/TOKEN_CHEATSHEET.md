@@ -191,21 +191,67 @@ Gradients provide subtle overlays that maintain accessibility with all surface f
 
 ## 🔄 Border Radius
 
+### Core Radius Values
 ```css
-/* Radius Scale */
---radius-small20       /* 2px */
---radius-small10       /* 4px */
---radius               /* 6px - DEFAULT */
---radius-large10       /* 8px */
---radius-large20       /* 12px */
---radius-large30       /* 16px */
-/* For circles use: 50% or --radius-full */
+/* Base radius scale */
+--radius-slight        /* 2px - Barely visible softening */
+--radius-small         /* 4px - Light rounding */
+--radius-medium        /* 8px - Standard rounding */
+--radius-large         /* 12px - Prominent rounding */
+--radius-xlarge        /* 16px - Extra large rounding */
+--radius-round         /* 9999px - Pills and circles */
+```
 
-/* Component Radius */
---radius-button        /* Button corners */
---radius-input         /* Input field corners */
---radius-card          /* Card corners */
---radius-dialog        /* Dialog corners */
+### Semantic Radius Tokens (Use These!)
+```css
+/* Purpose-based tokens - Use these in your components */
+--radius-interactive   /* 4px - Buttons, inputs, selects, chips */
+--radius-floating      /* 4px - Tooltips, popovers, context menus */
+--radius-container     /* 8px - Cards, panels, list items */
+--radius-modal         /* 12px - Dialogs, sheets, modals */
+```
+
+### Usage Guidelines
+
+**When to use each semantic token:**
+
+- **`--radius-interactive`**: Use for clickable/typeable controls
+  - Buttons (primary, secondary, etc.)
+  - Input fields and textareas
+  - Dropdowns and selects
+  - Chips and tags
+  - Segmented controls
+
+- **`--radius-floating`**: Use for elements that float over content
+  - Tooltips
+  - Popovers
+  - Context menus
+  - Dropdown menus
+
+- **`--radius-container`**: Use for content containers
+  - Cards
+  - Panels
+  - List items
+  - Notification banners
+  - Content sections
+
+- **`--radius-modal`**: Use for major overlays
+  - Modal dialogs
+  - Sheets and drawers
+  - Full-screen overlays
+  - Toast notifications
+
+- **`--radius-round`**: Use for circular/pill shapes (9999px)
+  - Avatar images
+  - Badge indicators
+  - Switch toggles
+  - Progress bars
+  - Pill buttons
+  - Status dots
+
+**For sharp edges (no rounding):**
+- Simply use `0` or omit the border-radius property
+- Appropriate for code blocks, terminals, data tables
 ```
 
 ## 🎬 Animation
