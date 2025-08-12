@@ -5552,30 +5552,8 @@ app.post('/api/feedback/submit', async (req, res) => {
   }
 });
 
-app.listen(PORT, async () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-  console.log(`Log files available in: ${path.join(__dirname, 'logs')}/`);
-  console.log('  - client-messages.log: Client requests and responses');
-  console.log('  - claude-messages.log: Claude API interactions');
-  console.log('  - events.log: High-level system events');
-
-  logger.logEvent('SERVER_READY', `Server listening on port ${PORT}`, {
-    port: PORT,
-    frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
-  });
-
-  // Check Claude availability on startup
-  if (claudeService.isClaudeAvailable) {
-    console.log('Claude Code SDK integrated and ready');
-  } else {
-    console.log('⚠️  Claude CLI not found or not authenticated');
-    console.log('   To use Claude features:');
-    console.log('   1. Install: npm install -g claude-code');
-    console.log('   2. Login: claude login');
-    console.log('   Or use mock mode for testing');
-  }
-
-  // Clean up any orphaned Claude Code reservations on startup
+// Helper function to clean up orphaned reservations
+async function cleanupOrphanedReservations() {
   console.log('Checking for orphaned Claude Code reservations...');
   let workspacePath;
   try {
@@ -5631,6 +5609,42 @@ app.listen(PORT, async () => {
   } catch (err) {
     console.error('Error cleaning up orphaned reservations:', err);
   }
+}
 
-  console.log('Server startup complete');
+const server = app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Log files available in: ${path.join(__dirname, 'logs')}/`);
+  console.log('  - client-messages.log: Client requests and responses');
+  console.log('  - claude-messages.log: Claude API interactions');
+  console.log('  - events.log: High-level system events');
+
+  logger.logEvent('SERVER_READY', `Server listening on port ${PORT}`, {
+    port: PORT,
+    frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
+  });
+
+  // Check Claude availability on startup
+  if (claudeService.isClaudeAvailable) {
+    console.log('Claude Code SDK integrated and ready');
+  } else {
+    console.log('⚠️  Claude CLI not found or not authenticated');
+    console.log('   To use Claude features:');
+    console.log('   1. Install: npm install -g claude-code');
+    console.log('   2. Login: claude login');
+    console.log('   Or use mock mode for testing');
+  }
+
+  // Clean up any orphaned Claude Code reservations on startup
+  cleanupOrphanedReservations().then(() => {
+    console.log('Server startup complete');
+  }).catch((err) => {
+    console.error('Error during cleanup:', err);
+    console.log('Server startup complete with errors');
+  });
+});
+
+// Keep the process alive by holding a reference to the server
+server.on('error', (err) => {
+  console.error('Server error:', err);
+  process.exit(1);
 });
