@@ -319,16 +319,22 @@
             // Add mockup links
             for (const mockup of item.mockups) {
               let mockupLabel;
-              if (mockup === 'mockup.html') {
+              // Extract just the filename from the path
+              const filename = mockup.split('/').pop();
+              
+              if (filename === 'mockup.html') {
                 mockupLabel = 'Mockup';
               } else {
-                // Handle names like 'mockup-default.html', 'mockup-dark.html', etc.
-                mockupLabel = mockup.replace('mockup-', '').replace('.html', '').replace(/-/g, ' ');
-                // Capitalize each word
-                mockupLabel = mockupLabel.split(' ').map(word => 
+                // Remove 'mock-' prefix and '.html' extension, then format
+                let cleanName = filename.replace(/^mock-/, '').replace('.html', '');
+                // Also handle 'mockup-' prefix for consistency
+                cleanName = cleanName.replace(/^mockup-/, '');
+                // Replace hyphens with spaces and capitalize
+                cleanName = cleanName.replace(/-/g, ' ');
+                cleanName = cleanName.split(' ').map(word => 
                   word.charAt(0).toUpperCase() + word.slice(1)
                 ).join(' ');
-                mockupLabel = 'Mockup: ' + mockupLabel;
+                mockupLabel = 'Mockup: ' + cleanName;
               }
               html += `<a href="plans/${categoryKey}/${item.folder}/${mockup}" class="link-badge mockup">🎨 ${mockupLabel}</a>`;
             }

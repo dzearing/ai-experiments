@@ -70,13 +70,61 @@ export function getRequiredContrast(
 }
 
 /**
- * Determine the best adjustment strategy based on background luminance
+ * Determine the best adjustment strategy based on background and foreground luminance
  */
-function determineStrategy(background: Color): 'lighten' | 'darken' {
-  const luminance = getLuminance(background);
+function determineStrategy(background: Color, foreground?: Color): 'lighten' | 'darken' {
+  const bgLuminance = getLuminance(background);
+  
+  // If we have a foreground color, consider both colors
+  if (foreground) {
+    const fgLuminance = getLuminance(foreground);
+    
+    // Calculate potential contrast in both directions
+    // This helps us choose the direction that will achieve better contrast
+    
+    // If foreground is already very light (> 0.9), we can only darken
+    if (fgLuminance > 0.9) {
+      return 'darken';
+    }
+    
+    // If foreground is already very dark (< 0.1), we can only lighten
+    if (fgLuminance < 0.1) {
+      return 'lighten';
+    }
+    
+    // For mid-range colors, choose the direction that moves away from the background
+    // If background is dark, prefer lightening unless foreground is already very light
+    // If background is light, prefer darkening unless foreground is already very dark
+    
+    // Calculate the contrast we'd get by going in each direction
+    const currentContrast = Math.abs(bgLuminance - fgLuminance);
+    
+    // Choose the direction that gives us more room to work with
+    if (bgLuminance < 0.5) {
+      // Dark background - prefer light text
+      // But if the foreground is already light and still doesn't have enough contrast,
+      // we might need to go darker (for mid-tone backgrounds like dark green)
+      if (fgLuminance > 0.7 && currentContrast < 0.3) {
+        // Foreground is light but not enough contrast - try darkening
+        return 'darken';
+      }
+      return 'lighten';
+    } else {
+      // Light background - prefer dark text
+      // But if the foreground is already dark and still doesn't have enough contrast,
+      // we might need to go lighter (for mid-tone backgrounds like beige)
+      if (fgLuminance < 0.3 && currentContrast < 0.3) {
+        // Foreground is dark but not enough contrast - try lightening
+        return 'lighten';
+      }
+      return 'darken';
+    }
+  }
+  
+  // Fallback to simple logic if no foreground provided
   // If background is dark (luminance < 0.5), lighten the foreground
   // If background is light (luminance >= 0.5), darken the foreground
-  return luminance < 0.5 ? 'lighten' : 'darken';
+  return bgLuminance < 0.5 ? 'lighten' : 'darken';
 }
 
 /**
@@ -99,9 +147,9 @@ export function adjustForContrast(
   // Determine adjustment direction
   const adjustmentDirection =
     strategy === 'auto'
-      ? determineStrategy(background)
+      ? determineStrategy(background, foreground)
       : strategy === 'vibrant'
-        ? determineStrategy(background)
+        ? determineStrategy(background, foreground)
         : strategy;
 
   if (strategy === 'vibrant') {
@@ -238,8 +286,40 @@ export function generateTextColor(
     return typeof preferred === 'string' ? preferred : rgbToHex(parseColor(preferred));
   }
 
-  // Try to adjust the preferred color
-  return adjustForContrast(preferred, background, requiredRatio, 'auto');
+  // Try to adjust the preferred color using smart strategy
+  const adjusted = adjustForContrast(preferred, background, requiredRatio, 'auto');
+  
+  // If adjustment worked, use it
+  if (meetsContrast(adjusted, background, level, textSize)) {
+    return adjusted;
+  }
+  
+  // Fallback: try both pure white and pure black and pick the best one
+  const whiteContrast = getContrastRatio('#ffffff', background);
+  const blackContrast = getContrastRatio('#000000', background);
+  
+  // Pick the one that meets requirements, preferring the one closer to the original preference
+  const preferredLuminance = getLuminance(preferred);
+  const prefersLight = preferredLuminance > 0.5;
+  
+  if (prefersLight) {
+    // User prefers light text, try white first
+    if (whiteContrast >= requiredRatio) {
+      return '#ffffff';
+    } else if (blackContrast >= requiredRatio) {
+      return '#000000';
+    }
+  } else {
+    // User prefers dark text, try black first
+    if (blackContrast >= requiredRatio) {
+      return '#000000';
+    } else if (whiteContrast >= requiredRatio) {
+      return '#ffffff';
+    }
+  }
+  
+  // If neither meets requirements (shouldn't happen), return the better one
+  return whiteContrast > blackContrast ? '#ffffff' : '#000000';
 }
 
 /**

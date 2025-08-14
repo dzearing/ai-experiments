@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Organization - Claude Flow</title>
+    
+    <link rel="stylesheet" href="/assets/styles.css">
+    
+    <script>
+        window.__uiKitBasePath = '/assets/';
+    </script>
+    
+    <script type="module" src="/assets/theme.js"></script>
+    <script type="module" src="/assets/theme-switcher.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--color-body-background);
+            color: var(--color-body-text);
+            font-family: system-ui, -apple-system, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: var(--color-panel-background);
+            border-right: 1px solid var(--color-panel-border);
+            display: flex;
+            flex-direction: column;
+            transition: transform var(--duration-normal) var(--easing-default);
+        }
+
+        .sidebar-header {
+            padding: var(--spacing);
+            border-bottom: 1px solid var(--color-panel-border);
+        }
+
+        .sidebar-title {
+            font-size: var(--font-size-large10);
+            font-weight: var(--font-weight-semibold);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+        }
+
+        .new-chat-button {
+            width: 100%;
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border: none;
+            padding: var(--spacing-buttonY) var(--spacing-buttonX);
+            border-radius: var(--radius-interactive);
+            font-weight: var(--font-weight-medium);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-small10);
+            margin-top: var(--spacing-small10);
+            transition: all var(--duration-fast10) ease;
+        }
+
+        .new-chat-button:hover {
+            background: var(--color-primary-background-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-button);
+        }
+
+        /* Search Bar */
+        .search-section {
+            padding: var(--spacing);
+            border-bottom: 1px solid var(--color-panel-border);
+        }
+
+        .search-input {
+            width: 100%;
+            background: var(--color-body-background);
+            border: 1px solid var(--color-input-border);
+            color: var(--color-body-text);
+            padding: var(--spacing-small10) var(--spacing);
+            border-radius: var(--radius-interactive);
+            font-size: var(--font-size);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--color-primary-border);
+            box-shadow: 0 0 0 3px var(--color-primary-background) inset;
+        }
+
+        /* Filter Tabs */
+        .filter-tabs {
+            display: flex;
+            gap: var(--spacing-small20);
+            padding: var(--spacing-small10) var(--spacing);
+            border-bottom: 1px solid var(--color-panel-border);
+        }
+
+        .filter-tab {
+            padding: var(--spacing-small20) var(--spacing-small10);
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--color-body-textSoft10);
+            border-radius: var(--radius-interactive);
+            cursor: pointer;
+            font-size: var(--font-size-small10);
+            transition: all var(--duration-fastest) ease;
+        }
+
+        .filter-tab:hover {
+            background: var(--color-body-background);
+        }
+
+        .filter-tab.active {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border-color: var(--color-primary-border);
+        }
+
+        /* Chat List */
+        .chat-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--spacing-small10);
+        }
+
+        .chat-group {
+            margin-bottom: var(--spacing-large10);
+        }
+
+        .chat-group-title {
+            font-size: var(--font-size-smallest);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-body-textSoft20);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: var(--spacing-small10) var(--spacing-small10);
+        }
+
+        .chat-item {
+            background: var(--color-body-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-interactive);
+            padding: var(--spacing-small10) var(--spacing);
+            margin-bottom: var(--spacing-small20);
+            cursor: pointer;
+            transition: all var(--duration-fast10) ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chat-item:hover {
+            background: var(--color-panel-background);
+            border-color: var(--color-primary-border);
+            transform: translateX(2px);
+        }
+
+        .chat-item.active {
+            background: linear-gradient(135deg,
+                var(--gradient-body-primary),
+                var(--color-panel-background)
+            );
+            border-color: var(--color-primary-border);
+        }
+
+        .chat-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-small20);
+        }
+
+        .chat-item-title {
+            font-weight: var(--font-weight-medium);
+            font-size: var(--font-size);
+            color: var(--color-body-text);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small20);
+        }
+
+        .chat-item-badge {
+            padding: 2px 6px;
+            background: var(--color-success-background);
+            color: var(--color-success-text);
+            border-radius: var(--radius-round);
+            font-size: var(--font-size-smallest);
+            font-weight: var(--font-weight-semibold);
+        }
+
+        .chat-item-time {
+            font-size: var(--font-size-smallest);
+            color: var(--color-body-textSoft20);
+        }
+
+        .chat-item-preview {
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft10);
+            line-height: var(--line-height);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .chat-item-tags {
+            display: flex;
+            gap: var(--spacing-small20);
+            margin-top: var(--spacing-small20);
+        }
+
+        .chat-tag {
+            padding: 2px 8px;
+            background: var(--color-body-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-round);
+            font-size: var(--font-size-smallest);
+            color: var(--color-body-textSoft10);
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--color-body-background);
+        }
+
+        /* Chat View Header */
+        .chat-header {
+            background: var(--color-panel-background);
+            border-bottom: 1px solid var(--color-panel-border);
+            padding: var(--spacing);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-header-info {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing);
+        }
+
+        .chat-header-title {
+            font-size: var(--font-size-large20);
+            font-weight: var(--font-weight-semibold);
+        }
+
+        .chat-header-subtitle {
+            color: var(--color-body-textSoft10);
+            font-size: var(--font-size-small10);
+        }
+
+        .chat-header-actions {
+            display: flex;
+            gap: var(--spacing-small10);
+        }
+
+        .header-action-button {
+            padding: var(--spacing-small10);
+            background: var(--color-body-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-interactive);
+            cursor: pointer;
+            transition: all var(--duration-fast10) ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+        }
+
+        .header-action-button:hover {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border-color: var(--color-primary-border);
+        }
+
+        /* Chat Messages Area */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--spacing-large10);
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing);
+        }
+
+        .message {
+            max-width: 70%;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            align-self: flex-end;
+        }
+
+        .message.assistant {
+            align-self: flex-start;
+        }
+
+        .message-bubble {
+            padding: var(--spacing) var(--spacing-large10);
+            border-radius: var(--radius-container);
+            position: relative;
+        }
+
+        .message.user .message-bubble {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+        }
+
+        .message.assistant .message-bubble {
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            color: var(--color-body-text);
+        }
+
+        /* Chat Input */
+        .chat-input-container {
+            padding: var(--spacing-large10);
+            background: var(--color-panel-background);
+            border-top: 1px solid var(--color-panel-border);
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            gap: var(--spacing-small10);
+            align-items: flex-end;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: var(--color-body-background);
+            border: 1px solid var(--color-input-border);
+            border-radius: var(--radius-container);
+            padding: var(--spacing) var(--spacing-large10);
+            font-size: var(--font-size);
+            color: var(--color-body-text);
+            resize: none;
+            min-height: 44px;
+            max-height: 200px;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--color-primary-border);
+        }
+
+        .send-button {
+            padding: var(--spacing-buttonY) var(--spacing-buttonX);
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border: none;
+            border-radius: var(--radius-interactive);
+            cursor: pointer;
+            font-weight: var(--font-weight-medium);
+            transition: all var(--duration-fast10) ease;
+        }
+
+        .send-button:hover {
+            background: var(--color-primary-background-hover);
+            transform: scale(1.05);
+        }
+
+        /* Folders Section */
+        .folders-section {
+            padding: var(--spacing);
+            border-top: 1px solid var(--color-panel-border);
+        }
+
+        .folders-title {
+            font-size: var(--font-size-small10);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-body-textSoft10);
+            margin-bottom: var(--spacing-small10);
+            text-transform: uppercase;
+        }
+
+        .folder-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+            padding: var(--spacing-small20) var(--spacing-small10);
+            border-radius: var(--radius-interactive);
+            cursor: pointer;
+            transition: background var(--duration-fast10) ease;
+        }
+
+        .folder-item:hover {
+            background: var(--color-body-background);
+        }
+
+        .folder-icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        .folder-name {
+            font-size: var(--font-size-small10);
+            flex: 1;
+        }
+
+        .folder-count {
+            font-size: var(--font-size-smallest);
+            color: var(--color-body-textSoft20);
+            padding: 2px 6px;
+            background: var(--color-body-background);
+            border-radius: var(--radius-round);
+        }
+
+        /* Empty State */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            padding: var(--spacing-section);
+        }
+
+        .empty-state-icon {
+            width: 64px;
+            height: 64px;
+            margin-bottom: var(--spacing);
+            opacity: 0.3;
+        }
+
+        .empty-state-title {
+            font-size: var(--font-size-h4);
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing-small10);
+        }
+
+        .empty-state-description {
+            color: var(--color-body-textSoft10);
+            font-size: var(--font-size);
+            max-width: 400px;
+        }
+
+        /* Floating Action Menu */
+        .floating-actions {
+            position: fixed;
+            bottom: var(--spacing-large20);
+            right: var(--spacing-large20);
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-small10);
+            align-items: flex-end;
+        }
+
+        .floating-button {
+            width: 56px;
+            height: 56px;
+            border-radius: var(--radius-round);
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-modal);
+            transition: all var(--duration-normal) ease;
+        }
+
+        .floating-button:hover {
+            transform: scale(1.1);
+            box-shadow: var(--shadow-hard20);
+        }
+
+        .floating-menu {
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-container);
+            padding: var(--spacing-small10);
+            box-shadow: var(--shadow-modal);
+            margin-bottom: var(--spacing-small10);
+            opacity: 0;
+            transform: translateY(20px) scale(0.9);
+            pointer-events: none;
+            transition: all var(--duration-fast10) var(--easing-decelerate);
+        }
+
+        .floating-menu.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+
+        .floating-menu-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+            padding: var(--spacing-small10) var(--spacing);
+            border-radius: var(--radius-interactive);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background var(--duration-fastest) ease;
+        }
+
+        .floating-menu-item:hover {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2 class="sidebar-title">
+                    <span>💬</span>
+                    Claude Flow
+                </h2>
+                <button class="new-chat-button">
+                    <span>+</span>
+                    New Chat
+                </button>
+            </div>
+
+            <!-- Search -->
+            <div class="search-section">
+                <input type="text" class="search-input" placeholder="Search conversations...">
+            </div>
+
+            <!-- Filter Tabs -->
+            <div class="filter-tabs">
+                <button class="filter-tab active">All</button>
+                <button class="filter-tab">Recent</button>
+                <button class="filter-tab">Starred</button>
+                <button class="filter-tab">Archive</button>
+            </div>
+
+            <!-- Chat List -->
+            <div class="chat-list">
+                <!-- Today -->
+                <div class="chat-group">
+                    <div class="chat-group-title">Today</div>
+                    
+                    <div class="chat-item active">
+                        <div class="chat-item-header">
+                            <span class="chat-item-title">
+                                React Performance
+                                <span class="chat-item-badge">3</span>
+                            </span>
+                            <span class="chat-item-time">2m</span>
+                        </div>
+                        <div class="chat-item-preview">
+                            Optimizing component re-renders with useMemo...
+                        </div>
+                        <div class="chat-item-tags">
+                            <span class="chat-tag">react</span>
+                            <span class="chat-tag">performance</span>
+                        </div>
+                    </div>
+
+                    <div class="chat-item">
+                        <div class="chat-item-header">
+                            <span class="chat-item-title">API Design Review</span>
+                            <span class="chat-item-time">1h</span>
+                        </div>
+                        <div class="chat-item-preview">
+                            Let's discuss the REST endpoints for the user service...
+                        </div>
+                        <div class="chat-item-tags">
+                            <span class="chat-tag">api</span>
+                            <span class="chat-tag">backend</span>
+                        </div>
+                    </div>
+
+                    <div class="chat-item">
+                        <div class="chat-item-header">
+                            <span class="chat-item-title">
+                                Database Migration
+                                <span class="chat-item-badge" style="background: var(--color-warning-background); color: var(--color-warning-text);">!</span>
+                            </span>
+                            <span class="chat-item-time">3h</span>
+                        </div>
+                        <div class="chat-item-preview">
+                            Planning the migration from PostgreSQL 12 to 15...
+                        </div>
+                        <div class="chat-item-tags">
+                            <span class="chat-tag">database</span>
+                            <span class="chat-tag">migration</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Yesterday -->
+                <div class="chat-group">
+                    <div class="chat-group-title">Yesterday</div>
+                    
+                    <div class="chat-item">
+                        <div class="chat-item-header">
+                            <span class="chat-item-title">UI Component Library</span>
+                            <span class="chat-item-time">1d</span>
+                        </div>
+                        <div class="chat-item-preview">
+                            Building a design system with Storybook...
+                        </div>
+                        <div class="chat-item-tags">
+                            <span class="chat-tag">ui</span>
+                            <span class="chat-tag">design-system</span>
+                        </div>
+                    </div>
+
+                    <div class="chat-item">
+                        <div class="chat-item-header">
+                            <span class="chat-item-title">Docker Setup</span>
+                            <span class="chat-item-time">1d</span>
+                        </div>
+                        <div class="chat-item-preview">
+                            Configuring multi-stage builds for production...
+                        </div>
+                        <div class="chat-item-tags">
+                            <span class="chat-tag">docker</span>
+                            <span class="chat-tag">devops</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- This Week -->
+                <div class="chat-group">
+                    <div class="chat-group-title">This Week</div>
+                    
+                    <div class="chat-item">
+                        <div class="chat-item-header">
+                            <span class="chat-item-title">Testing Strategy</span>
+                            <span class="chat-item-time">3d</span>
+                        </div>
+                        <div class="chat-item-preview">
+                            Implementing E2E tests with Playwright...
+                        </div>
+                        <div class="chat-item-tags">
+                            <span class="chat-tag">testing</span>
+                            <span class="chat-tag">qa</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Folders -->
+            <div class="folders-section">
+                <div class="folders-title">Folders</div>
+                <div class="folder-item">
+                    <span class="folder-icon">📁</span>
+                    <span class="folder-name">Projects</span>
+                    <span class="folder-count">12</span>
+                </div>
+                <div class="folder-item">
+                    <span class="folder-icon">📁</span>
+                    <span class="folder-name">Learning</span>
+                    <span class="folder-count">8</span>
+                </div>
+                <div class="folder-item">
+                    <span class="folder-icon">📁</span>
+                    <span class="folder-name">Code Reviews</span>
+                    <span class="folder-count">23</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Chat Header -->
+            <header class="chat-header">
+                <div class="chat-header-info">
+                    <div>
+                        <h1 class="chat-header-title">React Performance Optimization</h1>
+                        <p class="chat-header-subtitle">3 participants • Started 2 hours ago</p>
+                    </div>
+                </div>
+                <div class="chat-header-actions">
+                    <button class="header-action-button" title="Star conversation">⭐</button>
+                    <button class="header-action-button" title="Fork conversation">🔀</button>
+                    <button class="header-action-button" title="Share">📤</button>
+                    <button class="header-action-button" title="More options">⋯</button>
+                </div>
+            </header>
+
+            <!-- Chat Messages -->
+            <div class="chat-messages">
+                <div class="message user">
+                    <div class="message-bubble">
+                        How can I optimize my React component that's re-rendering too often?
+                    </div>
+                </div>
+
+                <div class="message assistant">
+                    <div class="message-bubble">
+                        There are several strategies to optimize React component re-renders:
+
+                        1. Use React.memo() for functional components
+                        2. Implement useMemo() for expensive computations
+                        3. Use useCallback() for function references
+                        4. Consider state management structure
+                        5. Use React DevTools Profiler to identify issues
+
+                        Which specific scenario are you dealing with?
+                    </div>
+                </div>
+
+                <div class="message user">
+                    <div class="message-bubble">
+                        I have a list with 1000+ items and filtering is very slow
+                    </div>
+                </div>
+
+                <div class="message assistant">
+                    <div class="message-bubble">
+                        For large lists, I recommend:
+
+                        1. Virtual scrolling with react-window or react-virtualized
+                        2. Debounce the filter input
+                        3. Use useMemo to cache filtered results
+                        4. Consider pagination or infinite scroll
+
+                        Would you like me to show you an implementation example?
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Input -->
+            <div class="chat-input-container">
+                <div class="chat-input-wrapper">
+                    <textarea class="chat-input" placeholder="Type your message..." rows="1"></textarea>
+                    <button class="send-button">Send</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Floating Actions -->
+    <div class="floating-actions">
+        <div class="floating-menu" id="floatingMenu">
+            <div class="floating-menu-item">
+                <span>🔀</span> Fork Conversation
+            </div>
+            <div class="floating-menu-item">
+                <span>👥</span> Add Participant
+            </div>
+            <div class="floating-menu-item">
+                <span>📊</span> View Analytics
+            </div>
+            <div class="floating-menu-item">
+                <span>💾</span> Export Chat
+            </div>
+        </div>
+        <button class="floating-button" onclick="document.getElementById('floatingMenu').classList.toggle('show')">
+            +
+        </button>
+    </div>
+
+    <script>
+        // Auto-resize textarea
+        const textarea = document.querySelector('.chat-input');
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+
+        // Simulate real-time updates
+        const badges = document.querySelectorAll('.chat-item-badge');
+        setInterval(() => {
+            badges.forEach(badge => {
+                if (Math.random() > 0.7) {
+                    badge.style.animation = 'pulse 0.5s';
+                    setTimeout(() => {
+                        badge.style.animation = '';
+                    }, 500);
+                }
+            });
+        }, 3000);
+    </script>
+</body>
+</html>

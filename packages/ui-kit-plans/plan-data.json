@@ -161,6 +161,50 @@
           "mockups/mock-segmented-control-variants.html"
         ]
       }
+    ],
+    "Animation Components": [
+      {
+        "name": "Animation Showcase",
+        "folder": "animation-showcase",
+        "plans": [],
+        "mockups": ["mockups/mock-animation-showcase.html"]
+      }
+    ],
+    "Chat Views": [
+      {
+        "name": "Chat Organization",
+        "folder": "chat-organization",
+        "plans": [],
+        "mockups": ["mockups/mock-chat-organization.html"]
+      }
+    ],
+    "Project Views": [
+      {
+        "name": "Work Item Definition",
+        "folder": "work-item-definition",
+        "plans": [],
+        "mockups": ["mockups/mock-work-item-definition.html"]
+      }
+    ],
+    "AI Views": [
+      {
+        "name": "Agent Monitoring",
+        "folder": "agent-monitoring",
+        "plans": [],
+        "mockups": ["mockups/mock-agent-monitoring.html"]
+      },
+      {
+        "name": "Chain of Thought",
+        "folder": "chain-of-thought",
+        "plans": [],
+        "mockups": ["mockups/mock-chain-of-thought.html"]
+      },
+      {
+        "name": "Context Forking",
+        "folder": "context-forking",
+        "plans": [],
+        "mockups": ["mockups/mock-context-forking.html"]
+      }
     ]
   }
 }

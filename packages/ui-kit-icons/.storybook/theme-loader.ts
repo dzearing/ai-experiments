@@ -8,40 +8,75 @@ export interface ThemeConfig {
   mode: 'light' | 'dark';
 }
 
-// Track loaded stylesheets to avoid duplicates
+// Track all loaded stylesheets (keep them loaded to prevent font reload)
 const loadedThemes = new Map<string, HTMLLinkElement>();
+let currentThemeKey: string | null = null;
 
 /**
- * Load a theme CSS file dynamically from ui-kit
+ * Preload a theme CSS file without applying it
  */
-export function loadTheme({ theme, mode }: ThemeConfig) {
+async function preloadTheme(themeKey: string): Promise<HTMLLinkElement> {
+  return new Promise((resolve, reject) => {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    const [theme, mode] = themeKey.split('-');
+    link.href = `./themes/${theme}-${mode}.css`;
+    link.setAttribute('data-theme-css', themeKey);
+    // Keep it disabled initially to prevent flash
+    link.disabled = true;
+    
+    link.onload = () => {
+      loadedThemes.set(themeKey, link);
+      resolve(link);
+    };
+    
+    link.onerror = () => {
+      reject(new Error(`Failed to load theme: ${themeKey}`));
+    };
+    
+    document.head.appendChild(link);
+  });
+}
+
+/**
+ * Load a theme CSS file dynamically from ui-kit without removing old themes
+ */
+export async function loadTheme({ theme, mode }: ThemeConfig) {
   const themeKey = `${theme}-${mode}`;
   
-  // Remove any previously loaded theme
-  loadedThemes.forEach((link, key) => {
-    if (key !== themeKey) {
-      link.remove();
-      loadedThemes.delete(key);
-    }
-  });
-  
-  // Check if this theme is already loaded
-  if (loadedThemes.has(themeKey)) {
+  // If it's the same theme, do nothing
+  if (currentThemeKey === themeKey) {
     return;
   }
   
-  // Create and insert the theme stylesheet from ui-kit
-  const link = document.createElement('link');
-  link.rel = 'stylesheet';
-  link.href = `/themes/${theme}-${mode}.css`;
-  link.setAttribute('data-theme-css', themeKey);
-  
-  document.head.appendChild(link);
-  loadedThemes.set(themeKey, link);
-  
-  // Set the data attributes on document
-  document.documentElement.setAttribute('data-theme', theme);
-  document.documentElement.setAttribute('data-theme-type', mode);
+  try {
+    let themeLink = loadedThemes.get(themeKey);
+    
+    // If theme not loaded yet, load it first
+    if (!themeLink) {
+      themeLink = await preloadTheme(themeKey);
+    }
+    
+    // Disable all other theme stylesheets
+    loadedThemes.forEach((link, key) => {
+      link.disabled = key !== themeKey;
+    });
+    
+    // Enable the new theme stylesheet
+    if (themeLink) {
+      themeLink.disabled = false;
+    }
+    
+    // Update current theme tracking
+    currentThemeKey = themeKey;
+    
+    // Set the data attributes on document
+    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.setAttribute('data-theme-type', mode);
+    
+  } catch (error) {
+    console.error('Failed to load theme:', error);
+  }
   
   // Also set on iframe if present (for docs pages)
   const applyToIframe = () => {
@@ -88,20 +123,24 @@ export function initializeThemes() {
         iframe.contentDocument.documentElement.setAttribute('data-theme', currentTheme);
         iframe.contentDocument.documentElement.setAttribute('data-theme-type', currentMode);
         
-        // Also load the theme CSS in the iframe if it's not already loaded
+        // Load theme CSS in iframe using the same disable/enable approach
         const themeKey = `${currentTheme}-${currentMode}`;
-        const existingThemeLink = iframe.contentDocument.querySelector(`link[data-theme-css="${themeKey}"]`);
+        const existingThemeLink = iframe.contentDocument.querySelector(`link[data-theme-css="${themeKey}"]`) as HTMLLinkElement;
+        
         if (!existingThemeLink) {
-          // Remove old theme links
-          iframe.contentDocument.querySelectorAll('link[data-theme-css]').forEach(link => link.remove());
-          
-          // Add new theme link
+          // Add new theme link (disabled initially)
           const themeLink = iframe.contentDocument.createElement('link');
           themeLink.rel = 'stylesheet';
-          themeLink.href = `/themes/${currentTheme}-${currentMode}.css`;
+          themeLink.href = `./themes/${currentTheme}-${currentMode}.css`;
           themeLink.setAttribute('data-theme-css', themeKey);
+          themeLink.disabled = false;
           iframe.contentDocument.head.appendChild(themeLink);
         }
+        
+        // Disable all other theme links, enable the current one
+        iframe.contentDocument.querySelectorAll('link[data-theme-css]').forEach((link: any) => {
+          link.disabled = link.getAttribute('data-theme-css') !== themeKey;
+        });
       }
     }
   };

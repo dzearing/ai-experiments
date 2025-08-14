@@ -4,6 +4,8 @@ import '../src/styles/storybook.css';
 
 // Initialize theme system on load
 if (typeof window !== 'undefined') {
+  // Set the base path for theme files to override the default logic
+  (window as any).__uiKitBasePath = '';
   initializeThemes();
 }
 

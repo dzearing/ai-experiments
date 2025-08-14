@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Context Forking - Claude Flow</title>
+    
+    <link rel="stylesheet" href="/assets/styles.css">
+    
+    <script>
+        window.__uiKitBasePath = '/assets/';
+    </script>
+    
+    <script type="module" src="/assets/theme.js"></script>
+    <script type="module" src="/assets/theme-switcher.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--color-body-background);
+            color: var(--color-body-text);
+            font-family: system-ui, -apple-system, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: var(--color-panel-background);
+            border-bottom: 1px solid var(--color-panel-border);
+            padding: var(--spacing);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-large10);
+        }
+
+        .header-title {
+            font-size: var(--font-size-large20);
+            font-weight: var(--font-weight-semibold);
+        }
+
+        .branch-indicator {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+            padding: var(--spacing-small10) var(--spacing);
+            background: var(--color-body-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-round);
+            font-size: var(--font-size-small10);
+        }
+
+        .branch-icon {
+            color: var(--color-primary-background);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: var(--spacing-small10);
+        }
+
+        .button {
+            padding: var(--spacing-buttonY) var(--spacing-buttonX);
+            border-radius: var(--radius-interactive);
+            font-weight: var(--font-weight-medium);
+            cursor: pointer;
+            transition: all var(--duration-fast10) ease;
+            border: 1px solid;
+        }
+
+        .button-primary {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border-color: var(--color-primary-border);
+        }
+
+        .button-primary:hover {
+            background: var(--color-primary-background-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-button);
+        }
+
+        .button-secondary {
+            background: var(--color-neutral-background);
+            color: var(--color-neutral-text);
+            border-color: var(--color-neutral-border);
+        }
+
+        /* Fork Visualization */
+        .fork-container {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Tree View */
+        .tree-view {
+            width: 320px;
+            background: var(--color-panel-background);
+            border-right: 1px solid var(--color-panel-border);
+            padding: var(--spacing);
+            overflow-y: auto;
+        }
+
+        .tree-header {
+            font-size: var(--font-size);
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tree-controls {
+            display: flex;
+            gap: var(--spacing-small20);
+        }
+
+        .control-button {
+            padding: var(--spacing-small20);
+            background: var(--color-body-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-interactive);
+            cursor: pointer;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size-small10);
+        }
+
+        .control-button:hover {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+        }
+
+        /* Fork Tree Structure */
+        .fork-tree {
+            position: relative;
+        }
+
+        .tree-branch {
+            position: relative;
+            margin-left: var(--spacing-large10);
+        }
+
+        .tree-node {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+            padding: var(--spacing-small10);
+            margin-bottom: var(--spacing-small10);
+            border-radius: var(--radius-interactive);
+            cursor: pointer;
+            transition: all var(--duration-fast10) ease;
+            position: relative;
+        }
+
+        .tree-node:hover {
+            background: var(--color-body-background);
+        }
+
+        .tree-node.active {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+        }
+
+        .tree-node.fork-point {
+            border: 2px solid var(--color-warning-border);
+            background: var(--color-warningSoft-background);
+        }
+
+        /* Connection Lines */
+        .tree-node::before {
+            content: '';
+            position: absolute;
+            left: calc(var(--spacing-large10) * -1);
+            top: 50%;
+            width: var(--spacing-large10);
+            height: 2px;
+            background: var(--color-panel-border);
+        }
+
+        .tree-branch::before {
+            content: '';
+            position: absolute;
+            left: calc(var(--spacing-large10) * -1 + 1px);
+            top: 0;
+            bottom: 50%;
+            width: 2px;
+            background: var(--color-panel-border);
+        }
+
+        .node-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: var(--radius-round);
+            background: var(--color-body-background);
+            border: 2px solid var(--color-panel-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size-smallest);
+        }
+
+        .node-icon.main {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border-color: var(--color-primary-border);
+        }
+
+        .node-icon.fork {
+            background: var(--color-warning-background);
+            color: var(--color-warning-text);
+            border-color: var(--color-warning-border);
+        }
+
+        .node-icon.merged {
+            background: var(--color-success-background);
+            color: var(--color-success-text);
+            border-color: var(--color-success-border);
+        }
+
+        .node-label {
+            font-size: var(--font-size-small10);
+            flex: 1;
+        }
+
+        .node-time {
+            font-size: var(--font-size-smallest);
+            color: var(--color-body-textSoft20);
+        }
+
+        /* Split View */
+        .split-view {
+            flex: 1;
+            display: flex;
+            position: relative;
+        }
+
+        .split-pane {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--color-panel-border);
+            position: relative;
+            min-width: 300px;
+        }
+
+        .split-pane:last-child {
+            border-right: none;
+        }
+
+        .pane-header {
+            background: var(--color-panel-background);
+            border-bottom: 1px solid var(--color-panel-border);
+            padding: var(--spacing);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .pane-title {
+            font-weight: var(--font-weight-semibold);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+        }
+
+        .pane-badge {
+            padding: var(--spacing-small20) var(--spacing-small10);
+            background: var(--color-body-background);
+            border-radius: var(--radius-round);
+            font-size: var(--font-size-smallest);
+        }
+
+        .pane-badge.main {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+        }
+
+        .pane-badge.fork {
+            background: var(--color-warning-background);
+            color: var(--color-warning-text);
+        }
+
+        .pane-actions {
+            display: flex;
+            gap: var(--spacing-small20);
+        }
+
+        .pane-action {
+            padding: var(--spacing-small20);
+            background: var(--color-body-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-interactive);
+            cursor: pointer;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pane-action:hover {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+        }
+
+        /* Chat Content */
+        .chat-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--spacing-large10);
+            background: var(--color-body-background);
+        }
+
+        .message {
+            margin-bottom: var(--spacing-large10);
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+            margin-bottom: var(--spacing-small10);
+        }
+
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-round);
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size-small10);
+            font-weight: var(--font-weight-semibold);
+        }
+
+        .message-avatar.user {
+            background: var(--color-neutral-background);
+            color: var(--color-neutral-text);
+        }
+
+        .message-info {
+            flex: 1;
+        }
+
+        .message-author {
+            font-weight: var(--font-weight-medium);
+            font-size: var(--font-size-small10);
+        }
+
+        .message-time {
+            font-size: var(--font-size-smallest);
+            color: var(--color-body-textSoft20);
+        }
+
+        .message-content {
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-container);
+            padding: var(--spacing);
+            margin-left: 42px;
+            line-height: var(--line-height-relaxed);
+        }
+
+        .message.highlight {
+            position: relative;
+        }
+
+        .message.highlight::before {
+            content: '';
+            position: absolute;
+            left: -8px;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--color-warning-background);
+            border-radius: var(--radius-interactive);
+        }
+
+        /* Fork Indicator */
+        .fork-indicator {
+            background: var(--color-warningSoft-background);
+            border: 1px solid var(--color-warningSoft-border);
+            color: var(--color-warningSoft-text);
+            border-radius: var(--radius-container);
+            padding: var(--spacing);
+            margin: var(--spacing-large10) 0;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing);
+        }
+
+        .fork-icon-large {
+            width: 40px;
+            height: 40px;
+            background: var(--color-warning-background);
+            color: var(--color-warning-text);
+            border-radius: var(--radius-round);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size-large10);
+        }
+
+        .fork-info {
+            flex: 1;
+        }
+
+        .fork-title {
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing-small20);
+        }
+
+        .fork-description {
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft10);
+        }
+
+        /* Input Area */
+        .input-area {
+            background: var(--color-panel-background);
+            border-top: 1px solid var(--color-panel-border);
+            padding: var(--spacing);
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: var(--spacing-small10);
+            align-items: flex-end;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: var(--color-body-background);
+            border: 1px solid var(--color-input-border);
+            border-radius: var(--radius-container);
+            padding: var(--spacing-small10) var(--spacing);
+            font-size: var(--font-size);
+            color: var(--color-body-text);
+            resize: none;
+            min-height: 40px;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--color-primary-border);
+        }
+
+        .send-button {
+            padding: var(--spacing-small10) var(--spacing);
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border: none;
+            border-radius: var(--radius-interactive);
+            cursor: pointer;
+            font-weight: var(--font-weight-medium);
+        }
+
+        /* Comparison Overlay */
+        .comparison-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--color-panel-background);
+            border: 2px solid var(--color-primary-border);
+            border-radius: var(--radius-modal);
+            padding: var(--spacing-large20);
+            box-shadow: var(--shadow-modal);
+            z-index: 10;
+            display: none;
+        }
+
+        .comparison-overlay.show {
+            display: block;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -40%);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        .comparison-title {
+            font-size: var(--font-size-large20);
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing);
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-large10);
+            margin-top: var(--spacing);
+        }
+
+        .comparison-item {
+            background: var(--color-body-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-interactive);
+            padding: var(--spacing);
+        }
+
+        .comparison-label {
+            font-size: var(--font-size-small10);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-body-textSoft10);
+            margin-bottom: var(--spacing-small10);
+        }
+
+        .comparison-value {
+            font-size: var(--font-size);
+            line-height: var(--line-height);
+        }
+
+        /* Merge Dialog */
+        .merge-dialog {
+            position: fixed;
+            bottom: var(--spacing-large20);
+            right: var(--spacing-large20);
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-modal);
+            padding: var(--spacing-large10);
+            box-shadow: var(--shadow-modal);
+            width: 320px;
+            display: none;
+        }
+
+        .merge-dialog.show {
+            display: block;
+            animation: slideLeft 0.3s ease-out;
+        }
+
+        @keyframes slideLeft {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .merge-title {
+            font-size: var(--font-size-large10);
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing);
+        }
+
+        .merge-options {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-small10);
+            margin-bottom: var(--spacing);
+        }
+
+        .merge-option {
+            padding: var(--spacing-small10);
+            background: var(--color-body-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-interactive);
+            cursor: pointer;
+            transition: all var(--duration-fast10) ease;
+        }
+
+        .merge-option:hover {
+            border-color: var(--color-primary-border);
+            transform: translateX(2px);
+        }
+
+        .merge-option.selected {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border-color: var(--color-primary-border);
+        }
+
+        .merge-actions {
+            display: flex;
+            gap: var(--spacing-small10);
+        }
+
+        /* Resizer */
+        .resizer {
+            position: absolute;
+            top: 0;
+            right: -3px;
+            bottom: 0;
+            width: 6px;
+            cursor: col-resize;
+            z-index: 1;
+        }
+
+        .resizer:hover {
+            background: var(--color-primary-background);
+            opacity: 0.3;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1 class="header-title">Context Forking Explorer</h1>
+                <div class="branch-indicator">
+                    <span class="branch-icon">🔀</span>
+                    <span>3 active branches</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="button button-secondary">Compare All</button>
+                <button class="button button-secondary">Export Tree</button>
+                <button class="button button-primary">Create Fork</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="fork-container">
+            <!-- Tree View -->
+            <aside class="tree-view">
+                <div class="tree-header">
+                    <span>Conversation Tree</span>
+                    <div class="tree-controls">
+                        <button class="control-button">⤓</button>
+                        <button class="control-button">↻</button>
+                    </div>
+                </div>
+
+                <div class="fork-tree">
+                    <!-- Main Branch -->
+                    <div class="tree-node active">
+                        <div class="node-icon main">M</div>
+                        <span class="node-label">Initial Query</span>
+                        <span class="node-time">10:00</span>
+                    </div>
+                    
+                    <div class="tree-node">
+                        <div class="node-icon main">M</div>
+                        <span class="node-label">Basic Implementation</span>
+                        <span class="node-time">10:05</span>
+                    </div>
+
+                    <div class="tree-node fork-point">
+                        <div class="node-icon fork">F</div>
+                        <span class="node-label">Fork Point: Optimization</span>
+                        <span class="node-time">10:15</span>
+                    </div>
+
+                    <!-- Branch A -->
+                    <div class="tree-branch">
+                        <div class="tree-node">
+                            <div class="node-icon fork">A</div>
+                            <span class="node-label">Performance Focus</span>
+                            <span class="node-time">10:18</span>
+                        </div>
+                        <div class="tree-node">
+                            <div class="node-icon fork">A</div>
+                            <span class="node-label">Caching Strategy</span>
+                            <span class="node-time">10:22</span>
+                        </div>
+                    </div>
+
+                    <!-- Branch B -->
+                    <div class="tree-branch">
+                        <div class="tree-node">
+                            <div class="node-icon fork">B</div>
+                            <span class="node-label">Feature Extension</span>
+                            <span class="node-time">10:20</span>
+                        </div>
+                        <div class="tree-node">
+                            <div class="node-icon fork">B</div>
+                            <span class="node-label">API Integration</span>
+                            <span class="node-time">10:25</span>
+                        </div>
+                        <div class="tree-node">
+                            <div class="node-icon fork">B</div>
+                            <span class="node-label">Testing Suite</span>
+                            <span class="node-time">10:30</span>
+                        </div>
+                    </div>
+
+                    <!-- Branch C -->
+                    <div class="tree-branch">
+                        <div class="tree-node">
+                            <div class="node-icon fork">C</div>
+                            <span class="node-label">Refactoring</span>
+                            <span class="node-time">10:19</span>
+                        </div>
+                        <div class="tree-node">
+                            <div class="node-icon merged">✓</div>
+                            <span class="node-label">Merged to Main</span>
+                            <span class="node-time">10:35</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Split View -->
+            <div class="split-view">
+                <!-- Main Context -->
+                <div class="split-pane">
+                    <div class="resizer"></div>
+                    <div class="pane-header">
+                        <div class="pane-title">
+                            <span class="pane-badge main">Main</span>
+                            <span>Original Context</span>
+                        </div>
+                        <div class="pane-actions">
+                            <button class="pane-action">📌</button>
+                            <button class="pane-action">⚡</button>
+                            <button class="pane-action">✕</button>
+                        </div>
+                    </div>
+
+                    <div class="chat-content">
+                        <div class="message">
+                            <div class="message-header">
+                                <div class="message-avatar user">U</div>
+                                <div class="message-info">
+                                    <div class="message-author">User</div>
+                                    <div class="message-time">10:00 AM</div>
+                                </div>
+                            </div>
+                            <div class="message-content">
+                                How can I implement a real-time chat feature in my React application?
+                            </div>
+                        </div>
+
+                        <div class="message">
+                            <div class="message-header">
+                                <div class="message-avatar">AI</div>
+                                <div class="message-info">
+                                    <div class="message-author">Assistant</div>
+                                    <div class="message-time">10:01 AM</div>
+                                </div>
+                            </div>
+                            <div class="message-content">
+                                I'll help you implement a real-time chat feature in React. Here's a basic approach using WebSockets:
+
+                                1. Set up a WebSocket server (using Socket.io or native WebSockets)
+                                2. Create React components for the chat interface
+                                3. Establish WebSocket connection from React
+                                4. Handle message sending and receiving
+                                5. Manage chat state and history
+                            </div>
+                        </div>
+
+                        <div class="fork-indicator">
+                            <div class="fork-icon-large">🔀</div>
+                            <div class="fork-info">
+                                <div class="fork-title">Context Fork Created</div>
+                                <div class="fork-description">Exploring 3 different implementation approaches</div>
+                            </div>
+                        </div>
+
+                        <div class="message highlight">
+                            <div class="message-header">
+                                <div class="message-avatar user">U</div>
+                                <div class="message-info">
+                                    <div class="message-author">User</div>
+                                    <div class="message-time">10:15 AM</div>
+                                </div>
+                            </div>
+                            <div class="message-content">
+                                What would be the best approach for optimizing this?
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-area">
+                        <div class="input-wrapper">
+                            <textarea class="chat-input" placeholder="Continue main conversation..."></textarea>
+                            <button class="send-button">Send</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fork A: Performance -->
+                <div class="split-pane">
+                    <div class="resizer"></div>
+                    <div class="pane-header">
+                        <div class="pane-title">
+                            <span class="pane-badge fork">A</span>
+                            <span>Performance Optimization</span>
+                        </div>
+                        <div class="pane-actions">
+                            <button class="pane-action">🔄</button>
+                            <button class="pane-action">📊</button>
+                            <button class="pane-action">✕</button>
+                        </div>
+                    </div>
+
+                    <div class="chat-content">
+                        <div class="message">
+                            <div class="message-header">
+                                <div class="message-avatar">AI</div>
+                                <div class="message-info">
+                                    <div class="message-author">Assistant (Branch A)</div>
+                                    <div class="message-time">10:18 AM</div>
+                                </div>
+                            </div>
+                            <div class="message-content">
+                                For performance optimization, I recommend:
+
+                                1. **Message Virtualization**: Use react-window to render only visible messages
+                                2. **Debouncing**: Implement typing indicators with debouncing
+                                3. **Lazy Loading**: Load message history in chunks
+                                4. **WebSocket Optimization**: Use binary protocols and compression
+                                5. **State Management**: Use Redux or Zustand for efficient updates
+                            </div>
+                        </div>
+
+                        <div class="message">
+                            <div class="message-header">
+                                <div class="message-avatar user">U</div>
+                                <div class="message-info">
+                                    <div class="message-author">User</div>
+                                    <div class="message-time">10:20 AM</div>
+                                </div>
+                            </div>
+                            <div class="message-content">
+                                Can you show me how to implement message virtualization?
+                            </div>
+                        </div>
+
+                        <div class="message">
+                            <div class="message-header">
+                                <div class="message-avatar">AI</div>
+                                <div class="message-info">
+                                    <div class="message-author">Assistant (Branch A)</div>
+                                    <div class="message-time">10:22 AM</div>
+                                </div>
+                            </div>
+                            <div class="message-content">
+                                Here's an implementation using react-window:
+
+                                ```jsx
+                                import { VariableSizeList } from 'react-window';
+
+                                const MessageList = ({ messages }) => {
+                                  const getItemSize = (index) => {
+                                    // Calculate height based on message content
+                                    return messages[index].height || 80;
+                                  };
+
+                                  return (
+                                    <VariableSizeList
+                                      height={600}
+                                      itemCount={messages.length}
+                                      itemSize={getItemSize}
+                                      width="100%"
+                                    >
+                                      {({ index, style }) => (
+                                        <Message 
+                                          key={messages[index].id}
+                                          message={messages[index]}
+                                          style={style}
+                                        />
+                                      )}
+                                    </VariableSizeList>
+                                  );
+                                };
+                                ```
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-area">
+                        <div class="input-wrapper">
+                            <textarea class="chat-input" placeholder="Continue performance discussion..."></textarea>
+                            <button class="send-button">Send</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fork B: Features -->
+                <div class="split-pane">
+                    <div class="resizer"></div>
+                    <div class="pane-header">
+                        <div class="pane-title">
+                            <span class="pane-badge fork">B</span>
+                            <span>Feature Extensions</span>
+                        </div>
+                        <div class="pane-actions">
+                            <button class="pane-action">🔄</button>
+                            <button class="pane-action">⭐</button>
+                            <button class="pane-action">✕</button>
+                        </div>
+                    </div>
+
+                    <div class="chat-content">
+                        <div class="message">
+                            <div class="message-header">
+                                <div class="message-avatar">AI</div>
+                                <div class="message-info">
+                                    <div class="message-author">Assistant (Branch B)</div>
+                                    <div class="message-time">10:20 AM</div>
+                                </div>
+                            </div>
+                            <div class="message-content">
+                                Let's extend your chat with advanced features:
+
+                                1. **File Sharing**: Drag-and-drop file uploads with preview
+                                2. **Voice Messages**: WebRTC audio recording
+                                3. **Message Reactions**: Emoji reactions and threading
+                                4. **Rich Text Editor**: Markdown support with live preview
+                                5. **Presence System**: Online status and typing indicators
+                                6. **Message Search**: Full-text search with filters
+                            </div>
+                        </div>
+
+                        <div class="message">
+                            <div class="message-header">
+                                <div class="message-avatar user">U</div>
+                                <div class="message-info">
+                                    <div class="message-author">User</div>
+                                    <div class="message-time">10:23 AM</div>
+                                </div>
+                            </div>
+                            <div class="message-content">
+                                How would I implement file sharing with drag-and-drop?
+                            </div>
+                        </div>
+
+                        <div class="message">
+                            <div class="message-header">
+                                <div class="message-avatar">AI</div>
+                                <div class="message-info">
+                                    <div class="message-author">Assistant (Branch B)</div>
+                                    <div class="message-time">10:25 AM</div>
+                                </div>
+                            </div>
+                            <div class="message-content">
+                                Here's a complete drag-and-drop file sharing implementation:
+
+                                ```jsx
+                                const FileDropZone = ({ onFileUpload }) => {
+                                  const [isDragging, setIsDragging] = useState(false);
+                                  
+                                  const handleDrop = (e) => {
+                                    e.preventDefault();
+                                    const files = Array.from(e.dataTransfer.files);
+                                    files.forEach(file => {
+                                      uploadFile(file);
+                                    });
+                                  };
+                                  
+                                  // File upload with progress tracking
+                                  const uploadFile = async (file) => {
+                                    const formData = new FormData();
+                                    formData.append('file', file);
+                                    
+                                    // Show progress indicator
+                                    // Upload to server
+                                    // Send file message via WebSocket
+                                  };
+                                };
+                                ```
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-area">
+                        <div class="input-wrapper">
+                            <textarea class="chat-input" placeholder="Continue features discussion..."></textarea>
+                            <button class="send-button">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparison Overlay -->
+        <div class="comparison-overlay" id="comparisonOverlay">
+            <h3 class="comparison-title">Branch Comparison</h3>
+            <div class="comparison-grid">
+                <div class="comparison-item">
+                    <div class="comparison-label">Branch A: Performance</div>
+                    <div class="comparison-value">
+                        Focus on optimization, virtualization, and caching strategies.
+                        5 messages, 2.3k tokens
+                    </div>
+                </div>
+                <div class="comparison-item">
+                    <div class="comparison-label">Branch B: Features</div>
+                    <div class="comparison-value">
+                        Advanced features like file sharing, voice, and rich text.
+                        7 messages, 3.1k tokens
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top: var(--spacing); text-align: right;">
+                <button class="button button-secondary" onclick="document.getElementById('comparisonOverlay').classList.remove('show')">Close</button>
+            </div>
+        </div>
+
+        <!-- Merge Dialog -->
+        <div class="merge-dialog" id="mergeDialog">
+            <h3 class="merge-title">Merge Branches</h3>
+            <p style="font-size: var(--font-size-small10); color: var(--color-body-textSoft10); margin-bottom: var(--spacing);">
+                Select branches to merge into main context
+            </p>
+            <div class="merge-options">
+                <div class="merge-option">
+                    <label>
+                        <input type="checkbox" checked> Branch A: Performance optimizations
+                    </label>
+                </div>
+                <div class="merge-option">
+                    <label>
+                        <input type="checkbox" checked> Branch B: Feature extensions
+                    </label>
+                </div>
+                <div class="merge-option">
+                    <label>
+                        <input type="checkbox"> Branch C: Refactoring approach
+                    </label>
+                </div>
+            </div>
+            <div class="merge-actions">
+                <button class="button button-secondary">Cancel</button>
+                <button class="button button-primary">Merge Selected</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Handle tree node clicks
+        document.querySelectorAll('.tree-node').forEach(node => {
+            node.addEventListener('click', () => {
+                document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('active'));
+                node.classList.add('active');
+            });
+        });
+
+        // Show comparison overlay
+        setTimeout(() => {
+            // document.getElementById('comparisonOverlay').classList.add('show');
+        }, 2000);
+
+        // Show merge dialog
+        setTimeout(() => {
+            // document.getElementById('mergeDialog').classList.add('show');
+        }, 4000);
+
+        // Handle pane resizing
+        let isResizing = false;
+        let currentResizer = null;
+        let currentPane = null;
+
+        document.querySelectorAll('.resizer').forEach(resizer => {
+            resizer.addEventListener('mousedown', (e) => {
+                isResizing = true;
+                currentResizer = resizer;
+                currentPane = resizer.parentElement;
+                document.body.style.cursor = 'col-resize';
+            });
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+            
+            const newWidth = e.clientX - currentPane.offsetLeft;
+            if (newWidth > 300 && newWidth < 800) {
+                currentPane.style.flex = `0 0 ${newWidth}px`;
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            isResizing = false;
+            currentResizer = null;
+            currentPane = null;
+            document.body.style.cursor = 'default';
+        });
+
+        // Auto-resize textareas
+        document.querySelectorAll('.chat-input').forEach(textarea => {
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            });
+        });
+    </script>
+</body>
+</html>

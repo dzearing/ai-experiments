@@ -54,11 +54,23 @@ const getThemeBasePath = (): string => {
       return basePath.endsWith('/') ? `${basePath}themes/` : `${basePath}/themes/`;
     }
     
+    // Check if we're in Storybook environment
+    const isStorybook = window.location.pathname.includes('/iframe.html') || 
+                        window.location.port === '6006' ||
+                        document.querySelector('#storybook-root') !== null ||
+                        document.querySelector('#storybook-preview-iframe') !== null;
+    
+    if (isStorybook) {
+      // In Storybook, themes are served from /themes/
+      return '/themes/';
+    }
+    
     // Check if assets/themes exists (mockup environment)
     const pathname = window.location.pathname;
     const isLocalMockup = pathname.endsWith('.html') && 
                           !pathname.startsWith('/themes/') &&
-                          !pathname.startsWith('/assets/');
+                          !pathname.startsWith('/assets/') &&
+                          !isStorybook;
     if (isLocalMockup) {
       // For mockups, always use assets/themes/
       return 'assets/themes/';

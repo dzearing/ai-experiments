@@ -5,15 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>File Tree Visualizer Mockup</title>
     <!-- UI Kit Styles -->
-    <link rel="stylesheet" href="../../../assets/styles.css">
+    <link rel="stylesheet" href="/assets/styles.css">
     
     <!-- Set theme base path for mockups -->
     <script>
-        window.__uiKitBasePath = '../../../assets/';
+        window.__uiKitBasePath = '/assets/';
     </script>    
     <!-- Theme Scripts (ES modules) -->
-    <script type="module" src="../../../assets/theme.js"></script>
-    <script type="module" src="../../../assets/theme-switcher.js"></script>
+    <script type="module" src="/assets/theme.js"></script>
+    <script type="module" src="/assets/theme-switcher.js"></script>
     
     <style>
         /* Component-specific tokens not in ui-kit */
@@ -63,7 +63,7 @@
         .file-tree-container {
             background: var(--color-panel-background);
             border: 1px solid var(--color-body-border);
-            border-radius: var(--radius-large10);
+            border-radius: var(--radius-container);
             overflow: hidden;
             max-width: 400px;
         }
@@ -237,7 +237,7 @@
             line-height: 1;
             font-weight: var(--font-weight-bold);
             color: var(--color-body-textSoft10);
-            border-radius: var(--radius-small20);
+            border-radius: var(--radius-smallest);
             transition: all var(--duration-fast10);
         }
 
@@ -279,7 +279,7 @@
         /* Badges and Indicators */
         .file-badge {
             padding: var(--spacing-small20);
-            border-radius: var(--radius-small10);
+            border-radius: var(--radius-small20);
             font-size: var(--font-size-smallest);
             font-weight: var(--font-weight-semibold);
             text-transform: uppercase;
@@ -337,7 +337,7 @@
             position: absolute;
             background: var(--color-panel-background);
             border: 1px solid var(--color-body-border);
-            border-radius: var(--radius-large10);
+            border-radius: var(--radius-medium);
             box-shadow: var(--shadow-card);
             padding: var(--spacing-small10);
             display: none;

@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work Item Definition - Claude Flow</title>
+    
+    <link rel="stylesheet" href="/assets/styles.css">
+    
+    <script>
+        window.__uiKitBasePath = '/assets/';
+    </script>
+    
+    <script type="module" src="/assets/theme.js"></script>
+    <script type="module" src="/assets/theme-switcher.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--color-body-background);
+            color: var(--color-body-text);
+            font-family: system-ui, -apple-system, sans-serif;
+            padding: var(--spacing-large20);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-container);
+            padding: var(--spacing-large10);
+            margin-bottom: var(--spacing-large10);
+            box-shadow: var(--shadow-soft10);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--spacing);
+        }
+
+        .work-item-title {
+            font-size: var(--font-size-h3);
+            font-weight: var(--font-weight-bold);
+            color: var(--color-body-text);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing);
+        }
+
+        .work-item-id {
+            font-size: var(--font-size);
+            color: var(--color-body-textSoft10);
+            font-weight: var(--font-weight-normal);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: var(--spacing-small10);
+        }
+
+        .action-button {
+            padding: var(--spacing-buttonY) var(--spacing-buttonX);
+            background: var(--color-neutral-background);
+            color: var(--color-neutral-text);
+            border: 1px solid var(--color-neutral-border);
+            border-radius: var(--radius-interactive);
+            cursor: pointer;
+            font-weight: var(--font-weight-medium);
+            transition: all var(--duration-fast10) ease;
+        }
+
+        .action-button:hover {
+            background: var(--color-neutral-background-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-button);
+        }
+
+        .action-button.primary {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border-color: var(--color-primary-border);
+        }
+
+        .action-button.primary:hover {
+            background: var(--color-primary-background-hover);
+        }
+
+        /* Status Bar */
+        .status-bar {
+            display: flex;
+            gap: var(--spacing-large10);
+            align-items: center;
+            padding-top: var(--spacing);
+            border-top: 1px solid var(--color-panel-border);
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+        }
+
+        .status-label {
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft10);
+        }
+
+        .status-value {
+            font-weight: var(--font-weight-medium);
+        }
+
+        .status-badge {
+            padding: var(--spacing-small20) var(--spacing-small10);
+            border-radius: var(--radius-round);
+            font-size: var(--font-size-small10);
+            font-weight: var(--font-weight-semibold);
+        }
+
+        .status-badge.todo {
+            background: var(--color-neutral-background);
+            color: var(--color-neutral-text);
+        }
+
+        .status-badge.in-progress {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+        }
+
+        .status-badge.done {
+            background: var(--color-success-background);
+            color: var(--color-success-text);
+        }
+
+        .priority-badge {
+            padding: var(--spacing-small20) var(--spacing-small10);
+            border-radius: var(--radius-interactive);
+            font-size: var(--font-size-small10);
+            font-weight: var(--font-weight-semibold);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small20);
+        }
+
+        .priority-badge.high {
+            background: var(--color-dangerSoft-background);
+            color: var(--color-dangerSoft-text);
+            border: 1px solid var(--color-dangerSoft-border);
+        }
+
+        .priority-badge.medium {
+            background: var(--color-warningSoft-background);
+            color: var(--color-warningSoft-text);
+            border: 1px solid var(--color-warningSoft-border);
+        }
+
+        .priority-badge.low {
+            background: var(--color-infoSoft-background);
+            color: var(--color-infoSoft-text);
+            border: 1px solid var(--color-infoSoft-border);
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: var(--spacing-large10);
+        }
+
+        /* Content Section */
+        .content-section {
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-container);
+            padding: var(--spacing-large10);
+            margin-bottom: var(--spacing-large10);
+        }
+
+        .section-title {
+            font-size: var(--font-size-large20);
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+        }
+
+        .section-icon {
+            width: 20px;
+            height: 20px;
+            opacity: 0.6;
+        }
+
+        /* Description */
+        .description-content {
+            line-height: var(--line-height-relaxed);
+            color: var(--color-body-text);
+        }
+
+        .description-editor {
+            background: var(--color-body-background);
+            border: 1px solid var(--color-input-border);
+            border-radius: var(--radius-interactive);
+            padding: var(--spacing);
+            min-height: 120px;
+            font-family: inherit;
+            font-size: var(--font-size);
+            line-height: var(--line-height-relaxed);
+            resize: vertical;
+        }
+
+        /* Acceptance Criteria */
+        .criteria-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-small10);
+        }
+
+        .criteria-item {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--spacing-small10);
+            padding: var(--spacing-small10) var(--spacing);
+            background: var(--color-body-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-interactive);
+            transition: all var(--duration-fast10) ease;
+        }
+
+        .criteria-item:hover {
+            border-color: var(--color-primary-border);
+            transform: translateX(2px);
+        }
+
+        .criteria-checkbox {
+            width: 18px;
+            height: 18px;
+            margin-top: 2px;
+            accent-color: var(--color-success-background);
+        }
+
+        .criteria-text {
+            flex: 1;
+            line-height: var(--line-height);
+        }
+
+        .criteria-item.completed {
+            opacity: 0.6;
+        }
+
+        .criteria-item.completed .criteria-text {
+            text-decoration: line-through;
+            color: var(--color-body-textSoft10);
+        }
+
+        /* Tasks */
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-small10);
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing);
+            padding: var(--spacing);
+            background: var(--color-body-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-interactive);
+            transition: all var(--duration-fast10) ease;
+            cursor: move;
+        }
+
+        .task-item:hover {
+            border-color: var(--color-primary-border);
+            box-shadow: var(--shadow-soft10);
+        }
+
+        .task-item.dragging {
+            opacity: 0.5;
+            transform: rotate(2deg);
+        }
+
+        .task-checkbox {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--color-success-background);
+        }
+
+        .task-content {
+            flex: 1;
+        }
+
+        .task-title {
+            font-weight: var(--font-weight-medium);
+            margin-bottom: var(--spacing-small20);
+        }
+
+        .task-meta {
+            display: flex;
+            gap: var(--spacing);
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft10);
+        }
+
+        .task-assignee {
+            width: 28px;
+            height: 28px;
+            border-radius: var(--radius-round);
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size-small10);
+            font-weight: var(--font-weight-semibold);
+        }
+
+        /* Add Item Button */
+        .add-item-button {
+            width: 100%;
+            padding: var(--spacing-small10);
+            background: transparent;
+            border: 1px dashed var(--color-panel-border);
+            border-radius: var(--radius-interactive);
+            color: var(--color-body-textSoft10);
+            cursor: pointer;
+            transition: all var(--duration-fast10) ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-small10);
+            margin-top: var(--spacing-small10);
+        }
+
+        .add-item-button:hover {
+            background: var(--color-body-background);
+            border-color: var(--color-primary-border);
+            color: var(--color-primary-text);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-large10);
+        }
+
+        .sidebar-section {
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-container);
+            padding: var(--spacing);
+        }
+
+        .sidebar-title {
+            font-size: var(--font-size);
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing);
+            color: var(--color-body-text);
+        }
+
+        /* Properties */
+        .property-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-small10);
+        }
+
+        .property-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-small10) 0;
+        }
+
+        .property-label {
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft10);
+        }
+
+        .property-value {
+            font-weight: var(--font-weight-medium);
+            color: var(--color-body-text);
+        }
+
+        .property-select {
+            padding: var(--spacing-small20) var(--spacing-small10);
+            background: var(--color-body-background);
+            border: 1px solid var(--color-input-border);
+            border-radius: var(--radius-interactive);
+            font-size: var(--font-size-small10);
+            color: var(--color-body-text);
+            cursor: pointer;
+        }
+
+        /* Assignees */
+        .assignee-list {
+            display: flex;
+            gap: var(--spacing-small20);
+            flex-wrap: wrap;
+        }
+
+        .assignee-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-round);
+            background: linear-gradient(135deg, var(--color-primary-background), var(--color-success-background));
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size-small10);
+            font-weight: var(--font-weight-semibold);
+            cursor: pointer;
+            transition: transform var(--duration-fast10) ease;
+        }
+
+        .assignee-avatar:hover {
+            transform: scale(1.1);
+        }
+
+        .assignee-add {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-round);
+            border: 1px dashed var(--color-panel-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all var(--duration-fast10) ease;
+        }
+
+        .assignee-add:hover {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border-style: solid;
+        }
+
+        /* Labels */
+        .label-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-small20);
+        }
+
+        .label-tag {
+            padding: var(--spacing-small20) var(--spacing-small10);
+            background: var(--color-body-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-round);
+            font-size: var(--font-size-smallest);
+            cursor: pointer;
+            transition: all var(--duration-fast10) ease;
+        }
+
+        .label-tag:hover {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border-color: var(--color-primary-border);
+        }
+
+        /* Activity */
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing);
+        }
+
+        .activity-item {
+            display: flex;
+            gap: var(--spacing-small10);
+            position: relative;
+        }
+
+        .activity-item::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 32px;
+            bottom: calc(var(--spacing) * -1);
+            width: 1px;
+            background: var(--color-panel-border);
+        }
+
+        .activity-item:last-child::before {
+            display: none;
+        }
+
+        .activity-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: var(--radius-round);
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size-smallest);
+            font-weight: var(--font-weight-semibold);
+            flex-shrink: 0;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-action {
+            font-size: var(--font-size-small10);
+            margin-bottom: var(--spacing-small20);
+        }
+
+        .activity-time {
+            font-size: var(--font-size-smallest);
+            color: var(--color-body-textSoft20);
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            margin-top: var(--spacing);
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-small10);
+            font-size: var(--font-size-small10);
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: var(--color-body-background);
+            border-radius: var(--radius-round);
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--color-primary-background), var(--color-success-background));
+            border-radius: var(--radius-round);
+            transition: width var(--duration-slow10) ease;
+        }
+
+        /* Comments Section */
+        .comments-section {
+            margin-top: var(--spacing-large10);
+        }
+
+        .comment-input-wrapper {
+            display: flex;
+            gap: var(--spacing-small10);
+            margin-bottom: var(--spacing);
+        }
+
+        .comment-input {
+            flex: 1;
+            padding: var(--spacing-small10) var(--spacing);
+            background: var(--color-body-background);
+            border: 1px solid var(--color-input-border);
+            border-radius: var(--radius-interactive);
+            font-size: var(--font-size);
+            color: var(--color-body-text);
+        }
+
+        .comment-input:focus {
+            outline: none;
+            border-color: var(--color-primary-border);
+        }
+
+        .comment-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing);
+        }
+
+        .comment-item {
+            display: flex;
+            gap: var(--spacing-small10);
+        }
+
+        .comment-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-round);
+            background: var(--color-neutral-background);
+            color: var(--color-neutral-text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size-small10);
+            font-weight: var(--font-weight-semibold);
+            flex-shrink: 0;
+        }
+
+        .comment-content {
+            flex: 1;
+            background: var(--color-body-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-interactive);
+            padding: var(--spacing-small10) var(--spacing);
+        }
+
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-small10);
+        }
+
+        .comment-author {
+            font-weight: var(--font-weight-medium);
+            font-size: var(--font-size-small10);
+        }
+
+        .comment-time {
+            font-size: var(--font-size-smallest);
+            color: var(--color-body-textSoft20);
+        }
+
+        .comment-text {
+            font-size: var(--font-size);
+            line-height: var(--line-height);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-top">
+                <h1 class="work-item-title">
+                    Implement Real-time Collaboration Features
+                    <span class="work-item-id">#CF-1247</span>
+                </h1>
+                <div class="header-actions">
+                    <button class="action-button">Edit</button>
+                    <button class="action-button">Clone</button>
+                    <button class="action-button">Archive</button>
+                    <button class="action-button primary">Start Work</button>
+                </div>
+            </div>
+            <div class="status-bar">
+                <div class="status-item">
+                    <span class="status-label">Status:</span>
+                    <span class="status-badge in-progress">In Progress</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Priority:</span>
+                    <span class="priority-badge high">
+                        <span>↑</span> High
+                    </span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Sprint:</span>
+                    <span class="status-value">Sprint 23</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Due:</span>
+                    <span class="status-value">Dec 15, 2024</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Estimate:</span>
+                    <span class="status-value">8 points</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Left Column -->
+            <div>
+                <!-- Description -->
+                <div class="content-section">
+                    <h2 class="section-title">
+                        <span class="section-icon">📝</span>
+                        Description
+                    </h2>
+                    <div class="description-content">
+                        <p>Implement real-time collaboration features that allow multiple users to work on the same document simultaneously. This includes presence indicators, live cursors, and conflict resolution mechanisms.</p>
+                        <br>
+                        <p>The implementation should use WebSockets for real-time communication and implement operational transformation (OT) or conflict-free replicated data types (CRDTs) for handling concurrent edits.</p>
+                    </div>
+                </div>
+
+                <!-- Acceptance Criteria -->
+                <div class="content-section">
+                    <h2 class="section-title">
+                        <span class="section-icon">✅</span>
+                        Acceptance Criteria
+                    </h2>
+                    <div class="criteria-list">
+                        <div class="criteria-item completed">
+                            <input type="checkbox" class="criteria-checkbox" checked>
+                            <span class="criteria-text">Users can see who else is viewing the same document</span>
+                        </div>
+                        <div class="criteria-item completed">
+                            <input type="checkbox" class="criteria-checkbox" checked>
+                            <span class="criteria-text">Live cursors show where other users are typing</span>
+                        </div>
+                        <div class="criteria-item">
+                            <input type="checkbox" class="criteria-checkbox">
+                            <span class="criteria-text">Changes are synchronized in real-time across all clients</span>
+                        </div>
+                        <div class="criteria-item">
+                            <input type="checkbox" class="criteria-checkbox">
+                            <span class="criteria-text">Conflict resolution handles simultaneous edits gracefully</span>
+                        </div>
+                        <div class="criteria-item">
+                            <input type="checkbox" class="criteria-checkbox">
+                            <span class="criteria-text">Performance remains smooth with up to 10 concurrent users</span>
+                        </div>
+                        <div class="criteria-item">
+                            <input type="checkbox" class="criteria-checkbox">
+                            <span class="criteria-text">Offline mode with sync when reconnected</span>
+                        </div>
+                    </div>
+                    <button class="add-item-button">
+                        <span>+</span> Add criteria
+                    </button>
+                </div>
+
+                <!-- Tasks -->
+                <div class="content-section">
+                    <h2 class="section-title">
+                        <span class="section-icon">📋</span>
+                        Tasks
+                        <span style="font-size: var(--font-size-small10); color: var(--color-body-textSoft10); font-weight: normal;">
+                            (3 of 7 completed)
+                        </span>
+                    </h2>
+                    <div class="task-list">
+                        <div class="task-item">
+                            <input type="checkbox" class="task-checkbox" checked>
+                            <div class="task-content">
+                                <div class="task-title">Set up WebSocket server infrastructure</div>
+                                <div class="task-meta">
+                                    <span>Completed • 2 days ago</span>
+                                </div>
+                            </div>
+                            <div class="task-assignee">JD</div>
+                        </div>
+                        <div class="task-item">
+                            <input type="checkbox" class="task-checkbox" checked>
+                            <div class="task-content">
+                                <div class="task-title">Implement presence service</div>
+                                <div class="task-meta">
+                                    <span>Completed • Yesterday</span>
+                                </div>
+                            </div>
+                            <div class="task-assignee">SK</div>
+                        </div>
+                        <div class="task-item">
+                            <input type="checkbox" class="task-checkbox" checked>
+                            <div class="task-content">
+                                <div class="task-title">Create cursor tracking system</div>
+                                <div class="task-meta">
+                                    <span>Completed • 4 hours ago</span>
+                                </div>
+                            </div>
+                            <div class="task-assignee">JD</div>
+                        </div>
+                        <div class="task-item">
+                            <input type="checkbox" class="task-checkbox">
+                            <div class="task-content">
+                                <div class="task-title">Implement CRDT for text synchronization</div>
+                                <div class="task-meta">
+                                    <span>In Progress • Est: 2 days</span>
+                                </div>
+                            </div>
+                            <div class="task-assignee">MR</div>
+                        </div>
+                        <div class="task-item">
+                            <input type="checkbox" class="task-checkbox">
+                            <div class="task-content">
+                                <div class="task-title">Add conflict resolution UI</div>
+                                <div class="task-meta">
+                                    <span>Todo • Est: 1 day</span>
+                                </div>
+                            </div>
+                            <div class="task-assignee">SK</div>
+                        </div>
+                        <div class="task-item">
+                            <input type="checkbox" class="task-checkbox">
+                            <div class="task-content">
+                                <div class="task-title">Implement offline sync mechanism</div>
+                                <div class="task-meta">
+                                    <span>Todo • Est: 3 days</span>
+                                </div>
+                            </div>
+                            <div class="task-assignee" style="background: var(--color-neutral-background); color: var(--color-neutral-text);">?</div>
+                        </div>
+                        <div class="task-item">
+                            <input type="checkbox" class="task-checkbox">
+                            <div class="task-content">
+                                <div class="task-title">Performance testing and optimization</div>
+                                <div class="task-meta">
+                                    <span>Todo • Est: 2 days</span>
+                                </div>
+                            </div>
+                            <div class="task-assignee" style="background: var(--color-neutral-background); color: var(--color-neutral-text);">?</div>
+                        </div>
+                    </div>
+                    <button class="add-item-button">
+                        <span>+</span> Add task
+                    </button>
+                </div>
+
+                <!-- Comments -->
+                <div class="content-section comments-section">
+                    <h2 class="section-title">
+                        <span class="section-icon">💬</span>
+                        Comments
+                    </h2>
+                    <div class="comment-input-wrapper">
+                        <input type="text" class="comment-input" placeholder="Add a comment...">
+                        <button class="action-button primary">Post</button>
+                    </div>
+                    <div class="comment-list">
+                        <div class="comment-item">
+                            <div class="comment-avatar">MR</div>
+                            <div class="comment-content">
+                                <div class="comment-header">
+                                    <span class="comment-author">Mike Rodriguez</span>
+                                    <span class="comment-time">2 hours ago</span>
+                                </div>
+                                <div class="comment-text">
+                                    I've started working on the CRDT implementation. Using Yjs library as it has good performance characteristics and built-in WebRTC support.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="comment-item">
+                            <div class="comment-avatar">SK</div>
+                            <div class="comment-content">
+                                <div class="comment-header">
+                                    <span class="comment-author">Sarah Kim</span>
+                                    <span class="comment-time">1 hour ago</span>
+                                </div>
+                                <div class="comment-text">
+                                    Great choice! I've used Yjs before. Make sure to implement proper cleanup for disconnected users to avoid memory leaks.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Properties -->
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">Properties</h3>
+                    <div class="property-group">
+                        <div class="property-item">
+                            <span class="property-label">Type</span>
+                            <select class="property-select">
+                                <option>Feature</option>
+                                <option>Bug</option>
+                                <option>Task</option>
+                            </select>
+                        </div>
+                        <div class="property-item">
+                            <span class="property-label">Component</span>
+                            <span class="property-value">Editor</span>
+                        </div>
+                        <div class="property-item">
+                            <span class="property-label">Version</span>
+                            <span class="property-value">v2.4.0</span>
+                        </div>
+                        <div class="property-item">
+                            <span class="property-label">Created</span>
+                            <span class="property-value">Nov 28, 2024</span>
+                        </div>
+                        <div class="property-item">
+                            <span class="property-label">Updated</span>
+                            <span class="property-value">2 hours ago</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress -->
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">Progress</h3>
+                    <div class="progress-container">
+                        <div class="progress-info">
+                            <span>43% Complete</span>
+                            <span>3 of 7 tasks</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 43%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assignees -->
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">Assignees</h3>
+                    <div class="assignee-list">
+                        <div class="assignee-avatar" title="John Doe">JD</div>
+                        <div class="assignee-avatar" title="Sarah Kim" style="background: linear-gradient(135deg, var(--color-warning-background), var(--color-success-background));">SK</div>
+                        <div class="assignee-avatar" title="Mike Rodriguez" style="background: linear-gradient(135deg, var(--color-danger-background), var(--color-primary-background));">MR</div>
+                        <div class="assignee-add">+</div>
+                    </div>
+                </div>
+
+                <!-- Labels -->
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">Labels</h3>
+                    <div class="label-list">
+                        <span class="label-tag">collaboration</span>
+                        <span class="label-tag">websocket</span>
+                        <span class="label-tag">real-time</span>
+                        <span class="label-tag">performance</span>
+                        <span class="label-tag">+</span>
+                    </div>
+                </div>
+
+                <!-- Activity -->
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">Recent Activity</h3>
+                    <div class="activity-list">
+                        <div class="activity-item">
+                            <div class="activity-avatar">JD</div>
+                            <div class="activity-content">
+                                <div class="activity-action">
+                                    <strong>John</strong> completed task "Create cursor tracking"
+                                </div>
+                                <div class="activity-time">4 hours ago</div>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-avatar">MR</div>
+                            <div class="activity-content">
+                                <div class="activity-action">
+                                    <strong>Mike</strong> started working on CRDT implementation
+                                </div>
+                                <div class="activity-time">6 hours ago</div>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-avatar">SK</div>
+                            <div class="activity-content">
+                                <div class="activity-action">
+                                    <strong>Sarah</strong> completed task "Implement presence service"
+                                </div>
+                                <div class="activity-time">Yesterday</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Animate progress on load
+        setTimeout(() => {
+            const progressFill = document.querySelector('.progress-fill');
+            if (progressFill) {
+                progressFill.style.width = '43%';
+            }
+        }, 100);
+
+        // Add drag and drop hint to tasks
+        const taskItems = document.querySelectorAll('.task-item');
+        taskItems.forEach(item => {
+            item.addEventListener('dragstart', () => {
+                item.classList.add('dragging');
+            });
+            item.addEventListener('dragend', () => {
+                item.classList.remove('dragging');
+            });
+        });
+    </script>
+</body>
+</html>

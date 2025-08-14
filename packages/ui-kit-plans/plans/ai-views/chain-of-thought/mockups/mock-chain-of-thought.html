@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chain of Thought Evaluation - Claude Flow</title>
+    
+    <link rel="stylesheet" href="/assets/styles.css">
+    
+    <script>
+        window.__uiKitBasePath = '/assets/';
+    </script>
+    
+    <script type="module" src="/assets/theme.js"></script>
+    <script type="module" src="/assets/theme-switcher.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--color-body-background);
+            color: var(--color-body-text);
+            font-family: system-ui, -apple-system, sans-serif;
+            padding: var(--spacing-large20);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-container);
+            padding: var(--spacing-large10);
+            margin-bottom: var(--spacing-large20);
+            box-shadow: var(--shadow-soft10);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            font-size: var(--font-size-h3);
+            font-weight: var(--font-weight-bold);
+        }
+
+        .header-subtitle {
+            font-size: var(--font-size);
+            color: var(--color-body-textSoft10);
+            margin-top: var(--spacing-small20);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: var(--spacing-small10);
+        }
+
+        .button {
+            padding: var(--spacing-buttonY) var(--spacing-buttonX);
+            border-radius: var(--radius-interactive);
+            font-weight: var(--font-weight-medium);
+            cursor: pointer;
+            transition: all var(--duration-fast10) ease;
+            border: 1px solid;
+        }
+
+        .button-primary {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border-color: var(--color-primary-border);
+        }
+
+        .button-primary:hover {
+            background: var(--color-primary-background-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-button);
+        }
+
+        .button-secondary {
+            background: var(--color-neutral-background);
+            color: var(--color-neutral-text);
+            border-color: var(--color-neutral-border);
+        }
+
+        /* Chain Container */
+        .chain-container {
+            display: flex;
+            gap: var(--spacing-large20);
+        }
+
+        /* Thought Chain */
+        .thought-chain {
+            flex: 1;
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-container);
+            padding: var(--spacing-large20);
+        }
+
+        .chain-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-large10);
+        }
+
+        .chain-title {
+            font-size: var(--font-size-large20);
+            font-weight: var(--font-weight-semibold);
+        }
+
+        .chain-controls {
+            display: flex;
+            gap: var(--spacing-small10);
+        }
+
+        .control-button {
+            padding: var(--spacing-small10);
+            background: var(--color-body-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-interactive);
+            cursor: pointer;
+            transition: all var(--duration-fast10) ease;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-button:hover {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+        }
+
+        /* Thought Steps */
+        .thought-steps {
+            position: relative;
+        }
+
+        .thought-step {
+            position: relative;
+            display: flex;
+            gap: var(--spacing);
+            margin-bottom: var(--spacing-large10);
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Connection Line */
+        .thought-step::before {
+            content: '';
+            position: absolute;
+            left: 24px;
+            top: 48px;
+            bottom: calc(var(--spacing-large10) * -1);
+            width: 2px;
+            background: linear-gradient(180deg,
+                var(--color-primary-background) 0%,
+                var(--color-panel-border) 100%
+            );
+        }
+
+        .thought-step:last-child::before {
+            display: none;
+        }
+
+        .step-marker {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-round);
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: var(--font-weight-bold);
+            flex-shrink: 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-marker.complete {
+            background: var(--color-success-background);
+            color: var(--color-success-text);
+        }
+
+        .step-marker.current {
+            background: var(--color-primary-background);
+            animation: pulse 2s infinite;
+        }
+
+        .step-marker.error {
+            background: var(--color-danger-background);
+            color: var(--color-danger-text);
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 0 0 var(--color-primary-background);
+            }
+            50% {
+                box-shadow: 0 0 0 8px transparent;
+            }
+        }
+
+        .step-content {
+            flex: 1;
+            background: var(--color-body-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-container);
+            padding: var(--spacing);
+            transition: all var(--duration-normal) ease;
+        }
+
+        .step-content:hover {
+            border-color: var(--color-primary-border);
+            box-shadow: var(--shadow-soft10);
+        }
+
+        .step-content.expanded {
+            border-color: var(--color-primary-border);
+            background: linear-gradient(135deg,
+                var(--gradient-body-primary),
+                var(--color-body-background)
+            );
+        }
+
+        .step-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--spacing);
+            cursor: pointer;
+        }
+
+        .step-title {
+            font-weight: var(--font-weight-semibold);
+            font-size: var(--font-size);
+            margin-bottom: var(--spacing-small20);
+        }
+
+        .step-type {
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft10);
+        }
+
+        .step-duration {
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft20);
+            padding: var(--spacing-small20) var(--spacing-small10);
+            background: var(--color-panel-background);
+            border-radius: var(--radius-round);
+        }
+
+        .step-details {
+            display: none;
+            margin-top: var(--spacing);
+            padding-top: var(--spacing);
+            border-top: 1px solid var(--color-panel-border);
+        }
+
+        .step-content.expanded .step-details {
+            display: block;
+        }
+
+        .step-reasoning {
+            background: var(--color-panel-background);
+            border-left: 3px solid var(--color-primary-background);
+            padding: var(--spacing);
+            border-radius: var(--radius-interactive);
+            margin-bottom: var(--spacing);
+            font-style: italic;
+            color: var(--color-body-textSoft10);
+        }
+
+        .step-inputs,
+        .step-outputs {
+            margin-bottom: var(--spacing);
+        }
+
+        .step-label {
+            font-size: var(--font-size-small10);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-body-textSoft10);
+            text-transform: uppercase;
+            margin-bottom: var(--spacing-small10);
+        }
+
+        .step-data {
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-interactive);
+            padding: var(--spacing-small10);
+            font-family: monospace;
+            font-size: var(--font-size-small10);
+            line-height: var(--line-height-relaxed);
+            overflow-x: auto;
+        }
+
+        .step-metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--spacing-small10);
+            margin-top: var(--spacing);
+        }
+
+        .metric-item {
+            text-align: center;
+            padding: var(--spacing-small10);
+            background: var(--color-panel-background);
+            border-radius: var(--radius-interactive);
+        }
+
+        .metric-value {
+            font-size: var(--font-size-large10);
+            font-weight: var(--font-weight-semibold);
+        }
+
+        .metric-label {
+            font-size: var(--font-size-smallest);
+            color: var(--color-body-textSoft20);
+        }
+
+        /* Sidebar */
+        .evaluation-sidebar {
+            width: 380px;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-large10);
+        }
+
+        .sidebar-card {
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-container);
+            padding: var(--spacing-large10);
+        }
+
+        .sidebar-title {
+            font-size: var(--font-size-large10);
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing);
+        }
+
+        /* Performance Metrics */
+        .performance-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing);
+        }
+
+        .perf-metric {
+            background: var(--color-body-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-interactive);
+            padding: var(--spacing);
+            text-align: center;
+        }
+
+        .perf-value {
+            font-size: var(--font-size-h4);
+            font-weight: var(--font-weight-bold);
+            color: var(--color-body-text);
+        }
+
+        .perf-label {
+            font-size: var(--font-size-smallest);
+            color: var(--color-body-textSoft20);
+            text-transform: uppercase;
+            margin-top: var(--spacing-small20);
+        }
+
+        .perf-change {
+            font-size: var(--font-size-smallest);
+            margin-top: var(--spacing-small20);
+        }
+
+        .perf-change.positive {
+            color: var(--color-success-background);
+        }
+
+        .perf-change.negative {
+            color: var(--color-danger-background);
+        }
+
+        /* Decision Tree */
+        .decision-tree {
+            margin-top: var(--spacing);
+        }
+
+        .tree-node {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+            padding: var(--spacing-small10);
+            margin-left: var(--spacing-large10);
+            position: relative;
+            cursor: pointer;
+            transition: background var(--duration-fast10) ease;
+            border-radius: var(--radius-interactive);
+        }
+
+        .tree-node:hover {
+            background: var(--color-body-background);
+        }
+
+        .tree-node.selected {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+        }
+
+        .tree-node::before {
+            content: '';
+            position: absolute;
+            left: calc(var(--spacing-large10) * -1);
+            top: 50%;
+            width: var(--spacing-large10);
+            height: 1px;
+            background: var(--color-panel-border);
+        }
+
+        .tree-icon {
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tree-label {
+            font-size: var(--font-size-small10);
+        }
+
+        .tree-confidence {
+            margin-left: auto;
+            font-size: var(--font-size-smallest);
+            color: var(--color-body-textSoft20);
+            padding: 2px 6px;
+            background: var(--color-body-background);
+            border-radius: var(--radius-round);
+        }
+
+        /* Confidence Graph */
+        .confidence-graph {
+            height: 120px;
+            background: var(--color-body-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-interactive);
+            padding: var(--spacing);
+            margin-top: var(--spacing);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .graph-line {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 80%;
+            background: linear-gradient(180deg,
+                transparent,
+                var(--color-primary-background)
+            );
+            opacity: 0.2;
+            clip-path: polygon(
+                0% 100%,
+                10% 85%,
+                20% 70%,
+                30% 75%,
+                40% 60%,
+                50% 65%,
+                60% 50%,
+                70% 40%,
+                80% 45%,
+                90% 30%,
+                100% 20%,
+                100% 100%
+            );
+        }
+
+        .graph-label {
+            position: absolute;
+            top: var(--spacing-small10);
+            left: var(--spacing);
+            font-size: var(--font-size-smallest);
+            color: var(--color-body-textSoft20);
+        }
+
+        /* Alternative Paths */
+        .alternative-paths {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-small10);
+            margin-top: var(--spacing);
+        }
+
+        .path-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+            padding: var(--spacing-small10);
+            background: var(--color-body-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-interactive);
+            cursor: pointer;
+            transition: all var(--duration-fast10) ease;
+        }
+
+        .path-item:hover {
+            border-color: var(--color-primary-border);
+            transform: translateX(2px);
+        }
+
+        .path-item.selected {
+            background: linear-gradient(135deg,
+                var(--gradient-body-primary),
+                var(--color-body-background)
+            );
+            border-color: var(--color-primary-border);
+        }
+
+        .path-score {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-round);
+            background: var(--color-panel-background);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: var(--font-weight-semibold);
+            font-size: var(--font-size-small10);
+        }
+
+        .path-score.high {
+            background: var(--color-success-background);
+            color: var(--color-success-text);
+        }
+
+        .path-score.medium {
+            background: var(--color-warning-background);
+            color: var(--color-warning-text);
+        }
+
+        .path-score.low {
+            background: var(--color-neutral-background);
+            color: var(--color-neutral-text);
+        }
+
+        .path-details {
+            flex: 1;
+        }
+
+        .path-name {
+            font-weight: var(--font-weight-medium);
+            font-size: var(--font-size-small10);
+        }
+
+        .path-description {
+            font-size: var(--font-size-smallest);
+            color: var(--color-body-textSoft10);
+        }
+
+        /* Evaluation Summary */
+        .evaluation-summary {
+            background: linear-gradient(135deg,
+                var(--gradient-body-success),
+                var(--color-panel-background)
+            );
+            border: 1px solid var(--color-successSoft-border);
+            border-radius: var(--radius-container);
+            padding: var(--spacing-large10);
+            margin-top: var(--spacing-large20);
+        }
+
+        .summary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing);
+        }
+
+        .summary-title {
+            font-size: var(--font-size-large20);
+            font-weight: var(--font-weight-semibold);
+        }
+
+        .summary-score {
+            font-size: var(--font-size-h3);
+            font-weight: var(--font-weight-bold);
+            color: var(--color-success-background);
+        }
+
+        .summary-content {
+            line-height: var(--line-height-relaxed);
+            color: var(--color-body-text);
+        }
+
+        /* Feedback Section */
+        .feedback-section {
+            display: flex;
+            gap: var(--spacing);
+            margin-top: var(--spacing);
+            padding-top: var(--spacing);
+            border-top: 1px solid var(--color-panel-border);
+        }
+
+        .feedback-button {
+            flex: 1;
+            padding: var(--spacing-small10);
+            background: var(--color-body-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-interactive);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-small10);
+            transition: all var(--duration-fast10) ease;
+        }
+
+        .feedback-button:hover {
+            background: var(--color-panel-background);
+            transform: translateY(-1px);
+        }
+
+        .feedback-button.positive:hover {
+            border-color: var(--color-success-border);
+            color: var(--color-success-text);
+        }
+
+        .feedback-button.negative:hover {
+            border-color: var(--color-danger-border);
+            color: var(--color-danger-text);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div>
+                    <h1 class="header-title">Chain of Thought Analysis</h1>
+                    <p class="header-subtitle">Evaluating reasoning process for: "Optimize database query performance"</p>
+                </div>
+                <div class="header-actions">
+                    <button class="button button-secondary">Export Analysis</button>
+                    <button class="button button-primary">Re-run Evaluation</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="chain-container">
+            <!-- Thought Chain -->
+            <div class="thought-chain">
+                <div class="chain-header">
+                    <h2 class="chain-title">Reasoning Steps</h2>
+                    <div class="chain-controls">
+                        <button class="control-button" title="Expand all">⤓</button>
+                        <button class="control-button" title="Collapse all">⤒</button>
+                        <button class="control-button" title="Play through">▶</button>
+                    </div>
+                </div>
+
+                <div class="thought-steps">
+                    <!-- Step 1 -->
+                    <div class="thought-step">
+                        <div class="step-marker complete">1</div>
+                        <div class="step-content expanded">
+                            <div class="step-header">
+                                <div>
+                                    <div class="step-title">Problem Analysis</div>
+                                    <div class="step-type">Initial Assessment</div>
+                                </div>
+                                <span class="step-duration">0.3s</span>
+                            </div>
+                            <div class="step-details">
+                                <div class="step-reasoning">
+                                    "First, I need to understand the current query performance issues. The user mentions slow database queries, which could be due to missing indexes, inefficient query structure, or data volume."
+                                </div>
+                                <div class="step-inputs">
+                                    <div class="step-label">Input</div>
+                                    <div class="step-data">
+                                        Query: SELECT * FROM orders WHERE status = 'pending' AND created_at > '2024-01-01'
+                                    </div>
+                                </div>
+                                <div class="step-outputs">
+                                    <div class="step-label">Analysis</div>
+                                    <div class="step-data">
+                                        - Full table scan detected<br>
+                                        - No index on (status, created_at)<br>
+                                        - Returning all columns unnecessarily
+                                    </div>
+                                </div>
+                                <div class="step-metrics">
+                                    <div class="metric-item">
+                                        <div class="metric-value">92%</div>
+                                        <div class="metric-label">Confidence</div>
+                                    </div>
+                                    <div class="metric-item">
+                                        <div class="metric-value">0.3s</div>
+                                        <div class="metric-label">Duration</div>
+                                    </div>
+                                    <div class="metric-item">
+                                        <div class="metric-value">3</div>
+                                        <div class="metric-label">Issues Found</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="thought-step">
+                        <div class="step-marker complete">2</div>
+                        <div class="step-content">
+                            <div class="step-header">
+                                <div>
+                                    <div class="step-title">Solution Generation</div>
+                                    <div class="step-type">Optimization Strategies</div>
+                                </div>
+                                <span class="step-duration">0.5s</span>
+                            </div>
+                            <div class="step-details">
+                                <div class="step-reasoning">
+                                    "Based on the analysis, I'll propose multiple optimization strategies. Adding appropriate indexes will be the most impactful change, followed by query restructuring."
+                                </div>
+                                <div class="step-outputs">
+                                    <div class="step-label">Proposed Solutions</div>
+                                    <div class="step-data">
+                                        1. CREATE INDEX idx_orders_status_date ON orders(status, created_at);<br>
+                                        2. SELECT only required columns<br>
+                                        3. Consider partitioning for date ranges<br>
+                                        4. Implement query result caching
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="thought-step">
+                        <div class="step-marker current">3</div>
+                        <div class="step-content">
+                            <div class="step-header">
+                                <div>
+                                    <div class="step-title">Impact Evaluation</div>
+                                    <div class="step-type">Performance Projection</div>
+                                </div>
+                                <span class="step-duration">0.4s</span>
+                            </div>
+                            <div class="step-details">
+                                <div class="step-reasoning">
+                                    "Let me evaluate the potential performance improvement from each optimization. The composite index should reduce query time by approximately 95%."
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 4 -->
+                    <div class="thought-step">
+                        <div class="step-marker">4</div>
+                        <div class="step-content">
+                            <div class="step-header">
+                                <div>
+                                    <div class="step-title">Implementation Plan</div>
+                                    <div class="step-type">Execution Strategy</div>
+                                </div>
+                                <span class="step-duration">--</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 5 -->
+                    <div class="thought-step">
+                        <div class="step-marker">5</div>
+                        <div class="step-content">
+                            <div class="step-header">
+                                <div>
+                                    <div class="step-title">Validation & Testing</div>
+                                    <div class="step-type">Quality Assurance</div>
+                                </div>
+                                <span class="step-duration">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <aside class="evaluation-sidebar">
+                <!-- Performance Metrics -->
+                <div class="sidebar-card">
+                    <h3 class="sidebar-title">Performance Metrics</h3>
+                    <div class="performance-grid">
+                        <div class="perf-metric">
+                            <div class="perf-value">1.7s</div>
+                            <div class="perf-label">Total Time</div>
+                            <div class="perf-change positive">↓ 0.3s</div>
+                        </div>
+                        <div class="perf-metric">
+                            <div class="perf-value">5</div>
+                            <div class="perf-label">Steps</div>
+                            <div class="perf-change">Optimal</div>
+                        </div>
+                        <div class="perf-metric">
+                            <div class="perf-value">88%</div>
+                            <div class="perf-label">Accuracy</div>
+                            <div class="perf-change positive">↑ 5%</div>
+                        </div>
+                        <div class="perf-metric">
+                            <div class="perf-value">0</div>
+                            <div class="perf-label">Backtracks</div>
+                            <div class="perf-change positive">Perfect</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Decision Tree -->
+                <div class="sidebar-card">
+                    <h3 class="sidebar-title">Decision Tree</h3>
+                    <div class="decision-tree">
+                        <div class="tree-node selected">
+                            <span class="tree-icon">📊</span>
+                            <span class="tree-label">Analyze Query</span>
+                            <span class="tree-confidence">92%</span>
+                        </div>
+                        <div class="tree-node selected" style="margin-left: var(--spacing-large20);">
+                            <span class="tree-icon">🔍</span>
+                            <span class="tree-label">Check Indexes</span>
+                            <span class="tree-confidence">88%</span>
+                        </div>
+                        <div class="tree-node" style="margin-left: var(--spacing-large20);">
+                            <span class="tree-icon">📈</span>
+                            <span class="tree-label">Analyze Volume</span>
+                            <span class="tree-confidence">72%</span>
+                        </div>
+                        <div class="tree-node selected" style="margin-left: var(--spacing-section);">
+                            <span class="tree-icon">⚡</span>
+                            <span class="tree-label">Add Index</span>
+                            <span class="tree-confidence">95%</span>
+                        </div>
+                        <div class="tree-node" style="margin-left: var(--spacing-section);">
+                            <span class="tree-icon">🔄</span>
+                            <span class="tree-label">Refactor Query</span>
+                            <span class="tree-confidence">78%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Confidence Graph -->
+                <div class="sidebar-card">
+                    <h3 class="sidebar-title">Confidence Over Time</h3>
+                    <div class="confidence-graph">
+                        <span class="graph-label">100%</span>
+                        <div class="graph-line"></div>
+                    </div>
+                </div>
+
+                <!-- Alternative Paths -->
+                <div class="sidebar-card">
+                    <h3 class="sidebar-title">Alternative Approaches</h3>
+                    <div class="alternative-paths">
+                        <div class="path-item selected">
+                            <div class="path-score high">A</div>
+                            <div class="path-details">
+                                <div class="path-name">Index Optimization</div>
+                                <div class="path-description">Add composite index on frequently queried columns</div>
+                            </div>
+                        </div>
+                        <div class="path-item">
+                            <div class="path-score medium">B</div>
+                            <div class="path-details">
+                                <div class="path-name">Query Refactoring</div>
+                                <div class="path-description">Rewrite query using JOINs and subqueries</div>
+                            </div>
+                        </div>
+                        <div class="path-item">
+                            <div class="path-score low">C</div>
+                            <div class="path-details">
+                                <div class="path-name">Caching Layer</div>
+                                <div class="path-description">Implement Redis caching for frequent queries</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <!-- Evaluation Summary -->
+        <div class="evaluation-summary">
+            <div class="summary-header">
+                <h3 class="summary-title">Evaluation Summary</h3>
+                <div class="summary-score">88/100</div>
+            </div>
+            <div class="summary-content">
+                <p>The reasoning chain demonstrates a logical and efficient approach to database optimization. The analysis correctly identified the primary performance bottleneck (missing indexes) and proposed the most impactful solution first. The step-by-step reasoning shows clear understanding of database optimization principles.</p>
+                <br>
+                <p><strong>Strengths:</strong> Systematic analysis, accurate problem identification, practical solutions</p>
+                <p><strong>Areas for improvement:</strong> Could consider more advanced optimization techniques like query plan analysis</p>
+            </div>
+            <div class="feedback-section">
+                <button class="feedback-button positive">
+                    <span>👍</span>
+                    Helpful Analysis
+                </button>
+                <button class="feedback-button negative">
+                    <span>👎</span>
+                    Needs Improvement
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Toggle step expansion
+        document.querySelectorAll('.step-header').forEach(header => {
+            header.addEventListener('click', () => {
+                const content = header.closest('.step-content');
+                content.classList.toggle('expanded');
+            });
+        });
+
+        // Simulate step progression
+        let currentStep = 3;
+        setInterval(() => {
+            const markers = document.querySelectorAll('.step-marker');
+            if (currentStep < markers.length) {
+                markers[currentStep - 1].classList.remove('current');
+                markers[currentStep - 1].classList.add('complete');
+                markers[currentStep].classList.add('current');
+                
+                // Update duration
+                const duration = markers[currentStep].parentElement.querySelector('.step-duration');
+                if (duration) {
+                    duration.textContent = `${(Math.random() * 0.8 + 0.2).toFixed(1)}s`;
+                }
+                
+                currentStep++;
+            }
+        }, 3000);
+
+        // Animate confidence graph
+        const graphLine = document.querySelector('.graph-line');
+        if (graphLine) {
+            setInterval(() => {
+                const newPath = `polygon(
+                    0% 100%,
+                    ${Array.from({length: 10}, (_, i) => 
+                        `${(i + 1) * 10}% ${100 - Math.random() * 80}%`
+                    ).join(',')},
+                    100% 100%
+                )`;
+                graphLine.style.clipPath = newPath;
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

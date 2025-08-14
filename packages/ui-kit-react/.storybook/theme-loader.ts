@@ -8,40 +8,76 @@ export interface ThemeConfig {
   mode: 'light' | 'dark';
 }
 
-// Track loaded stylesheets to avoid duplicates
+// Track all loaded stylesheets (keep them loaded to prevent font reload)
 const loadedThemes = new Map<string, HTMLLinkElement>();
+let currentThemeKey: string | null = null;
 
 /**
- * Load a theme CSS file dynamically
+ * Preload a theme CSS file without applying it
  */
-export function loadTheme({ theme, mode }: ThemeConfig) {
+async function preloadTheme(themeKey: string): Promise<HTMLLinkElement> {
+  return new Promise((resolve, reject) => {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    const [theme, mode] = themeKey.split('-');
+    link.href = `./themes/${theme}-${mode}.css`;
+    link.setAttribute('data-theme-css', themeKey);
+    // Keep it disabled initially to prevent flash
+    link.disabled = true;
+    
+    link.onload = () => {
+      loadedThemes.set(themeKey, link);
+      resolve(link);
+    };
+    
+    link.onerror = () => {
+      reject(new Error(`Failed to load theme: ${themeKey}`));
+    };
+    
+    document.head.appendChild(link);
+  });
+}
+
+/**
+ * Load a theme CSS file dynamically without removing old themes
+ * This prevents font reload jank by keeping all themes loaded but disabled
+ */
+export async function loadTheme({ theme, mode }: ThemeConfig) {
   const themeKey = `${theme}-${mode}`;
   
-  // Remove any previously loaded theme
-  loadedThemes.forEach((link, key) => {
-    if (key !== themeKey) {
-      link.remove();
-      loadedThemes.delete(key);
-    }
-  });
-  
-  // Check if this theme is already loaded
-  if (loadedThemes.has(themeKey)) {
+  // If it's the same theme, do nothing
+  if (currentThemeKey === themeKey) {
     return;
   }
   
-  // Create and insert the theme stylesheet
-  const link = document.createElement('link');
-  link.rel = 'stylesheet';
-  link.href = `/themes/${theme}-${mode}.css`;
-  link.setAttribute('data-theme-css', themeKey);
-  
-  document.head.appendChild(link);
-  loadedThemes.set(themeKey, link);
-  
-  // Set the data attributes
-  document.documentElement.setAttribute('data-theme', theme);
-  document.documentElement.setAttribute('data-theme-type', mode);
+  try {
+    let themeLink = loadedThemes.get(themeKey);
+    
+    // If theme not loaded yet, load it first
+    if (!themeLink) {
+      themeLink = await preloadTheme(themeKey);
+    }
+    
+    // Disable all other theme stylesheets
+    loadedThemes.forEach((link, key) => {
+      link.disabled = key !== themeKey;
+    });
+    
+    // Enable the new theme stylesheet
+    if (themeLink) {
+      themeLink.disabled = false;
+    }
+    
+    // Update current theme tracking
+    currentThemeKey = themeKey;
+    
+    // Set the data attributes
+    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.setAttribute('data-theme-type', mode);
+    
+  } catch (error) {
+    console.error('Failed to load theme:', error);
+  }
 }
 
 /**

@@ -47,7 +47,7 @@ const getThemeCardStyles = () => `
       var(--color-panel-background);
     border: 2px solid var(--color-panel-border);
     border-radius: var(--radius-container);
-    padding: var(--spacing-large20);
+    padding: var(--spacing);
     transition: background var(--duration-normal) var(--easing-default),
                 border-color var(--duration-normal) var(--easing-default),
                 box-shadow var(--duration-normal) var(--easing-default);
@@ -89,7 +89,7 @@ const getThemeCardStyles = () => `
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--spacing);
+    margin-bottom: var(--spacing-small20);
     width: 100%;
   }
   
@@ -156,21 +156,18 @@ const getThemeCardStyles = () => `
   .theme-description {
     font-size: var(--font-size-small20);
     color: var(--color-panel-textSoft20);
-    margin: 0 0 var(--spacing) 0;
+    margin: 0 0 var(--spacing-small10) 0;
     line-height: var(--line-height-normal);
   }
   
   .theme-preview {
-    background: var(--color-body-background);
-    border: 1px solid var(--color-body-border);
-    border-radius: var(--radius-container);
-    padding: var(--spacing);
+    /* Removed the panel - components render directly */
   }
   
   .preview-components {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing);
+    gap: var(--spacing-small10);
     align-items: stretch;
   }
   
@@ -182,11 +179,11 @@ const getThemeCardStyles = () => `
   }
 
   .preview-button {
-    height: 36px;
-    padding: 0 var(--spacing);
+    height: 32px;
+    padding: 0 var(--spacing-small10);
     border: none;
     border-radius: var(--radius-interactive);
-    font-size: var(--font-size-small10);
+    font-size: var(--font-size-small20);
     cursor: pointer;
     transition: background-color var(--duration-normal) var(--easing-default),
                 color var(--duration-normal) var(--easing-default),
@@ -279,13 +276,13 @@ const getThemeCardStyles = () => `
   }
   
   .preview-input {
-    height: 36px;
-    padding: 0 var(--spacing);
+    height: 32px;
+    padding: 0 var(--spacing-small10);
     background: var(--color-input-background);
     color: var(--color-input-text);
     border: 1px solid var(--color-input-border);
     border-radius: var(--radius-interactive);
-    font-size: var(--font-size-small10);
+    font-size: var(--font-size-small20);
     transition: background-color var(--duration-normal) var(--easing-default),
                 border-color var(--duration-normal) var(--easing-default),
                 outline var(--duration-normal) var(--easing-default);
@@ -303,54 +300,142 @@ const getThemeCardStyles = () => `
     background: var(--color-input-background-focus);
   }
   
-  .preview-slider-group {
-    width: 100%;
+  .preview-controls {
+    display: flex;
+    gap: var(--spacing);
+    align-items: center;
   }
-  
-  .preview-slider {
-    width: 100%;
-    height: 8px;
-    -webkit-appearance: none;
-    appearance: none;
-    background: var(--color-panel-background);
-    border: 1px solid var(--color-panel-border);
-    border-radius: 4px;
-    outline: none;
-    transition: opacity var(--duration-normal) var(--easing-default);
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
-  }
-  
-  .preview-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 18px;
-    height: 18px;
-    background: var(--color-primary-background);
-    border-radius: 50%;
+
+  /* Switch Styles - matching ui-kit-react */
+  .preview-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-small10);
     cursor: pointer;
-    transition: background-color var(--duration-normal) var(--easing-default),
-                transform var(--duration-normal) var(--easing-default);
+    user-select: none;
   }
-  
-  .preview-slider::-moz-range-thumb {
-    width: 18px;
-    height: 18px;
+
+  .preview-switch-input {
+    position: absolute;
+    width: 0;
+    height: 0;
+    opacity: 0;
+  }
+
+  .preview-switch-slider {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    background: var(--color-body-border);
+    border-radius: var(--radius-round);
+    transition: all var(--duration) var(--easing-default);
+    flex-shrink: 0;
+  }
+
+  .preview-switch:hover .preview-switch-input:not(:checked) + .preview-switch-slider {
+    background: var(--color-body-border-hover);
+  }
+
+  .preview-switch-input:checked + .preview-switch-slider {
     background: var(--color-primary-background);
-    border-radius: 50%;
+  }
+
+  .preview-switch:hover .preview-switch-input:checked + .preview-switch-slider {
+    background: var(--color-primary-background-hover);
+  }
+
+  /* Thumb element */
+  .preview-switch-thumb {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    top: 2px;
+    left: 2px;
+    background: var(--color-body-background);
+    border-radius: var(--radius-round);
+    transition: transform var(--duration) var(--easing-bounce);
+    box-shadow: var(--shadow-small10);
+  }
+
+  .preview-switch-input:checked + .preview-switch-slider .preview-switch-thumb {
+    transform: translateX(20px);
+  }
+
+  .preview-switch-label {
+    font-size: var(--font-size-normal);
+    color: var(--color-body-text);
+    white-space: nowrap;
+  }
+
+  /* Checkbox Styles - matching ui-kit-react */
+  .preview-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-small10);
     cursor: pointer;
-    border: none;
-    transition: background-color var(--duration-normal) var(--easing-default),
-                transform var(--duration-normal) var(--easing-default);
+    user-select: none;
   }
-  
-  .preview-slider:hover::-webkit-slider-thumb {
-    background: var(--color-primary-background-hover);
-    transform: scale(1.1);
+
+  .preview-checkbox-input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
   }
-  
-  .preview-slider:hover::-moz-range-thumb {
+
+  .preview-checkbox-mark {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    background: var(--color-input-background);
+    border: 2px solid var(--color-input-border);
+    border-radius: var(--radius-slight);
+    transition: all var(--duration) var(--easing-default);
+  }
+
+  .preview-checkbox:hover .preview-checkbox-mark {
+    border-color: var(--color-input-border-hover);
+    background: var(--color-input-background-hover);
+  }
+
+  .preview-checkbox-input:checked + .preview-checkbox-mark {
+    background: var(--color-primary-background);
+    border-color: var(--color-primary-border);
+  }
+
+  .preview-checkbox-input:checked:hover + .preview-checkbox-mark {
     background: var(--color-primary-background-hover);
-    transform: scale(1.1);
+    border-color: var(--color-primary-border-hover);
+  }
+
+  /* Checkmark using SVG for better control */
+  .preview-checkbox-mark::after {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    opacity: 0;
+    transform: scale(0);
+    transition: all var(--duration) var(--easing-bounce);
+    /* Create checkmark with CSS */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath fill='none' stroke='white' stroke-width='2' d='M2 6l3 3 5-6'/%3E%3C/svg%3E");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+  .preview-checkbox-input:checked + .preview-checkbox-mark::after {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .preview-checkbox-label {
+    font-size: var(--font-size-normal);
+    color: var(--color-body-text);
+    white-space: nowrap;
   }
   
   .preview-spinner-progress {
@@ -427,11 +512,17 @@ const ThemeCard: React.FC<{
   theme: ThemeInfo;
   isActive: boolean;
   onClick: () => void;
-}> = ({ theme, isActive, onClick }) => {
-  const [isDark, setIsDark] = useState(false);
+  globalDarkMode: boolean;
+}> = ({ theme, isActive, onClick, globalDarkMode }) => {
+  const [isDark, setIsDark] = useState(globalDarkMode);
   const containerRef = useRef<HTMLDivElement>(null);
   const shadowRef = useRef<ShadowRoot | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Update dark mode when global prop changes
+  useEffect(() => {
+    setIsDark(globalDarkMode);
+  }, [globalDarkMode]);
 
   // Create shadow DOM and initial setup
   useEffect(() => {
@@ -451,15 +542,7 @@ const ThemeCard: React.FC<{
           
           <div class="theme-header">
             <h3>${theme.name}</h3>
-            <div class="theme-toggle">
-              <span class="toggle-label">Light</span>
-              <div class="toggle-switch">
-                <div class="toggle-slider"></div>
-              </div>
-              <span class="toggle-label">Dark</span>
-            </div>
           </div>
-          
           
           <p class="theme-description">${theme.description}</p>
           
@@ -470,12 +553,23 @@ const ThemeCard: React.FC<{
                 <button class="preview-button preview-button-neutral">Neutral</button>
                 <button class="preview-button preview-button-outline">Outline</button>
               </div>
+              <div class="preview-controls">
+                <label class="preview-switch">
+                  <input type="checkbox" class="preview-switch-input" checked>
+                  <span class="preview-switch-slider">
+                    <span class="preview-switch-thumb"></span>
+                  </span>
+                  <span class="preview-switch-label">Switch</span>
+                </label>
+                <label class="preview-checkbox">
+                  <input type="checkbox" class="preview-checkbox-input" checked>
+                  <span class="preview-checkbox-mark"></span>
+                  <span class="preview-checkbox-label">Checkbox</span>
+                </label>
+              </div>
               <div class="preview-input-group">
                 <label for="theme-input-${theme.id}" class="preview-label">Label</label>
                 <input type="text" id="theme-input-${theme.id}" class="preview-input" placeholder="Placeholder text">
-              </div>
-              <div class="preview-slider-group">
-                <input type="range" class="preview-slider" min="0" max="100" value="50">
               </div>
               <div class="preview-spinner-progress">
                 <div class="preview-spinner"></div>
@@ -495,36 +589,19 @@ const ThemeCard: React.FC<{
   // Add event listeners
   useEffect(() => {
     if (shadowRef.current) {
-      const toggle = shadowRef.current.querySelector('.theme-toggle');
       const content = shadowRef.current.querySelector('.theme-content');
       
-      const handleToggle = (e: Event) => {
-        e.stopPropagation();
-        setIsDark(prev => !prev);
-      };
-      
       const handleCardClick = (e: Event) => {
-        // Don't trigger if clicking on toggle
-        const target = e.target as HTMLElement;
-        if (!target.closest('.theme-toggle')) {
-          onClick();
-        }
+        onClick();
       };
       
       // Add event listeners
-      if (toggle) {
-        toggle.addEventListener('click', handleToggle);
-      }
-      
       if (content) {
         content.addEventListener('click', handleCardClick);
       }
       
       // Cleanup
       return () => {
-        if (toggle) {
-          toggle.removeEventListener('click', handleToggle);
-        }
         if (content) {
           content.removeEventListener('click', handleCardClick);
         }
@@ -566,47 +643,60 @@ const ThemeCard: React.FC<{
         setIsLoading(true);
         const themeType = isDark ? 'dark' : 'light';
         const themeFile = `${theme.id}-${themeType}`;
+        const themeKey = `${theme.id}-${themeType}`;
         
         try {
-          // Clear adopted stylesheets first
-          shadowRef.current!.adoptedStyleSheets = [];
+          // Ensure base styles are loaded first
+          let baseStyles = shadowRef.current!.querySelector('link[data-base-styles]') as HTMLLinkElement;
+          if (!baseStyles) {
+            baseStyles = document.createElement('link');
+            baseStyles.rel = 'stylesheet';
+            baseStyles.href = './styles.css';
+            baseStyles.setAttribute('data-base-styles', 'true');
+            await new Promise((resolve, reject) => {
+              baseStyles.onload = resolve;
+              baseStyles.onerror = reject;
+              shadowRef.current!.appendChild(baseStyles);
+            });
+          }
           
-          // Remove ALL existing links to prevent duplicates
-          shadowRef.current!.querySelectorAll('link').forEach(link => link.remove());
+          // Check if theme link already exists
+          let themeLink = shadowRef.current!.querySelector(`link[data-theme-key="${themeKey}"]`) as HTMLLinkElement;
           
-          // Add theme-specific CSS (without base styles to avoid button conflicts)
-          const themeLink = document.createElement('link');
-          themeLink.rel = 'stylesheet';
-          themeLink.href = `./themes/${themeFile}.css`;
-          themeLink.setAttribute('data-theme-file', themeFile);
+          if (!themeLink) {
+            // Add theme-specific CSS
+            themeLink = document.createElement('link');
+            themeLink.rel = 'stylesheet';
+            themeLink.href = `./themes/${themeFile}.css`;
+            themeLink.setAttribute('data-theme-file', themeFile);
+            themeLink.setAttribute('data-theme-key', themeKey);
+            
+            // Wait for theme to load
+            await new Promise((resolve, reject) => {
+              themeLink.onload = resolve;
+              themeLink.onerror = reject;
+              shadowRef.current!.appendChild(themeLink);
+            });
+          }
           
-          // Wait for theme to load
-          await new Promise((resolve, reject) => {
-            themeLink.onload = resolve;
-            themeLink.onerror = reject;
-            shadowRef.current!.appendChild(themeLink);
+          // Enable only the current theme link
+          shadowRef.current!.querySelectorAll('link[data-theme-key]').forEach((link: any) => {
+            link.disabled = link.getAttribute('data-theme-key') !== themeKey;
           });
           
-          // Add component styles using adoptedStyleSheets
-          // Create and apply the stylesheet immediately
-          const styleSheet = new CSSStyleSheet();
-          const styles = getThemeCardStyles();
-          await styleSheet.replace(styles);
-          
-          // Apply the stylesheet to the shadow DOM
-          shadowRef.current!.adoptedStyleSheets = [styleSheet];
+          // Ensure component styles are applied
+          if (shadowRef.current!.adoptedStyleSheets.length === 0) {
+            const styleSheet = new CSSStyleSheet();
+            const styles = getThemeCardStyles();
+            await styleSheet.replace(styles);
+            shadowRef.current!.adoptedStyleSheets = [styleSheet];
+          }
           
           // Update wrapper attributes
           const wrapper = shadowRef.current!.querySelector('.theme-card-shadow-wrapper');
           if (wrapper) {
             wrapper.setAttribute('data-theme', theme.id);
             wrapper.setAttribute('data-theme-type', themeType);
-            
-            // Update toggle appearance
-            const toggleSwitch = wrapper.querySelector('.toggle-switch');
-            if (toggleSwitch) {
-              toggleSwitch.classList.toggle('dark', isDark);
-            }
           }
           
           setIsLoading(false);
@@ -638,15 +728,28 @@ type ThemeInfo = {
 // Main Theme Explorer Component
 const ThemeExplorer: React.FC = () => {
   const [activeTheme, setActiveTheme] = useState('default');
+  const [globalDarkMode, setGlobalDarkMode] = useState(() => {
+    // Initialize from localStorage
+    const stored = localStorage.getItem('theme-explorer-dark-mode');
+    return stored === 'true';
+  });
 
   const availableThemes: ThemeInfo[] = themeManifest.themes.map(theme => ({
     id: theme.id,
     name: theme.name,
     description: theme.description,
   }));
-  
-  // Ensure base styles are loaded
+
+  // Save dark mode preference to localStorage
   useEffect(() => {
+    localStorage.setItem('theme-explorer-dark-mode', globalDarkMode.toString());
+  }, [globalDarkMode]);
+  
+  // Ensure base styles are loaded and preload all themes
+  useEffect(() => {
+    // Set the base path for theme files to override the default logic
+    (window as any).__uiKitBasePath = '';
+    
     // Check if base styles link exists
     const baseStylesId = 'ui-kit-base-styles';
     if (!document.getElementById(baseStylesId)) {
@@ -656,7 +759,45 @@ const ThemeExplorer: React.FC = () => {
       baseLink.href = './styles.css';
       document.head.appendChild(baseLink);
     }
-  }, []);
+    
+    // Preload all themes in the background for instant switching
+    const preloadThemes = async () => {
+      const preloadPromises: Promise<void>[] = [];
+      
+      for (const theme of availableThemes) {
+        for (const mode of ['light', 'dark']) {
+          const themeKey = `${theme.id}-${mode}`;
+          const existingLink = document.querySelector(`link[data-theme-key="${themeKey}"]`);
+          
+          if (!existingLink) {
+            preloadPromises.push(
+              new Promise<void>((resolve) => {
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = `./themes/${themeKey}.css`;
+                link.setAttribute('data-theme-css', 'true');
+                link.setAttribute('data-theme-key', themeKey);
+                link.disabled = true; // Keep disabled until needed
+                
+                link.onload = () => resolve();
+                link.onerror = () => {
+                  console.warn(`Failed to preload theme: ${themeKey}`);
+                  resolve();
+                };
+                
+                document.head.appendChild(link);
+              })
+            );
+          }
+        }
+      }
+      
+      await Promise.all(preloadPromises);
+      console.log('All themes preloaded for Theme Explorer');
+    };
+    
+    preloadThemes();
+  }, [availableThemes]);
   
   // Load default theme on mount
   useEffect(() => {
@@ -669,39 +810,57 @@ const ThemeExplorer: React.FC = () => {
     // Apply theme to the root document
     document.documentElement.setAttribute('data-theme', themeId);
     
-    // Load the theme CSS at document level
+    // Load the theme CSS at document level using disable/enable approach
     const isDarkMode = document.documentElement.getAttribute('data-theme-type') === 'dark';
     const themeType = isDarkMode ? 'dark' : 'light';
     const themeFile = `${themeId}-${themeType}`;
+    const themeKey = `${themeId}-${themeType}`;
     
-    // Add new theme link first
-    const themeLink = document.createElement('link');
-    themeLink.rel = 'stylesheet';
-    themeLink.href = `./themes/${themeFile}.css`;
-    themeLink.setAttribute('data-theme-css', 'true');
-    themeLink.setAttribute('data-theme-id', themeId);
+    // Check if theme already exists
+    let themeLink = document.querySelector(`link[data-theme-key="${themeKey}"]`) as HTMLLinkElement;
     
-    // Wait for the new theme to load
-    await new Promise((resolve, reject) => {
-      themeLink.onload = resolve;
-      themeLink.onerror = reject;
-      document.head.appendChild(themeLink);
-    });
+    if (!themeLink) {
+      // Add new theme link (disabled initially for smooth transition)
+      themeLink = document.createElement('link');
+      themeLink.rel = 'stylesheet';
+      themeLink.href = `./themes/${themeFile}.css`;
+      themeLink.setAttribute('data-theme-css', 'true');
+      themeLink.setAttribute('data-theme-key', themeKey);
+      themeLink.disabled = true;
+      
+      // Wait for the theme to load
+      await new Promise((resolve, reject) => {
+        themeLink.onload = resolve;
+        themeLink.onerror = reject;
+        document.head.appendChild(themeLink);
+      });
+    }
     
-    // Remove all old theme links after new one is loaded
-    const existingThemeLinks = document.querySelectorAll('link[data-theme-css]');
-    existingThemeLinks.forEach(link => {
-      if (link !== themeLink) {
-        link.remove();
-      }
+    // Disable all theme links except the current one
+    document.querySelectorAll('link[data-theme-css]').forEach((link: any) => {
+      link.disabled = link.getAttribute('data-theme-key') !== themeKey;
     });
   };
 
   return (
     <div className="theme-explorer">
       <header className="explorer-header">
-        <h2>Theme Explorer</h2>
-        <p>Explore all available themes. Each theme card shows its unique color scheme with independent light/dark mode toggle.</p>
+        <div className="explorer-header-content">
+          <div className="explorer-header-text">
+            <h2>Theme Explorer</h2>
+            <p>Explore all available themes. Each theme card shows its unique color scheme with synchronized light/dark mode.</p>
+          </div>
+          <div className="global-theme-toggle">
+            <span className="toggle-label">Light</span>
+            <div 
+              className={`toggle-switch ${globalDarkMode ? 'dark' : ''}`}
+              onClick={() => setGlobalDarkMode(!globalDarkMode)}
+            >
+              <div className="toggle-slider"></div>
+            </div>
+            <span className="toggle-label">Dark</span>
+          </div>
+        </div>
       </header>
 
       <div className="themes-grid">
@@ -711,6 +870,7 @@ const ThemeExplorer: React.FC = () => {
             theme={theme}
             isActive={activeTheme === theme.id}
             onClick={() => handleThemeSelect(theme.id)}
+            globalDarkMode={globalDarkMode}
           />
         ))}
       </div>

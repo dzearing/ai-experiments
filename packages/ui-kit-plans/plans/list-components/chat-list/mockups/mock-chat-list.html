@@ -1,434 +1,631 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chat List - Default View</title>
-  
-  <!-- UI Kit Styles -->
-  <link rel="stylesheet" href="../../../assets/styles.css">
-  
-  <!-- Set ui-kit assets base path -->
-  <script>
-    window.__uiKitBasePath = '../../../assets/';
-  </script>
-  
-  <!-- Theme Scripts (ES modules) -->
-  <script type="module" src="../../../assets/theme.js"></script>
-  <script type="module" src="../../../assets/theme-switcher.js"></script>
-  <style>
-    :root {
-      /* Component-specific tokens */
-      --chat-avatar-size: var(--spacing-large20);
-      --chat-message-gap: var(--spacing-small10);
-      --chat-bubble-padding: var(--spacing-small20) var(--spacing);
-      --chat-actions-size: var(--spacing-large10);
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat List - Clean Implementation</title>
+    
+    <link rel="stylesheet" href="/assets/styles.css">
+    
+    <script>
+        window.__uiKitBasePath = '/assets/';
+    </script>
+    
+    <script type="module" src="/assets/theme.js"></script>
+    <script type="module" src="/assets/theme-switcher.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    body {
-      margin: 0;
-      padding: var(--spacing-large10);
-      background: var(--color-body-background);
-      font-family: var(--font-family);
-      min-height: 100vh;
-    }
+        body {
+            background: var(--color-body-background);
+            color: var(--color-body-text);
+            font-family: system-ui, -apple-system, sans-serif;
+            font-size: var(--font-size);
+            line-height: var(--line-height);
+            padding: var(--spacing-large20);
+        }
 
-    .demo-container {
-      max-width: 800px;
-      margin: 0 auto;
-      height: 600px;
-      display: flex;
-      flex-direction: column;
-      background: var(--color-panel-background);
-      border: 1px solid var(--color-panel-border);
-      border-radius: var(--radius-large10);
-      overflow: hidden;
-    }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
 
-    .chat-header {
-      padding: var(--spacing) var(--spacing-large10);
-      border-bottom: 1px solid var(--color-panel-border);
-      background: var(--color-panel-background);
-      display: flex;
-      align-items: center;
-      gap: var(--spacing);
-    }
+        /* Chat Container */
+        .chat-container {
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-container);
+            overflow: hidden;
+            box-shadow: var(--shadow-card);
+        }
 
-    .chat-header__title {
-      flex: 1;
-      font-size: var(--font-size-large10);
-      font-weight: var(--font-weight-semibold);
-      color: var(--color-body-text);
-    }
+        /* Chat Header */
+        .chat-header {
+            padding: var(--spacing);
+            border-bottom: 1px solid var(--color-panel-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--color-panel-background);
+        }
 
-    .chat-header__status {
-      font-size: var(--font-size-small10);
-      color: var(--color-body-textSoft10);
-    }
+        .chat-title {
+            font-size: var(--font-size-large20);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-body-text);
+        }
 
-    .chat-list {
-      flex: 1;
-      overflow-y: auto;
-      padding: var(--spacing);
-      position: relative;
-      scroll-behavior: smooth;
-    }
+        .chat-participants {
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft10);
+        }
 
-    /* Virtual scroll container */
-    .virtual-scroller {
-      position: relative;
-      min-height: 100%;
-    }
+        /* Messages Area */
+        .messages-area {
+            height: 500px;
+            overflow-y: auto;
+            padding: var(--spacing-large10);
+            background: var(--color-body-background);
+        }
 
-    /* Chat message - positioned absolutely for virtualization */
-    .chat-message {
-      position: absolute;
-      width: 100%;
-      display: flex;
-      gap: var(--spacing-small20);
-      padding: var(--chat-message-gap) 0;
-      transform: translateY(var(--item-y));
-      transition: transform var(--duration-normal) var(--easing-default);
-      will-change: transform;
-    }
+        /* Message Group */
+        .message-group {
+            margin-bottom: var(--spacing-large20);
+        }
 
-    /* User messages */
-    .chat-message--user {
-      flex-direction: row;
-    }
+        /* Message */
+        .message {
+            display: flex;
+            gap: var(--spacing);
+            margin-bottom: var(--spacing-large10);
+        }
 
-    /* Assistant messages */
-    .chat-message--assistant {
-      flex-direction: row-reverse;
-    }
+        .message:last-child {
+            margin-bottom: 0;
+        }
 
-    .chat-message--assistant .chat-message__content {
-      background: var(--color-panel-background);
-      border: 1px solid var(--color-panel-border);
-      border-radius: var(--radius);
-      padding: var(--chat-bubble-padding);
-    }
+        /* Avatar */
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-round);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size-large10);
+            font-weight: var(--font-weight-semibold);
+            flex-shrink: 0;
+        }
 
-    /* Avatar */
-    .chat-message__avatar {
-      width: var(--chat-avatar-size);
-      height: var(--chat-avatar-size);
-      border-radius: 50%;
-      background: var(--color-infoSoft-background);
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: var(--font-size-small10);
-    }
+        .avatar.user {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
 
-    /* Content area */
-    .chat-message__content {
-      flex: 1;
-      min-width: 0;
-      max-width: 70%;
-    }
+        .avatar.assistant {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+        }
 
-    .chat-message__header {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: var(--spacing-smallest);
-      align-items: baseline;
-    }
+        /* Message Content */
+        .message-content {
+            flex: 1;
+            min-width: 0; /* Prevents overflow */
+        }
 
-    .chat-message__author {
-      font-weight: var(--font-weight-medium);
-      color: var(--color-body-text);
-      font-size: var(--font-size-small10);
-    }
+        .message-header {
+            display: flex;
+            align-items: baseline;
+            gap: var(--spacing);
+            margin-bottom: var(--spacing-small10);
+        }
 
-    .chat-message__time {
-      font-size: var(--font-size-small20);
-      color: var(--color-body-textSoft20);
-    }
+        .message-author {
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-body-text);
+            font-size: var(--font-size);
+        }
 
-    .chat-message__body {
-      color: var(--color-body-text);
-      line-height: var(--line-height);
-      word-wrap: break-word;
-    }
+        .message-time {
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft20);
+        }
 
-    /* Code blocks in messages */
-    .chat-message__body pre {
-      background: var(--color-panel-background);
-      border: 1px solid var(--color-panel-border);
-      border-radius: var(--radius-small10);
-      padding: var(--spacing-small20);
-      margin: var(--spacing-small20) 0;
-      overflow-x: auto;
-    }
+        .message-text {
+            color: var(--color-body-text);
+            font-size: var(--font-size);
+            line-height: var(--line-height-relaxed);
+        }
 
-    .chat-message__body code {
-      font-family: var(--font-family-mono);
-      font-size: var(--font-size-small10);
-      color: var(--color-body-textSoft10);
-    }
+        /* Assistant Message Special Styling */
+        .message.assistant .message-bubble {
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-container);
+            padding: var(--spacing);
+            margin-top: var(--spacing-small10);
+        }
 
-    /* Actions (on hover) */
-    .chat-message__actions {
-      opacity: 0;
-      transition: opacity var(--duration-fast10);
-      display: flex;
-      gap: var(--spacing-smallest);
-      margin-top: var(--spacing-smallest);
-    }
+        /* Code Block */
+        .code-block {
+            background: var(--color-body-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-interactive);
+            padding: var(--spacing);
+            margin-top: var(--spacing-small10);
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: var(--font-size-small10);
+            line-height: var(--line-height-relaxed);
+            overflow-x: auto;
+        }
 
-    .chat-message:hover .chat-message__actions {
-      opacity: 1;
-    }
+        .code-block code {
+            color: var(--color-body-text);
+            display: block;
+            white-space: pre;
+        }
 
-    .chat-message__action {
-      width: var(--chat-actions-size);
-      height: var(--chat-actions-size);
-      background: var(--color-neutral-background);
-      border: 1px solid var(--color-neutral-border);
-      border-radius: var(--radius-small10);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: var(--font-size-small20);
-      transition: background var(--duration-fast10);
-    }
+        /* Input Area */
+        .input-area {
+            padding: var(--spacing);
+            border-top: 1px solid var(--color-panel-border);
+            background: var(--color-panel-background);
+            display: flex;
+            gap: var(--spacing);
+            align-items: flex-end;
+        }
 
-    .chat-message__action:hover {
-      background: var(--color-neutral-background-hover);
-    }
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
 
-    /* Typing indicator */
-    .typing-indicator {
-      display: flex;
-      gap: var(--spacing-small20);
-      padding: var(--spacing-small20);
-      margin-top: var(--spacing);
-    }
+        .chat-input {
+            width: 100%;
+            padding: var(--spacing) var(--spacing-large10);
+            background: var(--color-body-background);
+            border: 1px solid var(--color-input-border);
+            border-radius: var(--radius-container);
+            font-size: var(--font-size);
+            color: var(--color-body-text);
+            resize: none;
+            min-height: 44px;
+            font-family: inherit;
+            line-height: var(--line-height);
+        }
 
-    .typing-indicator span {
-      width: var(--spacing-small10);
-      height: var(--spacing-small10);
-      background: var(--color-body-textSoft20);
-      border-radius: 50%;
-      animation: typing 1.4s infinite;
-    }
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--color-primary-border);
+            box-shadow: 0 0 0 2px var(--color-primary-background) inset;
+        }
 
-    .typing-indicator span:nth-child(2) {
-      animation-delay: 0.2s;
-    }
+        .chat-input::placeholder {
+            color: var(--color-body-textSoft20);
+        }
 
-    .typing-indicator span:nth-child(3) {
-      animation-delay: 0.4s;
-    }
+        .send-button {
+            padding: var(--spacing-buttonY) var(--spacing-buttonX);
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border: none;
+            border-radius: var(--radius-interactive);
+            font-size: var(--font-size);
+            font-weight: var(--font-weight-medium);
+            cursor: pointer;
+            transition: all var(--duration-fast10) ease;
+            height: 44px;
+        }
 
-    @keyframes typing {
-      0%, 60%, 100% {
-        transform: translateY(0);
-        opacity: 0.5;
-      }
-      30% {
-        transform: translateY(calc(var(--spacing-small10) * -1));
-        opacity: 1;
-      }
-    }
+        .send-button:hover {
+            background: var(--color-primary-background-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-button);
+        }
 
-    /* Chat input */
-    .chat-input-container {
-      padding: var(--spacing);
-      border-top: 1px solid var(--color-panel-border);
-      background: var(--color-panel-background);
-      display: flex;
-      gap: var(--spacing-small20);
-    }
+        .send-button:active {
+            transform: translateY(0);
+        }
 
-    .chat-input {
-      flex: 1;
-      background: var(--color-input-background);
-      border: 1px solid var(--color-input-border);
-      border-radius: var(--radius-input);
-      padding: var(--spacing-inputY) var(--spacing-inputX);
-      font-size: var(--font-size);
-      color: var(--color-input-text);
-      resize: none;
-      font-family: var(--font-family);
-      line-height: var(--line-height);
-    }
+        /* Demo Variations Section */
+        .demo-section {
+            margin-top: var(--spacing-section);
+        }
 
-    .chat-input:focus {
-      outline: 2px solid var(--color-input-outline);
-      outline-offset: 2px;
-      border-color: var(--color-input-border-focus);
-    }
+        .section-title {
+            font-size: var(--font-size-h4);
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing-large10);
+            color: var(--color-body-text);
+        }
 
-    .chat-input::placeholder {
-      color: var(--color-body-textSoft20);
-    }
+        .variations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: var(--spacing-large10);
+        }
 
-    .send-button {
-      background: var(--color-primary-background);
-      color: var(--color-primary-text);
-      border: 1px solid var(--color-primary-border);
-      border-radius: var(--radius-button);
-      padding: var(--spacing-buttonY) var(--spacing-buttonX);
-      font-weight: var(--font-weight-medium);
-      cursor: pointer;
-      transition: background var(--duration-fast10);
-    }
+        /* Mini Chat Card */
+        .mini-chat {
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-container);
+            padding: var(--spacing);
+            cursor: pointer;
+            transition: all var(--duration-normal) ease;
+        }
 
-    .send-button:hover {
-      background: var(--color-primary-background-hover);
-    }
+        .mini-chat:hover {
+            border-color: var(--color-primary-border);
+            box-shadow: var(--shadow-card);
+            transform: translateY(-2px);
+        }
 
-    .send-button:active {
-      background: var(--color-primary-background);
-    }
+        .mini-chat-header {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+            margin-bottom: var(--spacing-small10);
+        }
 
-    /* Entrance animation */
-    @keyframes slideInUp {
-      from {
-        opacity: 0;
-        transform: translateY(calc(var(--item-y) + var(--spacing-large5)));
-      }
-      to {
-        opacity: 1;
-        transform: translateY(var(--item-y));
-      }
-    }
+        .mini-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-round);
+            background: var(--color-neutral-background);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size-small10);
+            font-weight: var(--font-weight-semibold);
+        }
 
-    .chat-message.entering {
-      animation: slideInUp var(--duration-normal) var(--easing-default);
-    }
-  </style>
+        .mini-chat-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .mini-chat-name {
+            font-weight: var(--font-weight-medium);
+            font-size: var(--font-size);
+            color: var(--color-body-text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .mini-chat-preview {
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft10);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .mini-chat-time {
+            font-size: var(--font-size-smallest);
+            color: var(--color-body-textSoft20);
+        }
+
+        .mini-chat-unread {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            width: 20px;
+            height: 20px;
+            border-radius: var(--radius-round);
+            font-size: var(--font-size-smallest);
+            font-weight: var(--font-weight-semibold);
+        }
+
+        /* Status Indicators */
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: var(--radius-round);
+            margin-left: var(--spacing-small20);
+        }
+
+        .status-indicator.online {
+            background: var(--color-success-background);
+        }
+
+        .status-indicator.away {
+            background: var(--color-warning-background);
+        }
+
+        .status-indicator.offline {
+            background: var(--color-neutral-background);
+        }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small20);
+            padding: var(--spacing-small10) 0;
+            color: var(--color-body-textSoft10);
+            font-size: var(--font-size-small10);
+            font-style: italic;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 3px;
+        }
+
+        .typing-dot {
+            width: 4px;
+            height: 4px;
+            background: var(--color-body-textSoft20);
+            border-radius: var(--radius-round);
+            animation: typingPulse 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typingPulse {
+            0%, 60%, 100% {
+                opacity: 0.3;
+                transform: scale(1);
+            }
+            30% {
+                opacity: 1;
+                transform: scale(1.3);
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="demo-container">
-    <div class="chat-header">
-      <div class="chat-header__title">Chat Demo</div>
-      <div class="chat-header__status">3 participants</div>
-    </div>
+    <div class="container">
+        <!-- Main Chat Demo -->
+        <div class="chat-container">
+            <!-- Header -->
+            <div class="chat-header">
+                <h2 class="chat-title">Chat Demo</h2>
+                <span class="chat-participants">3 participants</span>
+            </div>
 
-    <div class="chat-list">
-      <div class="virtual-scroller" style="height: 800px;">
-        <!-- Virtualized messages with absolute positioning -->
-        <div class="chat-message chat-message--user" style="--item-y: 0px;">
-          <div class="chat-message__avatar">👤</div>
-          <div class="chat-message__content">
-            <div class="chat-message__header">
-              <span class="chat-message__author">Alex Johnson</span>
-              <span class="chat-message__time">10:23 AM</span>
-            </div>
-            <div class="chat-message__body">
-              Hey team! I've been working on the virtualized list component. The performance improvements are looking great - we can now handle thousands of messages smoothly.
-            </div>
-            <div class="chat-message__actions">
-              <button class="chat-message__action" aria-label="Edit">✏️</button>
-              <button class="chat-message__action" aria-label="Reply">↩️</button>
-              <button class="chat-message__action" aria-label="React">😊</button>
-            </div>
-          </div>
-        </div>
+            <!-- Messages -->
+            <div class="messages-area">
+                <!-- Message 1 -->
+                <div class="message">
+                    <div class="avatar user">👤</div>
+                    <div class="message-content">
+                        <div class="message-header">
+                            <span class="message-author">Alex Johnson</span>
+                            <span class="message-time">10:23 AM</span>
+                        </div>
+                        <div class="message-text">
+                            Hey team! I've been working on the virtualized list component. The performance improvements are looking great - we can now handle thousands of messages smoothly.
+                        </div>
+                    </div>
+                </div>
 
-        <div class="chat-message chat-message--assistant" style="--item-y: 120px;">
-          <div class="chat-message__avatar">🤖</div>
-          <div class="chat-message__content">
-            <div class="chat-message__header">
-              <span class="chat-message__author">Assistant</span>
-              <span class="chat-message__time">10:24 AM</span>
-            </div>
-            <div class="chat-message__body">
-              That's excellent! The virtualization approach with element recycling should provide significant performance benefits. Here's a quick example of the recycling pattern:
-              <pre><code>class ComponentRecycler {
+                <!-- Message 2 (Assistant) -->
+                <div class="message assistant">
+                    <div class="avatar assistant">🤖</div>
+                    <div class="message-content">
+                        <div class="message-header">
+                            <span class="message-author">Assistant</span>
+                            <span class="message-time">10:24 AM</span>
+                        </div>
+                        <div class="message-bubble">
+                            <div class="message-text">
+                                That's excellent! The virtualization approach with element recycling should provide significant performance benefits. Here's a quick example of the recycling pattern:
+                            </div>
+                            <div class="code-block">
+                                <code>class ComponentRecycler {
   acquire(key) {
     return this.pool.pop() || this.create();
   }
   
   release(component) {
-    this.pool.push(component);
+    this.pool.push(this.reset(component));
   }
-}</code></pre>
+}</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Message 3 -->
+                <div class="message">
+                    <div class="avatar user">😊</div>
+                    <div class="message-content">
+                        <div class="message-header">
+                            <span class="message-author">Sarah Chen</span>
+                            <span class="message-time">10:25 AM</span>
+                        </div>
+                        <div class="message-text">
+                            Looks great! How does it handle dynamic heights? That's been a challenge with other virtualization libraries.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Typing Indicator -->
+                <div class="typing-indicator">
+                    <span>Alex is typing</span>
+                    <div class="typing-dots">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
             </div>
-            <div class="chat-message__actions">
-              <button class="chat-message__action" aria-label="Copy">📋</button>
-              <button class="chat-message__action" aria-label="Reply">↩️</button>
+
+            <!-- Input Area -->
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <textarea class="chat-input" placeholder="Type a message..." rows="1"></textarea>
+                </div>
+                <button class="send-button">Send</button>
             </div>
-          </div>
         </div>
 
-        <div class="chat-message chat-message--user" style="--item-y: 320px;">
-          <div class="chat-message__avatar">👩</div>
-          <div class="chat-message__content">
-            <div class="chat-message__header">
-              <span class="chat-message__author">Sarah Chen</span>
-              <span class="chat-message__time">10:25 AM</span>
-            </div>
-            <div class="chat-message__body">
-              Looks great! How does it handle dynamic heights? That's been a challenge with other virtualization libraries.
-            </div>
-            <div class="chat-message__actions">
-              <button class="chat-message__action" aria-label="Edit">✏️</button>
-              <button class="chat-message__action" aria-label="Reply">↩️</button>
-              <button class="chat-message__action" aria-label="React">😊</button>
-            </div>
-          </div>
-        </div>
+        <!-- Chat List Variations -->
+        <div class="demo-section">
+            <h2 class="section-title">Chat List Variations</h2>
+            
+            <div class="variations-grid">
+                <!-- Active Chat -->
+                <div class="mini-chat">
+                    <div class="mini-chat-header">
+                        <div class="mini-avatar">TM</div>
+                        <div class="mini-chat-info">
+                            <div class="mini-chat-name">
+                                Team Meeting
+                                <span class="status-indicator online"></span>
+                            </div>
+                            <div class="mini-chat-preview">
+                                Discussion about Q4 roadmap...
+                            </div>
+                        </div>
+                        <div>
+                            <div class="mini-chat-time">2m ago</div>
+                            <div class="mini-chat-unread">3</div>
+                        </div>
+                    </div>
+                </div>
 
-        <div class="chat-message chat-message--user entering" style="--item-y: 420px;">
-          <div class="chat-message__avatar">👤</div>
-          <div class="chat-message__content">
-            <div class="chat-message__header">
-              <span class="chat-message__author">Alex Johnson</span>
-              <span class="chat-message__time">10:26 AM</span>
-            </div>
-            <div class="chat-message__body">
-              We're using a measurement cache with ResizeObserver. Each message height is measured once and cached, then we update positions using transforms for smooth scrolling.
-            </div>
-            <div class="chat-message__actions">
-              <button class="chat-message__action" aria-label="Edit">✏️</button>
-              <button class="chat-message__action" aria-label="Reply">↩️</button>
-              <button class="chat-message__action" aria-label="React">😊</button>
-            </div>
-          </div>
-        </div>
+                <!-- Direct Message -->
+                <div class="mini-chat">
+                    <div class="mini-chat-header">
+                        <div class="mini-avatar" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">JD</div>
+                        <div class="mini-chat-info">
+                            <div class="mini-chat-name">
+                                John Doe
+                                <span class="status-indicator away"></span>
+                            </div>
+                            <div class="mini-chat-preview">
+                                Thanks for the review!
+                            </div>
+                        </div>
+                        <div>
+                            <div class="mini-chat-time">1h ago</div>
+                        </div>
+                    </div>
+                </div>
 
-        <!-- Typing indicator -->
-        <div class="typing-indicator" style="position: absolute; --item-y: 540px; transform: translateY(var(--item-y));">
-          <span></span>
-          <span></span>
-          <span></span>
+                <!-- Group Chat -->
+                <div class="mini-chat">
+                    <div class="mini-chat-header">
+                        <div class="mini-avatar" style="background: var(--color-success-background); color: var(--color-success-text);">🎨</div>
+                        <div class="mini-chat-info">
+                            <div class="mini-chat-name">
+                                Design Team
+                                <span class="status-indicator offline"></span>
+                            </div>
+                            <div class="mini-chat-preview">
+                                New mockups are ready
+                            </div>
+                        </div>
+                        <div>
+                            <div class="mini-chat-time">Yesterday</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bot Chat -->
+                <div class="mini-chat">
+                    <div class="mini-chat-header">
+                        <div class="mini-avatar" style="background: var(--color-primary-background); color: var(--color-primary-text);">🤖</div>
+                        <div class="mini-chat-info">
+                            <div class="mini-chat-name">
+                                AI Assistant
+                                <span class="status-indicator online"></span>
+                            </div>
+                            <div class="mini-chat-preview">
+                                How can I help you today?
+                            </div>
+                        </div>
+                        <div>
+                            <div class="mini-chat-time">Now</div>
+                            <div class="mini-chat-unread">1</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Archived Chat -->
+                <div class="mini-chat" style="opacity: 0.6;">
+                    <div class="mini-chat-header">
+                        <div class="mini-avatar">📁</div>
+                        <div class="mini-chat-info">
+                            <div class="mini-chat-name">
+                                Project Alpha
+                                <span class="status-indicator offline"></span>
+                            </div>
+                            <div class="mini-chat-preview">
+                                [Archived conversation]
+                            </div>
+                        </div>
+                        <div>
+                            <div class="mini-chat-time">2 weeks</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Support Chat -->
+                <div class="mini-chat">
+                    <div class="mini-chat-header">
+                        <div class="mini-avatar" style="background: var(--color-warning-background); color: var(--color-warning-text);">💬</div>
+                        <div class="mini-chat-info">
+                            <div class="mini-chat-name">
+                                Customer Support
+                                <span class="status-indicator online"></span>
+                            </div>
+                            <div class="mini-chat-preview">
+                                Ticket #1234 resolved
+                            </div>
+                        </div>
+                        <div>
+                            <div class="mini-chat-time">5m ago</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
 
-    <div class="chat-input-container">
-      <textarea 
-        class="chat-input" 
-        placeholder="Type a message..."
-        rows="1"
-      ></textarea>
-      <button class="send-button">Send</button>
-    </div>
-  </div>
+    <script>
+        // Auto-resize textarea
+        const textarea = document.querySelector('.chat-input');
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
 
-  <script>
-    // Simulate new message animation
-    setTimeout(() => {
-      const messages = document.querySelectorAll('.chat-message');
-      messages.forEach(msg => {
-        if (msg.classList.contains('entering')) {
-          setTimeout(() => msg.classList.remove('entering'), 200);
-        }
-      });
-    }, 100);
+        // Simulate sending message
+        document.querySelector('.send-button').addEventListener('click', () => {
+            const input = document.querySelector('.chat-input');
+            if (input.value.trim()) {
+                // Add animation effect
+                input.value = '';
+                input.style.height = 'auto';
+            }
+        });
 
-    // Auto-resize textarea
-    const textarea = document.querySelector('.chat-input');
-    textarea.addEventListener('input', () => {
-      textarea.style.height = 'auto';
-      textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
-    });
-  </script>
+        // Enter to send (Shift+Enter for new line)
+        textarea.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                document.querySelector('.send-button').click();
+            }
+        });
+    </script>
 </body>
 </html>

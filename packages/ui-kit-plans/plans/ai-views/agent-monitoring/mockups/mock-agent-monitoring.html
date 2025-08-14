@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Definition & Monitoring - Claude Flow</title>
+    
+    <link rel="stylesheet" href="/assets/styles.css">
+    
+    <script>
+        window.__uiKitBasePath = '/assets/';
+    </script>
+    
+    <script type="module" src="/assets/theme.js"></script>
+    <script type="module" src="/assets/theme-switcher.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--color-body-background);
+            color: var(--color-body-text);
+            font-family: system-ui, -apple-system, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar Navigation */
+        .nav-sidebar {
+            width: 260px;
+            background: var(--color-panel-background);
+            border-right: 1px solid var(--color-panel-border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .nav-header {
+            padding: var(--spacing-large10);
+            border-bottom: 1px solid var(--color-panel-border);
+        }
+
+        .nav-title {
+            font-size: var(--font-size-large20);
+            font-weight: var(--font-weight-bold);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+        }
+
+        .nav-section {
+            padding: var(--spacing);
+        }
+
+        .nav-section-title {
+            font-size: var(--font-size-smallest);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-body-textSoft20);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: var(--spacing-small10);
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+            padding: var(--spacing-small10) var(--spacing);
+            border-radius: var(--radius-interactive);
+            cursor: pointer;
+            transition: all var(--duration-fast10) ease;
+            margin-bottom: var(--spacing-small20);
+        }
+
+        .nav-item:hover {
+            background: var(--color-body-background);
+        }
+
+        .nav-item.active {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: var(--color-panel-background);
+            border-bottom: 1px solid var(--color-panel-border);
+            padding: var(--spacing-large10);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing);
+        }
+
+        .header-title {
+            font-size: var(--font-size-h4);
+            font-weight: var(--font-weight-semibold);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: var(--spacing-small10);
+        }
+
+        .button {
+            padding: var(--spacing-buttonY) var(--spacing-buttonX);
+            border-radius: var(--radius-interactive);
+            font-weight: var(--font-weight-medium);
+            cursor: pointer;
+            transition: all var(--duration-fast10) ease;
+            border: 1px solid;
+        }
+
+        .button-primary {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border-color: var(--color-primary-border);
+        }
+
+        .button-primary:hover {
+            background: var(--color-primary-background-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-button);
+        }
+
+        .button-secondary {
+            background: var(--color-neutral-background);
+            color: var(--color-neutral-text);
+            border-color: var(--color-neutral-border);
+        }
+
+        .button-secondary:hover {
+            background: var(--color-neutral-background-hover);
+        }
+
+        /* Status Pills */
+        .status-pills {
+            display: flex;
+            gap: var(--spacing);
+        }
+
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+            padding: var(--spacing-small20) var(--spacing);
+            background: var(--color-body-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-round);
+            font-size: var(--font-size-small10);
+        }
+
+        .status-pill.active {
+            background: var(--color-successSoft-background);
+            border-color: var(--color-successSoft-border);
+            color: var(--color-successSoft-text);
+        }
+
+        .status-pill.warning {
+            background: var(--color-warningSoft-background);
+            border-color: var(--color-warningSoft-border);
+            color: var(--color-warningSoft-text);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: var(--radius-round);
+            background: currentColor;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: var(--spacing-large10);
+            padding: 0 var(--spacing-large10);
+            border-bottom: 1px solid var(--color-panel-border);
+            background: var(--color-panel-background);
+        }
+
+        .tab {
+            padding: var(--spacing) 0;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            font-weight: var(--font-weight-medium);
+            color: var(--color-body-textSoft10);
+            transition: all var(--duration-fast10) ease;
+        }
+
+        .tab:hover {
+            color: var(--color-body-text);
+        }
+
+        .tab.active {
+            color: var(--color-primary-text);
+            border-bottom-color: var(--color-primary-background);
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--spacing-large10);
+        }
+
+        /* Agent Grid */
+        .agent-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: var(--spacing-large10);
+            margin-bottom: var(--spacing-large20);
+        }
+
+        .agent-card {
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-container);
+            padding: var(--spacing-large10);
+            transition: all var(--duration-normal) ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .agent-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-card);
+            border-color: var(--color-primary-border);
+        }
+
+        .agent-card.running {
+            border-color: var(--color-primary-border);
+            background: linear-gradient(135deg,
+                var(--gradient-body-primary),
+                var(--color-panel-background)
+            );
+        }
+
+        .agent-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--spacing);
+        }
+
+        .agent-info {
+            flex: 1;
+        }
+
+        .agent-name {
+            font-size: var(--font-size-large10);
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing-small20);
+        }
+
+        .agent-type {
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft10);
+        }
+
+        .agent-status {
+            padding: var(--spacing-small20) var(--spacing-small10);
+            border-radius: var(--radius-round);
+            font-size: var(--font-size-smallest);
+            font-weight: var(--font-weight-semibold);
+        }
+
+        .agent-status.idle {
+            background: var(--color-neutral-background);
+            color: var(--color-neutral-text);
+        }
+
+        .agent-status.running {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            animation: pulse 1.5s infinite;
+        }
+
+        .agent-status.completed {
+            background: var(--color-success-background);
+            color: var(--color-success-text);
+        }
+
+        .agent-status.error {
+            background: var(--color-danger-background);
+            color: var(--color-danger-text);
+        }
+
+        .agent-metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--spacing);
+            margin-top: var(--spacing);
+            padding-top: var(--spacing);
+            border-top: 1px solid var(--color-panel-border);
+        }
+
+        .metric {
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: var(--font-size-large20);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-body-text);
+        }
+
+        .metric-label {
+            font-size: var(--font-size-smallest);
+            color: var(--color-body-textSoft20);
+            text-transform: uppercase;
+        }
+
+        /* Progress Indicator */
+        .agent-progress {
+            margin-top: var(--spacing);
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: var(--color-body-background);
+            border-radius: var(--radius-round);
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg,
+                var(--color-primary-background),
+                var(--color-success-background)
+            );
+            border-radius: var(--radius-round);
+            transition: width var(--duration-slow10) ease;
+            position: relative;
+        }
+
+        .progress-fill.animating::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg,
+                transparent,
+                rgba(255, 255, 255, 0.3),
+                transparent
+            );
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* Monitoring Dashboard */
+        .monitoring-dashboard {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: var(--spacing-large10);
+        }
+
+        .chart-container {
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-container);
+            padding: var(--spacing-large10);
+        }
+
+        .chart-title {
+            font-size: var(--font-size-large10);
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing);
+        }
+
+        .chart-placeholder {
+            height: 300px;
+            background: linear-gradient(135deg,
+                var(--color-body-background),
+                var(--color-panel-background)
+            );
+            border-radius: var(--radius-interactive);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--color-body-textSoft20);
+        }
+
+        /* Activity Feed */
+        .activity-feed {
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-container);
+            padding: var(--spacing-large10);
+        }
+
+        .activity-title {
+            font-size: var(--font-size-large10);
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing);
+        }
+
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing);
+        }
+
+        .activity-item {
+            display: flex;
+            gap: var(--spacing-small10);
+            position: relative;
+        }
+
+        .activity-item::before {
+            content: '';
+            position: absolute;
+            left: 20px;
+            top: 36px;
+            bottom: calc(var(--spacing) * -1);
+            width: 1px;
+            background: var(--color-panel-border);
+        }
+
+        .activity-item:last-child::before {
+            display: none;
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-round);
+            background: var(--color-body-background);
+            border: 2px solid var(--color-panel-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .activity-icon.success {
+            background: var(--color-successSoft-background);
+            border-color: var(--color-successSoft-border);
+            color: var(--color-successSoft-text);
+        }
+
+        .activity-icon.warning {
+            background: var(--color-warningSoft-background);
+            border-color: var(--color-warningSoft-border);
+            color: var(--color-warningSoft-text);
+        }
+
+        .activity-icon.error {
+            background: var(--color-dangerSoft-background);
+            border-color: var(--color-dangerSoft-border);
+            color: var(--color-dangerSoft-text);
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-message {
+            font-size: var(--font-size);
+            line-height: var(--line-height);
+            margin-bottom: var(--spacing-small20);
+        }
+
+        .activity-time {
+            font-size: var(--font-size-smallest);
+            color: var(--color-body-textSoft20);
+        }
+
+        /* Agent Definition Form */
+        .definition-form {
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-container);
+            padding: var(--spacing-large20);
+        }
+
+        .form-section {
+            margin-bottom: var(--spacing-large20);
+        }
+
+        .form-title {
+            font-size: var(--font-size-large20);
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing);
+        }
+
+        .form-group {
+            margin-bottom: var(--spacing);
+        }
+
+        .form-label {
+            display: block;
+            font-size: var(--font-size-small10);
+            font-weight: var(--font-weight-medium);
+            color: var(--color-body-text);
+            margin-bottom: var(--spacing-small10);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: var(--spacing-small10) var(--spacing);
+            background: var(--color-body-background);
+            border: 1px solid var(--color-input-border);
+            border-radius: var(--radius-interactive);
+            font-size: var(--font-size);
+            color: var(--color-body-text);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--color-primary-border);
+        }
+
+        .form-textarea {
+            width: 100%;
+            padding: var(--spacing);
+            background: var(--color-body-background);
+            border: 1px solid var(--color-input-border);
+            border-radius: var(--radius-interactive);
+            font-size: var(--font-size);
+            color: var(--color-body-text);
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: var(--spacing-small10) var(--spacing);
+            background: var(--color-body-background);
+            border: 1px solid var(--color-input-border);
+            border-radius: var(--radius-interactive);
+            font-size: var(--font-size);
+            color: var(--color-body-text);
+            cursor: pointer;
+        }
+
+        /* Capability Tags */
+        .capability-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-small10);
+            margin-top: var(--spacing-small10);
+        }
+
+        .capability-tag {
+            padding: var(--spacing-small20) var(--spacing-small10);
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border-radius: var(--radius-round);
+            font-size: var(--font-size-smallest);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small20);
+            cursor: pointer;
+        }
+
+        .capability-tag:hover {
+            background: var(--color-primary-background-hover);
+        }
+
+        .capability-tag-remove {
+            cursor: pointer;
+            opacity: 0.7;
+        }
+
+        .capability-tag-remove:hover {
+            opacity: 1;
+        }
+
+        /* Real-time Monitoring */
+        .realtime-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--spacing-large10);
+            margin-bottom: var(--spacing-large20);
+        }
+
+        .stat-card {
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-container);
+            padding: var(--spacing-large10);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: var(--font-size-h3);
+            font-weight: var(--font-weight-bold);
+            color: var(--color-body-text);
+            margin-bottom: var(--spacing-small10);
+        }
+
+        .stat-label {
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft10);
+            text-transform: uppercase;
+        }
+
+        .stat-change {
+            font-size: var(--font-size-smallest);
+            margin-top: var(--spacing-small10);
+        }
+
+        .stat-change.positive {
+            color: var(--color-success-background);
+        }
+
+        .stat-change.negative {
+            color: var(--color-danger-background);
+        }
+
+        /* Console Output */
+        .console-output {
+            background: var(--color-body-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-interactive);
+            padding: var(--spacing);
+            font-family: monospace;
+            font-size: var(--font-size-small10);
+            line-height: var(--line-height-relaxed);
+            height: 200px;
+            overflow-y: auto;
+            color: var(--color-body-text);
+        }
+
+        .console-line {
+            margin-bottom: var(--spacing-small20);
+        }
+
+        .console-timestamp {
+            color: var(--color-body-textSoft20);
+            margin-right: var(--spacing-small10);
+        }
+
+        .console-level {
+            font-weight: var(--font-weight-semibold);
+            margin-right: var(--spacing-small10);
+        }
+
+        .console-level.info {
+            color: var(--color-infoSoft-text);
+        }
+
+        .console-level.success {
+            color: var(--color-successSoft-text);
+        }
+
+        .console-level.warning {
+            color: var(--color-warningSoft-text);
+        }
+
+        .console-level.error {
+            color: var(--color-dangerSoft-text);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="nav-sidebar">
+            <div class="nav-header">
+                <h2 class="nav-title">
+                    <span>🤖</span>
+                    AI Agents
+                </h2>
+            </div>
+            
+            <div class="nav-section">
+                <div class="nav-section-title">Management</div>
+                <div class="nav-item active">
+                    <span class="nav-icon">📊</span>
+                    <span>Monitoring</span>
+                </div>
+                <div class="nav-item">
+                    <span class="nav-icon">➕</span>
+                    <span>Create Agent</span>
+                </div>
+                <div class="nav-item">
+                    <span class="nav-icon">📚</span>
+                    <span>Templates</span>
+                </div>
+                <div class="nav-item">
+                    <span class="nav-icon">⚙️</span>
+                    <span>Settings</span>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Agent Types</div>
+                <div class="nav-item">
+                    <span class="nav-icon">💬</span>
+                    <span>Chat Agents</span>
+                </div>
+                <div class="nav-item">
+                    <span class="nav-icon">🔍</span>
+                    <span>Research Agents</span>
+                </div>
+                <div class="nav-item">
+                    <span class="nav-icon">💻</span>
+                    <span>Code Agents</span>
+                </div>
+                <div class="nav-item">
+                    <span class="nav-icon">📝</span>
+                    <span>Writing Agents</span>
+                </div>
+                <div class="nav-item">
+                    <span class="nav-icon">🎨</span>
+                    <span>Creative Agents</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-top">
+                    <h1 class="header-title">Agent Monitoring Dashboard</h1>
+                    <div class="header-actions">
+                        <button class="button button-secondary">Export Report</button>
+                        <button class="button button-primary">Deploy New Agent</button>
+                    </div>
+                </div>
+                <div class="status-pills">
+                    <div class="status-pill active">
+                        <span class="status-dot"></span>
+                        <span>5 Active Agents</span>
+                    </div>
+                    <div class="status-pill">
+                        <span>12 Total Tasks</span>
+                    </div>
+                    <div class="status-pill warning">
+                        <span>2 Warnings</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <div class="tab active">Overview</div>
+                <div class="tab">Active Agents</div>
+                <div class="tab">Performance</div>
+                <div class="tab">Logs</div>
+                <div class="tab">Configuration</div>
+            </div>
+
+            <!-- Content -->
+            <div class="content-area">
+                <!-- Real-time Stats -->
+                <div class="realtime-stats">
+                    <div class="stat-card">
+                        <div class="stat-value">5</div>
+                        <div class="stat-label">Active Agents</div>
+                        <div class="stat-change positive">↑ 2 from yesterday</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">87%</div>
+                        <div class="stat-label">Success Rate</div>
+                        <div class="stat-change negative">↓ 3% from last hour</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">1.2s</div>
+                        <div class="stat-label">Avg Response</div>
+                        <div class="stat-change positive">↓ 0.3s improvement</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">2,847</div>
+                        <div class="stat-label">Tasks Completed</div>
+                        <div class="stat-change positive">↑ 124 today</div>
+                    </div>
+                </div>
+
+                <!-- Agent Grid -->
+                <div class="agent-grid">
+                    <!-- Running Agent -->
+                    <div class="agent-card running">
+                        <div class="agent-card-header">
+                            <div class="agent-info">
+                                <div class="agent-name">Code Review Agent</div>
+                                <div class="agent-type">Code Analysis</div>
+                            </div>
+                            <div class="agent-status running">Running</div>
+                        </div>
+                        <div class="agent-metrics">
+                            <div class="metric">
+                                <div class="metric-value">42</div>
+                                <div class="metric-label">Tasks</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">0.8s</div>
+                                <div class="metric-label">Avg Time</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">98%</div>
+                                <div class="metric-label">Success</div>
+                            </div>
+                        </div>
+                        <div class="agent-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill animating" style="width: 65%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Idle Agent -->
+                    <div class="agent-card">
+                        <div class="agent-card-header">
+                            <div class="agent-info">
+                                <div class="agent-name">Research Assistant</div>
+                                <div class="agent-type">Information Gathering</div>
+                            </div>
+                            <div class="agent-status idle">Idle</div>
+                        </div>
+                        <div class="agent-metrics">
+                            <div class="metric">
+                                <div class="metric-value">156</div>
+                                <div class="metric-label">Tasks</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">2.1s</div>
+                                <div class="metric-label">Avg Time</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">94%</div>
+                                <div class="metric-label">Success</div>
+                            </div>
+                        </div>
+                        <div class="agent-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Completed Agent -->
+                    <div class="agent-card">
+                        <div class="agent-card-header">
+                            <div class="agent-info">
+                                <div class="agent-name">Documentation Writer</div>
+                                <div class="agent-type">Content Generation</div>
+                            </div>
+                            <div class="agent-status completed">Completed</div>
+                        </div>
+                        <div class="agent-metrics">
+                            <div class="metric">
+                                <div class="metric-value">23</div>
+                                <div class="metric-label">Tasks</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">5.2s</div>
+                                <div class="metric-label">Avg Time</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">100%</div>
+                                <div class="metric-label">Success</div>
+                            </div>
+                        </div>
+                        <div class="agent-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Error Agent -->
+                    <div class="agent-card">
+                        <div class="agent-card-header">
+                            <div class="agent-info">
+                                <div class="agent-name">Test Runner</div>
+                                <div class="agent-type">Quality Assurance</div>
+                            </div>
+                            <div class="agent-status error">Error</div>
+                        </div>
+                        <div class="agent-metrics">
+                            <div class="metric">
+                                <div class="metric-value">89</div>
+                                <div class="metric-label">Tasks</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">3.4s</div>
+                                <div class="metric-label">Avg Time</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">76%</div>
+                                <div class="metric-label">Success</div>
+                            </div>
+                        </div>
+                        <div class="agent-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 45%; background: var(--color-danger-background)"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Running Agent 2 -->
+                    <div class="agent-card running">
+                        <div class="agent-card-header">
+                            <div class="agent-info">
+                                <div class="agent-name">Data Processor</div>
+                                <div class="agent-type">ETL Pipeline</div>
+                            </div>
+                            <div class="agent-status running">Running</div>
+                        </div>
+                        <div class="agent-metrics">
+                            <div class="metric">
+                                <div class="metric-value">1.2k</div>
+                                <div class="metric-label">Records</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">0.3s</div>
+                                <div class="metric-label">Per Item</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">99%</div>
+                                <div class="metric-label">Success</div>
+                            </div>
+                        </div>
+                        <div class="agent-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill animating" style="width: 82%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- New Agent Template -->
+                    <div class="agent-card" style="border-style: dashed; cursor: pointer;">
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 150px;">
+                            <div style="font-size: 48px; opacity: 0.3; margin-bottom: var(--spacing);">+</div>
+                            <div style="color: var(--color-body-textSoft10);">Create New Agent</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monitoring Dashboard -->
+                <div class="monitoring-dashboard">
+                    <!-- Chart -->
+                    <div class="chart-container">
+                        <h3 class="chart-title">Agent Performance Over Time</h3>
+                        <div class="chart-placeholder">
+                            [Performance Chart Visualization]
+                        </div>
+                    </div>
+
+                    <!-- Activity Feed -->
+                    <div class="activity-feed">
+                        <h3 class="activity-title">Recent Activity</h3>
+                        <div class="activity-list">
+                            <div class="activity-item">
+                                <div class="activity-icon success">✓</div>
+                                <div class="activity-content">
+                                    <div class="activity-message">
+                                        <strong>Code Review Agent</strong> completed analysis of 15 files
+                                    </div>
+                                    <div class="activity-time">2 minutes ago</div>
+                                </div>
+                            </div>
+                            <div class="activity-item">
+                                <div class="activity-icon warning">!</div>
+                                <div class="activity-content">
+                                    <div class="activity-message">
+                                        <strong>Test Runner</strong> encountered timeout issue
+                                    </div>
+                                    <div class="activity-time">5 minutes ago</div>
+                                </div>
+                            </div>
+                            <div class="activity-item">
+                                <div class="activity-icon success">✓</div>
+                                <div class="activity-content">
+                                    <div class="activity-message">
+                                        <strong>Documentation Writer</strong> generated 3 new pages
+                                    </div>
+                                    <div class="activity-time">12 minutes ago</div>
+                                </div>
+                            </div>
+                            <div class="activity-item">
+                                <div class="activity-icon error">✕</div>
+                                <div class="activity-content">
+                                    <div class="activity-message">
+                                        <strong>Test Runner</strong> failed with connection error
+                                    </div>
+                                    <div class="activity-time">18 minutes ago</div>
+                                </div>
+                            </div>
+                            <div class="activity-item">
+                                <div class="activity-icon success">→</div>
+                                <div class="activity-content">
+                                    <div class="activity-message">
+                                        <strong>Data Processor</strong> started batch job #847
+                                    </div>
+                                    <div class="activity-time">25 minutes ago</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Console Output -->
+                <div class="chart-container" style="margin-top: var(--spacing-large10);">
+                    <h3 class="chart-title">Console Output</h3>
+                    <div class="console-output">
+                        <div class="console-line">
+                            <span class="console-timestamp">14:32:15</span>
+                            <span class="console-level info">[INFO]</span>
+                            Code Review Agent initialized successfully
+                        </div>
+                        <div class="console-line">
+                            <span class="console-timestamp">14:32:16</span>
+                            <span class="console-level info">[INFO]</span>
+                            Processing repository: claude-flow/main
+                        </div>
+                        <div class="console-line">
+                            <span class="console-timestamp">14:32:18</span>
+                            <span class="console-level success">[SUCCESS]</span>
+                            Found 42 files for analysis
+                        </div>
+                        <div class="console-line">
+                            <span class="console-timestamp">14:32:20</span>
+                            <span class="console-level warning">[WARN]</span>
+                            Test Runner: Retry attempt 2 of 3
+                        </div>
+                        <div class="console-line">
+                            <span class="console-timestamp">14:32:22</span>
+                            <span class="console-level error">[ERROR]</span>
+                            Test Runner: Connection timeout after 30s
+                        </div>
+                        <div class="console-line">
+                            <span class="console-timestamp">14:32:25</span>
+                            <span class="console-level info">[INFO]</span>
+                            Data Processor: Batch processing started
+                        </div>
+                        <div class="console-line">
+                            <span class="console-timestamp">14:32:28</span>
+                            <span class="console-level success">[SUCCESS]</span>
+                            Documentation Writer: Generated README.md
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Simulate real-time updates
+        setInterval(() => {
+            // Update random stat
+            const stats = document.querySelectorAll('.stat-value');
+            const randomStat = stats[Math.floor(Math.random() * stats.length)];
+            if (randomStat.textContent.includes('%')) {
+                const current = parseInt(randomStat.textContent);
+                randomStat.textContent = (current + Math.floor(Math.random() * 3 - 1)) + '%';
+            }
+
+            // Animate progress bars
+            const progressFills = document.querySelectorAll('.progress-fill.animating');
+            progressFills.forEach(fill => {
+                const current = parseInt(fill.style.width);
+                const newWidth = Math.min(100, current + Math.random() * 5);
+                fill.style.width = newWidth + '%';
+            });
+        }, 2000);
+
+        // Add console output
+        setInterval(() => {
+            const console = document.querySelector('.console-output');
+            const messages = [
+                { level: 'info', text: 'Agent health check passed' },
+                { level: 'success', text: 'Task completed successfully' },
+                { level: 'warning', text: 'Memory usage above 80%' },
+                { level: 'error', text: 'Failed to connect to service' }
+            ];
+            
+            const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+            const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+            
+            const newLine = document.createElement('div');
+            newLine.className = 'console-line';
+            newLine.innerHTML = `
+                <span class="console-timestamp">${time}</span>
+                <span class="console-level ${randomMessage.level}">[${randomMessage.level.toUpperCase()}]</span>
+                ${randomMessage.text}
+            `;
+            
+            console.appendChild(newLine);
+            console.scrollTop = console.scrollHeight;
+            
+            // Keep only last 10 lines
+            while (console.children.length > 10) {
+                console.removeChild(console.firstChild);
+            }
+        }, 3000);
+    </script>
+</body>
+</html>

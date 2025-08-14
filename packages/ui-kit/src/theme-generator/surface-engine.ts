@@ -12,6 +12,8 @@ import {
   darken,
   saturate,
   adjustTemperature,
+  getLuminance,
+  getContrastRatio,
 } from './utilities/index.js';
 import { generateTextColor, meetsContrast } from './accessibility.js';
 import type { WCAGLevel, TextSize } from './accessibility.js';
@@ -102,15 +104,28 @@ function generateSurfaceTokenSet(
   
   // Generate text with contrast validation
   const rawText = resolveColor(surface.base.text, contextWithCurrent);
-  tokens.text = validateAndAdjustContrast(
-    rawText,
-    tokens.background,
-    context.theme.accessibility.targetLevel || 'AA',
-    'normal',
-    surface.name,
-    'text',
-    contextWithCurrent
-  );
+  // If text was generated using contrast function, it's already validated
+  // Don't re-validate with different parameters
+  const isContrastGenerated = typeof surface.base.text === 'object' && 
+    'fn' in surface.base.text && 
+    surface.base.text.fn === 'contrast';
+  
+  
+  if (isContrastGenerated) {
+    // Already validated with correct parameters in resolveContrastFunction
+    tokens.text = rawText;
+  } else {
+    // Validate and adjust if needed
+    tokens.text = validateAndAdjustContrast(
+      rawText,
+      tokens.background,
+      context.theme.accessibility.targetLevel || 'AA',
+      'normal',
+      surface.name,
+      'text',
+      contextWithCurrent
+    );
+  }
   
   tokens.border = resolveColor(surface.base.border, contextWithCurrent);
 
@@ -340,6 +355,7 @@ function resolveContrastFunction(args: ContrastFunctionArgs, context: Resolution
   const targetLevel = args.target || context.theme.accessibility.targetLevel;
   const textSize = args.textSize || 'normal';
 
+
   // Try preferred color first
   if (args.prefer) {
     let preferred: string;
@@ -352,10 +368,16 @@ function resolveContrastFunction(args: ContrastFunctionArgs, context: Resolution
           : resolveColorReference(args.prefer, context);
     } else if ('ref' in args.prefer) {
       preferred = resolveColorReference(args.prefer.ref, context);
+    } else if ('fn' in args.prefer) {
+      // Handle function-based preference (like auto)
+      preferred = resolveColorFunction(args.prefer, context);
     } else {
       preferred = '#000000';
     }
-    return generateTextColor(background, preferred, targetLevel, textSize);
+    
+    const result = generateTextColor(background, preferred, targetLevel, textSize);
+    
+    return result;
   }
 
   // Generate appropriate text color
@@ -681,18 +703,22 @@ function generateStates(
 
   // Background states - define ALL states even if they reference base
   if (tokens.background) {
+    // Determine the best contrast direction once and apply consistently
+    const contrastDirection = determineContrastDirection(tokens.background, tokens.text);
+    
     // Always define all state variants, even if not in surface definition
     tokens['background-hover'] = states?.hover 
-      ? applyStateModifier(tokens.background, states.hover, tokens.background, context.mode, context)
+      ? applyContrastAwareStateModifierWithDirection(tokens.background, states.hover, contrastDirection, context.mode, context)
       : tokens.background;
       
     // Active builds on hover state for smooth progression
+    const hoverBg = tokens['background-hover'] || tokens.background;
     tokens['background-active'] = states?.active
-      ? applyRelativeStateModifier(tokens['background-hover'] || tokens.background, states.active, states.hover, tokens.background, context.mode, context)
+      ? applyContrastAwareStateModifierWithDirection(hoverBg, states.active, contrastDirection, context.mode, context)
       : tokens.background;
       
     tokens['background-focus'] = states?.focus
-      ? applyStateModifier(tokens.background, states.focus, tokens.background, context.mode, context)
+      ? applyContrastAwareStateModifierWithDirection(tokens.background, states.focus, contrastDirection, context.mode, context)
       : tokens.background;
       
     tokens['background-disabled'] = states?.disabled
@@ -702,32 +728,9 @@ function generateStates(
 
   // Text states - define ALL states even if they reference base
   if (tokens.text) {
-    // For each state, validate contrast against the corresponding background state
-    const bgHover = tokens['background-hover'] || tokens.background;
-    tokens['text-hover'] = states?.hover
-      ? validateAndAdjustContrast(
-          applyStateModifier(tokens.text, states.hover, bgHover, undefined, context),
-          bgHover,
-          context.theme.accessibility.targetLevel || 'AA',
-          'normal',
-          surfaceName,
-          'textHover',
-          context
-        )
-      : tokens.text;
-      
-    const bgActive = tokens['background-active'] || tokens.background;
-    tokens['text-active'] = states?.active
-      ? validateAndAdjustContrast(
-          applyStateModifier(tokens.text, states.active, bgActive, undefined, context),
-          bgActive,
-          context.theme.accessibility.targetLevel || 'AA',
-          'normal',
-          surfaceName,
-          'textActive',
-          context
-        )
-      : tokens.text;
+    // Keep text unchanged on hover/active - the background adjusts to increase contrast
+    tokens['text-hover'] = tokens.text;
+    tokens['text-active'] = tokens.text;
       
     const bgFocus = tokens['background-focus'] || tokens.background;
     tokens['text-focus'] = states?.focus
@@ -858,47 +861,85 @@ function applyStateModifier(
 }
 
 /**
- * Apply state modifier relative to previous state
- * This ensures smooth state progression (e.g., active builds on hover)
+ * Determine the best direction for contrast enhancement
+ * Returns 'lighter' or 'darker' based on available range and contrast improvement
  */
-function applyRelativeStateModifier(
-  startColor: string,
-  modifier: StateModifier,
-  previousModifier: StateModifier | undefined,
+function determineContrastDirection(
   baseColor: string,
+  textColor: string | undefined
+): 'lighter' | 'darker' {
+  if (!textColor) return 'darker'; // Fallback
+  
+  const bgLuminance = getLuminance(baseColor);
+  const textLuminance = getLuminance(textColor);
+  
+  // Calculate available range in both directions
+  const availableRangeLighter = 1.0 - bgLuminance; // How much we can lighten (0 to 1)
+  const availableRangeDarker = bgLuminance; // How much we can darken (0 to 1)
+  
+  // Test with a moderate adjustment (15%) to see which direction gives better contrast
+  const testAmount = 0.15;
+  const testLighterBg = lighten(baseColor, testAmount * 100);
+  const testDarkerBg = darken(baseColor, testAmount * 100);
+  
+  const lighterContrast = getContrastRatio(textColor, testLighterBg);
+  const darkerContrast = getContrastRatio(textColor, testDarkerBg);
+  const currentContrast = getContrastRatio(textColor, baseColor);
+  
+  // Calculate contrast improvements
+  const lighterImprovement = lighterContrast - currentContrast;
+  const darkerImprovement = darkerContrast - currentContrast;
+  
+  // Require minimum range to be viable (at least 0.15 luminance room for meaningful change)
+  const canGoLighter = availableRangeLighter > 0.15;
+  const canGoDarker = availableRangeDarker > 0.15;
+  
+  if (canGoLighter && canGoDarker) {
+    // Both directions available, choose the one with better contrast improvement
+    return lighterImprovement > darkerImprovement ? 'lighter' : 'darker';
+  } else if (canGoLighter && !canGoDarker) {
+    // Only lighter direction has sufficient room
+    return 'lighter';
+  } else if (!canGoLighter && canGoDarker) {
+    // Only darker direction has sufficient room
+    return 'darker';
+  } else {
+    // Neither direction has much room, fall back to text-based logic
+    return textLuminance < 0.5 ? 'lighter' : 'darker';
+  }
+}
+
+/**
+ * Apply state modifier in a predetermined contrast direction
+ * Ensures consistent direction across hover/active states
+ */
+function applyContrastAwareStateModifierWithDirection(
+  baseColor: string,
+  modifier: StateModifier,
+  direction: 'lighter' | 'darker',
   mode?: 'light' | 'dark',
   context?: ResolutionContext
 ): string {
-  if (!modifier) return startColor;
-
-  // If there's no previous modifier, just apply the current one
-  if (!previousModifier) {
-    return applyStateModifier(baseColor, modifier, baseColor, mode, context);
+  if (!modifier) {
+    return baseColor;
   }
 
-  // Calculate the delta between modifiers
-  const deltaModifier: StateModifier = {};
-
-  // Calculate lightness delta
+  const contrastAwareModifier: StateModifier = { ...modifier };
+  
   if (modifier.lightness !== undefined) {
-    const currentValue = typeof modifier.lightness === 'object' && mode
+    let lightnessValue = typeof modifier.lightness === 'object' && mode
       ? modifier.lightness[mode]
-      : typeof modifier.lightness === 'number' ? modifier.lightness : 0;
+      : typeof modifier.lightness === 'number'
+        ? modifier.lightness
+        : 0;
     
-    const previousValue = previousModifier.lightness !== undefined
-      ? (typeof previousModifier.lightness === 'object' && mode
-          ? previousModifier.lightness[mode]
-          : typeof previousModifier.lightness === 'number' ? previousModifier.lightness : 0)
-      : 0;
-    
-    const delta = currentValue - previousValue;
-    if (delta !== 0) {
-      deltaModifier.lightness = delta;
-    }
+    // Apply the predetermined direction
+    contrastAwareModifier.lightness = direction === 'lighter' ? 
+      Math.abs(lightnessValue) : 
+      Math.abs(lightnessValue) * -1;
   }
-
-  // Apply the delta to the start color
-  return applyStateModifier(startColor, deltaModifier, baseColor, mode, context);
+  
+  return applyStateModifier(baseColor, contrastAwareModifier, baseColor, mode, context);
 }
 
 /**

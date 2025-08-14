@@ -25,7 +25,7 @@ Every mockup HTML file must include these essential elements:
     <title>Component Name - Mockup</title>
     
     <!-- 1. Link to UI Kit styles -->
-    <link rel="stylesheet" href="../../../shared/ui-kit-config.js">
+    <link rel="stylesheet" href="/assets/styles.css">
     
     <!-- 2. Set base path for themes -->
     <script>

@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animation Showcase - Claude Flow UX Animations</title>
+    
+    <link rel="stylesheet" href="/assets/styles.css">
+    
+    <script>
+        window.__uiKitBasePath = '/assets/';
+    </script>
+    
+    <script type="module" src="/assets/theme.js"></script>
+    <script type="module" src="/assets/theme-switcher.js"></script>
+    
+    <style>
+        body {
+            padding: var(--spacing-large20);
+            background: var(--color-body-background);
+            color: var(--color-body-text);
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        .showcase-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .showcase-header {
+            margin-bottom: var(--spacing-section);
+        }
+
+        .showcase-title {
+            font-size: var(--font-size-h2);
+            font-weight: var(--font-weight-bold);
+            margin-bottom: var(--spacing);
+        }
+
+        .showcase-description {
+            color: var(--color-body-textSoft10);
+            font-size: var(--font-size-large10);
+            line-height: var(--line-height-relaxed);
+        }
+
+        .animation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: var(--spacing-large20);
+            margin-bottom: var(--spacing-section);
+        }
+
+        .animation-card {
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-container);
+            padding: var(--spacing-card);
+            overflow: hidden;
+        }
+
+        .animation-title {
+            font-size: var(--font-size-large20);
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing-small10);
+        }
+
+        .animation-description {
+            color: var(--color-body-textSoft10);
+            font-size: var(--font-size-small10);
+            margin-bottom: var(--spacing);
+        }
+
+        .animation-demo {
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background: linear-gradient(135deg, 
+                var(--gradient-body-primary),
+                var(--color-body-background)
+            );
+            border-radius: var(--radius-interactive);
+            margin-top: var(--spacing);
+        }
+
+        /* 1. Slide and Fade Animation */
+        .slide-fade-demo {
+            position: relative;
+            width: 100%;
+        }
+
+        .slide-fade-item {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            padding: var(--spacing) var(--spacing-large10);
+            border-radius: var(--radius-interactive);
+            animation: slideInFade 1.5s ease-out infinite alternate;
+        }
+
+        @keyframes slideInFade {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* 2. Scale and Rotate Animation */
+        .scale-rotate-demo .icon-container {
+            width: 80px;
+            height: 80px;
+            background: var(--color-success-background);
+            border-radius: var(--radius-round);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: scaleRotate 2s ease-in-out infinite;
+        }
+
+        @keyframes scaleRotate {
+            0%, 100% {
+                transform: scale(1) rotate(0deg);
+            }
+            50% {
+                transform: scale(1.2) rotate(180deg);
+            }
+        }
+
+        /* 3. Typing Indicator */
+        .typing-indicator {
+            display: flex;
+            gap: var(--spacing-small20);
+            padding: var(--spacing) var(--spacing-large10);
+            background: var(--color-panel-background);
+            border-radius: var(--radius-container);
+            border: 1px solid var(--color-panel-border);
+        }
+
+        .typing-dot {
+            width: 12px;
+            height: 12px;
+            background: var(--color-body-textSoft20);
+            border-radius: var(--radius-round);
+            animation: typingPulse 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typingPulse {
+            0%, 80%, 100% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1.3);
+                opacity: 1;
+            }
+        }
+
+        /* 4. Progress Wave */
+        .progress-wave {
+            width: 100%;
+            height: 60px;
+            position: relative;
+            overflow: hidden;
+            background: var(--color-panel-background);
+            border-radius: var(--radius-interactive);
+        }
+
+        .wave {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                var(--color-primary-background) 0%,
+                var(--color-success-background) 50%,
+                var(--color-primary-background) 100%
+            );
+            animation: wave 3s linear infinite;
+            opacity: 0.7;
+        }
+
+        @keyframes wave {
+            0% {
+                transform: translateX(0) translateY(20px);
+            }
+            50% {
+                transform: translateX(-25%) translateY(10px);
+            }
+            100% {
+                transform: translateX(-50%) translateY(20px);
+            }
+        }
+
+        /* 5. Stagger List Animation */
+        .stagger-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-small10);
+        }
+
+        .stagger-item {
+            background: var(--color-panel-background);
+            padding: var(--spacing-small10) var(--spacing);
+            border-radius: var(--radius-interactive);
+            border: 1px solid var(--color-panel-border);
+            opacity: 0;
+            animation: staggerIn 0.5s ease-out forwards;
+        }
+
+        .stagger-item:nth-child(1) { animation-delay: 0.1s; }
+        .stagger-item:nth-child(2) { animation-delay: 0.2s; }
+        .stagger-item:nth-child(3) { animation-delay: 0.3s; }
+        .stagger-item:nth-child(4) { animation-delay: 0.4s; }
+
+        @keyframes staggerIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 6. Morphing Button */
+        .morph-button {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border: none;
+            padding: var(--spacing-buttonY) var(--spacing-buttonX);
+            border-radius: var(--radius-interactive);
+            font-weight: var(--font-weight-medium);
+            cursor: pointer;
+            transition: all var(--duration-normal) var(--easing-default);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .morph-button:hover {
+            transform: scale(1.05);
+            border-radius: var(--radius-round);
+            padding: var(--spacing-buttonY) var(--spacing-large20);
+        }
+
+        .morph-button::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: var(--radius-round);
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width var(--duration-slow10) ease-out, 
+                        height var(--duration-slow10) ease-out;
+        }
+
+        .morph-button:active::after {
+            width: 300px;
+            height: 300px;
+        }
+
+        /* 7. Context Menu Slide */
+        .context-menu-demo {
+            position: relative;
+            height: 100%;
+        }
+
+        .context-trigger {
+            background: var(--color-neutral-background);
+            color: var(--color-neutral-text);
+            padding: var(--spacing-small10) var(--spacing);
+            border-radius: var(--radius-interactive);
+            border: 1px solid var(--color-neutral-border);
+            cursor: pointer;
+        }
+
+        .context-menu {
+            position: absolute;
+            top: calc(100% + var(--spacing-small10));
+            left: 0;
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-floating);
+            box-shadow: var(--shadow-modal);
+            padding: var(--spacing-small20);
+            min-width: 200px;
+            opacity: 0;
+            transform: translateY(-10px) scale(0.95);
+            pointer-events: none;
+            transition: all var(--duration-fast10) var(--easing-decelerate);
+        }
+
+        .context-trigger:hover + .context-menu,
+        .context-menu:hover {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+
+        .context-menu-item {
+            padding: var(--spacing-small10) var(--spacing);
+            border-radius: var(--radius-interactive);
+            cursor: pointer;
+            transition: background var(--duration-fastest) ease;
+        }
+
+        .context-menu-item:hover {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+        }
+
+        /* 8. Streaming Text Effect */
+        .streaming-text {
+            font-family: monospace;
+            font-size: var(--font-size);
+            line-height: var(--line-height-relaxed);
+            position: relative;
+        }
+
+        .streaming-text::after {
+            content: '▋';
+            animation: blink 1s infinite;
+            color: var(--color-primary-background);
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        /* 9. Card Flip Animation */
+        .flip-container {
+            perspective: 1000px;
+            width: 100%;
+            height: 100%;
+        }
+
+        .flip-card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.8s;
+            transform-style: preserve-3d;
+        }
+
+        .flip-container:hover .flip-card {
+            transform: rotateY(180deg);
+        }
+
+        .flip-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-container);
+            padding: var(--spacing);
+        }
+
+        .flip-back {
+            transform: rotateY(180deg);
+            background: linear-gradient(135deg,
+                var(--color-primary-background),
+                var(--color-success-background)
+            );
+            color: white;
+        }
+
+        /* 10. Skeleton Loading */
+        .skeleton-card {
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-container);
+            padding: var(--spacing);
+        }
+
+        .skeleton-line {
+            height: 14px;
+            background: linear-gradient(90deg,
+                var(--color-body-background) 25%,
+                var(--color-panel-border) 50%,
+                var(--color-body-background) 75%
+            );
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: var(--radius-interactive);
+            margin-bottom: var(--spacing-small10);
+        }
+
+        .skeleton-line:last-child {
+            width: 70%;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        /* Demo Controls */
+        .demo-controls {
+            display: flex;
+            gap: var(--spacing);
+            margin-top: var(--spacing-large20);
+            padding-top: var(--spacing-large20);
+            border-top: 1px solid var(--color-panel-border);
+        }
+
+        .control-button {
+            background: var(--color-neutral-background);
+            color: var(--color-neutral-text);
+            border: 1px solid var(--color-neutral-border);
+            padding: var(--spacing-small10) var(--spacing);
+            border-radius: var(--radius-interactive);
+            cursor: pointer;
+            transition: all var(--duration-fast10) ease;
+        }
+
+        .control-button:hover {
+            background: var(--color-neutral-background-hover);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-button);
+        }
+    </style>
+</head>
+<body>
+    <div class="showcase-container">
+        <header class="showcase-header">
+            <h1 class="showcase-title">Claude Flow Animation Patterns</h1>
+            <p class="showcase-description">
+                High-quality UX animations that enhance user experience through smooth transitions,
+                meaningful feedback, and delightful interactions.
+            </p>
+        </header>
+
+        <div class="animation-grid">
+            <!-- Slide and Fade -->
+            <div class="animation-card">
+                <h3 class="animation-title">Message Entry</h3>
+                <p class="animation-description">Smooth slide and fade for new chat messages</p>
+                <div class="animation-demo slide-fade-demo">
+                    <div class="slide-fade-item">New message appears...</div>
+                </div>
+            </div>
+
+            <!-- Scale and Rotate -->
+            <div class="animation-card">
+                <h3 class="animation-title">Success State</h3>
+                <p class="animation-description">Celebratory animation for task completion</p>
+                <div class="animation-demo">
+                    <div class="scale-rotate-demo">
+                        <div class="icon-container">✓</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Typing Indicator -->
+            <div class="animation-card">
+                <h3 class="animation-title">AI Thinking</h3>
+                <p class="animation-description">Indicates AI is processing</p>
+                <div class="animation-demo">
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Wave -->
+            <div class="animation-card">
+                <h3 class="animation-title">Progress Wave</h3>
+                <p class="animation-description">Fluid progress indication</p>
+                <div class="animation-demo">
+                    <div class="progress-wave">
+                        <div class="wave"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stagger List -->
+            <div class="animation-card">
+                <h3 class="animation-title">List Population</h3>
+                <p class="animation-description">Staggered entry for list items</p>
+                <div class="animation-demo">
+                    <div class="stagger-list">
+                        <div class="stagger-item">Work Item 1</div>
+                        <div class="stagger-item">Work Item 2</div>
+                        <div class="stagger-item">Work Item 3</div>
+                        <div class="stagger-item">Work Item 4</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Morphing Button -->
+            <div class="animation-card">
+                <h3 class="animation-title">Interactive Button</h3>
+                <p class="animation-description">Morphing hover state with ripple</p>
+                <div class="animation-demo">
+                    <button class="morph-button">Start Agent</button>
+                </div>
+            </div>
+
+            <!-- Context Menu -->
+            <div class="animation-card">
+                <h3 class="animation-title">Context Menu</h3>
+                <p class="animation-description">Smooth reveal on hover</p>
+                <div class="animation-demo">
+                    <div class="context-menu-demo">
+                        <div class="context-trigger">Right Click Me</div>
+                        <div class="context-menu">
+                            <div class="context-menu-item">Fork Context</div>
+                            <div class="context-menu-item">View Chain</div>
+                            <div class="context-menu-item">Export Chat</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Streaming Text -->
+            <div class="animation-card">
+                <h3 class="animation-title">Streaming Response</h3>
+                <p class="animation-description">Real-time text streaming with cursor</p>
+                <div class="animation-demo">
+                    <div class="streaming-text">
+                        Generating response in real-time
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Flip -->
+            <div class="animation-card">
+                <h3 class="animation-title">Card Flip</h3>
+                <p class="animation-description">3D flip for revealing details</p>
+                <div class="animation-demo">
+                    <div class="flip-container">
+                        <div class="flip-card">
+                            <div class="flip-face">
+                                <span>Hover to flip</span>
+                            </div>
+                            <div class="flip-face flip-back">
+                                <span>Details revealed!</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Skeleton Loading -->
+            <div class="animation-card">
+                <h3 class="animation-title">Skeleton Loading</h3>
+                <p class="animation-description">Content placeholder animation</p>
+                <div class="animation-demo">
+                    <div class="skeleton-card">
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-line"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-controls">
+            <button class="control-button" onclick="location.reload()">Restart Animations</button>
+            <button class="control-button" onclick="document.body.classList.toggle('reduced-motion')">Toggle Reduced Motion</button>
+        </div>
+    </div>
+</body>
+</html>
