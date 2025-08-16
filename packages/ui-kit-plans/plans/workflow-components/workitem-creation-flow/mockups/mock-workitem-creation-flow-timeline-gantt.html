@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work Item Creation Flow - Timeline & Gantt View</title>
+    
+    <!-- UI Kit styles -->
+    <link rel="stylesheet" href="/assets/styles.css">
+    
+    <!-- Set base path for themes -->
+    <script>
+        window.__uiKitBasePath = '/assets/';
+    </script>
+    
+    <!-- Load theme engine (auto-initializes) -->
+    <script type="module" src="/assets/theme.js"></script>
+    
+    <!-- Theme switcher UI -->
+    <script type="module" src="/assets/theme-switcher.js"></script>
+    
+    <style>
+        /* Container */
+        .timeline-container {
+            min-height: 100vh;
+            background: var(--color-body-background);
+            color: var(--color-body-text);
+            padding: var(--spacing);
+        }
+        
+        /* Header */
+        .timeline-header {
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-container);
+            padding: var(--spacing-large10);
+            margin-bottom: var(--spacing);
+        }
+        
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--spacing);
+        }
+        
+        .workflow-info {
+            flex: 1;
+        }
+        
+        .workflow-name {
+            font-size: var(--font-size-h3);
+            font-weight: var(--font-weight-semibold);
+            margin: 0 0 var(--spacing-small20) 0;
+        }
+        
+        .workflow-description {
+            color: var(--color-body-textSoft20);
+            font-size: var(--font-size-small10);
+            margin: 0;
+        }
+        
+        .workflow-stats {
+            display: flex;
+            gap: var(--spacing-large10);
+        }
+        
+        .stat-card {
+            background: var(--color-body-background);
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius-interactive);
+            padding: var(--spacing);
+            text-align: center;
+            min-width: 100px;
+        }
+        
+        .stat-value {
+            font-size: var(--font-size-h4);
+            font-weight: var(--font-weight-bold);
+            color: var(--color-primary-text);
+            display: block;
+        }
+        
+        .stat-label {
+            font-size: var(--font-size-smallest);
+            color: var(--color-body-textSoft20);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        /* Timeline Controls */
+        .timeline-controls {
+            display: flex;
+            gap: var(--spacing);
+            align-items: center;
+            padding: var(--spacing);
+            background: var(--color-body-background);
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius-interactive);
+        }
+        
+        .control-group {
+            display: flex;
+            gap: var(--spacing-small10);
+            align-items: center;
+            padding-right: var(--spacing);
+            border-right: 1px solid var(--color-body-border);
+        }
+        
+        .control-group:last-child {
+            border-right: none;
+        }
+        
+        .control-label {
+            font-size: var(--font-size-small20);
+            color: var(--color-body-textSoft10);
+        }
+        
+        .zoom-control {
+            display: flex;
+            gap: var(--spacing-small20);
+            align-items: center;
+        }
+        
+        .zoom-button {
+            width: 28px;
+            height: 28px;
+            border: 1px solid var(--color-body-border);
+            background: var(--color-body-background);
+            color: var(--color-body-text);
+            border-radius: var(--radius-small);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--duration) var(--easing-default);
+        }
+        
+        .zoom-button:hover {
+            background: var(--color-neutral-background);
+            border-color: var(--color-neutral-border);
+        }
+        
+        /* Main Timeline View */
+        .timeline-view {
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-container);
+            overflow: hidden;
+        }
+        
+        .timeline-grid {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            min-height: 600px;
+        }
+        
+        /* Task List (Left) */
+        .task-list {
+            background: var(--color-body-background);
+            border-right: 2px solid var(--color-body-border);
+        }
+        
+        .task-list-header {
+            padding: var(--spacing);
+            background: var(--color-panel-background);
+            border-bottom: 1px solid var(--color-panel-border);
+            font-weight: var(--font-weight-semibold);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .task-row {
+            padding: var(--spacing-small10) var(--spacing);
+            border-bottom: 1px solid var(--color-body-border);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+            min-height: 48px;
+            transition: background var(--duration) var(--easing-default);
+        }
+        
+        .task-row:hover {
+            background: var(--color-panel-background);
+        }
+        
+        .task-row.parent {
+            font-weight: var(--font-weight-medium);
+            background: var(--gradient-body-primary), var(--color-panel-background);
+        }
+        
+        .task-row.child {
+            padding-left: var(--spacing-large20);
+        }
+        
+        .task-expand {
+            width: 20px;
+            height: 20px;
+            border: none;
+            background: transparent;
+            color: var(--color-body-textSoft20);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .task-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: var(--radius-small);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size-smallest);
+            font-weight: var(--font-weight-bold);
+        }
+        
+        .task-icon.setup { background: var(--color-infoSoft-background); color: var(--color-infoSoft-text); }
+        .task-icon.build { background: var(--color-primary-background); color: var(--color-primary-text); }
+        .task-icon.validate { background: var(--color-successSoft-background); color: var(--color-successSoft-text); }
+        .task-icon.parallel { background: var(--color-warningSoft-background); color: var(--color-warningSoft-text); }
+        
+        .task-name {
+            flex: 1;
+            font-size: var(--font-size-small10);
+        }
+        
+        /* Gantt Chart (Right) */
+        .gantt-chart {
+            position: relative;
+            overflow-x: auto;
+            background: var(--gradient-body-primary), var(--color-panel-background);
+        }
+        
+        .gantt-header {
+            position: sticky;
+            top: 0;
+            background: var(--color-panel-background);
+            border-bottom: 1px solid var(--color-panel-border);
+            height: 49px;
+            display: flex;
+            z-index: 10;
+        }
+        
+        .time-unit {
+            flex: 0 0 120px;
+            padding: var(--spacing-small10);
+            border-right: 1px solid var(--color-body-border);
+            text-align: center;
+            font-size: var(--font-size-small20);
+            color: var(--color-body-textSoft10);
+            font-weight: var(--font-weight-medium);
+        }
+        
+        .gantt-rows {
+            position: relative;
+        }
+        
+        .gantt-row {
+            height: 48px;
+            border-bottom: 1px solid var(--color-body-border);
+            position: relative;
+            display: flex;
+        }
+        
+        .gantt-row.parent {
+            background: var(--gradient-body-primary), transparent;
+        }
+        
+        .time-block {
+            flex: 0 0 120px;
+            border-right: 1px dashed var(--color-body-borderSoft10);
+            height: 100%;
+        }
+        
+        /* Task Bars */
+        .task-bar {
+            position: absolute;
+            height: 28px;
+            top: 10px;
+            border-radius: var(--radius-interactive);
+            display: flex;
+            align-items: center;
+            padding: 0 var(--spacing-small10);
+            font-size: var(--font-size-smallest);
+            font-weight: var(--font-weight-medium);
+            cursor: pointer;
+            transition: all var(--duration) var(--easing-default);
+            box-shadow: var(--shadow-small10);
+        }
+        
+        .task-bar:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-interactive);
+            z-index: 5;
+        }
+        
+        .task-bar.setup {
+            background: var(--color-info-background);
+            color: var(--color-info-text);
+            left: 0;
+            width: 120px;
+        }
+        
+        .task-bar.parallel {
+            background: var(--color-warning-background);
+            color: var(--color-warning-text);
+            left: 120px;
+            width: 180px;
+            opacity: 0.9;
+        }
+        
+        .task-bar.dependent {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            left: 300px;
+            width: 240px;
+        }
+        
+        .task-bar.validation {
+            background: var(--color-success-background);
+            color: var(--color-success-text);
+            left: 540px;
+            width: 120px;
+        }
+        
+        /* Dependencies Lines */
+        .dependency-arrow {
+            position: absolute;
+            stroke: var(--color-danger-border);
+            stroke-width: 2;
+            fill: none;
+            stroke-dasharray: 4,2;
+            marker-end: url(#arrow);
+            pointer-events: none;
+        }
+        
+        /* Progress Indicator */
+        .task-progress {
+            position: absolute;
+            bottom: 2px;
+            left: 2px;
+            right: 2px;
+            height: 3px;
+            background: var(--color-body-background);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--color-successSoft-background);
+            border-radius: 2px;
+            transition: width var(--duration) var(--easing-default);
+        }
+        
+        /* Task Details Tooltip */
+        .task-tooltip {
+            position: absolute;
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-interactive);
+            padding: var(--spacing);
+            box-shadow: var(--shadow-overlay);
+            z-index: 100;
+            min-width: 280px;
+            display: none;
+        }
+        
+        .task-tooltip.visible {
+            display: block;
+        }
+        
+        .tooltip-title {
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing-small10);
+        }
+        
+        .tooltip-detail {
+            display: flex;
+            justify-content: space-between;
+            font-size: var(--font-size-small20);
+            color: var(--color-body-textSoft10);
+            margin-bottom: var(--spacing-small20);
+        }
+        
+        .tooltip-label {
+            color: var(--color-body-textSoft20);
+        }
+        
+        /* Critical Path Highlight */
+        .critical-path {
+            background: var(--gradient-body-danger), var(--color-dangerSoft-background) !important;
+            border: 1px solid var(--color-danger-border);
+        }
+        
+        /* Milestone Markers */
+        .milestone {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            background: var(--color-primary-background);
+            border: 3px solid var(--color-primary-border);
+            border-radius: var(--radius-round);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--color-primary-text);
+            font-weight: var(--font-weight-bold);
+            box-shadow: var(--shadow-interactive);
+            z-index: 10;
+        }
+        
+        /* Now Line */
+        .now-line {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--color-danger-background);
+            left: 180px;
+            z-index: 15;
+        }
+        
+        .now-indicator {
+            position: absolute;
+            top: -20px;
+            left: -20px;
+            background: var(--color-danger-background);
+            color: var(--color-danger-text);
+            padding: var(--spacing-small20) var(--spacing-small10);
+            border-radius: var(--radius-small);
+            font-size: var(--font-size-smallest);
+            font-weight: var(--font-weight-medium);
+        }
+        
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .timeline-grid {
+                grid-template-columns: 200px 1fr;
+            }
+            
+            .time-unit, .time-block {
+                flex: 0 0 100px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .workflow-stats {
+                flex-wrap: wrap;
+            }
+            
+            .timeline-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .task-list {
+                border-right: none;
+                border-bottom: 2px solid var(--color-body-border);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="timeline-container">
+        <!-- Header with Stats -->
+        <div class="timeline-header">
+            <div class="header-top">
+                <div class="workflow-info">
+                    <h1 class="workflow-name">Build E-Commerce Platform</h1>
+                    <p class="workflow-description">Complex multi-agent workflow with parallel execution paths and validation gates</p>
+                </div>
+                
+                <div class="workflow-stats">
+                    <div class="stat-card">
+                        <span class="stat-value">24</span>
+                        <span class="stat-label">Tasks</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value">8</span>
+                        <span class="stat-label">Parallel</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value">3</span>
+                        <span class="stat-label">Critical</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value">~4h</span>
+                        <span class="stat-label">Est. Time</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Timeline Controls -->
+            <div class="timeline-controls">
+                <div class="control-group">
+                    <label class="control-label">View:</label>
+                    <select style="padding: var(--spacing-small20); border-radius: var(--radius-small); border: 1px solid var(--color-body-border); background: var(--color-body-background); color: var(--color-body-text);">
+                        <option>Hours</option>
+                        <option>Minutes</option>
+                        <option>Steps</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label">Zoom:</label>
+                    <div class="zoom-control">
+                        <button class="zoom-button">−</button>
+                        <span style="min-width: 40px; text-align: center;">100%</span>
+                        <button class="zoom-button">+</button>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label">Filter:</label>
+                    <label style="display: flex; align-items: center; gap: var(--spacing-small20);">
+                        <input type="checkbox" checked> Critical Path
+                    </label>
+                    <label style="display: flex; align-items: center; gap: var(--spacing-small20);">
+                        <input type="checkbox"> Validation Only
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Timeline View -->
+        <div class="timeline-view">
+            <div class="timeline-grid">
+                <!-- Task List -->
+                <div class="task-list">
+                    <div class="task-list-header">Task Hierarchy</div>
+                    
+                    <!-- Parent Task Group -->
+                    <div class="task-row parent">
+                        <button class="task-expand">▼</button>
+                        <div class="task-icon setup">S</div>
+                        <span class="task-name">1. Environment Setup</span>
+                    </div>
+                    
+                    <div class="task-row child">
+                        <span style="width: 20px;"></span>
+                        <div class="task-icon setup">•</div>
+                        <span class="task-name">1.1 Validate Requirements</span>
+                    </div>
+                    
+                    <div class="task-row child">
+                        <span style="width: 20px;"></span>
+                        <div class="task-icon setup">•</div>
+                        <span class="task-name">1.2 Install Dependencies</span>
+                    </div>
+                    
+                    <!-- Parallel Tasks -->
+                    <div class="task-row parent">
+                        <button class="task-expand">▼</button>
+                        <div class="task-icon parallel">P</div>
+                        <span class="task-name">2. Parallel Initialization</span>
+                    </div>
+                    
+                    <div class="task-row child">
+                        <span style="width: 20px;"></span>
+                        <div class="task-icon parallel">⟦</div>
+                        <span class="task-name">2.1 Database Setup</span>
+                    </div>
+                    
+                    <div class="task-row child">
+                        <span style="width: 20px;"></span>
+                        <div class="task-icon parallel">⟦</div>
+                        <span class="task-name">2.2 Cache Configuration</span>
+                    </div>
+                    
+                    <div class="task-row child">
+                        <span style="width: 20px;"></span>
+                        <div class="task-icon parallel">⟦</div>
+                        <span class="task-name">2.3 API Gateway Setup</span>
+                    </div>
+                    
+                    <!-- Build Tasks -->
+                    <div class="task-row parent">
+                        <button class="task-expand">▼</button>
+                        <div class="task-icon build">B</div>
+                        <span class="task-name">3. Build Components</span>
+                    </div>
+                    
+                    <div class="task-row child">
+                        <span style="width: 20px;"></span>
+                        <div class="task-icon build">◆</div>
+                        <span class="task-name">3.1 Authentication Module</span>
+                    </div>
+                    
+                    <div class="task-row child">
+                        <span style="width: 20px;"></span>
+                        <div class="task-icon build">◆</div>
+                        <span class="task-name">3.2 Product Catalog</span>
+                    </div>
+                    
+                    <div class="task-row child">
+                        <span style="width: 20px;"></span>
+                        <div class="task-icon build">◆</div>
+                        <span class="task-name">3.3 Shopping Cart</span>
+                    </div>
+                    
+                    <!-- Validation -->
+                    <div class="task-row parent">
+                        <button class="task-expand">▶</button>
+                        <div class="task-icon validate">V</div>
+                        <span class="task-name">4. Validation & Testing</span>
+                    </div>
+                </div>
+                
+                <!-- Gantt Chart -->
+                <div class="gantt-chart">
+                    <!-- Time Header -->
+                    <div class="gantt-header">
+                        <div class="time-unit">0:00</div>
+                        <div class="time-unit">1:00</div>
+                        <div class="time-unit">2:00</div>
+                        <div class="time-unit">3:00</div>
+                        <div class="time-unit">4:00</div>
+                        <div class="time-unit">5:00</div>
+                    </div>
+                    
+                    <!-- Gantt Rows -->
+                    <div class="gantt-rows">
+                        <!-- Now Line -->
+                        <div class="now-line">
+                            <div class="now-indicator">NOW</div>
+                        </div>
+                        
+                        <!-- Environment Setup Group -->
+                        <div class="gantt-row parent">
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                        </div>
+                        
+                        <div class="gantt-row">
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="task-bar setup">
+                                Validate Requirements
+                                <div class="task-progress">
+                                    <div class="progress-fill" style="width: 100%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="gantt-row">
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="task-bar setup" style="left: 60px; width: 120px;">
+                                Install Dependencies
+                                <div class="task-progress">
+                                    <div class="progress-fill" style="width: 75%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Parallel Tasks Group -->
+                        <div class="gantt-row parent">
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                        </div>
+                        
+                        <div class="gantt-row">
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="task-bar parallel">
+                                Database Setup
+                                <div class="task-progress">
+                                    <div class="progress-fill" style="width: 30%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="gantt-row">
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="task-bar parallel" style="left: 120px; width: 120px;">
+                                Cache Configuration
+                                <div class="task-progress">
+                                    <div class="progress-fill" style="width: 50%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="gantt-row">
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="task-bar parallel" style="left: 120px; width: 150px;">
+                                API Gateway Setup
+                                <div class="task-progress">
+                                    <div class="progress-fill" style="width: 10%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Build Components Group -->
+                        <div class="gantt-row parent">
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                        </div>
+                        
+                        <div class="gantt-row">
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="task-bar dependent critical-path">
+                                Authentication Module
+                                <div class="task-progress">
+                                    <div class="progress-fill" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="gantt-row">
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="task-bar dependent" style="left: 360px; width: 180px;">
+                                Product Catalog
+                                <div class="task-progress">
+                                    <div class="progress-fill" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="gantt-row">
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="task-bar dependent" style="left: 420px; width: 180px;">
+                                Shopping Cart
+                                <div class="task-progress">
+                                    <div class="progress-fill" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Validation Group -->
+                        <div class="gantt-row parent">
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="time-block"></div>
+                            <div class="task-bar validation">
+                                Validation & Testing
+                                <div class="task-progress">
+                                    <div class="progress-fill" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                            <!-- Milestone -->
+                            <div class="milestone" style="left: 660px; top: 8px;">✓</div>
+                        </div>
+                        
+                        <!-- Dependency Arrows -->
+                        <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
+                            <defs>
+                                <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+                                    <polygon points="0 0, 10 3, 0 6" fill="var(--color-danger-border)" />
+                                </marker>
+                            </defs>
+                            <path class="dependency-arrow" d="M 180 72 Q 200 72 200 120" />
+                            <path class="dependency-arrow" d="M 300 168 Q 320 168 320 384" />
+                        </svg>
+                    </div>
+                    
+                    <!-- Task Tooltip (Hidden by default) -->
+                    <div class="task-tooltip" id="tooltip">
+                        <div class="tooltip-title">Database Setup</div>
+                        <div class="tooltip-detail">
+                            <span class="tooltip-label">Duration:</span>
+                            <span>1h 30m</span>
+                        </div>
+                        <div class="tooltip-detail">
+                            <span class="tooltip-label">Dependencies:</span>
+                            <span>Install Dependencies</span>
+                        </div>
+                        <div class="tooltip-detail">
+                            <span class="tooltip-label">Progress:</span>
+                            <span>30%</span>
+                        </div>
+                        <div class="tooltip-detail">
+                            <span class="tooltip-label">Agent:</span>
+                            <span>Database Specialist</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Interactive behavior
+        document.addEventListener('DOMContentLoaded', () => {
+            // Task expand/collapse
+            const expandButtons = document.querySelectorAll('.task-expand');
+            expandButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const isExpanded = button.textContent === '▼';
+                    button.textContent = isExpanded ? '▶' : '▼';
+                    
+                    // Toggle child rows visibility
+                    let nextRow = button.closest('.task-row').nextElementSibling;
+                    while (nextRow && nextRow.classList.contains('child')) {
+                        nextRow.style.display = isExpanded ? 'none' : 'flex';
+                        nextRow = nextRow.nextElementSibling;
+                    }
+                });
+            });
+            
+            // Task bar hover tooltips
+            const taskBars = document.querySelectorAll('.task-bar');
+            const tooltip = document.getElementById('tooltip');
+            
+            taskBars.forEach(bar => {
+                bar.addEventListener('mouseenter', (e) => {
+                    tooltip.classList.add('visible');
+                    tooltip.style.left = e.pageX + 10 + 'px';
+                    tooltip.style.top = e.pageY + 10 + 'px';
+                });
+                
+                bar.addEventListener('mouseleave', () => {
+                    tooltip.classList.remove('visible');
+                });
+            });
+            
+            // Animate progress bars
+            setTimeout(() => {
+                document.querySelectorAll('.progress-fill').forEach(fill => {
+                    const width = fill.style.width;
+                    fill.style.width = '0';
+                    setTimeout(() => {
+                        fill.style.width = width;
+                    }, 100);
+                });
+            }, 500);
+            
+            // Zoom controls
+            let zoomLevel = 100;
+            const zoomButtons = document.querySelectorAll('.zoom-button');
+            const zoomDisplay = document.querySelector('.zoom-control span');
+            
+            zoomButtons[0].addEventListener('click', () => {
+                zoomLevel = Math.max(50, zoomLevel - 10);
+                zoomDisplay.textContent = zoomLevel + '%';
+                document.querySelector('.gantt-chart').style.transform = `scale(${zoomLevel / 100})`;
+                document.querySelector('.gantt-chart').style.transformOrigin = 'left top';
+            });
+            
+            zoomButtons[1].addEventListener('click', () => {
+                zoomLevel = Math.min(150, zoomLevel + 10);
+                zoomDisplay.textContent = zoomLevel + '%';
+                document.querySelector('.gantt-chart').style.transform = `scale(${zoomLevel / 100})`;
+                document.querySelector('.gantt-chart').style.transformOrigin = 'left top';
+            });
+            
+            // Animate now line
+            let nowPosition = 180;
+            setInterval(() => {
+                nowPosition += 0.5;
+                if (nowPosition > 720) nowPosition = 0;
+                document.querySelector('.now-line').style.left = nowPosition + 'px';
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

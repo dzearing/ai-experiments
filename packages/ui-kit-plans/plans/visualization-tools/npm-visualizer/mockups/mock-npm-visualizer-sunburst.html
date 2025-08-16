@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NPM Dependency Visualizer - Sunburst View</title>
+    
+    <!-- 1. Link to UI Kit styles -->
+    <link rel="stylesheet" href="/assets/styles.css">
+    
+    <!-- 2. Set base path for themes -->
+    <script>
+        window.__uiKitBasePath = '/assets/';
+    </script>
+    
+    <!-- 3. Load theme engine (auto-initializes) -->
+    <script type="module" src="/assets/theme.js"></script>
+    
+    <!-- 4. Optional: Theme switcher UI -->
+    <script type="module" src="/assets/theme-switcher.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--gradient-body-accent), var(--color-body-background);
+            color: var(--color-body-text);
+            font-size: var(--font-size);
+            line-height: var(--line-height);
+            overflow: hidden;
+        }
+
+        .sunburst-container {
+            height: 100vh;
+            display: flex;
+        }
+
+        /* Control Panel */
+        .control-panel {
+            width: 320px;
+            background: var(--color-panel-background);
+            border-right: 1px solid var(--color-panel-border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            padding: var(--spacing-large10);
+            border-bottom: 1px solid var(--color-panel-border);
+            background: var(--gradient-body-primary), var(--color-panel-background);
+        }
+
+        .panel-title {
+            font-size: var(--font-size-h5);
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing-small10);
+        }
+
+        .panel-subtitle {
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft10);
+        }
+
+        /* Breadcrumb */
+        .breadcrumb {
+            padding: var(--spacing);
+            background: var(--color-body-background);
+            border-bottom: 1px solid var(--color-body-borderSoft10);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+            overflow-x: auto;
+        }
+
+        .breadcrumb-item {
+            padding: var(--spacing-small20) var(--spacing-small10);
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-interactive);
+            font-size: var(--font-size-small10);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all var(--duration-fast10) var(--easing-default);
+        }
+
+        .breadcrumb-item:hover {
+            background: var(--color-neutral-background);
+        }
+
+        .breadcrumb-item.current {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border-color: var(--color-primary-border);
+        }
+
+        .breadcrumb-separator {
+            color: var(--color-body-textSoft20);
+        }
+
+        /* Current Package Info */
+        .current-package {
+            padding: var(--spacing);
+            border-bottom: 1px solid var(--color-panel-border);
+        }
+
+        .package-badge {
+            display: inline-block;
+            padding: var(--spacing-small20) var(--spacing-small10);
+            background: var(--color-successSoft-background);
+            color: var(--color-successSoft-text);
+            border-radius: var(--radius-interactive);
+            font-size: var(--font-size-smallest);
+            margin-bottom: var(--spacing-small10);
+        }
+
+        .package-name {
+            font-size: var(--font-size-h6);
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing-small10);
+        }
+
+        .package-description {
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft10);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            padding: var(--spacing);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-small10);
+            border-bottom: 1px solid var(--color-panel-border);
+        }
+
+        .stat-card {
+            padding: var(--spacing-small10);
+            background: var(--color-body-background);
+            border-radius: var(--radius-interactive);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: var(--font-size-h5);
+            font-weight: var(--font-weight-bold);
+            color: var(--color-primary-text);
+        }
+
+        .stat-label {
+            font-size: var(--font-size-smallest);
+            color: var(--color-body-textSoft20);
+            margin-top: var(--spacing-small20);
+        }
+
+        /* Children List */
+        .children-section {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--spacing);
+        }
+
+        .section-title {
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft10);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: var(--spacing-small10);
+        }
+
+        .children-list {
+            list-style: none;
+        }
+
+        .child-item {
+            padding: var(--spacing-small10);
+            background: var(--color-body-background);
+            border: 1px solid var(--color-body-borderSoft10);
+            border-radius: var(--radius-interactive);
+            margin-bottom: var(--spacing-small10);
+            cursor: pointer;
+            transition: all var(--duration-fast10) var(--easing-default);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .child-item:hover {
+            border-color: var(--color-primary-background);
+            transform: translateX(4px);
+            box-shadow: var(--shadow-card);
+        }
+
+        .child-name {
+            font-weight: var(--font-weight-medium);
+            font-size: var(--font-size-small10);
+        }
+
+        .child-size {
+            font-size: var(--font-size-smallest);
+            color: var(--color-body-textSoft20);
+        }
+
+        /* Main Visualization */
+        .viz-area {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* SVG Sunburst */
+        #sunburst-svg {
+            max-width: 90%;
+            max-height: 90%;
+        }
+
+        .sunburst-segment {
+            cursor: pointer;
+            transition: opacity var(--duration-fast10) var(--easing-default);
+        }
+
+        .sunburst-segment:hover {
+            opacity: 0.8;
+        }
+
+        .segment-label {
+            pointer-events: none;
+            font-size: var(--font-size-smallest);
+            fill: white;
+            text-anchor: middle;
+        }
+
+        /* Center Info */
+        .center-info {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .center-package {
+            font-size: var(--font-size-h4);
+            font-weight: var(--font-weight-bold);
+            margin-bottom: var(--spacing-small10);
+        }
+
+        .center-stats {
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft10);
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-container);
+            padding: var(--spacing-small10);
+            box-shadow: var(--shadow-modal);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity var(--duration-fast10) var(--easing-default);
+            z-index: 100;
+        }
+
+        .tooltip.visible {
+            opacity: 1;
+        }
+
+        .tooltip-title {
+            font-weight: var(--font-weight-medium);
+            margin-bottom: var(--spacing-small20);
+        }
+
+        .tooltip-info {
+            font-size: var(--font-size-small20);
+            color: var(--color-body-textSoft10);
+        }
+
+        /* Controls */
+        .viz-controls {
+            position: absolute;
+            top: var(--spacing);
+            right: var(--spacing);
+            display: flex;
+            gap: var(--spacing-small10);
+            background: var(--color-panel-background);
+            padding: var(--spacing-small10);
+            border-radius: var(--radius-container);
+            box-shadow: var(--shadow-card);
+        }
+
+        .control-btn {
+            padding: var(--spacing-small10) var(--spacing);
+            background: var(--color-neutral-background);
+            border: 1px solid var(--color-neutral-border);
+            border-radius: var(--radius-interactive);
+            color: var(--color-neutral-text);
+            font-size: var(--font-size-small10);
+            cursor: pointer;
+            transition: all var(--duration-fast10) var(--easing-default);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small20);
+        }
+
+        .control-btn:hover {
+            background: var(--color-neutral-background-hover);
+        }
+
+        .control-btn.active {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border-color: var(--color-primary-border);
+        }
+
+        /* Legend */
+        .legend {
+            position: absolute;
+            bottom: var(--spacing);
+            right: var(--spacing);
+            background: var(--color-panel-background);
+            border-radius: var(--radius-container);
+            box-shadow: var(--shadow-card);
+            padding: var(--spacing);
+        }
+
+        .legend-title {
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft10);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: var(--spacing-small10);
+        }
+
+        .legend-items {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-small20);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+            font-size: var(--font-size-smallest);
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: var(--radius-slight);
+        }
+
+        /* Depth Indicator */
+        .depth-indicator {
+            position: absolute;
+            bottom: var(--spacing);
+            left: var(--spacing);
+            background: var(--color-panel-background);
+            border-radius: var(--radius-container);
+            padding: var(--spacing);
+            box-shadow: var(--shadow-card);
+        }
+
+        .depth-label {
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft10);
+            margin-bottom: var(--spacing-small10);
+        }
+
+        .depth-slider {
+            width: 200px;
+            margin-bottom: var(--spacing-small10);
+        }
+
+        .depth-value {
+            font-size: var(--font-size-small20);
+            color: var(--color-primary-text);
+            font-weight: var(--font-weight-medium);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .control-panel {
+                position: absolute;
+                z-index: 10;
+                transform: translateX(-100%);
+                transition: transform var(--duration-normal) var(--easing-default);
+            }
+
+            .control-panel.open {
+                transform: translateX(0);
+            }
+
+            .mobile-toggle {
+                position: absolute;
+                top: var(--spacing);
+                left: var(--spacing);
+                z-index: 20;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sunburst-container">
+        <!-- Control Panel -->
+        <aside class="control-panel">
+            <div class="panel-header">
+                <h2 class="panel-title">Dependency Hierarchy</h2>
+                <p class="panel-subtitle">Radial view of package relationships</p>
+            </div>
+
+            <!-- Breadcrumb Navigation -->
+            <div class="breadcrumb">
+                <div class="breadcrumb-item" onclick="navigateToRoot()">Root</div>
+                <span class="breadcrumb-separator">→</span>
+                <div class="breadcrumb-item" onclick="navigateToPackage('@app/main')">@app/main</div>
+                <span class="breadcrumb-separator">→</span>
+                <div class="breadcrumb-item current">@monorepo/core</div>
+            </div>
+
+            <!-- Current Package Info -->
+            <div class="current-package">
+                <div class="package-badge">v1.2.0</div>
+                <h3 class="package-name">@monorepo/core</h3>
+                <p class="package-description">
+                    Core utilities and shared functionality. This package is at depth level 2 with 8 direct dependencies.
+                </p>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">8</div>
+                    <div class="stat-label">Direct Deps</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">23</div>
+                    <div class="stat-label">Total Deps</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">3</div>
+                    <div class="stat-label">Depth</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">2.4MB</div>
+                    <div class="stat-label">Size</div>
+                </div>
+            </div>
+
+            <!-- Children List -->
+            <div class="children-section">
+                <div class="section-title">Direct Dependencies (8)</div>
+                <ul class="children-list">
+                    <li class="child-item" onclick="drillDown('@monorepo/utils')">
+                        <span class="child-name">@monorepo/utils</span>
+                        <span class="child-size">5 deps</span>
+                    </li>
+                    <li class="child-item" onclick="drillDown('@monorepo/logger')">
+                        <span class="child-name">@monorepo/logger</span>
+                        <span class="child-size">3 deps</span>
+                    </li>
+                    <li class="child-item" onclick="drillDown('@monorepo/config')">
+                        <span class="child-name">@monorepo/config</span>
+                        <span class="child-size">7 deps</span>
+                    </li>
+                    <li class="child-item" onclick="drillDown('@monorepo/db')">
+                        <span class="child-name">@monorepo/db</span>
+                        <span class="child-size">4 deps</span>
+                    </li>
+                    <li class="child-item" onclick="drillDown('lodash')">
+                        <span class="child-name">lodash</span>
+                        <span class="child-size">external</span>
+                    </li>
+                    <li class="child-item" onclick="drillDown('axios')">
+                        <span class="child-name">axios</span>
+                        <span class="child-size">external</span>
+                    </li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Main Visualization Area -->
+        <main class="viz-area">
+            <!-- Sunburst SVG -->
+            <svg id="sunburst-svg" width="800" height="800" viewBox="0 0 800 800">
+                <defs>
+                    <!-- Gradients for depth -->
+                    <radialGradient id="centerGradient">
+                        <stop offset="0%" style="stop-color: var(--color-primary-background); stop-opacity: 1"/>
+                        <stop offset="100%" style="stop-color: var(--color-primary-background); stop-opacity: 0.8"/>
+                    </radialGradient>
+                </defs>
+
+                <g transform="translate(400, 400)">
+                    <!-- Center circle -->
+                    <circle r="80" fill="url(#centerGradient)" class="sunburst-segment"/>
+                    
+                    <!-- First ring - Direct dependencies -->
+                    <path d="M 0,-120 A 120,120 0 0,1 104,-60 L 52,-30 A 60,60 0 0,0 0,-60 Z" 
+                          fill="var(--color-success-background)" class="sunburst-segment" data-package="@monorepo/utils"/>
+                    <text transform="translate(60, -75) rotate(30)" class="segment-label">utils</text>
+                    
+                    <path d="M 104,-60 A 120,120 0 0,1 104,60 L 52,30 A 60,60 0 0,0 52,-30 Z" 
+                          fill="var(--color-success-background)" class="sunburst-segment" data-package="@monorepo/logger"/>
+                    <text transform="translate(95, 0)" class="segment-label">logger</text>
+                    
+                    <path d="M 104,60 A 120,120 0 0,1 0,120 L 0,60 A 60,60 0 0,0 52,30 Z" 
+                          fill="var(--color-warning-background)" class="sunburst-segment" data-package="@monorepo/config"/>
+                    <text transform="translate(60, 75) rotate(-30)" class="segment-label">config</text>
+                    
+                    <path d="M 0,120 A 120,120 0 0,1 -104,60 L -52,30 A 60,60 0 0,0 0,60 Z" 
+                          fill="var(--color-success-background)" class="sunburst-segment" data-package="@monorepo/db"/>
+                    <text transform="translate(-60, 75) rotate(-150)" class="segment-label">db</text>
+                    
+                    <path d="M -104,60 A 120,120 0 0,1 -104,-60 L -52,-30 A 60,60 0 0,0 -52,30 Z" 
+                          fill="var(--color-neutral-background)" class="sunburst-segment" data-package="lodash"/>
+                    <text transform="translate(-95, 0)" class="segment-label">lodash</text>
+                    
+                    <path d="M -104,-60 A 120,120 0 0,1 0,-120 L 0,-60 A 60,60 0 0,0 -52,-30 Z" 
+                          fill="var(--color-neutral-background)" class="sunburst-segment" data-package="axios"/>
+                    <text transform="translate(-60, -75) rotate(150)" class="segment-label">axios</text>
+                    
+                    <!-- Second ring - Transitive dependencies -->
+                    <path d="M 0,-200 A 200,200 0 0,1 50,-194 L 30,-116 A 120,120 0 0,0 0,-120 Z" 
+                          fill="color-mix(in srgb, var(--color-success-background) 70%, transparent)" class="sunburst-segment"/>
+                    
+                    <path d="M 50,-194 A 200,200 0 0,1 100,-173 L 60,-104 A 120,120 0 0,0 30,-116 Z" 
+                          fill="color-mix(in srgb, var(--color-success-background) 70%, transparent)" class="sunburst-segment"/>
+                    
+                    <path d="M 100,-173 A 200,200 0 0,1 141,-141 L 85,-85 A 120,120 0 0,0 60,-104 Z" 
+                          fill="color-mix(in srgb, var(--color-success-background) 70%, transparent)" class="sunburst-segment"/>
+                    
+                    <path d="M 141,-141 A 200,200 0 0,1 173,-100 L 104,-60 A 120,120 0 0,0 85,-85 Z" 
+                          fill="color-mix(in srgb, var(--color-neutral-background) 70%, transparent)" class="sunburst-segment"/>
+                    
+                    <!-- Third ring - Deep dependencies -->
+                    <path d="M 0,-280 A 280,280 0 0,1 70,-271 L 50,-194 A 200,200 0 0,0 0,-200 Z" 
+                          fill="color-mix(in srgb, var(--color-success-background) 50%, transparent)" class="sunburst-segment"/>
+                    
+                    <path d="M 70,-271 A 280,280 0 0,1 137,-244 L 98,-174 A 200,200 0 0,0 50,-194 Z" 
+                          fill="color-mix(in srgb, var(--color-neutral-background) 50%, transparent)" class="sunburst-segment"/>
+                    
+                    <path d="M 137,-244 A 280,280 0 0,1 198,-198 L 141,-141 A 200,200 0 0,0 98,-174 Z" 
+                          fill="color-mix(in srgb, var(--color-success-background) 50%, transparent)" class="sunburst-segment"/>
+                </g>
+            </svg>
+
+            <!-- Center Info -->
+            <div class="center-info">
+                <div class="center-package">@monorepo/core</div>
+                <div class="center-stats">23 total dependencies</div>
+            </div>
+
+            <!-- Controls -->
+            <div class="viz-controls">
+                <button class="control-btn active" onclick="setColorMode('type')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                        <rect x="8" y="8" width="3" height="3"/>
+                        <rect x="13" y="8" width="3" height="3"/>
+                        <rect x="8" y="13" width="3" height="3"/>
+                        <rect x="13" y="13" width="3" height="3"/>
+                    </svg>
+                    By Type
+                </button>
+                <button class="control-btn" onclick="setColorMode('size')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="11" width="18" height="10" rx="2" ry="2"/>
+                        <rect x="7" y="7" width="10" height="4" rx="1" ry="1"/>
+                        <rect x="11" y="3" width="2" height="4" rx="1" ry="1"/>
+                    </svg>
+                    By Size
+                </button>
+                <button class="control-btn" onclick="resetView()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="1 4 1 10 7 10"/>
+                        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+                    </svg>
+                    Reset
+                </button>
+            </div>
+
+            <!-- Legend -->
+            <div class="legend">
+                <div class="legend-title">Package Types</div>
+                <div class="legend-items">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--color-primary-background);"></div>
+                        <span>Root/Selected</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--color-success-background);"></div>
+                        <span>Internal</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--color-neutral-background);"></div>
+                        <span>External</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--color-warning-background);"></div>
+                        <span>Cyclic</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Depth Control -->
+            <div class="depth-indicator">
+                <div class="depth-label">Visualization Depth</div>
+                <input type="range" class="depth-slider" min="1" max="5" value="3" onchange="updateDepth(this.value)"/>
+                <div class="depth-value">Level 3</div>
+            </div>
+
+            <!-- Tooltip -->
+            <div class="tooltip" id="tooltip">
+                <div class="tooltip-title">Package Name</div>
+                <div class="tooltip-info">Dependencies: 5<br>Size: 1.2MB</div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Sunburst interactions
+        document.querySelectorAll('.sunburst-segment').forEach(segment => {
+            segment.addEventListener('mouseenter', function(e) {
+                const tooltip = document.getElementById('tooltip');
+                const packageName = this.getAttribute('data-package') || '@monorepo/core';
+                
+                tooltip.querySelector('.tooltip-title').textContent = packageName;
+                tooltip.style.left = e.pageX + 10 + 'px';
+                tooltip.style.top = e.pageY - 30 + 'px';
+                tooltip.classList.add('visible');
+                
+                // Dim other segments
+                document.querySelectorAll('.sunburst-segment').forEach(s => {
+                    if (s !== this) {
+                        s.style.opacity = '0.3';
+                    }
+                });
+            });
+            
+            segment.addEventListener('mouseleave', function() {
+                document.getElementById('tooltip').classList.remove('visible');
+                
+                // Restore opacity
+                document.querySelectorAll('.sunburst-segment').forEach(s => {
+                    s.style.opacity = '1';
+                });
+            });
+            
+            segment.addEventListener('click', function() {
+                const packageName = this.getAttribute('data-package');
+                if (packageName) {
+                    drillDown(packageName);
+                }
+            });
+        });
+
+        // Navigation functions
+        function drillDown(packageName) {
+            console.log(`Drilling down to ${packageName}`);
+            // Animate transition
+            const svg = document.getElementById('sunburst-svg');
+            svg.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+                svg.style.transform = 'scale(1)';
+            }, 300);
+        }
+
+        function navigateToRoot() {
+            console.log('Navigating to root');
+        }
+
+        function navigateToPackage(packageName) {
+            console.log(`Navigating to ${packageName}`);
+        }
+
+        // Control functions
+        function setColorMode(mode) {
+            document.querySelectorAll('.control-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.closest('.control-btn').classList.add('active');
+            console.log(`Setting color mode to ${mode}`);
+        }
+
+        function resetView() {
+            console.log('Resetting view');
+            const svg = document.getElementById('sunburst-svg');
+            svg.style.transform = 'scale(1) rotate(0deg)';
+        }
+
+        function updateDepth(value) {
+            document.querySelector('.depth-value').textContent = `Level ${value}`;
+            console.log(`Updating depth to ${value}`);
+            
+            // Animate depth change
+            const rings = document.querySelectorAll('.sunburst-segment');
+            rings.forEach((ring, index) => {
+                if (index > value * 6) {
+                    ring.style.opacity = '0.1';
+                } else {
+                    ring.style.opacity = '1';
+                }
+            });
+        }
+
+        // Rotation animation
+        let rotation = 0;
+        let isRotating = false;
+
+        document.addEventListener('keydown', (e) => {
+            const svg = document.getElementById('sunburst-svg').querySelector('g');
+            
+            if (e.key === 'ArrowLeft') {
+                rotation -= 15;
+                svg.style.transform = `translate(400px, 400px) rotate(${rotation}deg)`;
+            } else if (e.key === 'ArrowRight') {
+                rotation += 15;
+                svg.style.transform = `translate(400px, 400px) rotate(${rotation}deg)`;
+            } else if (e.key === ' ') {
+                e.preventDefault();
+                isRotating = !isRotating;
+                if (isRotating) {
+                    animateRotation();
+                }
+            }
+        });
+
+        function animateRotation() {
+            if (!isRotating) return;
+            
+            rotation += 0.5;
+            const svg = document.getElementById('sunburst-svg').querySelector('g');
+            svg.style.transform = `translate(400px, 400px) rotate(${rotation}deg)`;
+            
+            requestAnimationFrame(animateRotation);
+        }
+
+        // Initialize
+        updateDepth(3);
+    </script>
+</body>
+</html>

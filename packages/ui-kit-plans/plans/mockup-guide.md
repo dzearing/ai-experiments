@@ -2,17 +2,58 @@
 
 This guide provides best practices and requirements for creating HTML mockups that demonstrate component designs using the ui-kit design system.
 
-## Quick Start
+## Quick Start - FOLLOW THESE STEPS IN ORDER
 
-HTML mockups belong in `ui-kit-plans/plans/{subject}/{subject}/mockups/mock-{subject}-{scenario}.html`. 
+### Step 0: READ THE TOKEN_CHEATSHEET.md (MANDATORY)
 
-Each part of the path is kebab-cased. Notes:
+**🚨 CRITICAL FIRST STEP**: Before creating ANY mockup, you MUST read and understand the design token system:
 
-* Try to group component plans by subject (e.g. "animation-components", "form-components", "experimental-chat-views"). 
-* The subject represents the component or view name (kebab cased).
-* The scenario (optional) represents the scenario being demo'd, or can simply be omited for a general mock.
+1. **READ** `/docs/guides/TOKEN_CHEATSHEET.md` - This contains all available design tokens
+2. **UNDERSTAND** the surface-based color system and spacing grid
+3. **REFERENCE** the token examples throughout your mockup creation
+4. **NEVER** use hardcoded colors, spacing, or typography values
 
-**Important**: After creating a new mockup, update `/packages/ui-kit-plans/plan-data.json` to add your mockup to the appropriate category so it appears in the index page.
+**Your mockups MUST use ui-kit design tokens exclusively.** Any mockup using hardcoded values will be rejected.
+
+### Step 1: Determine File Location and Naming
+
+HTML mockups belong in `ui-kit-plans/plans/{category}/{component-name}/mockups/mock-{component-name}-{scenario}.html`
+
+Each part of the path is kebab-cased:
+* **category**: Group by type (e.g. "animation-components", "form-components", "workflow-components") 
+* **component-name**: The specific component/view name (kebab-cased)
+* **scenario**: Optional descriptor for variants (e.g., "default", "interactive", "responsive")
+
+**CRITICAL**: File names MUST start with `mock-` not `mockup-`
+
+### Step 2: Create the Mockup Files
+
+Create one or more HTML files following the template below. Multiple files may be needed for:
+- Different scenarios (default, dark mode, mobile view)
+- Complex workflows with multiple screens
+- Alternative design approaches
+
+### Step 3: Update plan-data.json (NEVER SKIP THIS STEP)
+
+**CRITICAL**: You MUST update `/packages/ui-kit-plans/plan-data.json` to register your mockups:
+
+1. Open `plan-data.json`
+2. Find or create your category in the categories object
+3. Add/update the component entry:
+```json
+{
+  "name": "Your Component Name",
+  "folder": "your-component-name",
+  "plans": [],
+  "mockups": [
+    "mockups/mock-your-component-name-default.html",
+    "mockups/mock-your-component-name-interactive.html"
+  ]
+}
+```
+4. Verify all mockup paths are correct
+
+**If you skip this step, your mockups will not appear in the index!**
 
 Every mockup HTML file must include these essential elements:
 
@@ -66,9 +107,17 @@ __uiKitTheme.getMode();              // Get current mode
 
 ## Design Token Usage
 
-Follow guidance in docs/guides/TOKEN_CHEATSHEET.md on what toens to use. You must follow the token guidance there and DO NOT assume any token names will exist if they aren't documented.
+**Refer to Step 0 above for mandatory TOKEN_CHEATSHEET.md requirements.**
 
-If tokens are missing, update docs/guides/TOKEN_SUGGESTIONS.md with:
+### Important Token Guidelines
+
+- **NEVER** assume token names - only use tokens documented in TOKEN_CHEATSHEET.md
+- **ALWAYS** use surface-based colors for accessibility (e.g., `--color-primary-background` with `--color-primary-text`)
+- **FOLLOW** the 4px spacing grid exclusively
+
+### Missing Tokens
+
+If tokens are missing from TOKEN_CHEATSHEET.md, update `/docs/guides/TOKEN_SUGGESTIONS.md` with:
 * The token name you were looking for
 * Scenario you needed it in
 * Suggested alternative names
@@ -192,6 +241,12 @@ Shows the component used with others:
     border-radius: 8px;  /* ❌ Use --radius-container */
 }
 
+/* Don't override theme-provided styles */
+body {
+    font-family: system-ui, -apple-system;  /* ❌ Theme already sets this */
+    font-weight: 400;  /* ❌ Use --font-weight tokens */
+}
+
 /* Don't use absolute positioning unnecessarily */
 .element {
     position: absolute;  /* ❌ Unless truly needed */
@@ -200,12 +255,61 @@ Shows the component used with others:
 }
 ```
 
-## Testing Your Mockup
+### IMPORTANT: Theme System Integration
 
-Before finalizing:
+**The ui-kit theme system already provides:**
+- Font family settings (DO NOT override with `font-family` on body)
+- Base font weights and sizes
+- Line heights
+- Color schemes
+- All typography foundations
+
+**Your mockups should ONLY set:**
+```css
+body {
+    /* Theme-compatible overrides only */
+    background: var(--color-body-background);
+    color: var(--color-body-text);
+    font-size: var(--font-size);  /* Only if needed */
+    line-height: var(--line-height);  /* Only if needed */
+    /* DO NOT SET: font-family, font-weight, or other typography that the theme handles */
+}
+```
+
+## Final Verification Checklist
+
+Before completing your mockup, verify EVERY item:
+
+### TOKEN REQUIREMENTS (MANDATORY)
+- [ ] **READ** `/docs/guides/TOKEN_CHEATSHEET.md` before starting
+- [ ] **ALL** colors use design tokens from the cheatsheet AND stick with same-surface bg and fg tokens (do not mix and match surfaces to avoid accessibility issues where we render white on white.)
+- [ ] **ALL** spacing uses design tokens from the cheatsheet  
+- [ ] **ALL** typography uses design tokens from the cheatsheet
+- [ ] **NO** hardcoded values (colors, px values, font names) anywhere
+- [ ] **VERIFIED** all tokens exist in TOKEN_CHEATSHEET.md
+
+### Files and Structure
+- [ ] Files are in `plans/{category}/{component-name}/mockups/` directory
+- [ ] Files named as `mock-{component-name}-{scenario}.html` (NOT mockup-)
+- [ ] All required HTML template elements included
+
+### plan-data.json Updates (CRITICAL)
+- [ ] `plan-data.json` has been updated
+- [ ] Category exists in the categories object
+- [ ] Component entry includes all mockup file paths
+- [ ] File paths in JSON match actual file locations exactly
+
+### Quality Checks
 - [ ] Test in both light and dark modes
 - [ ] Check responsive behavior at different sizes
 - [ ] Ensure semantic HTML is used
-- [ ] Validate accessibility basics (headings, labels)
+- [ ] Validate accessibility basics (headings, labels, ARIA)
 - [ ] Test with different themes (use theme switcher)
-- [ ] Verify no hardcoded colors or spacing
+- [ ] Verify no hardcoded colors or spacing (only design tokens)
+
+### Summary
+After completing, you should be able to confirm:
+- ✅ Mockup files created in correct location with correct names
+- ✅ plan-data.json updated with all mockup entries
+- ✅ Mockups appear in the ui-kit-plans index page
+- ✅ All mockups use design tokens and follow ui-kit patterns

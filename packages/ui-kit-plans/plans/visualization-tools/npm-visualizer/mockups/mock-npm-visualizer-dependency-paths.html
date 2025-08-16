@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NPM Dependency Visualizer - Path Analysis</title>
+    
+    <!-- 1. Link to UI Kit styles -->
+    <link rel="stylesheet" href="/assets/styles.css">
+    
+    <!-- 2. Set base path for themes -->
+    <script>
+        window.__uiKitBasePath = '/assets/';
+    </script>
+    
+    <!-- 3. Load theme engine (auto-initializes) -->
+    <script type="module" src="/assets/theme.js"></script>
+    
+    <!-- 4. Optional: Theme switcher UI -->
+    <script type="module" src="/assets/theme-switcher.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--color-body-background);
+            color: var(--color-body-text);
+            font-size: var(--font-size);
+            line-height: var(--line-height);
+        }
+
+        .paths-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Left Sidebar */
+        .sidebar {
+            width: 360px;
+            background: var(--color-panel-background);
+            border-right: 1px solid var(--color-panel-border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: var(--spacing-large10);
+            border-bottom: 1px solid var(--color-panel-border);
+            background: var(--gradient-body-primary), var(--color-panel-background);
+        }
+
+        .sidebar-title {
+            font-size: var(--font-size-h5);
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing);
+        }
+
+        /* Path Finder */
+        .path-finder {
+            padding: var(--spacing);
+            border-bottom: 1px solid var(--color-panel-border);
+        }
+
+        .finder-label {
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft10);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: var(--spacing-small10);
+        }
+
+        .package-selector {
+            position: relative;
+            margin-bottom: var(--spacing);
+        }
+
+        .package-input {
+            width: 100%;
+            padding: var(--spacing-buttonY) var(--spacing-buttonX);
+            background: var(--color-body-background);
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius-interactive);
+            color: var(--color-body-text);
+            font-size: var(--font-size);
+            transition: all var(--duration-fast10) var(--easing-default);
+        }
+
+        .package-input:focus {
+            outline: none;
+            border-color: var(--color-primary-background);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary-background) 20%, transparent);
+        }
+
+        .autocomplete-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-container);
+            box-shadow: var(--shadow-modal);
+            margin-top: var(--spacing-small20);
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 10;
+            display: none;
+        }
+
+        .autocomplete-dropdown.visible {
+            display: block;
+        }
+
+        .autocomplete-item {
+            padding: var(--spacing-small10) var(--spacing);
+            cursor: pointer;
+            transition: background var(--duration-fastest) var(--easing-default);
+        }
+
+        .autocomplete-item:hover {
+            background: var(--color-neutral-background);
+        }
+
+        .find-paths-btn {
+            width: 100%;
+            padding: var(--spacing-buttonY) var(--spacing-buttonX);
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border: 1px solid var(--color-primary-border);
+            border-radius: var(--radius-interactive);
+            font-size: var(--font-size);
+            font-weight: var(--font-weight-medium);
+            cursor: pointer;
+            transition: all var(--duration-fast10) var(--easing-default);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-small10);
+        }
+
+        .find-paths-btn:hover {
+            background: var(--color-primary-background-hover);
+        }
+
+        .find-paths-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Path Options */
+        .path-options {
+            padding: var(--spacing);
+            border-bottom: 1px solid var(--color-panel-border);
+        }
+
+        .option-group {
+            margin-bottom: var(--spacing);
+        }
+
+        .option-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .option-label {
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft10);
+            margin-bottom: var(--spacing-small10);
+        }
+
+        .option-chips {
+            display: flex;
+            gap: var(--spacing-small10);
+        }
+
+        .option-chip {
+            padding: var(--spacing-small20) var(--spacing-small10);
+            background: var(--color-neutral-background);
+            border: 1px solid var(--color-neutral-border);
+            border-radius: var(--radius-interactive);
+            font-size: var(--font-size-small20);
+            cursor: pointer;
+            transition: all var(--duration-fast10) var(--easing-default);
+        }
+
+        .option-chip.active {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border-color: var(--color-primary-border);
+        }
+
+        .option-chip:hover:not(.active) {
+            background: var(--color-neutral-background-hover);
+        }
+
+        /* Path Results */
+        .path-results {
+            flex: 1;
+            padding: var(--spacing);
+            overflow-y: auto;
+        }
+
+        .results-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--spacing);
+        }
+
+        .results-title {
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft10);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .results-count {
+            padding: var(--spacing-small20) var(--spacing-small10);
+            background: var(--color-successSoft-background);
+            color: var(--color-successSoft-text);
+            border-radius: var(--radius-round);
+            font-size: var(--font-size-smallest);
+        }
+
+        .path-item {
+            background: var(--color-body-background);
+            border: 1px solid var(--color-body-borderSoft10);
+            border-radius: var(--radius-container);
+            padding: var(--spacing);
+            margin-bottom: var(--spacing-small10);
+            cursor: pointer;
+            transition: all var(--duration-fast10) var(--easing-default);
+        }
+
+        .path-item:hover {
+            border-color: var(--color-primary-background);
+            box-shadow: var(--shadow-card);
+        }
+
+        .path-item.selected {
+            border-color: var(--color-primary-background);
+            background: color-mix(in srgb, var(--color-primary-background) 5%, var(--color-body-background));
+        }
+
+        .path-length {
+            display: inline-block;
+            padding: var(--spacing-small20) var(--spacing-small10);
+            background: var(--color-neutral-background);
+            color: var(--color-neutral-text);
+            border-radius: var(--radius-interactive);
+            font-size: var(--font-size-smallest);
+            margin-bottom: var(--spacing-small10);
+        }
+
+        .path-length.shortest {
+            background: var(--color-success-background);
+            color: var(--color-success-text);
+        }
+
+        .path-length.cyclic {
+            background: var(--color-warning-background);
+            color: var(--color-warning-text);
+        }
+
+        .path-nodes {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+            overflow-x: auto;
+            padding: var(--spacing-small10) 0;
+        }
+
+        .path-node {
+            padding: var(--spacing-small20) var(--spacing-small10);
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-interactive);
+            font-size: var(--font-size-small20);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .path-arrow {
+            color: var(--color-body-textSoft20);
+            flex-shrink: 0;
+        }
+
+        /* Main Visualization Area */
+        .main-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--gradient-body-accent), var(--color-body-background);
+        }
+
+        /* Header Bar */
+        .header-bar {
+            padding: var(--spacing);
+            background: var(--color-panel-background);
+            border-bottom: 1px solid var(--color-panel-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .view-selector {
+            display: flex;
+            gap: var(--spacing-small10);
+        }
+
+        .view-btn {
+            padding: var(--spacing-small10) var(--spacing);
+            background: var(--color-neutral-background);
+            border: 1px solid var(--color-neutral-border);
+            border-radius: var(--radius-interactive);
+            color: var(--color-neutral-text);
+            font-size: var(--font-size-small10);
+            cursor: pointer;
+            transition: all var(--duration-fast10) var(--easing-default);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+        }
+
+        .view-btn.active {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border-color: var(--color-primary-border);
+        }
+
+        .view-btn:hover:not(.active) {
+            background: var(--color-neutral-background-hover);
+        }
+
+        /* Path Visualization */
+        .path-viz {
+            flex: 1;
+            padding: var(--spacing-large20);
+            overflow: auto;
+            position: relative;
+        }
+
+        /* Flow Diagram */
+        .flow-diagram {
+            min-height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .flow-container {
+            background: var(--color-panel-background);
+            border-radius: var(--radius-container);
+            padding: var(--spacing-large20);
+            box-shadow: var(--shadow-modal);
+        }
+
+        .flow-row {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-large10);
+            margin-bottom: var(--spacing-large10);
+        }
+
+        .flow-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .flow-node {
+            padding: var(--spacing) var(--spacing-large10);
+            background: var(--color-body-background);
+            border: 2px solid var(--color-body-border);
+            border-radius: var(--radius-container);
+            font-weight: var(--font-weight-medium);
+            position: relative;
+            transition: all var(--duration-fast10) var(--easing-default);
+            cursor: pointer;
+        }
+
+        .flow-node:hover {
+            border-color: var(--color-primary-background);
+            transform: scale(1.05);
+            box-shadow: var(--shadow-card);
+        }
+
+        .flow-node.source {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border-color: var(--color-primary-border);
+        }
+
+        .flow-node.target {
+            background: var(--color-success-background);
+            color: var(--color-success-text);
+            border-color: var(--color-success-border);
+        }
+
+        .flow-node.intermediate {
+            background: var(--color-neutral-background);
+            color: var(--color-neutral-text);
+        }
+
+        .flow-connector {
+            width: var(--spacing-large20);
+            height: 2px;
+            background: var(--color-body-border);
+            position: relative;
+        }
+
+        .flow-connector::after {
+            content: '▶';
+            position: absolute;
+            right: -8px;
+            top: -9px;
+            color: var(--color-body-border);
+            font-size: var(--font-size-small20);
+        }
+
+        /* Alternative Paths */
+        .alt-paths {
+            margin-top: var(--spacing-large20);
+            padding: var(--spacing-large10);
+            background: var(--color-body-background);
+            border-radius: var(--radius-container);
+            border: 1px solid var(--color-body-borderSoft10);
+        }
+
+        .alt-paths-title {
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft10);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: var(--spacing);
+        }
+
+        /* Stats Panel */
+        .stats-panel {
+            position: absolute;
+            top: var(--spacing);
+            right: var(--spacing);
+            width: 280px;
+            background: var(--color-panel-background);
+            border-radius: var(--radius-container);
+            box-shadow: var(--shadow-modal);
+            padding: var(--spacing);
+        }
+
+        .stats-title {
+            font-size: var(--font-size-h6);
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing);
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: var(--spacing-small10) 0;
+            border-bottom: 1px solid var(--color-body-borderSoft10);
+        }
+
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft10);
+        }
+
+        .stat-value {
+            font-weight: var(--font-weight-medium);
+            color: var(--color-primary-text);
+        }
+
+        /* Impact Analysis */
+        .impact-section {
+            margin-top: var(--spacing-large10);
+            padding: var(--spacing);
+            background: var(--color-warningSoft-background);
+            border: 1px solid var(--color-warningSoft-border);
+            border-radius: var(--radius-container);
+        }
+
+        .impact-title {
+            font-size: var(--font-size);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-warningSoft-text);
+            margin-bottom: var(--spacing-small10);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+        }
+
+        .impact-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .impact-item {
+            padding: var(--spacing-small10) 0;
+            font-size: var(--font-size-small10);
+            color: var(--color-warningSoft-text);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+        }
+
+        /* Loading State */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: color-mix(in srgb, var(--color-body-background) 90%, transparent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            display: none;
+        }
+
+        .loading-overlay.visible {
+            display: flex;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--color-body-borderSoft10);
+            border-top-color: var(--color-primary-background);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .paths-container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: 40vh;
+                border-right: none;
+                border-bottom: 1px solid var(--color-panel-border);
+            }
+
+            .stats-panel {
+                position: static;
+                width: 100%;
+                margin-top: var(--spacing);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="paths-container">
+        <!-- Left Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2 class="sidebar-title">Dependency Path Finder</h2>
+                <p style="color: var(--color-body-textSoft10); font-size: var(--font-size-small10);">
+                    Analyze paths between any two packages in your monorepo
+                </p>
+            </div>
+
+            <!-- Path Finder -->
+            <div class="path-finder">
+                <div class="finder-label">Source Package</div>
+                <div class="package-selector">
+                    <input type="text" class="package-input" id="sourceInput" value="@app/main" placeholder="Select source package..." />
+                    <div class="autocomplete-dropdown" id="sourceDropdown">
+                        <div class="autocomplete-item">@app/main</div>
+                        <div class="autocomplete-item">@monorepo/core</div>
+                        <div class="autocomplete-item">@monorepo/ui</div>
+                        <div class="autocomplete-item">@monorepo/utils</div>
+                    </div>
+                </div>
+
+                <div class="finder-label">Target Package</div>
+                <div class="package-selector">
+                    <input type="text" class="package-input" id="targetInput" value="@monorepo/logger" placeholder="Select target package..." />
+                    <div class="autocomplete-dropdown" id="targetDropdown">
+                        <div class="autocomplete-item">@monorepo/logger</div>
+                        <div class="autocomplete-item">@monorepo/config</div>
+                        <div class="autocomplete-item">@monorepo/auth</div>
+                        <div class="autocomplete-item">@monorepo/db</div>
+                    </div>
+                </div>
+
+                <button class="find-paths-btn" onclick="findPaths()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="m21 21-4.35-4.35"/>
+                    </svg>
+                    Find All Paths
+                </button>
+            </div>
+
+            <!-- Path Options -->
+            <div class="path-options">
+                <div class="option-group">
+                    <div class="option-label">Path Type</div>
+                    <div class="option-chips">
+                        <div class="option-chip active" onclick="toggleOption(this)">All</div>
+                        <div class="option-chip" onclick="toggleOption(this)">Shortest</div>
+                        <div class="option-chip" onclick="toggleOption(this)">Direct</div>
+                    </div>
+                </div>
+
+                <div class="option-group">
+                    <div class="option-label">Max Depth</div>
+                    <div class="option-chips">
+                        <div class="option-chip" onclick="toggleOption(this)">3</div>
+                        <div class="option-chip active" onclick="toggleOption(this)">5</div>
+                        <div class="option-chip" onclick="toggleOption(this)">∞</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Path Results -->
+            <div class="path-results">
+                <div class="results-header">
+                    <div class="results-title">Found Paths</div>
+                    <div class="results-count">4 paths</div>
+                </div>
+
+                <div class="path-item selected">
+                    <span class="path-length shortest">Shortest - 3 hops</span>
+                    <div class="path-nodes">
+                        <div class="path-node">@app/main</div>
+                        <div class="path-arrow">→</div>
+                        <div class="path-node">@monorepo/core</div>
+                        <div class="path-arrow">→</div>
+                        <div class="path-node">@monorepo/utils</div>
+                        <div class="path-arrow">→</div>
+                        <div class="path-node">@monorepo/logger</div>
+                    </div>
+                </div>
+
+                <div class="path-item">
+                    <span class="path-length">4 hops</span>
+                    <div class="path-nodes">
+                        <div class="path-node">@app/main</div>
+                        <div class="path-arrow">→</div>
+                        <div class="path-node">@monorepo/ui</div>
+                        <div class="path-arrow">→</div>
+                        <div class="path-node">@monorepo/shared</div>
+                        <div class="path-arrow">→</div>
+                        <div class="path-node">@monorepo/utils</div>
+                        <div class="path-arrow">→</div>
+                        <div class="path-node">@monorepo/logger</div>
+                    </div>
+                </div>
+
+                <div class="path-item">
+                    <span class="path-length cyclic">5 hops - Contains cycle</span>
+                    <div class="path-nodes">
+                        <div class="path-node">@app/main</div>
+                        <div class="path-arrow">→</div>
+                        <div class="path-node">@monorepo/api</div>
+                        <div class="path-arrow">→</div>
+                        <div class="path-node">@monorepo/config</div>
+                        <div class="path-arrow">⟲</div>
+                        <div class="path-node">@monorepo/shared</div>
+                        <div class="path-arrow">→</div>
+                        <div class="path-node">@monorepo/utils</div>
+                        <div class="path-arrow">→</div>
+                        <div class="path-node">@monorepo/logger</div>
+                    </div>
+                </div>
+
+                <div class="path-item">
+                    <span class="path-length">6 hops</span>
+                    <div class="path-nodes">
+                        <div class="path-node">@app/main</div>
+                        <div class="path-arrow">→</div>
+                        <div class="path-node">@monorepo/auth</div>
+                        <div class="path-arrow">→</div>
+                        <div class="path-node">@monorepo/crypto</div>
+                        <div class="path-arrow">→</div>
+                        <div class="path-node">@monorepo/db</div>
+                        <div class="path-arrow">→</div>
+                        <div class="path-node">@monorepo/models</div>
+                        <div class="path-arrow">→</div>
+                        <div class="path-node">@monorepo/utils</div>
+                        <div class="path-arrow">→</div>
+                        <div class="path-node">@monorepo/logger</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Visualization Area -->
+        <main class="main-area">
+            <!-- Header Bar -->
+            <div class="header-bar">
+                <div class="view-selector">
+                    <button class="view-btn active" onclick="setView('flow')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="7" height="7"/>
+                            <rect x="14" y="3" width="7" height="7"/>
+                            <rect x="14" y="14" width="7" height="7"/>
+                            <rect x="3" y="14" width="7" height="7"/>
+                            <polyline points="10 6.5 14 6.5"/>
+                            <polyline points="6.5 10 6.5 14"/>
+                            <polyline points="17.5 10 17.5 14"/>
+                            <polyline points="10 17.5 14 17.5"/>
+                        </svg>
+                        Flow View
+                    </button>
+                    <button class="view-btn" onclick="setView('tree')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2v6m0 0v6m0-6h6m-6 0H6"/>
+                            <circle cx="12" cy="8" r="2"/>
+                            <circle cx="6" cy="20" r="2"/>
+                            <circle cx="18" cy="20" r="2"/>
+                            <path d="M12 14v4m0 0-4 2m4-2 4 2"/>
+                        </svg>
+                        Tree View
+                    </button>
+                    <button class="view-btn" onclick="setView('sankey')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 3v18l7-4v-10L3 3z"/>
+                            <path d="M10 7l4 2v6l-4 2"/>
+                            <path d="M14 9l7-6v18l-7-6"/>
+                        </svg>
+                        Sankey
+                    </button>
+                </div>
+
+                <div style="display: flex; gap: var(--spacing);">
+                    <button class="view-btn" onclick="exportPaths()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        Export
+                    </button>
+                    <button class="view-btn" onclick="sharePaths()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="18" cy="5" r="3"/>
+                            <circle cx="6" cy="12" r="3"/>
+                            <circle cx="18" cy="19" r="3"/>
+                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                        </svg>
+                        Share
+                    </button>
+                </div>
+            </div>
+
+            <!-- Path Visualization -->
+            <div class="path-viz">
+                <div class="flow-diagram">
+                    <div class="flow-container">
+                        <!-- Main Path -->
+                        <div class="flow-row">
+                            <div class="flow-node source">
+                                @app/main
+                                <div style="font-size: var(--font-size-smallest); opacity: 0.8; margin-top: var(--spacing-small20);">Source</div>
+                            </div>
+                            <div class="flow-connector"></div>
+                            <div class="flow-node intermediate">
+                                @monorepo/core
+                                <div style="font-size: var(--font-size-smallest); opacity: 0.8; margin-top: var(--spacing-small20);">v1.2.0</div>
+                            </div>
+                            <div class="flow-connector"></div>
+                            <div class="flow-node intermediate">
+                                @monorepo/utils
+                                <div style="font-size: var(--font-size-smallest); opacity: 0.8; margin-top: var(--spacing-small20);">v0.9.2</div>
+                            </div>
+                            <div class="flow-connector"></div>
+                            <div class="flow-node target">
+                                @monorepo/logger
+                                <div style="font-size: var(--font-size-smallest); opacity: 0.8; margin-top: var(--spacing-small20);">Target</div>
+                            </div>
+                        </div>
+
+                        <!-- Alternative Paths -->
+                        <div class="alt-paths">
+                            <div class="alt-paths-title">Alternative Paths</div>
+                            
+                            <div class="flow-row">
+                                <div class="flow-node" style="opacity: 0.6;">@app/main</div>
+                                <div class="flow-connector" style="opacity: 0.6;"></div>
+                                <div class="flow-node" style="opacity: 0.6;">@monorepo/ui</div>
+                                <div class="flow-connector" style="opacity: 0.6;"></div>
+                                <div class="flow-node" style="opacity: 0.6;">@monorepo/shared</div>
+                                <div class="flow-connector" style="opacity: 0.6;"></div>
+                                <div class="flow-node" style="opacity: 0.6;">@monorepo/utils</div>
+                                <div class="flow-connector" style="opacity: 0.6;"></div>
+                                <div class="flow-node" style="opacity: 0.6;">@monorepo/logger</div>
+                            </div>
+                        </div>
+
+                        <!-- Impact Analysis -->
+                        <div class="impact-section">
+                            <div class="impact-title">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                                    <line x1="12" y1="9" x2="12" y2="13"/>
+                                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                                </svg>
+                                Breaking Change Impact
+                            </div>
+                            <ul class="impact-list">
+                                <li class="impact-item">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="9 11 12 14 22 4"/>
+                                        <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                                    </svg>
+                                    Changes to @monorepo/logger will affect 12 packages
+                                </li>
+                                <li class="impact-item">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="9 11 12 14 22 4"/>
+                                        <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                                    </svg>
+                                    @app/main will need rebuilding
+                                </li>
+                                <li class="impact-item">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="9 11 12 14 22 4"/>
+                                        <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                                    </svg>
+                                    3 test suites may be affected
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats Panel -->
+                <div class="stats-panel">
+                    <h3 class="stats-title">Path Analysis</h3>
+                    
+                    <div class="stat-row">
+                        <span class="stat-label">Total Paths Found</span>
+                        <span class="stat-value">4</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Shortest Path</span>
+                        <span class="stat-value">3 hops</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Longest Path</span>
+                        <span class="stat-value">6 hops</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Cyclic Dependencies</span>
+                        <span class="stat-value" style="color: var(--color-warning-text)">1</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Common Nodes</span>
+                        <span class="stat-value">@monorepo/utils</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Analysis Time</span>
+                        <span class="stat-value">23ms</span>
+                    </div>
+                </div>
+
+                <!-- Loading Overlay -->
+                <div class="loading-overlay" id="loadingOverlay">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Interactive functionality
+        function toggleOption(element) {
+            const group = element.parentElement;
+            group.querySelectorAll('.option-chip').forEach(chip => {
+                chip.classList.remove('active');
+            });
+            element.classList.add('active');
+        }
+
+        function setView(view) {
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.closest('.view-btn').classList.add('active');
+            console.log(`Switching to ${view} view`);
+        }
+
+        function findPaths() {
+            const source = document.getElementById('sourceInput').value;
+            const target = document.getElementById('targetInput').value;
+            
+            // Show loading
+            document.getElementById('loadingOverlay').classList.add('visible');
+            
+            // Simulate path finding
+            setTimeout(() => {
+                document.getElementById('loadingOverlay').classList.remove('visible');
+                console.log(`Finding paths from ${source} to ${target}`);
+            }, 1000);
+        }
+
+        function exportPaths() {
+            console.log('Exporting paths...');
+        }
+
+        function sharePaths() {
+            console.log('Sharing paths...');
+        }
+
+        // Path item selection
+        document.querySelectorAll('.path-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.path-item').forEach(i => {
+                    i.classList.remove('selected');
+                });
+                this.classList.add('selected');
+                
+                // Update visualization
+                console.log('Selected path:', this);
+            });
+        });
+
+        // Autocomplete functionality
+        document.querySelectorAll('.package-input').forEach(input => {
+            input.addEventListener('focus', function() {
+                const dropdown = this.nextElementSibling;
+                dropdown.classList.add('visible');
+            });
+            
+            input.addEventListener('blur', function() {
+                setTimeout(() => {
+                    const dropdown = this.nextElementSibling;
+                    dropdown.classList.remove('visible');
+                }, 200);
+            });
+            
+            input.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const dropdown = this.nextElementSibling;
+                const items = dropdown.querySelectorAll('.autocomplete-item');
+                
+                items.forEach(item => {
+                    if (item.textContent.toLowerCase().includes(searchTerm)) {
+                        item.style.display = 'block';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        });
+
+        // Autocomplete item selection
+        document.querySelectorAll('.autocomplete-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const input = this.parentElement.previousElementSibling;
+                input.value = this.textContent;
+                this.parentElement.classList.remove('visible');
+            });
+        });
+
+        // Flow node interactions
+        document.querySelectorAll('.flow-node').forEach(node => {
+            node.addEventListener('click', function() {
+                console.log('Node clicked:', this.textContent);
+            });
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && (e.target.id === 'sourceInput' || e.target.id === 'targetInput')) {
+                findPaths();
+            }
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.autocomplete-dropdown').forEach(dropdown => {
+                    dropdown.classList.remove('visible');
+                });
+            }
+        });
+
+        // Initialize with a search
+        setTimeout(() => {
+            findPaths();
+        }, 500);
+    </script>
+</body>
+</html>

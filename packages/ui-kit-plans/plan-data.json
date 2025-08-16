@@ -205,6 +205,32 @@
         "plans": [],
         "mockups": ["mockups/mock-context-forking.html"]
       }
+    ],
+    "Workflow Components": [
+      {
+        "name": "Work Item Creation Flow",
+        "folder": "workitem-creation-flow",
+        "plans": [],
+        "mockups": [
+          "mockups/mock-workitem-creation-flow-dependency-graph.html",
+          "mockups/mock-workitem-creation-flow-timeline-gantt.html",
+          "mockups/mock-workitem-creation-flow-dynamic-workflow.html"
+        ]
+      }
+    ],
+    "Visualization Tools": [
+      {
+        "name": "NPM Dependency Visualizer",
+        "folder": "npm-visualizer",
+        "plans": [],
+        "mockups": [
+          "mockups/mock-npm-visualizer-default.html",
+          "mockups/mock-npm-visualizer-detail-view.html",
+          "mockups/mock-npm-visualizer-dependency-paths.html",
+          "mockups/mock-npm-visualizer-matrix-view.html",
+          "mockups/mock-npm-visualizer-sunburst.html"
+        ]
+      }
     ]
   }
 }

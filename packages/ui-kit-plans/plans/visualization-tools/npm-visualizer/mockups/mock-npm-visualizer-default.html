@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NPM Dependency Visualizer - Interactive Graph</title>
+    
+    <!-- 1. Link to UI Kit styles -->
+    <link rel="stylesheet" href="/assets/styles.css">
+    
+    <!-- 2. Set base path for themes -->
+    <script>
+        window.__uiKitBasePath = '/assets/';
+    </script>
+    
+    <!-- 3. Load theme engine (auto-initializes) -->
+    <script type="module" src="/assets/theme.js"></script>
+    
+    <!-- 4. Optional: Theme switcher UI -->
+    <script type="module" src="/assets/theme-switcher.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--color-body-background);
+            color: var(--color-body-text);
+            font-size: var(--font-size);
+            line-height: var(--line-height);
+            overflow: hidden;
+        }
+
+        .visualizer-container {
+            display: flex;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* Control Panel */
+        .control-panel {
+            width: 320px;
+            background: var(--color-panel-background);
+            border-right: 1px solid var(--color-panel-border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: transform var(--duration-normal) var(--easing-default);
+        }
+
+        .control-panel.collapsed {
+            transform: translateX(-280px);
+        }
+
+        .panel-header {
+            padding: var(--spacing);
+            border-bottom: 1px solid var(--color-panel-border);
+            background: var(--gradient-body-primary), var(--color-panel-background);
+        }
+
+        .panel-title {
+            font-size: var(--font-size-h5);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-body-text);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+        }
+
+        .panel-collapse-btn {
+            margin-left: auto;
+            background: transparent;
+            border: none;
+            color: var(--color-body-icon);
+            cursor: pointer;
+            padding: var(--spacing-small20);
+            border-radius: var(--radius-interactive);
+            transition: all var(--duration-fast10) var(--easing-default);
+        }
+
+        .panel-collapse-btn:hover {
+            background: var(--color-neutral-background);
+        }
+
+        /* Search Section */
+        .search-section {
+            padding: var(--spacing);
+            border-bottom: 1px solid var(--color-panel-border);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: var(--spacing-buttonY) var(--spacing-buttonX);
+            background: var(--color-body-background);
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius-interactive);
+            color: var(--color-body-text);
+            font-size: var(--font-size);
+            transition: all var(--duration-fast10) var(--easing-default);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--color-primary-background);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary-background) 20%, transparent);
+        }
+
+        /* View Mode Selector */
+        .view-modes {
+            padding: var(--spacing);
+            border-bottom: 1px solid var(--color-panel-border);
+        }
+
+        .mode-label {
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft10);
+            margin-bottom: var(--spacing-small10);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .mode-buttons {
+            display: flex;
+            gap: var(--spacing-small10);
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: var(--spacing-small10) var(--spacing-small10);
+            background: var(--color-neutral-background);
+            border: 1px solid var(--color-neutral-border);
+            border-radius: var(--radius-interactive);
+            color: var(--color-neutral-text);
+            font-size: var(--font-size-small10);
+            cursor: pointer;
+            transition: all var(--duration-fast10) var(--easing-default);
+        }
+
+        .mode-btn.active {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border-color: var(--color-primary-border);
+        }
+
+        .mode-btn:hover:not(.active) {
+            background: var(--color-neutral-background-hover);
+        }
+
+        /* Filter Section */
+        .filter-section {
+            padding: var(--spacing);
+            border-bottom: 1px solid var(--color-panel-border);
+        }
+
+        .filter-group {
+            margin-bottom: var(--spacing);
+        }
+
+        .filter-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .filter-label {
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft10);
+            margin-bottom: var(--spacing-small10);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .filter-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-small20);
+        }
+
+        .filter-chip {
+            padding: var(--spacing-small20) var(--spacing-small10);
+            background: var(--color-body-background);
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius-round);
+            font-size: var(--font-size-small20);
+            cursor: pointer;
+            transition: all var(--duration-fast10) var(--easing-default);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small20);
+        }
+
+        .filter-chip.active {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border-color: var(--color-primary-border);
+        }
+
+        .filter-chip:hover:not(.active) {
+            border-color: var(--color-primary-background);
+            background: color-mix(in srgb, var(--color-primary-background) 10%, var(--color-body-background));
+        }
+
+        .chip-count {
+            background: color-mix(in srgb, currentColor 20%, transparent);
+            padding: 0 var(--spacing-small20);
+            border-radius: var(--radius-round);
+            font-size: var(--font-size-smallest);
+            min-width: 18px;
+            text-align: center;
+        }
+
+        /* Statistics Section */
+        .stats-section {
+            padding: var(--spacing);
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-small10);
+            margin-bottom: var(--spacing);
+        }
+
+        .stat-card {
+            background: var(--color-body-background);
+            padding: var(--spacing-small10);
+            border-radius: var(--radius-container);
+            border: 1px solid var(--color-body-borderSoft10);
+        }
+
+        .stat-value {
+            font-size: var(--font-size-h4);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-primary-text);
+        }
+
+        .stat-label {
+            font-size: var(--font-size-small20);
+            color: var(--color-body-textSoft20);
+            margin-top: var(--spacing-small20);
+        }
+
+        /* Main Graph Area */
+        .graph-container {
+            flex: 1;
+            position: relative;
+            background: var(--gradient-body-accent), var(--color-body-background);
+        }
+
+        .graph-canvas {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* SVG Graph */
+        #dependency-graph {
+            width: 100%;
+            height: 100%;
+        }
+
+        .node {
+            cursor: pointer;
+            transition: all var(--duration-fast10) var(--easing-default);
+        }
+
+        .node:hover {
+            filter: brightness(1.2);
+        }
+
+        .node.selected {
+            stroke: var(--color-primary-background);
+            stroke-width: 3;
+        }
+
+        .node.root {
+            fill: var(--color-primary-background);
+        }
+
+        .node.direct {
+            fill: var(--color-success-background);
+        }
+
+        .node.transitive {
+            fill: var(--color-neutral-background);
+        }
+
+        .node.cyclic {
+            fill: var(--color-warning-background);
+        }
+
+        .node.external {
+            fill: var(--color-body-background);
+            stroke: var(--color-body-border);
+            stroke-width: 2;
+        }
+
+        .link {
+            stroke: var(--color-body-border);
+            stroke-opacity: 0.7;
+            stroke-width: 2;
+            fill: none;
+            transition: all var(--duration-fast10) var(--easing-default);
+        }
+
+        .link.highlighted {
+            stroke: var(--color-primary-background);
+            stroke-width: 3;
+            stroke-opacity: 1;
+        }
+
+        .link.cyclic {
+            stroke: var(--color-warning-background);
+            stroke-width: 2;
+            stroke-opacity: 0.8;
+        }
+
+        /* Hover states for edges */
+        .graph-hovering .link {
+            stroke-opacity: 0.2;
+        }
+
+        .graph-hovering .link.edge-highlight {
+            stroke: var(--color-primary-background) !important;
+            stroke-width: 4;
+            stroke-opacity: 1;
+            marker-end: url(#arrowhead-highlighted) !important;
+        }
+
+        .graph-hovering .link.edge-highlight-reverse {
+            stroke: var(--color-success-background) !important;
+            stroke-width: 4;
+            stroke-opacity: 1;
+            marker-end: url(#arrowhead) !important;
+        }
+
+        .node-label {
+            font-size: var(--font-size-small20);
+            pointer-events: none;
+            text-anchor: middle;
+            font-weight: var(--font-weight-medium);
+        }
+
+        /* Zoom Controls */
+        .zoom-controls {
+            position: absolute;
+            bottom: var(--spacing);
+            right: var(--spacing);
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-small20);
+            background: var(--color-panel-background);
+            padding: var(--spacing-small10);
+            border-radius: var(--radius-container);
+            box-shadow: var(--shadow-card);
+        }
+
+        .zoom-btn {
+            width: 36px;
+            height: 36px;
+            background: var(--color-neutral-background);
+            border: 1px solid var(--color-neutral-border);
+            border-radius: var(--radius-interactive);
+            color: var(--color-neutral-text);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--duration-fast10) var(--easing-default);
+        }
+
+        .zoom-btn:hover {
+            background: var(--color-neutral-background-hover);
+        }
+
+        /* Detail Panel */
+        .detail-panel {
+            position: absolute;
+            top: var(--spacing);
+            left: var(--spacing);
+            width: 320px;
+            max-height: 80vh;
+            background: var(--color-panel-background);
+            border-radius: var(--radius-container);
+            box-shadow: var(--shadow-modal);
+            overflow: hidden;
+            transform: translateX(-120%);
+            transition: transform var(--duration-normal) var(--easing-default);
+        }
+
+        .detail-panel.visible {
+            transform: translateX(0);
+        }
+
+        .detail-header {
+            padding: var(--spacing);
+            background: var(--gradient-body-primary), var(--color-panel-background);
+            border-bottom: 1px solid var(--color-panel-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .detail-title {
+            font-size: var(--font-size-h5);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-body-text);
+        }
+
+        .detail-close {
+            background: transparent;
+            border: none;
+            color: var(--color-body-icon);
+            cursor: pointer;
+            padding: var(--spacing-small20);
+            border-radius: var(--radius-interactive);
+            transition: all var(--duration-fast10) var(--easing-default);
+        }
+
+        .detail-close:hover {
+            background: var(--color-neutral-background);
+        }
+
+        .detail-body {
+            padding: var(--spacing);
+            overflow-y: auto;
+            max-height: calc(80vh - 60px);
+        }
+
+        .detail-section {
+            margin-bottom: var(--spacing-large10);
+        }
+
+        .detail-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .detail-section-title {
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft10);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: var(--spacing-small10);
+        }
+
+        .detail-version {
+            display: inline-block;
+            padding: var(--spacing-small20) var(--spacing-small10);
+            background: var(--color-successSoft-background);
+            color: var(--color-successSoft-text);
+            border-radius: var(--radius-interactive);
+            font-size: var(--font-size-small20);
+            margin-bottom: var(--spacing-small10);
+        }
+
+        .detail-description {
+            color: var(--color-body-textSoft10);
+            margin-bottom: var(--spacing);
+        }
+
+        .dependency-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .dependency-item {
+            padding: var(--spacing-small10);
+            background: var(--color-body-background);
+            border-radius: var(--radius-interactive);
+            margin-bottom: var(--spacing-small20);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all var(--duration-fast10) var(--easing-default);
+        }
+
+        .dependency-item:hover {
+            background: var(--color-neutral-background);
+        }
+
+        .dependency-name {
+            font-weight: var(--font-weight-medium);
+        }
+
+        .dependency-version {
+            font-size: var(--font-size-small20);
+            color: var(--color-body-textSoft20);
+        }
+
+        /* Legend */
+        .legend {
+            position: absolute;
+            bottom: var(--spacing);
+            left: var(--spacing);
+            background: var(--color-panel-background);
+            padding: var(--spacing);
+            border-radius: var(--radius-container);
+            box-shadow: var(--shadow-card);
+        }
+
+        .legend-title {
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft10);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: var(--spacing-small10);
+        }
+
+        .legend-items {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-small20);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+            font-size: var(--font-size-small10);
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        .legend-color.root {
+            background: var(--color-primary-background);
+        }
+
+        .legend-color.direct {
+            background: var(--color-success-background);
+        }
+
+        .legend-color.transitive {
+            background: var(--color-neutral-background);
+        }
+
+        .legend-color.cyclic {
+            background: var(--color-warning-background);
+        }
+
+        .legend-color.external {
+            background: var(--color-body-background);
+            border: 2px solid var(--color-body-border);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .control-panel {
+                position: absolute;
+                z-index: 10;
+                box-shadow: var(--shadow-modal);
+            }
+
+            .detail-panel {
+                width: calc(100% - var(--spacing-large20));
+            }
+
+            .legend {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="visualizer-container">
+        <!-- Control Panel -->
+        <aside class="control-panel" id="controlPanel">
+            <div class="panel-header">
+                <h2 class="panel-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/>
+                        <circle cx="4" cy="12" r="2"/>
+                        <circle cx="20" cy="12" r="2"/>
+                        <circle cx="12" cy="4" r="2"/>
+                        <circle cx="12" cy="20" r="2"/>
+                        <line x1="12" y1="9" x2="12" y2="7"/>
+                        <line x1="12" y1="17" x2="12" y2="15"/>
+                        <line x1="15" y1="12" x2="18" y2="12"/>
+                        <line x1="6" y1="12" x2="9" y2="12"/>
+                    </svg>
+                    NPM Dependencies
+                    <button class="panel-collapse-btn" onclick="togglePanel()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="15 18 9 12 15 6"/>
+                        </svg>
+                    </button>
+                </h2>
+            </div>
+
+            <!-- Search -->
+            <div class="search-section">
+                <input type="text" class="search-input" placeholder="Search packages..." id="searchInput" />
+            </div>
+
+            <!-- View Modes -->
+            <div class="view-modes">
+                <div class="mode-label">View Mode</div>
+                <div class="mode-buttons">
+                    <button class="mode-btn active" onclick="setViewMode('force')">Force</button>
+                    <button class="mode-btn" onclick="setViewMode('hierarchical')">Tree</button>
+                    <button class="mode-btn" onclick="setViewMode('circular')">Circular</button>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="filter-section">
+                <div class="filter-group">
+                    <div class="filter-label">Package Type</div>
+                    <div class="filter-chips">
+                        <div class="filter-chip active" onclick="toggleFilter(this, 'internal')">
+                            Internal <span class="chip-count">52</span>
+                        </div>
+                        <div class="filter-chip active" onclick="toggleFilter(this, 'external')">
+                            External <span class="chip-count">89</span>
+                        </div>
+                        <div class="filter-chip" onclick="toggleFilter(this, 'cyclic')">
+                            Cyclic <span class="chip-count">7</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <div class="filter-label">Depth</div>
+                    <div class="filter-chips">
+                        <div class="filter-chip active" onclick="toggleDepth(this, 1)">Direct</div>
+                        <div class="filter-chip active" onclick="toggleDepth(this, 2)">2 levels</div>
+                        <div class="filter-chip" onclick="toggleDepth(this, 3)">3 levels</div>
+                        <div class="filter-chip" onclick="toggleDepth(this, 99)">All</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics -->
+            <div class="stats-section">
+                <div class="filter-label">Statistics</div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">141</div>
+                        <div class="stat-label">Total Packages</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">52</div>
+                        <div class="stat-label">Internal</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">7</div>
+                        <div class="stat-label">Cyclic Deps</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">5</div>
+                        <div class="stat-label">Max Depth</div>
+                    </div>
+                </div>
+
+                <div class="filter-label" style="margin-top: var(--spacing)">Top Dependencies</div>
+                <ul class="dependency-list">
+                    <li class="dependency-item" onclick="selectPackage('@monorepo/core')">
+                        <span class="dependency-name">@monorepo/core</span>
+                        <span class="dependency-version">23 deps</span>
+                    </li>
+                    <li class="dependency-item" onclick="selectPackage('@monorepo/utils')">
+                        <span class="dependency-name">@monorepo/utils</span>
+                        <span class="dependency-version">18 deps</span>
+                    </li>
+                    <li class="dependency-item" onclick="selectPackage('@monorepo/ui')">
+                        <span class="dependency-name">@monorepo/ui</span>
+                        <span class="dependency-version">15 deps</span>
+                    </li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Main Graph Area -->
+        <main class="graph-container">
+            <div class="graph-canvas" id="graphCanvas">
+                <!-- SVG Graph -->
+                <svg id="dependency-graph" viewBox="0 0 1000 800">
+                    <defs>
+                        <!-- Arrow marker for directed edges -->
+                        <marker id="arrowhead" markerWidth="6" markerHeight="5" 
+                                refX="5" refY="2.5" orient="auto">
+                            <polygon points="0 0, 6 2.5, 0 5" fill="var(--color-body-border)" />
+                        </marker>
+                        <marker id="arrowhead-highlighted" markerWidth="7" markerHeight="6" 
+                                refX="6" refY="3" orient="auto">
+                            <polygon points="0 0, 7 3, 0 6" fill="var(--color-primary-background)" />
+                        </marker>
+                        <marker id="arrowhead-cyclic" markerWidth="6" markerHeight="5" 
+                                refX="5" refY="2.5" orient="auto">
+                            <polygon points="0 0, 6 2.5, 0 5" fill="var(--color-warning-background)" />
+                        </marker>
+                    </defs>
+
+                    <!-- Links -->
+                    <g id="links">
+                        <!-- From @app/main to its dependencies -->
+                        <path class="link" data-source="@app/main" data-target="@monorepo/core" d="M 440,390 L 415,318" marker-end="url(#arrowhead)"/>
+                        <path class="link" data-source="@app/main" data-target="@monorepo/ui" d="M 560,390 L 595,318" marker-end="url(#arrowhead)"/>
+                        <path class="link" data-source="@app/main" data-target="@monorepo/utils" d="M 470,420 L 435,482" marker-end="url(#arrowhead)"/>
+                        <path class="link" data-source="@app/main" data-target="@monorepo/auth" d="M 530,420 L 565,482" marker-end="url(#arrowhead)"/>
+                        <path class="link" data-source="@app/main" data-target="@monorepo/api" d="M 500,380 L 500,218" marker-end="url(#arrowhead)"/>
+                        
+                        <!-- From @monorepo/core to its dependencies -->
+                        <path class="link" d="M 315,282 L 285,216" marker-end="url(#arrowhead)"/>
+                        <path class="link" d="M 315,318 L 290,384" marker-end="url(#arrowhead)"/>
+                        
+                        <!-- From @monorepo/ui to its dependencies -->
+                        <path class="link" d="M 685,282 L 715,216" marker-end="url(#arrowhead)"/>
+                        
+                        <!-- From @monorepo/utils to its dependencies -->
+                        <path class="link" d="M 370,518 L 330,584" marker-end="url(#arrowhead)"/>
+                        
+                        <!-- From @monorepo/auth to its dependencies -->
+                        <path class="link" d="M 630,518 L 670,584" marker-end="url(#arrowhead)"/>
+                        
+                        <!-- Cyclic dependency: @monorepo/shared back to @app/main -->
+                        <path class="link cyclic" d="M 320,400 L 440,400" marker-end="url(#arrowhead-cyclic)" stroke-dasharray="5,5"/>
+                        
+                        <!-- External dependencies -->
+                        <path class="link" d="M 285,300 L 180,300" marker-end="url(#arrowhead)"/>
+                        <path class="link" d="M 715,300 L 820,300" marker-end="url(#arrowhead)"/>
+                    </g>
+
+                    <!-- Nodes -->
+                    <g id="nodes">
+                        <!-- Root Application -->
+                        <g class="node-group" transform="translate(500,400)">
+                            <rect class="node root selected" x="-60" y="-20" width="120" height="40" rx="4" />
+                            <text class="node-label" dy="5" fill="var(--color-primary-text)">@app/main</text>
+                        </g>
+
+                        <!-- Direct Dependencies -->
+                        <g class="node-group" transform="translate(350,300)">
+                            <rect class="node direct" x="-65" y="-18" width="130" height="36" rx="4" />
+                            <text class="node-label" dy="5" fill="var(--color-success-text)">@monorepo/core</text>
+                        </g>
+
+                        <g class="node-group" transform="translate(650,300)">
+                            <rect class="node direct" x="-55" y="-18" width="110" height="36" rx="4" />
+                            <text class="node-label" dy="5" fill="var(--color-success-text)">@monorepo/ui</text>
+                        </g>
+
+                        <g class="node-group" transform="translate(500,200)">
+                            <rect class="node direct" x="-60" y="-18" width="120" height="36" rx="4" />
+                            <text class="node-label" dy="5" fill="var(--color-success-text)">@monorepo/api</text>
+                        </g>
+
+                        <g class="node-group" transform="translate(400,500)">
+                            <rect class="node direct" x="-65" y="-18" width="130" height="36" rx="4" />
+                            <text class="node-label" dy="5" fill="var(--color-success-text)">@monorepo/utils</text>
+                        </g>
+
+                        <g class="node-group" transform="translate(600,500)">
+                            <rect class="node direct" x="-65" y="-18" width="130" height="36" rx="4" />
+                            <text class="node-label" dy="5" fill="var(--color-success-text)">@monorepo/auth</text>
+                        </g>
+
+                        <!-- Transitive Dependencies -->
+                        <g class="node-group" transform="translate(250,200)">
+                            <rect class="node transitive" x="-55" y="-16" width="110" height="32" rx="4" />
+                            <text class="node-label" dy="4" fill="var(--color-neutral-text)">@monorepo/db</text>
+                        </g>
+
+                        <g class="node-group" transform="translate(750,200)">
+                            <rect class="node transitive" x="-70" y="-16" width="140" height="32" rx="4" />
+                            <text class="node-label" dy="4" fill="var(--color-neutral-text)">@monorepo/theme</text>
+                        </g>
+
+                        <g class="node-group" transform="translate(300,600)">
+                            <rect class="node transitive" x="-70" y="-16" width="140" height="32" rx="4" />
+                            <text class="node-label" dy="4" fill="var(--color-neutral-text)">@monorepo/logger</text>
+                        </g>
+
+                        <g class="node-group" transform="translate(700,600)">
+                            <rect class="node transitive" x="-70" y="-16" width="140" height="32" rx="4" />
+                            <text class="node-label" dy="4" fill="var(--color-neutral-text)">@monorepo/crypto</text>
+                        </g>
+
+                        <!-- Cyclic Dependency Indicator -->
+                        <g class="node-group" transform="translate(250,400)">
+                            <rect class="node cyclic" x="-70" y="-16" width="140" height="32" rx="4" />
+                            <text class="node-label" dy="4" fill="var(--color-warning-text)">@monorepo/shared</text>
+                        </g>
+
+                        <!-- External Dependencies -->
+                        <g class="node-group" transform="translate(150,300)">
+                            <rect class="node external" x="-30" y="-14" width="60" height="28" rx="4" />
+                            <text class="node-label" dy="3" fill="var(--color-body-text)">react</text>
+                        </g>
+
+                        <g class="node-group" transform="translate(850,300)">
+                            <rect class="node external" x="-40" y="-14" width="80" height="28" rx="4" />
+                            <text class="node-label" dy="3" fill="var(--color-body-text)">express</text>
+                        </g>
+                    </g>
+                </svg>
+            </div>
+
+            <!-- Zoom Controls -->
+            <div class="zoom-controls">
+                <button class="zoom-btn" onclick="zoomIn()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"/>
+                        <line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                </button>
+                <button class="zoom-btn" onclick="zoomOut()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                </button>
+                <button class="zoom-btn" onclick="resetZoom()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="1 4 1 10 7 10"/>
+                        <polyline points="23 20 23 14 17 14"/>
+                        <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Legend -->
+            <div class="legend">
+                <div class="legend-title">Legend</div>
+                <div class="legend-items">
+                    <div class="legend-item">
+                        <div class="legend-color root"></div>
+                        <span>Root Application</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color direct"></div>
+                        <span>Direct Dependency</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color transitive"></div>
+                        <span>Transitive</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color cyclic"></div>
+                        <span>Cyclic Dependency</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color external"></div>
+                        <span>External Package</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detail Panel -->
+            <div class="detail-panel" id="detailPanel">
+                <div class="detail-header">
+                    <h3 class="detail-title">@app/main</h3>
+                    <button class="detail-close" onclick="closeDetail()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="detail-body">
+                    <div class="detail-section">
+                        <div class="detail-version">v2.3.1</div>
+                        <p class="detail-description">
+                            Main application package that orchestrates the entire monorepo. This is the entry point for the production build.
+                        </p>
+                    </div>
+
+                    <div class="detail-section">
+                        <div class="detail-section-title">Direct Dependencies (5)</div>
+                        <ul class="dependency-list">
+                            <li class="dependency-item" data-target="@monorepo/core">
+                                <span class="dependency-name">@monorepo/core</span>
+                                <span class="dependency-version">^1.2.0</span>
+                            </li>
+                            <li class="dependency-item" data-target="@monorepo/ui">
+                                <span class="dependency-name">@monorepo/ui</span>
+                                <span class="dependency-version">^2.1.0</span>
+                            </li>
+                            <li class="dependency-item" data-target="@monorepo/api">
+                                <span class="dependency-name">@monorepo/api</span>
+                                <span class="dependency-version">^1.0.5</span>
+                            </li>
+                            <li class="dependency-item" data-target="@monorepo/utils">
+                                <span class="dependency-name">@monorepo/utils</span>
+                                <span class="dependency-version">^0.9.2</span>
+                            </li>
+                            <li class="dependency-item" data-target="@monorepo/auth">
+                                <span class="dependency-name">@monorepo/auth</span>
+                                <span class="dependency-version">^1.1.0</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="detail-section">
+                        <div class="detail-section-title">Imported By (3)</div>
+                        <ul class="dependency-list">
+                            <li class="dependency-item" data-source="@monorepo/tests">
+                                <span class="dependency-name">@monorepo/tests</span>
+                                <span class="dependency-version">dev</span>
+                            </li>
+                            <li class="dependency-item" data-source="@monorepo/e2e">
+                                <span class="dependency-name">@monorepo/e2e</span>
+                                <span class="dependency-version">dev</span>
+                            </li>
+                            <li class="dependency-item" data-source="@monorepo/storybook">
+                                <span class="dependency-name">@monorepo/storybook</span>
+                                <span class="dependency-version">dev</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="detail-section">
+                        <div class="detail-section-title">Cyclic Dependencies</div>
+                        <ul class="dependency-list">
+                            <li class="dependency-item" style="background: var(--color-warningSoft-background)">
+                                <span class="dependency-name">@monorepo/shared</span>
+                                <span class="dependency-version">Circular</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Interactive functionality
+        let currentZoom = 1;
+        let selectedNode = null;
+        let viewMode = 'force';
+
+        function togglePanel() {
+            const panel = document.getElementById('controlPanel');
+            panel.classList.toggle('collapsed');
+        }
+
+        function setViewMode(mode) {
+            viewMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            redrawGraph();
+        }
+
+        function toggleFilter(element, type) {
+            element.classList.toggle('active');
+            updateGraph();
+        }
+
+        function toggleDepth(element, depth) {
+            document.querySelectorAll('.filter-chips')[1].querySelectorAll('.filter-chip').forEach(chip => {
+                chip.classList.remove('active');
+            });
+            element.classList.add('active');
+            updateGraph();
+        }
+
+        function selectPackage(packageName) {
+            showDetail();
+            highlightPackage(packageName);
+        }
+
+        function showDetail() {
+            document.getElementById('detailPanel').classList.add('visible');
+        }
+
+        function closeDetail() {
+            document.getElementById('detailPanel').classList.remove('visible');
+        }
+
+        function zoomIn() {
+            currentZoom = Math.min(currentZoom * 1.2, 3);
+            applyZoom();
+        }
+
+        function zoomOut() {
+            currentZoom = Math.max(currentZoom / 1.2, 0.5);
+            applyZoom();
+        }
+
+        function resetZoom() {
+            currentZoom = 1;
+            applyZoom();
+        }
+
+        function applyZoom() {
+            const svg = document.getElementById('dependency-graph');
+            const viewBox = svg.getAttribute('viewBox').split(' ');
+            const centerX = 500;
+            const centerY = 400;
+            const width = 1000 / currentZoom;
+            const height = 800 / currentZoom;
+            svg.setAttribute('viewBox', `${centerX - width/2} ${centerY - height/2} ${width} ${height}`);
+        }
+
+        function highlightPackage(packageName) {
+            // Reset all nodes
+            document.querySelectorAll('.node').forEach(node => {
+                node.classList.remove('selected');
+            });
+            
+            // Highlight selected node
+            const nodeGroups = document.querySelectorAll('.node-group');
+            nodeGroups.forEach(group => {
+                const label = group.querySelector('.node-label');
+                if (label && label.textContent === packageName) {
+                    group.querySelector('.node').classList.add('selected');
+                }
+            });
+
+            // Highlight paths
+            document.querySelectorAll('.link').forEach(link => {
+                link.classList.remove('highlighted');
+                // In a real implementation, we'd calculate which paths connect to the selected node
+            });
+        }
+
+        function updateGraph() {
+            console.log('Updating graph based on filters...');
+            // In a real implementation, this would redraw the graph based on active filters
+        }
+
+        function redrawGraph() {
+            console.log(`Redrawing graph in ${viewMode} mode...`);
+            // In a real implementation, this would reorganize nodes based on the view mode
+        }
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            document.querySelectorAll('.node-label').forEach(label => {
+                const node = label.previousElementSibling;
+                if (label.textContent.toLowerCase().includes(searchTerm)) {
+                    node.style.opacity = '1';
+                    label.style.opacity = '1';
+                } else {
+                    node.style.opacity = '0.3';
+                    label.style.opacity = '0.3';
+                }
+            });
+        });
+
+        // Node click handlers
+        document.querySelectorAll('.node-group').forEach(nodeGroup => {
+            nodeGroup.addEventListener('click', function() {
+                const label = this.querySelector('.node-label').textContent;
+                selectPackage(label);
+            });
+        });
+
+        // Initialize with a selected node
+        setTimeout(() => {
+            selectPackage('@app/main');
+        }, 500);
+
+        // Dependency item hover to highlight edges
+        document.querySelectorAll('.dependency-item[data-target], .dependency-item[data-source]').forEach(item => {
+            item.addEventListener('mouseenter', function() {
+                const targetPackage = this.getAttribute('data-target');
+                const sourcePackage = this.getAttribute('data-source');
+                const currentPackage = document.querySelector('.detail-title').textContent;
+                const graphCanvas = document.getElementById('graphCanvas');
+                
+                // Add hovering class to graph
+                graphCanvas.classList.add('graph-hovering');
+                
+                // Find and highlight the corresponding edge
+                document.querySelectorAll('.link').forEach(link => {
+                    // Remove any previous highlight classes
+                    link.classList.remove('edge-highlight', 'edge-highlight-reverse');
+                    
+                    const linkSource = link.getAttribute('data-source');
+                    const linkTarget = link.getAttribute('data-target');
+                    
+                    // For dependencies (current package depends on target)
+                    if (targetPackage && linkSource === currentPackage && linkTarget === targetPackage) {
+                        link.classList.add('edge-highlight');
+                    } 
+                    // For importers (source depends on current package)
+                    else if (sourcePackage && linkSource === sourcePackage && linkTarget === currentPackage) {
+                        link.classList.add('edge-highlight-reverse');
+                    }
+                });
+                
+                // Also highlight the related node
+                const nodeToHighlight = targetPackage || sourcePackage;
+                document.querySelectorAll('.node-group').forEach(group => {
+                    const label = group.querySelector('.node-label');
+                    if (label && label.textContent === nodeToHighlight) {
+                        const node = group.querySelector('.node');
+                        node.style.strokeWidth = '3';
+                        node.style.stroke = targetPackage ? 
+                            'var(--color-primary-background)' : 'var(--color-success-background)';
+                    }
+                });
+            });
+            
+            item.addEventListener('mouseleave', function() {
+                const graphCanvas = document.getElementById('graphCanvas');
+                
+                // Remove hovering class
+                graphCanvas.classList.remove('graph-hovering');
+                
+                // Remove highlight classes
+                document.querySelectorAll('.link').forEach(link => {
+                    link.classList.remove('edge-highlight', 'edge-highlight-reverse');
+                });
+                
+                // Reset node styles
+                document.querySelectorAll('.node').forEach(node => {
+                    node.style.strokeWidth = '';
+                    node.style.stroke = '';
+                });
+            });
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeDetail();
+            }
+            if (e.key === '=' || e.key === '+') {
+                zoomIn();
+            }
+            if (e.key === '-') {
+                zoomOut();
+            }
+            if (e.key === '0') {
+                resetZoom();
+            }
+        });
+
+        // Pan functionality
+        let isPanning = false;
+        let startX, startY;
+        const svg = document.getElementById('dependency-graph');
+
+        svg.addEventListener('mousedown', (e) => {
+            if (e.target === svg || e.target.parentElement === svg) {
+                isPanning = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                svg.style.cursor = 'grabbing';
+            }
+        });
+
+        svg.addEventListener('mousemove', (e) => {
+            if (!isPanning) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            const viewBox = svg.getAttribute('viewBox').split(' ').map(Number);
+            viewBox[0] -= dx / currentZoom;
+            viewBox[1] -= dy / currentZoom;
+            svg.setAttribute('viewBox', viewBox.join(' '));
+            startX = e.clientX;
+            startY = e.clientY;
+        });
+
+        svg.addEventListener('mouseup', () => {
+            isPanning = false;
+            svg.style.cursor = 'default';
+        });
+
+        svg.addEventListener('mouseleave', () => {
+            isPanning = false;
+            svg.style.cursor = 'default';
+        });
+    </script>
+</body>
+</html>

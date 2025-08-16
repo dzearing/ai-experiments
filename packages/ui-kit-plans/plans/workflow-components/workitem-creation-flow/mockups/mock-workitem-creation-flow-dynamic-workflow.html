@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work Item Creation - Dynamic Workflow Builder</title>
+    
+    <!-- UI Kit styles -->
+    <link rel="stylesheet" href="/assets/styles.css">
+    
+    <!-- Set base path for themes -->
+    <script>
+        window.__uiKitBasePath = '/assets/';
+    </script>
+    
+    <!-- Load theme engine (auto-initializes) -->
+    <script type="module" src="/assets/theme.js"></script>
+    
+    <!-- Theme switcher UI -->
+    <script type="module" src="/assets/theme-switcher.js"></script>
+    
+    <style>
+        /* Container */
+        .dynamic-workflow {
+            min-height: 100vh;
+            background: var(--gradient-body-primary), var(--color-body-background);
+            color: var(--color-body-text);
+        }
+        
+        /* Header */
+        .workflow-header {
+            background: var(--color-panel-background);
+            border-bottom: 2px solid var(--color-panel-border);
+            padding: var(--spacing-large10);
+        }
+        
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .workflow-title {
+            font-size: var(--font-size-h3);
+            font-weight: var(--font-weight-bold);
+            margin: 0;
+        }
+        
+        .complexity-indicator {
+            display: flex;
+            gap: var(--spacing);
+            align-items: center;
+        }
+        
+        .complexity-badge {
+            padding: var(--spacing-small20) var(--spacing);
+            border-radius: var(--radius-round);
+            font-size: var(--font-size-small10);
+            font-weight: var(--font-weight-semibold);
+        }
+        
+        .complexity-simple {
+            background: var(--color-successSoft-background);
+            color: var(--color-successSoft-text);
+            border: 1px solid var(--color-successSoft-border);
+        }
+        
+        .complexity-moderate {
+            background: var(--color-warningSoft-background);
+            color: var(--color-warningSoft-text);
+            border: 1px solid var(--color-warningSoft-border);
+        }
+        
+        .complexity-complex {
+            background: var(--color-dangerSoft-background);
+            color: var(--color-dangerSoft-text);
+            border: 1px solid var(--color-dangerSoft-border);
+        }
+        
+        /* Wizard Steps */
+        .wizard-progress {
+            background: var(--color-body-background);
+            border-bottom: 1px solid var(--color-body-border);
+            padding: var(--spacing-large10) 0;
+        }
+        
+        .steps-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+        }
+        
+        .step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .step-number {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto var(--spacing-small10);
+            background: var(--color-neutral-background);
+            border: 2px solid var(--color-neutral-border);
+            border-radius: var(--radius-round);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: var(--font-weight-bold);
+            transition: all var(--duration) var(--easing-default);
+        }
+        
+        .step.active .step-number {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border-color: var(--color-primary-border);
+            transform: scale(1.1);
+        }
+        
+        .step.completed .step-number {
+            background: var(--color-success-background);
+            color: var(--color-success-text);
+            border-color: var(--color-success-border);
+        }
+        
+        .step-label {
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft20);
+        }
+        
+        .step.active .step-label {
+            color: var(--color-body-text);
+            font-weight: var(--font-weight-medium);
+        }
+        
+        .step-line {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--color-body-border);
+            z-index: 1;
+        }
+        
+        /* Main Content */
+        .workflow-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--spacing-large20);
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: var(--spacing-large10);
+        }
+        
+        /* Dynamic Form */
+        .dynamic-form {
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-container);
+            padding: var(--spacing-large20);
+        }
+        
+        .form-title {
+            font-size: var(--font-size-large10);
+            font-weight: var(--font-weight-semibold);
+            margin: 0 0 var(--spacing) 0;
+        }
+        
+        .form-description {
+            color: var(--color-body-textSoft20);
+            font-size: var(--font-size-small10);
+            margin-bottom: var(--spacing-large10);
+        }
+        
+        /* Smart Questions */
+        .question-card {
+            background: var(--color-body-background);
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius-interactive);
+            padding: var(--spacing);
+            margin-bottom: var(--spacing);
+            transition: all var(--duration) var(--easing-default);
+        }
+        
+        .question-card:hover {
+            border-color: var(--color-primary-border);
+            box-shadow: var(--shadow-interactive);
+        }
+        
+        .question-card.answered {
+            background: var(--gradient-body-success), var(--color-successSoft-background);
+            border-color: var(--color-successSoft-border);
+        }
+        
+        .question-label {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+            font-weight: var(--font-weight-medium);
+            margin-bottom: var(--spacing-small10);
+        }
+        
+        .question-icon {
+            width: 24px;
+            height: 24px;
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border-radius: var(--radius-round);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size-small20);
+        }
+        
+        .question-input {
+            width: 100%;
+            padding: var(--spacing-small10);
+            background: var(--color-input-background);
+            border: 1px solid var(--color-input-border);
+            border-radius: var(--radius-interactive);
+            color: var(--color-input-text);
+            font-size: var(--font-size-normal);
+            transition: all var(--duration) var(--easing-default);
+        }
+        
+        .question-input:focus {
+            outline: none;
+            border-color: var(--color-input-border-focus);
+            background: var(--color-input-background-focus);
+        }
+        
+        .question-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: var(--spacing-small10);
+            margin-top: var(--spacing-small10);
+        }
+        
+        .option-card {
+            padding: var(--spacing);
+            background: var(--color-body-background);
+            border: 2px solid var(--color-body-border);
+            border-radius: var(--radius-interactive);
+            cursor: pointer;
+            transition: all var(--duration) var(--easing-default);
+            text-align: center;
+        }
+        
+        .option-card:hover {
+            border-color: var(--color-primary-border);
+            background: var(--gradient-body-primary), var(--color-body-background);
+        }
+        
+        .option-card.selected {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border-color: var(--color-primary-border);
+        }
+        
+        .option-icon {
+            font-size: var(--font-size-h4);
+            margin-bottom: var(--spacing-small20);
+        }
+        
+        .option-label {
+            font-size: var(--font-size-small10);
+            font-weight: var(--font-weight-medium);
+        }
+        
+        /* Dynamic Suggestions */
+        .suggestions-panel {
+            background: var(--gradient-body-info), var(--color-infoSoft-background);
+            border: 1px solid var(--color-infoSoft-border);
+            border-radius: var(--radius-interactive);
+            padding: var(--spacing);
+            margin-top: var(--spacing);
+        }
+        
+        .suggestions-title {
+            font-size: var(--font-size-small10);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-infoSoft-text);
+            margin-bottom: var(--spacing-small10);
+        }
+        
+        .suggestion-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+            padding: var(--spacing-small20) 0;
+            font-size: var(--font-size-small20);
+            color: var(--color-body-text);
+        }
+        
+        .suggestion-check {
+            color: var(--color-success-text);
+        }
+        
+        /* Building Blocks Recommendation */
+        .blocks-recommendation {
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-container);
+            padding: var(--spacing-large10);
+        }
+        
+        .blocks-title {
+            font-size: var(--font-size-normal);
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing);
+        }
+        
+        .block-category {
+            margin-bottom: var(--spacing-large10);
+        }
+        
+        .category-label {
+            font-size: var(--font-size-small20);
+            color: var(--color-body-textSoft20);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: var(--spacing-small10);
+        }
+        
+        .block-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-small10);
+        }
+        
+        .block-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+            padding: var(--spacing-small10);
+            background: var(--color-body-background);
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius-small);
+            font-size: var(--font-size-small10);
+        }
+        
+        .block-status {
+            width: 8px;
+            height: 8px;
+            border-radius: var(--radius-round);
+        }
+        
+        .status-available { background: var(--color-success-background); }
+        .status-build { background: var(--color-warning-background); }
+        .status-external { background: var(--color-info-background); }
+        
+        .block-name {
+            flex: 1;
+        }
+        
+        .block-action {
+            font-size: var(--font-size-smallest);
+            color: var(--color-body-textSoft20);
+        }
+        
+        /* Workflow Preview */
+        .workflow-preview {
+            background: var(--color-body-background);
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius-container);
+            padding: var(--spacing);
+            margin-top: var(--spacing);
+        }
+        
+        .preview-title {
+            font-size: var(--font-size-small10);
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing);
+        }
+        
+        .preview-diagram {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-small10);
+        }
+        
+        .preview-node {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+            padding: var(--spacing-small10);
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-small);
+            font-size: var(--font-size-small20);
+        }
+        
+        .preview-node.parallel {
+            margin-left: var(--spacing-large10);
+            border-style: dashed;
+        }
+        
+        .node-icon {
+            width: 20px;
+            height: 20px;
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border-radius: var(--radius-small);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size-smallest);
+        }
+        
+        /* Action Buttons */
+        .form-actions {
+            display: flex;
+            gap: var(--spacing);
+            margin-top: var(--spacing-large20);
+        }
+        
+        .btn {
+            padding: var(--spacing-buttonY) var(--spacing-buttonX);
+            border-radius: var(--radius-interactive);
+            border: none;
+            font-size: var(--font-size-normal);
+            font-weight: var(--font-weight-medium);
+            cursor: pointer;
+            transition: all var(--duration) var(--easing-default);
+        }
+        
+        .btn-primary {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            flex: 1;
+        }
+        
+        .btn-primary:hover {
+            background: var(--color-primary-background-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-interactive);
+        }
+        
+        .btn-secondary {
+            background: var(--color-neutral-background);
+            color: var(--color-neutral-text);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--color-neutral-background-hover);
+        }
+        
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .workflow-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .blocks-recommendation {
+                order: 2;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .steps-container {
+                padding: 0 var(--spacing);
+            }
+            
+            .step-label {
+                display: none;
+            }
+            
+            .question-options {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dynamic-workflow">
+        <!-- Header -->
+        <header class="workflow-header">
+            <div class="header-content">
+                <h1 class="workflow-title">Create Work Item</h1>
+                <div class="complexity-indicator">
+                    <span>Detected Complexity:</span>
+                    <span class="complexity-badge complexity-moderate" id="complexity">Moderate</span>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Wizard Progress -->
+        <div class="wizard-progress">
+            <div class="steps-container">
+                <div class="step-line"></div>
+                <div class="step completed">
+                    <div class="step-number">✓</div>
+                    <div class="step-label">Define Goal</div>
+                </div>
+                <div class="step active">
+                    <div class="step-number">2</div>
+                    <div class="step-label">Analyze Requirements</div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-label">Design Approach</div>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-label">Define Validation</div>
+                </div>
+                <div class="step">
+                    <div class="step-number">5</div>
+                    <div class="step-label">Review & Create</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="workflow-content">
+            <!-- Left: Dynamic Form -->
+            <div class="dynamic-form">
+                <h2 class="form-title">Analyzing Your Requirements</h2>
+                <p class="form-description">
+                    Based on your goal to "Build an E-Commerce Platform", I need to understand the specific requirements to design the optimal workflow.
+                </p>
+                
+                <!-- Smart Questions based on context -->
+                <div class="question-card answered">
+                    <div class="question-label">
+                        <span class="question-icon">✓</span>
+                        <span>What type of e-commerce platform?</span>
+                    </div>
+                    <div class="question-options">
+                        <div class="option-card selected">
+                            <div class="option-icon">🛍️</div>
+                            <div class="option-label">B2C Marketplace</div>
+                        </div>
+                        <div class="option-card">
+                            <div class="option-icon">🏢</div>
+                            <div class="option-label">B2B Platform</div>
+                        </div>
+                        <div class="option-card">
+                            <div class="option-icon">🤝</div>
+                            <div class="option-label">C2C Marketplace</div>
+                        </div>
+                        <div class="option-card">
+                            <div class="option-icon">📦</div>
+                            <div class="option-label">Dropshipping</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="question-card">
+                    <div class="question-label">
+                        <span class="question-icon">?</span>
+                        <span>Expected catalog size?</span>
+                    </div>
+                    <div class="question-options">
+                        <div class="option-card">
+                            <div class="option-icon">📝</div>
+                            <div class="option-label">&lt; 100 products</div>
+                        </div>
+                        <div class="option-card">
+                            <div class="option-icon">📚</div>
+                            <div class="option-label">100-1K products</div>
+                        </div>
+                        <div class="option-card">
+                            <div class="option-icon">🏬</div>
+                            <div class="option-label">1K-10K products</div>
+                        </div>
+                        <div class="option-card">
+                            <div class="option-icon">🏭</div>
+                            <div class="option-label">10K+ products</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="question-card">
+                    <div class="question-label">
+                        <span class="question-icon">?</span>
+                        <span>Payment processing requirements?</span>
+                    </div>
+                    <textarea class="question-input" rows="3" placeholder="Describe payment methods, currencies, compliance requirements..."></textarea>
+                </div>
+                
+                <!-- Dynamic Suggestions -->
+                <div class="suggestions-panel">
+                    <div class="suggestions-title">💡 Based on your B2C Marketplace selection, I recommend:</div>
+                    <div class="suggestion-item">
+                        <span class="suggestion-check">✓</span>
+                        <span>Multi-vendor support architecture</span>
+                    </div>
+                    <div class="suggestion-item">
+                        <span class="suggestion-check">✓</span>
+                        <span>Review and rating system</span>
+                    </div>
+                    <div class="suggestion-item">
+                        <span class="suggestion-check">✓</span>
+                        <span>Advanced search with filters</span>
+                    </div>
+                    <div class="suggestion-item">
+                        <span class="suggestion-check">✓</span>
+                        <span>Recommendation engine</span>
+                    </div>
+                </div>
+                
+                <!-- Workflow Preview -->
+                <div class="workflow-preview">
+                    <div class="preview-title">Generated Workflow Structure</div>
+                    <div class="preview-diagram">
+                        <div class="preview-node">
+                            <span class="node-icon">1</span>
+                            <span>Environment Setup & Dependencies</span>
+                        </div>
+                        <div class="preview-node parallel">
+                            <span class="node-icon">2a</span>
+                            <span>Database Schema Design</span>
+                        </div>
+                        <div class="preview-node parallel">
+                            <span class="node-icon">2b</span>
+                            <span>API Gateway Configuration</span>
+                        </div>
+                        <div class="preview-node parallel">
+                            <span class="node-icon">2c</span>
+                            <span>CDN & Asset Pipeline</span>
+                        </div>
+                        <div class="preview-node">
+                            <span class="node-icon">3</span>
+                            <span>Core Services Implementation</span>
+                        </div>
+                        <div class="preview-node">
+                            <span class="node-icon">4</span>
+                            <span>Integration Testing Suite</span>
+                        </div>
+                        <div class="preview-node">
+                            <span class="node-icon">5</span>
+                            <span>Performance & Security Validation</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div class="form-actions">
+                    <button class="btn btn-secondary">Previous</button>
+                    <button class="btn btn-primary">Continue to Design Approach</button>
+                </div>
+            </div>
+            
+            <!-- Right: Building Blocks -->
+            <aside>
+                <div class="blocks-recommendation">
+                    <h3 class="blocks-title">Recommended Building Blocks</h3>
+                    
+                    <div class="block-category">
+                        <div class="category-label">Available</div>
+                        <div class="block-list">
+                            <div class="block-item">
+                                <span class="block-status status-available"></span>
+                                <span class="block-name">PostgreSQL Connector</span>
+                                <span class="block-action">Ready</span>
+                            </div>
+                            <div class="block-item">
+                                <span class="block-status status-available"></span>
+                                <span class="block-name">Redis Cache Layer</span>
+                                <span class="block-action">Ready</span>
+                            </div>
+                            <div class="block-item">
+                                <span class="block-status status-available"></span>
+                                <span class="block-name">JWT Auth Module</span>
+                                <span class="block-action">Ready</span>
+                            </div>
+                            <div class="block-item">
+                                <span class="block-status status-available"></span>
+                                <span class="block-name">REST API Builder</span>
+                                <span class="block-action">Ready</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="block-category">
+                        <div class="category-label">Need to Build</div>
+                        <div class="block-list">
+                            <div class="block-item">
+                                <span class="block-status status-build"></span>
+                                <span class="block-name">Product Catalog Service</span>
+                                <span class="block-action">+45min</span>
+                            </div>
+                            <div class="block-item">
+                                <span class="block-status status-build"></span>
+                                <span class="block-name">Shopping Cart Manager</span>
+                                <span class="block-action">+30min</span>
+                            </div>
+                            <div class="block-item">
+                                <span class="block-status status-build"></span>
+                                <span class="block-name">Order Processing Pipeline</span>
+                                <span class="block-action">+60min</span>
+                            </div>
+                            <div class="block-item">
+                                <span class="block-status status-build"></span>
+                                <span class="block-name">Vendor Management</span>
+                                <span class="block-action">+40min</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="block-category">
+                        <div class="category-label">External Services</div>
+                        <div class="block-list">
+                            <div class="block-item">
+                                <span class="block-status status-external"></span>
+                                <span class="block-name">Stripe Payment</span>
+                                <span class="block-action">API Key</span>
+                            </div>
+                            <div class="block-item">
+                                <span class="block-status status-external"></span>
+                                <span class="block-name">SendGrid Email</span>
+                                <span class="block-action">Configure</span>
+                            </div>
+                            <div class="block-item">
+                                <span class="block-status status-external"></span>
+                                <span class="block-name">Cloudflare CDN</span>
+                                <span class="block-action">Setup</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Estimated Impact -->
+                <div class="blocks-recommendation" style="margin-top: var(--spacing);">
+                    <h3 class="blocks-title">Workflow Impact</h3>
+                    <div class="block-list">
+                        <div class="block-item">
+                            <span>Total Tasks:</span>
+                            <strong>24</strong>
+                        </div>
+                        <div class="block-item">
+                            <span>Parallel Paths:</span>
+                            <strong>3</strong>
+                        </div>
+                        <div class="block-item">
+                            <span>Critical Dependencies:</span>
+                            <strong>5</strong>
+                        </div>
+                        <div class="block-item">
+                            <span>Est. Agent Time:</span>
+                            <strong>~4.5 hours</strong>
+                        </div>
+                        <div class="block-item">
+                            <span>Success Probability:</span>
+                            <strong style="color: var(--color-success-text);">92%</strong>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+    
+    <script>
+        // Dynamic workflow adaptation
+        document.addEventListener('DOMContentLoaded', () => {
+            // Option selection
+            const optionCards = document.querySelectorAll('.option-card');
+            optionCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    // Clear siblings
+                    this.parentElement.querySelectorAll('.option-card').forEach(c => {
+                        c.classList.remove('selected');
+                    });
+                    this.classList.add('selected');
+                    
+                    // Mark question as answered
+                    this.closest('.question-card').classList.add('answered');
+                    const icon = this.closest('.question-card').querySelector('.question-icon');
+                    icon.textContent = '✓';
+                    
+                    // Update complexity based on selections
+                    updateComplexity();
+                    
+                    // Show next question with animation
+                    const nextQuestion = this.closest('.question-card').nextElementSibling;
+                    if (nextQuestion && nextQuestion.classList.contains('question-card')) {
+                        setTimeout(() => {
+                            nextQuestion.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 300);
+                    }
+                });
+            });
+            
+            // Update complexity indicator
+            function updateComplexity() {
+                const answered = document.querySelectorAll('.question-card.answered').length;
+                const complexityBadge = document.getElementById('complexity');
+                
+                if (answered >= 2) {
+                    complexityBadge.textContent = 'Complex';
+                    complexityBadge.className = 'complexity-badge complexity-complex';
+                    
+                    // Add more building blocks
+                    addDynamicBlocks();
+                }
+            }
+            
+            // Dynamically add building blocks based on selections
+            function addDynamicBlocks() {
+                const needToBuild = document.querySelector('.block-category:nth-child(2) .block-list');
+                
+                // Check if recommendation engine not already added
+                if (!needToBuild.querySelector('[data-dynamic]')) {
+                    const newBlock = document.createElement('div');
+                    newBlock.className = 'block-item';
+                    newBlock.setAttribute('data-dynamic', 'true');
+                    newBlock.innerHTML = `
+                        <span class="block-status status-build"></span>
+                        <span class="block-name">ML Recommendation Engine</span>
+                        <span class="block-action">+90min</span>
+                    `;
+                    newBlock.style.opacity = '0';
+                    needToBuild.appendChild(newBlock);
+                    
+                    setTimeout(() => {
+                        newBlock.style.transition = 'opacity 0.5s';
+                        newBlock.style.opacity = '1';
+                    }, 100);
+                }
+            }
+            
+            // Step navigation
+            const steps = document.querySelectorAll('.step');
+            let currentStep = 1;
+            
+            document.querySelector('.btn-primary').addEventListener('click', () => {
+                if (currentStep < steps.length - 1) {
+                    steps[currentStep].classList.remove('active');
+                    steps[currentStep].classList.add('completed');
+                    steps[currentStep].querySelector('.step-number').textContent = '✓';
+                    
+                    currentStep++;
+                    steps[currentStep].classList.add('active');
+                    
+                    // Update form content based on step
+                    updateFormContent(currentStep);
+                }
+            });
+            
+            document.querySelector('.btn-secondary').addEventListener('click', () => {
+                if (currentStep > 0) {
+                    steps[currentStep].classList.remove('active');
+                    currentStep--;
+                    steps[currentStep].classList.remove('completed');
+                    steps[currentStep].classList.add('active');
+                    steps[currentStep].querySelector('.step-number').textContent = currentStep + 1;
+                    
+                    updateFormContent(currentStep);
+                }
+            });
+            
+            function updateFormContent(step) {
+                const formTitle = document.querySelector('.form-title');
+                const formDesc = document.querySelector('.form-description');
+                
+                const stepContent = {
+                    2: {
+                        title: 'Design Your Approach',
+                        desc: 'Let\'s define how agents will execute each task in your workflow.'
+                    },
+                    3: {
+                        title: 'Define Validation Criteria',
+                        desc: 'Specify how we\'ll verify each task completes successfully.'
+                    },
+                    4: {
+                        title: 'Review & Create',
+                        desc: 'Review your complete workflow before creating work items.'
+                    }
+                };
+                
+                if (stepContent[step]) {
+                    formTitle.textContent = stepContent[step].title;
+                    formDesc.textContent = stepContent[step].desc;
+                }
+            }
+            
+            // Auto-save progress
+            let autoSaveTimer;
+            document.querySelectorAll('input, textarea').forEach(input => {
+                input.addEventListener('input', () => {
+                    clearTimeout(autoSaveTimer);
+                    autoSaveTimer = setTimeout(() => {
+                        console.log('Auto-saving workflow progress...');
+                        // Show save indicator
+                        const indicator = document.createElement('div');
+                        indicator.textContent = '✓ Saved';
+                        indicator.style.cssText = `
+                            position: fixed;
+                            bottom: 20px;
+                            right: 20px;
+                            background: var(--color-success-background);
+                            color: var(--color-success-text);
+                            padding: var(--spacing-small10) var(--spacing);
+                            border-radius: var(--radius-interactive);
+                            animation: fadeInOut 2s;
+                        `;
+                        document.body.appendChild(indicator);
+                        setTimeout(() => indicator.remove(), 2000);
+                    }, 1000);
+                });
+            });
+        });
+        
+        // Add animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeInOut {
+                0% { opacity: 0; transform: translateY(10px); }
+                20% { opacity: 1; transform: translateY(0); }
+                80% { opacity: 1; transform: translateY(0); }
+                100% { opacity: 0; transform: translateY(-10px); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

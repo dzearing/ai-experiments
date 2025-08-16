@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work Item Creation Flow - Dependency Graph View</title>
+    
+    <!-- UI Kit styles -->
+    <link rel="stylesheet" href="/assets/styles.css">
+    
+    <!-- Set base path for themes -->
+    <script>
+        window.__uiKitBasePath = '/assets/';
+    </script>
+    
+    <!-- Load theme engine (auto-initializes) -->
+    <script type="module" src="/assets/theme.js"></script>
+    
+    <!-- Theme switcher UI -->
+    <script type="module" src="/assets/theme-switcher.js"></script>
+    
+    <style>
+        /* Container Layout */
+        .workflow-container {
+            min-height: 100vh;
+            background: var(--color-body-background);
+            color: var(--color-body-text);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Header */
+        .workflow-header {
+            background: var(--color-panel-background);
+            border-bottom: 1px solid var(--color-panel-border);
+            padding: var(--spacing) var(--spacing-large10);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-large10);
+        }
+        
+        .workflow-title {
+            flex: 1;
+        }
+        
+        .workflow-title h1 {
+            font-size: var(--font-size-h3);
+            font-weight: var(--font-weight-semibold);
+            margin: 0 0 var(--spacing-small20) 0;
+        }
+        
+        .workflow-title p {
+            font-size: var(--font-size-small10);
+            color: var(--color-body-textSoft20);
+            margin: 0;
+        }
+        
+        .view-switcher {
+            display: flex;
+            gap: var(--spacing-small20);
+            background: var(--color-body-background);
+            padding: var(--spacing-small20);
+            border-radius: var(--radius-interactive);
+            border: 1px solid var(--color-body-border);
+        }
+        
+        .view-button {
+            padding: var(--spacing-small10) var(--spacing);
+            background: transparent;
+            color: var(--color-body-textSoft10);
+            border: none;
+            border-radius: var(--radius-small);
+            cursor: pointer;
+            font-size: var(--font-size-small10);
+            font-weight: var(--font-weight-medium);
+            transition: all var(--duration) var(--easing-default);
+        }
+        
+        .view-button.active {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+        }
+        
+        .view-button:hover:not(.active) {
+            background: var(--color-neutral-background);
+            color: var(--color-neutral-text);
+        }
+        
+        /* Main Content Area */
+        .workflow-content {
+            flex: 1;
+            display: flex;
+            gap: var(--spacing);
+            padding: var(--spacing);
+            overflow: hidden;
+        }
+        
+        /* Left Panel - Task Builder */
+        .task-builder {
+            width: 360px;
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-container);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .panel-header {
+            padding: var(--spacing);
+            border-bottom: 1px solid var(--color-panel-border);
+        }
+        
+        .panel-title {
+            font-size: var(--font-size-normal);
+            font-weight: var(--font-weight-semibold);
+            margin: 0;
+        }
+        
+        .task-form {
+            padding: var(--spacing);
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        .form-section {
+            margin-bottom: var(--spacing-large10);
+        }
+        
+        .form-label {
+            display: block;
+            font-size: var(--font-size-small10);
+            font-weight: var(--font-weight-medium);
+            color: var(--color-body-text);
+            margin-bottom: var(--spacing-small20);
+        }
+        
+        .form-input, .form-textarea {
+            width: 100%;
+            padding: var(--spacing-small10) var(--spacing-small10);
+            background: var(--color-input-background);
+            border: 1px solid var(--color-input-border);
+            border-radius: var(--radius-interactive);
+            color: var(--color-input-text);
+            font-size: var(--font-size-small10);
+            transition: all var(--duration) var(--easing-default);
+        }
+        
+        .form-textarea {
+            min-height: 80px;
+            resize: vertical;
+            font-family: inherit;
+        }
+        
+        .form-input:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--color-input-border-focus);
+            background: var(--color-input-background-focus);
+        }
+        
+        /* Center - Graph Visualization */
+        .graph-canvas {
+            flex: 1;
+            background: var(--gradient-body-primary), var(--color-body-background);
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius-container);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .graph-svg {
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* Task Nodes */
+        .task-node {
+            cursor: pointer;
+            transition: all var(--duration) var(--easing-default);
+        }
+        
+        .task-node-bg {
+            fill: var(--color-panel-background);
+            stroke: var(--color-panel-border);
+            stroke-width: 2;
+            rx: 8;
+        }
+        
+        .task-node.selected .task-node-bg {
+            stroke: var(--color-primary-border);
+            stroke-width: 3;
+            filter: drop-shadow(0 0 8px var(--color-primary-background));
+        }
+        
+        .task-node.parallel .task-node-bg {
+            stroke-dasharray: 5,5;
+        }
+        
+        .task-node.complete .task-node-bg {
+            fill: var(--color-successSoft-background);
+            stroke: var(--color-successSoft-border);
+        }
+        
+        .task-node-text {
+            fill: var(--color-body-text);
+            font-size: var(--font-size-small10);
+            font-weight: var(--font-weight-medium);
+        }
+        
+        .task-node-subtext {
+            fill: var(--color-body-textSoft20);
+            font-size: var(--font-size-smallest);
+        }
+        
+        /* Dependency Lines */
+        .dependency-line {
+            stroke: var(--color-body-border);
+            stroke-width: 2;
+            fill: none;
+            marker-end: url(#arrowhead);
+        }
+        
+        .dependency-line.critical-path {
+            stroke: var(--color-danger-border);
+            stroke-width: 3;
+        }
+        
+        /* Right Panel - Task Details */
+        .task-details {
+            width: 400px;
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-container);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .details-content {
+            padding: var(--spacing);
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        .detail-section {
+            margin-bottom: var(--spacing-large10);
+            padding-bottom: var(--spacing-large10);
+            border-bottom: 1px solid var(--color-panel-border);
+        }
+        
+        .detail-section:last-child {
+            border-bottom: none;
+        }
+        
+        .detail-label {
+            font-size: var(--font-size-smallest);
+            color: var(--color-body-textSoft20);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: var(--spacing-small20);
+        }
+        
+        .detail-value {
+            font-size: var(--font-size-normal);
+            color: var(--color-body-text);
+            line-height: var(--line-height-normal);
+        }
+        
+        /* Dependency Pills */
+        .dependency-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-small20);
+        }
+        
+        .dependency-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-small20);
+            padding: var(--spacing-small20) var(--spacing-small10);
+            background: var(--color-neutral-background);
+            color: var(--color-neutral-text);
+            border-radius: var(--radius-round);
+            font-size: var(--font-size-smallest);
+            font-weight: var(--font-weight-medium);
+        }
+        
+        .dependency-pill.blocker {
+            background: var(--color-dangerSoft-background);
+            color: var(--color-dangerSoft-text);
+            border: 1px solid var(--color-dangerSoft-border);
+        }
+        
+        /* Building Blocks Section */
+        .building-blocks {
+            display: grid;
+            gap: var(--spacing-small10);
+        }
+        
+        .building-block {
+            padding: var(--spacing-small10);
+            background: var(--color-body-background);
+            border: 1px solid var(--color-body-border);
+            border-radius: var(--radius-small);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small10);
+        }
+        
+        .block-icon {
+            width: 20px;
+            height: 20px;
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+            border-radius: var(--radius-small);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size-smallest);
+        }
+        
+        .block-name {
+            flex: 1;
+            font-size: var(--font-size-small10);
+        }
+        
+        .block-status {
+            font-size: var(--font-size-smallest);
+            color: var(--color-body-textSoft20);
+        }
+        
+        /* Execution Controls */
+        .execution-controls {
+            position: absolute;
+            bottom: var(--spacing);
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--color-panel-background);
+            border: 1px solid var(--color-panel-border);
+            border-radius: var(--radius-round);
+            padding: var(--spacing-small10);
+            display: flex;
+            gap: var(--spacing-small10);
+            box-shadow: var(--shadow-overlay);
+        }
+        
+        .control-button {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-round);
+            border: none;
+            background: var(--color-neutral-background);
+            color: var(--color-neutral-text);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--duration) var(--easing-default);
+        }
+        
+        .control-button:hover {
+            background: var(--color-neutral-background-hover);
+            transform: scale(1.1);
+        }
+        
+        .control-button.play {
+            background: var(--color-primary-background);
+            color: var(--color-primary-text);
+        }
+        
+        /* Responsive */
+        @media (max-width: 1400px) {
+            .task-details {
+                width: 320px;
+            }
+        }
+        
+        @media (max-width: 1200px) {
+            .task-builder {
+                width: 280px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .workflow-content {
+                flex-direction: column;
+            }
+            
+            .task-builder,
+            .task-details {
+                width: 100%;
+                max-height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="workflow-container">
+        <!-- Header with View Switcher -->
+        <header class="workflow-header">
+            <div class="workflow-title">
+                <h1>Work Item Creation Flow</h1>
+                <p>Define agent-executed tasks with dependencies and validation</p>
+            </div>
+            
+            <div class="view-switcher" role="tablist">
+                <button class="view-button active" role="tab" aria-selected="true">Dependency Graph</button>
+                <button class="view-button" role="tab" aria-selected="false">Timeline View</button>
+                <button class="view-button" role="tab" aria-selected="false">Validation Matrix</button>
+                <button class="view-button" role="tab" aria-selected="false">Execution Flow</button>
+            </div>
+        </header>
+        
+        <div class="workflow-content">
+            <!-- Left Panel - Task Builder -->
+            <aside class="task-builder">
+                <div class="panel-header">
+                    <h2 class="panel-title">Add New Task</h2>
+                </div>
+                
+                <form class="task-form">
+                    <div class="form-section">
+                        <label class="form-label" for="task-name">Task Name</label>
+                        <input type="text" id="task-name" class="form-input" placeholder="e.g., Initialize Database Schema">
+                    </div>
+                    
+                    <div class="form-section">
+                        <label class="form-label" for="task-goal">Goal</label>
+                        <textarea id="task-goal" class="form-textarea" placeholder="What should this task achieve?"></textarea>
+                    </div>
+                    
+                    <div class="form-section">
+                        <label class="form-label" for="task-approach">Approach</label>
+                        <textarea id="task-approach" class="form-textarea" placeholder="How will the agent execute this task?"></textarea>
+                    </div>
+                    
+                    <div class="form-section">
+                        <label class="form-label" for="task-validation">Validation Criteria</label>
+                        <textarea id="task-validation" class="form-textarea" placeholder="How do we verify success?"></textarea>
+                    </div>
+                    
+                    <div class="form-section">
+                        <label class="form-label">Dependencies</label>
+                        <div class="dependency-list">
+                            <span class="dependency-pill">
+                                Setup Environment
+                                <button aria-label="Remove dependency">×</button>
+                            </span>
+                            <button class="dependency-pill" style="background: transparent; border: 1px dashed var(--color-body-border);">
+                                + Add Dependency
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <label class="form-label">Building Blocks</label>
+                        <div class="building-blocks">
+                            <div class="building-block">
+                                <div class="block-icon">▣</div>
+                                <span class="block-name">Database Connection</span>
+                                <span class="block-status">Available</span>
+                            </div>
+                            <div class="building-block">
+                                <div class="block-icon">◈</div>
+                                <span class="block-name">Schema Validator</span>
+                                <span class="block-status">Build Required</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="button" class="view-button" style="width: 100%; padding: var(--spacing-small10); background: var(--color-primary-background); color: var(--color-primary-text);">
+                        Add Task to Workflow
+                    </button>
+                </form>
+            </aside>
+            
+            <!-- Center - Graph Visualization -->
+            <main class="graph-canvas">
+                <svg class="graph-svg" viewBox="0 0 800 600">
+                    <!-- Arrow marker definition -->
+                    <defs>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                            <polygon points="0 0, 10 3, 0 6" fill="var(--color-body-border)" />
+                        </marker>
+                    </defs>
+                    
+                    <!-- Dependency Lines -->
+                    <g class="dependency-lines">
+                        <path class="dependency-line critical-path" d="M 200 100 Q 250 150 300 200" />
+                        <path class="dependency-line" d="M 200 100 Q 350 100 500 100" />
+                        <path class="dependency-line" d="M 520 120 Q 520 160 400 220" />
+                        <path class="dependency-line" d="M 320 220 Q 360 260 400 300" />
+                    </g>
+                    
+                    <!-- Task Nodes -->
+                    <g class="task-nodes">
+                        <!-- Entry Point -->
+                        <g class="task-node selected" transform="translate(100, 80)">
+                            <rect class="task-node-bg" width="160" height="60" />
+                            <text class="task-node-text" x="80" y="25" text-anchor="middle">Setup Environment</text>
+                            <text class="task-node-subtext" x="80" y="45" text-anchor="middle">Entry Point</text>
+                        </g>
+                        
+                        <!-- Parallel Tasks -->
+                        <g class="task-node parallel" transform="translate(420, 80)">
+                            <rect class="task-node-bg" width="160" height="60" />
+                            <text class="task-node-text" x="80" y="25" text-anchor="middle">Load Configuration</text>
+                            <text class="task-node-subtext" x="80" y="45" text-anchor="middle">Can Run Parallel</text>
+                        </g>
+                        
+                        <g class="task-node parallel" transform="translate(220, 180)">
+                            <rect class="task-node-bg" width="160" height="60" />
+                            <text class="task-node-text" x="80" y="25" text-anchor="middle">Initialize Database</text>
+                            <text class="task-node-subtext" x="80" y="45" text-anchor="middle">Can Run Parallel</text>
+                        </g>
+                        
+                        <!-- Dependent Task -->
+                        <g class="task-node" transform="translate(320, 280)">
+                            <rect class="task-node-bg" width="160" height="60" />
+                            <text class="task-node-text" x="80" y="25" text-anchor="middle">Run Migrations</text>
+                            <text class="task-node-subtext" x="80" y="45" text-anchor="middle">Requires: DB Init</text>
+                        </g>
+                        
+                        <!-- Complete Task -->
+                        <g class="task-node complete" transform="translate(320, 380)">
+                            <rect class="task-node-bg" width="160" height="60" />
+                            <text class="task-node-text" x="80" y="25" text-anchor="middle">Validate Schema</text>
+                            <text class="task-node-subtext" x="80" y="45" text-anchor="middle">✓ Complete</text>
+                        </g>
+                    </g>
+                </svg>
+                
+                <!-- Execution Controls -->
+                <div class="execution-controls">
+                    <button class="control-button" aria-label="Reset">↺</button>
+                    <button class="control-button play" aria-label="Play">▶</button>
+                    <button class="control-button" aria-label="Step">⏭</button>
+                    <button class="control-button" aria-label="Validate">✓</button>
+                </div>
+            </main>
+            
+            <!-- Right Panel - Task Details -->
+            <aside class="task-details">
+                <div class="panel-header">
+                    <h2 class="panel-title">Task: Setup Environment</h2>
+                </div>
+                
+                <div class="details-content">
+                    <div class="detail-section">
+                        <div class="detail-label">Goal</div>
+                        <div class="detail-value">
+                            Prepare the execution environment with all necessary dependencies, configurations, and permissions required for subsequent tasks.
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <div class="detail-label">Approach</div>
+                        <div class="detail-value">
+                            1. Verify system requirements<br>
+                            2. Install required packages<br>
+                            3. Set environment variables<br>
+                            4. Create working directories<br>
+                            5. Initialize logging system
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <div class="detail-label">Validation</div>
+                        <div class="detail-value">
+                            ✓ All dependencies installed<br>
+                            ✓ Environment variables set<br>
+                            ✓ Write permissions verified<br>
+                            ✓ Network connectivity confirmed<br>
+                            ✓ Logging system operational
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <div class="detail-label">Inputs</div>
+                        <div class="detail-value">
+                            • config.yaml<br>
+                            • requirements.txt<br>
+                            • .env.template
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <div class="detail-label">Outputs</div>
+                        <div class="detail-value">
+                            • Environment ready signal<br>
+                            • System capabilities report<br>
+                            • Dependency version manifest
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <div class="detail-label">Dependencies</div>
+                        <div class="dependency-list">
+                            <span class="dependency-pill">None (Entry Point)</span>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <div class="detail-label">Enables</div>
+                        <div class="dependency-list">
+                            <span class="dependency-pill">Load Configuration</span>
+                            <span class="dependency-pill">Initialize Database</span>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <div class="detail-label">Building Blocks Used</div>
+                        <div class="building-blocks">
+                            <div class="building-block">
+                                <div class="block-icon">◆</div>
+                                <span class="block-name">Package Manager</span>
+                                <span class="block-status">System</span>
+                            </div>
+                            <div class="building-block">
+                                <div class="block-icon">◉</div>
+                                <span class="block-name">Environment Validator</span>
+                                <span class="block-status">Available</span>
+                            </div>
+                            <div class="building-block">
+                                <div class="block-icon">▣</div>
+                                <span class="block-name">Logger Factory</span>
+                                <span class="block-status">Available</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+    
+    <script>
+        // Interactive behavior
+        document.addEventListener('DOMContentLoaded', () => {
+            // View switcher
+            const viewButtons = document.querySelectorAll('.view-button[role="tab"]');
+            viewButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    viewButtons.forEach(b => {
+                        b.classList.remove('active');
+                        b.setAttribute('aria-selected', 'false');
+                    });
+                    button.classList.add('active');
+                    button.setAttribute('aria-selected', 'true');
+                });
+            });
+            
+            // Task node selection
+            const taskNodes = document.querySelectorAll('.task-node');
+            taskNodes.forEach(node => {
+                node.addEventListener('click', () => {
+                    taskNodes.forEach(n => n.classList.remove('selected'));
+                    node.classList.add('selected');
+                    
+                    // Update details panel
+                    const taskName = node.querySelector('.task-node-text').textContent;
+                    document.querySelector('.task-details .panel-title').textContent = `Task: ${taskName}`;
+                });
+            });
+            
+            // Simulate execution
+            document.querySelector('.control-button.play').addEventListener('click', () => {
+                let index = 0;
+                const nodes = document.querySelectorAll('.task-node:not(.complete)');
+                
+                const interval = setInterval(() => {
+                    if (index < nodes.length) {
+                        nodes[index].classList.add('complete');
+                        index++;
+                    } else {
+                        clearInterval(interval);
+                    }
+                }, 1000);
+            });
+            
+            // Reset button
+            document.querySelector('.control-button[aria-label="Reset"]').addEventListener('click', () => {
+                document.querySelectorAll('.task-node').forEach(node => {
+                    node.classList.remove('complete');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
