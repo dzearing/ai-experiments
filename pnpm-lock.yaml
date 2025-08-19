@@ -34,6 +34,43 @@ importers:
         specifier: ^0.38.4
         version: 0.38.4
 
+  apps/ui-kit-mocks:
+    dependencies:
+      '@claude-flow/ui-kit':
+        specifier: workspace:*
+        version: link:../../packages/ui-kit
+      '@claude-flow/ui-kit-icons':
+        specifier: workspace:*
+        version: link:../../packages/ui-kit-icons
+      '@claude-flow/ui-kit-react':
+        specifier: workspace:*
+        version: link:../../packages/ui-kit-react
+      classnames:
+        specifier: ^2.5.1
+        version: 2.5.1
+      react:
+        specifier: ^19.1.0
+        version: 19.1.0
+      react-dom:
+        specifier: ^19.1.0
+        version: 19.1.0(react@19.1.0)
+      react-router-dom:
+        specifier: ^7.6.3
+        version: 7.6.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+    devDependencies:
+      '@claude-flow/repo-scripts':
+        specifier: workspace:*
+        version: link:../../tools/repo-scripts
+      '@claude-flow/tsconfig':
+        specifier: workspace:*
+        version: link:../../tools/tsconfig
+      '@types/react':
+        specifier: ^19.1.8
+        version: 19.1.8
+      '@types/react-dom':
+        specifier: ^19.1.6
+        version: 19.1.6(@types/react@19.1.8)
+
   apps/v1/client:
     dependencies:
       '@mdxeditor/editor':

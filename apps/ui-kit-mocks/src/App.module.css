@@ -1,0 +1,178 @@
+/* UI Kit styles are imported in index.global.css */
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--spacing);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing);
+}
+
+.header h1 {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-body-text);
+  margin: 0;
+}
+
+.stats {
+  display: flex;
+  gap: var(--spacing-large10);
+  margin-bottom: var(--spacing);
+  padding: var(--spacing-small20) var(--spacing);
+  background: var(--color-panel-background);
+  border: var(--border-width) solid var(--color-panel-border);
+  border-radius: var(--radius);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.statValue {
+  font-size: var(--font-size-h4);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-body-link);
+}
+
+.statLabel {
+  font-size: var(--font-size-smallest);
+  color: var(--color-body-textSoft10);
+}
+
+.category {
+  background: var(--color-panel-background);
+  border: var(--border-width) solid var(--color-panel-border);
+  border-radius: var(--radius);
+  margin-bottom: var(--spacing-small20);
+  overflow: hidden;
+}
+
+.categoryHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-small20) var(--spacing);
+  cursor: pointer;
+  user-select: none;
+  transition: background var(--duration-fast) var(--easing-standard);
+}
+
+.categoryHeader:hover {
+  background: var(--color-panel-background-hover);
+}
+
+.categoryTitle {
+  font-size: var(--font-size-large10);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-panel-text);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small20);
+}
+
+.categoryChevron {
+  width: 16px;
+  height: 16px;
+  transition: transform var(--duration-fast) var(--easing-standard);
+}
+
+.category.collapsed .categoryChevron {
+  transform: rotate(-90deg);
+}
+
+.categoryCount {
+  font-size: var(--font-size-small10);
+  color: var(--color-body-textSoft20);
+  font-weight: var(--font-weight-normal);
+}
+
+.categoryContent {
+  padding: 0 var(--spacing) var(--spacing);
+  max-height: 2000px;
+  overflow: hidden;
+  transition: max-height var(--duration-normal) var(--easing-standard), 
+              padding var(--duration-normal) var(--easing-standard);
+}
+
+.category.collapsed .categoryContent {
+  max-height: 0;
+  padding: 0 var(--spacing);
+}
+
+.componentList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-small20);
+}
+
+.componentItem {
+  background: var(--color-panelRaised-background);
+  border: var(--border-width) solid var(--color-panelRaised-border);
+  border-radius: var(--radius-small);
+  padding: var(--spacing-small20) var(--spacing-small10);
+  transition: background var(--duration-fast) var(--easing-standard);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small10);
+}
+
+.componentItem:hover {
+  background: var(--color-panelRaised-background-hover);
+}
+
+.componentName {
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size);
+  color: var(--color-body-text);
+  flex-shrink: 0;
+  min-width: 180px;
+}
+
+.componentLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-small20);
+}
+
+.linkBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-large20);
+  text-decoration: none;
+  font-size: var(--font-size-smallest);
+  font-weight: var(--font-weight-medium);
+  transition: filter var(--duration-fast) var(--easing-standard);
+  height: 20px;
+  line-height: 1;
+}
+
+.linkBadge:hover {
+  filter: brightness(1.05);
+}
+
+.linkBadge.plan {
+  background: var(--color-infoSoft-background);
+  color: var(--color-infoSoft-text);
+}
+
+.linkBadge.mockup {
+  background: var(--color-successSoft-background);
+  color: var(--color-successSoft-text);
+}
+
+.emptyState {
+  padding: var(--spacing);
+  text-align: center;
+  color: var(--color-body-textSoft20);
+  font-style: italic;
+}

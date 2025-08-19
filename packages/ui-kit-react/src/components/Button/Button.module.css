@@ -236,6 +236,25 @@
   padding-right: var(--spacing-large20);
 }
 
+.round {
+  border-radius: 50%;
+  aspect-ratio: 1;
+  padding: var(--spacing-small10);
+}
+
+/* Round shape size adjustments - symmetrical padding */
+.round.small {
+  padding: var(--spacing-small20);
+}
+
+.round.medium {
+  padding: var(--spacing-small10);
+}
+
+.round.large {
+  padding: var(--spacing);
+}
+
 
 /* Full width */
 .fullWidth {

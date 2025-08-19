@@ -46,7 +46,10 @@ ${await readFile(resolve(projectRoot, 'src/styles/variables/layout.css'), 'utf-8
 ${await readFile(resolve(projectRoot, 'src/styles/variables/colors.css'), 'utf-8')}
 
 /* Base Styles */
-${await readFile(resolve(projectRoot, 'src/styles.css'), 'utf-8')}
+${(await readFile(resolve(projectRoot, 'src/styles.css'), 'utf-8'))
+  .split('\n')
+  .filter(line => !line.startsWith('@import'))
+  .join('\n')}
 `;
 
     // Process with PostCSS (mainly for nesting)

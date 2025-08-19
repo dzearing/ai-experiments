@@ -1,0 +1,198 @@
+.container {
+  width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--color-panel-background);
+  border: 1px solid var(--color-panel-border);
+  border-radius: var(--radius-container);
+  position: relative;
+}
+
+.content {
+  position: relative;
+  width: 100%;
+}
+
+.virtualList {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+}
+
+.node {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  cursor: pointer;
+  user-select: none;
+  color: var(--color-panel-text);
+  transition: background-color var(--duration-fast20) var(--easing-default);
+  border: 1px solid transparent;
+  outline: none;
+  position: relative;
+  background: transparent;
+}
+
+/* Default hover state - neutral surface */
+.node:hover:not(.selected):not(.focused) {
+  background: var(--color-neutral-background);
+  color: var(--color-neutral-text);
+}
+
+/* Focus visible outline for keyboard navigation */
+.node:focus-visible {
+  outline: 2px solid var(--color-primary-border);
+  outline-offset: -2px;
+  border-radius: var(--radius-interactive);
+}
+
+/* Focused but not selected - use neutral with focus ring */
+.node.focused:not(.selected) {
+  background: var(--color-neutral-background);
+  color: var(--color-neutral-text);
+  outline: 2px solid var(--color-primary-border);
+  outline-offset: -2px;
+  border-radius: var(--radius-interactive);
+}
+
+/* Focused hover - slightly darker neutral */
+.node.focused:not(.selected):hover {
+  background: var(--color-neutral-background-hover);
+  color: var(--color-neutral-text);
+}
+
+/* Selected but not focused (tree not focused) - use neutral */
+.node.selected:not(.focused) {
+  background: var(--color-neutral-background);
+  color: var(--color-neutral-text);
+}
+
+.node.selected:not(.focused):hover {
+  background: var(--color-neutral-background-hover);
+  color: var(--color-neutral-text);
+}
+
+/* Selected AND focused - use primary surface */
+.node.selected.focused {
+  background: var(--color-primary-background);
+  color: var(--color-primary-text);
+  outline: 2px solid var(--color-primary-border);
+  outline-offset: -2px;
+  border-radius: var(--radius-interactive);
+}
+
+.node.selected.focused:hover {
+  background: var(--color-primary-background-hover);
+  color: var(--color-primary-text);
+}
+
+/* Icon colors for selected items */
+.node.selected:not(.focused) .chevron,
+.node.selected:not(.focused) .icon {
+  color: var(--color-neutral-icon);
+}
+
+.node.selected.focused .chevron,
+.node.selected.focused .icon {
+  color: var(--color-primary-icon);
+}
+
+.node.focused:not(.selected) .chevron,
+.node.focused:not(.selected) .icon {
+  color: var(--color-neutral-icon);
+}
+
+.chevron {
+  display: inline-block !important;
+  width: 16px !important;
+  height: 16px !important;
+  margin-right: var(--spacing-small20);
+  flex-shrink: 0;
+  transition: transform var(--duration-fast20) var(--easing-default);
+  color: var(--color-panel-iconSoft20);
+  cursor: pointer;
+}
+
+.chevron:hover {
+  color: var(--color-panel-icon);
+}
+
+.chevron.expanded {
+  transform: rotate(90deg);
+}
+
+.icon {
+  display: inline-block !important;
+  width: 16px !important;
+  height: 16px !important;
+  margin-right: var(--spacing-small10);
+  flex-shrink: 0;
+  color: var(--color-panel-icon);
+}
+
+.label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-size);
+  line-height: var(--line-height);
+}
+
+.container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.container::-webkit-scrollbar-thumb {
+  background: var(--color-panel-borderSoft10);
+  border-radius: var(--radius-interactive);
+}
+
+.container::-webkit-scrollbar-thumb:hover {
+  background: var(--color-panel-border);
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--color-panel-textSoft20);
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--color-panel-textSoft20);
+  font-size: var(--font-size-small10);
+}
+
+@media (max-width: 768px) {
+  .node {
+    height: 36px;
+  }
+  
+  .chevron,
+  .icon {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .label {
+    font-size: var(--font-size-small10);
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    box-shadow: var(--shadow-card);
+  }
+}

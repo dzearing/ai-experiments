@@ -9,7 +9,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   /** Button size */
   size?: 'small' | 'medium' | 'large';
   /** Button shape */
-  shape?: 'square' | 'pill';
+  shape?: 'square' | 'pill' | 'round';
   /** Full width button */
   fullWidth?: boolean;
   /** Loading state */
