@@ -107,24 +107,11 @@ export const IconBrowser: Story = {
     const filteredCategories = useMemo(() => {
       if (!search) return categories;
       
-      // Parse search terms - treat quoted strings as single terms
-      const searchTerms: string[] = [];
-      const quotedPattern = /"([^"]+)"/g;
-      let remainingSearch = search;
-      let match;
-      
-      // Extract quoted terms first
-      while ((match = quotedPattern.exec(search)) !== null) {
-        searchTerms.push(match[1].toLowerCase());
-        remainingSearch = remainingSearch.replace(match[0], '');
-      }
-      
-      // Split remaining search by spaces and add non-empty terms
-      remainingSearch.split(/\s+/).forEach(term => {
-        if (term.trim()) {
-          searchTerms.push(term.toLowerCase());
-        }
-      });
+      // Split by comma first, then trim each term
+      const searchTerms = search
+        .split(',')
+        .map(term => term.trim().toLowerCase())
+        .filter(term => term.length > 0);
       
       if (searchTerms.length === 0) return categories;
       
@@ -173,7 +160,7 @@ export const IconBrowser: Story = {
                   </div>
                   <input
                     type="text"
-                    placeholder="Search icons..."
+                    placeholder="Search icons... (e.g. Close, Add)"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className={styles.searchInput}

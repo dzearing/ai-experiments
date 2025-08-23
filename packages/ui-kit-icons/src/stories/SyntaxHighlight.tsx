@@ -54,8 +54,8 @@ export const SyntaxHighlight: React.FC<SyntaxHighlightProps> = ({ code, language
           .replace(/import/g, '<span class="keyword">import</span>')
           .replace(/from/g, '<span class="keyword">from</span>')
           .replace(/(['"].*?['"])/g, '<span class="string">$1</span>')
-          .replace(/\{([^}]+)\}/g, (match, content) => {
-            const items = content.split(',').map(item => 
+          .replace(/\{([^}]+)\}/g, (_match, content: string) => {
+            const items = content.split(',').map((item: string) => 
               `<span class="variable">${item.trim()}</span>`
             ).join(', ');
             return `<span class="punctuation">{</span> ${items} <span class="punctuation">}</span>`;
@@ -84,7 +84,7 @@ export const SyntaxHighlight: React.FC<SyntaxHighlightProps> = ({ code, language
       // JSX tags
       if (line.includes('<') && line.includes('>')) {
         const highlighted = line
-          .replace(/<(\/?)([\w]+)([^>]*)>/g, (match, slash, tag, attrs) => {
+          .replace(/<(\/?)([\w]+)([^>]*)>/g, (_match, slash: string, tag: string, attrs: string) => {
             let result = `<span class="tag">&lt;${slash}${tag}</span>`;
             
             if (attrs) {

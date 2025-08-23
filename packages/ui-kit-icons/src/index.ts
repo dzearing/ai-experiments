@@ -1,6 +1,7 @@
 // Auto-generated icon exports
 // Generated from SVG files in src/svgs/
 // To update icons, modify the SVG files and run: pnpm generate-icons
+export { AddCircleIcon } from './components/AddCircleIcon';
 export { AddIcon } from './components/AddIcon';
 export { ArrowDownIcon } from './components/ArrowDownIcon';
 export { ArrowLeftIcon } from './components/ArrowLeftIcon';
@@ -32,6 +33,7 @@ export { ErrorCircleIcon } from './components/ErrorCircleIcon';
 export { ErrorIcon } from './components/ErrorIcon';
 export { ExpandIcon } from './components/ExpandIcon';
 export { ExportIcon } from './components/ExportIcon';
+export { FastForwardIcon } from './components/FastForwardIcon';
 export { FileIcon } from './components/FileIcon';
 export { FilterIcon } from './components/FilterIcon';
 export { FolderIcon } from './components/FolderIcon';
@@ -51,21 +53,29 @@ export { LinkIcon } from './components/LinkIcon';
 export { ListBulletIcon } from './components/ListBulletIcon';
 export { ListOrderedIcon } from './components/ListOrderedIcon';
 export { ListTaskIcon } from './components/ListTaskIcon';
-export { LoadingIcon } from './components/LoadingIcon';
+export { MaximizeIcon } from './components/MaximizeIcon';
 export { MenuIcon } from './components/MenuIcon';
-export { NotificationIcon } from './components/NotificationIcon';
+export { MinimizeIcon } from './components/MinimizeIcon';
+export { NextTrackIcon } from './components/NextTrackIcon';
 export { OutdentIcon } from './components/OutdentIcon';
 export { PasteIcon } from './components/PasteIcon';
+export { PauseIcon } from './components/PauseIcon';
+export { PlayIcon } from './components/PlayIcon';
+export { PopInIcon } from './components/PopInIcon';
+export { PopOutIcon } from './components/PopOutIcon';
+export { PreviousTrackIcon } from './components/PreviousTrackIcon';
 export { QuoteIcon } from './components/QuoteIcon';
 export { RedoIcon } from './components/RedoIcon';
 export { RefreshIcon } from './components/RefreshIcon';
 export { RemoveIcon } from './components/RemoveIcon';
+export { RestoreIcon } from './components/RestoreIcon';
+export { RewindIcon } from './components/RewindIcon';
 export { SaveIcon } from './components/SaveIcon';
 export { SearchIcon } from './components/SearchIcon';
 export { SettingsIcon } from './components/SettingsIcon';
 export { ShareIcon } from './components/ShareIcon';
-export { SpinnerIcon } from './components/SpinnerIcon';
 export { StarIcon } from './components/StarIcon';
+export { StopIcon } from './components/StopIcon';
 export { StrikethroughIcon } from './components/StrikethroughIcon';
 export { SyncIcon } from './components/SyncIcon';
 export { TableIcon } from './components/TableIcon';
@@ -77,7 +87,8 @@ export { UsersIcon } from './components/UsersIcon';
 export { WarningIcon } from './components/WarningIcon';
 export { WarningTriangleIcon } from './components/WarningTriangleIcon';
 export { XCircleIcon } from './components/XCircleIcon';
-export { XIcon } from './components/XIcon';
+export { ZoomInIcon } from './components/ZoomInIcon';
+export { ZoomOutIcon } from './components/ZoomOutIcon';
 
 // Type exports
 export type { IconProps } from './types';

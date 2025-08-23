@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 import { Button } from '@claude-flow/ui-kit-react';
-import { CloseIcon, AddIcon } from '@claude-flow/ui-kit-icons';
+import { CloseIcon } from '@claude-flow/ui-kit-icons';
 import styles from './ViewTemplate.module.css';
 
 /**
@@ -147,11 +147,10 @@ export const ViewTemplate: React.FC<ViewTemplateProps> = ({
           {canAddLeft && onAddLeftPanel && (
             <Button
               variant="primary"
-              shape="round"
               onClick={onAddLeftPanel}
               aria-label="Add left panel"
             >
-              <AddIcon />
+              Add left panel
             </Button>
           )}
           
@@ -164,11 +163,10 @@ export const ViewTemplate: React.FC<ViewTemplateProps> = ({
           {canAddRight && onAddRightPanel && (
             <Button
               variant="primary"
-              shape="round"
               onClick={onAddRightPanel}
               aria-label="Add right panel"
             >
-              <AddIcon />
+              Add right panel
             </Button>
           )}
         </footer>
