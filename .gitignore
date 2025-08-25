@@ -15,6 +15,7 @@ dist-ssr
 *.local
 lib
 lib-commonjs
+public
 
 .playwright-mcp
 
@@ -44,3 +45,4 @@ temp/
 
 # Storybook build output
 storybook-static
+

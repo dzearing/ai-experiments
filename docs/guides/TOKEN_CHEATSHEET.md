@@ -14,7 +14,8 @@ Quick reference for design tokens in Claude Flow. For complete documentation, se
 - `danger` surface = Destructive buttons/actions
 - `success` surface = Success buttons/states
 - `warning` surface = Warning buttons/actions (caution state)
-- `*Soft` surfaces = Banner/alert backgrounds (e.g., `successSoft`, `dangerSoft`, `warningSoft`)
+- `info` surface = Informational buttons/actions
+- `*Soft` surfaces = Banner/alert backgrounds (e.g., `successSoft`, `dangerSoft`, `warningSoft`, `infoSoft`)
 
 Note: the `surface` component defines the background color group - the `concept` defines things within that group which will work together in that `state`. We can guarantee that the body text will work on the body background. However you must NOT mix and match surfaces - you should not use primary background with body text. Mixing different values from different surfaces risks creating contrast issues.
 
@@ -64,6 +65,10 @@ Note: the `surface` component defines the background color group - the `concept`
 --color-warning-text               /* Warning button text */
 --color-warning-border             /* Warning button border */
 --color-warning-background-hover   /* Warning hover state */
+--color-info-background            /* Informational actions */
+--color-info-text                  /* Info button text */
+--color-info-border                /* Info button border */
+--color-info-background-hover      /* Info hover state */
 
 /* States & Feedback (Soft Surfaces) */
 --color-successSoft-background     /* Success message background */

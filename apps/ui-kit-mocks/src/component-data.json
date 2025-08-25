@@ -13,6 +13,14 @@
         "plans": [],
         "mockups": ["Virtualized Tree View"]
       }
+    ],
+    "Terminal Components": [
+      {
+        "name": "Claude Code Terminal",
+        "folder": "terminal-components/claude-code-terminal",
+        "plans": [],
+        "mockups": ["Claude Code Web Terminal"]
+      }
     ]
   }
 }

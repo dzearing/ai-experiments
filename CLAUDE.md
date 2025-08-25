@@ -223,6 +223,7 @@ The project uses a surface-based design token system.
 **Quick References:**
 - `/docs/guides/TOKEN_CHEATSHEET.md` - Quick reference for common tokens
 - `/docs/guides/COMPONENT_TOKEN_MAPPING.md` - Which tokens to use for each component
+- `/docs/guides/ICONS_CHEATSHEET.md` - All available icons from `@claude-flow/ui-kit-icons`
 - `/packages/ui-kit/README.md` - Complete token system documentation
 
 ### Common Token Examples

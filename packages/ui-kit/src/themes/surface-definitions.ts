@@ -483,6 +483,47 @@ export const surfaces: SurfaceDefinition[] = [
     },
   },
 
+  // Info surface (informational actions)
+  {
+    name: 'info',
+    base: {
+      background: { ref: 'info.600' },
+      text: {
+        fn: 'contrast',
+        args: {
+          against: 'info.background',
+          prefer: {
+            fn: 'auto',
+            args: {
+              light: '#fafafa',
+              dark: '#f0f0f0',
+            },
+          },
+          textSize: 'ui',
+        },
+      },
+      border: 'transparent',
+      icon: { ref: 'info.text' },
+      shadow: '0 2px 4px rgba(0, 0, 0, 0.15)',
+      outline: {
+        fn: 'auto',
+        args: {
+          light: { ref: 'info.500' },
+          dark: { ref: 'info.400' },
+        },
+      },
+    },
+    variants: {
+      soft: [10, 20],
+      hard: [10, 20],
+    },
+    states: {
+      hover: { lightness: -10 },
+      active: { lightness: -15 },
+      disabled: { opacity: 0.6 },
+    },
+  },
+
   // Input fields
   {
     name: 'input',

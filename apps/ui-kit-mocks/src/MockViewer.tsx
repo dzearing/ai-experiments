@@ -26,6 +26,8 @@ export const MockViewer: React.FC = () => {
         return import('./mocks/view-layouts/stackable-panels/example');
       case 'view-layouts/tree-view':
         return import('./mocks/view-layouts/tree-view/example');
+      case 'terminal-components/claude-code-terminal':
+        return import('./mocks/terminal-components/claude-code-terminal/example');
       default:
         return Promise.resolve({ default: NotFound });
     }
