@@ -23,6 +23,7 @@ import {
   CollapseIcon,
   MenuIcon,
   CloseIcon,
+  AddIcon,
 } from '@claude-flow/ui-kit-icons';
 
 export interface Message {
@@ -40,6 +41,8 @@ export interface Chat {
   id: string;
   title: string;
   subtitle: string;
+  previousSubtitle?: string;
+  subtitleInitialized?: boolean;
   isActive: boolean;
   isBusy: boolean;
   messages: Message[];
@@ -123,6 +126,7 @@ export const ClaudeCodeTerminal: React.FC<ClaudeCodeTerminalProps> = ({
   const [isStreaming, setIsStreaming] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const [currentDraft, setCurrentDraft] = useState(''); // Store the current draft when navigating history
   const [showChatNav, setShowChatNav] = useState(true);
   const [chatFilter, setChatFilter] = useState<'all' | 'idle' | 'busy'>('all');
   const [autoComplete, setAutoComplete] = useState<string[]>([]);
@@ -132,6 +136,28 @@ export const ClaudeCodeTerminal: React.FC<ClaudeCodeTerminalProps> = ({
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  
+  // Predefined actions for simulating work
+  const workActions = [
+    'Analyzing code structure...',
+    'Reading file contents...',
+    'Searching for references...',
+    'Running type checks...',
+    'Evaluating dependencies...',
+    'Processing imports...',
+    'Scanning for patterns...',
+    'Building AST...',
+    'Checking syntax...',
+    'Validating configuration...',
+    'Examining test coverage...',
+    'Reviewing documentation...',
+    'Parsing modules...',
+    'Inspecting components...',
+    'Analyzing performance...',
+    'Gathering metrics...',
+    'Compiling results...',
+    'Organizing findings...',
+  ];
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -167,6 +193,73 @@ export const ClaudeCodeTerminal: React.FC<ClaudeCodeTerminalProps> = ({
   useEffect(() => {
     setIsRememberMode(input.startsWith('#'));
   }, [input]);
+  
+  // Animate subtitles for busy chats with staggered timing
+  useEffect(() => {
+    const timers: NodeJS.Timeout[] = [];
+    let mounted = true;
+    
+    // Create a separate timer for each busy chat with random intervals
+    const updateChat = (chatId: string) => {
+      if (!mounted) return;
+      
+      // Each update gets a new random interval
+      const nextInterval = Math.random() * 5000 + 5000; // 5-10 seconds
+      
+      const timer = setTimeout(() => {
+        if (!mounted) return;
+        
+        setChats(prevChats => 
+          prevChats.map(chat => {
+            if (chat.id === chatId && chat.isBusy) {
+              // Pick a random action from the list
+              const randomAction = workActions[Math.floor(Math.random() * workActions.length)];
+              return { 
+                ...chat, 
+                previousSubtitle: chat.subtitleInitialized ? chat.subtitle : undefined,
+                subtitle: randomAction,
+                subtitleInitialized: true
+              };
+            }
+            return chat;
+          })
+        );
+        
+        // Clear the previous subtitle after animation completes
+        const clearTimer = setTimeout(() => {
+          if (!mounted) return;
+          setChats(prevChats => 
+            prevChats.map(chat => 
+              chat.id === chatId ? { ...chat, previousSubtitle: undefined } : chat
+            )
+          );
+        }, 500); // Match animation duration
+        timers.push(clearTimer);
+        
+        // Schedule the next update for this chat
+        updateChat(chatId);
+      }, nextInterval);
+      
+      timers.push(timer);
+    };
+    
+    // Start timers for all busy chats with different initial delays
+    chats.forEach((chat, index) => {
+      if (chat.isBusy) {
+        // Stagger initial delays more evenly
+        const initialDelay = Math.random() * 10000; // Spread initial starts over 10 seconds
+        const timer = setTimeout(() => {
+          if (mounted) updateChat(chat.id);
+        }, initialDelay);
+        timers.push(timer);
+      }
+    });
+    
+    return () => {
+      mounted = false;
+      timers.forEach(timer => clearTimeout(timer));
+    };
+  }, [chats.filter(c => c.isBusy).length]); // Only re-run when number of busy chats changes
 
   const handleSubmit = useCallback(() => {
     if (!input.trim()) return;
@@ -206,6 +299,7 @@ export const ClaudeCodeTerminal: React.FC<ClaudeCodeTerminalProps> = ({
     }
 
     setInput('');
+    setCurrentDraft(''); // Clear the draft when submitting
     setAutoComplete([]);
   }, [input, onPrompt]);
 
@@ -415,26 +509,81 @@ Let me start by implementing the solution...`,
       }
     }
 
-    // History navigation
-    if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      if (history.length > 0) {
-        const newIndex = historyIndex === -1 ? history.length - 1 : Math.max(0, historyIndex - 1);
-        setHistoryIndex(newIndex);
-        setInput(history[newIndex]);
+    // History navigation with multiline support
+    const textarea = e.currentTarget;
+    const cursorPosition = textarea.selectionStart;
+    const lines = textarea.value.split('\n');
+    let currentLine = 0;
+    let positionInLine = cursorPosition;
+    let charCount = 0;
+    
+    // Find current line and position within that line
+    for (let i = 0; i < lines.length; i++) {
+      if (charCount + lines[i].length >= cursorPosition) {
+        currentLine = i;
+        positionInLine = cursorPosition - charCount;
+        break;
       }
-    } else if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      if (historyIndex !== -1) {
-        const newIndex = Math.min(history.length - 1, historyIndex + 1);
-        if (newIndex === history.length - 1) {
-          setHistoryIndex(-1);
-          setInput('');
-        } else {
+      charCount += lines[i].length + 1; // +1 for newline
+    }
+    
+    if (e.key === 'ArrowUp') {
+      // Check if we're at the first line
+      if (currentLine === 0) {
+        // If at position 0 of first line, navigate to previous history
+        if (positionInLine === 0 && history.length > 0) {
+          e.preventDefault();
+          
+          // Save current input as draft if we're starting to navigate history
+          if (historyIndex === -1) {
+            setCurrentDraft(input);
+          }
+          
+          const newIndex = historyIndex === -1 ? history.length - 1 : Math.max(0, historyIndex - 1);
           setHistoryIndex(newIndex);
           setInput(history[newIndex]);
+          // Set cursor to end of the loaded text
+          setTimeout(() => {
+            textarea.selectionStart = textarea.selectionEnd = textarea.value.length;
+          }, 0);
+        } else if (positionInLine > 0) {
+          // Move to position 0 of first line
+          e.preventDefault();
+          textarea.selectionStart = textarea.selectionEnd = 0;
         }
       }
+      // Otherwise let default behavior handle moving between lines
+    } else if (e.key === 'ArrowDown') {
+      // Check if we're at the last line
+      if (currentLine === lines.length - 1) {
+        // If at last position of last line, navigate to next history
+        if (positionInLine === lines[currentLine].length) {
+          if (historyIndex !== -1) {
+            e.preventDefault();
+            const newIndex = historyIndex + 1;
+            if (newIndex >= history.length) {
+              // Return to current draft
+              setHistoryIndex(-1);
+              setInput(currentDraft);
+              setTimeout(() => {
+                textarea.selectionStart = textarea.selectionEnd = currentDraft.length;
+              }, 0);
+            } else {
+              setHistoryIndex(newIndex);
+              setInput(history[newIndex]);
+              // Set cursor to beginning of the loaded text
+              setTimeout(() => {
+                textarea.selectionStart = textarea.selectionEnd = 0;
+              }, 0);
+            }
+          }
+        } else if (positionInLine < lines[currentLine].length) {
+          // Move to end of last line
+          e.preventDefault();
+          textarea.selectionStart = textarea.selectionEnd = textarea.value.length;
+        }
+      }
+      // Otherwise let default behavior handle moving between lines
     }
     
     // Auto-complete and mode switching
@@ -536,14 +685,6 @@ Let me start by implementing the solution...`,
                 </Button>
                 <h3 className={styles.chatNavTitle}>Chats</h3>
               </div>
-              <Button 
-                variant="neutral" 
-                size="small"
-                onClick={handleNewChat}
-                aria-label="New chat"
-              >
-                <ChevronRightIcon /> New
-              </Button>
             </div>
             <div className={styles.chatNavFilters}>
               <Button
@@ -563,6 +704,15 @@ Let me start by implementing the solution...`,
                 <Spinner size="tiny" /> Busy
               </Button>
             </div>
+            <Button 
+              variant="primary" 
+              size="medium"
+              onClick={handleNewChat}
+              aria-label="New chat"
+              className={styles.newChatButton}
+            >
+              <AddIcon /> New chat
+            </Button>
             <div className={styles.chatList}>
               {chats
                 .filter(chat => {
@@ -585,7 +735,23 @@ Let me start by implementing the solution...`,
                     </div>
                     <div className={styles.chatItemContent}>
                       <div className={styles.chatItemTitle}>{chat.title}</div>
-                      <div className={styles.chatItemSubtitle}>{chat.subtitle}</div>
+                      <div className={styles.chatItemSubtitleContainer}>
+                        {chat.previousSubtitle && (
+                          <div 
+                            className={styles.chatItemSubtitle}
+                            data-leaving="true"
+                          >
+                            {chat.previousSubtitle}
+                          </div>
+                        )}
+                        <div 
+                          key={chat.subtitle} 
+                          className={styles.chatItemSubtitle}
+                          data-animate={chat.previousSubtitle ? "true" : "false"}
+                        >
+                          {chat.subtitle}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -593,22 +759,22 @@ Let me start by implementing the solution...`,
           </div>
         )}
         <div className={styles.mainContent}>
-          {!showChatNav && (
-            <div className={styles.collapsedNav}>
-              <Button
-                variant="inline"
-                shape="square"
-                size="small"
-                onClick={() => setShowChatNav(true)}
-                aria-label="Expand chat navigation"
-                className={styles.expandButton}
-              >
-                <ChevronRightIcon />
-              </Button>
-            </div>
-          )}
           <div className={styles.chatHeader}>
-            <h2 className={styles.chatTitle}>{activeChat.title}</h2>
+            <div className={styles.chatHeaderLeft}>
+              {!showChatNav && (
+                <Button
+                  variant="inline"
+                  shape="square"
+                  size="small"
+                  onClick={() => setShowChatNav(true)}
+                  aria-label="Expand chat navigation"
+                  className={styles.expandHeaderButton}
+                >
+                  <ChevronRightIcon />
+                </Button>
+              )}
+              <h2 className={styles.chatTitle}>{activeChat.title}</h2>
+            </div>
             {(activeChat.repoPath || activeChat.branch) && (
               <div className={styles.chatRepoInfo}>
                 {activeChat.repoPath && (

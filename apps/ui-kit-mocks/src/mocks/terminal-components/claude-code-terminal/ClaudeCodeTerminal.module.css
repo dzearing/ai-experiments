@@ -103,6 +103,16 @@
   border-bottom: 1px solid var(--color-panel-border);
 }
 
+.chatHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small10);
+}
+
+.expandHeaderButton {
+  flex-shrink: 0;
+}
+
 .chatTitle {
   margin: 0;
   font-size: var(--font-size-large10);
@@ -302,9 +312,9 @@
 }
 
 .modeBadgeExecute {
-  background: var(--color-danger-background);
-  color: var(--color-danger-text);
-  border: 1px solid var(--color-danger-border);
+  background: var(--color-success-background);
+  color: var(--color-success-text);
+  border: 1px solid var(--color-success-border);
   border-bottom: none;
 }
 
@@ -344,7 +354,7 @@
    the input border exactly matches the mode badge background color,
    creating a unified visual appearance */
 .inputExecute {
-  border-color: var(--color-danger-background);
+  border-color: var(--color-success-background);
 }
 
 .inputPlan {
@@ -455,15 +465,13 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-small10);
-  padding: var(--spacing);
-  border-bottom: 1px solid var(--color-panel-border);
+  padding: var(--spacing) var(--spacing) 0;
 }
 
 .chatNavTitleRow {
   display: flex;
   align-items: center;
   gap: var(--spacing-small10);
-  margin-bottom: var(--spacing-small10);
 }
 
 .chatNavTitle {
@@ -475,9 +483,14 @@
 
 .chatNavFilters {
   display: flex;
-  gap: var(--spacing-small10);
-  padding: var(--spacing-small10) var(--spacing);
+  gap: var(--spacing);
+  padding: var(--spacing);
+  margin-bottom: var(--spacing);
   border-bottom: 1px solid var(--color-panel-border);
+}
+
+.newChatButton {
+  margin: 0 var(--spacing) var(--spacing);
 }
 
 .chatList {
@@ -551,12 +564,52 @@
   white-space: nowrap;
 }
 
+.chatItemSubtitleContainer {
+  position: relative;
+  height: 1.5em; /* Increased to prevent descender truncation */
+  overflow: hidden;
+}
+
 .chatItemSubtitle {
   font-size: var(--font-size-small10);
   color: var(--color-body-textSoft10);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  position: absolute;
+  width: 100%;
+}
+
+/* Only animate when it's not the initial render */
+.chatItemSubtitle[data-animate="true"] {
+  animation: slideInFromBottom 0.5s ease-out;
+}
+
+/* When subtitle is leaving */
+.chatItemSubtitle[data-leaving="true"] {
+  animation: slideOutToTop 0.5s ease-out forwards;
+}
+
+@keyframes slideInFromBottom {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutToTop {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
 }
 
 /* Idle icon - green circle indicating idle state */
