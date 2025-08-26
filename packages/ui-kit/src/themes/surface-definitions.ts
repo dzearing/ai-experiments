@@ -580,9 +580,9 @@ export const surfaces: SurfaceDefinition[] = [
           light: {
             fn: 'mix',
             args: {
-              color1: { ref: 'info.100' },
+              color1: { ref: 'info.300' },
               color2: { ref: 'body.background' },
-              ratio: 0.3,
+              ratio: 0.6,
             },
           },
           dark: {
@@ -590,7 +590,7 @@ export const surfaces: SurfaceDefinition[] = [
             args: {
               color1: { ref: 'info.900' },
               color2: { ref: 'body.background' },
-              ratio: 0.7,
+              ratio: 0.18,
             },
           },
         },

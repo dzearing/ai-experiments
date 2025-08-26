@@ -19,6 +19,7 @@ export { Link } from './Link';
 export { Stack } from './Stack';
 export { SegmentedControl } from './SegmentedControl';
 export { TreeView } from './TreeView';
+export { Tabs } from './Tabs';
 
 // Export types
 export type { BannerProps } from './Banner';
@@ -41,3 +42,4 @@ export type { LinkProps } from './Link';
 export type { StackProps } from './Stack';
 export type { SegmentedControlProps, SegmentOption } from './SegmentedControl';
 export type { TreeViewProps, TreeNode } from './TreeView';
+export type { TabsProps, TabItem } from './Tabs';

@@ -1,0 +1,230 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
+.tabBar {
+  display: flex;
+  align-items: stretch;
+  background: var(--color-panel-background);
+  position: relative;
+  min-height: 35px;
+}
+
+.scrollContainer {
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-body-borderSoft10) transparent;
+  position: relative;
+}
+
+.scrollContainer::-webkit-scrollbar {
+  height: 3px;
+}
+
+.scrollContainer::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollContainer::-webkit-scrollbar-thumb {
+  background: var(--color-body-borderSoft10);
+  border-radius: var(--radius-slight);
+}
+
+.scrollContainer:hover::-webkit-scrollbar-thumb {
+  background: var(--color-body-border);
+}
+
+.tabList {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+  padding: 0 var(--spacing-small20) 0 var(--spacing-small20);
+  position: relative;
+  border-bottom: 1px solid var(--color-panel-border);
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small20);
+  padding: 0 var(--spacing-small10);
+  min-width: 80px;
+  max-width: 200px;
+  height: 100%;
+  border: none;
+  border-left: 1px solid transparent;
+  border-right: 1px solid transparent;
+  background: transparent;
+  color: var(--color-body-textSoft10);
+  font-size: var(--font-size-small10);
+  font-family: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  position: relative;
+  transition: color var(--duration-fast20) var(--easing-default),
+              background var(--duration-fast20) var(--easing-default);
+}
+
+.tab:first-child {
+  border-left: none;
+}
+
+.tab:hover:not(.active):not(.disabled) {
+  background: var(--color-neutral-background);
+  color: var(--color-neutral-text);
+}
+
+.tab.active {
+  background: var(--color-body-background);
+  color: var(--color-body-text);
+  border-top: 2px solid var(--color-primary-background);
+  border-left-color: var(--color-panel-border);
+  border-right-color: var(--color-panel-border);
+  border-radius: var(--radius-interactive) var(--radius-interactive) 0 0;
+  position: relative;
+  padding-bottom: 2px; /* Extend to cover the border */
+  margin-bottom: -1px; /* Pull down to overlap the border */
+}
+
+.tab.active:hover:not(.disabled) {
+  background: var(--color-infoSoft-background);
+  color: var(--color-infoSoft-text);
+}
+
+/* This pseudo-element covers the bottom border */
+.tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: -1px;
+  right: -1px;
+  height: 2px;
+  background: var(--color-body-background);
+}
+
+.tab.active:hover::after {
+  background: var(--color-infoSoft-background);
+}
+
+.tab.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  color: var(--color-body-iconSoft20);
+}
+
+.tab.active .icon {
+  color: var(--color-body-icon);
+}
+
+.label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.closeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-left: auto;
+  margin-right: calc(var(--spacing-small20) * -1);
+  border: none;
+  background: transparent;
+  color: var(--color-body-iconSoft20);
+  cursor: pointer;
+  border-radius: var(--radius-slight);
+  opacity: 0;
+  transition: opacity var(--duration-fast20) var(--easing-default),
+              color var(--duration-fast20) var(--easing-default),
+              background var(--duration-fast20) var(--easing-default);
+}
+
+.tab:hover .closeButton,
+.tab.active .closeButton {
+  opacity: 1;
+}
+
+.closeButton:hover {
+  color: var(--color-body-icon);
+  background: var(--color-body-backgroundHard10);
+}
+
+.closeButton:active {
+  background: var(--color-body-backgroundHard20);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small20);
+  padding: 0 var(--spacing-small10);
+  border-left: 1px solid var(--color-panel-border);
+  border-bottom: 1px solid var(--color-panel-border);
+}
+
+.content {
+  flex: 1;
+  background: var(--color-body-background);
+  overflow: auto;
+  position: relative;
+}
+
+/* Size variations */
+.small .tabBar {
+  min-height: 30px;
+}
+
+.small .tab {
+  font-size: var(--font-size-small20);
+  padding: 0 var(--spacing-small20);
+  min-width: 60px;
+  max-width: 160px;
+}
+
+.small .icon {
+  width: 14px;
+  height: 14px;
+}
+
+.small .closeButton {
+  width: 16px;
+  height: 16px;
+}
+
+.large .tabBar {
+  min-height: 42px;
+}
+
+.large .tab {
+  font-size: var(--font-size);
+  padding: 0 var(--spacing);
+  min-width: 100px;
+  max-width: 240px;
+  gap: var(--spacing-small10);
+}
+
+.large .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.large .closeButton {
+  width: 20px;
+  height: 20px;
+}

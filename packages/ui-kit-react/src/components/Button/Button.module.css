@@ -198,36 +198,27 @@
 
 /* Sizes */
 .small {
+  min-height: 28px;
   padding: var(--spacing-small20) var(--spacing);
   font-size: var(--font-size-small10);
 }
 
 .medium {
+  min-height: 36px;
   padding: var(--spacing-small10) var(--spacing-large10);
   font-size: var(--font-size-normal);
 }
 
 .large {
+  min-height: 48px;
   padding: var(--spacing) var(--spacing-large20);
   font-size: var(--font-size-large10);
 }
 
 /* Shapes */
-.square {
-  padding: var(--spacing-small10);
-}
-
-/* Square shape size adjustments - symmetrical padding */
-.square.small {
-  padding: var(--spacing-small20);
-}
-
-.square.medium {
-  padding: var(--spacing-small10);
-}
-
-.square.large {
-  padding: var(--spacing);
+.square,
+.circle {
+  padding: 0;
 }
 
 .pill {
@@ -236,23 +227,32 @@
   padding-right: var(--spacing-large20);
 }
 
-.round {
+.circle {
   border-radius: 50%;
   aspect-ratio: 1;
-  padding: var(--spacing-small10);
+  padding: 0;
 }
 
-/* Round shape size adjustments - symmetrical padding */
-.round.small {
-  padding: var(--spacing-small20);
+/* Shape size adjustments - min dimensions, no padding */
+.square.small,
+.circle.small {
+  min-width: 28px;
+  min-height: 28px;
+  padding: 0;
 }
 
-.round.medium {
-  padding: var(--spacing-small10);
+.square.medium,
+.circle.medium {
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
 }
 
-.round.large {
-  padding: var(--spacing);
+.square.large,
+.circle.large {
+  min-width: 48px;
+  min-height: 48px;
+  padding: 0;
 }
 
 

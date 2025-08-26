@@ -5,12 +5,7 @@ import {
   ListBulletIcon,
   TableIcon,
   ImageIcon,
-  CalendarIcon,
-  ClockIcon,
-  FolderIcon,
-  HomeIcon,
-  UserIcon,
-  SettingsIcon
+  FolderIcon
 } from '@claude-flow/ui-kit-icons';
 
 const meta: Meta<typeof SegmentedControl> = {

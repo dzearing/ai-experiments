@@ -79,7 +79,7 @@ export const SegmentedControl = React.forwardRef<HTMLDivElement, SegmentedContro
     // Update indicator position when value changes
     useEffect(() => {
       const selectedButton = optionRefs.current.get(value);
-      const firstButton = options.length > 0 ? optionRefs.current.get(options[0].value) : null;
+      const firstButton = options.length > 0 && options[0] ? optionRefs.current.get(options[0].value) : null;
       
       if (selectedButton && firstButton) {
         const firstRect = firstButton.getBoundingClientRect();

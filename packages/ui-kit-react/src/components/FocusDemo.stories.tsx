@@ -19,7 +19,7 @@ type Story = StoryObj<typeof meta>;
 
 export const FocusStylesShowcase: Story = {
   render: () => (
-    <Stack direction="vertical" spacing="large30" style={{ padding: '20px' }}>
+    <Stack direction="vertical" gap="xlarge" style={{ padding: '20px' }}>
       <div>
         <h2 style={{ marginBottom: '16px' }}>Focus Style Consistency Demo</h2>
         <p style={{ marginBottom: '24px', color: 'var(--color-body-textSoft20)' }}>
@@ -27,9 +27,9 @@ export const FocusStylesShowcase: Story = {
         </p>
       </div>
 
-      <Stack direction="vertical" spacing="large10">
+      <Stack direction="vertical" gap="large">
         <h3>Buttons - Internal 2px focus border</h3>
-        <Stack direction="horizontal" spacing="medium">
+        <Stack direction="horizontal" gap="medium">
           <Button variant="primary">Primary Button</Button>
           <Button variant="outline">Outline Button</Button>
           <Button variant="neutral">Neutral Button</Button>
@@ -40,18 +40,18 @@ export const FocusStylesShowcase: Story = {
         </p>
       </Stack>
 
-      <Stack direction="vertical" spacing="large10">
+      <Stack direction="vertical" gap="large">
         <h3>Inputs - 2px internal border on focus</h3>
-        <Stack direction="horizontal" spacing="medium">
+        <Stack direction="horizontal" gap="medium">
           <Input placeholder="Normal input" />
-          <Input placeholder="Error input" error errorText="Error state" />
+          <Input placeholder="Error input" error errorMessage="Error state" />
           <Input placeholder="Success input" success />
         </Stack>
       </Stack>
 
-      <Stack direction="vertical" spacing="large10">
+      <Stack direction="vertical" gap="large">
         <h3>Checkboxes & Switches</h3>
-        <Stack direction="horizontal" spacing="large20">
+        <Stack direction="horizontal" gap="large">
           <Checkbox label="Checkbox 1" />
           <Checkbox label="Checkbox 2" />
           <Switch label="Switch 1" />
@@ -59,18 +59,18 @@ export const FocusStylesShowcase: Story = {
         </Stack>
       </Stack>
 
-      <Stack direction="vertical" spacing="large10">
+      <Stack direction="vertical" gap="large">
         <h3>Links - Internal focus with padding adjustment</h3>
-        <Stack direction="horizontal" spacing="large10">
+        <Stack direction="horizontal" gap="large">
           <Link href="#">Link 1</Link>
           <Link href="#">Link 2</Link>
-          <Link href="#" variant="secondary">Secondary Link</Link>
+          <Link href="#" variant="subtle">Secondary Link</Link>
         </Stack>
       </Stack>
 
-      <Stack direction="vertical" spacing="large10">
+      <Stack direction="vertical" gap="large">
         <h3>Dropdowns</h3>
-        <Stack direction="horizontal" spacing="medium">
+        <Stack direction="horizontal" gap="medium">
           <Dropdown
             options={[
               { label: 'Option 1', value: '1' },
@@ -90,7 +90,7 @@ export const FocusStylesShowcase: Story = {
         </Stack>
       </Stack>
 
-      <Stack direction="vertical" spacing="medium" style={{ marginTop: '40px' }}>
+      <Stack direction="vertical" gap="medium" style={{ marginTop: '40px' }}>
         <h3>Key Changes:</h3>
         <ul style={{ paddingLeft: '20px', lineHeight: '1.6' }}>
           <li>All components now use <code>box-shadow: inset 0 0 0 2px</code> for focus</li>

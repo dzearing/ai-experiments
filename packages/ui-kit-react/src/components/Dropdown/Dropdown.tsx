@@ -66,7 +66,7 @@ export const Dropdown = React.forwardRef<HTMLSelectElement, DropdownProps>((
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  const searchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   // Use controlled value if provided, otherwise use internal state
   const currentValue = value !== undefined ? value : internalValue;
@@ -176,6 +176,7 @@ export const Dropdown = React.forwardRef<HTMLSelectElement, DropdownProps>((
         window.removeEventListener('resize', updatePosition);
       };
     }
+    return undefined;
   }, [isOpen, selectedIndex, options.length]);
 
   useEffect(() => {
@@ -216,7 +217,7 @@ export const Dropdown = React.forwardRef<HTMLSelectElement, DropdownProps>((
     setSearchString(newSearchString);
 
     // Find first matching option
-    const matchIndex = options.findIndex((option, index) => {
+    const matchIndex = options.findIndex((option) => {
       // Skip disabled options
       if (option.disabled) return false;
       // Check if label starts with search string
@@ -226,7 +227,7 @@ export const Dropdown = React.forwardRef<HTMLSelectElement, DropdownProps>((
     if (matchIndex >= 0) {
       setFocusedIndex(matchIndex);
       // If dropdown is closed, select the item directly
-      if (!isOpen) {
+      if (!isOpen && options[matchIndex]) {
         handleSelect(options[matchIndex]);
       }
     }
@@ -283,12 +284,14 @@ export const Dropdown = React.forwardRef<HTMLSelectElement, DropdownProps>((
       case 'Enter':
       case ' ':
         event.preventDefault();
-        handleSelect(options[index]);
+        if (options[index]) {
+          handleSelect(options[index]);
+        }
         break;
       case 'ArrowDown':
         event.preventDefault();
         let nextIndex = index + 1;
-        while (nextIndex < options.length && options[nextIndex].disabled) {
+        while (nextIndex < options.length && options[nextIndex]?.disabled) {
           nextIndex++;
         }
         if (nextIndex < options.length) {
@@ -298,7 +301,7 @@ export const Dropdown = React.forwardRef<HTMLSelectElement, DropdownProps>((
       case 'ArrowUp':
         event.preventDefault();
         let prevIndex = index - 1;
-        while (prevIndex >= 0 && options[prevIndex].disabled) {
+        while (prevIndex >= 0 && options[prevIndex]?.disabled) {
           prevIndex--;
         }
         if (prevIndex >= 0) {
@@ -308,7 +311,7 @@ export const Dropdown = React.forwardRef<HTMLSelectElement, DropdownProps>((
       case 'Home':
         event.preventDefault();
         let firstIndex = 0;
-        while (firstIndex < options.length && options[firstIndex].disabled) {
+        while (firstIndex < options.length && options[firstIndex]?.disabled) {
           firstIndex++;
         }
         if (firstIndex < options.length) {
@@ -318,7 +321,7 @@ export const Dropdown = React.forwardRef<HTMLSelectElement, DropdownProps>((
       case 'End':
         event.preventDefault();
         let lastIndex = options.length - 1;
-        while (lastIndex >= 0 && options[lastIndex].disabled) {
+        while (lastIndex >= 0 && options[lastIndex]?.disabled) {
           lastIndex--;
         }
         if (lastIndex >= 0) {
@@ -337,7 +340,7 @@ export const Dropdown = React.forwardRef<HTMLSelectElement, DropdownProps>((
           } else {
             // Move to previous non-disabled option
             let prevIndex = index - 1;
-            while (prevIndex >= 0 && options[prevIndex].disabled) {
+            while (prevIndex >= 0 && options[prevIndex]?.disabled) {
               prevIndex--;
             }
             if (prevIndex >= 0) {
@@ -346,8 +349,9 @@ export const Dropdown = React.forwardRef<HTMLSelectElement, DropdownProps>((
           }
         } else {
           // Tab: if on last item, go back to dropdown button
-          const lastEnabledIndex = options.findLastIndex(opt => !opt.disabled);
-          if (index === lastEnabledIndex) {
+          const lastEnabledIndex = [...options].reverse().findIndex((opt: DropdownOption) => !opt.disabled);
+          const actualLastEnabledIndex = lastEnabledIndex >= 0 ? options.length - 1 - lastEnabledIndex : -1;
+          if (index === actualLastEnabledIndex) {
             setIsOpen(false);
             setFocusedIndex(-1);
             setSearchString('');
@@ -355,7 +359,7 @@ export const Dropdown = React.forwardRef<HTMLSelectElement, DropdownProps>((
           } else {
             // Move to next non-disabled option
             let nextIndex = index + 1;
-            while (nextIndex < options.length && options[nextIndex].disabled) {
+            while (nextIndex < options.length && options[nextIndex]?.disabled) {
               nextIndex++;
             }
             if (nextIndex < options.length) {

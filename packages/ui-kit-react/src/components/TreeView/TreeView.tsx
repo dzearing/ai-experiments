@@ -145,10 +145,7 @@ export const TreeView: React.FC<TreeViewProps> = ({
     }
   }, [flatNodes, itemHeight, scrollTop, height]);
 
-  const focusNode = useCallback((nodeId: string) => {
-    setFocusedNodeId(nodeId);
-    scrollNodeIntoView(nodeId);
-  }, [scrollNodeIntoView]);
+  // Remove unused focusNode function
 
   const navigateToNode = useCallback((direction: 'up' | 'down' | 'first' | 'last' | 'pageUp' | 'pageDown') => {
     const currentIndex = focusedNodeId ? flatNodes.findIndex(n => n.id === focusedNodeId) : -1;
@@ -193,7 +190,7 @@ export const TreeView: React.FC<TreeViewProps> = ({
     // If no node is focused, set focus to the first node
     let currentFocusedId = focusedNodeId;
     if (!currentFocusedId && flatNodes.length > 0) {
-      currentFocusedId = flatNodes[0].id;
+      currentFocusedId = flatNodes[0]?.id || '';
       setFocusedNodeId(currentFocusedId);
     }
     
@@ -305,7 +302,7 @@ export const TreeView: React.FC<TreeViewProps> = ({
   // Initialize focused node on mount if not set
   useEffect(() => {
     if (!focusedNodeId && flatNodes.length > 0) {
-      setFocusedNodeId(flatNodes[0].id);
+      setFocusedNodeId(flatNodes[0]?.id || '');
     }
   }, [focusedNodeId, flatNodes]);
 
@@ -319,7 +316,7 @@ export const TreeView: React.FC<TreeViewProps> = ({
         setIsTreeFocused(true);
         // Initialize focused node if not set
         if (!focusedNodeId && flatNodes.length > 0) {
-          const initialFocusId = selectedNodeId || flatNodes[0].id;
+          const initialFocusId = selectedNodeId || flatNodes[0]?.id || '';
           setFocusedNodeId(initialFocusId);
         }
       }}
