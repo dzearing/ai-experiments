@@ -28,6 +28,7 @@ export { CopyIcon } from './components/CopyIcon';
 export { CutIcon } from './components/CutIcon';
 export { DeleteIcon } from './components/DeleteIcon';
 export { DownloadIcon } from './components/DownloadIcon';
+export { DragHandleIcon } from './components/DragHandleIcon';
 export { EditIcon } from './components/EditIcon';
 export { ErrorCircleIcon } from './components/ErrorCircleIcon';
 export { ErrorIcon } from './components/ErrorIcon';

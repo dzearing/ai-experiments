@@ -29,8 +29,8 @@ export function createIcon(
           aria-hidden={title ? undefined : true}
           role={title ? 'img' : undefined}
           className={className}
-          {...sizeProps}
           {...props}
+          {...sizeProps}
           dangerouslySetInnerHTML={{ __html: svgContent }}
         >
           {title && <title>{title}</title>}

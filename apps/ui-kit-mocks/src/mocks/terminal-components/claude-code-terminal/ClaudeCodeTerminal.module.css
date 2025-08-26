@@ -1,7 +1,7 @@
 .terminal {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
   background: var(--color-body-background);
   color: var(--color-body-text);
 }
@@ -159,7 +159,6 @@
   padding: var(--spacing);
   background: var(--color-body-background);
   min-height: 0;
-  height: 0;
 }
 
 .message {
@@ -291,6 +290,7 @@
   background: var(--color-panel-background);
   border-top: 1px solid var(--color-panel-border);
   flex-shrink: 0;
+  height: auto;
 }
 
 .inputWrapper {
@@ -302,6 +302,8 @@
 .helperText {
   font-size: var(--font-size-small20);
   color: var(--color-body-textSoft20);
+  flex-shrink: 0;
+  min-height: 20px;
 }
 
 .modeBadge {
@@ -477,14 +479,37 @@
 .chatNavTitleRow {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--spacing-small10);
+  width: 100%;
 }
 
 .chatNavTitle {
+  flex: 1;
   margin: 0;
   font-size: var(--font-size);
   font-weight: var(--font-weight-semibold);
   color: var(--color-body-text);
+}
+
+.editButton {
+  flex-shrink: 0;
+  color: var(--color-body-textSoft10);
+  transition: color var(--duration-normal), background var(--duration-normal);
+}
+
+.editButton:hover {
+  color: var(--color-body-text);
+}
+
+.editButtonActive {
+  color: var(--color-primary-text);
+  background: var(--color-primary-background);
+}
+
+.editButtonActive:hover {
+  color: var(--color-primary-text);
+  background: var(--color-primary-backgroundHover);
 }
 
 .chatNavFilters {
@@ -688,6 +713,72 @@
   color: currentColor; /* Inherits from button's text color */
 }
 
+/* Edit mode styles */
+.chatItemEditMode {
+  cursor: move;
+  user-select: none;
+  transition: transform 200ms ease-out;
+}
+
+.chatItemDragging {
+  opacity: 0.3;
+  background: var(--color-panel-backgroundHover);
+}
+
+.chatItemDragOver {
+  border-top: 2px solid var(--color-primary-border);
+  padding-top: calc(var(--spacing-small10) - 2px);
+}
+
+.dragHandle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--spacing-large10);
+  margin-left: calc(var(--spacing-small10) * -1);
+  color: var(--color-body-textSoft20);
+  cursor: grab;
+  flex-shrink: 0;
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.dragHandle svg {
+  width: var(--spacing);
+  height: var(--spacing);
+}
+
+.deleteButton {
+  margin-left: auto;
+  color: var(--color-body-textSoft20);
+  opacity: 0;
+  transition: opacity var(--duration-normal), color var(--duration-normal);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.deleteButton svg {
+  width: var(--spacing);
+  height: var(--spacing);
+}
+
+.chatItemEditMode .deleteButton {
+  opacity: 0.6;
+}
+
+.chatItemEditMode:hover .deleteButton {
+  opacity: 1;
+}
+
+.deleteButton:hover {
+  color: var(--color-danger-text);
+  background: var(--color-danger-backgroundSoft);
+}
+
 /* Mobile responsive */
 @media (max-width: 768px) {
   .chatNav {
@@ -732,4 +823,142 @@
   .input {
     background: var(--color-body-background);
   }
+}
+
+/* Split view layout for plan mode */
+.splitView {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 0;
+}
+
+.splitView .chatHeader {
+  grid-column: 1 / -1;
+}
+
+.splitView .messages {
+  grid-column: 1;
+  grid-row: 2;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.splitView .inputArea {
+  grid-column: 1;
+  grid-row: 3;
+}
+
+.splitView .autoComplete {
+  grid-column: 1;
+  grid-row: 3;
+}
+
+/* Editor pane styles */
+.editorPane {
+  grid-column: 2;
+  grid-row: 2 / 4; /* Span from row 2 to row 4 to include input area row */
+  display: flex;
+  flex-direction: column;
+  background: var(--color-body-background);
+  height: 100%;
+  overflow: hidden;
+  border-left: 1px solid var(--color-panel-border);
+}
+
+.editorToolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small10);
+  padding: var(--spacing-small10) var(--spacing);
+  background: var(--color-panel-background);
+  border-bottom: 1px solid var(--color-panel-border);
+  flex-shrink: 0;
+}
+
+.toolbarGroup {
+  display: flex;
+  gap: var(--spacing-small20);
+}
+
+.toolbarButton {
+  padding: var(--spacing-small20);
+  color: var(--color-body-textSoft10);
+  transition: color var(--duration-normal);
+}
+
+.toolbarButton:hover {
+  color: var(--color-body-text);
+  background: var(--color-buttonInline-backgroundHover);
+}
+
+.toolbarSeparator {
+  width: 1px;
+  height: 20px;
+  background: var(--color-panel-border);
+  margin: 0 var(--spacing-small20);
+}
+
+.editorContent {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-large10);
+}
+
+.editorDocument {
+  max-width: 800px;
+  margin: 0 auto;
+  font-family: var(--font-family);
+  font-size: var(--font-size);
+  line-height: var(--line-height-relaxed);
+  color: var(--color-body-text);
+  outline: none;
+  min-height: 100px;
+}
+
+.editorDocument:focus {
+  outline: none;
+}
+
+.editorDocument[contenteditable] {
+  cursor: text;
+}
+
+.editorDocument div {
+  margin: var(--spacing-small20) 0;
+}
+
+.editorDocument h1,
+.editorDocument h2,
+.editorDocument h3 {
+  font-weight: var(--font-weight-semibold);
+  margin: var(--spacing) 0 var(--spacing-small10) 0;
+  color: var(--color-body-text);
+}
+
+.editorDocument h1 {
+  font-size: var(--font-size-h3);
+}
+
+.editorDocument h2 {
+  font-size: var(--font-size-h4);
+}
+
+.editorDocument h3 {
+  font-size: var(--font-size-h5);
+}
+
+.editorDocument strong {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-body-text);
+}
+
+.editorDocument ul,
+.editorDocument ol {
+  margin: var(--spacing-small10) 0;
+  padding-left: var(--spacing-large10);
+}
+
+.editorDocument li {
+  margin: var(--spacing-small20) 0;
 }

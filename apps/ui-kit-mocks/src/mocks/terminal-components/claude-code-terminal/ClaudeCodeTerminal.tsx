@@ -25,6 +25,21 @@ import {
   CloseIcon,
   AddIcon,
   HourglassIcon,
+  BoldIcon,
+  ItalicIcon,
+  UnderlineIcon,
+  ListBulletIcon,
+  ListOrderedIcon,
+  LinkIcon,
+  Heading1Icon,
+  Heading2Icon,
+  Heading3Icon,
+  UndoIcon,
+  RedoIcon,
+  CodeBlockIcon,
+  EditIcon,
+  DeleteIcon,
+  DragHandleIcon,
 } from '@claude-flow/ui-kit-icons';
 
 export interface Message {
@@ -134,6 +149,11 @@ export const ClaudeCodeTerminal: React.FC<ClaudeCodeTerminalProps> = ({
   const [autoCompleteIndex, setAutoCompleteIndex] = useState(0);
   const [currentMode, setCurrentMode] = useState<'default' | 'plan'>('default');
   const [isRememberMode, setIsRememberMode] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [draggedChatId, setDraggedChatId] = useState<string | null>(null);
+  const [dragOverChatId, setDragOverChatId] = useState<string | null>(null);
+  const chatNavRef = useRef<HTMLDivElement>(null);
+  const [planContent, setPlanContent] = useState(`# Project Implementation Plan\n\n## Overview\nThis document outlines the implementation strategy for the authentication feature.\n\n## Phase 1: Setup OAuth2\n- Configure OAuth providers\n- Set up redirect URIs\n- Implement token storage\n\n## Phase 2: User Flow\n1. **Login Page**\n   - Design responsive login form\n   - Add social login buttons\n   - Implement error handling\n\n2. **Session Management**\n   - Create session middleware\n   - Handle token refresh\n   - Implement logout flow\n\n## Technical Considerations\n- Security best practices\n- Rate limiting\n- CSRF protection\n\n## Testing Strategy\n- Unit tests for auth logic\n- Integration tests for OAuth flow\n- E2E tests for user journey`);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -210,6 +230,20 @@ export const ClaudeCodeTerminal: React.FC<ClaudeCodeTerminalProps> = ({
   useEffect(() => {
     setIsRememberMode(input.startsWith('#'));
   }, [input]);
+  
+  // Handle escape key for edit mode
+  useEffect(() => {
+    const handleEscapeKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isEditMode && chatNavRef.current?.contains(document.activeElement)) {
+        setIsEditMode(false);
+      }
+    };
+    
+    if (isEditMode) {
+      document.addEventListener('keydown', handleEscapeKey);
+      return () => document.removeEventListener('keydown', handleEscapeKey);
+    }
+  }, [isEditMode]);
   
   // Animate subtitles for busy chats with staggered timing
   useEffect(() => {
@@ -369,6 +403,12 @@ ${isMac ? '⌘' : 'Ctrl'}+Enter - Submit prompt`);
         const newMode = currentMode === 'plan' ? 'default' : 'plan';
         setCurrentMode(newMode);
         addSystemMessage(`Switched to ${newMode === 'plan' ? 'Plan' : 'Execute'} mode`);
+        // Focus input when switching back to execute mode
+        if (newMode === 'default' && inputRef.current) {
+          requestAnimationFrame(() => {
+            inputRef.current?.focus();
+          });
+        }
         break;
         
       case 'clear':
@@ -538,6 +578,67 @@ Let me start by implementing the solution...`,
     }, 600); // Match animation duration
   };
   
+  const handleDeleteChat = (chatId: string) => {
+    setChats(prev => {
+      const filtered = prev.filter(c => c.id !== chatId);
+      // If we deleted the active chat, activate the first remaining chat
+      if (chatId === activeChatId && filtered.length > 0) {
+        setActiveChatId(filtered[0].id);
+        filtered[0].isActive = true;
+      }
+      return filtered;
+    });
+  };
+  
+  const handleDragStart = (e: React.DragEvent, chatId: string) => {
+    setDraggedChatId(chatId);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', chatId);
+  };
+  
+  const handleDragOver = (e: React.DragEvent, chatId: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    
+    if (!draggedChatId || draggedChatId === chatId) return;
+    
+    setDragOverChatId(chatId);
+    
+    // Real-time reordering
+    setChats(prev => {
+      const newChats = [...prev];
+      const draggedIndex = newChats.findIndex(c => c.id === draggedChatId);
+      const targetIndex = newChats.findIndex(c => c.id === chatId);
+      
+      if (draggedIndex !== -1 && targetIndex !== -1 && draggedIndex !== targetIndex) {
+        const [draggedChat] = newChats.splice(draggedIndex, 1);
+        newChats.splice(targetIndex, 0, draggedChat);
+      }
+      
+      return newChats;
+    });
+  };
+  
+  const handleDragLeave = (e: React.DragEvent) => {
+    // Only clear if we're actually leaving the element
+    const relatedTarget = e.relatedTarget as HTMLElement;
+    if (!e.currentTarget.contains(relatedTarget)) {
+      setDragOverChatId(null);
+    }
+  };
+  
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDraggedChatId(null);
+    setDragOverChatId(null);
+  };
+  
+  const handleDragEnd = () => {
+    setDraggedChatId(null);
+    setDragOverChatId(null);
+  };
+  
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     // Handle remember mode exit
     if (isRememberMode) {
@@ -668,6 +769,12 @@ Let me start by implementing the solution...`,
           const newMode = currentMode === 'plan' ? 'default' : 'plan';
           setCurrentMode(newMode);
           addSystemMessage(`Switched to ${newMode === 'plan' ? 'Plan' : 'Execute'} mode`);
+          // Focus input when switching back to execute mode
+          if (newMode === 'default' && inputRef.current) {
+            requestAnimationFrame(() => {
+              inputRef.current?.focus();
+            });
+          }
         }
       } else if (input.startsWith('/')) {
         // Command auto-complete
@@ -751,7 +858,7 @@ Let me start by implementing the solution...`,
     <div className={styles.terminal}>
       <div className={styles.body}>
         {showChatNav && (
-          <div className={styles.chatNav}>
+          <div className={styles.chatNav} ref={chatNavRef}>
             <div className={styles.chatNavHeader}>
               <div className={styles.chatNavTitleRow}>
                 <Button 
@@ -765,6 +872,16 @@ Let me start by implementing the solution...`,
                   <ChevronLeftIcon />
                 </Button>
                 <h3 className={styles.chatNavTitle}>Chats</h3>
+                <Button
+                  variant="inline"
+                  shape="square"
+                  size="small"
+                  onClick={() => setIsEditMode(!isEditMode)}
+                  aria-label={isEditMode ? "Exit edit mode" : "Enter edit mode"}
+                  className={`${styles.editButton} ${isEditMode ? styles.editButtonActive : ''}`}
+                >
+                  <EditIcon />
+                </Button>
               </div>
             </div>
             <div className={styles.chatNavFilters}>
@@ -806,10 +923,25 @@ Let me start by implementing the solution...`,
                 .map((chat, index) => (
                   <div 
                     key={chat.id}
-                    className={`${styles.chatItem} ${chat.isActive ? styles.chatItemActive : ''} ${hasInitialized && newChatIds.has(chat.id) ? styles.chatItemNew : ''}`}
-                    onClick={() => handleChatSelect(chat.id)}
+                    className={`${styles.chatItem} ${!isEditMode && chat.isActive ? styles.chatItemActive : ''} ${hasInitialized && newChatIds.has(chat.id) ? styles.chatItemNew : ''} ${isEditMode ? styles.chatItemEditMode : ''} ${draggedChatId === chat.id ? styles.chatItemDragging : ''} ${dragOverChatId === chat.id ? styles.chatItemDragOver : ''}`}
+                    onClick={() => !isEditMode && handleChatSelect(chat.id)}
                     style={hasInitialized && newChatIds.has(chat.id) ? { animationDelay: `${index * 50}ms` } : undefined}
+                    draggable={false}
+                    onDragStart={(e) => handleDragStart(e, chat.id)}
+                    onDragOver={(e) => handleDragOver(e, chat.id)}
+                    onDragLeave={(e) => handleDragLeave(e)}
+                    onDrop={handleDrop}
+                    onDragEnd={handleDragEnd}
                   >
+                    {isEditMode && (
+                      <div 
+                        className={styles.dragHandle}
+                        onMouseDown={(e) => e.currentTarget.parentElement?.setAttribute('draggable', 'true')}
+                        onMouseUp={(e) => e.currentTarget.parentElement?.setAttribute('draggable', 'false')}
+                      >
+                        <DragHandleIcon size={12} />
+                      </div>
+                    )}
                     <div className={styles.chatItemIndicator}>
                       {chat.isBusy ? (
                         <Spinner size="small" />
@@ -837,12 +969,27 @@ Let me start by implementing the solution...`,
                         </div>
                       </div>
                     </div>
+                    {isEditMode && (
+                      <Button
+                        variant="inline"
+                        shape="square"
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteChat(chat.id);
+                        }}
+                        aria-label={`Delete ${chat.title}`}
+                        className={styles.deleteButton}
+                      >
+                        <DeleteIcon />
+                      </Button>
+                    )}
                   </div>
                 ))}
             </div>
           </div>
         )}
-        <div className={styles.mainContent}>
+        <div className={`${styles.mainContent} ${currentMode === 'plan' ? styles.splitView : ''}`}>
           <div className={styles.chatHeader}>
             <div className={styles.chatHeaderLeft}>
               {!showChatNav && (
@@ -884,6 +1031,178 @@ Let me start by implementing the solution...`,
             )}
             <div ref={messagesEndRef} />
           </div>
+          {currentMode === 'plan' && (
+            <div className={styles.editorPane}>
+              <div className={styles.editorToolbar}>
+                <div className={styles.toolbarGroup}>
+                  <Button
+                    variant="inline"
+                    shape="square"
+                    size="small"
+                    aria-label="Undo"
+                    className={styles.toolbarButton}
+                  >
+                    <UndoIcon />
+                  </Button>
+                  <Button
+                    variant="inline"
+                    shape="square"
+                    size="small"
+                    aria-label="Redo"
+                    className={styles.toolbarButton}
+                  >
+                    <RedoIcon />
+                  </Button>
+                </div>
+                <div className={styles.toolbarSeparator} />
+                <div className={styles.toolbarGroup}>
+                  <Button
+                    variant="inline"
+                    shape="square"
+                    size="small"
+                    aria-label="Heading 1"
+                    className={styles.toolbarButton}
+                  >
+                    <Heading1Icon />
+                  </Button>
+                  <Button
+                    variant="inline"
+                    shape="square"
+                    size="small"
+                    aria-label="Heading 2"
+                    className={styles.toolbarButton}
+                  >
+                    <Heading2Icon />
+                  </Button>
+                  <Button
+                    variant="inline"
+                    shape="square"
+                    size="small"
+                    aria-label="Heading 3"
+                    className={styles.toolbarButton}
+                  >
+                    <Heading3Icon />
+                  </Button>
+                </div>
+                <div className={styles.toolbarSeparator} />
+                <div className={styles.toolbarGroup}>
+                  <Button
+                    variant="inline"
+                    shape="square"
+                    size="small"
+                    aria-label="Bold"
+                    className={styles.toolbarButton}
+                  >
+                    <BoldIcon />
+                  </Button>
+                  <Button
+                    variant="inline"
+                    shape="square"
+                    size="small"
+                    aria-label="Italic"
+                    className={styles.toolbarButton}
+                  >
+                    <ItalicIcon />
+                  </Button>
+                  <Button
+                    variant="inline"
+                    shape="square"
+                    size="small"
+                    aria-label="Underline"
+                    className={styles.toolbarButton}
+                  >
+                    <UnderlineIcon />
+                  </Button>
+                </div>
+                <div className={styles.toolbarSeparator} />
+                <div className={styles.toolbarGroup}>
+                  <Button
+                    variant="inline"
+                    shape="square"
+                    size="small"
+                    aria-label="Bullet List"
+                    className={styles.toolbarButton}
+                  >
+                    <ListBulletIcon />
+                  </Button>
+                  <Button
+                    variant="inline"
+                    shape="square"
+                    size="small"
+                    aria-label="Numbered List"
+                    className={styles.toolbarButton}
+                  >
+                    <ListOrderedIcon />
+                  </Button>
+                </div>
+                <div className={styles.toolbarSeparator} />
+                <div className={styles.toolbarGroup}>
+                  <Button
+                    variant="inline"
+                    shape="square"
+                    size="small"
+                    aria-label="Insert Link"
+                    className={styles.toolbarButton}
+                  >
+                    <LinkIcon />
+                  </Button>
+                  <Button
+                    variant="inline"
+                    shape="square"
+                    size="small"
+                    aria-label="Code Block"
+                    className={styles.toolbarButton}
+                  >
+                    <CodeBlockIcon />
+                  </Button>
+                </div>
+              </div>
+              <div className={styles.editorContent}>
+                <div 
+                  className={styles.editorDocument}
+                  contentEditable
+                  suppressContentEditableWarning
+                  onInput={(e) => {
+                    const target = e.currentTarget;
+                    setPlanContent(target.innerText);
+                  }}
+                  dangerouslySetInnerHTML={{ 
+                    __html: planContent
+                      .split('\n')
+                      .map(line => {
+                        // Headers
+                        if (line.startsWith('### ')) {
+                          return `<h3>${line.slice(4)}</h3>`;
+                        } else if (line.startsWith('## ')) {
+                          return `<h2>${line.slice(3)}</h2>`;
+                        } else if (line.startsWith('# ')) {
+                          return `<h1>${line.slice(2)}</h1>`;
+                        }
+                        // Lists
+                        else if (line.match(/^\d+\.\s/)) {
+                          return `<div style="margin-left: 20px">${line}</div>`;
+                        } else if (line.startsWith('- ')) {
+                          return `<div>• ${line.slice(2)}</div>`;
+                        }
+                        // Bold text
+                        else if (line.includes('**')) {
+                          return `<div>${line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>`;
+                        }
+                        // Empty lines
+                        else if (line.trim() === '') {
+                          return '<br>';
+                        }
+                        // Regular text
+                        else {
+                          return `<div>${line}</div>`;
+                        }
+                      })
+                      .join('')
+                  }}
+                />
+              </div>
+            </div>
+          )}
 
           {autoComplete.length > 0 && (
             <div className={styles.autoComplete}>
