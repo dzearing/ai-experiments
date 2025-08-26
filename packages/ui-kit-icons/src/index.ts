@@ -44,6 +44,7 @@ export { Heading2Icon } from './components/Heading2Icon';
 export { Heading3Icon } from './components/Heading3Icon';
 export { HeartIcon } from './components/HeartIcon';
 export { HomeIcon } from './components/HomeIcon';
+export { HourglassIcon } from './components/HourglassIcon';
 export { ImageIcon } from './components/ImageIcon';
 export { IndentIcon } from './components/IndentIcon';
 export { InfoCircleIcon } from './components/InfoCircleIcon';

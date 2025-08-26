@@ -83,6 +83,7 @@ import { IconName } from '@claude-flow/ui-kit-icons';
 - `GearIcon` - Gear/settings
 - `HeartIcon` - Heart/favorite
 - `HomeIcon` - Home/house
+- `HourglassIcon` - Hourglass/time/waiting
 - `ImageIcon` - Image/picture
 - `LinkIcon` - Link/chain
 - `MaximizeIcon` - Maximize window

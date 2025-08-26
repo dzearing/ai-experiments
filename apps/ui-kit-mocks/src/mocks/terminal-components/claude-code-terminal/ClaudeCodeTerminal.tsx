@@ -86,7 +86,7 @@ export const ClaudeCodeTerminal: React.FC<ClaudeCodeTerminalProps> = ({
     {
       id: 'chat-2',
       title: 'Database migration',
-      subtitle: 'Running migration scripts',
+      subtitle: 'Running migration scripts...',
       isActive: false,
       isBusy: true,
       messages: [],
@@ -108,7 +108,7 @@ export const ClaudeCodeTerminal: React.FC<ClaudeCodeTerminalProps> = ({
     {
       id: 'chat-4',
       title: 'Performance optimization',
-      subtitle: 'Analyzing bundle size',
+      subtitle: 'Analyzing bundle size...',
       isActive: false,
       isBusy: true,
       messages: [],
@@ -139,30 +139,36 @@ export const ClaudeCodeTerminal: React.FC<ClaudeCodeTerminalProps> = ({
   
   // Predefined actions for simulating work
   const workActions = [
-    'Analyzing code structure...',
-    'Reading file contents...',
-    'Searching for references...',
-    'Running type checks...',
-    'Evaluating dependencies...',
-    'Processing imports...',
-    'Scanning for patterns...',
-    'Building AST...',
-    'Checking syntax...',
-    'Validating configuration...',
-    'Examining test coverage...',
-    'Reviewing documentation...',
-    'Parsing modules...',
-    'Inspecting components...',
-    'Analyzing performance...',
-    'Gathering metrics...',
-    'Compiling results...',
-    'Organizing findings...',
+    'Analyzing code structure',
+    'Reading file contents',
+    'Searching for references',
+    'Running type checks',
+    'Evaluating dependencies',
+    'Processing imports',
+    'Scanning for patterns',
+    'Building AST',
+    'Checking syntax',
+    'Validating configuration',
+    'Examining test coverage',
+    'Reviewing documentation',
+    'Parsing modules',
+    'Inspecting components',
+    'Analyzing performance',
+    'Gathering metrics',
+    'Compiling results',
+    'Organizing findings',
   ];
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    const messagesContainer = messagesEndRef.current?.parentElement;
+    if (messagesContainer) {
+      messagesContainer.scrollTo({
+        top: messagesContainer.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+  }, [messages.length]); // Only trigger on message count change, not content changes
 
   // Focus input on mount and set initial height
   useEffect(() => {
@@ -171,6 +177,8 @@ export const ClaudeCodeTerminal: React.FC<ClaudeCodeTerminalProps> = ({
       inputRef.current.style.height = 'auto';
       inputRef.current.style.height = inputRef.current.scrollHeight + 'px';
     }
+    // Mark as initialized after first render to prevent initial animations
+    setHasInitialized(true);
   }, []);
 
   // Adjust textarea height when input changes
@@ -186,6 +194,14 @@ export const ClaudeCodeTerminal: React.FC<ClaudeCodeTerminalProps> = ({
     const chat = chats.find(c => c.id === activeChatId);
     if (chat) {
       setMessages(chat.messages);
+      // Immediately scroll to bottom when switching chats (no animation)
+      // Use scrollTop instead of scrollIntoView to prevent full page scroll
+      setTimeout(() => {
+        const messagesContainer = messagesEndRef.current?.parentElement;
+        if (messagesContainer) {
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+      }, 0);
     }
   }, [activeChatId, chats]);
   
@@ -212,8 +228,8 @@ export const ClaudeCodeTerminal: React.FC<ClaudeCodeTerminalProps> = ({
         setChats(prevChats => 
           prevChats.map(chat => {
             if (chat.id === chatId && chat.isBusy) {
-              // Pick a random action from the list
-              const randomAction = workActions[Math.floor(Math.random() * workActions.length)];
+              // Pick a random action from the list and add ellipsis
+              const randomAction = workActions[Math.floor(Math.random() * workActions.length)] + '...';
               return { 
                 ...chat, 
                 previousSubtitle: chat.subtitleInitialized ? chat.subtitle : undefined,
@@ -244,7 +260,7 @@ export const ClaudeCodeTerminal: React.FC<ClaudeCodeTerminalProps> = ({
     };
     
     // Start timers for all busy chats with different initial delays
-    chats.forEach((chat, index) => {
+    chats.forEach((chat) => {
       if (chat.isBusy) {
         // Stagger initial delays more evenly
         const initialDelay = Math.random() * 10000; // Spread initial starts over 10 seconds
@@ -301,12 +317,19 @@ export const ClaudeCodeTerminal: React.FC<ClaudeCodeTerminalProps> = ({
     setInput('');
     setCurrentDraft(''); // Clear the draft when submitting
     setAutoComplete([]);
+    
+    // Keep focus on the input and ensure it's not disabled
+    requestAnimationFrame(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+        inputRef.current.disabled = false;
+      }
+    });
   }, [input, onPrompt]);
 
   const handleCommand = (command: string) => {
     const parts = command.split(' ');
     const cmd = parts[0].substring(1); // Remove the '/'
-    const args = parts.slice(1).join(' ');
 
     // Add command message
     const cmdMessage: Message = {
@@ -469,6 +492,9 @@ Let me start by implementing the solution...`,
     })));
   };
   
+  const [newChatIds, setNewChatIds] = useState<Set<string>>(new Set());
+  const [hasInitialized, setHasInitialized] = useState(false);
+  
   const handleNewChat = () => {
     const newChat: Chat = {
       id: `chat-${Date.now()}`,
@@ -485,11 +511,30 @@ Let me start by implementing the solution...`,
       lastActivity: new Date(),
     };
     
+    // Track this as a new chat for animation
+    setNewChatIds(prev => new Set(prev).add(newChat.id));
+    
     setChats(prev => [
-      ...prev.map(c => ({ ...c, isActive: false })),
-      newChat
+      newChat,
+      ...prev.map(c => ({ ...c, isActive: false }))
     ]);
     setActiveChatId(newChat.id);
+    
+    // Focus the input after the new chat is rendered
+    requestAnimationFrame(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    });
+    
+    // Remove from new chat tracking after animation completes
+    setTimeout(() => {
+      setNewChatIds(prev => {
+        const next = new Set(prev);
+        next.delete(newChat.id);
+        return next;
+      });
+    }, 600); // Match animation duration
   };
   
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -507,6 +552,28 @@ Let me start by implementing the solution...`,
         setIsRememberMode(false);
         return;
       }
+    }
+    
+    // Handle Escape key
+    if (e.key === 'Escape' && !isRememberMode) {
+      e.preventDefault();
+      if (isStreaming) {
+        // Abort if we're waiting for a response
+        setIsStreaming(false);
+        addSystemMessage('Operation aborted');
+        // Mark active chat as idle
+        setChats(prev => prev.map(chat => 
+          chat.id === activeChatId 
+            ? { ...chat, isBusy: false, subtitle: 'Ready' }
+            : chat
+        ));
+      } else {
+        // Clear input if idle
+        setInput('');
+        setCurrentDraft('');
+        setHistoryIndex(-1);
+      }
+      return;
     }
 
     // History navigation with multiline support
@@ -534,6 +601,11 @@ Let me start by implementing the solution...`,
         if (positionInLine === 0 && history.length > 0) {
           e.preventDefault();
           
+          // If we're already at the beginning of history, no-op
+          if (historyIndex === 0) {
+            return;
+          }
+          
           // Save current input as draft if we're starting to navigate history
           if (historyIndex === -1) {
             setCurrentDraft(input);
@@ -542,7 +614,7 @@ Let me start by implementing the solution...`,
           const newIndex = historyIndex === -1 ? history.length - 1 : Math.max(0, historyIndex - 1);
           setHistoryIndex(newIndex);
           setInput(history[newIndex]);
-          // Set cursor to end of the loaded text
+          // Set cursor to end when going backward (up) in history
           setTimeout(() => {
             textarea.selectionStart = textarea.selectionEnd = textarea.value.length;
           }, 0);
@@ -571,7 +643,7 @@ Let me start by implementing the solution...`,
             } else {
               setHistoryIndex(newIndex);
               setInput(history[newIndex]);
-              // Set cursor to beginning of the loaded text
+              // Set cursor to beginning when moving forward in history
               setTimeout(() => {
                 textarea.selectionStart = textarea.selectionEnd = 0;
               }, 0);
@@ -614,6 +686,14 @@ Let me start by implementing the solution...`,
     if (e.key === 'Enter' && (isMac ? e.metaKey : e.ctrlKey)) {
       e.preventDefault();
       handleSubmit();
+      // Ensure input stays enabled and focused
+      requestAnimationFrame(() => {
+        if (inputRef.current) {
+          inputRef.current.disabled = false;
+          inputRef.current.focus();
+        }
+      });
+      return; // Exit early to prevent any other processing
     }
     // Enter key alone just adds a newline (default behavior)
     
@@ -701,7 +781,7 @@ Let me start by implementing the solution...`,
                 onClick={() => setChatFilter(chatFilter === 'busy' ? 'all' : 'busy')}
                 aria-label="Filter busy chats"
               >
-                <Spinner size="tiny" /> Busy
+                <Spinner size="small" /> Busy
               </Button>
             </div>
             <Button 
@@ -720,11 +800,12 @@ Let me start by implementing the solution...`,
                   if (chatFilter === 'busy') return chat.isBusy;
                   return true;
                 })
-                .map(chat => (
+                .map((chat, index) => (
                   <div 
                     key={chat.id}
-                    className={`${styles.chatItem} ${chat.isActive ? styles.chatItemActive : ''}`}
+                    className={`${styles.chatItem} ${chat.isActive ? styles.chatItemActive : ''} ${hasInitialized && newChatIds.has(chat.id) ? styles.chatItemNew : ''}`}
                     onClick={() => handleChatSelect(chat.id)}
+                    style={hasInitialized && newChatIds.has(chat.id) ? { animationDelay: `${index * 50}ms` } : undefined}
                   >
                     <div className={styles.chatItemIndicator}>
                       {chat.isBusy ? (
@@ -842,7 +923,7 @@ Let me start by implementing the solution...`,
                 }}
                 onKeyDown={handleKeyDown}
                 placeholder="Type a prompt or /help for commands"
-                disabled={isStreaming}
+                disabled={false}
                 aria-label="Terminal input"
                 rows={1}
               />
