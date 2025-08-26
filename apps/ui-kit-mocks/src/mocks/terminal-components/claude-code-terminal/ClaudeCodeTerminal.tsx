@@ -24,6 +24,7 @@ import {
   MenuIcon,
   CloseIcon,
   AddIcon,
+  HourglassIcon,
 } from '@claude-flow/ui-kit-icons';
 
 export interface Message {
@@ -768,20 +769,22 @@ Let me start by implementing the solution...`,
             </div>
             <div className={styles.chatNavFilters}>
               <Button
-                variant={chatFilter === 'idle' ? 'primary' : 'neutral'}
+                variant={chatFilter === 'idle' ? 'primary' : 'outline'}
                 size="small"
+                shape="pill"
                 onClick={() => setChatFilter(chatFilter === 'idle' ? 'all' : 'idle')}
                 aria-label="Filter idle chats"
               >
                 <CheckCircleIcon className={styles.idleIcon} /> Idle
               </Button>
               <Button
-                variant={chatFilter === 'busy' ? 'primary' : 'neutral'}
+                variant={chatFilter === 'busy' ? 'primary' : 'outline'}
                 size="small"
+                shape="pill"
                 onClick={() => setChatFilter(chatFilter === 'busy' ? 'all' : 'busy')}
                 aria-label="Filter busy chats"
               >
-                <Spinner size="small" /> Busy
+                <HourglassIcon className={styles.busyIcon} /> Busy
               </Button>
             </div>
             <Button 
@@ -811,7 +814,7 @@ Let me start by implementing the solution...`,
                       {chat.isBusy ? (
                         <Spinner size="small" />
                       ) : (
-                        <CheckCircleIcon className={styles.idleIcon} />
+                        <CheckCircleIcon className={styles.chatIndicatorIcon} />
                       )}
                     </div>
                     <div className={styles.chatItemContent}>

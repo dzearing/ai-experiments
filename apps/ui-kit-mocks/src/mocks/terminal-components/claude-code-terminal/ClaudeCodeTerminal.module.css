@@ -609,6 +609,12 @@
   flex-shrink: 0;
 }
 
+.chatIndicatorIcon {
+  width: var(--spacing);
+  height: var(--spacing);
+  color: var(--color-body-textSoft10);
+}
+
 .chatItemContent {
   flex: 1;
   min-width: 0;
@@ -674,11 +680,12 @@
   }
 }
 
-/* Idle icon - green circle indicating idle state */
-.idleIcon {
-  color: var(--color-body-textSuccess);
+/* Filter button icons - inherit color from button surface */
+.idleIcon,
+.busyIcon {
   width: var(--spacing);
   height: var(--spacing);
+  color: currentColor; /* Inherits from button's text color */
 }
 
 /* Mobile responsive */
