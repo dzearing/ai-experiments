@@ -1,0 +1,116 @@
+.messages {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  min-height: 0;
+  padding: var(--spacing);
+  background: var(--color-body-background);
+}
+
+.message {
+  margin-bottom: var(--spacing);
+  animation: fadeIn var(--duration-normal) ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(var(--spacing-small20));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.messageHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small10);
+  padding-bottom: var(--spacing-small20);
+  font-size: var(--font-size-small10);
+}
+
+.messageIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--spacing-large10);
+  height: var(--spacing-large10);
+}
+
+.messageType {
+  font-weight: var(--font-weight-medium);
+  text-transform: capitalize;
+}
+
+.messageTime {
+  color: var(--color-body-textSoft10);
+  margin-left: auto;
+}
+
+.messageContent {
+  padding-left: calc(var(--spacing-large10) + var(--spacing-small10));
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size);
+  line-height: var(--line-height-normal);
+}
+
+.messageContent pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: inherit;
+}
+
+/* Message type specific styles */
+.message-user .messageType {
+  color: var(--color-primary-text);
+}
+
+.message-assistant .messageType {
+  color: var(--color-success-text);
+}
+
+.message-system .messageType {
+  color: var(--color-neutral-text);
+}
+
+.message-system .messageContent {
+  color: var(--color-body-textSoft10);
+  font-style: italic;
+}
+
+.message-tool .messageType {
+  color: var(--color-warning-text);
+}
+
+.toolOutput {
+  margin-top: var(--spacing-small10);
+  padding: var(--spacing-small10);
+  background: var(--color-panel-background);
+  border-left: 2px solid var(--color-panel-border);
+  font-size: var(--font-size-small10);
+}
+
+.toolOutputLabel {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-body-textSoft10);
+}
+
+.streamingIndicator {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small10);
+  padding: var(--spacing);
+  color: var(--color-body-textSoft10);
+  animation: pulseOpacity 2s ease-in-out infinite;
+}
+
+@keyframes pulseOpacity {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}

@@ -2,83 +2,17 @@ import React, { useState, useRef, useEffect, useCallback, KeyboardEvent } from '
 import styles from './ClaudeCodeTerminal.module.css';
 import { Button, Spinner, Tabs, TabItem } from '@claude-flow/ui-kit-react';
 import {
-  ChevronRightIcon,
-  ChevronLeftIcon,
-  ChevronUpIcon,
-  ChevronDownIcon,
-  PlayIcon,
-  StopIcon,
-  SettingsIcon,
-  CheckCircleIcon,
-  ErrorCircleIcon,
-  InfoCircleIcon,
-  ClockIcon,
-  CodeIcon,
-  FileIcon,
-  FolderIcon,
-  RefreshIcon,
-  SaveIcon,
-  CopyIcon,
-  ExpandIcon,
-  CollapseIcon,
-  MenuIcon,
-  CloseIcon,
   AddIcon,
-  HourglassIcon,
-  BoldIcon,
-  ItalicIcon,
-  UnderlineIcon,
-  ListBulletIcon,
-  ListOrderedIcon,
-  LinkIcon,
-  Heading1Icon,
-  Heading2Icon,
-  Heading3Icon,
-  UndoIcon,
-  RedoIcon,
-  CodeBlockIcon,
-  EditIcon,
-  DeleteIcon,
-  DragHandleIcon,
+  CodeIcon,
   ChatIcon,
   UsersIcon,
   ListTaskIcon,
-  ImageIcon,
-  TableIcon,
 } from '@claude-flow/ui-kit-icons';
 import { ContextView } from './views/ContextView';
 import { AgentsView } from './views/AgentsView';
 import { DiffView } from './views/DiffView';
-
-export interface Message {
-  id: string;
-  type: 'user' | 'assistant' | 'system' | 'tool';
-  content: string;
-  timestamp: Date;
-  model?: string;
-  toolName?: string;
-  toolStatus?: 'executing' | 'completed' | 'failed';
-  toolOutput?: string;
-}
-
-export interface Chat {
-  id: string;
-  title: string;
-  subtitle: string;
-  previousSubtitle?: string;
-  subtitleInitialized?: boolean;
-  isActive: boolean;
-  isBusy: boolean;
-  messages: Message[];
-  lastActivity: Date;
-  repoPath?: string;
-  branch?: string;
-}
-
-export interface ClaudeCodeTerminalProps {
-  onCommand?: (command: string) => void;
-  onPrompt?: (prompt: string) => void;
-}
+import { ChatNavigation, MessageList, InputArea, PlanEditor, ChatHeader } from './components';
+import type { Message, Chat, ClaudeCodeTerminalProps } from './types';
 
 export const ClaudeCodeTerminal: React.FC<ClaudeCodeTerminalProps> = ({
   onCommand,
@@ -158,9 +92,6 @@ export const ClaudeCodeTerminal: React.FC<ClaudeCodeTerminalProps> = ({
   const [currentMode, setCurrentMode] = useState<'default' | 'plan'>('default');
   const [isRememberMode, setIsRememberMode] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [draggedChatId, setDraggedChatId] = useState<string | null>(null);
-  const [dragOverChatId, setDragOverChatId] = useState<string | null>(null);
-  const chatNavRef = useRef<HTMLDivElement>(null);
   const [inputMode, setInputMode] = useState<'single-line' | 'multi-line'>('single-line');
   const [planContent, setPlanContent] = useState(`# Project Implementation Plan\n\n## Overview\nThis document outlines the implementation strategy for the authentication feature.\n\n## Phase 1: Setup OAuth2\n- Configure OAuth providers\n- Set up redirect URIs\n- Implement token storage\n\n## Phase 2: User Flow\n1. **Login Page**\n   - Design responsive login form\n   - Add social login buttons\n   - Implement error handling\n\n2. **Session Management**\n   - Create session middleware\n   - Handle token refresh\n   - Implement logout flow\n\n## Technical Considerations\n- Security best practices\n- Rate limiting\n- CSRF protection\n\n## Testing Strategy\n- Unit tests for auth logic\n- Integration tests for OAuth flow\n- E2E tests for user journey`);
   
@@ -256,19 +187,6 @@ export const ClaudeCodeTerminal: React.FC<ClaudeCodeTerminalProps> = ({
     return () => clearTimeout(timer);
   }, [currentMode]);
   
-  // Handle escape key for edit mode
-  useEffect(() => {
-    const handleEscapeKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isEditMode && chatNavRef.current?.contains(document.activeElement)) {
-        setIsEditMode(false);
-      }
-    };
-    
-    if (isEditMode) {
-      document.addEventListener('keydown', handleEscapeKey);
-      return () => document.removeEventListener('keydown', handleEscapeKey);
-    }
-  }, [isEditMode]);
   
   // Animate subtitles for busy chats with staggered timing
   useEffect(() => {
@@ -650,25 +568,11 @@ Let me start by implementing the solution...`,
     });
   };
   
-  const handleDragStart = (e: React.DragEvent, chatId: string) => {
-    setDraggedChatId(chatId);
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', chatId);
-  };
-  
-  const handleDragOver = (e: React.DragEvent, chatId: string) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    
-    if (!draggedChatId || draggedChatId === chatId) return;
-    
-    setDragOverChatId(chatId);
-    
-    // Real-time reordering
+  const handleChatReorder = (draggedId: string, targetId: string) => {
     setChats(prev => {
       const newChats = [...prev];
-      const draggedIndex = newChats.findIndex(c => c.id === draggedChatId);
-      const targetIndex = newChats.findIndex(c => c.id === chatId);
+      const draggedIndex = newChats.findIndex(c => c.id === draggedId);
+      const targetIndex = newChats.findIndex(c => c.id === targetId);
       
       if (draggedIndex !== -1 && targetIndex !== -1 && draggedIndex !== targetIndex) {
         const [draggedChat] = newChats.splice(draggedIndex, 1);
@@ -677,26 +581,6 @@ Let me start by implementing the solution...`,
       
       return newChats;
     });
-  };
-  
-  const handleDragLeave = (e: React.DragEvent) => {
-    // Only clear if we're actually leaving the element
-    const relatedTarget = e.relatedTarget as HTMLElement;
-    if (!e.currentTarget.contains(relatedTarget)) {
-      setDragOverChatId(null);
-    }
-  };
-  
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDraggedChatId(null);
-    setDragOverChatId(null);
-  };
-  
-  const handleDragEnd = () => {
-    setDraggedChatId(null);
-    setDragOverChatId(null);
   };
   
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -1010,449 +894,59 @@ Let me start by implementing the solution...`,
 
   const getChatContent = () => (
     <div className={styles.chatContainer}>
-      <div className={styles.messages}>
-        {messages.map(renderMessage)}
-        {isStreaming && (
-          <div className={styles.streamingIndicator}>
-            <Spinner size="small" />
-            <span>Claude is thinking...</span>
-          </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-      {autoComplete.length > 0 && (
-        <div className={styles.autoComplete}>
-          {autoComplete.map((cmd, idx) => (
-            <div 
-              key={cmd}
-              className={`${styles.autoCompleteItem} ${idx === autoCompleteIndex ? styles.selected : ''}`}
-            >
-              /{cmd}
-            </div>
-          ))}
-        </div>
-      )}
-      <div className={styles.inputArea}>
-        <div className={styles.inputWrapper}>
-          <span className={`${styles.modeBadge} ${
-            isRememberMode ? styles.modeBadgeRemember : 
-            currentMode === 'plan' ? styles.modeBadgePlan : 
-            styles.modeBadgeExecute
-          }`}>
-            {isRememberMode ? 'Remember' : currentMode === 'plan' ? 'Plan' : 'Execute'} {inputMode === 'multi-line' ? '↵' : '↲'}
-          </span>
-          <textarea
-            ref={inputRef}
-            className={`${styles.input} ${
-              isRememberMode ? styles.inputRemember : 
-              currentMode === 'plan' ? styles.inputPlan : 
-              styles.inputExecute
-            }`}
-            value={isRememberMode && input.startsWith('#') ? input.slice(1) : input}
-            onChange={(e) => {
-              const newValue = e.target.value;
-              if (isRememberMode) {
-                // In remember mode, prepend # to the actual stored value
-                setInput('#' + newValue);
-              } else {
-                setInput(newValue);
-              }
-            }}
-            onKeyDown={handleKeyDown}
-            placeholder="Type a prompt or /help for commands"
-            disabled={false}
-            aria-label="Terminal input"
-            rows={1}
-          />
-        </div>
-        <div className={styles.helperText}>
-          {inputMode === 'single-line' ? 'Enter to submit' : `${isMac ? '⌘' : 'Ctrl'}-Enter to submit`} • {isMac ? '⌘' : 'Ctrl'}↓ to toggle input mode • Shift-Tab to change modes
-        </div>
-      </div>
+      <MessageList 
+        messages={messages}
+        isStreaming={isStreaming}
+        messagesEndRef={messagesEndRef}
+      />
+      <InputArea
+        input={input}
+        inputMode={inputMode}
+        currentMode={currentMode}
+        isRememberMode={isRememberMode}
+        autoComplete={autoComplete}
+        autoCompleteIndex={autoCompleteIndex}
+        isMac={isMac}
+        inputRef={inputRef}
+        onInputChange={setInput}
+        onKeyDown={handleKeyDown}
+      />
     </div>
   );
 
   const getPlanContent = () => (
-    <div className={styles.editorPane}>
-                <div className={styles.editorToolbar}>
-                  <div className={styles.toolbarGroup}>
-                    <Button
-                      variant="inline"
-                      shape="square"
-                      size="small"
-                      aria-label="Undo"
-                      className={styles.toolbarButton}
-                    >
-                      <UndoIcon />
-                    </Button>
-                    <Button
-                      variant="inline"
-                      shape="square"
-                      size="small"
-                      aria-label="Redo"
-                      className={styles.toolbarButton}
-                    >
-                      <RedoIcon />
-                    </Button>
-                  </div>
-                  <div className={styles.toolbarSeparator} />
-                  <div className={styles.toolbarGroup}>
-                    <Button
-                      variant="inline"
-                      shape="square"
-                      size="small"
-                      aria-label="Heading 1"
-                      className={styles.toolbarButton}
-                    >
-                      <Heading1Icon />
-                    </Button>
-                    <Button
-                      variant="inline"
-                      shape="square"
-                      size="small"
-                      aria-label="Heading 2"
-                      className={styles.toolbarButton}
-                    >
-                      <Heading2Icon />
-                    </Button>
-                    <Button
-                      variant="inline"
-                      shape="square"
-                      size="small"
-                      aria-label="Heading 3"
-                      className={styles.toolbarButton}
-                    >
-                      <Heading3Icon />
-                    </Button>
-                  </div>
-                  <div className={styles.toolbarSeparator} />
-                  <div className={styles.toolbarGroup}>
-                    <Button
-                      variant="inline"
-                      shape="square"
-                      size="small"
-                      aria-label="Bold"
-                      className={styles.toolbarButton}
-                    >
-                      <BoldIcon />
-                    </Button>
-                    <Button
-                      variant="inline"
-                      shape="square"
-                      size="small"
-                      aria-label="Italic"
-                      className={styles.toolbarButton}
-                    >
-                      <ItalicIcon />
-                    </Button>
-                    <Button
-                      variant="inline"
-                      shape="square"
-                      size="small"
-                      aria-label="Underline"
-                      className={styles.toolbarButton}
-                    >
-                      <UnderlineIcon />
-                    </Button>
-                  </div>
-                  <div className={styles.toolbarSeparator} />
-                  <div className={styles.toolbarGroup}>
-                    <Button
-                      variant="inline"
-                      shape="square"
-                      size="small"
-                      aria-label="Bullet List"
-                      className={styles.toolbarButton}
-                    >
-                      <ListBulletIcon />
-                    </Button>
-                    <Button
-                      variant="inline"
-                      shape="square"
-                      size="small"
-                      aria-label="Numbered List"
-                      className={styles.toolbarButton}
-                    >
-                      <ListOrderedIcon />
-                    </Button>
-                  </div>
-                  <div className={styles.toolbarSeparator} />
-                  <div className={styles.toolbarGroup}>
-                    <Button
-                      variant="inline"
-                      shape="square"
-                      size="small"
-                      aria-label="Insert Link"
-                      className={styles.toolbarButton}
-                    >
-                      <LinkIcon />
-                    </Button>
-                    <Button
-                      variant="inline"
-                      shape="square"
-                      size="small"
-                      aria-label="Code Block"
-                      className={styles.toolbarButton}
-                    >
-                      <CodeBlockIcon />
-                    </Button>
-                  </div>
-                </div>
-                <div className={styles.editorContent}>
-                  <div 
-                    className={styles.editorDocument}
-                    contentEditable
-                    suppressContentEditableWarning
-                    onInput={(e) => {
-                      const target = e.currentTarget;
-                      setPlanContent(target.innerText);
-                    }}
-                    dangerouslySetInnerHTML={{ 
-                      __html: planContent
-                        .split('\n')
-                        .map(line => {
-                          // Headers
-                          if (line.startsWith('### ')) {
-                            return `<h3>${line.slice(4)}</h3>`;
-                          } else if (line.startsWith('## ')) {
-                            return `<h2>${line.slice(3)}</h2>`;
-                          } else if (line.startsWith('# ')) {
-                            return `<h1>${line.slice(2)}</h1>`;
-                          }
-                          // Lists
-                          else if (line.match(/^\d+\.\s/)) {
-                            return `<div style="margin-left: 20px">${line}</div>`;
-                          } else if (line.startsWith('- ')) {
-                            return `<div>• ${line.slice(2)}</div>`;
-                          }
-                          // Bold text
-                          else if (line.includes('**')) {
-                            return `<div>${line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>`;
-                          }
-                          // Empty lines
-                          else if (line.trim() === '') {
-                            return '<br>';
-                          }
-                          // Regular text
-                          else {
-                            return `<div>${line}</div>`;
-                          }
-                        })
-                        .join('')
-                    }}
-                  />
-                </div>
-              </div>
+    <PlanEditor
+      planContent={planContent}
+      onPlanContentChange={setPlanContent}
+    />
   );
 
-  const renderMessage = (message: Message) => {
-    const iconMap = {
-      user: <ChevronRightIcon className={styles.messageIcon} />,
-      assistant: '✨',
-      system: <InfoCircleIcon className={styles.messageIcon} />,
-      tool: message.toolStatus === 'completed' ? <CheckCircleIcon className={styles.messageIcon} /> :
-            message.toolStatus === 'failed' ? <ErrorCircleIcon className={styles.messageIcon} /> :
-            <Spinner size="small" />,
-    };
-
-    return (
-      <div key={message.id} className={`${styles.message} ${styles[`message-${message.type}`]}`}>
-        <div className={styles.messageHeader}>
-          <span className={styles.messageIcon}>{iconMap[message.type]}</span>
-          <span className={styles.messageType}>
-            {message.type === 'tool' ? message.toolName : message.type}
-          </span>
-          <span className={styles.messageTime}>
-            {message.timestamp.toLocaleTimeString()}
-          </span>
-        </div>
-        <div className={styles.messageContent}>
-          <pre>{message.content}</pre>
-          {message.toolOutput && (
-            <div className={styles.toolOutput}>
-              <span className={styles.toolOutputLabel}>Output:</span> {message.toolOutput}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className={styles.terminal}>
       <div className={styles.body}>
-        {showChatNav && (
-          <div className={styles.chatNav} ref={chatNavRef}>
-            <div className={styles.chatNavHeader}>
-              <div className={styles.chatNavTitleRow}>
-                <Button 
-                  variant="inline"
-                  shape="square"
-                  size="small"
-                  onClick={() => setShowChatNav(false)}
-                  aria-label="Collapse chat navigation"
-                  className={styles.collapseButton}
-                >
-                  <ChevronLeftIcon />
-                </Button>
-                <h3 className={styles.chatNavTitle}>Chats</h3>
-                <Button
-                  variant="inline"
-                  shape="square"
-                  onClick={() => setIsEditMode(!isEditMode)}
-                  aria-label={isEditMode ? "Exit edit mode" : "Enter edit mode"}
-                  className={`${styles.editButton} ${isEditMode ? styles.editButtonActive : ''}`}
-                >
-                  <EditIcon size={20} />
-                </Button>
-              </div>
-            </div>
-            <div className={styles.chatNavFilters}>
-              <Button
-                variant={chatFilter === 'idle' ? 'primary' : 'outline'}
-                size="small"
-                shape="pill"
-                onClick={() => setChatFilter(chatFilter === 'idle' ? 'all' : 'idle')}
-                aria-label="Filter idle chats"
-              >
-                <CheckCircleIcon className={styles.idleIcon} /> 
-                Idle
-                {(() => {
-                  const idleCount = chats.filter(c => !c.isBusy).length;
-                  return idleCount > 1 ? <span className={`${styles.filterCount} ${chatFilter === 'idle' ? styles.filterCountSelected : ''}`}>{idleCount}</span> : null;
-                })()}
-              </Button>
-              <Button
-                variant={chatFilter === 'busy' ? 'primary' : 'outline'}
-                size="small"
-                shape="pill"
-                onClick={() => setChatFilter(chatFilter === 'busy' ? 'all' : 'busy')}
-                aria-label="Filter busy chats"
-              >
-                <HourglassIcon className={styles.busyIcon} /> 
-                Busy
-                {(() => {
-                  const busyCount = chats.filter(c => c.isBusy).length;
-                  return busyCount > 1 ? <span className={`${styles.filterCount} ${chatFilter === 'busy' ? styles.filterCountSelected : ''}`}>{busyCount}</span> : null;
-                })()}
-              </Button>
-            </div>
-            <Button 
-              variant="primary" 
-              size="medium"
-              onClick={handleNewChat}
-              aria-label="New chat"
-              className={styles.newChatButton}
-            >
-              <AddIcon /> New chat
-            </Button>
-            <div className={styles.chatList}>
-              {chats
-                .filter(chat => {
-                  if (chatFilter === 'idle') return !chat.isBusy;
-                  if (chatFilter === 'busy') return chat.isBusy;
-                  return true;
-                })
-                .map((chat, index) => (
-                  <div 
-                    key={chat.id}
-                    className={`${styles.chatItem} ${!isEditMode && chat.isActive ? styles.chatItemActive : ''} ${hasInitialized && newChatIds.has(chat.id) ? styles.chatItemNew : ''} ${isEditMode ? styles.chatItemEditMode : ''} ${draggedChatId === chat.id ? styles.chatItemDragging : ''} ${dragOverChatId === chat.id ? styles.chatItemDragOver : ''}`}
-                    onClick={() => !isEditMode && handleChatSelect(chat.id)}
-                    style={hasInitialized && newChatIds.has(chat.id) ? { animationDelay: `${index * 50}ms` } : undefined}
-                    draggable={false}
-                    onDragStart={(e) => handleDragStart(e, chat.id)}
-                    onDragOver={(e) => handleDragOver(e, chat.id)}
-                    onDragLeave={(e) => handleDragLeave(e)}
-                    onDrop={handleDrop}
-                    onDragEnd={handleDragEnd}
-                  >
-                    {isEditMode && (
-                      <div 
-                        className={styles.dragHandle}
-                        onMouseDown={(e) => e.currentTarget.parentElement?.setAttribute('draggable', 'true')}
-                        onMouseUp={(e) => e.currentTarget.parentElement?.setAttribute('draggable', 'false')}
-                      >
-                        <DragHandleIcon size={20} />
-                      </div>
-                    )}
-                    <div className={styles.chatItemIndicator}>
-                      {chat.isBusy ? (
-                        <Spinner size="small" />
-                      ) : (
-                        <CheckCircleIcon className={styles.chatIndicatorIcon} />
-                      )}
-                    </div>
-                    <div className={styles.chatItemContent}>
-                      <div className={styles.chatItemTitle}>{chat.title}</div>
-                      <div className={styles.chatItemSubtitleContainer}>
-                        {chat.previousSubtitle && (
-                          <div 
-                            className={styles.chatItemSubtitle}
-                            data-leaving="true"
-                          >
-                            {chat.previousSubtitle}
-                          </div>
-                        )}
-                        <div 
-                          key={chat.subtitle} 
-                          className={styles.chatItemSubtitle}
-                          data-animate={chat.previousSubtitle ? "true" : "false"}
-                        >
-                          {chat.subtitle}
-                        </div>
-                      </div>
-                    </div>
-                    {isEditMode && (
-                      <Button
-                        variant="inline"
-                        shape="square"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteChat(chat.id);
-                        }}
-                        aria-label={`Delete ${chat.title}`}
-                        className={styles.deleteButton}
-                      >
-                        <DeleteIcon size={20} />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-            </div>
-          </div>
-        )}
+        <ChatNavigation
+          chats={chats}
+          activeChatId={activeChatId}
+          showChatNav={showChatNav}
+          chatFilter={chatFilter}
+          isEditMode={isEditMode}
+          newChatIds={newChatIds}
+          hasInitialized={hasInitialized}
+          onChatSelect={handleChatSelect}
+          onNewChat={handleNewChat}
+          onDeleteChat={handleDeleteChat}
+          onToggleNav={setShowChatNav}
+          onFilterChange={setChatFilter}
+          onEditModeToggle={setIsEditMode}
+          onChatReorder={handleChatReorder}
+        />
         <div className={styles.mainContent}>
-          <div className={styles.chatHeader}>
-            <div className={styles.chatHeaderLeft}>
-              {!showChatNav && (
-                <Button
-                  variant="inline"
-                  shape="square"
-                  size="small"
-                  onClick={() => setShowChatNav(true)}
-                  aria-label="Expand chat navigation"
-                  className={styles.expandHeaderButton}
-                >
-                  <ChevronRightIcon />
-                </Button>
-              )}
-              <h2 className={styles.chatTitle}>{activeChat.title}</h2>
-            </div>
-            {(activeChat.repoPath || activeChat.branch) && (
-              <div className={styles.chatRepoInfo}>
-                {activeChat.repoPath && (
-                  <div className={styles.repoName}>
-                    <span className={styles.repoLabel}>Repo:</span> {activeChat.repoPath}
-                  </div>
-                )}
-                {activeChat.branch && (
-                  <div className={styles.branchName}>
-                    <span className={styles.branchLabel}>Branch:</span> {activeChat.branch}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          <ChatHeader
+            chat={activeChat}
+            showChatNav={showChatNav}
+            onToggleNav={setShowChatNav}
+          />
           <Tabs
             tabs={getTabItems()}
             activeTabId={activeTabId}

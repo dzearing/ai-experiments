@@ -1,0 +1,131 @@
+.inputArea {
+  padding: var(--spacing);
+  background: var(--color-panel-background);
+  border-top: 1px solid var(--color-panel-border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-small20);
+}
+
+.inputWrapper {
+  display: flex;
+  gap: var(--spacing-small10);
+  align-items: flex-start;
+}
+
+.modeBadge {
+  padding: var(--spacing-small20) var(--spacing-small10);
+  border-radius: var(--radius-interactive);
+  font-size: var(--font-size-small20);
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  flex-shrink: 0;
+  margin-top: 2px;
+  user-select: none;
+  transition: all var(--duration-normal);
+}
+
+.modeBadgeExecute {
+  background: var(--color-successSoft-background);
+  color: var(--color-successSoft-text);
+  border: 1px solid var(--color-successSoft-border);
+}
+
+.modeBadgePlan {
+  background: var(--color-infoSoft-background);
+  color: var(--color-infoSoft-text);
+  border: 1px solid var(--color-infoSoft-border);
+}
+
+.modeBadgeRemember {
+  background: var(--color-warningSoft-background);
+  color: var(--color-warningSoft-text);
+  border: 1px solid var(--color-warningSoft-border);
+}
+
+.input {
+  flex: 1;
+  min-height: 36px;
+  max-height: 200px;
+  padding: var(--spacing-small10) var(--spacing);
+  background: var(--color-body-background);
+  color: var(--color-body-text);
+  border-radius: var(--radius-interactive);
+  border: 1px solid transparent;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size);
+  line-height: var(--line-height-normal);
+  resize: none;
+  transition: all var(--duration-normal);
+  outline: none;
+  overflow-y: auto;
+}
+
+.input:focus {
+  border-color: var(--color-primary-border);
+  box-shadow: 0 0 0 2px var(--color-primary-background-alpha10);
+}
+
+.inputExecute {
+  border-color: var(--color-successSoft-border);
+}
+
+.inputExecute:focus {
+  border-color: var(--color-success-border);
+  box-shadow: 0 0 0 2px var(--color-success-background-alpha10);
+}
+
+.inputPlan {
+  border-color: var(--color-infoSoft-border);
+}
+
+.inputPlan:focus {
+  border-color: var(--color-info-border);
+  box-shadow: 0 0 0 2px var(--color-info-background-alpha10);
+}
+
+.inputRemember {
+  border-color: var(--color-warningSoft-border);
+  background: var(--color-warningSoft-background-alpha10);
+}
+
+.inputRemember:focus {
+  border-color: var(--color-warning-border);
+  box-shadow: 0 0 0 2px var(--color-warning-background-alpha10);
+}
+
+.helperText {
+  font-size: var(--font-size-small20);
+  color: var(--color-body-textSoft10);
+  padding-left: var(--spacing);
+}
+
+.autoComplete {
+  position: absolute;
+  bottom: 100%;
+  left: var(--spacing);
+  right: var(--spacing);
+  margin-bottom: var(--spacing-small10);
+  background: var(--color-panel-background);
+  border: 1px solid var(--color-panel-border);
+  border-radius: var(--radius-interactive);
+  box-shadow: var(--shadow-overlay);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.autoCompleteItem {
+  padding: var(--spacing-small10) var(--spacing);
+  cursor: pointer;
+  transition: background var(--duration-normal);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size);
+}
+
+.autoCompleteItem:hover,
+.autoCompleteItem.selected {
+  background: var(--color-primary-background);
+  color: var(--color-primary-text);
+}
