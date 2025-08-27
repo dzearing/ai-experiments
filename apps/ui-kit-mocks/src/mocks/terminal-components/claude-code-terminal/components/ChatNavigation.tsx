@@ -98,7 +98,6 @@ export const ChatNavigation: React.FC<ChatNavigationProps> = ({
     setDragOverChatId(null);
   };
 
-  if (!showChatNav) return null;
 
   const filteredChats = chats.filter(chat => {
     if (chatFilter === 'idle') return !chat.isBusy;
@@ -110,7 +109,7 @@ export const ChatNavigation: React.FC<ChatNavigationProps> = ({
   const busyCount = chats.filter(c => c.isBusy).length;
 
   return (
-    <div className={styles.chatNav} ref={chatNavRef}>
+    <div className={styles.chatNav} ref={chatNavRef} style={{ width: '100%' }}>
       <div className={styles.chatNavHeader}>
         <div className={styles.chatNavTitleRow}>
           <Button 
@@ -143,13 +142,15 @@ export const ChatNavigation: React.FC<ChatNavigationProps> = ({
           onClick={() => onFilterChange(chatFilter === 'idle' ? 'all' : 'idle')}
           aria-label="Filter idle chats"
         >
-          <CheckCircleIcon className={styles.idleIcon} /> 
+          <span className={ styles.filterButtonContent}>
+          <CheckCircleIcon className={styles.idleIcon} size={16} /> 
           Idle
           {idleCount > 1 && (
             <span className={`${styles.filterCount} ${chatFilter === 'idle' ? styles.filterCountSelected : ''}`}>
               {idleCount}
             </span>
           )}
+          </span>
         </Button>
         <Button
           variant={chatFilter === 'busy' ? 'primary' : 'outline'}
@@ -158,13 +159,15 @@ export const ChatNavigation: React.FC<ChatNavigationProps> = ({
           onClick={() => onFilterChange(chatFilter === 'busy' ? 'all' : 'busy')}
           aria-label="Filter busy chats"
         >
-          <HourglassIcon className={styles.busyIcon} /> 
-          Busy
-          {busyCount > 1 && (
-            <span className={`${styles.filterCount} ${chatFilter === 'busy' ? styles.filterCountSelected : ''}`}>
-              {busyCount}
-            </span>
-          )}
+          <span className={ styles.filterButtonContent}>
+            <HourglassIcon className={styles.busyIcon} size={16} /> 
+            Busy
+            {busyCount > 1 && (
+              <span className={`${styles.filterCount} ${chatFilter === 'busy' ? styles.filterCountSelected : ''}`}>
+                {busyCount}
+              </span>
+            )}
+          </span>
         </Button>
       </div>
       <Button 
@@ -190,7 +193,7 @@ export const ChatNavigation: React.FC<ChatNavigationProps> = ({
             onDrop={handleDrop}
             onDragEnd={handleDragEnd}
           >
-            {isEditMode && (
+            {isEditMode ? (
               <div 
                 className={styles.dragHandle}
                 onMouseDown={(e) => e.currentTarget.parentElement?.setAttribute('draggable', 'true')}
@@ -198,14 +201,15 @@ export const ChatNavigation: React.FC<ChatNavigationProps> = ({
               >
                 <DragHandleIcon size={20} />
               </div>
+            ) : (
+              <div className={styles.chatItemIndicator}>
+                {chat.isBusy ? (
+                  <Spinner size="small" />
+                ) : (
+                  <CheckCircleIcon className={styles.chatIndicatorIcon} />
+                )}
+              </div>
             )}
-            <div className={styles.chatItemIndicator}>
-              {chat.isBusy ? (
-                <Spinner size="small" />
-              ) : (
-                <CheckCircleIcon className={styles.chatIndicatorIcon} />
-              )}
-            </div>
             <div className={styles.chatItemContent}>
               <div className={styles.chatItemTitle}>{chat.title}</div>
               <div className={styles.chatItemSubtitleContainer}>

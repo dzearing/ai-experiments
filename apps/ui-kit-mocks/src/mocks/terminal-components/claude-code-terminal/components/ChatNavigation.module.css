@@ -1,10 +1,9 @@
 .chatNav {
-  width: 280px;
   background: var(--color-panel-background);
-  border-right: 1px solid var(--color-panel-border);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  height: 100%;
 }
 
 .chatNavHeader {
@@ -12,12 +11,14 @@
   flex-direction: column;
   gap: var(--spacing-small10);
   padding: var(--spacing);
+  padding-bottom: 0;
 }
 
 .chatNavTitleRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--spacing-small10);
   padding: 0;
 }
 
@@ -56,8 +57,7 @@
 .chatNavFilters {
   display: flex;
   gap: var(--spacing-small10);
-  padding: var(--spacing);
-  margin-bottom: var(--spacing);
+  padding: var(--spacing) var(--spacing);
   border-bottom: 1px solid var(--color-panel-border);
 }
 
@@ -81,12 +81,15 @@
 }
 
 .newChatButton {
-  margin: 0 var(--spacing) var(--spacing);
+  margin: var(--spacing) var(--spacing);
 }
 
 .chatList {
   flex: 1;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
   padding: var(--spacing-small20) 0;
   min-height: 0;
 }
@@ -95,12 +98,17 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-small10);
-  padding: var(--spacing-small10) var(--spacing);
+  padding: 0 var(--spacing-small10);
   cursor: pointer;
   transition: background var(--duration-normal);
   position: relative;
   user-select: none;
-  margin-bottom: 1px;
+  min-height: 60px;
+}
+
+/* Reduce left padding in edit mode to bring drag handle closer to edge */
+.chatItemEditMode {
+  padding-left: var(--spacing-small20);
 }
 
 .chatItemNew {
@@ -157,7 +165,7 @@
 }
 
 .chatIndicatorIcon {
-  color: var(--color-successSoft-text);
+  color: var(--color-success-background);
 }
 
 .chatItemContent {
@@ -226,9 +234,10 @@
 }
 
 .chatItemEditMode {
-  cursor: move;
+  cursor: default;
   user-select: none;
   transition: transform 200ms ease-out;
+  gap: var(--spacing-small20);
 }
 
 .chatItemDragging {
@@ -242,57 +251,39 @@
 }
 
 .dragHandle {
-  position: absolute;
-  left: var(--spacing-small20);
-  top: 50%;
-  transform: translateY(-50%);
-  width: var(--spacing-large10);
-  height: var(--spacing-large10);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--color-body-textSoft10);
   cursor: grab;
-  opacity: 0;
   transition: opacity var(--duration-normal);
+  width: var(--spacing-large10);
+  height: 100%;
+  flex-shrink: 0;
 }
 
 .dragHandle:active {
   cursor: grabbing;
 }
 
-.chatItemEditMode .dragHandle {
-  opacity: 0.6;
-}
-
 .chatItemEditMode:hover .dragHandle {
-  opacity: 1;
+  color: var(--color-body-text);
 }
 
 .deleteButton {
-  position: absolute;
-  right: var(--spacing-small10);
-  top: 50%;
-  transform: translateY(-50%);
-  opacity: 0;
-  transition: opacity var(--duration-normal);
-}
-
-.chatItemEditMode .deleteButton {
-  opacity: 0.6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity var(--duration-normal), color var(--duration-normal);
+  color: var(--color-body-textSoft20);
+  flex-shrink: 0;
 }
 
 .chatItemEditMode:hover .deleteButton {
-  opacity: 1;
+  color: var(--color-danger-text);
 }
 
-.idleIcon {
-  color: var(--color-successSoft-text);
-}
 
-.busyIcon {
-  color: var(--color-warningSoft-text);
-}
 
 /* Mobile responsive styles */
 @media (max-width: 768px) {
@@ -305,4 +296,14 @@
     z-index: 100;
     box-shadow: var(--shadow-overlay);
   }
+}
+
+.filterButtonContent {
+  display: flex;
+  gap: var(--spacing-small20);
+  align-items: center;
+}
+
+.filterButtonContent svg {
+  flex-shrink: 0;
 }

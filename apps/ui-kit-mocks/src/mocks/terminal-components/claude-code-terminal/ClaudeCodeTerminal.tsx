@@ -11,7 +11,7 @@ import {
 import { ContextView } from './views/ContextView';
 import { AgentsView } from './views/AgentsView';
 import { DiffView } from './views/DiffView';
-import { ChatNavigation, MessageList, InputArea, PlanEditor, ChatHeader } from './components';
+import { ChatNavigation, MessageList, InputArea, PlanEditor, ChatHeader, ResizeBar } from './components';
 import type { Message, Chat, ClaudeCodeTerminalProps } from './types';
 
 export const ClaudeCodeTerminal: React.FC<ClaudeCodeTerminalProps> = ({
@@ -98,6 +98,9 @@ export const ClaudeCodeTerminal: React.FC<ClaudeCodeTerminalProps> = ({
   // Tab management state
   const [activeTabId, setActiveTabId] = useState('chat-1');
   const [dynamicTabs, setDynamicTabs] = useState<string[]>(['chat-1', 'plan-1', 'context-1', 'agents-1']);
+  const [navWidth, setNavWidth] = useState(280);
+  const [splitPaneLeftWidth, setSplitPaneLeftWidth] = useState<number | null>(null);
+  const splitContainerRef = useRef<HTMLDivElement>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -835,10 +838,20 @@ Let me start by implementing the solution...`,
           closable: true,
           content: currentMode === 'plan' ? (
             // Show split view when in plan mode
-            <div className={styles.splitContainer}>
-              <div className={styles.leftPane}>
+            <div className={styles.splitContainer} ref={splitContainerRef}>
+              <div 
+                className={styles.leftPane}
+                style={splitPaneLeftWidth ? { width: splitPaneLeftWidth, flex: 'none' } : {}}
+              >
                 {getChatContent()}
               </div>
+              <ResizeBar
+                minWidth={400}
+                maxWidth={2000}
+                defaultWidth={600}
+                onResize={setSplitPaneLeftWidth}
+                containerRef={splitContainerRef}
+              />
               <div className={styles.rightPane}>
                 {getPlanContent()}
               </div>
@@ -925,22 +938,34 @@ Let me start by implementing the solution...`,
   return (
     <div className={styles.terminal}>
       <div className={styles.body}>
-        <ChatNavigation
-          chats={chats}
-          activeChatId={activeChatId}
-          showChatNav={showChatNav}
-          chatFilter={chatFilter}
-          isEditMode={isEditMode}
-          newChatIds={newChatIds}
-          hasInitialized={hasInitialized}
-          onChatSelect={handleChatSelect}
-          onNewChat={handleNewChat}
-          onDeleteChat={handleDeleteChat}
-          onToggleNav={setShowChatNav}
-          onFilterChange={setChatFilter}
-          onEditModeToggle={setIsEditMode}
-          onChatReorder={handleChatReorder}
-        />
+        {showChatNav && (
+          <>
+            <div style={{ width: navWidth, flexShrink: 0 }}>
+              <ChatNavigation
+                chats={chats}
+                activeChatId={activeChatId}
+                showChatNav={showChatNav}
+                chatFilter={chatFilter}
+                isEditMode={isEditMode}
+                newChatIds={newChatIds}
+                hasInitialized={hasInitialized}
+                onChatSelect={handleChatSelect}
+                onNewChat={handleNewChat}
+                onDeleteChat={handleDeleteChat}
+                onToggleNav={setShowChatNav}
+                onFilterChange={setChatFilter}
+                onEditModeToggle={setIsEditMode}
+                onChatReorder={handleChatReorder}
+              />
+            </div>
+            <ResizeBar
+              minWidth={200}
+              maxWidth={500}
+              defaultWidth={navWidth}
+              onResize={setNavWidth}
+            />
+          </>
+        )}
         <div className={styles.mainContent}>
           <ChatHeader
             chat={activeChat}
