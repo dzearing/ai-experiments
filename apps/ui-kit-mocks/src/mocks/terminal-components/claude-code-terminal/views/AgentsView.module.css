@@ -1,0 +1,116 @@
+.agentsView {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: var(--spacing);
+  background: var(--color-body-background);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing);
+  padding-bottom: var(--spacing-small10);
+  border-bottom: 1px solid var(--color-body-border);
+}
+
+.header h3 {
+  margin: 0;
+  font-size: var(--font-size-h5);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-body-text);
+}
+
+.count {
+  font-size: var(--font-size-small10);
+  color: var(--color-body-textSoft20);
+}
+
+.agentList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing);
+  overflow-y: auto;
+}
+
+.agentCard {
+  background: var(--color-panel-background);
+  border: 1px solid var(--color-panel-border);
+  border-radius: var(--radius);
+  padding: var(--spacing);
+  transition: all var(--duration-fast);
+}
+
+.agentCard:hover {
+  border-color: var(--color-panel-borderHover);
+  box-shadow: var(--shadow-card);
+}
+
+.agentHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing);
+}
+
+.agentStatus {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--color-body-background);
+  border-radius: var(--radius);
+  flex-shrink: 0;
+  color: var(--color-body-textSoft20);
+}
+
+.agentInfo {
+  flex: 1;
+}
+
+.agentInfo h4 {
+  margin: 0 0 var(--spacing-small20) 0;
+  font-size: var(--font-size);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-body-text);
+}
+
+.agentInfo p {
+  margin: 0;
+  font-size: var(--font-size-small10);
+  color: var(--color-body-textSoft10);
+  line-height: var(--line-height-normal);
+}
+
+.runButton {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small20);
+  padding: var(--spacing-small20) var(--spacing-small10);
+  background: var(--color-buttonPrimary-background);
+  color: var(--color-buttonPrimary-text);
+  border: none;
+  border-radius: var(--radius-button);
+  font-size: var(--font-size-small10);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--duration-fast);
+}
+
+.runButton:hover:not(:disabled) {
+  background: var(--color-buttonPrimary-backgroundHover);
+}
+
+.runButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.agentFooter {
+  margin-top: var(--spacing-small10);
+  padding-top: var(--spacing-small10);
+  border-top: 1px solid var(--color-body-border);
+  font-size: var(--font-size-small20);
+  color: var(--color-body-textSoft20);
+}

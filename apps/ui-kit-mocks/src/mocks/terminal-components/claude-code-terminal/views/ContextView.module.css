@@ -1,0 +1,71 @@
+.contextView {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: var(--spacing);
+  background: var(--color-body-background);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing);
+  padding-bottom: var(--spacing-small10);
+  border-bottom: 1px solid var(--color-body-border);
+}
+
+.header h3 {
+  margin: 0;
+  font-size: var(--font-size-h5);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-body-text);
+}
+
+.count {
+  font-size: var(--font-size-small10);
+  color: var(--color-body-textSoft20);
+}
+
+.fileList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-small20);
+  overflow-y: auto;
+}
+
+.fileItem {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small10);
+  padding: var(--spacing-small10) var(--spacing);
+  background: var(--color-panel-background);
+  border: 1px solid var(--color-panel-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all var(--duration-fast);
+}
+
+.fileItem:hover {
+  background: var(--color-panel-backgroundHover);
+  border-color: var(--color-panel-borderHover);
+}
+
+.fileItem svg {
+  flex-shrink: 0;
+  color: var(--color-body-textSoft20);
+}
+
+.fileItem span:nth-child(2) {
+  flex: 1;
+  font-size: var(--font-size);
+  color: var(--color-body-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fileSize {
+  font-size: var(--font-size-small10);
+  color: var(--color-body-textSoft20);
+}

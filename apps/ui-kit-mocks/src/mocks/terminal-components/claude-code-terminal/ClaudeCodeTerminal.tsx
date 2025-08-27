@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback, KeyboardEvent } from 'react';
 import styles from './ClaudeCodeTerminal.module.css';
-import { Button, Spinner } from '@claude-flow/ui-kit-react';
+import { Button, Spinner, Tabs, TabItem } from '@claude-flow/ui-kit-react';
 import {
   ChevronRightIcon,
   ChevronLeftIcon,
@@ -40,7 +40,15 @@ import {
   EditIcon,
   DeleteIcon,
   DragHandleIcon,
+  ChatIcon,
+  UsersIcon,
+  ListTaskIcon,
+  ImageIcon,
+  TableIcon,
 } from '@claude-flow/ui-kit-icons';
+import { ContextView } from './views/ContextView';
+import { AgentsView } from './views/AgentsView';
+import { DiffView } from './views/DiffView';
 
 export interface Message {
   id: string;
@@ -153,7 +161,12 @@ export const ClaudeCodeTerminal: React.FC<ClaudeCodeTerminalProps> = ({
   const [draggedChatId, setDraggedChatId] = useState<string | null>(null);
   const [dragOverChatId, setDragOverChatId] = useState<string | null>(null);
   const chatNavRef = useRef<HTMLDivElement>(null);
+  const [inputMode, setInputMode] = useState<'single-line' | 'multi-line'>('single-line');
   const [planContent, setPlanContent] = useState(`# Project Implementation Plan\n\n## Overview\nThis document outlines the implementation strategy for the authentication feature.\n\n## Phase 1: Setup OAuth2\n- Configure OAuth providers\n- Set up redirect URIs\n- Implement token storage\n\n## Phase 2: User Flow\n1. **Login Page**\n   - Design responsive login form\n   - Add social login buttons\n   - Implement error handling\n\n2. **Session Management**\n   - Create session middleware\n   - Handle token refresh\n   - Implement logout flow\n\n## Technical Considerations\n- Security best practices\n- Rate limiting\n- CSRF protection\n\n## Testing Strategy\n- Unit tests for auth logic\n- Integration tests for OAuth flow\n- E2E tests for user journey`);
+  
+  // Tab management state
+  const [activeTabId, setActiveTabId] = useState('chat-1');
+  const [dynamicTabs, setDynamicTabs] = useState<string[]>(['chat-1', 'plan-1', 'context-1', 'agents-1']);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -230,6 +243,18 @@ export const ClaudeCodeTerminal: React.FC<ClaudeCodeTerminalProps> = ({
   useEffect(() => {
     setIsRememberMode(input.startsWith('#'));
   }, [input]);
+  
+  // Maintain focus when switching modes
+  useEffect(() => {
+    // Small delay to ensure DOM has updated
+    const timer = setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 50);
+    
+    return () => clearTimeout(timer);
+  }, [currentMode]);
   
   // Handle escape key for edit mode
   useEffect(() => {
@@ -366,50 +391,85 @@ export const ClaudeCodeTerminal: React.FC<ClaudeCodeTerminalProps> = ({
     const parts = command.split(' ');
     const cmd = parts[0].substring(1); // Remove the '/'
 
-    // Add command message
-    const cmdMessage: Message = {
-      id: Date.now().toString(),
-      type: 'user',
-      content: command,
-      timestamp: new Date(),
-    };
-    setMessages(prev => [...prev, cmdMessage]);
+    // Don't add command as a user message - commands are handled silently
     
-    // Update chat messages
-    setChats(prev => prev.map(chat => 
-      chat.id === activeChatId 
-        ? { ...chat, messages: [...chat.messages, cmdMessage], lastActivity: new Date() }
-        : chat
-    ));
-
     // Process command
     switch (cmd) {
       case 'help':
         addSystemMessage(`Available commands:
 /clear - Clear the conversation
 /stop - Stop current operation
-/plan - Toggle plan mode
+/diff - Open a diff view tab
+/agents - Open or switch to agents tab
+/plan - Open or switch to plan tab
+/context - Open or switch to context tab
 /help - Show this help message
 
 Keyboard shortcuts:
 ↑/↓ - Navigate command history
 Tab - Auto-complete commands
-Shift+Tab - Toggle Plan/Execute mode
 # - Enter remember mode
-${isMac ? '⌘' : 'Ctrl'}+Enter - Submit prompt`);
+${isMac ? '⌘' : 'Ctrl'}+↓ - Toggle input mode (single-line/multi-line)
+${inputMode === 'single-line' ? 'Enter' : `${isMac ? '⌘' : 'Ctrl'}+Enter`} - Submit prompt
+${inputMode === 'single-line' ? 'Shift+Enter' : 'Enter'} - New line`);
+        break;
+        
+      case 'diff':
+        // Open a diff tab
+        const diffId = `diff-${Date.now()}`;
+        setDynamicTabs(prev => [...prev, diffId]);
+        setActiveTabId(diffId);
+        addSystemMessage('Opened diff view tab');
+        break;
+        
+      case 'agents':
+        // Check if agents tab exists
+        const agentsTabExists = getTabItems().some(tab => tab.id === 'agents-1');
+        if (agentsTabExists) {
+          setActiveTabId('agents-1');
+          addSystemMessage('Switched to agents tab');
+        } else {
+          // Agents tab was closed, recreate it
+          if (!dynamicTabs.includes('agents-1')) {
+            setDynamicTabs(prev => [...prev, 'agents-1']);
+          }
+          setActiveTabId('agents-1');
+          addSystemMessage('Opened agents tab');
+        }
         break;
         
       case 'plan':
-        const newMode = currentMode === 'plan' ? 'default' : 'plan';
-        setCurrentMode(newMode);
-        addSystemMessage(`Switched to ${newMode === 'plan' ? 'Plan' : 'Execute'} mode`);
-        // Focus input when switching back to execute mode
-        if (newMode === 'default' && inputRef.current) {
-          requestAnimationFrame(() => {
-            inputRef.current?.focus();
-          });
+        // Check if plan tab exists
+        const planTabExists = getTabItems().some(tab => tab.id === 'plan-1');
+        if (planTabExists) {
+          setActiveTabId('plan-1');
+          addSystemMessage('Switched to plan tab');
+        } else {
+          // Plan tab was closed, recreate it
+          if (!dynamicTabs.includes('plan-1')) {
+            setDynamicTabs(prev => [...prev, 'plan-1']);
+          }
+          setActiveTabId('plan-1');
+          addSystemMessage('Opened plan tab');
         }
         break;
+        
+      case 'context':
+        // Check if context tab exists
+        const contextTabExists = getTabItems().some(tab => tab.id === 'context-1');
+        if (contextTabExists) {
+          setActiveTabId('context-1');
+          addSystemMessage('Switched to context tab');
+        } else {
+          // Context tab was closed, recreate it
+          if (!dynamicTabs.includes('context-1')) {
+            setDynamicTabs(prev => [...prev, 'context-1']);
+          }
+          setActiveTabId('context-1');
+          addSystemMessage('Opened context tab');
+        }
+        break;
+        
         
       case 'clear':
         const clearMessage = {
@@ -640,6 +700,14 @@ Let me start by implementing the solution...`,
   };
   
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    // Handle input mode toggle with Ctrl/Meta+Down Arrow
+    if (e.key === 'ArrowDown' && (isMac ? e.metaKey : e.ctrlKey)) {
+      e.preventDefault();
+      setInputMode(prev => prev === 'single-line' ? 'multi-line' : 'single-line');
+      // No system message - the mode change is already visible in the mode badge and helper text
+      return;
+    }
+    
     // Handle remember mode exit
     if (isRememberMode) {
       if (e.key === 'Escape') {
@@ -768,17 +836,20 @@ Let me start by implementing the solution...`,
         if (!isRememberMode) {
           const newMode = currentMode === 'plan' ? 'default' : 'plan';
           setCurrentMode(newMode);
-          addSystemMessage(`Switched to ${newMode === 'plan' ? 'Plan' : 'Execute'} mode`);
-          // Focus input when switching back to execute mode
-          if (newMode === 'default' && inputRef.current) {
-            requestAnimationFrame(() => {
-              inputRef.current?.focus();
-            });
-          }
+          // No system message when switching modes - it's already shown in the mode badge
+          // Always maintain focus on input when switching modes
+          requestAnimationFrame(() => {
+            if (inputRef.current) {
+              inputRef.current.focus();
+              // Restore cursor position to end
+              const length = inputRef.current.value.length;
+              inputRef.current.setSelectionRange(length, length);
+            }
+          });
         }
       } else if (input.startsWith('/')) {
         // Command auto-complete
-        const commands = ['help', 'clear', 'stop', 'plan'];
+        const commands = ['help', 'clear', 'stop', 'diff', 'agents', 'plan', 'context'];
         const partial = input.substring(1);
         const matches = commands.filter(c => c.startsWith(partial));
         if (matches.length === 1) {
@@ -790,20 +861,40 @@ Let me start by implementing the solution...`,
       }
     }
     
-    // Submit on Ctrl+Enter (Windows) or Cmd+Enter (Mac)
-    if (e.key === 'Enter' && (isMac ? e.metaKey : e.ctrlKey)) {
-      e.preventDefault();
-      handleSubmit();
-      // Ensure input stays enabled and focused
-      requestAnimationFrame(() => {
-        if (inputRef.current) {
-          inputRef.current.disabled = false;
-          inputRef.current.focus();
+    // Handle Enter key based on input mode
+    if (e.key === 'Enter') {
+      if (inputMode === 'single-line') {
+        // Single-line mode: Enter submits
+        if (!e.shiftKey && !e.ctrlKey && !e.metaKey) {
+          e.preventDefault();
+          handleSubmit();
+          // Ensure input stays enabled and focused
+          requestAnimationFrame(() => {
+            if (inputRef.current) {
+              inputRef.current.disabled = false;
+              inputRef.current.focus();
+            }
+          });
+          return;
         }
-      });
-      return; // Exit early to prevent any other processing
+        // Shift+Enter adds a newline in single-line mode
+      } else {
+        // Multi-line mode: Ctrl/Cmd+Enter submits
+        if (isMac ? e.metaKey : e.ctrlKey) {
+          e.preventDefault();
+          handleSubmit();
+          // Ensure input stays enabled and focused
+          requestAnimationFrame(() => {
+            if (inputRef.current) {
+              inputRef.current.disabled = false;
+              inputRef.current.focus();
+            }
+          });
+          return;
+        }
+        // Enter alone adds a newline (default behavior)
+      }
     }
-    // Enter key alone just adds a newline (default behavior)
     
     // Interrupt with Ctrl+C
     if (e.key === 'c' && e.ctrlKey) {
@@ -820,6 +911,339 @@ Let me start by implementing the solution...`,
       setMessages([]);
     }
   };
+
+  const handleTabChange = (tabId: string) => {
+    setActiveTabId(tabId);
+  };
+
+  const handleTabClose = (tabId: string) => {
+    // Don't allow closing the last tab
+    const allTabs = getTabItems();
+    if (allTabs.length <= 1) return;
+    
+    // Remove from dynamic tabs if it's there
+    setDynamicTabs(prev => prev.filter(id => id !== tabId));
+    
+    // If we closed the active tab, select another one
+    if (tabId === activeTabId) {
+      const remainingTabs = allTabs.filter(t => t.id !== tabId);
+      if (remainingTabs.length > 0) {
+        setActiveTabId(remainingTabs[0].id);
+      }
+    }
+  };
+
+  const handleNewTab = () => {
+    const newId = `chat-${Date.now()}`;
+    setDynamicTabs(prev => [...prev, newId]);
+    setActiveTabId(newId);
+  };
+
+  // Generate tab items with embedded content
+  const getTabItems = (): TabItem[] => {
+    // Map all dynamic tabs (including base tabs)
+    const allTabs = dynamicTabs.map(tabId => {
+      if (tabId === 'chat-1') {
+        return { 
+          id: 'chat-1', 
+          label: 'Chat', 
+          icon: <ChatIcon size={14} />, 
+          closable: true,
+          content: currentMode === 'plan' ? (
+            // Show split view when in plan mode
+            <div className={styles.splitContainer}>
+              <div className={styles.leftPane}>
+                {getChatContent()}
+              </div>
+              <div className={styles.rightPane}>
+                {getPlanContent()}
+              </div>
+            </div>
+          ) : getChatContent()
+        };
+      } else if (tabId === 'plan-1') {
+        return {
+          id: tabId,
+          label: 'Plan',
+          icon: <ListTaskIcon size={14} />,
+          closable: true,
+          content: getPlanContent()
+        };
+      } else if (tabId === 'context-1') {
+        return {
+          id: tabId,
+          label: 'Context',
+          icon: <ListTaskIcon size={14} />,
+          closable: true,
+          content: <ContextView />
+        };
+      } else if (tabId === 'agents-1') {
+        return {
+          id: tabId,
+          label: 'Agents',
+          icon: <UsersIcon size={14} />,
+          closable: true,
+          content: <AgentsView />
+        };
+      } else if (tabId.startsWith('diff-')) {
+        return {
+          id: tabId,
+          label: 'Code Diff',
+          icon: <CodeIcon size={14} />,
+          closable: true,
+          content: <DiffView />
+        };
+      } else if (tabId.startsWith('chat-')) {
+        return {
+          id: tabId,
+          label: `Chat`,
+          icon: <ChatIcon size={14} />,
+          closable: true,
+          content: getChatContent()
+        };
+      }
+      return null;
+    }).filter(Boolean) as TabItem[];
+
+    return allTabs;
+  };
+
+  const getChatContent = () => (
+    <div className={styles.chatContainer}>
+      <div className={styles.messages}>
+        {messages.map(renderMessage)}
+        {isStreaming && (
+          <div className={styles.streamingIndicator}>
+            <Spinner size="small" />
+            <span>Claude is thinking...</span>
+          </div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+      {autoComplete.length > 0 && (
+        <div className={styles.autoComplete}>
+          {autoComplete.map((cmd, idx) => (
+            <div 
+              key={cmd}
+              className={`${styles.autoCompleteItem} ${idx === autoCompleteIndex ? styles.selected : ''}`}
+            >
+              /{cmd}
+            </div>
+          ))}
+        </div>
+      )}
+      <div className={styles.inputArea}>
+        <div className={styles.inputWrapper}>
+          <span className={`${styles.modeBadge} ${
+            isRememberMode ? styles.modeBadgeRemember : 
+            currentMode === 'plan' ? styles.modeBadgePlan : 
+            styles.modeBadgeExecute
+          }`}>
+            {isRememberMode ? 'Remember' : currentMode === 'plan' ? 'Plan' : 'Execute'} {inputMode === 'multi-line' ? '↵' : '↲'}
+          </span>
+          <textarea
+            ref={inputRef}
+            className={`${styles.input} ${
+              isRememberMode ? styles.inputRemember : 
+              currentMode === 'plan' ? styles.inputPlan : 
+              styles.inputExecute
+            }`}
+            value={isRememberMode && input.startsWith('#') ? input.slice(1) : input}
+            onChange={(e) => {
+              const newValue = e.target.value;
+              if (isRememberMode) {
+                // In remember mode, prepend # to the actual stored value
+                setInput('#' + newValue);
+              } else {
+                setInput(newValue);
+              }
+            }}
+            onKeyDown={handleKeyDown}
+            placeholder="Type a prompt or /help for commands"
+            disabled={false}
+            aria-label="Terminal input"
+            rows={1}
+          />
+        </div>
+        <div className={styles.helperText}>
+          {inputMode === 'single-line' ? 'Enter to submit' : `${isMac ? '⌘' : 'Ctrl'}-Enter to submit`} • {isMac ? '⌘' : 'Ctrl'}↓ to toggle input mode • Shift-Tab to change modes
+        </div>
+      </div>
+    </div>
+  );
+
+  const getPlanContent = () => (
+    <div className={styles.editorPane}>
+                <div className={styles.editorToolbar}>
+                  <div className={styles.toolbarGroup}>
+                    <Button
+                      variant="inline"
+                      shape="square"
+                      size="small"
+                      aria-label="Undo"
+                      className={styles.toolbarButton}
+                    >
+                      <UndoIcon />
+                    </Button>
+                    <Button
+                      variant="inline"
+                      shape="square"
+                      size="small"
+                      aria-label="Redo"
+                      className={styles.toolbarButton}
+                    >
+                      <RedoIcon />
+                    </Button>
+                  </div>
+                  <div className={styles.toolbarSeparator} />
+                  <div className={styles.toolbarGroup}>
+                    <Button
+                      variant="inline"
+                      shape="square"
+                      size="small"
+                      aria-label="Heading 1"
+                      className={styles.toolbarButton}
+                    >
+                      <Heading1Icon />
+                    </Button>
+                    <Button
+                      variant="inline"
+                      shape="square"
+                      size="small"
+                      aria-label="Heading 2"
+                      className={styles.toolbarButton}
+                    >
+                      <Heading2Icon />
+                    </Button>
+                    <Button
+                      variant="inline"
+                      shape="square"
+                      size="small"
+                      aria-label="Heading 3"
+                      className={styles.toolbarButton}
+                    >
+                      <Heading3Icon />
+                    </Button>
+                  </div>
+                  <div className={styles.toolbarSeparator} />
+                  <div className={styles.toolbarGroup}>
+                    <Button
+                      variant="inline"
+                      shape="square"
+                      size="small"
+                      aria-label="Bold"
+                      className={styles.toolbarButton}
+                    >
+                      <BoldIcon />
+                    </Button>
+                    <Button
+                      variant="inline"
+                      shape="square"
+                      size="small"
+                      aria-label="Italic"
+                      className={styles.toolbarButton}
+                    >
+                      <ItalicIcon />
+                    </Button>
+                    <Button
+                      variant="inline"
+                      shape="square"
+                      size="small"
+                      aria-label="Underline"
+                      className={styles.toolbarButton}
+                    >
+                      <UnderlineIcon />
+                    </Button>
+                  </div>
+                  <div className={styles.toolbarSeparator} />
+                  <div className={styles.toolbarGroup}>
+                    <Button
+                      variant="inline"
+                      shape="square"
+                      size="small"
+                      aria-label="Bullet List"
+                      className={styles.toolbarButton}
+                    >
+                      <ListBulletIcon />
+                    </Button>
+                    <Button
+                      variant="inline"
+                      shape="square"
+                      size="small"
+                      aria-label="Numbered List"
+                      className={styles.toolbarButton}
+                    >
+                      <ListOrderedIcon />
+                    </Button>
+                  </div>
+                  <div className={styles.toolbarSeparator} />
+                  <div className={styles.toolbarGroup}>
+                    <Button
+                      variant="inline"
+                      shape="square"
+                      size="small"
+                      aria-label="Insert Link"
+                      className={styles.toolbarButton}
+                    >
+                      <LinkIcon />
+                    </Button>
+                    <Button
+                      variant="inline"
+                      shape="square"
+                      size="small"
+                      aria-label="Code Block"
+                      className={styles.toolbarButton}
+                    >
+                      <CodeBlockIcon />
+                    </Button>
+                  </div>
+                </div>
+                <div className={styles.editorContent}>
+                  <div 
+                    className={styles.editorDocument}
+                    contentEditable
+                    suppressContentEditableWarning
+                    onInput={(e) => {
+                      const target = e.currentTarget;
+                      setPlanContent(target.innerText);
+                    }}
+                    dangerouslySetInnerHTML={{ 
+                      __html: planContent
+                        .split('\n')
+                        .map(line => {
+                          // Headers
+                          if (line.startsWith('### ')) {
+                            return `<h3>${line.slice(4)}</h3>`;
+                          } else if (line.startsWith('## ')) {
+                            return `<h2>${line.slice(3)}</h2>`;
+                          } else if (line.startsWith('# ')) {
+                            return `<h1>${line.slice(2)}</h1>`;
+                          }
+                          // Lists
+                          else if (line.match(/^\d+\.\s/)) {
+                            return `<div style="margin-left: 20px">${line}</div>`;
+                          } else if (line.startsWith('- ')) {
+                            return `<div>• ${line.slice(2)}</div>`;
+                          }
+                          // Bold text
+                          else if (line.includes('**')) {
+                            return `<div>${line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>`;
+                          }
+                          // Empty lines
+                          else if (line.trim() === '') {
+                            return '<br>';
+                          }
+                          // Regular text
+                          else {
+                            return `<div>${line}</div>`;
+                          }
+                        })
+                        .join('')
+                    }}
+                  />
+                </div>
+              </div>
+  );
 
   const renderMessage = (message: Message) => {
     const iconMap = {
@@ -875,12 +1299,11 @@ Let me start by implementing the solution...`,
                 <Button
                   variant="inline"
                   shape="square"
-                  size="small"
                   onClick={() => setIsEditMode(!isEditMode)}
                   aria-label={isEditMode ? "Exit edit mode" : "Enter edit mode"}
                   className={`${styles.editButton} ${isEditMode ? styles.editButtonActive : ''}`}
                 >
-                  <EditIcon />
+                  <EditIcon size={20} />
                 </Button>
               </div>
             </div>
@@ -892,7 +1315,12 @@ Let me start by implementing the solution...`,
                 onClick={() => setChatFilter(chatFilter === 'idle' ? 'all' : 'idle')}
                 aria-label="Filter idle chats"
               >
-                <CheckCircleIcon className={styles.idleIcon} /> Idle
+                <CheckCircleIcon className={styles.idleIcon} /> 
+                Idle
+                {(() => {
+                  const idleCount = chats.filter(c => !c.isBusy).length;
+                  return idleCount > 1 ? <span className={`${styles.filterCount} ${chatFilter === 'idle' ? styles.filterCountSelected : ''}`}>{idleCount}</span> : null;
+                })()}
               </Button>
               <Button
                 variant={chatFilter === 'busy' ? 'primary' : 'outline'}
@@ -901,7 +1329,12 @@ Let me start by implementing the solution...`,
                 onClick={() => setChatFilter(chatFilter === 'busy' ? 'all' : 'busy')}
                 aria-label="Filter busy chats"
               >
-                <HourglassIcon className={styles.busyIcon} /> Busy
+                <HourglassIcon className={styles.busyIcon} /> 
+                Busy
+                {(() => {
+                  const busyCount = chats.filter(c => c.isBusy).length;
+                  return busyCount > 1 ? <span className={`${styles.filterCount} ${chatFilter === 'busy' ? styles.filterCountSelected : ''}`}>{busyCount}</span> : null;
+                })()}
               </Button>
             </div>
             <Button 
@@ -939,7 +1372,7 @@ Let me start by implementing the solution...`,
                         onMouseDown={(e) => e.currentTarget.parentElement?.setAttribute('draggable', 'true')}
                         onMouseUp={(e) => e.currentTarget.parentElement?.setAttribute('draggable', 'false')}
                       >
-                        <DragHandleIcon size={12} />
+                        <DragHandleIcon size={20} />
                       </div>
                     )}
                     <div className={styles.chatItemIndicator}>
@@ -973,7 +1406,6 @@ Let me start by implementing the solution...`,
                       <Button
                         variant="inline"
                         shape="square"
-                        size="small"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteChat(chat.id);
@@ -981,7 +1413,7 @@ Let me start by implementing the solution...`,
                         aria-label={`Delete ${chat.title}`}
                         className={styles.deleteButton}
                       >
-                        <DeleteIcon />
+                        <DeleteIcon size={20} />
                       </Button>
                     )}
                   </div>
@@ -989,7 +1421,7 @@ Let me start by implementing the solution...`,
             </div>
           </div>
         )}
-        <div className={`${styles.mainContent} ${currentMode === 'plan' ? styles.splitView : ''}`}>
+        <div className={styles.mainContent}>
           <div className={styles.chatHeader}>
             <div className={styles.chatHeaderLeft}>
               {!showChatNav && (
@@ -1021,239 +1453,25 @@ Let me start by implementing the solution...`,
               </div>
             )}
           </div>
-          <div className={styles.messages}>
-            {messages.map(renderMessage)}
-            {isStreaming && (
-              <div className={styles.streamingIndicator}>
-                <Spinner size="small" />
-                <span>Claude is thinking...</span>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-          {currentMode === 'plan' && (
-            <div className={styles.editorPane}>
-              <div className={styles.editorToolbar}>
-                <div className={styles.toolbarGroup}>
-                  <Button
-                    variant="inline"
-                    shape="square"
-                    size="small"
-                    aria-label="Undo"
-                    className={styles.toolbarButton}
-                  >
-                    <UndoIcon />
-                  </Button>
-                  <Button
-                    variant="inline"
-                    shape="square"
-                    size="small"
-                    aria-label="Redo"
-                    className={styles.toolbarButton}
-                  >
-                    <RedoIcon />
-                  </Button>
-                </div>
-                <div className={styles.toolbarSeparator} />
-                <div className={styles.toolbarGroup}>
-                  <Button
-                    variant="inline"
-                    shape="square"
-                    size="small"
-                    aria-label="Heading 1"
-                    className={styles.toolbarButton}
-                  >
-                    <Heading1Icon />
-                  </Button>
-                  <Button
-                    variant="inline"
-                    shape="square"
-                    size="small"
-                    aria-label="Heading 2"
-                    className={styles.toolbarButton}
-                  >
-                    <Heading2Icon />
-                  </Button>
-                  <Button
-                    variant="inline"
-                    shape="square"
-                    size="small"
-                    aria-label="Heading 3"
-                    className={styles.toolbarButton}
-                  >
-                    <Heading3Icon />
-                  </Button>
-                </div>
-                <div className={styles.toolbarSeparator} />
-                <div className={styles.toolbarGroup}>
-                  <Button
-                    variant="inline"
-                    shape="square"
-                    size="small"
-                    aria-label="Bold"
-                    className={styles.toolbarButton}
-                  >
-                    <BoldIcon />
-                  </Button>
-                  <Button
-                    variant="inline"
-                    shape="square"
-                    size="small"
-                    aria-label="Italic"
-                    className={styles.toolbarButton}
-                  >
-                    <ItalicIcon />
-                  </Button>
-                  <Button
-                    variant="inline"
-                    shape="square"
-                    size="small"
-                    aria-label="Underline"
-                    className={styles.toolbarButton}
-                  >
-                    <UnderlineIcon />
-                  </Button>
-                </div>
-                <div className={styles.toolbarSeparator} />
-                <div className={styles.toolbarGroup}>
-                  <Button
-                    variant="inline"
-                    shape="square"
-                    size="small"
-                    aria-label="Bullet List"
-                    className={styles.toolbarButton}
-                  >
-                    <ListBulletIcon />
-                  </Button>
-                  <Button
-                    variant="inline"
-                    shape="square"
-                    size="small"
-                    aria-label="Numbered List"
-                    className={styles.toolbarButton}
-                  >
-                    <ListOrderedIcon />
-                  </Button>
-                </div>
-                <div className={styles.toolbarSeparator} />
-                <div className={styles.toolbarGroup}>
-                  <Button
-                    variant="inline"
-                    shape="square"
-                    size="small"
-                    aria-label="Insert Link"
-                    className={styles.toolbarButton}
-                  >
-                    <LinkIcon />
-                  </Button>
-                  <Button
-                    variant="inline"
-                    shape="square"
-                    size="small"
-                    aria-label="Code Block"
-                    className={styles.toolbarButton}
-                  >
-                    <CodeBlockIcon />
-                  </Button>
-                </div>
-              </div>
-              <div className={styles.editorContent}>
-                <div 
-                  className={styles.editorDocument}
-                  contentEditable
-                  suppressContentEditableWarning
-                  onInput={(e) => {
-                    const target = e.currentTarget;
-                    setPlanContent(target.innerText);
-                  }}
-                  dangerouslySetInnerHTML={{ 
-                    __html: planContent
-                      .split('\n')
-                      .map(line => {
-                        // Headers
-                        if (line.startsWith('### ')) {
-                          return `<h3>${line.slice(4)}</h3>`;
-                        } else if (line.startsWith('## ')) {
-                          return `<h2>${line.slice(3)}</h2>`;
-                        } else if (line.startsWith('# ')) {
-                          return `<h1>${line.slice(2)}</h1>`;
-                        }
-                        // Lists
-                        else if (line.match(/^\d+\.\s/)) {
-                          return `<div style="margin-left: 20px">${line}</div>`;
-                        } else if (line.startsWith('- ')) {
-                          return `<div>• ${line.slice(2)}</div>`;
-                        }
-                        // Bold text
-                        else if (line.includes('**')) {
-                          return `<div>${line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>`;
-                        }
-                        // Empty lines
-                        else if (line.trim() === '') {
-                          return '<br>';
-                        }
-                        // Regular text
-                        else {
-                          return `<div>${line}</div>`;
-                        }
-                      })
-                      .join('')
-                  }}
-                />
-              </div>
-            </div>
-          )}
-
-          {autoComplete.length > 0 && (
-            <div className={styles.autoComplete}>
-              {autoComplete.map((cmd, idx) => (
-                <div 
-                  key={cmd}
-                  className={`${styles.autoCompleteItem} ${idx === autoCompleteIndex ? styles.selected : ''}`}
-                >
-                  /{cmd}
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className={styles.inputArea}>
-            <div className={styles.inputWrapper}>
-              <span className={`${styles.modeBadge} ${
-                isRememberMode ? styles.modeBadgeRemember : 
-                currentMode === 'plan' ? styles.modeBadgePlan : 
-                styles.modeBadgeExecute
-              }`}>
-                {isRememberMode ? 'Remember' : currentMode === 'plan' ? 'Plan' : 'Execute'}
-              </span>
-              <textarea
-                ref={inputRef}
-                className={`${styles.input} ${
-                  isRememberMode ? styles.inputRemember : 
-                  currentMode === 'plan' ? styles.inputPlan : 
-                  styles.inputExecute
-                }`}
-                value={isRememberMode && input.startsWith('#') ? input.slice(1) : input}
-                onChange={(e) => {
-                  const newValue = e.target.value;
-                  if (isRememberMode) {
-                    // In remember mode, prepend # to the actual stored value
-                    setInput('#' + newValue);
-                  } else {
-                    setInput(newValue);
-                  }
-                }}
-                onKeyDown={handleKeyDown}
-                placeholder="Type a prompt or /help for commands"
-                disabled={false}
-                aria-label="Terminal input"
-                rows={1}
-              />
-            </div>
-            <div className={styles.helperText}>
-              Shift-Tab to change modes, {isMac ? '⌘' : 'Ctrl'}-Enter to submit
-            </div>
-          </div>
+          <Tabs
+            tabs={getTabItems()}
+            activeTabId={activeTabId}
+            onTabChange={handleTabChange}
+            onTabClose={handleTabClose}
+            toolbar={
+              <Button
+                variant="inline"
+                shape="square"
+                size="small"
+                onClick={handleNewTab}
+                aria-label="New tab"
+              >
+                <AddIcon />
+              </Button>
+            }
+            contentClassName={styles.tabContent}
+            size="medium"
+          />
         </div>
       </div>
     </div>

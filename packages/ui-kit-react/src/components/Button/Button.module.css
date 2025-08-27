@@ -201,6 +201,7 @@
   min-height: 28px;
   padding: var(--spacing-small20) var(--spacing);
   font-size: var(--font-size-small10);
+  font-weight: var(--font-weight-normal);
 }
 
 .medium {

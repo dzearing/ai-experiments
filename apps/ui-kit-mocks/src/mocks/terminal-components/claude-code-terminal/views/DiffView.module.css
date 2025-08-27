@@ -1,0 +1,101 @@
+.diffView {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--color-body-background);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing);
+  border-bottom: 1px solid var(--color-body-border);
+}
+
+.header h3 {
+  margin: 0;
+  font-size: var(--font-size-h5);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-body-text);
+}
+
+.fileInfo {
+  font-size: var(--font-size-small10);
+  color: var(--color-body-textSoft10);
+  font-family: var(--font-family-mono);
+}
+
+.diffContent {
+  flex: 1;
+  overflow: auto;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-small10);
+  line-height: 1.6;
+}
+
+.diffLine {
+  display: flex;
+  min-height: 24px;
+  align-items: center;
+}
+
+.diffLine.removed {
+  background: rgba(255, 0, 0, 0.1);
+}
+
+.diffLine.added {
+  background: rgba(0, 255, 0, 0.1);
+}
+
+.lineNumber {
+  display: inline-block;
+  width: 50px;
+  padding: 0 var(--spacing-small10);
+  text-align: right;
+  color: var(--color-body-textSoft20);
+  background: var(--color-panel-background);
+  border-right: 1px solid var(--color-body-border);
+  user-select: none;
+}
+
+.unchanged,
+.removedText,
+.addedText {
+  flex: 1;
+  padding: 0 var(--spacing);
+  white-space: pre;
+}
+
+.removedText {
+  color: #ff4444;
+}
+
+.addedText {
+  color: #44ff44;
+}
+
+.summary {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing);
+  padding: var(--spacing-small10) var(--spacing);
+  background: var(--color-panel-background);
+  border-top: 1px solid var(--color-body-border);
+  font-size: var(--font-size-small10);
+}
+
+.additions {
+  color: #44ff44;
+  font-weight: var(--font-weight-medium);
+}
+
+.deletions {
+  color: #ff4444;
+  font-weight: var(--font-weight-medium);
+}
+
+.fileName {
+  margin-left: auto;
+  color: var(--color-body-textSoft10);
+}

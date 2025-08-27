@@ -1,0 +1,145 @@
+.tabBar {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--spacing-small20);
+  background: transparent;
+  border-bottom: 1px solid var(--color-body-border);
+  padding: var(--spacing-small10) var(--spacing-small10) 0;
+  height: calc(var(--spacing-large20) + var(--spacing-small5)); /* ~42px */
+  overflow: hidden;
+}
+
+.tabList {
+  display: flex;
+  flex: 1;
+  gap: calc(var(--spacing-small20) / 2); /* 2px */
+  height: var(--spacing-large20); /* 32px */
+  align-items: flex-end;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.tabList::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small20);
+  padding: 0 var(--spacing-small20) 0 var(--spacing);
+  height: 46px;
+  min-width: calc(var(--spacing) * 7.5); /* ~120px */
+  max-width: calc(var(--spacing) * 15); /* ~240px */
+  background: red;
+  border: 1px solid var(--color-panel-border);
+  border-bottom: none;
+  border-radius: var(--radius-interactive) var(--radius-interactive) 0 0;
+  cursor: pointer;
+  position: relative;
+  transition: all var(--duration-fast20);
+  user-select: none;
+  white-space: nowrap;
+}
+
+.tab:hover {
+  background: var(--color-panel-backgroundHard10);
+}
+
+.tab:hover .tabCloseButton {
+  opacity: 0.7;
+}
+
+.tabActive {
+  background: var(--color-primary-background);
+  border: 1px solid var(--color-primary-border);
+  border-bottom: 1px solid var(--color-primary-background);
+  margin-bottom: -1px;
+  z-index: 1;
+  box-shadow: var(--shadow-card);
+}
+
+.tabActive:hover {
+  background: var(--color-primary-background-hover);
+  border-color: var(--color-primary-border-hover);
+  border-bottom: 1px solid var(--color-primary-background-hover);
+}
+
+.tabActive .tabTitle,
+.tabActive .tabIcon {
+  color: var(--color-primary-text);
+}
+
+.tabIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--color-panel-textSoft10);
+}
+
+.tabTitle {
+  flex: 1;
+  font-size: var(--font-size-small10);
+  color: var(--color-panel-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
+}
+
+.tabActive .tabTitle {
+  font-weight: var(--font-weight-medium);
+}
+
+.tabDirtyIndicator {
+  position: absolute;
+  left: calc(var(--spacing-small10) * -1); /* -8px */
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-panel-textSoft20);
+  font-size: var(--font-size-large10);
+  line-height: 1;
+}
+
+.tabCloseButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--spacing);
+  height: var(--spacing);
+  padding: 0;
+  margin-right: var(--spacing-small20);
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-interactive);
+  color: var(--color-panel-textSoft20);
+  cursor: pointer;
+  opacity: 0.6;
+  transition: all var(--duration-fast20);
+  flex-shrink: 0;
+}
+
+.tabCloseButton:hover {
+  opacity: 1;
+  background: var(--color-panel-backgroundHard10);
+  color: var(--color-panel-text);
+}
+
+.tabActive .tabCloseButton {
+  opacity: 0.8;
+  color: var(--color-primary-text);
+}
+
+.tabActive .tabCloseButton:hover {
+  opacity: 1;
+  background: var(--color-primary-background-hover);
+}
+
+.newTabButton {
+  flex-shrink: 0;
+  margin-left: auto;
+  margin-bottom: calc(var(--spacing-small20) / 2); /* 2px */
+}

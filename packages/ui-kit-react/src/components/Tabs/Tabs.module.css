@@ -10,7 +10,9 @@
   align-items: stretch;
   background: var(--color-panel-background);
   position: relative;
-  min-height: 35px;
+  min-height: 42px;
+  padding-top: 6px;
+  flex-shrink: 0;
 }
 
 .scrollContainer {
@@ -44,6 +46,7 @@
   align-items: stretch;
   height: 100%;
   padding: 0 var(--spacing-small20) 0 var(--spacing-small20);
+  gap: var(--spacing-small20);
   position: relative;
   border-bottom: 1px solid var(--color-panel-border);
 }
@@ -53,12 +56,13 @@
   align-items: center;
   gap: var(--spacing-small20);
   padding: 0 var(--spacing-small10);
-  min-width: 80px;
+  min-width: 100px;
   max-width: 200px;
   height: 100%;
   border: none;
   border-left: 1px solid transparent;
   border-right: 1px solid transparent;
+  border-radius: var(--radius-interactive) var(--radius-interactive) 0 0;
   background: transparent;
   color: var(--color-body-textSoft10);
   font-size: var(--font-size-small10);
@@ -68,10 +72,6 @@
   position: relative;
   transition: color var(--duration-fast20) var(--easing-default),
               background var(--duration-fast20) var(--easing-default);
-}
-
-.tab:first-child {
-  border-left: none;
 }
 
 .tab:hover:not(.active):not(.disabled) {
@@ -85,7 +85,6 @@
   border-top: 2px solid var(--color-primary-background);
   border-left-color: var(--color-panel-border);
   border-right-color: var(--color-panel-border);
-  border-radius: var(--radius-interactive) var(--radius-interactive) 0 0;
   position: relative;
   padding-bottom: 2px; /* Extend to cover the border */
   margin-bottom: -1px; /* Pull down to overlap the border */
@@ -142,8 +141,11 @@
   justify-content: center;
   width: 18px;
   height: 18px;
+  min-width: 18px;
+  min-height: 18px;
   margin-left: auto;
   margin-right: calc(var(--spacing-small20) * -1);
+  padding: 0;
   border: none;
   background: transparent;
   color: var(--color-body-iconSoft20);
@@ -181,8 +183,11 @@
 .content {
   flex: 1;
   background: var(--color-body-background);
-  overflow: auto;
+  overflow: hidden;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 /* Size variations */

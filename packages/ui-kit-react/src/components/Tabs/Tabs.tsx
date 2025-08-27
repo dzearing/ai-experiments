@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styles from './Tabs.module.css';
 import cx from 'clsx';
+import { CloseIcon } from '@claude-flow/ui-kit-icons';
 
 export interface TabItem {
   /** Unique identifier for the tab */
@@ -57,7 +58,7 @@ export const Tabs = React.forwardRef<HTMLDivElement, TabsProps>(
       activeTabId || tabs[0]?.id || ''
     );
     const scrollContainerRef = useRef<HTMLDivElement>(null);
-    const activeTabRef = useRef<HTMLButtonElement>(null);
+    const activeTabRef = useRef<HTMLDivElement>(null);
 
     const currentActiveId = activeTabId !== undefined ? activeTabId : internalActiveId;
     const activeTab = tabs.find((tab) => tab.id === currentActiveId);
@@ -148,22 +149,20 @@ export const Tabs = React.forwardRef<HTMLDivElement, TabsProps>(
           <div className={styles.scrollContainer} ref={scrollContainerRef}>
             <div className={styles.tabList} role="tablist">
               {tabs.map((tab) => (
-                <button
+                <div
                   key={tab.id}
                   ref={tab.id === currentActiveId ? activeTabRef : null}
-                  type="button"
                   role="tab"
                   aria-selected={tab.id === currentActiveId}
                   aria-disabled={tab.disabled}
-                  disabled={tab.disabled}
                   className={cx(
                     styles.tab,
                     tab.id === currentActiveId && styles.active,
                     tab.disabled && styles.disabled
                   )}
-                  onClick={() => handleTabClick(tab.id)}
-                  onKeyDown={(e) => handleKeyDown(e, tab.id)}
-                  tabIndex={tab.id === currentActiveId ? 0 : -1}
+                  onClick={tab.disabled ? undefined : () => handleTabClick(tab.id)}
+                  onKeyDown={tab.disabled ? undefined : (e) => handleKeyDown(e, tab.id)}
+                  tabIndex={tab.disabled ? -1 : (tab.id === currentActiveId ? 0 : -1)}
                 >
                   {tab.icon && <span className={styles.icon}>{tab.icon}</span>}
                   <span className={styles.label}>{tab.label}</span>
@@ -175,23 +174,10 @@ export const Tabs = React.forwardRef<HTMLDivElement, TabsProps>(
                       aria-label={`Close ${tab.label}`}
                       tabIndex={-1}
                     >
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M12 4L4 12M4 4L12 12"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                        />
-                      </svg>
+                      <CloseIcon size={14} />
                     </button>
                   )}
-                </button>
+                </div>
               ))}
             </div>
           </div>
