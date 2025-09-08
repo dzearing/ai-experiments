@@ -3703,7 +3703,7 @@ const SESSION_CREATION_DEBOUNCE_MS = 2000; // 2 seconds
 
 // Initialize Claude Code session
 app.post('/api/claude/code/start', async (req, res) => {
-  const { projectId, projectPath, repoName, userName, userEmail, initialMode } = req.body;
+  const { projectId, projectPath, repoName, userName, userEmail, initialMode, systemPrompt } = req.body;
   
   // Create a unique key for this session request (needed for finally block)
   const requestKey = `${projectPath || 'unknown'}-${repoName || 'unknown'}-${userName || 'anonymous'}`;
@@ -3807,46 +3807,66 @@ app.post('/api/claude/code/start', async (req, res) => {
     
     const sessionId = `${projectId}-${repoName}-${crypto.randomUUID()}`;
     
-    // Use the specific repo requested by the user
-    const reposPath = path.join(projectPath, 'repos');
-    const repoPath = path.join(reposPath, repoName);
+    // Check if this is an agent chat session (virtual project)
+    const isAgentChat = projectId === 'agent-chat' && repoName.startsWith('agent-');
+    let repoPath = null;
     
-    // Verify the repo exists
-    try {
-      await fsAsync.access(repoPath);
-    } catch (err) {
-      return res.status(404).json({ error: `Repository ${repoName} not found` });
-    }
-    
-    // Check if repo is clean and available
-    const { exec } = require('child_process');
-    const util = require('util');
-    const execAsync = util.promisify(exec);
-    
-    try {
-      // Check if repo is clean
-      const { stdout: statusOutput } = await execAsync('git status --porcelain', { 
-        cwd: repoPath 
-      });
-      
-      if (statusOutput.trim() !== '') {
-        console.warn(`Repository ${repoName} has uncommitted changes but proceeding anyway`);
+    if (isAgentChat) {
+      // For agent chat, we don't need a real repository
+      // Create a temporary directory for the session if needed
+      const tempDir = path.join(require('os').tmpdir(), 'agent-chat-sessions', sessionId);
+      try {
+        await fsAsync.mkdir(tempDir, { recursive: true });
+        repoPath = tempDir;
+      } catch (err) {
+        console.error('Error creating temp directory for agent chat:', err);
+        repoPath = require('os').tmpdir(); // Fallback to system temp
       }
-    } catch (err) {
-      console.error(`Error checking repo status for ${repoName}:`, err);
+      logger.debug(`Agent chat session using temp directory: ${repoPath}`);
+    } else {
+      // Regular Claude Code session - verify the repo exists
+      const reposPath = path.join(projectPath, 'repos');
+      repoPath = path.join(reposPath, repoName);
+      
+      // Verify the repo exists
+      try {
+        await fsAsync.access(repoPath);
+      } catch (err) {
+        return res.status(404).json({ error: `Repository ${repoName} not found` });
+      }
+      
+      // Check if repo is clean and available
+      const { exec } = require('child_process');
+      const util = require('util');
+      const execAsync = util.promisify(exec);
+      
+      try {
+        // Check if repo is clean
+        const { stdout: statusOutput } = await execAsync('git status --porcelain', { 
+          cwd: repoPath 
+        });
+        
+        if (statusOutput.trim() !== '') {
+          console.warn(`Repository ${repoName} has uncommitted changes but proceeding anyway`);
+        }
+      } catch (err) {
+        console.error(`Error checking repo status for ${repoName}:`, err);
+      }
     }
     
     const reservedRepo = repoName;
     
-    // Migrate from REPOS.md if needed
-    try {
-      await claudeFlowSettings.migrateFromReposMd(projectPath);
-    } catch (err) {
-      console.error('Error migrating from REPOS.md:', err);
-    }
-    
-    // Update claudeflow.settings.json to mark repo as reserved
-    try {
+    // Skip claudeflow settings for agent chat sessions
+    if (!isAgentChat) {
+      // Migrate from REPOS.md if needed
+      try {
+        await claudeFlowSettings.migrateFromReposMd(projectPath);
+      } catch (err) {
+        console.error('Error migrating from REPOS.md:', err);
+      }
+      
+      // Update claudeflow.settings.json to mark repo as reserved
+      try {
       // First ensure the repo exists in settings
       let settings = await claudeFlowSettings.load(projectPath);
       if (!settings.repositories[reservedRepo]) {
@@ -3883,12 +3903,13 @@ app.post('/api/claude/code/start', async (req, res) => {
           }
         }
       }
-    } catch (err) {
-      // This is an unexpected error
-      logger.error('Unexpected error updating claudeflow.settings.json:', err);
-      logger.error('Project path was:', projectPath);
-      logger.error('Repo was:', reservedRepo);
-      // Continue anyway - don't fail the session start
+      } catch (err) {
+        // This is an unexpected error
+        logger.error('Unexpected error updating claudeflow.settings.json:', err);
+        logger.error('Project path was:', projectPath);
+        logger.error('Repo was:', reservedRepo);
+        // Continue anyway - don't fail the session start
+      }
     }
     
     // Create session using session manager
@@ -3899,7 +3920,8 @@ app.post('/api/claude/code/start', async (req, res) => {
       repoName: reservedRepo,
       userName,
       userEmail,
-      initialMode
+      initialMode,
+      systemPrompt
     });
     
     logger.debug('Created session:', {
@@ -4076,8 +4098,15 @@ app.post('/api/claude/code/message', async (req, res) => {
           `${msg.role === 'user' ? 'Human' : 'Assistant'}: ${msg.content}`
         ).join('\n\n');
         
-        // Create the full prompt
-        const fullPrompt = `${contextPrompt}\n\nHuman: ${message}\n\nAssistant:`;
+        // Create the full prompt - include system prompt if present
+        let fullPrompt;
+        if (session.systemPrompt) {
+          // If we have a system prompt (agent mode), include it at the beginning
+          fullPrompt = `${session.systemPrompt}\n\n${contextPrompt}\n\nHuman: ${message}\n\nAssistant:`;
+        } else {
+          // Regular Claude Code mode
+          fullPrompt = `${contextPrompt}\n\nHuman: ${message}\n\nAssistant:`;
+        }
         
         // Configure tools based on mode (for context in prompt)
         // In plan mode, only allow read-only tools (no writes, edits, or executions)
@@ -4086,7 +4115,20 @@ app.post('/api/claude/code/message', async (req, res) => {
         // Don't send any thinking or progress messages
         
         // Get the repo path for Claude to work in
-        const repoPath = path.join(session.projectPath, 'repos', session.repoName);
+        let repoPath;
+        if (session.projectId === 'agent-chat' && session.repoName.startsWith('agent-')) {
+          // For agent chat, use a temp directory
+          repoPath = path.join(require('os').tmpdir(), 'agent-chat-sessions', sessionId);
+          // Ensure the directory exists
+          try {
+            await fsAsync.mkdir(repoPath, { recursive: true });
+          } catch (err) {
+            // Directory might already exist, that's fine
+          }
+        } else {
+          // Regular repo path
+          repoPath = path.join(session.projectPath, 'repos', session.repoName);
+        }
         
         // Process with Claude with progress updates
         console.log('=== CLAUDE REQUEST ===');
@@ -4904,8 +4946,24 @@ app.get('/api/claude/code/stream', (req, res) => {
         const sessionMode = session.initialMode || 'default';
         const isPlanMode = sessionMode === 'plan';
         
-        // Create greeting prompt
-        const greetingPrompt = `Generate a friendly, personalized greeting for a Claude Code session. Keep it brief (1-2 sentences), warm, and motivating.
+        // Check if this is an agent chat session
+        const isAgentChat = session.projectId === 'agent-chat' && session.repoName.startsWith('agent-');
+        
+        let greetingPrompt;
+        
+        if (isAgentChat && session.systemPrompt) {
+          // For agent chat, use the system prompt and ask the agent to introduce itself
+          greetingPrompt = `${session.systemPrompt}
+
+You are starting a new chat session with a user. Please introduce yourself based on your role and capabilities defined above. Keep your introduction brief (2-3 sentences), professional, and welcoming. End by asking how you can help today.
+
+Current time: ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+User's name: ${userName || 'there'}
+
+Generate your introduction now:`;
+        } else {
+          // Regular Claude Code greeting
+          greetingPrompt = `Generate a friendly, personalized greeting for a Claude Code session. Keep it brief (1-2 sentences), warm, and motivating.
 
 Context:
 - User's name: ${userName || 'Developer'}
@@ -4939,6 +4997,7 @@ ${isPlanMode ?
 - "Welcome back, Jordan! Time to make some magic happen in the api-gateway repo. What's on the agenda?"`}
 
 Generate a greeting now:`;
+        }
 
         const claudeService = require('./claude-service');
         
@@ -4955,24 +5014,7 @@ Generate a greeting now:`;
           return;
         }
         
-        debugLog(`Sending greeting to ${connections.size} connections for session ${sessionId}`);
-        
-        // Send greeting start event to all active connections
-        for (const [connId, conn] of connections.entries()) {
-          try {
-            conn.res.write(`event: message-start\ndata: ${JSON.stringify({ 
-              id: greetingMessageId,
-              type: 'assistant',
-              isGreeting: true 
-            })}\n\n`);
-            debugLog(`Sent message-start to connection ${connId}`);
-          } catch (err) {
-            debugLog(`Error sending message-start to connection ${connId}:`, err);
-            // Remove dead connection
-            connections.delete(connId);
-          }
-        }
-        
+        debugLog(`Preparing greeting for ${connections.size} connections for session ${sessionId}`);
         debugLog('Claude service available:', claudeService.isClaudeAvailable);
         
         let greetingText = '';
@@ -4980,11 +5022,26 @@ Generate a greeting now:`;
         if (claudeService.isClaudeAvailable) {
           // Get real greeting from Claude
           debugLog('Calling processClaudeCodeMessage for greeting');
+          // Get the appropriate repo path for the greeting
+          let greetingRepoPath;
+          if (isAgentChat) {
+            // For agent chat, use temp directory
+            greetingRepoPath = path.join(require('os').tmpdir(), 'agent-chat-sessions', sessionId);
+            // Ensure the directory exists
+            try {
+              await fsAsync.mkdir(greetingRepoPath, { recursive: true });
+            } catch (err) {
+              // Directory might already exist, that's fine
+            }
+          } else {
+            greetingRepoPath = path.join(projectPath, 'repos', repoName);
+          }
+          
           const greetingResponse = await claudeService.processClaudeCodeMessage(
             greetingPrompt,
             [], // No tools needed for greeting
             'opus',
-            path.join(projectPath, 'repos', repoName),
+            greetingRepoPath,
             null, // No progress callback needed
             null, // No tool execution callback
             null  // No message callback
@@ -5001,26 +5058,41 @@ Generate a greeting now:`;
           }
         } else {
           // Fallback greeting when Claude is not available
-          greetingText = `Hello${userName ? ' ' + userName : ''}! I'm ready to help you with the **${repoName}** repository. What would you like to work on today?`;
+          if (isAgentChat) {
+            greetingText = `Hello${userName ? ' ' + userName : ''}! I'm your AI assistant. How can I help you today?`;
+          } else {
+            greetingText = `Hello${userName ? ' ' + userName : ''}! I'm ready to help you with the **${repoName}** repository. What would you like to work on today?`;
+          }
         }
         
-        // Send the complete greeting as a single chunk for reliability
-        // Add a small delay to ensure message-start is processed first
-        await new Promise(resolve => setTimeout(resolve, 50));
-        
+        // Now that we have the greeting text, send it to all connections
         const currentConnections = claudeCodeClients.get(sessionId);
         if (currentConnections && currentConnections.size > 0) {
           debugLog(`Sending greeting to ${currentConnections.size} connections`);
           
           for (const [connId, conn] of currentConnections.entries()) {
             try {
-              // Send the complete text as one chunk
+              // First send message-start event
+              conn.res.write(`event: message-start\ndata: ${JSON.stringify({ 
+                id: greetingMessageId,
+                type: 'assistant',
+                isGreeting: true 
+              })}\n\n`);
+              debugLog(`Sent message-start to connection ${connId}`);
+              
+              // Send the complete text as one chunk immediately
               debugLog(`Sending chunk with messageId: ${greetingMessageId} to connection ${connId}`);
               conn.res.write(`event: message-chunk\ndata: ${JSON.stringify({ 
                 messageId: greetingMessageId, 
                 chunk: greetingText
               })}\n\n`);
               debugLog(`Sent greeting chunk to connection ${connId}`);
+              
+              // Send message-complete event to finalize the message
+              conn.res.write(`event: message-complete\ndata: ${JSON.stringify({ 
+                messageId: greetingMessageId 
+              })}\n\n`);
+              debugLog(`Sent message-complete for greeting to connection ${connId}`);
             } catch (err) {
               debugLog(`Error sending greeting to connection ${connId}:`, err);
               currentConnections.delete(connId);
@@ -5269,6 +5341,10 @@ app.post('/api/claude/code/end', async (req, res) => {
       projectPath: session.projectPath
     });
     
+    // Check if this is an agent chat session
+    const isAgentChat = session.projectPath === '/tmp/agent-chat' || 
+                        (session.projectId === 'agent-chat' && session.repoName?.startsWith('agent-'));
+    
     if (session.repoName && session.projectPath) {
       const repoPath = path.join(session.projectPath, 'repos', session.repoName);
       
@@ -5282,18 +5358,22 @@ app.post('/api/claude/code/end', async (req, res) => {
         console.error('Error clearing Claude history:', err);
       }
       
-      // Update claudeflow.settings.json
-      try {
-        console.log('About to release repository:', session.repoName);
-        await claudeFlowSettings.releaseRepository(session.projectPath, session.repoName);
-        console.log(`Released repo ${session.repoName} back to available in claudeflow.settings.json`);
-        
-        // Verify it was released
-        const settings = await claudeFlowSettings.load(session.projectPath);
-        console.log('Verification - repo status after release:', settings.repositories[session.repoName]);
-      } catch (err) {
-        console.error('Error updating claudeflow.settings.json:', err);
-        console.error('Full error:', err.stack);
+      // Only update claudeflow.settings.json for non-agent chat sessions
+      if (!isAgentChat) {
+        try {
+          console.log('About to release repository:', session.repoName);
+          await claudeFlowSettings.releaseRepository(session.projectPath, session.repoName);
+          console.log(`Released repo ${session.repoName} back to available in claudeflow.settings.json`);
+          
+          // Verify it was released
+          const settings = await claudeFlowSettings.load(session.projectPath);
+          console.log('Verification - repo status after release:', settings.repositories[session.repoName]);
+        } catch (err) {
+          console.error('Error updating claudeflow.settings.json:', err);
+          console.error('Full error:', err.stack);
+        }
+      } else {
+        console.log('Skipping claudeflow.settings.json update for agent chat session');
       }
     } else {
       console.log('Warning: No reservedRepo or projectPath in session');

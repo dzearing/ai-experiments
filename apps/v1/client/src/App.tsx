@@ -68,6 +68,7 @@ function AppContent() {
               <Route path="agents/new/:step" element={<NewAgentMultiStep />} />
               <Route path="agents/edit/:personaId" element={<NewAgentMultiStep />} />
               <Route path="agents/edit/:personaId/:step" element={<NewAgentMultiStep />} />
+              <Route path="agents/chat/:personaId" element={<ClaudeCode />} />
               <Route path="jam-sessions" element={<JamSessions />} />
               <Route path="jam-sessions/:id" element={<JamSessionDetail />} />
               <Route path="daily-report" element={<div>Daily Report Page (TODO)</div>} />

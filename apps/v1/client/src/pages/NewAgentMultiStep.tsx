@@ -8,6 +8,73 @@ import { StockPhotoAvatar, getRandomName, getGenderFromSeed, hashCode } from '..
 import { InlineLoadingSpinner } from '../components/ui/LoadingSpinner';
 import type { PersonaType } from '../types';
 
+// Helper function to extract role summary from agent prompt
+function extractRoleSummary(agentPrompt: string): string {
+  if (!agentPrompt) return '';
+  
+  // Try to find the Primary Role or Overview section
+  const primaryRoleMatch = agentPrompt.match(/\*\*Primary Role\*\*:\s*([^\n]+)/i);
+  if (primaryRoleMatch) {
+    // Clean up the text - remove list markers and format as sentence
+    let role = primaryRoleMatch[1].trim();
+    role = role.replace(/^[-•*]\s*/, ''); // Remove list markers
+    role = role.replace(/\*\*/g, ''); // Remove bold markers
+    return role;
+  }
+  
+  // Alternative: look for "Primary Role:" without bold markers
+  const roleMatch = agentPrompt.match(/Primary Role[:\s]*([^\n]+)/i);
+  if (roleMatch) {
+    let role = roleMatch[1].trim();
+    role = role.replace(/^[-•*]\s*/, '');
+    role = role.replace(/\*\*/g, '');
+    return role;
+  }
+  
+  // Try to find role description in overview section
+  const overviewSection = agentPrompt.match(/##\s*(?:Agent\s+)?Overview[\s\S]*?(?=##|$)/i);
+  if (overviewSection) {
+    const lines = overviewSection[0].split('\n');
+    for (const line of lines) {
+      // Look for lines that describe the role but aren't headers or list items
+      if (line.includes('Role:') || line.includes('role')) {
+        let role = line.replace(/.*Role:\s*/i, '').trim();
+        role = role.replace(/^[-•*]\s*/, '');
+        role = role.replace(/\*\*/g, '');
+        if (role.length > 20) return role;
+      }
+    }
+  }
+  
+  // Look for a "Core Capabilities" or expertise section and create a summary
+  const capabilitiesMatch = agentPrompt.match(/##\s*(?:Core\s+)?Capabilities[\s\S]*?(?=##|$)/i);
+  if (capabilitiesMatch) {
+    const capabilities = [];
+    const lines = capabilitiesMatch[0].split('\n');
+    for (const line of lines) {
+      if (line.startsWith('-') || line.startsWith('*')) {
+        const capability = line.replace(/^[-*]\s*/, '').trim();
+        if (capability && !capability.startsWith('#')) {
+          capabilities.push(capability.toLowerCase());
+        }
+      }
+    }
+    if (capabilities.length > 0) {
+      // Create a sentence from capabilities
+      const topCaps = capabilities.slice(0, 3);
+      if (topCaps.length === 1) {
+        return `Specializes in ${topCaps[0]}.`;
+      } else if (topCaps.length === 2) {
+        return `Specializes in ${topCaps[0]} and ${topCaps[1]}.`;
+      } else {
+        return `Specializes in ${topCaps[0]}, ${topCaps[1]}, and ${topCaps[2]}.`;
+      }
+    }
+  }
+  
+  return '';
+}
+
 interface StepProps {
   onNext: () => void;
   onBack?: () => void;
@@ -23,6 +90,7 @@ interface AgentSuggestion {
   expertise: string[];
   systemPrompt?: string; // Deprecated
   agentPrompt: string; // Full markdown specification
+  roleSummary?: string; // Short summary of the agent's role
 }
 
 // Step 1: Describe Work
@@ -88,7 +156,8 @@ const DescribeWorkStep = memo(function DescribeWorkStep({ onNext, workDescriptio
           jobTitle,
           name: 'Alex Chen',
           expertise,
-          agentPrompt: `# Agent Specification\n\nWork requested: ${workDescription}\n\n## Overview\nAgent type: ${type}\nJob title: ${jobTitle}\n\n## Expertise\n${expertise.map(e => `- ${e}`).join('\n')}`
+          agentPrompt: `# Agent Specification\n\nWork requested: ${workDescription}\n\n## Overview\n- **Primary Role**: ${jobTitle} focused on ${expertise[0].toLowerCase()}\nAgent type: ${type}\nJob title: ${jobTitle}\n\n## Expertise\n${expertise.map(e => `- ${e}`).join('\n')}`,
+          roleSummary: `${jobTitle} focused on ${expertise[0].toLowerCase()}`
         };
         
         setAgentSuggestion(suggestion);
@@ -480,7 +549,8 @@ export function NewAgentMultiStep() {
         jobTitle: existingPersona.jobTitle || 'Agent',
         name: existingPersona.name,
         expertise: existingPersona.expertise,
-        agentPrompt: existingPersona.agentPrompt || existingPersona.systemPrompt || ''
+        agentPrompt: existingPersona.agentPrompt || existingPersona.systemPrompt || '',
+        roleSummary: existingPersona.roleSummary
       };
     }
     
@@ -518,6 +588,9 @@ export function NewAgentMultiStep() {
 
   const handleNext = () => {
     if (currentStep === 2 && agentSuggestion) {
+      // Extract role summary from agent prompt
+      const roleSummary = extractRoleSummary(agentSuggestion.agentPrompt);
+      
       // Create or update agent
       const agentData = {
         name: agentSuggestion.name,
@@ -525,6 +598,7 @@ export function NewAgentMultiStep() {
         jobTitle: agentSuggestion.jobTitle,
         expertise: agentSuggestion.expertise,
         agentPrompt: agentSuggestion.agentPrompt,
+        roleSummary: roleSummary || `${agentSuggestion.jobTitle} specializing in ${agentSuggestion.expertise.slice(0, 2).join(' and ')}`,
         avatarSeed,
         avatarGender: getGenderFromSeed(avatarSeed),
       };

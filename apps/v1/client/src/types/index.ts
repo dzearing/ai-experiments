@@ -11,6 +11,7 @@ export interface Persona {
   avatarGender?: 'male' | 'female';
   systemPrompt?: string; // Deprecated - kept for backwards compatibility
   agentPrompt?: string; // Full markdown specification of the agent
+  roleSummary?: string; // Short summary of the agent's role and responsibilities
 }
 
 export type PersonaType =

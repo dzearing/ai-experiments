@@ -64,10 +64,7 @@ export function ThemedPersonas() {
                 Agent
               </th>
               <th scope="col" className={`px-6 py-3 text-left text-sm font-semibold ${styles.headingColor}`}>
-                Personality
-              </th>
-              <th scope="col" className={`px-6 py-3 text-left text-sm font-semibold ${styles.headingColor} w-32`}>
-                Status
+                Role
               </th>
               <th scope="col" className={`px-6 py-3 text-left text-sm font-semibold ${styles.headingColor} w-28`}>
                 Actions
@@ -77,7 +74,7 @@ export function ThemedPersonas() {
           <tbody className={`divide-y ${styles.contentBorder}`}>
             {personas.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-6 py-12 text-center">
+                <td colSpan={3} className="px-6 py-12 text-center">
                   <svg className={`mx-auto h-12 w-12 ${styles.mutedText}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
@@ -116,23 +113,22 @@ export function ThemedPersonas() {
                       </div>
                     </td>
                     <td className={`px-6 py-4 text-sm ${styles.textColor}`}>
-                      {persona.personality || 'Default personality'}
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm">
-                      <span className={`
-                        inline-flex rounded-full px-2 py-1 text-xs font-semibold
-                        ${persona.status === 'available' 
-                          ? 'text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-900/50'
-                          : persona.status === 'busy' 
-                          ? 'text-yellow-600 bg-yellow-100 dark:text-yellow-400 dark:bg-yellow-900/50'
-                          : 'text-neutral-600 bg-neutral-100 dark:text-neutral-400 dark:bg-neutral-900/50'
-                        }
-                      `}>
-                        {persona.status}
-                      </span>
+                      {persona.roleSummary || persona.personality || 'No role description available'}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-sm">
                       <div className="flex items-center gap-2">
+                        <IconButton
+                          aria-label="Chat with agent"
+                          variant="ghost"
+                          size="sm"
+                          className="hover:bg-black/5 dark:hover:bg-white/5"
+                          as={Link}
+                          to={`/agents/chat/${persona.id}`}
+                        >
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                          </svg>
+                        </IconButton>
                         <IconButton
                           aria-label="Edit agent"
                           variant="ghost"
