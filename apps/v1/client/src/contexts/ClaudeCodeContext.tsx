@@ -340,21 +340,26 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
         // Get current content for this message
         const currentContent = streamingMessageContentRef.current.get(data.messageId) || '';
 
-        // For existing messages, reset the streaming content before adding the chunk
-        // This prevents appending to previous content
+        // For existing messages being restored, just set the chunk directly
+        // For new messages (including greetings), append the chunk
+        let finalContent: string;
         if (isRestoringExistingSessionRef.current) {
-          streamingMessageContentRef.current.set(data.messageId, data.chunk);
+          finalContent = data.chunk;
+          streamingMessageContentRef.current.set(data.messageId, finalContent);
           console.log('Restored existing message content, length:', data.chunk?.length);
         } else {
           // Append chunk to streaming content for new messages
-          streamingMessageContentRef.current.set(data.messageId, currentContent + data.chunk);
+          finalContent = currentContent + data.chunk;
+          streamingMessageContentRef.current.set(data.messageId, finalContent);
+          console.log(`Appending chunk to message ${data.messageId}: current="${currentContent.substring(0, 20)}", chunk="${data.chunk?.substring(0, 20)}", new="${finalContent.substring(0, 40)}"`);
         }
-        const updatedContent = streamingMessageContentRef.current.get(data.messageId) || '';
         console.log(
           'Streaming content for',
           data.messageId,
-          'now:',
-          updatedContent.substring(0, 50)
+          'now has length:',
+          finalContent.length,
+          'preview:',
+          finalContent.substring(0, 50)
         );
 
         setMessages((prev) => {
@@ -372,7 +377,7 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
             const newMessage: ClaudeMessage = {
               id: data.messageId,
               role: 'assistant',
-              content: streamingMessageContentRef.current.get(data.messageId) || '',
+              content: finalContent,
               timestamp: new Date(),
               startTime: new Date(),
               isStreaming: true,
@@ -383,23 +388,26 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
 
           const updated = prev.map((msg) => {
             if (msg.id === data.messageId) {
-              const newContent = streamingMessageContentRef.current.get(data.messageId) || '';
               console.log(
                 'Updating message:',
                 msg.id,
                 'old content:',
                 msg.content.substring(0, 30),
                 'new content:',
-                newContent.substring(0, 30)
+                finalContent.substring(0, 30)
               );
-              // For existing messages that aren't streaming, mark as complete immediately
-              const isComplete = !msg.isStreaming;
-              const updatedMessage = {
+              
+              // Always update the content from the finalContent captured outside setMessages
+              // Force a new object to ensure React detects the change
+              const updatedMessage: ClaudeMessage = {
                 ...msg,
-                content: streamingMessageContentRef.current.get(data.messageId) || '',
-                isStreaming: isComplete ? false : msg.isStreaming,
+                content: finalContent,
+                isStreaming: msg.isStreaming, // Keep streaming state as-is, will be set to false by message-complete
+                timestamp: msg.timestamp, // Preserve timestamp
               };
               console.log('Updated message content length:', updatedMessage.content.length);
+              console.log('Updated message content preview:', updatedMessage.content.substring(0, 50));
+              console.log('Message object changed:', msg !== updatedMessage); // Should always be true
               return updatedMessage;
             }
             return msg;
