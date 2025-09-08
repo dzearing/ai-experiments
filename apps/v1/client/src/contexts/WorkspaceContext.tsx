@@ -21,8 +21,22 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   });
   const [projects, setProjects] = useState<WorkspaceProject[]>([]);
 
-  // Load workspace config from user profile on mount
+  // Load workspace config from localStorage first, then try user profile
   useEffect(() => {
+    // Check localStorage first for saved workspace config
+    const savedConfig = localStorage.getItem('workspaceConfig');
+    if (savedConfig) {
+      try {
+        const config = JSON.parse(savedConfig) as WorkspaceConfig;
+        setWorkspace((prev) => ({ ...prev, config }));
+        loadWorkspaceData(config.path);
+        return; // Don't try to load from server if we have local config
+      } catch (error) {
+        console.error('Error parsing saved workspace config:', error);
+      }
+    }
+    
+    // If no localStorage config, try loading from user profile
     loadUserProfile();
   }, []);
 
@@ -44,13 +58,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('Error loading user profile:', error);
-      // Fall back to localStorage if server is not available
-      const savedConfig = localStorage.getItem('workspaceConfig');
-      if (savedConfig) {
-        const config = JSON.parse(savedConfig) as WorkspaceConfig;
-        setWorkspace((prev) => ({ ...prev, config }));
-        loadWorkspaceData(config.path);
-      }
     }
   };
 

@@ -771,7 +771,7 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
   );
 
   const initializeSession = useCallback(
-    async (projectId: string, projectPath: string, repoName: string) => {
+    async (projectId: string, projectPath: string, repoName: string, systemPrompt?: string) => {
       // Prevent duplicate initialization requests
       if (sessionInitializationRef.current) {
         console.log('Session initialization already in progress, waiting for completion');
@@ -813,6 +813,7 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
               userName,
               userEmail,
               initialMode: mode,
+              systemPrompt,
             }),
           });
 
