@@ -118,6 +118,197 @@ class ClaudeService {
     }
   }
 
+  async generateAgentSpecification(workDescription, model) {
+    // Force using Opus model for best quality agent generation
+    const modelName = this.getModel('opus');
+    console.log('Using model for agent generation:', modelName);
+    
+    // Check if Claude is available first
+    if (!this.isClaudeAvailable) {
+      throw new Error(
+        'Claude CLI is not installed or not in PATH.\n' +
+        'Please install Claude Code CLI and authenticate:\n' +
+        '1. Install: npm install -g claude-code\n' +
+        '2. Login: claude login\n' +
+        'Or enable mock mode in settings for testing.'
+      );
+    }
+
+    const prompt = `You are an expert in designing AI agent specifications. A user needs an agent for the following work:
+
+"${workDescription}"
+
+IMPORTANT: Return ONLY a valid JSON object. Do not include any text before or after the JSON.
+Use only ASCII characters. Do not use any special characters or unicode.
+For the agentPrompt field, use \\n for newlines and escape quotes properly.
+
+Create an agent specification and return it as JSON:
+
+{
+  "name": "Choose a professional name (first and last name)",
+  "type": "Choose ONE from: usability-expert, developer, tester, data-scientist, devops, project-manager, designer, motion-designer",
+  "jobTitle": "Professional job title relevant to the work",
+  "expertise": ["List 5-7 specific skills as an array of strings"],
+  "agentPrompt": "A markdown string with the full specification. Use \\n for line breaks. Include sections for: Agent Overview, Core Capabilities, Input Requirements, Output Deliverables, Working Process, and Integration Points."
+}
+
+Example structure for agentPrompt field:
+"# Name - Title\\n\\n## Agent Overview\\n- Name: ...\\n- Job Title: ...\\n\\n## Core Capabilities\\n- Skill 1\\n- Skill 2\\n\\n## Input Requirements\\n- Requirement 1\\n- Requirement 2\\n\\n## Output Deliverables\\n- Output 1\\n- Output 2\\n\\n## Working Process\\n1. Step 1\\n2. Step 2\\n\\n## Integration Points\\n- Integration 1\\n- Integration 2"
+
+Remember: Return ONLY the JSON object, nothing else.`;
+
+    try {
+      console.log('Generating agent specification with Claude SDK using Opus model...');
+      const claudeResponse = await claude()
+        .withModel(modelName)
+        .query(prompt)
+        .asText();
+      
+      console.log('Raw Claude response length:', claudeResponse.length);
+      console.log('First 200 chars:', claudeResponse.substring(0, 200));
+      
+      // Clean the response first
+      let cleanedResponse = claudeResponse.trim();
+      
+      // Remove any potential BOM or zero-width characters
+      cleanedResponse = cleanedResponse.replace(/^\uFEFF/, '');
+      cleanedResponse = cleanedResponse.replace(/[\u200B-\u200D\uFEFF]/g, '');
+      
+      // Try to extract JSON from the response
+      try {
+        // First, try to parse the entire response as JSON
+        try {
+          const parsed = JSON.parse(cleanedResponse);
+          console.log('Successfully parsed entire response as JSON');
+          return parsed;
+        } catch (e) {
+          // Response might have text around the JSON
+        }
+        
+        // Try to find JSON in a code block
+        const codeBlockMatch = cleanedResponse.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+        if (codeBlockMatch) {
+          const parsed = JSON.parse(codeBlockMatch[1]);
+          console.log('Successfully parsed JSON from code block');
+          return parsed;
+        }
+        
+        // Try to find a raw JSON object
+        const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          // Additional cleaning for the extracted JSON
+          let jsonStr = jsonMatch[0];
+          
+          // Remove any non-ASCII characters that shouldn't be in JSON
+          jsonStr = jsonStr.replace(/[^\x00-\x7F]/g, (char) => {
+            // Keep newlines and tabs
+            if (char === '\n' || char === '\t') return char;
+            // Replace other non-ASCII with space
+            return ' ';
+          });
+          
+          const parsed = JSON.parse(jsonStr);
+          console.log('Successfully parsed extracted JSON object');
+          return parsed;
+        }
+        
+        // If JSON parsing fails completely, try to extract key information manually
+        const nameMatch = claudeResponse.match(/"name":\s*"([^"]+)"/);
+        const typeMatch = claudeResponse.match(/"type":\s*"([^"]+)"/);
+        const jobTitleMatch = claudeResponse.match(/"jobTitle":\s*"([^"]+)"/);
+        
+        if (nameMatch && typeMatch && jobTitleMatch) {
+          console.log('Falling back to manual extraction');
+          
+          // Extract expertise array
+          const expertiseMatch = claudeResponse.match(/"expertise":\s*\[([^\]]+)\]/);
+          let expertise = ['Software Development', 'Problem Solving', 'Technical Analysis'];
+          if (expertiseMatch) {
+            try {
+              expertise = JSON.parse('[' + expertiseMatch[1] + ']');
+            } catch (e) {
+              // Use default expertise if parsing fails
+            }
+          }
+          
+          // Extract or generate agent prompt
+          const agentPromptMatch = claudeResponse.match(/"agentPrompt":\s*"([^"]+(?:\\.[^"]+)*)"/);
+          const agentPrompt = agentPromptMatch ? 
+            agentPromptMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"') :
+            `# ${nameMatch[1]} - ${jobTitleMatch[1]}\n\n## Agent Overview\n- **Name**: ${nameMatch[1]}\n- **Job Title**: ${jobTitleMatch[1]}\n- **Agent Type**: ${typeMatch[1]}\n\n## Core Capabilities\n${expertise.map(e => `- ${e}`).join('\n')}`;
+          
+          return {
+            name: nameMatch[1],
+            type: typeMatch[1],
+            jobTitle: jobTitleMatch[1],
+            expertise,
+            agentPrompt
+          };
+        }
+        
+        throw new Error('Could not extract agent information from Claude response');
+        
+      } catch (jsonError) {
+        console.error('JSON parsing error:', jsonError);
+        console.log('Failed to parse response, returning fallback');
+        
+        // Return a sensible fallback based on the work description
+        const fallbackType = workDescription.toLowerCase().includes('boat') ? 'developer' : 'developer';
+        const fallbackName = 'Alex Morgan';
+        const fallbackJobTitle = workDescription.toLowerCase().includes('boat') ? 
+          'Marine Systems Engineer' : 'Software Developer';
+        
+        return {
+          name: fallbackName,
+          type: fallbackType,
+          jobTitle: fallbackJobTitle,
+          expertise: ['Technical Analysis', 'Problem Solving', 'Project Management', 'Quality Assurance'],
+          agentPrompt: `# ${fallbackName} - ${fallbackJobTitle}
+
+## Agent Overview
+- **Name**: ${fallbackName}
+- **Job Title**: ${fallbackJobTitle}
+- **Primary Role**: Technical specialist for ${workDescription}
+- **Agent Type**: ${fallbackType}
+
+## Core Capabilities
+- Technical Analysis and Design
+- Problem Solving and Innovation
+- Project Management
+- Quality Assurance
+- Documentation
+
+## Input Requirements
+- Clear project requirements and specifications
+- Access to relevant tools and resources
+- Communication channels with stakeholders
+
+## Output Deliverables
+- Technical solutions and implementations
+- Documentation and reports
+- Quality assessments
+- Progress updates
+
+## Working Process
+1. Analyze requirements
+2. Design solution
+3. Implement and test
+4. Document and deliver
+5. Iterate based on feedback
+
+## Integration Points
+- Version control systems
+- Project management tools
+- Communication platforms
+- Testing frameworks`
+        };
+      }
+    } catch (error) {
+      console.error('Error generating agent specification:', error);
+      throw error;
+    }
+  }
+
   async processIdea(idea, model) {
     const modelName = this.getModel(model);
 

@@ -209,3 +209,28 @@ The project follows a phased migration from V1 to V2:
 - Phase 3-5: Future V2 development and migration
 
 See `/docs/guides/migration/migration-v1-to-v2.md` for details.
+
+## Workflow Memories
+
+- Process Feedback Workflow:
+  - When instructed to "process feedback":
+    - Look in `temp/feedback/reports` folder for JSON files
+    - Each file contains:
+      - Feedback details
+      - Screenshot link
+      - Client/server logs from the session
+    - Actions:
+      1. Read the feedback
+      2. Attempt to:
+         - Repair issue
+         - Fix bug
+         - Add requested feature
+    - If successfully addressed:
+      - Move JSON and screenshot to `temp/feedback/processed` folder
+      - Create markdown in `temp/feedback/changes` folder
+        - Filename in camelCase documenting the change
+        - Report includes:
+          - Requested change details
+          - Summary of new behavior
+          - How the change was implemented
+    - Document any ambiguous issues encountered

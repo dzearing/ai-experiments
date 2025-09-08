@@ -3,12 +3,14 @@ export interface Persona {
   type: PersonaType;
   jobTitle: string;
   name: string;
-  personality?: string;
+  personality?: string; // Deprecated - kept for backwards compatibility
   expertise: string[];
   status: 'available' | 'busy' | 'offline';
   currentTaskId?: string;
   avatarSeed?: string;
   avatarGender?: 'male' | 'female';
+  systemPrompt?: string; // Deprecated - kept for backwards compatibility
+  agentPrompt?: string; // Full markdown specification of the agent
 }
 
 export type PersonaType =

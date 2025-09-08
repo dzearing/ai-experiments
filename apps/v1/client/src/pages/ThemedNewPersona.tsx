@@ -246,12 +246,15 @@ export function ThemedNewPersona() {
               focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500
             `}
           >
-            {personaTypes.map(({ value, label, description }) => (
+            {personaTypes.map(({ value, label }) => (
               <option key={value} value={value}>
-                {label} - {description}
+                {label}
               </option>
             ))}
           </select>
+          <p className={`mt-2 text-sm ${styles.mutedText}`}>
+            {personaTypes.find(p => p.value === formData.type)?.description}
+          </p>
         </div>
 
         <div>
