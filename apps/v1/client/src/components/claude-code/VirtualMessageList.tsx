@@ -146,26 +146,55 @@ export function VirtualMessageList({ messages, scrollContainerRef, onSuggestedRe
       console.log('[SCROLL] Last user group index:', lastUserGroupIndex);
       
       if (lastUserGroupIndex >= 0) {
-        // Get the virtual item for this group
-        const item = rowVirtualizer.getVirtualItems().find(
-          vi => vi.index === lastUserGroupIndex
-        );
+        // Measure all items to get accurate positions
+        const allItems = rowVirtualizer.getVirtualItems();
+        let userMessageStart = 0;
         
-        if (item) {
-          // Estimate the message height from the virtual item size
-          const messageHeight = item.size;
-          // Calculate padding: container height minus (message height + 8px)
-          const paddingNeeded = Math.max(containerHeight - (messageHeight + 8), 0);
-          console.log('[SCROLL] Message height:', messageHeight, 'Padding needed:', paddingNeeded);
-          setBottomPadding(paddingNeeded);
-        } else {
-          console.log('[SCROLL] No virtual item found for user message');
+        // Find the start position of the user message
+        for (let i = 0; i < lastUserGroupIndex; i++) {
+          const item = allItems.find(vi => vi.index === i);
+          if (item) {
+            userMessageStart = item.start + item.size;
+          } else {
+            // Estimate if not virtualized
+            userMessageStart += estimateSize(i);
+          }
         }
+        
+        // If we can find the actual item, use its start position
+        const userItem = allItems.find(vi => vi.index === lastUserGroupIndex);
+        if (userItem) {
+          userMessageStart = userItem.start;
+        }
+        
+        console.log('[SCROLL] User message start position:', userMessageStart);
+        
+        // Calculate total height after user message (including the user message itself)
+        let totalHeightFromUser = 0;
+        for (let i = lastUserGroupIndex; i < groupedMessages.length; i++) {
+          const item = allItems.find(vi => vi.index === i);
+          if (item) {
+            totalHeightFromUser += item.size;
+          } else {
+            // Estimate if not virtualized
+            totalHeightFromUser += estimateSize(i);
+          }
+        }
+        
+        console.log('[SCROLL] Total height from user message to end:', totalHeightFromUser);
+        
+        // We want: when scrolled to bottom, user message is at top + 8px
+        // So the total scrollable height should be: userMessageStart + containerHeight - 8
+        // Current actual content height from user to end is: totalHeightFromUser
+        // So padding needed is: (containerHeight - 8) - totalHeightFromUser
+        const paddingNeeded = Math.max((containerHeight - 8) - totalHeightFromUser, 0);
+        console.log('[SCROLL] Padding needed:', paddingNeeded);
+        setBottomPadding(paddingNeeded);
       }
     } else {
       console.log('[SCROLL] updateBottomPadding prerequisites not met');
     }
-  }, [groupedMessages, rowVirtualizer, scrollContainerRef]);
+  }, [groupedMessages, rowVirtualizer, scrollContainerRef, estimateSize]);
 
   // Scroll to position last user message at top
   const scrollToLastUserMessage = useCallback(() => {
