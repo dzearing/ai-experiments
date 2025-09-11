@@ -12,6 +12,7 @@ export interface Persona {
   systemPrompt?: string; // Deprecated - kept for backwards compatibility
   agentPrompt?: string; // Full markdown specification of the agent
   roleSummary?: string; // Short summary of the agent's role and responsibilities
+  loadingMessages?: string[]; // Custom loading messages for when the agent is preparing
 }
 
 export type PersonaType =

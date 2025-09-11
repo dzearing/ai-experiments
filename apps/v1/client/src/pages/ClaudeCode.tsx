@@ -373,7 +373,11 @@ function ClaudeCodeContent() {
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
                 <DancingBubbles className="justify-center mb-4" />
-                <p className={`${styles.mutedText}`}>Claude is preparing to greet you...</p>
+                <p className={`${styles.mutedText}`}>
+                  {isAgentChat && agent?.loadingMessages && agent.loadingMessages.length > 0
+                    ? agent.loadingMessages[Math.floor(Math.random() * agent.loadingMessages.length)]
+                    : 'Claude is preparing to greet you...'}
+                </p>
               </div>
             </div>
           ) : (

@@ -91,6 +91,7 @@ interface AgentSuggestion {
   systemPrompt?: string; // Deprecated
   agentPrompt: string; // Full markdown specification
   roleSummary?: string; // Short summary of the agent's role
+  loadingMessages?: string[]; // Custom loading messages for when the agent is preparing
 }
 
 // Step 1: Describe Work
@@ -614,6 +615,7 @@ export function NewAgentMultiStep() {
         roleSummary: roleSummary || `${suggestionToUse.jobTitle} specializing in ${suggestionToUse.expertise.slice(0, 2).join(' and ')}`,
         avatarSeed,
         avatarGender: getGenderFromSeed(avatarSeed),
+        loadingMessages: suggestionToUse.loadingMessages,
       };
 
       console.log('Creating/updating agent with data:', {

@@ -117,7 +117,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       
       if (response.ok) {
         const data = await response.json();
-        setPersonas([...personas, data.agent]);
+        // Refresh the agents list from the server to get proper sorting
+        const refreshResponse = await fetch(`http://localhost:3000/api/agents?workspacePath=${encodeURIComponent(workspacePath)}`);
+        if (refreshResponse.ok) {
+          const refreshData = await refreshResponse.json();
+          setPersonas(refreshData.agents || []);
+        } else {
+          // Fallback: prepend the new agent to show it at the top
+          setPersonas([data.agent, ...personas]);
+        }
         console.log('Agent saved to file system:', data.agent.name);
       } else {
         console.error('Failed to save agent:', response.status);
@@ -154,7 +162,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       
       if (response.ok) {
         const data = await response.json();
-        setPersonas(personas.map((p) => (p.id === id ? data.agent : p)));
+        // Refresh the agents list from the server to get proper sorting
+        const refreshResponse = await fetch(`http://localhost:3000/api/agents?workspacePath=${encodeURIComponent(workspacePath)}`);
+        if (refreshResponse.ok) {
+          const refreshData = await refreshResponse.json();
+          setPersonas(refreshData.agents || []);
+        } else {
+          // Fallback: update in place
+          setPersonas(personas.map((p) => (p.id === id ? data.agent : p)));
+        }
         console.log('Agent updated in file system:', data.agent.name);
       } else {
         console.error('Failed to update agent:', response.status);

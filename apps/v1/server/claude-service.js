@@ -149,11 +149,21 @@ Create an agent specification and return it as JSON:
   "type": "Choose ONE from: usability-expert, developer, tester, data-scientist, devops, project-manager, designer, motion-designer",
   "jobTitle": "Professional job title relevant to the work",
   "expertise": ["List 5-7 specific skills as an array of strings"],
-  "agentPrompt": "A markdown string with the full specification. Use \\n for line breaks. Include sections for: Agent Overview, Core Capabilities, Input Requirements, Output Deliverables, Working Process, and Integration Points."
+  "agentPrompt": "A markdown string with the full specification. Use \\n for line breaks. Include sections for: Agent Overview, Core Capabilities, Input Requirements, Output Deliverables, Working Process, and Integration Points.",
+  "loadingMessages": [
+    "Create 5 unique loading messages in third person, referencing the agent by their first name",
+    "Each message should be short (under 50 characters), personality-driven, and role-specific",
+    "Messages should describe what the agent is doing to prepare",
+    "Example for a developer named Sarah: 'Sarah is setting up her development environment...'",
+    "Example for a designer named Alex: 'Alex is organizing his design workspace...'"
+  ]
 }
 
 Example structure for agentPrompt field:
 "# Name - Title\\n\\n## Agent Overview\\n- Name: ...\\n- Job Title: ...\\n\\n## Core Capabilities\\n- Skill 1\\n- Skill 2\\n\\n## Input Requirements\\n- Requirement 1\\n- Requirement 2\\n\\n## Output Deliverables\\n- Output 1\\n- Output 2\\n\\n## Working Process\\n1. Step 1\\n2. Step 2\\n\\n## Integration Points\\n- Integration 1\\n- Integration 2"
+
+Example loadingMessages for a developer agent named Sarah:
+["Sarah is setting up her development environment...", "Sarah is loading code analysis tools...", "Sarah is checking the latest documentation...", "Sarah is preparing her debugging toolkit...", "Sarah is syncing with the codebase..."]
 
 Remember: Return ONLY the JSON object, nothing else.`;
 
@@ -242,6 +252,13 @@ Remember: Return ONLY the JSON object, nothing else.`;
             type: typeMatch[1],
             jobTitle: jobTitleMatch[1],
             expertise,
+            loadingMessages: [
+              `${nameMatch[1].split(' ')[0]} is preparing the workspace...`,
+              `${nameMatch[1].split(' ')[0]} is getting ready to assist...`,
+              `${nameMatch[1].split(' ')[0]} is loading tools and resources...`,
+              `${nameMatch[1].split(' ')[0]} is setting up for the conversation...`,
+              `${nameMatch[1].split(' ')[0]} is organizing thoughts...`
+            ],
             agentPrompt
           };
         }
@@ -263,6 +280,13 @@ Remember: Return ONLY the JSON object, nothing else.`;
           type: fallbackType,
           jobTitle: fallbackJobTitle,
           expertise: ['Technical Analysis', 'Problem Solving', 'Project Management', 'Quality Assurance'],
+          loadingMessages: [
+            'Alex is setting up the workspace...',
+            'Alex is loading development tools...',
+            'Alex is reviewing project requirements...',
+            'Alex is preparing technical resources...',
+            'Alex is getting ready to assist...'
+          ],
           agentPrompt: `# ${fallbackName} - ${fallbackJobTitle}
 
 ## Agent Overview

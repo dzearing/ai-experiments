@@ -3183,12 +3183,24 @@ app.get('/api/agents', async (req, res) => {
           const filePath = path.join(agentsPath, file);
           const content = await fsAsync.readFile(filePath, 'utf-8');
           const agent = JSON.parse(content);
+          
+          // Get file stats to include last modified time
+          const stats = await fsAsync.stat(filePath);
+          agent.lastModified = stats.mtime.toISOString();
+          
           agents.push(agent);
         } catch (error) {
           console.error(`Error reading agent file ${file}:`, error);
         }
       }
     }
+    
+    // Sort agents by last modified date (newest first)
+    agents.sort((a, b) => {
+      const dateA = new Date(a.lastModified || 0);
+      const dateB = new Date(b.lastModified || 0);
+      return dateB - dateA;
+    });
     
     res.json({ agents });
   } catch (error) {
@@ -4049,8 +4061,40 @@ app.post('/api/claude/code/start', async (req, res) => {
       }
     }
     
+    // If this is an agent chat, enhance the system prompt with instructions for dynamic prompts
+    let enhancedSystemPrompt = systemPrompt;
+    if (systemPrompt) {
+      enhancedSystemPrompt = `${systemPrompt}
+
+## Important Instructions for User Interaction
+
+When you want to present options or ask questions to the user, format your response in a special way:
+
+1. First, provide your message text normally
+2. If you want to show suggested response buttons, end your message with:
+   
+   **[PROMPT_OPTIONS]**
+   - Option 1 text
+   - Option 2 text
+   - Option 3 text
+   - Option 4 text (maximum 4 options)
+
+The user interface will detect this pattern and display these as clickable buttons for the user.
+
+Example:
+"I can help you with several tasks today. What would you like me to focus on?
+
+**[PROMPT_OPTIONS]**
+- Explain the code
+- Fix the issue
+- Add a feature
+- Review for improvements"
+
+Use this format whenever you want to guide the conversation with specific response options.`;
+    }
+
     // Create session using session manager
-    console.log('[DEBUG] Creating session with systemPrompt:', systemPrompt ? systemPrompt.substring(0, 100) + '...' : 'none');
+    console.log('[DEBUG] Creating session with systemPrompt:', enhancedSystemPrompt ? enhancedSystemPrompt.substring(0, 100) + '...' : 'none');
     const session = sessionManager.createSession({
       sessionId,
       projectId,
@@ -4059,7 +4103,7 @@ app.post('/api/claude/code/start', async (req, res) => {
       userName,
       userEmail,
       initialMode,
-      systemPrompt
+      systemPrompt: enhancedSystemPrompt
     });
     
     logger.debug('Created session:', {
@@ -5123,16 +5167,24 @@ app.get('/api/claude/code/stream', (req, res) => {
         let greetingPrompt;
         
         if (isAgentChat && session.systemPrompt) {
-          // For agent chat, use the system prompt and ask the agent to introduce itself
+          // For agent chat, use the system prompt for context
           console.log('[DEBUG] Using agent systemPrompt for greeting:', session.systemPrompt.substring(0, 100) + '...');
           greetingPrompt = `${session.systemPrompt}
 
-You are starting a new chat session with a user. Please introduce yourself based on your role and capabilities defined above. Keep your introduction brief (2-3 sentences), professional, and welcoming. End by asking how you can help today.
+You are starting a new chat session with a user. Provide a natural greeting in character with your role. Be brief (2-3 sentences), professional, and welcoming. DO NOT announce that you are introducing yourself or mention "I'll introduce myself" - just greet naturally.
+
+After your greeting, use the prompt options format to provide suggested starting points:
+
+**[PROMPT_OPTIONS]**
+- Explain the code
+- Fix the issue
+- Add a feature
+- Review for improvements
 
 Current time: ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
 User's name: ${userName || 'there'}
 
-Generate your introduction now:`;
+Provide your greeting:`;
         } else {
           // Regular Claude Code greeting
           greetingPrompt = `Generate a friendly, personalized greeting for a Claude Code session. Keep it brief (1-2 sentences), warm, and motivating.
