@@ -95,12 +95,12 @@ export function ThemedLayoutV2() {
       {/* Background pattern when enabled */}
       {backgroundEffectEnabled && <BackgroundPattern />}
       {/* Sidebar */}
-      <aside className={`w-64 ${styles.sidebarBg} ${styles.sidebarBorder} border-r relative`}>
+      <aside className={`w-64 ${styles.sidebarBg} ${styles.sidebarBorder} border-r relative flex flex-col`}>
         <div className="p-6">
           <h1 className={`text-2xl font-bold ${styles.sidebarText}`}>Claude Flow</h1>
         </div>
 
-        <nav className="px-4 pb-6">
+        <nav className="px-4 pb-6 flex-1">
           {navItems.map((item) => (
             <Link
               key={item.path}

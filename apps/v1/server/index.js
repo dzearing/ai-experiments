@@ -3156,6 +3156,143 @@ app.post('/api/work-items/delete', async (req, res) => {
   }
 });
 
+// Agent management endpoints
+app.get('/api/agents', async (req, res) => {
+  try {
+    const { workspacePath } = req.query;
+    
+    if (!workspacePath) {
+      return res.status(400).json({ error: 'Workspace path is required' });
+    }
+    
+    const agentsPath = path.join(workspacePath, 'agents');
+    
+    // Create agents directory if it doesn't exist
+    if (!fs.existsSync(agentsPath)) {
+      await fsAsync.mkdir(agentsPath, { recursive: true });
+      return res.json({ agents: [] });
+    }
+    
+    // Read all JSON files from agents directory
+    const files = await fsAsync.readdir(agentsPath);
+    const agents = [];
+    
+    for (const file of files) {
+      if (file.endsWith('.json')) {
+        try {
+          const filePath = path.join(agentsPath, file);
+          const content = await fsAsync.readFile(filePath, 'utf-8');
+          const agent = JSON.parse(content);
+          agents.push(agent);
+        } catch (error) {
+          console.error(`Error reading agent file ${file}:`, error);
+        }
+      }
+    }
+    
+    res.json({ agents });
+  } catch (error) {
+    console.error('Error fetching agents:', error);
+    res.status(500).json({ error: 'Failed to fetch agents' });
+  }
+});
+
+app.post('/api/agents', async (req, res) => {
+  try {
+    const { workspacePath, agent } = req.body;
+    
+    if (!workspacePath || !agent) {
+      return res.status(400).json({ error: 'Workspace path and agent data are required' });
+    }
+    
+    const agentsPath = path.join(workspacePath, 'agents');
+    
+    // Create agents directory if it doesn't exist
+    if (!fs.existsSync(agentsPath)) {
+      await fsAsync.mkdir(agentsPath, { recursive: true });
+    }
+    
+    // Generate ID if not provided
+    if (!agent.id) {
+      agent.id = crypto.randomUUID();
+    }
+    
+    // Add timestamp
+    agent.createdAt = agent.createdAt || new Date().toISOString();
+    agent.updatedAt = new Date().toISOString();
+    
+    // Save agent to file
+    const filename = `${agent.id}.json`;
+    const filePath = path.join(agentsPath, filename);
+    await fsAsync.writeFile(filePath, JSON.stringify(agent, null, 2));
+    
+    console.log(`Agent saved: ${agent.name} (${agent.id})`);
+    res.json({ success: true, agent });
+  } catch (error) {
+    console.error('Error creating agent:', error);
+    res.status(500).json({ error: 'Failed to create agent' });
+  }
+});
+
+app.put('/api/agents/:id', async (req, res) => {
+  try {
+    const { workspacePath, agent } = req.body;
+    const { id } = req.params;
+    
+    if (!workspacePath || !agent) {
+      return res.status(400).json({ error: 'Workspace path and agent data are required' });
+    }
+    
+    const agentsPath = path.join(workspacePath, 'agents');
+    const filePath = path.join(agentsPath, `${id}.json`);
+    
+    // Check if agent exists
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'Agent not found' });
+    }
+    
+    // Update timestamp
+    agent.updatedAt = new Date().toISOString();
+    
+    // Save updated agent
+    await fsAsync.writeFile(filePath, JSON.stringify(agent, null, 2));
+    
+    console.log(`Agent updated: ${agent.name} (${id})`);
+    res.json({ success: true, agent });
+  } catch (error) {
+    console.error('Error updating agent:', error);
+    res.status(500).json({ error: 'Failed to update agent' });
+  }
+});
+
+app.delete('/api/agents/:id', async (req, res) => {
+  try {
+    const { workspacePath } = req.body;
+    const { id } = req.params;
+    
+    if (!workspacePath) {
+      return res.status(400).json({ error: 'Workspace path is required' });
+    }
+    
+    const agentsPath = path.join(workspacePath, 'agents');
+    const filePath = path.join(agentsPath, `${id}.json`);
+    
+    // Check if agent exists
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'Agent not found' });
+    }
+    
+    // Delete agent file
+    await fsAsync.unlink(filePath);
+    
+    console.log(`Agent deleted: ${id}`);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting agent:', error);
+    res.status(500).json({ error: 'Failed to delete agent' });
+  }
+});
+
 // Claude API endpoints for jam sessions
 app.post('/api/claude/analyze-document', async (req, res) => {
   try {
@@ -3913,6 +4050,7 @@ app.post('/api/claude/code/start', async (req, res) => {
     }
     
     // Create session using session manager
+    console.log('[DEBUG] Creating session with systemPrompt:', systemPrompt ? systemPrompt.substring(0, 100) + '...' : 'none');
     const session = sessionManager.createSession({
       sessionId,
       projectId,
@@ -4865,20 +5003,41 @@ app.get('/api/claude/code/stream', (req, res) => {
     
     // Use setImmediate to ensure events are sent after connection is established
     setImmediate(() => {
-      // Send all existing messages to the new connection
-      for (const message of session.messages) {
-        debugLog(`Processing message: role=${message.role}, id=${message.id}, content=${message.content?.substring(0, 30)}`);
-        if (message.role === 'assistant') {
+      // Send all existing messages to the new connection with their index
+      for (let index = 0; index < session.messages.length; index++) {
+        const message = session.messages[index];
+        debugLog(`Processing message ${index}: role=${message.role}, id=${message.id}, content=${message.content?.substring(0, 30)}`);
+        
+        if (message.role === 'user') {
           const messageId = message.id || crypto.randomUUID();
-          debugLog(`Sending assistant message: ${messageId}`);
+          debugLog(`Sending user message: ${messageId} at index ${index}`);
           
           try {
-            // Send message-start event
+            // Send user-message event for rehydration with index
+            res.write(`event: user-message\ndata: ${JSON.stringify({ 
+              id: messageId,
+              role: 'user',
+              content: message.content,
+              timestamp: message.timestamp,
+              mode: message.mode,
+              index: index
+            })}\n\n`);
+          } catch (err) {
+            debugLog('Error sending user message:', err);
+          }
+        } else if (message.role === 'assistant') {
+          const messageId = message.id || crypto.randomUUID();
+          debugLog(`Sending assistant message: ${messageId} at index ${index}`);
+          
+          try {
+            // Send message-start event with timestamp and index
             res.write(`event: message-start\ndata: ${JSON.stringify({ 
               id: messageId,
               type: 'assistant',
               isGreeting: message.isGreeting || false,
-              mode: message.mode
+              mode: message.mode,
+              timestamp: message.timestamp,
+              index: index
             })}\n\n`);
             
             // Send the complete message content
@@ -4895,12 +5054,14 @@ app.get('/api/claude/code/stream', (req, res) => {
             debugLog('Error sending existing message:', err);
           }
         } else if (message.role === 'tool') {
-          debugLog(`Sending tool message: ${message.id}`);
+          debugLog(`Sending tool message: ${message.id} at index ${index}`);
           
           try {
-            // Send tool execution event
+            // Send tool execution event with index
             res.write(`event: tool-execution\ndata: ${JSON.stringify({ 
               messageId: message.id,
+              timestamp: message.timestamp,
+              index: index,
               toolExecution: {
                 id: message.id,
                 name: message.name,
@@ -4913,6 +5074,16 @@ app.get('/api/claude/code/stream', (req, res) => {
             debugLog('Error sending tool message:', err);
           }
         }
+      }
+      
+      // Send a rehydration-complete event to signal all messages have been sent
+      try {
+        res.write(`event: rehydration-complete\ndata: ${JSON.stringify({ 
+          messageCount: session.messages.length 
+        })}\n\n`);
+        debugLog(`Sent rehydration-complete event with ${session.messages.length} messages`);
+      } catch (err) {
+        debugLog('Error sending rehydration-complete:', err);
       }
     });
   }
@@ -4953,6 +5124,7 @@ app.get('/api/claude/code/stream', (req, res) => {
         
         if (isAgentChat && session.systemPrompt) {
           // For agent chat, use the system prompt and ask the agent to introduce itself
+          console.log('[DEBUG] Using agent systemPrompt for greeting:', session.systemPrompt.substring(0, 100) + '...');
           greetingPrompt = `${session.systemPrompt}
 
 You are starting a new chat session with a user. Please introduce yourself based on your role and capabilities defined above. Keep your introduction brief (2-3 sentences), professional, and welcoming. End by asking how you can help today.

@@ -68,7 +68,7 @@ interface ClaudeCodeContextType {
   // Actions
   sendMessage: (content: string) => Promise<void>;
   setMode: (mode: ClaudeMode) => void;
-  initializeSession: (projectId: string, projectPath: string, repoName: string) => Promise<void>;
+  initializeSession: (projectId: string, projectPath: string, repoName: string, systemPrompt?: string) => Promise<void>;
   clearMessages: () => void;
   cancelMessage: () => void;
 }
@@ -122,6 +122,7 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
   const lastConnectionAttemptRef = useRef<number>(0);
   const sessionInitializationRef = useRef<Promise<void> | null>(null);
   const isRestoringExistingSessionRef = useRef<boolean>(false);
+  const rehydratingMessagesRef = useRef<Map<number, ClaudeMessage>>(new Map());
 
   // Persist mode changes
   useEffect(() => {
@@ -231,16 +232,16 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
         );
 
         // Check if this is an existing message being restored
-        const isExistingMessage = isRestoringExistingSessionRef.current;
-        console.log('isExistingMessage:', isExistingMessage);
+        const isExistingMessage = isRestoringExistingSessionRef.current && data.index !== undefined;
+        console.log('isExistingMessage:', isExistingMessage, 'index:', data.index);
 
-        // Create the new message
+        // Create the new message - use provided timestamp for existing messages
         const newMessage: ClaudeMessage = {
           id: data.id,
           role: 'assistant',
           content: '', // Start with empty content
-          timestamp: new Date(),
-          startTime: new Date(),
+          timestamp: data.timestamp ? new Date(data.timestamp) : new Date(),
+          startTime: data.timestamp ? new Date(data.timestamp) : new Date(),
           isStreaming: !isExistingMessage, // Don't stream existing messages
           isGreeting: data.isGreeting,
           isError: data.isError,
@@ -254,7 +255,15 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
           isExistingMessage
         );
 
-        // Check if message already exists or if we recently created a greeting
+        // If rehydrating with an index, store the message for later batch update
+        if (isExistingMessage && data.index !== undefined) {
+          rehydratingMessagesRef.current.set(data.index, newMessage);
+          streamingMessageContentRef.current.set(data.id, '');
+          console.log(`Stored rehydrating assistant message at index ${data.index}`);
+          return;
+        }
+
+        // For new messages (not rehydrating), add them immediately
         setMessages((prev) => {
           console.log('setMessages called in message-start, prev length:', prev.length);
           console.log(
@@ -320,13 +329,6 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
         if (!isExistingMessage) {
           streamingMessageContentRef.current.set(data.id, '');
           console.log('Initialized streaming content for new message:', data.id);
-        } else {
-          const existingContent = streamingMessageContentRef.current.get(data.id) || '';
-          console.log(
-            'Preserving streaming content for existing message:',
-            data.id,
-            existingContent.substring(0, 50)
-          );
         }
       });
 
@@ -347,6 +349,15 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
           finalContent = data.chunk;
           streamingMessageContentRef.current.set(data.messageId, finalContent);
           console.log('Restored existing message content, length:', data.chunk?.length);
+          
+          // If we're rehydrating, update the message in the rehydrating map
+          for (const [index, msg] of rehydratingMessagesRef.current.entries()) {
+            if (msg.id === data.messageId) {
+              msg.content = finalContent;
+              console.log(`Updated rehydrating message content at index ${index}`);
+              break;
+            }
+          }
         } else {
           // Append chunk to streaming content for new messages
           finalContent = currentContent + data.chunk;
@@ -362,62 +373,65 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
           finalContent.substring(0, 50)
         );
 
-        setMessages((prev) => {
-          console.log('setMessages in message-chunk, looking for messageId:', data.messageId);
-          console.log(
-            'Current messages before update:',
-            prev.map((m) => ({ id: m.id, content: m.content.substring(0, 30) }))
-          );
+        // Only update messages state if not rehydrating
+        if (!isRestoringExistingSessionRef.current) {
+          setMessages((prev) => {
+            console.log('setMessages in message-chunk, looking for messageId:', data.messageId);
+            console.log(
+              'Current messages before update:',
+              prev.map((m) => ({ id: m.id, content: m.content.substring(0, 30) }))
+            );
 
-          const messageExists = prev.some((msg) => msg.id === data.messageId);
-          if (!messageExists) {
-            console.error('Message not found for chunk! MessageId:', data.messageId);
-            console.log('Attempting to create message from chunk data');
-            // Create the message if it doesn't exist (can happen due to race conditions)
-            const newMessage: ClaudeMessage = {
-              id: data.messageId,
-              role: 'assistant',
-              content: finalContent,
-              timestamp: new Date(),
-              startTime: new Date(),
-              isStreaming: true,
-              isGreeting: true, // Assume greeting for now
-            };
-            return [...prev, newMessage];
-          }
-
-          const updated = prev.map((msg) => {
-            if (msg.id === data.messageId) {
-              console.log(
-                'Updating message:',
-                msg.id,
-                'old content:',
-                msg.content.substring(0, 30),
-                'new content:',
-                finalContent.substring(0, 30)
-              );
-              
-              // Always update the content from the finalContent captured outside setMessages
-              // Force a new object to ensure React detects the change
-              const updatedMessage: ClaudeMessage = {
-                ...msg,
+            const messageExists = prev.some((msg) => msg.id === data.messageId);
+            if (!messageExists) {
+              console.error('Message not found for chunk! MessageId:', data.messageId);
+              console.log('Attempting to create message from chunk data');
+              // Create the message if it doesn't exist (can happen due to race conditions)
+              const newMessage: ClaudeMessage = {
+                id: data.messageId,
+                role: 'assistant',
                 content: finalContent,
-                isStreaming: msg.isStreaming, // Keep streaming state as-is, will be set to false by message-complete
-                timestamp: msg.timestamp, // Preserve timestamp
+                timestamp: new Date(),
+                startTime: new Date(),
+                isStreaming: true,
+                isGreeting: true, // Assume greeting for now
               };
-              console.log('Updated message content length:', updatedMessage.content.length);
-              console.log('Updated message content preview:', updatedMessage.content.substring(0, 50));
-              console.log('Message object changed:', msg !== updatedMessage); // Should always be true
-              return updatedMessage;
+              return [...prev, newMessage];
             }
-            return msg;
+
+            const updated = prev.map((msg) => {
+              if (msg.id === data.messageId) {
+                console.log(
+                  'Updating message:',
+                  msg.id,
+                  'old content:',
+                  msg.content.substring(0, 30),
+                  'new content:',
+                  finalContent.substring(0, 30)
+                );
+                
+                // Always update the content from the finalContent captured outside setMessages
+                // Force a new object to ensure React detects the change
+                const updatedMessage: ClaudeMessage = {
+                  ...msg,
+                  content: finalContent,
+                  isStreaming: msg.isStreaming, // Keep streaming state as-is, will be set to false by message-complete
+                  timestamp: msg.timestamp, // Preserve timestamp
+                };
+                console.log('Updated message content length:', updatedMessage.content.length);
+                console.log('Updated message content preview:', updatedMessage.content.substring(0, 50));
+                console.log('Message object changed:', msg !== updatedMessage); // Should always be true
+                return updatedMessage;
+              }
+              return msg;
+            });
+            console.log(
+              'Updated messages after chunk:',
+              updated.map((m) => ({ id: m.id, content: m.content.substring(0, 30) }))
+            );
+            return updated;
           });
-          console.log(
-            'Updated messages after chunk:',
-            updated.map((m) => ({ id: m.id, content: m.content.substring(0, 30) }))
-          );
-          return updated;
-        });
+        }
       });
 
       eventSource.addEventListener('message-end', (event) => {
@@ -443,6 +457,24 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
       eventSource.addEventListener('message-complete', (event) => {
         const data = JSON.parse(event.data);
         console.log('message-complete event received for messageId:', data.messageId);
+        
+        // If we're rehydrating, just mark the message as complete in the rehydrating map
+        if (isRestoringExistingSessionRef.current) {
+          for (const [index, msg] of rehydratingMessagesRef.current.entries()) {
+            if (msg.id === data.messageId) {
+              msg.isStreaming = false;
+              // Generate suggested responses based on the final content
+              msg.suggestedResponses = generateSuggestedResponses(msg.content);
+              console.log(`Marked rehydrating message at index ${index} as complete`);
+              break;
+            }
+          }
+          // Clean up streaming content
+          streamingMessageContentRef.current.delete(data.messageId);
+          return;
+        }
+        
+        // For new messages, update them immediately
         setMessages((prev) => {
           console.log(
             'Processing message-complete, current messages:',
@@ -485,10 +517,8 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
           return updated;
         });
 
-        // Clean up streaming content for this message if we're not restoring
-        if (!isRestoringExistingSessionRef.current) {
-          streamingMessageContentRef.current.delete(data.messageId);
-        }
+        // Clean up streaming content for this message
+        streamingMessageContentRef.current.delete(data.messageId);
         setCurrentMessageId(null);
         setIsProcessing(false);
       });
@@ -573,13 +603,45 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
           id: toolMessageId,
           role: 'tool',
           content: '', // Tool messages don't need content as they use specialized fields
-          timestamp: new Date(),
+          timestamp: data.timestamp ? new Date(data.timestamp) : new Date(),
           name: data.toolExecution.name,
           args: data.toolExecution.args,
           status: data.toolExecution.status || 'complete',
           executionTime: data.toolExecution.executionTime,
         };
 
+        // If rehydrating with an index, store the message for later batch update
+        if (data.index !== undefined) {
+          rehydratingMessagesRef.current.set(data.index, toolMessage);
+          console.log(`Stored rehydrating tool message at index ${data.index}`);
+          
+          // Handle TodoWrite tool specifically
+          if (data.toolExecution.name === 'TodoWrite' && data.toolExecution.args) {
+            try {
+              // Parse the args to get the todos
+              const argsData =
+                typeof data.toolExecution.args === 'string'
+                  ? JSON.parse(data.toolExecution.args)
+                  : data.toolExecution.args;
+
+              if (argsData.todos && Array.isArray(argsData.todos)) {
+                // Add IDs to todos if they don't have them
+                const todosWithIds = argsData.todos.map((todo: any, index: number) => ({
+                  ...todo,
+                  id: todo.id || `todo-${Date.now()}-${index}`,
+                  priority: todo.priority || 'medium',
+                }));
+                console.log('Updating todos from TodoWrite:', todosWithIds);
+                setTodos(todosWithIds);
+              }
+            } catch (err) {
+              console.error('Error parsing TodoWrite args:', err);
+            }
+          }
+          return;
+        }
+
+        // For new tool messages (not rehydrating), add them immediately
         setMessages((prev) => {
           // Check if this tool message already exists
           if (prev.some((msg) => msg.id === toolMessageId)) {
@@ -610,8 +672,14 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
                 : data.toolExecution.args;
 
             if (argsData.todos && Array.isArray(argsData.todos)) {
-              console.log('Updating todos from TodoWrite:', argsData.todos);
-              setTodos(argsData.todos);
+              // Add IDs to todos if they don't have them
+              const todosWithIds = argsData.todos.map((todo: any, index: number) => ({
+                ...todo,
+                id: todo.id || `todo-${Date.now()}-${index}`,
+                priority: todo.priority || 'medium',
+              }));
+              console.log('Updating todos from TodoWrite:', todosWithIds);
+              setTodos(todosWithIds);
             }
           } catch (err) {
             console.error('Error parsing TodoWrite args:', err);
@@ -744,6 +812,72 @@ export function ClaudeCodeProvider({ children }: { children: ReactNode }) {
         );
         setIsProcessing(false);
         setCurrentMessageId(null);
+      });
+
+      eventSource.addEventListener('rehydration-complete', (event) => {
+        const data = JSON.parse(event.data);
+        console.log('rehydration-complete event received, messageCount:', data.messageCount);
+        
+        // Apply all rehydrated messages in the correct order
+        if (rehydratingMessagesRef.current.size > 0) {
+          const sortedMessages: ClaudeMessage[] = [];
+          
+          // Get the maximum index to iterate through
+          const maxIndex = Math.max(...Array.from(rehydratingMessagesRef.current.keys()));
+          
+          // Add messages in order by their index
+          for (let i = 0; i <= maxIndex; i++) {
+            const message = rehydratingMessagesRef.current.get(i);
+            if (message) {
+              sortedMessages.push(message);
+              console.log(`Adding message at index ${i}: role=${message.role}, id=${message.id}`);
+            }
+          }
+          
+          // Set all messages at once
+          setMessages(sortedMessages);
+          console.log(`Set ${sortedMessages.length} rehydrated messages`);
+          
+          // Clear the rehydrating messages map
+          rehydratingMessagesRef.current.clear();
+        }
+        
+        // Clear the restoring flag
+        isRestoringExistingSessionRef.current = false;
+        console.log('Rehydration complete, clearing isRestoringExistingSessionRef flag');
+      });
+
+      eventSource.addEventListener('user-message', (event) => {
+        const data = JSON.parse(event.data);
+        console.log('user-message event received:', data);
+        
+        // Add user message from rehydration
+        const userMessage: ClaudeMessage = {
+          id: data.id,
+          role: 'user',
+          content: data.content,
+          timestamp: data.timestamp ? new Date(data.timestamp) : new Date(),
+          mode: data.mode,
+        };
+        
+        // If rehydrating with an index, store the message for later batch update
+        if (data.index !== undefined) {
+          rehydratingMessagesRef.current.set(data.index, userMessage);
+          console.log(`Stored rehydrating user message at index ${data.index}`);
+          return;
+        }
+        
+        // For messages without index (shouldn't happen in normal flow), add immediately
+        setMessages((prev) => {
+          // Check if message already exists
+          const exists = prev.some((msg) => msg.id === data.id);
+          if (exists) {
+            console.log('User message already exists, skipping:', data.id);
+            return prev;
+          }
+          console.log('Adding user message:', data.id);
+          return [...prev, userMessage];
+        });
       });
 
       eventSource.addEventListener('session-end', (event) => {

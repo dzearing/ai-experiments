@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import type { Persona, Project, WorkItem, JamSession, DailyReport } from '../types';
+import { useWorkspace } from './WorkspaceContext';
 
 interface AppContextType {
   personas: Persona[];
@@ -43,13 +44,41 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [workItems, setWorkItems] = useState<WorkItem[]>([]);
   const [jamSessions, setJamSessions] = useState<JamSession[]>([]);
   const [dailyReports, setDailyReports] = useState<DailyReport[]>([]);
+  const { workspace } = useWorkspace();
 
-  // Load data from localStorage on mount
+  // Load agents from file system when workspace changes
+  useEffect(() => {
+    const workspacePath = workspace.config?.path;
+    if (!workspacePath) {
+      console.log('No workspace path available yet');
+      return;
+    }
+    
+    const loadAgents = async () => {
+      try {
+        console.log('Loading agents from workspace:', workspacePath);
+        const response = await fetch(`http://localhost:3000/api/agents?workspacePath=${encodeURIComponent(workspacePath)}`);
+        if (response.ok) {
+          const data = await response.json();
+          setPersonas(data.agents || []);
+          console.log('Loaded agents from file system:', data.agents?.length || 0);
+        } else {
+          console.error('Failed to load agents:', response.status);
+        }
+      } catch (error) {
+        console.error('Error loading agents:', error);
+      }
+    };
+    
+    loadAgents();
+  }, [workspace.config?.path]);
+
+  // Load other data from localStorage on mount
   useEffect(() => {
     const savedData = localStorage.getItem(STORAGE_KEY);
     if (savedData) {
       const data = JSON.parse(savedData);
-      setPersonas(data.personas || []);
+      // Don't load personas from localStorage anymore - they come from file system
       setProjects(data.projects || []);
       setWorkItems(data.workItems || []);
       setJamSessions(data.jamSessions || []);
@@ -57,26 +86,107 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Save data to localStorage whenever it changes
+  // Save data to localStorage whenever it changes (except personas which are file-based)
   useEffect(() => {
-    const data = { personas, projects, workItems, jamSessions, dailyReports };
+    // Don't save personas to localStorage - they're in file system
+    const data = { projects, workItems, jamSessions, dailyReports };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }, [personas, projects, workItems, jamSessions, dailyReports]);
+  }, [projects, workItems, jamSessions, dailyReports]);
 
-  const createPersona = (persona: Omit<Persona, 'id'>) => {
+  const createPersona = async (persona: Omit<Persona, 'id'>) => {
+    const workspacePath = workspace.config?.path;
+    if (!workspacePath) {
+      console.error('No workspace selected');
+      return;
+    }
+    
     const newPersona: Persona = {
       ...persona,
       id: uuidv4(),
     };
-    setPersonas([...personas, newPersona]);
+    
+    try {
+      const response = await fetch('http://localhost:3000/api/agents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          workspacePath,
+          agent: newPersona 
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setPersonas([...personas, data.agent]);
+        console.log('Agent saved to file system:', data.agent.name);
+      } else {
+        console.error('Failed to save agent:', response.status);
+      }
+    } catch (error) {
+      console.error('Error saving agent:', error);
+    }
   };
 
-  const updatePersona = (id: string, updates: Partial<Persona>) => {
-    setPersonas(personas.map((p) => (p.id === id ? { ...p, ...updates } : p)));
+  const updatePersona = async (id: string, updates: Partial<Persona>) => {
+    const workspacePath = workspace.config?.path;
+    if (!workspacePath) {
+      console.error('No workspace selected');
+      return;
+    }
+    
+    const persona = personas.find(p => p.id === id);
+    if (!persona) {
+      console.error('Agent not found:', id);
+      return;
+    }
+    
+    const updatedPersona = { ...persona, ...updates };
+    
+    try {
+      const response = await fetch(`http://localhost:3000/api/agents/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          workspacePath,
+          agent: updatedPersona 
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setPersonas(personas.map((p) => (p.id === id ? data.agent : p)));
+        console.log('Agent updated in file system:', data.agent.name);
+      } else {
+        console.error('Failed to update agent:', response.status);
+      }
+    } catch (error) {
+      console.error('Error updating agent:', error);
+    }
   };
 
-  const deletePersona = (id: string) => {
-    setPersonas(personas.filter((p) => p.id !== id));
+  const deletePersona = async (id: string) => {
+    const workspacePath = workspace.config?.path;
+    if (!workspacePath) {
+      console.error('No workspace selected');
+      return;
+    }
+    
+    try {
+      const response = await fetch(`http://localhost:3000/api/agents/${id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workspacePath })
+      });
+      
+      if (response.ok) {
+        setPersonas(personas.filter((p) => p.id !== id));
+        console.log('Agent deleted from file system:', id);
+      } else {
+        console.error('Failed to delete agent:', response.status);
+      }
+    } catch (error) {
+      console.error('Error deleting agent:', error);
+    }
   };
 
   const createProject = (

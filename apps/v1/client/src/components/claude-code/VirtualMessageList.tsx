@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useMemo } from 'react';
+import { useEffect, useRef, useCallback, useMemo, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ClaudeMessage } from './ClaudeMessage';
 import { ToolExecutionGroup } from '../chat/ToolExecutionGroup';
@@ -125,21 +125,131 @@ export function VirtualMessageList({ messages, scrollContainerRef, onSuggestedRe
     },
   });
   
-  // Handle auto-scroll to bottom for new messages
-  useEffect(() => {
-    if (shouldAutoScroll.current && messages.length > 0 && scrollContainerRef.current) {
-      const scrollToBottom = () => {
-        if (scrollContainerRef.current) {
-          scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
-        }
-      };
+  // Calculate dynamic bottom padding
+  const [bottomPadding, setBottomPadding] = useState(0);
+  
+  const updateBottomPadding = useCallback(() => {
+    console.log('[SCROLL] updateBottomPadding called');
+    if (scrollContainerRef.current && groupedMessages.length > 0) {
+      const container = scrollContainerRef.current;
+      const containerHeight = container.clientHeight;
+      console.log('[SCROLL] Container height:', containerHeight);
       
-      // Use RAF to ensure DOM has updated
-      requestAnimationFrame(() => {
-        requestAnimationFrame(scrollToBottom);
-      });
+      // Find the last user message in grouped messages
+      let lastUserGroupIndex = -1;
+      for (let i = groupedMessages.length - 1; i >= 0; i--) {
+        if (groupedMessages[i].messages.some(m => m.role === 'user')) {
+          lastUserGroupIndex = i;
+          break;
+        }
+      }
+      console.log('[SCROLL] Last user group index:', lastUserGroupIndex);
+      
+      if (lastUserGroupIndex >= 0) {
+        // Get the virtual item for this group
+        const item = rowVirtualizer.getVirtualItems().find(
+          vi => vi.index === lastUserGroupIndex
+        );
+        
+        if (item) {
+          // Estimate the message height from the virtual item size
+          const messageHeight = item.size;
+          // Calculate padding: container height minus (message height + 8px)
+          const paddingNeeded = Math.max(containerHeight - (messageHeight + 8), 0);
+          console.log('[SCROLL] Message height:', messageHeight, 'Padding needed:', paddingNeeded);
+          setBottomPadding(paddingNeeded);
+        } else {
+          console.log('[SCROLL] No virtual item found for user message');
+        }
+      }
+    } else {
+      console.log('[SCROLL] updateBottomPadding prerequisites not met');
     }
-  }, [messages.length, scrollContainerRef]);
+  }, [groupedMessages, rowVirtualizer, scrollContainerRef]);
+
+  // Scroll to position last user message at top
+  const scrollToLastUserMessage = useCallback(() => {
+    console.log('[SCROLL] scrollToLastUserMessage called');
+    if (messages.length > 0 && scrollContainerRef.current && rowVirtualizer) {
+      // Find the last user message
+      let lastUserMessage = null;
+      for (let i = messages.length - 1; i >= 0; i--) {
+        if (messages[i].role === 'user') {
+          lastUserMessage = messages[i];
+          console.log('[SCROLL] Found last user message:', lastUserMessage.id);
+          break;
+        }
+      }
+      
+      if (lastUserMessage) {
+        // Find the index in grouped messages
+        const userMessageGroupIndex = groupedMessages.findIndex(
+          group => group.messages.some(msg => msg.id === lastUserMessage.id)
+        );
+        console.log('[SCROLL] User message group index:', userMessageGroupIndex);
+        
+        if (userMessageGroupIndex !== -1) {
+          // Update padding first
+          updateBottomPadding();
+          
+          // Scroll to position the message 8px from top
+          setTimeout(() => {
+            const item = rowVirtualizer.getVirtualItems().find(
+              vi => vi.index === userMessageGroupIndex
+            );
+            console.log('[SCROLL] Virtual item:', item);
+            
+            if (item && scrollContainerRef.current) {
+              const targetScrollTop = item.start - 8;
+              console.log('[SCROLL] Scrolling to position:', targetScrollTop);
+              scrollContainerRef.current.scrollTo({
+                top: targetScrollTop,
+                behavior: 'smooth'
+              });
+            } else {
+              console.log('[SCROLL] Could not scroll - item or ref missing');
+            }
+          }, 100);
+        }
+      } else {
+        console.log('[SCROLL] No user message found');
+      }
+    } else {
+      console.log('[SCROLL] Prerequisites not met - messages:', messages.length, 'ref:', !!scrollContainerRef.current, 'virtualizer:', !!rowVirtualizer);
+    }
+  }, [messages, scrollContainerRef, groupedMessages, rowVirtualizer, updateBottomPadding]);
+
+  // Scroll on initial load (once messages are loaded)
+  useEffect(() => {
+    if (messages.length > 0) {
+      // Delay to ensure virtualizer is ready
+      const timer = setTimeout(() => {
+        scrollToLastUserMessage();
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, []); // Only on mount
+
+  // Track previous user message count to detect new user messages
+  const prevUserMessageCount = useRef(0);
+  
+  // Handle new USER messages only
+  useEffect(() => {
+    if (messages.length > 0) {
+      // Count current user messages
+      const currentUserMessageCount = messages.filter(m => m.role === 'user').length;
+      console.log('[SCROLL] User message count - prev:', prevUserMessageCount.current, 'current:', currentUserMessageCount);
+      
+      // Check if a new user message was added
+      if (currentUserMessageCount > prevUserMessageCount.current) {
+        console.log('[SCROLL] New user message detected, triggering scroll to top');
+        scrollToLastUserMessage();
+      }
+      
+      // Update the count for next comparison
+      prevUserMessageCount.current = currentUserMessageCount;
+    }
+  }, [messages, scrollToLastUserMessage]); // Depend on messages array to check all changes
   
   // Detect user scrolling
   useEffect(() => {
@@ -180,51 +290,55 @@ export function VirtualMessageList({ messages, scrollContainerRef, onSuggestedRe
   const totalSize = rowVirtualizer.getTotalSize();
   
   return (
-    <div
-      style={{
-        height: `${totalSize}px`,
-        width: '100%',
-        position: 'relative',
-      }}
-    >
-      {virtualItems.map((virtualItem) => {
-        const group = groupedMessages[virtualItem.index];
-        
-        return (
-          <div
-            key={virtualItem.key}
-            data-group-id={group.id}
-            ref={rowVirtualizer.measureElement}
-            data-index={virtualItem.index}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              transform: `translateY(${virtualItem.start}px)`,
-            }}
-          >
-            {group.type === 'toolGroup' ? (
-              <ToolExecutionGroup
-                tools={group.messages}
-                sessionId={sessionId}
-              />
-            ) : (
-              <ClaudeMessage 
-                message={group.messages[0]} 
-                onSuggestedResponse={onSuggestedResponse}
-                isLatestAssistantMessage={
-                  group.messages[0].role === 'assistant' && 
-                  !group.messages[0].isStreaming &&
-                  // Find the last assistant message
-                  messages.findLastIndex(m => m.role === 'assistant' && m.id === group.messages[0].id) === messages.length - 1
-                }
-                sessionId={sessionId}
-              />
-            )}
-          </div>
-        );
-      })}
-    </div>
+    <>
+      <div
+        style={{
+          height: `${totalSize}px`,
+          width: '100%',
+          position: 'relative',
+        }}
+      >
+        {virtualItems.map((virtualItem) => {
+          const group = groupedMessages[virtualItem.index];
+          
+          return (
+            <div
+              key={virtualItem.key}
+              data-group-id={group.id}
+              ref={rowVirtualizer.measureElement}
+              data-index={virtualItem.index}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                transform: `translateY(${virtualItem.start}px)`,
+              }}
+            >
+              {group.type === 'toolGroup' ? (
+                <ToolExecutionGroup
+                  tools={group.messages}
+                  sessionId={sessionId}
+                />
+              ) : (
+                <ClaudeMessage 
+                  message={group.messages[0]} 
+                  onSuggestedResponse={onSuggestedResponse}
+                  isLatestAssistantMessage={
+                    group.messages[0].role === 'assistant' && 
+                    !group.messages[0].isStreaming &&
+                    // Find the last assistant message
+                    messages.findLastIndex(m => m.role === 'assistant' && m.id === group.messages[0].id) === messages.length - 1
+                  }
+                  sessionId={sessionId}
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {/* Dynamic padding to allow scrolling last user message to top */}
+      <div style={{ height: `${bottomPadding}px` }} />
+    </>
   );
 }

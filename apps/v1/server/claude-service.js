@@ -1342,8 +1342,12 @@ Respond with exactly this JSON structure:
       };
     }
 
-    const prompt = `You are ${persona.name}, a ${persona.type} with expertise in ${persona.expertise.join(', ')}.
-Your personality: ${persona.personality}
+    // Use agentPrompt if available, otherwise fall back to basic persona description
+    const agentDescription = persona.agentPrompt || 
+      `You are ${persona.name}, a ${persona.type} with expertise in ${persona.expertise.join(', ')}.
+Your personality: ${persona.personality}`;
+
+    const prompt = `${agentDescription}
 
 You are reviewing a work item document and providing suggestions to improve it.
 

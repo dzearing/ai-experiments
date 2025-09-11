@@ -86,12 +86,12 @@ function AppContent() {
 
 function App() {
   return (
-    <AppProvider>
-      <ThemeProvider>
-        <ToastProvider>
-          <AuthProvider>
-            <GitHubProvider>
-              <WorkspaceProvider>
+    <WorkspaceProvider>
+      <AppProvider>
+        <ThemeProvider>
+          <ToastProvider>
+            <AuthProvider>
+              <GitHubProvider>
                 <LayoutProvider>
                   <SubscriptionProvider>
                     <BrowserRouter>
@@ -99,12 +99,12 @@ function App() {
                     </BrowserRouter>
                   </SubscriptionProvider>
                 </LayoutProvider>
-              </WorkspaceProvider>
-            </GitHubProvider>
-          </AuthProvider>
-        </ToastProvider>
-      </ThemeProvider>
-    </AppProvider>
+              </GitHubProvider>
+            </AuthProvider>
+          </ToastProvider>
+        </ThemeProvider>
+      </AppProvider>
+    </WorkspaceProvider>
   );
 }
 

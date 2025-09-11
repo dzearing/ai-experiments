@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import { useTheme } from '../contexts/ThemeContextV2';
@@ -108,6 +108,8 @@ export function JamSessionDetail() {
   const { currentStyles, isDarkMode } = useTheme();
   const styles = currentStyles;
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const [bottomPadding, setBottomPadding] = useState(0);
 
   const session = jamSessions.find((s) => s.id === id);
 
@@ -178,10 +180,68 @@ Document ideas as they emerge...
     setSuggestedPersonas(suggestions.sort((a, b) => b.relevance - a.relevance).slice(0, 5));
   }, [focusDocument, personas]);
 
-  // Scroll to bottom when new messages arrive
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  // Calculate padding and scroll to last user message
+  const scrollLastUserMessageToTop = useCallback(() => {
+    if (!chatContainerRef.current || messages.length === 0) return;
+    
+    // Find the last user message
+    let lastUserMessageIndex = -1;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].personaId === 'user') {
+        lastUserMessageIndex = i;
+        break;
+      }
+    }
+    
+    if (lastUserMessageIndex < 0) return;
+    
+    // Wait for DOM to update
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (!chatContainerRef.current) return;
+        
+        const container = chatContainerRef.current;
+        const messageElements = container.querySelectorAll('[data-message-id]');
+        const userMessageElement = messageElements[lastUserMessageIndex] as HTMLElement;
+        
+        if (!userMessageElement) return;
+        
+        // Get measurements
+        const containerHeight = container.clientHeight;
+        const messageHeight = userMessageElement.offsetHeight;
+        const messageTop = userMessageElement.offsetTop;
+        
+        // Calculate padding needed: container height - message height - 8px padding
+        const paddingNeeded = Math.max(0, containerHeight - messageHeight - 8);
+        setBottomPadding(paddingNeeded);
+        
+        // Scroll to position message 8px from top
+        // Need another frame for padding to apply
+        requestAnimationFrame(() => {
+          container.scrollTo({
+            top: messageTop - 8,
+            behavior: 'smooth'
+          });
+        });
+      });
+    });
   }, [messages]);
+
+  // On initial load, position last user message
+  useEffect(() => {
+    scrollLastUserMessageToTop();
+  }, []); // Run once on mount
+
+  // When messages change, check if latest is from user
+  useEffect(() => {
+    if (messages.length > 0) {
+      const latestMessage = messages[messages.length - 1];
+      if (latestMessage.personaId === 'user') {
+        scrollLastUserMessageToTop();
+      }
+      // No scrolling for persona/system messages
+    }
+  }, [messages, scrollLastUserMessageToTop]);
 
   if (!session) {
     return (
@@ -463,6 +523,7 @@ Document ideas as they emerge...
 
         {/* Messages */}
         <div
+          ref={chatContainerRef}
           className={`flex-1 overflow-y-auto mb-4 ${styles.contentBg} ${styles.borderRadius} p-4`}
         >
           {messages.length === 0 ? (
@@ -478,7 +539,7 @@ Document ideas as they emerge...
                 const persona = !isUser ? personas.find((p) => p.id === message.personaId) : null;
 
                 return (
-                  <div key={message.id} className={`flex gap-3 ${isUser ? 'justify-end' : ''}`}>
+                  <div key={message.id} data-message-id={message.id} className={`flex gap-3 ${isUser ? 'justify-end' : ''}`}>
                     {!isUser && persona && <StockPhotoAvatar seed={persona.id} size={36} />}
                     <div className={`max-w-[70%] ${isUser ? 'order-first' : ''}`}>
                       {!isUser && persona && (
@@ -527,6 +588,8 @@ Document ideas as they emerge...
                 </div>
               )}
 
+              {/* Dynamic bottom padding to allow scrolling user message to top */}
+              <div style={{ height: `${bottomPadding}px` }} />
               <div ref={messagesEndRef} />
             </div>
           )}

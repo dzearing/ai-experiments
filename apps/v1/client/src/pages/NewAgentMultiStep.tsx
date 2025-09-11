@@ -251,11 +251,12 @@ const DescribeWorkStep = memo(function DescribeWorkStep({ onNext, workDescriptio
 });
 
 // Step 2: Review and Customize
-function ReviewCustomizeStep({ onNext, onBack, agentSuggestion, setAgentSuggestion, avatarSeed, setAvatarSeed }: StepProps & {
+function ReviewCustomizeStep({ onNext, onBack, agentSuggestion, setAgentSuggestion, avatarSeed, setAvatarSeed }: Omit<StepProps, 'onNext'> & {
   agentSuggestion: AgentSuggestion;
   setAgentSuggestion: (suggestion: AgentSuggestion) => void;
   avatarSeed: string;
   setAvatarSeed: (seed: string) => void;
+  onNext: (updatedSuggestion?: AgentSuggestion) => void;
 }) {
   const { currentStyles } = useTheme();
   const styles = currentStyles;
@@ -309,8 +310,14 @@ function ReviewCustomizeStep({ onNext, onBack, agentSuggestion, setAgentSuggesti
         ...formData.customExpertise.split(',').map(e => e.trim()).filter(Boolean)
       ]
     };
+    console.log('ReviewCustomizeStep handleNext - formData.agentPrompt includes WOOF?', formData.agentPrompt?.includes('WOOF'));
+    console.log('ReviewCustomizeStep handleNext - updatedSuggestion.agentPrompt includes WOOF?', updatedSuggestion.agentPrompt?.includes('WOOF'));
+    console.log('ReviewCustomizeStep handleNext - full agentPrompt:', updatedSuggestion.agentPrompt);
     setAgentSuggestion(updatedSuggestion);
-    onNext();
+    // Store the updated suggestion in sessionStorage to ensure persistence
+    sessionStorage.setItem('tempAgentSuggestion', JSON.stringify(updatedSuggestion));
+    // Pass the updated suggestion directly to onNext
+    onNext(updatedSuggestion);
   };
 
   return (
@@ -586,22 +593,35 @@ export function NewAgentMultiStep() {
     }
   }, [stepFromUrl, currentStep]);
 
-  const handleNext = () => {
-    if (currentStep === 2 && agentSuggestion) {
+  const handleNext = (updatedSuggestion?: AgentSuggestion) => {
+    // Use the updated suggestion if provided (from step 2), otherwise use the current one
+    const suggestionToUse = updatedSuggestion || agentSuggestion;
+    console.log('Parent handleNext - updatedSuggestion includes WOOF?', updatedSuggestion?.agentPrompt?.includes('WOOF'));
+    console.log('Parent handleNext - suggestionToUse includes WOOF?', suggestionToUse?.agentPrompt?.includes('WOOF'));
+    console.log('Parent handleNext - full suggestionToUse.agentPrompt:', suggestionToUse?.agentPrompt);
+    
+    if (currentStep === 2 && suggestionToUse) {
       // Extract role summary from agent prompt
-      const roleSummary = extractRoleSummary(agentSuggestion.agentPrompt);
+      const roleSummary = extractRoleSummary(suggestionToUse.agentPrompt);
       
       // Create or update agent
       const agentData = {
-        name: agentSuggestion.name,
-        type: agentSuggestion.type,
-        jobTitle: agentSuggestion.jobTitle,
-        expertise: agentSuggestion.expertise,
-        agentPrompt: agentSuggestion.agentPrompt,
-        roleSummary: roleSummary || `${agentSuggestion.jobTitle} specializing in ${agentSuggestion.expertise.slice(0, 2).join(' and ')}`,
+        name: suggestionToUse.name,
+        type: suggestionToUse.type,
+        jobTitle: suggestionToUse.jobTitle,
+        expertise: suggestionToUse.expertise,
+        agentPrompt: suggestionToUse.agentPrompt,
+        roleSummary: roleSummary || `${suggestionToUse.jobTitle} specializing in ${suggestionToUse.expertise.slice(0, 2).join(' and ')}`,
         avatarSeed,
         avatarGender: getGenderFromSeed(avatarSeed),
       };
+
+      console.log('Creating/updating agent with data:', {
+        name: agentData.name,
+        includesWOOF: agentData.agentPrompt?.includes('WOOF'),
+        includesBARK: agentData.agentPrompt?.includes('BARK'),
+        fullAgentPrompt: agentData.agentPrompt
+      });
 
       if (isEditMode && personaId) {
         updatePersona(personaId, agentData);

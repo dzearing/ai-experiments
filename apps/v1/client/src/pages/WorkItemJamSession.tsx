@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, Fragment } from 'react';
+import { useState, useEffect, useRef, Fragment, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import { useTheme } from '../contexts/ThemeContextV2';
@@ -126,14 +126,96 @@ export function WorkItemJamSession() {
     }
   }, [editedContent, sessionId, markdownContent, updateJamSession]);
 
-  // Scroll to bottom when new messages arrive
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
+  // State for bottom padding
+  const [bottomPadding, setBottomPadding] = useState(0);
+  
+  // Calculate padding and scroll to last user message
+  const scrollLastUserMessageToTop = useCallback(() => {
+    console.log('[SCROLL] scrollLastUserMessageToTop called, messages:', messages.length);
+    if (!chatContainerRef.current || messages.length === 0) {
+      console.log('[SCROLL] Early return - no container or messages');
+      return;
+    }
+    
+    // Find the last user message
+    let lastUserMessageIndex = -1;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].personaId === 'user') {
+        lastUserMessageIndex = i;
+        break;
+      }
+    }
+    
+    console.log('[SCROLL] Last user message index:', lastUserMessageIndex);
+    if (lastUserMessageIndex < 0) return;
+    
+    // Wait for DOM to update
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (!chatContainerRef.current) {
+          console.log('[SCROLL] Container lost after RAF');
+          return;
+        }
+        
+        const container = chatContainerRef.current;
+        const messageElements = container.querySelectorAll('[data-message-id]');
+        console.log('[SCROLL] Found message elements:', messageElements.length);
+        const userMessageElement = messageElements[lastUserMessageIndex] as HTMLElement;
+        
+        if (!userMessageElement) {
+          console.log('[SCROLL] User message element not found at index:', lastUserMessageIndex);
+          return;
+        }
+        
+        // Get measurements
+        const containerHeight = container.clientHeight;
+        const messageHeight = userMessageElement.offsetHeight;
+        const messageTop = userMessageElement.offsetTop;
+        
+        console.log('[SCROLL] Measurements:', {
+          containerHeight,
+          messageHeight,
+          messageTop
+        });
+        
+        // Calculate padding needed: container height - message height - 8px padding
+        const paddingNeeded = Math.max(0, containerHeight - messageHeight - 8);
+        console.log('[SCROLL] Setting bottom padding to:', paddingNeeded);
+        setBottomPadding(paddingNeeded);
+        
+        // Scroll to position message 8px from top
+        // Need another frame for padding to apply
+        requestAnimationFrame(() => {
+          const scrollTarget = messageTop - 8;
+          console.log('[SCROLL] Scrolling to:', scrollTarget);
+          container.scrollTo({
+            top: scrollTarget,
+            behavior: 'smooth'
+          });
+        });
+      });
+    });
   }, [messages]);
+  
+  // On initial load, position last user message
+  useEffect(() => {
+    scrollLastUserMessageToTop();
+  }, []); // Run once on mount
+  
+  // When messages change, check if latest is from user
+  useEffect(() => {
+    console.log('[SCROLL] Messages changed, count:', messages.length);
+    if (messages.length > 0) {
+      const latestMessage = messages[messages.length - 1];
+      console.log('[SCROLL] Latest message persona:', latestMessage.personaId);
+      if (latestMessage.personaId === 'user') {
+        console.log('[SCROLL] Latest is user message, triggering scroll');
+        scrollLastUserMessageToTop();
+      } else {
+        console.log('[SCROLL] Latest is not user message, no scroll');
+      }
+    }
+  }, [messages, scrollLastUserMessageToTop]);
 
   // Manage suggestion button visibility
   useEffect(() => {
@@ -1159,6 +1241,7 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
                   return (
                     <div
                       key={message.id}
+                      data-message-id={message.id}
                       className={`flex flex-col ${message.personaId === 'user' ? 'items-end' : 'items-start'}`}
                     >
                       <div
@@ -1261,6 +1344,8 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
                     </div>
                   </div>
                 )}
+                {/* Dynamic bottom padding to allow scrolling user message to top */}
+                <div style={{ height: `${bottomPadding}px` }} />
                 <div ref={messagesEndRef} />
               </div>
 
