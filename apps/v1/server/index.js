@@ -1315,7 +1315,8 @@ app.post('/api/workspace/project-details', async (req, res) => {
         ideas: [],
         planned: [],
         active: [],
-        completed: []
+        completed: [],
+        discarded: []
       }
     };
 
@@ -1357,7 +1358,7 @@ app.post('/api/workspace/project-details', async (req, res) => {
     }
 
     // Read plans - but don't parse markdown content yet
-    const planTypes = ['ideas', 'planned', 'active', 'completed'];
+    const planTypes = ['ideas', 'planned', 'active', 'completed', 'discarded'];
     
     await Promise.all(planTypes.map(async (planType) => {
       try {
@@ -1704,7 +1705,8 @@ app.post('/api/workspace/read', async (req, res) => {
               ideas: [],
               planned: [],
               active: [],
-              completed: []
+              completed: [],
+              discarded: []
             }
           };
 
@@ -1783,7 +1785,7 @@ app.post('/api/workspace/read', async (req, res) => {
 
           // Read plans
           const plansStartTime = Date.now();
-          const planTypes = ['ideas', 'planned', 'active', 'completed'];
+          const planTypes = ['ideas', 'planned', 'active', 'completed', 'discarded'];
           
           // Read all plan directories in parallel
           const planPromises = planTypes.map(async (planType) => {
@@ -2697,7 +2699,7 @@ app.post('/api/workspace/update-workitem', async (req, res) => {
       existingFilePath = path.join(projectPath, 'plans', 'planned', originalFilename);
     } else {
       // Otherwise, try to find it by work item ID
-      const planTypes = ['ideas', 'planned', 'active', 'completed'];
+      const planTypes = ['ideas', 'planned', 'active', 'completed', 'discarded'];
       for (const planType of planTypes) {
         const planDir = path.join(projectPath, 'plans', planType);
         try {
@@ -3094,32 +3096,27 @@ app.post('/api/work-items/delete', async (req, res) => {
       return res.status(404).json({ error: 'Markdown file not found' });
     }
     
+    // Parse path components (needed for both delete and move operations)
+    const pathParts = fullPath.split(path.sep);
+    const plansIndex = pathParts.lastIndexOf('plans');
+    
+    if (plansIndex === -1) {
+      return res.status(400).json({ error: 'Invalid markdown path structure' });
+    }
+    
+    // Calculate project and workspace paths for cache invalidation
+    const projectPath = pathParts.slice(0, plansIndex).join(path.sep);
+    const workspacePath = projectPath.split(path.sep).slice(0, -2).join(path.sep);
+    
     if (permanentDelete) {
       // Permanently delete the file
       await fsAsync.unlink(fullPath);
-      
-      // Invalidate cache after permanent deletion
-      const pathParts = fullPath.split(path.sep);
-      const plansIndex = pathParts.lastIndexOf('plans');
-      const projectPath = pathParts.slice(0, plansIndex).join(path.sep);
-      const workspacePath = projectPath.split(path.sep).slice(0, -2).join(path.sep);
-      invalidateCache(`workspace-light:${workspacePath}`);
-      invalidateCache(`project-details:${projectPath}`);
-      invalidateCache(`workspace:${workspacePath}`);
       
       res.json({ 
         success: true, 
         message: 'Work item markdown permanently deleted' 
       });
     } else {
-      // Move to discarded folder
-      const pathParts = fullPath.split(path.sep);
-      const plansIndex = pathParts.lastIndexOf('plans');
-      
-      if (plansIndex === -1) {
-        return res.status(400).json({ error: 'Invalid markdown path structure' });
-      }
-      
       // Build the discarded folder path
       const discardedPath = [...pathParts.slice(0, plansIndex + 1), 'discarded'].join(path.sep);
       
@@ -3141,8 +3138,6 @@ app.post('/api/work-items/delete', async (req, res) => {
     }
     
     // Invalidate cache after successful deletion/move
-    const projectPath = fullPath.split(path.sep).slice(0, pathParts.lastIndexOf('plans')).join(path.sep);
-    const workspacePath = projectPath.split(path.sep).slice(0, -2).join(path.sep);
     invalidateCache(`workspace-light:${workspacePath}`);
     invalidateCache(`project-details:${projectPath}`);
     invalidateCache(`workspace:${workspacePath}`);
@@ -5682,6 +5677,36 @@ app.post('/api/feedback/submit', async (req, res) => {
     res.status(500).json({ 
       success: false, 
       error: 'Internal server error' 
+    });
+  }
+});
+
+// Clear cache endpoint
+app.post('/api/cache/clear', async (req, res) => {
+  try {
+    const { workspacePath } = req.body;
+    
+    console.log('Clearing cache for workspace:', workspacePath);
+    
+    // Clear all cached data
+    workspaceCache.clear();
+    
+    // Log the cache clear
+    logger.logEvent('CACHE_CLEARED', 'Server cache cleared', {
+      workspacePath,
+      timestamp: new Date().toISOString()
+    });
+    
+    res.json({ 
+      success: true, 
+      message: 'Cache cleared successfully',
+      clearedAt: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error clearing cache:', error);
+    res.status(500).json({ 
+      error: 'Failed to clear cache',
+      details: error.message 
     });
   }
 });

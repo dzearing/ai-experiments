@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTheme } from '../contexts/ThemeContextV2';
 import { Button } from './ui/Button';
 import type { WorkItem } from '../types';
@@ -33,7 +34,7 @@ export function WorkItemDeleteDialog({
     onClose();
   };
 
-  return (
+  const dialogContent = (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
       <div
@@ -101,4 +102,8 @@ export function WorkItemDeleteDialog({
       </div>
     </div>
   );
+
+  // Use React Portal to render the dialog at the document body level
+  // This ensures the fixed positioning works correctly regardless of scroll context
+  return createPortal(dialogContent, document.body);
 }

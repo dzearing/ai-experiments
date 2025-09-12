@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContextV2';
 import { useWorkspace } from '../contexts/WorkspaceContext';
 import { useApp } from '../contexts/AppContext';
 import { useLayout } from '../contexts/LayoutContext';
+import { useToast } from '../contexts/ToastContext';
 import { BackgroundPattern } from './BackgroundPatternOptimized';
 import { AnimatedTransition } from './AnimatedTransition';
 import { AnimatedOutletWrapper } from './AnimatedOutletWrapper';
@@ -14,10 +16,63 @@ import { Breadcrumb } from './ui/Breadcrumb';
 export function ThemedLayoutV2() {
   const location = useLocation();
   const { currentStyles, backgroundEffectEnabled } = useTheme();
-  const { workspace } = useWorkspace();
+  const { workspace, reloadWorkspace } = useWorkspace();
   const { projects, workItems } = useApp();
   const { headerTitle, headerContent } = useLayout();
+  const { showToast } = useToast();
   const styles = currentStyles;
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    if (isRefreshing) return; // Prevent multiple clicks
+    
+    setIsRefreshing(true);
+    showToast('Refreshing workspace data...', 'info');
+    
+    try {
+      // Clear all cached data
+      if (workspace.config?.path) {
+        // Clear the cache utility's storage
+        const { invalidateCache } = await import('../utils/cache');
+        // Clear all cached data patterns
+        invalidateCache(/./); // This clears everything
+        
+        // Clear localStorage to remove any stale state
+        localStorage.removeItem('workspace-cache');
+        localStorage.removeItem('project-cache');
+        
+        // Clear sessionStorage as well
+        sessionStorage.clear();
+        
+        // Call server endpoint to clear server-side cache
+        try {
+          await fetch('http://localhost:3000/api/cache/clear', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              workspacePath: workspace.config.path 
+            })
+          });
+        } catch (err) {
+          console.error('Failed to clear server cache:', err);
+        }
+        
+        // Now reload workspace data
+        await reloadWorkspace();
+        
+        showToast('Workspace refreshed!', 'success');
+        
+        // Wait a moment for the toast to show, then reload
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+      }
+    } catch (error) {
+      console.error('Error refreshing workspace:', error);
+      showToast('Failed to refresh workspace', 'error');
+      setIsRefreshing(false);
+    }
+  };
   const direction = useNavigationDirection();
 
   // Extract projectId from various routes
@@ -195,6 +250,31 @@ export function ThemedLayoutV2() {
             {workspace.config && (
               <div className={`text-sm ${styles.mutedText}`}>{workspace.config.path}</div>
             )}
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className={`
+                p-2 rounded-lg transition-colors
+                ${styles.cardBg} hover:bg-neutral-200 dark:hover:bg-neutral-700
+                ${styles.textColor}
+                ${isRefreshing ? 'opacity-50 cursor-not-allowed' : ''}
+              `}
+              title="Refresh workspace data"
+            >
+              <svg
+                className={`h-5 w-5 ${isRefreshing ? 'animate-spin' : ''}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
+              </svg>
+            </button>
             <SettingsMenu />
             <AuthAvatar />
           </div>

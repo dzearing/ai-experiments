@@ -16,7 +16,7 @@ export function WorkItems() {
   const { currentStyles } = useTheme();
   const navigate = useNavigate();
   const styles = currentStyles;
-  const [filter, setFilter] = useState<'all' | WorkItem['status']>('all');
+  const [filter, setFilter] = useState<'all' | 'discarded' | WorkItem['status']>('all');
   const [sortBy, setSortBy] = useState<'priority' | 'dueDate' | 'created'>('priority');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [workItemToDelete, setWorkItemToDelete] = useState<WorkItem | null>(null);
@@ -56,7 +56,18 @@ export function WorkItems() {
     }
   };
 
-  const filteredItems = workItems.filter((item) => filter === 'all' || item.status === filter);
+  const filteredItems = workItems.filter((item) => {
+    if (filter === 'all') {
+      // Show all non-discarded items
+      return !item.markdownPath?.includes('/discarded/');
+    } else if (filter === 'discarded') {
+      // Show only discarded items
+      return item.markdownPath?.includes('/discarded/');
+    } else {
+      // Show items matching the status filter (excluding discarded)
+      return item.status === filter && !item.markdownPath?.includes('/discarded/');
+    }
+  });
 
   const sortedItems = [...filteredItems].sort((a, b) => {
     switch (sortBy) {
@@ -101,7 +112,7 @@ export function WorkItems() {
           <div className="flex items-center gap-2">
             <span className={`text-sm font-medium ${styles.textColor}`}>Status:</span>
             <div className="flex gap-1">
-              {(['all', 'planned', 'active', 'in-review', 'blocked', 'completed'] as const).map(
+              {(['all', 'planned', 'active', 'in-review', 'blocked', 'completed', 'discarded'] as const).map(
                 (status) => (
                   <Button
                     key={status}

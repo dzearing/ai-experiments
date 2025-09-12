@@ -381,7 +381,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       projectWorkItemMap[projectId] = [];
 
       // Process all plan types
-      ['ideas', 'planned', 'active', 'completed'].forEach((planType) => {
+      ['ideas', 'planned', 'active', 'completed', 'discarded'].forEach((planType) => {
         if (wp.plans[planType]) {
           wp.plans[planType].forEach((plan: any) => {
             if (plan.workItem) {
