@@ -3142,6 +3142,25 @@ app.post('/api/work-items/delete', async (req, res) => {
     invalidateCache(`project-details:${projectPath}`);
     invalidateCache(`workspace:${workspacePath}`);
     
+    // Notify all SSE clients about the workspace change
+    const notification = {
+      type: 'workspace-update',
+      action: permanentDelete ? 'work-item-deleted' : 'work-item-discarded',
+      workspacePath: workspacePath,
+      projectPath: projectPath,
+      timestamp: new Date().toISOString()
+    };
+    
+    // Broadcast to all connected SSE clients
+    subscriptionManager.clients.forEach((client, clientId) => {
+      try {
+        client.write(`event: workspace-update\ndata: ${JSON.stringify(notification)}\n\n`);
+        console.log(`Notified client ${clientId} about workspace update`);
+      } catch (err) {
+        console.error(`Failed to notify client ${clientId}:`, err.message);
+      }
+    });
+    
   } catch (error) {
     console.error('Error deleting/discarding work item:', error);
     res.status(500).json({ 

@@ -9,6 +9,9 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+.playwright-mcp
+playwright-report
+
 node_modules
 dist
 dist-ssr

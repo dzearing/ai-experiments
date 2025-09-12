@@ -40,10 +40,33 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       }
     };
 
+    const handleWorkspaceUpdate = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log('Received workspace update:', data);
+        
+        // Broadcast workspace update to all workspace subscribers
+        const workspaceCallbacks = callbacks.current.get('workspace-update');
+        if (workspaceCallbacks) {
+          workspaceCallbacks.forEach((cb) => {
+            try {
+              cb(data);
+            } catch (err) {
+              console.error('Error in workspace update callback:', err);
+            }
+          });
+        }
+      } catch (err) {
+        console.error('Error handling workspace update:', err);
+      }
+    };
+
     eventSource.addEventListener('update', handleUpdate);
+    eventSource.addEventListener('workspace-update', handleWorkspaceUpdate);
 
     return () => {
       eventSource.removeEventListener('update', handleUpdate);
+      eventSource.removeEventListener('workspace-update', handleWorkspaceUpdate);
     };
   }, [eventSource]);
 

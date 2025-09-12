@@ -4,6 +4,7 @@ import { useApp } from '../contexts/AppContext';
 import { useLayout } from '../contexts/LayoutContext';
 import { useWorkspace } from '../contexts/WorkspaceContext';
 import { useTheme } from '../contexts/ThemeContextV2';
+import { useRealtimeSubscription } from '../contexts/SubscriptionContext';
 import { Button } from '../components/ui/Button';
 import { IconButton } from '../components/ui/IconButton';
 import { WorkItemDeleteDialog } from '../components/WorkItemDeleteDialog';
@@ -11,9 +12,10 @@ import type { WorkItem } from '../types';
 
 export function WorkItems() {
   const { workItems, projects, personas, deleteWorkItem } = useApp();
-  const { isLoadingWorkspace } = useWorkspace();
+  const { isLoadingWorkspace, reloadWorkspace } = useWorkspace();
   const { setHeaderContent } = useLayout();
   const { currentStyles } = useTheme();
+  const { subscribe } = useRealtimeSubscription();
   const navigate = useNavigate();
   const styles = currentStyles;
   const [filter, setFilter] = useState<'all' | 'discarded' | WorkItem['status']>('all');
@@ -25,6 +27,20 @@ export function WorkItems() {
   useEffect(() => {
     setHeaderContent(null);
   }, [setHeaderContent]);
+
+  // Subscribe to workspace updates to refresh when work items change
+  useEffect(() => {
+    const unsubscribe = subscribe('workspace-update', '', (data) => {
+      console.log('WorkItems received workspace update:', data);
+      // Reload workspace data when we get a notification about work item changes
+      if (data.action === 'work-item-discarded' || data.action === 'work-item-deleted') {
+        console.log('Reloading workspace due to work item change');
+        reloadWorkspace();
+      }
+    });
+
+    return unsubscribe;
+  }, [subscribe, reloadWorkspace]);
 
   const getStatusColor = (status: WorkItem['status']) => {
     switch (status) {
@@ -403,6 +419,8 @@ export function WorkItems() {
                       aria-label="Delete work item"
                       variant="secondary"
                       onClick={() => {
+                        console.log('Setting work item to delete:', item);
+                        console.log('Work item markdownPath:', item.markdownPath);
                         setWorkItemToDelete(item);
                         setDeleteDialogOpen(true);
                       }}
@@ -438,6 +456,9 @@ export function WorkItems() {
         workItem={workItemToDelete}
         onConfirm={async (permanentDelete) => {
           if (!workItemToDelete) return;
+          
+          console.log('Deleting work item:', workItemToDelete);
+          console.log('Work item has markdownPath:', workItemToDelete.markdownPath);
 
           // Handle markdown file deletion/move if it exists
           if (workItemToDelete.markdownPath) {
@@ -459,8 +480,8 @@ export function WorkItems() {
                 invalidateCache(/^workspace-light:/);
                 invalidateCache(/^project-details:/);
 
-                // Reload the page to refresh the work items list
-                window.location.reload();
+                // The workspace will reload automatically via SSE notification
+                console.log('Work item delete/move successful, waiting for SSE update');
               }
             } catch (error) {
               console.error('Error handling markdown file:', error);
