@@ -35,7 +35,15 @@ export function WorkItems() {
       // Reload workspace data when we get a notification about work item changes
       if (data.action === 'work-item-discarded' || data.action === 'work-item-deleted') {
         console.log('Reloading workspace due to work item change');
-        reloadWorkspace();
+        // First invalidate client-side cache to ensure fresh data
+        import('../utils/cache').then(({ invalidateCache }) => {
+          invalidateCache(/^workspace-light:/);
+          invalidateCache(/^project-details:/);
+          invalidateCache(/^workspace:/);
+          invalidateCache(/^work-items:/);
+          // Then reload workspace
+          reloadWorkspace();
+        });
       }
     });
 
@@ -73,6 +81,16 @@ export function WorkItems() {
   };
 
   const filteredItems = workItems.filter((item) => {
+    // Debug logging for the problematic item
+    if (item.title?.toLowerCase().includes('first run')) {
+      console.log('First run item found:', {
+        title: item.title,
+        markdownPath: item.markdownPath,
+        includesDiscarded: item.markdownPath?.includes('/discarded/'),
+        filter: filter
+      });
+    }
+    
     if (filter === 'all') {
       // Show all non-discarded items
       return !item.markdownPath?.includes('/discarded/');
@@ -279,7 +297,7 @@ export function WorkItems() {
                         <div className="space-y-1">
                           {item.metadata.tasks.map((task, index) => (
                             <div
-                              key={task.id || `task-${index}`}
+                              key={`${item.id}-task-${index}-${task.id || 'notask'}`}
                               className={`flex items-center gap-2 ${styles.mutedText} text-sm`}
                             >
                               {/* Task status indicator */}
@@ -479,6 +497,8 @@ export function WorkItems() {
                 const { invalidateCache } = await import('../utils/cache');
                 invalidateCache(/^workspace-light:/);
                 invalidateCache(/^project-details:/);
+                invalidateCache(/^workspace:/);
+                invalidateCache(/^work-items:/);
 
                 // The workspace will reload automatically via SSE notification
                 console.log('Work item delete/move successful, waiting for SSE update');

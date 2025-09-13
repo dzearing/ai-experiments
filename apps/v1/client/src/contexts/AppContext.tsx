@@ -80,18 +80,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const data = JSON.parse(savedData);
       // Don't load personas from localStorage anymore - they come from file system
       setProjects(data.projects || []);
-      setWorkItems(data.workItems || []);
+      // IMPORTANT: Don't load work items from localStorage - they should come from workspace data only
+      // This was causing stale items with wrong paths to persist
+      // setWorkItems(data.workItems || []);
       setJamSessions(data.jamSessions || []);
       setDailyReports(data.dailyReports || []);
     }
   }, []);
 
-  // Save data to localStorage whenever it changes (except personas which are file-based)
+  // Save data to localStorage whenever it changes (except personas and work items which are file-based)
   useEffect(() => {
-    // Don't save personas to localStorage - they're in file system
-    const data = { projects, workItems, jamSessions, dailyReports };
+    // Don't save personas or work items to localStorage - they're in file system
+    const data = { projects, jamSessions, dailyReports };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }, [projects, workItems, jamSessions, dailyReports]);
+  }, [projects, jamSessions, dailyReports]);
 
   const createPersona = async (persona: Omit<Persona, 'id'>) => {
     const workspacePath = workspace.config?.path;

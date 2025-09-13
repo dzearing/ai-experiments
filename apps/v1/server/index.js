@@ -1358,6 +1358,8 @@ app.post('/api/workspace/project-details', async (req, res) => {
     }
 
     // Read plans - but don't parse markdown content yet
+    // NOTE: We include 'discarded' here so they can be shown in the discarded filter,
+    // but the client will filter them out of the "All" view based on markdownPath
     const planTypes = ['ideas', 'planned', 'active', 'completed', 'discarded'];
     
     await Promise.all(planTypes.map(async (planType) => {
@@ -1785,6 +1787,8 @@ app.post('/api/workspace/read', async (req, res) => {
 
           // Read plans
           const plansStartTime = Date.now();
+          // NOTE: We include 'discarded' here so they can be shown in the discarded filter,
+          // but the client will filter them out of the "All" view based on markdownPath
           const planTypes = ['ideas', 'planned', 'active', 'completed', 'discarded'];
           
           // Read all plan directories in parallel

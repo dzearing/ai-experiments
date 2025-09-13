@@ -102,7 +102,7 @@ export async function setupWorkspaceInBrowser(page: any, workspacePath: string) 
   }, workspacePath);
 
   // Navigate to the app
-  await page.goto('http://localhost:5173');
+  await page.goto('http://localhost:5174');
 
   // Wait for the initial DOM to be ready
   await page.waitForLoadState('domcontentloaded');
@@ -122,7 +122,7 @@ export async function setupWorkspaceInBrowser(page: any, workspacePath: string) 
   // Navigate to projects page if not already there
   const currentUrl = page.url();
   if (!currentUrl.includes('/projects')) {
-    await page.goto('http://localhost:5173/projects');
+    await page.goto('http://localhost:5174/projects');
     await page.waitForLoadState('domcontentloaded');
   }
 
