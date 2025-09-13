@@ -210,6 +210,88 @@ The project follows a phased migration from V1 to V2:
 
 See `/docs/guides/migration/migration-v1-to-v2.md` for details.
 
+## Client-Side Debug Logging
+
+The application includes a comprehensive client-side logging system for debugging complex issues. This system sends structured logs to the server for persistent storage and analysis.
+
+### How to Use Client Logging
+
+1. **Import the logger**:
+```typescript
+import { clientLogger } from '../utils/clientLogger';
+```
+
+2. **Log at different levels**:
+```typescript
+clientLogger.debug('ComponentName', 'Debug message', { data });
+clientLogger.info('ComponentName', 'Info message', { data });
+clientLogger.warn('ComponentName', 'Warning message', { data });
+clientLogger.error('ComponentName', 'Error message', { data });
+```
+
+3. **Log function entry/exit**:
+```typescript
+clientLogger.functionEntry('ComponentName', 'functionName', { args });
+clientLogger.functionExit('ComponentName', 'functionName', returnValue);
+```
+
+4. **Log state changes**:
+```typescript
+clientLogger.stateChange('ComponentName', 'stateName', oldValue, newValue);
+```
+
+### Where to Find Logs
+
+Client logs are stored in the project repository at:
+```
+{repo root}/temp/logs/client/{sessionId}.log
+```
+
+Each session gets a unique ID stored in sessionStorage. The logs are in readable text format with JSON data snippets.
+
+### To View Logs
+
+1. Find the session ID in browser DevTools:
+   - Open DevTools Console
+   - Run: `sessionStorage.getItem('logSessionId')`
+
+2. Read the log file:
+```bash
+cat temp/logs/client/{sessionId}.log
+```
+
+Or tail the log for real-time viewing:
+```bash
+tail -f temp/logs/client/{sessionId}.log
+```
+
+Or use the API endpoint:
+```
+GET http://localhost:3000/api/client-logs/{sessionId}
+```
+
+### Enable/Disable Logging
+
+To disable logging (e.g., in production):
+```javascript
+localStorage.setItem('clientLogging', 'false');
+```
+
+To re-enable:
+```javascript
+localStorage.setItem('clientLogging', 'true');
+```
+
+### Current Logging Implementation
+
+The NewWorkItemMultiStep component has comprehensive logging for:
+- Work item initialization and loading
+- Task markdown parsing and storage
+- Goals and criteria extraction from markdown
+- State changes when switching between tasks
+
+This helps debug issues where goals/criteria counts don't match the markdown content.
+
 ## Workflow Memories
 
 - Process Feedback Workflow:

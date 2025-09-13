@@ -26,6 +26,7 @@ import {
 } from '@mdxeditor/editor';
 import '@mdxeditor/editor/style.css';
 import '../styles/mdx-editor.css';
+import { clientLogger } from '../utils/clientLogger';
 
 interface Task {
   id: string;
@@ -86,6 +87,7 @@ function NewWorkItemContent() {
   // Add local state for immediate UI response
   const [, startTransition] = useTransition();
   const [editorKey, setEditorKey] = useState(0);
+  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // State for what's selected in review step
   const [selectedSection, setSelectedSection] = useState<'general' | 'task'>('general');
@@ -132,6 +134,9 @@ function NewWorkItemContent() {
   const isProgrammaticChange = useRef(false);
   const [originalTaskContents, setOriginalTaskContents] = useState<Record<string, string>>({});
   const isInitializing = useRef(true);
+  
+  // Track the edited markdown content for each task
+  const [taskMarkdownContents, setTaskMarkdownContents] = useState<Record<string, string>>({});
 
   // Update breadcrumb when in edit mode
   useEffect(() => {
@@ -169,39 +174,68 @@ function NewWorkItemContent() {
     };
   }, [hasChanges]);
 
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Function to parse edited markdown content back into task properties
   const parseTaskFromMarkdown = (markdown: string): Partial<Task> => {
+    clientLogger.functionEntry('NewWorkItemMultiStep', 'parseTaskFromMarkdown', {
+      markdownLength: markdown.length,
+      hasGoalsSection: markdown.includes('## Goals'),
+      hasValidationSection: markdown.includes('## Validation Criteria'),
+      markdownPreview: markdown.substring(0, 200)
+    });
     const task: Partial<Task> = {};
 
     // Extract description
-    const descMatch = markdown.match(/##\s*Description\s*\n+([\s\S]*?)(?=\n##|$)/);
+    const descMatch = markdown.match(/##\s*Description\s*\n+([\s\S]*?)(?=\n##|$)/i);
     if (descMatch) {
       task.description = descMatch[1].trim();
     }
 
     // Extract goals
-    const goalsMatch = markdown.match(/##\s*Goals\s*\n+([\s\S]*?)(?=\n##|$)/);
+    const goalsMatch = markdown.match(/##\s*Goals\s*\n+([\s\S]*?)(?=\n##|$)/i);
     if (goalsMatch) {
       const goalLines = goalsMatch[1].trim().split('\n');
-      task.goals = goalLines
-        .filter((line) => line.match(/^-\s*/))
-        .map((line) => line.replace(/^-\s*/, '').trim());
+      const parsedGoals = goalLines
+        .filter((line) => line.match(/^[-*]\s+/))  // Match both - and * bullet points
+        .map((line) => line.replace(/^[-*]\s+/, '').trim())
+        .filter((goal) => goal && goal !== 'No goals defined');
+      task.goals = parsedGoals.length > 0 ? parsedGoals : [];
     }
+    // Note: We don't set goals to [] if not found - let the existing values persist
 
     // Extract work description
-    const workMatch = markdown.match(/##\s*Work\s*Description\s*\n+([\s\S]*?)(?=\n##|$)/);
+    const workMatch = markdown.match(/##\s*Work\s*Description\s*\n+([\s\S]*?)(?=\n##|$)/i);
     if (workMatch) {
       task.workDescription = workMatch[1].trim();
     }
 
-    // Extract validation criteria
-    const criteriaMatch = markdown.match(/##\s*Validation\s*Criteria\s*\n+([\s\S]*?)(?=\n##|$)/);
+    // Extract validation criteria - case insensitive to handle both "Criteria" and "criteria"
+    const criteriaMatch = markdown.match(/##\s*Validation\s*Criteria\s*\n+([\s\S]*?)(?=\n##|$)/i);
     if (criteriaMatch) {
       const criteriaLines = criteriaMatch[1].trim().split('\n');
-      task.validationCriteria = criteriaLines
-        .filter((line) => line.match(/^-\s*/))
-        .map((line) => line.replace(/^-\s*/, '').trim());
+      const parsedCriteria = criteriaLines
+        .filter((line) => line.match(/^[-*]\s+/))  // Match both - and * bullet points
+        .map((line) => line.replace(/^[-*]\s+/, '').trim())
+        .filter((criteria) => criteria && criteria !== 'No criteria defined');
+      task.validationCriteria = parsedCriteria.length > 0 ? parsedCriteria : [];
     }
+    // Note: We don't set validationCriteria to [] if not found - let the existing values persist
+    
+    clientLogger.debug('NewWorkItemMultiStep', 'parseTaskFromMarkdown result', {
+      hasGoals: !!task.goals,
+      goalsCount: task.goals?.length || 0,
+      hasCriteria: !!task.validationCriteria,
+      criteriaCount: task.validationCriteria?.length || 0,
+      parsedFields: Object.keys(task)
+    });
 
     return task;
   };
@@ -210,10 +244,36 @@ function NewWorkItemContent() {
   const updateTaskFromMarkdown = (isUserEdit: boolean = true) => {
     if (selectedTaskId && editedContent) {
       const parsedTask = parseTaskFromMarkdown(editedContent);
-      const updatedTasks = tasks.map((task) =>
-        task.id === selectedTaskId ? { ...task, ...parsedTask } : task
-      );
+      const updatedTasks = tasks.map((task) => {
+        if (task.id === selectedTaskId) {
+          // Merge parsed task with existing task, only updating fields that are present in parsed result
+          const updatedTask = { ...task };
+          if (parsedTask.description !== undefined) {
+            updatedTask.description = parsedTask.description;
+          }
+          if (parsedTask.goals !== undefined) {
+            updatedTask.goals = parsedTask.goals;
+          }
+          if (parsedTask.workDescription !== undefined) {
+            updatedTask.workDescription = parsedTask.workDescription;
+          }
+          if (parsedTask.validationCriteria !== undefined) {
+            updatedTask.validationCriteria = parsedTask.validationCriteria;
+          }
+          return updatedTask;
+        }
+        return task;
+      });
       setTasks(updatedTasks);
+
+      // Update the original task contents to track changes correctly
+      if (!isUserEdit) {
+        // When switching tasks programmatically, update the stored original content
+        setOriginalTaskContents((prev) => ({
+          ...prev,
+          [selectedTaskId]: editedContent,
+        }));
+      }
 
       // Check if tasks actually changed after update (only for user edits)
       if (isEditMode && originalTasks.length > 0 && isUserEdit && !isProgrammaticChange.current) {
@@ -227,17 +287,25 @@ function NewWorkItemContent() {
 
   // Helper function to format task to markdown
   const formatTaskToMarkdown = (task: Task): string => {
+    const goalsSection = task.goals && task.goals.length > 0
+      ? task.goals.map((goal) => `- ${goal}`).join('\n')
+      : '- No goals defined';
+    
+    const criteriaSection = task.validationCriteria && task.validationCriteria.length > 0
+      ? task.validationCriteria.map((criteria) => `- ${criteria}`).join('\n')
+      : '- No criteria defined';
+
     return `## Description
 ${task.description || 'No description'}
 
 ## Goals
-${(task.goals || []).map((goal) => `- ${goal}`).join('\n') || '- No goals defined'}
+${goalsSection}
 
 ## Work Description
 ${task.workDescription || 'No work description'}
 
 ## Validation Criteria
-${(task.validationCriteria || []).map((criteria) => `- ${criteria}`).join('\n') || '- No criteria defined'}`;
+${criteriaSection}`;
   };
 
   // Function to assign task numbers with parallel task support
@@ -294,7 +362,7 @@ ${(task.validationCriteria || []).map((criteria) => `- ${criteria}`).join('\n') 
 
   // Initialize with existing work item data if in edit mode
   useEffect(() => {
-    console.log('=== Edit Mode Debug ===', {
+    clientLogger.info('NewWorkItemMultiStep', '=== Edit Mode Debug ===', {
       isEditMode,
       workItemId,
       existingWorkItem,
@@ -307,18 +375,59 @@ ${(task.validationCriteria || []).map((criteria) => `- ${criteria}`).join('\n') 
 
     if (isEditMode && existingWorkItem && existingWorkItem.metadata?.tasks) {
       // Ensure tasks have all required properties
-      const normalizedTasks = existingWorkItem.metadata.tasks.map((task: any) => ({
-        id: task.id || Math.random().toString(36).substring(2, 9),
-        title: task.title || '',
-        description: task.description || '',
-        goals: task.goals || [],
-        workDescription: task.workDescription || '',
-        validationCriteria: task.validationCriteria || [],
-        taskNumber: task.taskNumber,
-      }));
+      const normalizedTasks = existingWorkItem.metadata.tasks.map((task: any) => {
+        const taskId = task.id || Math.random().toString(36).substring(2, 9);
+        
+        // Check if we have stored markdown content for this task
+        const storedMarkdown = existingWorkItem.metadata?.taskMarkdownContents?.[taskId];
+        
+        const normalized = {
+          id: taskId,
+          title: task.title || '',
+          description: task.description || '',
+          goals: task.goals || [],
+          workDescription: task.workDescription || '',
+          validationCriteria: task.validationCriteria || [],
+          taskNumber: task.taskNumber,
+        };
+        
+        // If we have stored markdown, parse it to get the actual goals and criteria
+        if (storedMarkdown) {
+          const parsedFromMarkdown = parseTaskFromMarkdown(storedMarkdown);
+          if (parsedFromMarkdown.goals !== undefined) {
+            normalized.goals = parsedFromMarkdown.goals;
+          }
+          if (parsedFromMarkdown.validationCriteria !== undefined) {
+            normalized.validationCriteria = parsedFromMarkdown.validationCriteria;
+          }
+          clientLogger.info('NewWorkItemMultiStep', 'Parsed task from stored markdown', {
+            taskId,
+            goalsFromMarkdown: parsedFromMarkdown.goals,
+            criteriaFromMarkdown: parsedFromMarkdown.validationCriteria,
+            finalGoalsCount: normalized.goals.length,
+            finalCriteriaCount: normalized.validationCriteria.length
+          });
+        } else {
+          clientLogger.warn('NewWorkItemMultiStep', 'No stored markdown for task, using task object data', {
+            taskId,
+            goalsCount: normalized.goals.length,
+            criteriaCount: normalized.validationCriteria.length
+          });
+        }
+        
+        return normalized;
+      });
 
       // Set tasks from metadata
       const tasksWithNumbers = assignTaskNumbers(normalizedTasks);
+      clientLogger.info('NewWorkItemMultiStep', 'Tasks with numbers', {
+        tasks: tasksWithNumbers.map(t => ({
+        id: t.id,
+        title: t.title,
+        goalsCount: t.goals?.length || 0,
+        criteriaCount: t.validationCriteria?.length || 0
+        }))
+      });
       setTasks(tasksWithNumbers);
       setSelectedTaskId(tasksWithNumbers[0]?.id || null);
       // Extract original idea from description or use title
@@ -354,12 +463,15 @@ ${existingWorkItem.description || 'No description provided'}
       setOriginalGeneralMarkdown(markdownForWorkItem);
       setOriginalTasks(tasksWithNumbers);
 
-      // Store original content for each task
-      const taskContents: Record<string, string> = {};
-      tasksWithNumbers.forEach((task) => {
-        taskContents[task.id] = formatTaskToMarkdown(task);
-      });
-      setOriginalTaskContents(taskContents);
+      // Load stored markdown content for each task if available
+      if (existingWorkItem.metadata?.taskMarkdownContents) {
+        setTaskMarkdownContents(existingWorkItem.metadata.taskMarkdownContents);
+        setOriginalTaskContents(existingWorkItem.metadata.taskMarkdownContents);
+      } else {
+        // Initialize empty if no stored content
+        setOriginalTaskContents({});
+        setTaskMarkdownContents({});
+      }
 
       // Mark initialization as complete after a short delay
       setTimeout(() => {
@@ -370,12 +482,32 @@ ${existingWorkItem.description || 'No description provided'}
 
   // Update edited content when task selection changes
   useEffect(() => {
-    if (selectedTask) {
+    if (selectedTask && selectedTaskId) {
       // Mark this as a programmatic change
       isProgrammaticChange.current = true;
 
-      // Format the task as markdown immediately
-      const markdown = formatTaskToMarkdown(selectedTask);
+      // Check if we have saved markdown content for this task
+      const savedMarkdown = taskMarkdownContents[selectedTaskId];
+      
+      // Use saved markdown if available, otherwise generate from task
+      let markdown: string;
+      if (savedMarkdown) {
+        markdown = savedMarkdown;
+        clientLogger.info('NewWorkItemMultiStep', 'Loading saved markdown for task', {
+          taskId: selectedTaskId,
+          markdownLength: savedMarkdown.length,
+          hasGoalsInMarkdown: savedMarkdown.includes('## Goals'),
+          hasCriteriaInMarkdown: savedMarkdown.includes('## Validation Criteria')
+        });
+      } else {
+        markdown = formatTaskToMarkdown(selectedTask);
+        clientLogger.warn('NewWorkItemMultiStep', 'Generating markdown from task object', {
+          taskId: selectedTaskId,
+          taskGoalsCount: selectedTask.goals?.length || 0,
+          taskCriteriaCount: selectedTask.validationCriteria?.length || 0,
+          generatedMarkdownLength: markdown.length
+        });
+      }
 
       setEditedContent(markdown);
 
@@ -390,6 +522,56 @@ ${existingWorkItem.description || 'No description provided'}
       }, 100);
     }
   }, [selectedTaskId]); // Only depend on selectedTaskId change
+
+  // Track if we've already parsed the initial content for each task
+  const [parsedInitialContent, setParsedInitialContent] = useState<Set<string>>(new Set());
+
+  // Parse the markdown content after it loads to get the actual goals/criteria
+  useEffect(() => {
+    if (isEditMode && editedContent && selectedTaskId && !isProgrammaticChange.current && !parsedInitialContent.has(selectedTaskId)) {
+      // Mark this task as parsed
+      setParsedInitialContent(prev => new Set([...prev, selectedTaskId]));
+      
+      // Parse the actual markdown to get goals and criteria
+      const parsedTask = parseTaskFromMarkdown(editedContent);
+      
+      // Update the task with the parsed data
+      const updatedTasks = tasks.map((task: Task) => {
+        if (task.id === selectedTaskId) {
+          const updated = { ...task };
+          if (parsedTask.goals !== undefined) {
+            updated.goals = parsedTask.goals;
+          }
+          if (parsedTask.validationCriteria !== undefined) {
+            updated.validationCriteria = parsedTask.validationCriteria;
+          }
+          clientLogger.info('NewWorkItemMultiStep', 'Updated task from loaded markdown', {
+            taskId: selectedTaskId,
+            goalsFromMarkdown: parsedTask.goals,
+            criteriaFromMarkdown: parsedTask.validationCriteria,
+            goalsCount: updated.goals?.length || 0,
+            criteriaCount: updated.validationCriteria?.length || 0
+          });
+          return updated;
+        }
+        return task;
+      });
+      
+      setTasks(updatedTasks);
+
+      // Also save this markdown content
+      setTaskMarkdownContents(prev => ({
+        ...prev,
+        [selectedTaskId]: editedContent
+      }));
+
+      // Save as original if this is the first load
+      setOriginalTaskContents(prev => ({
+        ...prev,
+        [selectedTaskId]: editedContent
+      }));
+    }
+  }, [editedContent, selectedTaskId, isEditMode, parsedInitialContent]);
 
   const processIdea = async () => {
     if (!ideaText.trim()) return;
@@ -429,13 +611,43 @@ ${existingWorkItem.description || 'No description provided'}
 
       const data = await response.json();
 
+      // Log what we received from the server
+      console.log('Raw API response:', data);
+      if (data.tasks && data.tasks.length > 0) {
+        console.log('First task from API:', {
+          id: data.tasks[0].id,
+          title: data.tasks[0].title,
+          goals: data.tasks[0].goals,
+          goalsLength: data.tasks[0].goals?.length,
+          validationCriteria: data.tasks[0].validationCriteria,
+          criteriaLength: data.tasks[0].validationCriteria?.length
+        });
+      }
+
       // Handle new response format with generalMarkdown
       if (data.generalMarkdown) {
         setGeneralMarkdown(data.generalMarkdown);
       }
 
-      const numberedTasks = assignTaskNumbers(data.tasks);
+      // Ensure tasks have proper structure with arrays
+      const tasksWithArrays = data.tasks.map((task: any) => ({
+        ...task,
+        goals: Array.isArray(task.goals) ? task.goals : [],
+        validationCriteria: Array.isArray(task.validationCriteria) ? task.validationCriteria : [],
+      }));
+      const numberedTasks = assignTaskNumbers(tasksWithArrays);
+      console.log('Tasks received from API:', data.tasks);
+      console.log('Tasks with arrays:', tasksWithArrays);
+      console.log('Numbered tasks:', numberedTasks);
       setTasks(numberedTasks);
+      
+      // Initialize markdown content for each task
+      const markdownContents: Record<string, string> = {};
+      numberedTasks.forEach((task) => {
+        markdownContents[task.id] = formatTaskToMarkdown(task);
+      });
+      setTaskMarkdownContents(markdownContents);
+      
       setSelectedTaskId(numberedTasks[0]?.id || null);
       setSavedIdea(ideaText); // Save the idea that generated these tasks
       setStep('review'); // Context will clear ideaText
@@ -536,13 +748,37 @@ ${existingWorkItem.description || 'No description provided'}
     let savedToDisk = false;
     // Make sure to update the currently selected task with the latest edited content
     if (selectedTaskId && editedContent) {
-      updateTaskFromMarkdown(false); // Pass false since this is not a user edit
+      // Parse and update the current task before saving
+      const parsedTask = parseTaskFromMarkdown(editedContent);
+      const updatedTasks = tasks.map((task) =>
+        task.id === selectedTaskId ? { ...task, ...parsedTask } : task
+      );
+      setTasks(updatedTasks);
     }
 
     // Create a single work item with all tasks as sub-tasks
     const overallTitle = tasks.length > 0 ? tasks[0].title : 'Work Item';
 
+    // Get the latest tasks (after updating from edited content)
+    const latestTasks = selectedTaskId && editedContent
+      ? tasks.map((task) =>
+          task.id === selectedTaskId
+            ? { ...task, ...parseTaskFromMarkdown(editedContent) }
+            : task
+        )
+      : tasks;
+
     // Store tasks as JSON in a special field
+    // Also store the markdown content for each task
+    const taskMarkdownMap: Record<string, string> = {};
+    latestTasks.forEach(task => {
+      if (taskMarkdownContents[task.id]) {
+        taskMarkdownMap[task.id] = taskMarkdownContents[task.id];
+      } else if (task.id === selectedTaskId && editedContent) {
+        taskMarkdownMap[task.id] = editedContent;
+      }
+    });
+
     let workItem;
     if (isEditMode && existingWorkItem) {
       // Update existing work item
@@ -550,9 +786,10 @@ ${existingWorkItem.description || 'No description provided'}
         title: overallTitle,
         description: savedIdea || existingWorkItem.description,
         metadata: {
-          tasks: tasks,
+          tasks: latestTasks,
           currentTaskIndex: existingWorkItem.metadata?.currentTaskIndex || 0,
           generalMarkdown: generalMarkdown,
+          taskMarkdownContents: taskMarkdownMap, // Store markdown content for each task
         },
         updatedAt: new Date(),
       });
@@ -564,8 +801,10 @@ ${existingWorkItem.description || 'No description provided'}
         priority: existingWorkItem.priority || 'high',
         status: existingWorkItem.status || 'planned',
         metadata: {
-          tasks: tasks,
+          tasks: latestTasks,
           currentTaskIndex: existingWorkItem.metadata?.currentTaskIndex || 0,
+          generalMarkdown: generalMarkdown,
+          taskMarkdownContents: taskMarkdownMap, // Store markdown content for each task
         },
       };
     } else {
@@ -586,9 +825,10 @@ ${existingWorkItem.description || 'No description provided'}
         currentWorkflowStep: 0,
         // Store the tasks data for the work items UI to display
         metadata: {
-          tasks: tasks,
+          tasks: latestTasks,
           currentTaskIndex: 0,
           generalMarkdown: generalMarkdown,
+          taskMarkdownContents: taskMarkdownMap, // Store markdown content for each task
         },
       });
     }
@@ -652,6 +892,20 @@ ${existingWorkItem.description || 'No description provided'}
             // Trigger workspace reload to sync the new work item
             await reloadWorkspace();
             savedToDisk = true;
+          } else {
+            // For edit mode, update the original states to reflect saved changes
+            setOriginalGeneralMarkdown(generalMarkdown);
+            setOriginalTasks(latestTasks);
+            
+            // Update original task contents
+            const newTaskContents: Record<string, string> = {};
+            latestTasks.forEach((task) => {
+              newTaskContents[task.id] = formatTaskToMarkdown(task);
+            });
+            setOriginalTaskContents(newTaskContents);
+            
+            // Clear the hasChanges flag
+            setHasChanges(false);
           }
         }
       } catch (error) {
@@ -699,8 +953,15 @@ ${existingWorkItem.description || 'No description provided'}
               // Mark as programmatic change to prevent save button from appearing
               isProgrammaticChange.current = true;
 
-              // Update the task from markdown before switching (pass false for isUserEdit)
+              // Save the current task's markdown before switching
               if (selectedTaskId && editedContent) {
+                // Save the markdown to the state
+                setTaskMarkdownContents(prev => ({
+                  ...prev,
+                  [selectedTaskId]: editedContent
+                }));
+                
+                // Update the task from markdown
                 updateTaskFromMarkdown(false);
               }
 
@@ -738,6 +999,15 @@ ${existingWorkItem.description || 'No description provided'}
         </div>
 
         <div className="space-y-2 overflow-y-auto flex-1 min-h-0">
+          {(() => {
+            console.log('Rendering tasks in list:', tasks.map(t => ({
+              id: t.id,
+              title: t.title,
+              goalsLength: t.goals?.length,
+              criteriaLength: t.validationCriteria?.length
+            })));
+            return null;
+          })()}
           {tasks.map((task) => (
             <button
               key={task.id}
@@ -746,9 +1016,37 @@ ${existingWorkItem.description || 'No description provided'}
                   // Mark as programmatic change to prevent save button from appearing
                   isProgrammaticChange.current = true;
 
-                  // Update the current task from markdown before switching (pass false for isUserEdit)
+                  // Save the current markdown content before switching
                   if (selectedTaskId && editedContent) {
-                    updateTaskFromMarkdown(false);
+                    // Save the markdown to the state
+                    setTaskMarkdownContents(prev => ({
+                      ...prev,
+                      [selectedTaskId]: editedContent
+                    }));
+
+                    // Update the task with parsed content
+                    const parsedTask = parseTaskFromMarkdown(editedContent);
+                    const updatedTasks = tasks.map((t) => {
+                      if (t.id === selectedTaskId) {
+                        // Preserve existing goals/criteria if not found in markdown
+                        const updatedTask = { ...t };
+                        if (parsedTask.description !== undefined) {
+                          updatedTask.description = parsedTask.description;
+                        }
+                        if (parsedTask.goals !== undefined) {
+                          updatedTask.goals = parsedTask.goals;
+                        }
+                        if (parsedTask.workDescription !== undefined) {
+                          updatedTask.workDescription = parsedTask.workDescription;
+                        }
+                        if (parsedTask.validationCriteria !== undefined) {
+                          updatedTask.validationCriteria = parsedTask.validationCriteria;
+                        }
+                        return updatedTask;
+                      }
+                      return t;
+                    });
+                    setTasks(updatedTasks);
                   }
 
                   setSelectedSection('task');
@@ -909,26 +1207,71 @@ ${existingWorkItem.description || 'No description provided'}
                 const newValue = value || '';
                 setEditedContent(newValue);
 
-                // Only check for changes if this is a user edit
-                if (
-                  isEditMode &&
-                  !isProgrammaticChange.current &&
-                  !isInitializing.current &&
-                  selectedTask
-                ) {
-                  // Compare against the original content for this specific task
-                  const originalContent = originalTaskContents[selectedTask.id];
-                  const taskChanged = originalContent
-                    ? newValue.trim() !== originalContent.trim()
-                    : false;
+                // Save the markdown content for this task
+                if (selectedTaskId) {
+                  setTaskMarkdownContents(prev => ({
+                    ...prev,
+                    [selectedTaskId]: newValue
+                  }));
+                }
 
-                  // Also check if general markdown changed
-                  const generalChanged = generalMarkdown !== originalGeneralMarkdown;
+                // Clear any existing timeout
+                if (updateTimeoutRef.current) {
+                  clearTimeout(updateTimeoutRef.current);
+                }
 
-                  setHasChanges(taskChanged || generalChanged);
+                // Debounce the task update
+                updateTimeoutRef.current = setTimeout(() => {
+                  if (selectedTaskId && !isProgrammaticChange.current) {
+                    // Parse and update the task
+                    const parsedTask = parseTaskFromMarkdown(newValue);
+                    const updatedTasks = tasks.map((task) => {
+                      if (task.id === selectedTaskId) {
+                        // Merge parsed task with existing task to preserve fields not in markdown
+                        const updatedTask = { ...task, ...parsedTask };
+                        
+                        // Explicitly update goals and criteria counts
+                        if (parsedTask.goals !== undefined) {
+                          updatedTask.goals = parsedTask.goals;
+                        }
+                        if (parsedTask.validationCriteria !== undefined) {
+                          updatedTask.validationCriteria = parsedTask.validationCriteria;
+                        }
+                        
+                        return updatedTask;
+                      }
+                      return task;
+                    });
+                    setTasks(updatedTasks);
+                    
+                    // Log for debugging
+                    const updatedTask = updatedTasks.find(t => t.id === selectedTaskId);
+                    console.log('Updated task after typing:', {
+                      taskId: selectedTaskId,
+                      goals: updatedTask?.goals,
+                      validationCriteria: updatedTask?.validationCriteria,
+                      goalsCount: updatedTask?.goals?.length || 0,
+                      criteriaCount: updatedTask?.validationCriteria?.length || 0
+                    });
+
+                    // Check for changes if in edit mode
+                    if (isEditMode && !isInitializing.current) {
+                      const originalContent = originalTaskContents[selectedTaskId];
+                      const taskChanged = originalContent
+                        ? newValue.trim() !== originalContent.trim()
+                        : false;
+                      const generalChanged = generalMarkdown !== originalGeneralMarkdown;
+                      setHasChanges(taskChanged || generalChanged);
+                    }
+                  }
+                }, 500); // 500ms debounce
+              }}
+              onBlur={() => {
+                // Update task on blur with user edit flag
+                if (selectedTaskId && editedContent) {
+                  updateTaskFromMarkdown(true);
                 }
               }}
-              onBlur={() => updateTaskFromMarkdown()}
               contentEditableClassName="prose prose-neutral dark:prose-invert max-w-none p-4"
               plugins={[
                 headingsPlugin(),

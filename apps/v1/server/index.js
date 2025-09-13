@@ -5734,6 +5734,71 @@ app.post('/api/cache/clear', async (req, res) => {
   }
 });
 
+// Client-side logging endpoint
+app.post('/api/client-log', async (req, res) => {
+  try {
+    const { sessionId, timestamp, level, component, message, data } = req.body;
+    
+    // Create log directory in the expected location
+    const logsDir = path.join(__dirname, '..', '..', '..', 'temp', 'logs', 'client');
+    await fsAsync.mkdir(logsDir, { recursive: true });
+    
+    // Use sessionId or create one based on timestamp
+    const logSessionId = sessionId || `session-${Date.now()}`;
+    const logFile = path.join(logsDir, `${logSessionId}.log`);
+    
+    // Format log entry as readable text with optional JSON data
+    const logTimestamp = timestamp || new Date().toISOString();
+    const logLevel = (level || 'info').toUpperCase().padEnd(5);
+    const logComponent = `[${component || 'unknown'}]`.padEnd(30);
+    
+    let logLine = `${logTimestamp} ${logLevel} ${logComponent} ${message}`;
+    
+    // Add JSON data if present
+    if (data && Object.keys(data).length > 0) {
+      logLine += '\n  DATA: ' + JSON.stringify(data, null, 2).split('\n').join('\n  ');
+    }
+    
+    logLine += '\n';
+    
+    // Append to log file
+    await fsAsync.appendFile(logFile, logLine, 'utf8');
+    
+    // Also log to console for immediate visibility
+    console.log(`[CLIENT LOG] ${logLine}`);
+    
+    res.json({ success: true, sessionId: logSessionId });
+  } catch (error) {
+    console.error('Error writing client log:', error);
+    res.status(500).json({ 
+      error: 'Failed to write client log',
+      details: error.message 
+    });
+  }
+});
+
+// Get client logs endpoint (for debugging)
+app.get('/api/client-logs/:sessionId', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const logFile = path.join(__dirname, '..', '..', '..', 'temp', 'logs', 'client', `${sessionId}.log`);
+    
+    if (!await fsAsync.access(logFile).then(() => true).catch(() => false)) {
+      return res.status(404).json({ error: 'Log file not found' });
+    }
+    
+    const content = await fsAsync.readFile(logFile, 'utf8');
+    
+    res.json({ sessionId, content });
+  } catch (error) {
+    console.error('Error reading client logs:', error);
+    res.status(500).json({ 
+      error: 'Failed to read client logs',
+      details: error.message 
+    });
+  }
+});
+
 app.listen(PORT, async () => {
   console.log(`Server running on http://localhost:${PORT}`);
   console.log(`Log files available in: ${path.join(__dirname, 'logs')}/`);

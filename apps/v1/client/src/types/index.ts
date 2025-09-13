@@ -85,6 +85,7 @@ export interface WorkItem {
     acceptanceCriteria?: string[];
     workItemId?: string;
     generalMarkdown?: string;
+    taskMarkdownContents?: Record<string, string>;
   };
 }
 

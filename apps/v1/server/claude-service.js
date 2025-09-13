@@ -390,11 +390,19 @@ Respond with JSON in this exact format:
       const response = await claude().withModel(modelName).query(prompt).asText();
 
       console.log('Claude SDK response received');
+      console.log('Raw response preview:', response.substring(0, 500));
 
       // Extract JSON from response
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
+        const parsed = JSON.parse(jsonMatch[0]);
+        console.log('Parsed response structure:', {
+          hasGeneralMarkdown: !!parsed.generalMarkdown,
+          tasksCount: parsed.tasks?.length || 0,
+          firstTaskGoals: parsed.tasks?.[0]?.goals?.length || 0,
+          firstTaskCriteria: parsed.tasks?.[0]?.validationCriteria?.length || 0
+        });
+        return parsed;
       }
       throw new Error('Could not parse response as JSON');
     } catch (error) {
