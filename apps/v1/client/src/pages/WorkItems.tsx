@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import { useLayout } from '../contexts/LayoutContext';
 import { useWorkspace } from '../contexts/WorkspaceContext';
@@ -8,6 +8,7 @@ import { useRealtimeSubscription } from '../contexts/SubscriptionContext';
 import { Button } from '../components/ui/Button';
 import { IconButton } from '../components/ui/IconButton';
 import { WorkItemDeleteDialog } from '../components/WorkItemDeleteDialog';
+import { clientLogger } from '../utils/clientLogger';
 import type { WorkItem } from '../types';
 
 export function WorkItems() {
@@ -17,32 +18,78 @@ export function WorkItems() {
   const { currentStyles } = useTheme();
   const { subscribe } = useRealtimeSubscription();
   const navigate = useNavigate();
+  const location = useLocation();
   const styles = currentStyles;
   const [filter, setFilter] = useState<'all' | 'discarded' | WorkItem['status']>('all');
   const [sortBy, setSortBy] = useState<'priority' | 'dueDate' | 'created'>('priority');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [workItemToDelete, setWorkItemToDelete] = useState<WorkItem | null>(null);
+  const hasReloadedRef = useRef(false);
 
   // Clear header content on mount
   useEffect(() => {
     setHeaderContent(null);
   }, [setHeaderContent]);
 
+  // Force reload when coming back from edit
+  useEffect(() => {
+    // Check if we're coming back from an edit page
+    const isReturningFromEdit = location.state?.fromEdit === true;
+
+    if (isReturningFromEdit && !hasReloadedRef.current) {
+      clientLogger.info('WorkItems', 'Returning from edit, forcing workspace reload');
+      hasReloadedRef.current = true;
+
+      // Clear the navigation state
+      window.history.replaceState({}, document.title);
+
+      // Force reload the workspace with a small delay to ensure file writes are complete
+      setTimeout(async () => {
+        const { invalidateCache } = await import('../utils/cache');
+        invalidateCache(/^workspace-light:/);
+        invalidateCache(/^project-details:/);
+        invalidateCache(/^workspace:/);
+        invalidateCache(/^work-items:/);
+        await reloadWorkspace();
+        clientLogger.info('WorkItems', 'Workspace reload completed after edit');
+      }, 500); // 500ms delay to ensure file system operations are complete
+    }
+  }, [location, reloadWorkspace]);
+
   // Subscribe to workspace updates to refresh when work items change
   useEffect(() => {
     const unsubscribe = subscribe('workspace-update', '', (data) => {
-      console.log('WorkItems received workspace update:', data);
+      clientLogger.info('WorkItems', 'Received workspace update notification', {
+        action: data.action,
+        data
+      });
+
       // Reload workspace data when we get a notification about work item changes
-      if (data.action === 'work-item-discarded' || data.action === 'work-item-deleted') {
-        console.log('Reloading workspace due to work item change');
-        // First invalidate client-side cache to ensure fresh data
-        import('../utils/cache').then(({ invalidateCache }) => {
+      if (data.action === 'work-item-discarded' || data.action === 'work-item-deleted' || data.action === 'work-item-updated') {
+        clientLogger.info('WorkItems', 'Triggering workspace reload due to work item change', {
+          action: data.action,
+          workItemId: data.workItemId,
+          markdownPath: data.markdownPath
+        });
+
+        // Add a small delay to ensure file system operations are complete on the server
+        setTimeout(async () => {
+          // First invalidate client-side cache to ensure fresh data
+          const { invalidateCache } = await import('../utils/cache');
           invalidateCache(/^workspace-light:/);
           invalidateCache(/^project-details:/);
           invalidateCache(/^workspace:/);
           invalidateCache(/^work-items:/);
+          invalidateCache(/^work-item:/);
+          clientLogger.debug('WorkItems', 'Cache invalidated for workspace data');
+
           // Then reload workspace
-          reloadWorkspace();
+          await reloadWorkspace();
+          clientLogger.info('WorkItems', 'Workspace reload completed after SSE update');
+        }, 300); // 300ms delay for SSE updates
+      } else {
+        clientLogger.debug('WorkItems', 'Ignoring workspace update - not a work item change', {
+          action: data.action
         });
       }
     });
@@ -81,15 +128,6 @@ export function WorkItems() {
   };
 
   const filteredItems = workItems.filter((item) => {
-    // Debug logging for the problematic item
-    if (item.title?.toLowerCase().includes('first run')) {
-      console.log('First run item found:', {
-        title: item.title,
-        markdownPath: item.markdownPath,
-        includesDiscarded: item.markdownPath?.includes('/discarded/'),
-        filter: filter
-      });
-    }
     
     if (filter === 'all') {
       // Show all non-discarded items
@@ -253,6 +291,16 @@ export function WorkItems() {
                 ? personas.find((p) => p.id === item.assignedPersonaIds[0])
                 : undefined;
 
+            // DETAILED LOGGING FOR DEBUGGING
+            clientLogger.info('WorkItems', `Rendering work item ${item.id}`, {
+              title: item.title,
+              markdownPath: item.markdownPath,
+              projectId: item.projectId,
+              foundProject: !!project,
+              projectName: project?.name,
+              updatedAt: item.updatedAt
+            });
+
             console.log(`WorkItem ${item.id}:`, {
               title: item.title,
               projectId: item.projectId,
@@ -373,7 +421,13 @@ export function WorkItems() {
                     <IconButton
                       aria-label="Edit work item"
                       variant="secondary"
-                      onClick={() => navigate(`/work-items/${item.id}/edit`)}
+                      onClick={() => {
+                        clientLogger.userClick('WorkItems', 'Edit button', {
+                          workItemId: item.id,
+                          workItemTitle: item.title
+                        });
+                        navigate(`/work-items/${item.id}/edit`);
+                      }}
                     >
                       <svg
                         className="h-5 w-5"

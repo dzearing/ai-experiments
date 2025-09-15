@@ -125,7 +125,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
             );
 
             // Update the specific project with full details
-            console.log('Updating project with details:', project.name, details);
             setProjects((prev) =>
               prev.map((p) =>
                 p.path === project.path ? { ...p, ...details, isLoading: false } : p
@@ -145,7 +144,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       // If it's a connection error, try to create the workspace structure
       if (error instanceof TypeError && error.message.includes('fetch')) {
         // Server might not be running, use mock data
-        console.log('Server not available, using mock data');
         const mockProjects: WorkspaceProject[] = [
           {
             name: 'project-mgmt-ux',
@@ -240,9 +238,14 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const reloadWorkspace = async () => {
     if (workspace.config) {
-      // Invalidate cache before reloading
+      // Invalidate ALL workspace-related caches to ensure fresh data
       invalidateCache(`workspace-light:${workspace.config.path}`);
+      invalidateCache(`workspace:${workspace.config.path}`);
       invalidateCache(/^project-details:/);
+      invalidateCache(/^work-items:/);
+      invalidateCache(/^work-item:/);
+
+      // Force reload from server
       await loadWorkspaceData(workspace.config.path);
     }
   };

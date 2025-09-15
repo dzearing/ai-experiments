@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useCallback, type ReactNode } from 'react';
 import { useSubscription } from '../hooks/useSubscription';
+import { clientLogger } from '../utils/clientLogger';
 
 type SubscriptionCallback = (data: any) => void;
 
@@ -24,40 +25,91 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         const data = JSON.parse(event.data);
         const key = data.id; // Resource ID like "repo-status:project1/repo-1"
 
+        clientLogger.info('SubscriptionContext', 'SSE update received', {
+          eventType: 'update',
+          resourceId: key,
+          payload: data.payload
+        });
+
         // Call all registered callbacks for this resource
         const callbackSet = callbacks.current.get(key);
         if (callbackSet) {
+          clientLogger.debug('SubscriptionContext', `Notifying ${callbackSet.size} subscribers for ${key}`);
           callbackSet.forEach((cb) => {
             try {
               cb(data.payload);
             } catch (err) {
               console.error('Error in subscription callback:', err);
+              clientLogger.error('SubscriptionContext', 'Error in subscription callback', {
+                error: err instanceof Error ? err.message : String(err)
+              });
             }
           });
+        } else {
+          clientLogger.warn('SubscriptionContext', 'No subscribers found for update', { key });
         }
       } catch (err) {
         console.error('Error handling SSE update:', err);
+        clientLogger.error('SubscriptionContext', 'Error handling SSE update', {
+          error: err instanceof Error ? err.message : String(err)
+        });
       }
     };
 
     const handleWorkspaceUpdate = (event: MessageEvent) => {
       try {
         const data = JSON.parse(event.data);
-        console.log('Received workspace update:', data);
-        
+
+        clientLogger.info('SubscriptionContext', 'SSE workspace-update received', {
+          eventType: 'workspace-update',
+          data
+        });
+
+        // IMPORTANT: Invalidate cache IMMEDIATELY for workspace updates
+        // This ensures data is fresh when components subscribe later
+        if (data.action === 'work-item-updated' || data.action === 'work-item-discarded' || data.action === 'work-item-deleted') {
+          import('../utils/cache').then(({ invalidateCache }) => {
+            clientLogger.info('SubscriptionContext', 'Invalidating cache for workspace update', {
+              action: data.action,
+              workspacePath: data.workspacePath,
+              workItemId: data.workItemId
+            });
+
+            // Invalidate all relevant caches
+            if (data.workspacePath) {
+              invalidateCache(`workspace-light:${data.workspacePath}`);
+              invalidateCache(`workspace:${data.workspacePath}`);
+            }
+            if (data.projectPath) {
+              invalidateCache(`project-details:${data.projectPath}`);
+            }
+            invalidateCache(/^work-items:/);
+            invalidateCache(/^work-item:/);
+          });
+        }
+
         // Broadcast workspace update to all workspace subscribers
         const workspaceCallbacks = callbacks.current.get('workspace-update');
         if (workspaceCallbacks) {
+          clientLogger.debug('SubscriptionContext', `Notifying ${workspaceCallbacks.size} workspace subscribers`);
           workspaceCallbacks.forEach((cb) => {
             try {
               cb(data);
             } catch (err) {
               console.error('Error in workspace update callback:', err);
+              clientLogger.error('SubscriptionContext', 'Error in workspace update callback', {
+                error: err instanceof Error ? err.message : String(err)
+              });
             }
           });
+        } else {
+          clientLogger.warn('SubscriptionContext', 'No subscribers found for workspace update');
         }
       } catch (err) {
         console.error('Error handling workspace update:', err);
+        clientLogger.error('SubscriptionContext', 'Error handling workspace update', {
+          error: err instanceof Error ? err.message : String(err)
+        });
       }
     };
 
@@ -82,9 +134,11 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
       // If this is the first subscription to this resource, tell the server
       if (!activeSubscriptions.current.has(key)) {
+        clientLogger.info('SubscriptionContext', 'Subscribing to resource', { key });
         activeSubscriptions.current.add(key);
         subscribe([key]).catch((err) => {
           console.error('Failed to subscribe to resource:', err);
+          clientLogger.error('SubscriptionContext', 'Failed to subscribe to resource', { key, error: err.message });
         });
       }
 

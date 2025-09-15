@@ -611,18 +611,6 @@ ${existingWorkItem.description || 'No description provided'}
 
       const data = await response.json();
 
-      // Log what we received from the server
-      console.log('Raw API response:', data);
-      if (data.tasks && data.tasks.length > 0) {
-        console.log('First task from API:', {
-          id: data.tasks[0].id,
-          title: data.tasks[0].title,
-          goals: data.tasks[0].goals,
-          goalsLength: data.tasks[0].goals?.length,
-          validationCriteria: data.tasks[0].validationCriteria,
-          criteriaLength: data.tasks[0].validationCriteria?.length
-        });
-      }
 
       // Handle new response format with generalMarkdown
       if (data.generalMarkdown) {
@@ -636,9 +624,7 @@ ${existingWorkItem.description || 'No description provided'}
         validationCriteria: Array.isArray(task.validationCriteria) ? task.validationCriteria : [],
       }));
       const numberedTasks = assignTaskNumbers(tasksWithArrays);
-      console.log('Tasks received from API:', data.tasks);
-      console.log('Tasks with arrays:', tasksWithArrays);
-      console.log('Numbered tasks:', numberedTasks);
+      
       setTasks(numberedTasks);
       
       // Initialize markdown content for each task
@@ -744,6 +730,13 @@ ${existingWorkItem.description || 'No description provided'}
   };
 
   const createOrUpdateWorkItems = async () => {
+    clientLogger.userClick('NewWorkItemMultiStep', 'Save button', {
+      isEditMode,
+      workItemId: existingWorkItem?.id,
+      workItemTitle: existingWorkItem?.title,
+      currentGeneralMarkdown: generalMarkdown?.substring(0, 100)
+    });
+
     // Track whether we successfully saved to disk
     let savedToDisk = false;
     // Make sure to update the currently selected task with the latest edited content
@@ -756,8 +749,26 @@ ${existingWorkItem.description || 'No description provided'}
       setTasks(updatedTasks);
     }
 
-    // Create a single work item with all tasks as sub-tasks
-    const overallTitle = tasks.length > 0 ? tasks[0].title : 'Work Item';
+    // Extract title from general markdown if it exists, otherwise use first task title
+    let overallTitle = 'Work Item';
+
+    if (generalMarkdown) {
+      // Try to extract title from the first # heading in general markdown
+      const titleMatch = generalMarkdown.match(/^#\s+(.+)$/m);
+      if (titleMatch) {
+        overallTitle = titleMatch[1].trim();
+        clientLogger.info('NewWorkItemMultiStep', 'Extracted title from general markdown', {
+          extractedTitle: overallTitle
+        });
+      } else if (tasks.length > 0) {
+        overallTitle = tasks[0].title;
+        clientLogger.info('NewWorkItemMultiStep', 'Using first task title', {
+          title: overallTitle
+        });
+      }
+    } else if (tasks.length > 0) {
+      overallTitle = tasks[0].title;
+    }
 
     // Get the latest tasks (after updating from edited content)
     const latestTasks = selectedTaskId && editedContent
@@ -807,6 +818,14 @@ ${existingWorkItem.description || 'No description provided'}
           taskMarkdownContents: taskMarkdownMap, // Store markdown content for each task
         },
       };
+
+      // LOG WHAT TITLE WE'RE SAVING
+      clientLogger.info('NewWorkItemMultiStep', '=== SAVING WORK ITEM WITH TITLE ===', {
+        workItemId: workItem.id,
+        titleBeingSaved: workItem.title,
+        overallTitle: overallTitle,
+        markdownPath: existingWorkItem.markdownPath
+      });
     } else {
       // Create new work item
       workItem = createWorkItem({
@@ -835,10 +854,6 @@ ${existingWorkItem.description || 'No description provided'}
 
     // Save or update work item as markdown if we have a workspace and project with a path
     if (workspace.config && currentProject && currentProject.path) {
-      console.log(`Attempting to ${isEditMode ? 'update' : 'save'} work item as markdown`);
-      console.log('Workspace config:', workspace.config);
-      console.log('Current project:', currentProject);
-      console.log('Project path:', currentProject.path);
 
       try {
         const requestBody = {
@@ -855,7 +870,11 @@ ${existingWorkItem.description || 'No description provided'}
           tasks: tasks,
         };
 
-        console.log('Request body:', requestBody);
+        clientLogger.info('NewWorkItemMultiStep', 'Sending update request', {
+          isEditMode,
+          endpoint: isEditMode ? 'update-workitem' : 'create-workitem',
+          workItemId: workItem.id
+        });
 
         const endpoint = isEditMode
           ? 'http://localhost:3000/api/workspace/update-workitem'
@@ -873,9 +892,16 @@ ${existingWorkItem.description || 'No description provided'}
           const errorText = await response.text();
           console.error('Failed to save work item as markdown. Status:', response.status);
           console.error('Error response:', errorText);
+          clientLogger.error('NewWorkItemMultiStep', 'Failed to save work item', {
+            status: response.status,
+            error: errorText
+          });
         } else {
           const result = await response.json();
-          console.log('Work item saved as markdown:', result.path);
+          clientLogger.info('NewWorkItemMultiStep', 'Work item saved successfully', {
+            path: result.path,
+            workItemId: workItem.id
+          });
 
           // Update the work item with the markdown path
           if (result.path) {
@@ -893,17 +919,35 @@ ${existingWorkItem.description || 'No description provided'}
             await reloadWorkspace();
             savedToDisk = true;
           } else {
-            // For edit mode, update the original states to reflect saved changes
+            // For edit mode, invalidate cache and reload workspace
+            clientLogger.info('NewWorkItemMultiStep', 'Edit mode: invalidating cache and reloading workspace');
+
+            const { invalidateCache } = await import('../utils/cache');
+            invalidateCache(`workspace-light:${workspace.config.path}`);
+            invalidateCache(`project-details:${currentProject.path}`);
+            invalidateCache(`workspace:${workspace.config.path}`);
+            invalidateCache(/^work-items:/);
+            invalidateCache(/^work-item:/);
+
+            clientLogger.info('NewWorkItemMultiStep', 'Cache invalidated, triggering workspace reload');
+
+            // Trigger workspace reload and wait for it to complete
+            await reloadWorkspace();
+
+            clientLogger.info('NewWorkItemMultiStep', 'Workspace reload completed');
+            savedToDisk = true;
+
+            // Update original states to reflect saved changes
             setOriginalGeneralMarkdown(generalMarkdown);
             setOriginalTasks(latestTasks);
-            
+
             // Update original task contents
             const newTaskContents: Record<string, string> = {};
             latestTasks.forEach((task) => {
               newTaskContents[task.id] = formatTaskToMarkdown(task);
             });
             setOriginalTaskContents(newTaskContents);
-            
+
             // Clear the hasChanges flag
             setHasChanges(false);
           }
@@ -911,26 +955,24 @@ ${existingWorkItem.description || 'No description provided'}
       } catch (error) {
         console.error('Error saving work item as markdown:', error);
       }
-    } else {
-      console.log('Cannot save work item as markdown:');
-      console.log('- workspace.config:', workspace.config);
-      console.log('- currentProject:', currentProject);
-      if (currentProject && !currentProject.path) {
-        console.log(
-          '- Project exists but has no path (may have been created before workspace integration)'
-        );
-      }
     }
 
     // Navigate back to appropriate page
-    // If we saved to disk and it's a new item, wait a moment for sync to complete
-    if (!isEditMode && savedToDisk) {
-      // Give the workspace sync a moment to complete
+    // If we saved to disk, wait a moment for sync to complete
+    if (savedToDisk) {
+      clientLogger.info('NewWorkItemMultiStep', 'Waiting for sync before navigation');
+      // Give the workspace sync more time to complete and propagate through components
       setTimeout(() => {
-        navigate(projectId ? `/projects` : '/work-items');
-      }, 100);
+        clientLogger.info('NewWorkItemMultiStep', 'Navigating back after sync delay');
+        if (isEditMode) {
+          // Pass a state flag to indicate we're returning from edit
+          navigate('/work-items', { state: { fromEdit: true } });
+        } else {
+          navigate(projectId ? `/projects` : '/work-items');
+        }
+      }, 500); // Increased delay to ensure sync completes
     } else {
-      // For edits or items not saved to disk, navigate immediately
+      // For items not saved to disk, navigate immediately
       if (isEditMode) {
         navigate('/work-items');
       } else {
@@ -967,6 +1009,9 @@ ${existingWorkItem.description || 'No description provided'}
 
               setSelectedSection('general');
               setSelectedTaskId(null);
+              clientLogger.userSelect('NewWorkItemMultiStep', 'General section', {
+                previousSection: 'task'
+              });
 
               // Reset the flag after a short delay
               setTimeout(() => {
@@ -999,15 +1044,6 @@ ${existingWorkItem.description || 'No description provided'}
         </div>
 
         <div className="space-y-2 overflow-y-auto flex-1 min-h-0">
-          {(() => {
-            console.log('Rendering tasks in list:', tasks.map(t => ({
-              id: t.id,
-              title: t.title,
-              goalsLength: t.goals?.length,
-              criteriaLength: t.validationCriteria?.length
-            })));
-            return null;
-          })()}
           {tasks.map((task) => (
             <button
               key={task.id}
@@ -1051,6 +1087,10 @@ ${existingWorkItem.description || 'No description provided'}
 
                   setSelectedSection('task');
                   setSelectedTaskId(task.id);
+                  clientLogger.userSelect('NewWorkItemMultiStep', `Task: ${task.title}`, {
+                    taskId: task.id,
+                    taskNumber: task.taskNumber
+                  });
 
                   // Reset the flag after a short delay
                   setTimeout(() => {
@@ -1244,15 +1284,6 @@ ${existingWorkItem.description || 'No description provided'}
                     });
                     setTasks(updatedTasks);
                     
-                    // Log for debugging
-                    const updatedTask = updatedTasks.find(t => t.id === selectedTaskId);
-                    console.log('Updated task after typing:', {
-                      taskId: selectedTaskId,
-                      goals: updatedTask?.goals,
-                      validationCriteria: updatedTask?.validationCriteria,
-                      goalsCount: updatedTask?.goals?.length || 0,
-                      criteriaCount: updatedTask?.validationCriteria?.length || 0
-                    });
 
                     // Check for changes if in edit mode
                     if (isEditMode && !isInitializing.current) {

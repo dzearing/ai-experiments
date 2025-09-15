@@ -12,6 +12,7 @@ const fsAsync = fs.promises;
 const logger = require('./logger');
 const sessionManager = require('./session-manager');
 const feedbackHandler = require('./feedback-handler');
+const chokidar = require('chokidar');
 
 // Load .env from parent directory
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
@@ -106,6 +107,105 @@ function invalidateCache(pattern) {
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', claudeAvailable: true });
+});
+
+// Client logging endpoint (individual logs)
+app.post('/api/client-log', async (req, res) => {
+  try {
+    const { sessionId, timestamp, performanceTime, sequence, level, component, message, data } = req.body;
+
+    if (!sessionId) {
+      return res.status(400).json({ error: 'Session ID required' });
+    }
+
+    // Create logs directory if it doesn't exist
+    const logsDir = path.join(__dirname, '../../../temp/logs/client');
+    await fsAsync.mkdir(logsDir, { recursive: true });
+
+    // Format log entry with performance time and sequence
+    const perfTime = performanceTime ? performanceTime.toFixed(3) : '0.000';
+    const seq = sequence || 0;
+    const levelStr = level === 'user' ? 'USER' : level.toUpperCase();
+    const logEntry = `[${timestamp}] [perf:${perfTime}ms] [seq:${seq}] [${levelStr}] [${component}] ${message}${data && Object.keys(data).length > 0 ? ' ' + JSON.stringify(data) : ''}\n`;
+
+    // Write to session-specific log file
+    const logFile = path.join(logsDir, `${sessionId}.log`);
+    await fsAsync.appendFile(logFile, logEntry);
+
+    // Also log to console for debugging
+    console.log(`[CLIENT LOG] ${logEntry.trim()}`);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error writing client log:', error);
+    res.status(500).json({ error: 'Failed to write log' });
+  }
+});
+
+// Client logging batch endpoint (preferred for maintaining order)
+app.post('/api/client-logs-batch', async (req, res) => {
+  try {
+    const { sessionId, logs } = req.body;
+
+    if (!sessionId) {
+      return res.status(400).json({ error: 'Session ID required' });
+    }
+
+    if (!logs || !Array.isArray(logs)) {
+      return res.status(400).json({ error: 'Logs array required' });
+    }
+
+    // Create logs directory if it doesn't exist
+    const logsDir = path.join(__dirname, '../../../temp/logs/client');
+    await fsAsync.mkdir(logsDir, { recursive: true });
+
+    // Sort logs by sequence number to ensure proper order
+    const sortedLogs = logs.sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
+
+    // Format all log entries
+    const logEntries = sortedLogs.map(log => {
+      const perfTime = log.performanceTime ? log.performanceTime.toFixed(3) : '0.000';
+      const seq = log.sequence || 0;
+      const levelStr = log.level === 'user' ? 'USER' : log.level.toUpperCase();
+      return `[${log.timestamp}] [perf:${perfTime}ms] [seq:${seq}] [${levelStr}] [${log.component}] ${log.message}${log.data && Object.keys(log.data).length > 0 ? ' ' + JSON.stringify(log.data) : ''}`;
+    });
+
+    // Write all logs in a single operation to maintain order
+    const logFile = path.join(logsDir, `${sessionId}.log`);
+    await fsAsync.appendFile(logFile, logEntries.join('\n') + '\n');
+
+    // Log first and last entries to console for debugging
+    if (logEntries.length > 0) {
+      console.log(`[CLIENT LOG BATCH] First: ${logEntries[0]}`);
+      if (logEntries.length > 1) {
+        console.log(`[CLIENT LOG BATCH] Last: ${logEntries[logEntries.length - 1]}`);
+      }
+      console.log(`[CLIENT LOG BATCH] Total: ${logEntries.length} logs`);
+    }
+
+    res.json({ success: true, count: logEntries.length });
+  } catch (error) {
+    console.error('Error writing client log batch:', error);
+    res.status(500).json({ error: 'Failed to write logs' });
+  }
+});
+
+// Get client logs endpoint
+app.get('/api/client-logs/:sessionId', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const logFile = path.join(__dirname, '../../../temp/logs/client', `${sessionId}.log`);
+
+    const logs = await fsAsync.readFile(logFile, 'utf-8');
+    res.type('text/plain').send(logs);
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      res.status(404).send('Log file not found');
+    } else {
+      console.error('Error reading client log:', error);
+      res.status(500).send('Failed to read log');
+    }
+  }
 });
 
 // SSE endpoint for real-time updates
@@ -1358,8 +1458,6 @@ app.post('/api/workspace/project-details', async (req, res) => {
     }
 
     // Read plans - but don't parse markdown content yet
-    // NOTE: We include 'discarded' here so they can be shown in the discarded filter,
-    // but the client will filter them out of the "All" view based on markdownPath
     const planTypes = ['ideas', 'planned', 'active', 'completed', 'discarded'];
     
     await Promise.all(planTypes.map(async (planType) => {
@@ -1508,18 +1606,27 @@ app.post('/api/workspace/update-workitem', async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Use existing path or generate new one
-    let targetPath = markdownPath;
-    if (!targetPath) {
-      const fileName = workItem.title.toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '') + '.md';
-      
-      const statusFolder = workItem.status === 'planned' ? 'planned' : 
-                          workItem.status === 'active' ? 'active' : 
-                          workItem.status === 'completed' ? 'completed' : 'ideas';
-      
-      targetPath = path.join(projectPath, 'plans', statusFolder, fileName);
+    // Generate new path based on current title
+    const fileName = workItem.title.toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') + '.md';
+
+    const statusFolder = workItem.status === 'planned' ? 'planned' :
+                        workItem.status === 'active' ? 'active' :
+                        workItem.status === 'completed' ? 'completed' : 'ideas';
+
+    const targetPath = path.join(projectPath, 'plans', statusFolder, fileName);
+
+    // Check if we need to rename/move the file
+    let oldPath = markdownPath;
+    if (oldPath && oldPath !== targetPath) {
+      // File needs to be moved/renamed - delete the old one
+      try {
+        await fsAsync.unlink(oldPath);
+        console.log(`Deleted old work item file: ${oldPath}`);
+      } catch (err) {
+        console.warn(`Could not delete old file ${oldPath}:`, err.message);
+      }
     }
     
     // Create markdown content (same as create)
@@ -1569,17 +1676,45 @@ app.post('/api/workspace/update-workitem', async (req, res) => {
     
     // Write the file
     await fsAsync.writeFile(targetPath, markdownContent);
-    
+
+    // Small delay to ensure file system has fully synced
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     // Invalidate cache for this project
     invalidateCache(`workspace-light:${workspacePath}`);
     invalidateCache(`project-details:${projectPath}`);
     invalidateCache(`workspace:${workspacePath}`);
     invalidateCache(`work-item:${targetPath}`);
-    
+    // Also invalidate old path cache if file was renamed
+    if (oldPath && oldPath !== targetPath) {
+      invalidateCache(`work-item:${oldPath}`);
+    }
+
     console.log(`Updated work item at: ${targetPath}`);
-    
-    res.json({ 
-      success: true, 
+
+    // Send SSE notification to all clients about the update
+    const notification = {
+      type: 'workspace-update',
+      action: 'work-item-updated',
+      workspacePath: workspacePath,
+      projectPath: projectPath,
+      workItemId: workItem.id,
+      markdownPath: targetPath,
+      timestamp: new Date().toISOString()
+    };
+
+    console.log('Sending SSE notification for work item update:', notification);
+    subscriptionManager.clients.forEach((client, clientId) => {
+      try {
+        client.write(`event: workspace-update\ndata: ${JSON.stringify(notification)}\n\n`);
+        console.log(`Notified client ${clientId} about work item update`);
+      } catch (err) {
+        console.error(`Failed to notify client ${clientId}:`, err.message);
+      }
+    });
+
+    res.json({
+      success: true,
       path: targetPath
     });
     
@@ -1787,8 +1922,6 @@ app.post('/api/workspace/read', async (req, res) => {
 
           // Read plans
           const plansStartTime = Date.now();
-          // NOTE: We include 'discarded' here so they can be shown in the discarded filter,
-          // but the client will filter them out of the "All" view based on markdownPath
           const planTypes = ['ideas', 'planned', 'active', 'completed', 'discarded'];
           
           // Read all plan directories in parallel
@@ -2819,8 +2952,36 @@ ${JSON.stringify({ workItemId: workItem.id, tasks: tasks || [] }, null, 2)}
     }
 
     console.log(`Updated work item markdown at: ${newFilePath || existingFilePath}`);
-    res.json({ 
-      success: true, 
+
+    // Invalidate cache for this project
+    invalidateCache(`workspace-light:${workspacePath}`);
+    invalidateCache(`project-details:${projectPath}`);
+    invalidateCache(`workspace:${workspacePath}`);
+    invalidateCache(`work-item:${newFilePath || existingFilePath}`);
+
+    // Send SSE notification to all clients about the update
+    const notification = {
+      type: 'workspace-update',
+      action: 'work-item-updated',
+      workspacePath: workspacePath,
+      projectPath: projectPath,
+      workItemId: workItem.id,
+      markdownPath: newFilePath || existingFilePath,
+      timestamp: new Date().toISOString()
+    };
+
+    console.log('Sending SSE notification for work item update:', notification);
+    subscriptionManager.clients.forEach((client, clientId) => {
+      try {
+        client.write(`event: workspace-update\ndata: ${JSON.stringify(notification)}\n\n`);
+        console.log(`Notified client ${clientId} about work item update`);
+      } catch (err) {
+        console.error(`Failed to notify client ${clientId}:`, err.message);
+      }
+    });
+
+    res.json({
+      success: true,
       path: newFilePath || existingFilePath,
       filename: path.basename(newFilePath || existingFilePath)
     });
@@ -3070,6 +3231,320 @@ app.post('/api/workspace/add-repository', async (req, res) => {
 // Test endpoint
 app.get('/api/test', (req, res) => {
   res.json({ message: 'Test endpoint works' });
+});
+
+// Read workspace data - light version for fast loading
+app.post('/api/workspace/read-light', async (req, res) => {
+  try {
+    const { workspacePath } = req.body;
+
+    if (!workspacePath) {
+      return res.status(400).json({ error: 'Workspace path is required' });
+    }
+
+    // Check if workspace exists
+    try {
+      await fsAsync.access(workspacePath);
+    } catch (err) {
+      return res.status(404).json({ error: 'Workspace not found' });
+    }
+
+    const projectsPath = path.join(workspacePath, 'projects');
+
+    // Read all projects
+    const projectDirs = await fsAsync.readdir(projectsPath);
+    const projects = [];
+
+    for (const projectName of projectDirs) {
+      // Skip hidden folders and .template
+      if (projectName.startsWith('.')) continue;
+
+      const projectPath = path.join(projectsPath, projectName);
+      const stats = await fsAsync.stat(projectPath);
+
+      if (!stats.isDirectory()) continue;
+
+      // Read project README for basic info
+      let description = '';
+      try {
+        const readmePath = path.join(projectPath, 'README.md');
+        const readmeContent = await fsAsync.readFile(readmePath, 'utf-8');
+        // Extract description from README (first paragraph after # title)
+        const lines = readmeContent.split('\n');
+        const descStart = lines.findIndex(line => line.trim() && !line.startsWith('#'));
+        if (descStart !== -1) {
+          description = lines[descStart].trim();
+        }
+      } catch (err) {
+        // No README or couldn't read it
+      }
+
+      // Count work items in each folder
+      const planCounts = {
+        ideas: 0,
+        planned: 0,
+        active: 0,
+        completed: 0
+      };
+
+      const plansPath = path.join(projectPath, 'plans');
+      try {
+        for (const folder of Object.keys(planCounts)) {
+          const folderPath = path.join(plansPath, folder);
+          try {
+            const files = await fsAsync.readdir(folderPath);
+            planCounts[folder] = files.filter(f => f.endsWith('.md')).length;
+          } catch (err) {
+            // Folder doesn't exist
+          }
+        }
+      } catch (err) {
+        // Plans folder doesn't exist
+      }
+
+      // Get repository info
+      const repos = [];
+      const reposPath = path.join(projectPath, 'repos');
+      try {
+        const repoDirs = await fsAsync.readdir(reposPath);
+        for (const repoDir of repoDirs) {
+          if (repoDir.startsWith('.')) continue;
+
+          const repoPath = path.join(reposPath, repoDir);
+          const repoStats = await fsAsync.stat(repoPath);
+
+          if (repoStats.isDirectory()) {
+            // Parse repo name and number (format: repo-name-1)
+            const lastDashIndex = repoDir.lastIndexOf('-');
+            const repoName = repoDir.substring(0, lastDashIndex);
+            const repoNumber = parseInt(repoDir.substring(lastDashIndex + 1));
+
+            repos.push({
+              name: repoName,
+              number: repoNumber,
+              path: repoPath,
+              isAvailable: true // Will be updated based on REPOS.md
+            });
+          }
+        }
+      } catch (err) {
+        // Repos folder doesn't exist
+      }
+
+      projects.push({
+        name: projectName,
+        path: projectPath,
+        description,
+        repos,
+        workItemCounts: planCounts,
+        totalWorkItems: Object.values(planCounts).reduce((a, b) => a + b, 0)
+      });
+    }
+
+    res.json({
+      workspacePath,
+      projects,
+      totalProjects: projects.length
+    });
+
+  } catch (error) {
+    console.error('Error reading workspace:', error);
+    res.status(500).json({
+      error: 'Failed to read workspace',
+      details: error.message
+    });
+  }
+});
+
+// Get detailed project information
+app.post('/api/workspace/project-details', async (req, res) => {
+  try {
+    const { projectPath } = req.body;
+
+    if (!projectPath) {
+      return res.status(400).json({ error: 'Project path is required' });
+    }
+
+    // Read all work items with details
+    const workItems = {
+      ideas: [],
+      planned: [],
+      active: [],
+      completed: []
+    };
+
+    const plansPath = path.join(projectPath, 'plans');
+
+    for (const folder of Object.keys(workItems)) {
+      const folderPath = path.join(plansPath, folder);
+      try {
+        const files = await fsAsync.readdir(folderPath);
+
+        for (const file of files) {
+          if (!file.endsWith('.md')) continue;
+
+          const filePath = path.join(folderPath, file);
+          const content = await fsAsync.readFile(filePath, 'utf-8');
+
+          // Extract title and description from markdown
+          const lines = content.split('\n');
+          const titleLine = lines.find(l => l.startsWith('# '));
+          const title = titleLine ? titleLine.substring(2).trim() : file.replace('.md', '');
+
+          // Find description section
+          let description = '';
+          const descIndex = lines.findIndex(l => l.includes('## Description'));
+          if (descIndex !== -1) {
+            for (let i = descIndex + 1; i < lines.length; i++) {
+              if (lines[i].startsWith('##')) break;
+              if (lines[i].trim()) {
+                description += lines[i] + ' ';
+              }
+            }
+          }
+
+          workItems[folder].push({
+            name: file.replace('.md', ''),
+            title,
+            description: description.trim(),
+            path: filePath,
+            status: folder
+          });
+        }
+      } catch (err) {
+        // Folder doesn't exist
+      }
+    }
+
+    res.json({
+      projectPath,
+      workItems,
+      plans: {
+        ideas: workItems.ideas,
+        planned: workItems.planned,
+        active: workItems.active,
+        completed: workItems.completed
+      }
+    });
+
+  } catch (error) {
+    console.error('Error reading project details:', error);
+    res.status(500).json({
+      error: 'Failed to read project details',
+      details: error.message
+    });
+  }
+});
+
+// Check if workspace exists
+app.post('/api/workspace/exists', async (req, res) => {
+  try {
+    const { workspacePath } = req.body;
+
+    if (!workspacePath) {
+      return res.status(400).json({ error: 'Workspace path is required' });
+    }
+
+    try {
+      await fsAsync.access(workspacePath);
+      const projectsPath = path.join(workspacePath, 'projects');
+      await fsAsync.access(projectsPath);
+      res.json({ exists: true });
+    } catch (err) {
+      res.json({ exists: false });
+    }
+
+  } catch (error) {
+    console.error('Error checking workspace:', error);
+    res.status(500).json({
+      error: 'Failed to check workspace',
+      details: error.message
+    });
+  }
+});
+
+// Read workspace data (full version)
+app.post('/api/workspace/read', async (req, res) => {
+  try {
+    const { workspacePath } = req.body;
+
+    if (!workspacePath) {
+      return res.status(400).json({ error: 'Workspace path is required' });
+    }
+
+    // For now, just use the light version
+    // In the future, this could include more detailed information
+    const lightResponse = await fetch('http://localhost:3000/api/workspace/read-light', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ workspacePath }),
+    });
+
+    if (!lightResponse.ok) {
+      const errorData = await lightResponse.json();
+      return res.status(lightResponse.status).json(errorData);
+    }
+
+    const data = await lightResponse.json();
+    res.json(data);
+
+  } catch (error) {
+    console.error('Error reading workspace:', error);
+    res.status(500).json({
+      error: 'Failed to read workspace',
+      details: error.message
+    });
+  }
+});
+
+// Read file from workspace
+app.post('/api/workspace/read-file', async (req, res) => {
+  try {
+    const { filePath } = req.body;
+
+    if (!filePath) {
+      return res.status(400).json({ error: 'File path is required' });
+    }
+
+    const content = await fsAsync.readFile(filePath, 'utf-8');
+    res.json({ content });
+
+  } catch (error) {
+    console.error('Error reading file:', error);
+    res.status(500).json({
+      error: 'Failed to read file',
+      details: error.message
+    });
+  }
+});
+
+// Write file to workspace
+app.post('/api/workspace/write-file', async (req, res) => {
+  try {
+    const { filePath, content } = req.body;
+
+    if (!filePath || content === undefined) {
+      return res.status(400).json({ error: 'File path and content are required' });
+    }
+
+    // Ensure directory exists
+    const dir = path.dirname(filePath);
+    await fsAsync.mkdir(dir, { recursive: true });
+
+    // Write the file
+    await fsAsync.writeFile(filePath, content, 'utf-8');
+
+    res.json({ success: true, message: 'File written successfully' });
+
+  } catch (error) {
+    console.error('Error writing file:', error);
+    res.status(500).json({
+      error: 'Failed to write file',
+      details: error.message
+    });
+  }
 });
 
 // Endpoint to handle work item deletion/discarding
@@ -5734,69 +6209,156 @@ app.post('/api/cache/clear', async (req, res) => {
   }
 });
 
-// Client-side logging endpoint
-app.post('/api/client-log', async (req, res) => {
-  try {
-    const { sessionId, timestamp, level, component, message, data } = req.body;
-    
-    // Create log directory in the expected location
-    const logsDir = path.join(__dirname, '..', '..', '..', 'temp', 'logs', 'client');
-    await fsAsync.mkdir(logsDir, { recursive: true });
-    
-    // Use sessionId or create one based on timestamp
-    const logSessionId = sessionId || `session-${Date.now()}`;
-    const logFile = path.join(logsDir, `${logSessionId}.log`);
-    
-    // Format log entry as readable text with optional JSON data
-    const logTimestamp = timestamp || new Date().toISOString();
-    const logLevel = (level || 'info').toUpperCase().padEnd(5);
-    const logComponent = `[${component || 'unknown'}]`.padEnd(30);
-    
-    let logLine = `${logTimestamp} ${logLevel} ${logComponent} ${message}`;
-    
-    // Add JSON data if present
-    if (data && Object.keys(data).length > 0) {
-      logLine += '\n  DATA: ' + JSON.stringify(data, null, 2).split('\n').join('\n  ');
-    }
-    
-    logLine += '\n';
-    
-    // Append to log file
-    await fsAsync.appendFile(logFile, logLine, 'utf8');
-    
-    // Also log to console for immediate visibility
-    console.log(`[CLIENT LOG] ${logLine}`);
-    
-    res.json({ success: true, sessionId: logSessionId });
-  } catch (error) {
-    console.error('Error writing client log:', error);
-    res.status(500).json({ 
-      error: 'Failed to write client log',
-      details: error.message 
-    });
-  }
-});
+// File watcher for markdown files
+const watchedWorkspaces = new Set();
 
-// Get client logs endpoint (for debugging)
-app.get('/api/client-logs/:sessionId', async (req, res) => {
-  try {
-    const { sessionId } = req.params;
-    const logFile = path.join(__dirname, '..', '..', '..', 'temp', 'logs', 'client', `${sessionId}.log`);
-    
-    if (!await fsAsync.access(logFile).then(() => true).catch(() => false)) {
-      return res.status(404).json({ error: 'Log file not found' });
-    }
-    
-    const content = await fsAsync.readFile(logFile, 'utf8');
-    
-    res.json({ sessionId, content });
-  } catch (error) {
-    console.error('Error reading client logs:', error);
-    res.status(500).json({ 
-      error: 'Failed to read client logs',
-      details: error.message 
-    });
+function setupFileWatcher(workspacePath) {
+  if (watchedWorkspaces.has(workspacePath)) {
+    console.log(`File watcher already set up for workspace: ${workspacePath}`);
+    return;
   }
+
+  // Watch the workspace projects directory recursively
+  const watchPath = path.join(workspacePath, 'projects');
+  console.log(`Setting up file watcher for path:`, watchPath);
+
+  const watcher = chokidar.watch(watchPath, {
+    persistent: true,
+    ignoreInitial: true,
+    awaitWriteFinish: {
+      stabilityThreshold: 1000,
+      pollInterval: 100
+    },
+    depth: 10 // Ensure we traverse deep enough
+  });
+
+  watcher
+    .on('ready', () => {
+      console.log('File watcher ready!');
+      const watched = watcher.getWatched();
+      console.log('Watching directories:', Object.keys(watched));
+      Object.keys(watched).forEach(dir => {
+        console.log(`  ${dir}: ${watched[dir].length} files`);
+      });
+    })
+    .on('change', (filePath) => {
+      // Only process markdown files in plans folders
+      if (!filePath.endsWith('.md') || !filePath.includes('/plans/')) {
+        return;
+      }
+
+      console.log(`File changed: ${filePath}`);
+
+      // Invalidate ALL relevant caches for this work item
+      invalidateCache(`workspace-light:${workspacePath}`);
+      invalidateCache(`workspace:${workspacePath}`);
+      invalidateCache(`work-item:${filePath}`);
+
+      // Also invalidate project details cache if it's a work item
+      const projectMatch = filePath.match(/projects\/([^\/]+)\//);
+      if (projectMatch) {
+        const projectPath = path.join(workspacePath, 'projects', projectMatch[1]);
+        invalidateCache(`project-details:${projectPath}`);
+      }
+
+      // Broadcast workspace update event to all SSE clients
+      const notification = {
+        type: 'workspace-update',
+        action: 'work-item-updated',
+        workspacePath: workspacePath,
+        markdownPath: filePath,
+        timestamp: new Date().toISOString()
+      };
+
+      // Broadcast to all connected SSE clients
+      subscriptionManager.clients.forEach((client, clientId) => {
+        try {
+          client.write(`event: workspace-update\ndata: ${JSON.stringify(notification)}\n\n`);
+          console.log(`Notified client ${clientId} about file change`);
+        } catch (err) {
+          console.error(`Failed to notify client ${clientId}:`, err.message);
+        }
+      });
+    })
+    .on('add', (filePath) => {
+      console.log(`File added: ${filePath}`);
+
+      // Invalidate ALL relevant caches
+      invalidateCache(`workspace-light:${workspacePath}`);
+      invalidateCache(`workspace:${workspacePath}`);
+
+      // Invalidate project details cache if it's a work item
+      const projectMatch = filePath.match(/projects\/([^\/]+)\//);
+      if (projectMatch) {
+        const projectPath = path.join(workspacePath, 'projects', projectMatch[1]);
+        invalidateCache(`project-details:${projectPath}`);
+      }
+
+      const notification = {
+        type: 'workspace-update',
+        action: 'work-item-added',
+        workspacePath: workspacePath,
+        markdownPath: filePath,
+        timestamp: new Date().toISOString()
+      };
+
+      subscriptionManager.clients.forEach((client, clientId) => {
+        try {
+          client.write(`event: workspace-update\ndata: ${JSON.stringify(notification)}\n\n`);
+        } catch (err) {
+          console.error(`Failed to notify client ${clientId}:`, err.message);
+        }
+      });
+    })
+    .on('unlink', (filePath) => {
+      console.log(`File deleted: ${filePath}`);
+
+      // Invalidate ALL relevant caches
+      invalidateCache(`workspace-light:${workspacePath}`);
+      invalidateCache(`workspace:${workspacePath}`);
+      invalidateCache(`work-item:${filePath}`);
+
+      // Invalidate project details cache if it's a work item
+      const projectMatch = filePath.match(/projects\/([^\/]+)\//);
+      if (projectMatch) {
+        const projectPath = path.join(workspacePath, 'projects', projectMatch[1]);
+        invalidateCache(`project-details:${projectPath}`);
+      }
+
+      const notification = {
+        type: 'workspace-update',
+        action: 'work-item-deleted',
+        workspacePath: workspacePath,
+        markdownPath: filePath,
+        timestamp: new Date().toISOString()
+      };
+
+      subscriptionManager.clients.forEach((client, clientId) => {
+        try {
+          client.write(`event: workspace-update\ndata: ${JSON.stringify(notification)}\n\n`);
+        } catch (err) {
+          console.error(`Failed to notify client ${clientId}:`, err.message);
+        }
+      });
+    })
+    .on('error', (error) => {
+      console.error('File watcher error:', error);
+    });
+
+  watchedWorkspaces.add(workspacePath);
+  console.log(`File watcher set up for workspace: ${workspacePath}`);
+}
+
+// Add endpoint to register workspace for file watching
+app.post('/api/workspace/watch', (req, res) => {
+  const { workspacePath } = req.body;
+
+  if (!workspacePath) {
+    return res.status(400).json({ error: 'Workspace path is required' });
+  }
+
+  setupFileWatcher(workspacePath);
+  res.json({ success: true, message: 'File watcher activated' });
 });
 
 app.listen(PORT, async () => {

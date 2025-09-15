@@ -354,15 +354,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const syncWorkspaceProjects = (workspaceProjects: any[]) => {
-    console.log('Syncing workspace projects:', workspaceProjects);
-    console.log(
-      'Projects with plans:',
-      workspaceProjects.filter((wp) => wp.plans).map((wp) => wp.name)
-    );
-    console.log(
-      'Projects loading:',
-      workspaceProjects.filter((wp) => wp.isLoading).map((wp) => wp.name)
-    );
 
     // First, sync work items from plans
     const allWorkItems: WorkItem[] = [];
@@ -392,12 +383,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 plan.workItem.metadata?.workItemId ||
                 `${projectId}-${plan.name.replace(/\.md$/, '')}`;
 
-              // Check if work item already exists by ID or markdown path
-              const existingWorkItem = workItems.find(
-                (w) => w.id === workItemId || (w.markdownPath && w.markdownPath === plan.path)
-              );
+              // NEVER add duplicates - check if work item already exists by ID
+              const existingInCurrentBatch = allWorkItems.find(w => w.id === workItemId);
 
-              if (!existingWorkItem) {
+              if (!existingInCurrentBatch) {
                 console.log('Creating work item from plan:', {
                   planName: plan.name,
                   workItemTitle: plan.workItem.title,
@@ -470,27 +459,46 @@ export function AppProvider({ children }: { children: ReactNode }) {
       });
     });
 
-    // Add new work items (avoiding duplicates)
+    // Update or add work items
     if (allWorkItems.length > 0) {
       setWorkItems((prevWorkItems) => {
-        // Create a map of existing work items by their markdown path
-        const existingPaths = new Set(
-          prevWorkItems.map((item) => item.markdownPath).filter(Boolean)
-        );
+        // Create a map to track work items by ID (primary key)
+        const workItemsById = new Map<string, WorkItem>();
 
-        // Filter out work items that already exist
-        const newUniqueWorkItems = allWorkItems.filter(
-          (item) => !item.markdownPath || !existingPaths.has(item.markdownPath)
-        );
+        // First, add all new items from workspace
+        allWorkItems.forEach((newItem) => {
+          // Only keep one instance per ID - the latest one
+          workItemsById.set(newItem.id, newItem);
+        });
+
+        // Now check existing items and update or preserve them
+        prevWorkItems.forEach((existingItem) => {
+          const workspaceItem = workItemsById.get(existingItem.id);
+
+          if (workspaceItem) {
+            // Update with workspace data but preserve certain local fields
+            workItemsById.set(existingItem.id, {
+              ...workspaceItem,
+              createdAt: existingItem.createdAt || workspaceItem.createdAt,
+              updatedAt: new Date(),
+            });
+          } else if (!existingItem.markdownPath) {
+            // Local-only item (not saved to disk yet) - preserve it
+            workItemsById.set(existingItem.id, existingItem);
+          }
+          // If it has a markdownPath but wasn't in workspace, it's been deleted
+        });
+
+        const finalWorkItems = Array.from(workItemsById.values());
 
         console.log('Syncing work items:', {
           existingCount: prevWorkItems.length,
-          newCount: allWorkItems.length,
-          uniqueNewCount: newUniqueWorkItems.length,
-          duplicatesSkipped: allWorkItems.length - newUniqueWorkItems.length,
+          workspaceCount: allWorkItems.length,
+          finalCount: finalWorkItems.length,
+          uniqueIds: new Set(finalWorkItems.map(w => w.id)).size,
         });
 
-        return [...prevWorkItems, ...newUniqueWorkItems];
+        return finalWorkItems;
       });
     }
 

@@ -3,7 +3,7 @@
  * Sends structured logs to the server for persistent storage
  */
 
-type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'user';
 
 interface LogData {
   [key: string]: unknown;
@@ -11,8 +11,11 @@ interface LogData {
 
 class ClientLogger {
   private sessionId: string;
+  private sequenceNumber: number = 0;
   private buffer: Array<{
     timestamp: string;
+    performanceTime: number;
+    sequence: number;
     level: LogLevel;
     component: string;
     message: string;
@@ -24,10 +27,10 @@ class ClientLogger {
   constructor() {
     // Generate a unique session ID for this browser session
     this.sessionId = this.getOrCreateSessionId();
-    
+
     // Check if logging is enabled (can be disabled via localStorage)
     this.isEnabled = localStorage.getItem('clientLogging') !== 'false';
-    
+
     // Flush logs before page unload
     if (typeof window !== 'undefined') {
       window.addEventListener('beforeunload', () => this.flush());
@@ -51,9 +54,15 @@ class ClientLogger {
   ): Promise<void> {
     if (!this.isEnabled) return;
 
+    // Use high-precision performance timer and sequence number
+    const performanceTime = performance.now();
+    const sequence = ++this.sequenceNumber;
+
     const logEntry = {
       sessionId: this.sessionId,
       timestamp: new Date().toISOString(),
+      performanceTime,
+      sequence,
       level,
       component,
       message,
@@ -78,24 +87,38 @@ class ClientLogger {
   private async flush(): Promise<void> {
     if (this.buffer.length === 0) return;
 
-    const logsToSend = [...this.buffer];
+    // Sort buffer by sequence number to ensure order
+    const logsToSend = [...this.buffer].sort((a, b) => a.sequence - b.sequence);
     this.buffer = [];
 
     try {
-      // Send all buffered logs
-      await Promise.all(
-        logsToSend.map(log =>
-          fetch('http://localhost:3000/api/client-log', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(log),
-          }).catch(err => {
-            console.error('Failed to send log:', err);
-          })
-        )
-      );
+      // Send logs in batch to maintain order
+      await fetch('http://localhost:3000/api/client-logs-batch', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sessionId: this.sessionId,
+          logs: logsToSend
+        }),
+      }).catch(err => {
+        console.error('Failed to send logs:', err);
+        // Fall back to individual sends if batch fails
+        return Promise.all(
+          logsToSend.map(log =>
+            fetch('http://localhost:3000/api/client-log', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(log),
+            }).catch(err => {
+              console.error('Failed to send log:', err);
+            })
+          )
+        );
+      });
     } catch (error) {
       console.error('Failed to flush logs:', error);
     }
@@ -122,6 +145,12 @@ class ClientLogger {
     console.error(`[${component}] ${message}`, data || '');
   }
 
+  // User action logging
+  user(component: string, message: string, data?: LogData): void {
+    this.sendLog('user', component, message, data);
+    console.log(`[USER ACTION] [${component}] ${message}`, data || '');
+  }
+
   // Method to log function entry with arguments
   functionEntry(component: string, functionName: string, args?: LogData): void {
     this.debug(component, `→ ${functionName}`, args);
@@ -139,6 +168,27 @@ class ClientLogger {
       newValue,
       diff: this.getDiff(oldValue, newValue)
     });
+  }
+
+  // User interaction helpers
+  userClick(component: string, element: string, data?: LogData): void {
+    this.user(component, `Clicked: ${element}`, data);
+  }
+
+  userInput(component: string, field: string, value: string | number | boolean, data?: LogData): void {
+    this.user(component, `Input: ${field}`, { value, ...data });
+  }
+
+  userNavigate(component: string, to: string, from?: string): void {
+    this.user(component, `Navigate to: ${to}`, { from, to });
+  }
+
+  userSubmit(component: string, form: string, data?: LogData): void {
+    this.user(component, `Submit: ${form}`, data);
+  }
+
+  userSelect(component: string, option: string, data?: LogData): void {
+    this.user(component, `Selected: ${option}`, data);
   }
 
   // Helper to get simple diff
