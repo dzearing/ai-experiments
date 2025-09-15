@@ -281,11 +281,22 @@ export function WorkItemJamSession() {
             const data = await response.json();
             console.log('Markdown content loaded, length:', data.content.length);
 
-            // Remove metadata section if it exists
+            // Remove only the metadata section if it exists, keeping tasks that may come after
             let content = data.content;
             const metadataIndex = content.lastIndexOf('\n## Metadata\n');
             if (metadataIndex !== -1) {
-              content = content.substring(0, metadataIndex);
+              // Find the next section after metadata (starts with ## )
+              const afterMetadata = content.substring(metadataIndex + '\n## Metadata\n'.length);
+              const nextSectionMatch = afterMetadata.match(/\n## /);
+
+              if (nextSectionMatch) {
+                // There's another section after metadata, remove only the metadata content
+                const metadataEndIndex = metadataIndex + '\n## Metadata\n'.length + nextSectionMatch.index;
+                content = content.substring(0, metadataIndex) + content.substring(metadataEndIndex);
+              } else {
+                // No section after metadata, remove everything from metadata onwards
+                content = content.substring(0, metadataIndex);
+              }
             }
 
             setMarkdownContent(content);
@@ -298,21 +309,39 @@ export function WorkItemJamSession() {
           console.error('Error loading markdown:', error);
         }
       } else {
-        console.log('No markdownPath on work item');
+        console.log('No markdownPath on work item, constructing from metadata');
         // If no markdownPath, generate content from work item metadata
-        let generatedContent = `# ${workItem.title}
+        let generatedContent = '';
+
+        // Use generalMarkdown if available, otherwise create a basic header
+        if (workItem?.metadata?.generalMarkdown) {
+          generatedContent = workItem.metadata.generalMarkdown;
+        } else {
+          generatedContent = `# ${workItem.title}
 
 ## Description
 ${workItem.description || 'No description provided.'}`;
+        }
 
         // Add tasks section if tasks exist
         if (workItem?.metadata?.tasks && workItem.metadata.tasks.length > 0) {
-          generatedContent += `
+          // Add a tasks header if not already in generalMarkdown
+          if (!generatedContent.includes('## Tasks')) {
+            generatedContent += '\n\n## Tasks';
+          }
 
-## Tasks
-${workItem.metadata.tasks
-  .map(
-    (task: any, index: number) => `
+          // For each task, use the taskMarkdownContents if available, otherwise generate from task data
+          workItem.metadata.tasks.forEach((task: any, index: number) => {
+            const taskId = task.id;
+
+            // Check if we have stored markdown content for this task
+            if (workItem.metadata?.taskMarkdownContents?.[taskId]) {
+              // Use the full markdown content for this task
+              generatedContent += '\n\n' + workItem.metadata.taskMarkdownContents[taskId];
+            } else {
+              // Fallback to generating from task data
+              generatedContent += `
+
 ### Task ${task.taskNumber || index + 1}: ${task.title}
 **Description:** ${task.description}
 
@@ -323,12 +352,12 @@ ${task.goals?.map((g: string) => `- ${g}`).join('\n') || '- No goals defined'}
 ${task.workDescription || 'No work description'}
 
 **Validation Criteria:**
-${task.validationCriteria?.map((c: string) => `- ${c}`).join('\n') || '- No criteria defined'}
-`
-  )
-  .join('\n')}`;
+${task.validationCriteria?.map((c: string) => `- ${c}`).join('\n') || '- No criteria defined'}`;
+            }
+          });
         }
 
+        console.log('Generated content length:', generatedContent.length);
         setMarkdownContent(generatedContent);
         setEditedContent(generatedContent);
       }
@@ -795,12 +824,9 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
     setMessages((prev) => [...prev, savingMessage]);
 
     try {
-      // Remove metadata section if it exists
+      // Don't save the metadata section back - it should be preserved from the original file
+      // The backend should handle merging the edited content with preserved metadata
       let contentToSave = editedContent;
-      const metadataIndex = contentToSave.lastIndexOf('\n## Metadata\n');
-      if (metadataIndex !== -1) {
-        contentToSave = contentToSave.substring(0, metadataIndex);
-      }
 
       const response = await fetch(apiUrl('/api/workspace/write-file'), {
         method: 'POST',
