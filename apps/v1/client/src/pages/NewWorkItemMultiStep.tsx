@@ -88,6 +88,7 @@ function NewWorkItemContent() {
   const [, startTransition] = useTransition();
   const [editorKey, setEditorKey] = useState(0);
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const editorRef = useRef<any>(null);
 
   // State for what's selected in review step
   const [selectedSection, setSelectedSection] = useState<'general' | 'task'>('general');
@@ -134,6 +135,10 @@ function NewWorkItemContent() {
   const isProgrammaticChange = useRef(false);
   const [originalTaskContents, setOriginalTaskContents] = useState<Record<string, string>>({});
   const isInitializing = useRef(true);
+
+  // Doc link click handler removed due to stability issues with MDXEditor
+  // The feature was causing browser freezing and content deletion
+  // TODO: Research a safer approach that doesn't directly manipulate MDXEditor DOM
   
   // Track the edited markdown content for each task
   const [taskMarkdownContents, setTaskMarkdownContents] = useState<Record<string, string>>({});
@@ -176,10 +181,14 @@ function NewWorkItemContent() {
 
   // Cleanup timeout on unmount
   useEffect(() => {
+    // Doc link event listener disabled due to stability issues
+    // window.addEventListener('doc-link-clicked', handleDocLinkClick);
+
     return () => {
       if (updateTimeoutRef.current) {
         clearTimeout(updateTimeoutRef.current);
       }
+      // window.removeEventListener('doc-link-clicked', handleDocLinkClick);
     };
   }, []);
 
@@ -1177,6 +1186,7 @@ ${existingWorkItem.description || 'No description provided'}
           >
             {generalMarkdown ? (
               <MDXEditor
+                ref={editorRef}
                 key={`general-${editorKey}`}
                 markdown={generalMarkdown}
                 onChange={(value) => {
@@ -1241,6 +1251,7 @@ ${existingWorkItem.description || 'No description provided'}
             className={`flex-1 min-h-0 ${isDarkMode ? 'mdx-dark' : 'mdx-light'} mdx-edge-to-edge flex flex-col`}
           >
             <MDXEditor
+              ref={editorRef}
               key={editorKey}
               markdown={editedContent}
               onChange={(value) => {

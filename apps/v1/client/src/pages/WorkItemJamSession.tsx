@@ -7,6 +7,7 @@ import { IconButton } from '../components/ui/IconButton';
 import { LoadingSpinner, InlineLoadingSpinner } from '../components/ui/LoadingSpinner';
 import { StockPhotoAvatar, getGenderFromSeed, getRandomName } from '../components/StockPhotoAvatar';
 import { useAuth } from '../contexts/AuthContext';
+import { AgentSelector } from '../components/AgentSelector';
 import { DancingBubbles } from '../components/ui/DancingBubbles';
 import { apiUrl } from '../config/api';
 import {
@@ -24,6 +25,7 @@ import {
   ListsToggle,
   BlockTypeSelect,
   Separator,
+  type MDXEditorMethods,
 } from '@mdxeditor/editor';
 import '@mdxeditor/editor/style.css';
 import '../styles/mdx-editor.css';
@@ -57,8 +59,11 @@ export function WorkItemJamSession() {
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [persona, setPersona] = useState<Persona | null>(null);
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [showAgentSelector, setShowAgentSelector] = useState(true);
+  const [showAgentSelectorOverlay, setShowAgentSelectorOverlay] = useState(false);
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [markdownContent, setMarkdownContent] = useState('');
@@ -70,7 +75,12 @@ export function WorkItemJamSession() {
   const [retryCount, setRetryCount] = useState(0);
   const [hasInitialized, setHasInitialized] = useState(false);
   const [editorKey, setEditorKey] = useState(0); // Key to force editor remount when needed
-  const editorRef = useRef<any>(null);
+  const [chatStarted, setChatStarted] = useState(false);
+  const [isLoadingAgent, setIsLoadingAgent] = useState(false);
+  const [agentSuggestions, setAgentSuggestions] = useState<any[]>([]);
+  const [currentSuggestionIndex, setCurrentSuggestionIndex] = useState(0);
+  const [currentLoadingMessage, setCurrentLoadingMessage] = useState<string>('');
+  const editorRef = useRef<MDXEditorMethods>(null);
   const suggestionTimerRef = useRef<NodeJS.Timeout | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -79,12 +89,94 @@ export function WorkItemJamSession() {
   console.log('WorkItemJamSession - workItemId:', workItemId);
   console.log('WorkItemJamSession - found workItem:', workItem);
 
+  // Helper function to get a random loading message for an agent
+  const getRandomAgentLoadingMessage = (agent: Persona): string => {
+    // Use the agent's custom loading messages if available
+    if (agent.loadingMessages && agent.loadingMessages.length > 0) {
+      const randomIndex = Math.floor(Math.random() * agent.loadingMessages.length);
+      return agent.loadingMessages[randomIndex];
+    }
+
+    // Fallback loading messages personalized with agent's first name
+    const firstName = agent.name.split(' ')[0];
+    const fallbackMessages = [
+      `${firstName} is analyzing your document...`,
+      `${firstName} is reviewing the content...`,
+      `${firstName} is preparing suggestions...`,
+      `${firstName} is getting ready to help...`,
+      `${firstName} is checking requirements...`,
+      `${firstName} is organizing thoughts...`,
+      `${firstName} is loading best practices...`,
+      `${firstName} is gathering insights...`,
+      `${firstName} is preparing feedback...`,
+      `${firstName} is reviewing patterns...`,
+      `${firstName} is calibrating approach...`,
+      `${firstName} is finalizing analysis...`,
+    ];
+    const randomIndex = Math.floor(Math.random() * fallbackMessages.length);
+    return fallbackMessages[randomIndex];
+  };
+
+  // Rotate loading messages every 6 seconds
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout | null = null;
+
+    if (isLoadingAgent && persona) {
+      // Set initial message
+      setCurrentLoadingMessage(getRandomAgentLoadingMessage(persona));
+
+      // Rotate message every 6 seconds
+      intervalId = setInterval(() => {
+        setCurrentLoadingMessage(getRandomAgentLoadingMessage(persona));
+      }, 6000);
+    } else if (isAnalyzing) {
+      // For auto-create flow, also rotate the messages
+      const loadingMessages = [
+        'Finding the perfect reviewer for your work item',
+        'Searching for an expert to review your document',
+        'Matching your work with the ideal specialist',
+        'Assembling the right agent for your needs',
+        'Preparing a specialized reviewer for your project',
+        'Looking for the best agent to assist you',
+        'Identifying the perfect expert for this task',
+        'Customizing an agent for your specific requirements',
+        'Analyzing your requirements for the best match',
+        'Selecting optimal expertise for your needs',
+        'Configuring the ideal reviewer profile',
+        'Tailoring agent capabilities to your project',
+        'Optimizing reviewer selection for your work',
+        'Preparing personalized agent recommendations',
+        'Finalizing the perfect agent match',
+      ];
+
+      // Set initial message
+      const initialMessage = loadingMessages[Math.floor(Math.random() * loadingMessages.length)];
+      setCurrentLoadingMessage(initialMessage);
+
+      // Rotate message every 6 seconds
+      intervalId = setInterval(() => {
+        const newMessage = loadingMessages[Math.floor(Math.random() * loadingMessages.length)];
+        setCurrentLoadingMessage(newMessage);
+      }, 6000);
+    } else {
+      // Clear the message when not loading
+      setCurrentLoadingMessage('');
+    }
+
+    // Cleanup interval on unmount or when loading state changes
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [isLoadingAgent, isAnalyzing, persona]);
+
   // Get suggested responses based on message type
   const getSuggestedResponses = (type: string): string[] => {
     switch (type) {
       case 'suggestion':
         return [
-          'Yes, please apply this change',
+          'Make these changes',
           'Let me think about it',
           'Can you explain more?',
           'What are the alternatives?',
@@ -371,101 +463,68 @@ ${task.validationCriteria?.map((c: string) => `- ${c}`).join('\n') || '- No crit
     if (workItem && markdownContent && !hasInitialized) {
       setHasInitialized(true);
 
-      // Add a small delay to show the initial loading state
-      setTimeout(() => {
-        console.log(
-          'Checking for existing session - workItem:',
-          workItem.id,
-          'jamSessionIds:',
-          workItem.jamSessionIds
-        );
-        console.log(
-          'Available jamSessions:',
-          jamSessions.map((s) => ({ id: s.id, workItemId: s.workItemId }))
-        );
+      console.log(
+        'Checking for existing session - workItem:',
+        workItem.id,
+        'jamSessionIds:',
+        workItem.jamSessionIds
+      );
+      console.log(
+        'Available jamSessions:',
+        jamSessions.map((s) => ({ id: s.id, workItemId: s.workItemId }))
+      );
 
-        // Look for existing jam session
-        const existingSessionId = workItem.jamSessionIds[0]; // Get first session if exists
+      // Look for existing jam session
+      const existingSessionId = workItem.jamSessionIds[0]; // Get first session if exists
 
-        if (existingSessionId) {
-          console.log('Found existing session ID:', existingSessionId);
-          const session = jamSessions.find((s) => s.id === existingSessionId);
-          if (session) {
-            console.log('Found session:', session);
-            setSessionId(existingSessionId);
+      if (existingSessionId) {
+        console.log('Found existing session ID:', existingSessionId);
+        const session = jamSessions.find((s) => s.id === existingSessionId);
+        if (session) {
+          console.log('Found session:', session);
+          setSessionId(existingSessionId);
 
-            // Get the persona from the session
-            const personaId = session.participantIds.find((id) => id !== 'user');
-            console.log(
-              'Looking for persona ID:',
-              personaId,
-              'in personas:',
-              personas.map((p) => ({ id: p.id, name: p.name }))
-            );
-            const existingPersona = personas.find((p) => p.id === personaId);
+          // Get the persona from the session
+          const personaId = session.participantIds.find((id) => id !== 'user');
+          console.log(
+            'Looking for persona ID:',
+            personaId,
+            'in personas:',
+            personas.map((p) => ({ id: p.id, name: p.name }))
+          );
+          const existingPersona = personas.find((p) => p.id === personaId);
 
-            if (existingPersona) {
-              console.log('Found existing persona:', existingPersona);
-              setPersona(existingPersona);
+          if (existingPersona) {
+            console.log('Found existing persona:', existingPersona);
+            setPersona(existingPersona);
+            setSelectedAgentId(existingPersona.id);
+            setChatStarted(true);
+            setShowAgentSelector(false);
 
-              // Load existing messages
-              const sessionMessages: ChatMessage[] = session.messages.map((msg) => ({
-                id: msg.id,
-                personaId: msg.personaId,
-                content: msg.content,
-                timestamp: new Date(msg.timestamp),
-                type:
-                  msg.type === 'challenge' || msg.type === 'decision'
-                    ? 'message'
-                    : (msg.type as ChatMessage['type']),
-                suggestedResponses:
-                  msg.personaId !== 'user' ? getSuggestedResponses('message') : undefined,
-              }));
+            // Load existing messages
+            const sessionMessages: ChatMessage[] = session.messages.map((msg) => ({
+              id: msg.id,
+              personaId: msg.personaId,
+              content: msg.content,
+              timestamp: new Date(msg.timestamp),
+              type:
+                msg.type === 'challenge' || msg.type === 'decision'
+                  ? 'message'
+                  : (msg.type as ChatMessage['type']),
+              suggestedResponses:
+                msg.personaId !== 'user' ? getSuggestedResponses('message') : undefined,
+            }));
 
-              setMessages(sessionMessages);
+            setMessages(sessionMessages);
 
-              // Restore draft content if available
-              if (session.draftContent) {
-                setEditedContent(session.draftContent);
-              }
-
-              // If no messages exist, send initial greeting
-              if (sessionMessages.length === 0) {
-                const userName = activeAccount?.username || 'there';
-                const greetingMessage: ChatMessage = {
-                  id: Date.now().toString(),
-                  personaId: existingPersona.id,
-                  content: `Hey ${userName}! I'm ${existingPersona.name}, your ${existingPersona.jobTitle || existingPersona.type}. I'm here to review your work item and provide feedback. Let me take a look at what you have.`,
-                  timestamp: new Date(),
-                  type: 'message',
-                  suggestedResponses: getSuggestedResponses('message'),
-                };
-
-                setMessages([greetingMessage]);
-
-                // Add message to jam session
-                addJamMessage(
-                  existingSessionId,
-                  existingPersona.id,
-                  greetingMessage.content,
-                  'message'
-                );
-              }
-            } else {
-              // Persona not found for existing session - create new session
-              console.warn('Persona not found for existing session, creating new session');
-              analyzeDocument();
+            // Restore draft content if available
+            if (session.draftContent) {
+              setEditedContent(session.draftContent);
             }
-          } else {
-            // Session not found in jamSessions - create new session
-            console.warn('Session not found in jamSessions, creating new session');
-            analyzeDocument();
           }
-        } else {
-          // Analyze the document to create a persona
-          analyzeDocument();
         }
-      }, 500);
+      }
+      // Don't auto-create agent anymore - let user choose
     }
   }, [
     workItem,
@@ -473,8 +532,6 @@ ${task.validationCriteria?.map((c: string) => `- ${c}`).join('\n') || '- No crit
     hasInitialized,
     jamSessions,
     personas,
-    activeAccount,
-    addJamMessage,
   ]);
 
   const analyzeDocument = async () => {
@@ -484,6 +541,7 @@ ${task.validationCriteria?.map((c: string) => `- ${c}`).join('\n') || '- No crit
 
     setIsAnalyzing(true);
     setSetupError(null);
+    setChatStarted(true);
 
     try {
       // Generate persona details ahead of time for consistency
@@ -624,9 +682,442 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
     analyzeDocument();
   };
 
+  const restartChatWithCurrentAgent = async () => {
+    if (!persona || !workItem) return;
+
+    // Clear messages and suggestions
+    setMessages([]);
+    setAgentSuggestions([]);
+    setCurrentSuggestionIndex(0);
+    setIsTyping(false);
+
+    // Start fresh with current agent
+    await initializeAgentChat(persona);
+  };
+
+  const initializeAgentChat = async (selectedPersona: Persona) => {
+    if (!workItem) return;
+
+    setIsLoadingAgent(true);
+    setShowAgentSelector(false);
+    setShowAgentSelectorOverlay(false);
+    setChatStarted(true);
+
+    // Start a jam session if not exists
+    let currentSessionId = sessionId;
+    if (!currentSessionId) {
+      currentSessionId = startJamSession(
+        workItem.id,
+        [selectedPersona.id],
+        `Review session for ${workItem.title}`
+      );
+      setSessionId(currentSessionId);
+    }
+
+    // Don't show a loading message in the chat - the UI loading state handles it
+
+    // Call API to analyze document and get all suggestions
+    try {
+      const response = await fetch(apiUrl('/api/claude/agent-analyze'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          documentContent: editedContent,
+          workItem: {
+            title: workItem.title,
+            description: workItem.description,
+          },
+          persona: {
+            name: selectedPersona.name,
+            jobTitle: selectedPersona.jobTitle,
+            expertise: selectedPersona.expertise,
+            agentPrompt: selectedPersona.agentPrompt,
+            roleSummary: selectedPersona.roleSummary,
+          },
+        }),
+      });
+
+      setIsLoadingAgent(false);
+
+      if (response.ok) {
+        const data = await response.json();
+
+        // Store all suggestions
+        setAgentSuggestions(data.suggestions || []);
+        setCurrentSuggestionIndex(0);
+
+        // Clear loading and show introduction
+        setMessages([]);
+
+        // Build suggested responses for the introduction (which now includes the first suggestion)
+        const responses: string[] = [];
+        if (data.suggestions && data.suggestions.length > 0) {
+          const firstSuggestion = data.suggestions[0];
+
+          // If it's a change suggestion, add "Make these changes"
+          if (firstSuggestion.type === 'change' || firstSuggestion.suggestedChange) {
+            responses.push('Make these changes');
+          }
+
+          // Add contextual responses
+          responses.push('Tell me more');
+          responses.push('Why is this important?');
+
+          // Add "Next suggestion" if there are more
+          if (data.suggestions.length > 1) {
+            responses.push('Next suggestion');
+          }
+        }
+
+        const introMessage: ChatMessage = {
+          id: Date.now().toString(),
+          personaId: selectedPersona.id,
+          content: data.introduction || `Hi! I'm ${selectedPersona.name}, your ${selectedPersona.jobTitle}. I've analyzed your document and found ${data.suggestions?.length || 0} areas for improvement.`,
+          timestamp: new Date(),
+          type: 'message',
+          suggestedResponses: responses.length > 0 ? responses : undefined,
+        };
+
+        setMessages([introMessage]);
+
+        // Set the current suggestion index to 0 since first suggestion is in the intro
+        if (data.suggestions && data.suggestions.length > 0) {
+          setCurrentSuggestionIndex(0);
+        }
+
+        // Save to jam session
+        if (currentSessionId) {
+          addJamMessage(currentSessionId, selectedPersona.id, introMessage.content, 'message');
+        }
+      } else {
+        throw new Error('Failed to get analysis');
+      }
+    } catch (error) {
+      console.error('Error analyzing document:', error);
+      setIsLoadingAgent(false);
+
+      // Show error message but offer to retry
+      const errorMessage: ChatMessage = {
+        id: Date.now().toString(),
+        personaId: 'system',
+        content: `Failed to analyze the document. This might be due to a connection issue or the AI service being temporarily unavailable.`,
+        timestamp: new Date(),
+        type: 'system',
+      };
+
+      const retryMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        personaId: selectedPersona.id,
+        content: `I apologize for the technical issue. Would you like me to try analyzing your document again?`,
+        timestamp: new Date(),
+        type: 'message',
+        suggestedResponses: ['Try again', 'Continue without analysis'],
+      };
+
+      setMessages([errorMessage, retryMessage]);
+    }
+  };
+
+  const startChatWithAgent = async () => {
+    if (!selectedAgentId || !workItem) return;
+
+    // Handle auto-create agent
+    if (selectedAgentId === 'auto-create') {
+      setShowAgentSelector(false);
+      await analyzeDocument();
+      return;
+    }
+
+    // Use existing agent
+    const selectedPersona = personas.find((p) => p.id === selectedAgentId);
+    if (!selectedPersona) return;
+
+    setPersona(selectedPersona);
+    await initializeAgentChat(selectedPersona);
+  };
+
+  const presentSuggestion = (index: number, suggestion: any, totalSuggestions: number) => {
+    const hasMore = index < totalSuggestions - 1;
+
+    // Build suggested responses based on suggestion type
+    const responses: string[] = [];
+
+    // If it's a change suggestion, add "Make these changes"
+    if (suggestion.type === 'change' || suggestion.suggestedChange) {
+      responses.push('Make these changes');
+    }
+
+    // Add contextual responses
+    responses.push('Tell me more');
+    responses.push('Why is this important?');
+
+    // Add "Next suggestion" if there are more
+    if (hasMore) {
+      responses.push('Next suggestion');
+    } else {
+      responses.push('Review again');
+    }
+
+    const suggestionMessage: ChatMessage = {
+      id: (Date.now() + index).toString(),
+      personaId: persona!.id,
+      content: suggestion.content || suggestion.text,
+      timestamp: new Date(),
+      type: 'suggestion',
+      suggestedResponses: responses,
+    };
+
+    setMessages((prev) => [...prev, suggestionMessage]);
+    setCurrentSuggestionIndex(index);
+  };
+
+  const handleDocumentLink = (searchText: string) => {
+    if (!editorRef.current) return;
+
+    console.log('Searching for text:', searchText);
+
+    // Focus the editor first
+    editorRef.current.focus();
+
+    // We need to access the underlying Lexical editor
+    // MDXEditor doesn't directly expose the Lexical editor instance for updates,
+    // so we'll use a workaround by simulating selection through DOM
+    setTimeout(() => {
+      const editorElement = document.querySelector('.mdxeditor [contenteditable="true"]') as HTMLElement;
+      if (!editorElement) {
+        console.log('Editor element not found');
+        return;
+      }
+
+      // Create a text search walker
+      const walker = document.createTreeWalker(
+        editorElement,
+        NodeFilter.SHOW_TEXT,
+        null
+      );
+
+      let node: Node | null;
+      let found = false;
+      const searchLower = searchText.toLowerCase();
+
+      // Walk through all text nodes to find the search text
+      while ((node = walker.nextNode())) {
+        const textContent = node.textContent || '';
+        const lowerContent = textContent.toLowerCase();
+        const index = lowerContent.indexOf(searchLower);
+
+        if (index !== -1) {
+          // Found the text, create a selection
+          const range = document.createRange();
+          const selection = window.getSelection();
+
+          if (selection) {
+            // Clear any existing selection
+            selection.removeAllRanges();
+
+            // Set the range to select the found text
+            range.setStart(node, index);
+            range.setEnd(node, index + searchText.length);
+
+            // Apply the selection
+            selection.addRange(range);
+
+            // Scroll the selection into view
+            const selectedElement = selection.anchorNode?.parentElement;
+            if (selectedElement) {
+              selectedElement.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+              });
+            }
+
+            console.log('Text found and selected:', searchText);
+            found = true;
+            break;
+          }
+        }
+      }
+
+      if (!found) {
+        console.log('Text not found:', searchText);
+
+        // Try searching for partial matches or section headers
+        // Reset walker
+        const walker2 = document.createTreeWalker(
+          editorElement,
+          NodeFilter.SHOW_TEXT,
+          null
+        );
+
+        // Look for partial matches (e.g., "Task 3" might be part of "Task 3: Some Title")
+        while ((node = walker2.nextNode())) {
+          const textContent = node.textContent || '';
+          const lowerContent = textContent.toLowerCase();
+
+          // Check if this looks like a task reference
+          if (searchLower.startsWith('task ') && lowerContent.includes(searchLower)) {
+            const index = lowerContent.indexOf(searchLower);
+            const range = document.createRange();
+            const selection = window.getSelection();
+
+            if (selection) {
+              selection.removeAllRanges();
+
+              // Select from the match to the end of the line or node
+              range.setStart(node, index);
+
+              // Find the end of the line or paragraph
+              let endOffset = textContent.length;
+              const newlineIndex = textContent.indexOf('\n', index);
+              if (newlineIndex !== -1) {
+                endOffset = newlineIndex;
+              }
+
+              range.setEnd(node, Math.min(endOffset, textContent.length));
+              selection.addRange(range);
+
+              // Scroll into view
+              const selectedElement = selection.anchorNode?.parentElement;
+              if (selectedElement) {
+                selectedElement.scrollIntoView({
+                  behavior: 'smooth',
+                  block: 'center'
+                });
+              }
+
+              console.log('Partial match found and selected:', searchText);
+              found = true;
+              break;
+            }
+          }
+        }
+      }
+    }, 100); // Small delay to ensure editor is ready
+  };
+
   const sendMessage = async (messageText?: string) => {
     const message = messageText || inputMessage;
     if (!message.trim() || !persona || !sessionId) return;
+
+    // Handle /clear command
+    if (message.trim().toLowerCase() === '/clear') {
+      setInputMessage('');
+      await restartChatWithCurrentAgent();
+      return;
+    }
+
+    // Handle "Try again" response
+    if (message === 'Try again' && persona) {
+      setInputMessage('');
+      await initializeAgentChat(persona);
+      return;
+    }
+
+    // Handle "Next suggestion" response
+    if (message === 'Next suggestion' && agentSuggestions.length > 0) {
+      // Since first suggestion is in intro, we need to show the second one (index 1) first time
+      const nextIndex = currentSuggestionIndex === 0 ? 1 : currentSuggestionIndex + 1;
+      if (nextIndex < agentSuggestions.length) {
+        // Add user message
+        const userMessage: ChatMessage = {
+          id: Date.now().toString(),
+          personaId: 'user',
+          content: message,
+          timestamp: new Date(),
+          type: 'message',
+        };
+        setMessages((prev) => [...prev, userMessage]);
+        setInputMessage('');
+
+        // Present next suggestion
+        setTimeout(() => {
+          presentSuggestion(nextIndex, agentSuggestions[nextIndex], agentSuggestions.length);
+        }, 500);
+        return;
+      }
+    }
+
+    // Handle "Make these changes" response
+    if ((message === 'Make these changes' || message === 'Apply change') && currentSuggestionIndex < agentSuggestions.length) {
+      const currentSuggestion = agentSuggestions[currentSuggestionIndex];
+      console.log('[APPLY CHANGE] Current suggestion:', currentSuggestion);
+      console.log('[APPLY CHANGE] Has suggestedChange:', !!currentSuggestion.suggestedChange);
+
+      if (currentSuggestion.suggestedChange) {
+        // Add user message
+        const userMessage: ChatMessage = {
+          id: Date.now().toString(),
+          personaId: 'user',
+          content: message,
+          timestamp: new Date(),
+          type: 'message',
+        };
+        setMessages((prev) => [...prev, userMessage]);
+        setInputMessage('');
+
+        // Apply the change
+        setIsTyping(true);
+
+        // Apply the suggested change to the markdown content
+        let updatedContent = editedContent;
+        console.log('[APPLY CHANGE] Current content length:', editedContent.length);
+        console.log('[APPLY CHANGE] Suggested change:', currentSuggestion.suggestedChange);
+
+        // If the suggestion includes a section, try to replace that specific section
+        if (currentSuggestion.section && currentSuggestion.section !== 'General') {
+          console.log('[APPLY CHANGE] Targeting section:', currentSuggestion.section);
+          // Try to find and replace the specific section
+          const sectionPattern = new RegExp(`(^|\\n)(#{1,6}\\s*${currentSuggestion.section.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})([^#]*)`, 'im');
+          const match = updatedContent.match(sectionPattern);
+
+          if (match) {
+            console.log('[APPLY CHANGE] Found section match');
+            // Replace the content of this section with the suggested change
+            const sectionHeader = match[2];
+            const newSectionContent = `${sectionHeader}\n${currentSuggestion.suggestedChange}`;
+            updatedContent = updatedContent.replace(match[0], match[1] + newSectionContent);
+          } else {
+            console.log('[APPLY CHANGE] Section not found, replacing entire content');
+            // If we can't find the section, treat it as a full document replacement
+            updatedContent = currentSuggestion.suggestedChange;
+          }
+        } else {
+          console.log('[APPLY CHANGE] No specific section, replacing entire content');
+          // For general suggestions or if no section is specified, replace the entire content
+          updatedContent = currentSuggestion.suggestedChange;
+        }
+
+        console.log('[APPLY CHANGE] Updated content length:', updatedContent.length);
+
+        // Update both the edited content and the markdown content
+        setEditedContent(updatedContent);
+        setMarkdownContent(updatedContent);
+
+        // Force the editor to update with the new content
+        if (editorRef.current) {
+          console.log('[APPLY CHANGE] Updating editor with new content');
+          editorRef.current.setMarkdown(updatedContent);
+        } else {
+          console.log('[APPLY CHANGE] Editor ref not available');
+        }
+
+        setTimeout(() => {
+          const confirmMessage: ChatMessage = {
+            id: Date.now().toString(),
+            personaId: persona.id,
+            content: `Change applied successfully! I've updated the ${currentSuggestion.section || 'document'} with the suggested changes. Would you like to see the next suggestion?`,
+            timestamp: new Date(),
+            type: 'message',
+            suggestedResponses: currentSuggestionIndex < agentSuggestions.length - 1
+              ? ['Next suggestion', 'Review changes', 'Continue editing']
+              : ['Review changes', 'Continue editing', 'Start over'],
+          };
+          setMessages((prev) => [...prev, confirmMessage]);
+          setIsTyping(false);
+        }, 500);
+        return;
+      }
+    }
 
     // Add user message
     const userMessage: ChatMessage = {
@@ -651,7 +1142,12 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
         body: JSON.stringify({
           messages: messages,
           userMessage: message,
-          persona: persona,
+          persona: {
+            ...persona,
+            // Ensure agentPrompt is included for context
+            agentPrompt: persona.agentPrompt,
+            roleSummary: persona.roleSummary,
+          },
           documentContent: editedContent,
           workItem: {
             title: workItem?.title,
@@ -826,7 +1322,7 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
     try {
       // Don't save the metadata section back - it should be preserved from the original file
       // The backend should handle merging the edited content with preserved metadata
-      let contentToSave = editedContent;
+      const contentToSave = editedContent;
 
       const response = await fetch(apiUrl('/api/workspace/write-file'), {
         method: 'POST',
@@ -862,56 +1358,12 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
     }
   };
 
-  // Handle clicking on document references
-  const handleDocumentLink = (searchText: string) => {
-    if (!editedContent || !editorRef.current) return;
-
-    // Find the text in the document
-    const index = editedContent.toLowerCase().indexOf(searchText.toLowerCase());
-    if (index !== -1) {
-      console.log('Found text at index:', index, 'searching for:', searchText);
-
-      // Try to focus the editor and set cursor position
-      try {
-        // Focus the editor
-        const editorElement = document.querySelector(
-          '.mdxeditor [contenteditable="true"]'
-        ) as HTMLElement;
-        if (editorElement) {
-          editorElement.focus();
-
-          // Calculate approximate line number and scroll
-          const lines = editedContent.substring(0, index).split('\n');
-          const lineNumber = lines.length;
-
-          // Scroll to make the match visible
-          // This is approximate - MDXEditor handles its own scrolling
-          const lineHeight = 24; // Approximate line height
-          const scrollTop = (lineNumber - 5) * lineHeight; // Scroll to 5 lines before match
-
-          const scrollContainer = document.querySelector('.mdxeditor-root-contenteditable');
-          if (scrollContainer) {
-            scrollContainer.scrollTop = Math.max(0, scrollTop);
-          }
-
-          // Highlight effect
-          editorElement.style.transition = 'background-color 0.3s';
-          editorElement.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
-          setTimeout(() => {
-            editorElement.style.backgroundColor = '';
-          }, 1000);
-        }
-      } catch (error) {
-        console.error('Error focusing editor:', error);
-      }
-    }
-  };
 
   // Render message with rich formatting and clickable links
   const renderMessageContent = (content: string) => {
-    // Combined pattern for all formatting
+    // Combined pattern for all formatting including standard markdown links and task references
     const formattingPattern =
-      /\[([^\]]+)\]\(doc:([^)]+)\)|`([^`]+)`|\*\*([^*]+)\*\*|\*([^*]+)\*|\n/g;
+      /\[([^\]]+)\]\(doc:([^)]+)\)|\[([^\]]+)\]\(#([^)]+)\)|\[([^\]]+)\]\(([^)]+)\)|(Task \d+:.*?)(?=\n|$)|`([^`]+)`|\*\*([^*]+)\*\*|\*([^*]+)\*|\n/g;
     const parts = [];
     let lastIndex = 0;
     let match;
@@ -937,25 +1389,101 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
             onClick={() => handleDocumentLink(searchText)}
             className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
           >
-            📍 {linkText}
+            <span>{linkText}</span>
           </button>
         );
-      } else if (match[3]) {
+      } else if (match[3] && match[4]) {
+        // Section/anchor link: [text](#section)
+        const linkText = match[3];
+        const sectionId = match[4];
+        parts.push(
+          <button
+            key={`link-${keyIndex++}`}
+            onClick={() => handleDocumentLink(sectionId)}
+            className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+          >
+            <span>{linkText}</span>
+          </button>
+        );
+      } else if (match[5] && match[6]) {
+        // Standard markdown link: [text](url-or-section)
+        const linkText = match[5];
+        const target = match[6];
+
+        // Check if it's a section reference (starts with # or contains section keywords)
+        const isSectionRef = target.startsWith('#') ||
+                           target.toLowerCase().includes('task') ||
+                           target.toLowerCase().includes('section') ||
+                           target.toLowerCase().includes('goal') ||
+                           target.toLowerCase().includes('criteria');
+
+        if (isSectionRef) {
+          // Treat as document section reference
+          const searchText = target.startsWith('#') ? target.substring(1) : target;
+          parts.push(
+            <button
+              key={`link-${keyIndex++}`}
+              onClick={() => handleDocumentLink(searchText)}
+              className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+            >
+              <span>📍</span>
+              <span>{linkText}</span>
+            </button>
+          );
+        } else if (target.startsWith('http://') || target.startsWith('https://')) {
+          // External link
+          parts.push(
+            <a
+              key={`link-${keyIndex++}`}
+              href={target}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+            >
+              {linkText}
+            </a>
+          );
+        } else {
+          // Treat as document reference
+          parts.push(
+            <button
+              key={`link-${keyIndex++}`}
+              onClick={() => handleDocumentLink(target)}
+              className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+            >
+              <span>📍</span>
+              <span>{linkText}</span>
+            </button>
+          );
+        }
+      } else if (match[7]) {
+        // Task reference pattern: "Task 3: ..."
+        const taskText = match[7];
+        parts.push(
+          <button
+            key={`link-${keyIndex++}`}
+            onClick={() => handleDocumentLink(taskText)}
+            className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+          >
+            <span>{taskText}</span>
+          </button>
+        );
+      } else if (match[8]) {
         // Inline code: `code`
         parts.push(
           <code
             key={`code-${keyIndex++}`}
             className="px-1.5 py-0.5 rounded bg-neutral-200 dark:bg-neutral-700 text-sm font-mono"
           >
-            {match[3]}
+            {match[8]}
           </code>
         );
-      } else if (match[4]) {
+      } else if (match[9]) {
         // Bold: **text**
-        parts.push(<strong key={`bold-${keyIndex++}`}>{match[4]}</strong>);
-      } else if (match[5]) {
+        parts.push(<strong key={`bold-${keyIndex++}`}>{match[9]}</strong>);
+      } else if (match[10]) {
         // Italic: *text*
-        parts.push(<em key={`italic-${keyIndex++}`}>{match[5]}</em>);
+        parts.push(<em key={`italic-${keyIndex++}`}>{match[10]}</em>);
       } else if (match[0] === '\n') {
         // Newline
         parts.push(<br key={`br-${keyIndex++}`} />);
@@ -1079,21 +1607,31 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
           </div>
         </div>
 
-        {/* Right panel - Chat */}
+        {/* Right panel - Chat or Agent Selector */}
         <div className={`w-1/2 flex flex-col`}>
-          {!persona && !isAnalyzing && !setupError ? (
-            // Initial loading state
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center">
-                <div className="animate-pulse mb-6">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full mx-auto mb-4"></div>
-                  <div className="h-2 bg-neutral-300 dark:bg-neutral-700 rounded w-32 mx-auto mb-2"></div>
-                  <div className="h-2 bg-neutral-300 dark:bg-neutral-700 rounded w-24 mx-auto"></div>
-                </div>
-                <p className={`${styles.textColor} font-medium`}>Setting up review session...</p>
-                <p className={`${styles.mutedText} text-sm mt-2`}>
-                  Loading document and preparing reviewer
-                </p>
+          {showAgentSelector && !chatStarted ? (
+            // Agent selector view
+            <div className="flex-1 flex flex-col">
+              <div className={`px-4 py-3 border-b ${styles.contentBorder}`}>
+                <h2 className={`font-medium ${styles.headingColor}`}>Review Session</h2>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4">
+                <AgentSelector
+                  agents={personas}
+                  selectedAgentId={selectedAgentId}
+                  onSelectAgent={setSelectedAgentId}
+                  showAutoCreate={true}
+                />
+              </div>
+              <div className={`p-4 border-t ${styles.contentBorder}`}>
+                <Button
+                  onClick={startChatWithAgent}
+                  disabled={!selectedAgentId}
+                  variant="primary"
+                  className="w-full"
+                >
+                  Start Chat
+                </Button>
               </div>
             </div>
           ) : !persona && !isAnalyzing && setupError ? (
@@ -1178,8 +1716,8 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
                 )}
               </div>
             </div>
-          ) : isAnalyzing ? (
-            // Document analysis state
+          ) : isAnalyzing || isLoadingAgent ? (
+            // Document analysis state - show different messages based on which loading state
             <div className="flex-1 flex flex-col">
               {/* Header skeleton */}
               <div className={`px-4 py-3 border-b ${styles.contentBorder}`}>
@@ -1214,12 +1752,25 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
                       </svg>
                     </div>
                   </div>
-                  <p className={`${styles.headingColor} font-medium text-lg mb-2`}>
-                    Analyzing work item plan...
-                  </p>
-                  <p className={`${styles.mutedText} text-sm mb-4`}>
-                    Finding the perfect reviewer for your work item
-                  </p>
+                  {isLoadingAgent && persona ? (
+                    <>
+                      <p className={`${styles.headingColor} font-medium text-lg mb-2`}>
+                        {persona.name.split(' ')[0]} is preparing...
+                      </p>
+                      <p className={`${styles.mutedText} text-sm mb-4`}>
+                        {currentLoadingMessage || getRandomAgentLoadingMessage(persona)}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className={`${styles.headingColor} font-medium text-lg mb-2`}>
+                        Analyzing work item plan...
+                      </p>
+                      <p className={`${styles.mutedText} text-sm mb-4`}>
+                        {currentLoadingMessage || 'Finding the perfect reviewer for your work item'}
+                      </p>
+                    </>
+                  )}
                   <div className="flex items-center justify-center gap-2">
                     <div
                       className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"
@@ -1239,19 +1790,74 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
             </div>
           ) : persona ? (
             <>
-              {/* Persona header */}
-              <div className={`px-4 py-3 border-b ${styles.contentBorder}`}>
-                <div className="flex items-center gap-3">
-                  <StockPhotoAvatar
-                    seed={persona.avatarSeed || persona.id}
-                    size={40}
-                    gender={persona.avatarGender}
-                  />
-                  <div>
-                    <h3 className={`font-medium ${styles.headingColor}`}>{persona.name}</h3>
-                    <p className={`text-sm ${styles.mutedText}`}>{persona.expertise.join(', ')}</p>
+              {/* Persona header with chevron */}
+              <div className={`px-4 py-3 border-b ${styles.contentBorder} relative`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex-shrink-0">
+                      <StockPhotoAvatar
+                        seed={persona.avatarSeed || persona.id}
+                        size={40}
+                        gender={persona.avatarGender}
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className={`font-medium ${styles.headingColor}`}>{persona.name}</h3>
+                      <p className={`text-sm ${styles.mutedText} truncate`}>{persona.jobTitle}</p>
+                    </div>
                   </div>
+                  <IconButton
+                    aria-label="Change agent"
+                    variant="ghost"
+                    onClick={() => setShowAgentSelectorOverlay(!showAgentSelectorOverlay)}
+                  >
+                    <svg
+                      className={`h-5 w-5 transition-transform ${showAgentSelectorOverlay ? 'rotate-180' : ''}`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </IconButton>
                 </div>
+
+                {/* Agent selector overlay */}
+                {showAgentSelectorOverlay && (
+                  <div className={`absolute top-full left-0 right-0 z-20 ${styles.cardBg} ${styles.cardBorder} border-t-0 max-h-96 overflow-y-auto shadow-lg`}>
+                    <div className="p-4">
+                      <AgentSelector
+                        agents={personas}
+                        selectedAgentId={selectedAgentId}
+                        onSelectAgent={async (newAgentId) => {
+                          if (newAgentId !== selectedAgentId) {
+                            setSelectedAgentId(newAgentId);
+
+                            if (newAgentId === 'auto-create') {
+                              setShowAgentSelectorOverlay(false);
+                              await analyzeDocument();
+                            } else {
+                              const newPersona = personas.find(p => p.id === newAgentId);
+                              if (newPersona) {
+                                setPersona(newPersona);
+                                setShowAgentSelectorOverlay(false);
+                                await restartChatWithCurrentAgent();
+                              }
+                            }
+                          } else {
+                            setShowAgentSelectorOverlay(false);
+                          }
+                        }}
+                        showAutoCreate={true}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Messages */}
@@ -1271,12 +1877,12 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
                       className={`flex flex-col ${message.personaId === 'user' ? 'items-end' : 'items-start'}`}
                     >
                       <div
-                        className={`flex ${message.personaId === 'user' ? 'justify-end' : 'justify-start'}`}
+                        className={`flex ${message.personaId === 'user' ? 'justify-end' : 'justify-start'} max-w-[80%] ${message.personaId === 'user' ? 'ml-auto' : 'mr-auto'}`}
                       >
                         <div
-                          className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                          className={`rounded-lg px-4 py-2 ${
                             message.personaId === 'user'
-                              ? `${styles.primaryButton} ${styles.primaryButtonText}`
+                              ? `bg-blue-600 text-white`
                               : message.type === 'system'
                                 ? `${styles.contentBg} ${styles.mutedText} text-sm italic`
                                 : message.type === 'action'

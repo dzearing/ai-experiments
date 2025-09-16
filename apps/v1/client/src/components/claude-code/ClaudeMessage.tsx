@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useCallback } from 'react';
 import { ChatBubble } from '../chat/ChatBubble';
 import { ToolExecution } from '../chat/ToolExecution';
 import { SuggestedResponses } from '../chat/SuggestedResponses';
@@ -88,6 +88,23 @@ export const ClaudeMessage = memo(function ClaudeMessage({
     }
   }
 
+  // Handle doc link clicks
+  const handleDocLinkClick = useCallback((e: MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'A' && target.dataset.docRef) {
+      e.preventDefault();
+      const docRef = target.dataset.docRef;
+
+      // Emit a custom event that can be caught by the parent components
+      const event = new CustomEvent('doc-link-clicked', {
+        detail: { docRef },
+        bubbles: true,
+        composed: true
+      });
+      target.dispatchEvent(event);
+    }
+  }, []);
+
   const formatContent = useMemo(
     () => (content: string) => {
       const html = parseMarkdown(content);
@@ -95,10 +112,11 @@ export const ClaudeMessage = memo(function ClaudeMessage({
         <div
           className="prose prose-sm max-w-none dark:prose-invert markdown-content"
           dangerouslySetInnerHTML={{ __html: html }}
+          onClick={handleDocLinkClick as any}
         />
       );
     },
-    []
+    [handleDocLinkClick]
   );
 
   // Show thinking indicator for streaming messages

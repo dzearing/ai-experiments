@@ -11,6 +11,29 @@ export function parseMarkdown(content: string): string {
     // Pre-process content to fix common URL issues
     let processedContent = content;
 
+    // Handle special doc: links (e.g., [Task 1](doc:Display a save icon on each discarded work item))
+    // These should be rendered as clickable links that trigger navigation
+    processedContent = processedContent.replace(
+      /\[([^\]]+)\]\(doc:([^)]+)\)/g,
+      (_match, linkText, docRef) => {
+        // Create a special link that will be handled by a click event
+        const safeDocRef = docRef.trim().replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        const safeLinkText = linkText.trim().replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        return `<a href="#" data-doc-ref="${safeDocRef}" class="doc-link">${safeLinkText}</a>`;
+      }
+    );
+
+    // Also handle malformed doc links that might come from the server
+    // Pattern: 'section name'(doc: text) or "section name"(doc: text)
+    processedContent = processedContent.replace(
+      /['"]([^'"]+)['"]\s*\(doc:\s*([^)]+)\)/g,
+      (_match, linkText, docRef) => {
+        const safeDocRef = docRef.trim().replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        const safeLinkText = linkText.trim().replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        return `<a href="#" data-doc-ref="${safeDocRef}" class="doc-link">${safeLinkText}</a>`;
+      }
+    );
+
     // Fix URLs with angle brackets like <github.com/user/repo>
     processedContent = processedContent.replace(
       /<((?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})>/g,
@@ -104,6 +127,18 @@ export function parseMarkdown(content: string): string {
     // Post-process links to fix any remaining issues
     html = html.replace(/<a ([^>]*href=")([^"]+)("[^>]*)>/g, (_match, before, href, after) => {
       let cleanHref = href.trim();
+
+      // Skip doc-link processing (already handled)
+      if (cleanHref === '#' && after.includes('data-doc-ref=')) {
+        // Add styling for doc links
+        if (!after.includes('class=')) {
+          after = after.replace(
+            'class="doc-link"',
+            'class="doc-link text-blue-600 dark:text-blue-400 hover:underline cursor-pointer font-medium"'
+          );
+        }
+        return `<a ${before}${cleanHref}${after}>`;
+      }
 
       // Remove any remaining angle brackets
       cleanHref = cleanHref.replace(/^&lt;|&gt;$/g, '');

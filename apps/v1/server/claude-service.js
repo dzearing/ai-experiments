@@ -151,19 +151,20 @@ Create an agent specification and return it as JSON:
   "expertise": ["List 5-7 specific skills as an array of strings"],
   "agentPrompt": "A markdown string with the full specification. Use \\n for line breaks. Include sections for: Agent Overview, Core Capabilities, Input Requirements, Output Deliverables, Working Process, and Integration Points.",
   "loadingMessages": [
-    "Create 5 unique loading messages in third person, referencing the agent by their first name",
+    "Create exactly 15 unique loading messages in third person, referencing the agent by their first name",
     "Each message should be short (under 50 characters), personality-driven, and role-specific",
-    "Messages should describe what the agent is doing to prepare",
-    "Example for a developer named Sarah: 'Sarah is setting up her development environment...'",
-    "Example for a designer named Alex: 'Alex is organizing his design workspace...'"
+    "Messages should describe different activities the agent is doing to prepare",
+    "Include variety: some technical, some personality-driven, some role-specific",
+    "Example for a developer named Sarah: 'Sarah is setting up her development environment...', 'Sarah is reviewing the codebase...', 'Sarah is loading debugging tools...'",
+    "Example for a designer named Alex: 'Alex is organizing his design workspace...', 'Alex is gathering inspiration...', 'Alex is preparing color palettes...'"
   ]
 }
 
 Example structure for agentPrompt field:
 "# Name - Title\\n\\n## Agent Overview\\n- Name: ...\\n- Job Title: ...\\n\\n## Core Capabilities\\n- Skill 1\\n- Skill 2\\n\\n## Input Requirements\\n- Requirement 1\\n- Requirement 2\\n\\n## Output Deliverables\\n- Output 1\\n- Output 2\\n\\n## Working Process\\n1. Step 1\\n2. Step 2\\n\\n## Integration Points\\n- Integration 1\\n- Integration 2"
 
-Example loadingMessages for a developer agent named Sarah:
-["Sarah is setting up her development environment...", "Sarah is loading code analysis tools...", "Sarah is checking the latest documentation...", "Sarah is preparing her debugging toolkit...", "Sarah is syncing with the codebase..."]
+Example loadingMessages for a developer agent named Sarah (provide 15):
+["Sarah is setting up her development environment...", "Sarah is loading code analysis tools...", "Sarah is checking the latest documentation...", "Sarah is preparing her debugging toolkit...", "Sarah is syncing with the codebase...", "Sarah is analyzing project structure...", "Sarah is reviewing recent commits...", "Sarah is configuring her IDE...", "Sarah is loading test frameworks...", "Sarah is checking dependency versions...", "Sarah is optimizing her workspace...", "Sarah is gathering project requirements...", "Sarah is loading code templates...", "Sarah is preparing review guidelines...", "Sarah is organizing her notes..."]
 
 Remember: Return ONLY the JSON object, nothing else.`;
 
@@ -247,17 +248,28 @@ Remember: Return ONLY the JSON object, nothing else.`;
             agentPromptMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"') :
             `# ${nameMatch[1]} - ${jobTitleMatch[1]}\n\n## Agent Overview\n- **Name**: ${nameMatch[1]}\n- **Job Title**: ${jobTitleMatch[1]}\n- **Agent Type**: ${typeMatch[1]}\n\n## Core Capabilities\n${expertise.map(e => `- ${e}`).join('\n')}`;
           
+          const firstName = nameMatch[1].split(' ')[0];
           return {
             name: nameMatch[1],
             type: typeMatch[1],
             jobTitle: jobTitleMatch[1],
             expertise,
             loadingMessages: [
-              `${nameMatch[1].split(' ')[0]} is preparing the workspace...`,
-              `${nameMatch[1].split(' ')[0]} is getting ready to assist...`,
-              `${nameMatch[1].split(' ')[0]} is loading tools and resources...`,
-              `${nameMatch[1].split(' ')[0]} is setting up for the conversation...`,
-              `${nameMatch[1].split(' ')[0]} is organizing thoughts...`
+              `${firstName} is preparing the workspace...`,
+              `${firstName} is getting ready to assist...`,
+              `${firstName} is loading tools and resources...`,
+              `${firstName} is setting up for the conversation...`,
+              `${firstName} is organizing thoughts...`,
+              `${firstName} is reviewing project details...`,
+              `${firstName} is analyzing requirements...`,
+              `${firstName} is checking best practices...`,
+              `${firstName} is preparing recommendations...`,
+              `${firstName} is loading reference materials...`,
+              `${firstName} is calibrating approach...`,
+              `${firstName} is gathering insights...`,
+              `${firstName} is preparing analysis tools...`,
+              `${firstName} is organizing priorities...`,
+              `${firstName} is finalizing preparations...`
             ],
             agentPrompt
           };
@@ -285,7 +297,17 @@ Remember: Return ONLY the JSON object, nothing else.`;
             'Alex is loading development tools...',
             'Alex is reviewing project requirements...',
             'Alex is preparing technical resources...',
-            'Alex is getting ready to assist...'
+            'Alex is getting ready to assist...',
+            'Alex is analyzing the problem space...',
+            'Alex is checking documentation...',
+            'Alex is organizing the approach...',
+            'Alex is loading best practices...',
+            'Alex is preparing recommendations...',
+            'Alex is gathering relevant examples...',
+            'Alex is setting up analysis tools...',
+            'Alex is reviewing similar cases...',
+            'Alex is calibrating expertise...',
+            'Alex is finalizing preparations...'
           ],
           agentPrompt: `# ${fallbackName} - ${fallbackJobTitle}
 
@@ -1327,14 +1349,16 @@ Respond with exactly this JSON structure:
 
       // If user is responding to a suggestion
       if (isRespondingToSuggestion) {
+        // Only accept explicit confirmation to apply changes
         const userAgreed =
-          userMessage.toLowerCase().includes('yes') ||
-          userMessage.toLowerCase().includes('apply') ||
-          userMessage.toLowerCase().includes('ok') ||
-          userMessage.toLowerCase().includes('sure') ||
-          userMessage.toLowerCase().includes('please');
+          userMessage.toLowerCase() === 'apply change' ||
+          userMessage.toLowerCase() === 'make these changes' ||
+          userMessage.toLowerCase() === 'apply these changes' ||
+          userMessage.toLowerCase() === 'yes, apply this change' ||
+          userMessage.toLowerCase().includes('apply the change') ||
+          userMessage.toLowerCase().includes('make the change');
 
-        console.log('User agreed?', userAgreed);
+        console.log('User explicitly agreed to apply changes?', userAgreed);
 
         if (userAgreed) {
           // Return an action response indicating changes should be applied
@@ -1403,9 +1427,16 @@ User: ${userMessage}
 
 IMPORTANT: Check if the user is responding to your previous suggestion:
 - Look at the most recent message from you (${persona.name})
-- If it was marked [suggestion] and the user is now agreeing (yes, apply, ok, sure, please, etc.)
-- Then you MUST return type: "action" with action: "apply-changes"
+- If it was marked [suggestion] and the user EXPLICITLY says one of these exact phrases:
+  - "Make these changes"
+  - "Apply change"
+  - "Apply these changes"
+  - "Yes, apply this change"
+  - "Apply the change"
+  - "Make the change"
+- Then and ONLY then return type: "action" with action: "apply-changes"
 - Include the FULL suggestion content in suggestionToApply field
+- DO NOT apply changes for generic responses like "ok", "yes", "sure", etc.
 
 Example flow:
 ${persona.name} [suggestion]: "In Task 2, we should add API endpoint specifications..."
@@ -1422,11 +1453,19 @@ Provide a helpful response following these rules:
    - Use **bold** for emphasis
    - Use \`inline code\` for code snippets or technical terms
    - Use *italics* for subtle emphasis
-4. CRITICAL: If the user agrees to apply your MOST RECENT suggestion (says yes, apply, ok, sure, please, etc.):
+4. CRITICAL: If the user EXPLICITLY agrees to apply your MOST RECENT suggestion with one of these exact phrases:
+   - "Make these changes"
+   - "Apply change"
+   - "Apply these changes"
+   - "Yes, apply this change"
+   - "Apply the change"
+   - "Make the change"
+   Then:
    - Return type: "action"
    - Set action: "apply-changes"
    - Include the FULL content of your previous suggestion in suggestionToApply field
    - Your response should acknowledge you're applying the changes
+   For any other response (including "ok", "yes", "sure"), just continue the conversation normally
 5. For regular conversation, set type to "message"
 
 CRITICAL JSON FORMATTING RULES:

@@ -3923,12 +3923,74 @@ ${expertise.map(skill => `- ${skill}`).join('\n')}
 - **Communication**: Async updates via comments and synchronous via meetings
 - **Other Agents**: Collaborates with designers, testers, and project managers`;
 
+      // Generate 15 loading messages for the mock agent
+      const firstName = agentName.split(' ')[0];
+      const loadingMessages = [];
+
+      if (type === 'designer') {
+        loadingMessages.push(
+          `${firstName} is organizing design tools...`,
+          `${firstName} is reviewing design patterns...`,
+          `${firstName} is preparing the creative workspace...`,
+          `${firstName} is loading style guides...`,
+          `${firstName} is gathering visual inspiration...`,
+          `${firstName} is checking color palettes...`,
+          `${firstName} is loading typography systems...`,
+          `${firstName} is preparing wireframe tools...`,
+          `${firstName} is reviewing UX principles...`,
+          `${firstName} is setting up prototyping tools...`,
+          `${firstName} is analyzing design trends...`,
+          `${firstName} is loading component libraries...`,
+          `${firstName} is preparing feedback tools...`,
+          `${firstName} is organizing design assets...`,
+          `${firstName} is finalizing design setup...`
+        );
+      } else if (type === 'tester') {
+        loadingMessages.push(
+          `${firstName} is setting up test frameworks...`,
+          `${firstName} is preparing test scenarios...`,
+          `${firstName} is loading quality metrics...`,
+          `${firstName} is checking test coverage tools...`,
+          `${firstName} is reviewing edge cases...`,
+          `${firstName} is analyzing test patterns...`,
+          `${firstName} is loading automation tools...`,
+          `${firstName} is preparing bug tracking...`,
+          `${firstName} is reviewing test standards...`,
+          `${firstName} is setting up test data...`,
+          `${firstName} is checking regression suites...`,
+          `${firstName} is loading performance tools...`,
+          `${firstName} is organizing test plans...`,
+          `${firstName} is preparing validation criteria...`,
+          `${firstName} is finalizing test setup...`
+        );
+      } else {
+        // Default developer messages
+        loadingMessages.push(
+          `${firstName} is setting up the development environment...`,
+          `${firstName} is loading code analysis tools...`,
+          `${firstName} is checking the latest documentation...`,
+          `${firstName} is preparing the debugging toolkit...`,
+          `${firstName} is syncing with the codebase...`,
+          `${firstName} is analyzing project structure...`,
+          `${firstName} is reviewing coding standards...`,
+          `${firstName} is loading build tools...`,
+          `${firstName} is checking dependencies...`,
+          `${firstName} is preparing IDE settings...`,
+          `${firstName} is reviewing architecture patterns...`,
+          `${firstName} is loading version control...`,
+          `${firstName} is setting up linters...`,
+          `${firstName} is organizing development notes...`,
+          `${firstName} is finalizing environment setup...`
+        );
+      }
+
       return res.json({
         name: agentName,
         type,
         jobTitle,
         expertise,
-        agentPrompt
+        agentPrompt,
+        loadingMessages
       });
     }
     
@@ -3941,6 +4003,256 @@ ${expertise.map(skill => `- ${skill}`).join('\n')}
     res.status(500).json({ 
       error: 'Failed to generate agent specification',
       details: error.message 
+    });
+  }
+});
+
+app.post('/api/claude/agent-analyze', async (req, res) => {
+  try {
+    const { documentContent, workItem, persona } = req.body;
+
+    if (!documentContent || !workItem || !persona) {
+      return res.status(400).json({ error: 'Document content, work item, and persona are required' });
+    }
+
+    console.log('Agent analyze endpoint - persona:', persona.name, 'work item:', workItem.title);
+
+    // Construct a system prompt that uses the agent's prompt if available
+    let systemPrompt = '';
+    if (persona.agentPrompt) {
+      systemPrompt = persona.agentPrompt;
+    } else if (persona.roleSummary) {
+      systemPrompt = `You are ${persona.name}, ${persona.jobTitle}. ${persona.roleSummary}`;
+    } else {
+      systemPrompt = `You are ${persona.name}, a ${persona.jobTitle} with expertise in ${persona.expertise.join(', ')}.`;
+    }
+
+    // Create the analysis request
+    const analysisPrompt = `${systemPrompt}
+
+You are reviewing the following work item document:
+
+Title: ${workItem.title}
+Description: ${workItem.description}
+
+Document Content:
+${documentContent}
+
+Please carefully analyze this document and identify specific areas that could be improved based on your expertise.
+
+First, thoroughly read through the entire document. Then:
+
+1. Identify ALL concrete improvements (aim for 3-5 but be specific with the count)
+2. For each improvement, quote the EXACT text from the document
+3. Explain specifically what could be better
+4. Provide actionable suggestions
+
+IMPORTANT: You MUST return a valid JSON response with this exact structure:
+{
+  "introduction": "Hi! I'm [your name]. I've reviewed your [document type] and found exactly [X] areas where we can make improvements. Here's my first suggestion:\n\nIn the section [section name](doc:section name), I notice [specific issue]. I suggest [specific improvement].",
+  "suggestions": [
+    {
+      "content": "In the section [section name](doc:section name), I notice [specific issue]. I suggest [specific improvement].",
+      "type": "change",
+      "suggestedChange": "The exact replacement text if applicable",
+      "section": "Section name"
+    }
+  ]
+}
+
+CRITICAL FORMATTING RULES FOR LINKS:
+- Use markdown link format: [link text](doc:search text)
+- The link text and search text should be THE SAME - the section name or heading
+- Example: [Overall goals](doc:Overall goals)
+- Example: [Task 1](doc:Task 1)
+- Example: [Description](doc:Description)
+- DO NOT include the content under the section in the doc reference
+- DO NOT use quotes around the section name
+- The doc reference should help locate the SECTION HEADING, not its content
+
+CRITICAL REQUIREMENTS:
+- Count the EXACT number of suggestions you're providing
+- Include the FIRST suggestion directly in the introduction after stating the count
+- The first suggestion in the introduction should be the same as suggestions[0]
+
+If the document is already well-written, still return the JSON format but with suggestions like:
+{
+  "introduction": "Hi! I'm [your name]. I've thoroughly reviewed your document and it's well-structured. I have exactly 2 minor suggestions that could enhance it further. Here's the first:\n\n[The document](doc:comprehensive and well-organized) is excellent. You might consider adding [specific enhancement] to make it even clearer.",
+  "suggestions": [
+    {
+      "content": "The document is comprehensive and well-organized. You might consider adding [specific enhancement] to make it even clearer.",
+      "type": "suggestion",
+      "section": "General"
+    }
+  ]
+}
+
+Return ONLY the JSON object, no other text before or after.`;
+
+    // Call Claude directly to analyze the document
+    const { claude } = require('@instantlyeasy/claude-code-sdk-ts');
+    const response = await claude()
+      .withModel('claude-3-5-sonnet-20241022')
+      .query(analysisPrompt)
+      .asText();
+
+    // Try to parse as JSON
+    try {
+      // Extract JSON from the response
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+
+        // Ensure we have the expected structure
+        if (!parsed.suggestions) {
+          parsed.suggestions = [];
+        }
+
+        res.json(parsed);
+      } else {
+        // Fallback if not JSON - create structured response
+        res.json({
+          introduction: `Hi! I'm ${persona.name}, your ${persona.jobTitle}. I've reviewed your document.`,
+          suggestions: [{
+            content: response,
+            type: 'suggestion',
+            section: 'General'
+          }]
+        });
+      }
+    } catch (parseError) {
+      console.error('Error parsing agent analysis response:', parseError);
+
+      // Fallback response
+      res.json({
+        introduction: `Hi! I'm ${persona.name}, your ${persona.jobTitle}. I've reviewed your document and have some suggestions.`,
+        suggestions: [{
+          content: response,
+          type: 'suggestion',
+          section: 'General'
+        }]
+      });
+    }
+  } catch (error) {
+    console.error('Error analyzing document:', error);
+    res.status(500).json({
+      error: 'Failed to analyze document',
+      details: error.message
+    });
+  }
+});
+
+app.post('/api/claude/agent-review', async (req, res) => {
+  try {
+    const { documentContent, workItem, persona } = req.body;
+
+    if (!documentContent || !workItem || !persona) {
+      return res.status(400).json({ error: 'Document content, work item, and persona are required' });
+    }
+
+    console.log('Agent review endpoint - persona:', persona.name, 'work item:', workItem.title);
+
+    // Construct a system prompt that uses the agent's prompt if available
+    let systemPrompt = '';
+    if (persona.agentPrompt) {
+      systemPrompt = persona.agentPrompt;
+    } else if (persona.roleSummary) {
+      systemPrompt = `You are ${persona.name}, ${persona.jobTitle}. ${persona.roleSummary}`;
+    } else {
+      systemPrompt = `You are ${persona.name}, a ${persona.jobTitle} with expertise in ${persona.expertise.join(', ')}.`;
+    }
+
+    // Create the review request
+    const reviewPrompt = `${systemPrompt}
+
+You have been asked to review the following work item document:
+
+Title: ${workItem.title}
+Description: ${workItem.description}
+
+Document Content:
+${documentContent}
+
+Please analyze the document thoroughly and provide:
+1. A brief, friendly greeting introducing yourself (1-2 sentences)
+2. The TOTAL NUMBER of suggestions you have for improving this document (be specific with the count)
+3. Your FIRST specific, actionable suggestion for improvement based on your expertise
+
+Format your response as:
+GREETING: [Your introduction]
+TOTAL_SUGGESTIONS: [number]
+FIRST_SUGGESTION: [Your first detailed suggestion]
+
+Focus on providing value immediately with concrete suggestions they can apply.`;
+
+    const response = await claudeService.sendMessage(reviewPrompt, 'claude-3-5-sonnet-20241022');
+
+    // Parse the new structured response format
+    let greeting = '';
+    let totalSuggestions = 0;
+    let firstSuggestion = '';
+
+    // Try to parse the structured format
+    const greetingMatch = response.match(/GREETING:\s*(.+?)(?=\nTOTAL_SUGGESTIONS:|$)/s);
+    const totalMatch = response.match(/TOTAL_SUGGESTIONS:\s*(\d+)/);
+    const suggestionMatch = response.match(/FIRST_SUGGESTION:\s*(.+?)$/s);
+
+    if (greetingMatch) {
+      greeting = greetingMatch[1].trim();
+    }
+    if (totalMatch) {
+      totalSuggestions = parseInt(totalMatch[1], 10);
+    }
+    if (suggestionMatch) {
+      firstSuggestion = suggestionMatch[1].trim();
+    }
+
+    // Fallback parsing if structured format fails
+    if (!greeting || !firstSuggestion) {
+      const lines = response.split('\n').filter(line => line.trim());
+      let inGreeting = true;
+
+      for (const line of lines) {
+        if (inGreeting && (line.toLowerCase().includes('review') || line.startsWith('2.') || line.length > 200)) {
+          inGreeting = false;
+        }
+
+        if (inGreeting && !greeting) {
+          greeting = line.trim();
+        } else if (!inGreeting) {
+          firstSuggestion += (firstSuggestion ? '\n' : '') + line;
+        }
+      }
+    }
+
+    // Default values if parsing completely failed
+    if (!greeting) {
+      greeting = `Hello! I'm ${persona.name}, your ${persona.jobTitle}.`;
+    }
+    if (!firstSuggestion) {
+      firstSuggestion = response; // Use full response if parsing failed
+    }
+
+    // Construct the complete review message with count and first suggestion
+    let review = '';
+    if (totalSuggestions > 0) {
+      const suggestionText = totalSuggestions === 1 ? 'suggestion' : 'suggestions';
+      review = `I have ${totalSuggestions} ${suggestionText} for improving your document. Here's the first one:\n\n${firstSuggestion}`;
+    } else {
+      review = firstSuggestion;
+    }
+
+    res.json({
+      greeting: greeting.trim(),
+      review: review.trim(),
+      totalSuggestions: totalSuggestions,
+      type: 'suggestion'
+    });
+  } catch (error) {
+    console.error('Error getting agent review:', error);
+    res.status(500).json({
+      error: 'Failed to get agent review',
+      details: error.message
     });
   }
 });

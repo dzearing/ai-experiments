@@ -12,6 +12,7 @@
   --accentColorAlpha: 1;
   --basePageBg: 255, 255, 255; /* White */
   --basePageBgAlpha: 1;
+  --baseBg: #f0f0f3; /* Light gray for inline code background */
 }
 
 .mdx-light .mdxeditor-toolbar {
@@ -44,6 +45,7 @@
   --accentColorAlpha: 1;
   --basePageBg: 10, 10, 10; /* Neutral-950 - matches sidebar */
   --basePageBgAlpha: 1;
+  --baseBg: #333333; /* Dark gray for inline code background */
 }
 
 .mdx-dark .mdxeditor-toolbar {
