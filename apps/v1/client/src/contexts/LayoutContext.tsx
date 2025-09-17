@@ -10,6 +10,8 @@ export type HeaderContent = string | BreadcrumbItem[] | null;
 interface LayoutContextType {
   headerTitle: string | null;
   setHeaderTitle: (title: string | null) => void;
+  headerSubtitle: string | null;
+  setHeaderSubtitle: (subtitle: string | null) => void;
   headerContent: HeaderContent;
   setHeaderContent: (content: HeaderContent) => void;
 }
@@ -18,6 +20,7 @@ const LayoutContext = createContext<LayoutContextType | undefined>(undefined);
 
 export function LayoutProvider({ children }: { children: ReactNode }) {
   const [headerTitle, setHeaderTitle] = useState<string | null>(null);
+  const [headerSubtitle, setHeaderSubtitle] = useState<string | null>(null);
   const [headerContent, setHeaderContent] = useState<HeaderContent>(null);
 
   return (
@@ -25,6 +28,8 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
       value={{
         headerTitle,
         setHeaderTitle,
+        headerSubtitle,
+        setHeaderSubtitle,
         headerContent,
         setHeaderContent,
       }}

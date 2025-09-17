@@ -13,7 +13,7 @@ export function Breadcrumb({ items }: BreadcrumbProps) {
   if (items.length === 0) return null;
 
   return (
-    <nav className="flex items-center gap-2" aria-label="Breadcrumb">
+    <nav className="flex items-center gap-2 text-xl font-semibold" aria-label="Breadcrumb">
       {items.map((item, index) => {
         const isLast = index === items.length - 1;
 
@@ -32,7 +32,7 @@ export function Breadcrumb({ items }: BreadcrumbProps) {
 
             {!isLast && (
               <svg
-                className={`w-4 h-4 ${styles.mutedText}`}
+                className={`w-5 h-5 ${styles.mutedText}`}
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"

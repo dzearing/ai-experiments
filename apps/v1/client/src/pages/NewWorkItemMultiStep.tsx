@@ -995,7 +995,7 @@ ${existingWorkItem.description || 'No description provided'}
     <div className={`grid grid-cols-1 lg:grid-cols-3 gap-6 ${isEditMode ? 'h-full' : ''}`}>
       {/* Left Panel - General Details and Task List */}
       <div
-        className={`lg:col-span-1 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-4 flex flex-col ${isEditMode ? 'h-full' : ''}`}
+        className={`lg:col-span-1 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} py-3 pl-3 pr-2 flex flex-col ${isEditMode ? 'h-full' : ''}`}
       >
         {/* General Details Section */}
         <div className="mb-4">
@@ -1201,7 +1201,7 @@ ${existingWorkItem.description || 'No description provided'}
                     }
                   }
                 }}
-                contentEditableClassName="prose prose-neutral dark:prose-invert max-w-none p-4"
+                contentEditableClassName="prose prose-neutral dark:prose-invert max-w-none py-3 pl-2 pr-3"
                 plugins={[
                   headingsPlugin(),
                   listsPlugin(),

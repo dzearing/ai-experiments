@@ -62,12 +62,18 @@ export function AnimatedTransition({
     // Create unique key for this transition
     const newKey = `${transitionKey}-${Date.now()}`;
 
-    // Mark all existing items as exiting
+    // Clear all existing timeouts
+    timeoutsRef.current.forEach((timeout) => clearTimeout(timeout));
+    timeoutsRef.current.clear();
+
+    // Set new items with proper states
     setItems((current) => {
-      const exitingItems = current.map((item) => ({
-        ...item,
-        state: 'exiting' as const,
-      }));
+      // Only keep items that are currently active or entering
+      // This prevents stale exiting items from previous transitions
+      const activeItems = current.filter((item) => item.state === 'active' || item.state === 'entering');
+
+      // Mark current active/entering as exiting
+      const exitingItems = activeItems.map((item) => ({ ...item, state: 'exiting' as const }));
 
       // Add new item as entering
       const newItem: AnimationItem = {
@@ -79,12 +85,6 @@ export function AnimatedTransition({
 
       return [...exitingItems, newItem];
     });
-
-    // Clear any existing timeout for this key
-    const existingTimeout = timeoutsRef.current.get(newKey);
-    if (existingTimeout) {
-      clearTimeout(existingTimeout);
-    }
 
     // Transition new item to active after delay
     const activateTimeout = setTimeout(() => {
@@ -98,22 +98,10 @@ export function AnimatedTransition({
     // Remove exiting items after animation completes
     const cleanupTimeout = setTimeout(() => {
       setItems((current) => current.filter((item) => item.state !== 'exiting'));
-
-      // Clean up timeout references
-      timeoutsRef.current.delete(`${newKey}-activate`);
-      timeoutsRef.current.delete(`${newKey}-cleanup`);
-    }, 300 + delay); // 300ms for exit animation + delay
+    }, 300); // Standard animation duration
 
     timeoutsRef.current.set(`${newKey}-cleanup`, cleanupTimeout);
   }, [transitionKey, children, delay]);
-
-  const containerClasses = centered
-    ? `relative flex items-center justify-center ${className}`
-    : `relative ${className}`;
-
-  const contentClasses = centered
-    ? 'absolute inset-0 flex items-center justify-center'
-    : 'absolute inset-0';
 
   const getTransform = (state: AnimationItem['state'], reverse: boolean) => {
     switch (state) {
@@ -126,16 +114,40 @@ export function AnimatedTransition({
     }
   };
 
+  // For non-centered content (like headers)
+  if (!centered) {
+    return (
+      <div className={`relative overflow-hidden h-full ${className}`} style={{ minHeight: '3rem' }}>
+        {items.map((item) => (
+          <div
+            key={item.key}
+            className={item.state === 'active' ? '' : 'absolute top-0 left-0 right-0'}
+            style={{
+              opacity: item.state === 'active' ? 1 : 0,
+              transform: getTransform(item.state, reverse),
+              transition: `all 200ms cubic-bezier(0.4, 0, 0.2, 1)`,
+              pointerEvents: item.state === 'active' ? 'auto' : 'none',
+              height: '100%',
+            }}
+          >
+            {item.content}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // For centered content, use absolute positioning
   return (
-    <div className={containerClasses}>
+    <div className={`relative flex items-center justify-center ${className}`}>
       {items.map((item) => (
         <div
           key={item.key}
-          className={contentClasses}
+          className="absolute inset-0 flex items-center justify-center"
           style={{
             opacity: item.state === 'active' ? 1 : 0,
             transform: getTransform(item.state, reverse),
-            transition: `all 300ms cubic-bezier(0.4, 0, 0.2, 1)`,
+            transition: `all 200ms cubic-bezier(0.4, 0, 0.2, 1)`,
             pointerEvents: item.state === 'active' ? 'auto' : 'none',
           }}
         >

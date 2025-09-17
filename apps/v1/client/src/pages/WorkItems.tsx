@@ -20,8 +20,7 @@ export function WorkItems() {
   const navigate = useNavigate();
   const location = useLocation();
   const styles = currentStyles;
-  const [filter, setFilter] = useState<'all' | 'discarded' | WorkItem['status']>('all');
-  const [sortBy, setSortBy] = useState<'priority' | 'dueDate' | 'created'>('priority');
+  const [filter, setFilter] = useState<'active' | 'discarded'>('active');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [workItemToDelete, setWorkItemToDelete] = useState<WorkItem | null>(null);
   const hasReloadedRef = useRef(false);
@@ -128,92 +127,54 @@ export function WorkItems() {
   };
 
   const filteredItems = workItems.filter((item) => {
-    
-    if (filter === 'all') {
+    if (filter === 'active') {
       // Show all non-discarded items
       return !item.markdownPath?.includes('/discarded/');
-    } else if (filter === 'discarded') {
+    } else {
       // Show only discarded items
       return item.markdownPath?.includes('/discarded/');
-    } else {
-      // Show items matching the status filter (excluding discarded)
-      return item.status === filter && !item.markdownPath?.includes('/discarded/');
     }
   });
 
+  // Sort by last modified date (most recent first)
   const sortedItems = [...filteredItems].sort((a, b) => {
-    switch (sortBy) {
-      case 'priority':
-        const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-        return priorityOrder[a.priority] - priorityOrder[b.priority];
-      case 'dueDate':
-        return 0; // dueDate not implemented yet
-      case 'created':
-        return b.createdAt.getTime() - a.createdAt.getTime();
-      default:
-        return 0;
-    }
+    return b.updatedAt.getTime() - a.updatedAt.getTime();
   });
 
   return (
     <div>
-      <div className="flex justify-between items-start mb-6">
-        <div>
-          <h1 className={`text-2xl font-bold ${styles.headingColor}`}>Work items</h1>
-          <p className={`mt-1 ${styles.mutedText}`}>
-            Track and manage all your tasks across projects.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          {workItems.length > 0 && (
-            <Button as={Link} to="/work-items/new" variant="primary">
-              Create work item
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* Filters and Sorting */}
+      {/* Command Bar */}
       <div
         className={`
         ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius}
         ${styles.cardShadow} p-4 mb-6
       `}
       >
-        <div className="flex flex-wrap gap-4 items-center">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button as={Link} to="/work-items/new" variant="primary">
+              Create work item
+            </Button>
+          </div>
+
           <div className="flex items-center gap-2">
             <span className={`text-sm font-medium ${styles.textColor}`}>Status:</span>
             <div className="flex gap-1">
-              {(['all', 'planned', 'active', 'in-review', 'blocked', 'completed', 'discarded'] as const).map(
-                (status) => (
-                  <Button
-                    key={status}
-                    onClick={() => setFilter(status)}
-                    variant={filter === status ? 'primary' : 'secondary'}
-                    size="sm"
-                  >
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
-                  </Button>
-                )
-              )}
+              <Button
+                onClick={() => setFilter('active')}
+                variant={filter === 'active' ? 'primary' : 'secondary'}
+                size="sm"
+              >
+                Active
+              </Button>
+              <Button
+                onClick={() => setFilter('discarded')}
+                variant={filter === 'discarded' ? 'primary' : 'secondary'}
+                size="sm"
+              >
+                Discarded
+              </Button>
             </div>
-          </div>
-
-          <div className="flex items-center gap-2 ml-auto">
-            <span className={`text-sm font-medium ${styles.textColor}`}>Sort by:</span>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              className={`
-                px-3 py-1 text-sm ${styles.buttonRadius}
-                ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
-                focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500
-              `}
-            >
-              <option value="priority">Priority</option>
-              <option value="dueDate">Due Date</option>
-              <option value="created">Created</option>
-            </select>
           </div>
         </div>
       </div>
@@ -270,11 +231,11 @@ export function WorkItems() {
           </svg>
           <h3 className={`mt-4 text-lg font-medium ${styles.headingColor}`}>No work items found</h3>
           <p className={`mt-2 ${styles.mutedText}`}>
-            {filter === 'all'
+            {filter === 'active'
               ? 'Get started by creating your first work item.'
               : `No ${filter} work items.`}
           </p>
-          {filter === 'all' && (
+          {filter === 'active' && (
             <div className="mt-6">
               <Button as={Link} to="/work-items/new" variant="primary">
                 Create work item
@@ -319,7 +280,13 @@ export function WorkItems() {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     {project && (
-                      <div className={`text-sm ${styles.mutedText} mb-1`}>{project.name}</div>
+                      <div className={`text-sm ${styles.mutedText} mb-1 flex items-center gap-3`}>
+                        <span>{project.name}</span>
+                        <span>•</span>
+                        <span>Created: {item.createdAt.toLocaleDateString()}</span>
+                        <span>•</span>
+                        <span>Modified: {item.updatedAt.toLocaleDateString()}</span>
+                      </div>
                     )}
                     <div className="flex items-center gap-3 mb-2">
                       <span className="text-lg">{getPriorityIcon(item.priority)}</span>
@@ -336,56 +303,7 @@ export function WorkItems() {
                       </span>
                     </div>
 
-                    {/* Show sub-tasks if they exist */}
-                    {item.metadata?.tasks && item.metadata.tasks.length > 0 ? (
-                      <div className="mb-3">
-                        <p className={`${styles.textColor} mb-2`}>
-                          Contains {item.metadata.tasks.length} sub-tasks:
-                        </p>
-                        <div className="space-y-1">
-                          {item.metadata.tasks.map((task, index) => (
-                            <div
-                              key={`${item.id}-task-${index}-${task.id || 'notask'}`}
-                              className={`flex items-center gap-2 ${styles.mutedText} text-sm`}
-                            >
-                              {/* Task status indicator */}
-                              {task.status === 'in-progress' ? (
-                                // Pulsating green circle for in-progress
-                                <div className="relative w-4 h-4 flex items-center justify-center">
-                                  <div className="absolute inset-0 bg-green-500 rounded-full animate-ping opacity-75"></div>
-                                  <div className="relative w-2 h-2 bg-green-500 rounded-full"></div>
-                                </div>
-                              ) : task.completed ? (
-                                // Green checkmark for completed
-                                <svg
-                                  className="w-4 h-4 text-green-600 dark:text-green-400"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="currentColor"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={3}
-                                    d="M5 13l4 4L19 7"
-                                  />
-                                </svg>
-                              ) : (
-                                // Simple bullet for pending
-                                <div className="w-4 h-4 flex items-center justify-center">
-                                  <div className="w-1.5 h-1.5 bg-current rounded-full opacity-60"></div>
-                                </div>
-                              )}
-                              <span className={task.completed ? 'line-through opacity-60' : ''}>
-                                {task.taskNumber || index + 1}. {task.title}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <p className={`${styles.textColor} mb-3`}>{item.description}</p>
-                    )}
+                    <p className={`${styles.textColor} mb-3`}>{item.description}</p>
 
                     {/* Checklist progress - not implemented yet */}
 

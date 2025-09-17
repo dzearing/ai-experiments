@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, Fragment, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import { useTheme } from '../contexts/ThemeContextV2';
+import { useLayout } from '../contexts/LayoutContext';
 import { Button } from '../components/ui/Button';
 import { IconButton } from '../components/ui/IconButton';
 import { LoadingSpinner, InlineLoadingSpinner } from '../components/ui/LoadingSpinner';
@@ -55,6 +56,7 @@ export function WorkItemJamSession() {
   } = useApp();
   const { currentStyles, isDarkMode } = useTheme();
   const { activeAccount } = useAuth();
+  const { setHeaderSubtitle } = useLayout();
   const styles = currentStyles;
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -116,6 +118,24 @@ export function WorkItemJamSession() {
     const randomIndex = Math.floor(Math.random() * fallbackMessages.length);
     return fallbackMessages[randomIndex];
   };
+
+  // Update header subtitle based on state
+  useEffect(() => {
+    if (isAnalyzing || isLoadingAgent) {
+      setHeaderSubtitle('Setting up review session...');
+    } else if (showAgentSelector && !persona) {
+      setHeaderSubtitle('Select an agent to begin');
+    } else if (persona && !chatStarted) {
+      setHeaderSubtitle('Agent ready to help');
+    } else if (chatStarted) {
+      setHeaderSubtitle(null); // Clear subtitle once chat is active
+    }
+
+    // Clear subtitle when component unmounts
+    return () => {
+      setHeaderSubtitle(null);
+    };
+  }, [isAnalyzing, isLoadingAgent, showAgentSelector, persona, chatStarted, setHeaderSubtitle]);
 
   // Rotate loading messages every 6 seconds
   useEffect(() => {
@@ -222,13 +242,13 @@ export function WorkItemJamSession() {
   const [bottomPadding, setBottomPadding] = useState(0);
   
   // Calculate padding and scroll to last user message
-  const scrollLastUserMessageToTop = useCallback(() => {
-    console.log('[SCROLL] scrollLastUserMessageToTop called, messages:', messages.length);
+  const scrollLastUserMessageToTop = useCallback((shouldScroll: boolean = true) => {
+    console.log('[SCROLL] scrollLastUserMessageToTop called, messages:', messages.length, 'shouldScroll:', shouldScroll);
     if (!chatContainerRef.current || messages.length === 0) {
       console.log('[SCROLL] Early return - no container or messages');
       return;
     }
-    
+
     // Find the last user message
     let lastUserMessageIndex = -1;
     for (let i = messages.length - 1; i >= 0; i--) {
@@ -237,10 +257,14 @@ export function WorkItemJamSession() {
         break;
       }
     }
-    
+
     console.log('[SCROLL] Last user message index:', lastUserMessageIndex);
-    if (lastUserMessageIndex < 0) return;
-    
+    if (lastUserMessageIndex < 0) {
+      // No user messages, remove padding
+      setBottomPadding(0);
+      return;
+    }
+
     // Wait for DOM to update
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -248,43 +272,97 @@ export function WorkItemJamSession() {
           console.log('[SCROLL] Container lost after RAF');
           return;
         }
-        
+
         const container = chatContainerRef.current;
         const messageElements = container.querySelectorAll('[data-message-id]');
         console.log('[SCROLL] Found message elements:', messageElements.length);
         const userMessageElement = messageElements[lastUserMessageIndex] as HTMLElement;
-        
+
         if (!userMessageElement) {
           console.log('[SCROLL] User message element not found at index:', lastUserMessageIndex);
           return;
         }
-        
+
+        // Get the parent div that contains both the message and its suggested responses
+        const messageContainer = userMessageElement.parentElement;
+
         // Get measurements
         const containerHeight = container.clientHeight;
-        const messageHeight = userMessageElement.offsetHeight;
         const messageTop = userMessageElement.offsetTop;
-        
+        const messageHeight = userMessageElement.offsetHeight;
+
+        // Calculate the height of all content after the user's message (including suggested responses)
+        let bottomContentHeight = 0;
+        if (messageContainer) {
+          // Get all sibling elements after the user's message container
+          let nextSibling = messageContainer.nextElementSibling;
+          while (nextSibling) {
+            if (nextSibling instanceof HTMLElement) {
+              bottomContentHeight += nextSibling.offsetHeight;
+              // Include margins
+              const style = window.getComputedStyle(nextSibling);
+              bottomContentHeight += parseFloat(style.marginTop) + parseFloat(style.marginBottom);
+            }
+            nextSibling = nextSibling.nextElementSibling;
+          }
+        }
+
         console.log('[SCROLL] Measurements:', {
           containerHeight,
           messageHeight,
-          messageTop
+          messageTop,
+          bottomContentHeight
         });
-        
-        // Calculate padding needed: container height - message height - 8px padding
-        const paddingNeeded = Math.max(0, containerHeight - messageHeight - 8);
-        console.log('[SCROLL] Setting bottom padding to:', paddingNeeded);
+
+        // Calculate how much we need to scroll to get message to 8px from top
+        const targetScrollTop = messageTop - 8;
+
+        // Calculate the total height of content in the container
+        // This includes all messages and any existing padding
+        let totalContentHeight = 0;
+        const allChildren = container.children;
+        for (let i = 0; i < allChildren.length; i++) {
+          const child = allChildren[i] as HTMLElement;
+          // Skip the padding div itself when recalculating
+          if (child.hasAttribute('style') && child.style.height && child.style.height.includes('px')) {
+            continue;
+          }
+          totalContentHeight += child.offsetHeight;
+        }
+
+        // Calculate if we need padding
+        // We need padding if the target scroll position is greater than
+        // what's possible with current content
+        const maxPossibleScroll = Math.max(0, totalContentHeight - containerHeight);
+
+        let paddingNeeded = 0;
+        if (targetScrollTop > maxPossibleScroll) {
+          // We need exactly this much extra padding to make scrolling possible
+          paddingNeeded = targetScrollTop - maxPossibleScroll;
+        }
+
+        console.log('[SCROLL] Scroll calculations:', {
+          targetScrollTop,
+          totalContentHeight,
+          containerHeight,
+          maxPossibleScroll,
+          paddingNeeded
+        });
+
         setBottomPadding(paddingNeeded);
-        
-        // Scroll to position message 8px from top
-        // Need another frame for padding to apply
-        requestAnimationFrame(() => {
-          const scrollTarget = messageTop - 8;
-          console.log('[SCROLL] Scrolling to:', scrollTarget);
-          container.scrollTo({
-            top: scrollTarget,
-            behavior: 'smooth'
+
+        // Only scroll if requested (e.g., when user sends a message)
+        if (shouldScroll) {
+          // Need another frame for padding to apply
+          requestAnimationFrame(() => {
+            const scrollTarget = messageTop - 8;
+            console.log('[SCROLL] Scrolling to:', scrollTarget);
+            container.scrollTo({
+              top: scrollTarget,
+              behavior: 'smooth'
+            });
           });
-        });
+        }
       });
     });
   }, [messages]);
@@ -294,18 +372,16 @@ export function WorkItemJamSession() {
     scrollLastUserMessageToTop();
   }, []); // Run once on mount
   
-  // When messages change, check if latest is from user
+  // When messages change, recalculate padding and scroll if needed
   useEffect(() => {
     console.log('[SCROLL] Messages changed, count:', messages.length);
     if (messages.length > 0) {
       const latestMessage = messages[messages.length - 1];
       console.log('[SCROLL] Latest message persona:', latestMessage.personaId);
-      if (latestMessage.personaId === 'user') {
-        console.log('[SCROLL] Latest is user message, triggering scroll');
-        scrollLastUserMessageToTop();
-      } else {
-        console.log('[SCROLL] Latest is not user message, no scroll');
-      }
+      // Scroll only if the latest message is from the user
+      // But always recalculate padding to adjust for new content
+      const shouldScroll = latestMessage.personaId === 'user';
+      scrollLastUserMessageToTop(shouldScroll);
     }
   }, [messages, scrollLastUserMessageToTop]);
 
@@ -352,8 +428,8 @@ export function WorkItemJamSession() {
   // Load markdown content
   useEffect(() => {
     const loadMarkdown = async () => {
-      console.log('WorkItem:', workItem);
-      console.log('WorkItem markdownPath:', workItem?.markdownPath);
+      console.log('[MARKDOWN LOAD] WorkItem:', workItem);
+      console.log('[MARKDOWN LOAD] WorkItem markdownPath:', workItem?.markdownPath);
 
       if (!workItem) {
         console.log('No work item found');
@@ -393,6 +469,7 @@ export function WorkItemJamSession() {
 
             setMarkdownContent(content);
             setEditedContent(content);
+            console.log('[MARKDOWN LOAD] Content loaded, length:', content.length);
           } else {
             const errorText = await response.text();
             console.error('Failed to load markdown:', response.status, errorText);
@@ -449,7 +526,7 @@ ${task.validationCriteria?.map((c: string) => `- ${c}`).join('\n') || '- No crit
           });
         }
 
-        console.log('Generated content length:', generatedContent.length);
+        console.log('[MARKDOWN LOAD] Generated content from metadata, length:', generatedContent.length);
         setMarkdownContent(generatedContent);
         setEditedContent(generatedContent);
       }
@@ -754,8 +831,8 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
         if (data.suggestions && data.suggestions.length > 0) {
           const firstSuggestion = data.suggestions[0];
 
-          // If it's a change suggestion, add "Make these changes"
-          if (firstSuggestion.type === 'change' || firstSuggestion.suggestedChange) {
+          // Only show "Make these changes" if we have actual replacement content
+          if (firstSuggestion.type === 'change' && firstSuggestion.suggestedChange) {
             responses.push('Make these changes');
           }
 
@@ -842,8 +919,8 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
     // Build suggested responses based on suggestion type
     const responses: string[] = [];
 
-    // If it's a change suggestion, add "Make these changes"
-    if (suggestion.type === 'change' || suggestion.suggestedChange) {
+    // Only show "Make these changes" if we have actual replacement content
+    if (suggestion.type === 'change' && suggestion.suggestedChange) {
       responses.push('Make these changes');
     }
 
@@ -1042,6 +1119,7 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
       const currentSuggestion = agentSuggestions[currentSuggestionIndex];
       console.log('[APPLY CHANGE] Current suggestion:', currentSuggestion);
       console.log('[APPLY CHANGE] Has suggestedChange:', !!currentSuggestion.suggestedChange);
+      console.log('[APPLY CHANGE] Suggestion type:', currentSuggestion.type);
 
       if (currentSuggestion.suggestedChange) {
         // Add user message
@@ -1114,6 +1192,34 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
           };
           setMessages((prev) => [...prev, confirmMessage]);
           setIsTyping(false);
+        }, 500);
+        return;
+      } else {
+        // No suggestedChange available - explain to user
+        console.log('[APPLY CHANGE] No suggestedChange field available');
+
+        // Add user message
+        const userMessage: ChatMessage = {
+          id: Date.now().toString(),
+          personaId: 'user',
+          content: message,
+          timestamp: new Date(),
+          type: 'message',
+        };
+        setMessages((prev) => [...prev, userMessage]);
+        setInputMessage('');
+
+        // Add explanation message
+        setTimeout(() => {
+          const explainMessage: ChatMessage = {
+            id: Date.now().toString(),
+            personaId: persona.id,
+            content: `I understand you'd like to apply this suggestion, but this is more of a guidance point rather than a specific text change. Would you like me to help you implement this suggestion step by step?`,
+            timestamp: new Date(),
+            type: 'message',
+            suggestedResponses: ['Yes, guide me', 'Tell me more', 'Next suggestion'],
+          };
+          setMessages((prev) => [...prev, explainMessage]);
         }, 500);
         return;
       }
@@ -1500,7 +1606,19 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
     return parts.length > 0 ? <>{parts}</> : content;
   };
 
+  // Show loading state if workItems array is empty (still loading from workspace)
+  // Only show "not found" if workItems is populated but specific item not found
   if (!workItem) {
+    const isStillLoading = workItems.length === 0;
+
+    if (isStillLoading) {
+      return (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <LoadingSpinner size="large" text="Loading work item..." />
+        </div>
+      );
+    }
+
     return (
       <div className={`p-8 text-center ${styles.textColor}`}>
         <p>Work item not found</p>
@@ -1513,36 +1631,6 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
 
   return (
     <div className="absolute inset-0 flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6 flex-shrink-0">
-        <div className="flex items-center gap-4">
-          <IconButton
-            aria-label="Back to work items"
-            variant="secondary"
-            onClick={() => navigate('/work-items')}
-          >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10 19l-7-7m0 0l7-7m-7 7h18"
-              />
-            </svg>
-          </IconButton>
-          <div>
-            <h1 className={`text-xl font-bold ${styles.headingColor}`}>
-              Review Session: {workItem.title}
-            </h1>
-            <p className={`text-sm ${styles.mutedText}`}>
-              {persona ? `With ${persona.name}` : 'Setting up review session...'}
-            </p>
-          </div>
-        </div>
-        <Button onClick={saveMarkdown} variant="primary" size="sm">
-          Save Changes
-        </Button>
-      </div>
 
       {/* Main content panel */}
       <div
@@ -1554,11 +1642,8 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
       >
         {/* Left panel - Markdown editor */}
         <div className={`w-1/2 border-r ${styles.contentBorder} flex flex-col`}>
-          <div className={`px-4 py-3 border-b ${styles.contentBorder}`}>
-            <h2 className={`font-medium ${styles.headingColor}`}>Document</h2>
-          </div>
           <div
-            className={`flex-1 flex flex-col min-h-0 ${isDarkMode ? 'mdx-dark' : 'mdx-light'} mdx-edge-to-edge relative`}
+            className={`flex-1 flex flex-col min-h-0 ${isDarkMode ? 'mdx-dark' : 'mdx-light'} mdx-edge-to-edge relative overflow-hidden`}
           >
             {editedContent && editedContent.trim() ? (
               <>
@@ -1570,7 +1655,7 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
                     console.log('Editor onChange called, new length:', newContent?.length);
                     setEditedContent(newContent);
                   }}
-                  contentEditableClassName="prose prose-neutral dark:prose-invert max-w-none p-4"
+                  contentEditableClassName="prose prose-neutral dark:prose-invert max-w-none p-3"
                   plugins={[
                     headingsPlugin(),
                     listsPlugin(),
@@ -1590,6 +1675,11 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
                           <Separator />
                           <CreateLink />
                           <InsertThematicBreak />
+                          <div style={{ marginLeft: 'auto' }}>
+                            <Button onClick={saveMarkdown} variant="primary" size="sm">
+                              Save
+                            </Button>
+                          </div>
                         </>
                       ),
                     }),
@@ -1602,7 +1692,12 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
                 )}
               </>
             ) : (
-              <div className="p-4 text-center text-gray-500">Loading document...</div>
+              <div className="p-3 text-center text-gray-500">
+                Loading document...
+                <div className="text-xs mt-2">
+                  {!editedContent ? 'No content loaded' : 'Content is empty'}
+                </div>
+              </div>
             )}
           </div>
         </div>
@@ -1612,10 +1707,7 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
           {showAgentSelector && !chatStarted ? (
             // Agent selector view
             <div className="flex-1 flex flex-col">
-              <div className={`px-4 py-3 border-b ${styles.contentBorder}`}>
-                <h2 className={`font-medium ${styles.headingColor}`}>Review Session</h2>
-              </div>
-              <div className="flex-1 overflow-y-auto p-4">
+              <div className="flex-1 overflow-y-auto p-3">
                 <AgentSelector
                   agents={personas}
                   selectedAgentId={selectedAgentId}
@@ -1623,7 +1715,7 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
                   showAutoCreate={true}
                 />
               </div>
-              <div className={`p-4 border-t ${styles.contentBorder}`}>
+              <div className={`p-3 border-t ${styles.contentBorder}`}>
                 <Button
                   onClick={startChatWithAgent}
                   disabled={!selectedAgentId}

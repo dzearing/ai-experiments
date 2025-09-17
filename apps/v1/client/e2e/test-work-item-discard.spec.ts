@@ -241,7 +241,7 @@ testWorkspaceWithWorkItems.describe('Work Item Discard Functionality', () => {
     console.log(`Work items count after discard: ${workItemsAfter}`);
     console.log(`Work item still visible: ${workItemStillVisible}`);
 
-    let immediateDisappearance = !workItemStillVisible && (workItemsAfter === workItemsBefore - 1);
+    const immediateDisappearance = !workItemStillVisible && (workItemsAfter === workItemsBefore - 1);
 
     if (!immediateDisappearance) {
       console.log('Item did not immediately disappear, trying refresh...');

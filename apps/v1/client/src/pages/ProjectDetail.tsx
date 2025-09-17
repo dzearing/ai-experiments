@@ -64,11 +64,16 @@ export function ProjectDetail() {
   const [repoToDelete, setRepoToDelete] = useState<WorkspaceRepo | null>(null);
   const [repoReservations, setRepoReservations] = useState<Map<string, string>>(new Map());
 
-  // Set breadcrumb on mount
+  // Set breadcrumb on mount and clear on unmount
   useEffect(() => {
     if (project) {
       setHeaderContent([{ label: 'Projects', path: '/projects' }, { label: project.name }]);
     }
+
+    // Clear the header content when unmounting to avoid stale data
+    return () => {
+      setHeaderContent(null);
+    };
   }, [project, setHeaderContent]);
 
   // Subscribe to repository status updates

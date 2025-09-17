@@ -37,14 +37,8 @@ export function ThemedPersonas() {
   
   return (
     <div>
-      <div className="flex justify-between items-start mb-6">
-        <div>
-          <h1 className={`text-2xl font-bold ${styles.headingColor}`}>Agents</h1>
-          <p className={`mt-1 ${styles.mutedText}`}>
-            Manage your AI agents and their assignments.
-          </p>
-        </div>
-        {personas.length > 0 && (
+      {personas.length > 0 && (
+        <div className="flex justify-end mb-6">
           <Button
             as={Link}
             to="/agents/new"
@@ -52,8 +46,8 @@ export function ThemedPersonas() {
           >
             Create new agent
           </Button>
-        )}
-      </div>
+        </div>
+      )}
       
       {/* Personas Table */}
       <div className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} overflow-hidden`}>

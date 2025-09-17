@@ -1,0 +1,10 @@
+{
+  "name": "test-v1-client-agent",
+  "description": "Test agent for V1 client",
+  "initialization": {
+    "cwd": {
+      "type": "reference",
+      "value": "project-mgmt-ux/v1-client"
+    }
+  }
+}

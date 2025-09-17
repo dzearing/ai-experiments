@@ -4045,7 +4045,7 @@ First, thoroughly read through the entire document. Then:
 1. Identify ALL concrete improvements (aim for 3-5 but be specific with the count)
 2. For each improvement, quote the EXACT text from the document
 3. Explain specifically what could be better
-4. Provide actionable suggestions
+4. Provide actionable suggestions with COMPLETE replacement content
 
 IMPORTANT: You MUST return a valid JSON response with this exact structure:
 {
@@ -4054,11 +4054,17 @@ IMPORTANT: You MUST return a valid JSON response with this exact structure:
     {
       "content": "In the section [section name](doc:section name), I notice [specific issue]. I suggest [specific improvement].",
       "type": "change",
-      "suggestedChange": "The exact replacement text if applicable",
+      "suggestedChange": "## Section Name\n\nThe COMPLETE improved version of this section in markdown format. Include ALL content for this section, not just the changed parts. This will directly replace the existing section.",
       "section": "Section name"
     }
   ]
 }
+
+CRITICAL: For type "change" suggestions, the "suggestedChange" field MUST contain:
+- The COMPLETE replacement content for the section (not just the diff)
+- Valid markdown formatting
+- All content that should be in that section after the change
+- This text will directly replace the existing content when the user clicks "Make these changes"
 
 CRITICAL FORMATTING RULES FOR LINKS:
 - Use markdown link format: [link text](doc:search text)
@@ -4081,11 +4087,13 @@ If the document is already well-written, still return the JSON format but with s
   "suggestions": [
     {
       "content": "The document is comprehensive and well-organized. You might consider adding [specific enhancement] to make it even clearer.",
-      "type": "suggestion",
+      "type": "enhancement",
       "section": "General"
     }
   ]
 }
+
+Note: Use type "enhancement" or "suggestion" (not "change") when you're not providing specific replacement text. Only use type "change" when you include a complete "suggestedChange" field.
 
 Return ONLY the JSON object, no other text before or after.`;
 
@@ -4115,7 +4123,7 @@ Return ONLY the JSON object, no other text before or after.`;
           introduction: `Hi! I'm ${persona.name}, your ${persona.jobTitle}. I've reviewed your document.`,
           suggestions: [{
             content: response,
-            type: 'suggestion',
+            type: 'enhancement',
             section: 'General'
           }]
         });
@@ -4128,7 +4136,7 @@ Return ONLY the JSON object, no other text before or after.`;
         introduction: `Hi! I'm ${persona.name}, your ${persona.jobTitle}. I've reviewed your document and have some suggestions.`,
         suggestions: [{
           content: response,
-          type: 'suggestion',
+          type: 'enhancement',
           section: 'General'
         }]
       });
