@@ -322,7 +322,7 @@ function ReviewCustomizeStep({ onNext, onBack, agentSuggestion, setAgentSuggesti
   };
 
   return (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-6">
       <div>
         <h2 className={`text-xl font-semibold ${styles.headingColor} mb-2`}>
           Customize your agent
@@ -675,7 +675,8 @@ export function NewAgentMultiStep() {
   ];
 
   return (
-    <div className="max-w-2xl mx-auto pb-20">
+    <div className="h-full overflow-y-auto">
+      <div className="max-w-2xl mx-auto pb-8 px-1">
       <div className="mb-8">
         <h1 className={`text-2xl font-bold ${styles.headingColor}`}>
           {isEditMode ? 'Edit agent' : 'Create new agent'}
@@ -748,6 +749,7 @@ export function NewAgentMultiStep() {
             setAvatarSeed={setAvatarSeed}
           />
         )}
+      </div>
       </div>
     </div>
   );

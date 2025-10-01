@@ -426,7 +426,6 @@ export function ThemedLayoutV2() {
 
         <main className={`flex-1 p-8 ${styles.contentBg} relative overflow-y-auto`}>
           <AnimatedOutletWrapper
-            className='h-full'
             delay={200}
           />
         </main>

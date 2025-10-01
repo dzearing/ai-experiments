@@ -1630,7 +1630,7 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
   }
 
   return (
-    <div className="absolute inset-0 flex flex-col">
+    <div className="h-full flex flex-col" style={{ height: 'calc(100vh - 12rem)' }}>
 
       {/* Main content panel */}
       <div
@@ -1643,7 +1643,7 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
         {/* Left panel - Markdown editor */}
         <div className={`w-1/2 border-r ${styles.contentBorder} flex flex-col`}>
           <div
-            className={`flex-1 flex flex-col min-h-0 ${isDarkMode ? 'mdx-dark' : 'mdx-light'} mdx-edge-to-edge relative overflow-hidden`}
+            className={`flex-1 flex flex-col ${isDarkMode ? 'mdx-dark' : 'mdx-light'} mdx-edge-to-edge relative`}
           >
             {editedContent && editedContent.trim() ? (
               <>
@@ -1881,7 +1881,7 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
               </div>
             </div>
           ) : persona ? (
-            <>
+            <div className="flex-1 flex flex-col">
               {/* Persona header with chevron */}
               <div className={`px-4 py-3 border-b ${styles.contentBorder} relative`}>
                 <div className="flex items-center justify-between">
@@ -1953,7 +1953,7 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
               </div>
 
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0" ref={chatContainerRef}>
+              <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={chatContainerRef}>
                 {messages.map((message, index) => {
                   const isLastPersonaMessage =
                     message.personaId !== 'user' &&
@@ -2098,7 +2098,7 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
                   </Button>
                 </div>
               </div>
-            </>
+            </div>
           ) : null}
         </div>
       </div>

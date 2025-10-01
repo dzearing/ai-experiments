@@ -992,10 +992,10 @@ ${existingWorkItem.description || 'No description provided'}
 
   // The review content that will be rendered either with or without transition
   const reviewContent = (
-    <div className={`grid grid-cols-1 lg:grid-cols-3 gap-6 ${isEditMode ? 'h-full' : ''}`}>
+    <div className={`grid grid-cols-1 lg:grid-cols-3 gap-6 h-full`}>
       {/* Left Panel - General Details and Task List */}
       <div
-        className={`lg:col-span-1 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} py-3 pl-3 pr-2 flex flex-col ${isEditMode ? 'h-full' : ''}`}
+        className={`lg:col-span-1 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} py-3 pl-3 pr-2 flex flex-col overflow-hidden`}
       >
         {/* General Details Section */}
         <div className="mb-4">
@@ -1177,12 +1177,12 @@ ${existingWorkItem.description || 'No description provided'}
 
       {/* Right Panel - Details View */}
       <div
-        className={`lg:col-span-2 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} flex flex-col overflow-hidden ${isEditMode ? 'h-full' : ''}`}
+        className={`lg:col-span-2 ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} flex flex-col overflow-hidden`}
       >
         {selectedSection === 'general' && !selectedTaskId ? (
           // General Details View with MDXEditor
           <div
-            className={`flex-1 min-h-0 ${isDarkMode ? 'mdx-dark' : 'mdx-light'} mdx-edge-to-edge flex flex-col`}
+            className={`flex-1 ${isDarkMode ? 'mdx-dark' : 'mdx-light'} mdx-edge-to-edge flex flex-col overflow-hidden`}
           >
             {generalMarkdown ? (
               <MDXEditor
@@ -1223,18 +1223,30 @@ ${existingWorkItem.description || 'No description provided'}
                           <CreateLink />
                           <InsertThematicBreak />
                         </div>
-                        {isEditMode && (
-                          <button
-                            onClick={() => createOrUpdateWorkItems()}
-                            className={`px-3 py-1 text-sm font-medium rounded transition-opacity ${
-                              hasChanges
-                                ? 'opacity-100 bg-blue-600 hover:bg-blue-700 text-white'
-                                : 'opacity-0 pointer-events-none'
-                            }`}
-                            disabled={!hasChanges}
-                          >
-                            Save
-                          </button>
+                        {(isEditMode || step === 'review') && (
+                          <div className="flex gap-2">
+                            {!isEditMode && (
+                              <button
+                                onClick={resetToInput}
+                                className="px-3 py-1 text-sm font-medium rounded bg-gray-500 hover:bg-gray-600 text-white"
+                              >
+                                Back
+                              </button>
+                            )}
+                            <button
+                              onClick={() => createOrUpdateWorkItems()}
+                              className={`px-3 py-1 text-sm font-medium rounded ${
+                                isEditMode
+                                  ? hasChanges
+                                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                    : 'bg-gray-400 cursor-not-allowed text-gray-200'
+                                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+                              }`}
+                              disabled={isEditMode && !hasChanges}
+                            >
+                              {isEditMode ? 'Save' : 'Create work item'}
+                            </button>
+                          </div>
                         )}
                       </div>
                     ),
@@ -1248,7 +1260,7 @@ ${existingWorkItem.description || 'No description provided'}
         ) : selectedTask ? (
           // Task Details View
           <div
-            className={`flex-1 min-h-0 ${isDarkMode ? 'mdx-dark' : 'mdx-light'} mdx-edge-to-edge flex flex-col`}
+            className={`flex-1 ${isDarkMode ? 'mdx-dark' : 'mdx-light'} mdx-edge-to-edge flex flex-col overflow-hidden`}
           >
             <MDXEditor
               ref={editorRef}
@@ -1336,18 +1348,30 @@ ${existingWorkItem.description || 'No description provided'}
                         <CreateLink />
                         <InsertThematicBreak />
                       </div>
-                      {isEditMode && (
-                        <button
-                          onClick={() => createOrUpdateWorkItems()}
-                          className={`px-3 py-1 text-sm font-medium rounded transition-opacity ${
-                            hasChanges
-                              ? 'opacity-100 bg-blue-600 hover:bg-blue-700 text-white'
-                              : 'opacity-0 pointer-events-none'
-                          }`}
-                          disabled={!hasChanges}
-                        >
-                          Save
-                        </button>
+                      {(isEditMode || step === 'review') && (
+                        <div className="flex gap-2">
+                          {!isEditMode && (
+                            <button
+                              onClick={resetToInput}
+                              className="px-3 py-1 text-sm font-medium rounded bg-gray-500 hover:bg-gray-600 text-white"
+                            >
+                              Back
+                            </button>
+                          )}
+                          <button
+                            onClick={() => createOrUpdateWorkItems()}
+                            className={`px-3 py-1 text-sm font-medium rounded ${
+                              isEditMode
+                                ? hasChanges
+                                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                  : 'bg-gray-400 cursor-not-allowed text-gray-200'
+                                : 'bg-blue-600 hover:bg-blue-700 text-white'
+                            }`}
+                            disabled={isEditMode && !hasChanges}
+                          >
+                            {isEditMode ? 'Save' : 'Create work item'}
+                          </button>
+                        </div>
                       )}
                     </div>
                   ),
@@ -1365,23 +1389,15 @@ ${existingWorkItem.description || 'No description provided'}
   );
 
   return (
-    <div className={isEditMode ? 'h-full flex flex-col' : 'max-w-6xl mx-auto'}>
-      {/* Header for create mode only */}
-      {!isEditMode && (
-        <div className="mb-6">
-          <h1 className={`text-2xl font-bold ${styles.headingColor}`}>Create work item</h1>
-          <p className={`mt-2 ${styles.mutedText}`}>
-            Describe your idea and let Claude help break it down into actionable tasks
-          </p>
-        </div>
-      )}
+    <div className={isEditMode ? 'h-full flex flex-col overflow-hidden' : 'h-full flex flex-col overflow-y-auto'}>
 
-      {/* Step 1: Idea Input - Skip in edit mode */}
-      <DropdownTransition isOpen={!isEditMode && step === 'input'}>
-        <div
-          className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-8`}
-        >
-          <div className="max-w-2xl mx-auto">
+      <div className={isEditMode ? '' : 'max-w-6xl mx-auto w-full h-full flex flex-col p-4'}>
+        {/* Step 1: Idea Input - Skip in edit mode */}
+        <DropdownTransition isOpen={!isEditMode && step === 'input'}>
+          <div
+            className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-8`}
+          >
+            <div className="max-w-2xl mx-auto">
             <h2 className={`text-lg font-semibold ${styles.headingColor} mb-4`}>
               What would you like to work on?
             </h2>
@@ -1482,27 +1498,16 @@ ${existingWorkItem.description || 'No description provided'}
       </DropdownTransition>
 
       {/* Step 2: Review Tasks - Always show in edit mode */}
-      {isEditMode ? (
-        // No transition for edit mode - render directly
-        <div className="flex-1 flex flex-col">{reviewContent}</div>
-      ) : (
-        // Use transition for create mode
-        <DropdownTransition isOpen={step === 'review'}>{reviewContent}</DropdownTransition>
-      )}
-
-      {/* Action Buttons - only for create mode */}
-      {!isEditMode && (
-        <DropdownTransition isOpen={step === 'review'}>
-          <div className="mt-6 flex justify-end gap-3">
-            <Button onClick={resetToInput} variant="secondary">
-              Back
-            </Button>
-            <Button onClick={createOrUpdateWorkItems} variant="primary">
-              Create work item
-            </Button>
-          </div>
-        </DropdownTransition>
-      )}
+        {isEditMode ? (
+          // No transition for edit mode - render directly
+          <div className="flex-1 flex flex-col overflow-hidden">{reviewContent}</div>
+        ) : (
+          // Use transition for create mode
+          <DropdownTransition isOpen={step === 'review'} className="flex-1 flex flex-col overflow-hidden">
+            {reviewContent}
+          </DropdownTransition>
+        )}
+      </div>
     </div>
   );
 }
