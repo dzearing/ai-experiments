@@ -117,17 +117,16 @@ export function AnimatedTransition({
   // For non-centered content (like headers)
   if (!centered) {
     return (
-      <div className={`relative overflow-hidden h-full ${className}`} style={{ minHeight: '3rem' }}>
+      <div className={`relative overflow-hidden ${className}`} style={{ minHeight: '3rem' }}>
         {items.map((item) => (
           <div
             key={item.key}
-            className={item.state === 'active' ? '' : 'absolute top-0 left-0 right-0'}
+            className={item.state === 'active' ? 'h-full' : 'absolute top-0 left-0 right-0 bottom-0'}
             style={{
               opacity: item.state === 'active' ? 1 : 0,
               transform: getTransform(item.state, reverse),
               transition: `all 200ms cubic-bezier(0.4, 0, 0.2, 1)`,
               pointerEvents: item.state === 'active' ? 'auto' : 'none',
-              height: '100%',
             }}
           >
             {item.content}

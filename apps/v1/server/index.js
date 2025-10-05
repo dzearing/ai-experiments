@@ -872,8 +872,8 @@ function parseWorkItemMarkdown(content) {
       if (goalsMatch) {
         const goalLines = goalsMatch[1].trim().split('\n');
         task.goals = goalLines
-          .filter(line => line.match(/^-\s*/))
-          .map(line => line.replace(/^-\s*/, '').trim());
+          .filter(line => line.match(/^[-*]\s*/))
+          .map(line => line.replace(/^[-*]\s*/, '').trim());
       }
       
       // Extract work description
@@ -887,8 +887,8 @@ function parseWorkItemMarkdown(content) {
       if (criteriaMatch) {
         const criteriaLines = criteriaMatch[1].trim().split('\n');
         task.validationCriteria = criteriaLines
-          .filter(line => line.match(/^-\s*/))
-          .map(line => line.replace(/^-\s*/, '').trim());
+          .filter(line => line.match(/^[-*]\s*/))
+          .map(line => line.replace(/^[-*]\s*/, '').trim());
       }
       
       console.log(`Task ${task.taskNumber}: ${task.title}`);

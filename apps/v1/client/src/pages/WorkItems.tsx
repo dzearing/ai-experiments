@@ -142,7 +142,7 @@ export function WorkItems() {
   });
 
   return (
-    <div>
+    <div className="h-full overflow-auto p-8">
       {/* Command Bar */}
       <div
         className={`

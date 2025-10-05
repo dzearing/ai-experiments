@@ -1118,111 +1118,146 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
     if ((message === 'Make these changes' || message === 'Apply change') && currentSuggestionIndex < agentSuggestions.length) {
       const currentSuggestion = agentSuggestions[currentSuggestionIndex];
       console.log('[APPLY CHANGE] Current suggestion:', currentSuggestion);
-      console.log('[APPLY CHANGE] Has suggestedChange:', !!currentSuggestion.suggestedChange);
-      console.log('[APPLY CHANGE] Suggestion type:', currentSuggestion.type);
+      console.log('[APPLY CHANGE] Suggestion content:', currentSuggestion.content || currentSuggestion.text);
 
-      if (currentSuggestion.suggestedChange) {
-        // Add user message
-        const userMessage: ChatMessage = {
-          id: Date.now().toString(),
-          personaId: 'user',
-          content: message,
-          timestamp: new Date(),
-          type: 'message',
-        };
-        setMessages((prev) => [...prev, userMessage]);
-        setInputMessage('');
+      // Add user message
+      const userMessage: ChatMessage = {
+        id: Date.now().toString(),
+        personaId: 'user',
+        content: message,
+        timestamp: new Date(),
+        type: 'message',
+      };
+      setMessages((prev) => [...prev, userMessage]);
+      setInputMessage('');
 
-        // Apply the change
-        setIsTyping(true);
+      // Lock the editor and show spinner
+      setIsUpdatingEditor(true);
 
-        // Apply the suggested change to the markdown content
-        let updatedContent = editedContent;
-        console.log('[APPLY CHANGE] Current content length:', editedContent.length);
-        console.log('[APPLY CHANGE] Suggested change:', currentSuggestion.suggestedChange);
+      // Add action message
+      const actionMessageId = (Date.now() + 1).toString();
+      const actionMessage: ChatMessage = {
+        id: actionMessageId,
+        personaId: 'system',
+        content: 'Applying suggested changes to the document...',
+        timestamp: new Date(),
+        type: 'action',
+        actionStatus: 'pending',
+      };
+      setMessages((prev) => [...prev, actionMessage]);
 
-        // If the suggestion includes a section, try to replace that specific section
-        if (currentSuggestion.section && currentSuggestion.section !== 'General') {
-          console.log('[APPLY CHANGE] Targeting section:', currentSuggestion.section);
-          // Try to find and replace the specific section
-          const sectionPattern = new RegExp(`(^|\\n)(#{1,6}\\s*${currentSuggestion.section.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})([^#]*)`, 'im');
-          const match = updatedContent.match(sectionPattern);
+      // Make API call to apply changes with current document state
+      fetch(apiUrl('/api/claude/apply-changes'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentContent: editedContent,
+          previousSuggestion: currentSuggestion.content || currentSuggestion.text,
+          persona: persona,
+          workItem: {
+            title: workItem?.title,
+            description: workItem?.description,
+          },
+        }),
+      })
+        .then(async (response) => {
+          console.log('[APPLY CHANGE] Response status:', response.status);
 
-          if (match) {
-            console.log('[APPLY CHANGE] Found section match');
-            // Replace the content of this section with the suggested change
-            const sectionHeader = match[2];
-            const newSectionContent = `${sectionHeader}\n${currentSuggestion.suggestedChange}`;
-            updatedContent = updatedContent.replace(match[0], match[1] + newSectionContent);
-          } else {
-            console.log('[APPLY CHANGE] Section not found, replacing entire content');
-            // If we can't find the section, treat it as a full document replacement
-            updatedContent = currentSuggestion.suggestedChange;
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('[APPLY CHANGE] Error response:', errorText);
+            throw new Error(`Failed to apply changes: ${response.status}`);
           }
-        } else {
-          console.log('[APPLY CHANGE] No specific section, replacing entire content');
-          // For general suggestions or if no section is specified, replace the entire content
-          updatedContent = currentSuggestion.suggestedChange;
-        }
 
-        console.log('[APPLY CHANGE] Updated content length:', updatedContent.length);
+          const applyData = await response.json();
+          console.log('[APPLY CHANGE] Response data:', {
+            success: applyData.success,
+            hasUpdatedContent: !!applyData.updatedContent,
+            contentLength: applyData.updatedContent?.length,
+            summary: applyData.summary,
+            error: applyData.error,
+          });
 
-        // Update both the edited content and the markdown content
-        setEditedContent(updatedContent);
-        setMarkdownContent(updatedContent);
+          if (applyData.success && applyData.updatedContent) {
+            console.log('[APPLY CHANGE] Current content length:', editedContent.length);
+            console.log('[APPLY CHANGE] New content length:', applyData.updatedContent.length);
+            console.log('[APPLY CHANGE] Content changed:', editedContent !== applyData.updatedContent);
 
-        // Force the editor to update with the new content
-        if (editorRef.current) {
-          console.log('[APPLY CHANGE] Updating editor with new content');
-          editorRef.current.setMarkdown(updatedContent);
-        } else {
-          console.log('[APPLY CHANGE] Editor ref not available');
-        }
+            // Get the editor's contenteditable div for scroll position
+            const editorContent = document.querySelector('.mdxeditor .mdxeditor-root-contenteditable');
+            const savedScrollTop = editorContent?.scrollTop || 0;
 
-        setTimeout(() => {
-          const confirmMessage: ChatMessage = {
-            id: Date.now().toString(),
-            personaId: persona.id,
-            content: `Change applied successfully! I've updated the ${currentSuggestion.section || 'document'} with the suggested changes. Would you like to see the next suggestion?`,
-            timestamp: new Date(),
-            type: 'message',
-            suggestedResponses: currentSuggestionIndex < agentSuggestions.length - 1
-              ? ['Next suggestion', 'Review changes', 'Continue editing']
-              : ['Review changes', 'Continue editing', 'Start over'],
-          };
-          setMessages((prev) => [...prev, confirmMessage]);
-          setIsTyping(false);
-        }, 500);
-        return;
-      } else {
-        // No suggestedChange available - explain to user
-        console.log('[APPLY CHANGE] No suggestedChange field available');
+            console.log('[APPLY CHANGE] Saving scroll position:', savedScrollTop);
+            console.log('[APPLY CHANGE] Editor element:', editorContent);
 
-        // Add user message
-        const userMessage: ChatMessage = {
-          id: Date.now().toString(),
-          personaId: 'user',
-          content: message,
-          timestamp: new Date(),
-          type: 'message',
-        };
-        setMessages((prev) => [...prev, userMessage]);
-        setInputMessage('');
+            // Update the content using the editor's API if available
+            if (editorRef.current) {
+              console.log('[APPLY CHANGE] Using editor ref to set markdown');
+              editorRef.current.setMarkdown(applyData.updatedContent);
+            } else {
+              console.log('[APPLY CHANGE] No editor ref, using state update');
+              setEditedContent(applyData.updatedContent);
+              setMarkdownContent(applyData.updatedContent);
+            }
 
-        // Add explanation message
-        setTimeout(() => {
-          const explainMessage: ChatMessage = {
-            id: Date.now().toString(),
-            personaId: persona.id,
-            content: `I understand you'd like to apply this suggestion, but this is more of a guidance point rather than a specific text change. Would you like me to help you implement this suggestion step by step?`,
-            timestamp: new Date(),
-            type: 'message',
-            suggestedResponses: ['Yes, guide me', 'Tell me more', 'Next suggestion'],
-          };
-          setMessages((prev) => [...prev, explainMessage]);
-        }, 500);
-        return;
-      }
+            // Wait a bit for the editor to update, then restore scroll
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                const newEditorContent = document.querySelector('.mdxeditor .mdxeditor-root-contenteditable');
+                if (newEditorContent) {
+                  newEditorContent.scrollTop = savedScrollTop;
+                  console.log('[APPLY CHANGE] Restored scroll position to:', savedScrollTop);
+                  console.log('[APPLY CHANGE] Actual scroll position:', newEditorContent.scrollTop);
+                } else {
+                  console.log('[APPLY CHANGE] Could not find editor element to restore scroll');
+                }
+              });
+            });
+
+            // Mark action as complete
+            setTimeout(() => {
+              setMessages((prev) =>
+                prev.map((msg) =>
+                  msg.id === actionMessageId ? { ...msg, actionStatus: 'complete' } : msg
+                )
+              );
+
+              // Add completion message
+              const completeMessage: ChatMessage = {
+                id: (Date.now() + 2).toString(),
+                personaId: persona.id,
+                content: applyData.summary || "I've updated the document with the suggested changes.",
+                timestamp: new Date(),
+                type: 'summary',
+                suggestedResponses:
+                  currentSuggestionIndex < agentSuggestions.length - 1
+                    ? ['Next suggestion', 'Review changes', 'Continue editing']
+                    : ['Review changes', 'Continue editing', 'Start over'],
+              };
+              setMessages((prev) => [...prev, completeMessage]);
+
+              setIsUpdatingEditor(false);
+            }, 500);
+          } else {
+            console.error('[APPLY CHANGE] Invalid response:', applyData);
+            throw new Error(applyData.error || 'Failed to apply changes - no updated content returned');
+          }
+        })
+        .catch((error) => {
+          console.error('[APPLY CHANGE] Caught error:', error);
+          setIsUpdatingEditor(false);
+
+          // Update action to failed
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === actionMessageId
+                ? { ...msg, actionStatus: 'complete', content: `Failed to apply changes: ${error.message}` }
+                : msg
+            )
+          );
+        });
+
+      return;
     }
 
     // Add user message
@@ -1630,7 +1665,7 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
   }
 
   return (
-    <div className="absolute inset-0 flex flex-col">
+    <div className="h-full overflow-hidden flex flex-col">
 
       {/* Main content panel */}
       <div
@@ -1706,8 +1741,8 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
         <div className={`w-1/2 flex flex-col`}>
           {showAgentSelector && !chatStarted ? (
             // Agent selector view
-            <div className="flex-1 flex flex-col">
-              <div className="flex-1 overflow-y-auto p-3">
+            <div className="flex-1 flex flex-col min-h-0">
+              <div className="flex-1 overflow-y-auto p-3 min-h-0">
                 <AgentSelector
                   agents={personas}
                   selectedAgentId={selectedAgentId}
@@ -1828,40 +1863,40 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
               <div className="flex-1 flex items-center justify-center p-4">
                 <div className="text-center max-w-md">
                   <div className="mb-4">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 animate-pulse">
-                      <svg
-                        className="w-8 h-8 text-white"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                    {isLoadingAgent && persona ? (
+                      <div className="inline-block animate-pulse">
+                        <StockPhotoAvatar
+                          seed={persona.avatarSeed || persona.id}
+                          size={64}
+                          gender={persona.avatarGender}
                         />
-                      </svg>
-                    </div>
+                      </div>
+                    ) : (
+                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 animate-pulse">
+                        <svg
+                          className="w-8 h-8 text-white"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                          />
+                        </svg>
+                      </div>
+                    )}
                   </div>
                   {isLoadingAgent && persona ? (
-                    <>
-                      <p className={`${styles.headingColor} font-medium text-lg mb-2`}>
-                        {persona.name.split(' ')[0]} is preparing...
-                      </p>
-                      <p className={`${styles.mutedText} text-sm mb-4`}>
-                        {currentLoadingMessage || getRandomAgentLoadingMessage(persona)}
-                      </p>
-                    </>
+                    <p className={`${styles.headingColor} font-medium text-lg mb-4`}>
+                      {currentLoadingMessage || getRandomAgentLoadingMessage(persona)}
+                    </p>
                   ) : (
-                    <>
-                      <p className={`${styles.headingColor} font-medium text-lg mb-2`}>
-                        Analyzing work item plan...
-                      </p>
-                      <p className={`${styles.mutedText} text-sm mb-4`}>
-                        {currentLoadingMessage || 'Finding the perfect reviewer for your work item'}
-                      </p>
-                    </>
+                    <p className={`${styles.headingColor} font-medium text-lg mb-4`}>
+                      {currentLoadingMessage || 'Finding the perfect reviewer for your work item'}
+                    </p>
                   )}
                   <div className="flex items-center justify-center gap-2">
                     <div
@@ -1881,9 +1916,9 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
               </div>
             </div>
           ) : persona ? (
-            <>
+            <div className="flex-1 flex flex-col min-h-0">
               {/* Persona header with chevron */}
-              <div className={`px-4 py-3 border-b ${styles.contentBorder} relative`}>
+              <div className={`px-4 py-3 border-b ${styles.contentBorder} relative flex-shrink-0`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="flex-shrink-0">
@@ -2098,7 +2133,7 @@ ${data.analysisMessage || `I've found ${data.issueCount || 'several'} areas we c
                   </Button>
                 </div>
               </div>
-            </>
+            </div>
           ) : null}
         </div>
       </div>

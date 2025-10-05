@@ -289,9 +289,9 @@ function ClaudeCodeContent() {
   }
   
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full overflow-hidden flex flex-col">
       {/* Button Bar */}
-      <div className={`flex items-center justify-between px-4 py-3 border-b ${styles.contentBorder} ${styles.cardBg}`}>
+      <div className={`flex items-center justify-between px-4 py-3 border-b ${styles.contentBorder} ${styles.cardBg} flex-shrink-0`}>
         <div className="flex items-center gap-6">
           {isAgentChat && agent ? (
             <div className="flex items-center gap-4">
@@ -396,7 +396,7 @@ function ClaudeCodeContent() {
       </div>
       
       {/* Input Area or Progress Indicator */}
-      <div className={`border-t ${styles.contentBorder} ${styles.cardBg}`}>
+      <div className={`border-t ${styles.contentBorder} ${styles.cardBg} flex-shrink-0`}>
         {isProcessing ? (
           <ProgressIndicator
             startTime={messages.find(m => m.isStreaming)?.startTime || new Date()}

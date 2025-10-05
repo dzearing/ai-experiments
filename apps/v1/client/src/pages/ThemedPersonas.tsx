@@ -36,7 +36,7 @@ export function ThemedPersonas() {
   }, [setHeaderContent]);
   
   return (
-    <div>
+    <div className="h-full overflow-auto p-8">
       {personas.length > 0 && (
         <div className="flex justify-end mb-6">
           <Button

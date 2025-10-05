@@ -424,9 +424,9 @@ export function ThemedLayoutV2() {
           </div>
         </header>
 
-        <main className={`flex-1 p-8 ${styles.contentBg} relative overflow-y-auto`}>
+        <main className={`flex-1 ${styles.contentBg} relative flex flex-col overflow-hidden`}>
           <AnimatedOutletWrapper
-            className='h-full'
+            className="flex-1"
             delay={200}
           />
         </main>

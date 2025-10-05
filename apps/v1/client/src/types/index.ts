@@ -68,6 +68,17 @@ export interface WorkItem {
   currentWorkflowStep?: number;
   jamSessionIds: string[];
   markdownPath?: string;
+  tasks?: Array<{
+    id: string;
+    title: string;
+    description: string;
+    goals: string[];
+    workDescription: string;
+    validationCriteria: string[];
+    taskNumber?: string;
+    completed?: boolean;
+    status?: 'pending' | 'in-progress' | 'completed';
+  }>;
   metadata?: {
     tasks?: Array<{
       id: string;

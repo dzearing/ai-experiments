@@ -64,7 +64,7 @@ export function Projects() {
   };
 
   return (
-    <div>
+    <div className="h-full overflow-auto p-8">
       {projects.length > 0 && (
         <div className="flex justify-end mb-6">
           <Button as={Link} to="/projects/new" variant="primary">
