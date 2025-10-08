@@ -289,15 +289,13 @@ function ReviewCustomizeStep({ onNext, onBack, agentSuggestion, setAgentSuggesti
       attempts++;
     }
     
-    // Get the new gender and name for the new seed
+    // Get the new gender for logging
     const newGender = getGenderFromSeed(newSeed);
-    const newName = getRandomName(newSeed, newGender);
-    
-    console.log('Randomize clicked - old seed:', avatarSeed, 'old gender:', currentGender, 'new seed:', newSeed, 'new gender:', newGender, 'new name:', newName);
-    
-    // Update both avatar seed and name together
+
+    console.log('Randomize clicked - old seed:', avatarSeed, 'old gender:', currentGender, 'new seed:', newSeed, 'new gender:', newGender);
+
+    // Update only the avatar seed, keep the name unchanged
     setAvatarSeed(newSeed);
-    setFormData(prev => ({ ...prev, name: newName }));
   };
 
   const handleNext = () => {
@@ -675,11 +673,12 @@ export function NewAgentMultiStep() {
   ];
 
   return (
-    <div className="max-w-2xl mx-auto pb-20">
-      <div className="mb-8">
-        <h1 className={`text-2xl font-bold ${styles.headingColor}`}>
-          {isEditMode ? 'Edit agent' : 'Create new agent'}
-        </h1>
+    <div className="h-full overflow-auto p-8">
+      <div className="max-w-2xl mx-auto pb-20">
+        <div className="mb-8">
+          <h1 className={`text-2xl font-bold ${styles.headingColor}`}>
+            {isEditMode ? 'Edit agent' : 'Create new agent'}
+          </h1>
         
         {/* Progress Steps */}
         <div className="mt-6">
@@ -748,6 +747,7 @@ export function NewAgentMultiStep() {
             setAvatarSeed={setAvatarSeed}
           />
         )}
+      </div>
       </div>
     </div>
   );

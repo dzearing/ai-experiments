@@ -404,7 +404,7 @@ export function ProjectDetail() {
   };
 
   return (
-    <div>
+    <div className="p-8">
       {/* Connection status */}
       {!isConnected && (
         <div

@@ -114,7 +114,7 @@ export function ThemedNewPersona() {
     customExpertise: existingPersona?.expertise?.join(', ') || '',
   });
 
-  // Set random name on mount and when avatar changes (only in create mode)
+  // Set random name on mount (only in create mode)
   useEffect(() => {
     if (!isEditMode && !formData.name) {
       const gender = getGenderFromSeed(avatarSeed);
@@ -123,7 +123,9 @@ export function ThemedNewPersona() {
         name: getRandomName(avatarSeed, gender),
       }));
     }
-  }, [avatarSeed, isEditMode, formData.name]);
+    // Only run on mount - don't update name when avatar changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const randomizeAvatar = () => {
     console.log('Randomize avatar clicked');
@@ -175,10 +177,11 @@ export function ThemedNewPersona() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <h1 className={`text-2xl font-semibold ${styles.headingColor}`}>
-        {isEditMode ? 'Edit agent' : 'Spawn new agent'}
-      </h1>
+    <div className="h-full overflow-auto p-8">
+      <div className="max-w-2xl mx-auto">
+        <h1 className={`text-2xl font-semibold ${styles.headingColor}`}>
+          {isEditMode ? 'Edit agent' : 'Spawn new agent'}
+        </h1>
       <p className={`mt-2 text-sm ${styles.mutedText}`}>
         {isEditMode
           ? 'Update the agent persona details, expertise, and personality.'
@@ -327,6 +330,7 @@ export function ThemedNewPersona() {
           </Button>
         </div>
       </form>
+      </div>
     </div>
   );
 }
