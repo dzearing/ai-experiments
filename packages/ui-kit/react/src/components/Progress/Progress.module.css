@@ -1,0 +1,99 @@
+.container {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.track {
+  flex: 1;
+  background: var(--inset-bg);
+  border: 1px solid var(--inset-border);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.track.sm {
+  height: 6px;
+}
+
+.track.md {
+  height: 10px;
+}
+
+.track.lg {
+  height: 14px;
+}
+
+.bar {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width var(--duration-normal) var(--ease-default);
+  position: relative;
+  overflow: hidden;
+  min-width: 2px;
+}
+
+/* Shimmer animation for active progress */
+.bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.bar.default {
+  background: var(--controlPrimary-bg);
+}
+
+.bar.success {
+  background: var(--success-icon);
+}
+
+.bar.warning {
+  background: var(--warning-icon);
+}
+
+.bar.error {
+  background: var(--danger-icon);
+}
+
+.bar.indeterminate {
+  width: 30%;
+  animation: indeterminate 1.5s var(--ease-default) infinite;
+}
+
+.bar.indeterminate::after {
+  animation: none;
+}
+
+@keyframes indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
+}
+
+.label {
+  flex-shrink: 0;
+  font-size: var(--text-sm);
+  color: var(--page-text-soft);
+  min-width: 3ch;
+  text-align: right;
+}

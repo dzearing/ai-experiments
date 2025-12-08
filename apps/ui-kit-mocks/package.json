@@ -15,7 +15,7 @@
     "dev:wsl": "repo-scripts dev-wsl",
     "lint": "repo-scripts lint",
     "lint:fix": "repo-scripts lint-fix",
-    "postinstall": "node -e \"const fs = require('fs'), path = require('path'); const linkPath = path.join(__dirname, 'public/themes'); const targetPath = path.join(__dirname, '../../packages/ui-kit/dist/themes'); try { fs.unlinkSync(linkPath); } catch {} try { fs.symlinkSync(path.relative(path.dirname(linkPath), targetPath), linkPath); } catch (e) { console.log('Theme symlink creation failed:', e.message); }\"",
+    "postinstall": "node -e \"const fs = require('fs'), path = require('path'); const linkPath = path.join(__dirname, 'public/themes'); const targetPath = path.join(__dirname, '../../packages/ui-kit-legacy/dist/themes'); try { fs.unlinkSync(linkPath); } catch {} try { fs.symlinkSync(path.relative(path.dirname(linkPath), targetPath), linkPath); } catch (e) { console.log('Theme symlink creation failed:', e.message); }\"",
     "preview": "repo-scripts preview",
     "test": "repo-scripts test",
     "test:e2e": "repo-scripts test-e2e",
@@ -26,7 +26,7 @@
     "format:check": "repo-scripts format-check"
   },
   "dependencies": {
-    "@claude-flow/ui-kit": "workspace:*",
+    "@claude-flow/ui-kit-legacy": "workspace:*",
     "@claude-flow/ui-kit-react": "workspace:*",
     "@claude-flow/ui-kit-icons": "workspace:*",
     "classnames": "^2.5.1",

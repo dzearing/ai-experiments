@@ -1,0 +1,14 @@
+{
+  "id": "onedrive",
+  "name": "OneDrive",
+  "description": "OneDrive blues",
+  "colors": {
+    "primary": "#0078d4",
+    "secondary": "#00bcf2",
+    "accent": "#107c10",
+    "neutral": "#605e5c"
+  },
+  "accessibility": {
+    "level": "AA"
+  }
+}

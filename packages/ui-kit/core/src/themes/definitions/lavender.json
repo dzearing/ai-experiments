@@ -1,0 +1,27 @@
+{
+  "id": "lavender",
+  "name": "Lavender",
+  "description": "Soft purple tones for a calming experience",
+  "colors": {
+    "primary": "#9333ea",
+    "secondary": "#a855f7",
+    "accent": "#c084fc",
+    "neutral": "#78716c"
+  },
+  "config": {
+    "saturation": -5
+  },
+  "overrides": {
+    "light": {
+      "--page-bg": "#faf5ff",
+      "--card-bg": "#ffffff"
+    },
+    "dark": {
+      "--page-bg": "#1e1b2e",
+      "--card-bg": "#2a2640"
+    }
+  },
+  "accessibility": {
+    "level": "AA"
+  }
+}

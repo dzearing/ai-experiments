@@ -1,0 +1,108 @@
+import { useEffect, useCallback, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
+import styles from './Modal.module.css';
+
+/**
+ * Modal component - overlay container for dialogs
+ *
+ * Surfaces used:
+ * - overlay (backdrop)
+ * - panel (content container)
+ *
+ * Tokens used:
+ * - --overlay-bg
+ * - --panel-bg, --panel-border
+ * - --shadow-lg
+ * - --radius-lg
+ */
+
+export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
+
+export interface ModalProps {
+  /** Whether the modal is open */
+  open: boolean;
+  /** Callback when modal should close */
+  onClose: () => void;
+  /** Modal size */
+  size?: ModalSize;
+  /** Close on backdrop click */
+  closeOnBackdrop?: boolean;
+  /** Close on Escape key */
+  closeOnEscape?: boolean;
+  /** Modal content */
+  children: ReactNode;
+}
+
+export function Modal({
+  open,
+  onClose,
+  size = 'md',
+  closeOnBackdrop = true,
+  closeOnEscape = true,
+  children,
+}: ModalProps) {
+  const [visible, setVisible] = useState(open);
+  const [exiting, setExiting] = useState(false);
+
+  const handleEscape = useCallback(
+    (event: globalThis.KeyboardEvent) => {
+      if (closeOnEscape && event.key === 'Escape') {
+        onClose();
+      }
+    },
+    [closeOnEscape, onClose]
+  );
+
+  const handleBackdropClick = () => {
+    if (closeOnBackdrop) {
+      onClose();
+    }
+  };
+
+  const handleContentClick = (event: React.MouseEvent) => {
+    event.stopPropagation();
+  };
+
+  useEffect(() => {
+    if (open) {
+      setVisible(true);
+      setExiting(false);
+    } else if (visible) {
+      setExiting(true);
+      const timer = setTimeout(() => {
+        setVisible(false);
+        setExiting(false);
+      }, 200); // Match duration-normal
+      return () => clearTimeout(timer);
+    }
+  }, [open, visible]);
+
+  useEffect(() => {
+    if (visible) {
+      document.addEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = '';
+    };
+  }, [visible, handleEscape]);
+
+  if (!visible) return null;
+
+  const modal = (
+    <div className={`${styles.backdrop} ${exiting ? styles.exiting : ''}`} onClick={handleBackdropClick}>
+      <div
+        className={`${styles.modal} ${styles[size]} ${exiting ? styles.exiting : ''}`}
+        onClick={handleContentClick}
+        role="dialog"
+        aria-modal="true"
+      >
+        {children}
+      </div>
+    </div>
+  );
+
+  return createPortal(modal, document.body);
+}

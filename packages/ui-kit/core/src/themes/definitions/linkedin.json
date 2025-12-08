@@ -1,0 +1,14 @@
+{
+  "id": "linkedin",
+  "name": "LinkedIn",
+  "description": "LinkedIn blues and professional tones",
+  "colors": {
+    "primary": "#0a66c2",
+    "secondary": "#0073b1",
+    "accent": "#057642",
+    "neutral": "#666666"
+  },
+  "accessibility": {
+    "level": "AA"
+  }
+}

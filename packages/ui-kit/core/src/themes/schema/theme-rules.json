@@ -1,0 +1,357 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": "1.0.0",
+  "description": "UI Kit Theme Generation Rules - Defines all token roles, derivation rules, and color logic",
+
+  "semanticColors": {
+    "description": "Fixed semantic colors that remain consistent across all themes for UX clarity",
+    "success": {
+      "base": "#16a34a",
+      "description": "Positive outcomes, confirmations, completion states"
+    },
+    "warning": {
+      "base": "#f59e0b",
+      "description": "Caution states, attention needed, pending actions"
+    },
+    "danger": {
+      "base": "#dc2626",
+      "description": "Errors, destructive actions, critical states"
+    },
+    "info": {
+      "base": "#0ea5e9",
+      "description": "Informational, neutral status, help content"
+    }
+  },
+
+  "roles": {
+    "container": {
+      "description": "Token roles for static background regions",
+      "types": {
+        "page": {
+          "description": "Main application background",
+          "tokens": ["bg", "text", "text-soft", "text-softer", "text-hard", "border", "shadow"],
+          "defaults": {
+            "light": { "bg": "#fafafa", "text": "#171717" },
+            "dark": { "bg": "#0f0f0f", "text": "#e5e5e5" }
+          }
+        },
+        "card": {
+          "description": "Elevated content containers",
+          "tokens": ["bg", "text", "text-soft", "text-hard", "border", "shadow"],
+          "defaults": {
+            "light": { "bg": "#ffffff" },
+            "dark": { "bg": "#1a1a1a" }
+          },
+          "derivation": {
+            "text": "inherit:page.text",
+            "shadow": { "light": "0 4px 6px -1px rgba(0, 0, 0, 0.1)", "dark": "0 4px 6px -1px rgba(0, 0, 0, 0.4)" }
+          }
+        },
+        "overlay": {
+          "description": "Modals, dialogs, sheets",
+          "tokens": ["bg", "text", "text-soft", "text-hard", "border", "shadow"],
+          "defaults": {
+            "light": { "bg": "#ffffff" },
+            "dark": { "bg": "#1f1f1f" }
+          },
+          "derivation": {
+            "shadow": { "light": "0 20px 25px -5px rgba(0, 0, 0, 0.1)", "dark": "0 20px 25px -5px rgba(0, 0, 0, 0.5)" }
+          }
+        },
+        "popout": {
+          "description": "Dropdowns, menus, tooltips (highest elevation)",
+          "tokens": ["bg", "text", "text-soft", "text-hard", "border", "shadow"],
+          "defaults": {
+            "light": { "bg": "#ffffff" },
+            "dark": { "bg": "#262626" }
+          },
+          "derivation": {
+            "shadow": { "light": "0 10px 15px -3px rgba(0, 0, 0, 0.1)", "dark": "0 10px 15px -3px rgba(0, 0, 0, 0.5)" }
+          }
+        },
+        "inset": {
+          "description": "Recessed areas (input fields, wells)",
+          "tokens": ["bg", "bg-hover", "bg-focus", "text", "text-soft", "border", "border-focus"],
+          "defaults": {
+            "light": { "bg": "#f5f5f5", "bg-hover": "#eeeeee", "bg-focus": "#ffffff" },
+            "dark": { "bg": "#0a0a0a", "bg-hover": "#141414", "bg-focus": "#141414" }
+          },
+          "derivation": {
+            "border-focus": "theme:primary"
+          }
+        }
+      }
+    },
+    "control": {
+      "description": "Token roles for interactive elements",
+      "types": {
+        "control": {
+          "description": "Default interactive (buttons, list items)",
+          "tokens": ["bg", "bg-hover", "bg-pressed", "text", "text-hover", "text-pressed", "border", "border-hover", "border-pressed", "shadow"],
+          "defaults": {
+            "light": { "bg": "#f0f0f0", "bg-hover": "#e5e5e5", "bg-pressed": "#d4d4d4" },
+            "dark": { "bg": "#2a2a2a", "bg-hover": "#333333", "bg-pressed": "#404040" }
+          }
+        },
+        "controlPrimary": {
+          "description": "Primary actions (CTA buttons, selected states)",
+          "tokens": ["bg", "bg-hover", "bg-pressed", "text", "border", "shadow"],
+          "derivation": {
+            "bg": "theme:primary",
+            "bg-hover": { "light": "darken(theme:primary, 8)", "dark": "lighten(theme:primary, 8)" },
+            "bg-pressed": { "light": "darken(theme:primary, 12)", "dark": "lighten(theme:primary, 12)" },
+            "text": "contrast(bg)",
+            "border": "transparent"
+          }
+        },
+        "controlDanger": {
+          "description": "Destructive actions",
+          "tokens": ["bg", "bg-hover", "bg-pressed", "text", "border", "shadow"],
+          "derivation": {
+            "bg": "semantic:danger",
+            "bg-hover": { "light": "darken(semantic:danger, 8)", "dark": "lighten(semantic:danger, 8)" },
+            "bg-pressed": { "light": "darken(semantic:danger, 12)", "dark": "lighten(semantic:danger, 12)" },
+            "text": "contrast(bg)",
+            "border": "transparent"
+          }
+        },
+        "controlSubtle": {
+          "description": "Ghost/minimal buttons, tabs",
+          "tokens": ["bg", "bg-hover", "bg-pressed", "text", "text-hover", "text-pressed", "border"],
+          "defaults": {
+            "light": {
+              "bg": "transparent",
+              "bg-hover": "rgba(0, 0, 0, 0.04)",
+              "bg-pressed": "rgba(0, 0, 0, 0.08)"
+            },
+            "dark": {
+              "bg": "transparent",
+              "bg-hover": "rgba(255, 255, 255, 0.08)",
+              "bg-pressed": "rgba(255, 255, 255, 0.12)"
+            }
+          },
+          "derivation": {
+            "text": "mix(page.text, page.bg, 0.2)",
+            "text-hover": "page.text",
+            "text-pressed": "page.text",
+            "border": "transparent"
+          }
+        },
+        "controlDisabled": {
+          "description": "Non-interactive state",
+          "tokens": ["bg", "text", "border"],
+          "defaults": {
+            "light": { "bg": "#f5f5f5", "text": "#a3a3a3", "border": "#e5e5e5" },
+            "dark": { "bg": "#1f1f1f", "text": "#525252", "border": "#2a2a2a" }
+          }
+        }
+      }
+    },
+    "feedback": {
+      "description": "Token roles for status communication",
+      "types": {
+        "success": {
+          "tokens": ["bg", "text", "text-soft", "border", "icon"],
+          "derivation": {
+            "bg": { "light": "mix(semantic:success, #ffffff, 0.9)", "dark": "mix(semantic:success, #000000, 0.85)" },
+            "text": { "light": "darken(semantic:success, 30)", "dark": "lighten(semantic:success, 30)" },
+            "text-soft": "mix(text, bg, 0.3)",
+            "border": { "light": "darken(semantic:success, 10)", "dark": "lighten(semantic:success, 20)" },
+            "icon": "semantic:success"
+          }
+        },
+        "warning": {
+          "tokens": ["bg", "text", "text-soft", "border", "icon"],
+          "derivation": {
+            "bg": { "light": "mix(semantic:warning, #ffffff, 0.9)", "dark": "mix(semantic:warning, #000000, 0.85)" },
+            "text": { "light": "darken(semantic:warning, 30)", "dark": "lighten(semantic:warning, 30)" },
+            "text-soft": "mix(text, bg, 0.3)",
+            "border": { "light": "darken(semantic:warning, 10)", "dark": "lighten(semantic:warning, 20)" },
+            "icon": "semantic:warning"
+          }
+        },
+        "danger": {
+          "tokens": ["bg", "text", "text-soft", "border", "icon"],
+          "derivation": {
+            "bg": { "light": "mix(semantic:danger, #ffffff, 0.9)", "dark": "mix(semantic:danger, #000000, 0.85)" },
+            "text": { "light": "darken(semantic:danger, 30)", "dark": "lighten(semantic:danger, 30)" },
+            "text-soft": "mix(text, bg, 0.3)",
+            "border": { "light": "darken(semantic:danger, 10)", "dark": "lighten(semantic:danger, 20)" },
+            "icon": "semantic:danger"
+          }
+        },
+        "info": {
+          "tokens": ["bg", "text", "text-soft", "border", "icon"],
+          "derivation": {
+            "bg": { "light": "mix(semantic:info, #ffffff, 0.9)", "dark": "mix(semantic:info, #000000, 0.85)" },
+            "text": { "light": "darken(semantic:info, 30)", "dark": "lighten(semantic:info, 30)" },
+            "text-soft": "mix(text, bg, 0.3)",
+            "border": { "light": "darken(semantic:info, 10)", "dark": "lighten(semantic:info, 20)" },
+            "icon": "semantic:info"
+          }
+        }
+      }
+    }
+  },
+
+  "specialTokens": {
+    "focus": {
+      "description": "Focus ring for accessibility",
+      "tokens": {
+        "ring": { "derivation": "theme:primary" },
+        "ring-offset": { "default": "2px" },
+        "ring-width": { "default": "2px" }
+      }
+    },
+    "selection": {
+      "description": "Text selection highlight",
+      "tokens": {
+        "bg": { "derivation": { "light": "mix(theme:primary, #ffffff, 0.7)", "dark": "mix(theme:primary, #000000, 0.7)" } },
+        "text": { "default": { "light": "#000000", "dark": "#ffffff" } }
+      }
+    },
+    "link": {
+      "description": "Hyperlink colors",
+      "tokens": {
+        "default": { "derivation": "theme:primary" },
+        "hover": { "derivation": { "light": "darken(theme:primary, 10)", "dark": "lighten(theme:primary, 10)" } },
+        "pressed": { "derivation": { "light": "darken(theme:primary, 15)", "dark": "lighten(theme:primary, 15)" } },
+        "visited": { "derivation": "mix(theme:primary, #8b5cf6, 0.5)" }
+      }
+    },
+    "scrollbar": {
+      "description": "Custom scrollbar styling",
+      "tokens": {
+        "track": { "default": { "light": "#f5f5f5", "dark": "#1a1a1a" } },
+        "thumb": { "default": { "light": "#c4c4c4", "dark": "#404040" } },
+        "thumb-hover": { "default": { "light": "#a3a3a3", "dark": "#525252" } }
+      }
+    },
+    "skeleton": {
+      "description": "Loading skeleton states",
+      "tokens": {
+        "bg": { "default": { "light": "#e5e5e5", "dark": "#333333" } },
+        "shimmer": { "default": { "light": "rgba(255, 255, 255, 0.5)", "dark": "rgba(255, 255, 255, 0.1)" } }
+      }
+    },
+    "highlight": {
+      "description": "Search/text highlight",
+      "tokens": {
+        "bg": { "derivation": { "light": "mix(theme:primary, #ffffff, 0.8)", "dark": "mix(theme:primary, #000000, 0.8)" } },
+        "text": { "default": { "light": "#000000", "dark": "#ffffff" } }
+      }
+    }
+  },
+
+  "componentTokens": {
+    "description": "Shortcut tokens for common component patterns",
+    "tokens": {
+      "button-padding-x": { "default": "var(--space-4)" },
+      "button-padding-y": { "default": "var(--space-2)" },
+      "button-radius": { "default": "var(--radius-md)" },
+      "input-height": { "default": "40px" },
+      "input-padding-x": { "default": "var(--space-3)" },
+      "card-padding": { "default": "var(--space-4)" },
+      "modal-padding": { "default": "var(--space-6)" },
+      "avatar-size-sm": { "default": "24px" },
+      "avatar-size-md": { "default": "32px" },
+      "avatar-size-lg": { "default": "48px" }
+    }
+  },
+
+  "colorDerivation": {
+    "description": "Rules for deriving colors from theme inputs",
+    "rules": {
+      "text-soft": {
+        "formula": "mix(text, bg, 0.3)",
+        "description": "30% less contrast than base text"
+      },
+      "text-softer": {
+        "formula": "mix(text, bg, 0.5)",
+        "description": "50% less contrast than base text"
+      },
+      "text-hard": {
+        "formula": { "light": "#000000", "dark": "#ffffff" },
+        "description": "Maximum contrast text"
+      },
+      "border-default": {
+        "formula": { "light": "#e5e5e5", "dark": "#333333" },
+        "description": "Subtle border color"
+      },
+      "secondary-from-primary": {
+        "formula": "shiftHue(primary, 15)",
+        "description": "Secondary derived by shifting primary hue 15 degrees"
+      },
+      "accent-from-primary": {
+        "formula": "shiftHue(primary, 180)",
+        "description": "Accent as complementary color to primary"
+      },
+      "neutral-from-primary": {
+        "formula": "desaturate(primary, 80)",
+        "description": "Neutral derived by desaturating primary"
+      }
+    }
+  },
+
+  "accessibility": {
+    "contrastRequirements": {
+      "AA": {
+        "normalText": 4.5,
+        "largeText": 3,
+        "uiComponents": 3
+      },
+      "AAA": {
+        "normalText": 7,
+        "largeText": 4.5,
+        "uiComponents": 4.5
+      }
+    }
+  },
+
+  "themeInputSchema": {
+    "description": "Schema for theme JSON files",
+    "required": ["id", "name", "colors"],
+    "properties": {
+      "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+      "name": { "type": "string" },
+      "description": { "type": "string" },
+      "colors": {
+        "required": ["primary"],
+        "properties": {
+          "primary": { "type": "string", "format": "color" },
+          "secondary": { "type": "string", "format": "color", "description": "Optional, derived from primary if omitted" },
+          "accent": { "type": "string", "format": "color", "description": "Optional, derived from primary if omitted" },
+          "neutral": { "type": "string", "format": "color", "description": "Optional, derived from primary if omitted" }
+        }
+      },
+      "config": {
+        "properties": {
+          "saturation": { "type": "number", "minimum": -100, "maximum": 100 },
+          "temperature": { "type": "number", "minimum": -100, "maximum": 100 },
+          "contrastBoost": { "type": "number", "minimum": 0, "maximum": 100 }
+        }
+      },
+      "accessibility": {
+        "properties": {
+          "level": { "enum": ["AA", "AAA"] }
+        }
+      },
+      "typography": {
+        "properties": {
+          "fontSans": { "type": "string" },
+          "fontMono": { "type": "string" },
+          "fontSerif": { "type": "string" },
+          "scale": { "type": "number" },
+          "baseSize": { "type": "number" }
+        }
+      },
+      "overrides": {
+        "description": "Direct token overrides for specific modes",
+        "properties": {
+          "light": { "type": "object", "additionalProperties": { "type": "string" } },
+          "dark": { "type": "object", "additionalProperties": { "type": "string" } }
+        }
+      }
+    }
+  }
+}

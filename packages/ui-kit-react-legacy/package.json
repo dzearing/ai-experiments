@@ -1,0 +1,60 @@
+{
+  "name": "@claude-flow/ui-kit-react",
+  "version": "0.0.1",
+  "private": true,
+  "description": "UI components for React.",
+  "type": "module",
+  "packageType": "component-library",
+  "main": "./lib/index.js",
+  "module": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js"
+    },
+    "./styles.global.css": "./lib/styles.global.css"
+  },
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "build": "repo-scripts build",
+    "build:storybook": "repo-scripts build-storybook",
+    "clean": "repo-scripts clean",
+    "dev": "repo-scripts dev",
+    "dev:storybook": "repo-scripts dev-storybook",
+    "dev:storybook:wsl": "repo-scripts dev-storybook-wsl",
+    "dev:wsl": "repo-scripts dev-wsl",
+    "lint": "repo-scripts lint",
+    "lint:fix": "repo-scripts lint-fix",
+    "test": "repo-scripts test",
+    "test:watch": "repo-scripts test-watch",
+    "typecheck": "repo-scripts typecheck",
+    "format": "repo-scripts format",
+    "format:check": "repo-scripts format-check"
+  },
+  "dependencies": {
+    "@claude-flow/ui-kit-legacy": "workspace:*",
+    "clsx": "^2.1.1"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@claude-flow/repo-scripts": "workspace:*",
+    "@claude-flow/tsconfig": "workspace:*",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/user-event": "^14.5.2",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.3.4",
+    "jsdom": "^25.0.1",
+    "postcss-import": "^16.1.1",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "vitest": "^2.1.8"
+  }
+}

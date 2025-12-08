@@ -1,0 +1,135 @@
+.themes {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-10) var(--space-6);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: var(--space-10);
+}
+
+.title {
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-bold);
+  margin-bottom: var(--space-3);
+}
+
+.subtitle {
+  font-size: var(--text-lg);
+  color: var(--page-text-soft);
+  max-width: 600px;
+  margin: 0 auto var(--space-6);
+}
+
+.designerLink {
+  display: inline-block;
+  padding: var(--space-3) var(--space-6);
+  background: var(--controlPrimary-bg);
+  color: var(--controlPrimary-text);
+  border-radius: var(--radius-lg);
+  font-weight: var(--weight-semibold);
+  text-decoration: none;
+  transition: background var(--duration-fast) var(--ease-default);
+}
+
+.designerLink:hover {
+  background: var(--controlPrimary-bg-hover);
+  color: var(--controlPrimary-text);
+}
+
+.category {
+  margin-bottom: var(--space-10);
+}
+
+.categoryTitle {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
+  margin-bottom: var(--space-5);
+}
+
+.themeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-5);
+}
+
+.themeCard {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-xl);
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  overflow: hidden;
+  transition: all var(--duration-fast) var(--ease-default);
+}
+
+.themeCard:hover {
+  border-color: var(--controlPrimary-bg);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-4px);
+}
+
+.themePreview {
+  height: 140px;
+  background: #f5f5f5;
+  padding: var(--space-3);
+}
+
+.previewContent {
+  width: 100%;
+  height: 100%;
+  background: #ffffff;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.previewHeader {
+  height: 20px;
+  background: var(--preview-primary);
+}
+
+.previewBody {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  height: calc(100% - 20px);
+}
+
+.previewSidebar {
+  width: 40px;
+  background: #e5e5e5;
+  border-radius: 4px;
+}
+
+.previewMain {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.previewCard {
+  flex: 1;
+  background: #f0f0f0;
+  border-radius: 4px;
+  border-left: 3px solid var(--preview-primary);
+}
+
+.themeInfo {
+  padding: var(--space-4);
+}
+
+.themeName {
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  margin-bottom: var(--space-1);
+}
+
+.themeDesc {
+  font-size: var(--text-sm);
+  color: var(--page-text-soft);
+  margin: 0;
+}

@@ -1,5 +1,6 @@
 packages:
   - 'packages/*'
+  - 'packages/ui-kit/*'
   - 'apps/*'
   - 'apps/v1/*'
   - 'tools/*'

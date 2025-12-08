@@ -1,0 +1,44 @@
+.header {
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--card-border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+}
+
+.logo {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  color: var(--page-text-hard);
+  text-decoration: none;
+}
+
+.logo:hover {
+  color: var(--link);
+}
+
+.nav {
+  display: flex;
+  gap: var(--space-6);
+  flex: 1;
+}
+
+.navLink {
+  color: var(--page-text-soft);
+  font-weight: var(--weight-medium);
+  transition: color var(--duration-fast) var(--ease-default);
+}
+
+.navLink:hover {
+  color: var(--page-text);
+}

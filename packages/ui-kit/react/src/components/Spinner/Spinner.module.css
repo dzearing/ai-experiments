@@ -1,0 +1,65 @@
+.spinner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--controlPrimary-bg);
+}
+
+.spinner.inherit {
+  color: currentColor;
+}
+
+.spinner.sm {
+  width: 16px;
+  height: 16px;
+}
+
+.spinner.md {
+  width: 24px;
+  height: 24px;
+}
+
+.spinner.lg {
+  width: 32px;
+  height: 32px;
+}
+
+.spinner.xl {
+  width: 48px;
+  height: 48px;
+}
+
+.svg {
+  width: 100%;
+  height: 100%;
+  animation: spin 1s linear infinite;
+}
+
+.track {
+  opacity: 0.2;
+}
+
+.arc {
+  opacity: 1;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

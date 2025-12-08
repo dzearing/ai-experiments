@@ -1,0 +1,46 @@
+.divider {
+  border: none;
+  background: var(--page-border);
+  flex-shrink: 0;
+}
+
+/* Orientation */
+.horizontal {
+  width: 100%;
+  height: 1px;
+}
+
+.vertical {
+  width: 1px;
+  height: 100%;
+  align-self: stretch;
+}
+
+/* Spacing */
+.spacing-none {
+  margin: 0;
+}
+
+.spacing-sm.horizontal {
+  margin: var(--space-2) 0;
+}
+
+.spacing-sm.vertical {
+  margin: 0 var(--space-2);
+}
+
+.spacing-md.horizontal {
+  margin: var(--space-4) 0;
+}
+
+.spacing-md.vertical {
+  margin: 0 var(--space-4);
+}
+
+.spacing-lg.horizontal {
+  margin: var(--space-6) 0;
+}
+
+.spacing-lg.vertical {
+  margin: 0 var(--space-6);
+}

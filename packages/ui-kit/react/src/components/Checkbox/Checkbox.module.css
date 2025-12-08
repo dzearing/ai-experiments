@@ -1,0 +1,116 @@
+.wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  user-select: none;
+}
+
+.wrapper:has(.input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.checkbox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--inset-bg);
+  border: 1px solid var(--inset-border);
+  border-radius: var(--radius-sm);
+  transition: all var(--duration-fast) var(--ease-default);
+}
+
+.input:hover:not(:disabled) + .checkbox {
+  background: var(--inset-bg-hover);
+  border-color: var(--inset-border-hover);
+}
+
+.input:focus-visible + .checkbox {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.input:checked + .checkbox,
+.input[data-indeterminate="true"] + .checkbox {
+  background: var(--controlPrimary-bg);
+  border-color: var(--controlPrimary-border);
+  color: var(--controlPrimary-text);
+}
+
+.input:checked:hover:not(:disabled) + .checkbox,
+.input[data-indeterminate="true"]:hover:not(:disabled) + .checkbox {
+  background: var(--controlPrimary-bg-hover);
+}
+
+.input:disabled + .checkbox {
+  background: var(--controlDisabled-bg);
+  border-color: var(--controlDisabled-border);
+}
+
+.checkmark {
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all var(--duration-fast) var(--ease-default);
+}
+
+.input:checked + .checkbox .checkmark,
+.input[data-indeterminate="true"] + .checkbox .checkmark {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.label {
+  color: var(--page-text);
+  font-size: inherit;
+}
+
+/* Sizes */
+.sm .checkbox {
+  width: 14px;
+  height: 14px;
+}
+
+.sm .checkmark {
+  width: 10px;
+  height: 10px;
+}
+
+.sm {
+  font-size: var(--text-sm);
+}
+
+.md .checkbox {
+  width: 18px;
+  height: 18px;
+}
+
+.md .checkmark {
+  width: 12px;
+  height: 12px;
+}
+
+.md {
+  font-size: var(--text-base);
+}
+
+.lg .checkbox {
+  width: 22px;
+  height: 22px;
+}
+
+.lg .checkmark {
+  width: 14px;
+  height: 14px;
+}
+
+.lg {
+  font-size: var(--text-lg);
+}

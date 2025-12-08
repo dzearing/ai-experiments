@@ -1,0 +1,29 @@
+{
+  "id": "high-contrast",
+  "name": "High Contrast",
+  "description": "AAA-compliant theme for maximum accessibility",
+  "colors": {
+    "primary": "#0052cc",
+    "neutral": "#000000"
+  },
+  "accessibility": {
+    "level": "AAA"
+  },
+  "config": {
+    "contrastBoost": 30
+  },
+  "overrides": {
+    "light": {
+      "--page-text": "#000000",
+      "--page-bg": "#ffffff",
+      "--focus-ring-width": "3px",
+      "--control-border": "#000000"
+    },
+    "dark": {
+      "--page-text": "#ffffff",
+      "--page-bg": "#000000",
+      "--focus-ring-width": "3px",
+      "--control-border": "#ffffff"
+    }
+  }
+}

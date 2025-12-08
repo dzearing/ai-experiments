@@ -1,0 +1,17 @@
+{
+  "id": "cyberpunk",
+  "name": "Cyberpunk",
+  "description": "Neon pinks and cyans",
+  "colors": {
+    "primary": "#ec4899",
+    "secondary": "#06b6d4",
+    "accent": "#f59e0b",
+    "neutral": "#64748b"
+  },
+  "config": {
+    "saturation": 20
+  },
+  "accessibility": {
+    "level": "AA"
+  }
+}

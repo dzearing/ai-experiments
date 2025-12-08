@@ -1,0 +1,321 @@
+.settings {
+  min-height: 100vh;
+  background: var(--page-bg);
+}
+
+/* Header */
+.header {
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--card-border);
+  padding: var(--space-8) var(--space-6);
+}
+
+.title {
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-bold);
+  margin: 0 0 var(--space-2);
+}
+
+.subtitle {
+  color: var(--page-text-soft);
+  margin: 0;
+}
+
+/* Navigation */
+.nav {
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--card-border);
+  padding: 0 var(--space-6);
+  display: flex;
+  gap: var(--space-1);
+  overflow-x: auto;
+}
+
+.navItem {
+  padding: var(--space-4) var(--space-4);
+  color: var(--page-text-soft);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: all var(--duration-fast) var(--ease-default);
+}
+
+.navItem:hover {
+  color: var(--page-text);
+}
+
+.navItem.active {
+  color: var(--controlPrimary-bg);
+  border-bottom-color: var(--controlPrimary-bg);
+}
+
+/* Content */
+.content {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: var(--space-6);
+}
+
+/* Section */
+.section {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+}
+
+.sectionTitle {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  margin: 0 0 var(--space-2);
+}
+
+.sectionDesc {
+  color: var(--page-text-soft);
+  font-size: var(--text-sm);
+  margin: 0 0 var(--space-5);
+}
+
+/* Form */
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.fieldFull {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--page-text);
+}
+
+.input {
+  padding: var(--space-3) var(--space-4);
+  background: var(--inset-bg);
+  border: 1px solid var(--inset-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
+  color: var(--inset-text);
+  transition: border-color var(--duration-fast) var(--ease-default);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--inset-border-focus);
+  background: var(--inset-bg-focus);
+}
+
+.textarea {
+  padding: var(--space-3) var(--space-4);
+  background: var(--inset-bg);
+  border: 1px solid var(--inset-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
+  color: var(--inset-text);
+  resize: vertical;
+  font-family: inherit;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: var(--inset-border-focus);
+  background: var(--inset-bg-focus);
+}
+
+.select {
+  padding: var(--space-3) var(--space-4);
+  background: var(--inset-bg);
+  border: 1px solid var(--inset-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
+  color: var(--inset-text);
+  cursor: pointer;
+}
+
+/* Toggle */
+.toggleList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.toggleItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-4);
+  background: var(--inset-bg);
+  border-radius: var(--radius-md);
+}
+
+.toggleInfo {
+  flex: 1;
+}
+
+.toggleLabel {
+  font-weight: var(--weight-medium);
+  margin-bottom: var(--space-1);
+}
+
+.toggleDesc {
+  font-size: var(--text-sm);
+  color: var(--page-text-soft);
+}
+
+.toggle {
+  width: 44px;
+  height: 24px;
+  padding: 2px;
+  background: var(--control-bg);
+  border: none;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-default);
+}
+
+.toggle.toggleOn {
+  background: var(--controlPrimary-bg);
+}
+
+.toggleKnob {
+  display: block;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: var(--radius-full);
+  transition: transform var(--duration-fast) var(--ease-default);
+  box-shadow: var(--shadow-sm);
+}
+
+.toggle.toggleOn .toggleKnob {
+  transform: translateX(20px);
+}
+
+/* Radio */
+.radioGroup {
+  margin-top: var(--space-4);
+}
+
+.radioLabel {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  margin-bottom: var(--space-3);
+}
+
+.radioOptions {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.radio {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+
+.radio input {
+  accent-color: var(--controlPrimary-bg);
+}
+
+.radioText {
+  font-size: var(--text-sm);
+}
+
+/* Danger Zone */
+.dangerSection {
+  border-color: var(--danger-border);
+}
+
+.dangerActions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.dangerItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-4);
+  background: var(--danger-bg);
+  border-radius: var(--radius-md);
+}
+
+.dangerLabel {
+  font-weight: var(--weight-medium);
+  margin-bottom: var(--space-1);
+}
+
+.dangerDesc {
+  font-size: var(--text-sm);
+  color: var(--danger-text-soft);
+}
+
+.dangerButton {
+  padding: var(--space-2) var(--space-4);
+  background: var(--controlDanger-bg);
+  color: var(--controlDanger-text);
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-default);
+}
+
+.dangerButton:hover {
+  background: var(--controlDanger-bg-hover);
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+}
+
+.primaryButton {
+  padding: var(--space-3) var(--space-5);
+  background: var(--controlPrimary-bg);
+  color: var(--controlPrimary-text);
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-default);
+}
+
+.primaryButton:hover {
+  background: var(--controlPrimary-bg-hover);
+}
+
+.secondaryButton {
+  padding: var(--space-3) var(--space-5);
+  background: var(--control-bg);
+  color: var(--control-text);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-md);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-default);
+}
+
+.secondaryButton:hover {
+  background: var(--control-bg-hover);
+}

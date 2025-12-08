@@ -1,0 +1,14 @@
+{
+  "id": "fluent",
+  "name": "Fluent",
+  "description": "Microsoft Fluent/Fabric design",
+  "colors": {
+    "primary": "#0078d4",
+    "secondary": "#106ebe",
+    "accent": "#881798",
+    "neutral": "#605e5c"
+  },
+  "accessibility": {
+    "level": "AA"
+  }
+}

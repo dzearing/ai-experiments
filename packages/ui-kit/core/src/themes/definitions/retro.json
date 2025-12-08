@@ -1,0 +1,28 @@
+{
+  "id": "retro",
+  "name": "Retro",
+  "description": "80s inspired pastels",
+  "colors": {
+    "primary": "#ff6b9d",
+    "secondary": "#c44569",
+    "accent": "#ffc93c",
+    "neutral": "#574b60"
+  },
+  "config": {
+    "saturation": 15,
+    "temperature": 10
+  },
+  "overrides": {
+    "light": {
+      "--page-bg": "#ffeaa7",
+      "--card-bg": "#fdcb6e"
+    },
+    "dark": {
+      "--page-bg": "#2d1b2e",
+      "--card-bg": "#4a2c4a"
+    }
+  },
+  "accessibility": {
+    "level": "AA"
+  }
+}

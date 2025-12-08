@@ -1,0 +1,106 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay-bg);
+  z-index: 1000;
+  animation: fadeIn var(--duration-fast) var(--ease-default);
+}
+
+.drawer {
+  position: fixed;
+  background: var(--overlay-bg);
+  box-shadow: var(--overlay-shadow);
+  overflow: auto;
+}
+
+/* Positions */
+.left {
+  top: 0;
+  left: 0;
+  bottom: 0;
+  border-right: 1px solid var(--overlay-border);
+  animation: slideInLeft var(--duration-normal) var(--ease-default);
+}
+
+.right {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  border-left: 1px solid var(--overlay-border);
+  animation: slideInRight var(--duration-normal) var(--ease-default);
+}
+
+.top {
+  top: 0;
+  left: 0;
+  right: 0;
+  border-bottom: 1px solid var(--overlay-border);
+  animation: slideInTop var(--duration-normal) var(--ease-default);
+}
+
+.bottom {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-top: 1px solid var(--overlay-border);
+  animation: slideInBottom var(--duration-normal) var(--ease-default);
+}
+
+/* Sizes for left/right */
+.left.size-sm, .right.size-sm {
+  width: 280px;
+}
+
+.left.size-md, .right.size-md {
+  width: 400px;
+}
+
+.left.size-lg, .right.size-lg {
+  width: 600px;
+}
+
+.left.size-full, .right.size-full {
+  width: 100%;
+}
+
+/* Sizes for top/bottom */
+.top.size-sm, .bottom.size-sm {
+  height: 200px;
+}
+
+.top.size-md, .bottom.size-md {
+  height: 300px;
+}
+
+.top.size-lg, .bottom.size-lg {
+  height: 50vh;
+}
+
+.top.size-full, .bottom.size-full {
+  height: 100%;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes slideInTop {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes slideInBottom {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}

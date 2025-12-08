@@ -1,0 +1,214 @@
+.container {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+}
+
+.top-left {
+  top: 0;
+  left: 0;
+  align-items: flex-start;
+}
+
+.top-center {
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  align-items: center;
+}
+
+.top-right {
+  top: 0;
+  right: 0;
+  align-items: flex-end;
+}
+
+.bottom-left {
+  bottom: 0;
+  left: 0;
+  align-items: flex-start;
+}
+
+.bottom-center {
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  align-items: center;
+}
+
+.bottom-right {
+  bottom: 0;
+  right: 0;
+  align-items: flex-end;
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-width: 280px;
+  max-width: 400px;
+  padding: var(--space-3) var(--space-4);
+  background: var(--popout-bg);
+  border: 1px solid var(--popout-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  pointer-events: auto;
+  animation: slideIn var(--duration-normal) var(--ease-default);
+}
+
+.toast.exiting {
+  animation: slideOut var(--duration-fast) var(--ease-default) forwards;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  font-weight: var(--weight-medium);
+  color: var(--popout-text);
+  margin-bottom: var(--space-1);
+}
+
+.message {
+  color: var(--popout-text-soft);
+  font-size: var(--text-sm);
+}
+
+.action {
+  flex-shrink: 0;
+}
+
+.close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-1);
+  border: none;
+  background: transparent;
+  color: var(--popout-text-soft);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: color var(--duration-fast) var(--ease-default);
+}
+
+.close:hover {
+  color: var(--popout-text);
+}
+
+/* Variants */
+.info {
+  background: var(--info-bg);
+  border: 1px solid var(--info-border);
+  border-left: 3px solid var(--info-border);
+}
+
+.info .title {
+  color: var(--info-text);
+}
+
+.info .message {
+  color: var(--info-text-soft);
+}
+
+.info .close {
+  color: var(--info-text-soft);
+}
+
+.info .close:hover {
+  color: var(--info-text);
+}
+
+.success {
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+  border-left: 3px solid var(--success-border);
+}
+
+.success .title {
+  color: var(--success-text);
+}
+
+.success .message {
+  color: var(--success-text-soft);
+}
+
+.success .close {
+  color: var(--success-text-soft);
+}
+
+.success .close:hover {
+  color: var(--success-text);
+}
+
+.warning {
+  background: var(--warning-bg);
+  border: 1px solid var(--warning-border);
+  border-left: 3px solid var(--warning-border);
+}
+
+.warning .title {
+  color: var(--warning-text);
+}
+
+.warning .message {
+  color: var(--warning-text-soft);
+}
+
+.warning .close {
+  color: var(--warning-text-soft);
+}
+
+.warning .close:hover {
+  color: var(--warning-text);
+}
+
+.error {
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+  border-left: 3px solid var(--danger-border);
+}
+
+.error .title {
+  color: var(--danger-text);
+}
+
+.error .message {
+  color: var(--danger-text-soft);
+}
+
+.error .close {
+  color: var(--danger-text-soft);
+}
+
+.error .close:hover {
+  color: var(--danger-text);
+}

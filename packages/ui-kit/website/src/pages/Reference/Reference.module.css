@@ -1,0 +1,44 @@
+.reference {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.reference h1 {
+  margin-bottom: var(--space-4);
+}
+
+.intro {
+  color: var(--page-text-soft);
+  font-size: var(--text-lg);
+  margin-bottom: var(--space-10);
+}
+
+.sections {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-4);
+}
+
+.section {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-default);
+}
+
+.section:hover {
+  border-color: var(--controlPrimary-bg);
+  box-shadow: var(--shadow-md);
+}
+
+.section h2 {
+  font-size: var(--text-xl);
+  margin-bottom: var(--space-2);
+}
+
+.section p {
+  color: var(--page-text-soft);
+  margin-bottom: 0;
+}

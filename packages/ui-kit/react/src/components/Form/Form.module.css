@@ -1,0 +1,84 @@
+/* Form container */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6); /* 24px - larger gap between fields */
+}
+
+/* Individual field wrapper */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2); /* 8px gap between label/input/hint */
+}
+
+.label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--page-text);
+}
+
+.required {
+  color: var(--danger-text);
+  margin-left: var(--space-1);
+}
+
+.control {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Make inputs full width by default in forms */
+.control input,
+.control textarea,
+.control select {
+  width: 100%;
+}
+
+.hint {
+  font-size: var(--text-sm);
+  color: var(--page-text-soft);
+}
+
+.error {
+  font-size: var(--text-sm);
+  color: var(--danger-text);
+}
+
+.hasError .label {
+  color: var(--danger-text);
+}
+
+/* Form actions (buttons) */
+.actions {
+  display: flex;
+  gap: var(--space-3); /* 12px gap between buttons */
+  padding-top: var(--space-2); /* Small top padding for visual separation */
+}
+
+.align-start {
+  justify-content: flex-start;
+}
+
+.align-center {
+  justify-content: center;
+}
+
+.align-end {
+  justify-content: flex-end;
+}
+
+.align-between {
+  justify-content: space-between;
+}
+
+/* Form row (multiple fields side by side) */
+.row {
+  display: flex;
+  gap: var(--space-4); /* 16px gap between columns */
+}
+
+.row > * {
+  flex: 1;
+  min-width: 0; /* Allow fields to shrink */
+}

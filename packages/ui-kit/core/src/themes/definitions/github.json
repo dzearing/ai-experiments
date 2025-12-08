@@ -1,0 +1,14 @@
+{
+  "id": "github",
+  "name": "GitHub",
+  "description": "GitHub's design language",
+  "colors": {
+    "primary": "#238636",
+    "secondary": "#1f6feb",
+    "accent": "#8957e5",
+    "neutral": "#656d76"
+  },
+  "accessibility": {
+    "level": "AA"
+  }
+}

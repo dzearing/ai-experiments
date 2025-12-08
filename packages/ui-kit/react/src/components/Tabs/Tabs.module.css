@@ -1,0 +1,95 @@
+.tabs {
+  display: flex;
+  flex-direction: column;
+}
+
+.tabList {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.tab {
+  padding: var(--space-2) var(--space-4);
+  border: none;
+  background: transparent;
+  color: var(--page-text-soft);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-default);
+}
+
+.tab:hover:not(:disabled) {
+  color: var(--page-text);
+}
+
+.tab:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.tab.active {
+  color: var(--page-text);
+}
+
+.tab.disabled {
+  color: var(--controlDisabled-text);
+  cursor: not-allowed;
+}
+
+/* Default variant */
+.default {
+  border-bottom: 1px solid var(--page-border);
+}
+
+.default .tab {
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.default .tab.active {
+  border-bottom-color: var(--controlPrimary-bg);
+}
+
+/* Pills variant */
+.pills {
+  gap: var(--space-2);
+}
+
+.pills .tab {
+  border-radius: var(--radius-md);
+}
+
+.pills .tab:hover:not(:disabled):not(.active) {
+  background: var(--controlSubtle-bg-hover);
+}
+
+.pills .tab.active {
+  background: var(--controlPrimary-bg);
+  color: var(--controlPrimary-text);
+}
+
+/* Underline variant */
+.underline .tab {
+  position: relative;
+}
+
+.underline .tab::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--controlPrimary-bg);
+  transform: scaleX(0);
+  transition: transform var(--duration-fast) var(--ease-default);
+}
+
+.underline .tab.active::after {
+  transform: scaleX(1);
+}
+
+.tabPanel {
+  padding: var(--space-4) 0;
+}

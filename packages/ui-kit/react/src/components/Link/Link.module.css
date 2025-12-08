@@ -1,0 +1,32 @@
+.link {
+  color: var(--link);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 2px;
+  transition: all var(--duration-fast) var(--ease-default);
+}
+
+.link:hover {
+  color: var(--link-hover);
+  text-decoration-color: currentColor;
+}
+
+.link:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: var(--radius-sm);
+}
+
+.noUnderline {
+  text-decoration: none;
+}
+
+.noUnderline:hover {
+  text-decoration: underline;
+}
+
+.externalIcon {
+  display: inline-block;
+  margin-left: var(--space-0-5);
+  vertical-align: middle;
+}

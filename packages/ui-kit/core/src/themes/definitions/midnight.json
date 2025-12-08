@@ -1,0 +1,24 @@
+{
+  "id": "midnight",
+  "name": "Midnight",
+  "description": "Deep blues and purples",
+  "colors": {
+    "primary": "#6366f1",
+    "secondary": "#8b5cf6",
+    "accent": "#a855f7",
+    "neutral": "#64748b"
+  },
+  "config": {
+    "temperature": -10
+  },
+  "overrides": {
+    "dark": {
+      "--page-bg": "#0f0f23",
+      "--card-bg": "#1a1a3e",
+      "--page-text": "#e0e0f0"
+    }
+  },
+  "accessibility": {
+    "level": "AA"
+  }
+}

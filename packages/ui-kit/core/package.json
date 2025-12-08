@@ -1,0 +1,49 @@
+{
+  "name": "@ui-kit/core",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Framework-agnostic design tokens, themes, and surfaces for building accessible UIs",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./tokens.css": "./dist/tokens.css",
+    "./styles.css": "./dist/tokens.css",
+    "./surfaces": {
+      "types": "./dist/surfaces.d.ts",
+      "import": "./dist/surfaces.js"
+    },
+    "./themes/*": "./dist/themes/*",
+    "./dev": {
+      "types": "./dist/dev/index.d.ts",
+      "import": "./dist/dev/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsx scripts/build.ts",
+    "build:tokens": "tsx scripts/build-tokens.ts",
+    "build:themes": "tsx scripts/build-themes.ts",
+    "dev": "tsx watch scripts/build.ts",
+    "clean": "rm -rf dist",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "esbuild": "^0.20.0",
+    "tsx": "^4.20.3",
+    "typescript": "^5.4.0",
+    "vitest": "^3.2.4"
+  }
+}

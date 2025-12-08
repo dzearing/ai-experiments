@@ -1,0 +1,27 @@
+{
+  "id": "matrix",
+  "name": "Matrix",
+  "description": "Matrix-inspired with glow effects",
+  "colors": {
+    "primary": "#00ff41",
+    "secondary": "#008f11",
+    "accent": "#003b00",
+    "neutral": "#0d3b0d"
+  },
+  "typography": {
+    "fontSans": "'JetBrains Mono', 'Fira Code', monospace"
+  },
+  "overrides": {
+    "dark": {
+      "--page-bg": "#0d0208",
+      "--page-text": "#00ff41",
+      "--card-bg": "#0a0a0a",
+      "--card-text": "#00ff41",
+      "--shadow-sm": "0 0 5px rgba(0, 255, 65, 0.3)",
+      "--shadow-md": "0 0 10px rgba(0, 255, 65, 0.4)"
+    }
+  },
+  "accessibility": {
+    "level": "AA"
+  }
+}

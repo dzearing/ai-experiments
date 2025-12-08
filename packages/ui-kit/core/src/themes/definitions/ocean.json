@@ -1,0 +1,17 @@
+{
+  "id": "ocean",
+  "name": "Ocean",
+  "description": "Cool blues and aquatic tones",
+  "colors": {
+    "primary": "#0ea5e9",
+    "secondary": "#06b6d4",
+    "accent": "#8b5cf6",
+    "neutral": "#64748b"
+  },
+  "config": {
+    "temperature": -10
+  },
+  "accessibility": {
+    "level": "AA"
+  }
+}

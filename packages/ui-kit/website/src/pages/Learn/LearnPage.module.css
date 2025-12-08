@@ -1,0 +1,137 @@
+.learn {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: var(--space-10) var(--space-6);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: var(--space-10);
+}
+
+.title {
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-bold);
+  margin-bottom: var(--space-4);
+}
+
+.subtitle {
+  font-size: var(--text-lg);
+  color: var(--page-text-soft);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.lessons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-bottom: var(--space-12);
+}
+
+.lessonCard {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-5);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-xl);
+  text-decoration: none;
+  transition: all var(--duration-fast) var(--ease-default);
+}
+
+.lessonCard:hover {
+  border-color: var(--controlPrimary-bg);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.lessonNumber {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--controlPrimary-bg);
+  color: var(--controlPrimary-text);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  flex-shrink: 0;
+}
+
+.lessonContent {
+  flex: 1;
+}
+
+.lessonTitle {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  color: var(--page-text-hard);
+  margin-bottom: var(--space-1);
+}
+
+.lessonDesc {
+  font-size: var(--text-sm);
+  color: var(--page-text-soft);
+  margin: 0;
+}
+
+.lessonMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+.duration {
+  font-size: var(--text-sm);
+  color: var(--page-text-softer);
+}
+
+.arrow {
+  font-size: var(--text-xl);
+  color: var(--controlPrimary-bg);
+}
+
+.quickLinks {
+  padding: var(--space-6);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-xl);
+}
+
+.quickLinksTitle {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  margin-bottom: var(--space-4);
+}
+
+.quickLinksGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-3);
+}
+
+.quickLink {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--control-bg);
+  color: var(--control-text);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  font-weight: var(--weight-medium);
+  transition: background var(--duration-fast) var(--ease-default);
+}
+
+.quickLink:hover {
+  background: var(--control-bg-hover);
+  color: var(--control-text);
+}
+
+.quickLinkIcon {
+  font-size: var(--text-xl);
+}

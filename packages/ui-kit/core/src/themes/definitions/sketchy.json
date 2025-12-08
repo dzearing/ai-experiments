@@ -1,0 +1,30 @@
+{
+  "id": "sketchy",
+  "name": "Sketchy",
+  "description": "Hand-drawn, notebook style",
+  "colors": {
+    "primary": "#333333",
+    "secondary": "#555555",
+    "accent": "#d63031",
+    "neutral": "#777777"
+  },
+  "typography": {
+    "fontSans": "'Indie Flower', 'Comic Sans MS', cursive"
+  },
+  "overrides": {
+    "light": {
+      "--page-bg": "#fdfcf8",
+      "--card-bg": "#fffff0",
+      "--radius-sm": "0px",
+      "--radius-md": "2px",
+      "--radius-lg": "4px"
+    },
+    "dark": {
+      "--page-bg": "#2d2a26",
+      "--card-bg": "#3a3632"
+    }
+  },
+  "accessibility": {
+    "level": "AA"
+  }
+}

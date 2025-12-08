@@ -1,0 +1,98 @@
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+}
+
+.icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  font-weight: var(--weight-medium);
+  margin-bottom: var(--space-1);
+  color: var(--page-text);
+}
+
+.message {
+  font-size: var(--text-sm);
+  color: var(--page-text-soft);
+}
+
+.action {
+  flex-shrink: 0;
+}
+
+.close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-1);
+  border: none;
+  background: transparent;
+  color: var(--page-text-soft);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all var(--duration-fast) var(--ease-default);
+}
+
+.close:hover {
+  color: var(--page-text);
+  background: var(--controlSubtle-bg-hover);
+}
+
+/* Variants - icon gets the semantic color, text stays neutral */
+.default {
+  background: var(--control-bg);
+  border: 1px solid var(--page-border);
+}
+
+.default .icon {
+  color: var(--page-text-soft);
+}
+
+.info {
+  background: var(--info-bg);
+  border: 1px solid color-mix(in srgb, var(--info-border) 50%, transparent);
+}
+
+.info .icon {
+  color: var(--info-icon);
+}
+
+.success {
+  background: var(--success-bg);
+  border: 1px solid color-mix(in srgb, var(--success-border) 50%, transparent);
+}
+
+.success .icon {
+  color: var(--success-icon);
+}
+
+.warning {
+  background: var(--warning-bg);
+  border: 1px solid color-mix(in srgb, var(--warning-border) 50%, transparent);
+}
+
+.warning .icon {
+  color: var(--warning-icon);
+}
+
+.error {
+  background: var(--danger-bg);
+  border: 1px solid color-mix(in srgb, var(--danger-border) 50%, transparent);
+}
+
+.error .icon {
+  color: var(--danger-icon);
+}

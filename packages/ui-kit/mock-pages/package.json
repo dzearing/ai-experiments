@@ -1,0 +1,32 @@
+{
+  "name": "@ui-kit/mock-pages",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Mock UI pages for testing UI-Kit themes",
+  "type": "module",
+  "scripts": {
+    "dev": "storybook dev -p 6007",
+    "build": "storybook build",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ui-kit/core": "workspace:*",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@storybook/addon-essentials": "^8.0.0",
+    "@storybook/addon-interactions": "^8.0.0",
+    "@storybook/addon-links": "^8.0.0",
+    "@storybook/blocks": "^8.0.0",
+    "@storybook/react": "^8.0.0",
+    "@storybook/react-vite": "^8.0.0",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "storybook": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vite": "^5.0.0"
+  }
+}

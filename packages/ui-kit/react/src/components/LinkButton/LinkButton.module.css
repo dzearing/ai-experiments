@@ -1,0 +1,98 @@
+.linkButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-default);
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.linkButton:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* Sizes */
+.sm {
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.md {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-base);
+}
+
+.lg {
+  padding: var(--space-3) var(--space-6);
+  font-size: var(--text-lg);
+}
+
+/* Variants */
+.default {
+  background: var(--control-bg);
+  color: var(--control-text);
+  border-color: var(--control-border);
+}
+
+.default:hover {
+  background: var(--control-bg-hover);
+  border-color: var(--control-border-hover);
+}
+
+.default:active {
+  background: var(--control-bg-pressed);
+}
+
+.primary {
+  background: var(--controlPrimary-bg);
+  color: var(--controlPrimary-text);
+  border-color: var(--controlPrimary-border);
+}
+
+.primary:hover {
+  background: var(--controlPrimary-bg-hover);
+}
+
+.primary:active {
+  background: var(--controlPrimary-bg-pressed);
+}
+
+.danger {
+  background: var(--controlDanger-bg);
+  color: var(--controlDanger-text);
+  border-color: var(--controlDanger-border);
+}
+
+.danger:hover {
+  background: var(--controlDanger-bg-hover);
+}
+
+.danger:active {
+  background: var(--controlDanger-bg-pressed);
+}
+
+.ghost {
+  background: var(--controlSubtle-bg);
+  color: var(--controlSubtle-text);
+  border-color: transparent;
+}
+
+.ghost:hover {
+  background: var(--controlSubtle-bg-hover);
+  color: var(--controlSubtle-text-hover);
+}
+
+.ghost:active {
+  background: var(--controlSubtle-bg-pressed);
+}
+
+/* Full Width */
+.fullWidth {
+  width: 100%;
+}

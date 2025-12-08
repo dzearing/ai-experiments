@@ -1,0 +1,38 @@
+.heading {
+  margin: 0;
+  color: var(--page-text);
+  font-weight: var(--weight-semibold);
+}
+
+.h1 {
+  font-size: var(--text-4xl);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.02em;
+}
+
+.h2 {
+  font-size: var(--text-3xl);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.01em;
+}
+
+.h3 {
+  font-size: var(--text-2xl);
+  line-height: var(--leading-snug);
+}
+
+.h4 {
+  font-size: var(--text-xl);
+  line-height: var(--leading-snug);
+}
+
+.h5 {
+  font-size: var(--text-lg);
+  line-height: var(--leading-normal);
+}
+
+.h6 {
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  font-weight: var(--weight-medium);
+}

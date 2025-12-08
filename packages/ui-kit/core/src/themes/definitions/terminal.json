@@ -1,0 +1,24 @@
+{
+  "id": "terminal",
+  "name": "Terminal",
+  "description": "Green-on-black hacker aesthetic",
+  "colors": {
+    "primary": "#22c55e",
+    "secondary": "#10b981",
+    "accent": "#06b6d4",
+    "neutral": "#4ade80"
+  },
+  "typography": {
+    "fontSans": "'JetBrains Mono', 'Fira Code', monospace"
+  },
+  "overrides": {
+    "dark": {
+      "--page-bg": "#0a0a0a",
+      "--page-text": "#22c55e",
+      "--card-bg": "#111111"
+    }
+  },
+  "accessibility": {
+    "level": "AA"
+  }
+}

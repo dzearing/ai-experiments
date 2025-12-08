@@ -1,0 +1,29 @@
+{
+  "id": "art-deco",
+  "name": "Art Deco",
+  "description": "1920s geometric elegance",
+  "colors": {
+    "primary": "#d4af37",
+    "secondary": "#c9a227",
+    "accent": "#1a1a2e",
+    "neutral": "#4a4a4a"
+  },
+  "typography": {
+    "fontSerif": "'Playfair Display', Georgia, serif"
+  },
+  "overrides": {
+    "light": {
+      "--page-bg": "#f5f3ef",
+      "--card-bg": "#ffffff",
+      "--page-text": "#1a1a2e"
+    },
+    "dark": {
+      "--page-bg": "#1a1a2e",
+      "--card-bg": "#2a2a4e",
+      "--page-text": "#d4af37"
+    }
+  },
+  "accessibility": {
+    "level": "AA"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "id": "forest",
+  "name": "Forest",
+  "description": "Natural greens and earth tones",
+  "colors": {
+    "primary": "#16a34a",
+    "secondary": "#22c55e",
+    "accent": "#84cc16",
+    "neutral": "#57534e"
+  },
+  "config": {
+    "temperature": 5
+  },
+  "accessibility": {
+    "level": "AA"
+  }
+}

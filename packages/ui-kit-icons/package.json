@@ -44,7 +44,7 @@
   "devDependencies": {
     "@claude-flow/repo-scripts": "workspace:*",
     "@claude-flow/tsconfig": "workspace:*",
-    "@claude-flow/ui-kit": "workspace:*",
+    "@claude-flow/ui-kit-legacy": "workspace:*",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "glob": "^11.0.0",

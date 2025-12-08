@@ -1,0 +1,18 @@
+{
+  "id": "sunset",
+  "name": "Sunset",
+  "description": "Warm oranges and purples",
+  "colors": {
+    "primary": "#ea580c",
+    "secondary": "#f97316",
+    "accent": "#a855f7",
+    "neutral": "#78716c"
+  },
+  "config": {
+    "temperature": 15,
+    "saturation": 10
+  },
+  "accessibility": {
+    "level": "AA"
+  }
+}

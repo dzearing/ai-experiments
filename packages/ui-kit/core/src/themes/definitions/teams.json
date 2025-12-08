@@ -1,0 +1,14 @@
+{
+  "id": "teams",
+  "name": "Teams",
+  "description": "Microsoft Teams purple palette",
+  "colors": {
+    "primary": "#6264a7",
+    "secondary": "#7b83eb",
+    "accent": "#33344a",
+    "neutral": "#605e5c"
+  },
+  "accessibility": {
+    "level": "AA"
+  }
+}
