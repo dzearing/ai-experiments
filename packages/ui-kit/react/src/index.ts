@@ -222,5 +222,14 @@ export type {
 export { SplitPane } from './components/SplitPane';
 export type { SplitPaneProps, SplitPaneOrientation } from './components/SplitPane';
 
+// Segmented
+export { Segmented } from './components/Segmented';
+export type {
+  SegmentedProps,
+  SegmentedSize,
+  SegmentedVariant,
+  SegmentOption,
+} from './components/Segmented';
+
 // Context
 export { ThemeProvider, useTheme } from './context/ThemeProvider';

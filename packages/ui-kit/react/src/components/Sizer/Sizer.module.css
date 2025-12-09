@@ -20,6 +20,47 @@
   width: 100%;
 }
 
+/* Single center line using pseudo-elements */
+.horizontal::before,
+.horizontal::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  width: 1px;
+  background: var(--color-panel-border, var(--panel-border, #e0e0e0));
+  transform: translateX(-50%);
+}
+
+.horizontal::before {
+  top: 0;
+  bottom: calc(50% + 20px); /* Stop 4px before gripper (gripper is 32px, so 16px + 4px = 20px) */
+}
+
+.horizontal::after {
+  top: calc(50% + 20px); /* Start 4px after gripper center */
+  bottom: 0;
+}
+
+.vertical::before,
+.vertical::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  height: 1px;
+  background: var(--color-panel-border, var(--panel-border, #e0e0e0));
+  transform: translateY(-50%);
+}
+
+.vertical::before {
+  left: 0;
+  right: calc(50% + 20px);
+}
+
+.vertical::after {
+  left: calc(50% + 20px);
+  right: 0;
+}
+
 /* Hover state */
 .sizer:hover:not(.disabled) {
   background: var(--controlSubtle-bg-hover);

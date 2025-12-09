@@ -1,42 +1,50 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import { fn } from '@storybook/test';
 import { useState, useRef } from 'react';
 import { MarkdownEditor, type MarkdownEditorRef } from './MarkdownEditor';
 import { MarkdownRenderer } from '../MarkdownRenderer';
 
-const meta = {
-  title: 'Components/MarkdownEditor',
+const meta: Meta<typeof MarkdownEditor> = {
+  title: 'Markdown/MarkdownEditor',
   component: MarkdownEditor,
   tags: ['autodocs'],
   parameters: {
+    layout: 'padded',
     docs: {
       description: {
         component: `
-TipTap-based WYSIWYG markdown editor with bi-directional editing.
+Plain text markdown editor for editing raw markdown content.
 
 ## Features
-- Rich text editing with markdown output
-- Configurable toolbar
-- Deep-linking support
-- AI co-authoring ready
+- Plain text editing (no WYSIWYG)
+- Line numbers
+- Tab/Shift+Tab for indentation
+- Selection tracking for co-authoring cursor support
 
 ## Usage
 \`\`\`tsx
 import { MarkdownEditor } from '@ui-kit/react-markdown';
 
 <MarkdownEditor
-  value="# Hello"
+  defaultValue="# Hello"
   onChange={(markdown) => console.log(markdown)}
-  showToolbar
+  showLineNumbers
 />
 \`\`\`
         `,
       },
     },
   },
+  args: {
+    onChange: fn(),
+    onFocus: fn(),
+    onBlur: fn(),
+    onSelectionChange: fn(),
+  },
   argTypes: {
-    showToolbar: {
+    showLineNumbers: {
       control: 'boolean',
-      description: 'Show the formatting toolbar',
+      description: 'Show line numbers',
     },
     readOnly: {
       control: 'boolean',
@@ -50,24 +58,29 @@ import { MarkdownEditor } from '@ui-kit/react-markdown';
       control: 'text',
       description: 'Editor height',
     },
+    tabSize: {
+      control: 'number',
+      description: 'Number of spaces for tab',
+    },
+    onEditorReady: {
+      table: { disable: true },
+    },
   },
-} satisfies Meta<typeof MarkdownEditor>;
+};
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
 const sampleContent = `# Welcome to the Editor
 
-This is a **rich text** editor with *markdown* support.
+This is a **plain text** markdown editor.
 
 ## Features
 
-- Bold, italic, strikethrough
-- Headings (H1-H6)
-- Lists (bullet and numbered)
-- Code blocks
-- Links
-- And more!
+- Line numbers
+- Tab indentation
+- Selection tracking
+- Co-authoring ready
 
 \`\`\`typescript
 const greeting = 'Hello, World!';
@@ -79,39 +92,39 @@ Try editing this content!
 
 export const Default: Story = {
   args: {
-    value: sampleContent,
-    showToolbar: true,
+    defaultValue: sampleContent,
+    showLineNumbers: true,
     height: '400px',
-    placeholder: 'Start typing...',
+    placeholder: 'Enter markdown...',
   },
 };
 
 export const EmptyEditor: Story = {
   args: {
-    showToolbar: true,
+    showLineNumbers: true,
     height: '300px',
     placeholder: 'Start writing your document...',
   },
 };
 
-export const WithoutToolbar: Story = {
+export const WithoutLineNumbers: Story = {
   args: {
-    value: `# No Toolbar
+    defaultValue: `# No Line Numbers
 
-This editor has no toolbar. Use keyboard shortcuts instead!
+This editor has line numbers disabled.
 
-- **Bold**: Ctrl+B
-- *Italic*: Ctrl+I
-- \`Code\`: Ctrl+E`,
-    showToolbar: false,
+- Edit freely
+- Tab for indentation
+- Shift+Tab to outdent`,
+    showLineNumbers: false,
     height: '300px',
   },
 };
 
 export const ReadOnly: Story = {
   args: {
-    value: sampleContent,
-    showToolbar: false,
+    defaultValue: sampleContent,
+    showLineNumbers: true,
     readOnly: true,
     height: '400px',
   },
@@ -121,28 +134,29 @@ export const ReadOnly: Story = {
 const ControlledStory = () => {
   const [markdown, setMarkdown] = useState(`# Controlled Editor
 
-Edit me!`);
+Edit me and see the raw output below!`);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <MarkdownEditor
-        markdown={markdown}
+        value={markdown}
         onChange={setMarkdown}
-        showToolbar
+        showLineNumbers
         height="300px"
       />
 
       <div>
-        <h4 style={{ margin: '0 0 8px 0' }}>Raw Markdown:</h4>
+        <h4 style={{ margin: '0 0 8px 0' }}>Character Count: {markdown.length}</h4>
         <pre style={{
           padding: '16px',
-          background: 'var(--inset-bg)',
-          border: '1px solid var(--inset-border)',
+          background: 'var(--color-panel-background)',
+          border: '1px solid var(--color-panel-border)',
           borderRadius: '8px',
           overflow: 'auto',
           maxHeight: '200px',
           margin: 0,
           fontSize: '14px',
+          fontFamily: 'monospace',
         }}>
           {markdown}
         </pre>
@@ -180,22 +194,22 @@ const x = 42;
       height: '500px',
     }}>
       <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <h4 style={{ margin: '0 0 8px 0' }}>Editor</h4>
+        <h4 style={{ margin: '0 0 8px 0' }}>Editor (Plain Text)</h4>
         <MarkdownEditor
-          markdown={markdown}
+          value={markdown}
           onChange={setMarkdown}
-          showToolbar
+          showLineNumbers
           height="100%"
         />
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <h4 style={{ margin: '0 0 8px 0' }}>Preview</h4>
+        <h4 style={{ margin: '0 0 8px 0' }}>Preview (Rendered)</h4>
         <div style={{
           flex: 1,
           padding: '16px',
-          background: 'var(--panel-bg)',
-          border: '1px solid var(--panel-border)',
+          background: 'var(--color-panel-background)',
+          border: '1px solid var(--color-panel-border)',
           borderRadius: '8px',
           overflow: 'auto',
         }}>
@@ -211,54 +225,18 @@ const x = 42;
 
 export const EditorWithPreview: Story = {
   render: () => <SideBySideStory />,
-  parameters: {
-    layout: 'padded',
-  },
 };
 
-// Toolbar variants
-export const ToolbarSmall: Story = {
+// Tab size variants
+export const TabSize4: Story = {
   args: {
-    value: `# Small Toolbar
+    defaultValue: `# Tab Size 4
 
-Compact toolbar variant.`,
-    showToolbar: true,
-    toolbarProps: {
-      size: 'sm',
-    },
-    height: '200px',
-  },
-};
+Press Tab to indent with 4 spaces.
 
-export const ToolbarLarge: Story = {
-  args: {
-    value: `# Large Toolbar
-
-Larger toolbar for touch interfaces.`,
-    showToolbar: true,
-    toolbarProps: {
-      size: 'lg',
-    },
-    height: '200px',
-  },
-};
-
-export const MinimalToolbar: Story = {
-  args: {
-    value: `# Minimal Features
-
-Only basic formatting.`,
-    showToolbar: true,
-    toolbarProps: {
-      features: {
-        formatting: true,
-        headings: false,
-        lists: false,
-        blocks: false,
-        links: false,
-        undo: true,
-      },
-    },
+    This line is indented.`,
+    showLineNumbers: true,
+    tabSize: 4,
     height: '200px',
   },
 };
@@ -267,10 +245,11 @@ Only basic formatting.`,
 const RefAccessStory = () => {
   const editorRef = useRef<MarkdownEditorRef>(null);
   const [output, setOutput] = useState('');
+  const [selection, setSelection] = useState({ start: 0, end: 0 });
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <div style={{ display: 'flex', gap: '8px' }}>
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
         <button
           onClick={() => editorRef.current?.focus()}
           style={{ padding: '8px 16px', cursor: 'pointer' }}
@@ -296,15 +275,39 @@ Content set via ref!`);
         >
           Set Content
         </button>
+        <button
+          onClick={() => {
+            const sel = editorRef.current?.getSelection();
+            if (sel) setSelection(sel);
+          }}
+          style={{ padding: '8px 16px', cursor: 'pointer' }}
+        >
+          Get Selection
+        </button>
+        <button
+          onClick={() => {
+            editorRef.current?.insertText('\n\n**Inserted text!**\n\n');
+          }}
+          style={{ padding: '8px 16px', cursor: 'pointer' }}
+        >
+          Insert Text
+        </button>
+      </div>
+
+      <div style={{ fontSize: '14px', color: 'var(--color-body-textSoft10)' }}>
+        Selection: {selection.start} - {selection.end}
       </div>
 
       <MarkdownEditor
         ref={editorRef}
-        value={`# Ref Access
+        defaultValue={`# Ref Access
 
-Use the buttons above to interact with the editor programmatically.`}
-        showToolbar
+Use the buttons above to interact with the editor programmatically.
+
+Try selecting some text and clicking "Get Selection".`}
+        showLineNumbers
         height="250px"
+        onSelectionChange={(start, end) => setSelection({ start, end })}
       />
 
       {output && (
@@ -312,10 +315,11 @@ Use the buttons above to interact with the editor programmatically.`}
           <h4 style={{ margin: '0 0 8px 0' }}>Output:</h4>
           <pre style={{
             padding: '16px',
-            background: 'var(--inset-bg)',
-            border: '1px solid var(--inset-border)',
+            background: 'var(--color-panel-background)',
+            border: '1px solid var(--color-panel-border)',
             borderRadius: '8px',
             margin: 0,
+            fontFamily: 'monospace',
           }}>
             {output}
           </pre>
@@ -329,7 +333,7 @@ export const RefAccess: Story = {
   render: () => <RefAccessStory />,
 };
 
-// AI co-authoring simulation
+// Co-authoring simulation
 const CoAuthoringStory = () => {
   const editorRef = useRef<MarkdownEditorRef>(null);
   const [isApplying, setIsApplying] = useState(false);
@@ -342,11 +346,20 @@ const CoAuthoringStory = () => {
     // Simulate AI thinking
     await new Promise(r => setTimeout(r, 500));
 
-    // Apply edit
-    const currentContent = editorRef.current.getMarkdown();
-    const newContent = currentContent + '\n\n## AI-Generated Section\n\nThis content was added by the AI assistant. It demonstrates the co-authoring capability.\n\n```typescript\n// AI-generated code\nconst aiResult = await processData(input);\nconsole.log(aiResult);\n```';
+    // Apply edit at cursor position
+    editorRef.current.insertText(`
 
-    editorRef.current.setMarkdown(newContent);
+## AI-Generated Section
+
+This content was added by the AI assistant at your cursor position.
+
+\`\`\`typescript
+// AI-generated code
+const aiResult = await processData(input);
+console.log(aiResult);
+\`\`\`
+
+`);
 
     setIsApplying(false);
   };
@@ -363,19 +376,25 @@ const CoAuthoringStory = () => {
             opacity: isApplying ? 0.7 : 1,
           }}
         >
-          {isApplying ? 'AI is writing...' : '✨ Add AI Content'}
+          {isApplying ? 'AI is writing...' : 'Add AI Content at Cursor'}
         </button>
-        <span style={{ fontSize: '14px', color: 'var(--page-text-soft)' }}>
-          Click to simulate AI co-authoring
+        <span style={{ fontSize: '14px', color: 'var(--color-body-textSoft10)' }}>
+          Click to simulate AI co-authoring (inserts at cursor)
         </span>
       </div>
 
       <MarkdownEditor
         ref={editorRef}
-        value={`# My Document
+        defaultValue={`# My Document
 
-This is my draft document. Click the button above to let the AI add content.`}
-        showToolbar
+This is my draft document.
+
+Place your cursor here and click the button to let the AI add content.
+
+## Existing Section
+
+Some existing content...`}
+        showLineNumbers
         height="400px"
       />
     </div>
@@ -387,7 +406,7 @@ export const CoAuthoringSimulation: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Demonstrates programmatic content insertion for AI co-authoring.',
+        story: 'Demonstrates programmatic content insertion for AI co-authoring at cursor position.',
       },
     },
   },

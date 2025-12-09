@@ -1,2 +1,6 @@
-export { MarkdownCoEditor, type MarkdownCoEditorProps, type MarkdownCoEditorRef } from './MarkdownCoEditor';
-export { default } from './MarkdownCoEditor';
+export { MarkdownCoEditor } from './MarkdownCoEditor';
+export type {
+  MarkdownCoEditorProps,
+  MarkdownCoEditorRef,
+  ViewMode,
+} from './MarkdownCoEditor';

@@ -1,761 +1,282 @@
 /**
  * MarkdownCoEditor component
  *
- * A split-pane collaborative markdown editor inspired by HackMD.
- * Left side: CodeMirror editor with collaborator cursors
- * Right side: Live rendered preview
+ * A combined markdown editor and renderer with three view modes:
+ * - Edit: Shows only the plain text markdown editor
+ * - Preview: Shows only the rendered markdown
+ * - Split: Shows both editor and preview side by side
  *
- * Uses CodeMirror 6 for proper collaborative editing support -
- * unlike a textarea, CodeMirror allows programmatic edits without
- * disrupting the user's cursor position.
+ * Uses Segmented for mode switching.
+ * Uses plain text editor for easy co-authoring cursor support.
+ *
+ * Surfaces used:
+ * - panel (container)
+ * - inset (editor)
+ *
+ * Tokens used:
+ * - --panel-bg, --panel-border
+ * - --inset-bg, --inset-border
+ * - --space-*, --radius-*
  */
 
-import {
-  useRef,
-  useState,
-  useCallback,
-  useEffect,
-  forwardRef,
-  useImperativeHandle,
-} from 'react';
-import { EditorState, Transaction } from '@codemirror/state';
-import { EditorView, keymap, placeholder as placeholderExt, lineNumbers } from '@codemirror/view';
-import { markdown } from '@codemirror/lang-markdown';
-import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
+import { useState, useRef, useImperativeHandle, forwardRef, useCallback, useEffect } from 'react';
+import { Segmented, SplitPane, type SegmentOption, type SplitPaneOrientation } from '@ui-kit/react';
+import { MarkdownEditor, type MarkdownEditorRef } from '../MarkdownEditor';
 import { MarkdownRenderer } from '../MarkdownRenderer';
-import type { Collaborator, CollaboratorEdit } from '../../types/collaborator';
 import styles from './MarkdownCoEditor.module.css';
 
+export type ViewMode = 'edit' | 'preview' | 'split';
+
 export interface MarkdownCoEditorProps {
-  /** Initial markdown content */
-  value?: string;
+  /** Initial markdown content (uncontrolled) */
+  defaultValue?: string;
   /** Controlled markdown content */
-  markdown?: string;
-  /** Change handler */
+  value?: string;
+  /** Change handler for markdown output */
   onChange?: (markdown: string) => void;
-  /** Show preview pane */
-  showPreview?: boolean;
-  /** Preview position */
-  previewPosition?: 'right' | 'bottom';
-  /** Editor height */
+  /** Default view mode (uncontrolled) */
+  defaultMode?: ViewMode;
+  /** Controlled view mode */
+  mode?: ViewMode;
+  /** Callback when view mode changes */
+  onModeChange?: (mode: ViewMode) => void;
+  /** Show the mode switcher toolbar */
+  showModeSwitch?: boolean;
+  /** Height of the editor container */
   height?: string | number;
   /** Min height */
   minHeight?: string | number;
-  /** Read-only mode */
+  /** Max height */
+  maxHeight?: string | number;
+  /** Read-only mode (hides edit functionality) */
   readOnly?: boolean;
-  /** Placeholder text */
+  /** Auto-focus on mount */
+  autoFocus?: boolean;
+  /** Placeholder text for the editor */
   placeholder?: string;
-  /** Initial collaborators */
-  collaborators?: Collaborator[];
+  /** Editor ready callback */
+  onEditorReady?: (editor: MarkdownEditorRef) => void;
+  /** Selection change callback (for cursor tracking) */
+  onSelectionChange?: (start: number, end: number) => void;
+  /** Show line numbers in editor */
+  showLineNumbers?: boolean;
+  /** Enable streaming in preview mode */
+  streaming?: boolean;
+  /** Streaming speed */
+  streamingSpeed?: number;
+  /** Split pane orientation (horizontal = side-by-side, vertical = stacked) */
+  splitOrientation?: SplitPaneOrientation;
   /** Additional class name */
   className?: string;
-  /** Enable line wrapping (default: true) */
-  lineWrapping?: boolean;
-  /** Show line numbers */
-  showLineNumbers?: boolean;
 }
 
 export interface MarkdownCoEditorRef {
+  /** Get editor ref */
+  getEditor: () => MarkdownEditorRef | null;
   /** Get current markdown */
   getMarkdown: () => string;
   /** Set markdown content */
   setMarkdown: (markdown: string) => void;
   /** Focus editor */
   focus: () => void;
-  /** Add a collaborator */
-  addCollaborator: (collaborator: Collaborator) => void;
-  /** Remove a collaborator */
-  removeCollaborator: (id: string) => void;
-  /** Start a streaming edit for a collaborator */
-  streamEdit: (edit: CollaboratorEdit) => void;
-  /** Set cursor position for a collaborator */
-  setCursorPosition: (collaboratorId: string, position: number) => void;
-  /** Set selection range for a collaborator (anchor is where selection started, head is where cursor is) */
-  setSelection: (collaboratorId: string, anchor: number, head: number) => void;
-  /** Get all collaborators */
-  getCollaborators: () => Collaborator[];
-  /** Get EditorView instance */
-  getEditorView: () => EditorView | null;
+  /** Get current view mode */
+  getMode: () => ViewMode;
+  /** Set view mode */
+  setMode: (mode: ViewMode) => void;
 }
 
-// Selection range for a collaborator
-interface SelectionRange {
-  anchor: number; // Where selection started
-  head: number;   // Where cursor is (end of selection)
-}
-
-// Collaborator cursor widget for CodeMirror
-interface CursorWidget {
-  collaborator: Collaborator;
-  position: number;
-  element: HTMLElement;
-  selectionElements?: HTMLElement[]; // Selection highlight elements
-}
+const VIEW_MODE_OPTIONS: SegmentOption[] = [
+  { value: 'edit', label: 'Edit' },
+  { value: 'split', label: 'Split' },
+  { value: 'preview', label: 'Preview' },
+];
 
 export const MarkdownCoEditor = forwardRef<MarkdownCoEditorRef, MarkdownCoEditorProps>(
   function MarkdownCoEditor(
     {
-      value = '',
-      markdown: controlledMarkdown,
+      defaultValue = '',
+      value,
       onChange,
-      showPreview = true,
-      previewPosition = 'right',
+      defaultMode = 'edit',
+      mode: controlledMode,
+      onModeChange,
+      showModeSwitch = true,
       height,
       minHeight = '300px',
+      maxHeight,
       readOnly = false,
-      placeholder = 'Write markdown here...',
-      collaborators: initialCollaborators = [],
+      autoFocus = false,
+      placeholder = 'Enter markdown...',
+      onEditorReady,
+      onSelectionChange,
+      showLineNumbers = true,
+      streaming = false,
+      streamingSpeed,
+      splitOrientation = 'horizontal',
       className,
-      lineWrapping = true,
-      showLineNumbers = false,
     },
     ref
   ) {
-    // State
-    const [content, setContent] = useState(controlledMarkdown ?? value);
-    const [collaborators, setCollaborators] = useState<Map<string, Collaborator>>(
-      () => new Map(initialCollaborators.map((c) => [c.id, c]))
-    );
-    const [cursorPositions, setCursorPositions] = useState<Map<string, number>>(
-      () => new Map()
-    );
-    const [selections, setSelections] = useState<Map<string, SelectionRange>>(
-      () => new Map()
-    );
+    // Internal markdown state for uncontrolled mode
+    const [internalMarkdown, setInternalMarkdown] = useState(defaultValue);
+    const [internalMode, setInternalMode] = useState<ViewMode>(defaultMode);
 
-    // Refs
-    const editorContainerRef = useRef<HTMLDivElement>(null);
-    const editorViewRef = useRef<EditorView | null>(null);
-    const streamingTimersRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
-    const cursorPositionsRef = useRef<Map<string, number>>(new Map());
-    const selectionsRef = useRef<Map<string, SelectionRange>>(new Map());
-    const cursorWidgetsRef = useRef<Map<string, CursorWidget>>(new Map());
-    const isInternalUpdate = useRef(false);
+    const editorRef = useRef<MarkdownEditorRef>(null);
 
-    // Initialize CodeMirror
-    useEffect(() => {
-      if (!editorContainerRef.current || editorViewRef.current) return;
+    // Determine if controlled
+    const isValueControlled = value !== undefined;
+    const isModeControlled = controlledMode !== undefined;
 
-      const updateListener = EditorView.updateListener.of((update) => {
-        if (update.docChanged && !isInternalUpdate.current) {
-          const newContent = update.state.doc.toString();
-          setContent(newContent);
-          onChange?.(newContent);
+    const currentMarkdown = isValueControlled ? value : internalMarkdown;
+    const currentMode = isModeControlled ? controlledMode : internalMode;
 
-          // Adjust collaborator cursors based on the changes
-          update.changes.iterChanges((fromA, toA, _fromB, _toB, inserted) => {
-            const deletedLength = toA - fromA;
-            const insertedLength = inserted.length;
-            const delta = insertedLength - deletedLength;
-
-            if (delta !== 0) {
-              cursorPositionsRef.current.forEach((pos, id) => {
-                if (pos >= toA) {
-                  // Cursor is after the change - shift it
-                  const newPos = Math.max(fromA, pos + delta);
-                  cursorPositionsRef.current.set(id, newPos);
-                  setCursorPositions((prev) => {
-                    const next = new Map(prev);
-                    next.set(id, newPos);
-                    return next;
-                  });
-                } else if (pos > fromA && pos < toA) {
-                  // Cursor was inside deleted range - move to start of change
-                  cursorPositionsRef.current.set(id, fromA);
-                  setCursorPositions((prev) => {
-                    const next = new Map(prev);
-                    next.set(id, fromA);
-                    return next;
-                  });
-                }
-              });
-            }
-          });
-        }
-      });
-
-      // Build extensions array based on props
-      const extensions = [
-        markdown(),
-        history(),
-        keymap.of([...defaultKeymap, ...historyKeymap]),
-        placeholderExt(placeholder),
-        updateListener,
-        EditorView.editable.of(!readOnly),
-      ];
-
-      // Add line wrapping if enabled
-      if (lineWrapping) {
-        extensions.push(EditorView.lineWrapping);
+    // Handle markdown changes
+    const handleMarkdownChange = useCallback((markdown: string) => {
+      if (!isValueControlled) {
+        setInternalMarkdown(markdown);
       }
+      onChange?.(markdown);
+    }, [isValueControlled, onChange]);
 
-      // Add line numbers if enabled
-      if (showLineNumbers) {
-        extensions.push(lineNumbers());
+    // Handle mode changes
+    const handleModeChange = useCallback((newMode: string) => {
+      const mode = newMode as ViewMode;
+      if (!isModeControlled) {
+        setInternalMode(mode);
       }
+      onModeChange?.(mode);
+    }, [isModeControlled, onModeChange]);
 
-      // Add theme
-      extensions.push(EditorView.theme({
-        '&': {
-          height: '100%',
-          flex: '1',
-        },
-        '.cm-scroller': {
-          overflow: 'auto',
-          fontFamily: "'SF Mono', 'Consolas', 'Monaco', monospace",
-          fontSize: '14px',
-          lineHeight: '1.5',
-        },
-        '.cm-content': {
-          padding: '12px',
-          minHeight: '100%',
-        },
-        '.cm-focused': {
-          outline: 'none',
-        },
-        '.cm-line': {
-          padding: '0',
-        },
-      }));
-
-      const state = EditorState.create({
-        doc: controlledMarkdown ?? value,
-        extensions,
-      });
-
-      const view = new EditorView({
-        state,
-        parent: editorContainerRef.current,
-      });
-
-      editorViewRef.current = view;
-
-      return () => {
-        view.destroy();
-        editorViewRef.current = null;
-      };
-    }, []);
-
-    // Sync controlled content
+    // Sync internal markdown when controlled value changes
     useEffect(() => {
-      if (
-        controlledMarkdown !== undefined &&
-        editorViewRef.current &&
-        controlledMarkdown !== editorViewRef.current.state.doc.toString()
-      ) {
-        isInternalUpdate.current = true;
-        const view = editorViewRef.current;
-        view.dispatch({
-          changes: {
-            from: 0,
-            to: view.state.doc.length,
-            insert: controlledMarkdown,
-          },
-        });
-        setContent(controlledMarkdown);
-        isInternalUpdate.current = false;
+      if (isValueControlled && value !== internalMarkdown) {
+        setInternalMarkdown(value);
       }
-    }, [controlledMarkdown]);
-
-    // Helper to render selection rectangles for a range
-    // Handles wrapped lines by creating multiple rectangles per visual row
-    const renderSelectionRects = useCallback((
-      view: EditorView,
-      scroller: HTMLElement,
-      scrollerRect: DOMRect,
-      widget: CursorWidget,
-      selection: SelectionRange
-    ) => {
-      // Remove old selection elements
-      widget.selectionElements?.forEach(el => el.remove());
-      widget.selectionElements = [];
-
-      const from = Math.min(selection.anchor, selection.head);
-      const to = Math.max(selection.anchor, selection.head);
-
-      if (from === to) return; // No selection, just cursor
-
-      // Get document length to clamp positions
-      const docLength = view.state.doc.length;
-      const clampedFrom = Math.min(from, docLength);
-      const clampedTo = Math.min(to, docLength);
-
-      // Get line info for the selection range
-      const fromLine = view.state.doc.lineAt(clampedFrom);
-      const toLine = view.state.doc.lineAt(clampedTo);
-
-      // Render selection for each document line
-      for (let lineNum = fromLine.number; lineNum <= toLine.number; lineNum++) {
-        const line = view.state.doc.line(lineNum);
-        const lineSelStart = lineNum === fromLine.number ? clampedFrom : line.from;
-        const lineSelEnd = lineNum === toLine.number ? clampedTo : line.to;
-
-        // For wrapped lines, we need to handle each visual row separately
-        // Walk through the selection and detect when we move to a new visual row
-        let currentRowStart = lineSelStart;
-        let lastTop: number | null = null;
-
-        for (let pos = lineSelStart; pos <= lineSelEnd; pos++) {
-          const coords = view.coordsAtPos(pos);
-          if (!coords) continue;
-
-          const isNewRow = lastTop !== null && Math.abs(coords.top - lastTop) > 2;
-          const isEnd = pos === lineSelEnd;
-
-          if (isNewRow || isEnd) {
-            // End of current visual row or end of selection
-            const rowEnd = isNewRow ? pos - 1 : pos;
-            const startCoords = view.coordsAtPos(currentRowStart);
-            const endCoords = view.coordsAtPos(rowEnd);
-
-            if (startCoords && endCoords) {
-              const selEl = document.createElement('div');
-              selEl.className = styles.selectionHighlight;
-              selEl.style.backgroundColor = widget.collaborator.color;
-
-              const top = startCoords.top - scrollerRect.top + scroller.scrollTop;
-              const left = startCoords.left - scrollerRect.left + scroller.scrollLeft;
-              const width = endCoords.left - startCoords.left;
-              const height = startCoords.bottom - startCoords.top;
-
-              selEl.style.top = `${top}px`;
-              selEl.style.left = `${left}px`;
-              selEl.style.width = `${Math.max(width, 2)}px`;
-              selEl.style.height = `${height}px`;
-
-              scroller.appendChild(selEl);
-              widget.selectionElements!.push(selEl);
-            }
-
-            if (isNewRow) {
-              currentRowStart = pos;
-            }
-          }
-
-          lastTop = coords.top;
-        }
-      }
-    }, []);
-
-    // Function to update cursor widget positions
-    const updateCursorPositions = useCallback(() => {
-      const view = editorViewRef.current;
-      if (!view) return;
-
-      // Get the scroller element for proper coordinate calculation
-      const scroller = view.scrollDOM;
-      const scrollerRect = scroller.getBoundingClientRect();
-      const maxLeft = scroller.clientWidth - 20; // Leave room for cursor label
-
-      cursorWidgetsRef.current.forEach((widget, collaboratorId) => {
-        const position = cursorPositionsRef.current.get(collaboratorId);
-        if (position === undefined) return;
-
-        // Get pixel coordinates for position
-        const coords = view.coordsAtPos(Math.min(position, view.state.doc.length));
-        if (!coords) {
-          widget.element.style.display = 'none';
-          // Also hide selection elements
-          widget.selectionElements?.forEach(el => el.style.display = 'none');
-          return;
-        }
-
-        widget.element.style.display = '';
-        // Position relative to scroller, accounting for scroll
-        const top = coords.top - scrollerRect.top + scroller.scrollTop;
-        let left = coords.left - scrollerRect.left + scroller.scrollLeft;
-
-        // Clamp left position to stay within editor bounds
-        left = Math.max(0, Math.min(left, maxLeft));
-
-        widget.element.style.top = `${top}px`;
-        widget.element.style.left = `${left}px`;
-
-        // Render selection highlight if there's a selection
-        const selection = selectionsRef.current.get(collaboratorId);
-        if (selection) {
-          renderSelectionRects(view, scroller, scrollerRect, widget, selection);
-        } else {
-          // Clear selection elements if no selection
-          widget.selectionElements?.forEach(el => el.remove());
-          widget.selectionElements = [];
-        }
-      });
-    }, [renderSelectionRects]);
-
-    // Update cursor widgets when positions change
-    useEffect(() => {
-      const view = editorViewRef.current;
-      if (!view) return;
-
-      // Remove old widgets that no longer have positions
-      cursorWidgetsRef.current.forEach((widget, id) => {
-        if (!cursorPositions.has(id)) {
-          widget.element.remove();
-          cursorWidgetsRef.current.delete(id);
-        }
-      });
-
-      // Create or update widgets
-      cursorPositions.forEach((position, collaboratorId) => {
-        const collaborator = collaborators.get(collaboratorId);
-        if (!collaborator) return;
-
-        // Check if widget already exists
-        let widget = cursorWidgetsRef.current.get(collaboratorId);
-
-        if (!widget) {
-          // Create cursor element
-          const cursorEl = document.createElement('div');
-          cursorEl.className = `${styles.cursor} ${
-            collaborator.status === 'typing' ? styles.cursorTyping : styles.cursorIdle
-          }`;
-          cursorEl.style.setProperty('--cursor-color', collaborator.color);
-
-          // Create cursor line
-          const cursorLine = document.createElement('div');
-          cursorLine.className = styles.cursorLine;
-          cursorEl.appendChild(cursorLine);
-
-          // Create label
-          const label = document.createElement('div');
-          label.className = styles.cursorLabel;
-          label.style.backgroundColor = collaborator.color;
-
-          if (collaborator.isAI) {
-            const aiIcon = document.createElement('span');
-            aiIcon.className = styles.aiIcon;
-            aiIcon.textContent = '✨';
-            label.appendChild(aiIcon);
-          }
-
-          const nameSpan = document.createElement('span');
-          nameSpan.className = styles.cursorName;
-          nameSpan.textContent = collaborator.name;
-          label.appendChild(nameSpan);
-
-          cursorEl.appendChild(label);
-
-          // Add to the scroller element so it scrolls with content
-          view.scrollDOM.appendChild(cursorEl);
-
-          widget = {
-            collaborator,
-            position,
-            element: cursorEl,
-          };
-          cursorWidgetsRef.current.set(collaboratorId, widget);
-        }
-
-        // Update typing status class and dots
-        const cursorEl = widget.element;
-        cursorEl.className = `${styles.cursor} ${
-          collaborator.status === 'typing' ? styles.cursorTyping : styles.cursorIdle
-        }`;
-
-        // Update or add typing dots
-        const label = cursorEl.querySelector(`.${styles.cursorLabel}`) as HTMLElement;
-        if (label) {
-          const existingDots = label.querySelector(`.${styles.typingDots}`);
-          if (collaborator.status === 'typing' && !existingDots) {
-            const dots = document.createElement('span');
-            dots.className = styles.typingDots;
-            dots.innerHTML = '<span></span><span></span><span></span>';
-            label.appendChild(dots);
-          } else if (collaborator.status !== 'typing' && existingDots) {
-            existingDots.remove();
-          }
-        }
-
-        widget.position = position;
-      });
-
-      // Update all cursor positions
-      updateCursorPositions();
-    }, [cursorPositions, collaborators, selections, updateCursorPositions]);
-
-    // Update cursor positions on scroll
-    useEffect(() => {
-      const view = editorViewRef.current;
-      if (!view) return;
-
-      const scroller = view.scrollDOM;
-      const handleScroll = () => updateCursorPositions();
-
-      scroller.addEventListener('scroll', handleScroll);
-      return () => scroller.removeEventListener('scroll', handleScroll);
-    }, [updateCursorPositions]);
-
-    // Add collaborator
-    const addCollaborator = useCallback((collaborator: Collaborator) => {
-      setCollaborators((prev) => {
-        const next = new Map(prev);
-        next.set(collaborator.id, collaborator);
-        return next;
-      });
-    }, []);
-
-    // Remove collaborator
-    const removeCollaborator = useCallback((id: string) => {
-      // Clear any streaming timer
-      const timer = streamingTimersRef.current.get(id);
-      if (timer) clearTimeout(timer);
-      streamingTimersRef.current.delete(id);
-      cursorPositionsRef.current.delete(id);
-      selectionsRef.current.delete(id);
-
-      // Remove cursor widget and selection elements
-      const widget = cursorWidgetsRef.current.get(id);
-      if (widget) {
-        widget.element.remove();
-        widget.selectionElements?.forEach(el => el.remove());
-        cursorWidgetsRef.current.delete(id);
-      }
-
-      setCollaborators((prev) => {
-        const next = new Map(prev);
-        next.delete(id);
-        return next;
-      });
-      setCursorPositions((prev) => {
-        const next = new Map(prev);
-        next.delete(id);
-        return next;
-      });
-      setSelections((prev) => {
-        const next = new Map(prev);
-        next.delete(id);
-        return next;
-      });
-    }, []);
-
-    // Set cursor position
-    const setCursorPosition = useCallback((collaboratorId: string, position: number) => {
-      cursorPositionsRef.current.set(collaboratorId, position);
-      setCursorPositions((prev) => {
-        const next = new Map(prev);
-        next.set(collaboratorId, position);
-        return next;
-      });
-      // Clear selection when just setting cursor position
-      selectionsRef.current.delete(collaboratorId);
-      setSelections((prev) => {
-        const next = new Map(prev);
-        next.delete(collaboratorId);
-        return next;
-      });
-    }, []);
-
-    // Set selection range
-    const setSelection = useCallback((collaboratorId: string, anchor: number, head: number) => {
-      // Set cursor to head position
-      cursorPositionsRef.current.set(collaboratorId, head);
-      setCursorPositions((prev) => {
-        const next = new Map(prev);
-        next.set(collaboratorId, head);
-        return next;
-      });
-      // Set selection range
-      const range = { anchor, head };
-      selectionsRef.current.set(collaboratorId, range);
-      setSelections((prev) => {
-        const next = new Map(prev);
-        next.set(collaboratorId, range);
-        return next;
-      });
-    }, []);
-
-    // Update collaborator status
-    const updateCollaboratorStatus = useCallback(
-      (collaboratorId: string, status: Collaborator['status']) => {
-        setCollaborators((prev) => {
-          const collaborator = prev.get(collaboratorId);
-          if (!collaborator) return prev;
-          const next = new Map(prev);
-          next.set(collaboratorId, { ...collaborator, status });
-          return next;
-        });
-      },
-      []
-    );
-
-    // Stream edit - insert text character by character
-    const streamEdit = useCallback(
-      (edit: CollaboratorEdit) => {
-        const collaborator = collaborators.get(edit.collaboratorId);
-        if (!collaborator) return;
-
-        const view = editorViewRef.current;
-        if (!view) return;
-
-        const textContent = edit.content || '';
-        const streamSpeed = edit.streamSpeed || 25;
-        const startPosition = Math.min(edit.position, view.state.doc.length);
-
-        // For non-streaming, insert all at once
-        if (!edit.stream) {
-          isInternalUpdate.current = true;
-          view.dispatch({
-            changes: { from: startPosition, insert: textContent },
-          });
-          const newContent = view.state.doc.toString();
-          setContent(newContent);
-          onChange?.(newContent);
-          isInternalUpdate.current = false;
-
-          setCursorPosition(edit.collaboratorId, startPosition + textContent.length);
-
-          // Adjust other cursors
-          cursorPositionsRef.current.forEach((pos, id) => {
-            if (id !== edit.collaboratorId && pos >= startPosition) {
-              setCursorPosition(id, pos + textContent.length);
-            }
-          });
-          return;
-        }
-
-        // Streaming edit
-        let charIndex = 0;
-        cursorPositionsRef.current.set(edit.collaboratorId, startPosition);
-        updateCollaboratorStatus(edit.collaboratorId, 'typing');
-        setCursorPosition(edit.collaboratorId, startPosition);
-
-        const streamNextChar = () => {
-          if (charIndex >= textContent.length) {
-            // Done streaming
-            updateCollaboratorStatus(edit.collaboratorId, 'idle');
-            return;
-          }
-
-          const currentView = editorViewRef.current;
-          if (!currentView) return;
-
-          const nextChar = textContent[charIndex];
-          const insertPos = cursorPositionsRef.current.get(edit.collaboratorId) ?? startPosition;
-
-          // Insert character using CodeMirror's dispatch
-          // This preserves the user's cursor position!
-          isInternalUpdate.current = true;
-          currentView.dispatch({
-            changes: { from: insertPos, insert: nextChar },
-            // Don't move the user's selection - key to collaborative editing
-            annotations: Transaction.userEvent.of('input.collab'),
-          });
-          const newContent = currentView.state.doc.toString();
-          setContent(newContent);
-          onChange?.(newContent);
-          isInternalUpdate.current = false;
-
-          // Update collaborator cursor position
-          const newPos = insertPos + 1;
-          cursorPositionsRef.current.set(edit.collaboratorId, newPos);
-          setCursorPosition(edit.collaboratorId, newPos);
-
-          // Adjust other collaborators' positions (not the user's - CodeMirror handles that)
-          cursorPositionsRef.current.forEach((pos, id) => {
-            if (id !== edit.collaboratorId && pos >= insertPos) {
-              const adjustedPos = pos + 1;
-              cursorPositionsRef.current.set(id, adjustedPos);
-              setCursorPosition(id, adjustedPos);
-            }
-          });
-
-          charIndex++;
-
-          // Schedule next character
-          const timer = setTimeout(streamNextChar, streamSpeed);
-          streamingTimersRef.current.set(edit.collaboratorId, timer);
-        };
-
-        // Start streaming
-        const timer = setTimeout(streamNextChar, streamSpeed);
-        streamingTimersRef.current.set(edit.collaboratorId, timer);
-      },
-      [collaborators, onChange, setCursorPosition, updateCollaboratorStatus]
-    );
-
-    // Cleanup streaming timers
-    useEffect(() => {
-      return () => {
-        streamingTimersRef.current.forEach((timer) => clearTimeout(timer));
-      };
-    }, []);
+    }, [value, isValueControlled]);
 
     // Imperative handle
-    useImperativeHandle(
-      ref,
-      () => ({
-        getMarkdown: () => editorViewRef.current?.state.doc.toString() ?? content,
-        setMarkdown: (md: string) => {
-          const view = editorViewRef.current;
-          if (view) {
-            isInternalUpdate.current = true;
-            view.dispatch({
-              changes: { from: 0, to: view.state.doc.length, insert: md },
-            });
-            setContent(md);
-            onChange?.(md);
-            isInternalUpdate.current = false;
-          }
-        },
-        focus: () => editorViewRef.current?.focus(),
-        addCollaborator,
-        removeCollaborator,
-        streamEdit,
-        setCursorPosition,
-        setSelection,
-        getCollaborators: () => Array.from(collaborators.values()),
-        getEditorView: () => editorViewRef.current,
-      }),
-      [content, onChange, addCollaborator, removeCollaborator, streamEdit, setCursorPosition, setSelection, collaborators]
-    );
+    useImperativeHandle(ref, () => ({
+      getEditor: () => editorRef.current,
+      getMarkdown: () => currentMarkdown,
+      setMarkdown: (md: string) => {
+        if (!isValueControlled) {
+          setInternalMarkdown(md);
+        }
+        editorRef.current?.setMarkdown(md);
+      },
+      focus: () => editorRef.current?.focus(),
+      getMode: () => currentMode,
+      setMode: (mode: ViewMode) => {
+        if (!isModeControlled) {
+          setInternalMode(mode);
+        }
+        onModeChange?.(mode);
+      },
+    }), [currentMarkdown, currentMode, isValueControlled, isModeControlled, onModeChange]);
 
+    // Calculate container style
     const containerStyle: React.CSSProperties = {
       height,
       minHeight,
+      maxHeight,
     };
 
+    const showEditor = currentMode === 'edit' || currentMode === 'split';
+    const showPreview = currentMode === 'preview' || currentMode === 'split';
+
+    // Filter mode options in read-only mode
+    const modeOptions = readOnly
+      ? VIEW_MODE_OPTIONS.filter(opt => opt.value !== 'edit')
+      : VIEW_MODE_OPTIONS;
+
     return (
-      <div
-        className={`${styles.container} ${
-          previewPosition === 'bottom' ? styles.vertical : styles.horizontal
-        } ${className || ''}`}
-        style={containerStyle}
-      >
-        {/* Editor pane */}
-        <div className={styles.editorPane}>
-          <div className={styles.editorHeader}>
-            <span className={styles.editorLabel}>Markdown</span>
-            {collaborators.size > 0 && (
-              <div className={styles.collaboratorAvatars}>
-                {Array.from(collaborators.values()).map((c) => (
-                  <div
-                    key={c.id}
-                    className={`${styles.avatar} ${c.status === 'typing' ? styles.typing : ''}`}
-                    style={{ backgroundColor: c.color }}
-                    title={`${c.name}${c.status === 'typing' ? ' (typing...)' : ''}`}
-                  >
-                    {c.isAI ? '✨' : c.name.charAt(0).toUpperCase()}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className={styles.editorWrapper} ref={editorContainerRef} />
-        </div>
-
-        {/* Preview pane */}
-        {showPreview && (
-          <div className={styles.previewPane}>
-            <div className={styles.previewHeader}>
-              <span className={styles.previewLabel}>Preview</span>
-            </div>
-            <div className={styles.previewContent}>
-              <MarkdownRenderer content={content} />
-            </div>
+      <div className={`${styles.coEditor} ${className || ''}`} style={containerStyle}>
+        {/* Mode switcher toolbar */}
+        {showModeSwitch && (
+          <div className={styles.toolbar}>
+            <Segmented
+              options={modeOptions}
+              value={currentMode}
+              onChange={handleModeChange}
+              size="sm"
+              aria-label="Editor view mode"
+            />
           </div>
         )}
+
+        {/* Content area */}
+        <div className={`${styles.content} ${styles[currentMode]}`}>
+          {/* Split mode uses SplitPane for resizing */}
+          {currentMode === 'split' ? (
+            <SplitPane
+              first={
+                <div className={styles.editorPane}>
+                  <MarkdownEditor
+                    ref={editorRef}
+                    value={currentMarkdown}
+                    onChange={handleMarkdownChange}
+                    height="100%"
+                    readOnly={readOnly}
+                    autoFocus={autoFocus}
+                    placeholder={placeholder}
+                    onEditorReady={onEditorReady}
+                    onSelectionChange={onSelectionChange}
+                    showLineNumbers={showLineNumbers}
+                  />
+                </div>
+              }
+              second={
+                <div className={styles.previewPane}>
+                  <div className={styles.previewContent}>
+                    <MarkdownRenderer
+                      content={currentMarkdown}
+                      showLineNumbers={showLineNumbers}
+                      streaming={streaming}
+                      streamingSpeed={streamingSpeed}
+                    />
+                  </div>
+                </div>
+              }
+              orientation={splitOrientation}
+              defaultSize="50%"
+              minSize={150}
+            />
+          ) : (
+            <>
+              {/* Editor pane (edit mode only) */}
+              {showEditor && (
+                <div className={styles.editorPane}>
+                  <MarkdownEditor
+                    ref={editorRef}
+                    value={currentMarkdown}
+                    onChange={handleMarkdownChange}
+                    height="100%"
+                    readOnly={readOnly}
+                    autoFocus={autoFocus}
+                    placeholder={placeholder}
+                    onEditorReady={onEditorReady}
+                    onSelectionChange={onSelectionChange}
+                    showLineNumbers={showLineNumbers}
+                  />
+                </div>
+              )}
+
+              {/* Preview pane (preview mode only) */}
+              {showPreview && (
+                <div className={styles.previewPane}>
+                  <div className={styles.previewContent}>
+                    <MarkdownRenderer
+                      content={currentMarkdown}
+                      showLineNumbers={showLineNumbers}
+                      streaming={streaming}
+                      streamingSpeed={streamingSpeed}
+                    />
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
     );
   }

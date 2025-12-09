@@ -136,23 +136,27 @@ export function MarkdownRenderer({
 
   // Create markdown component overrides
   const markdownComponents = useMemo(() => ({
-    // Code blocks
-    code: ({ node, inline, className: codeClassName, children, ...props }: any) => {
+    // In react-markdown v9+, code blocks are rendered as <pre><code>...</code></pre>
+    // Inline code is rendered as just <code>...</code>
+    // We handle code blocks in the 'pre' component and inline code in the 'code' component
+
+    // Pre wrapper for code blocks
+    pre: ({ children }: any) => {
+      // The children is a code element with the actual code content
+      // Extract code element props
+      const codeElement = children?.props;
+      if (!codeElement) {
+        return <pre>{children}</pre>;
+      }
+
+      const { className: codeClassName, children: codeChildren } = codeElement;
+
       // Extract language from className (e.g., "language-typescript")
       const match = /language-(\w+)/.exec(codeClassName || '');
       const language = match ? match[1] : '';
 
-      // Inline code
-      if (inline) {
-        return (
-          <code className={styles.inlineCode} {...props}>
-            {children}
-          </code>
-        );
-      }
-
-      // Code block
-      const code = String(children).replace(/\n$/, '');
+      // Get the code content
+      const code = String(codeChildren).replace(/\n$/, '');
       const CodeComponent = customComponents?.code || CodeBlock;
 
       return (
@@ -164,6 +168,15 @@ export function MarkdownRenderer({
           collapsible={collapsibleCodeBlocks}
           onLineClick={handleLineClick}
         />
+      );
+    },
+
+    // Inline code only (code blocks are handled by 'pre')
+    code: ({ children, ...props }: any) => {
+      return (
+        <code className={styles.inlineCode} {...props}>
+          {children}
+        </code>
       );
     },
 

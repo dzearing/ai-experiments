@@ -1,299 +1,113 @@
 /**
  * MarkdownCoEditor styles
  *
- * Split-pane collaborative markdown editor
- *
- * Surfaces used:
- * - page (background)
- * - inset (editor area)
- * - popout (headers, labels)
- *
- * Tokens used:
- * - --page-bg, --page-text
- * - --inset-bg, --inset-border, --inset-text
- * - --popout-bg, --popout-border
- * - --font-mono, --font-sans
- * - --space-*, --radius-*
+ * Layout for the combined editor/preview component with
+ * support for edit, preview, and split view modes.
  */
 
-.container {
+.coEditor {
   display: flex;
-  border: 1px solid var(--inset-border, #e0e0e0);
-  border-radius: var(--radius-md, 8px);
-  overflow: hidden;
-  background: var(--page-bg, #fff);
+  flex-direction: column;
   flex: 1;
   min-height: 0;
-}
-
-.horizontal {
-  flex-direction: row;
-}
-
-.vertical {
-  flex-direction: column;
-}
-
-/* Editor pane */
-.editorPane {
-  flex: 1 1 50%;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
+  background: var(--color-panel-background, var(--panel-bg, #fff));
+  border: 1px solid var(--color-panel-border, var(--panel-border, #e0e0e0));
+  border-radius: var(--radius-lg, 8px);
   overflow: hidden;
-  border-right: 1px solid var(--inset-border, #e0e0e0);
 }
 
-/* In horizontal mode with preview, constrain to 50% */
-.horizontal .editorPane {
-  width: 50%;
-  max-width: 50%;
-}
+/* ==============================================
+   Toolbar
+   ============================================== */
 
-/* In vertical mode, use full width and 50% height */
-.vertical .editorPane {
-  border-right: none;
-  border-bottom: 1px solid var(--inset-border, #e0e0e0);
-  width: 100%;
-  max-width: none;
-  max-height: 50%;
-}
-
-/* When editor is the only child (no preview), use full width */
-.editorPane:only-child {
-  width: 100%;
-  max-width: none;
-  border-right: none;
-}
-
-.editorHeader {
+.toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: var(--space-2, 8px) var(--space-3, 12px);
-  background: var(--popout-bg, #f5f5f5);
-  border-bottom: 1px solid var(--inset-border, #e0e0e0);
+  justify-content: flex-end;
+  height: 44px;
+  flex-shrink: 0;
+  padding: 0 var(--space-3, 12px);
+  border-bottom: 1px solid var(--color-panel-border, var(--panel-border, #e0e0e0));
+  background: var(--color-panel-background, var(--panel-bg, #fff));
 }
 
-.editorLabel {
-  font-family: var(--font-sans, sans-serif);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--inset-text-soft, #666);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
+/* ==============================================
+   Content Area
+   ============================================== */
 
-.collaboratorAvatars {
+.content {
   display: flex;
-  gap: 4px;
-}
-
-.avatar {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  font-weight: 600;
-  color: white;
-  transition: transform 150ms ease;
-}
-
-.avatar.typing {
-  animation: pulse 1s ease-in-out infinite;
-}
-
-/* CodeMirror editor wrapper */
-.editorWrapper {
   flex: 1;
-  position: relative;
-  overflow: hidden;
-  min-height: 0;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  background: var(--inset-bg, #fafafa);
-}
-
-/* Make CodeMirror fill the wrapper */
-.editorWrapper :global(.cm-editor) {
   height: 100%;
-  width: 100%;
-  flex: 1;
   min-height: 0;
-  min-width: 0;
-}
-
-.editorWrapper :global(.cm-scroller) {
-  overflow: auto;
-  position: relative;
-  min-width: 0;
-}
-
-/* Collaborator cursor */
-.cursor {
-  position: absolute;
-  z-index: 50;
-  pointer-events: none;
-}
-
-.cursorLine {
-  width: 2px;
-  height: 18px;
-  background-color: var(--cursor-color);
-  border-radius: 1px;
-}
-
-.cursorIdle .cursorLine {
-  animation: blink 1s ease-in-out infinite;
-}
-
-.cursorTyping .cursorLine {
-  animation: none;
-  box-shadow: 0 0 4px var(--cursor-color), 0 0 8px var(--cursor-color);
-}
-
-.cursorLabel {
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 6px;
-  border-radius: var(--radius-sm, 4px);
-  font-family: var(--font-sans, sans-serif);
-  font-size: 11px;
-  font-weight: 500;
-  color: white;
-  white-space: nowrap;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-  transform: translateX(-2px);
-  margin-bottom: 2px;
-}
-
-.cursorName {
-  max-width: 100px;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.aiIcon {
-  font-size: 10px;
+/* Edit mode - full width editor */
+.content.edit .editorPane {
+  flex: 1;
 }
 
-.typingDots {
-  display: flex;
-  gap: 2px;
-  margin-left: 4px;
+/* Preview mode - full width preview */
+.content.preview .previewPane {
+  flex: 1;
 }
 
-.typingDots span {
-  width: 3px;
-  height: 3px;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 50%;
-  animation: dotPulse 1.4s ease-in-out infinite;
-}
+/* Split mode - SplitPane handles layout */
 
-.typingDots span:nth-child(2) {
-  animation-delay: 0.2s;
-}
+/* ==============================================
+   Editor Pane
+   ============================================== */
 
-.typingDots span:nth-child(3) {
-  animation-delay: 0.4s;
-}
-
-/* Selection highlight */
-.selectionHighlight {
-  position: absolute;
-  z-index: 40;
-  pointer-events: none;
-  opacity: 0.25;
-  border-radius: 2px;
-}
-
-/* Preview pane */
-.previewPane {
-  flex: 1 1 50%;
+.editorPane {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  height: 100%;
   min-width: 0;
+  min-height: 0;
   overflow: hidden;
-  background: var(--page-bg, #fff);
 }
 
-/* In horizontal mode, constrain to 50% */
-.horizontal .previewPane {
-  width: 50%;
-  max-width: 50%;
+/* Remove border from nested editor in co-editor context */
+.editorPane :global(.editorContainer) {
+  border: none;
+  border-radius: 0;
 }
 
-/* In vertical mode, use full width */
-.vertical .previewPane {
-  width: 100%;
-  max-width: none;
-}
+/* ==============================================
+   Preview Pane
+   ============================================== */
 
-.previewHeader {
+.previewPane {
   display: flex;
-  align-items: center;
-  padding: var(--space-2, 8px) var(--space-3, 12px);
-  background: var(--popout-bg, #f5f5f5);
-  border-bottom: 1px solid var(--inset-border, #e0e0e0);
-}
-
-.previewLabel {
-  font-family: var(--font-sans, sans-serif);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--inset-text-soft, #666);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .previewContent {
   flex: 1;
-  padding: var(--space-3, 12px);
-  overflow: auto;
+  padding: var(--space-4);
+  overflow-y: auto;
 }
 
-/* Animations */
-@keyframes blink {
-  0%,
-  50% {
-    opacity: 1;
-  }
-  51%,
-  100% {
-    opacity: 0;
-  }
-}
+/* In split mode, the Sizer handles visual separation */
 
-@keyframes dotPulse {
-  0%,
-  60%,
-  100% {
-    opacity: 0.4;
-    transform: scale(1);
-  }
-  30% {
-    opacity: 1;
-    transform: scale(1.2);
-  }
-}
+/* ==============================================
+   Responsive Adjustments
+   ============================================== */
 
-@keyframes pulse {
-  0%,
-  100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 currentColor;
+@media (max-width: 768px) {
+  /* Stack panes vertically on small screens in split mode */
+  .content.split {
+    flex-direction: column;
   }
-  50% {
-    transform: scale(1.1);
-    box-shadow: 0 0 0 3px transparent;
+
+  .content.split .previewPane {
+    border-left: none;
+    border-top: 1px solid var(--panel-border);
   }
 }

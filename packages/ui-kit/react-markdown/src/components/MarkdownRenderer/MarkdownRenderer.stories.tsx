@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { MarkdownRenderer } from './MarkdownRenderer';
 
 const meta = {
-  title: 'Components/MarkdownRenderer',
+  title: 'Markdown/MarkdownRenderer',
   component: MarkdownRenderer,
   tags: ['autodocs'],
   parameters: {

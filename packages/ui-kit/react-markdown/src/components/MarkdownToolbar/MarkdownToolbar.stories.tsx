@@ -4,7 +4,7 @@ import StarterKit from '@tiptap/starter-kit';
 import { MarkdownToolbar } from './MarkdownToolbar';
 
 const meta = {
-  title: 'Components/MarkdownToolbar',
+  title: 'Markdown/MarkdownToolbar',
   component: MarkdownToolbar,
   tags: ['autodocs'],
   parameters: {

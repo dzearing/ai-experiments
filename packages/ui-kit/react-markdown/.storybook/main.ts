@@ -21,6 +21,15 @@ const config: StorybookConfig = {
       to: '/themes',
     },
   ],
+  viteFinal: async (config) => {
+    // Resolve @ui-kit/react to source so CSS modules are processed correctly
+    config.resolve = config.resolve || {};
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@ui-kit/react': path.resolve(__dirname, '../../react/src'),
+    };
+    return config;
+  },
 };
 
 export default config;

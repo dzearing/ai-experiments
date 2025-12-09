@@ -9,10 +9,6 @@ import {
   Panel,
   Stack,
   Tabs,
-  TabList,
-  Tab,
-  TabPanels,
-  TabPanel,
   Text,
   IconButton,
 } from '../index';
@@ -284,25 +280,37 @@ function DataManagementPage() {
         </Stack>
       </div>
 
-      {/* Tabs */}
-      <div style={{ borderBottom: '1px solid var(--panel-border)' }}>
-        <Tabs value={activeTab} onChange={setActiveTab}>
-          <TabList style={{ paddingLeft: 'var(--space-4)' }}>
-            <Tab value="employees">
-              Employees
-              <Chip size="sm" variant="outline" style={{ marginLeft: 'var(--space-2)' }}>
-                {employeeData.length}
-              </Chip>
-            </Tab>
-            <Tab value="projects">
-              Projects
-              <Chip size="sm" variant="outline" style={{ marginLeft: 'var(--space-2)' }}>
-                {projectData.length}
-              </Chip>
-            </Tab>
-            <Tab value="reports">Reports</Tab>
-          </TabList>
-        </Tabs>
+      {/* Tabs Header */}
+      <div style={{ borderBottom: '1px solid var(--panel-border)', paddingLeft: 'var(--space-4)' }}>
+        <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+          <Button
+            variant={activeTab === 'employees' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setActiveTab('employees')}
+          >
+            Employees
+            <Chip size="sm" variant="outline" style={{ marginLeft: 'var(--space-2)' }}>
+              {employeeData.length}
+            </Chip>
+          </Button>
+          <Button
+            variant={activeTab === 'projects' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setActiveTab('projects')}
+          >
+            Projects
+            <Chip size="sm" variant="outline" style={{ marginLeft: 'var(--space-2)' }}>
+              {projectData.length}
+            </Chip>
+          </Button>
+          <Button
+            variant={activeTab === 'reports' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setActiveTab('reports')}
+          >
+            Reports
+          </Button>
+        </div>
       </div>
 
       {/* Toolbar */}
@@ -413,89 +421,85 @@ function DataManagementPage() {
 
       {/* Content */}
       <div style={{ flex: 1, overflow: 'auto', padding: 'var(--space-4)' }}>
-        <Tabs value={activeTab} onChange={setActiveTab}>
-          <TabPanels>
-            <TabPanel value="employees">
-              <Table
-                columns={employeeColumns}
-                data={sortedEmployees}
-                getRowKey={(e) => e.id}
-                selectable
-                multiSelect
-                selectedKeys={selectedEmployees}
-                onSelectionChange={setSelectedEmployees}
-                sort={employeeSort}
-                onSortChange={setEmployeeSort}
-                bordered
-                stickyHeader
-                maxHeight="calc(100vh - 350px)"
-                emptyMessage="No employees match your filters"
-              />
-            </TabPanel>
-            <TabPanel value="projects">
-              <Table
-                columns={projectColumns}
-                data={sortedProjects}
-                getRowKey={(p) => p.id}
-                selectable
-                multiSelect
-                selectedKeys={selectedProjects}
-                onSelectionChange={setSelectedProjects}
-                sort={projectSort}
-                onSortChange={setProjectSort}
-                bordered
-                stickyHeader
-                maxHeight="calc(100vh - 300px)"
-              />
-            </TabPanel>
-            <TabPanel value="reports">
-              <Panel padding="lg">
-                <Stack gap="md">
-                  <Heading level={4}>Available Reports</Heading>
-                  <Divider />
-                  <List variant="divided">
-                    <ListItem
-                      leading={<span>📊</span>}
-                      trailing={<Button size="sm" variant="outline">Generate</Button>}
-                    >
-                      <ListItemText
-                        primary="Employee Summary Report"
-                        secondary="Overview of all employees by department and status"
-                      />
-                    </ListItem>
-                    <ListItem
-                      leading={<span>📈</span>}
-                      trailing={<Button size="sm" variant="outline">Generate</Button>}
-                    >
-                      <ListItemText
-                        primary="Project Status Report"
-                        secondary="Detailed progress and budget analysis"
-                      />
-                    </ListItem>
-                    <ListItem
-                      leading={<span>💰</span>}
-                      trailing={<Button size="sm" variant="outline">Generate</Button>}
-                    >
-                      <ListItemText
-                        primary="Budget Allocation Report"
-                        secondary="Financial overview across all projects"
-                      />
-                    </ListItem>
-                    <ListItem
-                      leading={<span>📅</span>}
-                      trailing={<Button size="sm" variant="outline">Generate</Button>}
-                    >
-                      <ListItemText
-                        primary="Timeline Report"
-                        secondary="Project deadlines and milestones"
-                      />
-                    </ListItem>
-                  </List>
-                </Stack>
-              </Panel>
-            </TabPanel>
-          </TabPanels>
-        </Tabs>
+        {activeTab === 'employees' && (
+          <Table
+            columns={employeeColumns}
+            data={sortedEmployees}
+            getRowKey={(e) => e.id}
+            selectable
+            multiSelect
+            selectedKeys={selectedEmployees}
+            onSelectionChange={setSelectedEmployees}
+            sort={employeeSort}
+            onSortChange={setEmployeeSort}
+            bordered
+            stickyHeader
+            maxHeight="calc(100vh - 350px)"
+            emptyMessage="No employees match your filters"
+          />
+        )}
+        {activeTab === 'projects' && (
+          <Table
+            columns={projectColumns}
+            data={sortedProjects}
+            getRowKey={(p) => p.id}
+            selectable
+            multiSelect
+            selectedKeys={selectedProjects}
+            onSelectionChange={setSelectedProjects}
+            sort={projectSort}
+            onSortChange={setProjectSort}
+            bordered
+            stickyHeader
+            maxHeight="calc(100vh - 300px)"
+          />
+        )}
+        {activeTab === 'reports' && (
+          <Panel padding="lg">
+            <Stack gap="md">
+              <Heading level={4}>Available Reports</Heading>
+              <Divider />
+              <List variant="divided">
+                <ListItem
+                  leading={<span>📊</span>}
+                  trailing={<Button size="sm" variant="outline">Generate</Button>}
+                >
+                  <ListItemText
+                    primary="Employee Summary Report"
+                    secondary="Overview of all employees by department and status"
+                  />
+                </ListItem>
+                <ListItem
+                  leading={<span>📈</span>}
+                  trailing={<Button size="sm" variant="outline">Generate</Button>}
+                >
+                  <ListItemText
+                    primary="Project Status Report"
+                    secondary="Detailed progress and budget analysis"
+                  />
+                </ListItem>
+                <ListItem
+                  leading={<span>💰</span>}
+                  trailing={<Button size="sm" variant="outline">Generate</Button>}
+                >
+                  <ListItemText
+                    primary="Budget Allocation Report"
+                    secondary="Financial overview across all projects"
+                  />
+                </ListItem>
+                <ListItem
+                  leading={<span>📅</span>}
+                  trailing={<Button size="sm" variant="outline">Generate</Button>}
+                >
+                  <ListItemText
+                    primary="Timeline Report"
+                    secondary="Project deadlines and milestones"
+                  />
+                </ListItem>
+              </List>
+            </Stack>
+          </Panel>
+        )}
       </div>
 
       {/* Footer */}
@@ -579,19 +583,22 @@ Show bulk actions when items are selected:
 Use **Tabs** for different data categories:
 
 \`\`\`tsx
-<Tabs value={activeTab} onChange={setActiveTab}>
-  <TabList>
-    <Tab value="employees">
-      Employees
-      <Chip size="sm">{count}</Chip>
-    </Tab>
-  </TabList>
-  <TabPanels>
-    <TabPanel value="employees">
-      <Table ... />
-    </TabPanel>
-  </TabPanels>
-</Tabs>
+<Tabs
+  value={activeTab}
+  onChange={setActiveTab}
+  items={[
+    {
+      value: 'employees',
+      label: <>Employees <Chip size="sm">{count}</Chip></>,
+      content: <Table ... />
+    },
+    {
+      value: 'projects',
+      label: 'Projects',
+      content: <Table ... />
+    }
+  ]}
+/>
 \`\`\`
 
 ### Components Used

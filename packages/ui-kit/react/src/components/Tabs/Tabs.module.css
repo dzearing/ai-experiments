@@ -74,8 +74,9 @@
 
 /* Non-animated fallback: show individual tab underlines */
 .default:not(.animated) .tab {
-  border-bottom: 2px solid transparent;
+  border-bottom: 3px solid transparent;
   margin-bottom: -1px;
+  border-radius: 0 0 2px 2px;
 }
 
 .default:not(.animated) .tab.active {
@@ -125,8 +126,13 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 2px;
+  height: 3px;
   background: var(--controlPrimary-bg);
+  border-radius: 2px;
+  box-shadow:
+    0 -4px 8px 0 color-mix(in srgb, var(--controlPrimary-bg) light-dark(35%, 60%), transparent),
+    0 -10px 20px 0 color-mix(in srgb, var(--controlPrimary-bg) light-dark(20%, 40%), transparent),
+    0 -20px 40px 0 color-mix(in srgb, var(--controlPrimary-bg) light-dark(10%, 25%), transparent);
   transform: scaleX(0);
   transition: transform var(--duration-fast) var(--ease-default);
 }
@@ -143,12 +149,35 @@
   position: absolute;
   bottom: 0;
   left: 0;
-  height: 2px;
+  height: 3px;
   background: var(--controlPrimary-bg);
+  border-radius: 2px;
+  box-shadow:
+    0 -4px 8px 0 color-mix(in srgb, var(--controlPrimary-bg) 35%, transparent),
+    0 -10px 20px 0 color-mix(in srgb, var(--controlPrimary-bg) 20%, transparent),
+    0 -20px 40px 0 color-mix(in srgb, var(--controlPrimary-bg) 10%, transparent);
   transition: transform var(--duration-normal) var(--ease-default),
     width var(--duration-normal) var(--ease-default);
   pointer-events: none;
   will-change: transform, width;
+}
+
+/* Brighter glow in dark mode */
+[data-mode="dark"] .indicator,
+.dark .indicator {
+  box-shadow:
+    0 -4px 10px 2px color-mix(in srgb, var(--controlPrimary-bg) 45%, transparent),
+    0 -10px 24px 4px color-mix(in srgb, var(--controlPrimary-bg) 30%, transparent),
+    0 -20px 48px 8px color-mix(in srgb, var(--controlPrimary-bg) 15%, transparent);
+}
+
+@media (prefers-color-scheme: dark) {
+  .indicator {
+    box-shadow:
+      0 -4px 10px 2px color-mix(in srgb, var(--controlPrimary-bg) 45%, transparent),
+      0 -10px 24px 4px color-mix(in srgb, var(--controlPrimary-bg) 30%, transparent),
+      0 -20px 48px 8px color-mix(in srgb, var(--controlPrimary-bg) 15%, transparent);
+  }
 }
 
 /* Indicator position for default variant (on the border) */
