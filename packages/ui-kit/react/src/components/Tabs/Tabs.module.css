@@ -6,9 +6,22 @@
 .tabList {
   display: flex;
   gap: var(--space-1);
+  position: relative;
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+.fullWidth .tab {
+  flex: 1;
+  justify-content: center;
 }
 
 .tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
   padding: var(--space-2) var(--space-4);
   border: none;
   background: transparent;
@@ -16,7 +29,16 @@
   font-size: var(--text-base);
   font-weight: var(--weight-medium);
   cursor: pointer;
-  transition: all var(--duration-fast) var(--ease-default);
+  transition: color var(--duration-fast) var(--ease-default);
+  position: relative;
+  white-space: nowrap;
+}
+
+.tabIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1em;
 }
 
 .tab:hover:not(:disabled) {
@@ -37,27 +59,41 @@
   cursor: not-allowed;
 }
 
-/* Default variant */
+/* ==============================================
+   Default variant - border bottom with animated indicator
+   ============================================== */
+
 .default {
   border-bottom: 1px solid var(--page-border);
 }
 
-.default .tab {
+/* Hide the individual tab underlines when using animated indicator */
+.default.animated .tab {
+  border-bottom: none;
+}
+
+/* Non-animated fallback: show individual tab underlines */
+.default:not(.animated) .tab {
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
 }
 
-.default .tab.active {
+.default:not(.animated) .tab.active {
   border-bottom-color: var(--controlPrimary-bg);
 }
 
-/* Pills variant */
+/* ==============================================
+   Pills variant - background highlight (no indicator)
+   ============================================== */
+
 .pills {
   gap: var(--space-2);
 }
 
 .pills .tab {
   border-radius: var(--radius-md);
+  transition: color var(--duration-fast) var(--ease-default),
+    background var(--duration-fast) var(--ease-default);
 }
 
 .pills .tab:hover:not(:disabled):not(.active) {
@@ -69,12 +105,21 @@
   color: var(--controlPrimary-text);
 }
 
-/* Underline variant */
-.underline .tab {
+/* ==============================================
+   Underline variant - clean underline with animated indicator
+   ============================================== */
+
+/* Hide the individual tab underlines when using animated indicator */
+.underline.animated .tab::after {
+  display: none;
+}
+
+/* Non-animated fallback: show individual tab underlines with CSS transition */
+.underline:not(.animated) .tab {
   position: relative;
 }
 
-.underline .tab::after {
+.underline:not(.animated) .tab::after {
   content: '';
   position: absolute;
   bottom: 0;
@@ -86,10 +131,58 @@
   transition: transform var(--duration-fast) var(--ease-default);
 }
 
-.underline .tab.active::after {
+.underline:not(.animated) .tab.active::after {
   transform: scaleX(1);
 }
 
+/* ==============================================
+   Animated Indicator
+   ============================================== */
+
+.indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: var(--controlPrimary-bg);
+  transition: transform var(--duration-normal) var(--ease-default),
+    width var(--duration-normal) var(--ease-default);
+  pointer-events: none;
+  will-change: transform, width;
+}
+
+/* Indicator position for default variant (on the border) */
+.default .indicator {
+  bottom: -1px;
+}
+
+/* Indicator position for underline variant */
+.underline .indicator {
+  bottom: 0;
+}
+
+/* ==============================================
+   Tab Panel
+   ============================================== */
+
 .tabPanel {
   padding: var(--space-4) 0;
+}
+
+/* ==============================================
+   Reduced Motion
+   ============================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .indicator {
+    transition: none;
+  }
+
+  .tab {
+    transition: none;
+  }
+
+  .underline:not(.animated) .tab::after {
+    transition: none;
+  }
 }

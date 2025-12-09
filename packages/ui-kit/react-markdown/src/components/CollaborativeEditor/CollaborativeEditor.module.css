@@ -1,0 +1,221 @@
+/**
+ * CollaborativeEditor styles
+ *
+ * Surfaces used:
+ * - inset (editor background)
+ * - popout (toolbar, presence bar)
+ *
+ * Tokens used:
+ * - --inset-bg, --inset-border, --inset-text
+ * - --font-sans, --font-mono
+ * - --space-*, --radius-*
+ * - --duration-fast, --duration-normal
+ */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 8px);
+}
+
+.editorWrapper {
+  position: relative;
+  border: 1px solid var(--inset-border, #e0e0e0);
+  border-radius: var(--radius-md, 8px);
+  background: var(--inset-bg, #fafafa);
+  overflow: auto;
+}
+
+.editor {
+  min-height: 100%;
+  padding: var(--space-4, 16px);
+}
+
+.editor :global(.ProseMirror) {
+  outline: none;
+  min-height: 100%;
+  font-family: var(--font-sans, sans-serif);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--inset-text, #333);
+}
+
+.editor :global(.ProseMirror p) {
+  margin: 0 0 0.75em 0;
+}
+
+.editor :global(.ProseMirror h1),
+.editor :global(.ProseMirror h2),
+.editor :global(.ProseMirror h3) {
+  margin: 1em 0 0.5em 0;
+  font-weight: 600;
+}
+
+.editor :global(.ProseMirror code) {
+  font-family: var(--font-mono, monospace);
+  background: var(--page-bg, #f5f5f5);
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+.editor :global(.ProseMirror pre) {
+  background: var(--page-bg, #f5f5f5);
+  padding: var(--space-3, 12px);
+  border-radius: var(--radius-sm, 4px);
+  overflow-x: auto;
+}
+
+.editor :global(.ProseMirror blockquote) {
+  border-left: 3px solid var(--inset-border, #e0e0e0);
+  margin: 0;
+  padding-left: var(--space-3, 12px);
+  color: var(--inset-text-soft, #666);
+}
+
+.editor :global(.is-editor-empty:first-child::before) {
+  content: attr(data-placeholder);
+  color: var(--inset-text-soft, #999);
+  pointer-events: none;
+  float: left;
+  height: 0;
+}
+
+/* Collaborator cursor */
+.cursor {
+  position: absolute;
+  z-index: 50;
+  pointer-events: none;
+  transform: translateX(-1px);
+}
+
+.cursorLine {
+  width: 2px;
+  height: var(--cursor-height, 1.2em);
+  background-color: var(--cursor-color);
+  border-radius: 1px;
+}
+
+.idle .cursorLine {
+  animation: blink 1s ease-in-out infinite;
+}
+
+.typing .cursorLine {
+  animation: none;
+  box-shadow: 0 0 4px var(--cursor-color), 0 0 8px var(--cursor-color);
+}
+
+.cursorLabel {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm, 4px);
+  font-family: var(--font-sans, sans-serif);
+  font-size: 11px;
+  font-weight: 500;
+  color: white;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transform: translateX(-2px);
+  margin-bottom: 2px;
+}
+
+.cursorName {
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.aiIcon {
+  font-size: 10px;
+}
+
+.typingDots {
+  display: flex;
+  gap: 2px;
+  margin-left: 4px;
+}
+
+.typingDots span {
+  width: 3px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  animation: dotPulse 1.4s ease-in-out infinite;
+}
+
+.typingDots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typingDots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* Presence bar */
+.presenceBar {
+  display: flex;
+  gap: var(--space-1, 4px);
+  padding: var(--space-2, 8px);
+  background: var(--popout-bg, #fff);
+  border: 1px solid var(--popout-border, #e0e0e0);
+  border-radius: var(--radius-sm, 4px);
+}
+
+.presenceAvatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: white;
+  transition: transform var(--duration-fast, 150ms) ease;
+}
+
+.presenceAvatar.typing {
+  animation: pulse 1s ease-in-out infinite;
+}
+
+/* Animations */
+@keyframes blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes dotPulse {
+  0%,
+  60%,
+  100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 currentColor;
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 3px transparent;
+  }
+}

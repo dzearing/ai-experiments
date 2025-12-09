@@ -1,0 +1,225 @@
+/**
+ * MarkdownEditor styles
+ */
+
+.editorContainer {
+  display: flex;
+  flex-direction: column;
+  background: var(--inset-bg);
+  border: 1px solid var(--inset-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.editorWrapper {
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+}
+
+.editor {
+  height: 100%;
+}
+
+/* ProseMirror editor styles */
+.editor :global(.ProseMirror) {
+  padding: var(--space-4);
+  min-height: 100%;
+  outline: none;
+  font-family: var(--font-sans);
+  font-size: var(--text-base, 1rem);
+  line-height: 1.6;
+  color: var(--inset-text, var(--page-text));
+}
+
+.editor :global(.ProseMirror:focus) {
+  outline: none;
+}
+
+/* Placeholder */
+.editor :global(.ProseMirror p.is-editor-empty:first-child::before) {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--inset-text-soft, var(--page-text-soft));
+  pointer-events: none;
+  height: 0;
+}
+
+/* Headings */
+.editor :global(.ProseMirror h1) {
+  font-size: var(--text-3xl, 1.875rem);
+  font-weight: var(--weight-bold, 700);
+  margin: var(--space-6) 0 var(--space-3);
+  line-height: 1.25;
+}
+
+.editor :global(.ProseMirror h1:first-child) {
+  margin-top: 0;
+}
+
+.editor :global(.ProseMirror h2) {
+  font-size: var(--text-2xl, 1.5rem);
+  font-weight: var(--weight-semibold, 600);
+  margin: var(--space-5) 0 var(--space-2);
+  line-height: 1.25;
+}
+
+.editor :global(.ProseMirror h3) {
+  font-size: var(--text-xl, 1.25rem);
+  font-weight: var(--weight-semibold, 600);
+  margin: var(--space-4) 0 var(--space-2);
+  line-height: 1.25;
+}
+
+.editor :global(.ProseMirror h4),
+.editor :global(.ProseMirror h5),
+.editor :global(.ProseMirror h6) {
+  font-size: var(--text-lg, 1.125rem);
+  font-weight: var(--weight-medium, 500);
+  margin: var(--space-4) 0 var(--space-2);
+  line-height: 1.25;
+}
+
+/* Paragraphs */
+.editor :global(.ProseMirror p) {
+  margin: var(--space-2) 0;
+}
+
+.editor :global(.ProseMirror p:first-child) {
+  margin-top: 0;
+}
+
+.editor :global(.ProseMirror p:last-child) {
+  margin-bottom: 0;
+}
+
+/* Lists */
+.editor :global(.ProseMirror ul),
+.editor :global(.ProseMirror ol) {
+  padding-left: var(--space-6);
+  margin: var(--space-2) 0;
+}
+
+.editor :global(.ProseMirror ul) {
+  list-style-type: disc;
+}
+
+.editor :global(.ProseMirror ol) {
+  list-style-type: decimal;
+}
+
+.editor :global(.ProseMirror li) {
+  margin-bottom: var(--space-1);
+}
+
+.editor :global(.ProseMirror li > p) {
+  margin: 0;
+}
+
+/* Task lists */
+.editor :global(.ProseMirror ul[data-type="taskList"]) {
+  list-style: none;
+  padding-left: 0;
+}
+
+.editor :global(.ProseMirror ul[data-type="taskList"] li) {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.editor :global(.ProseMirror ul[data-type="taskList"] li input[type="checkbox"]) {
+  margin-top: 0.3em;
+}
+
+/* Inline code */
+.editor :global(.ProseMirror code) {
+  padding: 0.15em 0.4em;
+  background: var(--code-bg, var(--panel-bg));
+  border: 1px solid var(--code-border, var(--panel-border));
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  color: var(--code-text, var(--page-text));
+}
+
+/* Code blocks */
+.editor :global(.ProseMirror pre) {
+  background: var(--code-bg, var(--panel-bg));
+  border: 1px solid var(--code-border, var(--panel-border));
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  margin: var(--space-3) 0;
+  overflow-x: auto;
+}
+
+.editor :global(.ProseMirror pre code) {
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+  font-size: var(--text-sm, 0.875rem);
+  line-height: 1.5;
+}
+
+/* Blockquotes */
+.editor :global(.ProseMirror blockquote) {
+  margin: var(--space-4) 0;
+  padding: var(--space-2) var(--space-4);
+  border-left: 4px solid var(--panel-border);
+  background: var(--panel-bg);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  color: var(--page-text-soft);
+}
+
+.editor :global(.ProseMirror blockquote > *:first-child) {
+  margin-top: 0;
+}
+
+.editor :global(.ProseMirror blockquote > *:last-child) {
+  margin-bottom: 0;
+}
+
+/* Horizontal rule */
+.editor :global(.ProseMirror hr) {
+  border: none;
+  height: 1px;
+  background: var(--panel-border);
+  margin: var(--space-6) 0;
+}
+
+/* Links */
+.editor :global(.ProseMirror a) {
+  color: var(--page-link);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.editor :global(.ProseMirror a:hover) {
+  text-decoration: underline;
+}
+
+/* Images */
+.editor :global(.ProseMirror img) {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+}
+
+/* Selection */
+.editor :global(.ProseMirror ::selection) {
+  background: var(--selection-bg, rgba(0, 120, 212, 0.3));
+}
+
+/* Strong and emphasis */
+.editor :global(.ProseMirror strong) {
+  font-weight: var(--weight-semibold, 600);
+}
+
+.editor :global(.ProseMirror em) {
+  font-style: italic;
+}
+
+.editor :global(.ProseMirror s) {
+  text-decoration: line-through;
+}

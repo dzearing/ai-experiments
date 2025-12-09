@@ -1,11 +1,12 @@
 .inline {
-  padding: 2px 6px;
-  background: var(--inset-bg);
-  border: 1px solid var(--inset-border);
+  padding: 3px 7px;
+  background: rgba(0, 0, 0, 0.07);
+  border: none;
   color: var(--page-text);
   font-family: var(--font-mono);
   font-size: 0.875em;
-  border-radius: var(--radius-sm);
+  font-weight: var(--weight-medium, 500);
+  border-radius: var(--radius-md);
   white-space: nowrap;
 }
 

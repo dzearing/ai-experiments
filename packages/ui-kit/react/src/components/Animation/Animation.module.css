@@ -1,0 +1,294 @@
+/* ==============================================
+   Animation Component Styles
+   ============================================== */
+
+/* Base styles for animation wrappers */
+.collapse,
+.fade,
+.slide,
+.scale,
+.transition {
+  will-change: auto;
+}
+
+/* Collapse */
+.collapse {
+  overflow: hidden;
+}
+
+/* Fade */
+.fade {
+  opacity: 0;
+}
+
+.fadeIn {
+  opacity: 0;
+}
+
+/* Slide */
+.slide {
+  transform: translateY(0);
+}
+
+.slideIn {
+  opacity: 0;
+}
+
+/* Scale */
+.scale {
+  transform: scale(1);
+}
+
+.scaleIn {
+  opacity: 0;
+  transform: scale(var(--scale-initial, 0.95));
+}
+
+/* Transition state classes */
+.entering,
+.entered {
+  /* Active/visible state */
+}
+
+.exiting,
+.exited {
+  /* Inactive/hidden state */
+}
+
+/* ==============================================
+   Keyframe Animations
+   ============================================== */
+
+/* Fade animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Slide animations */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(var(--slide-distance, 20px));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--slide-distance, 20px) * -1));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(var(--slide-distance, 20px));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(calc(var(--slide-distance, 20px) * -1));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutUp {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(calc(var(--slide-distance, 20px) * -1));
+  }
+}
+
+@keyframes slideOutDown {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(var(--slide-distance, 20px));
+  }
+}
+
+@keyframes slideOutLeft {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(calc(var(--slide-distance, 20px) * -1));
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(var(--slide-distance, 20px));
+  }
+}
+
+/* Scale animations */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(var(--scale-initial, 0.95));
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes scaleOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(var(--scale-initial, 0.95));
+  }
+}
+
+/* Pop animation (scale with bounce) */
+@keyframes popIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes popOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+/* Expand/collapse height animation helper */
+@keyframes expandHeight {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    height: var(--expand-height);
+    opacity: 1;
+  }
+}
+
+@keyframes collapseHeight {
+  from {
+    height: var(--expand-height);
+    opacity: 1;
+  }
+  to {
+    height: 0;
+    opacity: 0;
+  }
+}
+
+/* Shake animation for errors/attention */
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-4px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(4px);
+  }
+}
+
+/* Pulse animation for attention */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Spin animation */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ==============================================
+   Reduced Motion Preferences
+   ============================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .collapse,
+  .fade,
+  .slide,
+  .scale,
+  .transition {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+
+  .fadeIn,
+  .slideIn,
+  .scaleIn {
+    animation: fadeIn 0.01ms both !important;
+  }
+}

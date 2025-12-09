@@ -1,0 +1,173 @@
+/* Container - scrollable with fixed height for virtualization */
+.container {
+  width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  outline: none;
+}
+
+/* No focus ring on container - focus is shown on individual nodes */
+
+/* Content wrapper - sets total height for scroll */
+.content {
+  position: relative;
+  width: 100%;
+}
+
+/* Virtual list - transformed to show visible items */
+.virtualList {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+}
+
+/* Node item */
+.node {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding-right: var(--space-3);
+  color: var(--page-text);
+  font-size: var(--text-sm);
+  border-radius: var(--radius-sm);
+  transition: background var(--duration-fast) var(--ease-default);
+  user-select: none;
+  outline: none;
+}
+
+.selectable {
+  cursor: pointer;
+}
+
+.selectable:hover:not(.disabled):not(.selected) {
+  background: var(--controlSubtle-bg-hover);
+}
+
+/* Selected state */
+.selected {
+  background: var(--controlPrimary-bg);
+  color: var(--controlPrimary-text);
+}
+
+.selected:hover:not(.disabled) {
+  background: var(--controlPrimary-bg-hover);
+}
+
+/* Focused state (keyboard focus, separate from selection) */
+.focused:not(.selected) {
+  background: var(--controlSubtle-bg-hover);
+  outline: 2px solid var(--controlPrimary-bg);
+  outline-offset: -2px;
+}
+
+.focused.selected {
+  outline: 2px solid var(--focus-ring, currentColor);
+  outline-offset: -2px;
+}
+
+/* Disabled state */
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Toggle button (chevron container) */
+.toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: var(--page-text-soft);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.toggle:hover {
+  background: var(--controlSubtle-bg-hover);
+  color: var(--page-text);
+}
+
+.toggle.hidden {
+  visibility: hidden;
+}
+
+.selected .toggle {
+  color: inherit;
+}
+
+.selected .toggle:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Chevron icon */
+.chevron {
+  transition: transform var(--duration-fast) var(--ease-default);
+}
+
+.chevron.expanded {
+  transform: rotate(90deg);
+}
+
+/* Icon */
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  color: var(--page-text-soft);
+}
+
+.icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.selected .icon {
+  color: inherit;
+  opacity: 0.85;
+}
+
+
+/* Label */
+.label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Scrollbar styling */
+.container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.container::-webkit-scrollbar-thumb {
+  background: var(--page-border);
+  border-radius: var(--radius-sm);
+}
+
+.container::-webkit-scrollbar-thumb:hover {
+  background: var(--page-text-soft);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .node,
+  .chevron,
+  .toggle {
+    transition: none;
+  }
+}

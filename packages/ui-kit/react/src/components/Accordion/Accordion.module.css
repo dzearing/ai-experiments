@@ -1,0 +1,121 @@
+.accordion {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Variants */
+.bordered {
+  border: 1px solid var(--page-border);
+  border-radius: var(--radius-md);
+}
+
+.bordered .item:not(:last-child) {
+  border-bottom: 1px solid var(--page-border);
+}
+
+.separated .item {
+  border: 1px solid var(--page-border);
+  border-radius: var(--radius-md);
+}
+
+.separated .item:not(:last-child) {
+  margin-bottom: var(--space-2);
+}
+
+/* Item */
+.item {
+  display: flex;
+  flex-direction: column;
+}
+
+.item.disabled {
+  opacity: 0.5;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: none;
+  background: transparent;
+  color: var(--page-text);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-default);
+}
+
+.header:hover:not(:disabled) {
+  background: var(--controlSubtle-bg-hover);
+}
+
+.header:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: calc(var(--focus-ring-offset) * -1);
+}
+
+.header:disabled {
+  cursor: not-allowed;
+}
+
+/* Icon */
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--page-text-soft);
+}
+
+/* Header content */
+.headerContent {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Chevron */
+.chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--page-text-soft);
+  transition: transform var(--duration-normal) var(--ease-default);
+}
+
+.chevron.expanded {
+  transform: rotate(180deg);
+}
+
+/* Content */
+.content {
+  padding: 0 var(--space-4) var(--space-4);
+  color: var(--page-text);
+}
+
+/* Nested accordion styling */
+.accordion .accordion {
+  margin-left: var(--space-4);
+}
+
+.accordion .accordion .header {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.accordion .accordion .content {
+  padding: 0 var(--space-3) var(--space-3);
+  font-size: var(--text-sm);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .header,
+  .chevron {
+    transition: none;
+  }
+}

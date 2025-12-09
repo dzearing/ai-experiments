@@ -1,0 +1,126 @@
+.sizer {
+  flex-shrink: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  transition: background var(--duration-fast) var(--ease-default);
+}
+
+/* Horizontal sizer (for side-by-side panels) */
+.horizontal {
+  cursor: col-resize;
+  height: 100%;
+}
+
+/* Vertical sizer (for stacked panels) */
+.vertical {
+  cursor: row-resize;
+  width: 100%;
+}
+
+/* Hover state */
+.sizer:hover:not(.disabled) {
+  background: var(--controlSubtle-bg-hover);
+}
+
+/* Active/focus state */
+.sizer:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: calc(var(--focus-ring-offset) * -1);
+}
+
+/* Disabled state */
+.disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+/* Grip indicator */
+.grip {
+  position: absolute;
+  background: var(--page-border);
+  border-radius: var(--radius-sm);
+  transition: background var(--duration-fast) var(--ease-default);
+}
+
+/* Grip for horizontal sizer */
+.horizontal .grip {
+  width: 4px;
+  height: 32px;
+  max-height: 50%;
+}
+
+/* Grip for vertical sizer */
+.vertical .grip {
+  width: 32px;
+  max-width: 50%;
+  height: 4px;
+}
+
+/* Show grip on hover */
+.sizer:hover:not(.disabled) .grip {
+  background: var(--controlSubtle-bg);
+}
+
+/* Grip dots pattern */
+.withGrip .grip::before,
+.withGrip .grip::after {
+  content: '';
+  position: absolute;
+  background: var(--page-border);
+  border-radius: 50%;
+  width: 2px;
+  height: 2px;
+}
+
+.horizontal.withGrip .grip::before,
+.horizontal.withGrip .grip::after {
+  left: 1px;
+}
+
+.horizontal.withGrip .grip::before {
+  top: 6px;
+}
+
+.horizontal.withGrip .grip::after {
+  bottom: 6px;
+}
+
+.vertical.withGrip .grip::before,
+.vertical.withGrip .grip::after {
+  top: 1px;
+}
+
+.vertical.withGrip .grip::before {
+  left: 6px;
+}
+
+.vertical.withGrip .grip::after {
+  right: 6px;
+}
+
+/* Hover state for grip dots */
+.sizer:hover:not(.disabled) .grip::before,
+.sizer:hover:not(.disabled) .grip::after {
+  background: var(--controlSubtle-bg);
+}
+
+/* Global styles when dragging */
+:global(body.resizing) {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+
+:global(body.resizing) * {
+  cursor: inherit !important;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .sizer,
+  .grip {
+    transition: none;
+  }
+}

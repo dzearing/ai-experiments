@@ -28,6 +28,13 @@ import {
  * - **Avatar**: Notification sources
  */
 
+// Close icon for dismiss buttons
+const CloseIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+);
+
 interface Notification {
   id: string;
   type: 'mention' | 'comment' | 'invite' | 'system' | 'alert';
@@ -329,14 +336,14 @@ function NotificationCenterPage() {
                           <Button
                             variant="ghost"
                             size="sm"
+                            iconOnly
+                            icon={<CloseIcon />}
                             aria-label="Dismiss notification"
                             onClick={(e) => {
                               e.stopPropagation();
                               setNotifications(prev => prev.filter(n => n.id !== notification.id));
                             }}
-                          >
-                            ×
-                          </Button>
+                          />
                         </Stack>
                       </div>
                     </Stack>

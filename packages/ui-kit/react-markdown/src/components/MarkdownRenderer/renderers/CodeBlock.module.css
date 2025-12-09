@@ -1,0 +1,209 @@
+/**
+ * CodeBlock styles
+ *
+ * VS Code-inspired syntax highlighting with design tokens.
+ */
+
+.codeBlock {
+  position: relative;
+  background: var(--inset-bg);
+  border: 1px solid var(--inset-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm, 0.875rem);
+  line-height: 1.5;
+}
+
+/* Header with language badge and collapse button */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-1) var(--space-3);
+  background: var(--inset-bg);
+  border-bottom: 1px solid var(--inset-border);
+}
+
+.language {
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--inset-text-soft, var(--page-text-soft));
+  text-transform: lowercase;
+}
+
+.collapseButton {
+  background: none;
+  border: none;
+  color: var(--inset-text-soft, var(--page-text-soft));
+  cursor: pointer;
+  padding: var(--space-1);
+  font-size: var(--text-xs, 0.75rem);
+  transition: color var(--duration-fast) var(--ease-default);
+}
+
+.collapseButton:hover {
+  color: var(--inset-text, var(--page-text));
+}
+
+/* Code content area */
+.codeContent {
+  overflow: auto;
+}
+
+.pre {
+  margin: 0;
+  padding: 0;
+}
+
+.code {
+  display: block;
+  padding: var(--space-3);
+}
+
+/* Individual line */
+.line {
+  display: flex;
+  min-height: 1.5em;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-default);
+}
+
+.line:hover {
+  background: var(--inset-bg-hover, rgba(0, 0, 0, 0.05));
+}
+
+.line.highlighted {
+  background: var(--warning-bg, rgba(255, 200, 0, 0.2));
+}
+
+/* Line numbers */
+.lineNumber {
+  flex-shrink: 0;
+  width: 3em;
+  padding-right: var(--space-2);
+  text-align: right;
+  color: var(--inset-text-soft, var(--page-text-soft));
+  user-select: none;
+  opacity: 0.5;
+}
+
+.lineContent {
+  flex: 1;
+  white-space: pre;
+}
+
+/* Collapsed indicator */
+.collapsedIndicator {
+  padding: var(--space-2) var(--space-3);
+  text-align: center;
+}
+
+.expandButton {
+  background: none;
+  border: none;
+  color: var(--control-text, var(--page-link));
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm, 0.875rem);
+}
+
+.expandButton:hover {
+  text-decoration: underline;
+}
+
+/* ==========================================
+   Syntax Highlighting Token Styles
+   VS Code-inspired color scheme
+   ========================================== */
+
+/* Comments */
+.code :global(.token.comment),
+.code :global(.token.prolog),
+.code :global(.token.doctype),
+.code :global(.token.cdata) {
+  color: var(--syntax-comment, #6a9955);
+}
+
+/* Keywords */
+.code :global(.token.keyword),
+.code :global(.token.tag),
+.code :global(.token.selector),
+.code :global(.token.important),
+.code :global(.token.atrule),
+.code :global(.token.control),
+.code :global(.token.directive),
+.code :global(.token.unit) {
+  color: var(--syntax-keyword, #c586c0);
+}
+
+/* Strings */
+.code :global(.token.string),
+.code :global(.token.char),
+.code :global(.token.attr-value),
+.code :global(.token.regex),
+.code :global(.token.template-string) {
+  color: var(--syntax-string, #ce9178);
+}
+
+/* Numbers */
+.code :global(.token.number),
+.code :global(.token.boolean),
+.code :global(.token.constant) {
+  color: var(--syntax-number, #b5cea8);
+}
+
+/* Functions */
+.code :global(.token.function),
+.code :global(.token.function-name) {
+  color: var(--syntax-function, #dcdcaa);
+}
+
+/* Classes and Types */
+.code :global(.token.class-name),
+.code :global(.token.type),
+.code :global(.token.builtin) {
+  color: var(--syntax-class, #4ec9b0);
+}
+
+/* Variables and Properties */
+.code :global(.token.variable),
+.code :global(.token.property),
+.code :global(.token.attr-name) {
+  color: var(--syntax-variable, #9cdcfe);
+}
+
+/* Operators and Punctuation */
+.code :global(.token.operator),
+.code :global(.token.punctuation) {
+  color: var(--syntax-operator, #d4d4d4);
+}
+
+/* Plain text (default) */
+.code :global(.token) {
+  color: var(--inset-text, var(--page-text));
+}
+
+/* Special: deleted/inserted for diffs */
+.code :global(.token.deleted) {
+  color: var(--danger-text, #f44747);
+  background: var(--danger-bg, rgba(244, 71, 71, 0.1));
+}
+
+.code :global(.token.inserted) {
+  color: var(--success-text, #4ec9b0);
+  background: var(--success-bg, rgba(78, 201, 176, 0.1));
+}
+
+/* Highlight animation for deep links */
+@keyframes highlightFade {
+  0% {
+    background: var(--warning-bg, rgba(255, 200, 0, 0.4));
+  }
+  100% {
+    background: var(--warning-bg, rgba(255, 200, 0, 0.2));
+  }
+}
+
+.line.highlighted {
+  animation: highlightFade 2s ease-out forwards;
+}

@@ -1,0 +1,185 @@
+.container {
+  overflow: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--panel-bg);
+}
+
+/* Size variants */
+.sm th,
+.sm td {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.md th,
+.md td {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-base);
+}
+
+.lg th,
+.lg td {
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-base);
+}
+
+/* Bordered variant */
+.bordered {
+  border: 1px solid var(--panel-border);
+}
+
+.bordered th,
+.bordered td {
+  border: 1px solid var(--panel-border);
+}
+
+/* Striped variant */
+.striped tbody tr:nth-child(even) {
+  background: var(--inset-bg);
+}
+
+/* Sticky header */
+.stickyHeader thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.stickyHeader th {
+  background: var(--panel-bg);
+}
+
+/* Header cell */
+.header {
+  text-align: left;
+  font-weight: var(--weight-medium);
+  color: var(--page-text);
+  background: var(--panel-bg);
+  white-space: nowrap;
+  border-bottom: 2px solid var(--page-text-soft, #888);
+}
+
+.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background var(--duration-fast) var(--ease-default);
+}
+
+.sortable:hover {
+  background: var(--controlSubtle-bg-hover);
+}
+
+.headerContent {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.sortIcon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--page-text-soft);
+  transition: color var(--duration-fast) var(--ease-default);
+}
+
+.sortIcon.active {
+  color: var(--page-text);
+}
+
+/* Alignment */
+.left {
+  text-align: left;
+}
+
+.center {
+  text-align: center;
+}
+
+.right {
+  text-align: right;
+}
+
+/* Cell */
+.cell {
+  color: var(--page-text);
+  border-bottom: 1px solid var(--panel-border);
+}
+
+/* Row */
+.row {
+  transition: background var(--duration-fast) var(--ease-default);
+}
+
+.row:hover {
+  background: var(--controlSubtle-bg-hover);
+}
+
+.row.selected {
+  background: var(--controlPrimary-bg);
+}
+
+.row.selected td {
+  color: var(--controlPrimary-text);
+}
+
+.row.selected:hover {
+  background: var(--controlPrimary-bg-hover);
+}
+
+/* Checkbox cell */
+.checkboxCell {
+  width: 40px;
+  text-align: center;
+}
+
+
+.checkbox {
+  cursor: pointer;
+}
+
+/* Empty state */
+.empty {
+  text-align: center;
+  padding: var(--space-6) var(--space-4);
+  color: var(--page-text-soft);
+}
+
+/* Loading state */
+.loading {
+  text-align: center;
+  padding: var(--space-6) var(--space-4);
+}
+
+.loadingSpinner {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--panel-border);
+  border-top-color: var(--controlPrimary-bg);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .row,
+  .sortable,
+  .sortIcon {
+    transition: none;
+  }
+
+  .loadingSpinner {
+    animation: none;
+  }
+}

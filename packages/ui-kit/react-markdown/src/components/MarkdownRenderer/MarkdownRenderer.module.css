@@ -1,0 +1,314 @@
+/**
+ * MarkdownRenderer styles
+ *
+ * Comprehensive markdown styling using design tokens.
+ */
+
+.markdown {
+  color: var(--page-text);
+  font-family: var(--font-sans);
+  font-size: var(--text-base, 1rem);
+  line-height: 1.6;
+  word-wrap: break-word;
+}
+
+/* ==========================================
+   Headings
+   ========================================== */
+
+.h1, .h2, .h3, .h4, .h5, .h6 {
+  position: relative;
+  margin-top: var(--space-6);
+  margin-bottom: var(--space-3);
+  font-weight: var(--weight-semibold, 600);
+  line-height: 1.25;
+  color: var(--page-text);
+}
+
+.h1:first-child,
+.h2:first-child,
+.h3:first-child,
+.h4:first-child,
+.h5:first-child,
+.h6:first-child {
+  margin-top: 0;
+}
+
+.h1 {
+  font-size: var(--text-3xl, 1.875rem);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.h2 {
+  font-size: var(--text-2xl, 1.5rem);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.h3 {
+  font-size: var(--text-xl, 1.25rem);
+}
+
+.h4 {
+  font-size: var(--text-lg, 1.125rem);
+}
+
+.h5 {
+  font-size: var(--text-base, 1rem);
+}
+
+.h6 {
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--page-text-soft);
+}
+
+/* Heading anchor link */
+.headingAnchor {
+  position: absolute;
+  left: -1.5em;
+  padding-right: var(--space-2);
+  color: var(--page-link);
+  text-decoration: none;
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-default);
+}
+
+.h1:hover .headingAnchor,
+.h2:hover .headingAnchor,
+.h3:hover .headingAnchor,
+.h4:hover .headingAnchor,
+.h5:hover .headingAnchor,
+.h6:hover .headingAnchor {
+  opacity: 0.5;
+}
+
+.headingAnchor:hover {
+  opacity: 1 !important;
+}
+
+/* Highlighted heading (from deep link) */
+.h1.highlighted,
+.h2.highlighted,
+.h3.highlighted,
+.h4.highlighted,
+.h5.highlighted,
+.h6.highlighted {
+  background: var(--warning-bg, rgba(255, 200, 0, 0.2));
+  margin-left: calc(-1 * var(--space-3));
+  padding-left: var(--space-3);
+  border-radius: var(--radius-sm);
+  animation: highlightFade 2s ease-out forwards;
+}
+
+@keyframes highlightFade {
+  0% {
+    background: var(--warning-bg, rgba(255, 200, 0, 0.4));
+  }
+  100% {
+    background: transparent;
+  }
+}
+
+/* ==========================================
+   Paragraphs and Text
+   ========================================== */
+
+.paragraph {
+  margin-top: 0;
+  margin-bottom: var(--space-4);
+}
+
+.paragraph:last-child {
+  margin-bottom: 0;
+}
+
+.strong {
+  font-weight: var(--weight-semibold, 600);
+}
+
+.emphasis {
+  font-style: italic;
+}
+
+.strikethrough {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+/* ==========================================
+   Links
+   ========================================== */
+
+.link {
+  color: var(--page-link);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-default);
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.fileLink {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--primary-text, #9333ea);
+}
+
+/* ==========================================
+   Lists
+   ========================================== */
+
+.list,
+.orderedList {
+  margin-top: 0;
+  margin-bottom: var(--space-4);
+  padding-left: var(--space-6);
+}
+
+.list {
+  list-style-type: disc;
+}
+
+.orderedList {
+  list-style-type: decimal;
+}
+
+.listItem {
+  margin-bottom: var(--space-1);
+}
+
+.listItem > .list,
+.listItem > .orderedList {
+  margin-top: var(--space-1);
+  margin-bottom: var(--space-1);
+}
+
+/* Task lists */
+.listItem:has(input[type="checkbox"]) {
+  list-style-type: none;
+  margin-left: calc(-1 * var(--space-6));
+}
+
+.listItem input[type="checkbox"] {
+  margin-right: var(--space-2);
+}
+
+/* ==========================================
+   Inline Code
+   ========================================== */
+
+.inlineCode {
+  padding: 0.15em 0.4em;
+  background: var(--inset-bg);
+  border: 1px solid var(--inset-border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  color: var(--inset-text);
+}
+
+/* ==========================================
+   Blockquotes
+   ========================================== */
+
+.blockquote {
+  margin: var(--space-4) 0;
+  padding: var(--space-2) var(--space-4);
+  border-left: 4px solid var(--page-link, var(--panel-border, #6b7280));
+  color: var(--page-text-soft);
+  background: var(--panel-bg, rgba(128, 128, 128, 0.1));
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.blockquote > *:first-child {
+  margin-top: 0;
+}
+
+.blockquote > *:last-child {
+  margin-bottom: 0;
+}
+
+/* ==========================================
+   Tables
+   ========================================== */
+
+.tableWrapper {
+  margin: var(--space-4) 0;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.tableHead {
+  background: var(--panel-bg);
+}
+
+.tableBody tr:nth-child(even) {
+  background: var(--panel-bg);
+}
+
+.tableRow {
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.tableHeaderCell,
+.tableCell {
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+}
+
+.tableHeaderCell {
+  font-weight: var(--weight-semibold, 600);
+  white-space: nowrap;
+}
+
+/* ==========================================
+   Images
+   ========================================== */
+
+.image {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+  margin: var(--space-4) 0;
+}
+
+/* ==========================================
+   Dividers
+   ========================================== */
+
+.divider {
+  height: 1px;
+  margin: var(--space-6) 0;
+  background: var(--panel-border);
+  border: none;
+}
+
+/* ==========================================
+   Streaming Cursor
+   ========================================== */
+
+.streamingCursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background: var(--page-text);
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  animation: blink 0.7s step-end infinite;
+}
+
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
