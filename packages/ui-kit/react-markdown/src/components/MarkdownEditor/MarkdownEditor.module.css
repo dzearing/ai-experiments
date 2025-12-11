@@ -1,10 +1,13 @@
 /**
- * MarkdownEditor styles - Plain text editor
+ * MarkdownEditor styles - CodeMirror 6 editor
+ *
+ * Provides container styling and integrates with design tokens.
+ * Most styling is handled by the CodeMirror theme extension.
  */
 
 .editorContainer {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   flex: 1;
   height: 100%;
   min-height: 0;
@@ -18,85 +21,79 @@
   line-height: 1.5;
 }
 
-/* Full-height background for line numbers column */
-.editorContainer.hasLineNumbers::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 48px;
-  background: var(--color-panel-background, rgba(0, 0, 0, 0.05));
-  border-right: 1px solid var(--color-inset-border, var(--color-body-border));
-  pointer-events: none;
-}
-
-/* Line numbers column */
-.lineNumbers {
-  position: relative;
-  z-index: 1;
-  flex-shrink: 0;
-  padding: var(--spacing-small10, 8px) 0;
-  background: transparent;
-  user-select: none;
-  overflow-y: hidden;
-  min-width: 48px;
-  text-align: right;
-  box-sizing: border-box;
-}
-
-.lineNumber {
-  padding: 0 var(--spacing-small10, 8px);
-  color: var(--color-body-textSoft20, rgba(0, 0, 0, 0.4));
-  font-size: inherit;
-  line-height: 1.5;
-}
-
-/* Textarea */
-.textarea {
-  flex: 1;
-  padding: var(--spacing-small10, 8px);
-  border: none;
+/* Ensure CodeMirror fills the container */
+.editorContainer :global(.cm-editor) {
+  height: 100%;
   outline: none;
-  background: transparent;
-  color: var(--color-inset-text, var(--color-body-text));
-  font-family: inherit;
-  font-size: inherit;
-  line-height: inherit;
-  resize: none;
+}
+
+.editorContainer :global(.cm-scroller) {
   overflow: auto;
-  white-space: pre;
-  tab-size: 2;
 }
 
-.textarea::placeholder {
-  color: var(--color-body-textSoft20, rgba(0, 0, 0, 0.4));
+/* Focus styling for the container */
+.editorContainer:focus-within {
+  border-color: var(--color-buttonPrimary-background, #0066cc);
+  box-shadow: 0 0 0 2px var(--color-buttonPrimary-background, #0066cc)20;
 }
 
-.textarea:focus {
+/* Search panel styling */
+.editorContainer :global(.cm-search) {
+  padding: var(--spacing-small10, 8px);
+  gap: var(--spacing-small10, 8px);
+}
+
+.editorContainer :global(.cm-search) :global(input),
+.editorContainer :global(.cm-search) :global(button) {
+  font-family: var(--font-sans, system-ui, -apple-system, sans-serif);
+  font-size: var(--font-size-sm, 13px);
+}
+
+.editorContainer :global(.cm-search) :global(input) {
+  padding: 4px 8px;
+  border: 1px solid var(--color-body-border);
+  border-radius: var(--radius-sm, 4px);
+  background: var(--color-body-background);
+  color: var(--color-body-text);
+}
+
+.editorContainer :global(.cm-search) :global(input:focus) {
   outline: none;
+  border-color: var(--color-buttonPrimary-background);
 }
 
-/* Selection styling */
-.textarea::selection {
-  background: var(--color-selection-background, rgba(0, 120, 212, 0.3));
+.editorContainer :global(.cm-search) :global(button) {
+  padding: 4px 8px;
+  border: 1px solid var(--color-body-border);
+  border-radius: var(--radius-sm, 4px);
+  background: var(--color-panel-background);
+  color: var(--color-body-text);
+  cursor: pointer;
+  transition: background-color var(--duration-fast, 100ms);
 }
 
-/* Scrollbar styling */
-.textarea::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+.editorContainer :global(.cm-search) :global(button:hover) {
+  background: var(--color-body-backgroundHard10);
 }
 
-.textarea::-webkit-scrollbar-track {
-  background: transparent;
+.editorContainer :global(.cm-search) :global(label) {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-sm, 13px);
+  color: var(--color-body-textSoft10);
 }
 
-.textarea::-webkit-scrollbar-thumb {
-  background: var(--color-body-textSoft20, rgba(0, 0, 0, 0.2));
-  border-radius: 4px;
+/* Go-to-line dialog styling */
+.editorContainer :global(.cm-gotoLine) {
+  padding: var(--spacing-small10, 8px);
 }
 
-.textarea::-webkit-scrollbar-thumb:hover {
-  background: var(--color-body-textSoft10, rgba(0, 0, 0, 0.3));
+.editorContainer :global(.cm-gotoLine) :global(input) {
+  padding: 4px 8px;
+  border: 1px solid var(--color-body-border);
+  border-radius: var(--radius-sm, 4px);
+  background: var(--color-body-background);
+  color: var(--color-body-text);
+  font-family: var(--font-mono);
 }

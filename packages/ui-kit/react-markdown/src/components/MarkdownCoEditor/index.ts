@@ -3,4 +3,5 @@ export type {
   MarkdownCoEditorProps,
   MarkdownCoEditorRef,
   ViewMode,
+  CoAuthor,
 } from './MarkdownCoEditor';

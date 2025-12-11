@@ -494,25 +494,34 @@ For sliding indicators (Tabs, SegmentedControl):
 
 ## Story Documentation
 
-Every component needs comprehensive Storybook documentation.
+Every component needs comprehensive Storybook documentation with consistent structure across all stories.
 
 ### Story File Structure
 
 ```tsx
 import type { Meta, StoryObj } from '@storybook/react';
+import { fn } from '@storybook/test';
+import { useState } from 'react';
 import { ComponentName } from './ComponentName';
 
-const meta: Meta<typeof ComponentName> = {
+const meta = {
   title: 'Category/ComponentName',  // e.g., 'Actions/Button', 'Navigation/Tabs'
   component: ComponentName,
   tags: ['autodocs'],
   parameters: {
+    layout: 'centered',  // 'centered' | 'padded' | 'fullscreen'
     docs: {
       description: {
         component: `
 Brief description of the component and its purpose.
 
-## Usage Guidelines
+## When to Use
+
+- Use case 1
+- Use case 2
+- Use case 3
+
+## Variants
 
 | Variant | Use Case |
 |---------|----------|
@@ -522,33 +531,57 @@ Brief description of the component and its purpose.
 
 ## Sizes
 
-- **sm**: Compact UI, toolbars, inline actions
-- **md**: Default size for most use cases
-- **lg**: Hero sections, prominent CTAs
+Heights match other controls for consistent alignment:
+
+- **sm** (28px): Compact UI, toolbars, inline actions
+- **md** (36px): Default size for most use cases
+- **lg** (44px): Hero sections, prominent CTAs
 
 ## Accessibility
 
 - Supports keyboard navigation (Enter/Space to activate)
 - Uses \`role="button"\` for semantic meaning
 - Focus visible with standard focus ring
+
+## Usage
+
+\\\`\\\`\\\`tsx
+import { ComponentName } from '@claude-flow/ui-kit-react';
+
+<ComponentName variant="primary" size="md">
+  Click me
+</ComponentName>
+\\\`\\\`\\\`
         `,
       },
     },
+  },
+  // Use fn() for callback props to enable action logging
+  args: {
+    onChange: fn(),
+    onClick: fn(),
   },
   argTypes: {
     variant: {
       control: 'select',
       options: ['default', 'primary', 'danger'],
+      description: 'Visual style variant',
     },
     size: {
       control: 'select',
       options: ['sm', 'md', 'lg'],
+      description: 'Size variant matching control heights',
     },
     disabled: {
       control: 'boolean',
+      description: 'Whether the component is disabled',
+    },
+    // Hide internal callbacks from controls
+    onInternalCallback: {
+      table: { disable: true },
     },
   },
-};
+} satisfies Meta<typeof ComponentName>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -629,6 +662,72 @@ export const AlignmentTest: Story = {
   ),
 };
 ```
+
+### Individual Story Descriptions
+
+Add descriptions to individual stories to explain specific behaviors or use cases:
+
+```tsx
+export const IconOnly: Story = {
+  args: {
+    options: iconOptions,
+    defaultValue: 'align-left',
+    iconOnly: true,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Icon-only mode for compact toolbars. Labels are visually hidden but still accessible to screen readers.',
+      },
+    },
+  },
+};
+```
+
+### Decorators for Story Context
+
+Use decorators when stories need specific container sizing or context:
+
+```tsx
+export const FullWidth: Story = {
+  args: {
+    options: basicOptions,
+    fullWidth: true,
+  },
+  decorators: [
+    (Story) => (
+      <div style={{ width: '400px' }}>
+        <Story />
+      </div>
+    ),
+  ],
+};
+
+// For fullscreen layouts
+const meta = {
+  // ...
+  parameters: {
+    layout: 'fullscreen',
+  },
+  decorators: [
+    (Story) => (
+      <div style={{ height: '100vh', padding: '16px', boxSizing: 'border-box' }}>
+        <Story />
+      </div>
+    ),
+  ],
+};
+```
+
+### Layout Parameters
+
+Use the `layout` parameter to control story canvas behavior:
+
+| Value | Use Case |
+|-------|----------|
+| `centered` | Default, centers component (good for buttons, controls) |
+| `padded` | Adds padding around component (good for cards, panels) |
+| `fullscreen` | No padding, fills canvas (good for page layouts, editors) |
 
 ### Story Categories
 

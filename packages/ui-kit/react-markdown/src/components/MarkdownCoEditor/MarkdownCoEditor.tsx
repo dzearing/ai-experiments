@@ -21,9 +21,11 @@
 
 import { useState, useRef, useImperativeHandle, forwardRef, useCallback, useEffect } from 'react';
 import { Segmented, SplitPane, type SegmentOption, type SplitPaneOrientation } from '@ui-kit/react';
-import { MarkdownEditor, type MarkdownEditorRef } from '../MarkdownEditor';
+import { MarkdownEditor, type MarkdownEditorRef, type CoAuthor } from '../MarkdownEditor';
 import { MarkdownRenderer } from '../MarkdownRenderer';
 import styles from './MarkdownCoEditor.module.css';
+
+export type { CoAuthor } from '../MarkdownEditor';
 
 export type ViewMode = 'edit' | 'preview' | 'split';
 
@@ -66,6 +68,10 @@ export interface MarkdownCoEditorProps {
   streamingSpeed?: number;
   /** Split pane orientation (horizontal = side-by-side, vertical = stacked) */
   splitOrientation?: SplitPaneOrientation;
+  /** Co-authors with their cursor positions */
+  coAuthors?: CoAuthor[];
+  /** Callback when co-author positions change (e.g., due to user typing) */
+  onCoAuthorsChange?: (coAuthors: CoAuthor[]) => void;
   /** Additional class name */
   className?: string;
 }
@@ -113,6 +119,8 @@ export const MarkdownCoEditor = forwardRef<MarkdownCoEditorRef, MarkdownCoEditor
       streaming = false,
       streamingSpeed,
       splitOrientation = 'horizontal',
+      coAuthors = [],
+      onCoAuthorsChange,
       className,
     },
     ref
@@ -194,13 +202,30 @@ export const MarkdownCoEditor = forwardRef<MarkdownCoEditorRef, MarkdownCoEditor
         {/* Mode switcher toolbar */}
         {showModeSwitch && (
           <div className={styles.toolbar}>
-            <Segmented
-              options={modeOptions}
-              value={currentMode}
-              onChange={handleModeChange}
-              size="sm"
-              aria-label="Editor view mode"
-            />
+            {/* Co-author avatars */}
+            {coAuthors.length > 0 && (
+              <div className={styles.coAuthorAvatars}>
+                {coAuthors.map((author) => (
+                  <div
+                    key={author.id}
+                    className={`${styles.avatar} ${author.isAI ? styles.aiAvatar : ''}`}
+                    style={{ '--avatar-color': author.color } as React.CSSProperties}
+                    title={author.name}
+                  >
+                    {author.isAI ? '✦' : author.name.charAt(0).toUpperCase()}
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className={styles.modeSwitcher}>
+              <Segmented
+                options={modeOptions}
+                value={currentMode}
+                onChange={handleModeChange}
+                size="sm"
+                aria-label="Editor view mode"
+              />
+            </div>
           </div>
         )}
 
@@ -222,6 +247,8 @@ export const MarkdownCoEditor = forwardRef<MarkdownCoEditorRef, MarkdownCoEditor
                     onEditorReady={onEditorReady}
                     onSelectionChange={onSelectionChange}
                     showLineNumbers={showLineNumbers}
+                    coAuthors={coAuthors}
+                    onCoAuthorsChange={onCoAuthorsChange}
                   />
                 </div>
               }
@@ -257,6 +284,8 @@ export const MarkdownCoEditor = forwardRef<MarkdownCoEditorRef, MarkdownCoEditor
                     onEditorReady={onEditorReady}
                     onSelectionChange={onSelectionChange}
                     showLineNumbers={showLineNumbers}
+                    coAuthors={coAuthors}
+                    onCoAuthorsChange={onCoAuthorsChange}
                   />
                 </div>
               )}

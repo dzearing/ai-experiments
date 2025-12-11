@@ -1,1 +1,2 @@
-export { MarkdownEditor, type MarkdownEditorProps, type MarkdownEditorRef } from './MarkdownEditor';
+export { MarkdownEditor } from './MarkdownEditor';
+export type { MarkdownEditorProps, MarkdownEditorRef, CoAuthor, RemoteEdit } from './types';

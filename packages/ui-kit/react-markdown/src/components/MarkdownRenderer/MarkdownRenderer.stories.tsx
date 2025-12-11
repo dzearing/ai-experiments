@@ -12,7 +12,15 @@ const meta = {
         component: `
 Renders markdown content with syntax highlighting, streaming support, and deep-linking.
 
+## When to Use
+
+- **Documentation display**: Rendering user-facing markdown content
+- **AI chat responses**: Streaming AI-generated markdown with animated reveal
+- **Code documentation**: Syntax-highlighted code blocks with line numbers
+- **Shareable content**: Deep-linking to specific headings or code lines
+
 ## Features
+
 - GitHub Flavored Markdown (GFM) support
 - Syntax highlighting with Prism.js
 - Line numbers in code blocks
@@ -21,6 +29,7 @@ Renders markdown content with syntax highlighting, streaming support, and deep-l
 - Deep-linking to headings and line numbers
 
 ## Usage
+
 \`\`\`tsx
 import { MarkdownRenderer } from '@ui-kit/react-markdown';
 

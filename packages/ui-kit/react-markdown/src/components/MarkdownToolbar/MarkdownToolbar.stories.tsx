@@ -13,14 +13,40 @@ const meta = {
         component: `
 Standalone toolbar for markdown editing with TipTap.
 
-## Features
-- Can be placed anywhere in the DOM
-- Feature toggles for button groups
-- Size variants (sm, md, lg)
-- Style variants (default, bordered, floating)
-- Custom button support
+## When to Use
+
+- **Rich text editing**: Adding formatting controls to a TipTap editor
+- **Custom editor layouts**: Placing the toolbar independently from the editor
+- **Feature-gated editors**: Enabling only specific formatting options
+
+## Sizes
+
+| Size | Use Case |
+|------|----------|
+| \`sm\` | Compact toolbars, inline editors |
+| \`md\` | Default size for most use cases |
+| \`lg\` | Touch-friendly interfaces |
+
+## Variants
+
+| Variant | Use Case |
+|---------|----------|
+| \`default\` | Transparent background |
+| \`bordered\` | With border and subtle background |
+| \`floating\` | Shadow and elevated appearance |
+
+## Feature Toggles
+
+Control which button groups appear:
+- \`formatting\`: Bold, italic, strikethrough
+- \`headings\`: H1, H2, H3 buttons
+- \`lists\`: Bullet and numbered lists
+- \`blocks\`: Code blocks, blockquotes
+- \`links\`: Link insertion
+- \`undo\`: Undo/redo buttons
 
 ## Usage
+
 \`\`\`tsx
 import { MarkdownToolbar } from '@ui-kit/react-markdown';
 import { useEditor } from '@tiptap/react';
@@ -34,6 +60,18 @@ const editor = useEditor({ ... });
 \`\`\`
         `,
       },
+    },
+  },
+  argTypes: {
+    size: {
+      control: 'select',
+      options: ['sm', 'md', 'lg'],
+      description: 'Size variant for toolbar buttons',
+    },
+    variant: {
+      control: 'select',
+      options: ['default', 'bordered', 'floating'],
+      description: 'Visual style variant',
     },
   },
 } satisfies Meta<typeof MarkdownToolbar>;

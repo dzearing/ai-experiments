@@ -23,12 +23,48 @@
 .toolbar {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   height: 44px;
   flex-shrink: 0;
   padding: 0 var(--space-3, 12px);
   border-bottom: 1px solid var(--color-panel-border, var(--panel-border, #e0e0e0));
   background: var(--color-panel-background, var(--panel-bg, #fff));
+}
+
+/* Co-author avatars in toolbar */
+.coAuthorAvatars {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Keep mode switcher on the right */
+.modeSwitcher {
+  margin-left: auto;
+}
+
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--avatar-color, #6495ed);
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: default;
+  user-select: none;
+  transition: transform 0.15s ease;
+}
+
+.avatar:hover {
+  transform: scale(1.1);
+}
+
+.aiAvatar {
+  font-size: 14px;
 }
 
 /* ==============================================

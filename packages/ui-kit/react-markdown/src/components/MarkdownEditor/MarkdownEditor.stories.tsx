@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { fn } from '@storybook/test';
-import { useState, useRef } from 'react';
-import { MarkdownEditor, type MarkdownEditorRef } from './MarkdownEditor';
+import { useState, useRef, useEffect } from 'react';
+import { MarkdownEditor, type MarkdownEditorRef, type CoAuthor } from './MarkdownEditor';
 import { MarkdownRenderer } from '../MarkdownRenderer';
 
 const meta: Meta<typeof MarkdownEditor> = {
@@ -13,15 +13,37 @@ const meta: Meta<typeof MarkdownEditor> = {
     docs: {
       description: {
         component: `
-Plain text markdown editor for editing raw markdown content.
+CodeMirror 6-based markdown editor with full editing capabilities.
+
+## When to Use
+
+- **Plain text editing**: When you need raw markdown editing without preview
+- **Code-heavy documents**: Documents with many code blocks benefit from syntax highlighting
+- **AI co-authoring**: Showing remote cursors during collaborative or AI-assisted writing
+- **Large documents**: Performance-optimized for documents with thousands of lines
 
 ## Features
-- Plain text editing (no WYSIWYG)
-- Line numbers
-- Tab/Shift+Tab for indentation
-- Selection tracking for co-authoring cursor support
+
+- **Syntax highlighting**: Full markdown support plus nested code blocks (JS, Python, etc.)
+- **Search/replace**: Ctrl+F to find, Ctrl+H to replace, Ctrl+G to go to line
+- **Code folding**: Fold code blocks and sections with gutter icons or Ctrl+Shift+[
+- **Co-authoring**: Remote cursor visibility with labels and selection highlights
+- **Theming**: Integrates with design tokens for light/dark mode
+
+## Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| Ctrl+F | Open search panel |
+| Ctrl+H | Open search/replace panel |
+| Ctrl+G | Go to line |
+| Ctrl+Z/Y | Undo/redo |
+| Tab/Shift+Tab | Indent/outdent |
+| Ctrl+Shift+[ | Fold at cursor |
+| Ctrl+Shift+] | Unfold at cursor |
 
 ## Usage
+
 \`\`\`tsx
 import { MarkdownEditor } from '@ui-kit/react-markdown';
 
@@ -40,11 +62,13 @@ import { MarkdownEditor } from '@ui-kit/react-markdown';
     onFocus: fn(),
     onBlur: fn(),
     onSelectionChange: fn(),
+    onEditorReady: fn(),
+    onCoAuthorsChange: fn(),
   },
   argTypes: {
     showLineNumbers: {
       control: 'boolean',
-      description: 'Show line numbers',
+      description: 'Show line numbers in gutter',
     },
     readOnly: {
       control: 'boolean',
@@ -52,17 +76,32 @@ import { MarkdownEditor } from '@ui-kit/react-markdown';
     },
     placeholder: {
       control: 'text',
-      description: 'Placeholder text',
+      description: 'Placeholder text when editor is empty',
     },
     height: {
       control: 'text',
-      description: 'Editor height',
+      description: 'Editor height (CSS value)',
     },
     tabSize: {
       control: 'number',
-      description: 'Number of spaces for tab',
+      description: 'Number of spaces for tab indentation',
+    },
+    onChange: {
+      table: { disable: true },
+    },
+    onFocus: {
+      table: { disable: true },
+    },
+    onBlur: {
+      table: { disable: true },
+    },
+    onSelectionChange: {
+      table: { disable: true },
     },
     onEditorReady: {
+      table: { disable: true },
+    },
+    onCoAuthorsChange: {
       table: { disable: true },
     },
   },
@@ -73,18 +112,31 @@ type Story = StoryObj<typeof meta>;
 
 const sampleContent = `# Welcome to the Editor
 
-This is a **plain text** markdown editor.
+This is a **CodeMirror 6** based markdown editor.
 
 ## Features
 
-- Line numbers
-- Tab indentation
-- Selection tracking
-- Co-authoring ready
+- Full markdown syntax highlighting
+- Nested code block highlighting
+- Search/replace (Ctrl+F, Ctrl+H)
+- Code folding (click gutter or Ctrl+Shift+[)
+- Co-authoring cursor support
 
 \`\`\`typescript
 const greeting = 'Hello, World!';
 console.log(greeting);
+
+function fibonacci(n: number): number {
+  if (n <= 1) return n;
+  return fibonacci(n - 1) + fibonacci(n - 2);
+}
+\`\`\`
+
+\`\`\`python
+def greet(name):
+    return f"Hello, {name}!"
+
+print(greet("World"))
 \`\`\`
 
 Try editing this content!
@@ -97,6 +149,13 @@ export const Default: Story = {
     height: '400px',
     placeholder: 'Enter markdown...',
   },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Default editor with line numbers, syntax highlighting, and sample content.',
+      },
+    },
+  },
 };
 
 export const EmptyEditor: Story = {
@@ -104,6 +163,13 @@ export const EmptyEditor: Story = {
     showLineNumbers: true,
     height: '300px',
     placeholder: 'Start writing your document...',
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Empty editor with placeholder text.',
+      },
+    },
   },
 };
 
@@ -119,6 +185,13 @@ This editor has line numbers disabled.
     showLineNumbers: false,
     height: '300px',
   },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Editor without line numbers for a cleaner appearance.',
+      },
+    },
+  },
 };
 
 export const ReadOnly: Story = {
@@ -127,6 +200,13 @@ export const ReadOnly: Story = {
     showLineNumbers: true,
     readOnly: true,
     height: '400px',
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Read-only mode prevents editing while maintaining syntax highlighting.',
+      },
+    },
   },
 };
 
@@ -167,6 +247,13 @@ Edit me and see the raw output below!`);
 
 export const ControlledMode: Story = {
   render: () => <ControlledStory />,
+  parameters: {
+    docs: {
+      description: {
+        story: 'Use `value` and `onChange` props for controlled state management. The raw markdown output is shown below.',
+      },
+    },
+  },
 };
 
 // Side-by-side editor and preview
@@ -225,6 +312,13 @@ const x = 42;
 
 export const EditorWithPreview: Story = {
   render: () => <SideBySideStory />,
+  parameters: {
+    docs: {
+      description: {
+        story: 'Side-by-side editor and live preview. Changes in the editor update the rendered preview in real-time.',
+      },
+    },
+  },
 };
 
 // Tab size variants
@@ -238,6 +332,13 @@ Press Tab to indent with 4 spaces.
     showLineNumbers: true,
     tabSize: 4,
     height: '200px',
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Tab indentation with 4 spaces instead of the default 2.',
+      },
+    },
   },
 };
 
@@ -292,6 +393,24 @@ Content set via ref!`);
         >
           Insert Text
         </button>
+        <button
+          onClick={() => editorRef.current?.goToLine(5)}
+          style={{ padding: '8px 16px', cursor: 'pointer' }}
+        >
+          Go to Line 5
+        </button>
+        <button
+          onClick={() => editorRef.current?.foldAll()}
+          style={{ padding: '8px 16px', cursor: 'pointer' }}
+        >
+          Fold All
+        </button>
+        <button
+          onClick={() => editorRef.current?.unfoldAll()}
+          style={{ padding: '8px 16px', cursor: 'pointer' }}
+        >
+          Unfold All
+        </button>
       </div>
 
       <div style={{ fontSize: '14px', color: 'var(--color-body-textSoft10)' }}>
@@ -304,9 +423,19 @@ Content set via ref!`);
 
 Use the buttons above to interact with the editor programmatically.
 
-Try selecting some text and clicking "Get Selection".`}
+Try selecting some text and clicking "Get Selection".
+
+\`\`\`javascript
+// This code block can be folded
+const message = "Hello!";
+console.log(message);
+\`\`\`
+
+## Another Section
+
+More content here.`}
         showLineNumbers
-        height="250px"
+        height="300px"
         onSelectionChange={(start, end) => setSelection({ start, end })}
       />
 
@@ -331,82 +460,299 @@ Try selecting some text and clicking "Get Selection".`}
 
 export const RefAccess: Story = {
   render: () => <RefAccessStory />,
+  parameters: {
+    docs: {
+      description: {
+        story: 'Access editor methods via ref: `focus()`, `getMarkdown()`, `setMarkdown()`, `insertText()`, `goToLine()`, `foldAll()`, `unfoldAll()`.',
+      },
+    },
+  },
 };
 
-// Co-authoring simulation
-const CoAuthoringStory = () => {
+// Rapid AI streaming test (TC-7)
+const RapidStreamingStory = () => {
   const editorRef = useRef<MarkdownEditorRef>(null);
-  const [isApplying, setIsApplying] = useState(false);
+  const initialMarkdown = '# Rapid Streaming Test\n\nStart: ';
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [coAuthors, setCoAuthors] = useState<CoAuthor[]>([
+    {
+      id: 'ai',
+      name: 'AI',
+      color: '#f59e0b',
+      isAI: true,
+      selectionStart: 36,
+      selectionEnd: 36,
+    },
+  ]);
 
-  const applyAIEdit = async () => {
-    if (!editorRef.current) return;
+  // Handle coAuthor position updates from the editor
+  const handleCoAuthorsChange = (updatedCoAuthors: CoAuthor[]) => {
+    setCoAuthors(updatedCoAuthors);
+  };
 
-    setIsApplying(true);
+  const startStreaming = async () => {
+    if (isStreaming || !editorRef.current) return;
+    setIsStreaming(true);
 
-    // Simulate AI thinking
-    await new Promise(r => setTimeout(r, 500));
+    const chars = 'The quick brown fox jumps over the lazy dog. Lorem ipsum dolor sit amet, consectetur adipiscing elit. ';
+    let pos = editorRef.current.getMarkdown().length;
 
-    // Apply edit at cursor position
-    editorRef.current.insertText(`
+    for (const char of chars) {
+      await new Promise(r => setTimeout(r, 20)); // 20ms per char
+      if (!editorRef.current) break;
 
-## AI-Generated Section
+      // Use imperative API for proper position mapping
+      editorRef.current.insertAt(pos, char);
+      pos++;
+      setCoAuthors([{
+        id: 'ai',
+        name: 'AI',
+        color: '#f59e0b',
+        isAI: true,
+        selectionStart: pos,
+        selectionEnd: pos,
+      }]);
+    }
 
-This content was added by the AI assistant at your cursor position.
-
-\`\`\`typescript
-// AI-generated code
-const aiResult = await processData(input);
-console.log(aiResult);
-\`\`\`
-
-`);
-
-    setIsApplying(false);
+    setIsStreaming(false);
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
         <button
-          onClick={applyAIEdit}
-          disabled={isApplying}
+          onClick={startStreaming}
+          disabled={isStreaming}
           style={{
             padding: '8px 16px',
-            cursor: isApplying ? 'not-allowed' : 'pointer',
-            opacity: isApplying ? 0.7 : 1,
+            cursor: isStreaming ? 'not-allowed' : 'pointer',
+            opacity: isStreaming ? 0.7 : 1,
           }}
         >
-          {isApplying ? 'AI is writing...' : 'Add AI Content at Cursor'}
+          {isStreaming ? 'Streaming...' : 'Start Rapid Streaming (20ms/char)'}
         </button>
         <span style={{ fontSize: '14px', color: 'var(--color-body-textSoft10)' }}>
-          Click to simulate AI co-authoring (inserts at cursor)
+          TC-7: Tests rapid AI streaming at 100 chars / 20ms intervals
         </span>
       </div>
 
       <MarkdownEditor
         ref={editorRef}
-        defaultValue={`# My Document
-
-This is my draft document.
-
-Place your cursor here and click the button to let the AI add content.
-
-## Existing Section
-
-Some existing content...`}
+        defaultValue={initialMarkdown}
+        coAuthors={coAuthors}
+        onCoAuthorsChange={handleCoAuthorsChange}
         showLineNumbers
-        height="400px"
+        height="200px"
       />
     </div>
   );
 };
 
-export const CoAuthoringSimulation: Story = {
-  render: () => <CoAuthoringStory />,
+export const RapidStreaming: Story = {
+  render: () => <RapidStreamingStory />,
   parameters: {
     docs: {
       description: {
-        story: 'Demonstrates programmatic content insertion for AI co-authoring at cursor position.',
+        story: 'TC-7: Tests rapid AI streaming at 100 characters with 20ms intervals. Your typing should remain responsive.',
+      },
+    },
+  },
+};
+
+// Large document performance test
+const LargeDocumentStory = () => {
+  const [lineCount] = useState(1000);
+
+  // Generate large document
+  const largeContent = Array.from({ length: lineCount }, (_, i) => {
+    if (i % 50 === 0) {
+      return `\n## Section ${Math.floor(i / 50) + 1}\n`;
+    }
+    if (i % 10 === 0) {
+      return `\`\`\`javascript\nconst line${i} = "content";\nconsole.log(line${i});\n\`\`\`\n`;
+    }
+    return `Line ${i + 1}: Lorem ipsum dolor sit amet, consectetur adipiscing elit.\n`;
+  }).join('');
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div style={{ fontSize: '14px', color: 'var(--color-body-textSoft10)' }}>
+        TC-10: Large document with {lineCount} lines. Type to test keystroke latency.
+      </div>
+      <MarkdownEditor
+        defaultValue={largeContent}
+        showLineNumbers
+        height="500px"
+      />
+    </div>
+  );
+};
+
+export const LargeDocument: Story = {
+  render: () => <LargeDocumentStory />,
+  parameters: {
+    docs: {
+      description: {
+        story: 'TC-10: Performance test with 1000 lines. Keystroke latency should remain under 16ms.',
+      },
+    },
+  },
+};
+
+// Search demo
+export const SearchDemo: Story = {
+  args: {
+    defaultValue: `# Search Demo
+
+Press **Ctrl+F** to open the search panel.
+
+This document contains multiple occurrences of the word "foo":
+- foo is here
+- and foo is here
+- also foo appears here
+
+Try searching for "foo" to see all matches highlighted!
+
+Press **Ctrl+G** to go to a specific line number.
+Press **Ctrl+H** to open search & replace.
+
+\`\`\`javascript
+const foo = "bar";
+const foobar = foo + "baz";
+\`\`\`
+`,
+    showLineNumbers: true,
+    height: '400px',
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'TC-14, TC-15, TC-16: Demonstrates search (Ctrl+F), regex search, and go-to-line (Ctrl+G).',
+      },
+    },
+  },
+};
+
+// Folding demo
+export const FoldingDemo: Story = {
+  args: {
+    defaultValue: `# Folding Demo
+
+Click the arrows in the gutter to fold/unfold code blocks and sections.
+
+## Section 1 (click to fold)
+
+This content is inside Section 1.
+You can fold the entire section by clicking the fold icon.
+
+\`\`\`javascript
+// This code block can be folded independently
+function longFunction() {
+  const a = 1;
+  const b = 2;
+  const c = 3;
+  const d = 4;
+  const e = 5;
+  return a + b + c + d + e;
+}
+\`\`\`
+
+## Section 2
+
+Another section with more content.
+
+\`\`\`python
+# Python code can also be folded
+def calculate():
+    result = 0
+    for i in range(100):
+        result += i
+    return result
+\`\`\`
+
+## Keyboard Shortcuts
+
+- **Ctrl+Shift+[** : Fold at cursor
+- **Ctrl+Shift+]** : Unfold at cursor
+`,
+    showLineNumbers: true,
+    height: '500px',
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'TC-17, TC-18, TC-19: Demonstrates code block and heading folding.',
+      },
+    },
+  },
+};
+
+// Syntax highlighting demo
+export const SyntaxHighlighting: Story = {
+  args: {
+    defaultValue: `# Syntax Highlighting Demo
+
+This shows **bold**, *italic*, and ~~strikethrough~~ text.
+
+Here's a [link](https://example.com) and some \`inline code\`.
+
+## Code Blocks with Language-Specific Highlighting
+
+\`\`\`javascript
+// JavaScript highlighting
+const greeting = 'Hello';
+const numbers = [1, 2, 3];
+const sum = numbers.reduce((a, b) => a + b, 0);
+
+async function fetchData(url) {
+  const response = await fetch(url);
+  return response.json();
+}
+\`\`\`
+
+\`\`\`python
+# Python highlighting
+def fibonacci(n):
+    if n <= 1:
+        return n
+    return fibonacci(n-1) + fibonacci(n-2)
+
+result = [fibonacci(i) for i in range(10)]
+print(f"Result: {result}")
+\`\`\`
+
+\`\`\`css
+/* CSS highlighting */
+.container {
+  display: flex;
+  align-items: center;
+  background: var(--color-primary);
+}
+\`\`\`
+
+\`\`\`json
+{
+  "name": "example",
+  "version": "1.0.0",
+  "dependencies": {
+    "react": "^18.0.0"
+  }
+}
+\`\`\`
+
+> Blockquotes are styled differently too.
+
+- List item 1
+- List item 2
+  - Nested item
+`,
+    showLineNumbers: true,
+    height: '600px',
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'TC-13, TC-22: Demonstrates markdown syntax highlighting and nested code block highlighting for multiple languages.',
       },
     },
   },
