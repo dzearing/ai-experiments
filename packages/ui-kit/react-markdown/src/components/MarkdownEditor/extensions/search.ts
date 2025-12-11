@@ -1,47 +1,119 @@
 /**
  * Search and navigation extensions for CodeMirror
  *
- * Provides Ctrl+F search, Ctrl+H replace, Ctrl+G go-to-line,
- * and all standard search/replace functionality.
+ * Provides search state management and keybindings.
+ * The search UI is handled by a custom React component (SearchPanel).
  */
 
-import { search, searchKeymap, highlightSelectionMatches } from '@codemirror/search';
-import { gotoLine } from '@codemirror/search';
+import {
+  search,
+  highlightSelectionMatches,
+  gotoLine,
+  findNext,
+  findPrevious,
+} from '@codemirror/search';
 import { keymap } from '@codemirror/view';
 import type { Extension } from '@codemirror/state';
+import type { EditorView } from '@codemirror/view';
 
 /**
- * Search panel configuration.
- * Configures the search panel to appear at the top of the editor.
+ * Callback type for when search panel should open
+ */
+export type SearchPanelOpenCallback = (showReplace: boolean) => void;
+
+/**
+ * Creates a custom search panel that returns nothing (empty panel).
+ * This prevents CodeMirror's default panel while keeping search state active.
+ */
+function createEmptyPanel() {
+  // Return a minimal panel that won't be visible
+  const dom = document.createElement('div');
+  dom.style.display = 'none';
+  return { dom, top: true };
+}
+
+/**
+ * Search configuration.
+ * Uses an empty panel creator to disable the default UI.
  */
 const searchConfig = search({
   top: true,
   caseSensitive: false,
   literal: false,
   wholeWord: false,
-  // Custom search panel class for styling
-  createPanel: undefined, // Use default panel
+  createPanel: createEmptyPanel,
 });
 
 /**
- * Custom keybindings for search and navigation.
- * Extends the default searchKeymap with additional shortcuts.
+ * Creates keybindings for search and navigation.
+ * Ctrl+F and Ctrl+H are handled by the React component via callbacks.
+ *
+ * @param onOpenSearch - Callback when Ctrl+F is pressed
+ * @param onOpenReplace - Callback when Ctrl+H is pressed
  */
-const searchKeybindings = keymap.of([
-  // Default search keybindings are included
-  ...searchKeymap,
-  // Go to line with Ctrl+G (or Cmd+G on Mac)
-  { key: 'Mod-g', run: gotoLine },
-]);
+export function createSearchKeybindings(
+  onOpenSearch?: SearchPanelOpenCallback,
+  onOpenReplace?: SearchPanelOpenCallback
+): Extension {
+  return keymap.of([
+    // Override Ctrl+F to use our custom panel
+    {
+      key: 'Mod-f',
+      run: (_view: EditorView) => {
+        if (onOpenSearch) {
+          onOpenSearch(false);
+          return true;
+        }
+        return false;
+      },
+    },
+    // Override Ctrl+H to open with replace
+    {
+      key: 'Mod-h',
+      run: (_view: EditorView) => {
+        if (onOpenReplace) {
+          onOpenReplace(true);
+          return true;
+        }
+        return false;
+      },
+    },
+    // F3 for find next (works without opening panel)
+    {
+      key: 'F3',
+      run: findNext,
+    },
+    // Shift+F3 for find previous
+    {
+      key: 'Shift-F3',
+      run: findPrevious,
+    },
+    // Go to line with Ctrl+G
+    {
+      key: 'Mod-g',
+      run: gotoLine,
+    },
+  ]);
+}
 
 /**
- * Combined search extension.
- * Includes search panel, keybindings, and selection match highlighting.
+ * Base search extension without custom keybindings.
+ * Includes search state and selection match highlighting.
+ */
+export const baseSearchExtension: Extension = [
+  searchConfig,
+  highlightSelectionMatches(),
+];
+
+/**
+ * Combined search extension with default (no-op) keybindings.
+ * Use createSearchKeybindings() to add custom Ctrl+F handling.
+ *
+ * @deprecated Use baseSearchExtension + createSearchKeybindings() instead
  */
 export const searchExtension: Extension = [
-  searchConfig,
-  searchKeybindings,
-  highlightSelectionMatches(),
+  baseSearchExtension,
+  createSearchKeybindings(),
 ];
 
 export default searchExtension;

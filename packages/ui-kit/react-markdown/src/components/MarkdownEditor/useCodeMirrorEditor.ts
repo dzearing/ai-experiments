@@ -17,7 +17,7 @@ import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirro
 import { indentOnInput, indentUnit, bracketMatching } from '@codemirror/language';
 
 import { theme } from './extensions/theme';
-import { searchExtension } from './extensions/search';
+import { baseSearchExtension, createSearchKeybindings } from './extensions/search';
 import { foldingExtension, foldAll, unfoldAll } from './extensions/folding';
 import { setCoAuthorsEffect, getMappedCoAuthors } from './useCoAuthorDecorations';
 import type { MarkdownEditorRef, RemoteEdit, CoAuthor } from './types';
@@ -33,6 +33,8 @@ interface UseCodeMirrorEditorOptions {
   onFocus?: () => void;
   /** Called when editor loses focus */
   onBlur?: () => void;
+  /** Called when search panel should open (Ctrl+F or Ctrl+H) */
+  onOpenSearch?: (showReplace: boolean) => void;
   /** Read-only mode */
   readOnly?: boolean;
   /** Placeholder text */
@@ -64,6 +66,7 @@ export function useCodeMirrorEditor(options: UseCodeMirrorEditorOptions): UseCod
     onSelectionChange,
     onFocus,
     onBlur,
+    onOpenSearch,
     readOnly = false,
     placeholder,
     showLineNumbers = true,
@@ -75,6 +78,10 @@ export function useCodeMirrorEditor(options: UseCodeMirrorEditorOptions): UseCod
   const viewRef = useRef<EditorView | null>(null);
   const [view, setView] = useState<EditorView | null>(null);
   const extensionCompartment = useRef(new Compartment());
+
+  // Use a ref for the search callback to avoid recreating extensions
+  const onOpenSearchRef = useRef(onOpenSearch);
+  onOpenSearchRef.current = onOpenSearch;
 
   // Track whether the last change came from inside the editor
   const isInternalChange = useRef(false);
@@ -109,8 +116,14 @@ export function useCodeMirrorEditor(options: UseCodeMirrorEditorOptions): UseCod
       // Theme (colors, fonts, etc.)
       theme,
 
-      // Search and folding
-      searchExtension,
+      // Search (base extension + custom keybindings that call onOpenSearch via ref)
+      baseSearchExtension,
+      createSearchKeybindings(
+        (showReplace) => onOpenSearchRef.current?.(showReplace),
+        (showReplace) => onOpenSearchRef.current?.(showReplace)
+      ),
+
+      // Folding
       foldingExtension,
     ];
 
@@ -130,6 +143,7 @@ export function useCodeMirrorEditor(options: UseCodeMirrorEditorOptions): UseCod
     }
 
     return exts;
+  // Note: onOpenSearch is accessed via ref to avoid recreating extensions
   }, [showLineNumbers, placeholder, readOnly, tabSize]);
 
   // Create update listener extension

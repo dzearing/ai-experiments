@@ -1,0 +1,131 @@
+/**
+ * SearchPanel styles
+ *
+ * Positions the search panel as a floating modal anchored to the top-right
+ * of the editor container with appropriate padding.
+ */
+
+.panel {
+  position: absolute;
+  top: var(--spacing-small10, 8px);
+  right: var(--spacing-small10, 8px);
+  z-index: 100;
+
+  /* Panel appearance */
+  background: var(--color-panel-background, #ffffff);
+  border: 1px solid var(--color-panel-border, #e0e0e0);
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: var(--shadow-lg, 0 8px 24px rgba(0, 0, 0, 0.15));
+
+  /* Size constraints */
+  min-width: 320px;
+  max-width: 420px;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-small10, 8px);
+  padding: var(--spacing-small10, 12px);
+}
+
+/* ==============================================
+   Row Layout
+   ============================================== */
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small10, 8px);
+}
+
+.inputWrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small10, 8px);
+  min-width: 0;
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+}
+
+.matchCount {
+  flex-shrink: 0;
+  color: var(--color-body-textSoft10, #666);
+  white-space: nowrap;
+  font-size: var(--font-size-xs, 12px);
+  padding-right: var(--spacing-small10, 8px);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+/* ==============================================
+   Options Row
+   ============================================== */
+
+.optionsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-small10, 8px);
+  padding-top: var(--spacing-small10, 8px);
+  border-top: 1px solid var(--color-panel-border, #e0e0e0);
+}
+
+/* Make checkboxes more compact */
+.optionsRow label {
+  font-size: var(--font-size-xs, 12px);
+}
+
+/* ==============================================
+   Animation
+   ============================================== */
+
+.panel {
+  animation: slideIn var(--duration-normal, 200ms) var(--ease-out, cubic-bezier(0, 0, 0.2, 1));
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==============================================
+   Focus Management
+   ============================================== */
+
+.panel:focus-within {
+  outline: none;
+}
+
+/* ==============================================
+   Reduced Motion
+   ============================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .panel {
+    animation: none;
+  }
+}
+
+/* ==============================================
+   Dark mode adjustments (if needed)
+   ============================================== */
+
+:global([data-theme="dark"]) .panel {
+  box-shadow: var(--shadow-lg, 0 8px 24px rgba(0, 0, 0, 0.4));
+}

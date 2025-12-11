@@ -403,19 +403,98 @@ Always show visible focus indicators:
 
 ### RTL Support
 
-Components should work in right-to-left layouts:
+Components MUST work correctly in right-to-left layouts. RTL support is not optional.
+
+#### Use CSS Logical Properties
+
+**ALWAYS use logical properties** instead of physical directional properties:
+
+| Physical (AVOID) | Logical (USE) |
+|------------------|---------------|
+| `margin-left` | `margin-inline-start` |
+| `margin-right` | `margin-inline-end` |
+| `padding-left` | `padding-inline-start` |
+| `padding-right` | `padding-inline-end` |
+| `left: 0` | `inset-inline-start: 0` |
+| `right: 0` | `inset-inline-end: 0` |
+| `text-align: left` | `text-align: start` |
+| `text-align: right` | `text-align: end` |
+| `border-left` | `border-inline-start` |
+| `border-right` | `border-inline-end` |
+
+**Note on positioning:** For absolute/fixed positioned elements, use `inset-inline-start` and `inset-inline-end` instead of `left` and `right`. This is critical for dropdown menus, tooltips, and popovers to align correctly in RTL.
 
 ```css
-/* Use logical properties */
-.element {
-  padding-inline-start: var(--space-4);  /* Not padding-left */
-  margin-inline-end: var(--space-2);     /* Not margin-right */
+/* ❌ WRONG - Physical properties break in RTL */
+.item {
+  text-align: left;
+  padding-left: var(--space-4);
+  margin-right: var(--space-2);
 }
 
-/* Or ensure RTL works with direction */
-[dir="rtl"] .element {
-  /* RTL-specific overrides if needed */
+/* ✅ CORRECT - Logical properties adapt to direction */
+.item {
+  text-align: start;
+  padding-inline-start: var(--space-4);
+  margin-inline-end: var(--space-2);
 }
+```
+
+#### Flexbox and RTL
+
+Flexbox `row` direction automatically reverses in RTL contexts, which is usually the desired behavior. However, be aware of edge cases:
+
+```css
+/* Flexbox gap and alignment work correctly in RTL */
+.row {
+  display: flex;
+  flex-direction: row;  /* Items will flow right-to-left in RTL */
+  gap: var(--space-2);
+}
+```
+
+#### When to Use `dir` Prop
+
+Components that have directional behavior (like submenus, arrow indicators) should accept a `dir` prop:
+
+```tsx
+interface Props {
+  /** Direction for text and layout. Affects submenu expansion direction. */
+  dir?: 'ltr' | 'rtl';
+}
+
+// Use dir to determine directional behavior
+const expandKey = dir === 'rtl' ? 'ArrowLeft' : 'ArrowRight';
+const submenuIndicator = dir === 'rtl' ? '◀' : '▶';
+```
+
+#### RTL Testing Checklist
+
+- [ ] Text is aligned to the start (right in RTL)
+- [ ] Icons/indicators flip direction appropriately
+- [ ] Submenus/popovers open in the correct direction
+- [ ] Keyboard navigation (left/right arrows) respects direction
+- [ ] Spacing is mirrored correctly
+
+#### Story for RTL
+
+Include an RTL story for components with directional behavior:
+
+```tsx
+export const RTLSupport: Story = {
+  render: () => (
+    <div dir="rtl" style={{ textAlign: 'right' }}>
+      <Component dir="rtl" {...props} />
+    </div>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story: 'RTL mode: text aligns right, submenus expand left.',
+      },
+    },
+  },
+};
 ```
 
 ---
@@ -848,7 +927,14 @@ Before submitting a new component, verify all items:
 - [ ] Proper ARIA roles and attributes
 - [ ] Focus visible for all interactive states
 - [ ] Works with screen readers
-- [ ] RTL-friendly (logical properties or RTL overrides)
+
+### RTL Support
+- [ ] Uses CSS logical properties (not left/right, use start/end)
+- [ ] `text-align: start` instead of `text-align: left`
+- [ ] `margin-inline-start/end` instead of `margin-left/right`
+- [ ] `padding-inline-start/end` instead of `padding-left/right`
+- [ ] Directional indicators flip in RTL (arrows, chevrons)
+- [ ] Keyboard navigation respects direction (if applicable)
 
 ### Animation
 - [ ] Skip animation on initial render
@@ -864,6 +950,7 @@ Before submitting a new component, verify all items:
 - [ ] Disabled states shown
 - [ ] Controlled example (if applicable)
 - [ ] Alignment test with other controls
+- [ ] RTL story (for directional components)
 
 ### Testing
 - [ ] Renders correctly

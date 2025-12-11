@@ -5,6 +5,15 @@
  * Most styling is handled by the CodeMirror theme extension.
  */
 
+/* Wrapper for editor + search panel positioning */
+.editorWrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
 .editorContainer {
   display: flex;
   flex-direction: column;

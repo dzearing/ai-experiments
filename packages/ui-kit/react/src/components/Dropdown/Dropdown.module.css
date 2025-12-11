@@ -3,6 +3,15 @@
   display: inline-flex;
 }
 
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
 .menu {
   position: absolute;
   background: var(--popout-bg);
@@ -11,29 +20,31 @@
   box-shadow: var(--popout-shadow);
   z-index: 1050;
   min-width: 160px;
+  max-width: 320px;
+  width: max-content;
   padding: var(--space-1) 0;
   animation: fadeIn var(--duration-fast) var(--ease-default);
 }
 
-/* Positions */
+/* Positions - using logical properties for RTL support */
 .bottom-start {
   top: calc(100% + 4px);
-  left: 0;
+  inset-inline-start: 0;
 }
 
 .bottom-end {
   top: calc(100% + 4px);
-  right: 0;
+  inset-inline-end: 0;
 }
 
 .top-start {
   bottom: calc(100% + 4px);
-  left: 0;
+  inset-inline-start: 0;
 }
 
 .top-end {
   bottom: calc(100% + 4px);
-  right: 0;
+  inset-inline-end: 0;
 }
 
 .item {
@@ -46,23 +57,44 @@
   background: transparent;
   color: var(--popout-text);
   font-size: var(--text-base);
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   transition: background var(--duration-fast) var(--ease-default);
 }
 
-.item:hover:not(:disabled) {
-  background: var(--controlSubtle-bg-hover);
+.item:hover:not(:disabled),
+.item.focused:not(:disabled) {
+  background: var(--controlPrimary-bg);
+  color: var(--controlPrimary-text);
+}
+
+.item:hover:not(:disabled) .icon,
+.item:hover:not(:disabled) .shortcut,
+.item:hover:not(:disabled) .submenuIndicator,
+.item.focused:not(:disabled) .icon,
+.item.focused:not(:disabled) .shortcut,
+.item.focused:not(:disabled) .submenuIndicator {
+  color: inherit;
+  opacity: 0.85;
+}
+
+.item:focus {
+  outline: none;
 }
 
 .item:focus-visible {
   outline: none;
-  background: var(--controlSubtle-bg-hover);
+  background: var(--controlPrimary-bg);
+  color: var(--controlPrimary-text);
 }
 
 .item.disabled {
   color: var(--controlDisabled-text);
   cursor: not-allowed;
+}
+
+.item.hasSubmenu {
+  padding-inline-end: var(--space-2);
 }
 
 .icon {
@@ -74,22 +106,66 @@
   flex-shrink: 0;
 }
 
+.iconPlaceholder {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
 .label {
   flex: 1;
+  white-space: nowrap;
 }
 
 .shortcut {
-  margin-left: auto;
-  padding-left: var(--space-4);
+  margin-inline-start: auto;
+  padding-inline-start: var(--space-4);
   font-size: var(--text-sm);
   color: var(--popout-text-soft);
   font-family: var(--font-mono);
+}
+
+.submenuIndicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-inline-start: var(--space-2);
+  font-size: 8px;
+  color: var(--popout-text-soft);
+  flex-shrink: 0;
 }
 
 .divider {
   height: 1px;
   background: var(--popout-border);
   margin: var(--space-1) 0;
+}
+
+/* Submenu positioning */
+.submenu {
+  position: absolute;
+  background: var(--popout-bg);
+  border: 1px solid var(--popout-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--popout-shadow);
+  z-index: 1051;
+  min-width: 160px;
+  max-width: 320px;
+  width: max-content;
+  padding: var(--space-1) 0;
+  animation: fadeIn var(--duration-fast) var(--ease-default);
+}
+
+.submenuLtr {
+  left: 100%;
+  margin-left: 4px;
+}
+
+.submenuRtl {
+  right: 100%;
+  margin-right: 4px;
 }
 
 @keyframes fadeIn {

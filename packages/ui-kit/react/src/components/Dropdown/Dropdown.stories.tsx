@@ -32,6 +32,25 @@ Menu that appears below a trigger element with selectable options.
 - **shortcut**: Display keyboard shortcuts
 - **divider**: Group related items with separators
 - **disabled**: Disable specific items
+- **items**: Nested submenus
+
+## Keyboard Navigation
+
+| Key | Action |
+|-----|--------|
+| **Enter/Space** | Open menu, select item, or expand submenu |
+| **Escape** | Close menu or submenu |
+| **ArrowDown** | Move to next item |
+| **ArrowUp** | Move to previous item |
+| **ArrowRight** (LTR) | Expand submenu |
+| **ArrowLeft** (LTR) | Close submenu |
+| **Home** | Move to first item |
+| **End** | Move to last item |
+| **PageUp/Down** | Move up/down by 10 items |
+
+## RTL Support
+
+In RTL mode, arrow keys for submenu expand/collapse are reversed.
         `,
       },
     },
@@ -85,6 +104,12 @@ const RedoIcon = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
     <path d="M8 3a5 5 0 100 10 5 5 0 000-10zm0-2a7 7 0 110 14A7 7 0 018 1z"/>
     <path d="M8 4l3 3-3 3v-2a2 2 0 100 4v1a3 3 0 110-6V4z"/>
+  </svg>
+);
+
+const FolderIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+    <path d="M1 3.5A1.5 1.5 0 012.5 2h3.172a1.5 1.5 0 011.06.44l.829.828a.5.5 0 00.353.147H13.5A1.5 1.5 0 0115 4.914V12.5a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 011 12.5v-9z"/>
   </svg>
 );
 
@@ -174,6 +199,122 @@ export const WithDisabled: Story = {
   ),
 };
 
+export const WithSubmenus: Story = {
+  render: () => (
+    <Dropdown
+      items={[
+        { label: 'New File', value: 'new-file', shortcut: '⌘N' },
+        {
+          label: 'New From Template',
+          value: 'new-template',
+          icon: <FolderIcon />,
+          items: [
+            { label: 'React Component', value: 'template-react' },
+            { label: 'TypeScript Module', value: 'template-ts' },
+            { label: 'Test File', value: 'template-test' },
+            { label: 'Story File', value: 'template-story' },
+          ],
+        },
+        { label: 'Open', value: 'open', shortcut: '⌘O', divider: true },
+        {
+          label: 'Recent Files',
+          value: 'recent',
+          items: [
+            { label: 'App.tsx', value: 'recent-app' },
+            { label: 'index.ts', value: 'recent-index' },
+            { label: 'styles.css', value: 'recent-styles' },
+          ],
+        },
+        { label: 'Save', value: 'save', shortcut: '⌘S' },
+        {
+          label: 'Export',
+          value: 'export',
+          items: [
+            { label: 'PDF', value: 'export-pdf' },
+            { label: 'PNG', value: 'export-png' },
+            { label: 'SVG', value: 'export-svg' },
+            { label: 'JSON', value: 'export-json' },
+          ],
+        },
+      ]}
+      onSelect={(value) => console.log('Selected:', value)}
+    >
+      <Button>File</Button>
+    </Dropdown>
+  ),
+};
+
+export const NestedSubmenus: Story = {
+  render: () => (
+    <Dropdown
+      items={[
+        { label: 'View', value: 'view' },
+        {
+          label: 'Insert',
+          value: 'insert',
+          items: [
+            { label: 'Text', value: 'insert-text' },
+            {
+              label: 'Shape',
+              value: 'insert-shape',
+              items: [
+                { label: 'Rectangle', value: 'shape-rect' },
+                { label: 'Circle', value: 'shape-circle' },
+                { label: 'Triangle', value: 'shape-triangle' },
+              ],
+            },
+            { label: 'Image', value: 'insert-image' },
+            { label: 'Video', value: 'insert-video' },
+          ],
+        },
+        { label: 'Format', value: 'format' },
+      ]}
+      onSelect={(value) => console.log('Selected:', value)}
+    >
+      <Button>Edit</Button>
+    </Dropdown>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story: 'Note: Deep nesting is supported but only the first level of submenus is rendered in the current implementation.',
+      },
+    },
+  },
+};
+
+export const RTLSupport: Story = {
+  render: () => (
+    <div dir="rtl" style={{ textAlign: 'right' }}>
+      <Dropdown
+        items={[
+          { label: 'עריכה', value: 'edit' },
+          {
+            label: 'שיתוף',
+            value: 'share',
+            items: [
+              { label: 'קישור', value: 'share-link' },
+              { label: 'אימייל', value: 'share-email' },
+              { label: 'הודעה', value: 'share-message' },
+            ],
+          },
+          { label: 'מחיקה', value: 'delete' },
+        ]}
+        onSelect={(value) => console.log('Selected:', value)}
+      >
+        <Button>פעולות</Button>
+      </Dropdown>
+    </div>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story: 'RTL is automatically detected from the DOM. In RTL mode, menu aligns to start (right), submenus expand to the left, and arrow key behavior is reversed.',
+      },
+    },
+  },
+};
+
 export const Positions: Story = {
   render: () => (
     <div style={{ display: 'flex', gap: '16px', padding: '100px' }}>
@@ -193,6 +334,44 @@ export const Positions: Story = {
       </Dropdown>
     </div>
   ),
+};
+
+export const KeyboardNavigation: Story = {
+  render: () => (
+    <div style={{ padding: '20px' }}>
+      <p style={{ marginBottom: '16px', color: 'var(--body-text-soft)' }}>
+        Try keyboard navigation: Tab to the button, press Enter to open, use arrows to navigate, Enter to select, Escape to close.
+      </p>
+      <Dropdown
+        items={[
+          { label: 'Item 1', value: '1' },
+          { label: 'Item 2', value: '2' },
+          { label: 'Item 3 (disabled)', value: '3', disabled: true },
+          { label: 'Item 4', value: '4' },
+          {
+            label: 'Submenu',
+            value: 'submenu',
+            items: [
+              { label: 'Sub Item A', value: 'a' },
+              { label: 'Sub Item B', value: 'b' },
+              { label: 'Sub Item C', value: 'c' },
+            ],
+          },
+          { label: 'Item 5', value: '5' },
+        ]}
+        onSelect={(value) => console.log('Selected:', value)}
+      >
+        <Button>Test Keyboard</Button>
+      </Dropdown>
+    </div>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story: 'Full keyboard navigation support including arrow keys, Home/End, PageUp/PageDown, Enter/Space for selection, and Escape to close.',
+      },
+    },
+  },
 };
 
 export const CompleteExample: Story = {
@@ -236,3 +415,4 @@ export const CompleteExample: Story = {
     </div>
   ),
 };
+

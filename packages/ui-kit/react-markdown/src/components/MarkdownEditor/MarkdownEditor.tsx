@@ -24,10 +24,12 @@ import {
   forwardRef,
   useImperativeHandle,
   useMemo,
+  useCallback,
 } from 'react';
 import styles from './MarkdownEditor.module.css';
 import { useCodeMirrorEditor } from './useCodeMirrorEditor';
 import { coAuthorExtension, useCoAuthorDecorations } from './useCoAuthorDecorations';
+import { SearchPanel } from './SearchPanel';
 import type { MarkdownEditorProps, MarkdownEditorRef, CoAuthor } from './types';
 
 // Re-export types for backwards compatibility
@@ -60,6 +62,10 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
     // Track internal value for uncontrolled mode
     const [internalValue, setInternalValue] = useState(defaultValue);
 
+    // Search panel state
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [searchShowReplace, setSearchShowReplace] = useState(false);
+
     // Determine if controlled
     const isControlled = value !== undefined;
     const currentValue = isControlled ? value : internalValue;
@@ -74,6 +80,17 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
       };
     }, [isControlled, onChange]);
 
+    // Handle search panel open (called by Ctrl+F or Ctrl+H keybinding)
+    const handleOpenSearch = useCallback((showReplace: boolean) => {
+      setSearchShowReplace(showReplace);
+      setIsSearchOpen(true);
+    }, []);
+
+    // Handle search panel close
+    const handleCloseSearch = useCallback(() => {
+      setIsSearchOpen(false);
+    }, []);
+
     // Additional extensions for co-authors (must be included in initial state)
     const additionalExtensions = useMemo(() => [coAuthorExtension], []);
 
@@ -84,6 +101,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
       onSelectionChange,
       onFocus,
       onBlur,
+      onOpenSearch: handleOpenSearch,
       readOnly,
       placeholder,
       showLineNumbers,
@@ -129,11 +147,19 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
     ].filter(Boolean).join(' ');
 
     return (
-      <div
-        className={containerClasses}
-        style={containerStyle}
-        ref={containerRef}
-      />
+      <div className={styles.editorWrapper}>
+        <div
+          className={containerClasses}
+          style={containerStyle}
+          ref={containerRef}
+        />
+        <SearchPanel
+          view={view}
+          isOpen={isSearchOpen}
+          onClose={handleCloseSearch}
+          showReplace={searchShowReplace}
+        />
+      </div>
     );
   }
 );
