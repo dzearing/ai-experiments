@@ -16,25 +16,50 @@ export function AdvancedPage() {
         <h2>Custom Surfaces</h2>
         <p>
           While the built-in surfaces cover most use cases, you can create
-          custom surfaces for brand-specific needs:
+          custom surfaces for brand-specific needs. Custom surfaces should
+          follow the reset/override pattern to ensure components inside them
+          have proper contrast:
         </p>
         <pre className={styles.code}>{`/* Define a custom brand surface */
-:root {
-  --brandHero-bg: linear-gradient(135deg, #667eea, #764ba2);
-  --brandHero-text: #ffffff;
-  --brandHero-text-soft: rgba(255, 255, 255, 0.8);
+.surface.brand {
+  /* Surface background and text */
+  --surface-bg: linear-gradient(135deg, #667eea, #764ba2);
+  --surface-text: #ffffff;
+  --surface-text-soft: rgba(255, 255, 255, 0.8);
+
+  /* Override control tokens for proper contrast */
+  --control-bg: rgba(255, 255, 255, 0.2);
+  --control-bg-hover: rgba(255, 255, 255, 0.3);
+  --control-text: #ffffff;
+  --control-border: rgba(255, 255, 255, 0.4);
+
+  /* Primary controls should stand out */
+  --controlPrimary-bg: #ffffff;
+  --controlPrimary-text: #667eea;
+  --controlPrimary-bg-hover: rgba(255, 255, 255, 0.9);
+
+  /* Apply the background */
+  background: var(--surface-bg);
+  color: var(--surface-text);
 }
 
-/* Dark mode variant */
-[data-mode="dark"] {
-  --brandHero-bg: linear-gradient(135deg, #4c51bf, #553c9a);
-}
-
-/* Usage */
-.hero-section {
-  background: var(--brandHero-bg);
-  color: var(--brandHero-text);
+/* Dark mode variant (optional) */
+[data-mode="dark"] .surface.brand {
+  --surface-bg: linear-gradient(135deg, #4c51bf, #553c9a);
+  --controlPrimary-text: #4c51bf;
 }`}</pre>
+        <p>
+          The key is overriding the control tokens (<code>--control-bg</code>,{' '}
+          <code>--controlPrimary-bg</code>, etc.) so buttons, inputs, and other
+          components automatically adapt to your custom surface.
+        </p>
+        <pre className={styles.code}>{`<!-- Usage -->
+<div class="surface brand">
+  <h2>Welcome to our app</h2>
+  <p>Components inside automatically get the right colors.</p>
+  <button class="button">Default Button</button>
+  <button class="button primary">Primary Button</button>
+</div>`}</pre>
       </section>
 
       <section className={styles.section}>

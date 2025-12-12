@@ -112,9 +112,9 @@
   --inset-border-focus: #2563eb;
 
   /* Control Surface */
-  --control-bg: #f0f0f0;
-  --control-bg-hover: #e5e5e5;
-  --control-bg-pressed: #d4d4d4;
+  --control-bg: #e5e5e5;
+  --control-bg-hover: #d9d9d9;
+  --control-bg-pressed: #cccccc;
   --control-text: #171717;
   --control-text-hover: #171717;
   --control-text-pressed: #171717;
@@ -130,6 +130,10 @@
   --controlPrimary-text: #ffffff;
   --controlPrimary-border: transparent;
   --controlPrimary-shadow: none;
+
+  /* Page-level reference for primary color (for .surface.primary to use) */
+  --page-primary-bg: #2563eb;
+  --page-primary-bg-hover: #1d4ed8;
 
   /* Control Danger Surface */
   --controlDanger-bg: #dc2626;
@@ -1458,4 +1462,201 @@
   --controlPrimary-bg: #6b7280;
   --controlPrimary-bg-hover: #9ca3af;
   --controlPrimary-text: #111827;
+}
+
+/* ================================================================
+   TONAL SURFACE SYSTEM
+   Usage: <div class="surface raised">...</div>
+   Every .surface resets tokens to page defaults, then applies overrides.
+   ================================================================ */
+
+.surface {
+  /* Surface tokens - reset to page values */
+  --surface-bg: var(--page-bg);
+  --surface-text: var(--page-text);
+  --surface-text-soft: var(--page-text-soft);
+  --surface-text-softer: var(--page-text-softer);
+  --surface-text-hard: var(--page-text-hard);
+  --surface-border: var(--page-border);
+  --surface-shadow: var(--page-shadow);
+
+  /* Apply surface tokens */
+  background: var(--surface-bg);
+  color: var(--surface-text);
+}
+
+/* .surface.base - Explicit reset to page defaults */
+/* Uses base .surface reset (no additional overrides) */
+
+/* .surface.raised - Elevated content (cards, panels) */
+.surface.raised {
+  --surface-bg: #ffffff;
+  --surface-border: #e5e5e5;
+  --surface-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+[data-mode="dark"] .surface.raised, .dark .surface.raised {
+  --surface-bg: #1a1a1a;
+  --surface-border: #333333;
+  --surface-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+}
+
+/* .surface.sunken - Recessed areas (input wells, sidebars) */
+.surface.sunken {
+  --surface-bg: #f0f0f0;
+  --surface-border: #e5e5e5;
+  --control-bg: #e5e5e5;
+  --control-bg-hover: #d9d9d9;
+  --control-bg-pressed: #cccccc;
+}
+[data-mode="dark"] .surface.sunken, .dark .surface.sunken {
+  --surface-bg: #0a0a0a;
+  --surface-border: #262626;
+  --control-bg: #1f1f1f;
+  --control-bg-hover: #2a2a2a;
+  --control-bg-pressed: #333333;
+}
+
+/* .surface.section - Slight visual separation (command areas, sidebars) */
+.surface.section {
+  --surface-bg: #f3f3f3;
+  --control-bg: #e0e0e0;
+  --control-bg-hover: #d4d4d4;
+  --control-bg-pressed: #c7c7c7;
+}
+[data-mode="dark"] .surface.section, .dark .surface.section {
+  --surface-bg: #1a1a1a;
+  --control-bg: #2a2a2a;
+  --control-bg-hover: #363636;
+  --control-bg-pressed: #424242;
+}
+
+/* .surface.section2 - Stronger visual separation */
+.surface.section2 {
+  --surface-bg: #e8e8e8;
+  --control-bg: #d4d4d4;
+  --control-bg-hover: #c7c7c7;
+  --control-bg-pressed: #bababa;
+}
+[data-mode="dark"] .surface.section2, .dark .surface.section2 {
+  --surface-bg: #242424;
+  --control-bg: #363636;
+  --control-bg-hover: #424242;
+  --control-bg-pressed: #4e4e4e;
+}
+
+/* .surface.section3 - Strongest visual separation */
+.surface.section3 {
+  --surface-bg: #d4d4d4;
+  --control-bg: #c0c0c0;
+  --control-bg-hover: #b3b3b3;
+  --control-bg-pressed: #a6a6a6;
+}
+[data-mode="dark"] .surface.section3, .dark .surface.section3 {
+  --surface-bg: #2e2e2e;
+  --control-bg: #424242;
+  --control-bg-hover: #4e4e4e;
+  --control-bg-pressed: #5a5a5a;
+}
+
+/* .surface.inverted - Opposite color scheme (tooltips, callouts) */
+.surface.inverted {
+  --surface-bg: #1a1a1a;
+  --surface-text: #e5e5e5;
+  --surface-text-soft: #a3a3a3;
+  --surface-text-softer: #737373;
+  --surface-text-hard: #ffffff;
+  --surface-border: #333333;
+  --control-bg: #333333;
+  --control-bg-hover: #404040;
+  --control-bg-pressed: #4d4d4d;
+  --control-text: #e5e5e5;
+  --control-border: #4d4d4d;
+  --control-border-hover: #5a5a5a;
+  --control-border-pressed: #666666;
+  --controlSubtle-text: #a3a3a3;
+  --controlSubtle-text-hover: #e5e5e5;
+  --controlSubtle-bg-hover: rgba(255, 255, 255, 0.08);
+  --controlSubtle-bg-pressed: rgba(255, 255, 255, 0.12);
+}
+[data-mode="dark"] .surface.inverted, .dark .surface.inverted {
+  --surface-bg: #fafafa;
+  --surface-text: #171717;
+  --surface-text-soft: #5b5b5b;
+  --surface-text-softer: #898989;
+  --surface-text-hard: #000000;
+  --surface-border: #e5e5e5;
+  --control-bg: #e5e5e5;
+  --control-bg-hover: #d9d9d9;
+  --control-bg-pressed: #cccccc;
+  --control-text: #171717;
+  --control-border: #c4c4c4;
+  --control-border-hover: #a3a3a3;
+  --control-border-pressed: #8a8a8a;
+  --controlSubtle-text: #5b5b5b;
+  --controlSubtle-text-hover: #171717;
+  --controlSubtle-bg-hover: rgba(0, 0, 0, 0.04);
+  --controlSubtle-bg-pressed: rgba(0, 0, 0, 0.08);
+}
+
+/* .surface.primary - Primary color background (teaching bubbles, branded sections) */
+.surface.primary {
+  --surface-bg: var(--page-primary-bg);
+  --surface-text: #ffffff;
+  --surface-text-soft: rgba(255, 255, 255, 0.7);
+  --surface-text-softer: rgba(255, 255, 255, 0.5);
+  --surface-text-hard: #ffffff;
+  --surface-border: var(--page-primary-bg-hover);
+  /* Default controls on primary become white/light */
+  --control-bg: rgba(255, 255, 255, 0.2);
+  --control-bg-hover: rgba(255, 255, 255, 0.3);
+  --control-bg-pressed: rgba(255, 255, 255, 0.4);
+  --control-text: #ffffff;
+  --control-border: rgba(255, 255, 255, 0.4);
+  --control-border-hover: rgba(255, 255, 255, 0.5);
+  --control-border-pressed: rgba(255, 255, 255, 0.6);
+  /* Primary controls flip to white on primary surface */
+  --controlPrimary-bg: #ffffff;
+  --controlPrimary-bg-hover: rgba(255, 255, 255, 0.85);
+  --controlPrimary-bg-pressed: rgba(255, 255, 255, 0.7);
+  --controlPrimary-text: var(--page-primary-bg);
+  --controlPrimary-border: transparent;
+  /* Subtle controls */
+  --controlSubtle-text: rgba(255, 255, 255, 0.8);
+  --controlSubtle-text-hover: #ffffff;
+  --controlSubtle-bg-hover: rgba(255, 255, 255, 0.15);
+  --controlSubtle-bg-pressed: rgba(255, 255, 255, 0.25);
+  /* Inset (inputs, unchecked checkboxes) */
+  --inset-bg: rgba(255, 255, 255, 0.15);
+  --inset-bg-hover: rgba(255, 255, 255, 0.25);
+  --inset-bg-focus: rgba(255, 255, 255, 0.3);
+  --inset-text: #ffffff;
+  --inset-text-soft: rgba(255, 255, 255, 0.7);
+  --inset-border: rgba(255, 255, 255, 0.4);
+  --inset-border-hover: rgba(255, 255, 255, 0.5);
+  --inset-border-focus: #ffffff;
+}
+
+/* Feedback surfaces */
+.surface.success {
+  --surface-bg: var(--success-bg);
+  --surface-text: var(--success-text);
+  --surface-border: var(--success-border);
+}
+
+.surface.warning {
+  --surface-bg: var(--warning-bg);
+  --surface-text: var(--warning-text);
+  --surface-border: var(--warning-border);
+}
+
+.surface.danger {
+  --surface-bg: var(--danger-bg);
+  --surface-text: var(--danger-text);
+  --surface-border: var(--danger-border);
+}
+
+.surface.info {
+  --surface-bg: var(--info-bg);
+  --surface-text: var(--info-text);
+  --surface-border: var(--info-border);
 }

@@ -45,18 +45,18 @@
 .default {
   background: var(--control-bg);
   color: var(--control-text);
-  border-color: var(--control-bg); /* Match background for solid appearance */
+  border-color: var(--control-border);
 }
 
 .default:hover:not(:disabled) {
   background: var(--control-bg-hover);
   color: var(--control-text);
-  border-color: var(--control-bg-hover); /* Match background for solid appearance */
+  border-color: var(--control-border-hover);
 }
 
 .default:active:not(:disabled) {
   background: var(--control-bg-pressed);
-  border-color: var(--control-bg-pressed); /* Match background for solid appearance */
+  border-color: var(--control-border-pressed);
 }
 
 .primary {

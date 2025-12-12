@@ -9,9 +9,10 @@ import type { ThemeDefinition } from './types';
 import {
   containerRoles,
   feedbackRoles,
-  surfaceClassName,
+  tonalSurfaces,
   getTokenNamesForSurface,
 } from '../surfaces/definitions';
+import type { FeedbackSurface } from '../surfaces/types';
 import {
   hexToRgb,
   rgbToHsl,
@@ -598,20 +599,115 @@ export function generateThemeCSS(
 /**
  * Generate surface class CSS
  *
- * Only generates surface classes for container and feedback roles.
- * Control roles (control, controlPrimary, controlDanger, etc.) don't get
- * surface classes because interactive elements need hover/pressed states
- * that are better handled with direct token usage in component CSS.
+ * NEW SYSTEM: Tonal surfaces with reset/override pattern
+ * - .surface base class resets ALL tokens to page defaults
+ * - .surface.raised, .surface.sunken, etc. apply overrides
+ * - Nested surfaces automatically reset - no compounding
+ *
+ * LEGACY SYSTEM: Kept for backward compatibility
+ * - .surface-page, .surface-card, etc.
  */
 function generateSurfaceClasses(): string[] {
   const lines: string[] = [];
 
-  // Only generate surface classes for containers and feedback - not controls
+  // ========================================================================
+  // NEW TONAL SURFACE SYSTEM
+  // ========================================================================
+
+  lines.push('/* ================================================================');
+  lines.push('   TONAL SURFACE SYSTEM');
+  lines.push('   Usage: <div class="surface raised">...</div>');
+  lines.push('   Every .surface resets tokens to page defaults, then applies overrides.');
+  lines.push('   ================================================================ */');
+  lines.push('');
+
+  // Base .surface class - resets ALL scoped tokens to page values
+  lines.push('.surface {');
+  lines.push('  /* Surface tokens - reset to page values */');
+  lines.push('  --surface-bg: var(--page-bg);');
+  lines.push('  --surface-text: var(--page-text);');
+  lines.push('  --surface-text-soft: var(--page-text-soft);');
+  lines.push('  --surface-text-softer: var(--page-text-softer);');
+  lines.push('  --surface-text-hard: var(--page-text-hard);');
+  lines.push('  --surface-border: var(--page-border);');
+  lines.push('  --surface-shadow: var(--page-shadow);');
+  lines.push('');
+  lines.push('  /* Apply surface tokens */');
+  lines.push('  background: var(--surface-bg);');
+  lines.push('  color: var(--surface-text);');
+  lines.push('}');
+  lines.push('');
+
+  // Generate tonal surface modifiers
+  const surfaceDefinitions = themeRules.surfaces?.types as Record<string, { description: string; overrides: Record<string, Record<string, string>> }> | undefined;
+
+  if (surfaceDefinitions) {
+    for (const surfaceName of tonalSurfaces) {
+      const config = surfaceDefinitions[surfaceName];
+      if (!config) continue;
+
+      const lightOverrides = config.overrides?.light || {};
+      const darkOverrides = config.overrides?.dark || {};
+
+      // Skip if no overrides (base surface just uses the reset)
+      if (Object.keys(lightOverrides).length === 0 && Object.keys(darkOverrides).length === 0) {
+        lines.push(`/* .surface.${surfaceName} - ${config.description} */`);
+        lines.push(`/* Uses base .surface reset (no additional overrides) */`);
+        lines.push('');
+        continue;
+      }
+
+      lines.push(`/* .surface.${surfaceName} - ${config.description} */`);
+
+      // Light mode overrides
+      if (Object.keys(lightOverrides).length > 0) {
+        lines.push(`.surface.${surfaceName} {`);
+        for (const [token, value] of Object.entries(lightOverrides)) {
+          lines.push(`  --${token}: ${value};`);
+        }
+        lines.push('}');
+      }
+
+      // Dark mode overrides
+      if (Object.keys(darkOverrides).length > 0) {
+        lines.push(`[data-mode="dark"] .surface.${surfaceName}, .dark .surface.${surfaceName} {`);
+        for (const [token, value] of Object.entries(darkOverrides)) {
+          lines.push(`  --${token}: ${value};`);
+        }
+        lines.push('}');
+      }
+
+      lines.push('');
+    }
+  }
+
+  // Generate feedback surface modifiers
+  lines.push('/* Feedback surfaces */');
+  const feedbackSurfaces: FeedbackSurface[] = ['success', 'warning', 'danger', 'info'];
+  for (const feedback of feedbackSurfaces) {
+    lines.push(`.surface.${feedback} {`);
+    lines.push(`  --surface-bg: var(--${feedback}-bg);`);
+    lines.push(`  --surface-text: var(--${feedback}-text);`);
+    lines.push(`  --surface-border: var(--${feedback}-border);`);
+    lines.push('}');
+    lines.push('');
+  }
+
+  // ========================================================================
+  // LEGACY SURFACE CLASSES (for backward compatibility)
+  // ========================================================================
+
+  lines.push('/* ================================================================');
+  lines.push('   LEGACY SURFACE CLASSES');
+  lines.push('   @deprecated Use tonal surfaces: <div class="surface raised">');
+  lines.push('   ================================================================ */');
+  lines.push('');
+
+  // Only generate legacy surface classes for containers and feedback - not controls
   const surfaceRoles = [...containerRoles, ...feedbackRoles];
 
   for (const surface of surfaceRoles) {
-    const className = surfaceClassName(surface);
-    lines.push(`.${className} {`);
+    lines.push(`.surface-${surface} {`);
     lines.push(`  background: var(--${surface}-bg);`);
     lines.push(`  color: var(--${surface}-text);`);
 

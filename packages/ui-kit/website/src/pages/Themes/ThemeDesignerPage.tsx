@@ -21,22 +21,39 @@ const DEFAULT_CONFIG: ThemeConfig = {
   accessibilityLevel: 'AA',
 };
 
+// Token roles for the Surface Inspector
 const SURFACE_INFO: Record<string, { label: string; description: string; category: 'container' | 'control' | 'feedback' }> = {
+  // Container roles (legacy - used for tokens like --page-bg, --card-bg)
   page: { label: 'Page', description: 'Main application background', category: 'container' },
   card: { label: 'Card', description: 'Elevated content containers', category: 'container' },
   overlay: { label: 'Overlay', description: 'Modals, dialogs, sheets', category: 'container' },
   popout: { label: 'Popout', description: 'Dropdowns, menus, tooltips', category: 'container' },
   inset: { label: 'Inset', description: 'Input fields, wells', category: 'container' },
+  // Control roles
   control: { label: 'Control', description: 'Default buttons', category: 'control' },
   controlPrimary: { label: 'Primary', description: 'Primary action buttons', category: 'control' },
   controlDanger: { label: 'Danger', description: 'Destructive actions', category: 'control' },
   controlSubtle: { label: 'Subtle', description: 'Ghost buttons', category: 'control' },
   controlDisabled: { label: 'Disabled', description: 'Non-interactive', category: 'control' },
+  // Feedback roles
   success: { label: 'Success', description: 'Positive feedback', category: 'feedback' },
   warning: { label: 'Warning', description: 'Caution alerts', category: 'feedback' },
   danger: { label: 'Danger', description: 'Error states', category: 'feedback' },
   info: { label: 'Info', description: 'Informational', category: 'feedback' },
 };
+
+// Tonal surfaces for the Surface Preview section
+const TONAL_SURFACES = [
+  { name: 'base', label: 'Base', description: 'Reset to page defaults' },
+  { name: 'raised', label: 'Raised', description: 'Cards, panels, elevated content' },
+  { name: 'sunken', label: 'Sunken', description: 'Sidebars, wells, recessed areas' },
+  { name: 'soft', label: 'Soft', description: 'Subtle background sections' },
+  { name: 'softer', label: 'Softer', description: 'Very subtle backgrounds' },
+  { name: 'strong', label: 'Strong', description: 'Emphasized sections' },
+  { name: 'stronger', label: 'Stronger', description: 'Very emphasized sections' },
+  { name: 'inverted', label: 'Inverted', description: 'Opposite color scheme' },
+  { name: 'primary', label: 'Primary', description: 'Branded sections' },
+] as const;
 
 export function ThemeDesignerPage() {
   const [config, setConfig] = useState<ThemeConfig>(DEFAULT_CONFIG);
@@ -436,6 +453,33 @@ export function ThemeDesignerPage() {
                 >
                   Info message
                 </div>
+              </div>
+            </div>
+
+            {/* Tonal Surfaces Preview */}
+            <div className={styles.previewSection}>
+              <h3 className={styles.previewSectionTitle}>Tonal Surfaces</h3>
+              <p className={styles.previewSectionDesc}>
+                Use <code>.surface.&#123;name&#125;</code> classes to create distinct visual contexts.
+                Components inside adapt automatically.
+              </p>
+              <div className={styles.surfacesGrid}>
+                {TONAL_SURFACES.map(({ name, label, description }) => (
+                  <div
+                    key={name}
+                    className={`surface ${name} ${styles.surfacePreview}`}
+                    style={{ borderRadius: generatedTheme.tokens['--radius-lg'] }}
+                  >
+                    <span className={styles.surfacePreviewLabel}>{label}</span>
+                    <span className={styles.surfacePreviewDesc}>{description}</span>
+                    <button
+                      className={styles.surfacePreviewButton}
+                      style={{ borderRadius: generatedTheme.tokens['--radius-md'] }}
+                    >
+                      Button
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

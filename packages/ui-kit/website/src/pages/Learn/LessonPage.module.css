@@ -39,6 +39,8 @@
   font-weight: var(--weight-semibold);
   margin-bottom: var(--space-4);
   color: var(--page-text-hard);
+  /* Account for sticky header when scrolling to this heading */
+  scroll-margin-top: calc(60px + var(--space-6));
 }
 
 .section p {
@@ -50,12 +52,14 @@
   font-family: var(--font-mono);
   font-size: 0.9em;
   background: var(--inset-bg);
+  color: var(--inset-text);
   padding: 2px 6px;
   border-radius: var(--radius-sm);
 }
 
 .code {
   background: var(--inset-bg);
+  color: var(--inset-text);
   border: 1px solid var(--inset-border);
   border-radius: var(--radius-lg);
   padding: var(--space-4);
@@ -92,6 +96,7 @@
   padding: 2px 8px;
   border-radius: var(--radius-sm);
 }
+/* Note: tokenItem code intentionally uses controlPrimary-bg for syntax highlighting color */
 
 .tokenItem span {
   font-size: var(--text-sm);
@@ -112,6 +117,7 @@
   font-family: var(--font-mono);
   font-size: 0.9em;
   background: var(--inset-bg);
+  color: var(--inset-text);
   padding: 2px 6px;
   border-radius: var(--radius-sm);
 }

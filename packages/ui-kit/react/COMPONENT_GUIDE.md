@@ -6,14 +6,16 @@ This guide defines the standards and best practices for creating components in `
 
 1. [Component Structure](#component-structure)
 2. [Required Files](#required-files)
-3. [Naming Conventions](#naming-conventions)
-4. [Sizing Standards](#sizing-standards)
-5. [Token Usage](#token-usage)
-6. [Accessibility Requirements](#accessibility-requirements)
-7. [Animation Guidelines](#animation-guidelines)
-8. [Story Documentation](#story-documentation)
-9. [Testing Requirements](#testing-requirements)
-10. [Checklist](#checklist)
+3. [Standard Root Element Props](#standard-root-element-props)
+4. [Polymorphic Components (the `as` Prop)](#polymorphic-components-the-as-prop)
+5. [Naming Conventions](#naming-conventions)
+6. [Sizing Standards](#sizing-standards)
+7. [Token Usage](#token-usage)
+8. [Accessibility Requirements](#accessibility-requirements)
+9. [Animation Guidelines](#animation-guidelines)
+10. [Story Documentation](#story-documentation)
+11. [Testing Requirements](#testing-requirements)
+12. [Checklist](#checklist)
 
 ---
 
@@ -221,6 +223,216 @@ export type {
   ComponentNameSize,
   ComponentNameVariant,
 } from './ComponentName';
+```
+
+---
+
+## Standard Root Element Props
+
+**All components MUST support standard HTML attributes** that get applied to the root element. This enables consumers to pass styles, accessibility attributes, and data attributes without wrapper elements.
+
+### Required Pattern
+
+Every component should:
+1. Extend appropriate HTML attributes for the root element type
+2. Spread remaining props onto the root element
+3. Compose `className` (never override)
+
+```tsx
+import type { HTMLAttributes, ReactNode } from 'react';
+
+// 1. Extend the appropriate HTML attributes interface
+export interface PanelProps extends HTMLAttributes<HTMLDivElement> {
+  variant?: 'default' | 'elevated';
+  children: ReactNode;
+}
+
+export function Panel({
+  variant = 'default',
+  className,           // 2. Destructure className separately
+  children,
+  ...props             // 3. Collect remaining props
+}: PanelProps) {
+  // 4. Compose className (never override)
+  const classNames = [
+    styles.panel,
+    styles[variant],
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  return (
+    // 5. Spread props onto root element
+    <div className={classNames} {...props}>
+      {children}
+    </div>
+  );
+}
+```
+
+### Supported Standard Props
+
+By extending HTML attributes, components automatically support:
+
+| Prop Category | Examples | Use Case |
+|---------------|----------|----------|
+| `className` | `className="custom"` | Custom styling |
+| `style` | `style={{ marginTop: 8 }}` | Inline styles |
+| `id` | `id="my-panel"` | DOM identification |
+| `data-*` | `data-testid="panel"` | Testing, custom data |
+| `aria-*` | `aria-label="Section"` | Accessibility |
+| Event handlers | `onClick`, `onFocus` | Interaction |
+
+### HTML Attribute Interfaces
+
+Use the appropriate interface based on the root element:
+
+| Root Element | Interface |
+|--------------|-----------|
+| `<div>` | `HTMLAttributes<HTMLDivElement>` |
+| `<button>` | `ButtonHTMLAttributes<HTMLButtonElement>` |
+| `<input>` | `InputHTMLAttributes<HTMLInputElement>` |
+| `<a>` | `AnchorHTMLAttributes<HTMLAnchorElement>` |
+| `<span>`, `<p>`, etc. | `HTMLAttributes<HTMLElement>` |
+
+---
+
+## Polymorphic Components (the `as` Prop)
+
+Some components support changing the underlying HTML element via the `as` prop. This enables semantic flexibility without sacrificing component features.
+
+### When to Support `as`
+
+| Component Type | Support `as`? | Example |
+|----------------|---------------|---------|
+| Typography (Text, Heading) | Yes | Render as `span`, `p`, `label` |
+| Layout (Stack, Grid) | Optional | Render as `section`, `article` |
+| Navigation (Link, Button) | Limited | Button can be `a` for links |
+| Interactive Controls | No | Input, Checkbox stay as native elements |
+
+### Basic Polymorphic Pattern (ElementType)
+
+For components where the element type doesn't affect available props:
+
+```tsx
+import { type ReactNode, type ElementType, type HTMLAttributes } from 'react';
+
+export interface TextProps extends HTMLAttributes<HTMLElement> {
+  children: ReactNode;
+  /** HTML element to render */
+  as?: ElementType;
+  size?: 'sm' | 'md' | 'lg';
+}
+
+export function Text({
+  children,
+  as: Component = 'span',
+  size = 'md',
+  className,
+  ...props
+}: TextProps) {
+  const classNames = [styles.text, styles[size], className]
+    .filter(Boolean)
+    .join(' ');
+
+  return (
+    <Component className={classNames} {...props}>
+      {children}
+    </Component>
+  );
+}
+```
+
+### Type-Safe Polymorphic Pattern (Discriminated Unions)
+
+For components where the element type affects available props (e.g., Button with `href`):
+
+```tsx
+import type { ButtonHTMLAttributes, AnchorHTMLAttributes, ReactNode } from 'react';
+
+interface ButtonBaseProps {
+  variant?: 'default' | 'primary';
+  size?: 'sm' | 'md' | 'lg';
+  children?: ReactNode;
+}
+
+// Button element (default)
+export interface ButtonAsButtonProps
+  extends ButtonBaseProps,
+    Omit<ButtonHTMLAttributes<HTMLButtonElement>, keyof ButtonBaseProps> {
+  as?: 'button';
+  href?: never;  // Disallow href for buttons
+}
+
+// Anchor element
+export interface ButtonAsAnchorProps
+  extends ButtonBaseProps,
+    Omit<AnchorHTMLAttributes<HTMLAnchorElement>, keyof ButtonBaseProps> {
+  as: 'a';
+  href: string;  // Require href for anchors
+}
+
+export type ButtonProps = ButtonAsButtonProps | ButtonAsAnchorProps;
+
+export function Button(props: ButtonProps) {
+  const { as = 'button', variant, size, className, children, ...rest } = props;
+
+  const classNames = [styles.button, styles[variant], styles[size], className]
+    .filter(Boolean)
+    .join(' ');
+
+  if (as === 'a') {
+    return (
+      <a className={classNames} {...(rest as AnchorHTMLAttributes<HTMLAnchorElement>)}>
+        {children}
+      </a>
+    );
+  }
+
+  return (
+    <button className={classNames} {...(rest as ButtonHTMLAttributes<HTMLButtonElement>)}>
+      {children}
+    </button>
+  );
+}
+```
+
+### Usage Examples
+
+```tsx
+// Text with different elements
+<Text>Default span</Text>
+<Text as="p">Paragraph text</Text>
+<Text as="label" htmlFor="input-id">Label text</Text>
+
+// Button as navigation link
+<Button variant="primary">Submit</Button>
+<Button as="a" href="/dashboard" variant="primary">Go to Dashboard</Button>
+
+// Stack with semantic element
+<Stack direction="vertical" gap="md">...</Stack>
+<Stack as="nav" direction="horizontal" gap="sm">...</Stack>
+```
+
+### Documenting `as` in Stories
+
+Always include an example showing the `as` prop in action:
+
+```tsx
+export const AsElement: Story = {
+  args: {
+    as: 'p',
+    children: 'This renders as a paragraph element instead of the default span.',
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Use the `as` prop to change the underlying HTML element while preserving all component styling and behavior.',
+      },
+    },
+  },
+};
 ```
 
 ---
@@ -921,6 +1133,13 @@ Before submitting a new component, verify all items:
 - [ ] All required files present (tsx, css, stories, test, index)
 - [ ] Exported from main `index.ts`
 - [ ] Types exported alongside component
+
+### Standard Props
+- [ ] Props interface extends appropriate HTML attributes (`HTMLAttributes<HTMLDivElement>`, etc.)
+- [ ] Spreads `...props` onto root element
+- [ ] Composes `className` (never overrides consumer className)
+- [ ] Supports `style`, `id`, `data-*`, `aria-*` attributes automatically
+- [ ] `as` prop documented if supported (for polymorphic components)
 
 ### Naming
 - [ ] Component name is PascalCase

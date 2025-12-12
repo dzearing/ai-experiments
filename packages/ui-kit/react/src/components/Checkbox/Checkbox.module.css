@@ -68,7 +68,7 @@
 }
 
 .label {
-  color: var(--page-text);
+  color: inherit;
   font-size: inherit;
 }
 

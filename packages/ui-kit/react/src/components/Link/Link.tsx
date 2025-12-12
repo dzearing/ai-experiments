@@ -21,16 +21,24 @@ export function Link({
   children,
   external = false,
   noUnderline = false,
-  className = '',
+  className,
   ...props
 }: LinkProps) {
   const externalProps = external
     ? { target: '_blank', rel: 'noopener noreferrer' }
     : {};
 
+  const classNames = [
+    styles.link,
+    noUnderline && styles.noUnderline,
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
     <a
-      className={`${styles.link} ${noUnderline ? styles.noUnderline : ''} ${className}`}
+      className={classNames}
       {...externalProps}
       {...props}
     >

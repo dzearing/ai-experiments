@@ -1,4 +1,4 @@
-import { type ReactNode, type ElementType } from 'react';
+import { type ReactNode, type ElementType, type HTMLAttributes } from 'react';
 import styles from './Text.module.css';
 
 /**
@@ -13,7 +13,7 @@ export type TextSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl';
 export type TextWeight = 'normal' | 'medium' | 'semibold' | 'bold';
 export type TextColor = 'default' | 'soft' | 'inherit';
 
-export interface TextProps {
+export interface TextProps extends HTMLAttributes<HTMLElement> {
   /** Text content */
   children: ReactNode;
   /** HTML element to render */
@@ -26,8 +26,6 @@ export interface TextProps {
   color?: TextColor;
   /** Truncate text with ellipsis */
   truncate?: boolean;
-  /** Additional class name */
-  className?: string;
 }
 
 export function Text({
@@ -37,12 +35,22 @@ export function Text({
   weight = 'normal',
   color = 'default',
   truncate = false,
-  className = '',
+  className,
+  ...props
 }: TextProps) {
+  const classNames = [
+    styles.text,
+    styles[`size-${size}`],
+    styles[`weight-${weight}`],
+    styles[color],
+    truncate && styles.truncate,
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
-    <Component
-      className={`${styles.text} ${styles[`size-${size}`]} ${styles[`weight-${weight}`]} ${styles[color]} ${truncate ? styles.truncate : ''} ${className}`}
-    >
+    <Component className={classNames} {...props}>
       {children}
     </Component>
   );

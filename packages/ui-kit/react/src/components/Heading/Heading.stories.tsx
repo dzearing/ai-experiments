@@ -36,6 +36,24 @@ Use \`level\` for semantic HTML (accessibility/SEO) and \`size\` to override vis
     },
   },
   tags: ['autodocs'],
+  argTypes: {
+    level: {
+      control: 'select',
+      options: [1, 2, 3, 4, 5, 6],
+      description: 'Semantic heading level (h1-h6). Affects HTML element and default visual size.',
+      table: {
+        defaultValue: { summary: '2' },
+      },
+    },
+    size: {
+      control: 'select',
+      options: [1, 2, 3, 4, 5, 6],
+      description: 'Visual size override. Use to decouple visual appearance from semantic level.',
+      table: {
+        defaultValue: { summary: 'same as level' },
+      },
+    },
+  },
 } satisfies Meta<typeof Heading>;
 
 export default meta;
@@ -90,4 +108,33 @@ export const InContext: Story = {
       </p>
     </article>
   ),
+};
+
+export const WithStandardProps: Story = {
+  render: () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <Heading
+        level={2}
+        id="section-title"
+        data-testid="main-heading"
+        aria-label="Main section"
+      >
+        Heading with id, data-testid, aria-label
+      </Heading>
+      <Heading
+        level={3}
+        style={{ color: 'var(--info-text)', marginBottom: '8px' }}
+        onClick={() => alert('Clicked!')}
+      >
+        Heading with custom style and onClick
+      </Heading>
+    </div>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story: 'Heading supports all standard HTML attributes including `id`, `style`, `data-*`, `aria-*`, and event handlers.',
+      },
+    },
+  },
 };

@@ -58,27 +58,56 @@ Buttons trigger actions or events. Use them for form submissions, dialog trigger
 - Use \`icon\` prop for leading icons (add, create actions)
 - Use \`iconAfter\` for trailing icons (arrows, external links)
 - Use \`iconOnly\` with \`aria-label\` for icon-only buttons
+
+## As Link
+
+Use \`as="a"\` with \`href\` to render the button as a navigation link while preserving button styling:
+
+\`\`\`tsx
+<Button as="a" href="/dashboard" variant="primary">
+  Go to Dashboard
+</Button>
+\`\`\`
         `,
       },
     },
   },
   argTypes: {
+    as: {
+      control: 'select',
+      options: ['button', 'a'],
+      description: 'HTML element to render. Use "a" with href for navigation links styled as buttons.',
+      table: {
+        defaultValue: { summary: 'button' },
+      },
+    },
     variant: {
       control: 'select',
       options: ['default', 'primary', 'danger', 'ghost', 'outline'],
+      description: 'Visual style variant',
+      table: {
+        defaultValue: { summary: 'default' },
+      },
     },
     size: {
       control: 'select',
       options: ['sm', 'md', 'lg'],
+      description: 'Button size',
+      table: {
+        defaultValue: { summary: 'md' },
+      },
     },
     fullWidth: {
       control: 'boolean',
+      description: 'Expand button to fill container width',
     },
     iconOnly: {
       control: 'boolean',
+      description: 'Icon-only mode (square button, requires aria-label)',
     },
     disabled: {
       control: 'boolean',
+      description: 'Disable button interaction',
     },
   },
 };
@@ -216,4 +245,29 @@ export const ButtonsWithIcons: Story = {
       </div>
     </div>
   ),
+};
+
+// As Link
+
+export const AsLink: Story = {
+  render: () => (
+    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+      <Button as="a" href="#dashboard" variant="primary">
+        Go to Dashboard
+      </Button>
+      <Button as="a" href="#settings" variant="default">
+        Settings
+      </Button>
+      <Button as="a" href="#docs" variant="ghost" iconAfter={<ArrowRightIcon />}>
+        View Docs
+      </Button>
+    </div>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story: 'Use `as="a"` with `href` to render Button as a navigation link. Preserves all button styling while providing proper anchor semantics for navigation.',
+      },
+    },
+  },
 };

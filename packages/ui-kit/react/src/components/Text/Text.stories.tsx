@@ -29,13 +29,62 @@ Body text component with consistent styling and semantic flexibility.
 - **size**: Control text size (xs through xl)
 - **weight**: Font weight (normal, medium, semibold, bold)
 - **color**: Text color (default, soft, inherit)
-- **as**: Render as different HTML element (span, p, etc.)
+- **as**: Render as different HTML element (span, p, label, etc.)
 - **truncate**: Single-line with ellipsis overflow
+
+## Standard Props
+
+Supports all standard HTML attributes:
+- \`style\` - Inline styles
+- \`className\` - Additional CSS classes
+- \`data-*\` - Data attributes for testing
+- \`aria-*\` - Accessibility attributes
         `,
       },
     },
   },
   tags: ['autodocs'],
+  argTypes: {
+    as: {
+      control: 'select',
+      options: ['span', 'p', 'div', 'label', 'strong', 'em', 'small', 'code'],
+      description: 'HTML element to render. Allows semantic flexibility while preserving styling.',
+      table: {
+        defaultValue: { summary: 'span' },
+      },
+    },
+    size: {
+      control: 'select',
+      options: ['xs', 'sm', 'base', 'lg', 'xl'],
+      description: 'Text size',
+      table: {
+        defaultValue: { summary: 'base' },
+      },
+    },
+    weight: {
+      control: 'select',
+      options: ['normal', 'medium', 'semibold', 'bold'],
+      description: 'Font weight',
+      table: {
+        defaultValue: { summary: 'normal' },
+      },
+    },
+    color: {
+      control: 'select',
+      options: ['default', 'soft', 'inherit'],
+      description: 'Text color',
+      table: {
+        defaultValue: { summary: 'default' },
+      },
+    },
+    truncate: {
+      control: 'boolean',
+      description: 'Truncate text with ellipsis when it overflows',
+      table: {
+        defaultValue: { summary: 'false' },
+      },
+    },
+  },
 } satisfies Meta<typeof Text>;
 
 export default meta;
@@ -95,4 +144,38 @@ export const Truncated: Story = {
       </Text>
     </div>
   ),
+};
+
+export const WithStandardProps: Story = {
+  render: () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <Text
+        as="label"
+        htmlFor="my-input"
+        style={{ cursor: 'pointer' }}
+      >
+        Label using as="label" with htmlFor
+      </Text>
+      <Text
+        data-testid="custom-text"
+        aria-label="Descriptive text"
+        id="my-text"
+      >
+        Text with data-testid, aria-label, and id
+      </Text>
+      <Text
+        onClick={() => alert('Clicked!')}
+        style={{ textDecoration: 'underline', cursor: 'pointer' }}
+      >
+        Clickable text with onClick handler
+      </Text>
+    </div>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story: 'Text supports all standard HTML attributes including `style`, `data-*`, `aria-*`, event handlers, and element-specific props when using the `as` prop.',
+      },
+    },
+  },
 };

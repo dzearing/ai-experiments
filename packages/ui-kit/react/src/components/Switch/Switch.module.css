@@ -53,14 +53,19 @@
 
 .thumb {
   position: absolute;
-  background: white;
+  background: var(--switch-thumb, white);
   border-radius: 50%;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   transition: all var(--duration-fast) var(--ease-default);
 }
 
+/* When checked on primary surface, thumb should contrast with track */
+.input:checked + .track .thumb {
+  background: var(--controlPrimary-text);
+}
+
 .label {
-  color: var(--page-text);
+  color: inherit;
   font-size: inherit;
 }
 

@@ -57,6 +57,7 @@ Flexbox layout component for consistent spacing and alignment.
 
 ## Props
 
+- **as**: HTML element to render (default: \`div\`, e.g., \`section\`, \`nav\`, \`article\`)
 - **direction**: \`vertical\` or \`horizontal\`
 - **gap**: Spacing between items (xs, sm, md, lg, xl)
 - **align**: Cross-axis alignment
@@ -67,6 +68,11 @@ Flexbox layout component for consistent spacing and alignment.
     },
   },
   argTypes: {
+    as: {
+      control: 'select',
+      options: ['div', 'section', 'article', 'nav', 'aside', 'header', 'footer', 'main'],
+      description: 'HTML element to render',
+    },
     direction: {
       control: 'select',
       options: ['vertical', 'horizontal'],
@@ -193,6 +199,23 @@ export const Wrapped: Story = {
         ))}
       </>
     ),
+  },
+};
+
+export const AsSemanticElement: Story = {
+  render: () => (
+    <Stack as="nav" direction="horizontal" gap="md" aria-label="Main navigation">
+      <a href="#home" style={{ color: 'var(--body-link)' }}>Home</a>
+      <a href="#about" style={{ color: 'var(--body-link)' }}>About</a>
+      <a href="#contact" style={{ color: 'var(--body-link)' }}>Contact</a>
+    </Stack>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story: 'Use the `as` prop to render Stack as a semantic element like `nav`, `section`, or `article` for better accessibility and SEO.',
+      },
+    },
   },
 };
 

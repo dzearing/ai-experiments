@@ -1,16 +1,72 @@
 /**
- * Token role definitions - derived from theme-rules.json
+ * Token role and surface definitions
  *
- * This module reads token role definitions from the theme rules configuration,
- * ensuring a single source of truth for all role types and their tokens.
+ * This module provides:
+ * 1. Token role definitions (e.g., "page", "control", "success") - from theme-rules.json
+ * 2. Surface type definitions (e.g., "raised", "sunken", "inverted") - tonal surfaces
  *
- * NOTE: "Role" is the semantic category in token names (e.g., "page" in --page-bg).
- * "Surface" is a CSS class that redefines tokens in a scoped area (e.g., .surface-sidebar).
- * This file defines ROLES, not surfaces.
+ * Roles are semantic categories in token names (--page-bg, --control-text).
+ * Surfaces are CSS classes that reset and override tokens (.surface.raised).
  */
 
-import type { Surface, ContainerSurface, ControlSurface, FeedbackSurface } from './types';
+import type {
+  Surface,
+  SurfaceType,
+  TonalSurface,
+  ContainerSurface,
+  ControlSurface,
+  ControlRole,
+  FeedbackSurface,
+} from './types';
 import themeRules from '../themes/schema/theme-rules.json';
+
+// ============================================================================
+// TONAL SURFACES (new system)
+// ============================================================================
+
+/**
+ * All tonal surface types
+ */
+export const tonalSurfaces: readonly TonalSurface[] = [
+  'base',
+  'raised',
+  'sunken',
+  'soft',
+  'softer',
+  'strong',
+  'stronger',
+  'inverted',
+  'primary',
+] as const;
+
+/**
+ * All surface types (tonal + feedback)
+ */
+export const surfaceTypes: readonly SurfaceType[] = [
+  ...tonalSurfaces,
+  'success',
+  'warning',
+  'danger',
+  'info',
+] as const;
+
+/**
+ * Check if a value is a valid surface type
+ */
+export function isSurfaceType(value: string): value is SurfaceType {
+  return surfaceTypes.includes(value as SurfaceType);
+}
+
+/**
+ * Check if a value is a tonal surface
+ */
+export function isTonalSurface(value: string): value is TonalSurface {
+  return tonalSurfaces.includes(value as TonalSurface);
+}
+
+// ============================================================================
+// TOKEN ROLES (existing system - from theme-rules.json)
+// ============================================================================
 
 // Extract role names from theme-rules.json
 const containerTypes = themeRules.roles.container.types;
@@ -89,10 +145,35 @@ export const surfaceTokenName = roleTokenName;
 
 /**
  * CSS class name for a surface (used to scope token overrides)
- * Note: This creates actual surface classes, not role references
+ *
+ * New system: Returns "surface {modifier}" for use with the .surface base class
+ * Example: surfaceClassName('raised') => 'surface raised'
+ *
+ * For feedback surfaces, also supports the new format:
+ * Example: surfaceClassName('success') => 'surface success'
+ *
+ * @deprecated For new code, use the class pattern directly: className="surface raised"
  */
 export function surfaceClassName(name: string): string {
+  // New tonal/feedback surfaces use "surface {name}" format
+  if (isSurfaceType(name)) {
+    return `surface ${name}`;
+  }
+  // Legacy container surfaces use "surface-{name}" format
   return `surface-${name}`;
+}
+
+/**
+ * Get CSS classes for a surface (new system)
+ * Returns an object for use with classnames libraries or template strings
+ *
+ * Example: getSurfaceClasses('raised') => { surface: true, raised: true }
+ */
+export function getSurfaceClasses(surface: SurfaceType): Record<string, boolean> {
+  return {
+    surface: true,
+    [surface]: true,
+  };
 }
 
 /**

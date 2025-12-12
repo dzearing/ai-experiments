@@ -67,6 +67,7 @@ code {
   font-family: var(--font-mono);
   font-size: 0.9em;
   background: var(--inset-bg);
+  color: var(--inset-text);
   padding: 2px 6px;
   border-radius: var(--radius-sm);
 }
@@ -74,6 +75,7 @@ code {
 pre {
   font-family: var(--font-mono);
   background: var(--inset-bg);
+  color: var(--inset-text);
   padding: var(--space-4);
   border-radius: var(--radius-lg);
   overflow-x: auto;

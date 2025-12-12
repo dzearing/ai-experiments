@@ -1,4 +1,4 @@
-import type { HTMLAttributes, ReactNode } from 'react';
+import type { HTMLAttributes, ReactNode, ElementType } from 'react';
 import styles from './Stack.module.css';
 
 /**
@@ -13,7 +13,9 @@ export type StackAlign = 'start' | 'center' | 'end' | 'stretch';
 export type StackJustify = 'start' | 'center' | 'end' | 'between' | 'around';
 export type StackGap = 'none' | 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
-export interface StackProps extends HTMLAttributes<HTMLDivElement> {
+export interface StackProps extends HTMLAttributes<HTMLElement> {
+  /** HTML element to render */
+  as?: ElementType;
   /** Stack direction */
   direction?: StackDirection;
   /** Align items */
@@ -29,6 +31,7 @@ export interface StackProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export function Stack({
+  as: Component = 'div',
   direction = 'vertical',
   align = 'stretch',
   justify = 'start',
@@ -51,8 +54,8 @@ export function Stack({
     .join(' ');
 
   return (
-    <div className={classNames} {...props}>
+    <Component className={classNames} {...props}>
       {children}
-    </div>
+    </Component>
   );
 }

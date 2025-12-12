@@ -1,5 +1,36 @@
 import { Link } from 'react-router-dom';
+import {
+  Button,
+  Checkbox,
+  Switch,
+  Slider,
+  Input,
+} from '@ui-kit/react';
 import styles from './LessonPage.module.css';
+import surfaceStyles from './SurfacesPage.module.css';
+
+/** Reusable component demo that shows various UI components */
+function SurfaceDemo({ label, className }: { label: string; className?: string }) {
+  return (
+    <div className={`surface ${className || ''} ${surfaceStyles.surfaceDemo}`}>
+      <span className={surfaceStyles.surfaceLabel}>{label}</span>
+      <div className={surfaceStyles.demoControls}>
+        <Button>Default</Button>
+        <Button variant="primary">Primary</Button>
+      </div>
+      <div className={surfaceStyles.demoControls}>
+        <Checkbox label="Option" defaultChecked />
+        <Switch label="Toggle" defaultChecked />
+      </div>
+      <div className={surfaceStyles.demoControls}>
+        <Input placeholder="Input text..." style={{ width: 140 }} />
+      </div>
+      <div className={surfaceStyles.demoControls}>
+        <Slider defaultValue={50} style={{ width: 140 }} />
+      </div>
+    </div>
+  );
+}
 
 export function SurfacesPage() {
   return (
@@ -8,120 +39,142 @@ export function SurfacesPage() {
         <span className={styles.lessonNumber}>Lesson 2</span>
         <h1 className={styles.title}>Understanding Surfaces</h1>
         <p className={styles.subtitle}>
-          The core concept that makes UI-Kit work: semantic surface types.
+          The core concept that makes UI-Kit work: tonal surfaces that ensure
+          accessible contrast across different backgrounds.
         </p>
       </div>
 
       <section className={styles.section}>
         <h2>What is a Surface?</h2>
         <p>
-          A surface is a semantic context for UI elements. Instead of using colors
-          directly (like &quot;blue button&quot; or &quot;gray background&quot;), you use surfaces
-          that describe the <em>purpose</em> of the element.
+          A surface is a CSS class that creates a distinct visual context for UI
+          elements. Surfaces solve a critical accessibility problem:{' '}
+          <strong>
+            ensuring components remain readable when placed on different
+            backgrounds
+          </strong>
+          .
         </p>
         <p>
-          For example, a card uses the <code>card</code> surface, which provides
-          appropriate background, text, and border colors. When the user switches
-          themes, all cards update automatically because they reference the same
-          semantic surface.
+          When you place a button on a dark sidebar, or a card on a sunken
+          background, the button&apos;s colors might not have enough contrast.
+          Surfaces automatically reset and override tokens to ensure all
+          components within them have proper contrast.
         </p>
       </section>
 
       <section className={styles.section}>
-        <h2>Container Surfaces</h2>
-        <p>These surfaces are for static backgrounds and layout containers:</p>
-        <div className={styles.tokenList}>
-          <div className={styles.tokenItem}>
-            <code>page</code>
-            <span>The main application background</span>
-          </div>
-          <div className={styles.tokenItem}>
-            <code>card</code>
-            <span>Elevated content containers</span>
-          </div>
-          <div className={styles.tokenItem}>
-            <code>overlay</code>
-            <span>Modals, dialogs, sheets, popovers</span>
-          </div>
-          <div className={styles.tokenItem}>
-            <code>popout</code>
-            <span>Dropdowns, menus, tooltips (highest elevation)</span>
-          </div>
-          <div className={styles.tokenItem}>
-            <code>inset</code>
-            <span>Recessed areas like input fields and wells</span>
-          </div>
-        </div>
+        <h2>The Reset/Override Pattern</h2>
+        <p>
+          Every <code>.surface</code> element resets ALL tokens to page
+          defaults, then applies specific overrides. This means:
+        </p>
+        <ul className={styles.list}>
+          <li>
+            <strong>Nested surfaces reset automatically</strong> - no
+            compounding issues
+          </li>
+          <li>
+            <strong>Components adapt automatically</strong> - buttons, inputs,
+            and text all get appropriate colors
+          </li>
+          <li>
+            <strong>Themes work consistently</strong> - surfaces respond to
+            theme changes
+          </li>
+        </ul>
+        <pre className={styles.code}>{`<!-- Usage: base class + modifier -->
+<div class="surface raised">
+  <button>This button has proper contrast</button>
+</div>
+
+<!-- Nested surfaces reset properly -->
+<div class="surface sunken">
+  <div class="surface raised">
+    <!-- Inner surface resets, then applies raised overrides -->
+  </div>
+</div>`}</pre>
       </section>
 
       <section className={styles.section}>
-        <h2>Control Surfaces</h2>
-        <p>These surfaces are for interactive elements:</p>
-        <div className={styles.tokenList}>
-          <div className={styles.tokenItem}>
-            <code>control</code>
-            <span>Default interactive elements (buttons, list items)</span>
-          </div>
-          <div className={styles.tokenItem}>
-            <code>controlPrimary</code>
-            <span>Primary actions (CTA buttons, selected states)</span>
-          </div>
-          <div className={styles.tokenItem}>
-            <code>controlDanger</code>
-            <span>Destructive actions (delete, remove)</span>
-          </div>
-          <div className={styles.tokenItem}>
-            <code>controlSubtle</code>
-            <span>Ghost/minimal buttons, tabs</span>
-          </div>
-          <div className={styles.tokenItem}>
-            <code>controlDisabled</code>
-            <span>Non-interactive state</span>
-          </div>
+        <h2>Tonal Surfaces</h2>
+        <p>
+          Tonal surfaces adjust the visual &quot;elevation&quot; or
+          &quot;depth&quot; of content areas. Components automatically adapt
+          their colors when placed inside a surface:
+        </p>
+
+        <div className={surfaceStyles.surfaceGrid}>
+          <SurfaceDemo label="base" className="base" />
+          <SurfaceDemo label="raised" className="raised" />
+          <SurfaceDemo label="sunken" className="sunken" />
+          <SurfaceDemo label="section" className="section" />
+          <SurfaceDemo label="section2" className="section2" />
+          <SurfaceDemo label="section3" className="section3" />
+          <SurfaceDemo label="inverted" className="inverted" />
+          <SurfaceDemo label="primary" className="primary" />
         </div>
       </section>
 
       <section className={styles.section}>
         <h2>Feedback Surfaces</h2>
-        <p>These surfaces communicate status:</p>
-        <div className={styles.tokenList}>
-          <div className={styles.tokenItem}>
-            <code>success</code>
-            <span>Positive outcomes, confirmations</span>
-          </div>
-          <div className={styles.tokenItem}>
-            <code>warning</code>
-            <span>Caution, attention needed</span>
-          </div>
-          <div className={styles.tokenItem}>
-            <code>danger</code>
-            <span>Errors, destructive states</span>
-          </div>
-          <div className={styles.tokenItem}>
-            <code>info</code>
-            <span>Informational, neutral status</span>
+        <p>Feedback surfaces provide semantic color contexts for status messages:</p>
+
+        <div className={surfaceStyles.surfaceGrid}>
+          <SurfaceDemo label="success" className="success" />
+          <SurfaceDemo label="warning" className="warning" />
+          <SurfaceDemo label="danger" className="danger" />
+          <SurfaceDemo label="info" className="info" />
+        </div>
+      </section>
+
+      <section className={styles.section}>
+        <h2>Nesting Surfaces</h2>
+        <p>
+          Surfaces can be nested without issues. Each surface resets tokens
+          before applying its own overrides:
+        </p>
+
+        <div className={surfaceStyles.nestingDemo}>
+          <div className={`surface sunken ${surfaceStyles.nestingOuter}`}>
+            <span className={surfaceStyles.surfaceLabel}>sunken</span>
+            <p>Sunken area (sidebar, well)</p>
+            <div className={`surface raised ${surfaceStyles.nestingInner}`}>
+              <span className={surfaceStyles.surfaceLabel}>raised</span>
+              <p>Raised card inside sunken area</p>
+              <div className={surfaceStyles.demoControls}>
+                <Button>Action</Button>
+                <Button variant="primary">Primary</Button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       <section className={styles.section}>
-        <h2>Surface Token Anatomy</h2>
-        <p>Each surface provides a set of tokens:</p>
-        <pre className={styles.code}>{`/* For any surface, you get: */
---{surface}-bg           /* background color */
---{surface}-bg-hover     /* background on hover (controls only) */
---{surface}-bg-pressed   /* background when pressed (controls only) */
---{surface}-text         /* text/icon color */
---{surface}-text-soft    /* muted text (some surfaces) */
---{surface}-text-hard    /* emphasized text (some surfaces) */
---{surface}-border       /* border color */
---{surface}-shadow       /* box-shadow value */
-
-/* Examples: */
---card-bg
---control-bg-hover
---success-text
---inset-border`}</pre>
+        <h2>When to Use Each Surface</h2>
+        <div className={styles.tokenList}>
+          <div className={styles.tokenItem}>
+            <code>raised</code>
+            <span>Cards, panels, dialogs, modals, dropdowns</span>
+          </div>
+          <div className={styles.tokenItem}>
+            <code>sunken</code>
+            <span>Input wells, code blocks, recessed areas</span>
+          </div>
+          <div className={styles.tokenItem}>
+            <code>section / section2 / section3</code>
+            <span>Command areas, sidebars, region separation (progressive emphasis)</span>
+          </div>
+          <div className={styles.tokenItem}>
+            <code>inverted</code>
+            <span>Tooltips, callouts, contrast sections</span>
+          </div>
+          <div className={styles.tokenItem}>
+            <code>primary</code>
+            <span>Teaching bubbles, branded hero sections</span>
+          </div>
+        </div>
       </section>
 
       <div className={styles.nav}>

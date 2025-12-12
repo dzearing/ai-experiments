@@ -26,6 +26,119 @@ For a quick reference, see `/docs/guides/TOKEN_CHEATSHEET.md`.
 
 ---
 
+## Understanding Surfaces
+
+Surfaces are CSS classes that create distinct visual contexts for UI regions. They solve a critical accessibility problem: **ensuring components remain readable when placed on different backgrounds**.
+
+### The Problem Surfaces Solve
+
+When you place a button on a dark sidebar, the button's `--control-bg` token might not provide enough contrast. Without surfaces, you'd need to manually override every component's colors for each background type.
+
+Surfaces automatically reset and override tokens to ensure all components within them have proper contrast:
+
+```html
+<!-- Components inside a surface automatically get appropriate token values -->
+<div class="surface raised">
+  <button>This button works correctly</button>
+</div>
+
+<div class="surface inverted">
+  <button>This button also works correctly (with inverted colors)</button>
+</div>
+```
+
+### The Reset/Override Pattern
+
+Every `.surface` element:
+1. **Resets ALL scoped tokens** to page defaults
+2. **Applies overrides** specific to that surface variant
+3. **Nested surfaces automatically reset** - no compounding issues
+
+```css
+/* The .surface class resets tokens to page values */
+.surface {
+  --surface-bg: var(--page-bg);
+  --surface-text: var(--page-text);
+  /* ... all tokens reset */
+}
+
+/* Modifiers apply specific overrides */
+.surface.raised {
+  --surface-bg: #ffffff;
+  --surface-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+```
+
+### Tonal Surfaces
+
+Tonal surfaces adjust the visual "elevation" or "depth" of content areas:
+
+| Surface | Usage | Description |
+|---------|-------|-------------|
+| `.surface.base` | Explicit reset | Same as page (when you need to break out of a parent surface) |
+| `.surface.raised` | Cards, panels | Elevated/lighter than page |
+| `.surface.sunken` | Sidebars, wells | Recessed/darker than page |
+| `.surface.soft` | Subtle sections | Slightly muted background |
+| `.surface.softer` | Very subtle sections | More muted background |
+| `.surface.strong` | Emphasized sections | Higher contrast background |
+| `.surface.stronger` | Very emphasized | Highest contrast background |
+| `.surface.inverted` | Tooltips, callouts | Opposite color scheme (dark in light mode, light in dark mode) |
+| `.surface.primary` | Teaching bubbles, branded sections | Primary color background |
+
+### Feedback Surfaces
+
+Feedback surfaces provide semantic color contexts:
+
+| Surface | Usage |
+|---------|-------|
+| `.surface.success` | Success messages, confirmations |
+| `.surface.warning` | Warning messages, caution states |
+| `.surface.danger` | Error messages, destructive states |
+| `.surface.info` | Informational messages |
+
+### Using Surfaces
+
+```html
+<!-- Card with elevated surface -->
+<div class="surface raised" style="padding: var(--space-4); border-radius: var(--radius-lg);">
+  <h2>Card Title</h2>
+  <p>Card content with proper contrast</p>
+  <button>Action</button>
+</div>
+
+<!-- Tooltip with inverted colors -->
+<div class="surface inverted" style="padding: var(--space-2); border-radius: var(--radius-md);">
+  Helpful tooltip text
+</div>
+
+<!-- Success banner -->
+<div class="surface success" style="padding: var(--space-3);">
+  Operation completed successfully!
+</div>
+
+<!-- Nested surfaces reset properly -->
+<div class="surface sunken">
+  <p>Sunken area</p>
+  <div class="surface raised">
+    <p>Raised card inside sunken area - tokens reset, no compounding</p>
+  </div>
+</div>
+```
+
+### Surface Tokens
+
+When inside a surface, use `--surface-*` tokens for the current context:
+
+```css
+.my-component {
+  background: var(--surface-bg);
+  color: var(--surface-text);
+  border-color: var(--surface-border);
+}
+```
+
+---
+
 ## Quick Reference
 
 ### When to Use Which Token

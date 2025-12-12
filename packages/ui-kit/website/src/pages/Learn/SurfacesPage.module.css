@@ -1,0 +1,68 @@
+/* Surface demo grid */
+.surfaceGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.surfaceDemo {
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--surface-border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.surfaceLabel {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: inherit;
+  opacity: 0.7;
+}
+
+.demoControls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+/* Nesting demo */
+.nestingDemo {
+  margin-bottom: var(--space-6);
+}
+
+.nestingOuter {
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--surface-border);
+  position: relative;
+}
+
+.nestingOuter > p {
+  margin-bottom: var(--space-4);
+  color: var(--surface-text-soft);
+}
+
+.nestingInner {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--surface-border);
+  box-shadow: var(--surface-shadow);
+  position: relative;
+}
+
+.nestingInner > p {
+  margin-bottom: var(--space-3);
+}
+
+.nestingOuter > .surfaceLabel,
+.nestingInner > .surfaceLabel {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-3);
+}

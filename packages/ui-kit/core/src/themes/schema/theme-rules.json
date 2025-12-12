@@ -293,6 +293,182 @@
     }
   },
 
+  "surfaces": {
+    "description": "Tonal surface definitions - CSS classes that reset and override tokens for different visual contexts",
+    "pattern": {
+      "description": "Every .surface element resets ALL tokens to page defaults, then applies variant overrides. Nested surfaces reset automatically.",
+      "baseClass": ".surface",
+      "modifierClasses": ".surface.{variant}"
+    },
+    "types": {
+      "base": {
+        "description": "Explicit reset to page defaults",
+        "overrides": {}
+      },
+      "raised": {
+        "description": "Elevated content (cards, panels) - lighter/elevated from page",
+        "overrides": {
+          "light": {
+            "surface-bg": "#ffffff",
+            "surface-border": "#e5e5e5",
+            "surface-shadow": "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+          },
+          "dark": {
+            "surface-bg": "#1a1a1a",
+            "surface-border": "#333333",
+            "surface-shadow": "0 4px 6px -1px rgba(0, 0, 0, 0.4)"
+          }
+        }
+      },
+      "sunken": {
+        "description": "Recessed areas (input wells, sidebars) - darker/recessed from page",
+        "overrides": {
+          "light": {
+            "surface-bg": "#f0f0f0",
+            "surface-border": "#e5e5e5",
+            "control-bg": "#e5e5e5",
+            "control-bg-hover": "#d9d9d9",
+            "control-bg-pressed": "#cccccc"
+          },
+          "dark": {
+            "surface-bg": "#0a0a0a",
+            "surface-border": "#262626",
+            "control-bg": "#1f1f1f",
+            "control-bg-hover": "#2a2a2a",
+            "control-bg-pressed": "#333333"
+          }
+        }
+      },
+      "soft": {
+        "description": "Subtle backgrounds - slightly muted from page",
+        "overrides": {
+          "light": {
+            "surface-bg": "#f7f7f7"
+          },
+          "dark": {
+            "surface-bg": "#141414"
+          }
+        }
+      },
+      "softer": {
+        "description": "Very subtle backgrounds - more muted from page",
+        "overrides": {
+          "light": {
+            "surface-bg": "#f3f3f3"
+          },
+          "dark": {
+            "surface-bg": "#1a1a1a"
+          }
+        }
+      },
+      "strong": {
+        "description": "Emphasized sections - higher contrast from page",
+        "overrides": {
+          "light": {
+            "surface-bg": "#e5e5e5",
+            "control-bg": "#d9d9d9",
+            "control-bg-hover": "#cccccc",
+            "control-bg-pressed": "#bfbfbf"
+          },
+          "dark": {
+            "surface-bg": "#262626",
+            "control-bg": "#333333",
+            "control-bg-hover": "#404040",
+            "control-bg-pressed": "#4d4d4d"
+          }
+        }
+      },
+      "stronger": {
+        "description": "Very emphasized sections - highest contrast from page",
+        "overrides": {
+          "light": {
+            "surface-bg": "#d4d4d4",
+            "control-bg": "#c4c4c4",
+            "control-bg-hover": "#b3b3b3",
+            "control-bg-pressed": "#a3a3a3"
+          },
+          "dark": {
+            "surface-bg": "#333333",
+            "control-bg": "#404040",
+            "control-bg-hover": "#4d4d4d",
+            "control-bg-pressed": "#5a5a5a"
+          }
+        }
+      },
+      "inverted": {
+        "description": "Opposite color scheme (tooltips, callouts)",
+        "overrides": {
+          "light": {
+            "surface-bg": "#1a1a1a",
+            "surface-text": "#e5e5e5",
+            "surface-text-soft": "#a3a3a3",
+            "surface-text-softer": "#737373",
+            "surface-text-hard": "#ffffff",
+            "surface-border": "#333333",
+            "control-bg": "#333333",
+            "control-bg-hover": "#404040",
+            "control-bg-pressed": "#4d4d4d",
+            "control-text": "#e5e5e5",
+            "controlSubtle-text": "#a3a3a3",
+            "controlSubtle-text-hover": "#e5e5e5",
+            "controlSubtle-bg-hover": "rgba(255, 255, 255, 0.08)",
+            "controlSubtle-bg-pressed": "rgba(255, 255, 255, 0.12)"
+          },
+          "dark": {
+            "surface-bg": "#fafafa",
+            "surface-text": "#171717",
+            "surface-text-soft": "#5b5b5b",
+            "surface-text-softer": "#898989",
+            "surface-text-hard": "#000000",
+            "surface-border": "#e5e5e5",
+            "control-bg": "#e5e5e5",
+            "control-bg-hover": "#d9d9d9",
+            "control-bg-pressed": "#cccccc",
+            "control-text": "#171717",
+            "controlSubtle-text": "#5b5b5b",
+            "controlSubtle-text-hover": "#171717",
+            "controlSubtle-bg-hover": "rgba(0, 0, 0, 0.04)",
+            "controlSubtle-bg-pressed": "rgba(0, 0, 0, 0.08)"
+          }
+        }
+      },
+      "primary": {
+        "description": "Primary color background (teaching bubbles, branded sections)",
+        "note": "Uses controlPrimary tokens for consistency with theme primary color",
+        "overrides": {
+          "light": {
+            "surface-bg": "var(--controlPrimary-bg)",
+            "surface-text": "var(--controlPrimary-text)",
+            "surface-border": "var(--controlPrimary-bg-hover)",
+            "control-bg": "var(--controlPrimary-bg-hover)",
+            "control-bg-hover": "var(--controlPrimary-bg-pressed)",
+            "control-bg-pressed": "var(--controlPrimary-bg-pressed)",
+            "control-text": "var(--controlPrimary-text)",
+            "controlSubtle-text": "var(--controlPrimary-text)",
+            "controlSubtle-bg-hover": "rgba(255, 255, 255, 0.2)",
+            "controlSubtle-bg-pressed": "rgba(255, 255, 255, 0.3)"
+          },
+          "dark": {
+            "surface-bg": "var(--controlPrimary-bg)",
+            "surface-text": "var(--controlPrimary-text)",
+            "surface-border": "var(--controlPrimary-bg-hover)",
+            "control-bg": "var(--controlPrimary-bg-hover)",
+            "control-bg-hover": "var(--controlPrimary-bg-pressed)",
+            "control-bg-pressed": "var(--controlPrimary-bg-pressed)",
+            "control-text": "var(--controlPrimary-text)",
+            "controlSubtle-text": "var(--controlPrimary-text)",
+            "controlSubtle-bg-hover": "rgba(0, 0, 0, 0.2)",
+            "controlSubtle-bg-pressed": "rgba(0, 0, 0, 0.3)"
+          }
+        }
+      }
+    },
+    "feedbackSurfaces": {
+      "description": "Feedback surfaces use the existing feedback role tokens",
+      "note": "success, warning, danger, info surfaces apply their role tokens as surface overrides"
+    }
+  },
+
   "accessibility": {
     "contrastRequirements": {
       "AA": {

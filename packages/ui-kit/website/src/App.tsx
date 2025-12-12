@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import { Layout } from './layouts/Layout';
+import { LessonLayout } from './components/LessonLayout';
 import { HomePage } from './pages/Home/HomePage';
 import { LearnPage } from './pages/Learn/LearnPage';
 import { GettingStartedPage } from './pages/Learn/GettingStartedPage';
@@ -17,11 +18,46 @@ export function App() {
       <Route path="/" element={<Layout />}>
         <Route index element={<HomePage />} />
         <Route path="learn" element={<LearnPage />} />
-        <Route path="learn/getting-started" element={<GettingStartedPage />} />
-        <Route path="learn/surfaces" element={<SurfacesPage />} />
-        <Route path="learn/styling-components" element={<StylingComponentsPage />} />
-        <Route path="learn/theming" element={<ThemingPage />} />
-        <Route path="learn/advanced" element={<AdvancedPage />} />
+        <Route
+          path="learn/getting-started"
+          element={
+            <LessonLayout>
+              <GettingStartedPage />
+            </LessonLayout>
+          }
+        />
+        <Route
+          path="learn/surfaces"
+          element={
+            <LessonLayout>
+              <SurfacesPage />
+            </LessonLayout>
+          }
+        />
+        <Route
+          path="learn/styling-components"
+          element={
+            <LessonLayout>
+              <StylingComponentsPage />
+            </LessonLayout>
+          }
+        />
+        <Route
+          path="learn/theming"
+          element={
+            <LessonLayout>
+              <ThemingPage />
+            </LessonLayout>
+          }
+        />
+        <Route
+          path="learn/advanced"
+          element={
+            <LessonLayout>
+              <AdvancedPage />
+            </LessonLayout>
+          }
+        />
         <Route path="reference" element={<ReferencePage />} />
         <Route path="themes" element={<ThemesPage />} />
         <Route path="themes/designer" element={<ThemeDesignerPage />} />
