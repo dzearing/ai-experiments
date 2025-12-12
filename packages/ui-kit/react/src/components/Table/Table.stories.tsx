@@ -1,10 +1,13 @@
 import { useState, useMemo } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
+import { fn } from '@storybook/test';
 import { Table, type TableColumn, type TableSort } from './Table';
 import { Chip } from '../Chip';
 import { Avatar } from '../Avatar';
 import { Stack } from '../Stack';
 import { Text } from '../Text';
+import { Input } from '../Input';
+import { Button } from '../Button';
 
 /**
  * # Table
@@ -18,7 +21,6 @@ import { Text } from '../Text';
  * - Custom cell renderers
  * - Loading and empty states
  * - Sticky header support
- * - Size variants (sm, md, lg)
  * - Bordered and striped styles
  *
  * ## Usage
@@ -52,6 +54,7 @@ import { Text } from '../Text';
 const meta: Meta<typeof Table> = {
   title: 'Data Display/Table',
   component: Table,
+  tags: ['autodocs'],
   parameters: {
     layout: 'padded',
     docs: {
@@ -75,8 +78,53 @@ The Table component displays tabular data with rich features.
 
 - Single select: One row at a time
 - Multi-select: Checkbox column with select all
+
+## Accessibility
+
+- Keyboard navigation for sortable columns (Tab + Enter/Space)
+- ARIA sort attributes for screen readers
+- Focus visible styling for interactive elements
+- RTL support with logical CSS properties
         `,
       },
+    },
+  },
+  args: {
+    onSortChange: fn(),
+    onSelectionChange: fn(),
+  },
+  argTypes: {
+    bordered: {
+      control: 'boolean',
+      description: 'Show borders around cells',
+    },
+    striped: {
+      control: 'boolean',
+      description: 'Alternate row backgrounds',
+    },
+    stickyHeader: {
+      control: 'boolean',
+      description: 'Keep header fixed when scrolling',
+    },
+    loading: {
+      control: 'boolean',
+      description: 'Show loading spinner',
+    },
+    selectable: {
+      control: 'boolean',
+      description: 'Enable row selection',
+    },
+    multiSelect: {
+      control: 'boolean',
+      description: 'Allow multiple row selection',
+    },
+    maxHeight: {
+      control: 'text',
+      description: 'Max height for scrollable table',
+    },
+    emptyMessage: {
+      control: 'text',
+      description: 'Message shown when no data',
     },
   },
 };
@@ -294,33 +342,6 @@ export const CustomCells: Story = {
   },
 };
 
-// Sizes
-export const Sizes: Story = {
-  render: () => (
-    <Stack gap="lg">
-      <div>
-        <Text size="sm" weight="medium" style={{ marginBottom: 'var(--space-2)' }}>Small</Text>
-        <Table columns={basicColumns} data={userData.slice(0, 3)} getRowKey={(user) => user.id} size="sm" />
-      </div>
-      <div>
-        <Text size="sm" weight="medium" style={{ marginBottom: 'var(--space-2)' }}>Medium (default)</Text>
-        <Table columns={basicColumns} data={userData.slice(0, 3)} getRowKey={(user) => user.id} size="md" />
-      </div>
-      <div>
-        <Text size="sm" weight="medium" style={{ marginBottom: 'var(--space-2)' }}>Large</Text>
-        <Table columns={basicColumns} data={userData.slice(0, 3)} getRowKey={(user) => user.id} size="lg" />
-      </div>
-    </Stack>
-  ),
-  parameters: {
-    docs: {
-      description: {
-        story: 'Table supports three sizes: sm, md (default), and lg.',
-      },
-    },
-  },
-};
-
 // Bordered and striped
 export const Variants: Story = {
   render: () => (
@@ -351,23 +372,29 @@ export const Variants: Story = {
 // Sticky header with scroll
 export const StickyHeader: Story = {
   render: () => {
-    const extendedData = [...userData, ...userData, ...userData];
+    // Create enough data to demonstrate scrolling and sticky header
+    const extendedData = [
+      ...userData,
+      ...userData.map((u, i) => ({ ...u, id: `${u.id}-copy1-${i}` })),
+      ...userData.map((u, i) => ({ ...u, id: `${u.id}-copy2-${i}` })),
+      ...userData.map((u, i) => ({ ...u, id: `${u.id}-copy3-${i}` })),
+      ...userData.map((u, i) => ({ ...u, id: `${u.id}-copy4-${i}` })),
+    ];
 
     return (
       <Table
         columns={basicColumns}
         data={extendedData}
-        getRowKey={(user, index) => `${user.id}-${index}`}
+        getRowKey={(user) => user.id}
         stickyHeader
         maxHeight={300}
-        bordered
       />
     );
   },
   parameters: {
     docs: {
       description: {
-        story: 'Enable sticky header with `stickyHeader` and set `maxHeight` for scrollable content.',
+        story: 'Enable sticky header with `stickyHeader` and set `maxHeight` for scrollable content. Scroll the table to see the header stay fixed.',
       },
     },
   },
@@ -381,13 +408,12 @@ export const Loading: Story = {
       data={[]}
       getRowKey={(user) => user.id}
       loading
-      bordered
     />
   ),
   parameters: {
     docs: {
       description: {
-        story: 'Show a loading indicator while data is being fetched.',
+        story: 'Show a loading spinner while data is being fetched.',
       },
     },
   },
@@ -480,6 +506,60 @@ export const ProductsTable: Story = {
     docs: {
       description: {
         story: 'A practical example showing product inventory with various column alignments and custom renderers.',
+      },
+    },
+  },
+};
+
+// RTL Support
+export const RTLSupport: Story = {
+  render: () => {
+    const rtlColumns: TableColumn<User>[] = [
+      { id: 'name', header: 'שם', accessor: 'name', sortable: true },
+      { id: 'email', header: 'אימייל', accessor: 'email', sortable: true },
+      { id: 'role', header: 'תפקיד', accessor: 'role' },
+    ];
+
+    return (
+      <div dir="rtl">
+        <Table
+          columns={rtlColumns}
+          data={userData.slice(0, 4)}
+          getRowKey={(user) => user.id}
+        />
+      </div>
+    );
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'RTL mode: text aligns to the end (right in RTL), column order is preserved. Uses CSS logical properties for proper mirroring.',
+      },
+    },
+  },
+};
+
+// Alignment with other controls
+export const AlignmentWithControls: Story = {
+  name: 'Alignment with Other Controls',
+  render: () => (
+    <Stack gap="md">
+      <Stack direction="row" gap="sm" align="center">
+        <Input placeholder="Search..." style={{ width: 200 }} />
+        <Button>Search</Button>
+        <Button variant="outline">Clear</Button>
+      </Stack>
+      <Table
+        columns={basicColumns}
+        data={userData.slice(0, 3)}
+        getRowKey={(user) => user.id}
+      />
+    </Stack>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story: 'Table used alongside other UI controls like Input and Button for filtering/searching patterns.',
       },
     },
   },

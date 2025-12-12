@@ -192,36 +192,6 @@ importers:
         specifier: ^5.1.0
         version: 5.1.0
 
-  packages/ui-kit-icons:
-    devDependencies:
-      '@claude-flow/repo-scripts':
-        specifier: workspace:*
-        version: link:../../tools/repo-scripts
-      '@claude-flow/tsconfig':
-        specifier: workspace:*
-        version: link:../../tools/tsconfig
-      '@claude-flow/ui-kit-legacy':
-        specifier: workspace:*
-        version: link:../ui-kit-legacy
-      '@types/react':
-        specifier: ^19.1.8
-        version: 19.1.8
-      '@types/react-dom':
-        specifier: ^19.1.6
-        version: 19.1.6(@types/react@19.1.8)
-      glob:
-        specifier: ^11.0.0
-        version: 11.0.3
-      react:
-        specifier: ^19.1.0
-        version: 19.1.0
-      react-dom:
-        specifier: ^19.1.0
-        version: 19.1.0(react@19.1.0)
-      svgo:
-        specifier: ^3.3.2
-        version: 3.3.2
-
   packages/ui-kit-icons-legacy:
     devDependencies:
       '@claude-flow/repo-scripts':
@@ -582,6 +552,9 @@ importers:
       '@ui-kit/core':
         specifier: workspace:*
         version: link:../core
+      '@ui-kit/react':
+        specifier: workspace:*
+        version: link:../react
       react:
         specifier: ^19.0.0
         version: 19.1.0

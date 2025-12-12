@@ -296,9 +296,22 @@ These components should all align when placed in a row:
 
 Always use design tokens. Never hardcode values.
 
-### Reference the Token Guide
+### Reference Guides
 
-See `@claude-flow/ui-kit-core/TOKEN_GUIDE.md` for complete token reference.
+- **Quick Reference**: `/docs/guides/TOKEN_CHEATSHEET.md` - Common tokens and patterns
+- **Complete Guide**: `/packages/ui-kit/core/TOKEN_GUIDE.md` - Full token reference
+
+### The Golden Rule
+
+**Always pair `-bg` and `-text` tokens from the same role to ensure accessible contrast:**
+
+```css
+/* ✅ CORRECT - same role guarantees contrast */
+.primary { background: var(--controlPrimary-bg); color: var(--controlPrimary-text); }
+
+/* ❌ WRONG - mixing roles breaks contrast */
+.broken { background: var(--controlPrimary-bg); color: var(--page-text); }
+```
 
 ### Common Token Patterns
 
@@ -977,6 +990,8 @@ Reference these components as examples of proper implementation:
 
 ## Getting Help
 
-- **Token Reference**: See `@claude-flow/ui-kit-core/TOKEN_GUIDE.md`
-- **Theme System**: See `@claude-flow/ui-kit-core/src/themes/theme-definition.md`
-- **Existing Components**: Browse `src/components/` for patterns
+- **Token Cheatsheet**: `/docs/guides/TOKEN_CHEATSHEET.md` - Quick reference for common tokens
+- **Token Guide**: `/packages/ui-kit/core/TOKEN_GUIDE.md` - Complete token documentation
+- **Theme System**: `/packages/ui-kit/core/src/themes/theme-definition.md` - Creating custom themes
+- **Icons**: `/docs/guides/ICONS_CHEATSHEET.md` - Available icons from `@claude-flow/ui-kit-icons`
+- **Existing Components**: Browse `src/components/` for implementation patterns

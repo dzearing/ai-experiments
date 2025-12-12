@@ -2,6 +2,30 @@
 
 This guide provides a comprehensive reference for using UI Kit design tokens. Tokens are CSS custom properties that ensure consistent styling across all components.
 
+For a quick reference, see `/docs/guides/TOKEN_CHEATSHEET.md`.
+
+---
+
+## The Golden Rule: Pair Tokens from the Same Role
+
+**To ensure accessible contrast, always use matching `-bg` and `-text` tokens from the same role:**
+
+```css
+/* ✅ CORRECT - same role guarantees contrast */
+.primary-button {
+  background: var(--controlPrimary-bg);
+  color: var(--controlPrimary-text);
+}
+
+/* ❌ WRONG - mixing roles breaks contrast */
+.broken {
+  background: var(--controlPrimary-bg);
+  color: var(--page-text);  /* May not be readable! */
+}
+```
+
+---
+
 ## Quick Reference
 
 ### When to Use Which Token
@@ -45,7 +69,7 @@ Container tokens are for static background regions that don't have interactive s
 --card-bg              /* Card/panel background */
 --card-text            /* Primary text on card */
 --card-text-soft       /* Secondary text on card */
---card-text-softer     /* Tertiary text on card */
+--card-text-hard       /* Maximum contrast text */
 --card-border          /* Card border */
 --card-shadow          /* Card shadow */
 ```
@@ -65,15 +89,18 @@ Container tokens are for static background regions that don't have interactive s
 ```css
 --overlay-bg           /* Modal/dialog background */
 --overlay-text         /* Text on overlay */
+--overlay-text-soft    /* Secondary text */
+--overlay-text-hard    /* Maximum contrast text */
 --overlay-border       /* Border */
 --overlay-shadow       /* Shadow */
---overlay-backdrop     /* Backdrop behind overlay (semi-transparent) */
 ```
 
 #### Popout (Highest Elevation - Dropdowns, Menus)
 ```css
 --popout-bg            /* Dropdown/menu background */
 --popout-text          /* Text */
+--popout-text-soft     /* Secondary text */
+--popout-text-hard     /* Maximum contrast text */
 --popout-border        /* Border */
 --popout-shadow        /* Shadow */
 ```
@@ -90,36 +117,39 @@ Control tokens include hover, pressed, and other state variations.
 --control-bg-hover          /* Hover background */
 --control-bg-pressed        /* Active/pressed background */
 --control-text              /* Text color */
---control-text-hover        /* Hover text */
 --control-border            /* Border */
---control-border-hover      /* Hover border */
+--control-shadow            /* Shadow */
 ```
 
 #### Control Primary (Primary Buttons/Actions)
 ```css
---controlPrimary-bg         /* Background (typically brand color) */
+--controlPrimary-bg         /* Background (brand color) */
 --controlPrimary-bg-hover   /* Hover background */
 --controlPrimary-bg-pressed /* Pressed background */
---controlPrimary-text       /* Text (typically white) */
+--controlPrimary-text       /* Text (auto-contrasts with bg) */
 --controlPrimary-border     /* Border */
+--controlPrimary-shadow     /* Shadow */
 ```
 
 #### Control Danger (Destructive Actions)
 ```css
---controlDanger-bg          /* Background (red) */
+--controlDanger-bg          /* Background (danger color) */
 --controlDanger-bg-hover    /* Hover background */
 --controlDanger-bg-pressed  /* Pressed background */
 --controlDanger-text        /* Text */
 --controlDanger-border      /* Border */
+--controlDanger-shadow      /* Shadow */
 ```
 
 #### Control Subtle (Ghost/Minimal Buttons)
 ```css
---controlSubtle-bg          /* Background (transparent or very subtle) */
+--controlSubtle-bg          /* Background (transparent) */
 --controlSubtle-bg-hover    /* Hover background */
 --controlSubtle-bg-pressed  /* Pressed background */
 --controlSubtle-text        /* Text color */
 --controlSubtle-text-hover  /* Hover text */
+--controlSubtle-text-pressed /* Pressed text */
+--controlSubtle-border      /* Border */
 ```
 
 #### Control Disabled
@@ -207,6 +237,18 @@ These are semantic colors that maintain consistent meaning across themes.
 --scrollbar-thumb-hover    /* Thumb hover state */
 ```
 
+#### Skeleton (Loading States)
+```css
+--skeleton-bg              /* Skeleton placeholder background */
+--skeleton-shimmer         /* Shimmer animation highlight */
+```
+
+#### Highlight (Search/Text Highlight)
+```css
+--highlight-bg             /* Highlight background */
+--highlight-text           /* Highlighted text color */
+```
+
 ---
 
 ### 5. Spacing Tokens
@@ -214,17 +256,18 @@ These are semantic colors that maintain consistent meaning across themes.
 Based on a 4px grid system.
 
 ```css
---space-0                  /* 0px */
---space-1                  /* 4px */
---space-2                  /* 8px */
---space-3                  /* 12px */
---space-4                  /* 16px (base unit) */
---space-5                  /* 20px */
---space-6                  /* 24px */
---space-8                  /* 32px */
---space-10                 /* 40px */
---space-12                 /* 48px */
---space-16                 /* 64px */
+--space-1                  /* Smallest */
+--space-2
+--space-3
+--space-4                  /* Base unit */
+--space-5
+--space-6
+--space-8
+--space-10
+--space-12
+--space-16
+--space-20
+--space-24                 /* Largest */
 ```
 
 ---
@@ -240,32 +283,29 @@ Based on a 4px grid system.
 
 #### Font Sizes
 ```css
---text-xs                  /* 11px - Fine print */
---text-sm                  /* 13px - Small text, captions */
---text-base                /* 15px - Body text (default) */
---text-lg                  /* 17px - Large body text */
---text-xl                  /* 20px - Subheadings */
---text-2xl                 /* 24px - Section headings */
---text-3xl                 /* 30px - Page headings */
---text-4xl                 /* 36px - Large headings */
+--text-xs                  /* Fine print */
+--text-sm                  /* Small text, captions */
+--text-base                /* Body text (default) */
+--text-lg                  /* Large body text */
+--text-xl                  /* Subheadings */
+--text-2xl                 /* Section headings */
+--text-3xl                 /* Page headings */
+--text-4xl                 /* Large headings */
 ```
 
 #### Font Weights
 ```css
---weight-normal            /* 400 */
---weight-medium            /* 500 */
---weight-semibold          /* 600 */
---weight-bold              /* 700 */
+--weight-normal
+--weight-medium
+--weight-semibold
+--weight-bold
 ```
 
 #### Line Heights
 ```css
---leading-none             /* 1 */
---leading-tight            /* 1.25 */
---leading-snug             /* 1.375 */
---leading-normal           /* 1.5 (default) */
---leading-relaxed          /* 1.625 */
---leading-loose            /* 2 */
+--leading-tight            /* Compact */
+--leading-normal           /* Default */
+--leading-loose            /* Spacious */
 ```
 
 ---
@@ -273,13 +313,12 @@ Based on a 4px grid system.
 ### 7. Border Radius Tokens
 
 ```css
---radius-none              /* 0px */
---radius-sm                /* 2px */
---radius-md                /* 4px (default for buttons) */
---radius-lg                /* 8px (default for cards) */
---radius-xl                /* 12px */
---radius-2xl               /* 16px */
---radius-full              /* 9999px (pill shape) */
+--radius-sm                /* Subtle rounding */
+--radius-md                /* Default for buttons */
+--radius-lg                /* Default for cards */
+--radius-xl                /* Large rounding */
+--radius-2xl               /* Extra large rounding */
+--radius-full              /* Pill/circle shape */
 ```
 
 ---
@@ -291,6 +330,7 @@ Based on a 4px grid system.
 --shadow-md                /* Default card shadow */
 --shadow-lg                /* Elevated elements */
 --shadow-xl                /* Modals, overlays */
+--shadow-inner             /* Inset shadow */
 ```
 
 ---
@@ -299,54 +339,50 @@ Based on a 4px grid system.
 
 #### Durations
 ```css
---duration-instant         /* 0ms - Immediate feedback */
---duration-fast            /* 100ms - Micro-interactions */
---duration-normal          /* 200ms - Default (buttons, inputs) */
---duration-slow            /* 300ms - Larger elements */
---duration-slower          /* 500ms - Page transitions */
+--duration-fast            /* Micro-interactions */
+--duration-normal          /* Default (buttons, inputs) */
+--duration-slow            /* Larger elements */
 ```
 
 #### Easing Functions
 ```css
---ease-default             /* cubic-bezier(0.4, 0, 0.2, 1) - General purpose */
---ease-in                  /* cubic-bezier(0.4, 0, 1, 1) - Enter animations */
---ease-out                 /* cubic-bezier(0, 0, 0.2, 1) - Exit animations */
---ease-in-out              /* cubic-bezier(0.4, 0, 0.2, 1) - Continuous */
---ease-bounce              /* cubic-bezier(0.34, 1.56, 0.64, 1) - Playful */
+--ease-default             /* General purpose */
+--ease-in                  /* Enter animations */
+--ease-out                 /* Exit animations */
+--ease-in-out              /* Continuous motion */
+--ease-bounce              /* Playful effect */
 ```
 
 ---
 
 ### 10. Component Tokens
 
-Pre-configured combinations for common patterns.
+Pre-configured shortcuts for common patterns.
 
-#### Size Tokens (Height Standards)
-```css
---size-control-sm          /* 28px - Small controls */
---size-control-md          /* 36px - Default controls */
---size-control-lg          /* 44px - Large controls */
-```
-
-**IMPORTANT:** All interactive controls (buttons, inputs, selects, segmented controls) should use these height tokens to ensure they align when placed side-by-side.
-
-#### Button Padding
+#### Button
 ```css
 --button-padding-x         /* Horizontal padding */
 --button-padding-y         /* Vertical padding */
 --button-radius            /* Border radius */
 ```
 
-#### Input Dimensions
+#### Input
 ```css
 --input-height             /* Input field height */
 --input-padding-x          /* Horizontal padding */
 ```
 
-#### Card/Panel Padding
+#### Containers
 ```css
 --card-padding             /* Standard card padding */
 --modal-padding            /* Modal content padding */
+```
+
+#### Avatar
+```css
+--avatar-size-sm           /* Small avatar */
+--avatar-size-md           /* Medium avatar */
+--avatar-size-lg           /* Large avatar */
 ```
 
 ---
@@ -570,5 +606,6 @@ When using tokens, always provide fallbacks for robustness:
 
 ## See Also
 
+- [Token Cheatsheet](/docs/guides/TOKEN_CHEATSHEET.md) - Quick reference for common tokens
 - [Theme Definition Guide](./src/themes/theme-definition.md) - Creating custom themes
 - [Schema Definition](./src/themes/schema/schema-definition.md) - Token roles and derivation rules

@@ -1,16 +1,20 @@
 import type { AnchorHTMLAttributes, ReactNode } from 'react';
-import styles from './LinkButton.module.css';
+import { Button, type ButtonVariant, type ButtonSize } from '../Button/Button';
 
-export type LinkButtonVariant = 'default' | 'primary' | 'danger' | 'ghost';
-export type LinkButtonSize = 'sm' | 'md' | 'lg';
+export type LinkButtonVariant = ButtonVariant;
+export type LinkButtonSize = ButtonSize;
 
-export interface LinkButtonProps extends AnchorHTMLAttributes<HTMLAnchorElement> {
+export interface LinkButtonProps extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'children'> {
   /** Button variant */
   variant?: LinkButtonVariant;
   /** Button size */
   size?: LinkButtonSize;
   /** Full width button */
   fullWidth?: boolean;
+  /** Icon to display before children */
+  icon?: ReactNode;
+  /** Icon to display after children */
+  iconAfter?: ReactNode;
   /** Button content */
   children: ReactNode;
 }
@@ -18,30 +22,31 @@ export interface LinkButtonProps extends AnchorHTMLAttributes<HTMLAnchorElement>
 /**
  * LinkButton component - an anchor element styled as a button
  *
- * Use this for navigation actions that should look like buttons.
- * For actual button actions, use the Button component.
+ * @deprecated Use `<Button as="a" href="...">` instead for consistency.
+ * This component is kept for backward compatibility.
  */
 export function LinkButton({
-  variant = 'default',
-  size = 'md',
-  fullWidth = false,
-  className,
+  variant,
+  size,
+  fullWidth,
+  icon,
+  iconAfter,
   children,
+  href,
   ...props
 }: LinkButtonProps) {
-  const classNames = [
-    styles.linkButton,
-    styles[variant],
-    styles[size],
-    fullWidth && styles.fullWidth,
-    className,
-  ]
-    .filter(Boolean)
-    .join(' ');
-
   return (
-    <a className={classNames} {...props}>
+    <Button
+      as="a"
+      href={href ?? '#'}
+      variant={variant}
+      size={size}
+      fullWidth={fullWidth}
+      icon={icon}
+      iconAfter={iconAfter}
+      {...props}
+    >
       {children}
-    </a>
+    </Button>
   );
 }

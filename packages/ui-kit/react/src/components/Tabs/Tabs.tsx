@@ -129,7 +129,14 @@ export function Tabs({
 
   const activeItem = items.find((item) => item.value === activeValue);
 
-  const containerClassNames = [styles.tabs, className].filter(Boolean).join(' ');
+  // Check if any items have content (for navigation-only mode)
+  const hasContent = items.some((item) => item.content != null);
+
+  const containerClassNames = [
+    styles.tabs,
+    hasContent && styles.hasPanel,
+    className,
+  ].filter(Boolean).join(' ');
 
   const tabListClassNames = [
     styles.tabList,
@@ -177,9 +184,11 @@ export function Tabs({
           />
         )}
       </div>
-      <div className={styles.tabPanel} role="tabpanel">
-        {activeItem?.content}
-      </div>
+      {hasContent && (
+        <div className={styles.tabPanel} role="tabpanel">
+          {activeItem?.content}
+        </div>
+      )}
     </div>
   );
 }

@@ -6,9 +6,11 @@
   border: 1px solid transparent;
   border-radius: var(--radius-md);
   font-weight: var(--weight-medium);
+  line-height: 1.25;
   cursor: pointer;
   transition: all var(--duration-fast) var(--ease-default);
   white-space: nowrap;
+  text-decoration: none; /* For anchor elements rendered as buttons */
 }
 
 .button:focus-visible {
@@ -48,6 +50,7 @@
 
 .default:hover:not(:disabled) {
   background: var(--control-bg-hover);
+  color: var(--control-text);
   border-color: var(--control-bg-hover); /* Match background for solid appearance */
 }
 
@@ -64,6 +67,7 @@
 
 .primary:hover:not(:disabled) {
   background: var(--controlPrimary-bg-hover);
+  color: var(--controlPrimary-text);
 }
 
 .primary:active:not(:disabled) {
@@ -78,6 +82,7 @@
 
 .danger:hover:not(:disabled) {
   background: var(--controlDanger-bg-hover);
+  color: var(--controlDanger-text);
 }
 
 .danger:active:not(:disabled) {
@@ -107,6 +112,7 @@
 
 .outline:hover:not(:disabled) {
   background: var(--controlSubtle-bg-hover);
+  color: var(--control-text);
   border-color: var(--control-border-hover);
 }
 

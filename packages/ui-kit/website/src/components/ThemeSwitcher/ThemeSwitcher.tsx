@@ -1,34 +1,40 @@
 import { useState, useEffect } from 'react';
+import { Dropdown, Button, Segmented } from '@ui-kit/react';
 import styles from './ThemeSwitcher.module.css';
 
 const themes = [
-  { id: 'default', name: 'Default' },
-  { id: 'minimal', name: 'Minimal' },
-  { id: 'high-contrast', name: 'High Contrast' },
-  { id: 'github', name: 'GitHub' },
-  { id: 'linkedin', name: 'LinkedIn' },
-  { id: 'teams', name: 'Teams' },
-  { id: 'ocean', name: 'Ocean' },
-  { id: 'forest', name: 'Forest' },
-  { id: 'sunset', name: 'Sunset' },
-  { id: 'terminal', name: 'Terminal' },
-  { id: 'cyberpunk', name: 'Cyberpunk' },
-  { id: 'matrix', name: 'Matrix' },
-  { id: 'midnight', name: 'Midnight' },
-  { id: 'arctic', name: 'Arctic' },
-  { id: 'retro', name: 'Retro' },
-  { id: 'art-deco', name: 'Art Deco' },
-  { id: 'sketchy', name: 'Sketchy' },
-  { id: 'fluent', name: 'Fluent' },
-  { id: 'onedrive', name: 'OneDrive' },
+  { value: 'default', label: 'Default' },
+  { value: 'minimal', label: 'Minimal' },
+  { value: 'high-contrast', label: 'High Contrast' },
+  { value: 'github', label: 'GitHub' },
+  { value: 'linkedin', label: 'LinkedIn' },
+  { value: 'teams', label: 'Teams' },
+  { value: 'ocean', label: 'Ocean' },
+  { value: 'forest', label: 'Forest' },
+  { value: 'sunset', label: 'Sunset' },
+  { value: 'terminal', label: 'Terminal' },
+  { value: 'cyberpunk', label: 'Cyberpunk' },
+  { value: 'matrix', label: 'Matrix' },
+  { value: 'midnight', label: 'Midnight' },
+  { value: 'arctic', label: 'Arctic' },
+  { value: 'retro', label: 'Retro' },
+  { value: 'art-deco', label: 'Art Deco' },
+  { value: 'sketchy', label: 'Sketchy' },
+  { value: 'fluent', label: 'Fluent' },
+  { value: 'onedrive', label: 'OneDrive' },
 ];
 
 type Mode = 'light' | 'dark' | 'auto';
 
+const modeOptions = [
+  { value: 'light', label: 'Light', icon: <span>☀️</span>, 'aria-label': 'Light mode' },
+  { value: 'dark', label: 'Dark', icon: <span>🌙</span>, 'aria-label': 'Dark mode' },
+  { value: 'auto', label: 'Auto', icon: <span>🌓</span>, 'aria-label': 'Auto mode' },
+];
+
 export function ThemeSwitcher() {
   const [theme, setThemeState] = useState('default');
   const [mode, setMode] = useState<Mode>('auto');
-  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -54,49 +60,33 @@ export function ThemeSwitcher() {
     localStorage.setItem('uikit-theme', JSON.stringify({ theme: newTheme, mode: newMode }));
   };
 
-  const cycleMode = () => {
-    const modes: Mode[] = ['light', 'dark', 'auto'];
-    const nextIndex = (modes.indexOf(mode) + 1) % modes.length;
-    applyTheme(theme, modes[nextIndex]);
+  const handleModeChange = (newMode: string) => {
+    applyTheme(theme, newMode as Mode);
+  };
+
+  const handleThemeSelect = (value: string) => {
+    applyTheme(value, mode);
   };
 
   return (
     <div className={styles.switcher}>
-      <button className={styles.modeToggle} onClick={cycleMode} title={'Mode: ' + mode}>
-        {mode === 'light' && '\u2600\uFE0F'}
-        {mode === 'dark' && '\uD83C\uDF19'}
-        {mode === 'auto' && '\uD83C\uDF13'}
-      </button>
+      <Segmented
+        options={modeOptions}
+        value={mode}
+        onChange={handleModeChange}
+        iconOnly
+        aria-label="Color mode"
+      />
 
-      <div className={styles.themeDropdown}>
-        <button
-          className={styles.themeButton}
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          {themes.find(t => t.id === theme)?.name || 'Theme'}
-          <span className={styles.arrow}>▼</span>
-        </button>
-
-        {isOpen && (
-          <>
-            <div className={styles.backdrop} onClick={() => setIsOpen(false)} />
-            <div className={styles.menu}>
-              {themes.map(t => (
-                <button
-                  key={t.id}
-                  className={styles.menuItem + (theme === t.id ? ' ' + styles.selected : '')}
-                  onClick={() => {
-                    applyTheme(t.id, mode);
-                    setIsOpen(false);
-                  }}
-                >
-                  {t.name}
-                </button>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
+      <Dropdown
+        items={themes}
+        onSelect={handleThemeSelect}
+        position="bottom-end"
+      >
+        <Button variant="outline">
+          Change theme
+        </Button>
+      </Dropdown>
     </div>
   );
 }

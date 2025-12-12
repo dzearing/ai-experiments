@@ -221,8 +221,8 @@ export function Table<T>({
                           </svg>
                         ) : (
                           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                            <path d="M6 2L9 5H3L6 2Z" fill="currentColor" opacity="0.3" />
-                            <path d="M6 10L9 7H3L6 10Z" fill="currentColor" opacity="0.3" />
+                            <path d="M6 2L9 5H3L6 2Z" fill="currentColor" />
+                            <path d="M6 10L9 7H3L6 10Z" fill="currentColor" />
                           </svg>
                         )}
                       </span>

@@ -235,36 +235,6 @@
   border-color: var(--inset-border);
 }
 
-.surface-control {
-  background: var(--control-bg);
-  color: var(--control-text);
-  border-color: var(--control-border);
-}
-
-.surface-controlPrimary {
-  background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
-  border-color: var(--controlPrimary-border);
-}
-
-.surface-controlDanger {
-  background: var(--controlDanger-bg);
-  color: var(--controlDanger-text);
-  border-color: var(--controlDanger-border);
-}
-
-.surface-controlSubtle {
-  background: var(--controlSubtle-bg);
-  color: var(--controlSubtle-text);
-  border-color: var(--controlSubtle-border);
-}
-
-.surface-controlDisabled {
-  background: var(--controlDisabled-bg);
-  color: var(--controlDisabled-text);
-  border-color: var(--controlDisabled-border);
-}
-
 .surface-success {
   background: var(--success-bg);
   color: var(--success-text);

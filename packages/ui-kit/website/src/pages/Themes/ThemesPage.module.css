@@ -63,6 +63,7 @@
   text-align: left;
   overflow: hidden;
   transition: all var(--duration-fast) var(--ease-default);
+  font-family: inherit; /* Buttons don't inherit font by default */
 }
 
 .themeCard:hover {
@@ -126,10 +127,11 @@
   font-size: var(--text-base);
   font-weight: var(--weight-semibold);
   margin-bottom: var(--space-1);
+  color: var(--card-text); /* Must match card surface */
 }
 
 .themeDesc {
   font-size: var(--text-sm);
-  color: var(--page-text-soft);
+  color: var(--card-text-soft); /* Must match card surface */
   margin: 0;
 }

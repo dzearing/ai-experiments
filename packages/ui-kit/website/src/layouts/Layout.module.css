@@ -40,25 +40,6 @@
 
 .nav {
   display: flex;
-  gap: var(--space-6);
-}
-
-.navLink {
-  font-weight: var(--weight-medium);
-  color: var(--page-text-soft);
-  text-decoration: none;
-  padding: var(--space-2) 0;
-  border-bottom: 2px solid transparent;
-  transition: all var(--duration-fast) var(--ease-default);
-}
-
-.navLink:hover {
-  color: var(--page-text);
-}
-
-.navLink.active {
-  color: var(--controlPrimary-bg);
-  border-bottom-color: var(--controlPrimary-bg);
 }
 
 .headerActions {

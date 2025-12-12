@@ -1,9 +1,26 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Tabs } from '@ui-kit/react';
 import { ThemeSwitcher } from '../components/ThemeSwitcher/ThemeSwitcher';
 import { PageTransition } from '../components/PageTransition/PageTransition';
 import styles from './Layout.module.css';
 
+const navItems = [
+  { value: '/learn', label: 'Learn', content: null },
+  { value: '/reference', label: 'Reference', content: null },
+  { value: '/themes', label: 'Themes', content: null },
+];
+
 export function Layout() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Determine active tab from current path
+  const activeTab = navItems.find(item => location.pathname.startsWith(item.value))?.value || '';
+
+  const handleTabChange = (value: string) => {
+    navigate(value);
+  };
+
   return (
     <div className={styles.layout}>
       <header className={styles.header}>
@@ -14,36 +31,16 @@ export function Layout() {
           </NavLink>
 
           <nav className={styles.nav}>
-            <NavLink
-              to="/learn"
-              className={({ isActive }) => isActive ? `${styles.navLink} ${styles.active}` : styles.navLink}
-            >
-              Learn
-            </NavLink>
-            <NavLink
-              to="/reference"
-              className={({ isActive }) => isActive ? `${styles.navLink} ${styles.active}` : styles.navLink}
-            >
-              Reference
-            </NavLink>
-            <NavLink
-              to="/themes"
-              className={({ isActive }) => isActive ? `${styles.navLink} ${styles.active}` : styles.navLink}
-            >
-              Themes
-            </NavLink>
+            <Tabs
+              items={navItems}
+              value={activeTab}
+              onChange={handleTabChange}
+              variant="underline"
+            />
           </nav>
 
           <div className={styles.headerActions}>
             <ThemeSwitcher />
-            <a
-              href="https://github.com"
-              className={styles.githubLink}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              GitHub
-            </a>
           </div>
         </div>
       </header>

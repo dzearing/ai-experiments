@@ -7,7 +7,8 @@
 
 import type { ThemeDefinition } from './types';
 import {
-  surfaces,
+  containerRoles,
+  feedbackRoles,
   surfaceClassName,
   getTokenNamesForSurface,
 } from '../surfaces/definitions';
@@ -596,11 +597,19 @@ export function generateThemeCSS(
 
 /**
  * Generate surface class CSS
+ *
+ * Only generates surface classes for container and feedback roles.
+ * Control roles (control, controlPrimary, controlDanger, etc.) don't get
+ * surface classes because interactive elements need hover/pressed states
+ * that are better handled with direct token usage in component CSS.
  */
 function generateSurfaceClasses(): string[] {
   const lines: string[] = [];
 
-  for (const surface of surfaces) {
+  // Only generate surface classes for containers and feedback - not controls
+  const surfaceRoles = [...containerRoles, ...feedbackRoles];
+
+  for (const surface of surfaceRoles) {
     const className = surfaceClassName(surface);
     lines.push(`.${className} {`);
     lines.push(`  background: var(--${surface}-bg);`);

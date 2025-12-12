@@ -7,6 +7,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve(__dirname, './src'),
+      // Resolve @ui-kit/react to source for development (hot reload & proper CSS modules)
+      '@ui-kit/react': resolve(__dirname, '../react/src'),
     },
   },
   css: {
