@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { Drawer } from './Drawer';
+import { Button } from '../Button';
 
 const meta: Meta<typeof Drawer> = {
   title: 'Overlays/Drawer',
@@ -58,7 +59,7 @@ export const Right: Story = {
     const [open, setOpen] = useState(false);
     return (
       <>
-        <button onClick={() => setOpen(true)}>Open Drawer</button>
+        <Button onClick={() => setOpen(true)}>Open Drawer</Button>
         <Drawer {...args} open={open} onClose={() => setOpen(false)} position="right">
           <div style={{ padding: '24px' }}>
             <h2 style={{ marginBottom: '16px' }}>Drawer Content</h2>
@@ -75,7 +76,7 @@ export const Left: Story = {
     const [open, setOpen] = useState(false);
     return (
       <>
-        <button onClick={() => setOpen(true)}>Open Left Drawer</button>
+        <Button onClick={() => setOpen(true)}>Open Left Drawer</Button>
         <Drawer open={open} onClose={() => setOpen(false)} position="left">
           <div style={{ padding: '24px' }}>
             <h2>Navigation</h2>
@@ -99,7 +100,7 @@ export const Bottom: Story = {
     const [open, setOpen] = useState(false);
     return (
       <>
-        <button onClick={() => setOpen(true)}>Open Bottom Drawer</button>
+        <Button onClick={() => setOpen(true)}>Open Bottom Drawer</Button>
         <Drawer open={open} onClose={() => setOpen(false)} position="bottom" size="md">
           <div style={{ padding: '24px', textAlign: 'center' }}>
             <h2>Bottom Drawer</h2>
@@ -116,10 +117,10 @@ export const Positions: Story = {
     const [position, setPosition] = useState<'left' | 'right' | 'top' | 'bottom' | null>(null);
     return (
       <div style={{ display: 'flex', gap: '8px' }}>
-        <button onClick={() => setPosition('left')}>Left</button>
-        <button onClick={() => setPosition('right')}>Right</button>
-        <button onClick={() => setPosition('top')}>Top</button>
-        <button onClick={() => setPosition('bottom')}>Bottom</button>
+        <Button size="sm" onClick={() => setPosition('left')}>Left</Button>
+        <Button size="sm" onClick={() => setPosition('right')}>Right</Button>
+        <Button size="sm" onClick={() => setPosition('top')}>Top</Button>
+        <Button size="sm" onClick={() => setPosition('bottom')}>Bottom</Button>
         {position && (
           <Drawer open={true} onClose={() => setPosition(null)} position={position}>
             <div style={{ padding: '24px' }}>
@@ -137,7 +138,7 @@ export const FocusTrap: Story = {
     const [open, setOpen] = useState(false);
     return (
       <>
-        <button onClick={() => setOpen(true)}>Open Drawer with Focus Trap</button>
+        <Button onClick={() => setOpen(true)}>Open Drawer with Focus Trap</Button>
         <Drawer open={open} onClose={() => setOpen(false)} position="right">
           <div style={{ padding: '24px' }}>
             <h2 style={{ marginBottom: '16px' }}>Focus Trap Demo</h2>
@@ -165,8 +166,8 @@ export const FocusTrap: Story = {
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
-                <button onClick={() => setOpen(false)}>Reset</button>
-                <button onClick={() => setOpen(false)}>Apply</button>
+                <Button size="sm" onClick={() => setOpen(false)}>Reset</Button>
+                <Button size="sm" onClick={() => setOpen(false)}>Apply</Button>
               </div>
             </div>
           </div>

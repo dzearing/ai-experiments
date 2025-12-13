@@ -335,9 +335,9 @@ export function TreeView({
       const viewportBottom = scrollTop + height;
 
       if (nodeTop < viewportTop) {
-        containerRef.current?.scrollTo({ top: nodeTop, behavior: 'smooth' });
+        containerRef.current?.scrollTo({ top: nodeTop, behavior: 'instant' });
       } else if (nodeBottom > viewportBottom) {
-        containerRef.current?.scrollTo({ top: nodeBottom - height, behavior: 'smooth' });
+        containerRef.current?.scrollTo({ top: nodeBottom - height, behavior: 'instant' });
       }
     },
     [flatNodes, itemHeight, scrollTop, height]

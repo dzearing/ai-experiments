@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { Card, CardTitle, CardDescription } from './Card';
+import { Button } from '../Button';
 
 const meta: Meta<typeof Card> = {
   title: 'Layout/Card',
@@ -111,7 +112,7 @@ export const WithTitleAndDescription: Story = {
         Manage your personal information and preferences
       </CardDescription>
       <div style={{ marginTop: '16px' }}>
-        <button>Edit profile</button>
+        <Button size="sm">Edit profile</Button>
       </div>
     </Card>
   ),
@@ -183,8 +184,8 @@ export const ComplexContent: Story = {
       </div>
 
       <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
-        <button>Learn more</button>
-        <button>Dismiss</button>
+        <Button size="sm">Learn more</Button>
+        <Button size="sm">Dismiss</Button>
       </div>
     </Card>
   ),

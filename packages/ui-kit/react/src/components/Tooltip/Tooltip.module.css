@@ -1,85 +1,81 @@
-.wrapper {
-  position: relative;
-  display: inline-flex;
-}
+/**
+ * Tooltip styles
+ *
+ * Uses surface.inverted for automatic theme-aware inverted colors
+ * See TOKEN_GUIDE.md for surface reference
+ */
 
 .tooltip {
-  position: absolute;
-  background: var(--tooltip-bg);
-  color: var(--tooltip-text);
+  position: fixed;
+  top: 0;
+  left: 0;
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
   font-size: var(--text-sm);
+  line-height: var(--leading-tight);
   white-space: nowrap;
-  z-index: 1100;
-  box-shadow: var(--shadow-sm);
-  animation: fadeIn var(--duration-fast) var(--ease-default);
+  max-width: 280px;
+  z-index: 10000;
+  box-shadow: var(--shadow-md);
+  pointer-events: none;
+
+  /* Use surface tokens which get set by .surface.inverted */
+  background: var(--surface-bg);
+  color: var(--surface-text);
+
+  /* Start invisible, fade in when positioned */
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-default);
 }
 
-.arrow {
+.tooltip.visible {
+  opacity: 1;
+}
+
+/* Multiline variant - allows text wrapping */
+.multiline {
+  white-space: normal;
+  text-align: start;
+}
+
+/* ==============================================
+   Beak/Arrow
+   ============================================== */
+
+.beak {
   position: absolute;
-  width: 8px;
-  height: 8px;
-  background: inherit;
-  transform: rotate(45deg);
+  width: 0;
+  height: 0;
+  border: 6px solid transparent;
 }
 
-/* Positions */
-.top {
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.top .arrow {
+/* Beak pointing down (tooltip above target) */
+.beak-top {
   bottom: -4px;
-  left: 50%;
-  transform: translateX(-50%) rotate(45deg);
+  border-top-color: var(--surface-bg);
+  border-bottom: none;
 }
 
-.bottom {
-  top: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.bottom .arrow {
+/* Beak pointing up (tooltip below target) */
+.beak-bottom {
   top: -4px;
-  left: 50%;
-  transform: translateX(-50%) rotate(45deg);
+  border-bottom-color: var(--surface-bg);
+  border-top: none;
 }
 
-.left {
-  right: calc(100% + 8px);
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.left .arrow {
+/* Beak pointing right (tooltip to left of target) */
+.beak-left {
   right: -4px;
-  top: 50%;
-  transform: translateY(-50%) rotate(45deg);
+  border-left-color: var(--surface-bg);
+  border-right: none;
 }
 
-.right {
-  left: calc(100% + 8px);
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.right .arrow {
+/* Beak pointing left (tooltip to right of target) */
+.beak-right {
   left: -4px;
-  top: 50%;
-  transform: translateY(-50%) rotate(45deg);
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  border-right-color: var(--surface-bg);
+  border-left: none;
 }
 
 /* ==============================================
@@ -88,6 +84,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .tooltip {
-    animation: none;
+    transition: none;
   }
 }

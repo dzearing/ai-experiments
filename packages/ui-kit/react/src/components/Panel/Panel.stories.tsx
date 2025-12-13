@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { Panel } from './Panel';
+import { Button } from '../Button';
 
 const meta: Meta<typeof Panel> = {
   title: 'Layout/Panel',
@@ -128,18 +129,9 @@ export const UserProfileCard: Story = {
           <div style={{ color: 'var(--page-text-soft)', fontSize: '12px' }}>Following</div>
         </div>
       </div>
-      <button style={{
-        width: '100%',
-        padding: '10px',
-        background: 'var(--controlPrimary-bg)',
-        color: 'var(--controlPrimary-text)',
-        border: 'none',
-        borderRadius: 'var(--radius-md)',
-        cursor: 'pointer',
-        fontWeight: 500,
-      }}>
+      <Button variant="primary" fullWidth>
         Follow
-      </button>
+      </Button>
     </Panel>
   ),
 };

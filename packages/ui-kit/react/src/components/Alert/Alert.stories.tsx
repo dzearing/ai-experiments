@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { Alert } from './Alert';
+import { Button } from '../Button';
 
 const meta: Meta<typeof Alert> = {
   title: 'Feedback/Alert',
@@ -182,7 +183,7 @@ export const WithActions: Story = {
       <Alert variant="warning">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span>Your trial expires in 3 days.</span>
-          <button style={{ marginLeft: '16px' }}>Upgrade now</button>
+          <Button size="sm">Upgrade now</Button>
         </div>
       </Alert>
 
@@ -194,7 +195,7 @@ export const WithActions: Story = {
               Unusual activity detected on your account.
             </p>
           </div>
-          <button style={{ marginLeft: '16px', flexShrink: 0 }}>Review</button>
+          <Button size="sm">Review</Button>
         </div>
       </Alert>
     </div>

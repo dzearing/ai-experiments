@@ -3,6 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { Accordion, AccordionItem, AccordionHeader, AccordionContent } from './Accordion';
 import { Stack } from '../Stack';
 import { Text } from '../Text';
+import { Button } from '../Button';
 
 /**
  * # Accordion
@@ -339,9 +340,9 @@ export const Controlled: Story = {
     return (
       <Stack gap="md" style={{ width: 400 }}>
         <Stack direction="row" gap="sm">
-          <button onClick={() => setExpanded(['item-1'])}>Open First</button>
-          <button onClick={() => setExpanded(['item-2'])}>Open Second</button>
-          <button onClick={() => setExpanded([])}>Close All</button>
+          <Button size="sm" onClick={() => setExpanded(['item-1'])}>Open First</Button>
+          <Button size="sm" onClick={() => setExpanded(['item-2'])}>Open Second</Button>
+          <Button size="sm" onClick={() => setExpanded([])}>Close All</Button>
         </Stack>
         <Accordion
           expandedItems={expanded}

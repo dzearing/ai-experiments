@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { PageTransition } from './PageTransition';
+import { Button } from '../Button';
 
 const meta: Meta<typeof PageTransition> = {
   title: 'Animation/PageTransition',
@@ -157,9 +158,9 @@ export const Default: Story = {
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         <div style={{ padding: '16px', background: 'var(--panel-bg)', borderBottom: '1px solid var(--panel-border)' }}>
           <div style={{ display: 'flex', gap: '8px' }}>
-            <button onClick={() => setPageKey('page1')}>Page 1</button>
-            <button onClick={() => setPageKey('page2')}>Page 2</button>
-            <button onClick={() => setPageKey('page3')}>Page 3</button>
+            <Button size="sm" onClick={() => setPageKey('page1')}>Page 1</Button>
+            <Button size="sm" onClick={() => setPageKey('page2')}>Page 2</Button>
+            <Button size="sm" onClick={() => setPageKey('page3')}>Page 3</Button>
           </div>
         </div>
 
@@ -204,12 +205,12 @@ export const WithHistoryIndex: Story = {
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         <div style={{ padding: '16px', background: 'var(--panel-bg)', borderBottom: '1px solid var(--panel-border)' }}>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <button onClick={goBack} disabled={pageIndex === 0}>
+            <Button size="sm" onClick={goBack} disabled={pageIndex === 0}>
               Back
-            </button>
-            <button onClick={goForward} disabled={pageIndex === pages.length - 1}>
+            </Button>
+            <Button size="sm" onClick={goForward} disabled={pageIndex === pages.length - 1}>
               Forward
-            </button>
+            </Button>
             <span style={{ marginLeft: '16px', color: 'var(--panel-text-soft)' }}>
               Page {pageIndex + 1} of {pages.length} (History Index: {historyIndex})
             </span>
@@ -251,9 +252,9 @@ export const CustomDuration: Story = {
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         <div style={{ padding: '16px', background: 'var(--panel-bg)', borderBottom: '1px solid var(--panel-border)' }}>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '12px' }}>
-            <button onClick={() => setPageKey('page1')}>Page 1</button>
-            <button onClick={() => setPageKey('page2')}>Page 2</button>
-            <button onClick={() => setPageKey('page3')}>Page 3</button>
+            <Button size="sm" onClick={() => setPageKey('page1')}>Page 1</Button>
+            <Button size="sm" onClick={() => setPageKey('page2')}>Page 2</Button>
+            <Button size="sm" onClick={() => setPageKey('page3')}>Page 3</Button>
           </div>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <label>Duration: {duration}ms</label>
@@ -305,9 +306,9 @@ export const WithCallbacks: Story = {
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         <div style={{ padding: '16px', background: 'var(--panel-bg)', borderBottom: '1px solid var(--panel-border)' }}>
           <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-            <button onClick={() => setPageKey('page1')}>Page 1</button>
-            <button onClick={() => setPageKey('page2')}>Page 2</button>
-            <button onClick={() => setPageKey('page3')}>Page 3</button>
+            <Button size="sm" onClick={() => setPageKey('page1')}>Page 1</Button>
+            <Button size="sm" onClick={() => setPageKey('page2')}>Page 2</Button>
+            <Button size="sm" onClick={() => setPageKey('page3')}>Page 3</Button>
           </div>
           <div style={{ fontSize: '12px', color: 'var(--panel-text-soft)' }}>
             {log.length === 0 ? (
@@ -390,8 +391,8 @@ export const ComplexContent: Story = {
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         <div style={{ padding: '16px', background: 'var(--panel-bg)', borderBottom: '1px solid var(--panel-border)' }}>
           <div style={{ display: 'flex', gap: '8px' }}>
-            <button onClick={() => setPageKey('dashboard')}>Dashboard</button>
-            <button onClick={() => setPageKey('settings')}>Settings</button>
+            <Button size="sm" onClick={() => setPageKey('dashboard')}>Dashboard</Button>
+            <Button size="sm" onClick={() => setPageKey('settings')}>Settings</Button>
           </div>
         </div>
 

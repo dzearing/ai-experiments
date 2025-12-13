@@ -6,6 +6,7 @@ import { Stack } from '../Stack';
 import { Text } from '../Text';
 import { TreeView, type TreeNode } from '../TreeView';
 import { List, ListItem } from '../List';
+import { Button } from '../Button';
 
 /**
  * # SplitPane
@@ -237,12 +238,12 @@ export const Controlled: Story = {
     return (
       <Stack gap="md" style={{ height: 400 }}>
         <Stack direction="row" gap="sm" align="center">
-          <button onClick={() => setSize(150)}>Small (150px)</button>
-          <button onClick={() => setSize(250)}>Medium (250px)</button>
-          <button onClick={() => setSize(350)}>Large (350px)</button>
-          <button onClick={() => setCollapsed(!collapsed)}>
+          <Button size="sm" onClick={() => setSize(150)}>Small (150px)</Button>
+          <Button size="sm" onClick={() => setSize(250)}>Medium (250px)</Button>
+          <Button size="sm" onClick={() => setSize(350)}>Large (350px)</Button>
+          <Button size="sm" onClick={() => setCollapsed(!collapsed)}>
             {collapsed ? 'Expand' : 'Collapse'}
-          </button>
+          </Button>
           <Text size="sm" color="soft">Size: {size}px, Collapsed: {String(collapsed)}</Text>
         </Stack>
         <div style={{ flex: 1, border: '1px solid var(--panel-border)' }}>

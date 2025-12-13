@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { Modal } from './Modal';
+import { Button } from '../Button';
 
 const meta: Meta<typeof Modal> = {
   title: 'Overlays/Modal',
@@ -64,7 +65,7 @@ export const Default: Story = {
     const [open, setOpen] = useState(false);
     return (
       <>
-        <button onClick={() => setOpen(true)}>Open Modal</button>
+        <Button onClick={() => setOpen(true)}>Open Modal</Button>
         <Modal {...args} open={open} onClose={() => setOpen(false)}>
           <div style={{ padding: '24px' }}>
             <h2 style={{ marginBottom: '16px' }}>Modal Title</h2>
@@ -81,11 +82,11 @@ export const Sizes: Story = {
     const [size, setSize] = useState<'sm' | 'md' | 'lg' | 'xl' | 'full' | null>(null);
     return (
       <div style={{ display: 'flex', gap: '8px' }}>
-        <button onClick={() => setSize('sm')}>Small</button>
-        <button onClick={() => setSize('md')}>Medium</button>
-        <button onClick={() => setSize('lg')}>Large</button>
-        <button onClick={() => setSize('xl')}>XL</button>
-        <button onClick={() => setSize('full')}>Full</button>
+        <Button size="sm" onClick={() => setSize('sm')}>Small</Button>
+        <Button size="sm" onClick={() => setSize('md')}>Medium</Button>
+        <Button size="sm" onClick={() => setSize('lg')}>Large</Button>
+        <Button size="sm" onClick={() => setSize('xl')}>XL</Button>
+        <Button size="sm" onClick={() => setSize('full')}>Full</Button>
         {size && (
           <Modal open={true} onClose={() => setSize(null)} size={size}>
             <div style={{ padding: '24px' }}>
@@ -104,7 +105,7 @@ export const FocusTrap: Story = {
     const [open, setOpen] = useState(false);
     return (
       <>
-        <button onClick={() => setOpen(true)}>Open Modal with Focus Trap</button>
+        <Button onClick={() => setOpen(true)}>Open Modal with Focus Trap</Button>
         <Modal open={open} onClose={() => setOpen(false)}>
           <div style={{ padding: '24px' }}>
             <h2 style={{ marginBottom: '16px' }}>Focus Trap Demo</h2>
@@ -122,8 +123,8 @@ export const FocusTrap: Story = {
                 <option>Option 3</option>
               </select>
               <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                <button onClick={() => alert('Action clicked')}>Action</button>
-                <button onClick={() => setOpen(false)}>Close</button>
+                <Button size="sm" onClick={() => alert('Action clicked')}>Action</Button>
+                <Button size="sm" onClick={() => setOpen(false)}>Close</Button>
               </div>
             </div>
           </div>

@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { Spinner } from './Spinner';
+import { Button } from '../Button';
 
 const meta = {
   title: 'Feedback/Spinner',
@@ -84,22 +85,8 @@ export const InheritColor: Story = {
 
 export const InButton: Story = {
   render: () => (
-    <button
-      type="button"
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '8px',
-        padding: '8px 16px',
-        background: 'var(--controlPrimary-bg)',
-        color: 'var(--controlPrimary-text)',
-        border: 'none',
-        borderRadius: '6px',
-        cursor: 'pointer',
-      }}
-    >
-      <Spinner size="sm" inherit />
+    <Button variant="primary" icon={<Spinner size="sm" inherit />}>
       Loading...
-    </button>
+    </Button>
   ),
 };

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { Chip } from './Chip';
+import { Button } from '../Button';
 
 const meta = {
   title: 'Data/Chip',
@@ -76,7 +77,7 @@ export const Clickable: Story = {
 export const Removable: Story = {
   render: () => {
     const [visible, setVisible] = useState(true);
-    if (!visible) return <button onClick={() => setVisible(true)}>Reset</button>;
+    if (!visible) return <Button size="sm" onClick={() => setVisible(true)}>Reset</Button>;
     return (
       <Chip onRemove={() => setVisible(false)}>
         Remove me

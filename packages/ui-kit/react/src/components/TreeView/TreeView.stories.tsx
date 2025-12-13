@@ -4,6 +4,7 @@ import { TreeView, type TreeNode, type IconResolver } from './TreeView';
 import { Stack } from '../Stack';
 import { Text } from '../Text';
 import { Panel } from '../Panel';
+import { Button } from '../Button';
 
 /**
  * # TreeView
@@ -304,10 +305,10 @@ export const LargeDataset: Story = {
           />
         </Panel>
         <Stack direction="row" gap="sm">
-          <button onClick={() => setExpandedIds([])}>Collapse All</button>
-          <button onClick={() => setExpandedIds(largeData.map(n => n.id))}>
+          <Button size="sm" onClick={() => setExpandedIds([])}>Collapse All</Button>
+          <Button size="sm" onClick={() => setExpandedIds(largeData.map(n => n.id))}>
             Expand All Folders
-          </button>
+          </Button>
         </Stack>
       </Stack>
     );
@@ -466,10 +467,10 @@ export const ControlledExpansion: Story = {
     return (
       <Stack gap="md">
         <Stack direction="row" gap="sm">
-          <button onClick={() => setExpandedIds([])}>Collapse All</button>
-          <button onClick={() => setExpandedIds(['src', 'components', 'hooks', 'public'])}>
+          <Button size="sm" onClick={() => setExpandedIds([])}>Collapse All</Button>
+          <Button size="sm" onClick={() => setExpandedIds(['src', 'components', 'hooks', 'public'])}>
             Expand All
-          </button>
+          </Button>
         </Stack>
         <Panel style={{ width: 300 }}>
           <TreeView

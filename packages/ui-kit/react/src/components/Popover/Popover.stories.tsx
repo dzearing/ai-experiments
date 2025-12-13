@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { Popover } from './Popover';
+import { Button } from '../Button';
 
 const meta: Meta<typeof Popover> = {
   title: 'Overlays/Popover',
@@ -53,13 +54,13 @@ The popover can be positioned relative to its trigger:
 ### Uncontrolled (default)
 
 \`\`\`tsx
-import { Popover } from '@claude-flow/ui-kit-react';
+import { Popover, Button } from '@ui-kit/react';
 
 <Popover
   content={<div>Popover content here</div>}
   position="bottom"
 >
-  <button>Click me</button>
+  <Button>Click me</Button>
 </Popover>
 \`\`\`
 
@@ -67,7 +68,7 @@ import { Popover } from '@claude-flow/ui-kit-react';
 
 \`\`\`tsx
 import { useState } from 'react';
-import { Popover } from '@claude-flow/ui-kit-react';
+import { Popover, Button } from '@ui-kit/react';
 
 function MyComponent() {
   const [open, setOpen] = useState(false);
@@ -78,7 +79,7 @@ function MyComponent() {
       open={open}
       onOpenChange={setOpen}
     >
-      <button>Click me</button>
+      <Button>Click me</Button>
     </Popover>
   );
 }
@@ -132,7 +133,7 @@ export const Default: Story = {
   args: {
     content: <SimpleContent />,
     position: 'bottom',
-    children: <button>Click to open</button>,
+    children: <Button>Click to open</Button>,
   },
 };
 
@@ -145,16 +146,16 @@ export const Positions: Story = {
       padding: '80px'
     }}>
       <Popover content={<SimpleContent />} position="top">
-        <button>Top</button>
+        <Button>Top</Button>
       </Popover>
       <Popover content={<SimpleContent />} position="bottom">
-        <button>Bottom</button>
+        <Button>Bottom</Button>
       </Popover>
       <Popover content={<SimpleContent />} position="left">
-        <button>Left</button>
+        <Button>Left</Button>
       </Popover>
       <Popover content={<SimpleContent />} position="right">
-        <button>Right</button>
+        <Button>Right</Button>
       </Popover>
     </div>
   ),
@@ -171,7 +172,7 @@ export const WithActions: Story = {
   args: {
     content: <RichContent />,
     position: 'bottom',
-    children: <button>Actions</button>,
+    children: <Button>Actions</Button>,
   },
   parameters: {
     docs: {
@@ -192,19 +193,19 @@ export const Controlled: Story = {
           content={
             <div style={{ padding: '16px' }}>
               <p style={{ margin: '0 0 12px 0' }}>Controlled popover</p>
-              <button onClick={() => setOpen(false)}>Close</button>
+              <Button size="sm" onClick={() => setOpen(false)}>Close</Button>
             </div>
           }
           position="bottom"
           open={open}
           onOpenChange={setOpen}
         >
-          <button>Controlled trigger</button>
+          <Button>Controlled trigger</Button>
         </Popover>
 
         <div style={{ display: 'flex', gap: '8px' }}>
-          <button onClick={() => setOpen(true)}>Open programmatically</button>
-          <button onClick={() => setOpen(false)}>Close programmatically</button>
+          <Button size="sm" onClick={() => setOpen(true)}>Open programmatically</Button>
+          <Button size="sm" onClick={() => setOpen(false)}>Close programmatically</Button>
         </div>
 
         <p style={{ margin: 0 }}>
@@ -232,15 +233,15 @@ export const ComplexContent: Story = {
             Manage your account preferences and settings.
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <button style={{ width: '100%' }}>Profile</button>
-            <button style={{ width: '100%' }}>Preferences</button>
-            <button style={{ width: '100%' }}>Security</button>
+            <Button size="sm" fullWidth>Profile</Button>
+            <Button size="sm" fullWidth>Preferences</Button>
+            <Button size="sm" fullWidth>Security</Button>
           </div>
         </div>
       }
       position="bottom"
     >
-      <button>Open settings</button>
+      <Button>Open settings</Button>
     </Popover>
   ),
   parameters: {

@@ -8,9 +8,6 @@
 export { Button } from './components/Button';
 export type { ButtonProps, ButtonVariant, ButtonSize } from './components/Button';
 
-export { LinkButton } from './components/LinkButton';
-export type { LinkButtonProps, LinkButtonVariant, LinkButtonSize } from './components/LinkButton';
-
 export { IconButton } from './components/IconButton';
 export type { IconButtonProps, IconButtonVariant, IconButtonSize } from './components/IconButton';
 
