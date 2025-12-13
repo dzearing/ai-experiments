@@ -57,7 +57,10 @@
   color: var(--color-body-textSoft10, #666);
   white-space: nowrap;
   font-size: var(--font-size-xs, 12px);
-  padding-right: var(--spacing-small10, 8px);
+  padding-inline-end: var(--spacing-small10, 8px);
+  /* Prevent layout shift when match count changes (e.g., "999 of 999") */
+  min-width: 72px;
+  text-align: end;
 }
 
 .actions {
@@ -83,6 +86,11 @@
 /* Make checkboxes more compact */
 .optionsRow label {
   font-size: var(--font-size-xs, 12px);
+}
+
+/* Hidden but layout-preserving button (prevents horizontal shift) */
+.hiddenButton {
+  visibility: hidden;
 }
 
 /* ==============================================

@@ -40,7 +40,7 @@ import { Button } from '../Button';
  */
 
 const meta: Meta<typeof Accordion> = {
-  title: 'Navigation/Accordion',
+  title: 'Data Display/Accordion',
   component: Accordion,
   tags: ['autodocs'],
   parameters: {

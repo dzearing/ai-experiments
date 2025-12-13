@@ -21,6 +21,8 @@ import {
   replaceNext,
   replaceAll,
   selectMatches,
+  openSearchPanel,
+  closeSearchPanel,
 } from '@codemirror/search';
 import type { EditorView } from '@codemirror/view';
 import { Input, Checkbox, Button, IconButton, Stack, Text } from '@ui-kit/react';
@@ -61,6 +63,8 @@ export interface SearchPanelProps {
   onClose: () => void;
   /** Whether to show replace controls */
   showReplace?: boolean;
+  /** Increment this to re-focus the search input (even when already open) */
+  focusTrigger?: number;
 }
 
 export function SearchPanel({
@@ -68,6 +72,7 @@ export function SearchPanel({
   isOpen,
   onClose,
   showReplace: initialShowReplace = false,
+  focusTrigger = 0,
 }: SearchPanelProps) {
   const [searchText, setSearchText] = useState('');
   const [replaceText, setReplaceText] = useState('');
@@ -80,13 +85,24 @@ export function SearchPanel({
   const searchInputRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Focus search input when panel opens
+  // Focus search input when panel opens or focusTrigger changes
   useEffect(() => {
     if (isOpen && searchInputRef.current) {
       searchInputRef.current.focus();
       searchInputRef.current.select();
     }
-  }, [isOpen]);
+  }, [isOpen, focusTrigger]);
+
+  // Open CodeMirror's internal search panel when our panel opens.
+  // This enables the search highlighter which requires panel state to be set.
+  // We use createEmptyPanel to hide CM's default UI while keeping highlighting active.
+  useEffect(() => {
+    if (isOpen && view) {
+      openSearchPanel(view);
+    } else if (!isOpen && view) {
+      closeSearchPanel(view);
+    }
+  }, [isOpen, view]);
 
   // Sync with CodeMirror's search query on open
   useEffect(() => {
@@ -262,13 +278,13 @@ export function SearchPanel({
               className={styles.searchInput}
               aria-label="Search"
             />
-            {matchInfo && (
-              <Text size="sm" className={styles.matchCount}>
-                {matchInfo.total === 0
+            <Text size="sm" className={styles.matchCount}>
+              {matchInfo
+                ? matchInfo.total === 0
                   ? 'No results'
-                  : `${matchInfo.current} of ${matchInfo.total}`}
-              </Text>
-            )}
+                  : `${matchInfo.current} of ${matchInfo.total}`
+                : '\u00A0' /* Non-breaking space to maintain height */}
+            </Text>
           </div>
 
           <div className={styles.actions}>
@@ -363,15 +379,15 @@ export function SearchPanel({
             />
           </Stack>
 
-          {matchInfo && matchInfo.total > 1 && (
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={handleSelectAll}
-            >
-              Select all
-            </Button>
-          )}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleSelectAll}
+            disabled={!matchInfo || matchInfo.total <= 1}
+            className={!matchInfo || matchInfo.total <= 1 ? styles.hiddenButton : undefined}
+          >
+            Select all
+          </Button>
         </div>
       </div>
     </div>

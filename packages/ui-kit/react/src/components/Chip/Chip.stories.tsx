@@ -4,7 +4,7 @@ import { Chip } from './Chip';
 import { Button } from '../Button';
 
 const meta = {
-  title: 'Data/Chip',
+  title: 'Data Display/Chip',
   component: Chip,
   parameters: {
     layout: 'padded',

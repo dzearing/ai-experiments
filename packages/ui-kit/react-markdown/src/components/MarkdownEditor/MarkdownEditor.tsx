@@ -65,6 +65,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
     // Search panel state
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [searchShowReplace, setSearchShowReplace] = useState(false);
+    const [searchFocusTrigger, setSearchFocusTrigger] = useState(0);
 
     // Determine if controlled
     const isControlled = value !== undefined;
@@ -84,6 +85,8 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
     const handleOpenSearch = useCallback((showReplace: boolean) => {
       setSearchShowReplace(showReplace);
       setIsSearchOpen(true);
+      // Always increment focus trigger to re-focus input even if already open
+      setSearchFocusTrigger((prev) => prev + 1);
     }, []);
 
     // Handle search panel close
@@ -158,6 +161,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
           isOpen={isSearchOpen}
           onClose={handleCloseSearch}
           showReplace={searchShowReplace}
+          focusTrigger={searchFocusTrigger}
         />
       </div>
     );

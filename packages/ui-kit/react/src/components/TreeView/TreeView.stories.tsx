@@ -61,7 +61,7 @@ import { Button } from '../Button';
  */
 
 const meta: Meta<typeof TreeView> = {
-  title: 'Navigation/TreeView',
+  title: 'Data Display/TreeView',
   component: TreeView,
   tags: ['autodocs'],
   parameters: {

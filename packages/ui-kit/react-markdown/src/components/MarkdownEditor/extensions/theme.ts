@@ -107,14 +107,17 @@ export const editorTheme = EditorView.theme({
     borderBottom: '1px solid var(--color-panel-border)',
   },
 
+  // Search matches - soft yellow highlight
   '.cm-searchMatch': {
-    backgroundColor: 'rgba(255, 200, 0, 0.3)',
-    outline: '1px solid rgba(255, 200, 0, 0.5)',
+    backgroundColor: 'rgba(255, 220, 0, 0.25)',
+    borderRadius: '2px',
   },
 
+  // Currently selected search match - prominent orange with border
   '.cm-searchMatch.cm-searchMatch-selected': {
-    backgroundColor: 'rgba(255, 150, 0, 0.4)',
-    outline: '1px solid rgba(255, 150, 0, 0.6)',
+    backgroundColor: 'rgba(255, 140, 0, 0.5)',
+    outline: '2px solid rgba(255, 100, 0, 0.8)',
+    borderRadius: '2px',
   },
 
   // Tooltip (autocomplete, etc.)

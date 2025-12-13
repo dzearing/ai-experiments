@@ -72,6 +72,22 @@ const preview: Preview = {
     backgrounds: {
       disable: true, // Let the theme control backgrounds
     },
+    options: {
+      storySort: {
+        order: [
+          'Actions',      // Buttons - most common
+          'Inputs',       // Form inputs
+          'Layout',       // Structural components
+          'Data Display', // Lists, tables, trees
+          'Typography',   // Text components
+          'Navigation',   // Navigation patterns
+          'Feedback',     // Alerts, toasts, progress
+          'Overlays',     // Modals, popovers, tooltips
+          'Animation',    // Motion/transition utilities
+          'Example Pages', // Full page examples (last)
+        ],
+      },
+    },
   },
   globalTypes: {
     theme: {
