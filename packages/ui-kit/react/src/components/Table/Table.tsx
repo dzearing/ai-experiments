@@ -300,3 +300,4 @@ export function Table<T>({
     </div>
   );
 }
+Table.displayName = 'Table';

@@ -46,29 +46,68 @@ import { Panel } from '../Panel';
 const meta: Meta<typeof Menu> = {
   title: 'Overlays/Menu',
   component: Menu,
+  tags: ['autodocs'],
   parameters: {
     layout: 'centered',
     docs: {
       description: {
         component: `
-The Menu component provides a dropdown or context menu for actions.
+Contextual overlay displaying a list of actions triggered by click or right-click.
 
-## Item Types
+## When to Use
 
-| Type | Description |
-|------|-------------|
-| **MenuItem** | Standard clickable item with label, icon, shortcut |
-| **MenuDivider** | Visual separator between items |
-| **MenuGroup** | Named group of items with a label |
+- Context menus with actions for specific items (edit, delete, share)
+- Dropdown menus for application actions (user profile, settings)
+- More actions overflow menus (...) in toolbars or cards
+- Filter or sorting options for data tables
+- Navigation menus with grouped sections
 
-## Keyboard Navigation
+## Variants
 
-| Key | Action |
-|-----|--------|
-| Arrow Down | Move to next item |
-| Arrow Up | Move to previous item |
-| Enter/Space | Select focused item |
-| Escape | Close menu |
+| Item Type | Use Case |
+|-----------|----------|
+| \`MenuItem\` | Standard clickable action with optional icon and keyboard shortcut |
+| \`MenuDivider\` | Visual separator between groups of related actions |
+| \`MenuGroup\` | Named group of items with header label |
+| \`danger\` | Destructive actions (delete, remove, sign out) styled in red |
+| \`disabled\` | Unavailable actions that cannot be clicked |
+
+## Positioning
+
+Menu automatically positions itself relative to trigger: bottom-start, bottom-end, top-start, right-start. Auto-flips to stay in viewport.
+
+## Accessibility
+
+- Keyboard navigation with Arrow Up/Down to move between items
+- Press Home/End to jump to first/last item
+- Press Enter/Space to activate focused item
+- Press Escape to close menu
+- \`role="menu"\` and \`role="menuitem"\` for proper screen reader announcements
+- Focus trap keeps focus within menu while open
+- Click outside or Escape closes menu
+
+## Usage
+
+\`\`\`tsx
+import { Menu } from '@ui-kit/react';
+
+<Menu
+  items={[
+    { id: 'edit', label: 'Edit', icon: <EditIcon />, shortcut: 'Cmd+E' },
+    { id: 'duplicate', label: 'Duplicate', shortcut: 'Cmd+D' },
+    { type: 'divider' },
+    { id: 'delete', label: 'Delete', danger: true },
+  ]}
+  onSelect={(id) => console.log(id)}
+>
+  <Button>Actions</Button>
+</Menu>
+
+// Context menu (right-click)
+<Menu items={items} contextMenu onSelect={handleSelect}>
+  <div>Right-click me</div>
+</Menu>
+\`\`\`
         `,
       },
     },

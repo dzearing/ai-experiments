@@ -50,3 +50,4 @@ export function LinkButton({
     </Button>
   );
 }
+LinkButton.displayName = 'LinkButton';

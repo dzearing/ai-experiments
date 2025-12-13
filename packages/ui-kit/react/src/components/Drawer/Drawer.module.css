@@ -16,17 +16,17 @@
 /* Positions */
 .left {
   top: 0;
-  left: 0;
+  inset-inline-start: 0;
   bottom: 0;
-  border-right: 1px solid var(--overlay-border);
+  border-inline-end: 1px solid var(--overlay-border);
   animation: slideInLeft var(--duration-normal) var(--ease-default);
 }
 
 .right {
   top: 0;
-  right: 0;
+  inset-inline-end: 0;
   bottom: 0;
-  border-left: 1px solid var(--overlay-border);
+  border-inline-start: 1px solid var(--overlay-border);
   animation: slideInRight var(--duration-normal) var(--ease-default);
 }
 
@@ -103,4 +103,21 @@
 @keyframes slideInBottom {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
+}
+
+/* ==============================================
+   Reduced Motion
+   ============================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop {
+    animation: none;
+  }
+
+  .left,
+  .right,
+  .top,
+  .bottom {
+    animation: none;
+  }
 }

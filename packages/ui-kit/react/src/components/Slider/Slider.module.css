@@ -28,8 +28,8 @@
   appearance: none;
   background: var(--controlPrimary-bg);
   border-radius: 50%;
-  border: 2px solid white;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  border: 2px solid var(--card-bg);
+  box-shadow: var(--shadow-sm);
   cursor: pointer;
   transition: all var(--duration-fast) var(--ease-default);
 }
@@ -37,8 +37,8 @@
 .slider::-moz-range-thumb {
   background: var(--controlPrimary-bg);
   border-radius: 50%;
-  border: 2px solid white;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  border: 2px solid var(--card-bg);
+  box-shadow: var(--shadow-sm);
   cursor: pointer;
   transition: all var(--duration-fast) var(--ease-default);
 }
@@ -151,4 +151,26 @@
 /* Full width */
 .fullWidth {
   width: 100%;
+}
+
+/* ==============================================
+   Reduced Motion
+   ============================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .slider::-webkit-slider-thumb {
+    transition: none;
+  }
+
+  .slider::-moz-range-thumb {
+    transition: none;
+  }
+
+  .slider:hover::-webkit-slider-thumb {
+    transform: none;
+  }
+
+  .slider:hover::-moz-range-thumb {
+    transform: none;
+  }
 }

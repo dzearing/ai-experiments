@@ -35,35 +35,63 @@ const meta: Meta<typeof Button> = {
     docs: {
       description: {
         component: `
-Buttons trigger actions or events. Use them for form submissions, dialog triggers, and navigation actions.
+Clickable elements that trigger actions or navigate to different pages.
+
+## When to Use
+
+- Triggering actions like submitting forms, opening dialogs
+- Primary and secondary actions in toolbars and forms
+- Destructive actions requiring user confirmation
+- Navigation to other pages when styled as a link
 
 ## Variants
 
 | Variant | Use Case |
 |---------|----------|
 | \`primary\` | Main call-to-action, one per section |
-| \`default\` | Secondary actions |
-| \`danger\` | Destructive actions (delete, remove) |
+| \`default\` | Secondary actions, less emphasis than primary |
+| \`danger\` | Destructive actions (delete, remove, cancel) |
 | \`ghost\` | Tertiary actions, minimal visual weight |
 | \`outline\` | Alternative to default with border emphasis |
 
 ## Sizes
 
-- **sm**: Compact UI, toolbars, inline actions
-- **md**: Default size for most use cases
-- **lg**: Hero sections, prominent CTAs
+- **sm** (28px): Compact UI, toolbars, inline actions, tight spaces
+- **md** (36px): Default size for most use cases and forms
+- **lg** (44px): Hero sections, prominent CTAs, touch-friendly interfaces
 
-## With Icons
+## Accessibility
 
-- Use \`icon\` prop for leading icons (add, create actions)
-- Use \`iconAfter\` for trailing icons (arrows, external links)
-- Use \`iconOnly\` with \`aria-label\` for icon-only buttons
+- Uses semantic \`<button>\` element by default with proper type attribute
+- Focus visible indicator for keyboard navigation (Tab to focus)
+- Disabled state prevents interaction and updates ARIA state
+- Icon-only buttons require \`aria-label\` for screen readers
+- When used as link (\`as="a"\`), supports standard anchor behaviors
 
-## As Link
-
-Use \`as="a"\` with \`href\` to render the button as a navigation link while preserving button styling:
+## Usage
 
 \`\`\`tsx
+import { Button } from '@ui-kit/react';
+
+// Basic button
+<Button onClick={handleClick}>
+  Click Me
+</Button>
+
+// Primary action
+<Button variant="primary" onClick={handleSubmit}>
+  Submit
+</Button>
+
+// With icon
+<Button icon={<PlusIcon />} variant="primary">
+  Add Item
+</Button>
+
+// Icon only
+<Button iconOnly icon={<CloseIcon />} aria-label="Close" />
+
+// As navigation link
 <Button as="a" href="/dashboard" variant="primary">
   Go to Dashboard
 </Button>

@@ -41,7 +41,7 @@
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 255, 255, 0.3),
+    var(--skeleton-shimmer),
     transparent
   );
   animation: shimmer 2s infinite;
@@ -96,4 +96,24 @@
   color: var(--page-text-soft);
   min-width: 3ch;
   text-align: right;
+}
+
+/* ==============================================
+   Reduced Motion
+   ============================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .bar {
+    transition: none;
+  }
+
+  .bar::after {
+    animation: none;
+  }
+
+  .bar.indeterminate {
+    animation: none;
+    /* Show static state at 50% position for visibility */
+    transform: translateX(150%);
+  }
 }

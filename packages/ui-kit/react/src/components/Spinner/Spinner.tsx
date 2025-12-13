@@ -43,3 +43,4 @@ export function Spinner({ size = 'md', label = 'Loading', inherit = false }: Spi
     </div>
   );
 }
+Spinner.displayName = 'Spinner';

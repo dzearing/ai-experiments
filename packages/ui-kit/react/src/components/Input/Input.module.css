@@ -61,3 +61,13 @@
 .fullWidth {
   width: 100%;
 }
+
+/* ==============================================
+   Reduced Motion
+   ============================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .input {
+    transition: none;
+  }
+}

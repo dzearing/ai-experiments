@@ -20,7 +20,7 @@
 
 .required {
   color: var(--danger-text);
-  margin-left: var(--space-1);
+  margin-inline-start: var(--space-1);
 }
 
 .control {

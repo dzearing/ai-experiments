@@ -393,3 +393,5 @@ export function Menu({
     </div>
   );
 }
+
+Menu.displayName = 'Menu';

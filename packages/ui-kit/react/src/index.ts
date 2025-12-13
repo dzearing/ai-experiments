@@ -233,3 +233,6 @@ export type {
 
 // Context
 export { ThemeProvider, useTheme } from './context/ThemeProvider';
+
+// Hooks
+export { useFocusTrap } from './hooks';

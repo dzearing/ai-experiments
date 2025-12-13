@@ -47,30 +47,67 @@ import { Panel } from '../Panel';
 const meta: Meta<typeof Toolbar> = {
   title: 'Layout/Toolbar',
   component: Toolbar,
+  tags: ['autodocs'],
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component: `
-The Toolbar component organizes actions in a horizontal (or vertical) bar.
+Horizontal or vertical bar for organizing actions and tools with groups and spacing.
 
-## Subcomponents
+## When to Use
 
-| Component | Description |
-|-----------|-------------|
-| **Toolbar** | Container for toolbar items |
-| **ToolbarGroup** | Groups related items together |
-| **ToolbarDivider** | Visual separator between groups |
-| **ToolbarSpacer** | Flexible space to push items apart |
-| **ButtonGroup** | Connected buttons that appear as one unit |
+- Text editor toolbars with formatting actions (bold, italic, alignment)
+- Application command bars with file/edit operations
+- Data table controls (filter, sort, export buttons)
+- Media player controls (play, pause, volume, etc.)
+- Form action bars with save/cancel buttons
 
 ## Variants
 
-| Variant | Description |
-|---------|-------------|
-| **default** | Minimal styling |
-| **bordered** | Border around the toolbar |
-| **floating** | Elevated with shadow |
+| Variant | Use Case |
+|---------|----------|
+| \`default\` | Minimal styling, blends with background |
+| \`bordered\` | Border around entire toolbar for containment |
+| \`floating\` | Elevated with shadow for overlay toolbars |
+
+## Sizes
+
+- **sm**: Compact toolbar with reduced spacing (8px padding)
+- **md**: Default comfortable spacing (12px padding)
+- **lg**: Spacious toolbar with generous spacing (16px padding)
+
+## Accessibility
+
+- \`role="toolbar"\` with \`aria-orientation\` for proper screen reader announcements
+- Tab navigates between toolbar buttons
+- Arrow keys for roving tabindex navigation (optional)
+- Keyboard shortcuts displayed as hints on buttons
+- Grouping helps screen readers announce related actions together
+
+## Usage
+
+\`\`\`tsx
+import { Toolbar, ToolbarGroup, ToolbarDivider, ToolbarSpacer, ButtonGroup } from '@ui-kit/react';
+
+<Toolbar variant="bordered">
+  <ToolbarGroup>
+    <IconButton aria-label="Undo">↩</IconButton>
+    <IconButton aria-label="Redo">↪</IconButton>
+  </ToolbarGroup>
+
+  <ToolbarDivider />
+
+  <ButtonGroup>
+    <Button size="sm">Bold</Button>
+    <Button size="sm">Italic</Button>
+  </ButtonGroup>
+
+  <ToolbarSpacer />
+
+  <Button variant="primary">Save</Button>
+</Toolbar>
+\`\`\`
         `,
       },
     },

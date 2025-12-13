@@ -139,3 +139,4 @@ export function Collapse({
     </div>
   );
 }
+Collapse.displayName = 'Collapse';

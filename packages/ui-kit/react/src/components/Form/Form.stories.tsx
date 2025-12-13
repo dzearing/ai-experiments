@@ -14,30 +14,71 @@ const meta: Meta<typeof Form> = {
     docs: {
       description: {
         component: `
-Form layout system for consistent, accessible forms.
+Layout system for building accessible, well-structured forms with consistent spacing and validation.
 
-## Components
+## When to Use
 
-| Component | Purpose |
-|-----------|---------|
-| **Form** | Container with vertical spacing |
-| **FormField** | Input wrapper with label, hint, error |
-| **FormRow** | Side-by-side field layout |
-| **FormActions** | Button container (submit, cancel) |
+- User registration and login forms
+- Settings and preferences pages
+- Data entry and submission forms
+- Multi-step wizards with multiple fields
+- Contact and feedback forms
 
-## FormField Props
+## Variants
 
-- **label**: Field label text
-- **required**: Show required indicator
-- **hint**: Helper text below input
-- **error**: Error message (overrides hint)
-- **htmlFor**: Links label to input
+| Component | Use Case |
+|-----------|----------|
+| \`Form\` | Container with consistent vertical spacing between fields |
+| \`FormField\` | Wrapper for individual inputs with label, hint, and error display |
+| \`FormRow\` | Horizontal layout for placing multiple fields side-by-side |
+| \`FormActions\` | Container for form buttons with flexible alignment options |
 
-## Best Practices
+## FormField States
 
-- Always provide labels for accessibility
-- Use hints for format guidance
-- Show errors inline, not in alerts
+- **Normal**: Standard field with optional hint text
+- **Required**: Shows asterisk indicator for required fields
+- **Error**: Displays error message and applies error styling
+- **Hint + Error**: Error message replaces hint when present
+
+## Accessibility
+
+- Labels are properly associated with inputs via \`htmlFor\` and \`id\`
+- Required fields indicated with visual \`*\` and semantic markup
+- Error messages linked to inputs with \`aria-describedby\`
+- Logical tab order maintained throughout the form
+- Form element provides semantic structure for screen readers
+
+## Usage
+
+\`\`\`tsx
+import { Form, FormField, FormRow, FormActions } from '@ui-kit/react';
+import { Input, Button } from '@ui-kit/react';
+
+<Form>
+  <FormField
+    label="Email"
+    required
+    htmlFor="email"
+    hint="We'll never share your email"
+  >
+    <Input id="email" type="email" />
+  </FormField>
+
+  <FormRow>
+    <FormField label="First Name" htmlFor="first">
+      <Input id="first" />
+    </FormField>
+    <FormField label="Last Name" htmlFor="last">
+      <Input id="last" />
+    </FormField>
+  </FormRow>
+
+  <FormActions align="end">
+    <Button variant="ghost">Cancel</Button>
+    <Button variant="primary">Submit</Button>
+  </FormActions>
+</Form>
+\`\`\`
         `,
       },
     },

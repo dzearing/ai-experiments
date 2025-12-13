@@ -62,3 +62,4 @@ export function Breadcrumb({
     </nav>
   );
 }
+Breadcrumb.displayName = 'Breadcrumb';

@@ -5,6 +5,68 @@ const meta: Meta<typeof Grid> = {
   title: 'Layout/Grid',
   component: Grid,
   tags: ['autodocs'],
+  parameters: {
+    docs: {
+      description: {
+        component: `
+CSS Grid layout container for creating responsive, multi-column layouts.
+
+## When to Use
+
+- Product catalogs or image galleries with equal-width items
+- Dashboard layouts with metric cards or statistics
+- Form layouts with multiple input fields per row
+- Team member directories or contact lists
+- Any content requiring responsive grid arrangement
+
+## Variants
+
+| Mode | Use Case |
+|------|----------|
+| \`auto\` columns | Responsive grid that fits as many columns as possible based on \`minColumnWidth\` |
+| Fixed columns | Explicit number of columns (e.g., \`columns={3}\`) |
+
+## Column Behavior
+
+- **auto** (default): Automatically fits columns using \`repeat(auto-fill, minmax(minColumnWidth, 1fr))\`
+- **Fixed number**: Creates exact number of columns (e.g., \`columns={4}\`)
+- **minColumnWidth**: Controls minimum width of auto columns (default: 200px)
+
+## Accessibility
+
+- Uses semantic CSS Grid without affecting DOM structure
+- Maintains logical reading order for screen readers
+- Grid gap provides visual separation without extra elements
+- Responsive behavior works with browser zoom and text scaling
+
+## Usage
+
+\`\`\`tsx
+import { Grid } from '@ui-kit/react';
+
+// Auto-responsive grid
+<Grid columns="auto" minColumnWidth="250px" gap="md">
+  <Card>Item 1</Card>
+  <Card>Item 2</Card>
+  <Card>Item 3</Card>
+</Grid>
+
+// Fixed 3-column grid
+<Grid columns={3} gap="lg">
+  <Card>Column 1</Card>
+  <Card>Column 2</Card>
+  <Card>Column 3</Card>
+</Grid>
+
+// Custom alignment
+<Grid columns={2} gap="md" align="center" justify="stretch">
+  <div>Content</div>
+</Grid>
+\`\`\`
+        `,
+      },
+    },
+  },
   argTypes: {
     columns: {
       control: 'number',

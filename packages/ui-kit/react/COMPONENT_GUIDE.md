@@ -104,6 +104,30 @@ export function ComponentName({
 - Use consistent prop patterns (variant, size, disabled)
 - Spread remaining props for extensibility
 - Support className composition
+- **Always add `displayName`** for React DevTools debugging (see below)
+
+### displayName Requirement
+
+Every component MUST have a `displayName` for debugging in React DevTools:
+
+```tsx
+export function ComponentName({ ... }: ComponentNameProps) {
+  // component implementation
+}
+
+ComponentName.displayName = 'ComponentName';
+```
+
+For compound components, use dot notation:
+
+```tsx
+export function Card({ ... }: CardProps) { ... }
+function CardTitle({ ... }: CardTitleProps) { ... }
+
+Card.Title = CardTitle;
+Card.displayName = 'Card';
+CardTitle.displayName = 'Card.Title';
+```
 
 ### 2. Styles File (`ComponentName.module.css`)
 
@@ -626,6 +650,60 @@ Always show visible focus indicators:
 - Use semantic HTML elements where possible
 - Include `title` or tooltip for abbreviated content
 
+### Focus Trapping (Overlays)
+
+Modal overlays (Modal, Dialog, Drawer) MUST trap focus within the overlay while open:
+
+```tsx
+import { useFocusTrap } from '../hooks/useFocusTrap';
+
+function Modal({ visible, children }) {
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  // Trap focus when visible (deactivate during exit animation)
+  useFocusTrap(modalRef, visible && !exiting);
+
+  return (
+    <div ref={modalRef} role="dialog" aria-modal="true">
+      {children}
+    </div>
+  );
+}
+```
+
+The `useFocusTrap` hook:
+- Traps Tab/Shift+Tab within the container
+- Saves focus on activation, restores on deactivation
+- Finds all focusable elements automatically
+
+### WAI-ARIA Patterns
+
+Follow WAI-ARIA Authoring Practices for complex widgets:
+
+| Component | ARIA Pattern | Key Requirements |
+|-----------|--------------|------------------|
+| Tabs | [Tabs Pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/) | `role="tablist/tab/tabpanel"`, `aria-selected`, `aria-controls`, arrow key nav |
+| Menu | [Menu Pattern](https://www.w3.org/WAI/ARIA/apg/patterns/menu/) | `role="menu/menuitem"`, `aria-expanded`, `aria-haspopup` |
+| Dialog | [Dialog Pattern](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/) | `role="dialog"`, `aria-modal`, focus trap, Escape to close |
+| Tooltip | [Tooltip Pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tooltip/) | `role="tooltip"`, `aria-describedby` linking |
+| Accordion | [Accordion Pattern](https://www.w3.org/WAI/ARIA/apg/patterns/accordion/) | `aria-expanded`, `aria-controls`, keyboard nav |
+
+### Toast/Alert Accessibility
+
+Use appropriate roles based on message urgency:
+
+```tsx
+// Critical alerts (warning, error) - interrupt user
+<div role="alert" aria-live="assertive" aria-atomic="true">
+  {message}
+</div>
+
+// Non-critical status (info, success) - don't interrupt
+<div role="status" aria-live="polite" aria-atomic="true">
+  {message}
+</div>
+```
+
 ### RTL Support
 
 Components MUST work correctly in right-to-left layouts. RTL support is not optional.
@@ -1140,6 +1218,7 @@ Before submitting a new component, verify all items:
 - [ ] Composes `className` (never overrides consumer className)
 - [ ] Supports `style`, `id`, `data-*`, `aria-*` attributes automatically
 - [ ] `as` prop documented if supported (for polymorphic components)
+- [ ] `displayName` set on all exported components
 
 ### Naming
 - [ ] Component name is PascalCase
@@ -1156,9 +1235,11 @@ Before submitting a new component, verify all items:
 
 ### Accessibility
 - [ ] Keyboard accessible (Tab, Enter, Space, Arrow keys as appropriate)
-- [ ] Proper ARIA roles and attributes
+- [ ] Proper ARIA roles and attributes per WAI-ARIA APG patterns
 - [ ] Focus visible for all interactive states
 - [ ] Works with screen readers
+- [ ] Focus trap for modal overlays (Modal, Dialog, Drawer)
+- [ ] Toast/Alert uses correct role (alert/status) based on urgency
 
 ### RTL Support
 - [ ] Uses CSS logical properties (not left/right, use start/end)
@@ -1175,14 +1256,21 @@ Before submitting a new component, verify all items:
 - [ ] Respects prefers-reduced-motion
 
 ### Documentation
-- [ ] Story file with autodocs tag
-- [ ] Component description in meta
-- [ ] All variants documented
-- [ ] All sizes documented
+- [ ] Story file with `tags: ['autodocs']`
+- [ ] **Component description in meta** with ALL of the following sections:
+  - [ ] Brief description of purpose
+  - [ ] **When to Use** - bullet list of use cases
+  - [ ] **Variants** - table with variant name and use case
+  - [ ] **Sizes** - explanation of each size with heights (28px/36px/44px)
+  - [ ] **Accessibility** - keyboard support, ARIA roles, screen reader info
+  - [ ] **Usage** - code example showing import and basic usage
+- [ ] Individual story descriptions for non-obvious behaviors
+- [ ] All variants shown as separate stories
+- [ ] All sizes shown (typically in a "Sizes" story)
 - [ ] Disabled states shown
-- [ ] Controlled example (if applicable)
-- [ ] Alignment test with other controls
-- [ ] RTL story (for directional components)
+- [ ] Controlled example (if component supports controlled mode)
+- [ ] Alignment test with other controls (for interactive controls)
+- [ ] RTL story (for components with directional behavior)
 
 ### Testing
 - [ ] Renders correctly

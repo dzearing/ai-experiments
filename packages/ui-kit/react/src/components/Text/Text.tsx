@@ -55,3 +55,4 @@ export function Text({
     </Component>
   );
 }
+Text.displayName = 'Text';

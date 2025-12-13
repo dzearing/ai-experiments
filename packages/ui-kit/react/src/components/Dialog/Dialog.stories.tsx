@@ -164,3 +164,35 @@ export const LargeDialog: Story = {
     );
   },
 };
+
+export const FocusTrap: Story = {
+  render: () => {
+    const [open, setOpen] = useState(false);
+    return (
+      <>
+        <Button onClick={() => setOpen(true)}>Open Dialog with Focus Trap</Button>
+        <Dialog
+          open={open}
+          onClose={() => setOpen(false)}
+          title="Focus Trap Demo"
+          footer={
+            <>
+              <Button onClick={() => setOpen(false)}>Cancel</Button>
+              <Button variant="primary" onClick={() => setOpen(false)}>Submit</Button>
+            </>
+          }
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <p>
+              Try pressing Tab to cycle through the focusable elements.
+              The focus should stay trapped within this dialog, including the close button, inputs, and footer buttons.
+            </p>
+            <Input fullWidth placeholder="First input" />
+            <Input fullWidth placeholder="Second input" />
+            <Textarea fullWidth placeholder="Comments" rows={3} />
+          </div>
+        </Dialog>
+      </>
+    );
+  },
+};

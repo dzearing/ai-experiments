@@ -88,3 +88,13 @@
 .wrapper:has(.fullWidth) {
   width: 100%;
 }
+
+/* ==============================================
+   Reduced Motion
+   ============================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .select {
+    transition: none;
+  }
+}

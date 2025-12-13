@@ -112,3 +112,17 @@
 .lg {
   font-size: var(--text-lg);
 }
+
+/* ==============================================
+   Reduced Motion
+   ============================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .radio {
+    transition: none;
+  }
+
+  .dot {
+    transition: none;
+  }
+}

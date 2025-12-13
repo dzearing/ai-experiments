@@ -45,25 +45,65 @@ import { Text } from '../Text';
 const meta: Meta<typeof Sizer> = {
   title: 'Layout/Sizer',
   component: Sizer,
+  tags: ['autodocs'],
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component: `
-The Sizer component provides a draggable handle for resizing adjacent elements.
+Draggable handle for resizing adjacent panels or sections with mouse or keyboard.
 
-## Keyboard Support
+## When to Use
 
-| Key | Action |
-|-----|--------|
-| Arrow keys | Resize by 10px |
-| Shift + Arrow keys | Resize by 50px |
+- Resizable sidebar panels in application layouts
+- Split views where users control content area sizes
+- Adjustable columns in multi-panel interfaces (email clients, IDEs)
+- Collapsible navigation panes with expand/collapse on double-click
+- Any interface requiring user-controlled panel dimensions
 
-## Best Practices
+## Variants
 
-1. Always provide min/max constraints to prevent panels from collapsing completely
-2. Use the \`onDoubleClick\` prop to implement collapse/expand functionality
-3. Consider persisting panel sizes to localStorage for user preference
+| Orientation | Use Case |
+|-------------|----------|
+| \`horizontal\` | Side-by-side panels, resize left/right (default) |
+| \`vertical\` | Stacked panels, resize up/down |
+
+## Sizes
+
+The \`size\` prop controls the width (horizontal) or height (vertical) of the drag handle in pixels. Default: 8px.
+
+## Accessibility
+
+- \`role="separator"\` with \`aria-orientation\` for screen readers
+- Keyboard support: Arrow keys to resize (10px increments)
+- Shift + Arrow keys for faster resizing (50px increments)
+- Tab to focus the sizer, then use keyboard controls
+- Visual grip indicator for discoverability (can be hidden with \`showGrip={false}\`)
+- Double-click to collapse/expand (when \`onDoubleClick\` handler provided)
+
+## Usage
+
+\`\`\`tsx
+import { Sizer } from '@ui-kit/react';
+import { useState } from 'react';
+
+function ResizablePanels() {
+  const [leftWidth, setLeftWidth] = useState(250);
+
+  return (
+    <div style={{ display: 'flex', height: '400px' }}>
+      <Panel style={{ width: leftWidth }}>Left Panel</Panel>
+      <Sizer
+        orientation="horizontal"
+        onResize={(delta) => setLeftWidth(w => w + delta)}
+        min={100}
+        max={500}
+      />
+      <Panel style={{ flex: 1 }}>Right Panel</Panel>
+    </div>
+  );
+}
+\`\`\`
         `,
       },
     },

@@ -1,5 +1,6 @@
-import { useEffect, useCallback, type ReactNode } from 'react';
+import { useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { useFocusTrap } from '../../hooks';
 import styles from './Drawer.module.css';
 
 /**
@@ -44,6 +45,11 @@ export function Drawer({
   closeOnEscape = true,
   children,
 }: DrawerProps) {
+  const drawerRef = useRef<HTMLDivElement>(null);
+
+  // Enable focus trap when drawer is open
+  useFocusTrap(drawerRef, open);
+
   const handleEscape = useCallback(
     (event: globalThis.KeyboardEvent) => {
       if (closeOnEscape && event.key === 'Escape') {
@@ -80,6 +86,7 @@ export function Drawer({
   const drawer = (
     <div className={styles.backdrop} onClick={handleBackdropClick}>
       <div
+        ref={drawerRef}
         className={`${styles.drawer} ${styles[position]} ${styles[`size-${size}`]}`}
         onClick={handleContentClick}
         role="dialog"
@@ -92,3 +99,4 @@ export function Drawer({
 
   return createPortal(drawer, document.body);
 }
+Drawer.displayName = 'Drawer';

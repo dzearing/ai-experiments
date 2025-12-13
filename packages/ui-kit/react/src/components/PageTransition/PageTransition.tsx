@@ -187,3 +187,4 @@ export function PageTransition({
     </div>
   );
 }
+PageTransition.displayName = 'PageTransition';

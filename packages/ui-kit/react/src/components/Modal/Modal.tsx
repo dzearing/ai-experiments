@@ -1,5 +1,6 @@
-import { useEffect, useCallback, useState, type ReactNode } from 'react';
+import { useEffect, useCallback, useState, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { useFocusTrap } from '../../hooks';
 import styles from './Modal.module.css';
 
 /**
@@ -43,6 +44,10 @@ export function Modal({
 }: ModalProps) {
   const [visible, setVisible] = useState(open);
   const [exiting, setExiting] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  // Enable focus trap when modal is visible
+  useFocusTrap(modalRef, visible && !exiting);
 
   const handleEscape = useCallback(
     (event: globalThis.KeyboardEvent) => {
@@ -94,6 +99,7 @@ export function Modal({
   const modal = (
     <div className={`${styles.backdrop} ${exiting ? styles.exiting : ''}`} onClick={handleBackdropClick}>
       <div
+        ref={modalRef}
         className={`${styles.modal} ${styles[size]} ${exiting ? styles.exiting : ''}`}
         onClick={handleContentClick}
         role="dialog"
@@ -106,3 +112,4 @@ export function Modal({
 
   return createPortal(modal, document.body);
 }
+Modal.displayName = 'Modal';

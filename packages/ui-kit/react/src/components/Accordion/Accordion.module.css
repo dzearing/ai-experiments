@@ -44,7 +44,7 @@
   color: var(--page-text);
   font-size: var(--text-base);
   font-weight: var(--weight-medium);
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   transition: background var(--duration-fast) var(--ease-default);
 }
@@ -99,7 +99,7 @@
 
 /* Nested accordion styling */
 .accordion .accordion {
-  margin-left: var(--space-4);
+  margin-inline-start: var(--space-4);
 }
 
 .accordion .accordion .header {

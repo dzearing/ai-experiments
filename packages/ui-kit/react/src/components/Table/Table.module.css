@@ -6,7 +6,6 @@
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  background: var(--card-bg, var(--page-bg));
 }
 
 /* Size variants */
@@ -40,7 +39,7 @@
 
 /* Striped variant */
 .striped tbody tr:nth-child(even) {
-  background: var(--inset-bg);
+  background: var(--controlSubtle-bg-hover);
 }
 
 /* Sticky header */
@@ -51,7 +50,7 @@
 }
 
 .stickyHeader th {
-  background: var(--card-bg, var(--page-bg));
+  background: inherit;
 }
 
 /* Header cell */
@@ -59,7 +58,6 @@
   text-align: start;
   font-weight: var(--weight-medium);
   color: var(--page-text);
-  background: var(--card-bg, var(--page-bg));
   white-space: nowrap;
   border-bottom: 1px solid var(--page-border);
 }

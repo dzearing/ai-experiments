@@ -41,26 +41,58 @@ import { Text } from '../Text';
 const meta: Meta<typeof Accordion> = {
   title: 'Navigation/Accordion',
   component: Accordion,
+  tags: ['autodocs'],
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component: `
-The Accordion component organizes content into collapsible sections.
+Collapsible content panels for organizing and revealing information progressively.
+
+## When to Use
+
+- Organizing related content in limited vertical space
+- FAQs and help documentation with expandable answers
+- Settings pages with categorized options
+- Multi-step forms where sections can be collapsed after completion
+- Mobile interfaces where screen space is limited
 
 ## Variants
 
-| Variant | Description |
-|---------|-------------|
-| **default** | No borders, minimal styling |
-| **bordered** | Single border around all items |
-| **separated** | Individual borders with spacing between items |
+| Variant | Use Case |
+|---------|----------|
+| \`default\` | Minimal styling, blends with page background |
+| \`bordered\` | Single border around all items for visual containment |
+| \`separated\` | Individual borders with spacing for distinct sections |
 
 ## Behavior
 
-- By default, only one panel can be expanded at a time
-- Set \`allowMultiple={true}\` to allow multiple expanded panels
-- Use controlled mode with \`expandedItems\` for full control
+- **Single expand** (default): Only one panel open at a time
+- **Multiple expand**: Set \`allowMultiple={true}\` for independent panels
+- **Controlled mode**: Use \`expandedItems\` and \`onExpandedChange\` for full control
+
+## Accessibility
+
+- Uses semantic \`button\` elements for headers with proper ARIA attributes
+- Keyboard support: Tab to focus, Enter/Space to toggle, arrow keys for navigation
+- \`aria-expanded\` indicates panel state to screen readers
+- \`aria-controls\` links header to content panel
+- Disabled items are marked with \`aria-disabled\` and cannot be toggled
+
+## Usage
+
+\`\`\`tsx
+import { Accordion, AccordionItem, AccordionHeader, AccordionContent } from '@ui-kit/react';
+
+<Accordion allowMultiple>
+  <AccordionItem id="item-1">
+    <AccordionHeader itemId="item-1">Section Title</AccordionHeader>
+    <AccordionContent itemId="item-1">
+      Panel content goes here
+    </AccordionContent>
+  </AccordionItem>
+</Accordion>
+\`\`\`
         `,
       },
     },

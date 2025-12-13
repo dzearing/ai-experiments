@@ -665,3 +665,5 @@ export function Dropdown({
     </div>
   );
 }
+
+Dropdown.displayName = 'Dropdown';

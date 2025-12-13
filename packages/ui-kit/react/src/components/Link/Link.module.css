@@ -30,3 +30,13 @@
   margin-left: var(--space-0-5);
   vertical-align: middle;
 }
+
+/* ==============================================
+   Reduced Motion
+   ============================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .link {
+    transition: none;
+  }
+}

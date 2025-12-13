@@ -48,3 +48,4 @@ export function Panel({
     </div>
   );
 }
+Panel.displayName = 'Panel';

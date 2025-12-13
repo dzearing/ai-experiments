@@ -37,6 +37,7 @@ export function Card({
     </div>
   );
 }
+Card.displayName = 'Card';
 
 export function CardTitle({
   className,
@@ -49,6 +50,7 @@ export function CardTitle({
     </h3>
   );
 }
+CardTitle.displayName = 'CardTitle';
 
 export function CardDescription({
   className,
@@ -61,3 +63,4 @@ export function CardDescription({
     </p>
   );
 }
+CardDescription.displayName = 'CardDescription';

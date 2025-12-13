@@ -18,6 +18,7 @@ export function Form({ className, children, ...props }: FormProps) {
     </form>
   );
 }
+Form.displayName = 'Form';
 
 /**
  * FormField component - wrapper for individual form fields with label, hint, and error
@@ -68,6 +69,7 @@ export function FormField({
     </div>
   );
 }
+FormField.displayName = 'FormField';
 
 /**
  * FormActions component - container for form buttons with proper alignment
@@ -95,6 +97,7 @@ export function FormActions({
     </div>
   );
 }
+FormActions.displayName = 'FormActions';
 
 /**
  * FormRow component - horizontal layout for multiple fields in a row
@@ -113,3 +116,4 @@ export function FormRow({ className, children, ...props }: FormRowProps) {
     </div>
   );
 }
+FormRow.displayName = 'FormRow';

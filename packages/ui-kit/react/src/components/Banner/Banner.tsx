@@ -97,3 +97,4 @@ export function Banner({
     </div>
   );
 }
+Banner.displayName = 'Banner';

@@ -76,6 +76,7 @@ export function Fade({
     </div>
   );
 }
+Fade.displayName = 'Fade';
 
 /**
  * FadeIn component - one-way fade in animation on mount
@@ -111,3 +112,4 @@ export function FadeIn({
     </div>
   );
 }
+FadeIn.displayName = 'FadeIn';

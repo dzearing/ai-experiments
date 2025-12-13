@@ -70,3 +70,4 @@ export function Dialog({
     </Modal>
   );
 }
+Dialog.displayName = 'Dialog';

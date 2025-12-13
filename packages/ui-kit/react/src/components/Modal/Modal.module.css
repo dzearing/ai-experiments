@@ -94,3 +94,25 @@
 .modal.exiting {
   animation: slideOut var(--duration-normal) var(--ease-default) forwards;
 }
+
+/* ==============================================
+   Reduced Motion
+   ============================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop {
+    animation: none;
+  }
+
+  .modal {
+    animation: none;
+  }
+
+  .backdrop.exiting {
+    animation: none;
+  }
+
+  .modal.exiting {
+    animation: none;
+  }
+}

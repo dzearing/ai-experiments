@@ -112,6 +112,7 @@ export function Accordion({
     </AccordionContext.Provider>
   );
 }
+Accordion.displayName = 'Accordion';
 
 // AccordionItem Component
 export interface AccordionItemProps {
@@ -149,6 +150,7 @@ export function AccordionItem({
     </div>
   );
 }
+AccordionItem.displayName = 'AccordionItem';
 
 // AccordionHeader Component
 export interface AccordionHeaderProps {
@@ -226,6 +228,7 @@ export function AccordionHeader({
     </button>
   );
 }
+AccordionHeader.displayName = 'AccordionHeader';
 
 // AccordionContent Component
 export interface AccordionContentProps {
@@ -253,3 +256,4 @@ export function AccordionContent({
     </Collapse>
   );
 }
+AccordionContent.displayName = 'AccordionContent';

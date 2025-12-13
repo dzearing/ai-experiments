@@ -40,3 +40,4 @@ export function Heading({
     </Component>
   );
 }
+Heading.displayName = 'Heading';

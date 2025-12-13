@@ -126,6 +126,7 @@ export function Scale({
     </div>
   );
 }
+Scale.displayName = 'Scale';
 
 /**
  * ScaleIn component - one-way scale in animation on mount
@@ -169,3 +170,4 @@ export function ScaleIn({
     </div>
   );
 }
+ScaleIn.displayName = 'ScaleIn';

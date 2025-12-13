@@ -58,3 +58,14 @@
   height: 32px;
   color: var(--page-text-soft);
 }
+
+/* ==============================================
+   Reduced Motion
+   ============================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .navButton,
+  .pageButton {
+    transition: none;
+  }
+}

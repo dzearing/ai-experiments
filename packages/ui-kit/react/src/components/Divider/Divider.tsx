@@ -35,3 +35,4 @@ export function Divider({
 
   return <hr className={classNames} {...props} />;
 }
+Divider.displayName = 'Divider';

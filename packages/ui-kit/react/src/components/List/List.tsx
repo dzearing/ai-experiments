@@ -129,6 +129,7 @@ export function List({
     </ListContext.Provider>
   );
 }
+List.displayName = 'List';
 
 // ListItem Component
 export interface ListItemProps {
@@ -218,6 +219,7 @@ export function ListItem({
 
   return <li className={classNames}>{content}</li>;
 }
+ListItem.displayName = 'ListItem';
 
 // ListItemText Component
 export interface ListItemTextProps {
@@ -237,6 +239,7 @@ export function ListItemText({ primary, secondary, className }: ListItemTextProp
     </div>
   );
 }
+ListItemText.displayName = 'ListItemText';
 
 // ListGroup Component
 export interface ListGroupProps {
@@ -299,8 +302,10 @@ export function ListGroup({
     </li>
   );
 }
+ListGroup.displayName = 'ListGroup';
 
 // ListDivider Component
 export function ListDivider() {
   return <li className={styles.divider} role="separator" />;
 }
+ListDivider.displayName = 'ListDivider';

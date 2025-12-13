@@ -1,4 +1,4 @@
-import { useState, useRef, type ReactNode } from 'react';
+import { useState, useRef, useId, type ReactNode } from 'react';
 import styles from './Tooltip.module.css';
 
 /**
@@ -12,6 +12,11 @@ import styles from './Tooltip.module.css';
  * - --tooltip-text
  * - --radius-sm
  * - --shadow-sm
+ *
+ * Accessibility:
+ * - Uses aria-describedby to link trigger to tooltip content
+ * - Supports keyboard focus (onFocus/onBlur)
+ * - role="tooltip" on the tooltip element
  */
 
 export type TooltipPosition = 'top' | 'bottom' | 'left' | 'right';
@@ -35,6 +40,7 @@ export function Tooltip({
 }: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
   const timeoutRef = useRef<number | undefined>(undefined);
+  const tooltipId = useId();
 
   const showTooltip = () => {
     timeoutRef.current = window.setTimeout(() => {
@@ -56,10 +62,15 @@ export function Tooltip({
       onMouseLeave={hideTooltip}
       onFocus={showTooltip}
       onBlur={hideTooltip}
+      aria-describedby={isVisible ? tooltipId : undefined}
     >
       {children}
       {isVisible && (
-        <div className={`${styles.tooltip} ${styles[position]}`} role="tooltip">
+        <div
+          id={tooltipId}
+          className={`${styles.tooltip} ${styles[position]}`}
+          role="tooltip"
+        >
           {content}
           <span className={styles.arrow} />
         </div>
@@ -67,3 +78,5 @@ export function Tooltip({
     </div>
   );
 }
+
+Tooltip.displayName = 'Tooltip';

@@ -106,6 +106,7 @@ export function Slide({
     </div>
   );
 }
+Slide.displayName = 'Slide';
 
 /**
  * SlideIn component - one-way slide in animation on mount
@@ -150,3 +151,4 @@ export function SlideIn({
     </div>
   );
 }
+SlideIn.displayName = 'SlideIn';

@@ -178,3 +178,22 @@
     transform: translateY(0);
   }
 }
+
+/* ==============================================
+   Reduced Motion
+   ============================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .menu {
+    animation: none;
+    transition: none;
+  }
+
+  .submenu {
+    animation: none;
+  }
+
+  .item {
+    transition: none;
+  }
+}

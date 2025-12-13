@@ -57,6 +57,7 @@ export function Toolbar({
     </div>
   );
 }
+Toolbar.displayName = 'Toolbar';
 
 // ToolbarGroup Component
 export interface ToolbarGroupProps {
@@ -83,6 +84,7 @@ export function ToolbarGroup({
 
   return <div className={classNames}>{children}</div>;
 }
+ToolbarGroup.displayName = 'ToolbarGroup';
 
 // ToolbarDivider Component
 export interface ToolbarDividerProps {
@@ -93,11 +95,13 @@ export interface ToolbarDividerProps {
 export function ToolbarDivider({ className }: ToolbarDividerProps) {
   return <div className={`${styles.divider} ${className || ''}`} role="separator" />;
 }
+ToolbarDivider.displayName = 'ToolbarDivider';
 
 // ToolbarSpacer Component
 export function ToolbarSpacer() {
   return <div className={styles.spacer} />;
 }
+ToolbarSpacer.displayName = 'ToolbarSpacer';
 
 // ButtonGroup Component (for connected buttons)
 export interface ButtonGroupProps {
@@ -124,3 +128,4 @@ export function ButtonGroup({
 
   return <div className={classNames} role="group">{children}</div>;
 }
+ButtonGroup.displayName = 'ButtonGroup';

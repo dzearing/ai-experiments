@@ -59,3 +59,4 @@ export function Stack({
     </Component>
   );
 }
+Stack.displayName = 'Stack';

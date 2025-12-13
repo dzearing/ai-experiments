@@ -55,27 +55,72 @@ import { Text } from '../Text';
 
 const meta: Meta = {
   title: 'Animation/Overview',
+  tags: ['autodocs'],
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component: `
-Animation components provide smooth enter/exit transitions for UI elements.
+Smooth enter/exit transitions for revealing and hiding UI elements.
 
-## Key Features
+## When to Use
 
-- **CSS-based**: Uses CSS transitions and keyframes for smooth 60fps animations
-- **Reduced motion**: Respects \`prefers-reduced-motion\` user preference
-- **Hooks included**: Use \`useAnimatePresence\` for custom animation logic
-- **Duration control**: All durations are customizable
-- **Callbacks**: \`onEnterComplete\` and \`onExitComplete\` for sequencing
+- Showing and hiding modal dialogs or dropdown menus
+- Expanding and collapsing accordion panels or sidebars
+- Fading in newly loaded content or notifications
+- Sliding panels in and out of view
+- Creating staggered entrance animations for lists
 
-## Best Practices
+## Variants
 
-1. Use \`duration={200}\` for most UI transitions
-2. Use \`duration={300}\` for larger/more complex animations
-3. Use \`duration={100}\` for micro-interactions (hover states)
-4. Always provide reduced motion alternatives
+| Component | Use Case |
+|-----------|----------|
+| \`Collapse\` | Animates height for expand/collapse effects |
+| \`Fade\` | Simple opacity animation for show/hide |
+| \`Slide\` | Directional slide in/out (up, down, left, right) |
+| \`Scale\` | Grow/shrink animation with customizable origin |
+| \`FadeIn\` | One-way fade on mount (for staggered lists) |
+| \`SlideIn\` | One-way slide on mount |
+| \`ScaleIn\` | One-way scale on mount |
+
+## Durations
+
+- **100ms**: Micro-interactions, hover effects
+- **200ms**: Default for most transitions (recommended)
+- **300ms**: Larger or more complex animations
+
+## Accessibility
+
+- Respects \`prefers-reduced-motion\` system setting
+- Animations are instantly completed when reduced motion is enabled
+- Focus management maintained during transitions
+- Callbacks allow for announcement to screen readers after animation
+
+## Usage
+
+\`\`\`tsx
+import { Fade, Collapse, Slide, Scale } from '@ui-kit/react';
+
+// Simple fade
+<Fade isVisible={isOpen}>
+  <Panel>Content</Panel>
+</Fade>
+
+// Height animation
+<Collapse isOpen={isExpanded}>
+  <div>Expandable content</div>
+</Collapse>
+
+// Directional slide
+<Slide isVisible={isVisible} direction="up" distance={20}>
+  <Notification />
+</Slide>
+
+// Scale with origin
+<Scale isVisible={isVisible} initialScale={0.9} origin="top">
+  <Dialog />
+</Scale>
+\`\`\`
         `,
       },
     },

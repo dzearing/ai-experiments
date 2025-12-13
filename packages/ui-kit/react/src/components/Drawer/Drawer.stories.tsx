@@ -131,3 +131,47 @@ export const Positions: Story = {
     );
   },
 };
+
+export const FocusTrap: Story = {
+  render: () => {
+    const [open, setOpen] = useState(false);
+    return (
+      <>
+        <button onClick={() => setOpen(true)}>Open Drawer with Focus Trap</button>
+        <Drawer open={open} onClose={() => setOpen(false)} position="right">
+          <div style={{ padding: '24px' }}>
+            <h2 style={{ marginBottom: '16px' }}>Focus Trap Demo</h2>
+            <p style={{ marginBottom: '16px' }}>
+              Try pressing Tab to cycle through the focusable elements.
+              The focus should stay trapped within this drawer.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <input type="text" placeholder="Search..." style={{ padding: '8px' }} />
+              <div>
+                <h3>Filters</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <input type="checkbox" />
+                    Option 1
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <input type="checkbox" />
+                    Option 2
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <input type="checkbox" />
+                    Option 3
+                  </label>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+                <button onClick={() => setOpen(false)}>Reset</button>
+                <button onClick={() => setOpen(false)}>Apply</button>
+              </div>
+            </div>
+          </div>
+        </Drawer>
+      </>
+    );
+  },
+};

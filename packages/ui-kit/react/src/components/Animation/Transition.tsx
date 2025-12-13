@@ -112,6 +112,7 @@ export function Transition({
     </div>
   );
 }
+Transition.displayName = 'Transition';
 
 /**
  * AnimatePresence component - wrapper for managing mount/unmount animations
@@ -144,3 +145,4 @@ export function AnimatePresence({
 
   return <>{children}</>;
 }
+AnimatePresence.displayName = 'AnimatePresence';

@@ -62,27 +62,76 @@ import { Panel } from '../Panel';
 const meta: Meta<typeof TreeView> = {
   title: 'Navigation/TreeView',
   component: TreeView,
+  tags: ['autodocs'],
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component: `
-The TreeView component displays hierarchical data with virtualization for large datasets.
+Virtualized hierarchical tree navigation for displaying large nested data structures efficiently.
+
+## When to Use
+
+- File explorers and directory browsers
+- Organization charts showing company structure
+- Category navigation in e-commerce sites
+- Folder hierarchies in email or note-taking apps
+- Any nested menu or navigation with 100+ items
+
+## Variants
+
+TreeView doesn't have visual variants, but supports different configurations:
+- **Selectable**: Click nodes to select (single selection)
+- **Expandable**: Click chevron to expand/collapse folders
+- **With icons**: Custom icons per node or via icon resolver
+- **Disabled nodes**: Gray out unavailable items
 
 ## Virtualization
 
-The component uses windowed rendering to efficiently handle trees with thousands of nodes.
-Only visible nodes (plus a small buffer) are rendered to the DOM.
+Handles 10,000+ nodes efficiently using windowed rendering. Only visible nodes (plus buffer) are rendered to the DOM for optimal performance.
 
-## Node Structure
+## Accessibility
 
-Each node has the following properties:
-- \`id\`: Unique identifier (required)
-- \`label\`: Display text (required)
-- \`type\`: Node type for icon resolution (optional)
-- \`icon\`: Custom icon element (optional, overrides iconResolver)
-- \`children\`: Nested child nodes (optional)
-- \`disabled\`: Whether node is disabled (optional)
+- \`role="tree"\` with \`role="treeitem"\` for proper screen reader structure
+- Full keyboard navigation:
+  - Arrow Up/Down: Navigate between visible nodes
+  - Arrow Right: Expand folder or move to first child
+  - Arrow Left: Collapse folder or move to parent
+  - Home/End: Jump to first/last visible node
+  - PageUp/PageDown: Navigate by viewport height
+  - Enter: Select node and toggle expansion
+  - Space: Select node only (no toggle)
+- \`aria-expanded\` indicates folder state
+- \`aria-selected\` indicates selection
+- \`aria-level\` communicates nesting depth
+- Disabled nodes marked with \`aria-disabled\`
+
+## Usage
+
+\`\`\`tsx
+import { TreeView, type TreeNode } from '@ui-kit/react';
+
+const data: TreeNode[] = [
+  {
+    id: 'folder-1',
+    label: 'Documents',
+    type: 'folder',
+    children: [
+      { id: 'file-1', label: 'Resume.pdf', type: 'file' },
+      { id: 'file-2', label: 'Cover Letter.docx', type: 'file' },
+    ],
+  },
+];
+
+<TreeView
+  data={data}
+  height={400}
+  selectable
+  defaultExpandedIds={['folder-1']}
+  onSelect={(id, node) => console.log(id, node)}
+  aria-label="File tree"
+/>
+\`\`\`
         `,
       },
     },

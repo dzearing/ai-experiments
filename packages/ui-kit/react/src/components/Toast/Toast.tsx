@@ -8,6 +8,12 @@ import styles from './Toast.module.css';
  * Tokens used:
  * - --panel-background, --panel-border
  * - --status-info, --status-success, --status-warning, --status-error
+ *
+ * Accessibility:
+ * - role="status" for non-critical notifications (default, info, success)
+ * - role="alert" for critical notifications (warning, error)
+ * - aria-live="polite" for status, aria-live="assertive" for alerts
+ * - aria-atomic="true" ensures full content is announced
  */
 
 export type ToastVariant = 'default' | 'info' | 'success' | 'warning' | 'error';
@@ -74,12 +80,17 @@ export function Toast({
 
   if (!visible) return null;
 
+  // Use role="alert" and assertive for critical variants (warning/error)
+  // Use role="status" and polite for non-critical variants
+  const isUrgent = variant === 'warning' || variant === 'error';
+
   const toast = (
     <div className={`${styles.container} ${styles[position]}`}>
       <div
         className={`${styles.toast} ${styles[variant]} ${exiting ? styles.exiting : ''}`}
-        role="alert"
-        aria-live="polite"
+        role={isUrgent ? 'alert' : 'status'}
+        aria-live={isUrgent ? 'assertive' : 'polite'}
+        aria-atomic="true"
       >
         <div className={styles.content}>
           {title && <div className={styles.title}>{title}</div>}
@@ -194,11 +205,16 @@ function ToastItem({ variant, title, message, duration = 5000, action, onClose }
     setTimeout(onClose, 200);
   };
 
+  // Use role="alert" and assertive for critical variants (warning/error)
+  // Use role="status" and polite for non-critical variants
+  const isUrgent = variant === 'warning' || variant === 'error';
+
   return (
     <div
       className={`${styles.toast} ${styles[variant]} ${exiting ? styles.exiting : ''}`}
-      role="alert"
-      aria-live="polite"
+      role={isUrgent ? 'alert' : 'status'}
+      aria-live={isUrgent ? 'assertive' : 'polite'}
+      aria-atomic="true"
     >
       <div className={styles.content}>
         {title && <div className={styles.title}>{title}</div>}
@@ -211,3 +227,6 @@ function ToastItem({ variant, title, message, duration = 5000, action, onClose }
     </div>
   );
 }
+
+Toast.displayName = 'Toast';
+ToastProvider.displayName = 'ToastProvider';

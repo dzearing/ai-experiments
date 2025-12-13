@@ -83,3 +83,20 @@
     transform: translateX(-50%) translateY(0);
   }
 }
+
+/* ==============================================
+   Reduced Motion
+   ============================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .popover {
+    animation: none;
+  }
+
+  .top,
+  .bottom,
+  .left,
+  .right {
+    animation: none;
+  }
+}

@@ -87,3 +87,4 @@ export function Popover({
     </div>
   );
 }
+Popover.displayName = 'Popover';

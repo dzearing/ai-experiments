@@ -160,3 +160,4 @@ export function Sizer({
     </div>
   );
 }
+Sizer.displayName = 'Sizer';

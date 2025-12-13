@@ -45,3 +45,4 @@ export function IconButton({
     />
   );
 }
+IconButton.displayName = 'IconButton';

@@ -96,3 +96,13 @@
 .error .icon {
   color: var(--danger-icon);
 }
+
+/* ==============================================
+   Reduced Motion
+   ============================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .close {
+    transition: none;
+  }
+}

@@ -41,26 +41,71 @@ import { Panel } from '../Panel';
 const meta: Meta<typeof List> = {
   title: 'Data Display/List',
   component: List,
+  tags: ['autodocs'],
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component: `
-The List component displays collections of items with consistent styling.
+Display collections of items with optional selection, leading/trailing content, and grouping.
 
-## Density Options
+## When to Use
 
-| Density | Padding | Use Case |
-|---------|---------|----------|
-| **compact** | 4px 8px | Dense lists, menus |
-| **comfortable** | 8px 12px | Default, balanced |
-| **spacious** | 12px 16px | Touch targets, emphasis |
+- Navigation menus and sidebars with clickable items
+- Settings panels with list of options or preferences
+- Contact or user lists with avatars and status indicators
+- File explorers showing files and folders
+- Inbox or message lists with metadata
 
-## Selection Modes
+## Variants
 
-- **Single select**: Only one item can be selected at a time
-- **Multi-select**: Multiple items can be selected
-- **Non-selectable**: Items are display-only
+| Variant | Use Case |
+|---------|----------|
+| \`default\` | Clean list without borders |
+| \`bordered\` | Single border around entire list |
+| \`divided\` | Dividers between individual items |
+
+## Sizes (Density)
+
+- **compact** (4px 8px): Dense lists, dropdown menus, space-constrained UIs
+- **comfortable** (8px 12px): Default spacing for most use cases
+- **spacious** (12px 16px): Touch-friendly interfaces, emphasis on items
+
+## Accessibility
+
+- Uses \`role="listbox"\` for selectable lists, \`role="list"\` otherwise
+- List items have \`role="option"\` when selectable
+- \`aria-selected\` indicates selection state to screen readers
+- \`aria-multiselectable\` set when multi-select is enabled
+- Keyboard navigation with Tab, arrow keys, and Enter/Space
+- Disabled items marked with \`aria-disabled\`
+
+## Usage
+
+\`\`\`tsx
+import { List, ListItem, ListItemText } from '@ui-kit/react';
+
+// Simple list
+<List>
+  <ListItem>Item 1</ListItem>
+  <ListItem>Item 2</ListItem>
+</List>
+
+// Selectable with icons
+<List selectable onSelectionChange={(value) => console.log(value)}>
+  <ListItem value="1" leading={<Icon />}>
+    <ListItemText primary="Title" secondary="Description" />
+  </ListItem>
+</List>
+
+// Multi-select with groups
+<List selectable multiSelect>
+  <ListGroup label="Category">
+    <ListItem value="a">Item A</ListItem>
+    <ListItem value="b">Item B</ListItem>
+  </ListGroup>
+</List>
+\`\`\`
         `,
       },
     },

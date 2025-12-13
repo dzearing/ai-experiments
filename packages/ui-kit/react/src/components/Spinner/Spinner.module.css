@@ -63,3 +63,14 @@
   white-space: nowrap;
   border: 0;
 }
+
+/* ==============================================
+   Reduced Motion
+   ============================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .svg {
+    animation: none;
+    transform: rotate(45deg); /* Static position showing arc indicator */
+  }
+}

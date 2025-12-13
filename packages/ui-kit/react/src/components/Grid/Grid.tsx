@@ -60,3 +60,4 @@ export function Grid({
     </div>
   );
 }
+Grid.displayName = 'Grid';

@@ -75,3 +75,4 @@ export function Chip({
     </Component>
   );
 }
+Chip.displayName = 'Chip';

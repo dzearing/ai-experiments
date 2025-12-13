@@ -605,3 +605,4 @@ export function TreeView({
     </div>
   );
 }
+TreeView.displayName = 'TreeView';

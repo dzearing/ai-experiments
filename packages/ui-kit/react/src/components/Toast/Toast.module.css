@@ -212,3 +212,21 @@
 .error .close:hover {
   color: var(--danger-text);
 }
+
+/* ==============================================
+   Reduced Motion
+   ============================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+  }
+
+  .toast.exiting {
+    animation: none;
+  }
+
+  .close {
+    transition: none;
+  }
+}

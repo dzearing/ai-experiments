@@ -71,11 +71,11 @@
 
 .align-end {
   justify-content: flex-end;
-  margin-left: auto;
+  margin-inline-start: auto;
 }
 
 .vertical .align-end {
-  margin-left: 0;
+  margin-inline-start: 0;
   margin-top: auto;
 }
 
@@ -111,11 +111,17 @@
 }
 
 .buttonGroup > *:first-child {
-  border-radius: var(--radius-md) 0 0 var(--radius-md);
+  border-start-start-radius: var(--radius-md);
+  border-end-start-radius: var(--radius-md);
+  border-start-end-radius: 0;
+  border-end-end-radius: 0;
 }
 
 .buttonGroup > *:last-child {
-  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+  border-start-end-radius: var(--radius-md);
+  border-end-end-radius: var(--radius-md);
 }
 
 .buttonGroup > *:only-child {
@@ -123,7 +129,7 @@
 }
 
 .buttonGroup > *:not(:last-child) {
-  border-right-width: 0;
+  border-inline-end-width: 0;
 }
 
 .buttonGroup-outlined > * {
@@ -131,5 +137,5 @@
 }
 
 .buttonGroup-outlined > *:not(:last-child) {
-  border-right: none;
+  border-inline-end: none;
 }

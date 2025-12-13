@@ -41,30 +41,74 @@ import { List, ListItem } from '../List';
 const meta: Meta<typeof SplitPane> = {
   title: 'Layout/SplitPane',
   component: SplitPane,
+  tags: ['autodocs'],
   parameters: {
     layout: 'fullscreen',
     docs: {
       description: {
         component: `
-The SplitPane component creates a resizable two-panel layout.
+Resizable two-panel layout for side-by-side or stacked content with built-in Sizer.
 
-## Orientations
+## When to Use
 
-| Orientation | Description |
-|-------------|-------------|
-| **horizontal** | Panels side by side (default) |
-| **vertical** | Panels stacked vertically |
+- Application layouts with resizable sidebar and main content
+- Code editors with file explorer and editor panes
+- Email clients with message list and reading pane
+- Documentation sites with navigation and content areas
+- Any interface requiring user-adjustable panel sizes
 
-## Resizing
+## Variants
 
-- Drag the sizer handle to resize
-- Double-click to collapse/expand (when \`collapsible\` is enabled)
-- Use \`minSize\` and \`maxSize\` to constrain resize range
+| Orientation | Use Case |
+|-------------|----------|
+| \`horizontal\` | Panels side by side (resize left/right) |
+| \`vertical\` | Panels stacked vertically (resize up/down) |
 
-## Control Modes
+## Sizing Options
 
-- **Uncontrolled**: Use \`defaultSize\` and \`defaultCollapsed\`
-- **Controlled**: Use \`size\`, \`collapsed\`, and callbacks
+- **Pixel value**: \`defaultSize={250}\` for fixed initial size
+- **Percentage**: \`defaultSize="30%"\` for responsive initial size
+- **Controlled**: Use \`size\` prop with \`onSizeChange\` callback
+
+## Accessibility
+
+- Built-in Sizer with proper ARIA roles and keyboard support
+- Tab to focus sizer, Arrow keys to resize
+- Double-click sizer to collapse/expand first panel (when \`collapsible={true}\`)
+- \`minSize\` and \`maxSize\` prevent panels from becoming unusable
+- Maintains focus and reading order for screen readers
+
+## Usage
+
+\`\`\`tsx
+import { SplitPane } from '@ui-kit/react';
+
+// Basic usage
+<SplitPane
+  first={<Sidebar />}
+  second={<MainContent />}
+  defaultSize={250}
+  minSize={150}
+  maxSize={400}
+/>
+
+// Collapsible sidebar
+<SplitPane
+  first={<Sidebar />}
+  second={<MainContent />}
+  defaultSize={250}
+  collapsible
+  onCollapsedChange={(collapsed) => console.log(collapsed)}
+/>
+
+// Vertical split
+<SplitPane
+  orientation="vertical"
+  first={<TopPanel />}
+  second={<BottomPanel />}
+  defaultSize="60%"
+/>
+\`\`\`
         `,
       },
     },

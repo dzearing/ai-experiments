@@ -114,3 +114,17 @@
 .lg {
   font-size: var(--text-lg);
 }
+
+/* ==============================================
+   Reduced Motion
+   ============================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .checkbox {
+    transition: none;
+  }
+
+  .checkmark {
+    transition: none;
+  }
+}

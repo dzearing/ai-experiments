@@ -290,5 +290,6 @@ export function Segmented({
     </div>
   );
 }
+Segmented.displayName = 'Segmented';
 
 export default Segmented;

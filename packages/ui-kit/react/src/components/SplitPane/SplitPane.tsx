@@ -174,3 +174,4 @@ export function SplitPane({
     </div>
   );
 }
+SplitPane.displayName = 'SplitPane';

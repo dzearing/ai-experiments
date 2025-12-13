@@ -60,31 +60,70 @@ const meta: Meta<typeof Table> = {
     docs: {
       description: {
         component: `
-The Table component displays tabular data with rich features.
+Display tabular data with sorting, selection, and custom cell rendering.
 
-## Column Configuration
+## When to Use
 
-| Property | Description |
-|----------|-------------|
-| **id** | Unique column identifier |
-| **header** | Column header content |
-| **accessor** | Key or function to get cell value |
-| **sortable** | Enable sorting for this column |
-| **cell** | Custom cell renderer |
-| **align** | Text alignment (left, center, right) |
-| **width** | Column width |
+- Data grids showing structured records (users, products, orders)
+- Admin panels with sortable and filterable lists
+- Reports and dashboards with tabular data
+- Comparison tables (features, pricing plans)
+- Any interface requiring organized row/column data display
 
-## Selection
+## Variants
 
-- Single select: One row at a time
-- Multi-select: Checkbox column with select all
+| Feature | Use Case |
+|---------|----------|
+| \`bordered\` | Add borders around cells for visual structure |
+| \`striped\` | Alternate row backgrounds for better scanning |
+| \`stickyHeader\` | Keep header visible while scrolling long tables |
+| \`selectable\` | Enable row selection (single or multi-select) |
+| \`sortable\` | Click column headers to sort data |
+
+## Sizes
+
+The \`size\` prop controls row density:
+- **sm**: Compact rows for dense data display
+- **md**: Default comfortable spacing (recommended)
+- **lg**: Spacious rows for touch interfaces
 
 ## Accessibility
 
-- Keyboard navigation for sortable columns (Tab + Enter/Space)
-- ARIA sort attributes for screen readers
-- Focus visible styling for interactive elements
-- RTL support with logical CSS properties
+- Semantic \`<table>\` structure with proper \`<thead>\`, \`<tbody>\`, \`<th>\`, \`<td>\` elements
+- Sortable columns have \`aria-sort\` attributes (ascending, descending, none)
+- Keyboard navigation: Tab through sortable headers, Enter/Space to sort
+- Row selection: Click row or checkbox, indicated with \`aria-selected\`
+- Multi-select has select-all checkbox in header
+- RTL support with CSS logical properties
+
+## Usage
+
+\`\`\`tsx
+import { Table, type TableColumn } from '@ui-kit/react';
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+const columns: TableColumn<User>[] = [
+  { id: 'name', header: 'Name', accessor: 'name', sortable: true },
+  { id: 'email', header: 'Email', accessor: 'email' },
+  { id: 'role', header: 'Role', accessor: 'role' },
+];
+
+<Table
+  columns={columns}
+  data={users}
+  getRowKey={(user) => user.id}
+  selectable
+  onSelectionChange={(keys) => console.log(keys)}
+  sort={sort}
+  onSortChange={setSort}
+/>
+\`\`\`
         `,
       },
     },

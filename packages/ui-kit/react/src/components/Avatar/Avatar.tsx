@@ -51,3 +51,4 @@ export function Avatar({
     </div>
   );
 }
+Avatar.displayName = 'Avatar';

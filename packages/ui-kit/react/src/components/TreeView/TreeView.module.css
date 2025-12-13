@@ -19,8 +19,8 @@
 .virtualList {
   position: absolute;
   top: 0;
-  left: 0;
-  right: 0;
+  inset-inline-start: 0;
+  inset-inline-end: 0;
   width: 100%;
 }
 
@@ -29,7 +29,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-1);
-  padding-right: var(--space-3);
+  padding-inline-end: var(--space-3);
   color: var(--page-text);
   font-size: var(--text-sm);
   border-radius: var(--radius-sm);
