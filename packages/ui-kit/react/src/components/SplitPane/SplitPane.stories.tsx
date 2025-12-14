@@ -155,7 +155,7 @@ const fileTreeData: TreeNode[] = [
 // Placeholder panels
 const Sidebar = ({ title = 'Sidebar' }: { title?: string }) => (
   <Panel style={{ height: '100%', padding: 'var(--space-3)' }}>
-    <Text weight="medium" style={{ marginBottom: 'var(--space-2)' }}>{title}</Text>
+    <Text as="div" weight="medium" style={{ marginBottom: 'var(--space-2)' }}>{title}</Text>
     <TreeView
       data={fileTreeData}
       selectable
@@ -166,8 +166,8 @@ const Sidebar = ({ title = 'Sidebar' }: { title?: string }) => (
 
 const MainContent = ({ title = 'Main Content' }: { title?: string }) => (
   <Panel style={{ height: '100%', padding: 'var(--space-3)' }}>
-    <Text weight="medium" style={{ marginBottom: 'var(--space-2)' }}>{title}</Text>
-    <Text color="soft">
+    <Text as="p" weight="medium" style={{ marginBottom: 'var(--space-2)' }}>{title}</Text>
+    <Text as="p" color="soft">
       This is the main content area. Drag the handle to resize the panels.
     </Text>
   </Panel>
@@ -278,14 +278,14 @@ export const Vertical: Story = {
         orientation="vertical"
         first={
           <Panel style={{ height: '100%', padding: 'var(--space-3)' }}>
-            <Text weight="medium">Top Panel</Text>
-            <Text color="soft" size="sm">This panel is on top.</Text>
+            <Text as="p" weight="medium">Top Panel</Text>
+            <Text as="p" color="soft" size="sm">This panel is on top.</Text>
           </Panel>
         }
         second={
           <Panel style={{ height: '100%', padding: 'var(--space-3)' }}>
-            <Text weight="medium">Bottom Panel</Text>
-            <Text color="soft" size="sm">This panel is on the bottom. Drag to resize vertically.</Text>
+            <Text as="p" weight="medium">Bottom Panel</Text>
+            <Text as="p" color="soft" size="sm">This panel is on the bottom. Drag to resize vertically.</Text>
           </Panel>
         }
         defaultSize={200}
@@ -334,16 +334,16 @@ export const Nested: Story = {
             orientation="vertical"
             first={
               <Panel style={{ height: '100%', padding: 'var(--space-3)' }}>
-                <Text weight="medium">Editor</Text>
-                <Text color="soft" size="sm" style={{ marginTop: 'var(--space-2)' }}>
+                <Text as="p" weight="medium">Editor</Text>
+                <Text as="p" color="soft" size="sm" style={{ marginTop: 'var(--space-2)' }}>
                   Main editing area with nested vertical split.
                 </Text>
               </Panel>
             }
             second={
               <Panel style={{ height: '100%', padding: 'var(--space-3)' }}>
-                <Text weight="medium">Terminal</Text>
-                <Text color="soft" size="sm" style={{ marginTop: 'var(--space-2)' }}>
+                <Text as="p" weight="medium">Terminal</Text>
+                <Text as="p" color="soft" size="sm" style={{ marginTop: 'var(--space-2)' }}>
                   Output or terminal panel below.
                 </Text>
               </Panel>

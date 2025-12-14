@@ -12,22 +12,31 @@ import { tags } from '@lezer/highlight';
 /**
  * Editor theme using CSS custom properties from the design system.
  * All colors adapt automatically when theme changes.
+ *
+ * Token mapping from ui-kit/core themes:
+ * - --inset-bg: Editor background (darker/indented surfaces)
+ * - --inset-text: Editor text color
+ * - --inset-border: Editor borders
+ * - --page-text: Primary text color
+ * - --page-text-soft: Secondary/muted text
+ * - --card-bg: Panel/card backgrounds
+ * - --card-border: Panel/card borders
  */
 export const editorTheme = EditorView.theme({
   // Root editor container
   '&': {
-    backgroundColor: 'var(--color-inset-background, var(--color-body-background))',
-    color: 'var(--color-inset-text, var(--color-body-text))',
+    backgroundColor: 'var(--inset-bg, #f8f9fa)',
+    color: 'var(--inset-text, var(--page-text, #24292e))',
     height: '100%',
   },
 
   // Content area
   '.cm-content': {
     fontFamily: 'var(--font-mono, ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace)',
-    fontSize: 'var(--font-size-sm, 13px)',
+    fontSize: 'var(--text-sm, 13px)',
     lineHeight: '1.5',
-    padding: 'var(--spacing-small10, 8px) 0',
-    caretColor: 'var(--color-body-text)',
+    padding: 'var(--space-2, 8px) 0',
+    caretColor: 'var(--page-text, #24292e)',
   },
 
   // Editor container that allows focus
@@ -37,11 +46,11 @@ export const editorTheme = EditorView.theme({
 
   // Gutters (line numbers, fold markers)
   '.cm-gutters': {
-    backgroundColor: 'var(--color-panel-background, rgba(0, 0, 0, 0.03))',
-    color: 'var(--color-body-textSoft20, rgba(0, 0, 0, 0.4))',
-    borderRight: '1px solid var(--color-inset-border, var(--color-body-border))',
+    backgroundColor: 'var(--card-bg, rgba(0, 0, 0, 0.03))',
+    color: 'var(--page-text-soft, rgba(0, 0, 0, 0.4))',
+    borderRight: '1px solid var(--inset-border, var(--page-border, #e1e4e8))',
     fontFamily: 'var(--font-mono, ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace)',
-    fontSize: 'var(--font-size-sm, 13px)',
+    fontSize: 'var(--text-sm, 13px)',
   },
 
   // Line numbers gutter
@@ -63,48 +72,48 @@ export const editorTheme = EditorView.theme({
   '.cm-foldGutter .cm-gutterElement': {
     padding: '0 2px',
     cursor: 'pointer',
-    color: 'var(--color-body-textSoft20)',
+    color: 'var(--page-text-softer, var(--page-text-soft, rgba(0, 0, 0, 0.3)))',
     transition: 'color var(--duration-fast, 100ms)',
   },
 
   '.cm-foldGutter .cm-gutterElement:hover': {
-    color: 'var(--color-body-text)',
+    color: 'var(--page-text, #24292e)',
   },
 
   // Cursor
   '.cm-cursor': {
-    borderLeftColor: 'var(--color-body-text)',
+    borderLeftColor: 'var(--page-text, #24292e)',
     borderLeftWidth: '2px',
   },
 
   // Selection
   '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
-    backgroundColor: 'var(--color-selection-background, rgba(0, 120, 212, 0.2))',
+    backgroundColor: 'var(--selection-bg, rgba(0, 120, 212, 0.2))',
   },
 
   '.cm-selectionMatch': {
-    backgroundColor: 'var(--color-selection-background, rgba(0, 120, 212, 0.15))',
+    backgroundColor: 'var(--selection-bg, rgba(0, 120, 212, 0.15))',
   },
 
   // Active line highlight
   '.cm-activeLine': {
-    backgroundColor: 'var(--color-panel-background, rgba(0, 0, 0, 0.02))',
+    backgroundColor: 'var(--inset-bg-hover, rgba(0, 0, 0, 0.02))',
   },
 
   '.cm-activeLineGutter': {
-    backgroundColor: 'var(--color-panel-background, rgba(0, 0, 0, 0.05))',
+    backgroundColor: 'var(--inset-bg-hover, rgba(0, 0, 0, 0.05))',
   },
 
   // Search panel
   '.cm-panels': {
-    backgroundColor: 'var(--color-panel-background)',
-    borderBottom: '1px solid var(--color-panel-border)',
+    backgroundColor: 'var(--card-bg, #ffffff)',
+    borderBottom: '1px solid var(--card-border, #e1e4e8)',
     fontFamily: 'var(--font-sans, system-ui, -apple-system, sans-serif)',
-    fontSize: 'var(--font-size-sm, 13px)',
+    fontSize: 'var(--text-sm, 13px)',
   },
 
   '.cm-panels.cm-panels-top': {
-    borderBottom: '1px solid var(--color-panel-border)',
+    borderBottom: '1px solid var(--card-border, #e1e4e8)',
   },
 
   // Search matches - soft yellow highlight
@@ -122,24 +131,24 @@ export const editorTheme = EditorView.theme({
 
   // Tooltip (autocomplete, etc.)
   '.cm-tooltip': {
-    backgroundColor: 'var(--color-panel-background)',
-    border: '1px solid var(--color-panel-border)',
+    backgroundColor: 'var(--popout-bg, #ffffff)',
+    border: '1px solid var(--popout-border, #e1e4e8)',
     borderRadius: 'var(--radius-sm, 4px)',
-    boxShadow: 'var(--shadow-card)',
+    boxShadow: 'var(--popout-shadow, 0 4px 6px rgba(0, 0, 0, 0.1))',
   },
 
   // Placeholder
   '.cm-placeholder': {
-    color: 'var(--color-body-textSoft20, rgba(0, 0, 0, 0.4))',
+    color: 'var(--page-text-softer, var(--page-text-soft, rgba(0, 0, 0, 0.4)))',
     fontStyle: 'italic',
   },
 
   // Fold placeholder
   '.cm-foldPlaceholder': {
-    backgroundColor: 'var(--color-panel-background)',
-    border: '1px solid var(--color-panel-border)',
-    borderRadius: 'var(--radius-xs, 2px)',
-    color: 'var(--color-body-textSoft10)',
+    backgroundColor: 'var(--card-bg, #f6f8fa)',
+    border: '1px solid var(--card-border, #e1e4e8)',
+    borderRadius: 'var(--radius-sm, 2px)',
+    color: 'var(--page-text-soft, #6a737d)',
     padding: '0 4px',
     margin: '0 2px',
     fontSize: '0.85em',
@@ -148,7 +157,7 @@ export const editorTheme = EditorView.theme({
   // Scrollbar styling
   '.cm-scroller': {
     scrollbarWidth: 'thin',
-    scrollbarColor: 'var(--color-body-textSoft20) transparent',
+    scrollbarColor: 'var(--page-text-softer, rgba(0, 0, 0, 0.2)) transparent',
   },
 
   '.cm-scroller::-webkit-scrollbar': {
@@ -161,12 +170,12 @@ export const editorTheme = EditorView.theme({
   },
 
   '.cm-scroller::-webkit-scrollbar-thumb': {
-    background: 'var(--color-body-textSoft20, rgba(0, 0, 0, 0.2))',
+    background: 'var(--page-text-softer, rgba(0, 0, 0, 0.2))',
     borderRadius: '4px',
   },
 
   '.cm-scroller::-webkit-scrollbar-thumb:hover': {
-    background: 'var(--color-body-textSoft10, rgba(0, 0, 0, 0.3))',
+    background: 'var(--page-text-soft, rgba(0, 0, 0, 0.3))',
   },
 
   // Line wrap indicator
@@ -197,48 +206,49 @@ export const syntaxHighlightStyle = HighlightStyle.define([
   {
     tag: tags.monospace,
     fontFamily: 'var(--font-mono, ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace)',
-    backgroundColor: 'var(--color-panel-background, rgba(0, 0, 0, 0.05))',
+    backgroundColor: 'var(--card-bg, rgba(0, 0, 0, 0.05))',
     borderRadius: '3px',
     padding: '1px 4px',
   },
 
   // Links
-  { tag: tags.link, color: 'var(--color-body-link, #0066cc)', textDecoration: 'underline' },
-  { tag: tags.url, color: 'var(--color-body-link, #0066cc)' },
+  { tag: tags.link, color: 'var(--link-text, #0066cc)', textDecoration: 'underline' },
+  { tag: tags.url, color: 'var(--link-text, #0066cc)' },
 
   // Lists
-  { tag: tags.list, color: 'var(--color-body-textSoft10)' },
+  { tag: tags.list, color: 'var(--page-text-soft, #6a737d)' },
 
   // Quotes
-  { tag: tags.quote, fontStyle: 'italic', color: 'var(--color-body-textSoft10)' },
+  { tag: tags.quote, fontStyle: 'italic', color: 'var(--page-text-soft, #6a737d)' },
 
   // Meta (markdown symbols like #, *, etc.)
-  { tag: tags.processingInstruction, color: 'var(--color-body-textSoft20)' },
-  { tag: tags.meta, color: 'var(--color-body-textSoft20)' },
+  { tag: tags.processingInstruction, color: 'var(--page-text-softer, var(--page-text-soft, #959da5))' },
+  { tag: tags.meta, color: 'var(--page-text-softer, var(--page-text-soft, #959da5))' },
 
-  // Code block highlighting
-  { tag: tags.keyword, color: '#d73a49' },
-  { tag: tags.operator, color: '#d73a49' },
-  { tag: tags.variableName, color: '#24292e' },
-  { tag: tags.propertyName, color: '#005cc5' },
-  { tag: tags.function(tags.variableName), color: '#6f42c1' },
-  { tag: tags.function(tags.propertyName), color: '#6f42c1' },
-  { tag: tags.string, color: '#22863a' },
-  { tag: tags.number, color: '#005cc5' },
-  { tag: tags.bool, color: '#005cc5' },
-  { tag: tags.null, color: '#005cc5' },
-  { tag: tags.comment, color: '#6a737d', fontStyle: 'italic' },
-  { tag: tags.className, color: '#6f42c1' },
-  { tag: tags.typeName, color: '#6f42c1' },
-  { tag: tags.attributeName, color: '#6f42c1' },
-  { tag: tags.attributeValue, color: '#22863a' },
-  { tag: tags.regexp, color: '#032f62' },
-  { tag: tags.tagName, color: '#22863a' },
-  { tag: tags.angleBracket, color: '#24292e' },
-  { tag: tags.bracket, color: '#24292e' },
-  { tag: tags.paren, color: '#24292e' },
-  { tag: tags.brace, color: '#24292e' },
-  { tag: tags.squareBracket, color: '#24292e' },
+  // Code block highlighting - uses CSS custom properties for dark mode adaptation
+  // These vars are defined in MarkdownEditor.module.css with dark mode overrides
+  { tag: tags.keyword, color: 'var(--syntax-keyword, #d73a49)' },
+  { tag: tags.operator, color: 'var(--syntax-keyword, #d73a49)' },
+  { tag: tags.variableName, color: 'var(--page-text, #24292e)' },
+  { tag: tags.propertyName, color: 'var(--syntax-property, #005cc5)' },
+  { tag: tags.function(tags.variableName), color: 'var(--syntax-function, #6f42c1)' },
+  { tag: tags.function(tags.propertyName), color: 'var(--syntax-function, #6f42c1)' },
+  { tag: tags.string, color: 'var(--syntax-string, #22863a)' },
+  { tag: tags.number, color: 'var(--syntax-number, #005cc5)' },
+  { tag: tags.bool, color: 'var(--syntax-number, #005cc5)' },
+  { tag: tags.null, color: 'var(--syntax-number, #005cc5)' },
+  { tag: tags.comment, color: 'var(--syntax-comment, #6a737d)', fontStyle: 'italic' },
+  { tag: tags.className, color: 'var(--syntax-class, #6f42c1)' },
+  { tag: tags.typeName, color: 'var(--syntax-class, #6f42c1)' },
+  { tag: tags.attributeName, color: 'var(--syntax-function, #6f42c1)' },
+  { tag: tags.attributeValue, color: 'var(--syntax-string, #22863a)' },
+  { tag: tags.regexp, color: 'var(--syntax-regexp, #032f62)' },
+  { tag: tags.tagName, color: 'var(--syntax-tag, #22863a)' },
+  { tag: tags.angleBracket, color: 'var(--page-text, #24292e)' },
+  { tag: tags.bracket, color: 'var(--page-text, #24292e)' },
+  { tag: tags.paren, color: 'var(--page-text, #24292e)' },
+  { tag: tags.brace, color: 'var(--page-text, #24292e)' },
+  { tag: tags.squareBracket, color: 'var(--page-text, #24292e)' },
 ]);
 
 /**

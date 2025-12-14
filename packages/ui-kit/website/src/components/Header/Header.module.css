@@ -19,7 +19,7 @@
 .logo {
   font-size: var(--text-xl);
   font-weight: var(--weight-bold);
-  color: var(--page-text-hard);
+  color: var(--page-text-strong);
   text-decoration: none;
 }
 

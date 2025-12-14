@@ -1,0 +1,440 @@
+{/* Docs.mdx */}
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Docs" />
+
+# @ui-kit/icons
+
+A scalable icon library providing **88 icons** across 5 categories with multiple consumption formats optimized for different use cases.
+
+---
+
+## Consumption Approaches
+
+Choose the approach that best fits your use case:
+
+<table>
+  <thead>
+    <tr>
+      <th>Approach</th>
+      <th>Best For</th>
+      <th>Bundle Impact</th>
+      <th>Runtime</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>React Components</strong></td>
+      <td>Modern React apps</td>
+      <td>Tree-shakable (~1KB/icon)</td>
+      <td>Instant</td>
+    </tr>
+    <tr>
+      <td><strong>SVG Sprite</strong></td>
+      <td>SSR, non-React, shared cache</td>
+      <td>Single HTTP request (~15KB)</td>
+      <td>Instant</td>
+    </tr>
+    <tr>
+      <td><strong>Icon Font</strong></td>
+      <td>Legacy systems, email, CSS-only</td>
+      <td>Font file (~20KB)</td>
+      <td>Font load</td>
+    </tr>
+    <tr>
+      <td><strong>Inline SVG</strong></td>
+      <td>Maximum control, animation</td>
+      <td>Zero (embedded)</td>
+      <td>Instant</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## 1. React Components (Recommended)
+
+Best for modern React applications. Each icon is a separate module for optimal tree-shaking.
+
+### Direct Import (Best Tree-Shaking)
+
+```tsx
+// Import only what you use - each icon is ~1KB
+import { SaveIcon } from '@ui-kit/icons/SaveIcon';
+import { EditIcon } from '@ui-kit/icons/EditIcon';
+
+function Toolbar() {
+  return (
+    <div className="toolbar">
+      <button aria-label="Save">
+        <SaveIcon size={20} />
+      </button>
+      <button aria-label="Edit">
+        <EditIcon size={20} />
+      </button>
+    </div>
+  );
+}
+```
+
+### Barrel Import (Convenient for Development)
+
+```tsx
+// Convenient but relies on bundler optimization
+import { SaveIcon, EditIcon, DeleteIcon } from '@ui-kit/icons';
+```
+
+> **Note:** Barrel imports work well with modern bundlers (Vite, webpack 5, esbuild) that support tree-shaking. For maximum control, use direct imports.
+
+### Props API
+
+<table>
+  <thead>
+    <tr>
+      <th>Prop</th>
+      <th>Type</th>
+      <th>Default</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>size</code></td>
+      <td><code>number | string</code></td>
+      <td><code>24</code></td>
+      <td>Width and height in pixels</td>
+    </tr>
+    <tr>
+      <td><code>title</code></td>
+      <td><code>string</code></td>
+      <td>-</td>
+      <td>Accessible label (adds <code>role="img"</code>)</td>
+    </tr>
+    <tr>
+      <td><code>className</code></td>
+      <td><code>string</code></td>
+      <td>-</td>
+      <td>CSS class name</td>
+    </tr>
+    <tr>
+      <td><code>style</code></td>
+      <td><code>CSSProperties</code></td>
+      <td>-</td>
+      <td>Inline styles</td>
+    </tr>
+    <tr>
+      <td><code>...props</code></td>
+      <td><code>SVGProps</code></td>
+      <td>-</td>
+      <td>All SVG attributes</td>
+    </tr>
+  </tbody>
+</table>
+
+### Accessibility
+
+```tsx
+// Decorative icon (default) - hidden from screen readers
+<SearchIcon size={20} />
+
+// Meaningful icon - announced by screen readers
+<SearchIcon size={20} title="Search" />
+
+// With visible label - icon is decorative
+<button>
+  <SaveIcon size={16} />
+  <span>Save</span>
+</button>
+```
+
+---
+
+## 2. SVG Sprite
+
+Best for SSR applications, non-React environments, or when you want a single cacheable file.
+
+### Setup
+
+Include the sprite once in your HTML (typically in the document head or body):
+
+```html
+<!-- Option A: External reference -->
+<link rel="preload" href="/sprite.svg" as="image" type="image/svg+xml" />
+
+<!-- Option B: Inline for SSR -->
+<svg style="display: none;">
+  <!-- Contents of dist/sprite/sprite.svg -->
+</svg>
+```
+
+### Usage
+
+```html
+<!-- External sprite reference -->
+<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+  <use href="/sprite.svg#save" />
+</svg>
+
+<!-- Inline sprite reference -->
+<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+  <use href="#save" />
+</svg>
+
+<!-- With accessible title -->
+<svg viewBox="0 0 24 24" width="24" height="24" role="img" aria-label="Save document">
+  <use href="#save" />
+</svg>
+```
+
+### React Wrapper
+
+```tsx
+interface SpriteIconProps {
+  name: string;
+  size?: number;
+  title?: string;
+  className?: string;
+}
+
+function SpriteIcon({ name, size = 24, title, className }: SpriteIconProps) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      className={className}
+      aria-hidden={!title}
+      role={title ? 'img' : undefined}
+      aria-label={title}
+    >
+      <use href={`/sprite.svg#${name}`} />
+    </svg>
+  );
+}
+
+// Usage
+<SpriteIcon name="save" size={20} />
+```
+
+### Tradeoffs
+
+**Pros:**
+- Single HTTP request for all icons
+- Browser caches the sprite file
+- Works without JavaScript
+- Good for SSR hydration (no flash)
+
+**Cons:**
+- Loads all icons even if you use few
+- External file requires additional request
+- Inline sprite increases HTML size
+- Styling limited to CSS custom properties
+
+---
+
+## 3. Icon Font (WOFF2)
+
+Best for legacy browser support, email templates, or CSS-only implementations.
+
+### Setup
+
+```html
+<link rel="stylesheet" href="@ui-kit/icons/font/icons.css" />
+```
+
+Or import in your CSS/JS:
+
+```css
+@import '@ui-kit/icons/font/icons.css';
+```
+
+### Usage
+
+```html
+<!-- Basic usage -->
+<i class="icon icon-save"></i>
+<i class="icon icon-edit"></i>
+
+<!-- With sizing -->
+<i class="icon icon-save" style="font-size: 24px;"></i>
+
+<!-- In buttons -->
+<button>
+  <i class="icon icon-save"></i>
+  Save
+</button>
+```
+
+### Custom Subset
+
+Use the **Font Subset Generator** to create a custom font with only the icons you need:
+
+1. Open the Font Subset Generator in this Storybook
+2. Select the icons you need
+3. Choose export format (CSS, Data URI, or WOFF2)
+4. Copy or download the generated output
+
+### Tradeoffs
+
+**Pros:**
+- Works everywhere (including email)
+- Easy CSS sizing with `font-size`
+- Inherits text color automatically
+- Small subset possible with generator
+
+**Cons:**
+- Single color only (no multicolor icons)
+- Font rendering can be blurry at small sizes
+- Flash of invisible text (FOIT) during load
+- Accessibility requires additional markup
+
+---
+
+## 4. Inline SVG
+
+Best when you need maximum control, custom animations, or want to avoid any external dependencies.
+
+### Copy from Source
+
+SVG files are located at `src/svgs/{category}/{name}.svg`. Copy the content directly:
+
+```tsx
+function CustomSaveIcon({ size = 24, className }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      fill="none"
+      className={className}
+      aria-hidden="true"
+    >
+      <path
+        d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M17 21v-8H7v8M7 3v5h8"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+```
+
+### Tradeoffs
+
+**Pros:**
+- Zero dependencies
+- Full control over every path
+- Easy to animate with CSS/JS
+- No external requests
+
+**Cons:**
+- Increases bundle/HTML size
+- Manual updates when icons change
+- No tree-shaking benefits
+- Duplicated if used multiple times
+
+---
+
+## Styling Icons
+
+All icons use `currentColor` for strokes, making them easy to style:
+
+```css
+/* Inherit text color (default) */
+.icon {
+  color: inherit;
+}
+
+/* Custom color */
+.icon-primary {
+  color: var(--color-primary);
+}
+
+/* Hover state */
+button:hover .icon {
+  color: var(--color-primary-hover);
+}
+
+/* Sizing */
+.icon-sm { width: 16px; height: 16px; }
+.icon-md { width: 24px; height: 24px; }
+.icon-lg { width: 32px; height: 32px; }
+```
+
+---
+
+## Icon Categories
+
+<table>
+  <thead>
+    <tr>
+      <th>Category</th>
+      <th>Count</th>
+      <th>Examples</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Actions</strong></td>
+      <td>32</td>
+      <td>save, edit, delete, copy, paste, undo, redo</td>
+    </tr>
+    <tr>
+      <td><strong>Navigation</strong></td>
+      <td>16</td>
+      <td>arrow-*, chevron-*, home, menu, close</td>
+    </tr>
+    <tr>
+      <td><strong>Status</strong></td>
+      <td>9</td>
+      <td>check, error, warning, info</td>
+    </tr>
+    <tr>
+      <td><strong>Editor</strong></td>
+      <td>18</td>
+      <td>bold, italic, heading-*, list-*, code</td>
+    </tr>
+    <tr>
+      <td><strong>Misc</strong></td>
+      <td>13</td>
+      <td>user, folder, file, calendar, settings</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## Adding New Icons
+
+1. Drop an SVG file into `src/svgs/{category}/`
+2. Run `pnpm build`
+3. The icon is automatically available in all formats
+
+### SVG Requirements
+
+```xml
+<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path
+    d="..."
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>
+```
+
+- **ViewBox:** `0 0 24 24`
+- **Stroke-based:** Use `stroke="currentColor"`
+- **No fill:** Use `fill="none"` for outline style
+- **Stroke width:** 2px recommended
+- **Line caps/joins:** Round for consistency

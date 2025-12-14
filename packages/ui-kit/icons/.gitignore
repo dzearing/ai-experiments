@@ -1,0 +1,16 @@
+# Build output
+dist/
+
+# Generated source files (regenerated on build)
+src/components/
+src/index.ts
+
+# Dependencies
+node_modules/
+
+# Storybook
+storybook-static/
+
+# Editor
+.DS_Store
+*.swp

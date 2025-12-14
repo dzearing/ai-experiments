@@ -116,12 +116,6 @@ function ResizablePanels() {
     size: {
       control: { type: 'range', min: 4, max: 20, step: 1 },
     },
-    showGrip: {
-      control: 'boolean',
-    },
-    disabled: {
-      control: 'boolean',
-    },
   },
 };
 
@@ -129,7 +123,7 @@ export default meta;
 type Story = StoryObj<typeof Sizer>;
 
 // Interactive demo with horizontal sizer
-function HorizontalDemo() {
+function DefaultDemo() {
   const [leftWidth, setLeftWidth] = useState(250);
   const minWidth = 100;
   const maxWidth = 500;
@@ -148,11 +142,11 @@ function HorizontalDemo() {
         }}
         padding="md"
       >
-        <Text weight="medium">Left Panel</Text>
-        <Text size="sm" color="soft" style={{ marginTop: 'var(--space-2)' }}>
+        <Text as="p" weight="medium">Left Panel</Text>
+        <Text as="p" size="sm" color="soft" style={{ marginTop: 'var(--space-2)' }}>
           Width: {leftWidth}px
         </Text>
-        <Text size="sm" color="soft" style={{ marginTop: 'var(--space-1)' }}>
+        <Text as="p" size="sm" color="soft" style={{ marginTop: 'var(--space-1)' }}>
           Drag the sizer to resize
         </Text>
       </Panel>
@@ -164,8 +158,8 @@ function HorizontalDemo() {
         }}
         padding="md"
       >
-        <Text weight="medium">Right Panel</Text>
-        <Text size="sm" color="soft" style={{ marginTop: 'var(--space-2)' }}>
+        <Text as="p" weight="medium">Right Panel</Text>
+        <Text as="p" size="sm" color="soft" style={{ marginTop: 'var(--space-2)' }}>
           Flexible width
         </Text>
       </Panel>
@@ -173,8 +167,8 @@ function HorizontalDemo() {
   );
 }
 
-export const Horizontal: Story = {
-  render: () => <HorizontalDemo />,
+export const Default: Story = {
+  render: () => <DefaultDemo />,
   parameters: {
     docs: {
       description: {
@@ -204,8 +198,8 @@ function VerticalDemo() {
         }}
         padding="md"
       >
-        <Text weight="medium">Top Panel</Text>
-        <Text size="sm" color="soft" style={{ marginTop: 'var(--space-2)' }}>
+        <Text as="p" weight="medium">Top Panel</Text>
+        <Text as="p" size="sm" color="soft" style={{ marginTop: 'var(--space-2)' }}>
           Height: {topHeight}px
         </Text>
       </Panel>
@@ -217,8 +211,8 @@ function VerticalDemo() {
         }}
         padding="md"
       >
-        <Text weight="medium">Bottom Panel</Text>
-        <Text size="sm" color="soft" style={{ marginTop: 'var(--space-2)' }}>
+        <Text as="p" weight="medium">Bottom Panel</Text>
+        <Text as="p" size="sm" color="soft" style={{ marginTop: 'var(--space-2)' }}>
           Flexible height
         </Text>
       </Panel>
@@ -241,6 +235,7 @@ export const Vertical: Story = {
 function CollapsibleDemo() {
   const [leftWidth, setLeftWidth] = useState(250);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
   const minWidth = 50;
   const expandedWidth = 250;
 
@@ -250,6 +245,7 @@ function CollapsibleDemo() {
   };
 
   const handleDoubleClick = () => {
+    setIsAnimating(true);
     if (isCollapsed) {
       setLeftWidth(expandedWidth);
       setIsCollapsed(false);
@@ -259,6 +255,10 @@ function CollapsibleDemo() {
     }
   };
 
+  const handleTransitionEnd = () => {
+    setIsAnimating(false);
+  };
+
   return (
     <div style={{ display: 'flex', height: '300px', border: '1px solid var(--page-border)', borderRadius: 'var(--radius-md)' }}>
       <Panel
@@ -266,15 +266,16 @@ function CollapsibleDemo() {
           width: `${leftWidth}px`,
           flexShrink: 0,
           borderRadius: 'var(--radius-md) 0 0 var(--radius-md)',
-          transition: 'width var(--duration-normal) var(--ease-default)',
+          transition: isAnimating ? 'width var(--duration-normal) var(--ease-default)' : 'none',
           overflow: 'hidden',
         }}
         padding="md"
+        onTransitionEnd={handleTransitionEnd}
       >
         {!isCollapsed && (
           <>
-            <Text weight="medium">Sidebar</Text>
-            <Text size="sm" color="soft" style={{ marginTop: 'var(--space-2)' }}>
+            <Text as="p" weight="medium">Sidebar</Text>
+            <Text as="p" size="sm" color="soft" style={{ marginTop: 'var(--space-2)' }}>
               Double-click sizer to collapse
             </Text>
           </>
@@ -292,8 +293,8 @@ function CollapsibleDemo() {
         }}
         padding="md"
       >
-        <Text weight="medium">Main Content</Text>
-        <Text size="sm" color="soft" style={{ marginTop: 'var(--space-2)' }}>
+        <Text as="p" weight="medium">Main Content</Text>
+        <Text as="p" size="sm" color="soft" style={{ marginTop: 'var(--space-2)' }}>
           {isCollapsed ? 'Double-click sizer to expand sidebar' : 'Sidebar is expanded'}
         </Text>
       </Panel>
@@ -312,71 +313,3 @@ export const Collapsible: Story = {
   },
 };
 
-// Basic examples
-export const Default: Story = {
-  args: {
-    orientation: 'horizontal',
-  },
-  render: (args) => (
-    <div style={{ display: 'flex', height: '100px', alignItems: 'center' }}>
-      <div style={{ padding: 'var(--space-4)', background: 'var(--panel-bg)' }}>
-        Left
-      </div>
-      <Sizer {...args} />
-      <div style={{ padding: 'var(--space-4)', background: 'var(--panel-bg)' }}>
-        Right
-      </div>
-    </div>
-  ),
-};
-
-export const Disabled: Story = {
-  args: {
-    orientation: 'horizontal',
-    disabled: true,
-  },
-  render: (args) => (
-    <div style={{ display: 'flex', height: '100px', alignItems: 'center' }}>
-      <div style={{ padding: 'var(--space-4)', background: 'var(--panel-bg)' }}>
-        Left
-      </div>
-      <Sizer {...args} />
-      <div style={{ padding: 'var(--space-4)', background: 'var(--panel-bg)' }}>
-        Right
-      </div>
-    </div>
-  ),
-  parameters: {
-    docs: {
-      description: {
-        story: 'A disabled sizer that cannot be dragged.',
-      },
-    },
-  },
-};
-
-export const NoGrip: Story = {
-  args: {
-    orientation: 'horizontal',
-    showGrip: false,
-    size: 4,
-  },
-  render: (args) => (
-    <div style={{ display: 'flex', height: '100px', alignItems: 'center' }}>
-      <div style={{ padding: 'var(--space-4)', background: 'var(--panel-bg)' }}>
-        Left
-      </div>
-      <Sizer {...args} />
-      <div style={{ padding: 'var(--space-4)', background: 'var(--panel-bg)' }}>
-        Right
-      </div>
-    </div>
-  ),
-  parameters: {
-    docs: {
-      description: {
-        story: 'A minimal sizer without the grip indicator.',
-      },
-    },
-  },
-};

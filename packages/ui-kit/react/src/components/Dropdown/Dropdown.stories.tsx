@@ -1,61 +1,99 @@
+import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { Dropdown } from './Dropdown';
-import { Button } from '../Button';
+import { Dropdown, type DropdownOption } from './Dropdown';
+import { Stack } from '../Stack';
+import { Text } from '../Text';
+
+/**
+ * # Dropdown
+ *
+ * A select-like component with single/multi-select, search, and type-to-select capabilities.
+ *
+ * ## Features
+ *
+ * - Single and multi-select modes
+ * - Searchable/filterable options
+ * - Type-to-select (native select behavior)
+ * - Custom option and value rendering
+ * - Chip display for multi-select
+ * - Full keyboard navigation
+ * - Clearable option
+ * - Loading and error states
+ *
+ * ## Usage
+ *
+ * ```tsx
+ * import { Dropdown } from '@ui-kit/react';
+ *
+ * const options = [
+ *   { value: 'react', label: 'React' },
+ *   { value: 'vue', label: 'Vue' },
+ *   { value: 'angular', label: 'Angular' },
+ * ];
+ *
+ * <Dropdown
+ *   options={options}
+ *   value={selected}
+ *   onChange={setSelected}
+ *   placeholder="Select a framework..."
+ * />
+ * ```
+ */
 
 const meta: Meta<typeof Dropdown> = {
-  title: 'Overlays/Dropdown',
+  title: 'Inputs/Dropdown',
   component: Dropdown,
   tags: ['autodocs'],
   parameters: {
+    layout: 'centered',
     docs: {
       description: {
         component: `
-Menu that appears below a trigger element with selectable options.
+Select-like component for choosing from a list of options with advanced features.
 
 ## When to Use
 
-- Action menus (Edit, Delete, Share)
-- Context menus
-- Navigation dropdowns
-- Selection from many options
+- Single selection from many options
+- Multi-selection with tag display
+- Searchable dropdowns for large lists
+- Custom option rendering
+- Form inputs requiring selection
 
-## Dropdown vs Select
+## Dropdown vs Menu vs Select
 
 | Component | Use Case |
 |-----------|----------|
-| **Dropdown** | Actions, navigation, rich content |
-| **Select** | Form input, value selection |
-
-## Features
-
-- **icon**: Add icons to menu items
-- **shortcut**: Display keyboard shortcuts
-- **divider**: Group related items with separators
-- **disabled**: Disable specific items
-- **items**: Nested submenus
+| **Dropdown** | Selection with search, multi-select, rich rendering |
+| **Menu** | Actions and navigation (context menus, file menus) |
+| **Select** | Simple native HTML select for basic forms |
 
 ## Keyboard Navigation
 
 | Key | Action |
 |-----|--------|
-| **Enter/Space** | Open menu, select item, or expand submenu |
-| **Escape** | Close menu or submenu |
-| **ArrowDown** | Move to next item |
-| **ArrowUp** | Move to previous item |
-| **ArrowRight** (LTR) | Expand submenu |
-| **ArrowLeft** (LTR) | Close submenu |
-| **Home** | Move to first item |
-| **End** | Move to last item |
-| **PageUp/Down** | Move up/down by 10 items |
+| **Enter/Space** | Open dropdown, select option |
+| **Escape** | Close dropdown |
+| **ArrowDown/Up** | Navigate options |
+| **Home/End** | Jump to first/last option |
+| **Backspace** | Remove last chip (multi-select, empty search) |
+| **Type characters** | Type-to-select (jumps to matching option) |
 
-## RTL Support
+## Type-to-Select
 
-In RTL mode, arrow keys for submenu expand/collapse are reversed.
+When the dropdown is closed or in non-searchable mode, typing characters will jump to matching options (like a native select). The search buffer resets after 1 second of inactivity.
         `,
       },
     },
   },
   argTypes: {
+    mode: {
+      control: 'select',
+      options: ['single', 'multi'],
+    },
+    size: {
+      control: 'select',
+      options: ['sm', 'md', 'lg'],
+    },
     position: {
       control: 'select',
       options: ['bottom-start', 'bottom-end', 'top-start', 'top-end'],
@@ -64,355 +102,513 @@ In RTL mode, arrow keys for submenu expand/collapse are reversed.
 };
 
 export default meta;
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj<typeof Dropdown>;
 
-// SVG Icon components for stories
-const EditIcon = () => (
+// Icon components
+const ReactIcon = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-    <path d="M11.498 2.502a2.5 2.5 0 013.536 3.536l-8.5 8.5a1 1 0 01-.39.242l-3 1a1 1 0 01-1.212-1.212l1-3a1 1 0 01.242-.39l8.5-8.5z"/>
+    <circle cx="8" cy="8" r="1.5" />
+    <ellipse cx="8" cy="8" rx="7" ry="2.5" fill="none" stroke="currentColor" strokeWidth="1" />
+    <ellipse cx="8" cy="8" rx="7" ry="2.5" fill="none" stroke="currentColor" strokeWidth="1" transform="rotate(60 8 8)" />
+    <ellipse cx="8" cy="8" rx="7" ry="2.5" fill="none" stroke="currentColor" strokeWidth="1" transform="rotate(120 8 8)" />
   </svg>
 );
 
-const CopyIcon = () => (
+const VueIcon = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-    <path d="M4 2a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2V2zm2 0v8h6V2H6z"/>
-    <path d="M2 4a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2v-1H8v1H2V6h1V4H2z"/>
+    <path d="M8 12.5L2 2h3l3 5.5L11 2h3L8 12.5z" />
   </svg>
 );
 
-const ShareIcon = () => (
+const AngularIcon = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-    <path d="M11 2.5a2.5 2.5 0 110 5 2.5 2.5 0 010-5zM11 9.5a2.5 2.5 0 110 5 2.5 2.5 0 010-5zM5 6a2.5 2.5 0 110 5 2.5 2.5 0 010-5z"/>
-    <path d="M7.35 8.15l4 2.5-.7 1.1-4-2.5.7-1.1zM11.35 5.85l-4 2.5-.7-1.1 4-2.5.7 1.1z"/>
+    <path d="M8 1L1 4l1 9 6 3 6-3 1-9-7-3zm0 2.5l4 8.5H9.5L8.5 10h-1L6.5 12H4l4-8.5z" />
   </svg>
 );
 
-const DeleteIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-    <path d="M5 2V1a1 1 0 011-1h4a1 1 0 011 1v1h3a1 1 0 110 2h-1v10a2 2 0 01-2 2H5a2 2 0 01-2-2V4H2a1 1 0 010-2h3zm1 0h4V1H6v1zM4 4v10h8V4H4z"/>
-  </svg>
-);
-
-const UndoIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-    <path d="M8 3a5 5 0 110 10 5 5 0 010-10zm0-2a7 7 0 100 14A7 7 0 008 1z"/>
-    <path d="M8 4l-3 3 3 3v-2a2 2 0 010 4v1a3 3 0 100-6V4z"/>
-  </svg>
-);
-
-const RedoIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-    <path d="M8 3a5 5 0 100 10 5 5 0 000-10zm0-2a7 7 0 110 14A7 7 0 018 1z"/>
-    <path d="M8 4l3 3-3 3v-2a2 2 0 100 4v1a3 3 0 110-6V4z"/>
-  </svg>
-);
-
-const FolderIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-    <path d="M1 3.5A1.5 1.5 0 012.5 2h3.172a1.5 1.5 0 011.06.44l.829.828a.5.5 0 00.353.147H13.5A1.5 1.5 0 0115 4.914V12.5a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 011 12.5v-9z"/>
-  </svg>
-);
-
-const defaultItems = [
-  { label: 'Edit', value: 'edit' },
-  { label: 'Duplicate', value: 'duplicate' },
-  { label: 'Archive', value: 'archive' },
-  { label: 'Delete', value: 'delete' },
+// Basic options
+const frameworkOptions: DropdownOption[] = [
+  { value: 'react', label: 'React' },
+  { value: 'vue', label: 'Vue' },
+  { value: 'angular', label: 'Angular' },
+  { value: 'svelte', label: 'Svelte' },
+  { value: 'solid', label: 'SolidJS' },
+  { value: 'preact', label: 'Preact' },
 ];
 
 export const Default: Story = {
+  render: () => {
+    const [value, setValue] = useState<string | undefined>();
+
+    return (
+      <Stack gap="md" align="center" style={{ width: 300 }}>
+        <Dropdown
+          options={frameworkOptions}
+          value={value}
+          onChange={(v) => setValue(v as string)}
+          placeholder="Select a framework..."
+          fullWidth
+        />
+        {value && (
+          <Text size="sm" color="soft">
+            Selected: {value}
+          </Text>
+        )}
+      </Stack>
+    );
+  },
+};
+
+export const WithPlaceholder: Story = {
   render: () => (
     <Dropdown
-      items={defaultItems}
-      onSelect={(value) => console.log('Selected:', value)}
-    >
-      <Button>Actions</Button>
-    </Dropdown>
+      options={frameworkOptions}
+      placeholder="Choose your favorite framework..."
+    />
   ),
+  parameters: {
+    docs: {
+      description: {
+        story: 'Customize the placeholder text shown when no option is selected.',
+      },
+    },
+  },
 };
+
+// With icons
+const iconOptions: DropdownOption[] = [
+  { value: 'react', label: 'React', icon: <ReactIcon /> },
+  { value: 'vue', label: 'Vue', icon: <VueIcon /> },
+  { value: 'angular', label: 'Angular', icon: <AngularIcon /> },
+];
 
 export const WithIcons: Story = {
-  render: () => (
-    <Dropdown
-      items={[
-        { label: 'Edit', value: 'edit', icon: <EditIcon /> },
-        { label: 'Copy', value: 'copy', icon: <CopyIcon /> },
-        { label: 'Share', value: 'share', icon: <ShareIcon /> },
-        { label: 'Delete', value: 'delete', icon: <DeleteIcon /> },
-      ]}
-      onSelect={(value) => console.log('Selected:', value)}
-    >
-      <Button>More Actions</Button>
-    </Dropdown>
-  ),
-};
+  render: () => {
+    const [value, setValue] = useState<string | undefined>();
 
-export const WithShortcuts: Story = {
-  render: () => (
-    <Dropdown
-      items={[
-        { label: 'Undo', value: 'undo', icon: <UndoIcon />, shortcut: '⌘Z' },
-        { label: 'Redo', value: 'redo', icon: <RedoIcon />, shortcut: '⌘⇧Z', divider: true },
-        { label: 'Cut', value: 'cut', shortcut: '⌘X' },
-        { label: 'Copy', value: 'copy', icon: <CopyIcon />, shortcut: '⌘C' },
-        { label: 'Paste', value: 'paste', shortcut: '⌘V', divider: true },
-        { label: 'Delete', value: 'delete', icon: <DeleteIcon />, shortcut: '⌫' },
-      ]}
-      onSelect={(value) => console.log('Selected:', value)}
-    >
-      <Button>Edit Menu</Button>
-    </Dropdown>
-  ),
-};
-
-export const WithDividers: Story = {
-  render: () => (
-    <Dropdown
-      items={[
-        { label: 'New File', value: 'new', shortcut: '⌘N' },
-        { label: 'Open', value: 'open', shortcut: '⌘O' },
-        { label: 'Save', value: 'save', shortcut: '⌘S', divider: true },
-        { label: 'Export as PDF', value: 'pdf' },
-        { label: 'Export as PNG', value: 'png', divider: true },
-        { label: 'Settings', value: 'settings' },
-      ]}
-      onSelect={(value) => console.log('Selected:', value)}
-    >
-      <Button variant="primary">File</Button>
-    </Dropdown>
-  ),
-};
-
-export const WithDisabled: Story = {
-  render: () => (
-    <Dropdown
-      items={[
-        { label: 'View', value: 'view' },
-        { label: 'Edit', value: 'edit' },
-        { label: 'Share', value: 'share', disabled: true },
-        { label: 'Delete', value: 'delete', disabled: true },
-      ]}
-      onSelect={(value) => console.log('Selected:', value)}
-    >
-      <Button>Options</Button>
-    </Dropdown>
-  ),
-};
-
-export const WithSubmenus: Story = {
-  render: () => (
-    <Dropdown
-      items={[
-        { label: 'New File', value: 'new-file', shortcut: '⌘N' },
-        {
-          label: 'New From Template',
-          value: 'new-template',
-          icon: <FolderIcon />,
-          items: [
-            { label: 'React Component', value: 'template-react' },
-            { label: 'TypeScript Module', value: 'template-ts' },
-            { label: 'Test File', value: 'template-test' },
-            { label: 'Story File', value: 'template-story' },
-          ],
-        },
-        { label: 'Open', value: 'open', shortcut: '⌘O', divider: true },
-        {
-          label: 'Recent Files',
-          value: 'recent',
-          items: [
-            { label: 'App.tsx', value: 'recent-app' },
-            { label: 'index.ts', value: 'recent-index' },
-            { label: 'styles.css', value: 'recent-styles' },
-          ],
-        },
-        { label: 'Save', value: 'save', shortcut: '⌘S' },
-        {
-          label: 'Export',
-          value: 'export',
-          items: [
-            { label: 'PDF', value: 'export-pdf' },
-            { label: 'PNG', value: 'export-png' },
-            { label: 'SVG', value: 'export-svg' },
-            { label: 'JSON', value: 'export-json' },
-          ],
-        },
-      ]}
-      onSelect={(value) => console.log('Selected:', value)}
-    >
-      <Button>File</Button>
-    </Dropdown>
-  ),
-};
-
-export const NestedSubmenus: Story = {
-  render: () => (
-    <Dropdown
-      items={[
-        { label: 'View', value: 'view' },
-        {
-          label: 'Insert',
-          value: 'insert',
-          items: [
-            { label: 'Text', value: 'insert-text' },
-            {
-              label: 'Shape',
-              value: 'insert-shape',
-              items: [
-                { label: 'Rectangle', value: 'shape-rect' },
-                { label: 'Circle', value: 'shape-circle' },
-                { label: 'Triangle', value: 'shape-triangle' },
-              ],
-            },
-            { label: 'Image', value: 'insert-image' },
-            { label: 'Video', value: 'insert-video' },
-          ],
-        },
-        { label: 'Format', value: 'format' },
-      ]}
-      onSelect={(value) => console.log('Selected:', value)}
-    >
-      <Button>Edit</Button>
-    </Dropdown>
-  ),
+    return (
+      <Dropdown
+        options={iconOptions}
+        value={value}
+        onChange={(v) => setValue(v as string)}
+        placeholder="Select a framework..."
+      />
+    );
+  },
   parameters: {
     docs: {
       description: {
-        story: 'Note: Deep nesting is supported but only the first level of submenus is rendered in the current implementation.',
+        story: 'Options can include icons for visual identification.',
       },
     },
   },
 };
 
-export const RTLSupport: Story = {
-  render: () => (
-    <div dir="rtl" style={{ textAlign: 'right' }}>
-      <Dropdown
-        items={[
-          { label: 'עריכה', value: 'edit' },
-          {
-            label: 'שיתוף',
-            value: 'share',
-            items: [
-              { label: 'קישור', value: 'share-link' },
-              { label: 'אימייל', value: 'share-email' },
-              { label: 'הודעה', value: 'share-message' },
-            ],
-          },
-          { label: 'מחיקה', value: 'delete' },
-        ]}
-        onSelect={(value) => console.log('Selected:', value)}
-      >
-        <Button>פעולות</Button>
-      </Dropdown>
-    </div>
-  ),
+export const Searchable: Story = {
+  render: () => {
+    const [value, setValue] = useState<string | undefined>();
+    const countries = [
+      { value: 'us', label: 'United States' },
+      { value: 'uk', label: 'United Kingdom' },
+      { value: 'ca', label: 'Canada' },
+      { value: 'au', label: 'Australia' },
+      { value: 'de', label: 'Germany' },
+      { value: 'fr', label: 'France' },
+      { value: 'jp', label: 'Japan' },
+      { value: 'kr', label: 'South Korea' },
+      { value: 'br', label: 'Brazil' },
+      { value: 'mx', label: 'Mexico' },
+      { value: 'in', label: 'India' },
+      { value: 'cn', label: 'China' },
+    ];
+
+    return (
+      <Stack gap="md" style={{ width: 300 }}>
+        <Dropdown
+          options={countries}
+          value={value}
+          onChange={(v) => setValue(v as string)}
+          placeholder="Search countries..."
+          searchable
+          fullWidth
+        />
+      </Stack>
+    );
+  },
   parameters: {
     docs: {
       description: {
-        story: 'RTL is automatically detected from the DOM. In RTL mode, menu aligns to start (right), submenus expand to the left, and arrow key behavior is reversed.',
+        story: 'Enable `searchable` to filter options by typing.',
       },
     },
   },
 };
 
-export const Positions: Story = {
-  render: () => (
-    <div style={{ display: 'flex', gap: '16px', padding: '100px' }}>
-      <Dropdown
-        items={defaultItems}
-        onSelect={(v) => console.log(v)}
-        position="bottom-start"
-      >
-        <Button variant="outline">Bottom Start</Button>
-      </Dropdown>
-      <Dropdown
-        items={defaultItems}
-        onSelect={(v) => console.log(v)}
-        position="bottom-end"
-      >
-        <Button variant="outline">Bottom End</Button>
-      </Dropdown>
-    </div>
-  ),
+export const MultiSelect: Story = {
+  render: () => {
+    const [values, setValues] = useState<string[]>([]);
+
+    return (
+      <Stack gap="md" style={{ width: 350 }}>
+        <Dropdown
+          options={frameworkOptions}
+          mode="multi"
+          value={values}
+          onChange={(v) => setValues(v as string[])}
+          placeholder="Select frameworks..."
+          fullWidth
+        />
+        {values.length > 0 && (
+          <Text size="sm" color="soft">
+            Selected: {values.join(', ')}
+          </Text>
+        )}
+      </Stack>
+    );
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Multi-select mode displays selected items as removable chips.',
+      },
+    },
+  },
 };
 
-export const KeyboardNavigation: Story = {
+export const MultiSelectWithSearch: Story = {
+  render: () => {
+    const [values, setValues] = useState<string[]>(['react']);
+    const languages = [
+      { value: 'js', label: 'JavaScript' },
+      { value: 'ts', label: 'TypeScript' },
+      { value: 'py', label: 'Python' },
+      { value: 'go', label: 'Go' },
+      { value: 'rust', label: 'Rust' },
+      { value: 'java', label: 'Java' },
+      { value: 'csharp', label: 'C#' },
+      { value: 'cpp', label: 'C++' },
+      { value: 'ruby', label: 'Ruby' },
+      { value: 'php', label: 'PHP' },
+    ];
+
+    return (
+      <Stack gap="md" style={{ width: 350 }}>
+        <Dropdown
+          options={languages}
+          mode="multi"
+          value={values}
+          onChange={(v) => setValues(v as string[])}
+          placeholder="Select languages..."
+          searchable
+          fullWidth
+        />
+      </Stack>
+    );
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Combine multi-select with search for large option sets.',
+      },
+    },
+  },
+};
+
+export const Sizes: Story = {
   render: () => (
-    <div style={{ padding: '20px' }}>
-      <p style={{ marginBottom: '16px', color: 'var(--body-text-soft)' }}>
-        Try keyboard navigation: Tab to the button, press Enter to open, use arrows to navigate, Enter to select, Escape to close.
-      </p>
+    <Stack gap="md" align="start">
+      <Dropdown options={frameworkOptions} placeholder="Small" size="sm" />
+      <Dropdown options={frameworkOptions} placeholder="Medium (default)" size="md" />
+      <Dropdown options={frameworkOptions} placeholder="Large" size="lg" />
+    </Stack>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story: 'Three size variants to match your design needs.',
+      },
+    },
+  },
+};
+
+export const States: Story = {
+  render: () => (
+    <Stack gap="md" align="start">
+      <Dropdown options={frameworkOptions} placeholder="Normal" />
+      <Dropdown options={frameworkOptions} placeholder="Disabled" disabled />
+      <Dropdown options={frameworkOptions} placeholder="Error" error />
+      <Dropdown options={frameworkOptions} placeholder="Loading..." loading />
+    </Stack>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story: 'Various states: disabled, error, and loading.',
+      },
+    },
+  },
+};
+
+export const Clearable: Story = {
+  render: () => {
+    const [value, setValue] = useState<string | undefined>('react');
+
+    return (
+      <Stack gap="md" style={{ width: 300 }}>
+        <Dropdown
+          options={frameworkOptions}
+          value={value}
+          onChange={(v) => setValue(v as string)}
+          placeholder="Select a framework..."
+          clearable
+          fullWidth
+        />
+      </Stack>
+    );
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Enable `clearable` to show a clear button when there is a selection.',
+      },
+    },
+  },
+};
+
+export const DisabledOptions: Story = {
+  render: () => {
+    const options: DropdownOption[] = [
+      { value: 'free', label: 'Free Plan' },
+      { value: 'pro', label: 'Pro Plan' },
+      { value: 'enterprise', label: 'Enterprise Plan', disabled: true },
+      { value: 'custom', label: 'Custom Plan', disabled: true },
+    ];
+
+    return (
       <Dropdown
-        items={[
-          { label: 'Item 1', value: '1' },
-          { label: 'Item 2', value: '2' },
-          { label: 'Item 3 (disabled)', value: '3', disabled: true },
-          { label: 'Item 4', value: '4' },
-          {
-            label: 'Submenu',
-            value: 'submenu',
-            items: [
-              { label: 'Sub Item A', value: 'a' },
-              { label: 'Sub Item B', value: 'b' },
-              { label: 'Sub Item C', value: 'c' },
-            ],
-          },
-          { label: 'Item 5', value: '5' },
-        ]}
-        onSelect={(value) => console.log('Selected:', value)}
-      >
-        <Button>Test Keyboard</Button>
-      </Dropdown>
+        options={options}
+        placeholder="Select a plan..."
+      />
+    );
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Individual options can be disabled.',
+      },
+    },
+  },
+};
+
+export const TypeToSelect: Story = {
+  render: () => {
+    const [value, setValue] = useState<string | undefined>();
+    const fruits = [
+      { value: 'apple', label: 'Apple' },
+      { value: 'apricot', label: 'Apricot' },
+      { value: 'banana', label: 'Banana' },
+      { value: 'blueberry', label: 'Blueberry' },
+      { value: 'cherry', label: 'Cherry' },
+      { value: 'coconut', label: 'Coconut' },
+      { value: 'date', label: 'Date' },
+      { value: 'grape', label: 'Grape' },
+      { value: 'kiwi', label: 'Kiwi' },
+      { value: 'lemon', label: 'Lemon' },
+      { value: 'mango', label: 'Mango' },
+      { value: 'orange', label: 'Orange' },
+      { value: 'peach', label: 'Peach' },
+      { value: 'pear', label: 'Pear' },
+      { value: 'strawberry', label: 'Strawberry' },
+    ];
+
+    return (
+      <Stack gap="md" style={{ width: 300 }}>
+        <Text size="sm" color="soft">
+          Focus the dropdown and type "ap" to jump to Apple, then keep typing "r" for Apricot
+        </Text>
+        <Dropdown
+          options={fruits}
+          value={value}
+          onChange={(v) => setValue(v as string)}
+          placeholder="Select a fruit..."
+          fullWidth
+        />
+        {value && (
+          <Text size="sm" color="soft">
+            Selected: {value}
+          </Text>
+        )}
+      </Stack>
+    );
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Type characters to jump to matching options (like native select). The buffer resets after 1 second.',
+      },
+    },
+  },
+};
+
+export const CustomOptionRender: Story = {
+  render: () => {
+    const users: DropdownOption[] = [
+      { value: 'alice', label: 'Alice Johnson', data: { role: 'Admin', avatar: 'A' } },
+      { value: 'bob', label: 'Bob Smith', data: { role: 'Developer', avatar: 'B' } },
+      { value: 'carol', label: 'Carol White', data: { role: 'Designer', avatar: 'C' } },
+      { value: 'david', label: 'David Brown', data: { role: 'Manager', avatar: 'D' } },
+    ];
+
+    const [value, setValue] = useState<string | undefined>();
+
+    return (
+      <Dropdown
+        options={users}
+        value={value}
+        onChange={(v) => setValue(v as string)}
+        placeholder="Select a user..."
+        renderOption={(option, state) => (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%' }}>
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                background: state.selected ? 'var(--controlPrimary-bg)' : 'var(--controlSubtle-bg)',
+                color: state.selected ? 'var(--controlPrimary-text)' : 'var(--body-text)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 600,
+              }}
+            >
+              {(option.data as { avatar: string }).avatar}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 500 }}>{option.label}</div>
+              <div style={{ fontSize: '12px', color: 'var(--body-text-soft)' }}>
+                {(option.data as { role: string }).role}
+              </div>
+            </div>
+          </div>
+        )}
+      />
+    );
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Use `renderOption` to customize how options are displayed.',
+      },
+    },
+  },
+};
+
+export const ControlledValue: Story = {
+  render: () => {
+    const [value, setValue] = useState<string>('vue');
+
+    return (
+      <Stack gap="md" style={{ width: 300 }}>
+        <Stack gap="sm" direction="row">
+          <button onClick={() => setValue('react')}>Set React</button>
+          <button onClick={() => setValue('vue')}>Set Vue</button>
+          <button onClick={() => setValue('angular')}>Set Angular</button>
+        </Stack>
+        <Dropdown
+          options={frameworkOptions}
+          value={value}
+          onChange={(v) => setValue(v as string)}
+          fullWidth
+        />
+        <Text size="sm" color="soft">
+          Current value: {value}
+        </Text>
+      </Stack>
+    );
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Control the selected value externally.',
+      },
+    },
+  },
+};
+
+export const FullWidth: Story = {
+  render: () => (
+    <div style={{ width: 400 }}>
+      <Dropdown
+        options={frameworkOptions}
+        placeholder="Full width dropdown"
+        fullWidth
+      />
     </div>
   ),
   parameters: {
     docs: {
       description: {
-        story: 'Full keyboard navigation support including arrow keys, Home/End, PageUp/PageDown, Enter/Space for selection, and Escape to close.',
+        story: 'Use `fullWidth` to make the dropdown fill its container.',
       },
     },
   },
 };
 
 export const CompleteExample: Story = {
-  render: () => (
-    <div style={{ display: 'flex', gap: '8px' }}>
-      <Dropdown
-        items={[
-          { label: 'Undo', value: 'undo', icon: <UndoIcon />, shortcut: '⌘Z' },
-          { label: 'Redo', value: 'redo', icon: <RedoIcon />, shortcut: '⌘⇧Z', divider: true },
-          { label: 'Cut', value: 'cut', shortcut: '⌘X' },
-          { label: 'Copy', value: 'copy', icon: <CopyIcon />, shortcut: '⌘C' },
-          { label: 'Paste', value: 'paste', shortcut: '⌘V' },
-        ]}
-        onSelect={(value) => console.log('Selected:', value)}
-      >
-        <Button>Edit</Button>
-      </Dropdown>
-      <Dropdown
-        items={[
-          { label: 'New File', value: 'new-file', shortcut: '⌘N' },
-          { label: 'New Folder', value: 'new-folder', shortcut: '⌘⇧N', divider: true },
-          { label: 'Open...', value: 'open', shortcut: '⌘O' },
-          { label: 'Save', value: 'save', shortcut: '⌘S' },
-          { label: 'Save As...', value: 'save-as', shortcut: '⌘⇧S', divider: true },
-          { label: 'Close', value: 'close', shortcut: '⌘W' },
-        ]}
-        onSelect={(value) => console.log('Selected:', value)}
-      >
-        <Button>File</Button>
-      </Dropdown>
-      <Dropdown
-        items={[
-          { label: 'Share Link', value: 'share-link', icon: <ShareIcon /> },
-          { label: 'Share via Email', value: 'share-email' },
-          { label: 'Export', value: 'export', disabled: true },
-        ]}
-        onSelect={(value) => console.log('Selected:', value)}
-      >
-        <Button variant="primary">Share</Button>
-      </Dropdown>
-    </div>
-  ),
-};
+  render: () => {
+    const [framework, setFramework] = useState<string | undefined>();
+    const [languages, setLanguages] = useState<string[]>([]);
 
+    const languageOptions: DropdownOption[] = [
+      { value: 'js', label: 'JavaScript' },
+      { value: 'ts', label: 'TypeScript' },
+      { value: 'css', label: 'CSS' },
+      { value: 'html', label: 'HTML' },
+    ];
+
+    return (
+      <Stack gap="lg" style={{ width: 350 }}>
+        <Stack gap="sm">
+          <Text size="sm" weight="medium">Framework</Text>
+          <Dropdown
+            options={frameworkOptions}
+            value={framework}
+            onChange={(v) => setFramework(v as string)}
+            placeholder="Select a framework..."
+            searchable
+            clearable
+            fullWidth
+          />
+        </Stack>
+        <Stack gap="sm">
+          <Text size="sm" weight="medium">Languages</Text>
+          <Dropdown
+            options={languageOptions}
+            mode="multi"
+            value={languages}
+            onChange={(v) => setLanguages(v as string[])}
+            placeholder="Select languages..."
+            searchable
+            fullWidth
+          />
+        </Stack>
+        <Stack gap="sm">
+          <Text size="sm" color="soft">
+            Framework: {framework || 'None'}
+          </Text>
+          <Text size="sm" color="soft">
+            Languages: {languages.length > 0 ? languages.join(', ') : 'None'}
+          </Text>
+        </Stack>
+      </Stack>
+    );
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'A complete example showing single and multi-select dropdowns in a form.',
+      },
+    },
+  },
+};

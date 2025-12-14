@@ -68,7 +68,7 @@
 .lessonTitle {
   font-size: var(--text-lg);
   font-weight: var(--weight-semibold);
-  color: var(--page-text-hard);
+  color: var(--page-text-strong);
   margin-bottom: var(--space-1);
 }
 

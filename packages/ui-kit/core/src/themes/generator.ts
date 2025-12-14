@@ -409,8 +409,33 @@ function deriveTokenValue(
       return mix(text, background, 0.5);
     }
 
-    case 'text-hard':
+    case 'text-strong': {
+      // Higher contrast text (30% toward maximum)
+      const text = tokens[`--${surfaceName}-text`] || pageText;
+      const background = bg || pageBg;
+      const maxContrast = isDark ? '#ffffff' : '#000000';
+      return mix(text, maxContrast, 0.3);
+    }
+
+    case 'text-stronger':
       return isDark ? '#ffffff' : '#000000';
+
+    case 'border-soft': {
+      const border = tokens[`--${surfaceName}-border`] || tokens['--page-border'];
+      const background = bg || pageBg;
+      return mix(border || (isDark ? '#333333' : '#e5e5e5'), background, 0.4);
+    }
+
+    case 'border-strong': {
+      const border = tokens[`--${surfaceName}-border`] || tokens['--page-border'] || (isDark ? '#333333' : '#e5e5e5');
+      return isDark ? lighten(border, 20) : darken(border, 20);
+    }
+
+    case 'border-stronger': {
+      const border = tokens[`--${surfaceName}-border`] || tokens['--page-border'] || (isDark ? '#333333' : '#e5e5e5');
+      const maxContrast = isDark ? '#ffffff' : '#000000';
+      return mix(border, maxContrast, 0.5);
+    }
 
     case 'border': {
       const borderDefault = rules['border-default']?.formula;
@@ -628,8 +653,12 @@ function generateSurfaceClasses(): string[] {
   lines.push('  --surface-text: var(--page-text);');
   lines.push('  --surface-text-soft: var(--page-text-soft);');
   lines.push('  --surface-text-softer: var(--page-text-softer);');
-  lines.push('  --surface-text-hard: var(--page-text-hard);');
+  lines.push('  --surface-text-strong: var(--page-text-strong);');
+  lines.push('  --surface-text-stronger: var(--page-text-stronger);');
   lines.push('  --surface-border: var(--page-border);');
+  lines.push('  --surface-border-soft: var(--page-border-soft);');
+  lines.push('  --surface-border-strong: var(--page-border-strong);');
+  lines.push('  --surface-border-stronger: var(--page-border-stronger);');
   lines.push('  --surface-shadow: var(--page-shadow);');
   lines.push('');
   lines.push('  /* Apply surface tokens */');

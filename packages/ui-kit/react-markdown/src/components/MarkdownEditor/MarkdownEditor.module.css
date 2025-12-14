@@ -3,6 +3,15 @@
  *
  * Provides container styling and integrates with design tokens.
  * Most styling is handled by the CodeMirror theme extension.
+ *
+ * Token mapping from ui-kit/core themes:
+ * - --inset-bg: Editor background (darker/indented surfaces)
+ * - --inset-border: Editor borders
+ * - --page-text: Primary text color
+ * - --page-text-soft: Muted text color
+ * - --page-border: Page-level borders
+ * - --card-bg: Card/panel backgrounds
+ * - --primary-bg: Primary action color (for focus)
  */
 
 /* Wrapper for editor + search panel positioning */
@@ -21,12 +30,12 @@
   height: 100%;
   min-height: 0;
   position: relative;
-  background: var(--color-inset-background, var(--color-body-background));
-  border: 1px solid var(--color-inset-border, var(--color-body-border));
+  background: var(--inset-bg, #f8f9fa);
+  border: 1px solid var(--inset-border, var(--page-border, #e1e4e8));
   border-radius: var(--radius-md, 8px);
   overflow: hidden;
   font-family: var(--font-mono, ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace);
-  font-size: var(--font-size-sm, 13px);
+  font-size: var(--text-sm, 13px);
   line-height: 1.5;
 }
 
@@ -42,67 +51,100 @@
 
 /* Focus styling for the container */
 .editorContainer:focus-within {
-  border-color: var(--color-buttonPrimary-background, #0066cc);
-  box-shadow: 0 0 0 2px var(--color-buttonPrimary-background, #0066cc)20;
+  border-color: var(--primary-bg, #0066cc);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-bg, #0066cc) 20%, transparent);
 }
 
-/* Search panel styling */
+/* Search panel styling (CodeMirror default panel, mostly hidden by custom panel) */
 .editorContainer :global(.cm-search) {
-  padding: var(--spacing-small10, 8px);
-  gap: var(--spacing-small10, 8px);
+  padding: var(--space-2, 8px);
+  gap: var(--space-2, 8px);
 }
 
 .editorContainer :global(.cm-search) :global(input),
 .editorContainer :global(.cm-search) :global(button) {
   font-family: var(--font-sans, system-ui, -apple-system, sans-serif);
-  font-size: var(--font-size-sm, 13px);
+  font-size: var(--text-sm, 13px);
 }
 
 .editorContainer :global(.cm-search) :global(input) {
   padding: 4px 8px;
-  border: 1px solid var(--color-body-border);
+  border: 1px solid var(--page-border, #e1e4e8);
   border-radius: var(--radius-sm, 4px);
-  background: var(--color-body-background);
-  color: var(--color-body-text);
+  background: var(--page-bg, #ffffff);
+  color: var(--page-text, #24292e);
 }
 
 .editorContainer :global(.cm-search) :global(input:focus) {
   outline: none;
-  border-color: var(--color-buttonPrimary-background);
+  border-color: var(--primary-bg, #0066cc);
 }
 
 .editorContainer :global(.cm-search) :global(button) {
   padding: 4px 8px;
-  border: 1px solid var(--color-body-border);
+  border: 1px solid var(--page-border, #e1e4e8);
   border-radius: var(--radius-sm, 4px);
-  background: var(--color-panel-background);
-  color: var(--color-body-text);
+  background: var(--card-bg, #f6f8fa);
+  color: var(--page-text, #24292e);
   cursor: pointer;
   transition: background-color var(--duration-fast, 100ms);
 }
 
 .editorContainer :global(.cm-search) :global(button:hover) {
-  background: var(--color-body-backgroundHard10);
+  background: var(--card-bg, #f0f0f0);
 }
 
 .editorContainer :global(.cm-search) :global(label) {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: var(--font-size-sm, 13px);
-  color: var(--color-body-textSoft10);
+  font-size: var(--text-sm, 13px);
+  color: var(--page-text-soft, #6a737d);
 }
 
 /* Go-to-line dialog styling */
 .editorContainer :global(.cm-gotoLine) {
-  padding: var(--spacing-small10, 8px);
+  padding: var(--space-2, 8px);
 }
 
 .editorContainer :global(.cm-gotoLine) :global(input) {
   padding: 4px 8px;
-  border: 1px solid var(--color-body-border);
+  border: 1px solid var(--page-border, #e1e4e8);
   border-radius: var(--radius-sm, 4px);
-  background: var(--color-body-background);
-  color: var(--color-body-text);
+  background: var(--page-bg, #ffffff);
+  color: var(--page-text, #24292e);
   font-family: var(--font-mono);
+}
+
+/* ==============================================
+   Syntax Highlighting Colors
+   GitHub-inspired colors that adapt to light/dark modes
+   ============================================== */
+
+/* Light mode (default) - GitHub Light theme colors */
+.editorWrapper {
+  --syntax-keyword: #d73a49;
+  --syntax-string: #22863a;
+  --syntax-number: #005cc5;
+  --syntax-property: #005cc5;
+  --syntax-function: #6f42c1;
+  --syntax-class: #6f42c1;
+  --syntax-comment: #6a737d;
+  --syntax-tag: #22863a;
+  --syntax-regexp: #032f62;
+}
+
+/* Dark mode overrides - GitHub Dark theme colors */
+/* These colors match CodeBlock.module.css for consistency */
+:global([data-mode="dark"]) .editorWrapper,
+:global(.dark) .editorWrapper {
+  --syntax-keyword: #ff7b72;
+  --syntax-string: #a5d6ff;
+  --syntax-number: #79c0ff;
+  --syntax-property: #79c0ff;
+  --syntax-function: #d2a8ff;
+  --syntax-class: #ffa657;
+  --syntax-comment: #8b949e;
+  --syntax-tag: #7ee787;
+  --syntax-regexp: #a5d6ff;
 }

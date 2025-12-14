@@ -1,0 +1,52 @@
+# Icon Categories Definition
+# Used for organizing icons in the Storybook catalog
+
+categories:
+  actions:
+    displayName: Actions
+    description: Icons for user actions and operations
+    order: 1
+    subcategories:
+      - file-operations
+      - editing
+      - clipboard
+      - history
+      - media
+
+  navigation:
+    displayName: Navigation
+    description: Arrows, chevrons, and navigation controls
+    order: 2
+    subcategories:
+      - arrows
+      - chevrons
+      - menus
+
+  status:
+    displayName: Status & Feedback
+    description: Success, error, warning, and info indicators
+    order: 3
+    subcategories:
+      - alerts
+      - validation
+      - progress
+
+  editor:
+    displayName: Text Editor
+    description: Rich text editing controls
+    order: 4
+    subcategories:
+      - formatting
+      - alignment
+      - lists
+      - media
+
+  misc:
+    displayName: Miscellaneous
+    description: General purpose icons
+    order: 5
+    subcategories:
+      - ui-elements
+      - objects
+      - people
+      - time

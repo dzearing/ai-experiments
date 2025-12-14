@@ -92,12 +92,16 @@ export interface SurfaceTokens {
   text: string;
   'text-soft'?: string;
   'text-softer'?: string;
-  'text-hard'?: string;
+  'text-strong'?: string;
+  'text-stronger'?: string;
   'text-hover'?: string;
   'text-pressed'?: string;
 
   // Border
   border: string;
+  'border-soft'?: string;
+  'border-strong'?: string;
+  'border-stronger'?: string;
   'border-hover'?: string;
   'border-pressed'?: string;
   'border-focus'?: string;

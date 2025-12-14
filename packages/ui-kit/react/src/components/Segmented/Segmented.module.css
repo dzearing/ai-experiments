@@ -17,6 +17,7 @@
    ============================================== */
 
 .segmented {
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   position: relative;
@@ -28,10 +29,10 @@
 /* ==============================================
    Size Variants - MUST match control heights
 
-   Heights include container padding + segment height
-   - sm: 28px total (2px padding × 2 + 22px segment + 2px border)
-   - md: 36px total (3px padding × 2 + 28px segment + 2px border)
-   - lg: 44px total (4px padding × 2 + 34px segment + 2px border)
+   Container has fixed height, segments and indicator fill it.
+   - sm: 28px total
+   - md: 36px total
+   - lg: 44px total
    ============================================== */
 
 /* Small - 28px total height */
@@ -41,7 +42,6 @@
 }
 
 .sm .segment {
-  height: 22px;
   padding: 0 var(--space-2);
   font-size: var(--text-sm);
 }
@@ -51,11 +51,6 @@
   padding: 0;
 }
 
-.sm .indicator {
-  top: 2px;
-  height: 22px;
-}
-
 /* Medium (default) - 36px total height */
 .md {
   height: 36px;
@@ -63,7 +58,6 @@
 }
 
 .md .segment {
-  height: 28px;
   padding: 0 var(--space-3);
   font-size: var(--text-base);
 }
@@ -73,11 +67,6 @@
   padding: 0;
 }
 
-.md .indicator {
-  top: 3px;
-  height: 28px;
-}
-
 /* Large - 44px total height */
 .lg {
   height: 44px;
@@ -85,7 +74,6 @@
 }
 
 .lg .segment {
-  height: 34px;
   padding: 0 var(--space-4);
   font-size: var(--text-lg);
 }
@@ -93,11 +81,6 @@
 .lg.iconOnly .segment {
   width: 34px;
   padding: 0;
-}
-
-.lg .indicator {
-  top: 4px;
-  height: 34px;
 }
 
 /* ==============================================
@@ -174,6 +157,8 @@
   transition: color var(--duration-fast) var(--ease-default);
   -webkit-tap-highlight-color: transparent;
   user-select: none;
+  /* Fill the container height (accounting for container padding) */
+  align-self: stretch;
 }
 
 .segment:hover:not(:disabled):not(.active) {
@@ -239,6 +224,8 @@
 .indicator {
   position: absolute;
   left: 0;
+  top: 2px;
+  bottom: 2px;
   background: var(--controlPrimary-bg);
   box-shadow: var(--shadow-sm);
   transition:
@@ -247,6 +234,22 @@
   pointer-events: none;
   will-change: transform, width;
   z-index: 0;
+}
+
+/* Size-specific indicator positioning (match container padding) */
+.sm .indicator {
+  top: 2px;
+  bottom: 2px;
+}
+
+.md .indicator {
+  top: 3px;
+  bottom: 3px;
+}
+
+.lg .indicator {
+  top: 4px;
+  bottom: 4px;
 }
 
 /* ==============================================

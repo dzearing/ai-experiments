@@ -1,0 +1,15 @@
+/* Storybook Preview Styles */
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--page-bg);
+  color: var(--page-text);
+  margin: 0;
+  padding: 0;
+}
+
+.storyWrapper {
+  padding: var(--space-4);
+  min-height: 100vh;
+  box-sizing: border-box;
+}

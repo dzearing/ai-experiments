@@ -93,13 +93,17 @@ Each role generates tokens based on its category:
 
 #### Container Role Tokens
 ```
---{role}-bg          Background color
---{role}-text        Primary text color
---{role}-text-soft   Secondary text (30% less contrast)
---{role}-text-softer Tertiary text (50% less contrast)
---{role}-text-hard   Maximum contrast text
---{role}-border      Border color
---{role}-shadow      Box shadow
+--{role}-bg             Background color
+--{role}-text           Primary text color
+--{role}-text-soft      Secondary text (30% less contrast)
+--{role}-text-softer    Tertiary text (50% less contrast)
+--{role}-text-strong    Higher contrast text (30% toward maximum)
+--{role}-text-stronger  Maximum contrast text
+--{role}-border         Default border color
+--{role}-border-soft    Subtle border (less contrast)
+--{role}-border-strong  Higher contrast border
+--{role}-border-stronger Maximum contrast border
+--{role}-shadow         Box shadow
 ```
 
 #### Control Role Tokens
@@ -183,9 +187,25 @@ Rules can specify different values for light/dark modes:
       "formula": "mix(text, bg, 0.5)",
       "description": "50% less contrast than base text"
     },
-    "text-hard": {
+    "text-strong": {
+      "formula": "mix(text, contrast(bg), 0.3)",
+      "description": "Higher contrast text (30% toward maximum)"
+    },
+    "text-stronger": {
       "formula": { "light": "#000000", "dark": "#ffffff" },
       "description": "Maximum contrast text"
+    },
+    "border-soft": {
+      "formula": { "light": "mix(page.border, page.bg, 0.4)", "dark": "mix(page.border, page.bg, 0.4)" },
+      "description": "Subtle border - less contrast than default"
+    },
+    "border-strong": {
+      "formula": { "light": "darken(page.border, 20)", "dark": "lighten(page.border, 20)" },
+      "description": "Higher contrast border"
+    },
+    "border-stronger": {
+      "formula": { "light": "mix(page.border, #000000, 0.5)", "dark": "mix(page.border, #ffffff, 0.5)" },
+      "description": "Maximum contrast border"
     },
     "border-default": {
       "formula": { "light": "#e5e5e5", "dark": "#333333" },

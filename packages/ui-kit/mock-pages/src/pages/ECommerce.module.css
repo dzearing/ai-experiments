@@ -252,7 +252,7 @@
 .currentPrice {
   font-size: var(--text-2xl);
   font-weight: var(--weight-bold);
-  color: var(--page-text-hard);
+  color: var(--page-text-strong);
 }
 
 .originalPrice {

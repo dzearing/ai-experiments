@@ -8,7 +8,7 @@ import styles from './Card.module.css';
  * - card (default)
  *
  * Tokens used:
- * - --card-bg, --card-text, --card-text-soft, --card-text-hard
+ * - --card-bg, --card-text, --card-text-soft, --card-text-strong
  * - --card-border, --card-shadow
  * - --space-4, --space-6 (padding)
  * - --radius-lg

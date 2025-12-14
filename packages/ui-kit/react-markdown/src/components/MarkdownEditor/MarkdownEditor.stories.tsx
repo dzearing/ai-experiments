@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { fn } from '@storybook/test';
 import { useState, useRef, useEffect } from 'react';
+import { Button, Stack, Text } from '@ui-kit/react';
 import { MarkdownEditor, type MarkdownEditorRef, type CoAuthor } from './MarkdownEditor';
 import { MarkdownRenderer } from '../MarkdownRenderer';
 
@@ -217,7 +218,7 @@ const ControlledStory = () => {
 Edit me and see the raw output below!`);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <Stack direction="vertical" gap="md">
       <MarkdownEditor
         value={markdown}
         onChange={setMarkdown}
@@ -225,23 +226,24 @@ Edit me and see the raw output below!`);
         height="300px"
       />
 
-      <div>
-        <h4 style={{ margin: '0 0 8px 0' }}>Character Count: {markdown.length}</h4>
+      <Stack direction="vertical" gap="sm">
+        <Text weight="semibold">Character Count: {markdown.length}</Text>
         <pre style={{
-          padding: '16px',
-          background: 'var(--color-panel-background)',
-          border: '1px solid var(--color-panel-border)',
-          borderRadius: '8px',
+          padding: 'var(--space-4, 16px)',
+          background: 'var(--card-bg, #f6f8fa)',
+          border: '1px solid var(--card-border, #e1e4e8)',
+          borderRadius: 'var(--radius-md, 8px)',
           overflow: 'auto',
           maxHeight: '200px',
           margin: 0,
-          fontSize: '14px',
-          fontFamily: 'monospace',
+          fontSize: 'var(--text-sm, 14px)',
+          fontFamily: 'var(--font-mono, monospace)',
+          color: 'var(--page-text, #24292e)',
         }}>
           {markdown}
         </pre>
-      </div>
-    </div>
+      </Stack>
+    </Stack>
   );
 };
 
@@ -277,27 +279,27 @@ const x = 42;
     <div style={{
       display: 'grid',
       gridTemplateColumns: '1fr 1fr',
-      gap: '16px',
+      gap: 'var(--space-4, 16px)',
       height: '500px',
     }}>
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <h4 style={{ margin: '0 0 8px 0' }}>Editor (Plain Text)</h4>
+      <Stack direction="vertical" gap="sm" style={{ minHeight: 0 }}>
+        <Text weight="semibold">Editor (Plain Text)</Text>
         <MarkdownEditor
           value={markdown}
           onChange={setMarkdown}
           showLineNumbers
           height="100%"
         />
-      </div>
+      </Stack>
 
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <h4 style={{ margin: '0 0 8px 0' }}>Preview (Rendered)</h4>
+      <Stack direction="vertical" gap="sm" style={{ minHeight: 0 }}>
+        <Text weight="semibold">Preview (Rendered)</Text>
         <div style={{
           flex: 1,
-          padding: '16px',
-          background: 'var(--color-panel-background)',
-          border: '1px solid var(--color-panel-border)',
-          borderRadius: '8px',
+          padding: 'var(--space-4, 16px)',
+          background: 'var(--card-bg, #f6f8fa)',
+          border: '1px solid var(--card-border, #e1e4e8)',
+          borderRadius: 'var(--radius-md, 8px)',
           overflow: 'auto',
         }}>
           <MarkdownRenderer
@@ -305,7 +307,7 @@ const x = 42;
             showLineNumbers
           />
         </div>
-      </div>
+      </Stack>
     </div>
   );
 };
@@ -349,73 +351,81 @@ const RefAccessStory = () => {
   const [selection, setSelection] = useState({ start: 0, end: 0 });
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-        <button
+    <Stack direction="vertical" gap="md">
+      <Stack direction="horizontal" gap="sm" wrap>
+        <Button
+          variant="secondary"
+          size="sm"
           onClick={() => editorRef.current?.focus()}
-          style={{ padding: '8px 16px', cursor: 'pointer' }}
         >
           Focus Editor
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
           onClick={() => {
             const md = editorRef.current?.getMarkdown();
             setOutput(md || '');
           }}
-          style={{ padding: '8px 16px', cursor: 'pointer' }}
         >
           Get Markdown
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
           onClick={() => {
             editorRef.current?.setMarkdown(`# Programmatic Update
 
 Content set via ref!`);
           }}
-          style={{ padding: '8px 16px', cursor: 'pointer' }}
         >
           Set Content
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
           onClick={() => {
             const sel = editorRef.current?.getSelection();
             if (sel) setSelection(sel);
           }}
-          style={{ padding: '8px 16px', cursor: 'pointer' }}
         >
           Get Selection
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
           onClick={() => {
             editorRef.current?.insertText('\n\n**Inserted text!**\n\n');
           }}
-          style={{ padding: '8px 16px', cursor: 'pointer' }}
         >
           Insert Text
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
           onClick={() => editorRef.current?.goToLine(5)}
-          style={{ padding: '8px 16px', cursor: 'pointer' }}
         >
           Go to Line 5
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
           onClick={() => editorRef.current?.foldAll()}
-          style={{ padding: '8px 16px', cursor: 'pointer' }}
         >
           Fold All
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
           onClick={() => editorRef.current?.unfoldAll()}
-          style={{ padding: '8px 16px', cursor: 'pointer' }}
         >
           Unfold All
-        </button>
-      </div>
+        </Button>
+      </Stack>
 
-      <div style={{ fontSize: '14px', color: 'var(--color-body-textSoft10)' }}>
+      <Text size="sm" color="soft">
         Selection: {selection.start} - {selection.end}
-      </div>
+      </Text>
 
       <MarkdownEditor
         ref={editorRef}
@@ -440,21 +450,22 @@ More content here.`}
       />
 
       {output && (
-        <div>
-          <h4 style={{ margin: '0 0 8px 0' }}>Output:</h4>
+        <Stack direction="vertical" gap="sm">
+          <Text weight="semibold">Output:</Text>
           <pre style={{
-            padding: '16px',
-            background: 'var(--color-panel-background)',
-            border: '1px solid var(--color-panel-border)',
-            borderRadius: '8px',
+            padding: 'var(--space-4, 16px)',
+            background: 'var(--card-bg, #f6f8fa)',
+            border: '1px solid var(--card-border, #e1e4e8)',
+            borderRadius: 'var(--radius-md, 8px)',
             margin: 0,
-            fontFamily: 'monospace',
+            fontFamily: 'var(--font-mono, monospace)',
+            color: 'var(--page-text, #24292e)',
           }}>
             {output}
           </pre>
-        </div>
+        </Stack>
       )}
-    </div>
+    </Stack>
   );
 };
 
@@ -518,23 +529,20 @@ const RapidStreamingStory = () => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-        <button
+    <Stack direction="vertical" gap="md">
+      <Stack direction="horizontal" gap="md" align="center">
+        <Button
+          variant="primary"
+          size="sm"
           onClick={startStreaming}
           disabled={isStreaming}
-          style={{
-            padding: '8px 16px',
-            cursor: isStreaming ? 'not-allowed' : 'pointer',
-            opacity: isStreaming ? 0.7 : 1,
-          }}
         >
           {isStreaming ? 'Streaming...' : 'Start Rapid Streaming (20ms/char)'}
-        </button>
-        <span style={{ fontSize: '14px', color: 'var(--color-body-textSoft10)' }}>
+        </Button>
+        <Text size="sm" color="soft">
           TC-7: Tests rapid AI streaming at 100 chars / 20ms intervals
-        </span>
-      </div>
+        </Text>
+      </Stack>
 
       <MarkdownEditor
         ref={editorRef}
@@ -544,7 +552,7 @@ const RapidStreamingStory = () => {
         showLineNumbers
         height="200px"
       />
-    </div>
+    </Stack>
   );
 };
 
@@ -575,16 +583,16 @@ const LargeDocumentStory = () => {
   }).join('');
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <div style={{ fontSize: '14px', color: 'var(--color-body-textSoft10)' }}>
+    <Stack direction="vertical" gap="md">
+      <Text size="sm" color="soft">
         TC-10: Large document with {lineCount} lines. Type to test keystroke latency.
-      </div>
+      </Text>
       <MarkdownEditor
         defaultValue={largeContent}
         showLineNumbers
         height="500px"
       />
-    </div>
+    </Stack>
   );
 };
 

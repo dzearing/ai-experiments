@@ -3,19 +3,26 @@
  *
  * Positions the search panel as a floating modal anchored to the top-right
  * of the editor container with appropriate padding.
+ *
+ * Token mapping from ui-kit/core themes:
+ * - --popout-bg: Popout/floating panel background
+ * - --popout-border: Popout panel border
+ * - --popout-shadow: Popout panel shadow
+ * - --page-text-soft: Muted text color
+ * - --card-border: Card/panel borders
  */
 
 .panel {
   position: absolute;
-  top: var(--spacing-small10, 8px);
-  right: var(--spacing-small10, 8px);
+  top: var(--space-2, 8px);
+  right: var(--space-2, 8px);
   z-index: 100;
 
   /* Panel appearance */
-  background: var(--color-panel-background, #ffffff);
-  border: 1px solid var(--color-panel-border, #e0e0e0);
+  background: var(--popout-bg, #ffffff);
+  border: 1px solid var(--popout-border, #e0e0e0);
   border-radius: var(--radius-lg, 12px);
-  box-shadow: var(--shadow-lg, 0 8px 24px rgba(0, 0, 0, 0.15));
+  box-shadow: var(--popout-shadow, 0 8px 24px rgba(0, 0, 0, 0.15));
 
   /* Size constraints */
   min-width: 320px;
@@ -25,8 +32,8 @@
 .content {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-small10, 8px);
-  padding: var(--spacing-small10, 12px);
+  gap: var(--space-2, 8px);
+  padding: var(--space-3, 12px);
 }
 
 /* ==============================================
@@ -36,14 +43,14 @@
 .row {
   display: flex;
   align-items: center;
-  gap: var(--spacing-small10, 8px);
+  gap: var(--space-2, 8px);
 }
 
 .inputWrapper {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: var(--spacing-small10, 8px);
+  gap: var(--space-2, 8px);
   min-width: 0;
 }
 
@@ -54,10 +61,10 @@
 
 .matchCount {
   flex-shrink: 0;
-  color: var(--color-body-textSoft10, #666);
+  color: var(--page-text-soft, var(--popout-text-soft, #666));
   white-space: nowrap;
-  font-size: var(--font-size-xs, 12px);
-  padding-inline-end: var(--spacing-small10, 8px);
+  font-size: var(--text-xs, 12px);
+  padding-inline-end: var(--space-2, 8px);
   /* Prevent layout shift when match count changes (e.g., "999 of 999") */
   min-width: 72px;
   text-align: end;
@@ -78,14 +85,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--spacing-small10, 8px);
-  padding-top: var(--spacing-small10, 8px);
-  border-top: 1px solid var(--color-panel-border, #e0e0e0);
+  gap: var(--space-2, 8px);
+  padding-top: var(--space-2, 8px);
+  border-top: 1px solid var(--popout-border, var(--card-border, #e0e0e0));
 }
 
 /* Make checkboxes more compact */
 .optionsRow label {
-  font-size: var(--font-size-xs, 12px);
+  font-size: var(--text-xs, 12px);
 }
 
 /* Hidden but layout-preserving button (prevents horizontal shift) */
@@ -128,12 +135,4 @@
   .panel {
     animation: none;
   }
-}
-
-/* ==============================================
-   Dark mode adjustments (if needed)
-   ============================================== */
-
-:global([data-theme="dark"]) .panel {
-  box-shadow: var(--shadow-lg, 0 8px 24px rgba(0, 0, 0, 0.4));
 }

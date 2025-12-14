@@ -20,24 +20,24 @@
   width: 100%;
 }
 
-/* Single center line using pseudo-elements */
+/* Center line split into two segments with gap for grip */
 .horizontal::before,
 .horizontal::after {
   content: '';
   position: absolute;
   left: 50%;
   width: 1px;
-  background: var(--color-panel-border, var(--panel-border, #e0e0e0));
+  background: var(--page-border, #e0e0e0);
   transform: translateX(-50%);
 }
 
 .horizontal::before {
   top: 0;
-  bottom: calc(50% + 20px); /* Stop 4px before gripper (gripper is 32px, so 16px + 4px = 20px) */
+  bottom: calc(50% + 20px);
 }
 
 .horizontal::after {
-  top: calc(50% + 20px); /* Start 4px after gripper center */
+  top: calc(50% + 20px);
   bottom: 0;
 }
 
@@ -47,7 +47,7 @@
   position: absolute;
   top: 50%;
   height: 1px;
-  background: var(--color-panel-border, var(--panel-border, #e0e0e0));
+  background: var(--page-border, #e0e0e0);
   transform: translateY(-50%);
 }
 
@@ -62,7 +62,7 @@
 }
 
 /* Hover state */
-.sizer:hover:not(.disabled) {
+.sizer:hover {
   background: var(--controlSubtle-bg-hover);
 }
 
@@ -70,12 +70,6 @@
 .sizer:focus-visible {
   outline: var(--focus-ring-width) solid var(--focus-ring);
   outline-offset: calc(var(--focus-ring-offset) * -1);
-}
-
-/* Disabled state */
-.disabled {
-  cursor: default;
-  opacity: 0.5;
 }
 
 /* Grip indicator */
@@ -100,14 +94,24 @@
   height: 4px;
 }
 
-/* Show grip on hover */
-.sizer:hover:not(.disabled) .grip {
-  background: var(--controlSubtle-bg);
+/* Strengthen border lines and grip on hover */
+.sizer:hover::before,
+.sizer:hover::after {
+  background: var(--page-border-strong);
+}
+
+.sizer:hover .grip {
+  background: var(--page-border-strong);
+}
+
+.sizer:hover .grip::before,
+.sizer:hover .grip::after {
+  background: var(--page-border-strong);
 }
 
 /* Grip dots pattern */
-.withGrip .grip::before,
-.withGrip .grip::after {
+.grip::before,
+.grip::after {
   content: '';
   position: absolute;
   background: var(--page-border);
@@ -116,41 +120,35 @@
   height: 2px;
 }
 
-.horizontal.withGrip .grip::before,
-.horizontal.withGrip .grip::after {
+.horizontal .grip::before,
+.horizontal .grip::after {
   left: 1px;
 }
 
-.horizontal.withGrip .grip::before {
+.horizontal .grip::before {
   top: 6px;
 }
 
-.horizontal.withGrip .grip::after {
+.horizontal .grip::after {
   bottom: 6px;
 }
 
-.vertical.withGrip .grip::before,
-.vertical.withGrip .grip::after {
+.vertical .grip::before,
+.vertical .grip::after {
   top: 1px;
 }
 
-.vertical.withGrip .grip::before {
+.vertical .grip::before {
   left: 6px;
 }
 
-.vertical.withGrip .grip::after {
+.vertical .grip::after {
   right: 6px;
 }
 
-/* Hover state for grip dots */
-.sizer:hover:not(.disabled) .grip::before,
-.sizer:hover:not(.disabled) .grip::after {
-  background: var(--controlSubtle-bg);
-}
 
-/* Global styles when dragging */
+/* Global styles when dragging - cursor is set via JS based on orientation */
 :global(body.resizing) {
-  cursor: col-resize !important;
   user-select: none !important;
 }
 

@@ -29,54 +29,51 @@
       "types": {
         "page": {
           "description": "Main application background",
-          "tokens": ["bg", "text", "text-soft", "text-softer", "text-hard", "border", "shadow"],
+          "tokens": ["bg", "text", "text-soft", "text-softer", "text-strong", "text-stronger", "border", "border-soft", "border-strong", "border-stronger", "shadow"],
           "defaults": {
             "light": { "bg": "#fafafa", "text": "#171717" },
             "dark": { "bg": "#0f0f0f", "text": "#e5e5e5" }
+          },
+          "derivation": {
+            "border": { "light": "darken(page.bg, 8)", "dark": "lighten(page.bg, 20)" }
           }
         },
         "card": {
-          "description": "Elevated content containers",
-          "tokens": ["bg", "text", "text-soft", "text-hard", "border", "shadow"],
-          "defaults": {
-            "light": { "bg": "#ffffff" },
-            "dark": { "bg": "#1a1a1a" }
-          },
+          "description": "Elevated content containers - raised from page",
+          "tokens": ["bg", "text", "text-soft", "text-strong", "text-stronger", "border", "border-soft", "border-strong", "border-stronger", "shadow"],
           "derivation": {
+            "bg": { "light": "lighten(page.bg, 8)", "dark": "lighten(page.bg, 8)" },
             "text": "inherit:page.text",
+            "border": "inherit:page.border",
             "shadow": { "light": "0 4px 6px -1px rgba(0, 0, 0, 0.1)", "dark": "0 4px 6px -1px rgba(0, 0, 0, 0.4)" }
           }
         },
         "overlay": {
-          "description": "Modals, dialogs, sheets",
-          "tokens": ["bg", "text", "text-soft", "text-hard", "border", "shadow"],
-          "defaults": {
-            "light": { "bg": "#ffffff" },
-            "dark": { "bg": "#1f1f1f" }
-          },
+          "description": "Modals, dialogs, sheets - higher elevation than card",
+          "tokens": ["bg", "text", "text-soft", "text-strong", "text-stronger", "border", "border-soft", "border-strong", "border-stronger", "shadow"],
           "derivation": {
+            "bg": { "light": "lighten(page.bg, 10)", "dark": "lighten(page.bg, 12)" },
+            "border": "inherit:page.border",
             "shadow": { "light": "0 0 0 1px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.12), 0 16px 32px -4px rgba(0, 0, 0, 0.14)", "dark": "0 0 0 1px rgba(255, 255, 255, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4), 0 16px 32px -4px rgba(0, 0, 0, 0.5)" }
           }
         },
         "popout": {
           "description": "Dropdowns, menus, tooltips (highest elevation)",
-          "tokens": ["bg", "text", "text-soft", "text-hard", "border", "shadow"],
-          "defaults": {
-            "light": { "bg": "#ffffff" },
-            "dark": { "bg": "#262626" }
-          },
+          "tokens": ["bg", "text", "text-soft", "text-strong", "text-stronger", "border", "border-soft", "border-strong", "border-stronger", "shadow"],
           "derivation": {
+            "bg": { "light": "lighten(page.bg, 12)", "dark": "lighten(page.bg, 16)" },
+            "border": "inherit:page.border",
             "shadow": { "light": "0 10px 15px -3px rgba(0, 0, 0, 0.1)", "dark": "0 10px 15px -3px rgba(0, 0, 0, 0.5)" }
           }
         },
         "inset": {
-          "description": "Recessed areas (input fields, wells)",
+          "description": "Recessed areas (input fields, wells) - sunken from page",
           "tokens": ["bg", "bg-hover", "bg-focus", "text", "text-soft", "border", "border-focus"],
-          "defaults": {
-            "light": { "bg": "#f5f5f5", "bg-hover": "#eeeeee", "bg-focus": "#ffffff" },
-            "dark": { "bg": "#0a0a0a", "bg-hover": "#141414", "bg-focus": "#141414" }
-          },
           "derivation": {
+            "bg": { "light": "darken(page.bg, 4)", "dark": "darken(page.bg, 4)" },
+            "bg-hover": { "light": "darken(page.bg, 6)", "dark": "lighten(page.bg, 4)" },
+            "bg-focus": { "light": "lighten(page.bg, 4)", "dark": "lighten(page.bg, 6)" },
+            "border": "inherit:page.border",
             "border-focus": "theme:primary"
           }
         }
@@ -270,9 +267,25 @@
         "formula": "mix(text, bg, 0.5)",
         "description": "50% less contrast than base text"
       },
-      "text-hard": {
+      "text-strong": {
+        "formula": "mix(text, contrast(bg), 0.3)",
+        "description": "Higher contrast text (30% toward maximum)"
+      },
+      "text-stronger": {
         "formula": { "light": "#000000", "dark": "#ffffff" },
         "description": "Maximum contrast text"
+      },
+      "border-soft": {
+        "formula": { "light": "mix(page.border, page.bg, 0.4)", "dark": "mix(page.border, page.bg, 0.4)" },
+        "description": "Subtle border - less contrast than default"
+      },
+      "border-strong": {
+        "formula": { "light": "darken(page.border, 20)", "dark": "lighten(page.border, 20)" },
+        "description": "Higher contrast border"
+      },
+      "border-stronger": {
+        "formula": { "light": "mix(page.border, #000000, 0.5)", "dark": "mix(page.border, #ffffff, 0.5)" },
+        "description": "Maximum contrast border"
       },
       "border-default": {
         "formula": { "light": "#e5e5e5", "dark": "#333333" },
@@ -403,8 +416,12 @@
             "surface-text": "#e5e5e5",
             "surface-text-soft": "#a3a3a3",
             "surface-text-softer": "#737373",
-            "surface-text-hard": "#ffffff",
+            "surface-text-strong": "#f0f0f0",
+            "surface-text-stronger": "#ffffff",
             "surface-border": "#333333",
+            "surface-border-soft": "#262626",
+            "surface-border-strong": "#4d4d4d",
+            "surface-border-stronger": "#666666",
             "control-bg": "#333333",
             "control-bg-hover": "#404040",
             "control-bg-pressed": "#4d4d4d",
@@ -419,8 +436,12 @@
             "surface-text": "#171717",
             "surface-text-soft": "#5b5b5b",
             "surface-text-softer": "#898989",
-            "surface-text-hard": "#000000",
+            "surface-text-strong": "#0f0f0f",
+            "surface-text-stronger": "#000000",
             "surface-border": "#e5e5e5",
+            "surface-border-soft": "#f0f0f0",
+            "surface-border-strong": "#c4c4c4",
+            "surface-border-stronger": "#999999",
             "control-bg": "#e5e5e5",
             "control-bg-hover": "#d9d9d9",
             "control-bg-pressed": "#cccccc",

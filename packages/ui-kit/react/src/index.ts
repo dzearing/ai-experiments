@@ -68,9 +68,6 @@ export type { TooltipProps, TooltipPosition } from './components/Tooltip';
 export { Popover } from './components/Popover';
 export type { PopoverProps, PopoverPosition } from './components/Popover';
 
-export { Dropdown } from './components/Dropdown';
-export type { DropdownProps, DropdownItem } from './components/Dropdown';
-
 // Navigation
 export { Tabs } from './components/Tabs';
 export type { TabsProps, TabItem, TabsVariant } from './components/Tabs';
@@ -169,6 +166,12 @@ export type {
   MenuPosition,
 } from './components/Menu';
 
+// Dropdown (select-like with single/multi-select, search, type-to-select)
+export { Dropdown } from './components/Dropdown';
+export type { DropdownProps, DropdownOption, OptionState } from './components/Dropdown';
+export { useTypeToSelect } from './components/Dropdown';
+export type { UseTypeToSelectOptions, UseTypeToSelectReturn } from './components/Dropdown';
+
 // List
 export { List, ListItem, ListItemText, ListGroup, ListDivider } from './components/List';
 export type {
@@ -227,6 +230,13 @@ export type {
   SegmentedVariant,
   SegmentOption,
 } from './components/Segmented';
+
+// Focus Management
+export { FocusZone } from './components/FocusZone';
+export type { FocusZoneProps, FocusZoneDirection } from './components/FocusZone';
+
+export { BidirectionalFocusZone } from './components/BidirectionalFocusZone';
+export type { BidirectionalFocusZoneProps, FocusZoneLayout } from './components/BidirectionalFocusZone';
 
 // Context
 export { ThemeProvider, useTheme } from './context/ThemeProvider';

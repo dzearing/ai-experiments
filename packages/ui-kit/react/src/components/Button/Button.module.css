@@ -125,6 +125,11 @@
   width: 100%;
 }
 
+/* Pill Shape */
+.pill {
+  border-radius: 9999px;
+}
+
 /* Icon */
 .icon {
   display: inline-flex;

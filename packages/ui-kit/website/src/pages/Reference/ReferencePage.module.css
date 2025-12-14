@@ -1,7 +1,23 @@
-.reference {
-  max-width: 1000px;
+/* Page Layout with TOC */
+.pageLayout {
+  display: grid;
+  grid-template-columns: 1fr 220px;
+  gap: var(--space-8);
+  max-width: 1400px;
   margin: 0 auto;
-  padding: var(--space-10) var(--space-6);
+  padding: 0 var(--space-6);
+}
+
+.content {
+  min-width: 0; /* Prevent overflow issues with tables */
+}
+
+.sidebar {
+  /* Sidebar holds the sticky TOC */
+}
+
+.reference {
+  padding: var(--space-10) 0;
 }
 
 .header {
@@ -27,11 +43,21 @@
   font-size: var(--text-2xl);
   font-weight: var(--weight-bold);
   margin-bottom: var(--space-2);
+  /* Account for sticky header when scrolling to this heading */
+  scroll-margin-top: calc(60px + var(--space-6));
 }
 
 .sectionDesc {
   color: var(--page-text-soft);
   margin-bottom: var(--space-6);
+}
+
+.sectionDesc code {
+  background: var(--inset-bg);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
 }
 
 .categories {
@@ -45,53 +71,183 @@
   border: 1px solid var(--card-border);
   border-radius: var(--radius-lg);
   padding: var(--space-5);
+  overflow: hidden;
 }
 
 .categoryTitle {
   font-size: var(--text-lg);
   font-weight: var(--weight-semibold);
+  margin-bottom: var(--space-2);
+}
+
+.categoryDesc {
+  font-size: var(--text-sm);
+  color: var(--page-text-soft);
   margin-bottom: var(--space-4);
 }
 
-.tokenGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+/* Token Table */
+.tokenTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.tokenTableHeader {
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--card-border);
+  font-weight: var(--weight-semibold);
+  color: var(--page-text-soft);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tokenTableHeader:first-child {
+  width: 240px;
+}
+
+.tokenTableHeader:nth-child(2) {
+  width: 200px;
+}
+
+.tokenTableRow {
+  border-bottom: 1px solid var(--card-border-soft);
+}
+
+.tokenTableRow:last-child {
+  border-bottom: none;
+}
+
+.tokenTableRow:hover {
+  background: var(--inset-bg);
+}
+
+.tokenNameCell {
+  padding: var(--space-2) var(--space-3);
+  vertical-align: top;
+}
+
+.tokenValueCell {
+  padding: var(--space-2) var(--space-3);
+  vertical-align: top;
+  display: flex;
+  align-items: center;
   gap: var(--space-2);
 }
 
-.tokenRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.tokenDescCell {
   padding: var(--space-2) var(--space-3);
-  background: var(--inset-bg);
-  border-radius: var(--radius-md);
+  vertical-align: top;
 }
 
 .tokenName {
   font-family: var(--font-mono);
   font-size: var(--text-sm);
   color: var(--controlPrimary-bg);
+  word-break: break-all;
 }
 
 .tokenValue {
   font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--page-text-soft);
+  word-break: break-all;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tokenDesc {
+  display: block;
+  color: var(--page-text);
+  font-size: var(--text-sm);
+}
+
+.tokenDerivation {
+  display: block;
+  color: var(--page-text-softer);
+  font-size: var(--text-xs);
+  font-style: italic;
+  margin-top: 2px;
+}
+
+/* Color Swatch */
+.colorSwatch {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--card-border);
+  flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Surface Grid */
+.surfaceGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-3);
+}
+
+.surfaceCard {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.surfaceName {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--controlPrimary-bg);
+  font-weight: var(--weight-medium);
+}
+
+.surfaceDesc {
   font-size: var(--text-sm);
   color: var(--page-text-soft);
 }
 
-.tokenList {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .pageLayout {
+    grid-template-columns: 1fr;
+    max-width: 900px;
+  }
+
+  .sidebar {
+    display: none;
+  }
 }
 
-.surfaceToken {
-  display: inline-block;
-  padding: var(--space-1) var(--space-3);
-  background: var(--inset-bg);
-  border-radius: var(--radius-md);
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  color: var(--page-text);
+@media (max-width: 768px) {
+  .pageLayout {
+    padding: 0 var(--space-4);
+  }
+
+  .reference {
+    padding: var(--space-6) 0;
+  }
+
+  .tokenTable {
+    display: block;
+    overflow-x: auto;
+  }
+
+  .tokenTableHeader:first-child {
+    width: 180px;
+  }
+
+  .tokenTableHeader:nth-child(2) {
+    width: 150px;
+  }
+
+  .surfaceGrid {
+    grid-template-columns: 1fr;
+  }
 }

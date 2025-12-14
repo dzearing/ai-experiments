@@ -1,0 +1,422 @@
+{
+  "name": "@ui-kit/icons",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Scalable icon library with React components, SVG sprites, WOFF2 fonts, and PNG exports",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./AddIcon": {
+      "types": "./dist/AddIcon.d.ts",
+      "import": "./dist/AddIcon.js"
+    },
+    "./AddCircleIcon": {
+      "types": "./dist/AddCircleIcon.d.ts",
+      "import": "./dist/AddCircleIcon.js"
+    },
+    "./ArrowDownIcon": {
+      "types": "./dist/ArrowDownIcon.d.ts",
+      "import": "./dist/ArrowDownIcon.js"
+    },
+    "./ArrowLeftIcon": {
+      "types": "./dist/ArrowLeftIcon.d.ts",
+      "import": "./dist/ArrowLeftIcon.js"
+    },
+    "./ArrowRightIcon": {
+      "types": "./dist/ArrowRightIcon.d.ts",
+      "import": "./dist/ArrowRightIcon.js"
+    },
+    "./ArrowUpIcon": {
+      "types": "./dist/ArrowUpIcon.d.ts",
+      "import": "./dist/ArrowUpIcon.js"
+    },
+    "./BackIcon": {
+      "types": "./dist/BackIcon.d.ts",
+      "import": "./dist/BackIcon.js"
+    },
+    "./BellIcon": {
+      "types": "./dist/BellIcon.d.ts",
+      "import": "./dist/BellIcon.js"
+    },
+    "./BoldIcon": {
+      "types": "./dist/BoldIcon.d.ts",
+      "import": "./dist/BoldIcon.js"
+    },
+    "./CalendarIcon": {
+      "types": "./dist/CalendarIcon.d.ts",
+      "import": "./dist/CalendarIcon.js"
+    },
+    "./ChatIcon": {
+      "types": "./dist/ChatIcon.d.ts",
+      "import": "./dist/ChatIcon.js"
+    },
+    "./CheckIcon": {
+      "types": "./dist/CheckIcon.d.ts",
+      "import": "./dist/CheckIcon.js"
+    },
+    "./CheckCircleIcon": {
+      "types": "./dist/CheckCircleIcon.d.ts",
+      "import": "./dist/CheckCircleIcon.js"
+    },
+    "./ChevronDownIcon": {
+      "types": "./dist/ChevronDownIcon.d.ts",
+      "import": "./dist/ChevronDownIcon.js"
+    },
+    "./ChevronLeftIcon": {
+      "types": "./dist/ChevronLeftIcon.d.ts",
+      "import": "./dist/ChevronLeftIcon.js"
+    },
+    "./ChevronRightIcon": {
+      "types": "./dist/ChevronRightIcon.d.ts",
+      "import": "./dist/ChevronRightIcon.js"
+    },
+    "./ChevronUpIcon": {
+      "types": "./dist/ChevronUpIcon.d.ts",
+      "import": "./dist/ChevronUpIcon.js"
+    },
+    "./ClockIcon": {
+      "types": "./dist/ClockIcon.d.ts",
+      "import": "./dist/ClockIcon.js"
+    },
+    "./CloseIcon": {
+      "types": "./dist/CloseIcon.d.ts",
+      "import": "./dist/CloseIcon.js"
+    },
+    "./CodeIcon": {
+      "types": "./dist/CodeIcon.d.ts",
+      "import": "./dist/CodeIcon.js"
+    },
+    "./CodeBlockIcon": {
+      "types": "./dist/CodeBlockIcon.d.ts",
+      "import": "./dist/CodeBlockIcon.js"
+    },
+    "./CollapseIcon": {
+      "types": "./dist/CollapseIcon.d.ts",
+      "import": "./dist/CollapseIcon.js"
+    },
+    "./CommentIcon": {
+      "types": "./dist/CommentIcon.d.ts",
+      "import": "./dist/CommentIcon.js"
+    },
+    "./CopyIcon": {
+      "types": "./dist/CopyIcon.d.ts",
+      "import": "./dist/CopyIcon.js"
+    },
+    "./CutIcon": {
+      "types": "./dist/CutIcon.d.ts",
+      "import": "./dist/CutIcon.js"
+    },
+    "./DeleteIcon": {
+      "types": "./dist/DeleteIcon.d.ts",
+      "import": "./dist/DeleteIcon.js"
+    },
+    "./DownloadIcon": {
+      "types": "./dist/DownloadIcon.d.ts",
+      "import": "./dist/DownloadIcon.js"
+    },
+    "./EditIcon": {
+      "types": "./dist/EditIcon.d.ts",
+      "import": "./dist/EditIcon.js"
+    },
+    "./ErrorIcon": {
+      "types": "./dist/ErrorIcon.d.ts",
+      "import": "./dist/ErrorIcon.js"
+    },
+    "./ErrorCircleIcon": {
+      "types": "./dist/ErrorCircleIcon.d.ts",
+      "import": "./dist/ErrorCircleIcon.js"
+    },
+    "./ExpandIcon": {
+      "types": "./dist/ExpandIcon.d.ts",
+      "import": "./dist/ExpandIcon.js"
+    },
+    "./ExportIcon": {
+      "types": "./dist/ExportIcon.d.ts",
+      "import": "./dist/ExportIcon.js"
+    },
+    "./FastForwardIcon": {
+      "types": "./dist/FastForwardIcon.d.ts",
+      "import": "./dist/FastForwardIcon.js"
+    },
+    "./FileIcon": {
+      "types": "./dist/FileIcon.d.ts",
+      "import": "./dist/FileIcon.js"
+    },
+    "./FilterIcon": {
+      "types": "./dist/FilterIcon.d.ts",
+      "import": "./dist/FilterIcon.js"
+    },
+    "./FolderIcon": {
+      "types": "./dist/FolderIcon.d.ts",
+      "import": "./dist/FolderIcon.js"
+    },
+    "./ForwardIcon": {
+      "types": "./dist/ForwardIcon.d.ts",
+      "import": "./dist/ForwardIcon.js"
+    },
+    "./GearIcon": {
+      "types": "./dist/GearIcon.d.ts",
+      "import": "./dist/GearIcon.js"
+    },
+    "./Heading1Icon": {
+      "types": "./dist/Heading1Icon.d.ts",
+      "import": "./dist/Heading1Icon.js"
+    },
+    "./Heading2Icon": {
+      "types": "./dist/Heading2Icon.d.ts",
+      "import": "./dist/Heading2Icon.js"
+    },
+    "./Heading3Icon": {
+      "types": "./dist/Heading3Icon.d.ts",
+      "import": "./dist/Heading3Icon.js"
+    },
+    "./HeartIcon": {
+      "types": "./dist/HeartIcon.d.ts",
+      "import": "./dist/HeartIcon.js"
+    },
+    "./HomeIcon": {
+      "types": "./dist/HomeIcon.d.ts",
+      "import": "./dist/HomeIcon.js"
+    },
+    "./HourglassIcon": {
+      "types": "./dist/HourglassIcon.d.ts",
+      "import": "./dist/HourglassIcon.js"
+    },
+    "./ImageIcon": {
+      "types": "./dist/ImageIcon.d.ts",
+      "import": "./dist/ImageIcon.js"
+    },
+    "./IndentIcon": {
+      "types": "./dist/IndentIcon.d.ts",
+      "import": "./dist/IndentIcon.js"
+    },
+    "./InfoIcon": {
+      "types": "./dist/InfoIcon.d.ts",
+      "import": "./dist/InfoIcon.js"
+    },
+    "./InfoCircleIcon": {
+      "types": "./dist/InfoCircleIcon.d.ts",
+      "import": "./dist/InfoCircleIcon.js"
+    },
+    "./ItalicIcon": {
+      "types": "./dist/ItalicIcon.d.ts",
+      "import": "./dist/ItalicIcon.js"
+    },
+    "./LinkIcon": {
+      "types": "./dist/LinkIcon.d.ts",
+      "import": "./dist/LinkIcon.js"
+    },
+    "./ListBulletIcon": {
+      "types": "./dist/ListBulletIcon.d.ts",
+      "import": "./dist/ListBulletIcon.js"
+    },
+    "./ListOrderedIcon": {
+      "types": "./dist/ListOrderedIcon.d.ts",
+      "import": "./dist/ListOrderedIcon.js"
+    },
+    "./ListTaskIcon": {
+      "types": "./dist/ListTaskIcon.d.ts",
+      "import": "./dist/ListTaskIcon.js"
+    },
+    "./MaximizeIcon": {
+      "types": "./dist/MaximizeIcon.d.ts",
+      "import": "./dist/MaximizeIcon.js"
+    },
+    "./MenuIcon": {
+      "types": "./dist/MenuIcon.d.ts",
+      "import": "./dist/MenuIcon.js"
+    },
+    "./MinimizeIcon": {
+      "types": "./dist/MinimizeIcon.d.ts",
+      "import": "./dist/MinimizeIcon.js"
+    },
+    "./NextTrackIcon": {
+      "types": "./dist/NextTrackIcon.d.ts",
+      "import": "./dist/NextTrackIcon.js"
+    },
+    "./OutdentIcon": {
+      "types": "./dist/OutdentIcon.d.ts",
+      "import": "./dist/OutdentIcon.js"
+    },
+    "./PasteIcon": {
+      "types": "./dist/PasteIcon.d.ts",
+      "import": "./dist/PasteIcon.js"
+    },
+    "./PauseIcon": {
+      "types": "./dist/PauseIcon.d.ts",
+      "import": "./dist/PauseIcon.js"
+    },
+    "./PlayIcon": {
+      "types": "./dist/PlayIcon.d.ts",
+      "import": "./dist/PlayIcon.js"
+    },
+    "./PopInIcon": {
+      "types": "./dist/PopInIcon.d.ts",
+      "import": "./dist/PopInIcon.js"
+    },
+    "./PopOutIcon": {
+      "types": "./dist/PopOutIcon.d.ts",
+      "import": "./dist/PopOutIcon.js"
+    },
+    "./PreviousTrackIcon": {
+      "types": "./dist/PreviousTrackIcon.d.ts",
+      "import": "./dist/PreviousTrackIcon.js"
+    },
+    "./QuoteIcon": {
+      "types": "./dist/QuoteIcon.d.ts",
+      "import": "./dist/QuoteIcon.js"
+    },
+    "./RedoIcon": {
+      "types": "./dist/RedoIcon.d.ts",
+      "import": "./dist/RedoIcon.js"
+    },
+    "./RefreshIcon": {
+      "types": "./dist/RefreshIcon.d.ts",
+      "import": "./dist/RefreshIcon.js"
+    },
+    "./RemoveIcon": {
+      "types": "./dist/RemoveIcon.d.ts",
+      "import": "./dist/RemoveIcon.js"
+    },
+    "./RestoreIcon": {
+      "types": "./dist/RestoreIcon.d.ts",
+      "import": "./dist/RestoreIcon.js"
+    },
+    "./RewindIcon": {
+      "types": "./dist/RewindIcon.d.ts",
+      "import": "./dist/RewindIcon.js"
+    },
+    "./SaveIcon": {
+      "types": "./dist/SaveIcon.d.ts",
+      "import": "./dist/SaveIcon.js"
+    },
+    "./SearchIcon": {
+      "types": "./dist/SearchIcon.d.ts",
+      "import": "./dist/SearchIcon.js"
+    },
+    "./ShareIcon": {
+      "types": "./dist/ShareIcon.d.ts",
+      "import": "./dist/ShareIcon.js"
+    },
+    "./StarIcon": {
+      "types": "./dist/StarIcon.d.ts",
+      "import": "./dist/StarIcon.js"
+    },
+    "./StopIcon": {
+      "types": "./dist/StopIcon.d.ts",
+      "import": "./dist/StopIcon.js"
+    },
+    "./StrikethroughIcon": {
+      "types": "./dist/StrikethroughIcon.d.ts",
+      "import": "./dist/StrikethroughIcon.js"
+    },
+    "./SyncIcon": {
+      "types": "./dist/SyncIcon.d.ts",
+      "import": "./dist/SyncIcon.js"
+    },
+    "./TableIcon": {
+      "types": "./dist/TableIcon.d.ts",
+      "import": "./dist/TableIcon.js"
+    },
+    "./UnderlineIcon": {
+      "types": "./dist/UnderlineIcon.d.ts",
+      "import": "./dist/UnderlineIcon.js"
+    },
+    "./UndoIcon": {
+      "types": "./dist/UndoIcon.d.ts",
+      "import": "./dist/UndoIcon.js"
+    },
+    "./UploadIcon": {
+      "types": "./dist/UploadIcon.d.ts",
+      "import": "./dist/UploadIcon.js"
+    },
+    "./UserIcon": {
+      "types": "./dist/UserIcon.d.ts",
+      "import": "./dist/UserIcon.js"
+    },
+    "./UsersIcon": {
+      "types": "./dist/UsersIcon.d.ts",
+      "import": "./dist/UsersIcon.js"
+    },
+    "./WarningIcon": {
+      "types": "./dist/WarningIcon.d.ts",
+      "import": "./dist/WarningIcon.js"
+    },
+    "./WarningTriangleIcon": {
+      "types": "./dist/WarningTriangleIcon.d.ts",
+      "import": "./dist/WarningTriangleIcon.js"
+    },
+    "./XCircleIcon": {
+      "types": "./dist/XCircleIcon.d.ts",
+      "import": "./dist/XCircleIcon.js"
+    },
+    "./ZoomInIcon": {
+      "types": "./dist/ZoomInIcon.d.ts",
+      "import": "./dist/ZoomInIcon.js"
+    },
+    "./ZoomOutIcon": {
+      "types": "./dist/ZoomOutIcon.d.ts",
+      "import": "./dist/ZoomOutIcon.js"
+    },
+    "./sprite.svg": "./dist/sprite/sprite.svg",
+    "./font/icons.woff2": "./dist/font/icons.woff2",
+    "./font/icons.css": "./dist/font/icons.css",
+    "./metadata/icons.json": "./dist/metadata/icons.json",
+    "./metadata/search-index.json": "./dist/metadata/search-index.json",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsx scripts/build.ts",
+    "build:components": "tsx scripts/generate-components.ts",
+    "build:sprite": "tsx scripts/generate-sprite.ts",
+    "build:font": "tsx scripts/generate-font.ts",
+    "build:metadata": "tsx scripts/generate-metadata.ts",
+    "dev": "storybook dev -p 6007",
+    "dev:storybook": "storybook dev -p 6007",
+    "build:storybook": "storybook build",
+    "clean": "rm -rf dist",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@ui-kit/core": "workspace:*",
+    "@ui-kit/react": "workspace:*",
+    "@storybook/addon-essentials": "^8.6.12",
+    "@storybook/addon-interactions": "^8.6.12",
+    "@storybook/addon-links": "^8.6.12",
+    "@storybook/react": "^8.6.12",
+    "@storybook/react-vite": "^8.6.12",
+    "@types/node": "^20.0.0",
+    "@types/react": "^19.0.0",
+    "@vitejs/plugin-react": "^4.4.1",
+    "esbuild": "^0.20.0",
+    "js-yaml": "^4.1.0",
+    "@types/js-yaml": "^4.0.9",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "sharp": "^0.33.5",
+    "storybook": "^8.6.12",
+    "svgo": "^3.3.2",
+    "svgicons2svgfont": "^14.0.0",
+    "svg2ttf": "^6.0.3",
+    "ttf2woff2": "^6.0.1",
+    "tsx": "^4.20.3",
+    "typescript": "^5.4.0",
+    "vite": "^6.3.5",
+    "vite-plugin-dts": "^4.5.4"
+  }
+}

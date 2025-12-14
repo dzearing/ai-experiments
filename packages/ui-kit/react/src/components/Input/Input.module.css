@@ -31,19 +31,33 @@
   cursor: not-allowed;
 }
 
-/* Sizes */
+/* ==============================================
+   Size Variants - MUST match control heights
+
+   Standard control heights across all components:
+   - sm: 28px
+   - md: 36px
+   - lg: 44px
+   ============================================== */
+
+/* Small - 28px total height */
 .sm {
-  padding: var(--space-1) var(--space-2);
+  height: 28px;
+  padding: 0 var(--space-2);
   font-size: var(--text-sm);
 }
 
+/* Medium (default) - 36px total height */
 .md {
-  padding: var(--space-2) var(--space-3);
+  height: 36px;
+  padding: 0 var(--space-3);
   font-size: var(--text-base);
 }
 
+/* Large - 44px total height */
 .lg {
-  padding: var(--space-3) var(--space-4);
+  height: 44px;
+  padding: 0 var(--space-4);
   font-size: var(--text-lg);
 }
 

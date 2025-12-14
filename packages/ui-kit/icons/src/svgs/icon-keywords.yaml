@@ -1,0 +1,418 @@
+# Icon Keywords Definition
+# Maps icon names to their searchable keywords/aliases
+# These are merged with auto-generated keywords from the icon name
+
+icons:
+  # Actions
+  add:
+    - plus
+    - new
+    - create
+    - insert
+  add-circle:
+    - plus
+    - new
+    - create
+    - insert
+    - circle
+  remove:
+    - minus
+    - subtract
+    - delete
+  copy:
+    - duplicate
+    - clone
+    - clipboard
+  cut:
+    - scissors
+    - clip
+  paste:
+    - clipboard
+    - insert
+  delete:
+    - trash
+    - remove
+    - bin
+    - garbage
+    - discard
+  download:
+    - save
+    - get
+    - export
+    - arrow down
+  upload:
+    - send
+    - import
+    - arrow up
+  edit:
+    - pencil
+    - modify
+    - change
+    - update
+    - write
+  save:
+    - disk
+    - floppy
+    - persist
+    - store
+  export:
+    - share
+    - send
+    - output
+  filter:
+    - funnel
+    - sort
+    - refine
+  search:
+    - find
+    - magnify
+    - magnifying glass
+    - lookup
+    - query
+  share:
+    - send
+    - distribute
+    - social
+  refresh:
+    - reload
+    - sync
+    - update
+    - rotate
+  sync:
+    - refresh
+    - synchronize
+    - update
+    - arrows
+  undo:
+    - back
+    - revert
+    - previous
+  redo:
+    - forward
+    - repeat
+  restore:
+    - window
+    - unmaximize
+    - resize
+  maximize:
+    - fullscreen
+    - expand
+    - enlarge
+  minimize:
+    - reduce
+    - shrink
+    - hide
+  pop-out:
+    - external
+    - new window
+    - open
+  pop-in:
+    - internal
+    - embed
+  zoom-in:
+    - magnify
+    - enlarge
+    - plus
+  zoom-out:
+    - reduce
+    - shrink
+    - minus
+
+  # Media controls
+  play:
+    - start
+    - begin
+    - run
+    - triangle
+  pause:
+    - hold
+    - wait
+    - suspend
+  stop:
+    - end
+    - halt
+    - square
+  fast-forward:
+    - skip
+    - next
+    - speed
+  rewind:
+    - back
+    - previous
+    - reverse
+  next-track:
+    - skip
+    - forward
+  previous-track:
+    - back
+    - rewind
+
+  # Navigation
+  arrow-up:
+    - up
+    - north
+    - top
+  arrow-down:
+    - down
+    - south
+    - bottom
+  arrow-left:
+    - left
+    - west
+    - back
+  arrow-right:
+    - right
+    - east
+    - forward
+    - next
+  chevron-up:
+    - up
+    - expand
+    - collapse
+    - caret
+  chevron-down:
+    - down
+    - expand
+    - collapse
+    - dropdown
+    - caret
+  chevron-left:
+    - left
+    - back
+    - previous
+    - caret
+  chevron-right:
+    - right
+    - forward
+    - next
+    - caret
+  back:
+    - previous
+    - return
+    - left
+  forward:
+    - next
+    - right
+  home:
+    - house
+    - main
+    - start
+    - index
+  menu:
+    - hamburger
+    - nav
+    - navigation
+    - bars
+    - lines
+  close:
+    - x
+    - dismiss
+    - cancel
+    - exit
+  expand:
+    - open
+    - show
+    - unfold
+  collapse:
+    - close
+    - hide
+    - fold
+
+  # Status
+  check:
+    - tick
+    - done
+    - complete
+    - success
+    - yes
+    - ok
+  check-circle:
+    - success
+    - done
+    - complete
+    - valid
+    - approved
+  x-circle:
+    - close
+    - error
+    - cancel
+    - remove
+    - invalid
+    - denied
+  error:
+    - alert
+    - danger
+    - fail
+    - exclamation
+  error-circle:
+    - alert
+    - danger
+    - fail
+    - exclamation
+  warning:
+    - caution
+    - alert
+    - attention
+    - exclamation
+  warning-triangle:
+    - caution
+    - alert
+    - attention
+    - exclamation
+  info:
+    - information
+    - help
+    - about
+    - details
+  info-circle:
+    - information
+    - help
+    - about
+    - details
+
+  # Editor / Text formatting
+  bold:
+    - strong
+    - heavy
+    - weight
+    - b
+  italic:
+    - emphasis
+    - slant
+    - oblique
+    - i
+  underline:
+    - underscore
+    - u
+  strikethrough:
+    - strike
+    - line through
+    - delete
+    - s
+  code:
+    - monospace
+    - programming
+    - brackets
+  code-block:
+    - snippet
+    - programming
+    - pre
+  heading-1:
+    - h1
+    - title
+    - header
+  heading-2:
+    - h2
+    - subtitle
+    - header
+  heading-3:
+    - h3
+    - header
+  link:
+    - url
+    - anchor
+    - hyperlink
+    - chain
+  image:
+    - picture
+    - photo
+    - img
+    - media
+  table:
+    - grid
+    - spreadsheet
+    - data
+  quote:
+    - blockquote
+    - citation
+    - quotation
+  list-bullet:
+    - unordered
+    - ul
+    - dots
+    - bullets
+  list-ordered:
+    - numbered
+    - ol
+    - numbers
+    - "123"
+  list-task:
+    - checkbox
+    - todo
+    - checklist
+    - tasks
+  indent:
+    - tab
+    - right
+    - increase
+  outdent:
+    - untab
+    - left
+    - decrease
+
+  # Misc / Objects
+  gear:
+    - cog
+    - settings
+    - options
+    - config
+    - configuration
+    - preferences
+    - cogwheel
+    - prefs
+  user:
+    - person
+    - profile
+    - account
+    - avatar
+  users:
+    - people
+    - group
+    - team
+    - members
+  bell:
+    - notification
+    - alert
+    - alarm
+    - ring
+  calendar:
+    - date
+    - schedule
+    - event
+    - time
+  clock:
+    - time
+    - hour
+    - schedule
+  hourglass:
+    - time
+    - wait
+    - loading
+    - timer
+  file:
+    - document
+    - page
+    - paper
+  folder:
+    - directory
+    - collection
+  heart:
+    - love
+    - like
+    - favorite
+    - favourite
+  star:
+    - favorite
+    - favourite
+    - rating
+    - bookmark
+  chat:
+    - message
+    - conversation
+    - bubble
+    - talk
+  comment:
+    - message
+    - note
+    - bubble
+    - remark

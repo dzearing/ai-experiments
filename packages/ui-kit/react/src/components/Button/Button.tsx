@@ -31,6 +31,8 @@ interface ButtonBaseProps {
   size?: ButtonSize;
   /** Full width button */
   fullWidth?: boolean;
+  /** Pill shape (fully rounded) */
+  pill?: boolean;
   /** Icon to display before children */
   icon?: ReactNode;
   /** Icon to display after children */
@@ -67,6 +69,7 @@ export function Button(props: ButtonProps) {
     variant = 'default',
     size = 'md',
     fullWidth = false,
+    pill = false,
     icon,
     iconAfter,
     iconOnly = false,
@@ -80,6 +83,7 @@ export function Button(props: ButtonProps) {
     styles[variant],
     styles[size],
     fullWidth && styles.fullWidth,
+    pill && styles.pill,
     iconOnly && styles.iconOnly,
     className,
   ]

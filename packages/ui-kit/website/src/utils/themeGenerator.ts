@@ -254,10 +254,14 @@ export interface SurfaceTokens {
   text: string;
   'text-soft'?: string;
   'text-softer'?: string;
-  'text-hard'?: string;
+  'text-strong'?: string;
+  'text-stronger'?: string;
   'text-hover'?: string;
   'text-pressed'?: string;
   border: string;
+  'border-soft'?: string;
+  'border-strong'?: string;
+  'border-stronger'?: string;
   'border-hover'?: string;
   'border-pressed'?: string;
   'border-focus'?: string;
@@ -372,25 +376,35 @@ export function generateTheme(config: ThemeConfig, isDark: boolean): GeneratedTh
   // Page surface
   const pageBg = isDark ? '#0f0f0f' : '#fafafa';
   const pageText = ensureContrast(isDark ? '#e5e5e5' : '#171717', pageBg, contrastLevel);
+  const pageBorder = isDark ? '#2a2a2a' : '#e5e5e5';
   const pageSurface: SurfaceTokens = {
     bg: pageBg,
     text: pageText,
     'text-soft': mix(pageText, pageBg, 0.3),
     'text-softer': mix(pageText, pageBg, 0.5),
-    'text-hard': isDark ? '#ffffff' : '#000000',
-    border: isDark ? '#2a2a2a' : '#e5e5e5',
+    'text-strong': mix(pageText, isDark ? '#ffffff' : '#000000', 0.3),
+    'text-stronger': isDark ? '#ffffff' : '#000000',
+    border: pageBorder,
+    'border-soft': mix(pageBorder, pageBg, 0.4),
+    'border-strong': isDark ? lighten(pageBorder, 20) : darken(pageBorder, 20),
+    'border-stronger': mix(pageBorder, isDark ? '#ffffff' : '#000000', 0.5),
     shadow: 'none',
   };
 
   // Card surface
   const cardBg = isDark ? '#1a1a1a' : '#ffffff';
   const cardText = ensureContrast(pageText, cardBg, contrastLevel);
+  const cardBorder = isDark ? '#333333' : '#e5e5e5';
   const cardSurface: SurfaceTokens = {
     bg: cardBg,
     text: cardText,
     'text-soft': mix(cardText, cardBg, 0.3),
-    'text-hard': isDark ? '#ffffff' : '#000000',
-    border: isDark ? '#333333' : '#e5e5e5',
+    'text-strong': mix(cardText, isDark ? '#ffffff' : '#000000', 0.3),
+    'text-stronger': isDark ? '#ffffff' : '#000000',
+    border: cardBorder,
+    'border-soft': mix(cardBorder, cardBg, 0.4),
+    'border-strong': isDark ? lighten(cardBorder, 20) : darken(cardBorder, 20),
+    'border-stronger': mix(cardBorder, isDark ? '#ffffff' : '#000000', 0.5),
     shadow: isDark
       ? '0 4px 6px -1px rgba(0, 0, 0, 0.4)'
       : '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
@@ -399,12 +413,17 @@ export function generateTheme(config: ThemeConfig, isDark: boolean): GeneratedTh
   // Overlay surface
   const overlayBg = isDark ? '#1f1f1f' : '#ffffff';
   const overlayText = ensureContrast(pageText, overlayBg, contrastLevel);
+  const overlayBorder = isDark ? '#3a3a3a' : '#e5e5e5';
   const overlaySurface: SurfaceTokens = {
     bg: overlayBg,
     text: overlayText,
     'text-soft': mix(overlayText, overlayBg, 0.3),
-    'text-hard': isDark ? '#ffffff' : '#000000',
-    border: isDark ? '#3a3a3a' : '#e5e5e5',
+    'text-strong': mix(overlayText, isDark ? '#ffffff' : '#000000', 0.3),
+    'text-stronger': isDark ? '#ffffff' : '#000000',
+    border: overlayBorder,
+    'border-soft': mix(overlayBorder, overlayBg, 0.4),
+    'border-strong': isDark ? lighten(overlayBorder, 20) : darken(overlayBorder, 20),
+    'border-stronger': mix(overlayBorder, isDark ? '#ffffff' : '#000000', 0.5),
     shadow: isDark
       ? '0 20px 25px -5px rgba(0, 0, 0, 0.5)'
       : '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
@@ -413,12 +432,17 @@ export function generateTheme(config: ThemeConfig, isDark: boolean): GeneratedTh
   // Popout surface
   const popoutBg = isDark ? '#262626' : '#ffffff';
   const popoutText = ensureContrast(pageText, popoutBg, contrastLevel);
+  const popoutBorder = isDark ? '#404040' : '#e5e5e5';
   const popoutSurface: SurfaceTokens = {
     bg: popoutBg,
     text: popoutText,
     'text-soft': mix(popoutText, popoutBg, 0.3),
-    'text-hard': isDark ? '#ffffff' : '#000000',
-    border: isDark ? '#404040' : '#e5e5e5',
+    'text-strong': mix(popoutText, isDark ? '#ffffff' : '#000000', 0.3),
+    'text-stronger': isDark ? '#ffffff' : '#000000',
+    border: popoutBorder,
+    'border-soft': mix(popoutBorder, popoutBg, 0.4),
+    'border-strong': isDark ? lighten(popoutBorder, 20) : darken(popoutBorder, 20),
+    'border-stronger': mix(popoutBorder, isDark ? '#ffffff' : '#000000', 0.5),
     shadow: isDark
       ? '0 10px 15px -3px rgba(0, 0, 0, 0.5)'
       : '0 10px 15px -3px rgba(0, 0, 0, 0.1)',

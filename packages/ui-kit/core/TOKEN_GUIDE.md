@@ -125,9 +125,9 @@ Feedback surfaces provide semantic color contexts:
 </div>
 ```
 
-### Surface Tokens
+### Surface-Scoped Tokens
 
-When inside a surface, use `--surface-*` tokens for the current context:
+When inside a `.surface` class, use `--surface-*` tokens for the current context:
 
 ```css
 .my-component {
@@ -156,7 +156,11 @@ When inside a surface, use `--surface-*` tokens for the current context:
 | Primary text | `--page-text` or `--card-text` |
 | Secondary text | `--page-text-soft` or `--card-text-soft` |
 | Tertiary text | `--page-text-softer` or `--card-text-softer` |
+| Strong text | `--page-text-strong` or `--card-text-strong` |
+| Strongest text | `--page-text-stronger` or `--card-text-stronger` |
 | Borders | `--page-border`, `--card-border`, `--control-border` |
+| Subtle borders | `--page-border-soft`, `--card-border-soft` |
+| Strong borders | `--page-border-strong`, `--card-border-strong` |
 | Focus ring | `--focus-ring`, `--focus-ring-width`, `--focus-ring-offset` |
 
 ---
@@ -173,8 +177,12 @@ Container tokens are for static background regions that don't have interactive s
 --page-text            /* Primary text */
 --page-text-soft       /* Secondary text (30% less contrast) */
 --page-text-softer     /* Tertiary text (50% less contrast) */
---page-text-hard       /* Maximum contrast text */
---page-border          /* Borders */
+--page-text-strong     /* Higher contrast text (30% toward maximum) */
+--page-text-stronger   /* Maximum contrast text */
+--page-border          /* Standard borders */
+--page-border-soft     /* Subtle borders (less contrast) */
+--page-border-strong   /* Higher contrast borders */
+--page-border-stronger /* Maximum contrast borders */
 ```
 
 #### Card (Elevated Containers)
@@ -182,8 +190,12 @@ Container tokens are for static background regions that don't have interactive s
 --card-bg              /* Card/panel background */
 --card-text            /* Primary text on card */
 --card-text-soft       /* Secondary text on card */
---card-text-hard       /* Maximum contrast text */
+--card-text-strong     /* Higher contrast text */
+--card-text-stronger   /* Maximum contrast text */
 --card-border          /* Card border */
+--card-border-soft     /* Subtle border */
+--card-border-strong   /* Higher contrast border */
+--card-border-stronger /* Maximum contrast border */
 --card-shadow          /* Card shadow */
 ```
 
@@ -203,8 +215,12 @@ Container tokens are for static background regions that don't have interactive s
 --overlay-bg           /* Modal/dialog background */
 --overlay-text         /* Text on overlay */
 --overlay-text-soft    /* Secondary text */
---overlay-text-hard    /* Maximum contrast text */
+--overlay-text-strong  /* Higher contrast text */
+--overlay-text-stronger/* Maximum contrast text */
 --overlay-border       /* Border */
+--overlay-border-soft  /* Subtle border */
+--overlay-border-strong/* Higher contrast border */
+--overlay-border-stronger /* Maximum contrast border */
 --overlay-shadow       /* Shadow */
 ```
 
@@ -213,8 +229,12 @@ Container tokens are for static background regions that don't have interactive s
 --popout-bg            /* Dropdown/menu background */
 --popout-text          /* Text */
 --popout-text-soft     /* Secondary text */
---popout-text-hard     /* Maximum contrast text */
+--popout-text-strong   /* Higher contrast text */
+--popout-text-stronger /* Maximum contrast text */
 --popout-border        /* Border */
+--popout-border-soft   /* Subtle border */
+--popout-border-strong /* Higher contrast border */
+--popout-border-stronger /* Maximum contrast border */
 --popout-shadow        /* Shadow */
 ```
 

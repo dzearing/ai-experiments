@@ -25,16 +25,12 @@ export interface SizerProps {
   onResizeEnd?: () => void;
   /** Callback when double-clicked (typically to collapse/expand) */
   onDoubleClick?: () => void;
-  /** Whether the sizer is disabled */
-  disabled?: boolean;
   /** Minimum position constraint (in pixels from start) */
   min?: number;
   /** Maximum position constraint (in pixels from start) */
   max?: number;
   /** Size of the sizer handle in pixels (default: 8) */
   size?: number;
-  /** Whether to show the grip indicator (default: true) */
-  showGrip?: boolean;
   /** Additional class name */
   className?: string;
 }
@@ -45,9 +41,7 @@ export function Sizer({
   onResizeStart,
   onResizeEnd,
   onDoubleClick,
-  disabled = false,
   size = 8,
-  showGrip = true,
   className,
 }: SizerProps) {
   const sizerRef = useRef<HTMLDivElement>(null);
@@ -56,8 +50,6 @@ export function Sizer({
 
   const handleMouseDown = useCallback(
     (e: ReactMouseEvent<HTMLDivElement>) => {
-      if (disabled) return;
-
       e.preventDefault();
       isDraggingRef.current = true;
       startPosRef.current = orientation === 'horizontal' ? e.clientX : e.clientY;
@@ -69,7 +61,7 @@ export function Sizer({
       document.body.style.cursor = orientation === 'horizontal' ? 'col-resize' : 'row-resize';
       document.body.style.userSelect = 'none';
     },
-    [disabled, orientation, onResizeStart]
+    [orientation, onResizeStart]
   );
 
   useEffect(() => {
@@ -108,8 +100,6 @@ export function Sizer({
   // Keyboard support
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {
-      if (disabled) return;
-
       const step = e.shiftKey ? 50 : 10;
       let delta = 0;
 
@@ -126,14 +116,12 @@ export function Sizer({
         onResize?.(delta);
       }
     },
-    [disabled, orientation, onResize]
+    [orientation, onResize]
   );
 
   const classNames = [
     styles.sizer,
     styles[orientation],
-    disabled && styles.disabled,
-    showGrip && styles.withGrip,
     className,
   ]
     .filter(Boolean)
@@ -151,12 +139,12 @@ export function Sizer({
       role="separator"
       aria-orientation={orientation}
       aria-valuenow={undefined}
-      tabIndex={disabled ? -1 : 0}
+      tabIndex={0}
       onMouseDown={handleMouseDown}
-      onDoubleClick={disabled ? undefined : onDoubleClick}
+      onDoubleClick={onDoubleClick}
       onKeyDown={handleKeyDown}
     >
-      {showGrip && <div className={styles.grip} />}
+      <div className={styles.grip} />
     </div>
   );
 }

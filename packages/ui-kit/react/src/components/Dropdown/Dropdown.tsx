@@ -3,187 +3,326 @@ import {
   useRef,
   useEffect,
   useCallback,
+  useMemo,
   type ReactNode,
   type KeyboardEvent as ReactKeyboardEvent,
-  type MouseEvent as ReactMouseEvent,
 } from 'react';
+import { createPortal } from 'react-dom';
+import { Chip } from '../Chip';
+import { useTypeToSelect } from './useTypeToSelect';
 import styles from './Dropdown.module.css';
 
 /**
- * Dropdown component - menu list with items and submenus
+ * Dropdown component - select-like component with single/multi-select, search, and type-to-select
  *
  * Surfaces used:
- * - panel
- * - controlSubtle (items on hover)
+ * - inset (trigger)
+ * - popout (menu)
+ * - controlPrimary (selected/focused options)
  *
  * Tokens used:
- * - --panel-bg, --panel-border, --panel-text
- * - --controlSubtle-bg-hover
+ * - --inset-bg, --inset-border, --inset-text
+ * - --popout-bg, --popout-border, --popout-text
+ * - --controlPrimary-bg, --controlPrimary-text
  * - --shadow-md
  * - --radius-md
  *
- * Keyboard navigation:
- * - Enter/Space: Open menu, select item, expand submenu
- * - Escape: Close menu or submenu
- * - ArrowDown: Move to next item
- * - ArrowUp: Move to previous item
- * - ArrowRight (LTR) / ArrowLeft (RTL): Expand submenu
- * - ArrowLeft (LTR) / ArrowRight (RTL): Close submenu
- * - Home: Move to first item
- * - End: Move to last item
- * - PageUp: Move up 10 items
- * - PageDown: Move down 10 items
+ * Features:
+ * - Single and multi-select modes
+ * - Searchable/filterable options
+ * - Type-to-select (native select behavior when not searching)
+ * - Custom option and value rendering
+ * - Chip display for multi-select
+ * - Full keyboard navigation
  */
 
-export interface DropdownItem {
-  /** Item label */
+export interface DropdownOption<T = string> {
+  /** Option value */
+  value: T;
+  /** Display label */
   label: string;
-  /** Item value */
-  value: string;
-  /** Item is disabled */
+  /** Option is disabled */
   disabled?: boolean;
-  /** Item icon */
+  /** Optional icon */
   icon?: ReactNode;
-  /** Keyboard shortcut display text */
-  shortcut?: string;
-  /** Divider below this item */
-  divider?: boolean;
-  /** Submenu items */
-  items?: DropdownItem[];
+  /** Additional data for custom rendering */
+  data?: Record<string, unknown>;
 }
 
-export interface DropdownProps {
-  /** Dropdown items */
-  items: DropdownItem[];
-  /** Callback when item is selected */
-  onSelect: (value: string) => void;
-  /** Position relative to trigger */
+export interface OptionState {
+  /** Option is selected */
+  selected: boolean;
+  /** Option is focused */
+  focused: boolean;
+  /** Option is disabled */
+  disabled: boolean;
+}
+
+export interface DropdownProps<T = string> {
+  /** Available options */
+  options: DropdownOption<T>[];
+
+  /** Selection mode */
+  mode?: 'single' | 'multi';
+
+  /** Current value (controlled) */
+  value?: T | T[];
+  /** Change handler */
+  onChange?: (value: T | T[]) => void;
+  /** Default value (uncontrolled) */
+  defaultValue?: T | T[];
+
+  /** Enable search input */
+  searchable?: boolean;
+  /** Search input placeholder */
+  searchPlaceholder?: string;
+  /** External search handler (for async) */
+  onSearch?: (query: string) => void;
+  /** Custom filter function */
+  filterFn?: (option: DropdownOption<T>, query: string) => boolean;
+
+  /** Placeholder text when no selection */
+  placeholder?: string;
+  /** Custom option renderer */
+  renderOption?: (option: DropdownOption<T>, state: OptionState) => ReactNode;
+  /** Custom selected value renderer */
+  renderValue?: (selected: DropdownOption<T> | DropdownOption<T>[]) => ReactNode;
+
+  /** Size variant */
+  size?: 'sm' | 'md' | 'lg';
+  /** Full width */
+  fullWidth?: boolean;
+  /** Disabled state */
+  disabled?: boolean;
+  /** Error state */
+  error?: boolean;
+  /** Loading state */
+  loading?: boolean;
+  /** Show clear button */
+  clearable?: boolean;
+
+  /** Menu position */
   position?: 'bottom-start' | 'bottom-end' | 'top-start' | 'top-end';
-  /** The element that triggers the dropdown */
-  children: ReactNode;
+
+  /** Close menu after selection (default: true for single, false for multi) */
+  closeOnSelect?: boolean;
+
+  /** Additional class name */
+  className?: string;
+  /** ID for accessibility */
+  id?: string;
+  /** Name for form submission */
+  name?: string;
+  /** Aria label */
+  'aria-label'?: string;
 }
 
-/** Time to wait before expanding submenu on hover (ms) */
-const HOVER_DELAY = 250;
-/** Time to ignore clicks after hover-expand (ms) */
-const CLICK_IGNORE_DELAY = 500;
-/** Number of items to skip with PageUp/PageDown */
-const PAGE_SIZE = 10;
+// Chevron icon
+const ChevronIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+    <path d="M4.47 5.47a.75.75 0 011.06 0L8 7.94l2.47-2.47a.75.75 0 111.06 1.06l-3 3a.75.75 0 01-1.06 0l-3-3a.75.75 0 010-1.06z" />
+  </svg>
+);
 
-interface SubmenuState {
-  /** Index of parent item with open submenu */
-  parentIndex: number;
-  /** Focused index within the submenu */
-  focusedIndex: number;
-  /** Timestamp when submenu was opened via hover */
-  hoverOpenedAt: number | null;
-}
+// Clear icon
+const ClearIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+    <path d="M4 4l6 6M10 4l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+  </svg>
+);
 
-export function Dropdown({
-  items,
-  onSelect,
+// Check icon for multi-select
+const CheckIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+    <path d="M11.354 4.354a.5.5 0 00-.708-.708L5.5 8.793 3.354 6.646a.5.5 0 10-.708.708l2.5 2.5a.5.5 0 00.708 0l5.5-5.5z" />
+  </svg>
+);
+
+// Spinner for loading state
+const LoadingSpinner = () => (
+  <svg className={styles.spinner} width="16" height="16" viewBox="0 0 16 16">
+    <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="32" strokeLinecap="round" />
+  </svg>
+);
+
+export function Dropdown<T = string>({
+  options,
+  mode = 'single',
+  value: controlledValue,
+  onChange,
+  defaultValue,
+  searchable = false,
+  searchPlaceholder = 'Search...',
+  onSearch,
+  filterFn,
+  placeholder = 'Select...',
+  renderOption,
+  renderValue,
+  size = 'md',
+  fullWidth = false,
+  disabled = false,
+  error = false,
+  loading = false,
+  clearable = false,
   position = 'bottom-start',
-  children,
-}: DropdownProps) {
+  closeOnSelect,
+  className,
+  id,
+  name,
+  'aria-label': ariaLabel,
+}: DropdownProps<T>) {
+  // Controlled vs uncontrolled value
+  const isControlled = controlledValue !== undefined;
+  const [internalValue, setInternalValue] = useState<T | T[] | undefined>(defaultValue);
+  const value = isControlled ? controlledValue : internalValue;
+
+  // State
   const [isOpen, setIsOpen] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(-1);
-  const [submenu, setSubmenu] = useState<SubmenuState | null>(null);
-  const [detectedDir, setDetectedDir] = useState<'ltr' | 'rtl'>('ltr');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0, width: 0 });
 
+  // Refs
   const wrapperRef = useRef<HTMLDivElement>(null);
-
-  // Detect direction from DOM for JS logic (keyboard nav, submenu indicator, submenu positioning)
-  // CSS logical properties handle positioning automatically via inheritance
-  useEffect(() => {
-    const detectDirection = () => {
-      const element = wrapperRef.current;
-      if (element) {
-        const computedDir = getComputedStyle(element).direction;
-        setDetectedDir(computedDir === 'rtl' ? 'rtl' : 'ltr');
-      }
-    };
-
-    detectDirection();
-
-    // Re-detect on DOM changes (e.g., if dir attribute changes on ancestor)
-    const observer = new MutationObserver(detectDirection);
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['dir'],
-      subtree: true,
-    });
-
-    return () => observer.disconnect();
-  }, []);
-
-  // Use detected direction for JS logic
-  const effectiveDir = detectedDir;
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLDivElement>(null);
-  const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const submenuItemRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
-  // Filter to get only focusable items (non-disabled)
-  const getFocusableItems = useCallback(
-    (itemList: DropdownItem[]) => {
-      return itemList
-        .map((item, index) => ({ item, index }))
-        .filter(({ item }) => !item.disabled);
+  // Determine if we should close on select
+  const shouldCloseOnSelect = closeOnSelect ?? mode === 'single';
+
+  // Filter options based on search query
+  const filteredOptions = useMemo(() => {
+    if (!searchQuery) return options;
+
+    const defaultFilter = (opt: DropdownOption<T>, query: string) =>
+      opt.label.toLowerCase().includes(query.toLowerCase());
+
+    const filter = filterFn || defaultFilter;
+    return options.filter((opt) => filter(opt, searchQuery));
+  }, [options, searchQuery, filterFn]);
+
+  // Get selected options
+  const selectedOptions = useMemo(() => {
+    if (value === undefined) return [];
+    const values = Array.isArray(value) ? value : [value];
+    return options.filter((opt) => values.includes(opt.value));
+  }, [options, value]);
+
+  // Handle value change
+  const handleValueChange = useCallback(
+    (newValue: T | T[]) => {
+      if (!isControlled) {
+        setInternalValue(newValue);
+      }
+      onChange?.(newValue);
     },
-    []
+    [isControlled, onChange]
   );
 
-  const focusableItems = getFocusableItems(items);
+  // Handle option select
+  const handleSelect = useCallback(
+    (option: DropdownOption<T>) => {
+      if (option.disabled) return;
 
-  // Get focusable items for current submenu if open
-  const submenuItems = submenu !== null ? items[submenu.parentIndex]?.items ?? [] : [];
-  const focusableSubmenuItems = getFocusableItems(submenuItems);
+      if (mode === 'single') {
+        handleValueChange(option.value);
+        if (shouldCloseOnSelect) {
+          setIsOpen(false);
+          setSearchQuery('');
+          triggerRef.current?.focus();
+        }
+      } else {
+        // Multi-select: toggle option
+        const currentValues = Array.isArray(value) ? value : value !== undefined ? [value] : [];
+        const isSelected = currentValues.includes(option.value);
+
+        const newValues = isSelected
+          ? currentValues.filter((v) => v !== option.value)
+          : [...currentValues, option.value];
+
+        handleValueChange(newValues as T[]);
+
+        if (shouldCloseOnSelect) {
+          setIsOpen(false);
+          setSearchQuery('');
+          triggerRef.current?.focus();
+        }
+      }
+    },
+    [mode, value, handleValueChange, shouldCloseOnSelect]
+  );
+
+  // Handle clear
+  const handleClear = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      handleValueChange(mode === 'single' ? (undefined as unknown as T) : ([] as unknown as T[]));
+      triggerRef.current?.focus();
+    },
+    [mode, handleValueChange]
+  );
+
+  // Handle chip remove (multi-select)
+  const handleChipRemove = useCallback(
+    (optionValue: T) => {
+      const currentValues = Array.isArray(value) ? value : [];
+      const newValues = currentValues.filter((v) => v !== optionValue);
+      handleValueChange(newValues as T[]);
+    },
+    [value, handleValueChange]
+  );
+
+  // Calculate menu position
+  const calculatePosition = useCallback(() => {
+    const trigger = triggerRef.current;
+    if (!trigger) return;
+
+    const rect = trigger.getBoundingClientRect();
+    const menuHeight = 300; // Approximate
+
+    let top = 0;
+    let left = rect.left;
+
+    if (position.startsWith('bottom')) {
+      top = rect.bottom + 4;
+    } else {
+      top = rect.top - menuHeight - 4;
+    }
+
+    if (position.endsWith('end')) {
+      // Adjust for end alignment if needed
+    }
+
+    // Ensure menu stays in viewport
+    if (top + menuHeight > window.innerHeight) {
+      top = rect.top - menuHeight - 4;
+    }
+    if (top < 8) {
+      top = rect.bottom + 4;
+    }
+    if (left < 8) {
+      left = 8;
+    }
+
+    setMenuPosition({ top, left, width: rect.width });
+  }, [position]);
+
+  // Open dropdown
+  const openDropdown = useCallback(() => {
+    if (disabled) return;
+    calculatePosition();
+    setIsOpen(true);
+    setFocusedIndex(0);
+  }, [disabled, calculatePosition]);
 
   // Close dropdown
   const closeDropdown = useCallback(() => {
     setIsOpen(false);
     setFocusedIndex(-1);
-    setSubmenu(null);
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-      hoverTimeoutRef.current = null;
-    }
-    // Focus the button inside the trigger wrapper
-    const triggerButton = triggerRef.current?.querySelector('button');
-    triggerButton?.focus();
+    setSearchQuery('');
   }, []);
-
-  // Close submenu
-  const closeSubmenu = useCallback(() => {
-    setSubmenu(null);
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-      hoverTimeoutRef.current = null;
-    }
-  }, []);
-
-  // Open submenu for item at index
-  const openSubmenu = useCallback(
-    (parentIndex: number, viaHover = false) => {
-      const item = items[parentIndex];
-      if (!item?.items?.length || item.disabled) return;
-
-      setSubmenu({
-        parentIndex,
-        focusedIndex: viaHover ? -1 : 0, // Don't auto-focus on hover
-        hoverOpenedAt: viaHover ? Date.now() : null,
-      });
-    },
-    [items]
-  );
-
-  // Open dropdown and focus first item
-  const openDropdown = useCallback(() => {
-    setIsOpen(true);
-    const firstFocusable = focusableItems[0];
-    setFocusedIndex(firstFocusable?.index ?? -1);
-  }, [focusableItems]);
 
   // Toggle dropdown
   const toggleDropdown = useCallback(() => {
@@ -194,318 +333,152 @@ export function Dropdown({
     }
   }, [isOpen, closeDropdown, openDropdown]);
 
-  // Handle item selection
-  const handleSelect = useCallback(
-    (item: DropdownItem, _event?: ReactMouseEvent) => {
-      if (item.disabled) return;
-
-      // If item has submenu, check if we should ignore the click
-      if (item.items?.length) {
-        // If submenu is open and was opened via hover, check timing
-        if (submenu && submenu.hoverOpenedAt) {
-          const timeSinceHoverOpen = Date.now() - submenu.hoverOpenedAt;
-          if (timeSinceHoverOpen < CLICK_IGNORE_DELAY) {
-            // Ignore click, just keep submenu open
-            return;
-          }
+  // Type-to-select hook
+  const { handleKeyPress: handleTypeToSelect } = useTypeToSelect({
+    options: filteredOptions,
+    isOpen,
+    searchable,
+    onMatch: (index) => {
+      setFocusedIndex(index);
+      if (!isOpen) {
+        // When closed, also select the option
+        const option = filteredOptions[index];
+        if (option && !option.disabled) {
+          handleSelect(option);
         }
-        // Find this item's index and open/close submenu
-        const itemIndex = items.findIndex((i) => i.value === item.value);
-        if (submenu?.parentIndex === itemIndex) {
-          closeSubmenu();
-        } else {
-          openSubmenu(itemIndex, false);
-        }
-        return;
-      }
-
-      onSelect(item.value);
-      closeDropdown();
-    },
-    [items, submenu, onSelect, closeDropdown, closeSubmenu, openSubmenu]
-  );
-
-  // Navigate to item by offset in main menu
-  const navigateMainMenu = useCallback(
-    (offset: number) => {
-      if (focusableItems.length === 0) return;
-
-      const currentFocusableIndex = focusableItems.findIndex(
-        (fi) => fi.index === focusedIndex
-      );
-      let newFocusableIndex: number;
-
-      if (currentFocusableIndex === -1) {
-        newFocusableIndex = offset > 0 ? 0 : focusableItems.length - 1;
-      } else {
-        newFocusableIndex = currentFocusableIndex + offset;
-        // Wrap around
-        if (newFocusableIndex < 0) newFocusableIndex = focusableItems.length - 1;
-        if (newFocusableIndex >= focusableItems.length) newFocusableIndex = 0;
-      }
-
-      setFocusedIndex(focusableItems[newFocusableIndex].index);
-      closeSubmenu();
-    },
-    [focusableItems, focusedIndex, closeSubmenu]
-  );
-
-  // Navigate to item by offset in submenu
-  const navigateSubmenu = useCallback(
-    (offset: number) => {
-      if (!submenu || focusableSubmenuItems.length === 0) return;
-
-      const currentFocusableIndex = focusableSubmenuItems.findIndex(
-        (fi) => fi.index === submenu.focusedIndex
-      );
-      let newFocusableIndex: number;
-
-      if (currentFocusableIndex === -1) {
-        newFocusableIndex = offset > 0 ? 0 : focusableSubmenuItems.length - 1;
-      } else {
-        newFocusableIndex = currentFocusableIndex + offset;
-        // Wrap around
-        if (newFocusableIndex < 0) newFocusableIndex = focusableSubmenuItems.length - 1;
-        if (newFocusableIndex >= focusableSubmenuItems.length) newFocusableIndex = 0;
-      }
-
-      setSubmenu({
-        ...submenu,
-        focusedIndex: focusableSubmenuItems[newFocusableIndex].index,
-      });
-    },
-    [submenu, focusableSubmenuItems]
-  );
-
-  // Navigate to first/last item
-  const navigateToEdge = useCallback(
-    (toEnd: boolean, inSubmenu: boolean) => {
-      if (inSubmenu && submenu) {
-        const targetItems = focusableSubmenuItems;
-        if (targetItems.length === 0) return;
-        const targetIndex = toEnd ? targetItems.length - 1 : 0;
-        setSubmenu({
-          ...submenu,
-          focusedIndex: targetItems[targetIndex].index,
-        });
-      } else {
-        if (focusableItems.length === 0) return;
-        const targetIndex = toEnd ? focusableItems.length - 1 : 0;
-        setFocusedIndex(focusableItems[targetIndex].index);
-        closeSubmenu();
       }
     },
-    [focusableItems, focusableSubmenuItems, submenu, closeSubmenu]
-  );
+    enabled: !disabled,
+  });
 
-  // Handle keyboard in menu
-  const handleMenuKeyDown = useCallback(
+  // Keyboard navigation
+  const handleKeyDown = useCallback(
     (event: ReactKeyboardEvent) => {
-      const inSubmenu = submenu !== null && submenu.focusedIndex >= 0;
-      const expandKey = effectiveDir === 'rtl' ? 'ArrowLeft' : 'ArrowRight';
-      const collapseKey = effectiveDir === 'rtl' ? 'ArrowRight' : 'ArrowLeft';
+      // Handle type-to-select for printable characters
+      if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        if (!isOpen || !searchable) {
+          handleTypeToSelect(event.key);
+          if (!isOpen) return;
+        }
+      }
 
       switch (event.key) {
+        case 'Enter':
+        case ' ':
+          event.preventDefault();
+          if (!isOpen) {
+            openDropdown();
+          } else if (focusedIndex >= 0 && focusedIndex < filteredOptions.length) {
+            handleSelect(filteredOptions[focusedIndex]);
+          }
+          break;
+
         case 'Escape':
           event.preventDefault();
-          event.stopPropagation();
-          if (submenu) {
-            closeSubmenu();
-            // Re-focus the parent item
-            itemRefs.current[submenu.parentIndex]?.focus();
-          } else {
-            closeDropdown();
-          }
+          closeDropdown();
+          triggerRef.current?.focus();
           break;
 
         case 'ArrowDown':
           event.preventDefault();
-          if (inSubmenu) {
-            navigateSubmenu(1);
+          if (!isOpen) {
+            openDropdown();
           } else {
-            navigateMainMenu(1);
+            const nextIndex = focusedIndex < filteredOptions.length - 1 ? focusedIndex + 1 : 0;
+            // Skip disabled options
+            let idx = nextIndex;
+            while (filteredOptions[idx]?.disabled && idx !== focusedIndex) {
+              idx = idx < filteredOptions.length - 1 ? idx + 1 : 0;
+            }
+            setFocusedIndex(idx);
           }
           break;
 
         case 'ArrowUp':
           event.preventDefault();
-          if (inSubmenu) {
-            navigateSubmenu(-1);
+          if (!isOpen) {
+            openDropdown();
           } else {
-            navigateMainMenu(-1);
-          }
-          break;
-
-        case expandKey:
-          event.preventDefault();
-          if (!inSubmenu && focusedIndex >= 0) {
-            const item = items[focusedIndex];
-            if (item?.items?.length && !item.disabled) {
-              openSubmenu(focusedIndex, false);
+            const prevIndex = focusedIndex > 0 ? focusedIndex - 1 : filteredOptions.length - 1;
+            // Skip disabled options
+            let idx = prevIndex;
+            while (filteredOptions[idx]?.disabled && idx !== focusedIndex) {
+              idx = idx > 0 ? idx - 1 : filteredOptions.length - 1;
             }
-          }
-          break;
-
-        case collapseKey:
-          event.preventDefault();
-          if (submenu) {
-            closeSubmenu();
-            itemRefs.current[submenu.parentIndex]?.focus();
+            setFocusedIndex(idx);
           }
           break;
 
         case 'Home':
           event.preventDefault();
-          navigateToEdge(false, inSubmenu);
+          if (isOpen) {
+            const firstEnabled = filteredOptions.findIndex((opt) => !opt.disabled);
+            if (firstEnabled >= 0) setFocusedIndex(firstEnabled);
+          }
           break;
 
         case 'End':
           event.preventDefault();
-          navigateToEdge(true, inSubmenu);
-          break;
-
-        case 'PageUp':
-          event.preventDefault();
-          if (inSubmenu) {
-            // Navigate up by PAGE_SIZE
-            for (let i = 0; i < PAGE_SIZE; i++) {
-              navigateSubmenu(-1);
-            }
-          } else {
-            for (let i = 0; i < PAGE_SIZE; i++) {
-              navigateMainMenu(-1);
-            }
-          }
-          break;
-
-        case 'PageDown':
-          event.preventDefault();
-          if (inSubmenu) {
-            for (let i = 0; i < PAGE_SIZE; i++) {
-              navigateSubmenu(1);
-            }
-          } else {
-            for (let i = 0; i < PAGE_SIZE; i++) {
-              navigateMainMenu(1);
-            }
-          }
-          break;
-
-        case 'Enter':
-        case ' ':
-          event.preventDefault();
-          if (inSubmenu && submenu) {
-            const subItem = submenuItems[submenu.focusedIndex];
-            if (subItem && !subItem.disabled) {
-              onSelect(subItem.value);
-              closeDropdown();
-            }
-          } else if (focusedIndex >= 0) {
-            const item = items[focusedIndex];
-            if (item) {
-              if (item.items?.length && !item.disabled) {
-                openSubmenu(focusedIndex, false);
-              } else if (!item.disabled) {
-                onSelect(item.value);
-                closeDropdown();
+          if (isOpen) {
+            for (let i = filteredOptions.length - 1; i >= 0; i--) {
+              if (!filteredOptions[i].disabled) {
+                setFocusedIndex(i);
+                break;
               }
             }
           }
           break;
 
+        case 'Backspace':
+          // In multi-select, remove last selected item if search is empty
+          if (mode === 'multi' && searchable && !searchQuery && selectedOptions.length > 0) {
+            event.preventDefault();
+            const lastOption = selectedOptions[selectedOptions.length - 1];
+            handleChipRemove(lastOption.value);
+          }
+          break;
+
         case 'Tab':
-          // Close on tab and let focus move naturally
           closeDropdown();
           break;
       }
     },
     [
-      effectiveDir,
-      submenu,
+      isOpen,
+      searchable,
       focusedIndex,
-      items,
-      submenuItems,
-      navigateMainMenu,
-      navigateSubmenu,
-      navigateToEdge,
-      openSubmenu,
-      closeSubmenu,
+      filteredOptions,
+      mode,
+      searchQuery,
+      selectedOptions,
+      openDropdown,
       closeDropdown,
-      onSelect,
+      handleSelect,
+      handleTypeToSelect,
+      handleChipRemove,
     ]
   );
 
-  // Handle trigger keyboard
-  const handleTriggerKeyDown = useCallback(
-    (event: ReactKeyboardEvent) => {
-      switch (event.key) {
-        case 'Enter':
-        case ' ':
-        case 'ArrowDown':
-          event.preventDefault();
-          if (!isOpen) {
-            openDropdown();
-          }
-          break;
-        case 'ArrowUp':
-          event.preventDefault();
-          if (!isOpen) {
-            setIsOpen(true);
-            // Focus last item when opening with ArrowUp
-            const lastFocusable = focusableItems[focusableItems.length - 1];
-            setFocusedIndex(lastFocusable?.index ?? -1);
-          }
-          break;
-      }
+  // Handle search input change
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const query = e.target.value;
+      setSearchQuery(query);
+      setFocusedIndex(0);
+      onSearch?.(query);
     },
-    [isOpen, openDropdown, focusableItems]
-  );
-
-  // Handle mouse enter on item
-  const handleItemMouseEnter = useCallback(
-    (index: number) => {
-      setFocusedIndex(index);
-
-      const item = items[index];
-      if (item?.items?.length && !item.disabled) {
-        // Clear any existing timeout
-        if (hoverTimeoutRef.current) {
-          clearTimeout(hoverTimeoutRef.current);
-        }
-        // Set timeout to open submenu
-        hoverTimeoutRef.current = setTimeout(() => {
-          openSubmenu(index, true);
-        }, HOVER_DELAY);
-      } else {
-        // No submenu, close any open submenu after delay
-        if (hoverTimeoutRef.current) {
-          clearTimeout(hoverTimeoutRef.current);
-        }
-        hoverTimeoutRef.current = setTimeout(() => {
-          closeSubmenu();
-        }, HOVER_DELAY);
-      }
-    },
-    [items, openSubmenu, closeSubmenu]
-  );
-
-  // Handle mouse enter on submenu item
-  const handleSubmenuItemMouseEnter = useCallback(
-    (index: number) => {
-      if (submenu) {
-        setSubmenu({
-          ...submenu,
-          focusedIndex: index,
-        });
-      }
-    },
-    [submenu]
+    [onSearch]
   );
 
   // Handle click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(event.target as Node) &&
+        menuRef.current &&
+        !menuRef.current.contains(event.target as Node)
+      ) {
         closeDropdown();
       }
     };
@@ -519,149 +492,210 @@ export function Dropdown({
     };
   }, [isOpen, closeDropdown]);
 
-  // Focus management
+  // Focus search input when opening
   useEffect(() => {
-    if (isOpen && focusedIndex >= 0 && !submenu) {
-      itemRefs.current[focusedIndex]?.focus();
+    if (isOpen && searchable && searchInputRef.current) {
+      searchInputRef.current.focus();
     }
-  }, [isOpen, focusedIndex, submenu]);
+  }, [isOpen, searchable]);
 
+  // Scroll focused option into view
   useEffect(() => {
-    if (submenu && submenu.focusedIndex >= 0) {
-      submenuItemRefs.current[submenu.focusedIndex]?.focus();
+    if (isOpen && focusedIndex >= 0) {
+      optionRefs.current[focusedIndex]?.scrollIntoView({ block: 'nearest' });
     }
-  }, [submenu]);
+  }, [isOpen, focusedIndex]);
 
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (hoverTimeoutRef.current) {
-        clearTimeout(hoverTimeoutRef.current);
-      }
-    };
-  }, []);
+  // Check if option is selected
+  const isOptionSelected = useCallback(
+    (option: DropdownOption<T>) => {
+      if (value === undefined) return false;
+      const values = Array.isArray(value) ? value : [value];
+      return values.includes(option.value);
+    },
+    [value]
+  );
 
-  // Check if any items have icons (for alignment)
-  const hasAnyIcons = items.some((item) => item.icon);
-  const submenuHasAnyIcons = submenuItems.some((item) => item.icon);
+  // Render selected value display
+  const renderSelectedValue = () => {
+    if (selectedOptions.length === 0) {
+      return <span className={styles.placeholder}>{placeholder}</span>;
+    }
 
-  const renderMenuItem = (
-    item: DropdownItem,
-    index: number,
-    refs: React.MutableRefObject<(HTMLButtonElement | null)[]>,
-    isFocused: boolean,
-    onMouseEnter: (index: number) => void,
-    onItemSelect: (item: DropdownItem, event?: ReactMouseEvent) => void,
-    showSubmenuIndicator = false,
-    reserveIconSpace = false
-  ) => {
-    const hasSubmenu = item.items && item.items.length > 0;
-    const submenuIndicator = hasSubmenu ? (
-      <span className={styles.submenuIndicator} aria-hidden="true">
-        {effectiveDir === 'rtl' ? '◀' : '▶'}
-      </span>
-    ) : null;
+    if (renderValue) {
+      return renderValue(mode === 'single' ? selectedOptions[0] : selectedOptions);
+    }
 
+    if (mode === 'single') {
+      const opt = selectedOptions[0];
+      return (
+        <span className={styles.selectedValue}>
+          {opt.icon && <span className={styles.valueIcon}>{opt.icon}</span>}
+          {opt.label}
+        </span>
+      );
+    }
+
+    // Multi-select: show chips
     return (
-      <div key={item.value}>
-        <button
-          ref={(el) => {
-            refs.current[index] = el;
-          }}
-          type="button"
-          className={`${styles.item} ${item.disabled ? styles.disabled : ''} ${
-            isFocused ? styles.focused : ''
-          } ${hasSubmenu ? styles.hasSubmenu : ''}`}
-          onClick={(e) => onItemSelect(item, e)}
-          onMouseEnter={() => onMouseEnter(index)}
-          disabled={item.disabled}
-          role="menuitem"
-          aria-haspopup={hasSubmenu ? 'menu' : undefined}
-          aria-expanded={hasSubmenu && submenu?.parentIndex === index ? 'true' : undefined}
-          tabIndex={isFocused ? 0 : -1}
-        >
-          {item.icon ? (
-            <span className={styles.icon}>{item.icon}</span>
-          ) : reserveIconSpace ? (
-            <span className={styles.iconPlaceholder} aria-hidden="true" />
-          ) : null}
-          <span className={styles.label}>{item.label}</span>
-          {item.shortcut && <span className={styles.shortcut}>{item.shortcut}</span>}
-          {showSubmenuIndicator && submenuIndicator}
-        </button>
-        {item.divider && index < items.length - 1 && (
-          <div className={styles.divider} role="separator" />
-        )}
+      <div className={styles.chips}>
+        {selectedOptions.map((opt) => (
+          <Chip
+            key={String(opt.value)}
+            size="sm"
+            onRemove={() => handleChipRemove(opt.value)}
+          >
+            {opt.label}
+          </Chip>
+        ))}
       </div>
     );
   };
 
-  return (
-    <div className={styles.wrapper} ref={wrapperRef}>
-      <div
-        ref={triggerRef}
-        className={styles.trigger}
-        onClick={toggleDropdown}
-        onKeyDown={handleTriggerKeyDown}
-        aria-haspopup="menu"
-        aria-expanded={isOpen}
-      >
-        {children}
-      </div>
-      {isOpen && (
-        <div
-          ref={menuRef}
-          className={`${styles.menu} ${styles[position]}`}
-          role="menu"
-          aria-orientation="vertical"
-          onKeyDown={handleMenuKeyDown}
-        >
-          {items.map((item, index) =>
-            renderMenuItem(
-              item,
-              index,
-              itemRefs,
-              focusedIndex === index,
-              handleItemMouseEnter,
-              handleSelect,
-              true,
-              hasAnyIcons
-            )
-          )}
+  // Render option
+  const renderOptionItem = (option: DropdownOption<T>, index: number) => {
+    const isSelected = isOptionSelected(option);
+    const isFocused = index === focusedIndex;
+    const state: OptionState = {
+      selected: isSelected,
+      focused: isFocused,
+      disabled: !!option.disabled,
+    };
 
-          {/* Submenu */}
-          {submenu !== null && submenuItems.length > 0 && (
-            <div
-              className={`${styles.submenu} ${
-                effectiveDir === 'rtl' ? styles.submenuRtl : styles.submenuLtr
-              }`}
-              role="menu"
-              aria-label={items[submenu.parentIndex]?.label}
-              style={{
-                top: itemRefs.current[submenu.parentIndex]?.offsetTop ?? 0,
-              }}
-            >
-              {submenuItems.map((subItem, subIndex) =>
-                renderMenuItem(
-                  subItem,
-                  subIndex,
-                  submenuItemRefs,
-                  submenu.focusedIndex === subIndex,
-                  handleSubmenuItemMouseEnter,
-                  (item) => {
-                    if (!item.disabled) {
-                      onSelect(item.value);
-                      closeDropdown();
-                    }
-                  },
-                  false,
-                  submenuHasAnyIcons
-                )
-              )}
-            </div>
-          )}
+    if (renderOption) {
+      return (
+        <button
+          key={String(option.value)}
+          ref={(el) => {
+            optionRefs.current[index] = el;
+          }}
+          type="button"
+          className={`${styles.option} ${isSelected ? styles.selected : ''} ${
+            isFocused ? styles.focused : ''
+          } ${option.disabled ? styles.disabled : ''}`}
+          onClick={() => handleSelect(option)}
+          disabled={option.disabled}
+          role="option"
+          aria-selected={isSelected}
+          tabIndex={-1}
+        >
+          {renderOption(option, state)}
+        </button>
+      );
+    }
+
+    return (
+      <button
+        key={String(option.value)}
+        ref={(el) => {
+          optionRefs.current[index] = el;
+        }}
+        type="button"
+        className={`${styles.option} ${isSelected ? styles.selected : ''} ${
+          isFocused ? styles.focused : ''
+        } ${option.disabled ? styles.disabled : ''}`}
+        onClick={() => handleSelect(option)}
+        onMouseEnter={() => setFocusedIndex(index)}
+        disabled={option.disabled}
+        role="option"
+        aria-selected={isSelected}
+        tabIndex={-1}
+      >
+        {mode === 'multi' && (
+          <span className={`${styles.checkbox} ${isSelected ? styles.checked : ''}`}>
+            {isSelected && <CheckIcon />}
+          </span>
+        )}
+        {option.icon && <span className={styles.optionIcon}>{option.icon}</span>}
+        <span className={styles.optionLabel}>{option.label}</span>
+      </button>
+    );
+  };
+
+  const hasValue = selectedOptions.length > 0;
+  const showClearButton = clearable && hasValue && !disabled;
+
+  const menuContent = isOpen && (
+    <div
+      ref={menuRef}
+      className={styles.menu}
+      style={{
+        top: menuPosition.top,
+        left: menuPosition.left,
+        minWidth: menuPosition.width,
+      }}
+      role="listbox"
+      aria-multiselectable={mode === 'multi'}
+    >
+      {searchable && (
+        <div className={styles.searchWrapper}>
+          <input
+            ref={searchInputRef}
+            type="text"
+            className={styles.searchInput}
+            placeholder={searchPlaceholder}
+            value={searchQuery}
+            onChange={handleSearchChange}
+            onKeyDown={handleKeyDown}
+            aria-label="Search options"
+          />
         </div>
       )}
+      <div className={styles.optionsList}>
+        {loading ? (
+          <div className={styles.loading}>
+            <LoadingSpinner />
+            <span>Loading...</span>
+          </div>
+        ) : filteredOptions.length === 0 ? (
+          <div className={styles.empty}>No options found</div>
+        ) : (
+          filteredOptions.map((option, index) => renderOptionItem(option, index))
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <div
+      ref={wrapperRef}
+      className={`${styles.wrapper} ${styles[size]} ${fullWidth ? styles.fullWidth : ''} ${
+        error ? styles.error : ''
+      } ${disabled ? styles.disabled : ''} ${className || ''}`}
+    >
+      <button
+        ref={triggerRef}
+        type="button"
+        id={id}
+        name={name}
+        className={`${styles.trigger} ${isOpen ? styles.open : ''}`}
+        onClick={toggleDropdown}
+        onKeyDown={handleKeyDown}
+        disabled={disabled}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        aria-label={ariaLabel}
+      >
+        <div className={styles.valueContainer}>{renderSelectedValue()}</div>
+        <div className={styles.indicators}>
+          {loading && <LoadingSpinner />}
+          {showClearButton && (
+            <button
+              type="button"
+              className={styles.clearButton}
+              onClick={handleClear}
+              aria-label="Clear selection"
+              tabIndex={-1}
+            >
+              <ClearIcon />
+            </button>
+          )}
+          <span className={`${styles.arrow} ${isOpen ? styles.arrowOpen : ''}`}>
+            <ChevronIcon />
+          </span>
+        </div>
+      </button>
+      {typeof document !== 'undefined' && createPortal(menuContent, document.body)}
     </div>
   );
 }

@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { Form, FormField, FormActions, FormRow } from './Form';
 import { Input } from '../Input';
 import { Textarea } from '../Textarea';
-import { Select } from '../Select';
+import { Dropdown } from '../Dropdown';
 import { Checkbox } from '../Checkbox';
 import { Button } from '../Button';
 
@@ -194,13 +194,21 @@ export const RegistrationForm: Story = {
         <Input id="confirmPassword" type="password" placeholder="Confirm your password" />
       </FormField>
       <FormField label="Country" htmlFor="country">
-        <Select id="country">
-          <option value="">Select a country</option>
-          <option value="us">United States</option>
-          <option value="uk">United Kingdom</option>
-          <option value="ca">Canada</option>
-          <option value="au">Australia</option>
-        </Select>
+        <Dropdown
+          id="country"
+          placeholder="Select a country"
+          searchable
+          options={[
+            { value: 'us', label: 'United States' },
+            { value: 'uk', label: 'United Kingdom' },
+            { value: 'ca', label: 'Canada' },
+            { value: 'au', label: 'Australia' },
+            { value: 'de', label: 'Germany' },
+            { value: 'fr', label: 'France' },
+            { value: 'jp', label: 'Japan' },
+          ]}
+          fullWidth
+        />
       </FormField>
       <FormField htmlFor="terms">
         <Checkbox id="terms">
@@ -229,13 +237,17 @@ export const ContactForm: Story = {
         <Input id="contactEmail" type="email" placeholder="your@email.com" />
       </FormField>
       <FormField label="Subject" htmlFor="subject">
-        <Select id="subject">
-          <option value="">Select a subject</option>
-          <option value="general">General Inquiry</option>
-          <option value="support">Technical Support</option>
-          <option value="billing">Billing Question</option>
-          <option value="feedback">Feedback</option>
-        </Select>
+        <Dropdown
+          id="subject"
+          placeholder="Select a subject"
+          options={[
+            { value: 'general', label: 'General Inquiry' },
+            { value: 'support', label: 'Technical Support' },
+            { value: 'billing', label: 'Billing Question' },
+            { value: 'feedback', label: 'Feedback' },
+          ]}
+          fullWidth
+        />
       </FormField>
       <FormField
         label="Message"
@@ -267,12 +279,18 @@ export const SettingsForm: Story = {
         <Input id="settingsEmail" type="email" defaultValue="john@example.com" />
       </FormField>
       <FormField label="Timezone" htmlFor="timezone">
-        <Select id="timezone" defaultValue="est">
-          <option value="pst">Pacific Time (PT)</option>
-          <option value="mst">Mountain Time (MT)</option>
-          <option value="cst">Central Time (CT)</option>
-          <option value="est">Eastern Time (ET)</option>
-        </Select>
+        <Dropdown
+          id="timezone"
+          defaultValue="est"
+          options={[
+            { value: 'pst', label: 'Pacific Time (PT)' },
+            { value: 'mst', label: 'Mountain Time (MT)' },
+            { value: 'cst', label: 'Central Time (CT)' },
+            { value: 'est', label: 'Eastern Time (ET)' },
+            { value: 'utc', label: 'UTC' },
+          ]}
+          fullWidth
+        />
       </FormField>
       <FormField label="Notifications" htmlFor="notifications">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>

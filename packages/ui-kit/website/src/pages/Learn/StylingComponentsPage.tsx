@@ -98,7 +98,7 @@ export function StylingComponentsPage() {
 }
 
 .card-title {
-  color: var(--card-text-hard);
+  color: var(--card-text-strong);
   font-size: var(--text-lg);
   font-weight: var(--weight-semibold);
   margin-bottom: var(--space-2);

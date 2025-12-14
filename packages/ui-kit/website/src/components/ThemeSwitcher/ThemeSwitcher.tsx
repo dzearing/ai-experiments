@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Dropdown, Button, Segmented } from '@ui-kit/react';
+import { Dropdown, Segmented } from '@ui-kit/react';
 import styles from './ThemeSwitcher.module.css';
 
-const themes = [
+const themeOptions = [
   { value: 'default', label: 'Default' },
   { value: 'minimal', label: 'Minimal' },
   { value: 'high-contrast', label: 'High Contrast' },
@@ -64,8 +64,12 @@ export function ThemeSwitcher() {
     applyTheme(theme, newMode as Mode);
   };
 
-  const handleThemeSelect = (value: string) => {
-    applyTheme(value, mode);
+  const handleThemeChange = (value: string | string[]) => {
+    // Dropdown onChange returns string | string[] but we're in single mode
+    const newTheme = Array.isArray(value) ? value[0] : value;
+    if (newTheme) {
+      applyTheme(newTheme, mode);
+    }
   };
 
   return (
@@ -79,14 +83,13 @@ export function ThemeSwitcher() {
       />
 
       <Dropdown
-        items={themes}
-        onSelect={handleThemeSelect}
+        options={themeOptions}
+        value={theme}
+        onChange={handleThemeChange}
+        placeholder="Theme"
         position="bottom-end"
-      >
-        <Button variant="outline">
-          Change theme
-        </Button>
-      </Dropdown>
+        size="sm"
+      />
     </div>
   );
 }

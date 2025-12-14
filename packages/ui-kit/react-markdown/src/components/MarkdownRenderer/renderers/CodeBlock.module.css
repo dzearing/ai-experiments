@@ -1,16 +1,26 @@
 /**
  * CodeBlock styles
  *
- * VS Code-inspired syntax highlighting with design tokens.
+ * GitHub-inspired syntax highlighting that adapts to light/dark mode.
+ * Uses CSS custom properties with mode-specific fallbacks.
+ *
+ * Token mapping from ui-kit/core themes:
+ * - --inset-bg: Code block background
+ * - --inset-border: Code block border
+ * - --inset-text: Code text color
+ * - --inset-text-soft: Muted text (line numbers)
+ * - --page-text: Primary text color
+ * - --page-text-soft: Secondary text color
+ * - --page-link: Link/action color
  */
 
 .codeBlock {
   position: relative;
-  background: var(--inset-bg);
-  border: 1px solid var(--inset-border);
-  border-radius: var(--radius-md);
+  background: var(--inset-bg, #f6f8fa);
+  border: 1px solid var(--inset-border, #e1e4e8);
+  border-radius: var(--radius-md, 6px);
   overflow: hidden;
-  font-family: var(--font-mono);
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace);
   font-size: var(--text-sm, 0.875rem);
   line-height: 1.5;
 }
@@ -20,29 +30,29 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-1) var(--space-3);
-  background: var(--inset-bg);
-  border-bottom: 1px solid var(--inset-border);
+  padding: var(--space-1, 4px) var(--space-3, 12px);
+  background: var(--inset-bg, #f6f8fa);
+  border-bottom: 1px solid var(--inset-border, #e1e4e8);
 }
 
 .language {
   font-size: var(--text-xs, 0.75rem);
-  color: var(--inset-text-soft, var(--page-text-soft));
+  color: var(--inset-text-soft, var(--page-text-soft, #6a737d));
   text-transform: lowercase;
 }
 
 .collapseButton {
   background: none;
   border: none;
-  color: var(--inset-text-soft, var(--page-text-soft));
+  color: var(--inset-text-soft, var(--page-text-soft, #6a737d));
   cursor: pointer;
-  padding: var(--space-1);
+  padding: var(--space-1, 4px);
   font-size: var(--text-xs, 0.75rem);
-  transition: color var(--duration-fast) var(--ease-default);
+  transition: color var(--duration-fast, 100ms) var(--ease-default, ease-out);
 }
 
 .collapseButton:hover {
-  color: var(--inset-text, var(--page-text));
+  color: var(--inset-text, var(--page-text, #24292e));
 }
 
 /* Code content area */
@@ -57,7 +67,7 @@
 
 .code {
   display: block;
-  padding: var(--space-3);
+  padding: var(--space-3, 12px);
 }
 
 /* Individual line */
@@ -65,24 +75,24 @@
   display: flex;
   min-height: 1.5em;
   cursor: pointer;
-  transition: background var(--duration-fast) var(--ease-default);
+  transition: background var(--duration-fast, 100ms) var(--ease-default, ease-out);
 }
 
 .line:hover {
-  background: var(--inset-bg-hover, rgba(0, 0, 0, 0.05));
+  background: var(--inset-bg-hover, rgba(0, 0, 0, 0.04));
 }
 
 .line.highlighted {
-  background: var(--warning-bg, rgba(255, 200, 0, 0.2));
+  background: rgba(255, 200, 0, 0.15);
 }
 
 /* Line numbers */
 .lineNumber {
   flex-shrink: 0;
   width: 3em;
-  padding-right: var(--space-2);
+  padding-right: var(--space-2, 8px);
   text-align: right;
-  color: var(--inset-text-soft, var(--page-text-soft));
+  color: var(--inset-text-soft, var(--page-text-soft, #6a737d));
   user-select: none;
   opacity: 0.5;
 }
@@ -94,16 +104,16 @@
 
 /* Collapsed indicator */
 .collapsedIndicator {
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-2, 8px) var(--space-3, 12px);
   text-align: center;
 }
 
 .expandButton {
   background: none;
   border: none;
-  color: var(--control-text, var(--page-link));
+  color: var(--page-link, #0366d6);
   cursor: pointer;
-  font-family: var(--font-mono);
+  font-family: var(--font-mono, monospace);
   font-size: var(--text-sm, 0.875rem);
 }
 
@@ -113,94 +123,208 @@
 
 /* ==========================================
    Syntax Highlighting Token Styles
-   VS Code-inspired color scheme
+   GitHub-inspired color scheme that works in light/dark modes
    ========================================== */
 
-/* Comments */
+/* Base token color - inherits from inset text */
+.code :global(.token) {
+  color: var(--inset-text, var(--page-text, #24292e));
+}
+
+/* Comments - muted gray-green */
 .code :global(.token.comment),
 .code :global(.token.prolog),
 .code :global(.token.doctype),
 .code :global(.token.cdata) {
-  color: var(--syntax-comment, #6a9955);
+  color: var(--page-text-soft, #6a737d);
+  font-style: italic;
 }
 
-/* Keywords */
+/* Keywords - purple/magenta */
 .code :global(.token.keyword),
-.code :global(.token.tag),
 .code :global(.token.selector),
 .code :global(.token.important),
 .code :global(.token.atrule),
 .code :global(.token.control),
 .code :global(.token.directive),
 .code :global(.token.unit) {
-  color: var(--syntax-keyword, #c586c0);
+  color: #d73a49;
 }
 
-/* Strings */
+/* Tags (HTML) - green */
+.code :global(.token.tag) {
+  color: #22863a;
+}
+
+/* Strings - blue */
 .code :global(.token.string),
 .code :global(.token.char),
 .code :global(.token.attr-value),
 .code :global(.token.regex),
 .code :global(.token.template-string) {
-  color: var(--syntax-string, #ce9178);
+  color: #032f62;
 }
 
-/* Numbers */
+/* Numbers and constants - blue */
 .code :global(.token.number),
 .code :global(.token.boolean),
 .code :global(.token.constant) {
-  color: var(--syntax-number, #b5cea8);
+  color: #005cc5;
 }
 
-/* Functions */
+/* Functions - purple */
 .code :global(.token.function),
 .code :global(.token.function-name) {
-  color: var(--syntax-function, #dcdcaa);
+  color: #6f42c1;
 }
 
-/* Classes and Types */
+/* Classes and Types - orange/teal */
 .code :global(.token.class-name),
 .code :global(.token.type),
 .code :global(.token.builtin) {
-  color: var(--syntax-class, #4ec9b0);
+  color: #6f42c1;
 }
 
-/* Variables and Properties */
+/* Variables and Properties - blue */
 .code :global(.token.variable),
-.code :global(.token.property),
-.code :global(.token.attr-name) {
-  color: var(--syntax-variable, #9cdcfe);
+.code :global(.token.property) {
+  color: #005cc5;
 }
 
-/* Operators and Punctuation */
+/* Attribute names - purple */
+.code :global(.token.attr-name) {
+  color: #6f42c1;
+}
+
+/* Operators and Punctuation - inherit from base text */
 .code :global(.token.operator),
 .code :global(.token.punctuation) {
-  color: var(--syntax-operator, #d4d4d4);
-}
-
-/* Plain text (default) */
-.code :global(.token) {
-  color: var(--inset-text, var(--page-text));
+  color: var(--inset-text, var(--page-text, #24292e));
 }
 
 /* Special: deleted/inserted for diffs */
 .code :global(.token.deleted) {
-  color: var(--danger-text, #f44747);
-  background: var(--danger-bg, rgba(244, 71, 71, 0.1));
+  color: #b31d28;
+  background: rgba(255, 0, 0, 0.1);
 }
 
 .code :global(.token.inserted) {
-  color: var(--success-text, #4ec9b0);
-  background: var(--success-bg, rgba(78, 201, 176, 0.1));
+  color: #22863a;
+  background: rgba(0, 255, 0, 0.1);
+}
+
+/* ==========================================
+   Dark Mode Overrides
+   When in dark mode, use colors optimized for dark backgrounds
+   ========================================== */
+
+:global([data-mode="dark"]) .code :global(.token.comment),
+:global([data-mode="dark"]) .code :global(.token.prolog),
+:global([data-mode="dark"]) .code :global(.token.doctype),
+:global([data-mode="dark"]) .code :global(.token.cdata),
+:global(.dark) .code :global(.token.comment),
+:global(.dark) .code :global(.token.prolog),
+:global(.dark) .code :global(.token.doctype),
+:global(.dark) .code :global(.token.cdata) {
+  color: #8b949e;
+}
+
+:global([data-mode="dark"]) .code :global(.token.keyword),
+:global([data-mode="dark"]) .code :global(.token.selector),
+:global([data-mode="dark"]) .code :global(.token.important),
+:global([data-mode="dark"]) .code :global(.token.atrule),
+:global([data-mode="dark"]) .code :global(.token.control),
+:global([data-mode="dark"]) .code :global(.token.directive),
+:global([data-mode="dark"]) .code :global(.token.unit),
+:global(.dark) .code :global(.token.keyword),
+:global(.dark) .code :global(.token.selector),
+:global(.dark) .code :global(.token.important),
+:global(.dark) .code :global(.token.atrule),
+:global(.dark) .code :global(.token.control),
+:global(.dark) .code :global(.token.directive),
+:global(.dark) .code :global(.token.unit) {
+  color: #ff7b72;
+}
+
+:global([data-mode="dark"]) .code :global(.token.tag),
+:global(.dark) .code :global(.token.tag) {
+  color: #7ee787;
+}
+
+:global([data-mode="dark"]) .code :global(.token.string),
+:global([data-mode="dark"]) .code :global(.token.char),
+:global([data-mode="dark"]) .code :global(.token.attr-value),
+:global([data-mode="dark"]) .code :global(.token.regex),
+:global([data-mode="dark"]) .code :global(.token.template-string),
+:global(.dark) .code :global(.token.string),
+:global(.dark) .code :global(.token.char),
+:global(.dark) .code :global(.token.attr-value),
+:global(.dark) .code :global(.token.regex),
+:global(.dark) .code :global(.token.template-string) {
+  color: #a5d6ff;
+}
+
+:global([data-mode="dark"]) .code :global(.token.number),
+:global([data-mode="dark"]) .code :global(.token.boolean),
+:global([data-mode="dark"]) .code :global(.token.constant),
+:global(.dark) .code :global(.token.number),
+:global(.dark) .code :global(.token.boolean),
+:global(.dark) .code :global(.token.constant) {
+  color: #79c0ff;
+}
+
+:global([data-mode="dark"]) .code :global(.token.function),
+:global([data-mode="dark"]) .code :global(.token.function-name),
+:global(.dark) .code :global(.token.function),
+:global(.dark) .code :global(.token.function-name) {
+  color: #d2a8ff;
+}
+
+:global([data-mode="dark"]) .code :global(.token.class-name),
+:global([data-mode="dark"]) .code :global(.token.type),
+:global([data-mode="dark"]) .code :global(.token.builtin),
+:global(.dark) .code :global(.token.class-name),
+:global(.dark) .code :global(.token.type),
+:global(.dark) .code :global(.token.builtin) {
+  color: #ffa657;
+}
+
+:global([data-mode="dark"]) .code :global(.token.variable),
+:global([data-mode="dark"]) .code :global(.token.property),
+:global(.dark) .code :global(.token.variable),
+:global(.dark) .code :global(.token.property) {
+  color: #79c0ff;
+}
+
+:global([data-mode="dark"]) .code :global(.token.attr-name),
+:global(.dark) .code :global(.token.attr-name) {
+  color: #d2a8ff;
+}
+
+:global([data-mode="dark"]) .code :global(.token.deleted),
+:global(.dark) .code :global(.token.deleted) {
+  color: #ffa198;
+  background: rgba(255, 0, 0, 0.15);
+}
+
+:global([data-mode="dark"]) .code :global(.token.inserted),
+:global(.dark) .code :global(.token.inserted) {
+  color: #7ee787;
+  background: rgba(0, 255, 0, 0.15);
+}
+
+:global([data-mode="dark"]) .line:hover,
+:global(.dark) .line:hover {
+  background: var(--inset-bg-hover, rgba(255, 255, 255, 0.04));
 }
 
 /* Highlight animation for deep links */
 @keyframes highlightFade {
   0% {
-    background: var(--warning-bg, rgba(255, 200, 0, 0.4));
+    background: rgba(255, 200, 0, 0.3);
   }
   100% {
-    background: var(--warning-bg, rgba(255, 200, 0, 0.2));
+    background: rgba(255, 200, 0, 0.15);
   }
 }
 

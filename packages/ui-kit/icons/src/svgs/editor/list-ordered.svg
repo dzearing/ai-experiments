@@ -1,0 +1,12 @@
+<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- List lines -->
+  <line x1="10" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  <line x1="10" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  <line x1="10" y1="18" x2="21" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  <!-- Number 1 -->
+  <path d="M4 4L5 3.5V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Number 2 -->
+  <path d="M3.5 10.5C3.5 10 4 9.5 5 9.5C6 9.5 6.5 10 6.5 10.5C6.5 11 6 11.5 3.5 14H6.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Number 3 -->
+  <path d="M3.5 16C4 15.5 4.5 15.5 5 15.5C6 15.5 6.5 16 6.5 16.5C6.5 17 6 17.5 5 17.5C6 17.5 6.5 18 6.5 18.5C6.5 19 6 19.5 5 19.5C4.5 19.5 4 19.5 3.5 19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

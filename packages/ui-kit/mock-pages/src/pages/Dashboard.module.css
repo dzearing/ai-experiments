@@ -125,7 +125,7 @@
 .statValue {
   font-size: var(--text-3xl);
   font-weight: var(--weight-bold);
-  color: var(--page-text-hard);
+  color: var(--page-text-strong);
 }
 
 /* Content Grid */

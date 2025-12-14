@@ -1,4 +1,4 @@
-import { forwardRef, type InputHTMLAttributes } from 'react';
+import { forwardRef, type InputHTMLAttributes, type ReactNode } from 'react';
 import styles from './Checkbox.module.css';
 
 /**
@@ -20,14 +20,16 @@ export type CheckboxSize = 'sm' | 'md' | 'lg';
 export interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'size'> {
   /** Checkbox size */
   size?: CheckboxSize;
-  /** Label text */
+  /** Label text (can also use children) */
   label?: string;
   /** Indeterminate state */
   indeterminate?: boolean;
+  /** Label content (alternative to label prop) */
+  children?: ReactNode;
 }
 
 export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
-  ({ size = 'md', label, indeterminate = false, className, id, ...props }, ref) => {
+  ({ size = 'md', label, indeterminate = false, className, id, children, ...props }, ref) => {
     const checkboxId = id || `checkbox-${Math.random().toString(36).slice(2, 9)}`;
 
     const wrapperClasses = [
@@ -57,7 +59,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
             )}
           </svg>
         </span>
-        {label && <span className={styles.label}>{label}</span>}
+        {(label || children) && <span className={styles.label}>{children || label}</span>}
       </label>
     );
   }

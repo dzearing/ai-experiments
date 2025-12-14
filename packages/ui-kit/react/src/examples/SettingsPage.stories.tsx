@@ -6,11 +6,11 @@ import {
   Checkbox,
   Chip,
   Divider,
+  Dropdown,
   Heading,
   Input,
   Panel,
   Radio,
-  Select,
   Slider,
   Stack,
   Switch,
@@ -26,7 +26,7 @@ import {
  *
  * ## Components Used
  * - **Input**: Text fields for names, emails
- * - **Select**: Dropdown selections (language, timezone)
+ * - **Dropdown**: Searchable selections (language, timezone, visibility)
  * - **Switch**: Toggle settings (notifications, features)
  * - **Checkbox**: Multi-select options
  * - **Radio**: Single-select option groups
@@ -126,7 +126,7 @@ function SettingsPage() {
               <Stack gap="md">
                 <Stack gap="xs">
                   <Text size="sm" weight="medium">Language</Text>
-                  <Select
+                  <Dropdown
                     options={[
                       { value: 'en', label: 'English (US)' },
                       { value: 'en-gb', label: 'English (UK)' },
@@ -134,22 +134,30 @@ function SettingsPage() {
                       { value: 'fr', label: 'French' },
                       { value: 'de', label: 'German' },
                       { value: 'ja', label: 'Japanese' },
+                      { value: 'zh', label: 'Chinese' },
+                      { value: 'ko', label: 'Korean' },
                     ]}
                     defaultValue="en"
+                    searchable
+                    placeholder="Select language"
                   />
                 </Stack>
 
                 <Stack gap="xs">
                   <Text size="sm" weight="medium">Timezone</Text>
-                  <Select
+                  <Dropdown
                     options={[
                       { value: 'pst', label: 'Pacific Time (PT)' },
                       { value: 'mst', label: 'Mountain Time (MT)' },
                       { value: 'cst', label: 'Central Time (CT)' },
                       { value: 'est', label: 'Eastern Time (ET)' },
                       { value: 'utc', label: 'UTC' },
+                      { value: 'gmt', label: 'GMT' },
+                      { value: 'cet', label: 'Central European Time' },
                     ]}
                     defaultValue="pst"
+                    searchable
+                    placeholder="Select timezone"
                   />
                 </Stack>
               </Stack>
@@ -406,13 +414,14 @@ function SettingsPage() {
             <Stack gap="lg">
               <Stack gap="xs">
                 <Text size="sm" weight="medium">Profile Visibility</Text>
-                <Select
+                <Dropdown
                   options={[
                     { value: 'public', label: 'Public - Anyone can see your profile' },
                     { value: 'private', label: 'Private - Only you can see your profile' },
                     { value: 'connections', label: 'Connections - Only your connections' },
                   ]}
                   defaultValue="public"
+                  placeholder="Select visibility"
                 />
               </Stack>
 
@@ -466,8 +475,9 @@ This example demonstrates how to build a comprehensive settings page with multip
 - Add helper text below with \`size="xs" color="softer"\`
 - Group related inputs in rows using **Stack** with \`direction="row"\`
 
-#### Select Dropdowns
+#### Dropdown Selections
 - Use for selecting from a list of options
+- Enable \`searchable\` for longer lists (languages, timezones)
 - Provide clear, descriptive option labels
 - Consider grouping options if there are many
 
@@ -507,7 +517,7 @@ This example demonstrates how to build a comprehensive settings page with multip
 | Component | Purpose |
 |-----------|---------|
 | Input | Text fields, emails, passwords |
-| Select | Language, timezone, visibility |
+| Dropdown | Language, timezone, visibility (with search) |
 | Switch | Toggle settings |
 | Checkbox | Multi-select options |
 | Radio | Single-select groups |

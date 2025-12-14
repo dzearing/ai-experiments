@@ -1,53 +1,225 @@
 .wrapper {
   position: relative;
   display: inline-flex;
+  flex-direction: column;
 }
 
+.fullWidth {
+  display: flex;
+  width: 100%;
+}
+
+.fullWidth .trigger {
+  width: 100%;
+}
+
+/* Trigger button */
 .trigger {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  background: transparent;
-  border: none;
-  padding: 0;
+  gap: var(--space-2);
+  background: var(--inset-bg);
+  color: var(--inset-text);
+  border: 1px solid var(--inset-border);
+  border-radius: var(--radius-md);
   cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-default);
+  text-align: start;
+  min-width: 0;
 }
 
+.trigger:hover:not(:disabled) {
+  background: var(--inset-bg-hover);
+  border-color: var(--inset-border-hover);
+}
+
+.trigger:focus {
+  outline: none;
+}
+
+.trigger:focus-visible,
+.trigger.open {
+  border-color: var(--focus-ring);
+  box-shadow: 0 0 0 2px var(--focus-ring-muted);
+}
+
+.trigger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--controlDisabled-bg);
+}
+
+/* Size variants */
+.sm .trigger {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-sm);
+  min-height: 32px;
+}
+
+.md .trigger {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-base);
+  min-height: 40px;
+}
+
+.lg .trigger {
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-lg);
+  min-height: 48px;
+}
+
+/* Value container */
+.valueContainer {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.placeholder {
+  color: var(--inset-text-soft);
+}
+
+.selectedValue {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.valueIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* Multi-select chips */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  flex: 1;
+  min-width: 0;
+}
+
+/* Indicators (loading, clear, arrow) */
+.indicators {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+.arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--inset-text-soft);
+  transition: transform var(--duration-fast) var(--ease-default);
+}
+
+.arrowOpen {
+  transform: rotate(180deg);
+}
+
+.clearButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-1);
+  border: none;
+  background: transparent;
+  color: var(--inset-text-soft);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all var(--duration-fast) var(--ease-default);
+}
+
+.clearButton:hover {
+  background: var(--controlSubtle-bg-hover);
+  color: var(--inset-text);
+}
+
+/* Error state */
+.error .trigger {
+  border-color: var(--danger-border);
+}
+
+.error .trigger:focus-visible,
+.error .trigger.open {
+  box-shadow: 0 0 0 2px var(--danger-bg-muted);
+}
+
+/* Disabled state */
+.disabled {
+  pointer-events: none;
+}
+
+/* Menu dropdown */
 .menu {
-  position: absolute;
+  position: fixed;
+  z-index: 10000;
   background: var(--popout-bg);
   border: 1px solid var(--popout-border);
   border-radius: var(--radius-md);
-  box-shadow: var(--popout-shadow);
-  z-index: 1050;
-  min-width: 160px;
-  max-width: 320px;
-  width: max-content;
-  padding: var(--space-1) 0;
+  box-shadow: var(--shadow-lg);
+  max-height: 300px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   animation: fadeIn var(--duration-fast) var(--ease-default);
 }
 
-/* Positions - using logical properties for RTL support */
-.bottom-start {
-  top: calc(100% + 4px);
-  inset-inline-start: 0;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.bottom-end {
-  top: calc(100% + 4px);
-  inset-inline-end: 0;
+/* Search input */
+.searchWrapper {
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--popout-border);
 }
 
-.top-start {
-  bottom: calc(100% + 4px);
-  inset-inline-start: 0;
+.searchInput {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--inset-border);
+  border-radius: var(--radius-sm);
+  background: var(--inset-bg);
+  color: var(--inset-text);
+  font-size: var(--text-sm);
+  outline: none;
+  transition: all var(--duration-fast) var(--ease-default);
 }
 
-.top-end {
-  bottom: calc(100% + 4px);
-  inset-inline-end: 0;
+.searchInput:focus {
+  border-color: var(--focus-ring);
+  box-shadow: 0 0 0 2px var(--focus-ring-muted);
 }
 
-.item {
+.searchInput::placeholder {
+  color: var(--inset-text-soft);
+}
+
+/* Options list */
+.optionsList {
+  overflow-y: auto;
+  padding: var(--space-1) 0;
+}
+
+/* Option item */
+.option {
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -62,42 +234,52 @@
   transition: background var(--duration-fast) var(--ease-default);
 }
 
-.item:hover:not(:disabled),
-.item.focused:not(:disabled) {
-  background: var(--controlPrimary-bg);
+.option:hover:not(:disabled),
+.option.focused:not(:disabled) {
+  background: var(--controlSubtle-bg-hover);
+}
+
+.option.selected {
+  background: var(--controlPrimary-bg-soft);
   color: var(--controlPrimary-text);
 }
 
-.item:hover:not(:disabled) .icon,
-.item:hover:not(:disabled) .shortcut,
-.item:hover:not(:disabled) .submenuIndicator,
-.item.focused:not(:disabled) .icon,
-.item.focused:not(:disabled) .shortcut,
-.item.focused:not(:disabled) .submenuIndicator {
-  color: inherit;
-  opacity: 0.85;
-}
-
-.item:focus {
-  outline: none;
-}
-
-.item:focus-visible {
-  outline: none;
+.option.selected:hover:not(:disabled),
+.option.selected.focused:not(:disabled) {
   background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
 }
 
-.item.disabled {
+.option:focus {
+  outline: none;
+}
+
+.option.disabled {
   color: var(--controlDisabled-text);
   cursor: not-allowed;
 }
 
-.item.hasSubmenu {
-  padding-inline-end: var(--space-2);
+/* Multi-select checkbox */
+.checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--inset-border);
+  border-radius: var(--radius-xs);
+  background: var(--inset-bg);
+  flex-shrink: 0;
+  transition: all var(--duration-fast) var(--ease-default);
 }
 
-.icon {
+.checkbox.checked {
+  background: var(--controlPrimary-bg);
+  border-color: var(--controlPrimary-bg);
+  color: var(--controlPrimary-text);
+}
+
+/* Option icon */
+.optionIcon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -106,94 +288,59 @@
   flex-shrink: 0;
 }
 
-.iconPlaceholder {
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-}
-
-.label {
+.optionLabel {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.shortcut {
-  margin-inline-start: auto;
-  padding-inline-start: var(--space-4);
-  font-size: var(--text-sm);
-  color: var(--popout-text-soft);
-  font-family: var(--font-mono);
-}
-
-.submenuIndicator {
+/* Loading state */
+.loading {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
-  margin-inline-start: var(--space-2);
-  font-size: 8px;
+  gap: var(--space-2);
+  padding: var(--space-4);
   color: var(--popout-text-soft);
-  flex-shrink: 0;
 }
 
-.divider {
-  height: 1px;
-  background: var(--popout-border);
-  margin: var(--space-1) 0;
+.spinner {
+  animation: spin 1s linear infinite;
 }
 
-/* Submenu positioning */
-.submenu {
-  position: absolute;
-  background: var(--popout-bg);
-  border: 1px solid var(--popout-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--popout-shadow);
-  z-index: 1051;
-  min-width: 160px;
-  max-width: 320px;
-  width: max-content;
-  padding: var(--space-1) 0;
-  animation: fadeIn var(--duration-fast) var(--ease-default);
-}
-
-.submenuLtr {
-  left: 100%;
-  margin-left: 4px;
-}
-
-.submenuRtl {
-  right: 100%;
-  margin-right: 4px;
-}
-
-@keyframes fadeIn {
+@keyframes spin {
   from {
-    opacity: 0;
-    transform: translateY(-4px);
+    transform: rotate(0deg);
   }
   to {
-    opacity: 1;
-    transform: translateY(0);
+    transform: rotate(360deg);
   }
 }
 
-/* ==============================================
-   Reduced Motion
-   ============================================== */
+/* Empty state */
+.empty {
+  padding: var(--space-4);
+  text-align: center;
+  color: var(--popout-text-soft);
+}
 
+/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .menu {
     animation: none;
+  }
+
+  .trigger,
+  .option,
+  .arrow,
+  .clearButton,
+  .searchInput {
     transition: none;
   }
 
-  .submenu {
+  .spinner {
     animation: none;
-  }
-
-  .item {
-    transition: none;
   }
 }
