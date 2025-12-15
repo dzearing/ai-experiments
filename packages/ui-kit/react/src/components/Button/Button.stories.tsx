@@ -1,31 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { Button } from './Button';
-
-// Simple icon components for stories
-const PlusIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-  </svg>
-);
-
-const CloseIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-  </svg>
-);
-
-const SettingsIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.5" />
-    <path d="M8 1v2M8 13v2M1 8h2M13 8h2M2.93 2.93l1.41 1.41M11.66 11.66l1.41 1.41M2.93 13.07l1.41-1.41M11.66 4.34l1.41-1.41" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-  </svg>
-);
-
-const ArrowRightIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
+import { AddIcon, CloseIcon, ArrowRightIcon } from '@ui-kit/icons';
 
 const meta: Meta<typeof Button> = {
   title: 'Actions/Button',
@@ -60,6 +35,14 @@ Clickable elements that trigger actions or navigate to different pages.
 - **md** (36px): Default size for most use cases and forms
 - **lg** (44px): Hero sections, prominent CTAs, touch-friendly interfaces
 
+## Shapes
+
+| Shape | Description |
+|-------|-------------|
+| \`pill\` | Fully rounded corners (9999px radius) |
+
+For icon-only buttons, use the \`IconButton\` component instead.
+
 ## Accessibility
 
 - Uses semantic \`<button>\` element by default with proper type attribute
@@ -84,12 +67,12 @@ import { Button } from '@ui-kit/react';
 </Button>
 
 // With icon
-<Button icon={<PlusIcon />} variant="primary">
+<Button icon={<AddIcon size={16} />} variant="primary">
   Add Item
 </Button>
 
-// Icon only
-<Button iconOnly icon={<CloseIcon />} aria-label="Close" />
+// Pill shape
+<Button shape="pill">Pill Shape</Button>
 
 // As navigation link
 <Button as="a" href="/dashboard" variant="primary">
@@ -129,9 +112,13 @@ import { Button } from '@ui-kit/react';
       control: 'boolean',
       description: 'Expand button to fill container width',
     },
-    iconOnly: {
-      control: 'boolean',
-      description: 'Icon-only mode (square button, requires aria-label)',
+    shape: {
+      control: 'select',
+      options: [undefined, 'pill'],
+      description: 'Button shape: pill (fully rounded). For icon-only buttons, use IconButton.',
+      table: {
+        defaultValue: { summary: 'undefined' },
+      },
     },
     disabled: {
       control: 'boolean',
@@ -225,7 +212,7 @@ export const FullWidth: Story = {
 export const WithIcon: Story = {
   args: {
     children: 'Add Item',
-    icon: <PlusIcon />,
+    icon: <AddIcon size={16} />,
     variant: 'primary',
   },
 };
@@ -233,43 +220,22 @@ export const WithIcon: Story = {
 export const WithIconAfter: Story = {
   args: {
     children: 'Continue',
-    iconAfter: <ArrowRightIcon />,
+    iconAfter: <ArrowRightIcon size={16} />,
     variant: 'primary',
   },
-};
-
-export const IconOnly: Story = {
-  render: () => (
-    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-      <Button iconOnly icon={<PlusIcon />} aria-label="Add" />
-      <Button iconOnly icon={<PlusIcon />} variant="primary" aria-label="Add" />
-      <Button iconOnly icon={<CloseIcon />} variant="danger" aria-label="Delete" />
-      <Button iconOnly icon={<SettingsIcon />} variant="ghost" aria-label="Settings" />
-    </div>
-  ),
-};
-
-export const IconOnlySizes: Story = {
-  render: () => (
-    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-      <Button iconOnly size="sm" icon={<PlusIcon />} aria-label="Small" />
-      <Button iconOnly size="md" icon={<PlusIcon />} aria-label="Medium" />
-      <Button iconOnly size="lg" icon={<PlusIcon />} aria-label="Large" />
-    </div>
-  ),
 };
 
 export const ButtonsWithIcons: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-        <Button icon={<PlusIcon />}>Add Item</Button>
-        <Button icon={<PlusIcon />} variant="primary">Add Item</Button>
-        <Button icon={<CloseIcon />} variant="danger">Delete</Button>
+        <Button icon={<AddIcon size={16} />}>Add Item</Button>
+        <Button icon={<AddIcon size={16} />} variant="primary">Add Item</Button>
+        <Button icon={<CloseIcon size={16} />} variant="danger">Delete</Button>
       </div>
       <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-        <Button iconAfter={<ArrowRightIcon />}>Next</Button>
-        <Button iconAfter={<ArrowRightIcon />} variant="primary">Continue</Button>
+        <Button iconAfter={<ArrowRightIcon size={16} />}>Next</Button>
+        <Button iconAfter={<ArrowRightIcon size={16} />} variant="primary">Continue</Button>
       </div>
     </div>
   ),
@@ -286,7 +252,7 @@ export const AsLink: Story = {
       <Button as="a" href="#settings" variant="default">
         Settings
       </Button>
-      <Button as="a" href="#docs" variant="ghost" iconAfter={<ArrowRightIcon />}>
+      <Button as="a" href="#docs" variant="ghost" iconAfter={<ArrowRightIcon size={16} />}>
         View Docs
       </Button>
     </div>
@@ -297,5 +263,15 @@ export const AsLink: Story = {
         story: 'Use `as="a"` with `href` to render Button as a navigation link. Preserves all button styling while providing proper anchor semantics for navigation.',
       },
     },
+  },
+};
+
+// Shape examples
+
+export const PillShape: Story = {
+  args: {
+    children: 'Pill Button',
+    shape: 'pill',
+    variant: 'primary',
   },
 };

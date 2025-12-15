@@ -1,9 +1,13 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
+import { uikit } from '@ui-kit/core/vite';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    uikit(),
+  ],
   resolve: {
     alias: {
       '@': resolve(__dirname, './src'),

@@ -8,69 +8,66 @@ export function GettingStartedPage() {
         <span className={styles.lessonNumber}>Lesson 1</span>
         <h1 className={styles.title}>Getting Started</h1>
         <p className={styles.subtitle}>
-          Set up UI-Kit in your project with zero-flash theme loading.
+          Set up UI-Kit in your Vite project with zero-flash theme loading.
         </p>
       </div>
 
       <section className={styles.section}>
         <h2>Installation</h2>
         <p>
-          UI-Kit is a CSS-based design token system. You can use it with any framework
-          or vanilla HTML/CSS. The tokens are provided as CSS custom properties.
+          UI-Kit provides a Vite plugin that handles everything automatically:
+          theme detection, CSS loading, persistence, and zero-flash loading.
         </p>
         <pre className={styles.code}>{`npm install @ui-kit/core`}</pre>
-        <p>Or copy the tokens.css file directly into your project.</p>
       </section>
 
       <section className={styles.section}>
-        <h2>Zero-Flash Theme Loading</h2>
+        <h2>Add the Vite Plugin</h2>
         <p>
-          The most common issue with theming is a &quot;flash&quot; when the page loads - 
-          where users briefly see the wrong theme before JavaScript hydrates. 
-          UI-Kit solves this with an inline bootstrap script.
+          Add the UI-Kit plugin to your Vite config. That&apos;s it!
         </p>
-        <p>Add this script to your HTML &lt;head&gt;, before any stylesheets:</p>
-        <pre className={styles.code}>{`<script>
-  (function() {
-    var s = null;
-    try { s = JSON.parse(localStorage.getItem('uikit-theme')); } catch(e) {}
+        <pre className={styles.code}>{`// vite.config.ts
+import { defineConfig } from 'vite';
+import { uikit } from '@ui-kit/core/vite';
 
-    var theme = (s && s.theme) || 'default';
-    var mode = (s && s.mode) || 'auto';
-
-    if (mode === 'auto') {
-      mode = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-
-    // Check for high-contrast preference
-    if (!s && matchMedia('(prefers-contrast: more)').matches) {
-      theme = 'high-contrast';
-    }
-
-    document.documentElement.dataset.theme = theme;
-    document.documentElement.dataset.mode = mode;
-  })();
-</script>`}</pre>
-        <p>
-          This script runs synchronously before the page renders, setting the correct
-          theme attributes on the HTML element. The CSS then uses these attributes
-          to apply the right colors.
-        </p>
+export default defineConfig({
+  plugins: [uikit()]
+});`}</pre>
+        <p>The plugin automatically:</p>
+        <ul>
+          <li>Injects the bootstrap script into your HTML (zero-flash)</li>
+          <li>Copies theme CSS files to your public directory</li>
+          <li>Detects system light/dark preference</li>
+          <li>Persists user preferences to localStorage</li>
+          <li>Loads only the CSS needed for the current theme</li>
+          <li>Exposes the <code>window.UIKit</code> API for runtime changes</li>
+        </ul>
       </section>
 
       <section className={styles.section}>
-        <h2>Import the Tokens</h2>
-        <p>After the bootstrap script, import the tokens stylesheet:</p>
-        <pre className={styles.code}>{`<link rel="stylesheet" href="@ui-kit/core/tokens.css">`}</pre>
-        <p>Or in your CSS/JS:</p>
-        <pre className={styles.code}>{`@import '@ui-kit/core/tokens.css';
+        <h2>Plugin Options</h2>
+        <p>Customize the plugin behavior with options:</p>
+        <pre className={styles.code}>{`uikit({
+  // Where themes are served from (default: '/themes')
+  themesPath: '/assets/themes',
 
-// or in JavaScript
-import '@ui-kit/core/tokens.css';`}</pre>
+  // Default theme when no preference stored (default: 'default')
+  defaultTheme: 'github',
+
+  // Background colors for flash prevention
+  defaultBg: { light: '#ffffff', dark: '#121212' },
+
+  // Whether to copy theme files (default: true)
+  // Set false if serving from CDN
+  copyThemes: true,
+
+  // Where to copy themes (default: 'public/themes')
+  themesOutputDir: 'public/assets/themes',
+})`}</pre>
       </section>
 
       <section className={styles.section}>
-        <h2>Your First Tokens</h2>
+        <h2>Using Design Tokens</h2>
         <p>Now you can use the design tokens in your CSS:</p>
         <pre className={styles.code}>{`.my-card {
   background: var(--card-bg);
@@ -78,10 +75,68 @@ import '@ui-kit/core/tokens.css';`}</pre>
   border: 1px solid var(--card-border);
   padding: var(--space-4);
   border-radius: var(--radius-lg);
+  box-shadow: var(--card-shadow);
 }`}</pre>
         <p>
-          The card will automatically adapt to light/dark mode and any theme the user selects.
+          The card automatically adapts to light/dark mode and any theme.
           No additional CSS or JavaScript required!
+        </p>
+      </section>
+
+      <section className={styles.section}>
+        <h2>Changing Themes at Runtime</h2>
+        <p>
+          Use the global <code>UIKit</code> API to change themes programmatically:
+        </p>
+        <pre className={styles.code}>{`// Change theme (CSS loads on demand)
+UIKit.setTheme('github', 'dark', (state) => {
+  console.log('Theme loaded:', state);
+  // { theme: 'github', mode: 'dark', resolvedMode: 'dark' }
+});
+
+// Get current theme
+const { theme, mode, resolvedMode } = UIKit.getTheme();
+
+// Subscribe to theme changes
+const unsubscribe = UIKit.subscribe((state) => {
+  console.log('Theme changed:', state);
+});
+
+// Later: unsubscribe when done
+unsubscribe();`}</pre>
+      </section>
+
+      <section className={styles.section}>
+        <h2>Available Modes</h2>
+        <p>The <code>mode</code> parameter can be:</p>
+        <ul>
+          <li><code>&apos;light&apos;</code> - Always use light mode</li>
+          <li><code>&apos;dark&apos;</code> - Always use dark mode</li>
+          <li><code>&apos;auto&apos;</code> - Follow system preference (default)</li>
+        </ul>
+        <pre className={styles.code}>{`// Follow system preference
+UIKit.setTheme('default', 'auto');
+
+// Force dark mode
+UIKit.setTheme('terminal', 'dark');
+
+// Force light mode
+UIKit.setTheme('minimal', 'light');`}</pre>
+      </section>
+
+      <section className={styles.section}>
+        <h2>Without Vite</h2>
+        <p>
+          If you&apos;re not using Vite, you can import the bootstrap directly in your entry file:
+        </p>
+        <pre className={styles.code}>{`// main.ts - import at the very top
+import '@ui-kit/core/bootstrap.js';
+
+// Rest of your app...`}</pre>
+        <p>
+          Note: This approach may cause a brief flash on initial load since the script
+          runs after the page starts rendering. For true zero-flash loading, see
+          the manual inline approach in the Advanced section.
         </p>
       </section>
 

@@ -1,33 +1,12 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" style="background:var(--page-bg,#0f0f0f)">
   <head>
     <meta charset="UTF-8" />
+    <meta name="color-scheme" content="dark light" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>UI-Kit - A Design Token System</title>
     <meta name="description" content="A design token system that makes accessible, themeable UIs intuitive." />
-
-    <!-- Zero-flash theme loading -->
-    <script>
-      (function() {
-        var s = null;
-        try { s = JSON.parse(localStorage.getItem('uikit-theme')); } catch(e) {}
-
-        var theme = (s && s.theme) || 'default';
-        var mode = (s && s.mode) || 'auto';
-
-        if (mode === 'auto') {
-          mode = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        }
-
-        if (!s && matchMedia('(prefers-contrast: more)').matches) {
-          theme = 'high-contrast';
-        }
-
-        document.documentElement.dataset.theme = theme;
-        document.documentElement.dataset.mode = mode;
-      })();
-    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -4,7 +4,30 @@
  * A floating UI for quickly testing themes during development.
  */
 
-import { getTheme, setTheme, toggleMode, subscribe, getThemes } from '../runtime/theme-api';
+import { getTheme, setTheme, subscribe, type UIKitThemeState } from '../runtime/bootstrap';
+
+// Available themes list (hardcoded for now)
+const AVAILABLE_THEMES = [
+  { id: 'default', name: 'Default', category: 'Core' },
+  { id: 'minimal', name: 'Minimal', category: 'Core' },
+  { id: 'high-contrast', name: 'High Contrast', category: 'Core' },
+  { id: 'github', name: 'GitHub', category: 'Microsoft' },
+  { id: 'linkedin', name: 'LinkedIn', category: 'Microsoft' },
+  { id: 'teams', name: 'Teams', category: 'Microsoft' },
+  { id: 'onedrive', name: 'OneDrive', category: 'Microsoft' },
+  { id: 'fluent', name: 'Fluent', category: 'Microsoft' },
+  { id: 'terminal', name: 'Terminal', category: 'Creative' },
+  { id: 'matrix', name: 'Matrix', category: 'Creative' },
+  { id: 'cyberpunk', name: 'Cyberpunk', category: 'Creative' },
+  { id: 'sketchy', name: 'Sketchy', category: 'Creative' },
+  { id: 'art-deco', name: 'Art Deco', category: 'Creative' },
+  { id: 'retro', name: 'Retro', category: 'Creative' },
+  { id: 'ocean', name: 'Ocean', category: 'Nature' },
+  { id: 'forest', name: 'Forest', category: 'Nature' },
+  { id: 'sunset', name: 'Sunset', category: 'Nature' },
+  { id: 'midnight', name: 'Midnight', category: 'Nature' },
+  { id: 'arctic', name: 'Arctic', category: 'Nature' },
+];
 
 interface ThemeSwitcherOptions {
   position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
@@ -19,8 +42,6 @@ interface ThemeSwitcherOptions {
 export function createThemeSwitcher(options: ThemeSwitcherOptions = {}): () => void {
   const {
     position = 'bottom-right',
-    showModeToggle = true,
-    showThemeList = true,
     collapsed = false,
   } = options;
 
@@ -43,21 +64,24 @@ export function createThemeSwitcher(options: ThemeSwitcherOptions = {}): () => v
 
   // Populate theme options
   if (themeSelect) {
-    getThemes().then((themes) => {
-      themeSelect.innerHTML = themes
-        .map((t) => `<option value="${t.id}"${t.id === currentTheme.theme ? ' selected' : ''}>${t.name}</option>`)
-        .join('');
-    });
+    themeSelect.innerHTML = AVAILABLE_THEMES
+      .map((t) => `<option value="${t.id}"${t.id === currentTheme.theme ? ' selected' : ''}>${t.name}</option>`)
+      .join('');
 
     themeSelect.addEventListener('change', () => {
-      setTheme({ theme: themeSelect.value });
+      setTheme(themeSelect.value, currentTheme.mode);
     });
   }
 
-  // Mode toggle
+  // Mode toggle - cycles through light -> dark -> auto
   if (modeToggle) {
     modeToggle.addEventListener('click', () => {
-      toggleMode();
+      const current = currentTheme.mode;
+      let newMode: 'light' | 'dark' | 'auto';
+      if (current === 'light') newMode = 'dark';
+      else if (current === 'dark') newMode = 'auto';
+      else newMode = 'light';
+      setTheme(currentTheme.theme, newMode);
     });
   }
 
@@ -71,16 +95,17 @@ export function createThemeSwitcher(options: ThemeSwitcherOptions = {}): () => v
   }
 
   // Subscribe to theme changes
-  const unsubscribe = subscribe((state) => {
+  const unsubscribe = subscribe((state: UIKitThemeState) => {
     currentTheme = state;
     if (themeSelect) {
       themeSelect.value = state.theme;
     }
     if (modeLabel) {
-      const resolvedMode = state.mode === 'auto'
-        ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-        : state.mode;
-      modeLabel.textContent = resolvedMode === 'dark' ? '🌙' : '☀️';
+      if (state.mode === 'auto') {
+        modeLabel.textContent = '🌓';
+      } else {
+        modeLabel.textContent = state.resolvedMode === 'dark' ? '🌙' : '☀️';
+      }
     }
   });
 
@@ -199,9 +224,12 @@ function getStyles(): string {
 
 function getMarkup(position: string, collapsed: boolean): string {
   const currentTheme = getTheme();
-  const resolvedMode = currentTheme.mode === 'auto'
-    ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-    : currentTheme.mode;
+  let modeIcon: string;
+  if (currentTheme.mode === 'auto') {
+    modeIcon = '🌓';
+  } else {
+    modeIcon = currentTheme.resolvedMode === 'dark' ? '🌙' : '☀️';
+  }
 
   return `
 <div class="uikit-switcher-panel ${position}${collapsed ? ' collapsed' : ''}">
@@ -209,8 +237,8 @@ function getMarkup(position: string, collapsed: boolean): string {
   <div class="uikit-switcher-content">
     <span class="uikit-switcher-label">Theme</span>
     <select class="uikit-switcher-theme-select"></select>
-    <button class="uikit-switcher-mode-toggle" title="Toggle light/dark mode">
-      <span class="uikit-switcher-mode-label">${resolvedMode === 'dark' ? '🌙' : '☀️'}</span>
+    <button class="uikit-switcher-mode-toggle" title="Toggle light/dark/auto mode">
+      <span class="uikit-switcher-mode-label">${modeIcon}</span>
     </button>
   </div>
 </div>

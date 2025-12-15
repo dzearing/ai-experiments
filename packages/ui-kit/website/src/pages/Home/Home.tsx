@@ -53,20 +53,40 @@ export function Home() {
       </section>
 
       <section className={styles.quickStart}>
-        <h2>30 Seconds to Start</h2>
+        <h2>Quick Start</h2>
         <div className={styles.codeBlocks}>
-          <pre className={styles.codeBlock}>
-            <code>{`<script>/* inline bootstrap */</script>
-<link rel="stylesheet" href="uikit/tokens.css">`}</code>
-          </pre>
-          <pre className={styles.codeBlock}>
-            <code>{`.card {
+          <div className={styles.codeStep}>
+            <span className={styles.stepNumber}>1</span>
+            <pre className={styles.codeBlock}>
+              <code>{`npm install @ui-kit/core`}</code>
+            </pre>
+          </div>
+          <div className={styles.codeStep}>
+            <span className={styles.stepNumber}>2</span>
+            <pre className={styles.codeBlock}>
+              <code>{`// Import a theme (includes both light & dark modes)
+import '@ui-kit/core/themes/default-light.css';
+import '@ui-kit/core/themes/default-dark.css';`}</code>
+            </pre>
+          </div>
+          <div className={styles.codeStep}>
+            <span className={styles.stepNumber}>3</span>
+            <pre className={styles.codeBlock}>
+              <code>{`// Set mode on <html> element
+<html data-mode="light"> or <html data-mode="dark">`}</code>
+            </pre>
+          </div>
+          <div className={styles.codeStep}>
+            <span className={styles.stepNumber}>4</span>
+            <pre className={styles.codeBlock}>
+              <code>{`.card {
   background: var(--card-bg);
   color: var(--card-text);
   padding: var(--space-4);
   border-radius: var(--radius-lg);
 }`}</code>
-          </pre>
+            </pre>
+          </div>
         </div>
         <p className={styles.tagline}>
           Dark mode, accessibility, and theming — built in.

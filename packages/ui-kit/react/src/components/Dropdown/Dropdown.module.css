@@ -240,13 +240,13 @@
 }
 
 .option.selected {
-  background: var(--controlPrimary-bg-soft);
+  background: var(--controlPrimary-bg);
   color: var(--controlPrimary-text);
 }
 
 .option.selected:hover:not(:disabled),
 .option.selected.focused:not(:disabled) {
-  background: var(--controlPrimary-bg);
+  background: var(--controlPrimary-bg-hover);
 }
 
 .option:focus {

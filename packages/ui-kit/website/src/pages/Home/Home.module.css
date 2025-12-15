@@ -111,6 +111,31 @@
   margin: 0;
 }
 
+.codeStep {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.codeStep .codeBlock {
+  flex: 1;
+}
+
+.stepNumber {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  background: var(--controlPrimary-bg);
+  color: var(--controlPrimary-text);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  margin-top: 10px;
+}
+
 .tagline {
   color: var(--page-text-soft);
   font-size: var(--text-lg);

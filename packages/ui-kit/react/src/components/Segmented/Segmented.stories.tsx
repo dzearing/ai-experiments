@@ -2,43 +2,14 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { fn } from '@storybook/test';
 import { useState } from 'react';
 import { Segmented } from './Segmented';
-
-// Simple icon components for stories
-const ListIcon = () => (
-  <svg viewBox="0 0 16 16" fill="currentColor" width="16" height="16">
-    <path d="M2 4h12v1H2zm0 4h12v1H2zm0 4h12v1H2z" />
-  </svg>
-);
-
-const GridIcon = () => (
-  <svg viewBox="0 0 16 16" fill="currentColor" width="16" height="16">
-    <path d="M2 2h5v5H2zm7 0h5v5H9zM2 9h5v5H2zm7 0h5v5H9z" />
-  </svg>
-);
-
-const BoardIcon = () => (
-  <svg viewBox="0 0 16 16" fill="currentColor" width="16" height="16">
-    <path d="M2 2h3v12H2zm4.5 0h3v8h-3zm4.5 0h3v10h-3z" />
-  </svg>
-);
-
-const AlignLeftIcon = () => (
-  <svg viewBox="0 0 16 16" fill="currentColor" width="16" height="16">
-    <path d="M2 3h12v1H2zm0 3h8v1H2zm0 3h12v1H2zm0 3h8v1H2z" />
-  </svg>
-);
-
-const AlignCenterIcon = () => (
-  <svg viewBox="0 0 16 16" fill="currentColor" width="16" height="16">
-    <path d="M2 3h12v1H2zm4 3h4v1H6zM2 9h12v1H2zm4 3h4v1H6z" />
-  </svg>
-);
-
-const AlignRightIcon = () => (
-  <svg viewBox="0 0 16 16" fill="currentColor" width="16" height="16">
-    <path d="M2 3h12v1H2zm6 3h6v1H8zM2 9h12v1H2zm6 3h6v1H8z" />
-  </svg>
-);
+import {
+  ListViewIcon,
+  GridViewIcon,
+  BoardIcon,
+  AlignLeftIcon,
+  AlignCenterIcon,
+  AlignRightIcon,
+} from '@ui-kit/icons';
 
 const meta: Meta<typeof Segmented> = {
   title: 'Navigation/Segmented',
@@ -193,9 +164,9 @@ export const FullWidth: Story = {
 export const WithIcons: Story = {
   args: {
     options: [
-      { value: 'list', label: 'List', icon: <ListIcon /> },
-      { value: 'grid', label: 'Grid', icon: <GridIcon /> },
-      { value: 'board', label: 'Board', icon: <BoardIcon /> },
+      { value: 'list', label: 'List', icon: <ListViewIcon size={16} /> },
+      { value: 'grid', label: 'Grid', icon: <GridViewIcon size={16} /> },
+      { value: 'board', label: 'Board', icon: <BoardIcon size={16} /> },
     ],
     defaultValue: 'list',
   },
@@ -211,9 +182,9 @@ export const WithIcons: Story = {
 export const IconOnly: Story = {
   args: {
     options: [
-      { value: 'align-left', label: 'Align Left', icon: <AlignLeftIcon /> },
-      { value: 'align-center', label: 'Align Center', icon: <AlignCenterIcon /> },
-      { value: 'align-right', label: 'Align Right', icon: <AlignRightIcon /> },
+      { value: 'align-left', label: 'Align Left', icon: <AlignLeftIcon size={16} /> },
+      { value: 'align-center', label: 'Align Center', icon: <AlignCenterIcon size={16} /> },
+      { value: 'align-right', label: 'Align Right', icon: <AlignRightIcon size={16} /> },
     ],
     defaultValue: 'align-left',
     iconOnly: true,

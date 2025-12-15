@@ -1,56 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { IconButton } from './IconButton';
-
-// Simple icon components for stories
-const PlusIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-  </svg>
-);
-
-const CloseIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-  </svg>
-);
-
-const SettingsIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.5" />
-    <path d="M8 1v2M8 13v2M1 8h2M13 8h2M2.93 2.93l1.41 1.41M11.66 11.66l1.41 1.41M2.93 13.07l1.41-1.41M11.66 4.34l1.41-1.41" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-  </svg>
-);
-
-const HeartIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <path d="M8 14s-6-4-6-8c0-2.21 1.79-4 4-4 1.26 0 2.38.59 3.12 1.5.74-.91 1.86-1.5 3.12-1.5 2.21 0 4 1.79 4 4 0 4-6 8-6 8z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-
-const TrashIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <path d="M3 4h10M5 4V3a1 1 0 011-1h4a1 1 0 011 1v1M6 7v4M10 7v4M4 4l.5 9a1 1 0 001 1h5a1 1 0 001-1L12 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-
-const EditIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <path d="M7 3H3v10h10V9M10 2l4 4-6 6H4v-4l6-6z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-
-const SearchIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <circle cx="7" cy="7" r="4" stroke="currentColor" strokeWidth="1.5" />
-    <path d="M10 10l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-  </svg>
-);
-
-const MenuIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-  </svg>
-);
+import {
+  AddIcon,
+  CloseIcon,
+  GearIcon,
+  HeartIcon,
+  TrashIcon,
+  EditIcon,
+  SearchIcon,
+  MenuIcon,
+} from '@ui-kit/icons';
 
 const meta: Meta<typeof IconButton> = {
   title: 'Actions/IconButton',
@@ -61,7 +20,7 @@ const meta: Meta<typeof IconButton> = {
     docs: {
       description: {
         component: `
-Square button designed specifically for icon-only use cases. Wrapper around the Button component with \`iconOnly\` mode enabled.
+Icon-only button with automatic tooltip. The \`aria-label\` is required for accessibility and is automatically displayed as a tooltip on hover.
 
 ## When to Use
 
@@ -71,19 +30,28 @@ Square button designed specifically for icon-only use cases. Wrapper around the 
 - Icon-based navigation
 - Modal/dialog close buttons
 
-## Accessibility Requirements
+## Key Features
 
-**CRITICAL:** IconButton requires an \`aria-label\` prop for accessibility. This is enforced by TypeScript.
+- **Automatic Tooltip**: The \`aria-label\` value is shown as a tooltip on hover
+- **Required Accessibility**: TypeScript enforces \`aria-label\` to ensure screen reader support
+- **Two Shapes**: \`square\` (default) or \`round\` (circular)
+
+## Accessibility
 
 \`\`\`tsx
-// ✅ Correct - includes aria-label
-<IconButton icon={<CloseIcon />} aria-label="Close" />
+// ✅ Correct - aria-label is required and shown as tooltip
+<IconButton icon={<CloseIcon size={16} />} aria-label="Close" />
 
 // ❌ TypeScript Error - missing aria-label
-<IconButton icon={<CloseIcon />} />
+<IconButton icon={<CloseIcon size={16} />} />
 \`\`\`
 
-The aria-label provides a text alternative for screen readers since the button has no visible text.
+## Shapes
+
+| Shape | Description |
+|-------|-------------|
+| \`square\` | Default - maintains button border radius |
+| \`round\` | Fully circular (9999px radius), great for FABs |
 
 ## Variants
 
@@ -97,8 +65,6 @@ The aria-label provides a text alternative for screen readers since the button h
 
 ## Sizes
 
-IconButton uses square dimensions to accommodate the icon:
-
 - **sm** (28px × 28px): Compact toolbars, table actions
 - **md** (36px × 36px): Default size for most use cases
 - **lg** (44px × 44px): Touch-friendly, prominent actions
@@ -107,38 +73,36 @@ IconButton uses square dimensions to accommodate the icon:
 
 \`\`\`tsx
 import { IconButton } from '@claude-flow/ui-kit-react';
-import { CloseIcon, EditIcon, DeleteIcon } from './icons';
 
+// Basic - tooltip shows "Close dialog" on hover
 <IconButton
-  icon={<CloseIcon />}
+  icon={<CloseIcon size={16} />}
   aria-label="Close dialog"
   onClick={handleClose}
 />
 
+// Round shape for floating action buttons
 <IconButton
-  icon={<EditIcon />}
-  aria-label="Edit item"
+  icon={<AddIcon size={16} />}
+  aria-label="Add item"
+  shape="round"
   variant="primary"
-  onClick={handleEdit}
 />
 
+// Customize tooltip position
 <IconButton
-  icon={<DeleteIcon />}
-  aria-label="Delete item"
-  variant="danger"
-  onClick={handleDelete}
+  icon={<EditIcon size={16} />}
+  aria-label="Edit"
+  tooltipPosition="bottom"
+/>
+
+// Disable tooltip (aria-label still works for screen readers)
+<IconButton
+  icon={<GearIcon size={16} />}
+  aria-label="Settings"
+  hideTooltip
 />
 \`\`\`
-
-## Alternative: Button with iconOnly
-
-IconButton is a convenience wrapper. You can also use:
-
-\`\`\`tsx
-<Button icon={<CloseIcon />} iconOnly aria-label="Close" />
-\`\`\`
-
-Both approaches are equivalent. Use IconButton for clearer intent.
         `,
       },
     },
@@ -149,7 +113,7 @@ Both approaches are equivalent. Use IconButton for clearer intent.
     },
     'aria-label': {
       control: 'text',
-      description: 'Accessible label for the button (REQUIRED)',
+      description: 'Accessible label for the button (REQUIRED). Also displayed as tooltip.',
     },
     variant: {
       control: 'select',
@@ -167,6 +131,29 @@ Both approaches are equivalent. Use IconButton for clearer intent.
         defaultValue: { summary: 'md' },
       },
     },
+    shape: {
+      control: 'select',
+      options: ['square', 'round'],
+      description: 'Button shape: square (default) or round (circular)',
+      table: {
+        defaultValue: { summary: 'square' },
+      },
+    },
+    tooltipPosition: {
+      control: 'select',
+      options: ['top', 'bottom', 'left', 'right'],
+      description: 'Position of the tooltip',
+      table: {
+        defaultValue: { summary: 'top' },
+      },
+    },
+    hideTooltip: {
+      control: 'boolean',
+      description: 'Disable the tooltip (aria-label still applies for accessibility)',
+      table: {
+        defaultValue: { summary: 'false' },
+      },
+    },
     disabled: {
       control: 'boolean',
       description: 'Disable button interaction',
@@ -179,7 +166,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    icon: <PlusIcon />,
+    icon: <AddIcon size={16} />,
     'aria-label': 'Add item',
     variant: 'default',
     size: 'md',
@@ -189,11 +176,11 @@ export const Default: Story = {
 export const AllVariants: Story = {
   render: () => (
     <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-      <IconButton icon={<PlusIcon />} aria-label="Default" variant="default" />
-      <IconButton icon={<PlusIcon />} aria-label="Primary" variant="primary" />
-      <IconButton icon={<TrashIcon />} aria-label="Danger" variant="danger" />
-      <IconButton icon={<SettingsIcon />} aria-label="Ghost" variant="ghost" />
-      <IconButton icon={<EditIcon />} aria-label="Outline" variant="outline" />
+      <IconButton icon={<AddIcon size={16} />} aria-label="Default" variant="default" />
+      <IconButton icon={<AddIcon size={16} />} aria-label="Primary" variant="primary" />
+      <IconButton icon={<TrashIcon size={16} />} aria-label="Danger" variant="danger" />
+      <IconButton icon={<GearIcon size={16} />} aria-label="Ghost" variant="ghost" />
+      <IconButton icon={<EditIcon size={16} />} aria-label="Outline" variant="outline" />
     </div>
   ),
 };
@@ -201,9 +188,9 @@ export const AllVariants: Story = {
 export const Sizes: Story = {
   render: () => (
     <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-      <IconButton icon={<PlusIcon />} aria-label="Small" size="sm" />
-      <IconButton icon={<PlusIcon />} aria-label="Medium" size="md" />
-      <IconButton icon={<PlusIcon />} aria-label="Large" size="lg" />
+      <IconButton icon={<AddIcon size={16} />} aria-label="Small" size="sm" />
+      <IconButton icon={<AddIcon size={16} />} aria-label="Medium" size="md" />
+      <IconButton icon={<AddIcon size={16} />} aria-label="Large" size="lg" />
     </div>
   ),
   parameters: {
@@ -218,11 +205,11 @@ export const Sizes: Story = {
 export const Disabled: Story = {
   render: () => (
     <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-      <IconButton icon={<PlusIcon />} aria-label="Default disabled" variant="default" disabled />
-      <IconButton icon={<PlusIcon />} aria-label="Primary disabled" variant="primary" disabled />
-      <IconButton icon={<TrashIcon />} aria-label="Danger disabled" variant="danger" disabled />
-      <IconButton icon={<SettingsIcon />} aria-label="Ghost disabled" variant="ghost" disabled />
-      <IconButton icon={<EditIcon />} aria-label="Outline disabled" variant="outline" disabled />
+      <IconButton icon={<AddIcon size={16} />} aria-label="Default disabled" variant="default" disabled />
+      <IconButton icon={<AddIcon size={16} />} aria-label="Primary disabled" variant="primary" disabled />
+      <IconButton icon={<TrashIcon size={16} />} aria-label="Danger disabled" variant="danger" disabled />
+      <IconButton icon={<GearIcon size={16} />} aria-label="Ghost disabled" variant="ghost" disabled />
+      <IconButton icon={<EditIcon size={16} />} aria-label="Outline disabled" variant="outline" disabled />
     </div>
   ),
 };
@@ -230,10 +217,10 @@ export const Disabled: Story = {
 export const CommonActions: Story = {
   render: () => (
     <div style={{ display: 'flex', gap: '8px' }}>
-      <IconButton icon={<EditIcon />} aria-label="Edit" />
-      <IconButton icon={<TrashIcon />} aria-label="Delete" variant="danger" />
-      <IconButton icon={<SettingsIcon />} aria-label="Settings" />
-      <IconButton icon={<CloseIcon />} aria-label="Close" variant="ghost" />
+      <IconButton icon={<EditIcon size={16} />} aria-label="Edit" />
+      <IconButton icon={<TrashIcon size={16} />} aria-label="Delete" variant="danger" />
+      <IconButton icon={<GearIcon size={16} />} aria-label="Settings" />
+      <IconButton icon={<CloseIcon size={16} />} aria-label="Close" variant="ghost" />
     </div>
   ),
   parameters: {
@@ -256,12 +243,12 @@ export const Toolbar: Story = {
       borderRadius: '6px',
       width: 'fit-content'
     }}>
-      <IconButton icon={<EditIcon />} aria-label="Edit" size="sm" variant="ghost" />
-      <IconButton icon={<CloseIcon />} aria-label="Delete" size="sm" variant="ghost" />
-      <IconButton icon={<SettingsIcon />} aria-label="Settings" size="sm" variant="ghost" />
+      <IconButton icon={<EditIcon size={16} />} aria-label="Edit" size="sm" variant="ghost" />
+      <IconButton icon={<CloseIcon size={16} />} aria-label="Delete" size="sm" variant="ghost" />
+      <IconButton icon={<GearIcon size={16} />} aria-label="Settings" size="sm" variant="ghost" />
       <div style={{ width: '1px', background: 'var(--panel-border)', margin: '4px 4px' }} />
-      <IconButton icon={<SearchIcon />} aria-label="Search" size="sm" variant="ghost" />
-      <IconButton icon={<HeartIcon />} aria-label="Favorite" size="sm" variant="ghost" />
+      <IconButton icon={<SearchIcon size={16} />} aria-label="Search" size="sm" variant="ghost" />
+      <IconButton icon={<HeartIcon size={16} />} aria-label="Favorite" size="sm" variant="ghost" />
     </div>
   ),
   parameters: {
@@ -285,8 +272,8 @@ export const CardActions: Story = {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
         <h3 style={{ margin: 0 }}>Card Title</h3>
         <div style={{ display: 'flex', gap: '4px' }}>
-          <IconButton icon={<EditIcon />} aria-label="Edit card" size="sm" variant="ghost" />
-          <IconButton icon={<TrashIcon />} aria-label="Delete card" size="sm" variant="ghost" />
+          <IconButton icon={<EditIcon size={16} />} aria-label="Edit card" size="sm" variant="ghost" />
+          <IconButton icon={<TrashIcon size={16} />} aria-label="Delete card" size="sm" variant="ghost" />
         </div>
       </div>
       <p style={{ margin: 0, color: 'var(--card-text-soft)' }}>
@@ -319,7 +306,7 @@ export const DialogHeader: Story = {
         borderBottom: '1px solid var(--panel-border)'
       }}>
         <h2 style={{ margin: 0, fontSize: '18px' }}>Dialog Title</h2>
-        <IconButton icon={<CloseIcon />} aria-label="Close dialog" variant="ghost" />
+        <IconButton icon={<CloseIcon size={16} />} aria-label="Close dialog" variant="ghost" />
       </div>
       <div style={{ padding: '16px' }}>
         Dialog content goes here...
@@ -348,45 +335,115 @@ export const FloatingActions: Story = {
         flexDirection: 'column',
         gap: '8px'
       }}>
-        <IconButton icon={<PlusIcon />} aria-label="Add new item" variant="primary" size="lg" />
-        <IconButton icon={<SearchIcon />} aria-label="Search" variant="default" />
+        <IconButton icon={<AddIcon size={16} />} aria-label="Add new item" variant="primary" size="lg" shape="round" />
+        <IconButton icon={<SearchIcon size={16} />} aria-label="Search" variant="default" shape="round" />
       </div>
     </div>
   ),
   parameters: {
     docs: {
       description: {
-        story: 'Large IconButtons work well as floating action buttons for primary actions.',
+        story: 'Use `shape="round"` with large size for floating action buttons (FABs).',
       },
     },
   },
 };
 
-export const WithTooltip: Story = {
+export const Shapes: Story = {
   render: () => (
-    <div style={{ display: 'flex', gap: '8px' }}>
-      <IconButton
-        icon={<EditIcon />}
-        aria-label="Edit"
-        title="Edit (Ctrl+E)"
-      />
-      <IconButton
-        icon={<TrashIcon />}
-        aria-label="Delete"
-        variant="danger"
-        title="Delete (Del)"
-      />
-      <IconButton
-        icon={<SettingsIcon />}
-        aria-label="Settings"
-        title="Settings (Ctrl+,)"
-      />
+    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+      <div style={{ textAlign: 'center' }}>
+        <IconButton icon={<AddIcon size={16} />} aria-label="Add (square)" shape="square" />
+        <div style={{ fontSize: '12px', marginTop: '8px', color: 'var(--page-text-soft)' }}>square</div>
+      </div>
+      <div style={{ textAlign: 'center' }}>
+        <IconButton icon={<AddIcon size={16} />} aria-label="Add (round)" shape="round" />
+        <div style={{ fontSize: '12px', marginTop: '8px', color: 'var(--page-text-soft)' }}>round</div>
+      </div>
+      <div style={{ textAlign: 'center' }}>
+        <IconButton icon={<AddIcon size={16} />} aria-label="Add primary" shape="round" variant="primary" />
+        <div style={{ fontSize: '12px', marginTop: '8px', color: 'var(--page-text-soft)' }}>round primary</div>
+      </div>
     </div>
   ),
   parameters: {
     docs: {
       description: {
-        story: 'Use the native title attribute for simple tooltips. For rich tooltips, wrap IconButton with a Tooltip component.',
+        story: 'IconButton supports two shapes: `square` (default) with standard border radius, and `round` for circular buttons.',
+      },
+    },
+  },
+};
+
+export const AutomaticTooltip: Story = {
+  render: () => (
+    <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+      <IconButton
+        icon={<EditIcon size={16} />}
+        aria-label="Edit document"
+      />
+      <IconButton
+        icon={<TrashIcon size={16} />}
+        aria-label="Delete item"
+        variant="danger"
+      />
+      <IconButton
+        icon={<GearIcon size={16} />}
+        aria-label="Open settings"
+      />
+      <span style={{ color: 'var(--page-text-soft)', fontSize: '14px' }}>
+        Hover to see tooltips
+      </span>
+    </div>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story: 'IconButton automatically displays the `aria-label` as a tooltip on hover. No additional configuration needed!',
+      },
+    },
+  },
+};
+
+export const TooltipPositions: Story = {
+  render: () => (
+    <div style={{ display: 'flex', gap: '2rem', alignItems: 'center', padding: '3rem' }}>
+      <IconButton icon={<AddIcon size={16} />} aria-label="Top (default)" tooltipPosition="top" />
+      <IconButton icon={<AddIcon size={16} />} aria-label="Bottom" tooltipPosition="bottom" />
+      <IconButton icon={<AddIcon size={16} />} aria-label="Left" tooltipPosition="left" />
+      <IconButton icon={<AddIcon size={16} />} aria-label="Right" tooltipPosition="right" />
+    </div>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story: 'Control tooltip position with the `tooltipPosition` prop.',
+      },
+    },
+  },
+};
+
+export const HiddenTooltip: Story = {
+  render: () => (
+    <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+      <IconButton
+        icon={<EditIcon size={16} />}
+        aria-label="Edit (tooltip visible)"
+      />
+      <IconButton
+        icon={<EditIcon size={16} />}
+        aria-label="Edit (tooltip hidden)"
+        hideTooltip
+      />
+      <span style={{ color: 'var(--page-text-soft)', fontSize: '14px' }}>
+        Second button has no tooltip but still has aria-label
+      </span>
+    </div>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story: 'Use `hideTooltip` to disable the tooltip while keeping the aria-label for screen readers.',
       },
     },
   },
@@ -407,9 +464,9 @@ export const MobileActions: Story = {
         padding: '12px 16px',
         borderBottom: '1px solid var(--panel-border)'
       }}>
-        <IconButton icon={<MenuIcon />} aria-label="Open menu" size="lg" variant="ghost" />
+        <IconButton icon={<MenuIcon size={16} />} aria-label="Open menu" size="lg" variant="ghost" />
         <h1 style={{ margin: 0, fontSize: '18px' }}>Mobile App</h1>
-        <IconButton icon={<SearchIcon />} aria-label="Search" size="lg" variant="ghost" />
+        <IconButton icon={<SearchIcon size={16} />} aria-label="Search" size="lg" variant="ghost" />
       </div>
       <div style={{ padding: '16px' }}>
         Mobile content...
@@ -429,7 +486,7 @@ export const LoadingState: Story = {
   render: () => (
     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
       <IconButton
-        icon={<PlusIcon />}
+        icon={<AddIcon size={16} />}
         aria-label="Adding..."
         disabled
       />

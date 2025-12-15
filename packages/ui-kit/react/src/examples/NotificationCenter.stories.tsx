@@ -336,7 +336,7 @@ function NotificationCenterPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            iconOnly
+                            shape="square"
                             icon={<CloseIcon />}
                             aria-label="Dismiss notification"
                             onClick={(e) => {

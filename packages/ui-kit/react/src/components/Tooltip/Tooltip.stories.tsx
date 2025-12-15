@@ -55,7 +55,7 @@ Contextual help text that appears on hover or focus. Features smart positioning 
 import { Tooltip } from '@claude-flow/ui-kit-react';
 
 <Tooltip content="Save document">
-  <Button iconOnly icon={<SaveIcon />} />
+  <Button shape="square" icon={<SaveIcon />} aria-label="Save" />
 </Tooltip>
 
 // With preferred position (will flip if needed)
@@ -235,21 +235,21 @@ export const OnIcons: Story = {
   render: () => (
     <div style={{ display: 'flex', gap: '16px' }}>
       <Tooltip content="Save">
-        <Button iconOnly icon={
+        <Button shape="square" aria-label="Save" icon={
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path d="M13 14H3a1 1 0 01-1-1V3a1 1 0 011-1h7l4 4v7a1 1 0 01-1 1z" stroke="currentColor" strokeWidth="1.5"/>
           </svg>
         } />
       </Tooltip>
       <Tooltip content="Delete">
-        <Button iconOnly icon={
+        <Button shape="square" aria-label="Delete" icon={
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
           </svg>
         } />
       </Tooltip>
       <Tooltip content="Settings">
-        <Button iconOnly icon={
+        <Button shape="square" aria-label="Settings" icon={
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.5"/>
           </svg>

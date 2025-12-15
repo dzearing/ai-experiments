@@ -180,7 +180,7 @@ export function Dropdown<T = string>({
   const [isOpen, setIsOpen] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const [searchQuery, setSearchQuery] = useState('');
-  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0, width: 0 });
+  const [menuPosition, setMenuPosition] = useState<{ top: number; left?: number; right?: number; width: number }>({ top: 0, left: 0, width: 0 });
 
   // Refs
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -280,33 +280,71 @@ export function Dropdown<T = string>({
     if (!trigger) return;
 
     const rect = trigger.getBoundingClientRect();
-    const menuHeight = 300; // Approximate
+    const menuHeight = 300; // Approximate max-height from CSS
+    const estimatedMenuWidth = Math.max(rect.width, 200); // For collision detection only
+    const gap = 4;
+    const viewportPadding = 8;
+    // Use clientWidth to exclude scrollbar from calculations
+    const viewportWidth = document.documentElement.clientWidth;
 
-    let top = 0;
-    let left = rect.left;
+    // Determine vertical position
+    let top: number;
+    let verticalPlacement = position.startsWith('bottom') ? 'bottom' : 'top';
 
-    if (position.startsWith('bottom')) {
-      top = rect.bottom + 4;
+    // Check if preferred vertical placement fits
+    if (verticalPlacement === 'bottom') {
+      const bottomSpace = window.innerHeight - rect.bottom - gap;
+      if (bottomSpace < menuHeight && rect.top - gap > bottomSpace) {
+        // Flip to top if more space above
+        verticalPlacement = 'top';
+      }
     } else {
-      top = rect.top - menuHeight - 4;
+      const topSpace = rect.top - gap;
+      if (topSpace < menuHeight && window.innerHeight - rect.bottom - gap > topSpace) {
+        // Flip to bottom if more space below
+        verticalPlacement = 'bottom';
+      }
     }
 
-    if (position.endsWith('end')) {
-      // Adjust for end alignment if needed
+    top = verticalPlacement === 'bottom' ? rect.bottom + gap : rect.top - menuHeight - gap;
+
+    // Vertical safety bounds
+    if (top < viewportPadding) {
+      top = viewportPadding;
     }
 
-    // Ensure menu stays in viewport
-    if (top + menuHeight > window.innerHeight) {
-      top = rect.top - menuHeight - 4;
-    }
-    if (top < 8) {
-      top = rect.bottom + 4;
-    }
-    if (left < 8) {
-      left = 8;
-    }
+    // Determine horizontal position
+    // Use 'right' CSS property for end alignment, 'left' for start alignment
+    const preferEnd = position.endsWith('end');
 
-    setMenuPosition({ top, left, width: rect.width });
+    if (preferEnd) {
+      // For 'end' alignment: use CSS 'right' so menu's right edge aligns with trigger's right edge
+      const right = viewportWidth - rect.right;
+
+      // Check for left overflow - if menu would extend past left edge, fall back to left positioning
+      if (rect.right - estimatedMenuWidth < viewportPadding) {
+        setMenuPosition({ top, left: viewportPadding, right: undefined, width: rect.width });
+      } else {
+        setMenuPosition({ top, left: undefined, right, width: rect.width });
+      }
+    } else {
+      // For 'start' alignment: use CSS 'left'
+      let left = rect.left;
+
+      // Check for right overflow
+      if (left + estimatedMenuWidth > viewportWidth - viewportPadding) {
+        // Try end alignment instead (use right positioning)
+        const right = viewportWidth - rect.right;
+        if (rect.right - estimatedMenuWidth >= viewportPadding) {
+          setMenuPosition({ top, left: undefined, right, width: rect.width });
+          return;
+        }
+        // Both would overflow, pin to right edge
+        left = viewportWidth - estimatedMenuWidth - viewportPadding;
+      }
+
+      setMenuPosition({ top, left, right: undefined, width: rect.width });
+    }
   }, [position]);
 
   // Open dropdown
@@ -622,6 +660,7 @@ export function Dropdown<T = string>({
       style={{
         top: menuPosition.top,
         left: menuPosition.left,
+        right: menuPosition.right,
         minWidth: menuPosition.width,
       }}
       role="listbox"

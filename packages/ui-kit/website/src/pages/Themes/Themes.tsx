@@ -1,16 +1,33 @@
-import { useEffect, useState } from 'react';
-import { getThemes, setTheme } from '@ui-kit/core';
+import { setTheme } from '@ui-kit/core/bootstrap.js';
 import styles from './Themes.module.css';
 
+// Available themes - matches the generated manifest
+const THEMES = [
+  { id: 'default', name: 'Default' },
+  { id: 'minimal', name: 'Minimal' },
+  { id: 'high-contrast', name: 'High Contrast' },
+  { id: 'github', name: 'GitHub' },
+  { id: 'linkedin', name: 'LinkedIn' },
+  { id: 'teams', name: 'Teams' },
+  { id: 'onedrive', name: 'OneDrive' },
+  { id: 'fluent', name: 'Fluent' },
+  { id: 'terminal', name: 'Terminal' },
+  { id: 'matrix', name: 'Matrix' },
+  { id: 'cyberpunk', name: 'Cyberpunk' },
+  { id: 'sketchy', name: 'Sketchy' },
+  { id: 'art-deco', name: 'Art Deco' },
+  { id: 'retro', name: 'Retro' },
+  { id: 'ocean', name: 'Ocean' },
+  { id: 'forest', name: 'Forest' },
+  { id: 'sunset', name: 'Sunset' },
+  { id: 'midnight', name: 'Midnight' },
+  { id: 'arctic', name: 'Arctic' },
+  { id: 'lavender', name: 'Lavender' },
+];
+
 export function Themes() {
-  const [themes, setThemesData] = useState<Array<{ id: string; name: string }>>([]);
-
-  useEffect(() => {
-    getThemes().then(setThemesData);
-  }, []);
-
   const handleSelectTheme = (themeId: string) => {
-    setTheme({ theme: themeId });
+    setTheme(themeId);
   };
 
   return (
@@ -21,7 +38,7 @@ export function Themes() {
       </p>
 
       <div className={styles.grid}>
-        {themes.map((theme) => (
+        {THEMES.map((theme) => (
           <button
             key={theme.id}
             className={styles.themeCard}

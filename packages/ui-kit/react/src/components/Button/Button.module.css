@@ -125,7 +125,9 @@
   width: 100%;
 }
 
-/* Pill Shape */
+/* Shapes */
+
+/* Pill: fully rounded corners */
 .pill {
   border-radius: 9999px;
 }
@@ -140,26 +142,6 @@
 
 .label {
   flex: 1;
-}
-
-/* Icon Only - square button */
-.iconOnly {
-  padding: 0;
-}
-
-.iconOnly.sm {
-  width: 28px;
-  height: 28px;
-}
-
-.iconOnly.md {
-  width: 36px;
-  height: 36px;
-}
-
-.iconOnly.lg {
-  width: 44px;
-  height: 44px;
 }
 
 /* ==============================================

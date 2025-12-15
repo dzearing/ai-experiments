@@ -30,4 +30,8 @@ execSync('npx tsx scripts/build-themes.ts', { cwd: rootDir, stdio: 'inherit' });
 console.log('Building tokens CSS...');
 execSync('npx tsx scripts/build-tokens.ts', { cwd: rootDir, stdio: 'inherit' });
 
+// Build standalone bootstrap.js
+console.log('Building bootstrap.js...');
+execSync('npx tsx scripts/build-bootstrap.ts', { cwd: rootDir, stdio: 'inherit' });
+
 console.log('Build complete!');

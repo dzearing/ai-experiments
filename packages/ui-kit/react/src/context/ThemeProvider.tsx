@@ -3,22 +3,23 @@ import {
   useContext,
   useEffect,
   useState,
+  useCallback,
   type ReactNode,
 } from 'react';
 import {
   getTheme,
-  setTheme,
-  toggleMode,
+  setTheme as setThemeCore,
   subscribe,
-  initTheme,
-  type ThemeState,
-  type ThemeMode,
-} from '@ui-kit/core';
+  type UIKitThemeState,
+} from '@ui-kit/core/bootstrap.js';
+
+type ThemeMode = 'light' | 'dark' | 'auto';
 
 interface ThemeContextValue {
   theme: string;
   mode: ThemeMode;
-  setTheme: (theme: string) => void;
+  resolvedMode: 'light' | 'dark';
+  setTheme: (theme: string, mode?: ThemeMode) => void;
   setMode: (mode: ThemeMode) => void;
   toggleMode: () => void;
 }
@@ -33,19 +34,11 @@ export interface ThemeProviderProps {
 
 export function ThemeProvider({
   children,
-  defaultTheme = 'default',
-  defaultMode = 'auto',
 }: ThemeProviderProps) {
-  const [state, setState] = useState<ThemeState>(() => ({
-    theme: defaultTheme,
-    mode: defaultMode,
-  }));
+  const [state, setState] = useState<UIKitThemeState>(() => getTheme());
 
   useEffect(() => {
-    // Initialize theme system
-    initTheme();
-
-    // Get current state
+    // Bootstrap auto-initializes, just get current state
     setState(getTheme());
 
     // Subscribe to changes
@@ -56,12 +49,28 @@ export function ThemeProvider({
     return unsubscribe;
   }, []);
 
+  const handleSetTheme = useCallback((theme: string, mode?: ThemeMode) => {
+    setThemeCore(theme, mode);
+  }, []);
+
+  const handleSetMode = useCallback((mode: ThemeMode) => {
+    setThemeCore(state.theme, mode);
+  }, [state.theme]);
+
+  const handleToggleMode = useCallback(() => {
+    const nextMode: ThemeMode =
+      state.mode === 'light' ? 'dark' :
+      state.mode === 'dark' ? 'auto' : 'light';
+    setThemeCore(state.theme, nextMode);
+  }, [state.theme, state.mode]);
+
   const value: ThemeContextValue = {
     theme: state.theme,
     mode: state.mode,
-    setTheme: (theme: string) => setTheme({ theme }),
-    setMode: (mode: ThemeMode) => setTheme({ mode }),
-    toggleMode,
+    resolvedMode: state.resolvedMode,
+    setTheme: handleSetTheme,
+    setMode: handleSetMode,
+    toggleMode: handleToggleMode,
   };
 
   return (

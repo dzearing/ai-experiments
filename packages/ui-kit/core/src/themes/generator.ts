@@ -571,18 +571,20 @@ export function generateThemeCSS(
   const isDefaultTheme = themeId === 'default';
 
   if (isDefaultTheme) {
-    // Default theme: light mode is :root, dark mode is [data-mode="dark"]
+    // Default theme: light mode is :root, dark mode uses html selector for specificity
+    // The html prefix ensures theme CSS wins over fallback tokens.css
     if (mode === 'light') {
       lines.push(':root {');
     } else {
-      lines.push('[data-mode="dark"], .dark {');
+      lines.push('html[data-mode="dark"], html.dark {');
     }
   } else {
-    // Custom themes require both theme and mode attributes
+    // Custom themes: use html prefix for higher specificity than default theme
+    // This ensures non-default themes always win when multiple CSS files are loaded
     if (mode === 'light') {
-      lines.push(`[data-theme="${themeId}"], [data-theme="${themeId}"][data-mode="light"] {`);
+      lines.push(`html[data-theme="${themeId}"], html[data-theme="${themeId}"][data-mode="light"] {`);
     } else {
-      lines.push(`[data-theme="${themeId}"][data-mode="dark"], [data-theme="${themeId}"].dark {`);
+      lines.push(`html[data-theme="${themeId}"][data-mode="dark"], html[data-theme="${themeId}"].dark {`);
     }
   }
 
@@ -601,7 +603,7 @@ export function generateThemeCSS(
     if (isDefaultTheme) {
       lines.push('body {');
     } else {
-      lines.push(`[data-theme="${themeId}"] body, [data-theme="${themeId}"] {`);
+      lines.push(`html[data-theme="${themeId}"] body, html[data-theme="${themeId}"] {`);
     }
     lines.push('  font-family: var(--font-sans);');
     lines.push('  font-size: var(--text-base);');
@@ -697,9 +699,9 @@ function generateSurfaceClasses(): string[] {
         lines.push('}');
       }
 
-      // Dark mode overrides
+      // Dark mode overrides (use html prefix for specificity over fallback tokens)
       if (Object.keys(darkOverrides).length > 0) {
-        lines.push(`[data-mode="dark"] .surface.${surfaceName}, .dark .surface.${surfaceName} {`);
+        lines.push(`html[data-mode="dark"] .surface.${surfaceName}, html.dark .surface.${surfaceName} {`);
         for (const [token, value] of Object.entries(darkOverrides)) {
           lines.push(`  --${token}: ${value};`);
         }

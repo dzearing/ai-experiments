@@ -9,7 +9,7 @@ export { Button } from './components/Button';
 export type { ButtonProps, ButtonVariant, ButtonSize } from './components/Button';
 
 export { IconButton } from './components/IconButton';
-export type { IconButtonProps, IconButtonVariant, IconButtonSize } from './components/IconButton';
+export type { IconButtonProps, IconButtonVariant, IconButtonSize, IconButtonShape } from './components/IconButton';
 
 // Inputs
 export { Input } from './components/Input';
@@ -77,6 +77,9 @@ export type { BreadcrumbProps, BreadcrumbItem } from './components/Breadcrumb';
 
 export { Pagination } from './components/Pagination';
 export type { PaginationProps } from './components/Pagination';
+
+export { TableOfContents } from './components/TableOfContents';
+export type { TableOfContentsProps, TOCItem } from './components/TableOfContents';
 
 // Feedback
 export { Alert } from './components/Alert';

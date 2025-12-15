@@ -68,41 +68,39 @@ export function HomePage() {
 
       {/* Quick Start */}
       <section className={styles.quickStart}>
-        <h2 className={styles.sectionTitle}>30 Seconds to Start</h2>
+        <h2 className={styles.sectionTitle}>Quick Start (Vite)</h2>
         <div className={styles.codeBlocks}>
           <div className={styles.codeBlock}>
-            <div className={styles.codeHeader}>1. Add the bootstrap script</div>
-            <pre className={styles.code}>{`<script>
-  (function() {
-    var s = JSON.parse(localStorage.getItem('uikit-theme') || '{}');
-    var theme = s.theme || 'default';
-    var mode = s.mode || 'auto';
-    if (mode === 'auto') {
-      mode = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-    document.documentElement.dataset.theme = theme;
-    document.documentElement.dataset.mode = mode;
-  })();
-</script>`}</pre>
+            <div className={styles.codeHeader}>1. Install</div>
+            <pre className={styles.code}>{`npm install @ui-kit/core`}</pre>
           </div>
           <div className={styles.codeBlock}>
-            <div className={styles.codeHeader}>2. Import the tokens</div>
-            <pre className={styles.code}>{`<link rel="stylesheet" href="uikit/tokens.css">`}</pre>
+            <div className={styles.codeHeader}>2. Add the Vite plugin</div>
+            <pre className={styles.code}>{`// vite.config.ts
+import { uikit } from '@ui-kit/core/vite';
+
+export default defineConfig({
+  plugins: [uikit()]
+});`}</pre>
           </div>
           <div className={styles.codeBlock}>
             <div className={styles.codeHeader}>3. Use the tokens</div>
             <pre className={styles.code}>{`.card {
   background: var(--card-bg);
   color: var(--card-text);
-  border: 1px solid var(--card-border);
   padding: var(--space-4);
   border-radius: var(--radius-lg);
-  box-shadow: var(--card-shadow);
 }`}</pre>
+          </div>
+          <div className={styles.codeBlock}>
+            <div className={styles.codeHeader}>4. Change themes (optional)</div>
+            <pre className={styles.code}>{`UIKit.setTheme('github', 'dark', () => {
+  console.log('Theme loaded!');
+});`}</pre>
           </div>
         </div>
         <p className={styles.quickStartNote}>
-          Dark mode, accessibility, and theming. Built in.
+          Zero-flash loading. System theme auto-detected. CSS loaded on demand.
         </p>
       </section>
 

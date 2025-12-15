@@ -23,6 +23,7 @@ import styles from './Button.module.css';
 
 export type ButtonVariant = 'default' | 'primary' | 'danger' | 'ghost' | 'outline';
 export type ButtonSize = 'sm' | 'md' | 'lg';
+export type ButtonShape = 'pill';
 
 interface ButtonBaseProps {
   /** Button variant */
@@ -31,14 +32,12 @@ interface ButtonBaseProps {
   size?: ButtonSize;
   /** Full width button */
   fullWidth?: boolean;
-  /** Pill shape (fully rounded) */
-  pill?: boolean;
+  /** Button shape: 'pill' (fully rounded ends) */
+  shape?: ButtonShape;
   /** Icon to display before children */
   icon?: ReactNode;
   /** Icon to display after children */
   iconAfter?: ReactNode;
-  /** Icon-only mode (square button, no text) */
-  iconOnly?: boolean;
   /** Button content */
   children?: ReactNode;
 }
@@ -69,10 +68,9 @@ export function Button(props: ButtonProps) {
     variant = 'default',
     size = 'md',
     fullWidth = false,
-    pill = false,
+    shape,
     icon,
     iconAfter,
-    iconOnly = false,
     className,
     children,
     ...rest
@@ -83,8 +81,7 @@ export function Button(props: ButtonProps) {
     styles[variant],
     styles[size],
     fullWidth && styles.fullWidth,
-    pill && styles.pill,
-    iconOnly && styles.iconOnly,
+    shape && styles[shape],
     className,
   ]
     .filter(Boolean)
@@ -93,7 +90,7 @@ export function Button(props: ButtonProps) {
   const content = (
     <>
       {icon && <span className={styles.icon}>{icon}</span>}
-      {!iconOnly && children && <span className={styles.label}>{children}</span>}
+      {children && <span className={styles.label}>{children}</span>}
       {iconAfter && <span className={styles.icon}>{iconAfter}</span>}
     </>
   );

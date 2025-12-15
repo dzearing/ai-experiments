@@ -12,16 +12,29 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./bootstrap.js": {
+      "types": "./dist/runtime/bootstrap.d.ts",
+      "import": "./dist/runtime/bootstrap.js"
+    },
+    "./bootstrap.iife.js": "./dist/bootstrap.min.js",
     "./tokens.css": "./dist/tokens.css",
     "./styles.css": "./dist/tokens.css",
-    "./surfaces": {
+    "./surfaces.js": {
       "types": "./dist/surfaces.d.ts",
       "import": "./dist/surfaces.js"
     },
     "./themes/*": "./dist/themes/*",
-    "./dev": {
+    "./dev.js": {
       "types": "./dist/dev/index.d.ts",
       "import": "./dist/dev/index.js"
+    },
+    "./build/inline-bootstrap.js": {
+      "types": "./dist/build/inline-bootstrap.d.ts",
+      "import": "./dist/build/inline-bootstrap.js"
+    },
+    "./vite": {
+      "types": "./dist/vite/index.d.ts",
+      "import": "./dist/vite/index.js"
     }
   },
   "files": [
@@ -39,11 +52,20 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
   },
+  "peerDependencies": {
+    "vite": "^5.0.0 || ^6.0.0"
+  },
+  "peerDependenciesMeta": {
+    "vite": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "esbuild": "^0.20.0",
     "tsx": "^4.20.3",
     "typescript": "^5.4.0",
+    "vite": "^5.4.0",
     "vitest": "^3.2.4"
   }
 }

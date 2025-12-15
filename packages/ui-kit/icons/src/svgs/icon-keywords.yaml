@@ -416,3 +416,96 @@ icons:
     - note
     - bubble
     - remark
+
+  # New icons
+  align-left:
+    - text
+    - alignment
+    - left
+    - format
+    - justify
+  align-center:
+    - text
+    - alignment
+    - center
+    - middle
+    - format
+    - justify
+  align-right:
+    - text
+    - alignment
+    - right
+    - format
+    - justify
+  list-view:
+    - list
+    - rows
+    - lines
+    - view
+    - layout
+  grid-view:
+    - grid
+    - tiles
+    - squares
+    - view
+    - layout
+    - cards
+  board:
+    - kanban
+    - columns
+    - trello
+    - view
+    - layout
+    - tasks
+  help:
+    - question
+    - support
+    - faq
+    - assistance
+    - info
+  logout:
+    - sign out
+    - exit
+    - leave
+    - disconnect
+    - log out
+  chevrons-left:
+    - double chevron
+    - first
+    - start
+    - beginning
+    - pagination
+  chevrons-right:
+    - double chevron
+    - last
+    - end
+    - pagination
+  package:
+    - box
+    - npm
+    - module
+    - bundle
+    - parcel
+  trash:
+    - delete
+    - remove
+    - bin
+    - garbage
+    - discard
+  sun:
+    - light
+    - day
+    - bright
+    - light mode
+    - theme
+  moon:
+    - dark
+    - night
+    - dark mode
+    - theme
+  sun-moon:
+    - auto
+    - system
+    - theme
+    - light dark
+    - automatic

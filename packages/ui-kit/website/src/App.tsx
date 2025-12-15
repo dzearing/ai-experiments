@@ -9,6 +9,7 @@ import { StylingComponentsPage } from './pages/Learn/StylingComponentsPage';
 import { ThemingPage } from './pages/Learn/ThemingPage';
 import { AdvancedPage } from './pages/Learn/AdvancedPage';
 import { ReferencePage } from './pages/Reference/ReferencePage';
+import { NewTokenSystemPage } from './pages/Reference/NewTokenSystemPage';
 import { ThemesPage } from './pages/Themes/ThemesPage';
 import { ThemeDesignerPage } from './pages/Themes/ThemeDesignerPage';
 
@@ -59,6 +60,7 @@ export function App() {
           }
         />
         <Route path="reference" element={<ReferencePage />} />
+        <Route path="reference/new-tokens" element={<NewTokenSystemPage />} />
         <Route path="themes" element={<ThemesPage />} />
         <Route path="themes/designer" element={<ThemeDesignerPage />} />
       </Route>

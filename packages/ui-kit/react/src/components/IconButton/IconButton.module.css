@@ -1,0 +1,35 @@
+/**
+ * IconButton styles
+ *
+ * Uses Button as base, adds shape-specific sizing.
+ * Shapes: square (default), round
+ */
+
+/* Base icon button - inherits from Button */
+.iconButton {
+  aspect-ratio: 1;
+  padding: 0;
+}
+
+/* Square shape (default) - uses Button's border-radius */
+.square {
+  /* Uses default radius from Button */
+}
+
+/* Round shape - fully rounded */
+.round {
+  border-radius: 9999px;
+}
+
+/* Size overrides for fixed dimensions */
+.sm {
+  width: 28px;
+}
+
+.md {
+  width: 36px;
+}
+
+.lg {
+  width: 44px;
+}

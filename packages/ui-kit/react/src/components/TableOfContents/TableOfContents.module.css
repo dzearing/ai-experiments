@@ -1,0 +1,149 @@
+/**
+ * TableOfContents styles
+ *
+ * Surfaces: card, controlSubtle, controlPrimary
+ * See TOKEN_GUIDE.md for token reference
+ */
+
+.toc {
+  /* TOC needs to fill parent height for sticky inner to work */
+  height: 100%;
+  padding-inline-end: var(--space-4);
+}
+
+.tocInner {
+  position: sticky;
+  top: var(--space-6);
+  max-height: calc(100vh - var(--space-12));
+  overflow-y: auto;
+  padding: var(--space-4);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+}
+
+.title {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--page-text-soft);
+  margin: 0;
+  margin-block-end: var(--space-3);
+  padding-inline-start: var(--space-3);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
+
+.item {
+  margin: 0;
+  padding: 0;
+}
+
+.link {
+  display: block;
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--page-text-soft);
+  text-decoration: none;
+  text-align: start;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-default);
+  font-family: inherit;
+  line-height: var(--leading-snug);
+}
+
+.link:hover {
+  color: var(--page-text);
+  background: var(--controlSubtle-bg-hover);
+}
+
+/* ==============================================
+   Focus States
+   ============================================== */
+
+.link:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* ==============================================
+   Active State
+   ============================================== */
+
+.link.active {
+  color: var(--page-text);
+}
+
+/* ==============================================
+   Animated Indicator
+   ============================================== */
+
+.indicator {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3px;
+  background: var(--controlPrimary-bg);
+  border-radius: 2px;
+  /* Glow emanating from the indicator bar to the right */
+  box-shadow:
+    4px 0 8px 0 color-mix(in srgb, var(--controlPrimary-bg) 35%, transparent),
+    10px 0 20px 0 color-mix(in srgb, var(--controlPrimary-bg) 20%, transparent),
+    20px 0 40px 0 color-mix(in srgb, var(--controlPrimary-bg) 10%, transparent);
+  transition: transform var(--duration-normal) var(--ease-default),
+    height var(--duration-normal) var(--ease-default);
+  pointer-events: none;
+  will-change: transform, height;
+}
+
+/* Brighter glow in dark mode */
+[data-mode="dark"] .indicator,
+.dark .indicator {
+  box-shadow:
+    4px 0 10px 2px color-mix(in srgb, var(--controlPrimary-bg) 45%, transparent),
+    10px 0 24px 4px color-mix(in srgb, var(--controlPrimary-bg) 30%, transparent),
+    20px 0 48px 8px color-mix(in srgb, var(--controlPrimary-bg) 15%, transparent);
+}
+
+@media (prefers-color-scheme: dark) {
+  .indicator {
+    box-shadow:
+      4px 0 10px 2px color-mix(in srgb, var(--controlPrimary-bg) 45%, transparent),
+      10px 0 24px 4px color-mix(in srgb, var(--controlPrimary-bg) 30%, transparent),
+      20px 0 48px 8px color-mix(in srgb, var(--controlPrimary-bg) 15%, transparent);
+  }
+}
+
+/* ==============================================
+   Reduced Motion
+   ============================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .link {
+    transition: none;
+  }
+
+  .indicator {
+    transition: none;
+  }
+}
+
+/* ==============================================
+   Responsive - Hide on smaller screens (opt-in)
+   ============================================== */
+
+@media (max-width: 1100px) {
+  .hideOnSmall {
+    display: none;
+  }
+}

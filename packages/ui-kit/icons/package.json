@@ -21,6 +21,18 @@
       "types": "./dist/AddCircleIcon.d.ts",
       "import": "./dist/AddCircleIcon.js"
     },
+    "./AlignCenterIcon": {
+      "types": "./dist/AlignCenterIcon.d.ts",
+      "import": "./dist/AlignCenterIcon.js"
+    },
+    "./AlignLeftIcon": {
+      "types": "./dist/AlignLeftIcon.d.ts",
+      "import": "./dist/AlignLeftIcon.js"
+    },
+    "./AlignRightIcon": {
+      "types": "./dist/AlignRightIcon.d.ts",
+      "import": "./dist/AlignRightIcon.js"
+    },
     "./ArrowDownIcon": {
       "types": "./dist/ArrowDownIcon.d.ts",
       "import": "./dist/ArrowDownIcon.js"
@@ -44,6 +56,10 @@
     "./BellIcon": {
       "types": "./dist/BellIcon.d.ts",
       "import": "./dist/BellIcon.js"
+    },
+    "./BoardIcon": {
+      "types": "./dist/BoardIcon.d.ts",
+      "import": "./dist/BoardIcon.js"
     },
     "./BoldIcon": {
       "types": "./dist/BoldIcon.d.ts",
@@ -80,6 +96,14 @@
     "./ChevronUpIcon": {
       "types": "./dist/ChevronUpIcon.d.ts",
       "import": "./dist/ChevronUpIcon.js"
+    },
+    "./ChevronsLeftIcon": {
+      "types": "./dist/ChevronsLeftIcon.d.ts",
+      "import": "./dist/ChevronsLeftIcon.js"
+    },
+    "./ChevronsRightIcon": {
+      "types": "./dist/ChevronsRightIcon.d.ts",
+      "import": "./dist/ChevronsRightIcon.js"
     },
     "./ClockIcon": {
       "types": "./dist/ClockIcon.d.ts",
@@ -165,6 +189,10 @@
       "types": "./dist/GearIcon.d.ts",
       "import": "./dist/GearIcon.js"
     },
+    "./GridViewIcon": {
+      "types": "./dist/GridViewIcon.d.ts",
+      "import": "./dist/GridViewIcon.js"
+    },
     "./Heading1Icon": {
       "types": "./dist/Heading1Icon.d.ts",
       "import": "./dist/Heading1Icon.js"
@@ -180,6 +208,10 @@
     "./HeartIcon": {
       "types": "./dist/HeartIcon.d.ts",
       "import": "./dist/HeartIcon.js"
+    },
+    "./HelpIcon": {
+      "types": "./dist/HelpIcon.d.ts",
+      "import": "./dist/HelpIcon.js"
     },
     "./HomeIcon": {
       "types": "./dist/HomeIcon.d.ts",
@@ -225,6 +257,14 @@
       "types": "./dist/ListTaskIcon.d.ts",
       "import": "./dist/ListTaskIcon.js"
     },
+    "./ListViewIcon": {
+      "types": "./dist/ListViewIcon.d.ts",
+      "import": "./dist/ListViewIcon.js"
+    },
+    "./LogoutIcon": {
+      "types": "./dist/LogoutIcon.d.ts",
+      "import": "./dist/LogoutIcon.js"
+    },
     "./MaximizeIcon": {
       "types": "./dist/MaximizeIcon.d.ts",
       "import": "./dist/MaximizeIcon.js"
@@ -237,6 +277,10 @@
       "types": "./dist/MinimizeIcon.d.ts",
       "import": "./dist/MinimizeIcon.js"
     },
+    "./MoonIcon": {
+      "types": "./dist/MoonIcon.d.ts",
+      "import": "./dist/MoonIcon.js"
+    },
     "./NextTrackIcon": {
       "types": "./dist/NextTrackIcon.d.ts",
       "import": "./dist/NextTrackIcon.js"
@@ -244,6 +288,10 @@
     "./OutdentIcon": {
       "types": "./dist/OutdentIcon.d.ts",
       "import": "./dist/OutdentIcon.js"
+    },
+    "./PackageIcon": {
+      "types": "./dist/PackageIcon.d.ts",
+      "import": "./dist/PackageIcon.js"
     },
     "./PasteIcon": {
       "types": "./dist/PasteIcon.d.ts",
@@ -317,6 +365,14 @@
       "types": "./dist/StrikethroughIcon.d.ts",
       "import": "./dist/StrikethroughIcon.js"
     },
+    "./SunIcon": {
+      "types": "./dist/SunIcon.d.ts",
+      "import": "./dist/SunIcon.js"
+    },
+    "./SunMoonIcon": {
+      "types": "./dist/SunMoonIcon.d.ts",
+      "import": "./dist/SunMoonIcon.js"
+    },
     "./SyncIcon": {
       "types": "./dist/SyncIcon.d.ts",
       "import": "./dist/SyncIcon.js"
@@ -324,6 +380,10 @@
     "./TableIcon": {
       "types": "./dist/TableIcon.d.ts",
       "import": "./dist/TableIcon.js"
+    },
+    "./TrashIcon": {
+      "types": "./dist/TrashIcon.d.ts",
+      "import": "./dist/TrashIcon.js"
     },
     "./UnderlineIcon": {
       "types": "./dist/UnderlineIcon.d.ts",
