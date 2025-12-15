@@ -67,20 +67,73 @@ export default defineConfig({
       </section>
 
       <section className={styles.section}>
-        <h2>Using Design Tokens</h2>
-        <p>Now you can use the design tokens in your CSS:</p>
+        <h2>Using Color Groups</h2>
+        <p>
+          UI-Kit uses <strong>color groups</strong> to guarantee accessibility.
+          Each group has background, border, and foreground tokens that are
+          designed to work together with proper contrast.
+        </p>
         <pre className={styles.code}>{`.my-card {
-  background: var(--card-bg);
-  color: var(--card-text);
-  border: 1px solid var(--card-border);
+  /* Pick a color group for your background */
+  background: var(--soft-bg);
+
+  /* Use ONLY that group's tokens - contrast is guaranteed */
+  color: var(--soft-fg);
+  border: 1px solid var(--soft-border);
+
+  /* Static tokens work everywhere */
   padding: var(--space-4);
   border-radius: var(--radius-lg);
-  box-shadow: var(--card-shadow);
 }`}</pre>
         <p>
-          The card automatically adapts to light/dark mode and any theme.
-          No additional CSS or JavaScript required!
+          The key insight: <strong>pick a color group, use only its tokens</strong>.
+          This guarantees WCAG-compliant contrast in every theme.
         </p>
+      </section>
+
+      <section className={styles.section}>
+        <h2>Available Color Groups</h2>
+        <p>Choose the right group for your use case:</p>
+        <ul>
+          <li><code>softer</code> - Recessed areas, input backgrounds, wells</li>
+          <li><code>soft</code> - Elevated cards, panels, alternating rows</li>
+          <li><code>base</code> - Default page content, main surface</li>
+          <li><code>strong</code> - Emphasized sections, highlights</li>
+          <li><code>stronger</code> - Maximum emphasis areas</li>
+          <li><code>primary</code> - Primary buttons, selection states, branded elements</li>
+          <li><code>inverted</code> - Tooltips, opposite color scheme</li>
+          <li><code>success</code>, <code>warning</code>, <code>danger</code>, <code>info</code> - Semantic feedback</li>
+        </ul>
+      </section>
+
+      <section className={styles.section}>
+        <h2>Tokens in Each Group</h2>
+        <p>Every color group provides 18 tokens:</p>
+        <pre className={styles.code}>{`/* Backgrounds (with states) */
+--{group}-bg
+--{group}-bg-hover
+--{group}-bg-pressed
+--{group}-bg-disabled
+
+/* Borders (with states) */
+--{group}-border
+--{group}-border-hover
+--{group}-border-pressed
+--{group}-border-disabled
+
+/* Foregrounds (all accessible on this group's bg) */
+--{group}-fg           /* Primary text */
+--{group}-fg-soft      /* Secondary text */
+--{group}-fg-softer    /* Tertiary/muted text */
+--{group}-fg-strong    /* Emphasized text */
+--{group}-fg-stronger  /* Maximum emphasis */
+
+/* Semantic foregrounds */
+--{group}-fg-primary   /* Links, accents */
+--{group}-fg-danger    /* Error text */
+--{group}-fg-success   /* Success text */
+--{group}-fg-warning   /* Warning text */
+--{group}-fg-info      /* Info text */`}</pre>
       </section>
 
       <section className={styles.section}>
@@ -142,8 +195,8 @@ import '@ui-kit/core/bootstrap.js';
 
       <div className={styles.nav}>
         <div></div>
-        <Link to="/learn/surfaces" className={styles.nextLink}>
-          Next: Understanding Surfaces &rarr;
+        <Link to="/learn/color-groups" className={styles.nextLink}>
+          Next: Color Groups &rarr;
         </Link>
       </div>
     </article>

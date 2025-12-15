@@ -5,8 +5,8 @@
 /* Hero */
 .hero {
   padding: var(--space-24) var(--space-6);
-  background: var(--card-bg);
-  border-bottom: 1px solid var(--card-border);
+  background: var(--soft-bg);
+  border-bottom: 1px solid var(--soft-border);
 }
 
 .heroContent {
@@ -20,16 +20,16 @@
   font-weight: var(--weight-bold);
   line-height: var(--leading-tight);
   margin-bottom: var(--space-6);
-  color: var(--page-text-strong);
+  color: var(--base-fg-strong);
 }
 
 .highlight {
-  color: var(--controlPrimary-bg);
+  color: var(--primary-bg);
 }
 
 .heroSubtitle {
   font-size: var(--text-lg);
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   margin-bottom: var(--space-8);
   max-width: 600px;
   margin-left: auto;
@@ -45,8 +45,8 @@
 
 .primaryButton {
   padding: var(--space-3) var(--space-6);
-  background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
   border: none;
   border-radius: var(--radius-lg);
   font-weight: var(--weight-semibold);
@@ -56,15 +56,15 @@
 }
 
 .primaryButton:hover {
-  background: var(--controlPrimary-bg-hover);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg-hover);
+  color: var(--primary-fg);
 }
 
 .secondaryButton {
   padding: var(--space-3) var(--space-6);
-  background: var(--control-bg);
-  color: var(--control-text);
-  border: 1px solid var(--control-border);
+  background: var(--base-bg);
+  color: var(--base-fg);
+  border: 1px solid var(--base-border);
   border-radius: var(--radius-lg);
   font-weight: var(--weight-semibold);
   font-size: var(--text-base);
@@ -73,8 +73,8 @@
 }
 
 .secondaryButton:hover {
-  background: var(--control-bg-hover);
-  color: var(--control-text);
+  background: var(--base-bg-hover);
+  color: var(--base-fg);
 }
 
 /* Features */
@@ -92,15 +92,15 @@
 
 .feature {
   padding: var(--space-6);
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
   border-radius: var(--radius-xl);
 }
 
 .featureIcon {
   font-size: var(--text-2xl);
   margin-bottom: var(--space-4);
-  color: var(--controlPrimary-bg);
+  color: var(--primary-bg);
 }
 
 .featureTitle {
@@ -110,7 +110,7 @@
 }
 
 .featureDesc {
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   font-size: var(--text-sm);
   line-height: var(--leading-loose);
 }
@@ -118,9 +118,9 @@
 /* Quick Start */
 .quickStart {
   padding: var(--space-16) var(--space-6);
-  background: var(--card-bg);
-  border-top: 1px solid var(--card-border);
-  border-bottom: 1px solid var(--card-border);
+  background: var(--soft-bg);
+  border-top: 1px solid var(--soft-border);
+  border-bottom: 1px solid var(--soft-border);
 }
 
 .sectionTitle {
@@ -139,16 +139,16 @@
 }
 
 .codeBlock {
-  background: var(--inset-bg);
-  border: 1px solid var(--inset-border);
+  background: var(--softer-bg);
+  border: 1px solid var(--softer-border);
   border-radius: var(--radius-lg);
   overflow: hidden;
 }
 
 .codeHeader {
   padding: var(--space-3) var(--space-4);
-  background: var(--control-bg);
-  border-bottom: 1px solid var(--inset-border);
+  background: var(--base-bg);
+  border-bottom: 1px solid var(--softer-border);
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
 }
@@ -166,7 +166,7 @@
 .quickStartNote {
   text-align: center;
   margin-top: var(--space-8);
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   font-size: var(--text-lg);
 }
 
@@ -185,8 +185,8 @@
 
 .surfaceCategory {
   padding: var(--space-5);
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
   border-radius: var(--radius-lg);
 }
 
@@ -194,7 +194,7 @@
   font-size: var(--text-base);
   font-weight: var(--weight-semibold);
   margin-bottom: var(--space-4);
-  color: var(--page-text-strong);
+  color: var(--base-fg-strong);
 }
 
 .surfaceList {
@@ -213,15 +213,15 @@
 .surfaceName {
   font-family: var(--font-mono);
   font-size: var(--text-sm);
-  color: var(--controlPrimary-bg);
-  background: var(--inset-bg);
+  color: var(--primary-bg);
+  background: var(--softer-bg);
   padding: 2px 8px;
   border-radius: var(--radius-sm);
 }
 
 .surfaceDesc {
   font-size: var(--text-sm);
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   text-align: right;
 }
 
@@ -229,8 +229,8 @@
 .cta {
   padding: var(--space-16) var(--space-6);
   text-align: center;
-  background: var(--card-bg);
-  border-top: 1px solid var(--card-border);
+  background: var(--soft-bg);
+  border-top: 1px solid var(--soft-border);
 }
 
 .ctaTitle {
@@ -240,6 +240,6 @@
 }
 
 .ctaDesc {
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   margin-bottom: var(--space-6);
 }

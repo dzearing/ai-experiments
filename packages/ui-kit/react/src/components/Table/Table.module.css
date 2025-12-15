@@ -29,17 +29,17 @@
 
 /* Bordered variant */
 .bordered {
-  border: 1px solid var(--page-border);
+  border: 1px solid var(--base-border);
 }
 
 .bordered th,
 .bordered td {
-  border: 1px solid var(--page-border);
+  border: 1px solid var(--base-border);
 }
 
 /* Striped variant */
 .striped tbody tr:nth-child(even) {
-  background: var(--controlSubtle-bg-hover);
+  background: var(--base-bg-hover);
 }
 
 /* Sticky header */
@@ -57,9 +57,9 @@
 .header {
   text-align: start;
   font-weight: var(--weight-medium);
-  color: var(--page-text);
+  color: var(--base-fg);
   white-space: nowrap;
-  border-bottom: 1px solid var(--page-border);
+  border-bottom: 1px solid var(--base-border);
 }
 
 .sortable {
@@ -69,7 +69,7 @@
 }
 
 .sortable:hover {
-  background: var(--controlSubtle-bg-hover);
+  background: var(--base-bg-hover);
 }
 
 .sortable:focus-visible {
@@ -86,12 +86,12 @@
 .sortIcon {
   display: inline-flex;
   align-items: center;
-  color: var(--page-text-softer);
+  color: var(--base-fg-softer);
   transition: color var(--duration-fast) var(--ease-default);
 }
 
 .sortIcon.active {
-  color: var(--controlPrimary-bg);
+  color: var(--primary-bg);
 }
 
 /* Alignment */
@@ -109,7 +109,7 @@
 
 /* Cell */
 .cell {
-  color: var(--page-text);
+  color: var(--base-fg);
 }
 
 /* Row */
@@ -118,19 +118,24 @@
 }
 
 .row:hover {
-  background: var(--controlSubtle-bg-hover);
+  background: var(--base-bg-hover);
 }
 
 .row.selected {
-  background: var(--controlPrimary-bg);
+  background: var(--primary-bg);
 }
 
 .row.selected td {
-  color: var(--controlPrimary-text);
+  color: var(--primary-fg);
+}
+
+/* Ensure all nested elements in selected rows use inherited color */
+.row.selected td * {
+  color: inherit;
 }
 
 .row.selected:hover {
-  background: var(--controlPrimary-bg-hover);
+  background: var(--primary-bg-hover);
 }
 
 /* Checkbox cell */
@@ -149,7 +154,7 @@
   text-align: center;
   padding-block: var(--space-6);
   padding-inline: var(--space-4);
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
 }
 
 /* Loading state */
@@ -163,8 +168,8 @@
   display: inline-block;
   width: 24px;
   height: 24px;
-  border: 2px solid var(--page-border);
-  border-top-color: var(--controlPrimary-bg);
+  border: 2px solid var(--base-border);
+  border-top-color: var(--primary-bg);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }

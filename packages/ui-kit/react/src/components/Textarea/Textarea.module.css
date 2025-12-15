@@ -1,8 +1,8 @@
 .textarea {
   box-sizing: border-box;
-  background: var(--inset-bg);
-  color: var(--inset-text);
-  border: 1px solid var(--inset-border);
+  background: var(--softer-bg);
+  color: var(--softer-fg);
+  border: 1px solid var(--softer-border);
   border-radius: var(--radius-md);
   font-family: var(--font-sans);
   resize: vertical;
@@ -11,23 +11,23 @@
 }
 
 .textarea::placeholder {
-  color: var(--inset-text-soft);
+  color: var(--softer-fg-soft);
 }
 
 .textarea:hover:not(:disabled) {
-  background: var(--inset-bg-hover);
+  background: var(--softer-bg-hover);
 }
 
 .textarea:focus {
-  background: var(--inset-bg-focus);
+  background: var(--softer-bg-focus);
   border-color: var(--focus-ring);
   outline: none;
   box-shadow: 0 0 0 2px var(--focus-ring);
 }
 
 .textarea:disabled {
-  background: var(--controlDisabled-bg);
-  color: var(--controlDisabled-text);
+  background: var(--base-bg-disabled);
+  color: var(--base-fg-softer);
   cursor: not-allowed;
   resize: none;
 }

@@ -8,7 +8,7 @@
 }
 
 .intro {
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   font-size: var(--text-lg);
   margin-bottom: var(--space-10);
 }
@@ -23,8 +23,8 @@
   display: flex;
   align-items: center;
   gap: var(--space-4);
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
   border-radius: var(--radius-lg);
   padding: var(--space-5);
   cursor: pointer;
@@ -32,15 +32,15 @@
 }
 
 .lesson:hover {
-  border-color: var(--controlPrimary-bg);
+  border-color: var(--primary-bg);
   box-shadow: var(--shadow-md);
 }
 
 .lessonNumber {
   width: 40px;
   height: 40px;
-  background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
   border-radius: var(--radius-full);
   display: flex;
   align-items: center;
@@ -55,6 +55,6 @@
 }
 
 .lessonContent p {
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   margin-bottom: 0;
 }

@@ -34,18 +34,18 @@
 }
 
 .text {
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
 }
 
 .current {
-  color: var(--page-text);
+  color: var(--base-fg);
   font-weight: var(--weight-medium);
 }
 
 .separatorWrapper {
   display: flex;
   align-items: center;
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
 }
 
 .separator {

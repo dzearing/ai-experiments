@@ -4,18 +4,18 @@
  * Comprehensive markdown styling using design tokens.
  *
  * Token mapping from ui-kit/core themes:
- * - --page-text: Primary text color
- * - --page-text-soft: Secondary/muted text
- * - --page-link: Link color
- * - --card-bg: Card/panel background
- * - --card-border: Card/panel border
- * - --inset-bg: Inset element background (code blocks)
- * - --inset-border: Inset element border
- * - --inset-text: Inset element text
+ * - --base-fg: Primary text color
+ * - --base-fg-softer: Secondary/muted text
+ * - --link: Link color
+ * - --soft-bg: Card/panel background
+ * - --soft-border: Card/panel border
+ * - --softer-bg: Inset element background (code blocks)
+ * - --softer-border: Inset element border
+ * - --softer-fg: Inset element text
  */
 
 .markdown {
-  color: var(--page-text, #24292e);
+  color: var(--base-fg, #24292e);
   font-family: var(--font-sans, system-ui, -apple-system, sans-serif);
   font-size: var(--text-base, 1rem);
   line-height: 1.6;
@@ -32,7 +32,7 @@
   margin-bottom: var(--space-3, 12px);
   font-weight: var(--weight-semibold, 600);
   line-height: 1.25;
-  color: var(--page-text, #24292e);
+  color: var(--base-fg, #24292e);
 }
 
 .h1:first-child,
@@ -47,13 +47,13 @@
 .h1 {
   font-size: var(--text-3xl, 1.875rem);
   padding-bottom: var(--space-2, 8px);
-  border-bottom: 1px solid var(--page-border, #e1e4e8);
+  border-bottom: 1px solid var(--base-border, #e1e4e8);
 }
 
 .h2 {
   font-size: var(--text-2xl, 1.5rem);
   padding-bottom: var(--space-2, 8px);
-  border-bottom: 1px solid var(--page-border, #e1e4e8);
+  border-bottom: 1px solid var(--base-border, #e1e4e8);
 }
 
 .h3 {
@@ -70,7 +70,7 @@
 
 .h6 {
   font-size: var(--text-sm, 0.875rem);
-  color: var(--page-text-soft, #6a737d);
+  color: var(--base-fg-softer, #6a737d);
 }
 
 /* Heading anchor link */
@@ -78,7 +78,7 @@
   position: absolute;
   left: -1.5em;
   padding-right: var(--space-2, 8px);
-  color: var(--page-link, #0366d6);
+  color: var(--link, #0366d6);
   text-decoration: none;
   opacity: 0;
   transition: opacity var(--duration-fast, 100ms) var(--ease-default, ease-out);
@@ -151,7 +151,7 @@
    ========================================== */
 
 .link {
-  color: var(--page-link, #0366d6);
+  color: var(--link, #0366d6);
   text-decoration: none;
   transition: color var(--duration-fast, 100ms) var(--ease-default, ease-out);
 }
@@ -163,7 +163,7 @@
 .fileLink {
   font-family: var(--font-mono, monospace);
   font-size: var(--text-sm, 0.875rem);
-  color: var(--page-link, #0366d6);
+  color: var(--link, #0366d6);
 }
 
 /* ==========================================
@@ -211,12 +211,12 @@
 
 .inlineCode {
   padding: 0.15em 0.4em;
-  background: var(--inset-bg, #f6f8fa);
-  border: 1px solid var(--inset-border, #e1e4e8);
+  background: var(--softer-bg, #f6f8fa);
+  border: 1px solid var(--softer-border, #e1e4e8);
   border-radius: var(--radius-sm, 4px);
   font-family: var(--font-mono, ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace);
   font-size: 0.9em;
-  color: var(--inset-text, var(--page-text, #24292e));
+  color: var(--softer-fg, var(--base-fg, #24292e));
 }
 
 /* ==========================================
@@ -226,10 +226,10 @@
 .blockquote {
   margin: var(--space-4, 16px) 0;
   padding: var(--space-2, 8px) var(--space-4, 16px);
-  border-left: 4px solid var(--page-link, var(--card-border, #0366d6));
-  color: var(--page-text-soft, #6a737d);
-  /* Use inset-bg for recessed appearance - darken from page-bg ensures contrast in both modes */
-  background: var(--inset-bg, #f6f8fa);
+  border-left: 4px solid var(--link, var(--soft-border, #0366d6));
+  color: var(--base-fg-softer, #6a737d);
+  /* Use softer-bg for recessed appearance - darken from base-bg ensures contrast in both modes */
+  background: var(--softer-bg, #f6f8fa);
   border-radius: 0 var(--radius-sm, 4px) var(--radius-sm, 4px) 0;
 }
 
@@ -257,15 +257,15 @@
 }
 
 .tableHead {
-  background: var(--inset-bg, #f6f8fa);
+  background: var(--softer-bg, #f6f8fa);
 }
 
 .tableBody tr:nth-child(even) {
-  background: var(--inset-bg, #f6f8fa);
+  background: var(--softer-bg, #f6f8fa);
 }
 
 .tableRow {
-  border-bottom: 1px solid var(--page-border, #e1e4e8);
+  border-bottom: 1px solid var(--base-border, #e1e4e8);
 }
 
 .tableHeaderCell,
@@ -297,7 +297,7 @@
 .divider {
   height: 1px;
   margin: var(--space-6, 24px) 0;
-  background: var(--page-border, #e1e4e8);
+  background: var(--base-border, #e1e4e8);
   border: none;
 }
 
@@ -309,7 +309,7 @@
   display: inline-block;
   width: 2px;
   height: 1em;
-  background: var(--page-text, #24292e);
+  background: var(--base-fg, #24292e);
   margin-left: 2px;
   vertical-align: text-bottom;
   animation: blink 0.7s step-end infinite;

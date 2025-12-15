@@ -18,9 +18,9 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  background: var(--inset-bg);
-  color: var(--inset-text);
-  border: 1px solid var(--inset-border);
+  background: var(--softer-bg);
+  color: var(--softer-fg);
+  border: 1px solid var(--softer-border);
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: all var(--duration-fast) var(--ease-default);
@@ -29,8 +29,8 @@
 }
 
 .trigger:hover:not(:disabled) {
-  background: var(--inset-bg-hover);
-  border-color: var(--inset-border-hover);
+  background: var(--softer-bg-hover);
+  border-color: var(--softer-border-hover);
 }
 
 .trigger:focus {
@@ -46,7 +46,7 @@
 .trigger:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  background: var(--controlDisabled-bg);
+  background: var(--base-bg-disabled);
 }
 
 /* Size variants */
@@ -76,7 +76,7 @@
 }
 
 .placeholder {
-  color: var(--inset-text-soft);
+  color: var(--softer-fg-soft);
 }
 
 .selectedValue {
@@ -118,7 +118,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--inset-text-soft);
+  color: var(--softer-fg-soft);
   transition: transform var(--duration-fast) var(--ease-default);
 }
 
@@ -133,15 +133,15 @@
   padding: var(--space-1);
   border: none;
   background: transparent;
-  color: var(--inset-text-soft);
+  color: var(--softer-fg-soft);
   cursor: pointer;
   border-radius: var(--radius-sm);
   transition: all var(--duration-fast) var(--ease-default);
 }
 
 .clearButton:hover {
-  background: var(--controlSubtle-bg-hover);
-  color: var(--inset-text);
+  background: var(--base-bg-hover);
+  color: var(--softer-fg);
 }
 
 /* Error state */
@@ -151,7 +151,7 @@
 
 .error .trigger:focus-visible,
 .error .trigger.open {
-  box-shadow: 0 0 0 2px var(--danger-bg-muted);
+  box-shadow: 0 0 0 2px var(--danger-bg-disabled);
 }
 
 /* Disabled state */
@@ -163,8 +163,8 @@
 .menu {
   position: fixed;
   z-index: 10000;
-  background: var(--popout-bg);
-  border: 1px solid var(--popout-border);
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);
   max-height: 300px;
@@ -188,16 +188,16 @@
 /* Search input */
 .searchWrapper {
   padding: var(--space-2);
-  border-bottom: 1px solid var(--popout-border);
+  border-bottom: 1px solid var(--soft-border);
 }
 
 .searchInput {
   width: 100%;
   padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--inset-border);
+  border: 1px solid var(--softer-border);
   border-radius: var(--radius-sm);
-  background: var(--inset-bg);
-  color: var(--inset-text);
+  background: var(--softer-bg);
+  color: var(--softer-fg);
   font-size: var(--text-sm);
   outline: none;
   transition: all var(--duration-fast) var(--ease-default);
@@ -209,7 +209,7 @@
 }
 
 .searchInput::placeholder {
-  color: var(--inset-text-soft);
+  color: var(--softer-fg-soft);
 }
 
 /* Options list */
@@ -227,7 +227,7 @@
   padding: var(--space-2) var(--space-3);
   border: none;
   background: transparent;
-  color: var(--popout-text);
+  color: var(--soft-fg);
   font-size: var(--text-base);
   text-align: start;
   cursor: pointer;
@@ -236,17 +236,17 @@
 
 .option:hover:not(:disabled),
 .option.focused:not(:disabled) {
-  background: var(--controlSubtle-bg-hover);
+  background: var(--base-bg-hover);
 }
 
 .option.selected {
-  background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
 }
 
 .option.selected:hover:not(:disabled),
 .option.selected.focused:not(:disabled) {
-  background: var(--controlPrimary-bg-hover);
+  background: var(--primary-bg-hover);
 }
 
 .option:focus {
@@ -254,7 +254,7 @@
 }
 
 .option.disabled {
-  color: var(--controlDisabled-text);
+  color: var(--base-fg-softer);
   cursor: not-allowed;
 }
 
@@ -265,17 +265,17 @@
   justify-content: center;
   width: 16px;
   height: 16px;
-  border: 1px solid var(--inset-border);
+  border: 1px solid var(--softer-border);
   border-radius: var(--radius-xs);
-  background: var(--inset-bg);
+  background: var(--softer-bg);
   flex-shrink: 0;
   transition: all var(--duration-fast) var(--ease-default);
 }
 
 .checkbox.checked {
-  background: var(--controlPrimary-bg);
-  border-color: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg);
+  border-color: var(--primary-bg);
+  color: var(--primary-fg);
 }
 
 /* Option icon */
@@ -303,7 +303,7 @@
   justify-content: center;
   gap: var(--space-2);
   padding: var(--space-4);
-  color: var(--popout-text-soft);
+  color: var(--soft-fg-soft);
 }
 
 .spinner {
@@ -323,7 +323,7 @@
 .empty {
   padding: var(--space-4);
   text-align: center;
-  color: var(--popout-text-soft);
+  color: var(--soft-fg-soft);
 }
 
 /* Reduced motion */

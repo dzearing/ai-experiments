@@ -32,7 +32,7 @@
 
 .subtitle {
   font-size: var(--text-lg);
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
 }
 
 .section {
@@ -48,12 +48,12 @@
 }
 
 .sectionDesc {
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   margin-bottom: var(--space-6);
 }
 
 .sectionDesc code {
-  background: var(--inset-bg);
+  background: var(--softer-bg);
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-sm);
   font-family: var(--font-mono);
@@ -67,8 +67,8 @@
 }
 
 .category {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
   border-radius: var(--radius-lg);
   padding: var(--space-5);
   overflow: hidden;
@@ -82,7 +82,7 @@
 
 .categoryDesc {
   font-size: var(--text-sm);
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   margin-bottom: var(--space-4);
 }
 
@@ -96,9 +96,9 @@
 .tokenTableHeader {
   text-align: left;
   padding: var(--space-2) var(--space-3);
-  border-bottom: 1px solid var(--card-border);
+  border-bottom: 1px solid var(--soft-border);
   font-weight: var(--weight-semibold);
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -113,7 +113,7 @@
 }
 
 .tokenTableRow {
-  border-bottom: 1px solid var(--card-border-soft);
+  border-bottom: 1px solid var(--soft-border-soft);
 }
 
 .tokenTableRow:last-child {
@@ -121,7 +121,7 @@
 }
 
 .tokenTableRow:hover {
-  background: var(--inset-bg);
+  background: var(--softer-bg);
 }
 
 .tokenNameCell {
@@ -145,14 +145,14 @@
 .tokenName {
   font-family: var(--font-mono);
   font-size: var(--text-sm);
-  color: var(--controlPrimary-bg);
+  color: var(--link);
   word-break: break-all;
 }
 
 .tokenValue {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   word-break: break-all;
   max-width: 160px;
   overflow: hidden;
@@ -161,13 +161,13 @@
 
 .tokenDesc {
   display: block;
-  color: var(--page-text);
+  color: var(--base-fg);
   font-size: var(--text-sm);
 }
 
 .tokenDerivation {
   display: block;
-  color: var(--page-text-softer);
+  color: var(--base-fg-softer);
   font-size: var(--text-xs);
   font-style: italic;
   margin-top: 2px;
@@ -179,7 +179,7 @@
   width: 20px;
   height: 20px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--card-border);
+  border: 1px solid var(--soft-border);
   flex-shrink: 0;
   box-shadow: var(--shadow-sm);
 }
@@ -192,8 +192,8 @@
 }
 
 .surfaceCard {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
   border-radius: var(--radius-lg);
   padding: var(--space-4);
   display: flex;
@@ -204,13 +204,13 @@
 .surfaceName {
   font-family: var(--font-mono);
   font-size: var(--text-sm);
-  color: var(--controlPrimary-bg);
+  color: var(--link);
   font-weight: var(--weight-medium);
 }
 
 .surfaceDesc {
   font-size: var(--text-sm);
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
 }
 
 /* Responsive adjustments */

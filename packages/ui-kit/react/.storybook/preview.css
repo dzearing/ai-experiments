@@ -7,8 +7,8 @@ html, body, #storybook-root {
   margin: 0;
   padding: 0;
   height: 100%;
-  background: var(--page-bg);
-  color: var(--page-text);
+  background: var(--base-bg);
+  color: var(--base-fg);
   font-family: var(--font-sans);
 }
 
@@ -16,8 +16,8 @@ html, body, #storybook-root {
 .storyWrapper {
   padding: var(--space-4, 1rem);
   box-sizing: border-box;
-  background: var(--page-bg);
-  color: var(--page-text);
+  background: var(--base-bg);
+  color: var(--base-fg);
   border-radius: var(--radius-md);
   width: 100%;
   max-width: 100%;

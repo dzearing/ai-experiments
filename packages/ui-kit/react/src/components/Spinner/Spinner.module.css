@@ -2,7 +2,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--controlPrimary-bg);
+  color: var(--primary-bg);
 }
 
 .spinner.inherit {

@@ -22,15 +22,15 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--inset-bg);
-  border: 1px solid var(--inset-border);
+  background: var(--softer-bg);
+  border: 1px solid var(--softer-border);
   border-radius: var(--radius-sm);
   transition: all var(--duration-fast) var(--ease-default);
 }
 
 .input:hover:not(:disabled) + .checkbox {
-  background: var(--inset-bg-hover);
-  border-color: var(--inset-border-hover);
+  background: var(--softer-bg-hover);
+  border-color: var(--softer-border-hover);
 }
 
 .input:focus-visible + .checkbox {
@@ -40,19 +40,19 @@
 
 .input:checked + .checkbox,
 .input[data-indeterminate="true"] + .checkbox {
-  background: var(--controlPrimary-bg);
-  border-color: var(--controlPrimary-border);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg);
+  border-color: var(--primary-border);
+  color: var(--primary-fg);
 }
 
 .input:checked:hover:not(:disabled) + .checkbox,
 .input[data-indeterminate="true"]:hover:not(:disabled) + .checkbox {
-  background: var(--controlPrimary-bg-hover);
+  background: var(--primary-bg-hover);
 }
 
 .input:disabled + .checkbox {
-  background: var(--controlDisabled-bg);
-  border-color: var(--controlDisabled-border);
+  background: var(--base-bg-disabled);
+  border-color: var(--base-border-soft);
 }
 
 .checkmark {

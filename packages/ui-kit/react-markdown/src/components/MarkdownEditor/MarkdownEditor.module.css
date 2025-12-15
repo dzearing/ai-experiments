@@ -5,12 +5,12 @@
  * Most styling is handled by the CodeMirror theme extension.
  *
  * Token mapping from ui-kit/core themes:
- * - --inset-bg: Editor background (darker/indented surfaces)
- * - --inset-border: Editor borders
- * - --page-text: Primary text color
- * - --page-text-soft: Muted text color
- * - --page-border: Page-level borders
- * - --card-bg: Card/panel backgrounds
+ * - --softer-bg: Editor background (darker/indented surfaces)
+ * - --softer-border: Editor borders
+ * - --base-fg: Primary text color
+ * - --base-fg-softer: Muted text color
+ * - --base-border: Page-level borders
+ * - --soft-bg: Card/panel backgrounds
  * - --primary-bg: Primary action color (for focus)
  */
 
@@ -30,8 +30,8 @@
   height: 100%;
   min-height: 0;
   position: relative;
-  background: var(--inset-bg, #f8f9fa);
-  border: 1px solid var(--inset-border, var(--page-border, #e1e4e8));
+  background: var(--softer-bg, #f8f9fa);
+  border: 1px solid var(--softer-border, var(--base-border, #e1e4e8));
   border-radius: var(--radius-md, 8px);
   overflow: hidden;
   font-family: var(--font-mono, ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace);
@@ -69,10 +69,10 @@
 
 .editorContainer :global(.cm-search) :global(input) {
   padding: 4px 8px;
-  border: 1px solid var(--page-border, #e1e4e8);
+  border: 1px solid var(--base-border, #e1e4e8);
   border-radius: var(--radius-sm, 4px);
-  background: var(--page-bg, #ffffff);
-  color: var(--page-text, #24292e);
+  background: var(--base-bg, #ffffff);
+  color: var(--base-fg, #24292e);
 }
 
 .editorContainer :global(.cm-search) :global(input:focus) {
@@ -82,16 +82,16 @@
 
 .editorContainer :global(.cm-search) :global(button) {
   padding: 4px 8px;
-  border: 1px solid var(--page-border, #e1e4e8);
+  border: 1px solid var(--base-border, #e1e4e8);
   border-radius: var(--radius-sm, 4px);
-  background: var(--card-bg, #f6f8fa);
-  color: var(--page-text, #24292e);
+  background: var(--soft-bg, #f6f8fa);
+  color: var(--base-fg, #24292e);
   cursor: pointer;
   transition: background-color var(--duration-fast, 100ms);
 }
 
 .editorContainer :global(.cm-search) :global(button:hover) {
-  background: var(--card-bg, #f0f0f0);
+  background: var(--soft-bg, #f0f0f0);
 }
 
 .editorContainer :global(.cm-search) :global(label) {
@@ -99,7 +99,7 @@
   align-items: center;
   gap: 4px;
   font-size: var(--text-sm, 13px);
-  color: var(--page-text-soft, #6a737d);
+  color: var(--base-fg-softer, #6a737d);
 }
 
 /* Go-to-line dialog styling */
@@ -109,10 +109,10 @@
 
 .editorContainer :global(.cm-gotoLine) :global(input) {
   padding: 4px 8px;
-  border: 1px solid var(--page-border, #e1e4e8);
+  border: 1px solid var(--base-border, #e1e4e8);
   border-radius: var(--radius-sm, 4px);
-  background: var(--page-bg, #ffffff);
-  color: var(--page-text, #24292e);
+  background: var(--base-bg, #ffffff);
+  color: var(--base-fg, #24292e);
   font-family: var(--font-mono);
 }
 

@@ -21,12 +21,12 @@
 .title {
   font-weight: var(--weight-medium);
   margin-bottom: var(--space-1);
-  color: var(--page-text);
+  color: var(--base-fg);
 }
 
 .message {
   font-size: var(--text-sm);
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
 }
 
 .action {
@@ -40,25 +40,25 @@
   padding: var(--space-1);
   border: none;
   background: transparent;
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   cursor: pointer;
   border-radius: var(--radius-sm);
   transition: all var(--duration-fast) var(--ease-default);
 }
 
 .close:hover {
-  color: var(--page-text);
-  background: var(--controlSubtle-bg-hover);
+  color: var(--base-fg);
+  background: var(--base-bg-hover);
 }
 
 /* Variants - icon gets the semantic color, text stays neutral */
 .default {
-  background: var(--control-bg);
-  border: 1px solid var(--page-border);
+  background: var(--base-bg);
+  border: 1px solid var(--base-border);
 }
 
 .default .icon {
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
 }
 
 .info {

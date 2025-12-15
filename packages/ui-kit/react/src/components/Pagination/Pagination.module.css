@@ -21,7 +21,7 @@
   border: none;
   border-radius: var(--radius-md);
   background: transparent;
-  color: var(--page-text);
+  color: var(--base-fg);
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
   cursor: pointer;
@@ -30,7 +30,7 @@
 
 .navButton:hover:not(:disabled),
 .pageButton:hover:not(:disabled):not(.active) {
-  background: var(--controlSubtle-bg-hover);
+  background: var(--base-bg-hover);
 }
 
 .navButton:focus-visible,
@@ -41,13 +41,13 @@
 
 .navButton:disabled,
 .pageButton:disabled {
-  color: var(--controlDisabled-text);
+  color: var(--base-fg-softer);
   cursor: not-allowed;
 }
 
 .pageButton.active {
-  background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
 }
 
 .ellipsis {
@@ -56,7 +56,7 @@
   justify-content: center;
   min-width: 32px;
   height: 32px;
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
 }
 
 /* ==============================================

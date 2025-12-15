@@ -6,8 +6,8 @@
 
 .track {
   flex: 1;
-  background: var(--inset-bg);
-  border: 1px solid var(--inset-border);
+  background: var(--softer-bg);
+  border: 1px solid var(--softer-border);
   border-radius: var(--radius-full);
   overflow: hidden;
 }
@@ -57,7 +57,7 @@
 }
 
 .bar.default {
-  background: var(--controlPrimary-bg);
+  background: var(--primary-bg);
 }
 
 .bar.success {
@@ -93,7 +93,7 @@
 .label {
   flex-shrink: 0;
   font-size: var(--text-sm);
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   min-width: 3ch;
   text-align: right;
 }

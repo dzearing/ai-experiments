@@ -1,6 +1,6 @@
 .divider {
   border: none;
-  background: var(--page-border);
+  background: var(--base-border);
   flex-shrink: 0;
 }
 

@@ -8,7 +8,7 @@
 }
 
 .intro {
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   font-size: var(--text-lg);
   margin-bottom: var(--space-10);
 }
@@ -20,8 +20,8 @@
 }
 
 .section {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
   border-radius: var(--radius-lg);
   padding: var(--space-6);
   cursor: pointer;
@@ -29,7 +29,7 @@
 }
 
 .section:hover {
-  border-color: var(--controlPrimary-bg);
+  border-color: var(--primary-bg);
   box-shadow: var(--shadow-md);
 }
 
@@ -39,6 +39,6 @@
 }
 
 .section p {
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   margin-bottom: 0;
 }

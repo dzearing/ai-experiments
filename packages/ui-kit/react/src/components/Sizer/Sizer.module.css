@@ -27,7 +27,7 @@
   position: absolute;
   left: 50%;
   width: 1px;
-  background: var(--page-border, #e0e0e0);
+  background: var(--base-border, #e0e0e0);
   transform: translateX(-50%);
 }
 
@@ -47,7 +47,7 @@
   position: absolute;
   top: 50%;
   height: 1px;
-  background: var(--page-border, #e0e0e0);
+  background: var(--base-border, #e0e0e0);
   transform: translateY(-50%);
 }
 
@@ -63,7 +63,7 @@
 
 /* Hover state */
 .sizer:hover {
-  background: var(--controlSubtle-bg-hover);
+  background: var(--base-bg-hover);
 }
 
 /* Active/focus state */
@@ -75,7 +75,7 @@
 /* Grip indicator */
 .grip {
   position: absolute;
-  background: var(--page-border);
+  background: var(--base-border);
   border-radius: var(--radius-sm);
   transition: background var(--duration-fast) var(--ease-default);
 }
@@ -97,16 +97,16 @@
 /* Strengthen border lines and grip on hover */
 .sizer:hover::before,
 .sizer:hover::after {
-  background: var(--page-border-strong);
+  background: var(--base-border-hover);
 }
 
 .sizer:hover .grip {
-  background: var(--page-border-strong);
+  background: var(--base-border-hover);
 }
 
 .sizer:hover .grip::before,
 .sizer:hover .grip::after {
-  background: var(--page-border-strong);
+  background: var(--base-border-hover);
 }
 
 /* Grip dots pattern */
@@ -114,7 +114,7 @@
 .grip::after {
   content: '';
   position: absolute;
-  background: var(--page-border);
+  background: var(--base-border);
   border-radius: 50%;
   width: 2px;
   height: 2px;

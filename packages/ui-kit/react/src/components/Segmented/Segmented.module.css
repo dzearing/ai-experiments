@@ -5,9 +5,9 @@
  * Heights match other controls: 28px (sm), 36px (md), 44px (lg)
  *
  * Surfaces used:
- * - inset (background container)
- * - controlPrimary (active indicator)
- * - controlSubtle (segment text)
+ * - softer (background container)
+ * - primary (active indicator)
+ * - base (segment text)
  *
  * See TOKEN_GUIDE.md for token reference
  */
@@ -21,8 +21,8 @@
   display: inline-flex;
   align-items: center;
   position: relative;
-  background: var(--inset-bg);
-  border: 1px solid var(--inset-border);
+  background: var(--softer-bg);
+  border: 1px solid var(--softer-border);
   gap: 2px;
 }
 
@@ -147,7 +147,7 @@
   gap: var(--space-2);
   border: none;
   background: transparent;
-  color: var(--controlSubtle-text);
+  color: var(--base-fg-soft);
   font-family: inherit;
   font-weight: var(--weight-medium);
   cursor: pointer;
@@ -162,7 +162,7 @@
 }
 
 .segment:hover:not(:disabled):not(.active) {
-  color: var(--controlSubtle-text-hover);
+  color: var(--base-fg);
 }
 
 .segment:focus-visible {
@@ -172,11 +172,11 @@
 }
 
 .segment.active {
-  color: var(--controlPrimary-text);
+  color: var(--primary-fg);
 }
 
 .segment.segmentDisabled {
-  color: var(--controlDisabled-text);
+  color: var(--base-fg-softer);
   cursor: not-allowed;
 }
 
@@ -226,7 +226,7 @@
   left: 0;
   top: 2px;
   bottom: 2px;
-  background: var(--controlPrimary-bg);
+  background: var(--primary-bg);
   box-shadow: var(--shadow-sm);
   transition:
     transform var(--duration-normal) cubic-bezier(0.4, 0, 0.2, 1),

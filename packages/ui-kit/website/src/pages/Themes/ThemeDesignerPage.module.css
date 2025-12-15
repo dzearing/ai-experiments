@@ -15,7 +15,7 @@
 }
 
 .subtitle {
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   max-width: 600px;
 }
 
@@ -42,8 +42,8 @@
 }
 
 .section {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
   border-radius: var(--radius-lg);
   padding: var(--space-5);
 }
@@ -52,12 +52,12 @@
   font-size: var(--text-base);
   font-weight: var(--weight-semibold);
   margin-bottom: var(--space-1);
-  color: var(--card-text); /* Must match card surface */
+  color: var(--soft-fg); /* Must match card surface */
 }
 
 .sectionDesc {
   font-size: var(--text-sm);
-  color: var(--card-text-soft); /* Must match card surface */
+  color: var(--soft-fg-soft); /* Must match card surface */
   margin-bottom: var(--space-4);
 }
 
@@ -83,12 +83,12 @@
 .colorInputLabel {
   font-weight: var(--weight-medium);
   font-size: var(--text-sm);
-  color: var(--card-text); /* Must match card surface */
+  color: var(--soft-fg); /* Must match card surface */
 }
 
 .colorInputDesc {
   font-size: var(--text-xs);
-  color: var(--card-text-soft); /* Must match card surface */
+  color: var(--soft-fg-soft); /* Must match card surface */
 }
 
 .colorInputControls {
@@ -100,7 +100,7 @@
   width: 48px;
   height: 36px;
   padding: 0;
-  border: 1px solid var(--inset-border);
+  border: 1px solid var(--softer-border);
   border-radius: var(--radius-md);
   cursor: pointer;
   background: transparent;
@@ -118,21 +118,21 @@
 .colorHex {
   flex: 1;
   padding: var(--space-2) var(--space-3);
-  background: var(--inset-bg);
-  border: 1px solid var(--inset-border);
+  background: var(--softer-bg);
+  border: 1px solid var(--softer-border);
   border-radius: var(--radius-md);
   font-family: var(--font-mono);
   font-size: var(--text-sm);
-  color: var(--inset-text);
+  color: var(--softer-fg);
 }
 
 .colorHex:focus {
   outline: none;
-  border-color: var(--inset-border-focus);
+  border-color: var(--softer-border-focus);
 }
 
 .colorHex::placeholder {
-  color: var(--inset-text-soft);
+  color: var(--softer-fg-soft);
 }
 
 /* Border Radius Controls */
@@ -154,23 +154,23 @@
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-3);
-  background: var(--control-bg);
-  color: var(--control-text); /* Must match control surface */
-  border: 1px solid var(--control-border);
+  background: var(--base-bg);
+  color: var(--base-fg); /* Must match control surface */
+  border: 1px solid var(--base-border);
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: all var(--duration-fast) var(--ease-default);
 }
 
 .radiusPreset:hover {
-  background: var(--control-bg-hover);
-  border-color: var(--control-border-hover);
+  background: var(--base-bg-hover);
+  border-color: var(--base-border-hover);
 }
 
 .radiusPresetActive {
-  background: var(--controlPrimary-bg);
-  border-color: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg);
+  border-color: var(--primary-bg);
+  color: var(--primary-fg);
 }
 
 .radiusPreview {
@@ -200,19 +200,19 @@
   display: flex;
   justify-content: space-between;
   font-size: var(--text-sm);
-  color: var(--card-text-soft); /* Must match card surface */
+  color: var(--soft-fg-soft); /* Must match card surface */
 }
 
 .sliderValue {
   font-family: var(--font-mono);
-  color: var(--card-text); /* Must match card surface */
+  color: var(--soft-fg); /* Must match card surface */
 }
 
 .slider {
   width: 100%;
   height: 6px;
   border-radius: var(--radius-full);
-  background: var(--inset-bg);
+  background: var(--softer-bg);
   cursor: pointer;
   -webkit-appearance: none;
 }
@@ -222,7 +222,7 @@
   width: 16px;
   height: 16px;
   border-radius: var(--radius-full);
-  background: var(--controlPrimary-bg);
+  background: var(--primary-bg);
   cursor: pointer;
 }
 
@@ -239,22 +239,22 @@
   align-items: center;
   gap: var(--space-1);
   padding: var(--space-4);
-  background: var(--control-bg);
-  color: var(--control-text); /* Must match control surface */
-  border: 1px solid var(--control-border);
+  background: var(--base-bg);
+  color: var(--base-fg); /* Must match control surface */
+  border: 1px solid var(--base-border);
   border-radius: var(--radius-lg);
   cursor: pointer;
   transition: all var(--duration-fast) var(--ease-default);
 }
 
 .accessibilityOption:hover {
-  background: var(--control-bg-hover);
+  background: var(--base-bg-hover);
 }
 
 .accessibilityActive {
-  background: var(--controlPrimary-bg);
-  border-color: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg);
+  border-color: var(--primary-bg);
+  color: var(--primary-fg);
 }
 
 .accessibilityLevel {
@@ -282,9 +282,9 @@
 
 .exportButton {
   padding: var(--space-3);
-  background: var(--control-bg);
-  color: var(--control-text);
-  border: 1px solid var(--control-border);
+  background: var(--base-bg);
+  color: var(--base-fg);
+  border: 1px solid var(--base-border);
   border-radius: var(--radius-md);
   font-weight: var(--weight-medium);
   cursor: pointer;
@@ -292,13 +292,13 @@
 }
 
 .exportButton:hover {
-  background: var(--control-bg-hover);
+  background: var(--base-bg-hover);
 }
 
 .exportButtonPrimary {
   padding: var(--space-3);
-  background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
   border: none;
   border-radius: var(--radius-md);
   font-weight: var(--weight-semibold);
@@ -307,13 +307,13 @@
 }
 
 .exportButtonPrimary:hover {
-  background: var(--controlPrimary-bg-hover);
+  background: var(--primary-bg-hover);
 }
 
 /* Preview Panel */
 .preview {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
   border-radius: var(--radius-xl);
   overflow: hidden;
   display: flex;
@@ -325,8 +325,8 @@
   justify-content: space-between;
   align-items: center;
   padding: var(--space-3) var(--space-4);
-  background: var(--control-bg);
-  border-bottom: 1px solid var(--card-border);
+  background: var(--base-bg);
+  border-bottom: 1px solid var(--soft-border);
 }
 
 .previewTitle {
@@ -337,7 +337,7 @@
   display: flex;
   gap: var(--space-1);
   padding: var(--space-1);
-  background: var(--inset-bg);
+  background: var(--softer-bg);
   border-radius: var(--radius-md);
 }
 
@@ -348,18 +348,18 @@
   border-radius: var(--radius-sm);
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
-  color: var(--card-text-soft); /* Must match card surface */
+  color: var(--soft-fg-soft); /* Must match card surface */
   cursor: pointer;
   transition: all var(--duration-fast) var(--ease-default);
 }
 
 .modeButton:hover {
-  color: var(--card-text); /* Must match card surface */
+  color: var(--soft-fg); /* Must match card surface */
 }
 
 .modeButtonActive {
-  background: var(--card-bg);
-  color: var(--card-text); /* Must match card surface */
+  background: var(--soft-bg);
+  color: var(--soft-fg); /* Must match card surface */
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
@@ -510,15 +510,15 @@
 
 .surfacePreviewDesc {
   font-size: var(--text-xs);
-  color: var(--surface-text-soft);
+  color: var(--surface-fg-soft);
 }
 
 .surfacePreviewButton {
   margin-top: var(--space-2);
   padding: var(--space-2) var(--space-3);
-  background: var(--control-bg);
-  color: var(--control-text);
-  border: 1px solid var(--control-border);
+  background: var(--base-bg);
+  color: var(--base-fg);
+  border: 1px solid var(--base-border);
   font-family: inherit;
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
@@ -527,7 +527,7 @@
 }
 
 .surfacePreviewButton:hover {
-  background: var(--control-bg-hover);
+  background: var(--base-bg-hover);
 }
 
 /* Surface Inspector */
@@ -535,8 +535,8 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
   border-radius: var(--radius-lg);
   padding: var(--space-5);
   max-height: calc(100vh - 200px);
@@ -546,12 +546,12 @@
 .inspectorTitle {
   font-size: var(--text-base);
   font-weight: var(--weight-semibold);
-  color: var(--card-text); /* Must match card surface */
+  color: var(--soft-fg); /* Must match card surface */
 }
 
 .inspectorDesc {
   font-size: var(--text-sm);
-  color: var(--card-text-soft); /* Must match card surface */
+  color: var(--soft-fg-soft); /* Must match card surface */
   margin-top: calc(var(--space-1) * -1);
 }
 
@@ -576,12 +576,12 @@
 }
 
 .surfaceItem:hover {
-  background: var(--control-bg);
+  background: var(--base-bg);
 }
 
 .surfaceItemActive {
-  background: var(--control-bg);
-  border-color: var(--control-border);
+  background: var(--base-bg);
+  border-color: var(--base-border);
 }
 
 .surfaceSwatch {
@@ -605,13 +605,13 @@
   display: block;
   font-weight: var(--weight-medium);
   font-size: var(--text-sm);
-  color: var(--card-text); /* Must match card surface */
+  color: var(--soft-fg); /* Must match card surface */
 }
 
 .surfaceDesc {
   display: block;
   font-size: var(--text-xs);
-  color: var(--card-text-soft); /* Must match card surface */
+  color: var(--soft-fg-soft); /* Must match card surface */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -654,7 +654,7 @@
 .contrastRatio {
   font-size: var(--text-xs);
   font-family: var(--font-mono);
-  color: var(--card-text-soft); /* Must match card surface */
+  color: var(--soft-fg-soft); /* Must match card surface */
 }
 
 /* Token List */
@@ -664,7 +664,7 @@
   gap: var(--space-1);
   padding: var(--space-2);
   margin-left: var(--space-6);
-  border-left: 2px solid var(--card-border);
+  border-left: 2px solid var(--soft-border);
 }
 
 .tokenItem {
@@ -682,7 +682,7 @@
 }
 
 .tokenItem:hover {
-  background: var(--inset-bg);
+  background: var(--softer-bg);
 }
 
 .tokenCopied {
@@ -692,7 +692,7 @@
 .tokenName {
   font-size: var(--text-xs);
   font-family: var(--font-mono);
-  color: var(--card-text-soft); /* Must match card surface */
+  color: var(--soft-fg-soft); /* Must match card surface */
 }
 
 .tokenValue {
@@ -701,7 +701,7 @@
   gap: var(--space-1);
   font-size: var(--text-xs);
   font-family: var(--font-mono);
-  color: var(--card-text); /* Must match card surface */
+  color: var(--soft-fg); /* Must match card surface */
 }
 
 .tokenSwatch {

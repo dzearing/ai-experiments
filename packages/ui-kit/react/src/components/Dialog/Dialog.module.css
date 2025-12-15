@@ -3,14 +3,14 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-4) var(--space-6);
-  border-bottom: 1px solid var(--overlay-border);
+  border-bottom: 1px solid var(--soft-border);
 }
 
 .title {
   margin: 0;
   font-size: var(--text-lg);
   font-weight: var(--weight-semibold);
-  color: var(--overlay-text);
+  color: var(--soft-fg);
 }
 
 .closeButton {
@@ -21,15 +21,15 @@
   height: 32px;
   border: none;
   background: transparent;
-  color: var(--overlay-text-soft);
+  color: var(--soft-fg-soft);
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all var(--duration-fast) var(--ease-default);
 }
 
 .closeButton:hover {
-  background: var(--controlSubtle-bg-hover);
-  color: var(--overlay-text);
+  background: var(--base-bg-hover);
+  color: var(--soft-fg);
 }
 
 .closeButton:focus-visible {
@@ -47,7 +47,7 @@
   justify-content: flex-end;
   gap: var(--space-2);
   padding: var(--space-4) var(--space-6);
-  border-top: 1px solid var(--overlay-border);
+  border-top: 1px solid var(--soft-border);
 }
 
 /* ==============================================

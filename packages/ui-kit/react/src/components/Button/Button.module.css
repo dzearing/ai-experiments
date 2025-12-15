@@ -19,9 +19,9 @@
 }
 
 .button:disabled {
-  background: var(--controlDisabled-bg);
-  color: var(--controlDisabled-text);
-  border-color: var(--controlDisabled-border);
+  background: var(--base-bg-disabled);
+  color: var(--base-fg-softer);
+  border-color: var(--base-border-soft);
   cursor: not-allowed;
 }
 
@@ -43,81 +43,82 @@
 
 /* Variants */
 .default {
-  background: var(--control-bg);
-  color: var(--control-text);
-  border-color: var(--control-border);
+  background: var(--strong-bg);
+  color: var(--strong-fg);
+  border-color: var(--strong-border);
 }
 
 .default:hover:not(:disabled) {
-  background: var(--control-bg-hover);
-  color: var(--control-text);
-  border-color: var(--control-border-hover);
+  background: var(--strong-bg-hover);
+  color: var(--strong-fg);
+  border-color: var(--strong-border-hover);
 }
 
 .default:active:not(:disabled) {
-  background: var(--control-bg-pressed);
-  border-color: var(--control-border-pressed);
+  background: var(--strong-bg-pressed);
+  border-color: var(--strong-border-pressed);
 }
 
 .primary {
-  background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
-  border-color: var(--controlPrimary-border);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+  border-color: var(--primary-border);
 }
 
 .primary:hover:not(:disabled) {
-  background: var(--controlPrimary-bg-hover);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg-hover);
+  color: var(--primary-fg);
 }
 
 .primary:active:not(:disabled) {
-  background: var(--controlPrimary-bg-pressed);
+  background: var(--primary-bg-pressed);
 }
 
 .danger {
-  background: var(--controlDanger-bg);
-  color: var(--controlDanger-text);
-  border-color: var(--controlDanger-border);
+  background: var(--danger-bg);
+  color: var(--danger-fg);
+  border-color: var(--danger-border);
 }
 
 .danger:hover:not(:disabled) {
-  background: var(--controlDanger-bg-hover);
-  color: var(--controlDanger-text);
+  background: var(--danger-bg-hover);
+  color: var(--danger-fg);
 }
 
 .danger:active:not(:disabled) {
-  background: var(--controlDanger-bg-pressed);
+  background: var(--danger-bg-pressed);
 }
 
 .ghost {
-  background: var(--controlSubtle-bg);
-  color: var(--controlSubtle-text);
+  background: transparent;
+  color: var(--base-fg-soft);
   border-color: transparent;
 }
 
 .ghost:hover:not(:disabled) {
-  background: var(--controlSubtle-bg-hover);
-  color: var(--controlSubtle-text-hover);
+  background: var(--base-bg-hover);
+  color: var(--base-fg);
 }
 
 .ghost:active:not(:disabled) {
-  background: var(--controlSubtle-bg-pressed);
+  background: var(--base-bg-pressed);
 }
 
 .outline {
   background: transparent;
-  color: var(--control-text);
-  border-color: var(--control-border);
+  color: var(--base-fg);
+  border-color: var(--base-border);
 }
 
 .outline:hover:not(:disabled) {
-  background: var(--controlSubtle-bg-hover);
-  color: var(--control-text);
-  border-color: var(--control-border-hover);
+  background: var(--base-bg-hover);
+  color: var(--base-fg);
+  border-color: var(--base-border-hover);
 }
 
 .outline:active:not(:disabled) {
-  background: var(--controlSubtle-bg-pressed);
+  background: var(--base-bg-pressed);
+  border-color: var(--base-border-pressed);
 }
 
 /* Full Width */

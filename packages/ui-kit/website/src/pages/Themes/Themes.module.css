@@ -3,7 +3,7 @@
 }
 
 .intro {
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   font-size: var(--text-lg);
   margin-bottom: var(--space-10);
 }
@@ -15,8 +15,8 @@
 }
 
 .themeCard {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
   border-radius: var(--radius-lg);
   padding: var(--space-4);
   cursor: pointer;
@@ -25,7 +25,7 @@
 }
 
 .themeCard:hover {
-  border-color: var(--controlPrimary-bg);
+  border-color: var(--primary-bg);
   box-shadow: var(--shadow-md);
 }
 
@@ -35,7 +35,7 @@
 }
 
 .preview {
-  background: var(--inset-bg);
+  background: var(--softer-bg);
   border-radius: var(--radius-md);
   padding: var(--space-2);
   margin-bottom: var(--space-3);
@@ -47,7 +47,7 @@
 
 .previewHeader {
   height: 12px;
-  background: var(--control-bg);
+  background: var(--base-bg);
   border-radius: var(--radius-sm);
 }
 
@@ -59,11 +59,11 @@
 
 .previewCard {
   flex: 1;
-  background: var(--card-bg);
+  background: var(--soft-bg);
   border-radius: var(--radius-sm);
 }
 
 .themeName {
   font-weight: var(--weight-medium);
-  color: var(--card-text);
+  color: var(--soft-fg);
 }

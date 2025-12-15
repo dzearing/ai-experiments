@@ -6,10 +6,10 @@
   position: fixed;
   top: 0;
   left: 0;
-  background: var(--popout-bg);
-  border: 1px solid var(--popout-border);
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
   border-radius: var(--radius-md);
-  box-shadow: var(--popout-shadow);
+  box-shadow: var(--soft-shadow);
   z-index: 1050;
   min-width: 120px;
   opacity: 0;

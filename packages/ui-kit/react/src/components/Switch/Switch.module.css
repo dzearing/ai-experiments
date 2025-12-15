@@ -22,14 +22,14 @@
   position: relative;
   display: inline-flex;
   align-items: center;
-  background: var(--inset-bg);
-  border: 1px solid var(--inset-border);
+  background: var(--softer-bg);
+  border: 1px solid var(--softer-border);
   border-radius: 9999px;
   transition: all var(--duration-fast) var(--ease-default);
 }
 
 .input:hover:not(:disabled) + .track {
-  background: var(--inset-bg-hover);
+  background: var(--softer-bg-hover);
 }
 
 .input:focus-visible + .track {
@@ -38,22 +38,22 @@
 }
 
 .input:checked + .track {
-  background: var(--controlPrimary-bg);
-  border-color: var(--controlPrimary-border);
+  background: var(--primary-bg);
+  border-color: var(--primary-border);
 }
 
 .input:checked:hover:not(:disabled) + .track {
-  background: var(--controlPrimary-bg-hover);
+  background: var(--primary-bg-hover);
 }
 
 .input:disabled + .track {
-  background: var(--controlDisabled-bg);
-  border-color: var(--controlDisabled-border);
+  background: var(--base-bg-disabled);
+  border-color: var(--base-border-soft);
 }
 
 .thumb {
   position: absolute;
-  background: var(--card-bg);
+  background: var(--soft-bg);
   border-radius: 50%;
   box-shadow: var(--shadow-sm);
   transition: all var(--duration-fast) var(--ease-default);
@@ -61,7 +61,7 @@
 
 /* When checked on primary surface, thumb should contrast with track */
 .input:checked + .track .thumb {
-  background: var(--controlPrimary-text);
+  background: var(--primary-fg);
 }
 
 .label {

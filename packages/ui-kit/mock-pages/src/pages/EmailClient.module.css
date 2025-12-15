@@ -2,13 +2,13 @@
   display: grid;
   grid-template-columns: 240px 350px 1fr;
   min-height: 100vh;
-  background: var(--page-bg);
+  background: var(--base-bg);
 }
 
 /* Sidebar */
 .sidebar {
-  background: var(--card-bg);
-  border-right: 1px solid var(--card-border);
+  background: var(--soft-bg);
+  border-right: 1px solid var(--soft-border);
   padding: var(--space-4);
   display: flex;
   flex-direction: column;
@@ -17,8 +17,8 @@
 .composeButton {
   width: 100%;
   padding: var(--space-3) var(--space-4);
-  background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
   border: none;
   border-radius: var(--radius-lg);
   font-weight: var(--weight-semibold);
@@ -28,7 +28,7 @@
 }
 
 .composeButton:hover {
-  background: var(--controlPrimary-bg-hover);
+  background: var(--primary-bg-hover);
 }
 
 .folders {
@@ -43,18 +43,18 @@
   gap: var(--space-3);
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-md);
-  color: var(--page-text);
+  color: var(--base-fg);
   text-decoration: none;
   transition: background var(--duration-fast) var(--ease-default);
 }
 
 .folder:hover {
-  background: var(--controlSubtle-bg-hover);
+  background: var(--base-bg-hover);
 }
 
 .folder.active {
-  background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
 }
 
 .folderIcon {
@@ -67,7 +67,7 @@
 
 .folderCount {
   font-size: var(--text-xs);
-  background: var(--control-bg);
+  background: var(--base-bg);
   padding: 2px 6px;
   border-radius: var(--radius-full);
 }
@@ -84,7 +84,7 @@
   font-size: var(--text-xs);
   font-weight: var(--weight-semibold);
   text-transform: uppercase;
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   margin-bottom: var(--space-2);
   padding: 0 var(--space-3);
 }
@@ -94,7 +94,7 @@
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
-  color: var(--page-text);
+  color: var(--base-fg);
   text-decoration: none;
   font-size: var(--text-sm);
   border-radius: var(--radius-md);
@@ -102,7 +102,7 @@
 }
 
 .label:hover {
-  background: var(--controlSubtle-bg-hover);
+  background: var(--base-bg-hover);
 }
 
 .labelDot {
@@ -113,17 +113,17 @@
 
 /* Email List */
 .emailList {
-  border-right: 1px solid var(--card-border);
+  border-right: 1px solid var(--soft-border);
   display: flex;
   flex-direction: column;
 }
 
 .listHeader {
   padding: var(--space-4);
-  border-bottom: 1px solid var(--card-border);
+  border-bottom: 1px solid var(--soft-border);
   display: flex;
   gap: var(--space-3);
-  background: var(--card-bg);
+  background: var(--soft-bg);
 }
 
 .searchBar {
@@ -133,16 +133,16 @@
 .searchInput {
   width: 100%;
   padding: var(--space-2) var(--space-3);
-  background: var(--inset-bg);
-  border: 1px solid var(--inset-border);
+  background: var(--softer-bg);
+  border: 1px solid var(--softer-border);
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
-  color: var(--inset-text);
+  color: var(--softer-fg);
 }
 
 .searchInput:focus {
   outline: none;
-  border-color: var(--inset-border-focus);
+  border-color: var(--softer-border-focus);
 }
 
 .listActions {
@@ -164,7 +164,7 @@
 }
 
 .actionButton:hover {
-  background: var(--controlSubtle-bg-hover);
+  background: var(--base-bg-hover);
 }
 
 .emails {
@@ -177,13 +177,13 @@
   align-items: flex-start;
   gap: var(--space-3);
   padding: var(--space-4);
-  border-bottom: 1px solid var(--card-border);
+  border-bottom: 1px solid var(--soft-border);
   cursor: pointer;
   transition: background var(--duration-fast) var(--ease-default);
 }
 
 .emailItem:hover {
-  background: var(--controlSubtle-bg-hover);
+  background: var(--base-bg-hover);
 }
 
 .emailItem.selected {
@@ -197,7 +197,7 @@
 
 .emailCheckbox {
   margin-top: 4px;
-  accent-color: var(--controlPrimary-bg);
+  accent-color: var(--primary-bg);
 }
 
 .starButton {
@@ -216,19 +216,19 @@
 
 .emailSender {
   font-size: var(--text-sm);
-  color: var(--page-text);
+  color: var(--base-fg);
   margin-bottom: var(--space-1);
 }
 
 .emailSubject {
   font-size: var(--text-sm);
-  color: var(--page-text);
+  color: var(--base-fg);
   margin-bottom: var(--space-1);
 }
 
 .emailPreview {
   font-size: var(--text-sm);
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -240,19 +240,19 @@
 
 .emailTime {
   font-size: var(--text-xs);
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
 }
 
 /* Email Detail */
 .emailDetail {
   display: flex;
   flex-direction: column;
-  background: var(--card-bg);
+  background: var(--soft-bg);
 }
 
 .detailHeader {
   padding: var(--space-4);
-  border-bottom: 1px solid var(--card-border);
+  border-bottom: 1px solid var(--soft-border);
 }
 
 .detailActions {
@@ -278,14 +278,14 @@
   gap: var(--space-4);
   margin-bottom: var(--space-6);
   padding-bottom: var(--space-4);
-  border-bottom: 1px solid var(--card-border);
+  border-bottom: 1px solid var(--soft-border);
 }
 
 .senderAvatar {
   width: 40px;
   height: 40px;
-  background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
   border-radius: var(--radius-full);
   display: flex;
   align-items: center;
@@ -303,17 +303,17 @@
 
 .senderEmail {
   font-size: var(--text-sm);
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
 }
 
 .detailTime {
   font-size: var(--text-sm);
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
 }
 
 .detailBody {
   line-height: var(--leading-loose);
-  color: var(--page-text);
+  color: var(--base-fg);
 }
 
 .detailBody p {
@@ -323,24 +323,24 @@
 .replyBox {
   margin-top: var(--space-6);
   padding-top: var(--space-4);
-  border-top: 1px solid var(--card-border);
+  border-top: 1px solid var(--soft-border);
 }
 
 .replyInput {
   width: 100%;
   padding: var(--space-3) var(--space-4);
-  background: var(--inset-bg);
-  border: 1px solid var(--inset-border);
+  background: var(--softer-bg);
+  border: 1px solid var(--softer-border);
   border-radius: var(--radius-md);
   font-size: var(--text-base);
-  color: var(--inset-text);
+  color: var(--softer-fg);
   resize: vertical;
   font-family: inherit;
 }
 
 .replyInput:focus {
   outline: none;
-  border-color: var(--inset-border-focus);
+  border-color: var(--softer-border-focus);
 }
 
 .replyActions {
@@ -351,8 +351,8 @@
 
 .sendButton {
   padding: var(--space-2) var(--space-5);
-  background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
   border: none;
   border-radius: var(--radius-md);
   font-weight: var(--weight-medium);
@@ -361,5 +361,5 @@
 }
 
 .sendButton:hover {
-  background: var(--controlPrimary-bg-hover);
+  background: var(--primary-bg-hover);
 }

@@ -17,7 +17,7 @@
 
 .subtitle {
   font-size: var(--text-lg);
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   max-width: 600px;
   margin: 0 auto var(--space-6);
 }
@@ -25,8 +25,8 @@
 .designerLink {
   display: inline-block;
   padding: var(--space-3) var(--space-6);
-  background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
   border-radius: var(--radius-lg);
   font-weight: var(--weight-semibold);
   text-decoration: none;
@@ -34,8 +34,8 @@
 }
 
 .designerLink:hover {
-  background: var(--controlPrimary-bg-hover);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg-hover);
+  color: var(--primary-fg);
 }
 
 .category {
@@ -55,8 +55,8 @@
 }
 
 .themeCard {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
   border-radius: var(--radius-xl);
   padding: 0;
   cursor: pointer;
@@ -67,7 +67,7 @@
 }
 
 .themeCard:hover {
-  border-color: var(--controlPrimary-bg);
+  border-color: var(--primary-bg);
   box-shadow: var(--shadow-lg);
   transform: translateY(-4px);
 }
@@ -127,11 +127,11 @@
   font-size: var(--text-base);
   font-weight: var(--weight-semibold);
   margin-bottom: var(--space-1);
-  color: var(--card-text); /* Must match card surface */
+  color: var(--soft-fg); /* Must match card surface */
 }
 
 .themeDesc {
   font-size: var(--text-sm);
-  color: var(--card-text-soft); /* Must match card surface */
+  color: var(--soft-fg-soft); /* Must match card surface */
   margin: 0;
 }

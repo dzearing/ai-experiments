@@ -1,9 +1,9 @@
 .card {
-  background: var(--card-bg);
-  color: var(--card-text);
-  border: 1px solid var(--card-border);
+  background: var(--soft-bg);
+  color: var(--soft-fg);
+  border: 1px solid var(--soft-border);
   border-radius: var(--radius-lg);
-  box-shadow: var(--card-shadow);
+  box-shadow: var(--shadow-sm);
 }
 
 .sm {
@@ -19,14 +19,14 @@
 }
 
 .title {
-  color: var(--card-text-strong);
+  color: var(--soft-fg-strong);
   font-size: var(--text-lg);
   font-weight: var(--weight-semibold);
   margin-bottom: var(--space-2);
 }
 
 .description {
-  color: var(--card-text-soft);
+  color: var(--soft-fg-soft);
   font-size: var(--text-sm);
   margin: 0;
 }

@@ -17,7 +17,7 @@
 
 .subtitle {
   font-size: var(--text-lg);
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   max-width: 600px;
   margin: 0 auto;
 }
@@ -34,15 +34,15 @@
   align-items: center;
   gap: var(--space-5);
   padding: var(--space-5);
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
   border-radius: var(--radius-xl);
   text-decoration: none;
   transition: all var(--duration-fast) var(--ease-default);
 }
 
 .lessonCard:hover {
-  border-color: var(--controlPrimary-bg);
+  border-color: var(--primary-bg);
   box-shadow: var(--shadow-md);
   transform: translateY(-2px);
 }
@@ -53,8 +53,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
   border-radius: var(--radius-full);
   font-size: var(--text-xl);
   font-weight: var(--weight-bold);
@@ -68,13 +68,13 @@
 .lessonTitle {
   font-size: var(--text-lg);
   font-weight: var(--weight-semibold);
-  color: var(--page-text-strong);
+  color: var(--base-fg-strong);
   margin-bottom: var(--space-1);
 }
 
 .lessonDesc {
   font-size: var(--text-sm);
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   margin: 0;
 }
 
@@ -87,18 +87,18 @@
 
 .duration {
   font-size: var(--text-sm);
-  color: var(--page-text-softer);
+  color: var(--base-fg-softer);
 }
 
 .arrow {
   font-size: var(--text-xl);
-  color: var(--controlPrimary-bg);
+  color: var(--primary-bg);
 }
 
 .quickLinks {
   padding: var(--space-6);
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
   border-radius: var(--radius-xl);
 }
 
@@ -119,8 +119,8 @@
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
-  background: var(--control-bg);
-  color: var(--control-text);
+  background: var(--base-bg);
+  color: var(--base-fg);
   border-radius: var(--radius-lg);
   text-decoration: none;
   font-weight: var(--weight-medium);
@@ -128,8 +128,8 @@
 }
 
 .quickLink:hover {
-  background: var(--control-bg-hover);
-  color: var(--control-text);
+  background: var(--base-bg-hover);
+  color: var(--base-fg);
 }
 
 .quickLinkIcon {

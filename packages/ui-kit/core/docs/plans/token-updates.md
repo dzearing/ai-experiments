@@ -28,22 +28,39 @@ This plan outlines the migration from the current container-based token system t
 
 ### New Token Structure
 
-Each color group gets 12 tokens:
+Each color group gets 18 tokens:
 
+**Backgrounds (4):**
 ```
 --{group}-bg
 --{group}-bg-hover
 --{group}-bg-pressed
 --{group}-bg-disabled
---{group}-text-softer
---{group}-text-soft
---{group}-text
---{group}-text-strong
---{group}-text-stronger
---{group}-border-soft
---{group}-border
---{group}-border-strong
 ```
+
+**Borders (4):**
+```
+--{group}-border
+--{group}-border-hover
+--{group}-border-pressed
+--{group}-border-disabled
+```
+
+**Foregrounds (10):**
+```
+--{group}-fg              (primary text color)
+--{group}-fg-soft         (secondary text, 30% less contrast)
+--{group}-fg-softer       (tertiary text, 50% less contrast)
+--{group}-fg-strong       (emphasized text)
+--{group}-fg-stronger     (maximum contrast text)
+--{group}-fg-primary      (link/accent color, accessible on this bg)
+--{group}-fg-danger       (error text, accessible on this bg)
+--{group}-fg-success      (success text, accessible on this bg)
+--{group}-fg-warning      (warning text, accessible on this bg)
+--{group}-fg-info         (info text, accessible on this bg)
+```
+
+**Key Principle:** All `fg-*` tokens in a group are guaranteed accessible on that group's `bg` token.
 
 ### New Color Groups (11 total)
 
@@ -61,16 +78,29 @@ Each color group gets 12 tokens:
 | `danger` | Danger buttons, error states |
 | `info` | Info buttons, informational states |
 
-### New Semantic Text Tokens (7 total)
+### Semantic Foreground Tokens (Scoped per Group)
+
+Instead of standalone `--text-primary`, `--text-danger`, etc., these semantic colors are now scoped within each color group:
 
 ```
---text-primary           (brand colored text, links)
---text-primary-hover     (link hover)
---text-primary-pressed   (link active)
---text-danger            (inline error text)
---text-success           (inline success text)
---text-warning           (inline warning text)
---text-info              (inline info text)
+--base-fg-primary        (link color on base background)
+--base-fg-danger         (error text on base background)
+--soft-fg-primary        (link color on soft background)
+--soft-fg-danger         (error text on soft background)
+--inverted-fg-primary    (link color on inverted background)
+...etc for all groups
+```
+
+This ensures accessibility: `--base-fg-primary` is guaranteed accessible on `--base-bg`, while `--soft-fg-primary` is guaranteed accessible on `--soft-bg`.
+
+### Link Special Tokens (Kept)
+
+For universal link styling, use the special `--link` tokens:
+```
+--link                   (link color, inherits from theme primary)
+--link-hover             (link hover state)
+--link-pressed           (link pressed state)
+--link-visited           (visited link color)
 ```
 
 ### Legacy Tokens to Remove (Phase 4)
@@ -134,55 +164,57 @@ These become full color groups with hover/pressed/disabled states.
 | Legacy Token | New Token | Notes |
 |--------------|-----------|-------|
 | `--page-bg` | `--base-bg` | |
-| `--page-text` | `--base-text` | |
-| `--page-text-soft` | `--base-text-soft` | |
-| `--page-text-softer` | `--base-text-softer` | |
-| `--page-text-strong` | `--base-text-strong` | |
-| `--page-text-stronger` | `--base-text-stronger` | |
+| `--page-text` | `--base-fg` | `text` → `fg` |
+| `--page-text-soft` | `--base-fg-soft` | |
+| `--page-text-softer` | `--base-fg-softer` | |
+| `--page-text-strong` | `--base-fg-strong` | |
+| `--page-text-stronger` | `--base-fg-stronger` | |
 | `--page-border` | `--base-border` | |
-| `--page-border-soft` | `--base-border-soft` | |
-| `--page-border-strong` | `--base-border-strong` | |
+| `--page-border-soft` | `--base-border` | Single border, use states |
+| `--page-border-strong` | `--base-border-hover` | |
 | `--card-bg` | `--soft-bg` | |
-| `--card-text` | `--soft-text` | |
-| `--card-text-soft` | `--soft-text-soft` | |
-| `--card-text-strong` | `--soft-text-strong` | |
+| `--card-text` | `--soft-fg` | `text` → `fg` |
+| `--card-text-soft` | `--soft-fg-soft` | |
+| `--card-text-strong` | `--soft-fg-strong` | |
 | `--card-border` | `--soft-border` | |
-| `--card-shadow` | `--soft-shadow` | Add shadow token per group |
 | `--overlay-bg` | `--soft-bg` | Overlays use soft group |
-| `--overlay-text` | `--soft-text` | |
-| `--overlay-shadow` | `--soft-shadow` | |
+| `--overlay-text` | `--soft-fg` | |
 | `--popout-bg` | `--soft-bg` | Popouts use soft group |
-| `--popout-text` | `--soft-text` | |
-| `--popout-shadow` | `--soft-shadow` | |
+| `--popout-text` | `--soft-fg` | |
 | `--inset-bg` | `--softer-bg` | |
 | `--inset-bg-hover` | `--softer-bg-hover` | |
 | `--inset-bg-focus` | `--softer-bg-pressed` | Map focus to pressed |
-| `--inset-text` | `--softer-text` | |
-| `--inset-text-soft` | `--softer-text-soft` | |
+| `--inset-text` | `--softer-fg` | `text` → `fg` |
+| `--inset-text-soft` | `--softer-fg-soft` | |
 | `--inset-border` | `--softer-border` | |
 | `--control-bg` | `--base-bg` | Default buttons use base |
 | `--control-bg-hover` | `--base-bg-hover` | |
 | `--control-bg-pressed` | `--base-bg-pressed` | |
-| `--control-text` | `--base-text` | |
+| `--control-text` | `--base-fg` | `text` → `fg` |
 | `--control-border` | `--base-border` | |
 | `--controlPrimary-bg` | `--primary-bg` | |
 | `--controlPrimary-bg-hover` | `--primary-bg-hover` | |
 | `--controlPrimary-bg-pressed` | `--primary-bg-pressed` | |
-| `--controlPrimary-text` | `--primary-text` | |
+| `--controlPrimary-text` | `--primary-fg` | `text` → `fg` |
 | `--controlPrimary-border` | `--primary-border` | |
 | `--controlDanger-bg` | `--danger-bg` | |
 | `--controlDanger-bg-hover` | `--danger-bg-hover` | |
 | `--controlDanger-bg-pressed` | `--danger-bg-pressed` | |
-| `--controlDanger-text` | `--danger-text` | |
+| `--controlDanger-text` | `--danger-fg` | `text` → `fg` |
 | `--controlSubtle-bg` | `transparent` | Subtle buttons are transparent |
 | `--controlSubtle-bg-hover` | `--base-bg-hover` | Or use opacity |
-| `--controlSubtle-text` | `--base-text-soft` | |
-| `--controlSubtle-text-hover` | `--base-text` | |
+| `--controlSubtle-text` | `--base-fg-soft` | `text` → `fg` |
+| `--controlSubtle-text-hover` | `--base-fg` | |
 | `--controlDisabled-bg` | `--base-bg-disabled` | |
-| `--controlDisabled-text` | `--base-text-softer` | Disabled text is very muted |
-| `--link` | `--text-primary` | |
-| `--link-hover` | `--text-primary-hover` | |
-| `--link-pressed` | `--text-primary-pressed` | |
+| `--controlDisabled-text` | `--base-fg-softer` | Disabled text is very muted |
+| `--link` | `--link` | KEEP - special token |
+| `--link-hover` | `--link-hover` | KEEP |
+| `--link-pressed` | `--link-pressed` | KEEP |
+| `--text-primary` | `--base-fg-primary` | Now scoped to group |
+| `--text-danger` | `--base-fg-danger` | Now scoped to group |
+| `--text-success` | `--base-fg-success` | Now scoped to group |
+| `--text-warning` | `--base-fg-warning` | Now scoped to group |
+| `--text-info` | `--base-fg-info` | Now scoped to group |
 
 ### Files to Update
 
@@ -323,9 +355,18 @@ pnpm typecheck
 
 | Category | Count |
 |----------|-------|
-| Color groups (11) × 12 tokens | 132 |
-| Semantic text tokens | 7 |
-| **Total new color tokens** | **139** |
+| Color groups (11) × 18 tokens | 198 |
+| Link special tokens | 4 |
+| **Total new color tokens** | **202** |
+
+### Breakdown per Color Group (18 tokens each)
+
+| Token Type | Count | Examples |
+|------------|-------|----------|
+| Background states | 4 | `bg`, `bg-hover`, `bg-pressed`, `bg-disabled` |
+| Border states | 4 | `border`, `border-hover`, `border-pressed`, `border-disabled` |
+| Foreground variants | 5 | `fg`, `fg-soft`, `fg-softer`, `fg-strong`, `fg-stronger` |
+| Semantic foregrounds | 5 | `fg-primary`, `fg-danger`, `fg-success`, `fg-warning`, `fg-info` |
 
 ### Tokens Kept (unchanged)
 

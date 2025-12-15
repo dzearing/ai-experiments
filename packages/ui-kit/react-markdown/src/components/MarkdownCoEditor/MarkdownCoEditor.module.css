@@ -5,9 +5,9 @@
  * support for edit, preview, and split view modes.
  *
  * Token mapping from ui-kit/core themes:
- * - --card-bg: Card/panel background
- * - --card-border: Card/panel borders
- * - --page-text: Primary text color
+ * - --soft-bg: Card/panel background
+ * - --soft-border: Card/panel borders
+ * - --base-fg: Primary text color
  */
 
 .coEditor {
@@ -15,8 +15,8 @@
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  background: var(--card-bg, #fff);
-  border: 1px solid var(--card-border, #e0e0e0);
+  background: var(--soft-bg, #fff);
+  border: 1px solid var(--soft-border, #e0e0e0);
   border-radius: var(--radius-lg, 8px);
   overflow: hidden;
 }
@@ -32,8 +32,8 @@
   height: 44px;
   flex-shrink: 0;
   padding: 0 var(--space-3, 12px);
-  border-bottom: 1px solid var(--card-border, #e0e0e0);
-  background: var(--card-bg, #fff);
+  border-bottom: 1px solid var(--soft-border, #e0e0e0);
+  background: var(--soft-bg, #fff);
 }
 
 /* Co-author avatars in toolbar */
@@ -149,6 +149,6 @@
 
   .content.split .previewPane {
     border-left: none;
-    border-top: 1px solid var(--card-border, #e0e0e0);
+    border-top: 1px solid var(--soft-border, #e0e0e0);
   }
 }

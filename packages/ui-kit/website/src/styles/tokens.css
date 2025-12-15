@@ -191,7 +191,7 @@
   --focus-ring-width: 2px;
 
   --selection-bg: rgba(37, 99, 235, 0.3);
-  --selection-text: #000000;
+  --selection-fg: #000000;
 
   --link: #2563eb;
   --link-hover: #1d4ed8;
@@ -391,7 +391,7 @@
   /* Special Tokens */
   --focus-ring: #3b82f6;
   --selection-bg: rgba(59, 130, 246, 0.4);
-  --selection-text: #ffffff;
+  --selection-fg: #ffffff;
 
   --link: #60a5fa;
   --link-hover: #93c5fd;

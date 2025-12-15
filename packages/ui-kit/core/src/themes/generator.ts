@@ -49,6 +49,15 @@ interface SpecialTokenConfig {
   default?: string | { light: string; dark: string };
 }
 
+interface ColorGroupConfig {
+  description?: string;
+  defaults?: {
+    light?: Record<string, string>;
+    dark?: Record<string, string>;
+  };
+  derivation?: Record<string, string | { light: string; dark: string }>;
+}
+
 interface ProcessedColors {
   primary: string;
   secondary: string;
@@ -98,8 +107,13 @@ export function generateThemeTokens(
 
   Object.assign(tokens, spacingTokens, typographyTokens, radiiTokens, animTokens, shadows);
 
-  // Generate role tokens from rules
+  // Generate role tokens from rules (legacy)
   generateRoleTokensFromRules(ctx);
+
+  // Generate NEW color group tokens from rules
+  // Each group contains all fg tokens (fg, fg-soft, fg-softer, fg-strong, fg-stronger,
+  // fg-primary, fg-danger, fg-success, fg-warning, fg-info) ensuring accessibility
+  generateColorGroupTokens(ctx);
 
   // Generate special tokens from rules
   generateSpecialTokensFromRules(ctx);
@@ -210,6 +224,172 @@ function generateRoleTokensFromRules(ctx: GeneratorContext): void {
   const feedbackTypes = roleRules.feedback.types as Record<string, SurfaceTypeConfig>;
   for (const [roleName, config] of Object.entries(feedbackTypes)) {
     generateRoleTokens(roleName, config, ctx);
+  }
+}
+
+/**
+ * Generate NEW color group tokens from theme-rules.json
+ * Each group has 18 tokens:
+ * - bg, bg-hover, bg-pressed, bg-disabled (4)
+ * - border, border-hover, border-pressed, border-disabled (4)
+ * - fg, fg-soft, fg-softer, fg-strong, fg-stronger (5)
+ * - fg-primary, fg-danger, fg-success, fg-warning, fg-info (5)
+ */
+function generateColorGroupTokens(ctx: GeneratorContext): void {
+  const { colors, isDark, tokens } = ctx;
+  const colorGroups = (themeRules as any).colorGroups;
+
+  if (!colorGroups?.groups) return;
+
+  const tokenStructure = colorGroups.tokenStructure?.tokens || [
+    'bg', 'bg-hover', 'bg-pressed', 'bg-disabled',
+    'border', 'border-hover', 'border-pressed', 'border-disabled',
+    'fg', 'fg-soft', 'fg-softer', 'fg-strong', 'fg-stronger',
+    'fg-primary', 'fg-danger', 'fg-success', 'fg-warning', 'fg-info'
+  ];
+  const mode = isDark ? 'dark' : 'light';
+
+  for (const [groupName, config] of Object.entries(colorGroups.groups as Record<string, ColorGroupConfig>)) {
+    const defaults = config.defaults?.[mode] || {};
+    const derivation = config.derivation || {};
+
+    // Process each token for this color group
+    for (const tokenSuffix of tokenStructure) {
+      const cssVar = `--${groupName}-${tokenSuffix}`;
+
+      // Check for explicit default first
+      if (defaults[tokenSuffix] !== undefined) {
+        tokens[cssVar] = defaults[tokenSuffix];
+        continue;
+      }
+
+      // Check for derivation rule
+      const rule = derivation[tokenSuffix];
+      if (rule !== undefined) {
+        tokens[cssVar] = evaluateDerivation(rule, groupName, tokenSuffix, ctx);
+        continue;
+      }
+
+      // Apply automatic derivation based on token type
+      tokens[cssVar] = deriveColorGroupTokenValue(groupName, tokenSuffix, ctx);
+    }
+  }
+}
+
+/**
+ * Derive a color group token value automatically based on token type
+ */
+function deriveColorGroupTokenValue(
+  groupName: string,
+  tokenSuffix: string,
+  ctx: GeneratorContext
+): string {
+  const { colors, isDark, tokens } = ctx;
+
+  // Get the background color for this group
+  const bgToken = `--${groupName}-bg`;
+  const bg = tokens[bgToken];
+
+  // Get page colors for reference
+  const pageBg = tokens['--page-bg'] || (isDark ? '#0f0f0f' : '#fafafa');
+  const pageText = tokens['--page-text'] || (isDark ? '#e5e5e5' : '#171717');
+
+  switch (tokenSuffix) {
+    // Foreground tokens
+    case 'fg': {
+      if (bg) {
+        return getContrastingTextColor(bg);
+      }
+      return pageText;
+    }
+
+    case 'fg-soft': {
+      const fg = tokens[`--${groupName}-fg`] || deriveColorGroupTokenValue(groupName, 'fg', ctx);
+      const background = bg || pageBg;
+      return mix(fg, background, 0.3);
+    }
+
+    case 'fg-softer': {
+      const fg = tokens[`--${groupName}-fg`] || deriveColorGroupTokenValue(groupName, 'fg', ctx);
+      const background = bg || pageBg;
+      return mix(fg, background, 0.5);
+    }
+
+    case 'fg-strong': {
+      const fg = tokens[`--${groupName}-fg`] || deriveColorGroupTokenValue(groupName, 'fg', ctx);
+      const maxContrast = isDark ? '#ffffff' : '#000000';
+      return mix(fg, maxContrast, 0.3);
+    }
+
+    case 'fg-stronger':
+      return isDark ? '#ffffff' : '#000000';
+
+    // Semantic foreground colors (guaranteed accessible on this group's bg)
+    case 'fg-primary': {
+      // Primary link/accent color accessible on this background
+      const primary = colors.primary;
+      if (bg) {
+        return ensureContrast(primary, bg, 4.5);
+      }
+      return isDark ? lighten(primary, 10) : darken(primary, 10);
+    }
+
+    case 'fg-danger': {
+      const danger = colors.danger;
+      if (bg) {
+        return ensureContrast(danger, bg, 4.5);
+      }
+      return isDark ? lighten(danger, 20) : darken(danger, 10);
+    }
+
+    case 'fg-success': {
+      const success = colors.success;
+      if (bg) {
+        return ensureContrast(success, bg, 4.5);
+      }
+      return isDark ? lighten(success, 20) : darken(success, 10);
+    }
+
+    case 'fg-warning': {
+      const warning = colors.warning;
+      if (bg) {
+        return ensureContrast(warning, bg, 4.5);
+      }
+      return isDark ? lighten(warning, 10) : darken(warning, 15);
+    }
+
+    case 'fg-info': {
+      const info = colors.info;
+      if (bg) {
+        return ensureContrast(info, bg, 4.5);
+      }
+      return isDark ? lighten(info, 20) : darken(info, 10);
+    }
+
+    // Border tokens
+    case 'border': {
+      const border = tokens['--page-border'] || (isDark ? '#333333' : '#e5e5e5');
+      return border;
+    }
+
+    case 'border-hover': {
+      const border = tokens[`--${groupName}-border`] || tokens['--page-border'] || (isDark ? '#333333' : '#e5e5e5');
+      return isDark ? lighten(border, 10) : darken(border, 10);
+    }
+
+    case 'border-pressed': {
+      const border = tokens[`--${groupName}-border`] || tokens['--page-border'] || (isDark ? '#333333' : '#e5e5e5');
+      return isDark ? lighten(border, 15) : darken(border, 15);
+    }
+
+    case 'border-disabled': {
+      const border = tokens[`--${groupName}-border`] || tokens['--page-border'] || (isDark ? '#333333' : '#e5e5e5');
+      const background = bg || pageBg;
+      return mix(border, background, 0.5);
+    }
+
+    default:
+      return '';
   }
 }
 
@@ -428,7 +608,7 @@ function deriveTokenValue(
 
     case 'border-strong': {
       const border = tokens[`--${surfaceName}-border`] || tokens['--page-border'] || (isDark ? '#333333' : '#e5e5e5');
-      return isDark ? lighten(border, 20) : darken(border, 20);
+      return isDark ? lighten(border, 10) : darken(border, 10);
     }
 
     case 'border-stronger': {

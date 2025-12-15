@@ -17,7 +17,7 @@
 
 .subtitle {
   font-size: var(--text-xl);
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   margin-bottom: var(--space-8);
 }
 
@@ -28,8 +28,8 @@
 }
 
 .primaryButton {
-  background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
   padding: var(--space-3) var(--space-6);
   border-radius: var(--radius-md);
   font-weight: var(--weight-medium);
@@ -38,14 +38,14 @@
 }
 
 .primaryButton:hover {
-  background: var(--controlPrimary-bg-hover);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg-hover);
+  color: var(--primary-fg);
 }
 
 .secondaryButton {
-  background: var(--control-bg);
-  color: var(--control-text);
-  border: 1px solid var(--control-border);
+  background: var(--soft-bg);
+  color: var(--soft-fg);
+  border: 1px solid var(--soft-border);
   padding: var(--space-3) var(--space-6);
   border-radius: var(--radius-md);
   font-weight: var(--weight-medium);
@@ -54,8 +54,8 @@
 }
 
 .secondaryButton:hover {
-  background: var(--control-bg-hover);
-  color: var(--control-text);
+  background: var(--soft-bg-hover);
+  color: var(--soft-fg);
 }
 
 /* Features */
@@ -66,8 +66,8 @@
 }
 
 .feature {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
   border-radius: var(--radius-lg);
   padding: var(--space-6);
   text-align: center;
@@ -84,7 +84,7 @@
 }
 
 .featureDesc {
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   font-size: var(--text-sm);
   margin-bottom: 0;
 }
@@ -128,8 +128,8 @@
   width: 24px;
   height: 24px;
   min-width: 24px;
-  background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
   border-radius: var(--radius-full);
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
@@ -137,7 +137,7 @@
 }
 
 .tagline {
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   font-size: var(--text-lg);
   margin-bottom: 0;
 }

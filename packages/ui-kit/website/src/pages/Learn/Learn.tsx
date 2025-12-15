@@ -13,20 +13,28 @@ export function Learn() {
           <span className={styles.lessonNumber}>1</span>
           <div className={styles.lessonContent}>
             <h3>Getting Started</h3>
-            <p>Installation, first use, and basic setup</p>
+            <p>Installation, setup, and color groups basics</p>
           </div>
         </div>
 
         <div className={styles.lesson}>
           <span className={styles.lessonNumber}>2</span>
           <div className={styles.lessonContent}>
-            <h3>Understanding Surfaces</h3>
-            <p>The core concept that makes UI-Kit work</p>
+            <h3>Color Groups</h3>
+            <p>The accessibility-first token system</p>
           </div>
         </div>
 
         <div className={styles.lesson}>
           <span className={styles.lessonNumber}>3</span>
+          <div className={styles.lessonContent}>
+            <h3>Understanding Surfaces</h3>
+            <p>UI sections that redefine tokens for specific contexts</p>
+          </div>
+        </div>
+
+        <div className={styles.lesson}>
+          <span className={styles.lessonNumber}>4</span>
           <div className={styles.lessonContent}>
             <h3>Styling Components</h3>
             <p>Practical usage with real components</p>
@@ -34,7 +42,7 @@ export function Learn() {
         </div>
 
         <div className={styles.lesson}>
-          <span className={styles.lessonNumber}>4</span>
+          <span className={styles.lessonNumber}>5</span>
           <div className={styles.lessonContent}>
             <h3>Theming</h3>
             <p>Creating and customizing themes</p>
@@ -42,10 +50,10 @@ export function Learn() {
         </div>
 
         <div className={styles.lesson}>
-          <span className={styles.lessonNumber}>5</span>
+          <span className={styles.lessonNumber}>6</span>
           <div className={styles.lessonContent}>
             <h3>Advanced Topics</h3>
-            <p>Custom surfaces, optimization, and more</p>
+            <p>Custom color groups, optimization, and more</p>
           </div>
         </div>
       </div>

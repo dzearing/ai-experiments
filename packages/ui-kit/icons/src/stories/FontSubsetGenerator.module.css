@@ -60,17 +60,17 @@
   justify-content: center;
   gap: var(--space-1);
   padding: var(--space-4) var(--space-2);
-  border: 1px solid var(--card-border);
+  border: 1px solid var(--soft-border);
   border-radius: var(--radius-lg);
-  background: var(--card-bg);
-  color: var(--card-text);
+  background: var(--soft-bg);
+  color: var(--soft-fg);
   cursor: pointer;
   transition: all var(--duration-fast);
 }
 
 .iconCard:hover {
-  border-color: var(--controlPrimary-bg);
-  background: var(--card-bg);
+  border-color: var(--primary-bg);
+  background: var(--soft-bg);
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }
@@ -81,13 +81,13 @@
 
 /* Selected state for multi-select */
 .iconCard.selected {
-  border-color: var(--controlPrimary-border);
-  background: var(--controlPrimary-bg);
-  box-shadow: 0 0 0 2px var(--controlPrimary-border);
+  border-color: var(--primary-border);
+  background: var(--primary-bg);
+  box-shadow: 0 0 0 2px var(--primary-border);
 }
 
 .iconCard.selected:hover {
-  background: var(--controlPrimary-bg-hover);
+  background: var(--primary-bg-hover);
   transform: translateY(-2px);
 }
 
@@ -95,16 +95,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--card-text);
+  color: var(--soft-fg);
 }
 
 .iconCard.selected .iconWrapper {
-  color: var(--controlPrimary-text);
+  color: var(--primary-fg);
 }
 
 .iconName {
   font-size: var(--text-xs);
-  color: var(--card-text-soft);
+  color: var(--soft-fg-soft);
   text-align: center;
   word-break: break-word;
   max-width: 100%;
@@ -113,7 +113,7 @@
 }
 
 .iconCard.selected .iconName {
-  color: var(--controlPrimary-text);
+  color: var(--primary-fg);
 }
 
 /* Output Panel */
@@ -133,7 +133,7 @@
 
 .output {
   margin-top: var(--space-4);
-  border-top: 1px solid var(--card-border);
+  border-top: 1px solid var(--soft-border);
   padding-top: var(--space-4);
 }
 

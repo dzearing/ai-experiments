@@ -1,6 +1,6 @@
 .header {
-  background: var(--card-bg);
-  border-bottom: 1px solid var(--card-border);
+  background: var(--soft-bg);
+  border-bottom: 1px solid var(--soft-border);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -19,7 +19,7 @@
 .logo {
   font-size: var(--text-xl);
   font-weight: var(--weight-bold);
-  color: var(--page-text-strong);
+  color: var(--base-fg-strong);
   text-decoration: none;
 }
 
@@ -34,11 +34,11 @@
 }
 
 .navLink {
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   font-weight: var(--weight-medium);
   transition: color var(--duration-fast) var(--ease-default);
 }
 
 .navLink:hover {
-  color: var(--page-text);
+  color: var(--base-fg);
 }

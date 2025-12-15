@@ -5,19 +5,19 @@
  * Uses CSS custom properties with mode-specific fallbacks.
  *
  * Token mapping from ui-kit/core themes:
- * - --inset-bg: Code block background
- * - --inset-border: Code block border
- * - --inset-text: Code text color
- * - --inset-text-soft: Muted text (line numbers)
- * - --page-text: Primary text color
- * - --page-text-soft: Secondary text color
- * - --page-link: Link/action color
+ * - --softer-bg: Code block background
+ * - --softer-border: Code block border
+ * - --softer-fg: Code text color
+ * - --softer-fg-softer: Muted text (line numbers)
+ * - --base-fg: Primary text color
+ * - --base-fg-softer: Secondary text color
+ * - --link: Link/action color
  */
 
 .codeBlock {
   position: relative;
-  background: var(--inset-bg, #f6f8fa);
-  border: 1px solid var(--inset-border, #e1e4e8);
+  background: var(--softer-bg, #f6f8fa);
+  border: 1px solid var(--softer-border, #e1e4e8);
   border-radius: var(--radius-md, 6px);
   overflow: hidden;
   font-family: var(--font-mono, ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace);
@@ -31,20 +31,20 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-1, 4px) var(--space-3, 12px);
-  background: var(--inset-bg, #f6f8fa);
-  border-bottom: 1px solid var(--inset-border, #e1e4e8);
+  background: var(--softer-bg, #f6f8fa);
+  border-bottom: 1px solid var(--softer-border, #e1e4e8);
 }
 
 .language {
   font-size: var(--text-xs, 0.75rem);
-  color: var(--inset-text-soft, var(--page-text-soft, #6a737d));
+  color: var(--softer-fg-softer, var(--base-fg-softer, #6a737d));
   text-transform: lowercase;
 }
 
 .collapseButton {
   background: none;
   border: none;
-  color: var(--inset-text-soft, var(--page-text-soft, #6a737d));
+  color: var(--softer-fg-softer, var(--base-fg-softer, #6a737d));
   cursor: pointer;
   padding: var(--space-1, 4px);
   font-size: var(--text-xs, 0.75rem);
@@ -52,7 +52,7 @@
 }
 
 .collapseButton:hover {
-  color: var(--inset-text, var(--page-text, #24292e));
+  color: var(--softer-fg, var(--base-fg, #24292e));
 }
 
 /* Code content area */
@@ -79,7 +79,7 @@
 }
 
 .line:hover {
-  background: var(--inset-bg-hover, rgba(0, 0, 0, 0.04));
+  background: var(--softer-bg-hover, rgba(0, 0, 0, 0.04));
 }
 
 .line.highlighted {
@@ -92,7 +92,7 @@
   width: 3em;
   padding-right: var(--space-2, 8px);
   text-align: right;
-  color: var(--inset-text-soft, var(--page-text-soft, #6a737d));
+  color: var(--softer-fg-softer, var(--base-fg-softer, #6a737d));
   user-select: none;
   opacity: 0.5;
 }
@@ -111,7 +111,7 @@
 .expandButton {
   background: none;
   border: none;
-  color: var(--page-link, #0366d6);
+  color: var(--link, #0366d6);
   cursor: pointer;
   font-family: var(--font-mono, monospace);
   font-size: var(--text-sm, 0.875rem);
@@ -126,9 +126,9 @@
    GitHub-inspired color scheme that works in light/dark modes
    ========================================== */
 
-/* Base token color - inherits from inset text */
+/* Base token color - inherits from softer fg */
 .code :global(.token) {
-  color: var(--inset-text, var(--page-text, #24292e));
+  color: var(--softer-fg, var(--base-fg, #24292e));
 }
 
 /* Comments - muted gray-green */
@@ -136,7 +136,7 @@
 .code :global(.token.prolog),
 .code :global(.token.doctype),
 .code :global(.token.cdata) {
-  color: var(--page-text-soft, #6a737d);
+  color: var(--base-fg-softer, #6a737d);
   font-style: italic;
 }
 
@@ -196,10 +196,10 @@
   color: #6f42c1;
 }
 
-/* Operators and Punctuation - inherit from base text */
+/* Operators and Punctuation - inherit from base fg */
 .code :global(.token.operator),
 .code :global(.token.punctuation) {
-  color: var(--inset-text, var(--page-text, #24292e));
+  color: var(--softer-fg, var(--base-fg, #24292e));
 }
 
 /* Special: deleted/inserted for diffs */
@@ -315,7 +315,7 @@
 
 :global([data-mode="dark"]) .line:hover,
 :global(.dark) .line:hover {
-  background: var(--inset-bg-hover, rgba(255, 255, 255, 0.04));
+  background: var(--softer-bg-hover, rgba(255, 255, 255, 0.04));
 }
 
 /* Highlight animation for deep links */

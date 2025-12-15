@@ -31,48 +31,48 @@
 
 /* Variants */
 .default {
-  background: var(--control-bg);
-  color: var(--control-text);
+  background: var(--base-bg);
+  color: var(--base-fg);
 }
 
 .default.clickable:hover:not(.disabled) {
-  background: var(--control-bg-hover);
+  background: var(--base-bg-hover);
 }
 
 .default.selected {
-  background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
 }
 
 .primary {
-  background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
 }
 
 .primary.clickable:hover:not(.disabled) {
-  background: var(--controlPrimary-bg-hover);
+  background: var(--primary-bg-hover);
 }
 
 .outline {
   background: transparent;
-  color: var(--page-text);
-  box-shadow: inset 0 0 0 1px var(--page-border);
+  color: var(--base-fg);
+  box-shadow: inset 0 0 0 1px var(--base-border);
 }
 
 .outline.clickable:hover:not(.disabled) {
-  background: var(--control-bg);
+  background: var(--base-bg);
 }
 
 .outline.selected {
-  background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
   box-shadow: none;
 }
 
 /* Semantic variants */
 .success {
   background: var(--success-bg);
-  color: var(--success-text);
+  color: var(--success-fg);
 }
 
 .success.clickable:hover:not(.disabled) {
@@ -81,7 +81,7 @@
 
 .warning {
   background: var(--warning-bg);
-  color: var(--warning-text);
+  color: var(--warning-fg);
 }
 
 .warning.clickable:hover:not(.disabled) {
@@ -90,7 +90,7 @@
 
 .error {
   background: var(--danger-bg);
-  color: var(--danger-text);
+  color: var(--danger-fg);
 }
 
 .error.clickable:hover:not(.disabled) {
@@ -99,7 +99,7 @@
 
 .info {
   background: var(--info-bg);
-  color: var(--info-text);
+  color: var(--info-fg);
 }
 
 .info.clickable:hover:not(.disabled) {

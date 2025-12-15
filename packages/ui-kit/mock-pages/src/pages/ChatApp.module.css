@@ -2,13 +2,13 @@
   display: grid;
   grid-template-columns: 240px 1fr 280px;
   min-height: 100vh;
-  background: var(--page-bg);
+  background: var(--base-bg);
 }
 
 /* Sidebar */
 .sidebar {
-  background: var(--card-bg);
-  border-right: 1px solid var(--card-border);
+  background: var(--soft-bg);
+  border-right: 1px solid var(--soft-border);
   display: flex;
   flex-direction: column;
 }
@@ -18,7 +18,7 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-4);
-  border-bottom: 1px solid var(--card-border);
+  border-bottom: 1px solid var(--soft-border);
 }
 
 .workspaceName {
@@ -30,7 +30,7 @@
 .dropdownButton {
   background: transparent;
   border: none;
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   cursor: pointer;
   font-size: var(--text-sm);
 }
@@ -46,7 +46,7 @@
   padding: var(--space-2) var(--space-4);
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   cursor: pointer;
 }
 
@@ -66,7 +66,7 @@
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-4);
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   text-decoration: none;
   font-size: var(--text-sm);
   transition: all var(--duration-fast) var(--ease-default);
@@ -74,18 +74,18 @@
 
 .channel:hover,
 .dm:hover {
-  background: var(--controlSubtle-bg-hover);
-  color: var(--page-text);
+  background: var(--base-bg-hover);
+  color: var(--base-fg);
 }
 
 .channel.active {
-  background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
 }
 
 .channel.unread {
   font-weight: var(--weight-semibold);
-  color: var(--page-text);
+  color: var(--base-fg);
 }
 
 .status {
@@ -103,14 +103,14 @@
 }
 
 .status.offline {
-  background: var(--page-text-softer);
+  background: var(--base-fg-softer);
 }
 
 /* Main Chat */
 .chatMain {
   display: flex;
   flex-direction: column;
-  background: var(--card-bg);
+  background: var(--soft-bg);
 }
 
 .chatHeader {
@@ -118,7 +118,7 @@
   justify-content: space-between;
   align-items: center;
   padding: var(--space-4);
-  border-bottom: 1px solid var(--card-border);
+  border-bottom: 1px solid var(--soft-border);
 }
 
 .channelInfo {
@@ -135,7 +135,7 @@
 
 .channelDesc {
   font-size: var(--text-sm);
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
 }
 
 .chatActions {
@@ -154,7 +154,7 @@
 }
 
 .headerButton:hover {
-  background: var(--controlSubtle-bg-hover);
+  background: var(--base-bg-hover);
 }
 
 /* Messages */
@@ -173,10 +173,10 @@
 
 .dateDivider span {
   padding: var(--space-1) var(--space-3);
-  background: var(--control-bg);
+  background: var(--base-bg);
   border-radius: var(--radius-full);
   font-size: var(--text-xs);
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
 }
 
 .message {
@@ -188,8 +188,8 @@
 .messageAvatar {
   width: 36px;
   height: 36px;
-  background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
@@ -216,7 +216,7 @@
 
 .messageTime {
   font-size: var(--text-xs);
-  color: var(--page-text-softer);
+  color: var(--base-fg-softer);
 }
 
 .messageText {
@@ -225,7 +225,7 @@
 }
 
 .messageText code {
-  background: var(--inset-bg);
+  background: var(--softer-bg);
   padding: 2px 6px;
   border-radius: var(--radius-sm);
   font-family: var(--font-mono);
@@ -233,7 +233,7 @@
 }
 
 .codeBlock {
-  background: var(--inset-bg);
+  background: var(--softer-bg);
   padding: var(--space-3);
   border-radius: var(--radius-md);
   margin-top: var(--space-2);
@@ -243,7 +243,7 @@
 .codeBlock code {
   font-family: var(--font-mono);
   font-size: var(--text-sm);
-  color: var(--page-text);
+  color: var(--base-fg);
   background: transparent;
   padding: 0;
   white-space: pre;
@@ -257,7 +257,7 @@
 
 .reaction {
   padding: var(--space-1) var(--space-2);
-  background: var(--control-bg);
+  background: var(--base-bg);
   border-radius: var(--radius-full);
   font-size: var(--text-xs);
   cursor: pointer;
@@ -265,7 +265,7 @@
 }
 
 .reaction:hover {
-  background: var(--control-bg-hover);
+  background: var(--base-bg-hover);
 }
 
 /* Composer */
@@ -274,7 +274,7 @@
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-4);
-  border-top: 1px solid var(--card-border);
+  border-top: 1px solid var(--soft-border);
 }
 
 .composerActions {
@@ -294,29 +294,29 @@
 }
 
 .composerButton:hover {
-  background: var(--controlSubtle-bg-hover);
+  background: var(--base-bg-hover);
 }
 
 .composerInput {
   flex: 1;
   padding: var(--space-3) var(--space-4);
-  background: var(--inset-bg);
-  border: 1px solid var(--inset-border);
+  background: var(--softer-bg);
+  border: 1px solid var(--softer-border);
   border-radius: var(--radius-lg);
   font-size: var(--text-base);
-  color: var(--inset-text);
+  color: var(--softer-fg);
 }
 
 .composerInput:focus {
   outline: none;
-  border-color: var(--inset-border-focus);
+  border-color: var(--softer-border-focus);
 }
 
 .sendButton {
   width: 36px;
   height: 36px;
-  background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
   border: none;
   border-radius: var(--radius-full);
   cursor: pointer;
@@ -325,13 +325,13 @@
 }
 
 .sendButton:hover {
-  background: var(--controlPrimary-bg-hover);
+  background: var(--primary-bg-hover);
 }
 
 /* Details Panel */
 .detailsPanel {
-  background: var(--card-bg);
-  border-left: 1px solid var(--card-border);
+  background: var(--soft-bg);
+  border-left: 1px solid var(--soft-border);
 }
 
 .panelHeader {
@@ -339,7 +339,7 @@
   justify-content: space-between;
   align-items: center;
   padding: var(--space-4);
-  border-bottom: 1px solid var(--card-border);
+  border-bottom: 1px solid var(--soft-border);
 }
 
 .panelTitle {
@@ -356,12 +356,12 @@
   border-radius: var(--radius-md);
   cursor: pointer;
   font-size: var(--text-xl);
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   transition: background var(--duration-fast) var(--ease-default);
 }
 
 .closeButton:hover {
-  background: var(--controlSubtle-bg-hover);
+  background: var(--base-bg-hover);
 }
 
 .panelContent {
@@ -380,7 +380,7 @@
 
 .panelText {
   font-size: var(--text-sm);
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   line-height: var(--leading-normal);
   margin: 0;
 }
@@ -400,8 +400,8 @@
 .memberAvatar {
   width: 32px;
   height: 32px;
-  background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
@@ -421,7 +421,7 @@
 
 .memberRole {
   font-size: var(--text-xs);
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
 }
 
 .pinnedItem {
@@ -437,7 +437,7 @@
 }
 
 .pinnedItem:hover {
-  background: var(--controlSubtle-bg-hover);
+  background: var(--base-bg-hover);
 }
 
 .pinnedIcon {

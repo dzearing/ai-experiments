@@ -47,11 +47,11 @@
 
 /* Colors */
 .default {
-  color: var(--page-text);
+  color: var(--base-fg);
 }
 
 .soft {
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
 }
 
 .inherit {

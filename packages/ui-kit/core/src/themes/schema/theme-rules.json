@@ -23,6 +23,334 @@
     }
   },
 
+  "colorGroups": {
+    "description": "Color group system: 18 tokens per group. Pick a group for your background, use ONLY that group's fg tokens. Contrast is guaranteed.",
+    "tokenStructure": {
+      "description": "Each color group contains 18 tokens: 4 bg states, 4 border states, 10 fg variants",
+      "tokens": [
+        "bg", "bg-hover", "bg-pressed", "bg-disabled",
+        "border", "border-hover", "border-pressed", "border-disabled",
+        "fg", "fg-soft", "fg-softer", "fg-strong", "fg-stronger",
+        "fg-primary", "fg-danger", "fg-success", "fg-warning", "fg-info"
+      ]
+    },
+    "groups": {
+      "softer": {
+        "description": "Recessed areas, input backgrounds, wells",
+        "derivation": {
+          "bg": { "light": "darken(page.bg, 4)", "dark": "darken(page.bg, 4)" },
+          "bg-hover": { "light": "darken(page.bg, 6)", "dark": "lighten(page.bg, 4)" },
+          "bg-pressed": { "light": "darken(page.bg, 8)", "dark": "lighten(page.bg, 6)" },
+          "bg-disabled": { "light": "darken(page.bg, 2)", "dark": "darken(page.bg, 2)" },
+          "border": { "light": "darken(page.bg, 12)", "dark": "lighten(page.bg, 16)" },
+          "border-hover": { "light": "darken(page.bg, 16)", "dark": "lighten(page.bg, 20)" },
+          "border-pressed": { "light": "darken(page.bg, 20)", "dark": "lighten(page.bg, 24)" },
+          "border-disabled": { "light": "darken(page.bg, 8)", "dark": "lighten(page.bg, 10)" }
+        }
+      },
+      "soft": {
+        "description": "Elevated cards, panels, alternating row backgrounds",
+        "derivation": {
+          "bg": { "light": "lighten(page.bg, 8)", "dark": "lighten(page.bg, 8)" },
+          "bg-hover": { "light": "lighten(page.bg, 12)", "dark": "lighten(page.bg, 12)" },
+          "bg-pressed": { "light": "lighten(page.bg, 4)", "dark": "lighten(page.bg, 4)" },
+          "bg-disabled": { "light": "lighten(page.bg, 6)", "dark": "lighten(page.bg, 6)" },
+          "border": { "light": "darken(page.bg, 10)", "dark": "lighten(page.bg, 18)" },
+          "border-hover": { "light": "darken(page.bg, 14)", "dark": "lighten(page.bg, 22)" },
+          "border-pressed": { "light": "darken(page.bg, 18)", "dark": "lighten(page.bg, 26)" },
+          "border-disabled": { "light": "darken(page.bg, 6)", "dark": "lighten(page.bg, 12)" }
+        }
+      },
+      "base": {
+        "description": "Default page content, main surface",
+        "derivation": {
+          "bg": "page.bg",
+          "bg-hover": { "light": "darken(page.bg, 6)", "dark": "lighten(page.bg, 6)" },
+          "bg-pressed": { "light": "darken(page.bg, 10)", "dark": "lighten(page.bg, 10)" },
+          "bg-disabled": "page.bg",
+          "border": { "light": "darken(page.bg, 14)", "dark": "lighten(page.bg, 20)" },
+          "border-hover": { "light": "darken(page.bg, 18)", "dark": "lighten(page.bg, 24)" },
+          "border-pressed": { "light": "darken(page.bg, 22)", "dark": "lighten(page.bg, 28)" },
+          "border-disabled": { "light": "darken(page.bg, 8)", "dark": "lighten(page.bg, 12)" }
+        }
+      },
+      "strong": {
+        "description": "Emphasized sections, highlights",
+        "derivation": {
+          "bg": { "light": "darken(page.bg, 10)", "dark": "lighten(page.bg, 14)" },
+          "bg-hover": { "light": "darken(page.bg, 14)", "dark": "lighten(page.bg, 18)" },
+          "bg-pressed": { "light": "darken(page.bg, 18)", "dark": "lighten(page.bg, 22)" },
+          "bg-disabled": { "light": "darken(page.bg, 6)", "dark": "lighten(page.bg, 8)" },
+          "border": { "light": "darken(page.bg, 16)", "dark": "lighten(page.bg, 24)" },
+          "border-hover": { "light": "darken(page.bg, 20)", "dark": "lighten(page.bg, 28)" },
+          "border-pressed": { "light": "darken(page.bg, 24)", "dark": "lighten(page.bg, 32)" },
+          "border-disabled": { "light": "darken(page.bg, 10)", "dark": "lighten(page.bg, 16)" }
+        }
+      },
+      "stronger": {
+        "description": "Maximum emphasis areas",
+        "derivation": {
+          "bg": { "light": "darken(page.bg, 20)", "dark": "lighten(page.bg, 24)" },
+          "bg-hover": { "light": "darken(page.bg, 24)", "dark": "lighten(page.bg, 28)" },
+          "bg-pressed": { "light": "darken(page.bg, 28)", "dark": "lighten(page.bg, 32)" },
+          "bg-disabled": { "light": "darken(page.bg, 12)", "dark": "lighten(page.bg, 14)" },
+          "border": { "light": "darken(page.bg, 24)", "dark": "lighten(page.bg, 32)" },
+          "border-hover": { "light": "darken(page.bg, 28)", "dark": "lighten(page.bg, 36)" },
+          "border-pressed": { "light": "darken(page.bg, 32)", "dark": "lighten(page.bg, 40)" },
+          "border-disabled": { "light": "darken(page.bg, 16)", "dark": "lighten(page.bg, 20)" }
+        }
+      },
+      "primary": {
+        "description": "Selection, active states, branded elements",
+        "derivation": {
+          "bg": "theme:primary",
+          "bg-hover": { "light": "darken(theme:primary, 8)", "dark": "lighten(theme:primary, 8)" },
+          "bg-pressed": { "light": "darken(theme:primary, 12)", "dark": "lighten(theme:primary, 12)" },
+          "bg-disabled": { "light": "mix(theme:primary, page.bg, 0.5)", "dark": "mix(theme:primary, page.bg, 0.5)" },
+          "border": "transparent",
+          "border-hover": { "light": "rgba(255, 255, 255, 0.2)", "dark": "rgba(0, 0, 0, 0.2)" },
+          "border-pressed": { "light": "rgba(255, 255, 255, 0.3)", "dark": "rgba(0, 0, 0, 0.3)" },
+          "border-disabled": "transparent",
+          "fg": "contrast(bg)",
+          "fg-soft": { "light": "rgba(255, 255, 255, 0.85)", "dark": "rgba(0, 0, 0, 0.85)" },
+          "fg-softer": { "light": "rgba(255, 255, 255, 0.7)", "dark": "rgba(0, 0, 0, 0.7)" },
+          "fg-strong": "contrast(bg)",
+          "fg-stronger": "contrast(bg)",
+          "fg-primary": "contrast(bg)",
+          "fg-danger": { "light": "#fca5a5", "dark": "#7f1d1d" },
+          "fg-success": { "light": "#86efac", "dark": "#14532d" },
+          "fg-warning": { "light": "#fcd34d", "dark": "#78350f" },
+          "fg-info": { "light": "#7dd3fc", "dark": "#0c4a6e" }
+        }
+      },
+      "inverted": {
+        "description": "Opposite color scheme (tooltips)",
+        "defaults": {
+          "light": {
+            "bg": "#1a1a1a",
+            "bg-hover": "#262626",
+            "bg-pressed": "#333333",
+            "bg-disabled": "#1f1f1f",
+            "border": "#333333",
+            "border-hover": "#404040",
+            "border-pressed": "#4d4d4d",
+            "border-disabled": "#262626",
+            "fg": "#e5e5e5",
+            "fg-soft": "#a3a3a3",
+            "fg-softer": "#737373",
+            "fg-strong": "#f0f0f0",
+            "fg-stronger": "#ffffff",
+            "fg-primary": "#60a5fa",
+            "fg-danger": "#f87171",
+            "fg-success": "#4ade80",
+            "fg-warning": "#fbbf24",
+            "fg-info": "#38bdf8"
+          },
+          "dark": {
+            "bg": "#fafafa",
+            "bg-hover": "#f0f0f0",
+            "bg-pressed": "#e5e5e5",
+            "bg-disabled": "#f5f5f5",
+            "border": "#e5e5e5",
+            "border-hover": "#d4d4d4",
+            "border-pressed": "#c4c4c4",
+            "border-disabled": "#f0f0f0",
+            "fg": "#171717",
+            "fg-soft": "#5b5b5b",
+            "fg-softer": "#898989",
+            "fg-strong": "#0f0f0f",
+            "fg-stronger": "#000000",
+            "fg-primary": "#2563eb",
+            "fg-danger": "#dc2626",
+            "fg-success": "#16a34a",
+            "fg-warning": "#d97706",
+            "fg-info": "#0284c7"
+          }
+        }
+      },
+      "success": {
+        "description": "Success surfaces for toasts, notifications, alerts",
+        "defaults": {
+          "light": {
+            "bg": "#dcfce7",
+            "bg-hover": "#bbf7d0",
+            "bg-pressed": "#86efac",
+            "bg-disabled": "#f0fdf4",
+            "border": "#86efac",
+            "border-hover": "#4ade80",
+            "border-pressed": "#22c55e",
+            "border-disabled": "#bbf7d0",
+            "fg": "#166534",
+            "fg-soft": "#15803d",
+            "fg-softer": "#22c55e",
+            "fg-strong": "#14532d",
+            "fg-stronger": "#052e16",
+            "fg-primary": "#1d4ed8",
+            "fg-danger": "#dc2626",
+            "fg-success": "#166534",
+            "fg-warning": "#a16207",
+            "fg-info": "#0369a1"
+          },
+          "dark": {
+            "bg": "#14532d",
+            "bg-hover": "#166534",
+            "bg-pressed": "#15803d",
+            "bg-disabled": "#052e16",
+            "border": "#22c55e",
+            "border-hover": "#4ade80",
+            "border-pressed": "#86efac",
+            "border-disabled": "#166534",
+            "fg": "#dcfce7",
+            "fg-soft": "#bbf7d0",
+            "fg-softer": "#86efac",
+            "fg-strong": "#f0fdf4",
+            "fg-stronger": "#ffffff",
+            "fg-primary": "#60a5fa",
+            "fg-danger": "#f87171",
+            "fg-success": "#4ade80",
+            "fg-warning": "#fbbf24",
+            "fg-info": "#38bdf8"
+          }
+        }
+      },
+      "warning": {
+        "description": "Warning surfaces for toasts, notifications, alerts",
+        "defaults": {
+          "light": {
+            "bg": "#fef3c7",
+            "bg-hover": "#fde68a",
+            "bg-pressed": "#fcd34d",
+            "bg-disabled": "#fffbeb",
+            "border": "#fcd34d",
+            "border-hover": "#fbbf24",
+            "border-pressed": "#f59e0b",
+            "border-disabled": "#fde68a",
+            "fg": "#92400e",
+            "fg-soft": "#a16207",
+            "fg-softer": "#ca8a04",
+            "fg-strong": "#78350f",
+            "fg-stronger": "#451a03",
+            "fg-primary": "#1d4ed8",
+            "fg-danger": "#dc2626",
+            "fg-success": "#166534",
+            "fg-warning": "#92400e",
+            "fg-info": "#0369a1"
+          },
+          "dark": {
+            "bg": "#78350f",
+            "bg-hover": "#92400e",
+            "bg-pressed": "#a16207",
+            "bg-disabled": "#451a03",
+            "border": "#f59e0b",
+            "border-hover": "#fbbf24",
+            "border-pressed": "#fcd34d",
+            "border-disabled": "#92400e",
+            "fg": "#fef3c7",
+            "fg-soft": "#fde68a",
+            "fg-softer": "#fcd34d",
+            "fg-strong": "#fffbeb",
+            "fg-stronger": "#ffffff",
+            "fg-primary": "#60a5fa",
+            "fg-danger": "#f87171",
+            "fg-success": "#4ade80",
+            "fg-warning": "#fbbf24",
+            "fg-info": "#38bdf8"
+          }
+        }
+      },
+      "danger": {
+        "description": "Danger surfaces for toasts, notifications, alerts",
+        "defaults": {
+          "light": {
+            "bg": "#fee2e2",
+            "bg-hover": "#fecaca",
+            "bg-pressed": "#fca5a5",
+            "bg-disabled": "#fef2f2",
+            "border": "#fca5a5",
+            "border-hover": "#f87171",
+            "border-pressed": "#ef4444",
+            "border-disabled": "#fecaca",
+            "fg": "#991b1b",
+            "fg-soft": "#b91c1c",
+            "fg-softer": "#dc2626",
+            "fg-strong": "#7f1d1d",
+            "fg-stronger": "#450a0a",
+            "fg-primary": "#1d4ed8",
+            "fg-danger": "#991b1b",
+            "fg-success": "#166534",
+            "fg-warning": "#a16207",
+            "fg-info": "#0369a1"
+          },
+          "dark": {
+            "bg": "#7f1d1d",
+            "bg-hover": "#991b1b",
+            "bg-pressed": "#b91c1c",
+            "bg-disabled": "#450a0a",
+            "border": "#ef4444",
+            "border-hover": "#f87171",
+            "border-pressed": "#fca5a5",
+            "border-disabled": "#991b1b",
+            "fg": "#fee2e2",
+            "fg-soft": "#fecaca",
+            "fg-softer": "#fca5a5",
+            "fg-strong": "#fef2f2",
+            "fg-stronger": "#ffffff",
+            "fg-primary": "#60a5fa",
+            "fg-danger": "#f87171",
+            "fg-success": "#4ade80",
+            "fg-warning": "#fbbf24",
+            "fg-info": "#38bdf8"
+          }
+        }
+      },
+      "info": {
+        "description": "Info surfaces for toasts, notifications, alerts",
+        "defaults": {
+          "light": {
+            "bg": "#dbeafe",
+            "bg-hover": "#bfdbfe",
+            "bg-pressed": "#93c5fd",
+            "bg-disabled": "#eff6ff",
+            "border": "#93c5fd",
+            "border-hover": "#60a5fa",
+            "border-pressed": "#3b82f6",
+            "border-disabled": "#bfdbfe",
+            "fg": "#1e40af",
+            "fg-soft": "#1d4ed8",
+            "fg-softer": "#2563eb",
+            "fg-strong": "#1e3a8a",
+            "fg-stronger": "#172554",
+            "fg-primary": "#1d4ed8",
+            "fg-danger": "#dc2626",
+            "fg-success": "#166534",
+            "fg-warning": "#a16207",
+            "fg-info": "#1e40af"
+          },
+          "dark": {
+            "bg": "#1e3a8a",
+            "bg-hover": "#1e40af",
+            "bg-pressed": "#1d4ed8",
+            "bg-disabled": "#172554",
+            "border": "#3b82f6",
+            "border-hover": "#60a5fa",
+            "border-pressed": "#93c5fd",
+            "border-disabled": "#1e40af",
+            "fg": "#dbeafe",
+            "fg-soft": "#bfdbfe",
+            "fg-softer": "#93c5fd",
+            "fg-strong": "#eff6ff",
+            "fg-stronger": "#ffffff",
+            "fg-primary": "#60a5fa",
+            "fg-danger": "#f87171",
+            "fg-success": "#4ade80",
+            "fg-warning": "#fbbf24",
+            "fg-info": "#60a5fa"
+          }
+        }
+      }
+    }
+  },
+
   "roles": {
     "container": {
       "description": "Token roles for static background regions",

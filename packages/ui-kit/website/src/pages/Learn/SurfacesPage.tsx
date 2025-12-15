@@ -36,11 +36,10 @@ export function SurfacesPage() {
   return (
     <article className={styles.lesson}>
       <div className={styles.header}>
-        <span className={styles.lessonNumber}>Lesson 2</span>
+        <span className={styles.lessonNumber}>Lesson 3</span>
         <h1 className={styles.title}>Understanding Surfaces</h1>
         <p className={styles.subtitle}>
-          The core concept that makes UI-Kit work: tonal surfaces that ensure
-          accessible contrast across different backgrounds.
+          UI sections that redefine color group tokens for specific contexts.
         </p>
       </div>
 
@@ -178,8 +177,8 @@ export function SurfacesPage() {
       </section>
 
       <div className={styles.nav}>
-        <Link to="/learn/getting-started" className={styles.prevLink}>
-          &larr; Previous: Getting Started
+        <Link to="/learn/color-groups" className={styles.prevLink}>
+          &larr; Color Groups
         </Link>
         <Link to="/learn/styling-components" className={styles.nextLink}>
           Next: Styling Components &rarr;

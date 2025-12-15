@@ -30,7 +30,7 @@
   align-items: center;
   gap: var(--space-1);
   padding-inline-end: var(--space-3);
-  color: var(--page-text);
+  color: var(--base-fg);
   font-size: var(--text-sm);
   border-radius: var(--radius-sm);
   transition: background var(--duration-fast) var(--ease-default);
@@ -43,23 +43,23 @@
 }
 
 .selectable:hover:not(.disabled):not(.selected) {
-  background: var(--controlSubtle-bg-hover);
+  background: var(--base-bg-hover);
 }
 
 /* Selected state */
 .selected {
-  background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
 }
 
 .selected:hover:not(.disabled) {
-  background: var(--controlPrimary-bg-hover);
+  background: var(--primary-bg-hover);
 }
 
 /* Focused state (keyboard focus, separate from selection) */
 .focused:not(.selected) {
-  background: var(--controlSubtle-bg-hover);
-  outline: 2px solid var(--controlPrimary-bg);
+  background: var(--base-bg-hover);
+  outline: 2px solid var(--primary-bg);
   outline-offset: -2px;
 }
 
@@ -83,14 +83,14 @@
   width: 20px;
   height: 20px;
   flex-shrink: 0;
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   border-radius: var(--radius-sm);
   cursor: pointer;
 }
 
 .toggle:hover {
-  background: var(--controlSubtle-bg-hover);
-  color: var(--page-text);
+  background: var(--base-bg-hover);
+  color: var(--base-fg);
 }
 
 .toggle.hidden {
@@ -122,7 +122,7 @@
   flex-shrink: 0;
   width: 16px;
   height: 16px;
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
 }
 
 .icon svg {
@@ -133,6 +133,11 @@
 .selected .icon {
   color: inherit;
   opacity: 0.85;
+}
+
+/* Ensure all nested elements in selected nodes use inherited color */
+.selected * {
+  color: inherit;
 }
 
 
@@ -155,12 +160,12 @@
 }
 
 .container::-webkit-scrollbar-thumb {
-  background: var(--page-border);
+  background: var(--base-border);
   border-radius: var(--radius-sm);
 }
 
 .container::-webkit-scrollbar-thumb:hover {
-  background: var(--page-text-soft);
+  background: var(--base-fg-soft);
 }
 
 /* Reduced motion */

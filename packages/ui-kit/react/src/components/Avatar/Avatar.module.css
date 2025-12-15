@@ -2,8 +2,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--control-bg);
-  color: var(--control-text);
+  background: var(--base-bg);
+  color: var(--base-fg);
   overflow: hidden;
   flex-shrink: 0;
   border-radius: var(--radius-md);

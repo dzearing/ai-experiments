@@ -4,6 +4,7 @@ import { LessonLayout } from './components/LessonLayout';
 import { HomePage } from './pages/Home/HomePage';
 import { LearnPage } from './pages/Learn/LearnPage';
 import { GettingStartedPage } from './pages/Learn/GettingStartedPage';
+import { ColorGroupsPage } from './pages/Learn/ColorGroupsPage';
 import { SurfacesPage } from './pages/Learn/SurfacesPage';
 import { StylingComponentsPage } from './pages/Learn/StylingComponentsPage';
 import { ThemingPage } from './pages/Learn/ThemingPage';
@@ -24,6 +25,14 @@ export function App() {
           element={
             <LessonLayout>
               <GettingStartedPage />
+            </LessonLayout>
+          }
+        />
+        <Route
+          path="learn/color-groups"
+          element={
+            <LessonLayout>
+              <ColorGroupsPage />
             </LessonLayout>
           }
         />

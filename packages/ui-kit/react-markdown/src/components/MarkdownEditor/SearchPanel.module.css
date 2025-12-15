@@ -5,11 +5,11 @@
  * of the editor container with appropriate padding.
  *
  * Token mapping from ui-kit/core themes:
- * - --popout-bg: Popout/floating panel background
- * - --popout-border: Popout panel border
- * - --popout-shadow: Popout panel shadow
- * - --page-text-soft: Muted text color
- * - --card-border: Card/panel borders
+ * - --soft-bg: Popout/floating panel background
+ * - --soft-border: Popout panel border
+ * - --soft-shadow: Popout panel shadow
+ * - --base-fg-softer: Muted text color
+ * - --soft-border: Card/panel borders
  */
 
 .panel {
@@ -19,10 +19,10 @@
   z-index: 100;
 
   /* Panel appearance */
-  background: var(--popout-bg, #ffffff);
-  border: 1px solid var(--popout-border, #e0e0e0);
+  background: var(--soft-bg, #ffffff);
+  border: 1px solid var(--soft-border, #e0e0e0);
   border-radius: var(--radius-lg, 12px);
-  box-shadow: var(--popout-shadow, 0 8px 24px rgba(0, 0, 0, 0.15));
+  box-shadow: var(--soft-shadow, 0 8px 24px rgba(0, 0, 0, 0.15));
 
   /* Size constraints */
   min-width: 320px;
@@ -61,7 +61,7 @@
 
 .matchCount {
   flex-shrink: 0;
-  color: var(--page-text-soft, var(--popout-text-soft, #666));
+  color: var(--base-fg-softer, var(--soft-fg-softer, #666));
   white-space: nowrap;
   font-size: var(--text-xs, 12px);
   padding-inline-end: var(--space-2, 8px);
@@ -87,7 +87,7 @@
   justify-content: space-between;
   gap: var(--space-2, 8px);
   padding-top: var(--space-2, 8px);
-  border-top: 1px solid var(--popout-border, var(--card-border, #e0e0e0));
+  border-top: 1px solid var(--soft-border, var(--soft-border, #e0e0e0));
 }
 
 /* Make checkboxes more compact */

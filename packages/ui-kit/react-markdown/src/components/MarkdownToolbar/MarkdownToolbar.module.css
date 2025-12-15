@@ -7,14 +7,14 @@
   align-items: center;
   gap: var(--space-1);
   padding: var(--space-1) var(--space-2);
-  background: var(--popout-bg, var(--panel-bg));
-  border-bottom: 1px solid var(--popout-border, var(--panel-border));
+  background: var(--soft-bg, var(--panel-bg));
+  border-bottom: 1px solid var(--soft-border, var(--panel-border));
   flex-wrap: wrap;
 }
 
 /* Variants */
 .bordered {
-  border: 1px solid var(--popout-border, var(--panel-border));
+  border: 1px solid var(--soft-border, var(--panel-border));
   border-radius: var(--radius-md);
 }
 
@@ -23,7 +23,7 @@
   top: var(--space-2);
   left: 50%;
   transform: translateX(-50%);
-  border: 1px solid var(--popout-border, var(--panel-border));
+  border: 1px solid var(--soft-border, var(--panel-border));
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg, 0 4px 12px rgba(0, 0, 0, 0.15));
   z-index: 10;
@@ -40,7 +40,7 @@
 .divider {
   width: 1px;
   height: 1.5em;
-  background: var(--popout-border, var(--panel-border));
+  background: var(--soft-border, var(--panel-border));
   margin: 0 var(--space-1);
 }
 
@@ -51,14 +51,14 @@
   justify-content: center;
   border: none;
   background: transparent;
-  color: var(--controlSubtle-text, var(--page-text));
+  color: var(--base-fg, var(--base-fg));
   cursor: pointer;
   border-radius: var(--radius-sm);
   transition: all var(--duration-fast) var(--ease-default);
 }
 
 .button:hover:not(:disabled) {
-  background: var(--controlSubtle-bg-hover, rgba(0, 0, 0, 0.1));
+  background: var(--base-bg-hover, rgba(0, 0, 0, 0.1));
 }
 
 .button:disabled {
@@ -67,8 +67,8 @@
 }
 
 .button.active {
-  background: var(--controlSubtle-bg, rgba(0, 0, 0, 0.1));
-  color: var(--primary-text, var(--page-link));
+  background: var(--soft-bg, rgba(0, 0, 0, 0.1));
+  color: var(--link, var(--link));
 }
 
 /* Button sizes */

@@ -1,12 +1,12 @@
 .settings {
   min-height: 100vh;
-  background: var(--page-bg);
+  background: var(--base-bg);
 }
 
 /* Header */
 .header {
-  background: var(--card-bg);
-  border-bottom: 1px solid var(--card-border);
+  background: var(--soft-bg);
+  border-bottom: 1px solid var(--soft-border);
   padding: var(--space-8) var(--space-6);
 }
 
@@ -17,14 +17,14 @@
 }
 
 .subtitle {
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   margin: 0;
 }
 
 /* Navigation */
 .nav {
-  background: var(--card-bg);
-  border-bottom: 1px solid var(--card-border);
+  background: var(--soft-bg);
+  border-bottom: 1px solid var(--soft-border);
   padding: 0 var(--space-6);
   display: flex;
   gap: var(--space-1);
@@ -33,7 +33,7 @@
 
 .navItem {
   padding: var(--space-4) var(--space-4);
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   text-decoration: none;
   border-bottom: 2px solid transparent;
   white-space: nowrap;
@@ -41,12 +41,12 @@
 }
 
 .navItem:hover {
-  color: var(--page-text);
+  color: var(--base-fg);
 }
 
 .navItem.active {
-  color: var(--controlPrimary-bg);
-  border-bottom-color: var(--controlPrimary-bg);
+  color: var(--primary-bg);
+  border-bottom-color: var(--primary-bg);
 }
 
 /* Content */
@@ -58,8 +58,8 @@
 
 /* Section */
 .section {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
   border-radius: var(--radius-lg);
   padding: var(--space-6);
   margin-bottom: var(--space-6);
@@ -72,7 +72,7 @@
 }
 
 .sectionDesc {
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   font-size: var(--text-sm);
   margin: 0 0 var(--space-5);
 }
@@ -100,49 +100,49 @@
 .label {
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
-  color: var(--page-text);
+  color: var(--base-fg);
 }
 
 .input {
   padding: var(--space-3) var(--space-4);
-  background: var(--inset-bg);
-  border: 1px solid var(--inset-border);
+  background: var(--softer-bg);
+  border: 1px solid var(--softer-border);
   border-radius: var(--radius-md);
   font-size: var(--text-base);
-  color: var(--inset-text);
+  color: var(--softer-fg);
   transition: border-color var(--duration-fast) var(--ease-default);
 }
 
 .input:focus {
   outline: none;
-  border-color: var(--inset-border-focus);
-  background: var(--inset-bg-focus);
+  border-color: var(--softer-border-focus);
+  background: var(--softer-bg-focus);
 }
 
 .textarea {
   padding: var(--space-3) var(--space-4);
-  background: var(--inset-bg);
-  border: 1px solid var(--inset-border);
+  background: var(--softer-bg);
+  border: 1px solid var(--softer-border);
   border-radius: var(--radius-md);
   font-size: var(--text-base);
-  color: var(--inset-text);
+  color: var(--softer-fg);
   resize: vertical;
   font-family: inherit;
 }
 
 .textarea:focus {
   outline: none;
-  border-color: var(--inset-border-focus);
-  background: var(--inset-bg-focus);
+  border-color: var(--softer-border-focus);
+  background: var(--softer-bg-focus);
 }
 
 .select {
   padding: var(--space-3) var(--space-4);
-  background: var(--inset-bg);
-  border: 1px solid var(--inset-border);
+  background: var(--softer-bg);
+  border: 1px solid var(--softer-border);
   border-radius: var(--radius-md);
   font-size: var(--text-base);
-  color: var(--inset-text);
+  color: var(--softer-fg);
   cursor: pointer;
 }
 
@@ -158,7 +158,7 @@
   justify-content: space-between;
   align-items: center;
   padding: var(--space-4);
-  background: var(--inset-bg);
+  background: var(--softer-bg);
   border-radius: var(--radius-md);
 }
 
@@ -173,14 +173,14 @@
 
 .toggleDesc {
   font-size: var(--text-sm);
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
 }
 
 .toggle {
   width: 44px;
   height: 24px;
   padding: 2px;
-  background: var(--control-bg);
+  background: var(--base-bg);
   border: none;
   border-radius: var(--radius-full);
   cursor: pointer;
@@ -188,7 +188,7 @@
 }
 
 .toggle.toggleOn {
-  background: var(--controlPrimary-bg);
+  background: var(--primary-bg);
 }
 
 .toggleKnob {
@@ -230,7 +230,7 @@
 }
 
 .radio input {
-  accent-color: var(--controlPrimary-bg);
+  accent-color: var(--primary-bg);
 }
 
 .radioText {
@@ -264,13 +264,13 @@
 
 .dangerDesc {
   font-size: var(--text-sm);
-  color: var(--danger-text-soft);
+  color: var(--danger-fg-soft);
 }
 
 .dangerButton {
   padding: var(--space-2) var(--space-4);
-  background: var(--controlDanger-bg);
-  color: var(--controlDanger-text);
+  background: var(--danger-bg);
+  color: var(--danger-fg);
   border: none;
   border-radius: var(--radius-md);
   font-weight: var(--weight-medium);
@@ -279,7 +279,7 @@
 }
 
 .dangerButton:hover {
-  background: var(--controlDanger-bg-hover);
+  background: var(--danger-bg-hover);
 }
 
 /* Actions */
@@ -292,8 +292,8 @@
 
 .primaryButton {
   padding: var(--space-3) var(--space-5);
-  background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
   border: none;
   border-radius: var(--radius-md);
   font-weight: var(--weight-medium);
@@ -302,14 +302,14 @@
 }
 
 .primaryButton:hover {
-  background: var(--controlPrimary-bg-hover);
+  background: var(--primary-bg-hover);
 }
 
 .secondaryButton {
   padding: var(--space-3) var(--space-5);
-  background: var(--control-bg);
-  color: var(--control-text);
-  border: 1px solid var(--control-border);
+  background: var(--base-bg);
+  color: var(--base-fg);
+  border: 1px solid var(--base-border);
   border-radius: var(--radius-md);
   font-weight: var(--weight-medium);
   cursor: pointer;
@@ -317,5 +317,5 @@
 }
 
 .secondaryButton:hover {
-  background: var(--control-bg-hover);
+  background: var(--base-bg-hover);
 }

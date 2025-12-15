@@ -8,8 +8,8 @@
 /* Header */
 .header {
   grid-column: 1 / -1;
-  background: var(--card-bg);
-  border-bottom: 1px solid var(--card-border);
+  background: var(--soft-bg);
+  border-bottom: 1px solid var(--soft-border);
   padding: var(--space-4) var(--space-6);
   display: flex;
   justify-content: space-between;
@@ -38,7 +38,7 @@
   width: 36px;
   height: 36px;
   border: none;
-  background: var(--control-bg);
+  background: var(--base-bg);
   border-radius: var(--radius-md);
   cursor: pointer;
   display: flex;
@@ -47,14 +47,14 @@
 }
 
 .iconButton:hover {
-  background: var(--control-bg-hover);
+  background: var(--base-bg-hover);
 }
 
 .avatar {
   width: 36px;
   height: 36px;
-  background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
   border-radius: var(--radius-full);
   display: flex;
   align-items: center;
@@ -65,8 +65,8 @@
 
 /* Sidebar */
 .sidebar {
-  background: var(--card-bg);
-  border-right: 1px solid var(--card-border);
+  background: var(--soft-bg);
+  border-right: 1px solid var(--soft-border);
   padding: var(--space-4);
 }
 
@@ -79,25 +79,25 @@
 .navItem {
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-md);
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   text-decoration: none;
   transition: all var(--duration-fast) var(--ease-default);
 }
 
 .navItem:hover {
-  background: var(--controlSubtle-bg-hover);
-  color: var(--page-text);
+  background: var(--base-bg-hover);
+  color: var(--base-fg);
 }
 
 .navItem.active {
-  background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
 }
 
 /* Main */
 .main {
   padding: var(--space-6);
-  background: var(--page-bg);
+  background: var(--base-bg);
   overflow-y: auto;
 }
 
@@ -110,14 +110,14 @@
 }
 
 .statCard {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
   border-radius: var(--radius-lg);
   padding: var(--space-5);
 }
 
 .statLabel {
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   font-size: var(--text-sm);
   margin-bottom: var(--space-2);
 }
@@ -125,7 +125,7 @@
 .statValue {
   font-size: var(--text-3xl);
   font-weight: var(--weight-bold);
-  color: var(--page-text-strong);
+  color: var(--base-fg-strong);
 }
 
 /* Content Grid */
@@ -137,8 +137,8 @@
 }
 
 .card {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
   border-radius: var(--radius-lg);
   padding: var(--space-5);
 }
@@ -163,24 +163,24 @@
 .activityDot {
   width: 8px;
   height: 8px;
-  background: var(--controlPrimary-bg);
+  background: var(--primary-bg);
   border-radius: var(--radius-full);
   margin-top: 6px;
   flex-shrink: 0;
 }
 
 .activityContent {
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   font-size: var(--text-sm);
 }
 
 .activityContent strong {
-  color: var(--page-text);
+  color: var(--base-fg);
 }
 
 .activityTime {
   display: block;
-  color: var(--page-text-softer);
+  color: var(--base-fg-softer);
   font-size: var(--text-xs);
   margin-top: var(--space-1);
 }
@@ -203,12 +203,12 @@
 .checkbox {
   width: 18px;
   height: 18px;
-  accent-color: var(--controlPrimary-bg);
+  accent-color: var(--primary-bg);
 }
 
 .completed {
   text-decoration: line-through;
-  color: var(--page-text-softer);
+  color: var(--base-fg-softer);
 }
 
 /* Alerts */
@@ -226,12 +226,12 @@
 
 .alertSuccess {
   background: var(--success-bg);
-  color: var(--success-text);
+  color: var(--success-fg);
   border-left: 4px solid var(--success-border);
 }
 
 .alertWarning {
   background: var(--warning-bg);
-  color: var(--warning-text);
+  color: var(--warning-fg);
   border-left: 4px solid var(--warning-border);
 }

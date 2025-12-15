@@ -28,7 +28,7 @@
   padding: var(--space-2) var(--space-4);
   border: none;
   background: transparent;
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   font-size: var(--text-base);
   font-weight: var(--weight-medium);
   cursor: pointer;
@@ -45,7 +45,7 @@
 }
 
 .tab:hover:not(:disabled) {
-  color: var(--page-text);
+  color: var(--base-fg);
 }
 
 .tab:focus-visible {
@@ -54,11 +54,11 @@
 }
 
 .tab.active {
-  color: var(--page-text);
+  color: var(--base-fg);
 }
 
 .tab.disabled {
-  color: var(--controlDisabled-text);
+  color: var(--base-fg-softer);
   cursor: not-allowed;
 }
 
@@ -67,7 +67,7 @@
    ============================================== */
 
 .default {
-  border-bottom: 1px solid var(--page-border);
+  border-bottom: 1px solid var(--base-border);
 }
 
 /* Hide the individual tab underlines when using animated indicator */
@@ -83,7 +83,7 @@
 }
 
 .default:not(.animated) .tab.active {
-  border-bottom-color: var(--controlPrimary-bg);
+  border-bottom-color: var(--primary-bg);
 }
 
 /* ==============================================
@@ -101,12 +101,12 @@
 }
 
 .pills .tab:hover:not(:disabled):not(.active) {
-  background: var(--controlSubtle-bg-hover);
+  background: var(--base-bg-hover);
 }
 
 .pills .tab.active {
-  background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
 }
 
 /* ==============================================
@@ -130,12 +130,12 @@
   left: 0;
   right: 0;
   height: 3px;
-  background: var(--controlPrimary-bg);
+  background: var(--primary-bg);
   border-radius: 2px;
   box-shadow:
-    0 -4px 8px 0 color-mix(in srgb, var(--controlPrimary-bg) light-dark(35%, 60%), transparent),
-    0 -10px 20px 0 color-mix(in srgb, var(--controlPrimary-bg) light-dark(20%, 40%), transparent),
-    0 -20px 40px 0 color-mix(in srgb, var(--controlPrimary-bg) light-dark(10%, 25%), transparent);
+    0 -4px 8px 0 color-mix(in srgb, var(--primary-bg) light-dark(35%, 60%), transparent),
+    0 -10px 20px 0 color-mix(in srgb, var(--primary-bg) light-dark(20%, 40%), transparent),
+    0 -20px 40px 0 color-mix(in srgb, var(--primary-bg) light-dark(10%, 25%), transparent);
   transform: scaleX(0);
   transition: transform var(--duration-fast) var(--ease-default);
 }
@@ -153,12 +153,12 @@
   bottom: 0;
   left: 0;
   height: 3px;
-  background: var(--controlPrimary-bg);
+  background: var(--primary-bg);
   border-radius: 2px;
   box-shadow:
-    0 -4px 8px 0 color-mix(in srgb, var(--controlPrimary-bg) 35%, transparent),
-    0 -10px 20px 0 color-mix(in srgb, var(--controlPrimary-bg) 20%, transparent),
-    0 -20px 40px 0 color-mix(in srgb, var(--controlPrimary-bg) 10%, transparent);
+    0 -4px 8px 0 color-mix(in srgb, var(--primary-bg) 35%, transparent),
+    0 -10px 20px 0 color-mix(in srgb, var(--primary-bg) 20%, transparent),
+    0 -20px 40px 0 color-mix(in srgb, var(--primary-bg) 10%, transparent);
   transition: transform var(--duration-normal) var(--ease-default),
     width var(--duration-normal) var(--ease-default);
   pointer-events: none;
@@ -169,9 +169,9 @@
 [data-mode="dark"] .indicator,
 .dark .indicator {
   box-shadow:
-    0 -4px 10px 2px color-mix(in srgb, var(--controlPrimary-bg) 45%, transparent),
-    0 -10px 24px 4px color-mix(in srgb, var(--controlPrimary-bg) 30%, transparent),
-    0 -20px 48px 8px color-mix(in srgb, var(--controlPrimary-bg) 15%, transparent);
+    0 -4px 10px 2px color-mix(in srgb, var(--primary-bg) 45%, transparent),
+    0 -10px 24px 4px color-mix(in srgb, var(--primary-bg) 30%, transparent),
+    0 -20px 48px 8px color-mix(in srgb, var(--primary-bg) 15%, transparent);
 }
 
 @media (prefers-color-scheme: dark) {

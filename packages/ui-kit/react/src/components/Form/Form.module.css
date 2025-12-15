@@ -15,11 +15,11 @@
 .label {
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
-  color: var(--page-text);
+  color: var(--base-fg);
 }
 
 .required {
-  color: var(--danger-text);
+  color: var(--danger-fg);
   margin-inline-start: var(--space-1);
 }
 
@@ -37,16 +37,16 @@
 
 .hint {
   font-size: var(--text-sm);
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
 }
 
 .error {
   font-size: var(--text-sm);
-  color: var(--danger-text);
+  color: var(--danger-fg);
 }
 
 .hasError .label {
-  color: var(--danger-text);
+  color: var(--danger-fg);
 }
 
 /* Form actions (buttons) */

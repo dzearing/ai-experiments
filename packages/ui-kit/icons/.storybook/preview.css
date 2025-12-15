@@ -2,8 +2,8 @@
 
 body {
   font-family: var(--font-sans);
-  background-color: var(--page-bg);
-  color: var(--page-text);
+  background-color: var(--base-bg);
+  color: var(--base-fg);
   margin: 0;
   padding: 0;
 }

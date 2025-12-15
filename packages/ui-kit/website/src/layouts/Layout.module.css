@@ -8,8 +8,8 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  background: var(--card-bg);
-  border-bottom: 1px solid var(--card-border);
+  background: var(--soft-bg);
+  border-bottom: 1px solid var(--soft-border);
   backdrop-filter: blur(10px);
 }
 
@@ -29,12 +29,12 @@
   gap: var(--space-2);
   font-size: var(--text-xl);
   font-weight: var(--weight-bold);
-  color: var(--page-text-strong);
+  color: var(--base-fg-strong);
   text-decoration: none;
 }
 
 .logoIcon {
-  color: var(--controlPrimary-bg);
+  color: var(--primary-bg);
   font-size: var(--text-2xl);
 }
 
@@ -53,8 +53,8 @@
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-4);
-  background: var(--control-bg);
-  color: var(--control-text);
+  background: var(--base-bg);
+  color: var(--base-fg);
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
@@ -63,8 +63,8 @@
 }
 
 .githubLink:hover {
-  background: var(--control-bg-hover);
-  color: var(--control-text);
+  background: var(--base-bg-hover);
+  color: var(--base-fg);
 }
 
 .main {
@@ -72,8 +72,8 @@
 }
 
 .footer {
-  background: var(--card-bg);
-  border-top: 1px solid var(--card-border);
+  background: var(--soft-bg);
+  border-top: 1px solid var(--soft-border);
   padding: var(--space-8) var(--space-6);
 }
 
@@ -81,6 +81,6 @@
   max-width: 1200px;
   margin: 0 auto;
   text-align: center;
-  color: var(--page-text-soft);
+  color: var(--base-fg-soft);
   font-size: var(--text-sm);
 }

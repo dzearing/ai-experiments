@@ -53,8 +53,8 @@
   min-width: 280px;
   max-width: 400px;
   padding: var(--space-3) var(--space-4);
-  background: var(--popout-bg);
-  border: 1px solid var(--popout-border);
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   pointer-events: auto;
@@ -94,12 +94,12 @@
 
 .title {
   font-weight: var(--weight-medium);
-  color: var(--popout-text);
+  color: var(--soft-fg);
   margin-bottom: var(--space-1);
 }
 
 .message {
-  color: var(--popout-text-soft);
+  color: var(--soft-fg-soft);
   font-size: var(--text-sm);
 }
 
@@ -114,14 +114,14 @@
   padding: var(--space-1);
   border: none;
   background: transparent;
-  color: var(--popout-text-soft);
+  color: var(--soft-fg-soft);
   cursor: pointer;
   border-radius: var(--radius-sm);
   transition: color var(--duration-fast) var(--ease-default);
 }
 
 .close:hover {
-  color: var(--popout-text);
+  color: var(--soft-fg);
 }
 
 /* Variants */
@@ -132,19 +132,19 @@
 }
 
 .info .title {
-  color: var(--info-text);
+  color: var(--info-fg);
 }
 
 .info .message {
-  color: var(--info-text-soft);
+  color: var(--info-fg-soft);
 }
 
 .info .close {
-  color: var(--info-text-soft);
+  color: var(--info-fg-soft);
 }
 
 .info .close:hover {
-  color: var(--info-text);
+  color: var(--info-fg);
 }
 
 .success {
@@ -154,19 +154,19 @@
 }
 
 .success .title {
-  color: var(--success-text);
+  color: var(--success-fg);
 }
 
 .success .message {
-  color: var(--success-text-soft);
+  color: var(--success-fg-soft);
 }
 
 .success .close {
-  color: var(--success-text-soft);
+  color: var(--success-fg-soft);
 }
 
 .success .close:hover {
-  color: var(--success-text);
+  color: var(--success-fg);
 }
 
 .warning {
@@ -176,19 +176,19 @@
 }
 
 .warning .title {
-  color: var(--warning-text);
+  color: var(--warning-fg);
 }
 
 .warning .message {
-  color: var(--warning-text-soft);
+  color: var(--warning-fg-soft);
 }
 
 .warning .close {
-  color: var(--warning-text-soft);
+  color: var(--warning-fg-soft);
 }
 
 .warning .close:hover {
-  color: var(--warning-text);
+  color: var(--warning-fg);
 }
 
 .error {
@@ -198,19 +198,19 @@
 }
 
 .error .title {
-  color: var(--danger-text);
+  color: var(--danger-fg);
 }
 
 .error .message {
-  color: var(--danger-text-soft);
+  color: var(--danger-fg-soft);
 }
 
 .error .close {
-  color: var(--danger-text-soft);
+  color: var(--danger-fg-soft);
 }
 
 .error .close:hover {
-  color: var(--danger-text);
+  color: var(--danger-fg);
 }
 
 /* ==============================================
