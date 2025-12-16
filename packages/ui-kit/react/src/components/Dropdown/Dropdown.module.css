@@ -260,6 +260,19 @@
   cursor: not-allowed;
 }
 
+/* Divider/separator */
+.option.divider {
+  padding: 0;
+  height: 1px;
+  background: var(--soft-border);
+  margin: var(--space-1) 0;
+  pointer-events: none;
+}
+
+.option.divider .optionLabel {
+  display: none;
+}
+
 /* Multi-select checkbox */
 .checkbox {
   display: flex;

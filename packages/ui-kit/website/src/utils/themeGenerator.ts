@@ -234,6 +234,10 @@ export interface ThemeConfig {
   accent?: string;
   neutral?: string;
 
+  // Background colors (optional custom overrides)
+  lightBg?: string;
+  darkBg?: string;
+
   // Adjustments
   saturation: number;
   temperature: number;
@@ -241,6 +245,12 @@ export interface ThemeConfig {
   // Radii
   radiusScale: number;
   radiusStyle: RadiiStyle;
+
+  // Sizing
+  sizeScale: number; // 0.8 to 1.3, affects control heights
+
+  // Effects
+  glowIntensity: number; // 0 to 1, affects glow on tabs/selections
 
   // Accessibility
   accessibilityLevel: AccessibilityLevel;
@@ -367,18 +377,44 @@ function generateRadii(style: RadiiStyle, scale: number): Record<string, string>
 export function generateTheme(config: ThemeConfig, isDark: boolean): GeneratedTheme {
   const colors = processColors(config);
   const contrastLevel = config.accessibilityLevel === 'AAA' ? 7 : 4.5;
+  const sizeScale = config.sizeScale ?? 1;
+  const glowIntensity = config.glowIntensity ?? 0.5;
   const tokens: Record<string, string> = {};
 
   // Generate radii
   const radii = generateRadii(config.radiusStyle, config.radiusScale);
   Object.assign(tokens, radii);
 
-  // Page surface
-  const pageBg = isDark ? '#0f0f0f' : '#fafafa';
+  // Generate size tokens
+  const baseSizes = {
+    '--control-height-sm': 28,
+    '--control-height-md': 36,
+    '--control-height-lg': 44,
+    '--control-height-xl': 52,
+  };
+  for (const [token, baseValue] of Object.entries(baseSizes)) {
+    tokens[token] = `${Math.round(baseValue * sizeScale)}px`;
+  }
+
+  // Generate glow tokens
+  const glowOpacity = Math.round(glowIntensity * 40);
+  tokens['--glow-intensity'] = String(glowIntensity);
+  tokens['--glow-spread-sm'] = `${Math.round(8 * glowIntensity)}px`;
+  tokens['--glow-spread-md'] = `${Math.round(20 * glowIntensity)}px`;
+  tokens['--glow-spread-lg'] = `${Math.round(40 * glowIntensity)}px`;
+  tokens['--glow-opacity'] = `${glowOpacity}%`;
+  tokens['--glow-color'] = colors.primary;
+
+  // Page surface - use custom backgrounds if provided
+  const pageBg = isDark
+    ? (config.darkBg || '#0f0f0f')
+    : (config.lightBg || '#fafafa');
   const pageText = ensureContrast(isDark ? '#e5e5e5' : '#171717', pageBg, contrastLevel);
   const pageBorder = isDark ? '#2a2a2a' : '#e5e5e5';
   const pageSurface: SurfaceTokens = {
     bg: pageBg,
+    'bg-hover': isDark ? lighten(pageBg, 5) : darken(pageBg, 5),
+    'bg-pressed': isDark ? lighten(pageBg, 8) : darken(pageBg, 8),
     text: pageText,
     'text-soft': mix(pageText, pageBg, 0.3),
     'text-softer': mix(pageText, pageBg, 0.5),
@@ -391,10 +427,10 @@ export function generateTheme(config: ThemeConfig, isDark: boolean): GeneratedTh
     shadow: 'none',
   };
 
-  // Card surface
-  const cardBg = isDark ? '#1a1a1a' : '#ffffff';
+  // Card surface - derive from page background
+  const cardBg = isDark ? lighten(pageBg, 5) : lighten(pageBg, 3);
   const cardText = ensureContrast(pageText, cardBg, contrastLevel);
-  const cardBorder = isDark ? '#333333' : '#e5e5e5';
+  const cardBorder = isDark ? lighten(pageBg, 15) : darken(pageBg, 10);
   const cardSurface: SurfaceTokens = {
     bg: cardBg,
     text: cardText,
@@ -410,10 +446,10 @@ export function generateTheme(config: ThemeConfig, isDark: boolean): GeneratedTh
       : '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
   };
 
-  // Overlay surface
-  const overlayBg = isDark ? '#1f1f1f' : '#ffffff';
+  // Overlay surface - derive from page background
+  const overlayBg = isDark ? lighten(pageBg, 8) : lighten(pageBg, 5);
   const overlayText = ensureContrast(pageText, overlayBg, contrastLevel);
-  const overlayBorder = isDark ? '#3a3a3a' : '#e5e5e5';
+  const overlayBorder = isDark ? lighten(pageBg, 20) : darken(pageBg, 10);
   const overlaySurface: SurfaceTokens = {
     bg: overlayBg,
     text: overlayText,
@@ -429,10 +465,10 @@ export function generateTheme(config: ThemeConfig, isDark: boolean): GeneratedTh
       : '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
   };
 
-  // Popout surface
-  const popoutBg = isDark ? '#262626' : '#ffffff';
+  // Popout surface - derive from page background
+  const popoutBg = isDark ? lighten(pageBg, 10) : lighten(pageBg, 5);
   const popoutText = ensureContrast(pageText, popoutBg, contrastLevel);
-  const popoutBorder = isDark ? '#404040' : '#e5e5e5';
+  const popoutBorder = isDark ? lighten(pageBg, 25) : darken(pageBg, 10);
   const popoutSurface: SurfaceTokens = {
     bg: popoutBg,
     text: popoutText,
@@ -448,26 +484,26 @@ export function generateTheme(config: ThemeConfig, isDark: boolean): GeneratedTh
       : '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
   };
 
-  // Inset surface
-  const insetBg = isDark ? '#0a0a0a' : '#f5f5f5';
+  // Inset surface - derive from page background (darker/recessed)
+  const insetBg = isDark ? darken(pageBg, 3) : darken(pageBg, 3);
   const insetText = ensureContrast(pageText, insetBg, contrastLevel);
   const insetSurface: SurfaceTokens = {
     bg: insetBg,
-    'bg-hover': isDark ? '#141414' : '#eeeeee',
-    'bg-focus': isDark ? '#141414' : '#ffffff',
+    'bg-hover': isDark ? lighten(insetBg, 3) : darken(insetBg, 2),
+    'bg-focus': isDark ? lighten(insetBg, 3) : lighten(insetBg, 5),
     text: insetText,
     'text-soft': mix(insetText, insetBg, 0.4),
-    border: isDark ? '#333333' : '#d4d4d4',
+    border: isDark ? lighten(pageBg, 15) : darken(pageBg, 15),
     'border-focus': colors.primary,
   };
 
-  // Control surface
-  const controlBg = isDark ? '#2a2a2a' : '#f0f0f0';
+  // Control surface - derive from page background
+  const controlBg = isDark ? lighten(pageBg, 12) : darken(pageBg, 5);
   const controlText = ensureContrast(pageText, controlBg, contrastLevel);
   const controlSurface: SurfaceTokens = {
     bg: controlBg,
-    'bg-hover': isDark ? '#333333' : '#e5e5e5',
-    'bg-pressed': isDark ? '#404040' : '#d4d4d4',
+    'bg-hover': isDark ? lighten(controlBg, 5) : darken(controlBg, 5),
+    'bg-pressed': isDark ? lighten(controlBg, 10) : darken(controlBg, 10),
     text: controlText,
     'text-hover': controlText,
     'text-pressed': controlText,
@@ -541,7 +577,7 @@ export function generateTheme(config: ThemeConfig, isDark: boolean): GeneratedTh
   const dangerSurface = createFeedbackSurface(colors.danger);
   const infoSurface = createFeedbackSurface(colors.info);
 
-  // Build tokens object
+  // Build tokens object - using INTERNAL names
   const surfaces = {
     page: pageSurface,
     card: cardSurface,
@@ -559,11 +595,57 @@ export function generateTheme(config: ThemeConfig, isDark: boolean): GeneratedTh
     info: infoSurface,
   };
 
-  // Flatten surfaces to tokens
+  // Map internal surface names to actual CSS token names
+  // The token system uses: softer, soft, base, strong, stronger, primary, inverted, success, warning, danger, info
+  // IMPORTANT: Each surface must map to a UNIQUE token group to avoid overwrites!
+  const surfaceToTokenName: Record<string, string> = {
+    page: 'base',           // Page background → base tokens
+    card: 'soft',           // Cards/panels → soft tokens
+    overlay: 'overlay',     // Overlays → overlay tokens (unique)
+    popout: 'popout',       // Popouts → popout tokens (unique)
+    inset: 'softer',        // Input wells → softer tokens
+    control: 'strong',      // Default buttons → strong tokens
+    controlPrimary: 'primary',  // Primary buttons → primary tokens
+    controlDanger: 'danger',        // Danger buttons → solid red danger tokens
+    controlSubtle: 'subtle',        // Subtle/ghost buttons → subtle tokens (unique)
+    controlDisabled: 'disabled',    // Disabled state → disabled tokens (unique)
+    success: 'feedback-success',    // Feedback surfaces → tinted backgrounds
+    warning: 'feedback-warning',
+    danger: 'feedback-danger',      // Feedback danger → tinted (separate from button danger)
+    info: 'feedback-info',
+  };
+
+  // Map internal property names to CSS token property names
+  const propToTokenProp: Record<string, string> = {
+    'bg': 'bg',
+    'bg-hover': 'bg-hover',
+    'bg-pressed': 'bg-pressed',
+    'bg-focus': 'bg-focus',
+    'text': 'fg',           // text → fg
+    'text-soft': 'fg-soft',
+    'text-softer': 'fg-softer',
+    'text-strong': 'fg-strong',
+    'text-stronger': 'fg-stronger',
+    'text-hover': 'fg-hover',
+    'text-pressed': 'fg-pressed',
+    'border': 'border',
+    'border-soft': 'border-soft',
+    'border-strong': 'border-strong',
+    'border-stronger': 'border-stronger',
+    'border-hover': 'border-hover',
+    'border-pressed': 'border-pressed',
+    'border-focus': 'border-focus',
+    'shadow': 'shadow',
+    'icon': 'icon',
+  };
+
+  // Flatten surfaces to tokens with CORRECT naming
   for (const [surfaceName, surface] of Object.entries(surfaces)) {
+    const tokenGroup = surfaceToTokenName[surfaceName] || surfaceName;
     for (const [prop, value] of Object.entries(surface)) {
       if (value !== undefined) {
-        tokens[`--${surfaceName}-${prop}`] = value;
+        const tokenProp = propToTokenProp[prop] || prop;
+        tokens[`--${tokenGroup}-${tokenProp}`] = value;
       }
     }
   }

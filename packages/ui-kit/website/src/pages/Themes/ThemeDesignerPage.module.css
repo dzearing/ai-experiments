@@ -1,94 +1,85 @@
+/* Theme Designer - Full Height Layout */
 .designer {
-  min-height: 100vh;
-  padding: var(--space-6);
-}
-
-.header {
-  max-width: 1600px;
-  margin: 0 auto var(--space-6);
-}
-
-.title {
-  font-size: var(--text-3xl);
-  font-weight: var(--weight-bold);
-  margin-bottom: var(--space-2);
-}
-
-.subtitle {
-  color: var(--base-fg-soft);
-  max-width: 600px;
-}
-
-/* Layout */
-.layout {
-  display: grid;
-  grid-template-columns: 320px 1fr 300px;
-  gap: var(--space-6);
-  max-width: 1600px;
-  margin: 0 auto;
-}
-
-@media (max-width: 1200px) {
-  .layout {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Controls Panel */
-.controls {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  height: 100%;
+  overflow: hidden;
 }
 
-.section {
+/* Tools Panel */
+.toolsPanel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
   background: var(--soft-bg);
-  border: 1px solid var(--soft-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-5);
+  border-right: 1px solid var(--soft-border);
 }
 
-.sectionTitle {
-  font-size: var(--text-base);
-  font-weight: var(--weight-semibold);
-  margin-bottom: var(--space-1);
-  color: var(--soft-fg); /* Must match card surface */
+.accordionBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
 }
 
-.sectionDesc {
+.formField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.fieldLabel {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--soft-fg-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.textInput {
+  padding: var(--space-2) var(--space-3);
+  background: var(--softer-bg);
+  border: 1px solid var(--softer-border);
+  border-radius: var(--radius-md);
   font-size: var(--text-sm);
-  color: var(--soft-fg-soft); /* Must match card surface */
-  margin-bottom: var(--space-4);
+  color: var(--softer-fg);
+}
+
+.textInput:focus {
+  outline: none;
+  border-color: var(--primary-bg);
+}
+
+.hint {
+  font-size: var(--text-xs);
+  color: var(--soft-fg-soft);
+  margin-bottom: var(--space-2);
 }
 
 /* Color Inputs */
 .colorGrid {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-3);
+}
+
+.colorRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
 }
 
 .colorInput {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.colorInputHeader {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
 }
 
 .colorInputLabel {
-  font-weight: var(--weight-medium);
-  font-size: var(--text-sm);
-  color: var(--soft-fg); /* Must match card surface */
-}
-
-.colorInputDesc {
   font-size: var(--text-xs);
-  color: var(--soft-fg-soft); /* Must match card surface */
+  font-weight: var(--weight-medium);
+  color: var(--soft-fg);
 }
 
 .colorInputControls {
@@ -97,11 +88,11 @@
 }
 
 .colorPicker {
-  width: 48px;
-  height: 36px;
+  width: 36px;
+  height: 28px;
   padding: 0;
   border: 1px solid var(--softer-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   cursor: pointer;
   background: transparent;
 }
@@ -111,106 +102,47 @@
 }
 
 .colorPicker::-webkit-color-swatch {
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-xs);
   border: none;
 }
 
 .colorHex {
   flex: 1;
-  padding: var(--space-2) var(--space-3);
+  min-width: 0;
+  padding: var(--space-1) var(--space-2);
   background: var(--softer-bg);
   border: 1px solid var(--softer-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   font-family: var(--font-mono);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
   color: var(--softer-fg);
 }
 
 .colorHex:focus {
   outline: none;
-  border-color: var(--softer-border-focus);
+  border-color: var(--primary-bg);
 }
 
 .colorHex::placeholder {
   color: var(--softer-fg-soft);
 }
 
-/* Border Radius Controls */
-.radiusControls {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-.radiusPresets {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--space-2);
-}
-
-.radiusPreset {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  background: var(--base-bg);
-  color: var(--base-fg); /* Must match control surface */
-  border: 1px solid var(--base-border);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all var(--duration-fast) var(--ease-default);
-}
-
-.radiusPreset:hover {
-  background: var(--base-bg-hover);
-  border-color: var(--base-border-hover);
-}
-
-.radiusPresetActive {
-  background: var(--primary-bg);
-  border-color: var(--primary-bg);
-  color: var(--primary-fg);
-}
-
-.radiusPreview {
-  width: 28px;
-  height: 28px;
-  background: currentColor;
-  opacity: 0.2;
-}
-
-.radiusPresetActive .radiusPreview {
-  opacity: 0.3;
-}
-
-.radiusLabel {
-  font-size: var(--text-xs);
-  font-weight: var(--weight-medium);
-}
-
 /* Slider */
-.sliderGroup {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.sliderLabel {
+.sliderHeader {
   display: flex;
   justify-content: space-between;
-  font-size: var(--text-sm);
-  color: var(--soft-fg-soft); /* Must match card surface */
+  align-items: center;
 }
 
 .sliderValue {
   font-family: var(--font-mono);
-  color: var(--soft-fg); /* Must match card surface */
+  font-size: var(--text-xs);
+  color: var(--soft-fg);
 }
 
 .slider {
   width: 100%;
-  height: 6px;
+  height: 4px;
   border-radius: var(--radius-full);
   background: var(--softer-bg);
   cursor: pointer;
@@ -219,105 +151,26 @@
 
 .slider::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   border-radius: var(--radius-full);
   background: var(--primary-bg);
   cursor: pointer;
 }
 
-/* Accessibility Toggle */
-.accessibilityToggle {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-3);
-}
-
-.accessibilityOption {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-4);
-  background: var(--base-bg);
-  color: var(--base-fg); /* Must match control surface */
-  border: 1px solid var(--base-border);
-  border-radius: var(--radius-lg);
-  cursor: pointer;
-  transition: all var(--duration-fast) var(--ease-default);
-}
-
-.accessibilityOption:hover {
-  background: var(--base-bg-hover);
-}
-
-.accessibilityActive {
-  background: var(--primary-bg);
-  border-color: var(--primary-bg);
-  color: var(--primary-fg);
-}
-
-.accessibilityLevel {
-  font-size: var(--text-xl);
-  font-weight: var(--weight-bold);
-}
-
-.accessibilityRatio {
-  font-size: var(--text-sm);
-  font-family: var(--font-mono);
-  opacity: 0.8;
-}
-
-.accessibilityDesc {
-  font-size: var(--text-xs);
-  opacity: 0.7;
-}
-
 /* Export Buttons */
 .exportButtons {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-3);
-}
-
-.exportButton {
-  padding: var(--space-3);
-  background: var(--base-bg);
-  color: var(--base-fg);
-  border: 1px solid var(--base-border);
-  border-radius: var(--radius-md);
-  font-weight: var(--weight-medium);
-  cursor: pointer;
-  transition: all var(--duration-fast) var(--ease-default);
-}
-
-.exportButton:hover {
-  background: var(--base-bg-hover);
-}
-
-.exportButtonPrimary {
-  padding: var(--space-3);
-  background: var(--primary-bg);
-  color: var(--primary-fg);
-  border: none;
-  border-radius: var(--radius-md);
-  font-weight: var(--weight-semibold);
-  cursor: pointer;
-  transition: all var(--duration-fast) var(--ease-default);
-}
-
-.exportButtonPrimary:hover {
-  background: var(--primary-bg-hover);
+  display: flex;
+  gap: var(--space-2);
 }
 
 /* Preview Panel */
-.preview {
-  background: var(--soft-bg);
-  border: 1px solid var(--soft-border);
-  border-radius: var(--radius-xl);
-  overflow: hidden;
+.previewPanel {
   display: flex;
   flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background: var(--base-bg);
 }
 
 .previewHeader {
@@ -325,42 +178,14 @@
   justify-content: space-between;
   align-items: center;
   padding: var(--space-3) var(--space-4);
-  background: var(--base-bg);
-  border-bottom: 1px solid var(--soft-border);
-}
-
-.previewTitle {
-  font-weight: var(--weight-medium);
-}
-
-.modeToggle {
-  display: flex;
-  gap: var(--space-1);
-  padding: var(--space-1);
-  background: var(--softer-bg);
-  border-radius: var(--radius-md);
-}
-
-.modeButton {
-  padding: var(--space-1) var(--space-3);
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-  color: var(--soft-fg-soft); /* Must match card surface */
-  cursor: pointer;
-  transition: all var(--duration-fast) var(--ease-default);
-}
-
-.modeButton:hover {
-  color: var(--soft-fg); /* Must match card surface */
-}
-
-.modeButtonActive {
   background: var(--soft-bg);
-  color: var(--soft-fg); /* Must match card surface */
-  box-shadow: var(--shadow-sm, 0 1px 2px var(--base-border));
+  border-bottom: 1px solid var(--soft-border);
+  flex-shrink: 0;
+}
+
+.previewActions {
+  display: flex;
+  gap: var(--space-2);
 }
 
 .previewContent {
@@ -369,7 +194,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
-  min-height: 500px;
+  overflow-y: auto;
   transition: background var(--duration-normal) var(--ease-default),
               color var(--duration-normal) var(--ease-default);
 }
@@ -381,7 +206,7 @@
 }
 
 .previewSectionTitle {
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
   font-weight: var(--weight-semibold);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -441,6 +266,32 @@
   gap: var(--space-3);
 }
 
+.formControlsGrid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.formControlRow {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.formControlRow > * {
+  flex: 1;
+  min-width: 150px;
+}
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 1;
+  min-width: 150px;
+}
+
 .inputPreview,
 .selectPreview {
   flex: 1;
@@ -488,7 +339,7 @@
   gap: var(--space-3);
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1000px) {
   .surfacesGrid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -499,7 +350,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  border: 1px solid var(--surface-border);
+  border: 1px solid;
   transition: all var(--duration-normal) var(--ease-default);
 }
 
@@ -510,7 +361,6 @@
 
 .surfacePreviewDesc {
   font-size: var(--text-xs);
-  color: var(--surface-fg-soft);
 }
 
 .surfacePreviewButton {
@@ -528,41 +378,17 @@
   filter: brightness(0.95);
 }
 
-/* Surface Inspector */
-.inspector {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  background: var(--soft-bg);
-  border: 1px solid var(--soft-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-5);
-  max-height: calc(100vh - 200px);
-  overflow-y: auto;
-}
-
-.inspectorTitle {
-  font-size: var(--text-base);
-  font-weight: var(--weight-semibold);
-  color: var(--soft-fg); /* Must match card surface */
-}
-
-.inspectorDesc {
-  font-size: var(--text-sm);
-  color: var(--soft-fg-soft); /* Must match card surface */
-  margin-top: calc(var(--space-1) * -1);
-}
-
+/* Surface List (Token Inspector) */
 .surfaceList {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-1);
 }
 
 .surfaceItem {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2);
   width: 100%;
   padding: var(--space-2);
   background: transparent;
@@ -583,15 +409,15 @@
 }
 
 .surfaceSwatch {
-  width: 36px;
-  height: 28px;
+  width: 28px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--text-xs);
+  font-size: 10px;
   font-weight: var(--weight-bold);
   border: 1px solid var(--soft-border);
-  transition: all var(--duration-normal) var(--ease-default);
+  flex-shrink: 0;
 }
 
 .surfaceInfo {
@@ -602,14 +428,14 @@
 .surfaceName {
   display: block;
   font-weight: var(--weight-medium);
-  font-size: var(--text-sm);
-  color: var(--soft-fg); /* Must match card surface */
+  font-size: var(--text-xs);
+  color: var(--soft-fg);
 }
 
 .surfaceDesc {
   display: block;
-  font-size: var(--text-xs);
-  color: var(--soft-fg-soft); /* Must match card surface */
+  font-size: 10px;
+  color: var(--soft-fg-soft);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -619,14 +445,15 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: var(--space-1);
+  gap: 2px;
+  flex-shrink: 0;
 }
 
 .contrastLevel {
-  font-size: var(--text-xs);
+  font-size: 9px;
   font-weight: var(--weight-bold);
-  padding: 1px 4px;
-  border-radius: var(--radius-sm);
+  padding: 1px 3px;
+  border-radius: var(--radius-xs);
 }
 
 .contrastAAA {
@@ -650,18 +477,18 @@
 }
 
 .contrastRatio {
-  font-size: var(--text-xs);
+  font-size: 9px;
   font-family: var(--font-mono);
-  color: var(--soft-fg-soft); /* Must match card surface */
+  color: var(--soft-fg-soft);
 }
 
 /* Token List */
 .tokenList {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: 2px;
   padding: var(--space-2);
-  margin-left: var(--space-6);
+  margin-left: var(--space-4);
   border-left: 2px solid var(--soft-border);
 }
 
@@ -670,7 +497,7 @@
   justify-content: space-between;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-1) var(--space-2);
+  padding: var(--space-1);
   background: transparent;
   border: none;
   border-radius: var(--radius-sm);
@@ -688,30 +515,24 @@
 }
 
 .tokenName {
-  font-size: var(--text-xs);
+  font-size: 10px;
   font-family: var(--font-mono);
-  color: var(--soft-fg-soft); /* Must match card surface */
+  color: var(--soft-fg-soft);
 }
 
 .tokenValue {
   display: flex;
   align-items: center;
   gap: var(--space-1);
-  font-size: var(--text-xs);
+  font-size: 10px;
   font-family: var(--font-mono);
-  color: var(--soft-fg); /* Must match card surface */
+  color: var(--soft-fg);
 }
 
 .tokenSwatch {
-  width: 12px;
-  height: 12px;
-  border-radius: var(--radius-sm);
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
   border: 1px solid var(--soft-border);
-}
-
-/* Responsive */
-@media (max-width: 1200px) {
-  .inspector {
-    max-height: none;
-  }
+  flex-shrink: 0;
 }

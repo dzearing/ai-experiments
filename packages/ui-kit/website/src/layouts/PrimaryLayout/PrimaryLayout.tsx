@@ -50,12 +50,6 @@ export function PrimaryLayout() {
       <main className={styles.main}>
         <PageTransition />
       </main>
-
-      <footer className={styles.footer}>
-        <div className={styles.footerContent}>
-          <p>Built with UI-Kit tokens. No external CSS frameworks.</p>
-        </div>
-      </footer>
     </div>
   );
 }

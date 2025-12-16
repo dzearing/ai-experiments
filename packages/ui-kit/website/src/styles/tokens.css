@@ -135,14 +135,6 @@
   --page-primary-bg: #2563eb;
   --page-primary-bg-hover: #1d4ed8;
 
-  /* Control Danger Surface */
-  --controlDanger-bg: #dc2626;
-  --controlDanger-bg-hover: #b91c1c;
-  --controlDanger-bg-pressed: #991b1b;
-  --controlDanger-text: #ffffff;
-  --controlDanger-border: transparent;
-  --controlDanger-shadow: none;
-
   /* Control Subtle Surface */
   --controlSubtle-bg: transparent;
   --controlSubtle-bg-hover: rgba(0, 0, 0, 0.04);
@@ -157,33 +149,37 @@
   --controlDisabled-text: #a3a3a3;
   --controlDisabled-border: #e5e5e5;
 
-  /* Success Surface */
-  --success-bg: #dcfce7;
-  --success-text: #166534;
-  --success-text-soft: #15803d;
-  --success-border: #16a34a;
-  --success-icon: #16a34a;
+  /* Danger Surface (solid - for buttons) */
+  --danger-bg: #dc2626;
+  --danger-bg-hover: #b91c1c;
+  --danger-bg-pressed: #991b1b;
+  --danger-fg: #ffffff;
+  --danger-border: transparent;
 
-  /* Warning Surface */
-  --warning-bg: #fef3c7;
-  --warning-text: #92400e;
-  --warning-text-soft: #b45309;
-  --warning-border: #f59e0b;
-  --warning-icon: #f59e0b;
+  /* Feedback Surfaces (tinted - for alerts/notifications) */
+  --feedback-success-bg: #dcfce7;
+  --feedback-success-fg: #166534;
+  --feedback-success-fg-soft: #15803d;
+  --feedback-success-border: #16a34a;
+  --feedback-success-icon: #16a34a;
 
-  /* Danger Surface */
-  --danger-bg: #fee2e2;
-  --danger-text: #991b1b;
-  --danger-text-soft: #b91c1c;
-  --danger-border: #dc2626;
-  --danger-icon: #dc2626;
+  --feedback-warning-bg: #fef3c7;
+  --feedback-warning-fg: #92400e;
+  --feedback-warning-fg-soft: #b45309;
+  --feedback-warning-border: #f59e0b;
+  --feedback-warning-icon: #f59e0b;
 
-  /* Info Surface */
-  --info-bg: #dbeafe;
-  --info-text: #1e40af;
-  --info-text-soft: #1d4ed8;
-  --info-border: #2563eb;
-  --info-icon: #2563eb;
+  --feedback-danger-bg: #fee2e2;
+  --feedback-danger-fg: #991b1b;
+  --feedback-danger-fg-soft: #b91c1c;
+  --feedback-danger-border: #dc2626;
+  --feedback-danger-icon: #dc2626;
+
+  --feedback-info-bg: #dbeafe;
+  --feedback-info-fg: #1e40af;
+  --feedback-info-fg-soft: #1d4ed8;
+  --feedback-info-border: #2563eb;
+  --feedback-info-icon: #2563eb;
 
   /* Special Tokens */
   --focus-ring: #2563eb;
@@ -240,27 +236,27 @@
 }
 
 .surface-success {
-  background: var(--success-bg);
-  color: var(--success-text);
-  border-color: var(--success-border);
+  background: var(--feedback-success-bg);
+  color: var(--feedback-success-fg);
+  border-color: var(--feedback-success-border);
 }
 
 .surface-warning {
-  background: var(--warning-bg);
-  color: var(--warning-text);
-  border-color: var(--warning-border);
+  background: var(--feedback-warning-bg);
+  color: var(--feedback-warning-fg);
+  border-color: var(--feedback-warning-border);
 }
 
 .surface-danger {
-  background: var(--danger-bg);
-  color: var(--danger-text);
-  border-color: var(--danger-border);
+  background: var(--feedback-danger-bg);
+  color: var(--feedback-danger-fg);
+  border-color: var(--feedback-danger-border);
 }
 
 .surface-info {
-  background: var(--info-bg);
-  color: var(--info-text);
-  border-color: var(--info-border);
+  background: var(--feedback-info-bg);
+  color: var(--feedback-info-fg);
+  border-color: var(--feedback-info-border);
 }
 
 /* ===========================================
@@ -338,14 +334,6 @@
   --controlPrimary-border: transparent;
   --controlPrimary-shadow: none;
 
-  /* Control Danger Surface */
-  --controlDanger-bg: #ef4444;
-  --controlDanger-bg-hover: #f87171;
-  --controlDanger-bg-pressed: #fca5a5;
-  --controlDanger-text: #ffffff;
-  --controlDanger-border: transparent;
-  --controlDanger-shadow: none;
-
   /* Control Subtle Surface */
   --controlSubtle-bg: transparent;
   --controlSubtle-bg-hover: rgba(255, 255, 255, 0.08);
@@ -360,33 +348,37 @@
   --controlDisabled-text: #525252;
   --controlDisabled-border: #2a2a2a;
 
-  /* Success Surface */
-  --success-bg: #052e16;
-  --success-text: #86efac;
-  --success-text-soft: #4ade80;
-  --success-border: #22c55e;
-  --success-icon: #22c55e;
+  /* Danger Surface (solid - for buttons) */
+  --danger-bg: #ef4444;
+  --danger-bg-hover: #f87171;
+  --danger-bg-pressed: #fca5a5;
+  --danger-fg: #ffffff;
+  --danger-border: transparent;
 
-  /* Warning Surface */
-  --warning-bg: #422006;
-  --warning-text: #fde68a;
-  --warning-text-soft: #fcd34d;
-  --warning-border: #f59e0b;
-  --warning-icon: #f59e0b;
+  /* Feedback Surfaces (tinted - for alerts/notifications) */
+  --feedback-success-bg: #052e16;
+  --feedback-success-fg: #86efac;
+  --feedback-success-fg-soft: #4ade80;
+  --feedback-success-border: #22c55e;
+  --feedback-success-icon: #22c55e;
 
-  /* Danger Surface */
-  --danger-bg: #450a0a;
-  --danger-text: #fca5a5;
-  --danger-text-soft: #f87171;
-  --danger-border: #ef4444;
-  --danger-icon: #ef4444;
+  --feedback-warning-bg: #422006;
+  --feedback-warning-fg: #fde68a;
+  --feedback-warning-fg-soft: #fcd34d;
+  --feedback-warning-border: #f59e0b;
+  --feedback-warning-icon: #f59e0b;
 
-  /* Info Surface */
-  --info-bg: #172554;
-  --info-text: #93c5fd;
-  --info-text-soft: #60a5fa;
-  --info-border: #3b82f6;
-  --info-icon: #3b82f6;
+  --feedback-danger-bg: #450a0a;
+  --feedback-danger-fg: #fca5a5;
+  --feedback-danger-fg-soft: #f87171;
+  --feedback-danger-border: #ef4444;
+  --feedback-danger-icon: #ef4444;
+
+  --feedback-info-bg: #172554;
+  --feedback-info-fg: #93c5fd;
+  --feedback-info-fg-soft: #60a5fa;
+  --feedback-info-border: #3b82f6;
+  --feedback-info-icon: #3b82f6;
 
   /* Special Tokens */
   --focus-ring: #3b82f6;
@@ -1642,25 +1634,25 @@
 
 /* Feedback surfaces */
 .surface.success {
-  --surface-bg: var(--success-bg);
-  --surface-text: var(--success-text);
-  --surface-border: var(--success-border);
+  --surface-bg: var(--feedback-success-bg);
+  --surface-text: var(--feedback-success-fg);
+  --surface-border: var(--feedback-success-border);
 }
 
 .surface.warning {
-  --surface-bg: var(--warning-bg);
-  --surface-text: var(--warning-text);
-  --surface-border: var(--warning-border);
+  --surface-bg: var(--feedback-warning-bg);
+  --surface-text: var(--feedback-warning-fg);
+  --surface-border: var(--feedback-warning-border);
 }
 
 .surface.danger {
-  --surface-bg: var(--danger-bg);
-  --surface-text: var(--danger-text);
-  --surface-border: var(--danger-border);
+  --surface-bg: var(--feedback-danger-bg);
+  --surface-text: var(--feedback-danger-fg);
+  --surface-border: var(--feedback-danger-border);
 }
 
 .surface.info {
-  --surface-bg: var(--info-bg);
-  --surface-text: var(--info-text);
-  --surface-border: var(--info-border);
+  --surface-bg: var(--feedback-info-bg);
+  --surface-text: var(--feedback-info-fg);
+  --surface-border: var(--feedback-info-border);
 }

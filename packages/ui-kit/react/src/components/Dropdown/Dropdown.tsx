@@ -600,6 +600,20 @@ export function Dropdown<T = string>({
       disabled: !!option.disabled,
     };
 
+    // Check if this is a divider (by value or label pattern)
+    const isDivider = String(option.value) === 'divider' || String(option.value) === 'separator' || option.label.startsWith('─');
+
+    if (isDivider) {
+      return (
+        <div
+          key={String(option.value) + index}
+          className={`${styles.option} ${styles.divider}`}
+          role="separator"
+          aria-hidden="true"
+        />
+      );
+    }
+
     if (renderOption) {
       return (
         <button

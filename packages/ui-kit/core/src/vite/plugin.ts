@@ -190,6 +190,26 @@ export function uikit(options: UIKitPluginOptions = {}): Plugin {
     return null;
   }
 
+  /**
+   * Find the theme definitions directory from @ui-kit/core source
+   */
+  function findThemeDefinitionsDir(root: string): string | null {
+    // Try common locations
+    const candidates = [
+      // Monorepo sibling - source definitions
+      resolve(root, '../core/src/themes/definitions'),
+      // Node modules (not typically available in node_modules)
+    ];
+
+    for (const candidate of candidates) {
+      if (existsSync(candidate)) {
+        return candidate;
+      }
+    }
+
+    return null;
+  }
+
   return {
     name: 'vite-plugin-uikit',
 
@@ -217,14 +237,26 @@ export function uikit(options: UIKitPluginOptions = {}): Plugin {
       }
 
       // Copy theme CSS files
-      const files = readdirSync(themesSourceDir).filter(f => f.endsWith('.css'));
+      const cssFiles = readdirSync(themesSourceDir).filter(f => f.endsWith('.css'));
       let copied = 0;
 
-      for (const file of files) {
+      for (const file of cssFiles) {
         const src = resolve(themesSourceDir, file);
         const dest = resolve(outputDir, file);
         cpSync(src, dest);
         copied++;
+      }
+
+      // Also copy theme definition JSON files (for theme designer)
+      const definitionsDir = findThemeDefinitionsDir(config.root);
+      if (definitionsDir) {
+        const jsonFiles = readdirSync(definitionsDir).filter(f => f.endsWith('.json'));
+        for (const file of jsonFiles) {
+          const src = resolve(definitionsDir, file);
+          const dest = resolve(outputDir, file);
+          cpSync(src, dest);
+          copied++;
+        }
       }
 
       if (copied > 0) {

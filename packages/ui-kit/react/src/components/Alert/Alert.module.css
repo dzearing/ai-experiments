@@ -1,22 +1,22 @@
 .alert {
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-md);
-  border-left: 4px solid var(--success-border, currentColor);
+  border-left: 4px solid var(--feedback-success-border, currentColor);
 }
 
 /* Variant-specific border colors are handled by surface classes */
 .alert.surface-success {
-  border-left-color: var(--success-border);
+  border-left-color: var(--feedback-success-border);
 }
 
 .alert.surface-warning {
-  border-left-color: var(--warning-border);
+  border-left-color: var(--feedback-warning-border);
 }
 
 .alert.surface-danger {
-  border-left-color: var(--danger-border);
+  border-left-color: var(--feedback-danger-border);
 }
 
 .alert.surface-info {
-  border-left-color: var(--info-border);
+  border-left-color: var(--feedback-info-border);
 }

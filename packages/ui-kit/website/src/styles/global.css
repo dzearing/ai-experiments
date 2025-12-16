@@ -104,3 +104,43 @@ pre code {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--scrollbar-thumb-hover);
 }
+
+/* ================================================================
+   SURFACE UTILITY CLASSES
+   These apply semantic tokens to elements based on context.
+   The base .surface class is handled by the theme CSS files.
+   Feedback surfaces need explicit definitions here.
+   ================================================================ */
+
+/* Feedback Surfaces - for alerts, notifications, banners */
+.surface.success {
+  --surface-bg: var(--feedback-success-bg);
+  --surface-text: var(--feedback-success-fg);
+  --surface-border: var(--feedback-success-border);
+  background: var(--surface-bg);
+  color: var(--surface-text);
+}
+
+.surface.warning {
+  --surface-bg: var(--feedback-warning-bg);
+  --surface-text: var(--feedback-warning-fg);
+  --surface-border: var(--feedback-warning-border);
+  background: var(--surface-bg);
+  color: var(--surface-text);
+}
+
+.surface.danger {
+  --surface-bg: var(--feedback-danger-bg);
+  --surface-text: var(--feedback-danger-fg);
+  --surface-border: var(--feedback-danger-border);
+  background: var(--surface-bg);
+  color: var(--surface-text);
+}
+
+.surface.info {
+  --surface-bg: var(--feedback-info-bg);
+  --surface-text: var(--feedback-info-fg);
+  --surface-border: var(--feedback-info-border);
+  background: var(--surface-bg);
+  color: var(--surface-text);
+}

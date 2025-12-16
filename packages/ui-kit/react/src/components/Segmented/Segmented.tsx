@@ -110,7 +110,7 @@ export function Segmented({
   // Get enabled options for keyboard navigation
   const enabledOptions = options.filter((opt) => !opt.disabled);
 
-  // Update indicator position
+  // Update indicator position - always use pixel-based positioning from actual DOM measurements
   const updateIndicator = useCallback(() => {
     const activeSegment = segmentRefs.current.get(activeValue);
     const container = containerRef.current;
@@ -119,11 +119,15 @@ export function Segmented({
       const segmentRect = activeSegment.getBoundingClientRect();
       const containerRect = container.getBoundingClientRect();
 
+      // Account for container border (clientLeft/clientTop give border width)
+      const borderLeft = container.clientLeft;
+      const borderRight = container.clientLeft; // Same as left for uniform borders
+
       // Account for RTL
       const isRTL = getComputedStyle(container).direction === 'rtl';
       const left = isRTL
-        ? containerRect.right - segmentRect.right
-        : segmentRect.left - containerRect.left;
+        ? containerRect.right - segmentRect.right - borderRight
+        : segmentRect.left - containerRect.left - borderLeft;
 
       setIndicatorStyle({
         left,
@@ -144,11 +148,20 @@ export function Segmented({
     }
   }, [activeValue, options, updateIndicator, isInitialRender]);
 
-  // Update indicator on window resize
+  // Use ResizeObserver to handle container resizes
   useEffect(() => {
-    const handleResize = () => updateIndicator();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    const container = containerRef.current;
+    if (!container) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateIndicator();
+    });
+
+    resizeObserver.observe(container);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
   }, [updateIndicator]);
 
   const handleSegmentClick = (value: string) => {

@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
+import { ToastProvider } from '@ui-kit/react';
 import { PrimaryLayout } from './layouts/PrimaryLayout';
 import { LessonLayout } from './layouts/LessonLayout';
 import { HomePage } from './pages/Home/HomePage';
@@ -16,6 +17,7 @@ import { ThemeDesignerPage } from './pages/Themes/ThemeDesignerPage';
 
 export function App() {
   return (
+    <ToastProvider position="bottom-right">
     <Routes>
       <Route path="/" element={<PrimaryLayout />}>
         <Route index element={<HomePage />} />
@@ -74,5 +76,6 @@ export function App() {
         <Route path="themes/designer" element={<ThemeDesignerPage />} />
       </Route>
     </Routes>
+    </ToastProvider>
   );
 }
