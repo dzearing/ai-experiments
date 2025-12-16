@@ -360,7 +360,7 @@
 .modeButtonActive {
   background: var(--soft-bg);
   color: var(--soft-fg); /* Must match card surface */
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm, 0 1px 2px var(--base-border));
 }
 
 .previewContent {
@@ -418,7 +418,7 @@
 }
 
 .btnSubtle:hover {
-  background: rgba(128, 128, 128, 0.1);
+  background: var(--base-bg-hover);
 }
 
 .cardPreview {
@@ -477,7 +477,7 @@
 .previewSectionDesc code {
   font-family: var(--font-mono);
   font-size: 0.9em;
-  background: rgba(0, 0, 0, 0.08);
+  background: var(--softer-bg);
   padding: 2px 6px;
   border-radius: var(--radius-sm);
 }
@@ -516,18 +516,16 @@
 .surfacePreviewButton {
   margin-top: var(--space-2);
   padding: var(--space-2) var(--space-3);
-  background: var(--base-bg);
-  color: var(--base-fg);
-  border: 1px solid var(--base-border);
+  border: 1px solid;
   font-family: inherit;
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
   cursor: pointer;
-  transition: background var(--duration-fast) var(--ease-default);
+  transition: filter var(--duration-fast) var(--ease-default);
 }
 
 .surfacePreviewButton:hover {
-  background: var(--base-bg-hover);
+  filter: brightness(0.95);
 }
 
 /* Surface Inspector */
@@ -592,7 +590,7 @@
   justify-content: center;
   font-size: var(--text-xs);
   font-weight: var(--weight-bold);
-  border: 1px solid rgba(128, 128, 128, 0.2);
+  border: 1px solid var(--soft-border);
   transition: all var(--duration-normal) var(--ease-default);
 }
 
@@ -632,23 +630,23 @@
 }
 
 .contrastAAA {
-  background: #059669;
-  color: white;
+  background: var(--success-bg);
+  color: var(--success-fg);
 }
 
 .contrastAA {
-  background: #2563eb;
-  color: white;
+  background: var(--primary-bg);
+  color: var(--primary-fg);
 }
 
 .contrastAAlarge {
-  background: #d97706;
-  color: white;
+  background: var(--warning-bg);
+  color: var(--warning-fg);
 }
 
 .contrastFail {
-  background: #dc2626;
-  color: white;
+  background: var(--danger-bg);
+  color: var(--danger-fg);
 }
 
 .contrastRatio {
@@ -708,7 +706,7 @@
   width: 12px;
   height: 12px;
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(128, 128, 128, 0.2);
+  border: 1px solid var(--soft-border);
 }
 
 /* Responsive */

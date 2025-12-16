@@ -55,6 +55,146 @@ const TONAL_SURFACES = [
   { name: 'primary', label: 'Primary', description: 'Branded sections' },
 ] as const;
 
+// Helper to adjust hex color lightness
+function adjustLightness(hex: string, amount: number): string {
+  // Parse hex
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+
+  // Adjust each channel
+  const adjust = (c: number) => Math.max(0, Math.min(255, c + amount));
+  const nr = adjust(r);
+  const ng = adjust(g);
+  const nb = adjust(b);
+
+  return `#${nr.toString(16).padStart(2, '0')}${ng.toString(16).padStart(2, '0')}${nb.toString(16).padStart(2, '0')}`;
+}
+
+// Map tonal surface names to distinct visual colors for the preview
+function getSurfaceTokenMapping(surfaceName: string, tokens: Record<string, string>, isDark: boolean): {
+  bg: string;
+  text: string;
+  border: string;
+  buttonBg: string;
+  buttonText: string;
+  buttonBorder: string;
+} {
+  // Use the generated page colors as the base, then derive distinct surfaces
+  const pageBg = tokens['--page-bg'];
+  const pageText = tokens['--page-text'];
+  const pageBorder = tokens['--page-border'];
+  const controlBg = tokens['--control-bg'];
+  const controlText = tokens['--control-text'];
+  const controlBorder = tokens['--control-border'];
+
+  // In dark mode, lighter = higher values. In light mode, darker = lower values.
+  // We use larger offsets to make surfaces more visually distinct.
+  const step = isDark ? 15 : -10;
+
+  switch (surfaceName) {
+    case 'base':
+      // Page default - the baseline
+      return {
+        bg: pageBg,
+        text: pageText,
+        border: pageBorder,
+        buttonBg: controlBg,
+        buttonText: controlText,
+        buttonBorder: controlBorder,
+      };
+    case 'raised':
+      // Elevated content - noticeably lighter in dark mode, darker in light mode
+      return {
+        bg: adjustLightness(pageBg, step * 2),
+        text: pageText,
+        border: adjustLightness(pageBorder, step),
+        buttonBg: controlBg,
+        buttonText: controlText,
+        buttonBorder: controlBorder,
+      };
+    case 'sunken':
+      // Recessed areas - darker in dark mode, lighter in light mode
+      return {
+        bg: adjustLightness(pageBg, -step),
+        text: pageText,
+        border: adjustLightness(pageBorder, -step),
+        buttonBg: controlBg,
+        buttonText: controlText,
+        buttonBorder: controlBorder,
+      };
+    case 'soft':
+      // Subtle background - slightly different from base
+      return {
+        bg: adjustLightness(pageBg, step),
+        text: pageText,
+        border: pageBorder,
+        buttonBg: controlBg,
+        buttonText: controlText,
+        buttonBorder: controlBorder,
+      };
+    case 'softer':
+      // Very subtle - even closer to base
+      return {
+        bg: adjustLightness(pageBg, Math.round(step * 0.5)),
+        text: pageText,
+        border: pageBorder,
+        buttonBg: controlBg,
+        buttonText: controlText,
+        buttonBorder: controlBorder,
+      };
+    case 'strong':
+      // Emphasized - uses control background for stronger presence
+      return {
+        bg: controlBg,
+        text: controlText,
+        border: controlBorder,
+        buttonBg: pageBg,
+        buttonText: pageText,
+        buttonBorder: pageBorder,
+      };
+    case 'stronger':
+      // Very emphasized - even more distinct
+      return {
+        bg: adjustLightness(controlBg, step),
+        text: controlText,
+        border: adjustLightness(controlBorder, step),
+        buttonBg: pageBg,
+        buttonText: pageText,
+        buttonBorder: pageBorder,
+      };
+    case 'inverted':
+      // Opposite color scheme
+      return {
+        bg: isDark ? '#fafafa' : '#0f0f0f',
+        text: isDark ? '#171717' : '#e5e5e5',
+        border: isDark ? '#e5e5e5' : '#2a2a2a',
+        buttonBg: isDark ? '#e5e5e5' : '#2a2a2a',
+        buttonText: isDark ? '#171717' : '#e5e5e5',
+        buttonBorder: isDark ? '#d4d4d4' : '#404040',
+      };
+    case 'primary':
+      // Branded sections using the primary color
+      return {
+        bg: tokens['--controlPrimary-bg'],
+        text: tokens['--controlPrimary-text'],
+        border: tokens['--controlPrimary-bg'],
+        buttonBg: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.3)',
+        buttonText: tokens['--controlPrimary-text'],
+        buttonBorder: 'transparent',
+      };
+    default:
+      return {
+        bg: pageBg,
+        text: pageText,
+        border: pageBorder,
+        buttonBg: controlBg,
+        buttonText: controlText,
+        buttonBorder: controlBorder,
+      };
+  }
+}
+
 export function ThemeDesignerPage() {
   const [config, setConfig] = useState<ThemeConfig>(DEFAULT_CONFIG);
   const [previewMode, setPreviewMode] = useState<'light' | 'dark'>('light');
@@ -464,22 +604,35 @@ export function ThemeDesignerPage() {
                 Components inside adapt automatically.
               </p>
               <div className={styles.surfacesGrid}>
-                {TONAL_SURFACES.map(({ name, label, description }) => (
-                  <div
-                    key={name}
-                    className={`surface ${name} ${styles.surfacePreview}`}
-                    style={{ borderRadius: generatedTheme.tokens['--radius-lg'] }}
-                  >
-                    <span className={styles.surfacePreviewLabel}>{label}</span>
-                    <span className={styles.surfacePreviewDesc}>{description}</span>
-                    <button
-                      className={styles.surfacePreviewButton}
-                      style={{ borderRadius: generatedTheme.tokens['--radius-md'] }}
+                {TONAL_SURFACES.map(({ name, label, description }) => {
+                  const surfaceTokens = getSurfaceTokenMapping(name, generatedTheme.tokens, previewMode === 'dark');
+                  return (
+                    <div
+                      key={name}
+                      className={styles.surfacePreview}
+                      style={{
+                        background: surfaceTokens.bg,
+                        color: surfaceTokens.text,
+                        borderColor: surfaceTokens.border,
+                        borderRadius: generatedTheme.tokens['--radius-lg'],
+                      }}
                     >
-                      Button
-                    </button>
-                  </div>
-                ))}
+                      <span className={styles.surfacePreviewLabel}>{label}</span>
+                      <span className={styles.surfacePreviewDesc} style={{ color: surfaceTokens.text, opacity: 0.7 }}>{description}</span>
+                      <button
+                        className={styles.surfacePreviewButton}
+                        style={{
+                          background: surfaceTokens.buttonBg,
+                          color: surfaceTokens.buttonText,
+                          borderColor: surfaceTokens.buttonBorder,
+                          borderRadius: generatedTheme.tokens['--radius-md'],
+                        }}
+                      >
+                        Button
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
