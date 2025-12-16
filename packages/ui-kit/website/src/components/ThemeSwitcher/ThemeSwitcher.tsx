@@ -47,14 +47,6 @@ export function ThemeSwitcher() {
 
   return (
     <div className={styles.switcher}>
-      <Segmented
-        options={modeOptions}
-        value={mode}
-        onChange={handleModeChange}
-        iconOnly
-        aria-label="Color mode"
-      />
-
       <Dropdown
         options={themeOptions}
         value={theme}
@@ -62,6 +54,14 @@ export function ThemeSwitcher() {
         placeholder="Theme"
         position="bottom-end"
         size="sm"
+      />
+
+      <Segmented
+        options={modeOptions}
+        value={mode}
+        onChange={handleModeChange}
+        iconOnly
+        aria-label="Color mode"
       />
     </div>
   );

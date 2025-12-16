@@ -104,12 +104,13 @@ export function SurfacesPage() {
         </p>
 
         <div className={surfaceStyles.surfaceGrid}>
-          <SurfaceDemo label="base" className="base" />
+          <SurfaceDemo label="base" />
           <SurfaceDemo label="raised" className="raised" />
           <SurfaceDemo label="sunken" className="sunken" />
-          <SurfaceDemo label="section" className="section" />
-          <SurfaceDemo label="section2" className="section2" />
-          <SurfaceDemo label="section3" className="section3" />
+          <SurfaceDemo label="soft" className="soft" />
+          <SurfaceDemo label="softer" className="softer" />
+          <SurfaceDemo label="strong" className="strong" />
+          <SurfaceDemo label="stronger" className="stronger" />
           <SurfaceDemo label="inverted" className="inverted" />
           <SurfaceDemo label="primary" className="primary" />
         </div>
@@ -162,8 +163,12 @@ export function SurfacesPage() {
             <span>Input wells, code blocks, recessed areas</span>
           </div>
           <div className={styles.tokenItem}>
-            <code>section / section2 / section3</code>
-            <span>Command areas, sidebars, region separation (progressive emphasis)</span>
+            <code>soft / softer</code>
+            <span>Subtle backgrounds, slightly muted areas</span>
+          </div>
+          <div className={styles.tokenItem}>
+            <code>strong / stronger</code>
+            <span>Emphasized sections, command areas, region separation</span>
           </div>
           <div className={styles.tokenItem}>
             <code>inverted</code>

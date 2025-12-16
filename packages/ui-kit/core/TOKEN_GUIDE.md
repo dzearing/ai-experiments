@@ -1,40 +1,135 @@
 # UI Kit Token Guide
 
-This guide provides a comprehensive reference for using UI Kit design tokens. Tokens are CSS custom properties that ensure consistent styling across all components.
+This guide provides a comprehensive reference for using UI Kit design tokens. Tokens are CSS custom properties that ensure consistent styling and accessibility across all components.
 
 For a quick reference, see `/docs/guides/TOKEN_CHEATSHEET.md`.
 
 ---
 
-## The Golden Rule: Pair Tokens from the Same Role
+## The Golden Rule: Stay Within Your Color Group
 
-**To ensure accessible contrast, always use matching `-bg` and `-text` tokens from the same role:**
+**Pick a color group for your background, use ONLY that group's tokens for text and borders. Contrast is guaranteed.**
 
 ```css
-/* ✅ CORRECT - same role guarantees contrast */
+/* ✅ CORRECT - all tokens from the same group */
 .primary-button {
-  background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+  border: 1px solid var(--primary-border);
 }
 
-/* ❌ WRONG - mixing roles breaks contrast */
+/* ❌ WRONG - mixing groups breaks contrast */
 .broken {
-  background: var(--controlPrimary-bg);
-  color: var(--page-text);  /* May not be readable! */
+  background: var(--primary-bg);
+  color: var(--base-fg);  /* May not be readable! */
+}
+```
+
+This is the core accessibility principle of the token system. Each color group contains foreground tokens that are calculated specifically for that group's background. Mixing tokens from different groups does not guarantee accessible contrast.
+
+---
+
+## Color Groups
+
+The color group system provides 18 tokens per group. Each group includes:
+- **4 background states**: `bg`, `bg-hover`, `bg-pressed`, `bg-disabled`
+- **4 border states**: `border`, `border-hover`, `border-pressed`, `border-disabled`
+- **10 foreground variants**: `fg`, `fg-soft`, `fg-softer`, `fg-strong`, `fg-stronger`, `fg-primary`, `fg-danger`, `fg-success`, `fg-warning`, `fg-info`
+
+### Tonal Groups
+
+Tonal groups create visual hierarchy through lightness variation:
+
+| Group | Description | Usage |
+|-------|-------------|-------|
+| `softer` | Darkest in light mode, recessed | Input backgrounds, wells, code blocks |
+| `soft` | Slightly elevated | Cards, panels, alternating rows |
+| `base` | Page background | Default starting point |
+| `strong` | Emphasized | Default buttons, highlights |
+| `stronger` | Maximum emphasis | Very strong emphasis without semantic color |
+
+### Semantic Groups
+
+Semantic groups carry meaning through color:
+
+| Group | Description | Usage |
+|-------|-------------|-------|
+| `primary` | Brand color | Primary buttons, selected states, active elements |
+| `inverted` | Opposite scheme | Tooltips (dark in light mode, light in dark mode) |
+| `success` | Positive outcomes | Success toasts, confirmations |
+| `warning` | Caution states | Warning toasts, attention needed |
+| `danger` | Errors/destructive | Error toasts, destructive alerts |
+| `info` | Informational | Info toasts, neutral status |
+
+---
+
+## Token Structure
+
+### Background Tokens
+```css
+--{group}-bg              /* Default background */
+--{group}-bg-hover        /* Hover state */
+--{group}-bg-pressed      /* Active/pressed state */
+--{group}-bg-disabled     /* Disabled state */
+```
+
+### Border Tokens
+```css
+--{group}-border          /* Default border */
+--{group}-border-hover    /* Hover state */
+--{group}-border-pressed  /* Active/pressed state */
+--{group}-border-disabled /* Disabled state */
+```
+
+### Foreground Tokens (Text)
+```css
+--{group}-fg              /* Primary text */
+--{group}-fg-soft         /* Secondary text (less contrast) */
+--{group}-fg-softer       /* Tertiary text (subtle) */
+--{group}-fg-strong       /* Emphasized text */
+--{group}-fg-stronger     /* Maximum emphasis */
+```
+
+### Semantic Foreground Tokens
+Each group includes semantic foreground colors that are guaranteed accessible on that group's background:
+
+```css
+--{group}-fg-primary      /* Accent/link color on this background */
+--{group}-fg-danger       /* Error color on this background */
+--{group}-fg-success      /* Success color on this background */
+--{group}-fg-warning      /* Warning color on this background */
+--{group}-fg-info         /* Info color on this background */
+```
+
+**Example:**
+```css
+.card {
+  background: var(--soft-bg);
+}
+
+/* Need a primary-colored link on the soft background? */
+.card-link {
+  color: var(--soft-fg-primary);  /* Guaranteed accessible on --soft-bg */
+}
+
+/* NOT this - contrast is not guaranteed */
+.card-link {
+  color: var(--primary-fg);  /* Wrong! --primary-fg is for --primary-bg */
 }
 ```
 
 ---
 
-## Understanding Surfaces
+## Surfaces
 
-Surfaces are CSS classes that create distinct visual contexts for UI regions. They solve a critical accessibility problem: **ensuring components remain readable when placed on different backgrounds**.
+Surfaces are CSS classes that reset and override color group tokens for specific visual contexts. They solve a critical accessibility problem: **ensuring components remain readable when placed on different backgrounds**.
 
-### The Problem Surfaces Solve
+### The Reset/Override Pattern
 
-When you place a button on a dark sidebar, the button's `--control-bg` token might not provide enough contrast. Without surfaces, you'd need to manually override every component's colors for each background type.
-
-Surfaces automatically reset and override tokens to ensure all components within them have proper contrast:
+Every `.surface` element:
+1. **Resets ALL tokens** to page defaults
+2. **Applies overrides** specific to that surface variant
+3. **Nested surfaces automatically reset** - no compounding issues
 
 ```html
 <!-- Components inside a surface automatically get appropriate token values -->
@@ -42,303 +137,151 @@ Surfaces automatically reset and override tokens to ensure all components within
   <button>This button works correctly</button>
 </div>
 
-<div class="surface inverted">
-  <button>This button also works correctly (with inverted colors)</button>
-</div>
-```
-
-### The Reset/Override Pattern
-
-Every `.surface` element:
-1. **Resets ALL scoped tokens** to page defaults
-2. **Applies overrides** specific to that surface variant
-3. **Nested surfaces automatically reset** - no compounding issues
-
-```css
-/* The .surface class resets tokens to page values */
-.surface {
-  --surface-bg: var(--page-bg);
-  --surface-text: var(--page-text);
-  /* ... all tokens reset */
-}
-
-/* Modifiers apply specific overrides */
-.surface.raised {
-  --surface-bg: #ffffff;
-  --surface-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-```
-
-### Tonal Surfaces
-
-Tonal surfaces adjust the visual "elevation" or "depth" of content areas:
-
-| Surface | Usage | Description |
-|---------|-------|-------------|
-| `.surface.base` | Explicit reset | Same as page (when you need to break out of a parent surface) |
-| `.surface.raised` | Cards, panels | Elevated/lighter than page |
-| `.surface.sunken` | Sidebars, wells | Recessed/darker than page |
-| `.surface.soft` | Subtle sections | Slightly muted background |
-| `.surface.softer` | Very subtle sections | More muted background |
-| `.surface.strong` | Emphasized sections | Higher contrast background |
-| `.surface.stronger` | Very emphasized | Highest contrast background |
-| `.surface.inverted` | Tooltips, callouts | Opposite color scheme (dark in light mode, light in dark mode) |
-| `.surface.primary` | Teaching bubbles, branded sections | Primary color background |
-
-### Feedback Surfaces
-
-Feedback surfaces provide semantic color contexts:
-
-| Surface | Usage |
-|---------|-------|
-| `.surface.success` | Success messages, confirmations |
-| `.surface.warning` | Warning messages, caution states |
-| `.surface.danger` | Error messages, destructive states |
-| `.surface.info` | Informational messages |
-
-### Using Surfaces
-
-```html
-<!-- Card with elevated surface -->
-<div class="surface raised" style="padding: var(--space-4); border-radius: var(--radius-lg);">
-  <h2>Card Title</h2>
-  <p>Card content with proper contrast</p>
-  <button>Action</button>
-</div>
-
-<!-- Tooltip with inverted colors -->
-<div class="surface inverted" style="padding: var(--space-2); border-radius: var(--radius-md);">
-  Helpful tooltip text
-</div>
-
-<!-- Success banner -->
-<div class="surface success" style="padding: var(--space-3);">
-  Operation completed successfully!
-</div>
-
 <!-- Nested surfaces reset properly -->
 <div class="surface sunken">
   <p>Sunken area</p>
   <div class="surface raised">
-    <p>Raised card inside sunken area - tokens reset, no compounding</p>
+    <p>Raised card inside - tokens reset, no compounding</p>
   </div>
 </div>
 ```
 
-### Surface-Scoped Tokens
+### Tonal Surfaces
 
-When inside a `.surface` class, use `--surface-*` tokens for the current context:
+| Surface | Usage |
+|---------|-------|
+| `.surface.base` | Explicit reset to page defaults |
+| `.surface.raised` | Cards, panels, dialogs, modals |
+| `.surface.sunken` | Input wells, sidebars, recessed areas |
+| `.surface.section` | Command areas, region separation |
+| `.surface.section2` | Secondary region emphasis |
+| `.surface.section3` | Tertiary region emphasis |
+| `.surface.inverted` | Tooltips, callouts (opposite scheme) |
+| `.surface.primary` | Teaching bubbles, branded hero sections |
 
-```css
-.my-component {
-  background: var(--surface-bg);
-  color: var(--surface-text);
-  border-color: var(--surface-border);
-}
-```
+### Feedback Surfaces
+
+| Surface | Usage |
+|---------|-------|
+| `.surface.success` | Success toasts, notifications |
+| `.surface.warning` | Warning toasts, notifications |
+| `.surface.danger` | Error toasts, notifications |
+| `.surface.info` | Info toasts, notifications |
 
 ---
 
 ## Quick Reference
 
-### When to Use Which Token
+### When to Use Which Tokens
 
 | I want to style... | Use these tokens |
 |-------------------|------------------|
-| Page background | `--page-bg` |
-| Card/Panel background | `--card-bg` |
-| Input field background | `--inset-bg` |
-| Primary button | `--controlPrimary-bg`, `--controlPrimary-text` |
-| Secondary button | `--control-bg`, `--control-text` |
-| Ghost/subtle button | `--controlSubtle-bg`, `--controlSubtle-text` |
-| Danger button | `--controlDanger-bg`, `--controlDanger-text` |
-| Disabled control | `--controlDisabled-bg`, `--controlDisabled-text` |
-| Primary text | `--page-text` or `--card-text` |
-| Secondary text | `--page-text-soft` or `--card-text-soft` |
-| Tertiary text | `--page-text-softer` or `--card-text-softer` |
-| Strong text | `--page-text-strong` or `--card-text-strong` |
-| Strongest text | `--page-text-stronger` or `--card-text-stronger` |
-| Borders | `--page-border`, `--card-border`, `--control-border` |
-| Subtle borders | `--page-border-soft`, `--card-border-soft` |
-| Strong borders | `--page-border-strong`, `--card-border-strong` |
+| Page background | `--base-bg` |
+| Card/panel | `--soft-bg`, `--soft-fg`, `--soft-border` |
+| Input field | `--softer-bg`, `--softer-fg`, `--softer-border` |
+| Primary button | `--primary-bg`, `--primary-fg` |
+| Default button | `--strong-bg`, `--strong-fg`, `--strong-border` |
+| Outline button | `--base-bg`, `--base-fg`, `--base-border` |
+| Tooltip | `--inverted-bg`, `--inverted-fg` |
+| Primary text | `--base-fg` |
+| Secondary text | `--base-fg-soft` |
+| Tertiary text | `--base-fg-softer` |
+| Emphasized text | `--base-fg-strong` |
+| Links on page | `--base-fg-primary` |
+| Error text on page | `--base-fg-danger` |
+| Borders | `--base-border` |
 | Focus ring | `--focus-ring`, `--focus-ring-width`, `--focus-ring-offset` |
 
 ---
 
-## Token Categories
+## Static Tokens
 
-### 1. Container Tokens (Static Backgrounds)
+These tokens don't change based on color mode and can be used anywhere.
 
-Container tokens are for static background regions that don't have interactive states.
+### Spacing (4px Grid)
 
-#### Page (Main Background)
 ```css
---page-bg              /* Main app background */
---page-text            /* Primary text */
---page-text-soft       /* Secondary text (30% less contrast) */
---page-text-softer     /* Tertiary text (50% less contrast) */
---page-text-strong     /* Higher contrast text (30% toward maximum) */
---page-text-stronger   /* Maximum contrast text */
---page-border          /* Standard borders */
---page-border-soft     /* Subtle borders (less contrast) */
---page-border-strong   /* Higher contrast borders */
---page-border-stronger /* Maximum contrast borders */
+--space-1              /* 4px */
+--space-2              /* 8px */
+--space-3              /* 12px */
+--space-4              /* 16px - base unit */
+--space-5              /* 20px */
+--space-6              /* 24px */
+--space-8              /* 32px */
+--space-10             /* 40px */
+--space-12             /* 48px */
+--space-16             /* 64px */
+--space-20             /* 80px */
+--space-24             /* 96px */
 ```
 
-#### Card (Elevated Containers)
+### Typography
+
 ```css
---card-bg              /* Card/panel background */
---card-text            /* Primary text on card */
---card-text-soft       /* Secondary text on card */
---card-text-strong     /* Higher contrast text */
---card-text-stronger   /* Maximum contrast text */
---card-border          /* Card border */
---card-border-soft     /* Subtle border */
---card-border-strong   /* Higher contrast border */
---card-border-stronger /* Maximum contrast border */
---card-shadow          /* Card shadow */
+/* Font Families */
+--font-sans            /* System sans-serif stack */
+--font-mono            /* Monospace font stack */
+--font-serif           /* Serif font stack */
+
+/* Font Sizes */
+--text-xs              /* 11px */
+--text-sm              /* 13px */
+--text-base            /* 15px - default */
+--text-lg              /* 17px */
+--text-xl              /* 20px */
+--text-2xl             /* 24px */
+--text-3xl             /* 30px */
+--text-4xl             /* 36px */
+
+/* Font Weights */
+--weight-normal        /* 400 */
+--weight-medium        /* 500 */
+--weight-semibold      /* 600 */
+--weight-bold          /* 700 */
+
+/* Line Heights */
+--leading-tight        /* 1.25 */
+--leading-snug         /* 1.375 */
+--leading-normal       /* 1.5 */
+--leading-relaxed      /* 1.625 */
+--leading-loose        /* 1.75 */
 ```
 
-#### Inset (Recessed Areas - Inputs, Wells)
+### Border Radius
+
 ```css
---inset-bg             /* Default background */
---inset-bg-hover       /* Hover state */
---inset-bg-focus       /* Focus state */
---inset-text           /* Text color */
---inset-text-soft      /* Placeholder/hint text */
---inset-border         /* Border */
---inset-border-focus   /* Focus border (often same as --focus-ring) */
+--radius-sm            /* 2px */
+--radius-md            /* 4px - default for buttons */
+--radius-lg            /* 8px - default for cards */
+--radius-xl            /* 12px */
+--radius-2xl           /* 16px */
+--radius-full          /* 9999px - pill/circle */
 ```
 
-#### Overlay (Modal Layer)
+### Animation
+
 ```css
---overlay-bg           /* Modal/dialog background */
---overlay-text         /* Text on overlay */
---overlay-text-soft    /* Secondary text */
---overlay-text-strong  /* Higher contrast text */
---overlay-text-stronger/* Maximum contrast text */
---overlay-border       /* Border */
---overlay-border-soft  /* Subtle border */
---overlay-border-strong/* Higher contrast border */
---overlay-border-stronger /* Maximum contrast border */
---overlay-shadow       /* Shadow */
-```
+/* Durations */
+--duration-fast        /* 100ms - micro-interactions */
+--duration-normal      /* 200ms - default */
+--duration-slow        /* 300ms - larger elements */
 
-#### Popout (Highest Elevation - Dropdowns, Menus)
-```css
---popout-bg            /* Dropdown/menu background */
---popout-text          /* Text */
---popout-text-soft     /* Secondary text */
---popout-text-strong   /* Higher contrast text */
---popout-text-stronger /* Maximum contrast text */
---popout-border        /* Border */
---popout-border-soft   /* Subtle border */
---popout-border-strong /* Higher contrast border */
---popout-border-stronger /* Maximum contrast border */
---popout-shadow        /* Shadow */
-```
-
----
-
-### 2. Control Tokens (Interactive Elements)
-
-Control tokens include hover, pressed, and other state variations.
-
-#### Control (Default Buttons/Controls)
-```css
---control-bg                /* Default background */
---control-bg-hover          /* Hover background */
---control-bg-pressed        /* Active/pressed background */
---control-text              /* Text color */
---control-border            /* Border */
---control-shadow            /* Shadow */
-```
-
-#### Control Primary (Primary Buttons/Actions)
-```css
---controlPrimary-bg         /* Background (brand color) */
---controlPrimary-bg-hover   /* Hover background */
---controlPrimary-bg-pressed /* Pressed background */
---controlPrimary-text       /* Text (auto-contrasts with bg) */
---controlPrimary-border     /* Border */
---controlPrimary-shadow     /* Shadow */
-```
-
-#### Control Danger (Destructive Actions)
-```css
---controlDanger-bg          /* Background (danger color) */
---controlDanger-bg-hover    /* Hover background */
---controlDanger-bg-pressed  /* Pressed background */
---controlDanger-text        /* Text */
---controlDanger-border      /* Border */
---controlDanger-shadow      /* Shadow */
-```
-
-#### Control Subtle (Ghost/Minimal Buttons)
-```css
---controlSubtle-bg          /* Background (transparent) */
---controlSubtle-bg-hover    /* Hover background */
---controlSubtle-bg-pressed  /* Pressed background */
---controlSubtle-text        /* Text color */
---controlSubtle-text-hover  /* Hover text */
---controlSubtle-text-pressed /* Pressed text */
---controlSubtle-border      /* Border */
-```
-
-#### Control Disabled
-```css
---controlDisabled-bg        /* Disabled background */
---controlDisabled-text      /* Disabled text */
---controlDisabled-border    /* Disabled border */
+/* Easing */
+--ease-default         /* ease-out */
+--ease-in              /* ease-in */
+--ease-out             /* ease-out */
+--ease-in-out          /* ease-in-out */
 ```
 
 ---
 
-### 3. Feedback Tokens (Status Colors)
+## Special Tokens
 
-These are semantic colors that maintain consistent meaning across themes.
-
-#### Success (Green)
+### Focus Ring
 ```css
---success-bg               /* Success alert background */
---success-text             /* Success text */
---success-border           /* Success border */
---success-icon             /* Success icon color */
-```
-
-#### Warning (Amber)
-```css
---warning-bg               /* Warning alert background */
---warning-text             /* Warning text */
---warning-border           /* Warning border */
---warning-icon             /* Warning icon color */
-```
-
-#### Danger (Red)
-```css
---danger-bg                /* Error alert background */
---danger-text              /* Error text */
---danger-border            /* Error border */
---danger-icon              /* Error icon color */
-```
-
-#### Info (Blue)
-```css
---info-bg                  /* Info alert background */
---info-text                /* Info text */
---info-border              /* Info border */
---info-icon                /* Info icon color */
-```
-
----
-
-### 4. Special Tokens
-
-#### Focus Ring
-```css
---focus-ring               /* Focus ring color */
---focus-ring-width         /* Ring thickness (default: 2px) */
---focus-ring-offset        /* Space between element and ring (default: 2px) */
+--focus-ring           /* Ring color (usually primary) */
+--focus-ring-width     /* Ring thickness: 2px */
+--focus-ring-offset    /* Gap between element and ring: 2px */
 ```
 
 **Usage:**
@@ -349,276 +292,234 @@ These are semantic colors that maintain consistent meaning across themes.
 }
 ```
 
-#### Links
+### Links
 ```css
---link                     /* Default link color */
---link-hover               /* Hover color */
---link-pressed             /* Active/pressed color */
---link-visited             /* Visited color */
+--link                 /* Default link color */
+--link-hover           /* Hover color */
+--link-pressed         /* Active/pressed color */
+--link-visited         /* Visited color */
 ```
 
-#### Selection
+### Selection
 ```css
---selection-bg             /* Text selection background */
---selection-text           /* Selected text color */
+--selection-bg         /* Text selection background */
+--selection-text       /* Selected text color */
 ```
 
-#### Scrollbar
+### Scrollbar
 ```css
---scrollbar-track          /* Scrollbar track */
---scrollbar-thumb          /* Scrollbar thumb */
---scrollbar-thumb-hover    /* Thumb hover state */
+--scrollbar-track      /* Scrollbar track */
+--scrollbar-thumb      /* Scrollbar thumb */
+--scrollbar-thumb-hover /* Thumb hover state */
 ```
 
-#### Skeleton (Loading States)
+### Skeleton Loading
 ```css
---skeleton-bg              /* Skeleton placeholder background */
---skeleton-shimmer         /* Shimmer animation highlight */
+--skeleton-bg          /* Skeleton placeholder background */
+--skeleton-shimmer     /* Shimmer animation highlight */
 ```
 
-#### Highlight (Search/Text Highlight)
+### Highlight
 ```css
---highlight-bg             /* Highlight background */
---highlight-text           /* Highlighted text color */
-```
-
----
-
-### 5. Spacing Tokens
-
-Based on a 4px grid system.
-
-```css
---space-1                  /* Smallest */
---space-2
---space-3
---space-4                  /* Base unit */
---space-5
---space-6
---space-8
---space-10
---space-12
---space-16
---space-20
---space-24                 /* Largest */
-```
-
----
-
-### 6. Typography Tokens
-
-#### Font Families
-```css
---font-sans                /* System sans-serif stack */
---font-mono                /* Monospace font stack */
---font-serif               /* Serif font stack */
-```
-
-#### Font Sizes
-```css
---text-xs                  /* Fine print */
---text-sm                  /* Small text, captions */
---text-base                /* Body text (default) */
---text-lg                  /* Large body text */
---text-xl                  /* Subheadings */
---text-2xl                 /* Section headings */
---text-3xl                 /* Page headings */
---text-4xl                 /* Large headings */
-```
-
-#### Font Weights
-```css
---weight-normal
---weight-medium
---weight-semibold
---weight-bold
-```
-
-#### Line Heights
-```css
---leading-tight            /* Compact */
---leading-normal           /* Default */
---leading-loose            /* Spacious */
-```
-
----
-
-### 7. Border Radius Tokens
-
-```css
---radius-sm                /* Subtle rounding */
---radius-md                /* Default for buttons */
---radius-lg                /* Default for cards */
---radius-xl                /* Large rounding */
---radius-2xl               /* Extra large rounding */
---radius-full              /* Pill/circle shape */
-```
-
----
-
-### 8. Shadow Tokens
-
-```css
---shadow-sm                /* Subtle shadow */
---shadow-md                /* Default card shadow */
---shadow-lg                /* Elevated elements */
---shadow-xl                /* Modals, overlays */
---shadow-inner             /* Inset shadow */
-```
-
----
-
-### 9. Animation Tokens
-
-#### Durations
-```css
---duration-fast            /* Micro-interactions */
---duration-normal          /* Default (buttons, inputs) */
---duration-slow            /* Larger elements */
-```
-
-#### Easing Functions
-```css
---ease-default             /* General purpose */
---ease-in                  /* Enter animations */
---ease-out                 /* Exit animations */
---ease-in-out              /* Continuous motion */
---ease-bounce              /* Playful effect */
-```
-
----
-
-### 10. Component Tokens
-
-Pre-configured shortcuts for common patterns.
-
-#### Button
-```css
---button-padding-x         /* Horizontal padding */
---button-padding-y         /* Vertical padding */
---button-radius            /* Border radius */
-```
-
-#### Input
-```css
---input-height             /* Input field height */
---input-padding-x          /* Horizontal padding */
-```
-
-#### Containers
-```css
---card-padding             /* Standard card padding */
---modal-padding            /* Modal content padding */
-```
-
-#### Avatar
-```css
---avatar-size-sm           /* Small avatar */
---avatar-size-md           /* Medium avatar */
---avatar-size-lg           /* Large avatar */
+--highlight-bg         /* Search/text highlight background */
+--highlight-text       /* Highlighted text color */
 ```
 
 ---
 
 ## Common Patterns
 
-### Button Styling
+### Primary Button
 ```css
-.button {
-  /* Use control tokens */
-  background: var(--control-bg);
-  color: var(--control-text);
-  border: 1px solid var(--control-border);
+.button-primary {
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+  border: none;
   border-radius: var(--radius-md);
   padding: var(--space-2) var(--space-4);
   font-weight: var(--weight-medium);
-  transition: all var(--duration-fast) var(--ease-default);
+  transition: background var(--duration-fast) var(--ease-default);
 }
 
-.button:hover:not(:disabled) {
-  background: var(--control-bg-hover);
+.button-primary:hover:not(:disabled) {
+  background: var(--primary-bg-hover);
 }
 
-.button:focus-visible {
+.button-primary:active:not(:disabled) {
+  background: var(--primary-bg-pressed);
+}
+
+.button-primary:disabled {
+  background: var(--primary-bg-disabled);
+  cursor: not-allowed;
+}
+
+.button-primary:focus-visible {
   outline: var(--focus-ring-width) solid var(--focus-ring);
   outline-offset: var(--focus-ring-offset);
 }
+```
 
-.button:disabled {
-  background: var(--controlDisabled-bg);
-  color: var(--controlDisabled-text);
+### Default Button
+```css
+.button-default {
+  background: var(--strong-bg);
+  color: var(--strong-fg);
+  border: 1px solid var(--strong-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-4);
+  transition: all var(--duration-fast) var(--ease-default);
+}
+
+.button-default:hover:not(:disabled) {
+  background: var(--strong-bg-hover);
+  border-color: var(--strong-border-hover);
+}
+
+.button-default:active:not(:disabled) {
+  background: var(--strong-bg-pressed);
+  border-color: var(--strong-border-pressed);
+}
+
+.button-default:disabled {
+  background: var(--strong-bg-disabled);
+  border-color: var(--strong-border-disabled);
+  color: var(--strong-fg-softer);
   cursor: not-allowed;
 }
 ```
 
-### Input Field Styling
+### Outline Button
+```css
+.button-outline {
+  background: var(--base-bg);
+  color: var(--base-fg);
+  border: 1px solid var(--base-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-4);
+}
+
+.button-outline:hover:not(:disabled) {
+  background: var(--base-bg-hover);
+  border-color: var(--base-border-hover);
+}
+
+.button-outline:active:not(:disabled) {
+  background: var(--base-bg-pressed);
+  border-color: var(--base-border-pressed);
+}
+```
+
+### Input Field
 ```css
 .input {
-  background: var(--inset-bg);
-  color: var(--inset-text);
-  border: 1px solid var(--inset-border);
+  background: var(--softer-bg);
+  color: var(--softer-fg);
+  border: 1px solid var(--softer-border);
   border-radius: var(--radius-md);
   padding: var(--space-2) var(--space-3);
   transition: all var(--duration-fast) var(--ease-default);
 }
 
 .input::placeholder {
-  color: var(--inset-text-soft);
+  color: var(--softer-fg-softer);
 }
 
 .input:hover:not(:disabled) {
-  background: var(--inset-bg-hover);
+  background: var(--softer-bg-hover);
+  border-color: var(--softer-border-hover);
 }
 
 .input:focus {
-  background: var(--inset-bg-focus);
   border-color: var(--focus-ring);
-  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring);
   outline: none;
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring);
 }
 ```
 
-### Card Styling
+### Card
 ```css
 .card {
-  background: var(--card-bg);
-  color: var(--card-text);
-  border: 1px solid var(--card-border);
+  background: var(--soft-bg);
+  color: var(--soft-fg);
+  border: 1px solid var(--soft-border);
   border-radius: var(--radius-lg);
   padding: var(--space-4);
-  box-shadow: var(--shadow-md);
+}
+
+.card-title {
+  color: var(--soft-fg-strong);
+  font-weight: var(--weight-semibold);
+}
+
+.card-meta {
+  color: var(--soft-fg-soft);
+  font-size: var(--text-sm);
 }
 ```
 
-### Animated Indicator (Tabs, Segmented Controls)
+### Alert/Toast
 ```css
-.indicator {
-  background: var(--controlPrimary-bg);
+.alert-success {
+  background: var(--success-bg);
+  color: var(--success-fg);
+  border: 1px solid var(--success-border);
   border-radius: var(--radius-md);
-  transition:
-    transform var(--duration-normal) var(--ease-default),
-    width var(--duration-normal) var(--ease-default);
-  will-change: transform, width;
+  padding: var(--space-3) var(--space-4);
 }
 
-/* Skip animation on initial render */
-.indicator.initial {
-  transition: none;
+.alert-warning {
+  background: var(--warning-bg);
+  color: var(--warning-fg);
+  border: 1px solid var(--warning-border);
 }
 
-/* Respect reduced motion preference */
-@media (prefers-reduced-motion: reduce) {
-  .indicator {
-    transition: none;
-  }
+.alert-danger {
+  background: var(--danger-bg);
+  color: var(--danger-fg);
+  border: 1px solid var(--danger-border);
+}
+
+.alert-info {
+  background: var(--info-bg);
+  color: var(--info-fg);
+  border: 1px solid var(--info-border);
+}
+```
+
+### Text Hierarchy
+```css
+.heading {
+  color: var(--base-fg-strong);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+}
+
+.body {
+  color: var(--base-fg);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+}
+
+.secondary {
+  color: var(--base-fg-soft);
+  font-size: var(--text-sm);
+}
+
+.caption {
+  color: var(--base-fg-softer);
+  font-size: var(--text-xs);
 }
 ```
 
 ---
 
-## Accessibility Requirements
+## Accessibility
 
 ### Contrast Ratios
+
+The token system automatically ensures WCAG contrast ratios when you use matching tokens:
 
 | Content Type | AA (Default) | AAA (High Contrast) |
 |-------------|--------------|---------------------|
@@ -626,21 +527,18 @@ Pre-configured shortcuts for common patterns.
 | Large text (18px+) | 3:1 | 4.5:1 |
 | UI components | 3:1 | 4.5:1 |
 
-The token system automatically ensures these ratios when you use the proper tokens.
-
 ### Focus Visibility
 
 Always provide visible focus indicators:
 
 ```css
-/* Use the focus ring tokens */
 .interactive:focus-visible {
   outline: var(--focus-ring-width) solid var(--focus-ring);
   outline-offset: var(--focus-ring-offset);
 }
 
 /* Never hide focus completely */
-/* BAD: .element:focus { outline: none; } */
+/* ❌ BAD: .element:focus { outline: none; } */
 ```
 
 ### Reduced Motion
@@ -663,57 +561,59 @@ Always respect the user's motion preferences:
 
 ## Don'ts
 
+### Never Mix Color Groups
+```css
+/* ❌ BAD */
+.button {
+  background: var(--primary-bg);
+  color: var(--base-fg);  /* Wrong group! */
+}
+
+/* ✅ GOOD */
+.button {
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+}
+```
+
 ### Never Hardcode Colors
 ```css
-/* BAD */
+/* ❌ BAD */
 .button {
   background: #3b82f6;
   color: white;
 }
 
-/* GOOD */
+/* ✅ GOOD */
 .button {
-  background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
 }
 ```
 
 ### Never Hardcode Spacing
 ```css
-/* BAD */
+/* ❌ BAD */
 .card {
   padding: 16px;
   margin-bottom: 24px;
 }
 
-/* GOOD */
+/* ✅ GOOD */
 .card {
   padding: var(--space-4);
   margin-bottom: var(--space-6);
 }
 ```
 
-### Never Hardcode Durations
-```css
-/* BAD */
-.button {
-  transition: background 150ms ease;
-}
-
-/* GOOD */
-.button {
-  transition: background var(--duration-fast) var(--ease-default);
-}
-```
-
 ### Never Skip Focus Styles
 ```css
-/* BAD - removes focus for everyone */
+/* ❌ BAD */
 .button:focus {
   outline: none;
 }
 
-/* GOOD - styles focus properly */
+/* ✅ GOOD */
 .button:focus-visible {
   outline: var(--focus-ring-width) solid var(--focus-ring);
   outline-offset: var(--focus-ring-offset);
@@ -722,23 +622,8 @@ Always respect the user's motion preferences:
 
 ---
 
-## Fallback Values
-
-When using tokens, always provide fallbacks for robustness:
-
-```css
-.element {
-  /* Fallback ensures styling works even if token is undefined */
-  background: var(--card-bg, #ffffff);
-  color: var(--card-text, #1a1a1a);
-  border-radius: var(--radius-md, 4px);
-}
-```
-
----
-
 ## See Also
 
-- [Token Cheatsheet](/docs/guides/TOKEN_CHEATSHEET.md) - Quick reference for common tokens
-- [Theme Definition Guide](./src/themes/theme-definition.md) - Creating custom themes
-- [Schema Definition](./src/themes/schema/schema-definition.md) - Token roles and derivation rules
+- [Token Cheatsheet](/docs/guides/TOKEN_CHEATSHEET.md) - Quick reference
+- [Icons Cheatsheet](/docs/guides/ICONS_CHEATSHEET.md) - Available icons
+- [Learn Guides](/learn) - Interactive tutorials on the website

@@ -3,6 +3,7 @@
   text-decoration: underline;
   text-decoration-color: transparent;
   text-underline-offset: 2px;
+  border-radius: var(--radius-sm);
   transition: all var(--duration-fast) var(--ease-default);
 }
 
@@ -14,7 +15,6 @@
 .link:focus-visible {
   outline: var(--focus-ring-width) solid var(--focus-ring);
   outline-offset: var(--focus-ring-offset);
-  border-radius: var(--radius-sm);
 }
 
 .noUnderline {

@@ -38,7 +38,7 @@ body {
 /* Selection */
 ::selection {
   background: var(--selection-bg);
-  color: var(--selection-fg);
+  color: var(--selection-text);
 }
 
 /* Focus */

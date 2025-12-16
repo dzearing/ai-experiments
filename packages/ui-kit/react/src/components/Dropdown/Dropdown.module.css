@@ -33,14 +33,17 @@
   border-color: var(--softer-border-hover);
 }
 
-.trigger:focus {
+.trigger:focus:not(:focus-visible) {
   outline: none;
 }
 
-.trigger:focus-visible,
+.trigger:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
 .trigger.open {
   border-color: var(--focus-ring);
-  box-shadow: 0 0 0 2px var(--focus-ring-muted);
 }
 
 .trigger:disabled {
@@ -149,9 +152,8 @@
   border-color: var(--danger-border);
 }
 
-.error .trigger:focus-visible,
-.error .trigger.open {
-  box-shadow: 0 0 0 2px var(--danger-bg-disabled);
+.error .trigger:focus-visible {
+  outline-color: var(--danger-border);
 }
 
 /* Disabled state */
@@ -204,8 +206,8 @@
 }
 
 .searchInput:focus {
-  border-color: var(--focus-ring);
-  box-shadow: 0 0 0 2px var(--focus-ring-muted);
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
 }
 
 .searchInput::placeholder {

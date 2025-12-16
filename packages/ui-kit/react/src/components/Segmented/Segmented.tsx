@@ -211,10 +211,6 @@ export function Segmented({
     if (newIndex !== currentIndex) {
       const newValue = enabledOptions[newIndex].value;
       handleSegmentClick(newValue);
-
-      // Focus the new segment
-      const newSegment = segmentRefs.current.get(newValue);
-      newSegment?.focus();
     }
   };
 
@@ -245,6 +241,7 @@ export function Segmented({
       className={containerClassNames}
       role="radiogroup"
       aria-label={ariaLabel}
+      tabIndex={disabled ? -1 : 0}
       onKeyDown={handleKeyDown}
     >
       {/* Animated indicator - behind segments */}
@@ -279,7 +276,7 @@ export function Segmented({
             className={segmentClassNames}
             onClick={() => handleSegmentClick(option.value)}
             disabled={isDisabled}
-            tabIndex={isActive ? 0 : -1}
+            tabIndex={-1}
             title={iconOnly ? String(option.label) : undefined}
           >
             {option.icon && <span className={styles.segmentIcon}>{option.icon}</span>}

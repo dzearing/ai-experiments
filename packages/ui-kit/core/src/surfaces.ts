@@ -7,24 +7,23 @@
 
 export {
   // Types
-  type Surface,
-  type ContainerSurface,
-  type ControlSurface,
+  type TonalSurface,
   type FeedbackSurface,
+  type SurfaceType,
   type SurfaceTokens,
   type SurfaceState,
   type ComponentTokens,
   type SpecialTokens,
 
   // Constants
-  containerSurfaces,
-  controlSurfaces,
+  tonalSurfaces,
   feedbackSurfaces,
-  surfaces,
+  surfaceTypes,
 
   // Functions
-  getTokenNamesForSurface,
-  surfaceTokenName,
+  isSurfaceType,
+  isTonalSurface,
+  isFeedbackSurface,
   surfaceClassName,
-  isSurface,
+  getSurfaceClasses,
 } from './surfaces/index';

@@ -19,18 +19,36 @@
   padding: var(--space-4) var(--space-6);
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--space-8);
+}
+
+.headerLeft {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
 }
 
 .logo {
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
   font-size: var(--text-xl);
   font-weight: var(--weight-bold);
   color: var(--base-fg-strong);
   text-decoration: none;
+  border-radius: var(--radius-md);
+  transition: outline-offset var(--duration-fast) var(--ease-default);
+}
+
+.logo:hover {
+  color: var(--link);
+}
+
+.logo:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
 }
 
 .logoIcon {
@@ -43,8 +61,10 @@
 }
 
 .headerActions {
+  flex: 1;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--space-4);
 }
 

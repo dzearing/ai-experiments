@@ -2,266 +2,206 @@
 
 Quick reference for UI Kit design tokens. For complete documentation, see `/packages/ui-kit/core/TOKEN_GUIDE.md`.
 
-## Token Naming Pattern
-
-```
---[role]-[property][-modifier]
-```
-
-Examples:
-- `--page-bg` → Page background
-- `--card-text-soft` → Secondary text on cards
-- `--controlPrimary-bg-hover` → Primary button hover state
-
 ---
 
-## The Golden Rule: Always Pair Background + Text from the Same Role
+## The Golden Rule: Stay Within Your Color Group
 
-**To ensure accessible contrast, always use matching `-bg` and `-text` tokens from the same role:**
+**Pick a color group for your background, use ONLY that group's tokens for foreground/border. Contrast is guaranteed.**
 
 ```css
-/* ✅ CORRECT - tokens from same role guarantee contrast */
-.primary-button {
-  background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
+/* ✅ CORRECT - all tokens from the same group */
+.button {
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+  border: 1px solid var(--primary-border);
 }
 
 .card {
-  background: var(--card-bg);
-  color: var(--card-text);
+  background: var(--soft-bg);
+  color: var(--soft-fg);
+  border: 1px solid var(--soft-border);
 }
 
-.input {
-  background: var(--inset-bg);
-  color: var(--inset-text);
-}
-
-/* ❌ WRONG - mixing roles breaks contrast guarantees */
+/* ❌ WRONG - mixing groups breaks contrast */
 .broken {
-  background: var(--controlPrimary-bg);
-  color: var(--page-text);  /* May not be readable! */
+  background: var(--primary-bg);
+  color: var(--base-fg);  /* May not be readable! */
 }
 ```
 
-**Role families and their tokens:**
+---
 
-| Role | Background | Text | Text (soft) | Border |
-|------|------------|------|-------------|--------|
-| `page` | `--page-bg` | `--page-text` | `--page-text-soft` | `--page-border` |
-| `card` | `--card-bg` | `--card-text` | `--card-text-soft` | `--card-border` |
-| `inset` | `--inset-bg` | `--inset-text` | `--inset-text-soft` | `--inset-border` |
-| `overlay` | `--overlay-bg` | `--overlay-text` | `--overlay-text-soft` | `--overlay-border` |
-| `popout` | `--popout-bg` | `--popout-text` | `--popout-text-soft` | `--popout-border` |
-| `control` | `--control-bg` | `--control-text` | — | `--control-border` |
-| `controlPrimary` | `--controlPrimary-bg` | `--controlPrimary-text` | — | `--controlPrimary-border` |
-| `controlDanger` | `--controlDanger-bg` | `--controlDanger-text` | — | `--controlDanger-border` |
-| `controlSubtle` | `--controlSubtle-bg` | `--controlSubtle-text` | — | — |
-| `success` | `--success-bg` | `--success-text` | — | `--success-border` |
-| `warning` | `--warning-bg` | `--warning-text` | — | `--warning-border` |
-| `danger` | `--danger-bg` | `--danger-text` | — | `--danger-border` |
-| `info` | `--info-bg` | `--info-text` | — | `--info-border` |
+## Color Groups
+
+Each color group provides 18 tokens: 4 bg states, 4 border states, 10 fg variants.
+
+### Tonal Groups (Visual Hierarchy)
+
+| Group | Usage | Tokens |
+|-------|-------|--------|
+| `softer` | Input backgrounds, wells, recessed areas | `--softer-bg`, `--softer-fg`, `--softer-border` |
+| `soft` | Cards, panels, elevated content | `--soft-bg`, `--soft-fg`, `--soft-border` |
+| `base` | Page background, default content | `--base-bg`, `--base-fg`, `--base-border` |
+| `strong` | Default buttons, emphasized sections | `--strong-bg`, `--strong-fg`, `--strong-border` |
+| `stronger` | Maximum emphasis without color | `--stronger-bg`, `--stronger-fg`, `--stronger-border` |
+
+### Semantic Groups (Meaning Through Color)
+
+| Group | Usage | Tokens |
+|-------|-------|--------|
+| `primary` | Brand color, primary buttons, selected states | `--primary-bg`, `--primary-fg`, `--primary-border` |
+| `inverted` | Tooltips (opposite scheme) | `--inverted-bg`, `--inverted-fg`, `--inverted-border` |
+| `success` | Success surfaces, confirmations | `--success-bg`, `--success-fg`, `--success-border` |
+| `warning` | Warning surfaces, caution states | `--warning-bg`, `--warning-fg`, `--warning-border` |
+| `danger` | Error surfaces, destructive alerts | `--danger-bg`, `--danger-fg`, `--danger-border` |
+| `info` | Informational surfaces | `--info-bg`, `--info-fg`, `--info-border` |
+
+---
+
+## State Variants
+
+Each group provides interactive state variants:
+
+```css
+/* Background states */
+--{group}-bg
+--{group}-bg-hover
+--{group}-bg-pressed
+--{group}-bg-disabled
+
+/* Border states */
+--{group}-border
+--{group}-border-hover
+--{group}-border-pressed
+--{group}-border-disabled
+```
+
+**Example:**
+```css
+.button {
+  background: var(--strong-bg);
+  border: 1px solid var(--strong-border);
+}
+
+.button:hover {
+  background: var(--strong-bg-hover);
+  border-color: var(--strong-border-hover);
+}
+
+.button:active {
+  background: var(--strong-bg-pressed);
+  border-color: var(--strong-border-pressed);
+}
+
+.button:disabled {
+  background: var(--strong-bg-disabled);
+  border-color: var(--strong-border-disabled);
+  color: var(--strong-fg-softer);
+}
+```
+
+---
+
+## Foreground Variants
+
+Each group provides text hierarchy options:
+
+```css
+--{group}-fg           /* Primary text */
+--{group}-fg-soft      /* Secondary text (less contrast) */
+--{group}-fg-softer    /* Tertiary text (subtle) */
+--{group}-fg-strong    /* Emphasized text */
+--{group}-fg-stronger  /* Maximum emphasis */
+
+/* Semantic fg colors (accessible on that group's bg) */
+--{group}-fg-primary   /* Accent/link color */
+--{group}-fg-danger    /* Error text */
+--{group}-fg-success   /* Success text */
+--{group}-fg-warning   /* Warning text */
+--{group}-fg-info      /* Info text */
+```
+
+**Example:**
+```css
+.card {
+  background: var(--soft-bg);
+}
+
+.card-title {
+  color: var(--soft-fg-strong);   /* Emphasized */
+}
+
+.card-body {
+  color: var(--soft-fg);          /* Normal */
+}
+
+.card-meta {
+  color: var(--soft-fg-soft);     /* De-emphasized */
+}
+
+.card-link {
+  color: var(--soft-fg-primary);  /* Accent, accessible on soft-bg */
+}
+```
 
 ---
 
 ## Quick Reference Table
 
 | I want to style... | Use these tokens |
-|--------------------|------------------|
-| Page background | `--page-bg` |
-| Card/panel background | `--card-bg` |
-| Input field background | `--inset-bg` |
-| Primary button | `--controlPrimary-bg`, `--controlPrimary-text` |
-| Secondary button | `--control-bg`, `--control-text` |
-| Ghost/subtle button | `--controlSubtle-bg`, `--controlSubtle-text` |
-| Danger button | `--controlDanger-bg`, `--controlDanger-text` |
-| Disabled control | `--controlDisabled-bg`, `--controlDisabled-text` |
-| Primary text | `--page-text` or `--card-text` |
-| Secondary text | `--page-text-soft` or `--card-text-soft` |
-| Tertiary text | `--page-text-softer` or `--card-text-softer` |
-| Borders | `--page-border`, `--card-border`, `--control-border` |
+|-------------------|------------------|
+| Page background | `--base-bg` |
+| Card/panel background | `--soft-bg` |
+| Input field background | `--softer-bg` |
+| Primary button | `--primary-bg`, `--primary-fg` |
+| Default button | `--strong-bg`, `--strong-fg` |
+| Outline button | `--base-bg`, `--base-fg`, `--base-border` |
+| Tooltip | `--inverted-bg`, `--inverted-fg` |
+| Primary text | `--base-fg` |
+| Secondary text | `--base-fg-soft` |
+| Tertiary text | `--base-fg-softer` |
+| Links | `--base-fg-primary` |
+| Error text | `--base-fg-danger` |
+| Borders | `--base-border` |
 | Focus ring | `--focus-ring`, `--focus-ring-width` |
 
 ---
 
-## Container Tokens (Static Backgrounds)
+## Surfaces
 
-### Page (Main App Background)
-```css
---page-bg              /* Main background */
---page-text            /* Primary text */
---page-text-soft       /* Secondary text (30% less contrast) */
---page-text-softer     /* Tertiary text (50% less contrast) */
---page-text-hard       /* Maximum contrast (pure black/white) */
---page-border          /* Border color */
+Surfaces are CSS classes that reset and override tokens for specific contexts. Components inside surfaces automatically get appropriate colors.
+
+### Usage
+```html
+<!-- Base class + modifier -->
+<div class="surface raised">
+  <button>This button has proper contrast</button>
+</div>
+
+<!-- Nested surfaces reset properly -->
+<div class="surface sunken">
+  <div class="surface raised">
+    <!-- Inner surface resets, then applies raised overrides -->
+  </div>
+</div>
 ```
 
-### Card (Elevated Containers)
-```css
---card-bg              /* Card background */
---card-text            /* Primary text */
---card-text-soft       /* Secondary text */
---card-text-hard       /* Maximum contrast */
---card-border          /* Border color */
---card-shadow          /* Box shadow */
-```
+### Available Surfaces
 
-### Inset (Input Fields, Wells)
-```css
---inset-bg             /* Background */
---inset-bg-hover       /* Hover background */
---inset-bg-focus       /* Focus background */
---inset-text           /* Text color */
---inset-text-soft      /* Placeholder text */
---inset-border         /* Border */
---inset-border-focus   /* Focus border (matches --focus-ring) */
-```
-
-### Overlay (Modals, Dialogs)
-```css
---overlay-bg           /* Modal background */
---overlay-text         /* Text color */
---overlay-text-soft    /* Secondary text */
---overlay-border       /* Border */
---overlay-shadow       /* Drop shadow */
-```
-
-### Popout (Dropdowns, Menus, Tooltips)
-```css
---popout-bg            /* Menu background */
---popout-text          /* Text color */
---popout-text-soft     /* Secondary text */
---popout-border        /* Border */
---popout-shadow        /* Drop shadow */
-```
-
----
-
-## Control Tokens (Interactive Elements)
-
-### Control (Default Buttons)
-```css
---control-bg           /* Background */
---control-bg-hover     /* Hover */
---control-bg-pressed   /* Active/pressed */
---control-text         /* Text */
---control-border       /* Border */
-```
-
-### Control Primary (CTA Buttons)
-```css
---controlPrimary-bg           /* Background (brand color) */
---controlPrimary-bg-hover     /* Hover */
---controlPrimary-bg-pressed   /* Active/pressed */
---controlPrimary-text         /* Text (auto-contrasts) */
---controlPrimary-border       /* Border */
-```
-
-### Control Danger (Destructive Actions)
-```css
---controlDanger-bg            /* Background (red) */
---controlDanger-bg-hover      /* Hover */
---controlDanger-bg-pressed    /* Active/pressed */
---controlDanger-text          /* Text */
---controlDanger-border        /* Border */
-```
-
-### Control Subtle (Ghost/Minimal Buttons)
-```css
---controlSubtle-bg            /* Background (transparent) */
---controlSubtle-bg-hover      /* Hover */
---controlSubtle-bg-pressed    /* Active/pressed */
---controlSubtle-text          /* Text */
---controlSubtle-text-hover    /* Hover text */
-```
-
-### Control Disabled
-```css
---controlDisabled-bg          /* Background */
---controlDisabled-text        /* Text */
---controlDisabled-border      /* Border */
-```
-
----
-
-## Feedback Tokens (Status Colors)
-
-Semantic colors that stay consistent across all themes.
-
-### Success (Green)
-```css
---success-bg           /* Alert background */
---success-text         /* Text */
---success-border       /* Border */
---success-icon         /* Icon color (#16a34a) */
-```
-
-### Warning (Amber)
-```css
---warning-bg           /* Alert background */
---warning-text         /* Text */
---warning-border       /* Border */
---warning-icon         /* Icon color (#f59e0b) */
-```
-
-### Danger (Red)
-```css
---danger-bg            /* Alert background */
---danger-text          /* Text */
---danger-border        /* Border */
---danger-icon          /* Icon color (#dc2626) */
-```
-
-### Info (Blue)
-```css
---info-bg              /* Alert background */
---info-text            /* Text */
---info-border          /* Border */
---info-icon            /* Icon color (#0ea5e9) */
-```
-
----
-
-## Special Tokens
-
-### Focus Ring
-```css
---focus-ring           /* Ring color (brand color) */
---focus-ring-width     /* Ring thickness (2px) */
---focus-ring-offset    /* Gap between element and ring (2px) */
-```
-
-### Links
-```css
---link                 /* Default link color */
---link-hover           /* Hover */
---link-pressed         /* Active */
---link-visited         /* Visited */
-```
-
-### Selection
-```css
---selection-bg         /* Text selection background */
---selection-text       /* Selected text color */
-```
-
-### Scrollbar
-```css
---scrollbar-track      /* Track background */
---scrollbar-thumb      /* Thumb color */
---scrollbar-thumb-hover /* Thumb hover */
-```
-
-### Skeleton Loading
-```css
---skeleton-bg          /* Skeleton background */
---skeleton-shimmer     /* Shimmer highlight */
-```
-
-### Highlight
-```css
---highlight-bg         /* Search highlight background */
---highlight-text       /* Highlighted text color */
-```
+| Surface | Usage |
+|---------|-------|
+| `.surface.base` | Reset to page defaults |
+| `.surface.raised` | Cards, panels, dialogs |
+| `.surface.sunken` | Input wells, sidebars |
+| `.surface.section` | Region separation |
+| `.surface.section2` | Secondary region |
+| `.surface.section3` | Tertiary region |
+| `.surface.inverted` | Tooltips, callouts |
+| `.surface.primary` | Branded hero sections |
+| `.surface.success` | Success toasts/alerts |
+| `.surface.warning` | Warning toasts/alerts |
+| `.surface.danger` | Error toasts/alerts |
+| `.surface.info` | Info toasts/alerts |
 
 ---
 
@@ -298,8 +238,8 @@ Based on a 4px grid system.
 ### Font Sizes
 ```css
 --text-xs              /* 11px - Fine print */
---text-sm              /* 13px - Small text, captions */
---text-base            /* 15px - Body text (default) */
+--text-sm              /* 13px - Small text */
+--text-base            /* 15px - Body text */
 --text-lg              /* 17px - Large body */
 --text-xl              /* 20px - Subheadings */
 --text-2xl             /* 24px - Section headings */
@@ -318,7 +258,9 @@ Based on a 4px grid system.
 ### Line Heights
 ```css
 --leading-tight        /* 1.25 */
---leading-normal       /* 1.5 (default) */
+--leading-snug         /* 1.375 */
+--leading-normal       /* 1.5 */
+--leading-relaxed      /* 1.625 */
 --leading-loose        /* 1.75 */
 ```
 
@@ -328,23 +270,11 @@ Based on a 4px grid system.
 
 ```css
 --radius-sm            /* 2px */
---radius-md            /* 4px (default for buttons) */
---radius-lg            /* 8px (default for cards) */
+--radius-md            /* 4px */
+--radius-lg            /* 8px */
 --radius-xl            /* 12px */
 --radius-2xl           /* 16px */
 --radius-full          /* 9999px (pill/circle) */
-```
-
----
-
-## Shadow Tokens
-
-```css
---shadow-sm            /* Subtle shadow */
---shadow-md            /* Default card shadow */
---shadow-lg            /* Elevated elements */
---shadow-xl            /* Modals, overlays */
---shadow-inner         /* Inset shadow */
 ```
 
 ---
@@ -353,37 +283,17 @@ Based on a 4px grid system.
 
 ### Durations
 ```css
---duration-fast        /* 100ms - Micro-interactions */
---duration-normal      /* 200ms - Default (buttons, inputs) */
---duration-slow        /* 300ms - Larger elements */
+--duration-fast        /* 100ms */
+--duration-normal      /* 200ms */
+--duration-slow        /* 300ms */
 ```
 
 ### Easing Functions
 ```css
---ease-default         /* ease-out - General purpose */
---ease-in              /* ease-in - Enter animations */
---ease-out             /* ease-out - Exit animations */
---ease-in-out          /* ease-in-out - Continuous */
---ease-bounce          /* Playful bounce effect */
-```
-
----
-
-## Component Tokens
-
-Pre-configured shortcuts for common patterns.
-
-```css
---button-padding-x     /* var(--space-4) */
---button-padding-y     /* var(--space-2) */
---button-radius        /* var(--radius-md) */
---input-height         /* 40px */
---input-padding-x      /* var(--space-3) */
---card-padding         /* var(--space-4) */
---modal-padding        /* var(--space-6) */
---avatar-size-sm       /* 24px */
---avatar-size-md       /* 32px */
---avatar-size-lg       /* 48px */
+--ease-default         /* ease-out */
+--ease-in              /* ease-in */
+--ease-out             /* ease-out */
+--ease-in-out          /* ease-in-out */
 ```
 
 ---
@@ -393,9 +303,9 @@ Pre-configured shortcuts for common patterns.
 ### Primary Button
 ```css
 .button-primary {
-  background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
-  border: 1px solid var(--controlPrimary-border);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+  border: none;
   border-radius: var(--radius-md);
   padding: var(--space-2) var(--space-4);
   font-weight: var(--weight-medium);
@@ -403,132 +313,99 @@ Pre-configured shortcuts for common patterns.
 }
 
 .button-primary:hover:not(:disabled) {
-  background: var(--controlPrimary-bg-hover);
+  background: var(--primary-bg-hover);
+}
+
+.button-primary:active:not(:disabled) {
+  background: var(--primary-bg-pressed);
+}
+
+.button-primary:disabled {
+  background: var(--primary-bg-disabled);
+  cursor: not-allowed;
 }
 
 .button-primary:focus-visible {
   outline: var(--focus-ring-width) solid var(--focus-ring);
   outline-offset: var(--focus-ring-offset);
 }
+```
 
-.button-primary:disabled {
-  background: var(--controlDisabled-bg);
-  color: var(--controlDisabled-text);
-  cursor: not-allowed;
+### Default Button
+```css
+.button-default {
+  background: var(--strong-bg);
+  color: var(--strong-fg);
+  border: 1px solid var(--strong-border);
+  border-radius: var(--radius-md);
+}
+
+.button-default:hover:not(:disabled) {
+  background: var(--strong-bg-hover);
+  border-color: var(--strong-border-hover);
+}
+```
+
+### Outline Button
+```css
+.button-outline {
+  background: var(--base-bg);
+  color: var(--base-fg);
+  border: 1px solid var(--base-border);
+  border-radius: var(--radius-md);
+}
+
+.button-outline:hover:not(:disabled) {
+  background: var(--base-bg-hover);
+  border-color: var(--base-border-hover);
 }
 ```
 
 ### Input Field
 ```css
 .input {
-  background: var(--inset-bg);
-  color: var(--inset-text);
-  border: 1px solid var(--inset-border);
+  background: var(--softer-bg);
+  color: var(--softer-fg);
+  border: 1px solid var(--softer-border);
   border-radius: var(--radius-md);
   padding: var(--space-2) var(--space-3);
-  transition: all var(--duration-fast) var(--ease-default);
 }
 
 .input::placeholder {
-  color: var(--inset-text-soft);
+  color: var(--softer-fg-softer);
 }
 
 .input:hover:not(:disabled) {
-  background: var(--inset-bg-hover);
+  background: var(--softer-bg-hover);
+  border-color: var(--softer-border-hover);
 }
 
 .input:focus {
-  background: var(--inset-bg-focus);
   border-color: var(--focus-ring);
-  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring);
   outline: none;
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring);
 }
 ```
 
 ### Card
 ```css
 .card {
-  background: var(--card-bg);
-  color: var(--card-text);
-  border: 1px solid var(--card-border);
+  background: var(--soft-bg);
+  color: var(--soft-fg);
+  border: 1px solid var(--soft-border);
   border-radius: var(--radius-lg);
   padding: var(--space-4);
-  box-shadow: var(--shadow-md);
 }
 ```
 
-### Text Hierarchy
+### Alert
 ```css
-.heading {
-  color: var(--page-text);
-  font-size: var(--text-2xl);
-  font-weight: var(--weight-semibold);
-  line-height: var(--leading-tight);
-}
-
-.body {
-  color: var(--page-text);
-  font-size: var(--text-base);
-  line-height: var(--leading-normal);
-}
-
-.secondary {
-  color: var(--page-text-soft);
-  font-size: var(--text-sm);
-}
-
-.caption {
-  color: var(--page-text-softer);
-  font-size: var(--text-xs);
-}
-```
-
-### Alert/Banner
-```css
-.alert-danger {
-  background: var(--danger-bg);
-  color: var(--danger-text);
-  border: 1px solid var(--danger-border);
+.alert-success {
+  background: var(--success-bg);
+  color: var(--success-fg);
+  border: 1px solid var(--success-border);
   border-radius: var(--radius-md);
   padding: var(--space-3) var(--space-4);
-}
-
-.alert-danger .icon {
-  color: var(--danger-icon);
-}
-```
-
----
-
-## Surface Classes
-
-Pre-built CSS classes that apply background, text, border, and shadow from a role. Useful for containers and feedback states:
-
-```css
-/* Container surfaces */
-.surface-page          /* Page background & text */
-.surface-card          /* Card with shadow */
-.surface-overlay       /* Modal layer */
-.surface-popout        /* Dropdown/menu */
-.surface-inset         /* Input/well */
-
-/* Feedback surfaces (commonly used for alerts/banners) */
-.surface-success       /* Success alert */
-.surface-warning       /* Warning alert */
-.surface-danger        /* Danger alert */
-.surface-info          /* Info alert */
-```
-
-**Note:** For interactive controls (buttons), use the tokens directly rather than surface classes. This gives you proper hover/pressed states:
-
-```css
-/* ✅ Use tokens for buttons */
-.my-button {
-  background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
-}
-.my-button:hover {
-  background: var(--controlPrimary-bg-hover);
 }
 ```
 
@@ -536,81 +413,87 @@ Pre-built CSS classes that apply background, text, border, and shadow from a rol
 
 ## Don'ts
 
-### Never mix tokens from different roles
+### Never mix color groups
 ```css
-/* BAD - mixing roles can break contrast */
+/* ❌ BAD */
 .button {
-  background: var(--controlPrimary-bg);
-  color: var(--card-text);  /* Wrong! Use --controlPrimary-text */
+  background: var(--primary-bg);
+  color: var(--base-fg);  /* Wrong group! */
 }
 
-/* GOOD - same role guarantees contrast */
+/* ✅ GOOD */
 .button {
-  background: var(--controlPrimary-bg);
-  color: var(--controlPrimary-text);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
 }
 ```
 
 ### Never hardcode colors
 ```css
-/* BAD */
+/* ❌ BAD */
 .button { background: #3b82f6; color: white; }
 
-/* GOOD */
-.button { background: var(--controlPrimary-bg); color: var(--controlPrimary-text); }
+/* ✅ GOOD */
+.button { background: var(--primary-bg); color: var(--primary-fg); }
 ```
 
 ### Never hardcode spacing
 ```css
-/* BAD */
-.card { padding: 16px; margin-bottom: 24px; }
+/* ❌ BAD */
+.card { padding: 16px; }
 
-/* GOOD */
-.card { padding: var(--space-4); margin-bottom: var(--space-6); }
+/* ✅ GOOD */
+.card { padding: var(--space-4); }
 ```
 
 ### Never remove focus styles
 ```css
-/* BAD */
+/* ❌ BAD */
 .button:focus { outline: none; }
 
-/* GOOD */
+/* ✅ GOOD */
 .button:focus-visible {
   outline: var(--focus-ring-width) solid var(--focus-ring);
   outline-offset: var(--focus-ring-offset);
 }
 ```
 
-### Always respect reduced motion
-```css
-.animated {
-  transition: transform var(--duration-normal) var(--ease-default);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .animated { transition: none; }
-}
-```
-
 ---
 
-## Accessibility
+## Special Tokens
 
-The token system automatically ensures WCAG contrast ratios:
+### Focus Ring
+```css
+--focus-ring           /* Ring color */
+--focus-ring-width     /* 2px */
+--focus-ring-offset    /* 2px */
+```
 
-| Content Type | AA (Default) | AAA (High Contrast) |
-|--------------|--------------|---------------------|
-| Normal text  | 4.5:1        | 7:1                 |
-| Large text   | 3:1          | 4.5:1               |
-| UI components| 3:1          | 4.5:1               |
+### Links
+```css
+--link                 /* Default link color */
+--link-hover           /* Hover */
+--link-pressed         /* Active */
+--link-visited         /* Visited */
+```
 
-Use proper tokens and contrast is guaranteed.
+### Selection
+```css
+--selection-bg         /* Text selection background */
+--selection-text       /* Selected text color */
+```
+
+### Scrollbar
+```css
+--scrollbar-track      /* Track background */
+--scrollbar-thumb      /* Thumb color */
+--scrollbar-thumb-hover /* Thumb hover */
+```
 
 ---
 
 ## Resources
 
 - **Complete Token Guide**: `/packages/ui-kit/core/TOKEN_GUIDE.md`
-- **Theme Definition Guide**: `/packages/ui-kit/core/src/themes/theme-definition.md`
-- **Schema Reference**: `/packages/ui-kit/core/src/themes/schema/schema-definition.md`
 - **Icons Cheatsheet**: `/docs/guides/ICONS_CHEATSHEET.md`
+- **Learn Guides**: Run the website and visit `/learn`

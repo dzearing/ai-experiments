@@ -11,18 +11,6 @@
   "typography": {
     "fontSerif": "'Playfair Display', Georgia, serif"
   },
-  "overrides": {
-    "light": {
-      "--page-bg": "#f5f3ef",
-      "--card-bg": "#ffffff",
-      "--page-text": "#1a1a2e"
-    },
-    "dark": {
-      "--page-bg": "#1a1a2e",
-      "--card-bg": "#2a2a4e",
-      "--page-text": "#d4af37"
-    }
-  },
   "accessibility": {
     "level": "AA"
   }

@@ -14,16 +14,10 @@
   },
   "overrides": {
     "light": {
-      "--page-text": "#000000",
-      "--page-bg": "#ffffff",
-      "--focus-ring-width": "3px",
-      "--control-border": "#000000"
+      "--focus-ring-width": "3px"
     },
     "dark": {
-      "--page-text": "#ffffff",
-      "--page-bg": "#000000",
-      "--focus-ring-width": "3px",
-      "--control-border": "#ffffff"
+      "--focus-ring-width": "3px"
     }
   }
 }

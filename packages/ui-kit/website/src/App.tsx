@@ -1,6 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
-import { Layout } from './layouts/Layout';
-import { LessonLayout } from './components/LessonLayout';
+import { PrimaryLayout } from './layouts/PrimaryLayout';
+import { LessonLayout } from './layouts/LessonLayout';
 import { HomePage } from './pages/Home/HomePage';
 import { LearnPage } from './pages/Learn/LearnPage';
 import { GettingStartedPage } from './pages/Learn/GettingStartedPage';
@@ -17,7 +17,7 @@ import { ThemeDesignerPage } from './pages/Themes/ThemeDesignerPage';
 export function App() {
   return (
     <Routes>
-      <Route path="/" element={<Layout />}>
+      <Route path="/" element={<PrimaryLayout />}>
         <Route index element={<HomePage />} />
         <Route path="learn" element={<LearnPage />} />
         <Route

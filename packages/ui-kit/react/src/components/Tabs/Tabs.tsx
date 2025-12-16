@@ -29,7 +29,7 @@ import styles from './Tabs.module.css';
  * - role="tab" on tab buttons with aria-selected
  * - role="tabpanel" on content panel
  * - aria-controls linking tabs to panels
- * - Roving tabIndex for keyboard navigation
+ * - All non-disabled tabs are focusable
  * - Arrow key navigation (Left/Right)
  * - Home/End keys for first/last tab
  */
@@ -101,7 +101,7 @@ export function Tabs({
   const updateIndicator = () => {
     if (!animated || variant === 'pills') return;
 
-    const activeTab = tabRefs.current.get(activeValue);
+    const activeTab = activeValue ? tabRefs.current.get(activeValue) : null;
     const tabList = tabListRef.current;
 
     if (activeTab && tabList) {
@@ -112,6 +112,9 @@ export function Tabs({
         left: tabRect.left - listRect.left,
         width: tabRect.width,
       });
+    } else {
+      // Clear indicator when no active tab
+      setIndicatorStyle(null);
     }
   };
 
@@ -255,7 +258,7 @@ export function Tabs({
               role="tab"
               aria-selected={isActive}
               aria-controls={hasContent ? getPanelId(item.value) : undefined}
-              tabIndex={isActive ? 0 : -1}
+              tabIndex={item.disabled ? -1 : 0}
               className={`${styles.tab} ${isActive ? styles.active : ''} ${item.disabled ? styles.disabled : ''}`}
               onClick={() => !item.disabled && handleTabClick(item.value)}
               disabled={item.disabled}

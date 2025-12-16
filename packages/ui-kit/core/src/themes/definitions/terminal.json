@@ -11,13 +11,6 @@
   "typography": {
     "fontSans": "'JetBrains Mono', 'Fira Code', monospace"
   },
-  "overrides": {
-    "dark": {
-      "--page-bg": "#0a0a0a",
-      "--page-text": "#22c55e",
-      "--card-bg": "#111111"
-    }
-  },
   "accessibility": {
     "level": "AA"
   }

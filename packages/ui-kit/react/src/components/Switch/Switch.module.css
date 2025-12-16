@@ -53,7 +53,8 @@
 
 .thumb {
   position: absolute;
-  background: var(--soft-bg);
+  /* Use inverted-bg for high contrast: light in dark mode, dark in light mode */
+  background: var(--inverted-bg);
   border-radius: 50%;
   box-shadow: var(--shadow-sm);
   transition: all var(--duration-fast) var(--ease-default);

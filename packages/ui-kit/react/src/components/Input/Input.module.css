@@ -5,6 +5,7 @@
   border: 1px solid var(--softer-border);
   border-radius: var(--radius-md);
   font-family: var(--font-sans);
+  box-shadow: var(--shadow-inner, none);
   transition: all var(--duration-fast) var(--ease-default);
 }
 
@@ -12,6 +13,11 @@
   color: var(--softer-fg-soft);
   font-style: italic;
   opacity: 0.7;
+}
+
+.input::selection {
+  background: var(--selection-bg);
+  color: var(--selection-text);
 }
 
 .input:hover:not(:disabled) {

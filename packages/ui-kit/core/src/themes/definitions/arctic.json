@@ -12,17 +12,6 @@
     "temperature": -20,
     "saturation": -10
   },
-  "overrides": {
-    "light": {
-      "--page-bg": "#f0f9ff",
-      "--card-bg": "#ffffff"
-    },
-    "dark": {
-      "--page-bg": "#0c1929",
-      "--card-bg": "#152238",
-      "--page-text": "#e0f2fe"
-    }
-  },
   "accessibility": {
     "level": "AA"
   }

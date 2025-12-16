@@ -32,9 +32,12 @@
   font-size: var(--text-base);
   font-weight: var(--weight-medium);
   cursor: pointer;
-  transition: color var(--duration-fast) var(--ease-default);
+  transition:
+    color var(--duration-fast) var(--ease-default),
+    outline-offset var(--duration-fast) var(--ease-default);
   position: relative;
   white-space: nowrap;
+  border-radius: var(--radius-sm);
 }
 
 .tabIcon {
@@ -96,8 +99,10 @@
 
 .pills .tab {
   border-radius: var(--radius-md);
-  transition: color var(--duration-fast) var(--ease-default),
-    background var(--duration-fast) var(--ease-default);
+  transition:
+    color var(--duration-fast) var(--ease-default),
+    background var(--duration-fast) var(--ease-default),
+    outline-offset var(--duration-fast) var(--ease-default);
 }
 
 .pills .tab:hover:not(:disabled):not(.active) {

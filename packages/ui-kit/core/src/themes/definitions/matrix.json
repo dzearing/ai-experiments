@@ -13,10 +13,6 @@
   },
   "overrides": {
     "dark": {
-      "--page-bg": "#0d0208",
-      "--page-text": "#00ff41",
-      "--card-bg": "#0a0a0a",
-      "--card-text": "#00ff41",
       "--shadow-sm": "0 0 5px rgba(0, 255, 65, 0.3)",
       "--shadow-md": "0 0 10px rgba(0, 255, 65, 0.4)"
     }

@@ -1,6 +1,6 @@
 import { ReactNode, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { TableOfContents } from '../TableOfContents';
+import { TableOfContents } from '../../components/TableOfContents';
 import styles from './LessonLayout.module.css';
 
 export interface LessonLayoutProps {

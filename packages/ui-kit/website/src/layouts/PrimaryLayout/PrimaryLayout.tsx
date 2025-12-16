@@ -1,8 +1,8 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Tabs } from '@ui-kit/react';
-import { ThemeSwitcher } from '../components/ThemeSwitcher/ThemeSwitcher';
-import { PageTransition } from '../components/PageTransition/PageTransition';
-import styles from './Layout.module.css';
+import { ThemeSwitcher } from '../../components/ThemeSwitcher/ThemeSwitcher';
+import { PageTransition } from '../../components/PageTransition/PageTransition';
+import styles from './PrimaryLayout.module.css';
 
 const navItems = [
   { value: '/learn', label: 'Learn', content: null },
@@ -10,7 +10,7 @@ const navItems = [
   { value: '/themes', label: 'Themes', content: null },
 ];
 
-export function Layout() {
+export function PrimaryLayout() {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -25,10 +25,12 @@ export function Layout() {
     <div className={styles.layout}>
       <header className={styles.header}>
         <div className={styles.headerContent}>
-          <NavLink to="/" className={styles.logo}>
-            <span className={styles.logoIcon}>◈</span>
-            UI-Kit
-          </NavLink>
+          <div className={styles.headerLeft}>
+            <NavLink to="/" className={styles.logo}>
+              <span className={styles.logoIcon}>◈</span>
+              UI-Kit
+            </NavLink>
+          </div>
 
           <nav className={styles.nav}>
             <Tabs

@@ -6,12 +6,7 @@
  */
 
 import type { ThemeDefinition } from './types';
-import {
-  containerRoles,
-  feedbackRoles,
-  tonalSurfaces,
-  getTokenNamesForSurface,
-} from '../surfaces/definitions';
+import { tonalSurfaces } from '../surfaces/definitions';
 import type { FeedbackSurface } from '../surfaces/types';
 import {
   hexToRgb,
@@ -34,16 +29,6 @@ import { generateAnimationTokens } from '../tokens/animation';
 import themeRules from './schema/theme-rules.json';
 
 // Types for theme rules
-interface SurfaceTypeConfig {
-  description?: string;
-  tokens: string[];
-  defaults?: {
-    light?: Record<string, string>;
-    dark?: Record<string, string>;
-  };
-  derivation?: Record<string, string | { light: string; dark: string }>;
-}
-
 interface SpecialTokenConfig {
   derivation?: string | { light: string; dark: string };
   default?: string | { light: string; dark: string };
@@ -107,10 +92,7 @@ export function generateThemeTokens(
 
   Object.assign(tokens, spacingTokens, typographyTokens, radiiTokens, animTokens, shadows);
 
-  // Generate role tokens from rules (legacy)
-  generateRoleTokensFromRules(ctx);
-
-  // Generate NEW color group tokens from rules
+  // Generate color group tokens from rules
   // Each group contains all fg tokens (fg, fg-soft, fg-softer, fg-strong, fg-stronger,
   // fg-primary, fg-danger, fg-success, fg-warning, fg-info) ensuring accessibility
   generateColorGroupTokens(ctx);
@@ -202,33 +184,7 @@ function applyFormula(formula: string | { light: string; dark: string }, baseCol
 }
 
 /**
- * Generate role tokens from theme-rules.json
- */
-function generateRoleTokensFromRules(ctx: GeneratorContext): void {
-  const { colors, isDark, contrastLevel, tokens } = ctx;
-  const roleRules = themeRules.roles;
-
-  // Process container roles
-  const containerTypes = roleRules.container.types as Record<string, SurfaceTypeConfig>;
-  for (const [roleName, config] of Object.entries(containerTypes)) {
-    generateRoleTokens(roleName, config, ctx);
-  }
-
-  // Process control roles
-  const controlTypes = roleRules.control.types as Record<string, SurfaceTypeConfig>;
-  for (const [roleName, config] of Object.entries(controlTypes)) {
-    generateRoleTokens(roleName, config, ctx);
-  }
-
-  // Process feedback roles
-  const feedbackTypes = roleRules.feedback.types as Record<string, SurfaceTypeConfig>;
-  for (const [roleName, config] of Object.entries(feedbackTypes)) {
-    generateRoleTokens(roleName, config, ctx);
-  }
-}
-
-/**
- * Generate NEW color group tokens from theme-rules.json
+ * Generate color group tokens from theme-rules.json
  * Each group has 18 tokens:
  * - bg, bg-hover, bg-pressed, bg-disabled (4)
  * - border, border-hover, border-pressed, border-disabled (4)
@@ -394,43 +350,6 @@ function deriveColorGroupTokenValue(
 }
 
 /**
- * Generate tokens for a single role based on its config
- */
-function generateRoleTokens(
-  roleName: string,
-  config: SurfaceTypeConfig,
-  ctx: GeneratorContext
-): void {
-  const { colors, isDark, contrastLevel, tokens } = ctx;
-  const mode = isDark ? 'dark' : 'light';
-
-  // Get defaults for this mode
-  const defaults = config.defaults?.[mode] || {};
-  const derivation = config.derivation || {};
-
-  // Process each token for this role
-  for (const tokenName of config.tokens) {
-    const cssVar = `--${roleName}-${tokenName}`;
-
-    // Check for explicit default first
-    if (defaults[tokenName] !== undefined) {
-      tokens[cssVar] = defaults[tokenName];
-      continue;
-    }
-
-    // Check for derivation rule
-    const rule = derivation[tokenName];
-    if (rule !== undefined) {
-      tokens[cssVar] = evaluateDerivation(rule, roleName, tokenName, ctx);
-      continue;
-    }
-
-    // Apply automatic derivation based on token type
-    tokens[cssVar] = deriveTokenValue(roleName, tokenName, ctx);
-  }
-}
-
-/**
  * Evaluate a derivation rule
  */
 function evaluateDerivation(
@@ -440,6 +359,23 @@ function evaluateDerivation(
   ctx: GeneratorContext
 ): string {
   const { colors, isDark, tokens } = ctx;
+
+  // Default page colors (used as fallback when page.* tokens are referenced)
+  const pageDefaults = {
+    bg: isDark ? '#0f0f0f' : '#fafafa',
+    text: isDark ? '#e5e5e5' : '#171717',
+    border: isDark ? '#333333' : '#e5e5e5',
+  };
+
+  // Helper to resolve token with page fallback
+  const resolveToken = (surface: string, token: string): string => {
+    const tokenValue = tokens[`--${surface}-${token}`];
+    if (tokenValue) return tokenValue;
+    if (surface === 'page' && token in pageDefaults) {
+      return pageDefaults[token as keyof typeof pageDefaults];
+    }
+    return `${surface}.${token}`;
+  };
 
   // Get the rule string for current mode
   const ruleStr = typeof rule === 'string' ? rule : (isDark ? rule.dark : rule.light);
@@ -461,7 +397,7 @@ function evaluateDerivation(
   // "inherit:surface.token" - inherit from another surface
   if (ruleStr.startsWith('inherit:')) {
     const [surface, token] = ruleStr.slice(8).split('.');
-    return tokens[`--${surface}-${token}`] || ruleStr;
+    return resolveToken(surface, token);
   }
 
   // "transparent" - literal value
@@ -501,7 +437,7 @@ function evaluateDerivation(
   // "surface.token" - reference another token
   if (ruleStr.includes('.')) {
     const [surface, token] = ruleStr.split('.');
-    return tokens[`--${surface}-${token}`] || ruleStr;
+    return resolveToken(surface, token);
   }
 
   // Literal value (hex color, rgba, etc.)
@@ -512,8 +448,15 @@ function evaluateDerivation(
  * Resolve a color reference in a derivation formula
  */
 function resolveColorRef(ref: string, ctx: GeneratorContext): string {
-  const { colors, tokens } = ctx;
+  const { colors, tokens, isDark } = ctx;
   const trimmed = ref.trim();
+
+  // Default page colors (used as fallback when page.* tokens are referenced)
+  const pageDefaults = {
+    bg: isDark ? '#0f0f0f' : '#fafafa',
+    text: isDark ? '#e5e5e5' : '#171717',
+    border: isDark ? '#333333' : '#e5e5e5',
+  };
 
   // "theme:primary" style
   if (trimmed.startsWith('theme:')) {
@@ -530,7 +473,15 @@ function resolveColorRef(ref: string, ctx: GeneratorContext): string {
   // Token reference "surface.token"
   if (trimmed.includes('.')) {
     const [surface, token] = trimmed.split('.');
-    return tokens[`--${surface}-${token}`] || trimmed;
+    const tokenValue = tokens[`--${surface}-${token}`];
+    if (tokenValue) {
+      return tokenValue;
+    }
+    // Fallback for page.* references
+    if (surface === 'page' && token in pageDefaults) {
+      return pageDefaults[token as keyof typeof pageDefaults];
+    }
+    return trimmed;
   }
 
   // Simple color name from ProcessedColors
@@ -544,93 +495,6 @@ function resolveColorRef(ref: string, ctx: GeneratorContext): string {
   }
 
   return trimmed;
-}
-
-/**
- * Derive a token value automatically based on token type and surface
- */
-function deriveTokenValue(
-  surfaceName: string,
-  tokenName: string,
-  ctx: GeneratorContext
-): string {
-  const { colors, isDark, contrastLevel, tokens } = ctx;
-  const rules = themeRules.colorDerivation.rules;
-
-  // Get the background color for this surface (needed for text derivations)
-  const bgToken = `--${surfaceName}-bg`;
-  const bg = tokens[bgToken];
-
-  // Get page colors for reference
-  const pageBg = tokens['--page-bg'] || (isDark ? '#0f0f0f' : '#fafafa');
-  const pageText = tokens['--page-text'] || (isDark ? '#e5e5e5' : '#171717');
-
-  // Automatic derivation based on token name
-  switch (tokenName) {
-    case 'text':
-      if (bg) {
-        return ensureContrast(pageText, bg, contrastLevel);
-      }
-      return pageText;
-
-    case 'text-soft': {
-      const text = tokens[`--${surfaceName}-text`] || pageText;
-      const background = bg || pageBg;
-      const formula = rules['text-soft']?.formula;
-      if (typeof formula === 'string' && formula.includes('mix')) {
-        return mix(text, background, 0.3);
-      }
-      return mix(text, background, 0.3);
-    }
-
-    case 'text-softer': {
-      const text = tokens[`--${surfaceName}-text`] || pageText;
-      const background = bg || pageBg;
-      return mix(text, background, 0.5);
-    }
-
-    case 'text-strong': {
-      // Higher contrast text (30% toward maximum)
-      const text = tokens[`--${surfaceName}-text`] || pageText;
-      const background = bg || pageBg;
-      const maxContrast = isDark ? '#ffffff' : '#000000';
-      return mix(text, maxContrast, 0.3);
-    }
-
-    case 'text-stronger':
-      return isDark ? '#ffffff' : '#000000';
-
-    case 'border-soft': {
-      const border = tokens[`--${surfaceName}-border`] || tokens['--page-border'];
-      const background = bg || pageBg;
-      return mix(border || (isDark ? '#333333' : '#e5e5e5'), background, 0.4);
-    }
-
-    case 'border-strong': {
-      const border = tokens[`--${surfaceName}-border`] || tokens['--page-border'] || (isDark ? '#333333' : '#e5e5e5');
-      return isDark ? lighten(border, 10) : darken(border, 10);
-    }
-
-    case 'border-stronger': {
-      const border = tokens[`--${surfaceName}-border`] || tokens['--page-border'] || (isDark ? '#333333' : '#e5e5e5');
-      const maxContrast = isDark ? '#ffffff' : '#000000';
-      return mix(border, maxContrast, 0.5);
-    }
-
-    case 'border': {
-      const borderDefault = rules['border-default']?.formula;
-      if (typeof borderDefault === 'object') {
-        return isDark ? borderDefault.dark : borderDefault.light;
-      }
-      return isDark ? '#333333' : '#e5e5e5';
-    }
-
-    case 'shadow':
-      return 'none';
-
-    default:
-      return '';
-  }
 }
 
 /**
@@ -731,6 +595,40 @@ function adjustTemperature(hex: string, amount: number): string {
   return rgbToHex(r, rgb.g, b);
 }
 
+// Color groups that need theme-level preservation for surface resets
+const COLOR_GROUPS = ['softer', 'soft', 'base', 'strong', 'stronger', 'primary', 'inverted', 'success', 'warning', 'danger', 'info'] as const;
+const COLOR_GROUP_SUFFIXES = ['bg', 'bg-hover', 'bg-pressed', 'bg-disabled', 'border', 'border-hover', 'border-pressed', 'border-disabled', 'fg', 'fg-soft', 'fg-softer', 'fg-strong', 'fg-stronger', 'fg-primary', 'fg-danger', 'fg-success', 'fg-warning', 'fg-info'] as const;
+
+// Generate short internal token names (--_a0, --_a1, ..., --_z9, --_aa, etc.)
+// These are implementation details for surface resets - not meant for direct use
+function generateTokenMap(): Map<string, string> {
+  const map = new Map<string, string>();
+  let index = 0;
+
+  const toCode = (n: number): string => {
+    // Use base36 (0-9, a-z) for compact codes
+    return n.toString(36);
+  };
+
+  // Map color group tokens
+  for (const group of COLOR_GROUPS) {
+    for (const suffix of COLOR_GROUP_SUFFIXES) {
+      const fullName = `${group}-${suffix}`;
+      map.set(fullName, `--_${toCode(index++)}`);
+    }
+  }
+
+  // Map special tokens
+  const specialTokens = ['focus-ring', 'selection-bg', 'selection-text'];
+  for (const name of specialTokens) {
+    map.set(name, `--_${toCode(index++)}`);
+  }
+
+  return map;
+}
+
+const INTERNAL_TOKEN_MAP = generateTokenMap();
+
 /**
  * Generate CSS from tokens
  */
@@ -747,109 +645,127 @@ export function generateThemeCSS(
     '',
   ];
 
-  // Generate the appropriate selector based on theme and mode
-  const isDefaultTheme = themeId === 'default';
+  // Build the theme qualifier selector
+  // Uses CSS nesting - all rules scoped to this theme+mode combination
+  const qualifier = `[data-theme='${themeId}'][data-mode='${mode}']`;
+  lines.push(`${qualifier} {`);
 
-  if (isDefaultTheme) {
-    // Default theme: light mode is :root, dark mode uses html selector for specificity
-    // The html prefix ensures theme CSS wins over fallback tokens.css
-    if (mode === 'light') {
-      lines.push(':root {');
-    } else {
-      lines.push('html[data-mode="dark"], html.dark {');
-    }
-  } else {
-    // Custom themes: use html prefix for higher specificity than default theme
-    // This ensures non-default themes always win when multiple CSS files are loaded
-    if (mode === 'light') {
-      lines.push(`html[data-theme="${themeId}"], html[data-theme="${themeId}"][data-mode="light"] {`);
-    } else {
-      lines.push(`html[data-theme="${themeId}"][data-mode="dark"], html[data-theme="${themeId}"].dark {`);
+  // First pass: output internal tokens (preserved originals for surface resets)
+  // Uses short codes like --_0, --_1, etc. to minimize file size
+  for (const group of COLOR_GROUPS) {
+    for (const suffix of COLOR_GROUP_SUFFIXES) {
+      const fullName = `${group}-${suffix}`;
+      const shortName = INTERNAL_TOKEN_MAP.get(fullName);
+      const value = tokens[`--${fullName}`];
+      if (value && shortName) {
+        lines.push(`  ${shortName}: ${value};`);
+      }
     }
   }
+  // Also preserve special tokens that surfaces might override
+  const specialTokensToPreserve = ['focus-ring', 'selection-bg', 'selection-text'];
+  for (const name of specialTokensToPreserve) {
+    const shortName = INTERNAL_TOKEN_MAP.get(name);
+    const value = tokens[`--${name}`];
+    if (value && shortName) {
+      lines.push(`  ${shortName}: ${value};`);
+    }
+  }
+  lines.push('');
 
+  // Second pass: output all tokens normally
   for (const [name, value] of Object.entries(tokens)) {
     if (value) {
       lines.push(`  ${name}: ${value};`);
     }
   }
-
-  lines.push('}');
   lines.push('');
 
-  // Add body font-family rule (only for light mode to avoid duplication)
-  if (mode === 'light') {
-    lines.push('/* Base typography */');
-    if (isDefaultTheme) {
-      lines.push('body {');
+  // Add body typography and color rule (nested)
+  lines.push('  /* Base typography */');
+  lines.push('  & body {');
+  lines.push('    font-family: var(--font-sans);');
+  lines.push('    font-size: var(--text-base);');
+  lines.push('    line-height: var(--leading-normal);');
+  lines.push('    color: var(--base-fg);');
+  lines.push('    background: var(--base-bg);');
+  lines.push('  }');
+  lines.push('');
+
+  // Generate nested surface classes
+  lines.push('  /* Surface classes */');
+  const surfaceLines = generateSurfaceClasses(mode);
+  // Indent surface class lines for nesting
+  for (const line of surfaceLines) {
+    if (line.trim()) {
+      lines.push(`  ${line}`);
     } else {
-      lines.push(`html[data-theme="${themeId}"] body, html[data-theme="${themeId}"] {`);
+      lines.push('');
     }
-    lines.push('  font-family: var(--font-sans);');
-    lines.push('  font-size: var(--text-base);');
-    lines.push('  line-height: var(--leading-normal);');
-    lines.push('  color: var(--page-text);');
-    lines.push('  background: var(--page-bg);');
-    lines.push('}');
-    lines.push('');
   }
 
-  // Generate surface classes (only for light mode to avoid duplication)
-  if (mode === 'light') {
-    lines.push('/* Surface classes */');
-    lines.push(...generateSurfaceClasses());
-  }
+  lines.push('}');
 
   return lines.join('\n');
 }
 
 /**
- * Generate surface class CSS
+ * Generate surface class CSS for a specific mode
  *
- * NEW SYSTEM: Tonal surfaces with reset/override pattern
- * - .surface base class resets ALL tokens to page defaults
- * - .surface.raised, .surface.sunken, etc. apply overrides
- * - Nested surfaces automatically reset - no compounding
+ * Surfaces reset ALL color group tokens to their theme-level values (--_theme-*),
+ * then apply modifier-specific overrides. This ensures nested surfaces properly
+ * reset and don't inherit overrides from parent surfaces.
  *
- * LEGACY SYSTEM: Kept for backward compatibility
- * - .surface-page, .surface-card, etc.
+ * Uses CSS nesting with & prefix since these are nested inside the theme qualifier.
  */
-function generateSurfaceClasses(): string[] {
+function generateSurfaceClasses(mode: 'light' | 'dark'): string[] {
   const lines: string[] = [];
-
-  // ========================================================================
-  // NEW TONAL SURFACE SYSTEM
-  // ========================================================================
 
   lines.push('/* ================================================================');
   lines.push('   TONAL SURFACE SYSTEM');
   lines.push('   Usage: <div class="surface raised">...</div>');
-  lines.push('   Every .surface resets tokens to page defaults, then applies overrides.');
+  lines.push('   Every .surface resets ALL color group tokens to theme defaults,');
+  lines.push('   ensuring nested surfaces are isolated from parent overrides.');
   lines.push('   ================================================================ */');
   lines.push('');
 
-  // Base .surface class - resets ALL scoped tokens to page values
-  lines.push('.surface {');
-  lines.push('  /* Surface tokens - reset to page values */');
-  lines.push('  --surface-bg: var(--page-bg);');
-  lines.push('  --surface-text: var(--page-text);');
-  lines.push('  --surface-text-soft: var(--page-text-soft);');
-  lines.push('  --surface-text-softer: var(--page-text-softer);');
-  lines.push('  --surface-text-strong: var(--page-text-strong);');
-  lines.push('  --surface-text-stronger: var(--page-text-stronger);');
-  lines.push('  --surface-border: var(--page-border);');
-  lines.push('  --surface-border-soft: var(--page-border-soft);');
-  lines.push('  --surface-border-strong: var(--page-border-strong);');
-  lines.push('  --surface-border-stronger: var(--page-border-stronger);');
-  lines.push('  --surface-shadow: var(--page-shadow);');
-  lines.push('');
-  lines.push('  /* Apply surface tokens */');
-  lines.push('  background: var(--surface-bg);');
-  lines.push('  color: var(--surface-text);');
-  lines.push('}');
+  // Base .surface class - resets ALL color group tokens to theme values
+  lines.push('& .surface {');
+
+  // Reset all color group tokens using short internal references
+  for (const group of COLOR_GROUPS) {
+    for (const suffix of COLOR_GROUP_SUFFIXES) {
+      const fullName = `${group}-${suffix}`;
+      const shortName = INTERNAL_TOKEN_MAP.get(fullName);
+      if (shortName) {
+        lines.push(`  --${fullName}: var(${shortName});`);
+      }
+    }
+  }
+
+  // Also reset special tokens that surfaces might override
+  const focusRingShort = INTERNAL_TOKEN_MAP.get('focus-ring');
+  const selectionBgShort = INTERNAL_TOKEN_MAP.get('selection-bg');
+  const selectionTextShort = INTERNAL_TOKEN_MAP.get('selection-text');
+  lines.push(`  --focus-ring: var(${focusRingShort}, var(--primary-bg));`);
+  lines.push(`  --selection-bg: var(${selectionBgShort});`);
+  lines.push(`  --selection-text: var(${selectionTextShort});`);
   lines.push('');
 
-  // Generate tonal surface modifiers
+  lines.push('  /* Apply base surface styles */');
+  lines.push('  background: var(--base-bg);');
+  lines.push('  color: var(--base-fg);');
+  lines.push('');
+
+  // Selection styles nested inside .surface
+  lines.push('  /* Selection styles */');
+  lines.push('  & ::selection {');
+  lines.push('    background: var(--selection-bg);');
+  lines.push('    color: var(--selection-text);');
+  lines.push('  }');
+  lines.push('');
+
+  // Generate tonal surface modifiers (nested)
   const surfaceDefinitions = themeRules.surfaces?.types as Record<string, { description: string; overrides: Record<string, Record<string, string>> }> | undefined;
 
   if (surfaceDefinitions) {
@@ -857,83 +773,43 @@ function generateSurfaceClasses(): string[] {
       const config = surfaceDefinitions[surfaceName];
       if (!config) continue;
 
-      const lightOverrides = config.overrides?.light || {};
-      const darkOverrides = config.overrides?.dark || {};
+      const overrides = config.overrides?.[mode] || {};
 
-      // Skip if no overrides (base surface just uses the reset)
-      if (Object.keys(lightOverrides).length === 0 && Object.keys(darkOverrides).length === 0) {
-        lines.push(`/* .surface.${surfaceName} - ${config.description} */`);
-        lines.push(`/* Uses base .surface reset (no additional overrides) */`);
+      // Skip if no overrides for this mode
+      if (Object.keys(overrides).length === 0) {
+        lines.push(`  /* &.${surfaceName} - ${config.description} */`);
+        lines.push(`  /* No overrides for ${mode} mode */`);
         lines.push('');
         continue;
       }
 
-      lines.push(`/* .surface.${surfaceName} - ${config.description} */`);
-
-      // Light mode overrides
-      if (Object.keys(lightOverrides).length > 0) {
-        lines.push(`.surface.${surfaceName} {`);
-        for (const [token, value] of Object.entries(lightOverrides)) {
-          lines.push(`  --${token}: ${value};`);
-        }
-        lines.push('}');
+      lines.push(`  /* &.${surfaceName} - ${config.description} */`);
+      lines.push(`  &.${surfaceName} {`);
+      for (const [token, value] of Object.entries(overrides)) {
+        lines.push(`    --${token}: ${value};`);
       }
-
-      // Dark mode overrides (use html prefix for specificity over fallback tokens)
-      if (Object.keys(darkOverrides).length > 0) {
-        lines.push(`html[data-mode="dark"] .surface.${surfaceName}, html.dark .surface.${surfaceName} {`);
-        for (const [token, value] of Object.entries(darkOverrides)) {
-          lines.push(`  --${token}: ${value};`);
-        }
-        lines.push('}');
-      }
-
+      lines.push('  }');
       lines.push('');
     }
   }
 
-  // Generate feedback surface modifiers
-  lines.push('/* Feedback surfaces */');
-  const feedbackSurfaces: FeedbackSurface[] = ['success', 'warning', 'danger', 'info'];
-  for (const feedback of feedbackSurfaces) {
-    lines.push(`.surface.${feedback} {`);
-    lines.push(`  --surface-bg: var(--${feedback}-bg);`);
-    lines.push(`  --surface-text: var(--${feedback}-text);`);
-    lines.push(`  --surface-border: var(--${feedback}-border);`);
-    lines.push('}');
+  // Generate feedback surface modifiers (nested)
+  // These override base-* tokens to feedback colors
+  lines.push('  /* Feedback surfaces */');
+  const feedbackSurfacesList: FeedbackSurface[] = ['success', 'warning', 'danger', 'info'];
+  for (const feedback of feedbackSurfacesList) {
+    lines.push(`  &.${feedback} {`);
+    lines.push(`    --base-bg: var(--${feedback}-bg);`);
+    lines.push(`    --base-fg: var(--${feedback}-fg);`);
+    lines.push(`    --base-border: var(--${feedback}-border);`);
+    lines.push(`    background: var(--base-bg);`);
+    lines.push(`    color: var(--base-fg);`);
+    lines.push('  }');
     lines.push('');
   }
 
-  // ========================================================================
-  // LEGACY SURFACE CLASSES (for backward compatibility)
-  // ========================================================================
-
-  lines.push('/* ================================================================');
-  lines.push('   LEGACY SURFACE CLASSES');
-  lines.push('   @deprecated Use tonal surfaces: <div class="surface raised">');
-  lines.push('   ================================================================ */');
-  lines.push('');
-
-  // Only generate legacy surface classes for containers and feedback - not controls
-  const surfaceRoles = [...containerRoles, ...feedbackRoles];
-
-  for (const surface of surfaceRoles) {
-    lines.push(`.surface-${surface} {`);
-    lines.push(`  background: var(--${surface}-bg);`);
-    lines.push(`  color: var(--${surface}-text);`);
-
-    // Add border if surface has it
-    const tokenNames = getTokenNamesForSurface(surface);
-    if (tokenNames.includes('border')) {
-      lines.push(`  border-color: var(--${surface}-border);`);
-    }
-    if (tokenNames.includes('shadow')) {
-      lines.push(`  box-shadow: var(--${surface}-shadow);`);
-    }
-
-    lines.push('}');
-    lines.push('');
-  }
+  // Close the .surface block
+  lines.push('}');
 
   return lines;
 }
