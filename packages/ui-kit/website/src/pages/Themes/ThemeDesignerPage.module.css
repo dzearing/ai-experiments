@@ -2,7 +2,8 @@
 .designer {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  /* Fill viewport minus header (approx 65px) */
+  height: calc(100vh - 65px);
   overflow: hidden;
 }
 
@@ -335,13 +336,13 @@
 
 .surfacesGrid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: var(--space-3);
 }
 
-@media (max-width: 1000px) {
+@media (max-width: 600px) {
   .surfacesGrid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
   }
 }
 
@@ -376,6 +377,27 @@
 
 .surfacePreviewButton:hover {
   filter: brightness(0.95);
+}
+
+.surfaceTextExamples {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--text-sm);
+  margin-top: var(--space-1);
+}
+
+.surfaceButtonRow {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.surfaceButtonRow .surfacePreviewButton {
+  flex: 1;
+  min-width: 60px;
+  margin-top: 0;
 }
 
 /* Surface List (Token Inspector) */

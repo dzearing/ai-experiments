@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Dropdown, Segmented, useTheme } from '@ui-kit/react';
 import { SunIcon, MoonIcon, SunMoonIcon } from '@ui-kit/icons';
+import { generateRuntimeThemeTokens } from '@ui-kit/core';
 import { getStoredThemes, getAllThemeOptions, type StoredTheme } from '../../utils/themeStorage';
-import { generateTheme } from '../../utils/themeGenerator';
 import styles from './ThemeSwitcher.module.css';
 
 const modeOptions = [
@@ -25,8 +25,8 @@ export const THEME_SAVED_EVENT = 'uikit-theme-saved';
  */
 function applyCustomTheme(storedTheme: StoredTheme, resolvedMode: 'light' | 'dark', currentTheme: string) {
   // Generate tokens for both modes
-  const lightTokens = generateTheme(storedTheme.config, false).tokens;
-  const darkTokens = generateTheme(storedTheme.config, true).tokens;
+  const lightTokens = generateRuntimeThemeTokens(storedTheme.config, 'light');
+  const darkTokens = generateRuntimeThemeTokens(storedTheme.config, 'dark');
 
   // Use very high specificity to override the base theme tokens
   // We target [data-theme][data-mode] which will match the current built-in theme

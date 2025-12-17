@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { SplitPane, Segmented, Button, Accordion, AccordionItem, AccordionHeader, AccordionContent, Dropdown, Tabs, Card, Input, Select, Alert, Switch, Checkbox, useToast, useTheme } from '@ui-kit/react';
-import styles from './ThemeDesignerPage.module.css';
 import {
-  generateTheme,
+  generateRuntimeThemeTokens,
   contrastRatio,
-  type ThemeConfig,
+  getThemeById,
+  type RuntimeThemeConfig,
   type RadiiStyle,
   type AccessibilityLevel,
-} from '../../utils/themeGenerator';
+} from '@ui-kit/core';
+import styles from './ThemeDesignerPage.module.css';
 import {
   saveTheme,
   getStoredTheme,
@@ -18,7 +19,7 @@ import {
 } from '../../utils/themeStorage';
 import { THEME_SAVED_EVENT } from '../../components/ThemeSwitcher/ThemeSwitcher';
 
-const DEFAULT_CONFIG: ThemeConfig = {
+const DEFAULT_CONFIG: RuntimeThemeConfig = {
   primary: '#2563eb',
   secondary: '#06b6d4',
   accent: '#8b5cf6',
@@ -52,83 +53,213 @@ const SURFACE_INFO: Record<string, { label: string; description: string; categor
   info: { label: 'Info', description: 'Informational', category: 'feedback' },
 };
 
-// Tonal surfaces for the Surface Preview section
-const TONAL_SURFACES = [
-  { name: 'base', label: 'Base', description: 'Reset to page defaults' },
-  { name: 'raised', label: 'Raised', description: 'Cards, panels, elevated content' },
-  { name: 'sunken', label: 'Sunken', description: 'Sidebars, wells, recessed areas' },
-  { name: 'soft', label: 'Soft', description: 'Subtle background sections' },
-  { name: 'softer', label: 'Softer', description: 'Very subtle backgrounds' },
-  { name: 'strong', label: 'Strong', description: 'Emphasized sections' },
-  { name: 'stronger', label: 'Stronger', description: 'Very emphasized sections' },
-  { name: 'inverted', label: 'Inverted', description: 'Opposite color scheme' },
-  { name: 'primary', label: 'Primary', description: 'Branded sections' },
+// Surface groups for the Surface Preview section
+const SURFACE_GROUPS = [
+  {
+    title: 'Standard Surfaces',
+    description: 'Core tonal variations from the page background',
+    surfaces: [
+      { name: 'softer', label: 'Softer', description: 'Most subtle, toward extreme' },
+      { name: 'soft', label: 'Soft', description: 'Subtle background' },
+      { name: 'base', label: 'Base', description: 'Page defaults' },
+      { name: 'strong', label: 'Strong', description: 'Emphasized' },
+      { name: 'stronger', label: 'Stronger', description: 'Maximum emphasis' },
+    ],
+  },
+  {
+    title: 'Elevation Surfaces',
+    description: 'Depth perception relative to the user (light source)',
+    surfaces: [
+      { name: 'raised', label: 'Raised', description: 'Elevated, closer to user' },
+      { name: 'sunken', label: 'Sunken', description: 'Recessed, farther from user' },
+    ],
+  },
+  {
+    title: 'Feedback Surfaces',
+    description: 'Semantic feedback states',
+    surfaces: [
+      { name: 'info', label: 'Info', description: 'Informational' },
+      { name: 'success', label: 'Success', description: 'Positive outcome' },
+      { name: 'warning', label: 'Warning', description: 'Caution needed' },
+      { name: 'danger', label: 'Danger', description: 'Error or destructive' },
+    ],
+  },
+  {
+    title: 'Special Surfaces',
+    description: 'Branded and inverted contexts',
+    surfaces: [
+      { name: 'inverted', label: 'Inverted', description: 'Opposite color scheme' },
+      { name: 'primary', label: 'Primary', description: 'Branded sections' },
+    ],
+  },
 ] as const;
 
-// Helper to adjust hex color lightness
-function adjustLightness(hex: string, amount: number): string {
+// Helper to parse hex color to RGB
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
-  const adjust = (c: number) => Math.max(0, Math.min(255, c + amount));
-  const nr = adjust(r);
-  const ng = adjust(g);
-  const nb = adjust(b);
-  return `#${nr.toString(16).padStart(2, '0')}${ng.toString(16).padStart(2, '0')}${nb.toString(16).padStart(2, '0')}`;
+  return { r, g, b };
+}
+
+// Helper to convert RGB to hex
+function rgbToHex(r: number, g: number, b: number): string {
+  const clamp = (v: number) => Math.max(0, Math.min(255, Math.round(v)));
+  return `#${clamp(r).toString(16).padStart(2, '0')}${clamp(g).toString(16).padStart(2, '0')}${clamp(b).toString(16).padStart(2, '0')}`;
+}
+
+// Helper to adjust hex color lightness
+function adjustLightness(hex: string, amount: number): string {
+  const { r, g, b } = hexToRgb(hex);
+  return rgbToHex(r + amount, g + amount, b + amount);
 }
 
 // Map tonal surface names to distinct visual colors for the preview
 // Uses the actual token naming: base, soft, softer, strong, stronger, primary, etc.
-function getSurfaceTokenMapping(surfaceName: string, tokens: Record<string, string>, isDark: boolean) {
+//
+// Surface logic:
+// - Light source = user (always)
+// - Raised: BRIGHTER (closer to light source) - always positive lightness
+// - Sunken: DIMMER (farther from light source) - always negative lightness
+// - Soft/Softer: Closer to target extreme (white in light, black in dark)
+//   - Each level is a fixed step from Base, controlled by surfaceContrast
+//   - Softer = 2 steps, Soft = 1 step toward extreme
+// - Strong/Stronger: More contrast from page (darker in light, lighter in dark)
+//   - Stronger = 2 steps, Strong = 1 step toward contrast
+function getSurfaceTokenMapping(surfaceName: string, tokens: Record<string, string>, isDark: boolean, surfaceContrast = 0.5) {
   const baseBg = tokens['--base-bg'] || (isDark ? '#0f0f0f' : '#fafafa');
   const baseFg = tokens['--base-fg'] || (isDark ? '#e5e5e5' : '#171717');
   const baseBorder = tokens['--base-border'] || (isDark ? '#2a2a2a' : '#e5e5e5');
-  const strongBg = tokens['--strong-bg'] || (isDark ? '#2a2a2a' : '#e0e0e0');
-  const strongFg = tokens['--strong-fg'] || baseFg;
-  const strongBorder = tokens['--strong-border'] || (isDark ? '#404040' : '#d4d4d4');
-  const step = isDark ? 15 : -10;
+
+  // Step size scales with surfaceContrast (0.0 = 10 RGB, 1.0 = 50 RGB)
+  // At 0.5 default, step is ~30 RGB
+  const minStep = 10;
+  const maxStep = 50;
+  const stepSize = Math.round(minStep + (maxStep - minStep) * surfaceContrast);
+
+  // Direction for soft (toward extreme: white in light, black in dark)
+  const softDir = isDark ? -1 : 1;
+  // Direction for strong (toward contrast: black in light, white in dark)
+  const strongDir = isDark ? 1 : -1;
+
+  // Calculate surface backgrounds using fixed steps
+  // Soft: 1 step toward extreme
+  const softBg = adjustLightness(baseBg, softDir * stepSize);
+  // Softer: 2 steps toward extreme
+  const softerBg = adjustLightness(baseBg, softDir * stepSize * 2);
+  // Strong: 1 step toward contrast
+  const strongBg = adjustLightness(baseBg, strongDir * stepSize);
+  // Stronger: 2 steps toward contrast
+  const strongerBg = adjustLightness(baseBg, strongDir * stepSize * 2);
+
+  // Border colors follow the same pattern but with half intensity
+  const softerBorder = adjustLightness(baseBorder, softDir * stepSize);
+  const strongBorder = adjustLightness(baseBorder, strongDir * stepSize * 0.5);
+  const strongerBorder = adjustLightness(baseBorder, strongDir * stepSize);
+
+  // Raised/Sunken: Light source is always the user
+  // Raised = brighter (positive), Sunken = dimmer (negative) in BOTH modes
+  const raisedStep = 15;  // Always brighter
+  const sunkenStep = -12; // Always dimmer
 
   switch (surfaceName) {
     case 'base':
-      return { bg: baseBg, text: baseFg, border: baseBorder, buttonBg: strongBg, buttonText: strongFg, buttonBorder: strongBorder };
+      return { bg: baseBg, text: baseFg, border: baseBorder, buttonBg: strongBg, buttonText: baseFg, buttonBorder: strongBorder };
     case 'raised':
-      return { bg: adjustLightness(baseBg, step * 2), text: baseFg, border: adjustLightness(baseBorder, step), buttonBg: strongBg, buttonText: strongFg, buttonBorder: strongBorder };
+      return { bg: adjustLightness(baseBg, raisedStep), text: baseFg, border: adjustLightness(baseBorder, raisedStep / 2), buttonBg: strongBg, buttonText: baseFg, buttonBorder: strongBorder };
     case 'sunken':
-      return { bg: adjustLightness(baseBg, -step), text: baseFg, border: adjustLightness(baseBorder, -step), buttonBg: strongBg, buttonText: strongFg, buttonBorder: strongBorder };
+      return { bg: adjustLightness(baseBg, sunkenStep), text: baseFg, border: adjustLightness(baseBorder, sunkenStep / 2), buttonBg: strongBg, buttonText: baseFg, buttonBorder: strongBorder };
     case 'soft':
-      return { bg: adjustLightness(baseBg, step), text: baseFg, border: baseBorder, buttonBg: strongBg, buttonText: strongFg, buttonBorder: strongBorder };
+      return { bg: softBg, text: baseFg, border: baseBorder, buttonBg: strongBg, buttonText: baseFg, buttonBorder: strongBorder };
     case 'softer':
-      return { bg: adjustLightness(baseBg, Math.round(step * 0.5)), text: baseFg, border: baseBorder, buttonBg: strongBg, buttonText: strongFg, buttonBorder: strongBorder };
+      return { bg: softerBg, text: baseFg, border: softerBorder, buttonBg: strongBg, buttonText: baseFg, buttonBorder: strongBorder };
     case 'strong':
-      return { bg: strongBg, text: strongFg, border: strongBorder, buttonBg: baseBg, buttonText: baseFg, buttonBorder: baseBorder };
+      return { bg: strongBg, text: baseFg, border: strongBorder, buttonBg: baseBg, buttonText: baseFg, buttonBorder: baseBorder };
     case 'stronger':
-      return { bg: adjustLightness(strongBg, step), text: strongFg, border: adjustLightness(strongBorder, step), buttonBg: baseBg, buttonText: baseFg, buttonBorder: baseBorder };
+      return { bg: strongerBg, text: baseFg, border: strongerBorder, buttonBg: baseBg, buttonText: baseFg, buttonBorder: baseBorder };
     case 'inverted':
       return { bg: isDark ? '#fafafa' : '#0f0f0f', text: isDark ? '#171717' : '#e5e5e5', border: isDark ? '#e5e5e5' : '#2a2a2a', buttonBg: isDark ? '#e5e5e5' : '#2a2a2a', buttonText: isDark ? '#171717' : '#e5e5e5', buttonBorder: isDark ? '#d4d4d4' : '#404040' };
     case 'primary':
-      return { bg: tokens['--primary-bg'], text: tokens['--primary-fg'], border: tokens['--primary-bg'], buttonBg: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.3)', buttonText: tokens['--primary-fg'], buttonBorder: 'transparent' };
+      return { bg: tokens['--primary-bg'], text: tokens['--primary-fg'], border: tokens['--primary-bg'], buttonBg: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.3)', buttonText: tokens['--primary-fg'], buttonBorder: 'transparent', textSoft: tokens['--primary-fg-soft'] || 'rgba(255,255,255,0.85)' };
+    // Feedback surfaces
+    case 'info':
+      return { bg: tokens['--feedback-info-bg'] || (isDark ? '#131e37' : '#e0e8f8'), text: tokens['--feedback-info-fg'] || tokens['--primary-bg'], border: tokens['--feedback-info-border'] || tokens['--primary-bg'], buttonBg: tokens['--primary-bg'], buttonText: tokens['--primary-fg'], buttonBorder: 'transparent', textSoft: tokens['--feedback-info-fg'] };
+    case 'success':
+      return { bg: tokens['--feedback-success-bg'] || (isDark ? '#0f2918' : '#e6f4ea'), text: tokens['--feedback-success-fg'] || '#16a34a', border: tokens['--feedback-success-border'] || '#16a34a', buttonBg: tokens['--success-bg'] || '#16a34a', buttonText: tokens['--success-fg'] || '#ffffff', buttonBorder: 'transparent', textSoft: tokens['--feedback-success-fg'] };
+    case 'warning':
+      return { bg: tokens['--feedback-warning-bg'] || (isDark ? '#2d1f0d' : '#fef3e0'), text: tokens['--feedback-warning-fg'] || '#d97706', border: tokens['--feedback-warning-border'] || '#f59e0b', buttonBg: tokens['--warning-bg'] || '#f59e0b', buttonText: tokens['--warning-fg'] || '#000000', buttonBorder: 'transparent', textSoft: tokens['--feedback-warning-fg'] };
+    case 'danger':
+      return { bg: tokens['--feedback-danger-bg'] || (isDark ? '#341313' : '#f6e1e1'), text: tokens['--feedback-danger-fg'] || '#dc2626', border: tokens['--feedback-danger-border'] || '#dc2626', buttonBg: tokens['--danger-bg'] || '#dc2626', buttonText: tokens['--danger-fg'] || '#ffffff', buttonBorder: 'transparent', textSoft: tokens['--feedback-danger-fg'] };
     default:
-      return { bg: baseBg, text: baseFg, border: baseBorder, buttonBg: strongBg, buttonText: strongFg, buttonBorder: strongBorder };
+      return { bg: baseBg, text: baseFg, border: baseBorder, buttonBg: strongBg, buttonText: baseFg, buttonBorder: strongBorder, textSoft: tokens['--base-fg-soft'] || baseFg };
   }
 }
 
 // Storage key for active custom theme (must match ThemeSwitcher)
 const ACTIVE_CUSTOM_THEME_KEY = 'uikit-active-custom-theme';
 
+// Surface token property suffixes
+const SURFACE_PROPS = ['bg', 'bg-hover', 'bg-pressed', 'bg-focus', 'text', 'text-soft', 'text-softer', 'text-strong', 'text-stronger', 'text-hover', 'text-pressed', 'border', 'border-soft', 'border-strong', 'border-stronger', 'border-hover', 'border-pressed', 'border-focus', 'shadow', 'icon'] as const;
+
+// Token name mapping for different surface names
+const SURFACE_TOKEN_PREFIX: Record<string, string> = {
+  page: 'base',
+  card: 'soft',
+  overlay: 'overlay',
+  popout: 'popout',
+  inset: 'softer',
+  control: 'strong',
+  controlPrimary: 'primary',
+  controlDanger: 'feedback-danger',
+  controlSubtle: 'base',
+  controlDisabled: 'base',
+  success: 'feedback-success',
+  warning: 'feedback-warning',
+  danger: 'feedback-danger',
+  info: 'feedback-info',
+};
+
+// Extract surface object from flat tokens
+function extractSurfaceFromTokens(surfaceKey: string, tokens: Record<string, string>): Record<string, string | undefined> {
+  const prefix = SURFACE_TOKEN_PREFIX[surfaceKey] || surfaceKey;
+  const surface: Record<string, string | undefined> = {};
+
+  for (const prop of SURFACE_PROPS) {
+    const tokenName = `--${prefix}-${prop}`;
+    if (tokens[tokenName]) {
+      surface[prop] = tokens[tokenName];
+    }
+  }
+
+  // Fallback for basic properties using fg instead of text
+  if (!surface.text && tokens[`--${prefix}-fg`]) {
+    surface.text = tokens[`--${prefix}-fg`];
+  }
+  if (!surface.bg && tokens[`--${prefix}-bg`]) {
+    surface.bg = tokens[`--${prefix}-bg`];
+  }
+  if (!surface.border && tokens[`--${prefix}-border`]) {
+    surface.border = tokens[`--${prefix}-border`];
+  }
+
+  return surface;
+}
+
 export function ThemeDesignerPage() {
-  const [config, setConfig] = useState<ThemeConfig>(DEFAULT_CONFIG);
+  const [config, setConfig] = useState<RuntimeThemeConfig>(DEFAULT_CONFIG);
   const [previewMode, setPreviewMode] = useState<'light' | 'dark'>('light');
   const [themeName, setThemeName] = useState('My Theme');
   const [baseTheme, setBaseTheme] = useState<string>('default');
   const [activeSurface, setActiveSurface] = useState<string | null>(null);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
+  const [surfaceContrast, setSurfaceContrast] = useState(0.5); // Controls tonal surface step size
   const previewRef = useRef<HTMLDivElement>(null);
   const { showToast } = useToast();
   const { theme: currentTheme } = useTheme();
 
   // Load a theme by its dropdown value (handles both custom: and built-in themes)
-  const loadBaseTheme = useCallback(async (themeValue: string) => {
+  const loadBaseTheme = useCallback((themeValue: string) => {
     // Handle custom themes (prefixed with 'custom:')
     if (themeValue.startsWith('custom:')) {
       const customThemeId = themeValue.replace('custom:', '');
@@ -150,34 +281,31 @@ export function ThemeDesignerPage() {
       return;
     }
 
-    // Fall back to fetching from server
-    try {
-      const response = await fetch(`/themes/${themeValue}.json`);
-      if (!response.ok) throw new Error('Theme not found');
-      const themeData = await response.json();
-
-      // Map theme data to config
-      const newConfig: ThemeConfig = {
+    // Load from built-in themes using the core package
+    const themeData = getThemeById(themeValue);
+    if (themeData) {
+      // Map theme data to config (use defaults for properties not in ThemeDefinition)
+      const newConfig: RuntimeThemeConfig = {
         primary: themeData.colors?.primary || DEFAULT_CONFIG.primary,
         secondary: themeData.colors?.secondary,
         accent: themeData.colors?.accent,
         neutral: themeData.colors?.neutral,
-        lightBg: themeData.backgrounds?.light,
-        darkBg: themeData.backgrounds?.dark,
+        lightBg: DEFAULT_CONFIG.lightBg,
+        darkBg: DEFAULT_CONFIG.darkBg,
         saturation: themeData.config?.saturation ?? DEFAULT_CONFIG.saturation,
         temperature: themeData.config?.temperature ?? DEFAULT_CONFIG.temperature,
         radiusScale: themeData.radii?.scale ?? DEFAULT_CONFIG.radiusScale,
         radiusStyle: themeData.radii?.style ?? DEFAULT_CONFIG.radiusStyle,
-        sizeScale: themeData.sizing?.scale ?? DEFAULT_CONFIG.sizeScale,
-        glowIntensity: themeData.effects?.glowIntensity ?? DEFAULT_CONFIG.glowIntensity,
+        sizeScale: themeData.spacing?.scale ?? DEFAULT_CONFIG.sizeScale,
+        glowIntensity: DEFAULT_CONFIG.glowIntensity,
         accessibilityLevel: themeData.accessibility?.level ?? DEFAULT_CONFIG.accessibilityLevel,
       };
 
       setConfig(newConfig);
       setThemeName(themeData.name || 'My Theme');
       setBaseTheme(themeValue);
-    } catch (error) {
-      console.error('Failed to load theme:', error);
+    } else {
+      console.warn('Theme not found:', themeValue);
     }
   }, []);
 
@@ -212,20 +340,20 @@ export function ThemeDesignerPage() {
   };
 
   // Generate theme whenever config or mode changes
-  const generatedTheme = useMemo(() => {
-    return generateTheme(config, previewMode === 'dark');
+  const generatedTokens = useMemo(() => {
+    return generateRuntimeThemeTokens(config, previewMode === 'dark' ? 'dark' : 'light');
   }, [config, previewMode]);
 
   // Apply tokens to preview element
   useEffect(() => {
     if (previewRef.current) {
-      for (const [name, value] of Object.entries(generatedTheme.tokens)) {
+      for (const [name, value] of Object.entries(generatedTokens)) {
         previewRef.current.style.setProperty(name, value);
       }
     }
-  }, [generatedTheme]);
+  }, [generatedTokens]);
 
-  const handleConfigChange = <K extends keyof ThemeConfig>(key: K, value: ThemeConfig[K]) => {
+  const handleConfigChange = <K extends keyof RuntimeThemeConfig>(key: K, value: RuntimeThemeConfig[K]) => {
     setConfig(prev => ({ ...prev, [key]: value }));
   };
 
@@ -254,18 +382,18 @@ export function ThemeDesignerPage() {
   };
 
   const handleExportCSS = () => {
-    const lightTheme = generateTheme(config, false);
-    const darkTheme = generateTheme(config, true);
+    const lightTokens = generateRuntimeThemeTokens(config, 'light');
+    const darkTokens = generateRuntimeThemeTokens(config, 'dark');
     const themeId = themeName.toLowerCase().replace(/\s+/g, '-');
     let css = `/* ${themeName} - Generated by UI-Kit Theme Designer */\n\n`;
     css += '/* Light Mode */\n';
     css += `[data-theme="${themeId}"], [data-theme="${themeId}"][data-mode="light"] {\n`;
-    for (const [name, value] of Object.entries(lightTheme.tokens)) {
+    for (const [name, value] of Object.entries(lightTokens)) {
       css += `  ${name}: ${value};\n`;
     }
     css += '}\n\n/* Dark Mode */\n';
     css += `[data-theme="${themeId}"][data-mode="dark"] {\n`;
-    for (const [name, value] of Object.entries(darkTheme.tokens)) {
+    for (const [name, value] of Object.entries(darkTokens)) {
       css += `  ${name}: ${value};\n`;
     }
     css += '}\n';
@@ -403,14 +531,14 @@ export function ThemeDesignerPage() {
               <div className={styles.formField}>
                 <div className={styles.sliderHeader}>
                   <label className={styles.fieldLabel}>Radius Scale</label>
-                  <span className={styles.sliderValue}>{config.radiusScale.toFixed(1)}x</span>
+                  <span className={styles.sliderValue}>{(config.radiusScale ?? 1).toFixed(1)}x</span>
                 </div>
                 <input
                   type="range"
                   min="0.5"
                   max="2"
                   step="0.1"
-                  value={config.radiusScale}
+                  value={config.radiusScale ?? 1}
                   onChange={(e) => handleConfigChange('radiusScale', parseFloat(e.target.value))}
                   className={styles.slider}
                 />
@@ -427,18 +555,34 @@ export function ThemeDesignerPage() {
               <div className={styles.formField}>
                 <div className={styles.sliderHeader}>
                   <label className={styles.fieldLabel}>Glow Intensity</label>
-                  <span className={styles.sliderValue}>{Math.round(config.glowIntensity * 100)}%</span>
+                  <span className={styles.sliderValue}>{Math.round((config.glowIntensity ?? 0.5) * 100)}%</span>
                 </div>
                 <input
                   type="range"
                   min="0"
                   max="1"
                   step="0.05"
-                  value={config.glowIntensity}
+                  value={config.glowIntensity ?? 0.5}
                   onChange={(e) => handleConfigChange('glowIntensity', parseFloat(e.target.value))}
                   className={styles.slider}
                 />
                 <p className={styles.hint}>Affects glow on tabs, selections, and focus states.</p>
+              </div>
+              <div className={styles.formField}>
+                <div className={styles.sliderHeader}>
+                  <label className={styles.fieldLabel}>Surface Contrast</label>
+                  <span className={styles.sliderValue}>{Math.round(surfaceContrast * 100)}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={surfaceContrast}
+                  onChange={(e) => setSurfaceContrast(parseFloat(e.target.value))}
+                  className={styles.slider}
+                />
+                <p className={styles.hint}>Controls how distinct tonal surfaces (soft, strong) are from the base.</p>
               </div>
             </div>
           </AccordionContent>
@@ -466,11 +610,11 @@ export function ThemeDesignerPage() {
               <p className={styles.hint}>Click a surface to view its computed CSS variables.</p>
               <div className={styles.surfaceList}>
                 {Object.entries(SURFACE_INFO).map(([key, info]) => {
-                  const surface = generatedTheme.surfaces[key as keyof typeof generatedTheme.surfaces];
-                  if (!surface) return null;
+                  const surface = extractSurfaceFromTokens(key, generatedTokens);
+                  const bgColor = surface.bg || '#888';
+                  const textColor = surface.text || '#fff';
+                  if (!bgColor || !textColor) return null;
                   const isActive = activeSurface === key;
-                  const bgColor = surface.bg;
-                  const textColor = surface.text;
                   const contrast = getContrastDisplay(bgColor, textColor);
 
                   return (
@@ -479,7 +623,7 @@ export function ThemeDesignerPage() {
                         className={`${styles.surfaceItem} ${isActive ? styles.surfaceItemActive : ''}`}
                         onClick={() => setActiveSurface(isActive ? null : key)}
                       >
-                        <div className={styles.surfaceSwatch} style={{ background: bgColor, color: textColor, borderRadius: generatedTheme.tokens['--radius-sm'] }}>Aa</div>
+                        <div className={styles.surfaceSwatch} style={{ background: bgColor, color: textColor, borderRadius: generatedTokens['--radius-sm'] }}>Aa</div>
                         <div className={styles.surfaceInfo}>
                           <span className={styles.surfaceName}>{info.label}</span>
                           <span className={styles.surfaceDesc}>{info.description}</span>
@@ -493,12 +637,13 @@ export function ThemeDesignerPage() {
                         <div className={styles.tokenList}>
                           {Object.entries(surface).map(([prop, value]) => {
                             if (value === undefined) return null;
-                            const tokenName = `--${key}-${prop}`;
+                            const tokenPrefix = SURFACE_TOKEN_PREFIX[key] || key;
+                            const tokenName = `--${tokenPrefix}-${prop}`;
                             return (
-                              <button key={prop} className={`${styles.tokenItem} ${copiedToken === tokenName ? styles.tokenCopied : ''}`} onClick={() => handleCopyToken(tokenName, value)}>
+                              <button key={prop} className={`${styles.tokenItem} ${copiedToken === tokenName ? styles.tokenCopied : ''}`} onClick={() => handleCopyToken(tokenName, String(value))}>
                                 <code className={styles.tokenName}>{tokenName}</code>
                                 <span className={styles.tokenValue}>
-                                  {value.startsWith('#') || value.startsWith('rgb') ? (<><span className={styles.tokenSwatch} style={{ background: value }} />{value}</>) : value}
+                                  {String(value).startsWith('#') || String(value).startsWith('rgb') ? (<><span className={styles.tokenSwatch} style={{ background: String(value) }} />{value}</>) : value}
                                 </span>
                               </button>
                             );
@@ -547,7 +692,7 @@ export function ThemeDesignerPage() {
           <Button variant="primary" size="sm" onClick={handleSaveTheme}>Save Theme</Button>
         </div>
       </div>
-      <div ref={previewRef} className={styles.previewContent} style={{ ...generatedTheme.tokens, background: generatedTheme.tokens['--base-bg'], color: generatedTheme.tokens['--base-fg'] } as React.CSSProperties}>
+      <div ref={previewRef} className={styles.previewContent} style={{ ...generatedTokens, background: generatedTokens['--base-bg'], color: generatedTokens['--base-fg'] } as React.CSSProperties}>
         {/* Buttons Preview */}
         <div className={styles.previewSection}>
           <h3 className={styles.previewSectionTitle}>Buttons</h3>
@@ -630,70 +775,64 @@ export function ThemeDesignerPage() {
           </div>
         </div>
 
-        {/* Alerts Preview */}
-        <div className={styles.previewSection}>
-          <h3 className={styles.previewSectionTitle}>Feedback</h3>
-          <div className={styles.alertsGrid}>
-            <Alert
-              variant="success"
-              style={{
-                background: generatedTheme.tokens['--feedback-success-bg'],
-                color: generatedTheme.tokens['--feedback-success-fg'],
-                borderLeftColor: generatedTheme.tokens['--feedback-success-border'],
-              }}
-            >
-              Success message
-            </Alert>
-            <Alert
-              variant="warning"
-              style={{
-                background: generatedTheme.tokens['--feedback-warning-bg'],
-                color: generatedTheme.tokens['--feedback-warning-fg'],
-                borderLeftColor: generatedTheme.tokens['--feedback-warning-border'],
-              }}
-            >
-              Warning message
-            </Alert>
-            <Alert
-              variant="danger"
-              style={{
-                background: generatedTheme.tokens['--feedback-danger-bg'],
-                color: generatedTheme.tokens['--feedback-danger-fg'],
-                borderLeftColor: generatedTheme.tokens['--feedback-danger-border'],
-              }}
-            >
-              Danger message
-            </Alert>
-            <Alert
-              variant="info"
-              style={{
-                background: generatedTheme.tokens['--feedback-info-bg'],
-                color: generatedTheme.tokens['--feedback-info-fg'],
-                borderLeftColor: generatedTheme.tokens['--feedback-info-border'],
-              }}
-            >
-              Info message
-            </Alert>
+        {/* Surface Groups */}
+        {SURFACE_GROUPS.map((group) => (
+          <div key={group.title} className={styles.previewSection}>
+            <h3 className={styles.previewSectionTitle}>{group.title}</h3>
+            <p className={styles.previewSectionDesc}>{group.description}</p>
+            <div className={styles.surfacesGrid}>
+              {group.surfaces.map(({ name, label, description }) => {
+                const surfaceTokens = getSurfaceTokenMapping(name, generatedTokens, previewMode === 'dark', surfaceContrast);
+                const isFeedback = ['info', 'success', 'warning', 'danger'].includes(name);
+                const isSpecial = ['inverted', 'primary'].includes(name);
+                return (
+                  <div
+                    key={name}
+                    className={styles.surfacePreview}
+                    style={{
+                      background: surfaceTokens.bg,
+                      color: surfaceTokens.text,
+                      borderColor: surfaceTokens.border,
+                      borderRadius: generatedTokens['--radius-lg'],
+                    }}
+                  >
+                    <span className={styles.surfacePreviewLabel}>{label}</span>
+                    <span className={styles.surfacePreviewDesc} style={{ opacity: 0.7 }}>{description}</span>
+                    <div className={styles.surfaceTextExamples}>
+                      <span style={{ fontWeight: 600 }}>Strong text</span>
+                      <span>Regular text</span>
+                      <span style={{ opacity: 0.7 }}>Soft text</span>
+                    </div>
+                    <div className={styles.surfaceButtonRow}>
+                      <button
+                        className={styles.surfacePreviewButton}
+                        style={{
+                          background: isSpecial ? surfaceTokens.buttonBg : (generatedTokens['--strong-bg'] || '#e0e0e0'),
+                          color: isSpecial ? surfaceTokens.buttonText : (generatedTokens['--strong-fg'] || '#171717'),
+                          borderColor: 'transparent',
+                          borderRadius: generatedTokens['--radius-md'],
+                        }}
+                      >
+                        Default
+                      </button>
+                      <button
+                        className={styles.surfacePreviewButton}
+                        style={{
+                          background: isFeedback ? surfaceTokens.buttonBg : (generatedTokens['--primary-bg'] || '#2563eb'),
+                          color: isFeedback ? surfaceTokens.buttonText : (generatedTokens['--primary-fg'] || '#ffffff'),
+                          borderColor: 'transparent',
+                          borderRadius: generatedTokens['--radius-md'],
+                        }}
+                      >
+                        Primary
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
-
-        {/* Tonal Surfaces Preview */}
-        <div className={styles.previewSection}>
-          <h3 className={styles.previewSectionTitle}>Tonal Surfaces</h3>
-          <p className={styles.previewSectionDesc}>Use <code>.surface.&#123;name&#125;</code> classes to create distinct visual contexts.</p>
-          <div className={styles.surfacesGrid}>
-            {TONAL_SURFACES.map(({ name, label, description }) => {
-              const surfaceTokens = getSurfaceTokenMapping(name, generatedTheme.tokens, previewMode === 'dark');
-              return (
-                <div key={name} className={styles.surfacePreview} style={{ background: surfaceTokens.bg, color: surfaceTokens.text, borderColor: surfaceTokens.border, borderRadius: generatedTheme.tokens['--radius-lg'] }}>
-                  <span className={styles.surfacePreviewLabel}>{label}</span>
-                  <span className={styles.surfacePreviewDesc} style={{ color: surfaceTokens.text, opacity: 0.7 }}>{description}</span>
-                  <button className={styles.surfacePreviewButton} style={{ background: surfaceTokens.buttonBg, color: surfaceTokens.buttonText, borderColor: surfaceTokens.buttonBorder, borderRadius: generatedTheme.tokens['--radius-md'] }}>Button</button>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        ))}
       </div>
     </div>
   );

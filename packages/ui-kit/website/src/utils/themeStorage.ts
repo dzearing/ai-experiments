@@ -4,7 +4,7 @@
  * Handles localStorage persistence for custom themes with versioning support.
  */
 
-import type { ThemeConfig } from './themeGenerator';
+import type { RuntimeThemeConfig } from '@ui-kit/core';
 
 /**
  * Built-in themes - single source of truth
@@ -40,7 +40,7 @@ export interface StoredTheme {
   version: number;         // Increments on save
   baseTheme?: string;      // If derived from premade (e.g., 'default')
   baseVersion?: number;    // Version when customized
-  config: ThemeConfig;
+  config: RuntimeThemeConfig;
   createdAt: string;
   updatedAt: string;
 }
@@ -231,7 +231,7 @@ export function importThemeFromJSON(json: string): StoredTheme | null {
   try {
     const data = JSON.parse(json);
 
-    const config: ThemeConfig = {
+    const config: RuntimeThemeConfig = {
       primary: data.colors?.primary || '#2563eb',
       secondary: data.colors?.secondary,
       accent: data.colors?.accent,

@@ -18,8 +18,8 @@
       "description": "Errors, destructive actions, critical states"
     },
     "info": {
-      "base": "#0ea5e9",
-      "description": "Informational, neutral status, help content"
+      "base": "theme:primary",
+      "description": "Informational - derived from theme primary for consistent branding"
     }
   },
 
@@ -36,28 +36,28 @@
     },
     "groups": {
       "softer": {
-        "description": "Recessed areas, input backgrounds, wells",
+        "description": "Most subtle - closest to white (light) or black (dark), capped at 10%",
         "derivation": {
-          "bg": { "light": "darken(page.bg, 4)", "dark": "darken(page.bg, 4)" },
-          "bg-hover": { "light": "darken(page.bg, 6)", "dark": "lighten(page.bg, 4)" },
-          "bg-pressed": { "light": "darken(page.bg, 8)", "dark": "lighten(page.bg, 6)" },
-          "bg-disabled": { "light": "darken(page.bg, 2)", "dark": "darken(page.bg, 2)" },
-          "border": { "light": "darken(page.bg, 12)", "dark": "lighten(page.bg, 16)" },
-          "border-hover": { "light": "darken(page.bg, 16)", "dark": "lighten(page.bg, 20)" },
-          "border-pressed": { "light": "darken(page.bg, 20)", "dark": "lighten(page.bg, 24)" },
-          "border-disabled": { "light": "darken(page.bg, 8)", "dark": "lighten(page.bg, 10)" }
+          "bg": { "light": "lighten(page.bg, 10)", "dark": "darken(page.bg, 10)" },
+          "bg-hover": { "light": "lighten(page.bg, 6)", "dark": "darken(page.bg, 6)" },
+          "bg-pressed": { "light": "lighten(page.bg, 3)", "dark": "darken(page.bg, 3)" },
+          "bg-disabled": { "light": "lighten(page.bg, 8)", "dark": "darken(page.bg, 8)" },
+          "border": { "light": "darken(page.bg, 10)", "dark": "lighten(page.bg, 16)" },
+          "border-hover": { "light": "darken(page.bg, 14)", "dark": "lighten(page.bg, 20)" },
+          "border-pressed": { "light": "darken(page.bg, 18)", "dark": "lighten(page.bg, 24)" },
+          "border-disabled": { "light": "darken(page.bg, 6)", "dark": "lighten(page.bg, 10)" }
         }
       },
       "soft": {
-        "description": "Elevated cards, panels, alternating row backgrounds",
+        "description": "Subtle - halfway toward white (light) or black (dark), capped at 5%",
         "derivation": {
-          "bg": { "light": "lighten(page.bg, 8)", "dark": "lighten(page.bg, 8)" },
-          "bg-hover": { "light": "lighten(page.bg, 12)", "dark": "lighten(page.bg, 12)" },
-          "bg-pressed": { "light": "lighten(page.bg, 4)", "dark": "lighten(page.bg, 4)" },
-          "bg-disabled": { "light": "lighten(page.bg, 6)", "dark": "lighten(page.bg, 6)" },
-          "border": { "light": "darken(page.bg, 10)", "dark": "lighten(page.bg, 18)" },
-          "border-hover": { "light": "darken(page.bg, 14)", "dark": "lighten(page.bg, 22)" },
-          "border-pressed": { "light": "darken(page.bg, 18)", "dark": "lighten(page.bg, 26)" },
+          "bg": { "light": "lighten(page.bg, 5)", "dark": "darken(page.bg, 5)" },
+          "bg-hover": { "light": "lighten(page.bg, 8)", "dark": "darken(page.bg, 8)" },
+          "bg-pressed": { "light": "lighten(page.bg, 2)", "dark": "darken(page.bg, 2)" },
+          "bg-disabled": { "light": "lighten(page.bg, 4)", "dark": "darken(page.bg, 4)" },
+          "border": { "light": "darken(page.bg, 10)", "dark": "lighten(page.bg, 16)" },
+          "border-hover": { "light": "darken(page.bg, 14)", "dark": "lighten(page.bg, 20)" },
+          "border-pressed": { "light": "darken(page.bg, 18)", "dark": "lighten(page.bg, 24)" },
           "border-disabled": { "light": "darken(page.bg, 6)", "dark": "lighten(page.bg, 12)" }
         }
       },
@@ -75,29 +75,29 @@
         }
       },
       "strong": {
-        "description": "Emphasized sections, highlights",
+        "description": "Emphasized - 10% darker (light) or lighter (dark) than base",
         "derivation": {
-          "bg": { "light": "darken(page.bg, 10)", "dark": "lighten(page.bg, 14)" },
-          "bg-hover": { "light": "darken(page.bg, 14)", "dark": "lighten(page.bg, 18)" },
-          "bg-pressed": { "light": "darken(page.bg, 18)", "dark": "lighten(page.bg, 22)" },
-          "bg-disabled": { "light": "darken(page.bg, 6)", "dark": "lighten(page.bg, 8)" },
-          "border": { "light": "darken(page.bg, 16)", "dark": "lighten(page.bg, 24)" },
-          "border-hover": { "light": "darken(page.bg, 20)", "dark": "lighten(page.bg, 28)" },
-          "border-pressed": { "light": "darken(page.bg, 24)", "dark": "lighten(page.bg, 32)" },
-          "border-disabled": { "light": "darken(page.bg, 10)", "dark": "lighten(page.bg, 16)" }
+          "bg": { "light": "darken(page.bg, 10)", "dark": "lighten(page.bg, 10)" },
+          "bg-hover": { "light": "darken(page.bg, 14)", "dark": "lighten(page.bg, 14)" },
+          "bg-pressed": { "light": "darken(page.bg, 18)", "dark": "lighten(page.bg, 18)" },
+          "bg-disabled": { "light": "darken(page.bg, 6)", "dark": "lighten(page.bg, 6)" },
+          "border": { "light": "darken(page.bg, 16)", "dark": "lighten(page.bg, 20)" },
+          "border-hover": { "light": "darken(page.bg, 20)", "dark": "lighten(page.bg, 24)" },
+          "border-pressed": { "light": "darken(page.bg, 24)", "dark": "lighten(page.bg, 28)" },
+          "border-disabled": { "light": "darken(page.bg, 10)", "dark": "lighten(page.bg, 14)" }
         }
       },
       "stronger": {
-        "description": "Maximum emphasis areas",
+        "description": "Maximum emphasis - 20% darker (light) or lighter (dark) than base",
         "derivation": {
-          "bg": { "light": "darken(page.bg, 20)", "dark": "lighten(page.bg, 24)" },
-          "bg-hover": { "light": "darken(page.bg, 24)", "dark": "lighten(page.bg, 28)" },
-          "bg-pressed": { "light": "darken(page.bg, 28)", "dark": "lighten(page.bg, 32)" },
-          "bg-disabled": { "light": "darken(page.bg, 12)", "dark": "lighten(page.bg, 14)" },
-          "border": { "light": "darken(page.bg, 24)", "dark": "lighten(page.bg, 32)" },
-          "border-hover": { "light": "darken(page.bg, 28)", "dark": "lighten(page.bg, 36)" },
-          "border-pressed": { "light": "darken(page.bg, 32)", "dark": "lighten(page.bg, 40)" },
-          "border-disabled": { "light": "darken(page.bg, 16)", "dark": "lighten(page.bg, 20)" }
+          "bg": { "light": "darken(page.bg, 20)", "dark": "lighten(page.bg, 20)" },
+          "bg-hover": { "light": "darken(page.bg, 24)", "dark": "lighten(page.bg, 24)" },
+          "bg-pressed": { "light": "darken(page.bg, 28)", "dark": "lighten(page.bg, 28)" },
+          "bg-disabled": { "light": "darken(page.bg, 12)", "dark": "lighten(page.bg, 12)" },
+          "border": { "light": "darken(page.bg, 24)", "dark": "lighten(page.bg, 28)" },
+          "border-hover": { "light": "darken(page.bg, 28)", "dark": "lighten(page.bg, 32)" },
+          "border-pressed": { "light": "darken(page.bg, 32)", "dark": "lighten(page.bg, 36)" },
+          "border-disabled": { "light": "darken(page.bg, 16)", "dark": "lighten(page.bg, 18)" }
         }
       },
       "primary": {
@@ -169,183 +169,117 @@
         }
       },
       "success": {
-        "description": "Success surfaces for toasts, notifications, alerts",
-        "defaults": {
-          "light": {
-            "bg": "#dcfce7",
-            "bg-hover": "#bbf7d0",
-            "bg-pressed": "#86efac",
-            "bg-disabled": "#f0fdf4",
-            "border": "#86efac",
-            "border-hover": "#4ade80",
-            "border-pressed": "#22c55e",
-            "border-disabled": "#bbf7d0",
-            "fg": "#166534",
-            "fg-soft": "#15803d",
-            "fg-softer": "#22c55e",
-            "fg-strong": "#14532d",
-            "fg-stronger": "#052e16",
-            "fg-primary": "#1d4ed8",
-            "fg-danger": "#dc2626",
-            "fg-success": "#166534",
-            "fg-warning": "#a16207",
-            "fg-info": "#0369a1"
-          },
-          "dark": {
-            "bg": "#122e1a",
-            "bg-hover": "#173820",
-            "bg-pressed": "#1c4226",
-            "bg-disabled": "#0e2414",
-            "border": "#1f5c35",
-            "border-hover": "#22663d",
-            "border-pressed": "#2d804d",
-            "border-disabled": "#14331d",
-            "fg": "#86efac",
-            "fg-soft": "#4ade80",
-            "fg-softer": "#22c55e",
-            "fg-strong": "#bbf7d0",
-            "fg-stronger": "#dcfce7",
-            "fg-primary": "#60a5fa",
-            "fg-danger": "#f87171",
-            "fg-success": "#4ade80",
-            "fg-warning": "#fbbf24",
-            "fg-info": "#38bdf8"
-          }
+        "description": "Success color group - SOLID green for buttons and actions",
+        "derivation": {
+          "bg": "semantic:success",
+          "bg-hover": { "light": "darken(semantic:success, 8)", "dark": "lighten(semantic:success, 8)" },
+          "bg-pressed": { "light": "darken(semantic:success, 12)", "dark": "lighten(semantic:success, 12)" },
+          "bg-disabled": { "light": "mix(semantic:success, page.bg, 0.5)", "dark": "mix(semantic:success, page.bg, 0.5)" },
+          "border": "transparent",
+          "border-hover": { "light": "rgba(255, 255, 255, 0.2)", "dark": "rgba(0, 0, 0, 0.2)" },
+          "border-pressed": { "light": "rgba(255, 255, 255, 0.3)", "dark": "rgba(0, 0, 0, 0.3)" },
+          "border-disabled": "transparent",
+          "fg": "contrast(bg)",
+          "fg-soft": { "light": "rgba(255, 255, 255, 0.85)", "dark": "rgba(0, 0, 0, 0.85)" },
+          "fg-softer": { "light": "rgba(255, 255, 255, 0.7)", "dark": "rgba(0, 0, 0, 0.7)" },
+          "fg-strong": "contrast(bg)",
+          "fg-stronger": "contrast(bg)"
         }
       },
       "warning": {
-        "description": "Warning surfaces for toasts, notifications, alerts",
-        "defaults": {
-          "light": {
-            "bg": "#fef3c7",
-            "bg-hover": "#fde68a",
-            "bg-pressed": "#fcd34d",
-            "bg-disabled": "#fffbeb",
-            "border": "#fcd34d",
-            "border-hover": "#fbbf24",
-            "border-pressed": "#f59e0b",
-            "border-disabled": "#fde68a",
-            "fg": "#92400e",
-            "fg-soft": "#a16207",
-            "fg-softer": "#ca8a04",
-            "fg-strong": "#78350f",
-            "fg-stronger": "#451a03",
-            "fg-primary": "#1d4ed8",
-            "fg-danger": "#dc2626",
-            "fg-success": "#166534",
-            "fg-warning": "#92400e",
-            "fg-info": "#0369a1"
-          },
-          "dark": {
-            "bg": "#2a220e",
-            "bg-hover": "#362c12",
-            "bg-pressed": "#423616",
-            "bg-disabled": "#201a0a",
-            "border": "#5c4a1a",
-            "border-hover": "#66521b",
-            "border-pressed": "#806722",
-            "border-disabled": "#332910",
-            "fg": "#fcd34d",
-            "fg-soft": "#fbbf24",
-            "fg-softer": "#f59e0b",
-            "fg-strong": "#fde68a",
-            "fg-stronger": "#fef3c7",
-            "fg-primary": "#60a5fa",
-            "fg-danger": "#f87171",
-            "fg-success": "#4ade80",
-            "fg-warning": "#fbbf24",
-            "fg-info": "#38bdf8"
-          }
+        "description": "Warning color group - SOLID amber for buttons and actions",
+        "derivation": {
+          "bg": "semantic:warning",
+          "bg-hover": { "light": "darken(semantic:warning, 8)", "dark": "lighten(semantic:warning, 8)" },
+          "bg-pressed": { "light": "darken(semantic:warning, 12)", "dark": "lighten(semantic:warning, 12)" },
+          "bg-disabled": { "light": "mix(semantic:warning, page.bg, 0.5)", "dark": "mix(semantic:warning, page.bg, 0.5)" },
+          "border": "transparent",
+          "border-hover": { "light": "rgba(255, 255, 255, 0.2)", "dark": "rgba(0, 0, 0, 0.2)" },
+          "border-pressed": { "light": "rgba(255, 255, 255, 0.3)", "dark": "rgba(0, 0, 0, 0.3)" },
+          "border-disabled": "transparent",
+          "fg": "contrast(bg)",
+          "fg-soft": { "light": "rgba(255, 255, 255, 0.85)", "dark": "rgba(0, 0, 0, 0.85)" },
+          "fg-softer": { "light": "rgba(255, 255, 255, 0.7)", "dark": "rgba(0, 0, 0, 0.7)" },
+          "fg-strong": "contrast(bg)",
+          "fg-stronger": "contrast(bg)"
         }
       },
       "danger": {
-        "description": "Danger surfaces for toasts, notifications, alerts",
-        "defaults": {
-          "light": {
-            "bg": "#fee2e2",
-            "bg-hover": "#fecaca",
-            "bg-pressed": "#fca5a5",
-            "bg-disabled": "#fef2f2",
-            "border": "#fca5a5",
-            "border-hover": "#f87171",
-            "border-pressed": "#ef4444",
-            "border-disabled": "#fecaca",
-            "fg": "#991b1b",
-            "fg-soft": "#b91c1c",
-            "fg-softer": "#dc2626",
-            "fg-strong": "#7f1d1d",
-            "fg-stronger": "#450a0a",
-            "fg-primary": "#1d4ed8",
-            "fg-danger": "#991b1b",
-            "fg-success": "#166534",
-            "fg-warning": "#a16207",
-            "fg-info": "#0369a1"
-          },
-          "dark": {
-            "bg": "#2e1414",
-            "bg-hover": "#3a1a1a",
-            "bg-pressed": "#462020",
-            "bg-disabled": "#241010",
-            "border": "#5c2020",
-            "border-hover": "#662222",
-            "border-pressed": "#802b2b",
-            "border-disabled": "#331717",
-            "fg": "#fca5a5",
-            "fg-soft": "#f87171",
-            "fg-softer": "#ef4444",
-            "fg-strong": "#fecaca",
-            "fg-stronger": "#fee2e2",
-            "fg-primary": "#60a5fa",
-            "fg-danger": "#f87171",
-            "fg-success": "#4ade80",
-            "fg-warning": "#fbbf24",
-            "fg-info": "#38bdf8"
-          }
+        "description": "Danger color group - SOLID red for buttons and destructive actions",
+        "derivation": {
+          "bg": "semantic:danger",
+          "bg-hover": { "light": "darken(semantic:danger, 8)", "dark": "lighten(semantic:danger, 8)" },
+          "bg-pressed": { "light": "darken(semantic:danger, 12)", "dark": "lighten(semantic:danger, 12)" },
+          "bg-disabled": { "light": "mix(semantic:danger, page.bg, 0.5)", "dark": "mix(semantic:danger, page.bg, 0.5)" },
+          "border": "transparent",
+          "border-hover": { "light": "rgba(255, 255, 255, 0.2)", "dark": "rgba(0, 0, 0, 0.2)" },
+          "border-pressed": { "light": "rgba(255, 255, 255, 0.3)", "dark": "rgba(0, 0, 0, 0.3)" },
+          "border-disabled": "transparent",
+          "fg": "contrast(bg)",
+          "fg-soft": { "light": "rgba(255, 255, 255, 0.85)", "dark": "rgba(0, 0, 0, 0.85)" },
+          "fg-softer": { "light": "rgba(255, 255, 255, 0.7)", "dark": "rgba(0, 0, 0, 0.7)" },
+          "fg-strong": "contrast(bg)",
+          "fg-stronger": "contrast(bg)"
         }
       },
       "info": {
-        "description": "Info surfaces for toasts, notifications, alerts",
-        "defaults": {
-          "light": {
-            "bg": "#dbeafe",
-            "bg-hover": "#bfdbfe",
-            "bg-pressed": "#93c5fd",
-            "bg-disabled": "#eff6ff",
-            "border": "#93c5fd",
-            "border-hover": "#60a5fa",
-            "border-pressed": "#3b82f6",
-            "border-disabled": "#bfdbfe",
-            "fg": "#1e40af",
-            "fg-soft": "#1d4ed8",
-            "fg-softer": "#2563eb",
-            "fg-strong": "#1e3a8a",
-            "fg-stronger": "#172554",
-            "fg-primary": "#1d4ed8",
-            "fg-danger": "#dc2626",
-            "fg-success": "#166534",
-            "fg-warning": "#a16207",
-            "fg-info": "#1e40af"
-          },
-          "dark": {
-            "bg": "#141e30",
-            "bg-hover": "#1a263c",
-            "bg-pressed": "#202e48",
-            "bg-disabled": "#101826",
-            "border": "#243c60",
-            "border-hover": "#224066",
-            "border-pressed": "#2b507d",
-            "border-disabled": "#172336",
-            "fg": "#93c5fd",
-            "fg-soft": "#60a5fa",
-            "fg-softer": "#3b82f6",
-            "fg-strong": "#bfdbfe",
-            "fg-stronger": "#dbeafe",
-            "fg-primary": "#60a5fa",
-            "fg-danger": "#f87171",
-            "fg-success": "#4ade80",
-            "fg-warning": "#fbbf24",
-            "fg-info": "#60a5fa"
-          }
+        "description": "Info color group - SOLID primary for buttons and informational actions",
+        "derivation": {
+          "bg": "theme:primary",
+          "bg-hover": { "light": "darken(theme:primary, 8)", "dark": "lighten(theme:primary, 8)" },
+          "bg-pressed": { "light": "darken(theme:primary, 12)", "dark": "lighten(theme:primary, 12)" },
+          "bg-disabled": { "light": "mix(theme:primary, page.bg, 0.5)", "dark": "mix(theme:primary, page.bg, 0.5)" },
+          "border": "transparent",
+          "border-hover": { "light": "rgba(255, 255, 255, 0.2)", "dark": "rgba(0, 0, 0, 0.2)" },
+          "border-pressed": { "light": "rgba(255, 255, 255, 0.3)", "dark": "rgba(0, 0, 0, 0.3)" },
+          "border-disabled": "transparent",
+          "fg": "contrast(bg)",
+          "fg-soft": { "light": "rgba(255, 255, 255, 0.85)", "dark": "rgba(0, 0, 0, 0.85)" },
+          "fg-softer": { "light": "rgba(255, 255, 255, 0.7)", "dark": "rgba(0, 0, 0, 0.7)" },
+          "fg-strong": "contrast(bg)",
+          "fg-stronger": "contrast(bg)"
+        }
+      }
+    }
+  },
+
+  "feedbackSurfaces": {
+    "description": "Feedback surface system - light tinted backgrounds for alerts/notifications. Foreground colors are computed to ensure AA contrast (4.5:1) on the computed background.",
+    "surfaces": {
+      "feedback-success": {
+        "description": "Success feedback surface - subtle green tint for alerts",
+        "derivation": {
+          "bg": { "light": "mix(page.bg, semantic:success, 0.12)", "dark": "mix(page.bg, semantic:success, 0.18)" },
+          "bg-hover": { "light": "mix(page.bg, semantic:success, 0.18)", "dark": "mix(page.bg, semantic:success, 0.25)" },
+          "fg": "accessibleColor(semantic:success, bg)",
+          "border": { "light": "mix(page.bg, semantic:success, 0.35)", "dark": "mix(page.bg, semantic:success, 0.45)" }
+        }
+      },
+      "feedback-warning": {
+        "description": "Warning feedback surface - subtle amber tint for alerts",
+        "derivation": {
+          "bg": { "light": "mix(page.bg, semantic:warning, 0.12)", "dark": "mix(page.bg, semantic:warning, 0.18)" },
+          "bg-hover": { "light": "mix(page.bg, semantic:warning, 0.18)", "dark": "mix(page.bg, semantic:warning, 0.25)" },
+          "fg": "accessibleColor(semantic:warning, bg)",
+          "border": { "light": "mix(page.bg, semantic:warning, 0.35)", "dark": "mix(page.bg, semantic:warning, 0.45)" }
+        }
+      },
+      "feedback-danger": {
+        "description": "Danger feedback surface - subtle red tint for alerts",
+        "derivation": {
+          "bg": { "light": "mix(page.bg, semantic:danger, 0.12)", "dark": "mix(page.bg, semantic:danger, 0.18)" },
+          "bg-hover": { "light": "mix(page.bg, semantic:danger, 0.18)", "dark": "mix(page.bg, semantic:danger, 0.25)" },
+          "fg": "accessibleColor(semantic:danger, bg)",
+          "border": { "light": "mix(page.bg, semantic:danger, 0.35)", "dark": "mix(page.bg, semantic:danger, 0.45)" }
+        }
+      },
+      "feedback-info": {
+        "description": "Info feedback surface - subtle primary tint for alerts",
+        "derivation": {
+          "bg": { "light": "mix(page.bg, theme:primary, 0.12)", "dark": "mix(page.bg, theme:primary, 0.18)" },
+          "bg-hover": { "light": "mix(page.bg, theme:primary, 0.18)", "dark": "mix(page.bg, theme:primary, 0.25)" },
+          "fg": "accessibleColor(theme:primary, bg)",
+          "border": { "light": "mix(page.bg, theme:primary, 0.35)", "dark": "mix(page.bg, theme:primary, 0.45)" }
         }
       }
     }
@@ -479,7 +413,7 @@
         "overrides": {}
       },
       "raised": {
-        "description": "Elevated content (cards, panels) - lighter/elevated from page",
+        "description": "Elevated content (cards, panels) - BRIGHTER, closer to light source (user)",
         "overrides": {
           "light": {
             "base-bg": "#ffffff",
@@ -494,7 +428,7 @@
         }
       },
       "sunken": {
-        "description": "Recessed areas (input wells, sidebars) - darker/recessed from page",
+        "description": "Recessed areas (input wells, sidebars) - DIMMER, farther from light source",
         "overrides": {
           "light": {
             "base-bg": "#f0f0f0",
@@ -504,61 +438,61 @@
             "strong-bg-pressed": "#cccccc"
           },
           "dark": {
-            "base-bg": "#0a0a0a",
-            "base-border": "#262626",
-            "strong-bg": "#1f1f1f",
-            "strong-bg-hover": "#2a2a2a",
-            "strong-bg-pressed": "#333333"
+            "base-bg": "#080808",
+            "base-border": "#1a1a1a",
+            "strong-bg": "#141414",
+            "strong-bg-hover": "#1a1a1a",
+            "strong-bg-pressed": "#222222"
           }
         }
       },
       "soft": {
-        "description": "Subtle backgrounds - slightly muted from page",
+        "description": "Subtle - closer to target (white in light, black in dark)",
         "overrides": {
           "light": {
-            "base-bg": "#f7f7f7"
+            "base-bg": "#fcfcfc"
           },
           "dark": {
-            "base-bg": "#141414"
+            "base-bg": "#0a0a0a"
           }
         }
       },
       "softer": {
-        "description": "Very subtle backgrounds - more muted from page",
+        "description": "Most subtle - even closer to target (white in light, black in dark)",
         "overrides": {
           "light": {
-            "base-bg": "#f3f3f3"
+            "base-bg": "#fefefe"
           },
           "dark": {
-            "base-bg": "#1a1a1a"
+            "base-bg": "#050505"
           }
         }
       },
       "strong": {
-        "description": "Emphasized sections - higher contrast from page",
+        "description": "Emphasized - darker (light) or lighter (dark) than page",
         "overrides": {
           "light": {
-            "base-bg": "#e5e5e5",
-            "stronger-bg": "#d9d9d9",
-            "stronger-bg-hover": "#cccccc",
-            "stronger-bg-pressed": "#bfbfbf"
+            "base-bg": "#ebebeb",
+            "stronger-bg": "#e0e0e0",
+            "stronger-bg-hover": "#d5d5d5",
+            "stronger-bg-pressed": "#cacaca"
           },
           "dark": {
-            "base-bg": "#262626",
-            "stronger-bg": "#333333",
-            "stronger-bg-hover": "#404040",
-            "stronger-bg-pressed": "#4d4d4d"
+            "base-bg": "#1f1f1f",
+            "stronger-bg": "#2a2a2a",
+            "stronger-bg-hover": "#333333",
+            "stronger-bg-pressed": "#3d3d3d"
           }
         }
       },
       "stronger": {
-        "description": "Very emphasized sections - highest contrast from page",
+        "description": "Maximum emphasis - even more contrast from page",
         "overrides": {
           "light": {
-            "base-bg": "#d4d4d4"
+            "base-bg": "#dedede"
           },
           "dark": {
-            "base-bg": "#333333"
+            "base-bg": "#2a2a2a"
           }
         }
       },

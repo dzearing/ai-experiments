@@ -75,6 +75,19 @@ export function generateThemeTokens(
   const colors = applyColorAdjustments(theme.colors, theme.config, isDark);
   const contrastLevel = theme.accessibility?.level === 'AAA' ? 7 : 4.5;
 
+  // Pre-populate page tokens from overrides if provided
+  // This ensures feedback surfaces can derive from the correct background
+  const modeOverrides = isDark ? theme.overrides?.dark : theme.overrides?.light;
+  if (modeOverrides?.['--page-bg']) {
+    tokens['--page-bg'] = modeOverrides['--page-bg'];
+  }
+  if (modeOverrides?.['--page-text']) {
+    tokens['--page-text'] = modeOverrides['--page-text'];
+  }
+  if (modeOverrides?.['--page-border']) {
+    tokens['--page-border'] = modeOverrides['--page-border'];
+  }
+
   // Create generator context
   const ctx: GeneratorContext = {
     colors,
@@ -96,6 +109,9 @@ export function generateThemeTokens(
   // Each group contains all fg tokens (fg, fg-soft, fg-softer, fg-strong, fg-stronger,
   // fg-primary, fg-danger, fg-success, fg-warning, fg-info) ensuring accessibility
   generateColorGroupTokens(ctx);
+
+  // Generate feedback surface tokens (soft backgrounds for alerts)
+  generateFeedbackSurfaceTokens(ctx);
 
   // Generate special tokens from rules
   generateSpecialTokensFromRules(ctx);
@@ -148,6 +164,10 @@ function applyColorAdjustments(
   // Get semantic colors from rules (fixed across all themes for UX clarity)
   const semanticColors = themeRules.semanticColors;
 
+  // Info derives from primary, other semantic colors are fixed
+  const infoBase = semanticColors.info.base;
+  const infoColor = infoBase === 'theme:primary' ? primary : infoBase;
+
   return {
     primary,
     secondary,
@@ -156,7 +176,7 @@ function applyColorAdjustments(
     success: semanticColors.success.base,
     warning: semanticColors.warning.base,
     danger: semanticColors.danger.base,
-    info: semanticColors.info.base,
+    info: infoColor,
   };
 }
 
@@ -350,6 +370,27 @@ function deriveColorGroupTokenValue(
 }
 
 /**
+ * Generate feedback surface tokens from feedbackSurfaces rules
+ * These are soft/tinted backgrounds for alert components
+ */
+function generateFeedbackSurfaceTokens(ctx: GeneratorContext): void {
+  const feedbackSurfaces = (themeRules as any).feedbackSurfaces;
+  if (!feedbackSurfaces?.surfaces) return;
+
+  for (const [surfaceName, config] of Object.entries(feedbackSurfaces.surfaces as Record<string, any>)) {
+    const derivation = config.derivation || {};
+
+    // Process each token for this feedback surface
+    for (const [tokenSuffix, rule] of Object.entries(derivation)) {
+      const cssVar = `--${surfaceName}-${tokenSuffix}`;
+      if (rule !== undefined) {
+        ctx.tokens[cssVar] = evaluateDerivation(rule as any, surfaceName, tokenSuffix, ctx);
+      }
+    }
+  }
+}
+
+/**
  * Evaluate a derivation rule
  */
 function evaluateDerivation(
@@ -405,11 +446,31 @@ function evaluateDerivation(
     return 'transparent';
   }
 
-  // "contrast(bg)" - get contrasting text color
+  // "contrast(bg)" - get contrasting text color (black or white)
   if (ruleStr.startsWith('contrast(')) {
     const refToken = ruleStr.slice(9, -1);
     const bgColor = tokens[`--${surfaceName}-${refToken}`] || tokens[`--${surfaceName}-bg`];
     return bgColor ? getContrastingTextColor(bgColor) : '#000000';
+  }
+
+  // "accessibleColor(color, bgRef)" - ensure color is accessible on background
+  // Example: accessibleColor(semantic:success, bg) - returns success color adjusted for contrast
+  const accessibleMatch = ruleStr.match(/accessibleColor\(([^,]+),\s*([^)]+)\)/);
+  if (accessibleMatch) {
+    const baseColor = resolveColorRef(accessibleMatch[1], ctx);
+    const bgRef = accessibleMatch[2].trim();
+    // Get the background color - could be "bg" (same surface) or "surface.token"
+    let bgColor: string;
+    if (bgRef === 'bg') {
+      bgColor = tokens[`--${surfaceName}-bg`] || (isDark ? '#0f0f0f' : '#fafafa');
+    } else if (bgRef.includes('.')) {
+      const [surface, token] = bgRef.split('.');
+      bgColor = tokens[`--${surface}-${token}`] || (isDark ? '#0f0f0f' : '#fafafa');
+    } else {
+      bgColor = tokens[`--${surfaceName}-${bgRef}`] || (isDark ? '#0f0f0f' : '#fafafa');
+    }
+    // Ensure the color meets AA contrast (4.5:1) on the background
+    return ensureContrast(baseColor, bgColor, 4.5);
   }
 
   // "darken(color, amount)" or "lighten(color, amount)"
@@ -842,4 +903,122 @@ export function validateTheme(theme: unknown): theme is ThemeDefinition {
   if (typeof colors.primary !== 'string') return false;
 
   return true;
+}
+
+// ============================================================================
+// RUNTIME THEME GENERATION
+// ============================================================================
+
+/**
+ * Simplified config for runtime theme generation (Theme Designer)
+ */
+export interface RuntimeThemeConfig {
+  /** Primary brand color */
+  primary: string;
+  /** Secondary color (optional) */
+  secondary?: string;
+  /** Accent color (optional) */
+  accent?: string;
+  /** Neutral color (optional) */
+  neutral?: string;
+
+  /** Light mode background color override */
+  lightBg?: string;
+  /** Dark mode background color override */
+  darkBg?: string;
+
+  /** Saturation adjustment (-100 to 100) */
+  saturation?: number;
+  /** Temperature adjustment (-100 to 100) */
+  temperature?: number;
+
+  /** Border radius scale (default 1.0) */
+  radiusScale?: number;
+  /** Border radius style */
+  radiusStyle?: 'sharp' | 'subtle' | 'rounded' | 'pill';
+
+  /** Control size scale (0.8 to 1.3) */
+  sizeScale?: number;
+
+  /** Glow intensity (0 to 1) */
+  glowIntensity?: number;
+
+  /** Accessibility level */
+  accessibilityLevel?: 'AA' | 'AAA';
+}
+
+/**
+ * Convert RuntimeThemeConfig to ThemeDefinition
+ */
+function runtimeConfigToDefinition(config: RuntimeThemeConfig): ThemeDefinition {
+  const overrides: ThemeDefinition['overrides'] = {};
+
+  // Apply background overrides
+  if (config.lightBg) {
+    overrides.light = { '--page-bg': config.lightBg };
+  }
+  if (config.darkBg) {
+    overrides.dark = { '--page-bg': config.darkBg };
+  }
+
+  return {
+    id: 'runtime',
+    name: 'Runtime Theme',
+    colors: {
+      primary: config.primary,
+      secondary: config.secondary,
+      accent: config.accent,
+      neutral: config.neutral,
+    },
+    config: {
+      saturation: config.saturation ?? 0,
+      temperature: config.temperature ?? 0,
+    },
+    radii: {
+      scale: config.radiusScale ?? 1,
+      style: config.radiusStyle ?? 'rounded',
+    },
+    accessibility: {
+      level: config.accessibilityLevel ?? 'AA',
+    },
+    overrides,
+  };
+}
+
+/**
+ * Generate theme tokens for runtime use (Theme Designer)
+ *
+ * This is the main function for browser-side theme generation.
+ * It accepts a simplified config and returns tokens for a specific mode.
+ */
+export function generateRuntimeThemeTokens(
+  config: RuntimeThemeConfig,
+  mode: 'light' | 'dark'
+): Record<string, string> {
+  const definition = runtimeConfigToDefinition(config);
+  const tokens = generateThemeTokens(definition, mode);
+
+  // Add size scale tokens (not in core generator yet)
+  const sizeScale = config.sizeScale ?? 1;
+  const baseSizes = {
+    '--control-height-sm': 28,
+    '--control-height-md': 36,
+    '--control-height-lg': 44,
+    '--control-height-xl': 52,
+  };
+  for (const [token, baseValue] of Object.entries(baseSizes)) {
+    tokens[token] = `${Math.round(baseValue * sizeScale)}px`;
+  }
+
+  // Add glow tokens (not in core generator yet)
+  const glowIntensity = config.glowIntensity ?? 0.5;
+  const glowOpacity = Math.round(glowIntensity * 40);
+  tokens['--glow-intensity'] = String(glowIntensity);
+  tokens['--glow-spread-sm'] = `${Math.round(8 * glowIntensity)}px`;
+  tokens['--glow-spread-md'] = `${Math.round(20 * glowIntensity)}px`;
+  tokens['--glow-spread-lg'] = `${Math.round(40 * glowIntensity)}px`;
+  tokens['--glow-opacity'] = `${glowOpacity}%`;
+  tokens['--glow-color'] = config.primary;
+
+  return tokens;
 }
