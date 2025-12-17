@@ -96,3 +96,24 @@ export function getThemeById(id: string): ThemeDefinition | undefined {
 export function getThemeIds(): string[] {
   return builtInThemes.map((theme) => theme.id);
 }
+
+/**
+ * Theme option for dropdowns
+ */
+export interface ThemeOption {
+  value: string;
+  label: string;
+  disabled?: boolean;
+  isDivider?: boolean;
+}
+
+/**
+ * Get built-in theme options for dropdowns.
+ * This is the single source of truth for theme enumeration.
+ */
+export function getBuiltInThemeOptions(): ThemeOption[] {
+  return builtInThemes.map((theme) => ({
+    value: theme.id,
+    label: theme.name,
+  }));
+}

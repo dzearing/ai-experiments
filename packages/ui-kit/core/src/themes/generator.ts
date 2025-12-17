@@ -945,6 +945,42 @@ export interface RuntimeThemeConfig {
 
   /** Accessibility level */
   accessibilityLevel?: 'AA' | 'AAA';
+
+  // Typography settings
+  /** Sans-serif font family */
+  fontSans?: string;
+  /** Monospace font family */
+  fontMono?: string;
+  /** Serif font family */
+  fontSerif?: string;
+  /** Base font size in pixels (default 15) */
+  fontBaseSize?: number;
+  /** Font size scale multiplier (default 1.0) */
+  fontScale?: number;
+}
+
+/**
+ * Convert a font value from JSON array format to CSS font-family string.
+ * The Theme Designer stores fonts as JSON arrays (e.g., '["Inter", "system-ui"]')
+ * but CSS needs comma-separated strings (e.g., 'Inter, system-ui').
+ */
+function fontValueToCss(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+
+  // Check if it's a JSON array (starts with '[')
+  if (value.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        return parsed.join(', ');
+      }
+    } catch {
+      // Not valid JSON, return as-is
+    }
+  }
+
+  // Return as-is (already a CSS string or legacy format)
+  return value;
 }
 
 /**
@@ -973,6 +1009,14 @@ function runtimeConfigToDefinition(config: RuntimeThemeConfig): ThemeDefinition 
     config: {
       saturation: config.saturation ?? 0,
       temperature: config.temperature ?? 0,
+    },
+    typography: {
+      // Convert font values from JSON array format to CSS strings
+      fontSans: fontValueToCss(config.fontSans),
+      fontMono: fontValueToCss(config.fontMono),
+      fontSerif: fontValueToCss(config.fontSerif),
+      baseSize: config.fontBaseSize,
+      scale: config.fontScale,
     },
     radii: {
       scale: config.radiusScale ?? 1,

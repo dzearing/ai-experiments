@@ -32,6 +32,7 @@ import { IconName } from '@claude-flow/ui-kit-icons';
 - `DownloadIcon` - Download arrow
 - `EditIcon` - Edit/pencil
 - `ExportIcon` - Export/share out
+- `GripperIcon` - Drag handle/reorder grip (6 dots)
 - `PasteIcon` - Paste/clipboard
 - `RedoIcon` - Redo arrow
 - `RefreshIcon` - Refresh/reload
@@ -178,6 +179,9 @@ import { CheckCircleIcon, ErrorCircleIcon } from '@claude-flow/ui-kit-icons';
 - **Media**: `ImageIcon`, `PlayIcon`, `PauseIcon`
 - **Communication**: `ChatIcon`, `CommentIcon`, `BellIcon`
 - **Users**: `UserIcon`, `UsersIcon`
+
+### For List Interactions
+- **Drag/Reorder**: `GripperIcon` (place at start of list items)
 
 ## Notes
 

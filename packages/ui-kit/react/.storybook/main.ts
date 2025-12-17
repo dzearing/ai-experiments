@@ -1,5 +1,6 @@
 import type { StorybookConfig } from '@storybook/react-vite';
 import path from 'path';
+import type { InlineConfig } from 'vite';
 
 const config: StorybookConfig = {
   stories: ['../src/**/*.stories.@(ts|tsx)'],
@@ -21,6 +22,16 @@ const config: StorybookConfig = {
       to: '/themes',
     },
   ],
+  viteFinal: async (config: InlineConfig) => {
+    // Point packages to source files for hot reloading during development
+    config.resolve = config.resolve || {};
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@ui-kit/core/bootstrap.js': path.resolve(__dirname, '../../core/src/runtime/bootstrap.ts'),
+      '@ui-kit/core': path.resolve(__dirname, '../../core/src'),
+    };
+    return config;
+  },
 };
 
 export default config;

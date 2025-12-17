@@ -1,15 +1,29 @@
 /* Storybook Preview Styles */
 
-body {
-  font-family: var(--font-sans);
-  background-color: var(--base-bg);
-  color: var(--base-fg);
-  margin: 0;
-  padding: 0;
+/* Global reset for consistent sizing */
+*, *::before, *::after {
+  box-sizing: border-box;
 }
 
+html, body, #storybook-root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--base-bg);
+  color: var(--base-fg);
+  font-family: var(--font-sans);
+}
+
+/* Story wrapper - consistent padding on all sides */
 .storyWrapper {
-  padding: var(--space-4);
-  min-height: 100vh;
+  padding: var(--space-4, 1rem);
   box-sizing: border-box;
+  background: var(--base-bg);
+  color: var(--base-fg);
+  min-height: 100vh;
+}
+
+/* Full height only in canvas view, not docs */
+#storybook-root > .storyWrapper {
+  min-height: 100vh;
 }

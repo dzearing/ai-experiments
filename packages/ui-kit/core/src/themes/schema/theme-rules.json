@@ -52,8 +52,8 @@
         "description": "Subtle - halfway toward white (light) or black (dark), capped at 5%",
         "derivation": {
           "bg": { "light": "lighten(page.bg, 5)", "dark": "darken(page.bg, 5)" },
-          "bg-hover": { "light": "lighten(page.bg, 8)", "dark": "darken(page.bg, 8)" },
-          "bg-pressed": { "light": "lighten(page.bg, 2)", "dark": "darken(page.bg, 2)" },
+          "bg-hover": { "light": "lighten(page.bg, 8)", "dark": "darken(page.bg, 2)" },
+          "bg-pressed": { "light": "lighten(page.bg, 2)", "dark": "darken(page.bg, 8)" },
           "bg-disabled": { "light": "lighten(page.bg, 4)", "dark": "darken(page.bg, 4)" },
           "border": { "light": "darken(page.bg, 10)", "dark": "lighten(page.bg, 16)" },
           "border-hover": { "light": "darken(page.bg, 14)", "dark": "lighten(page.bg, 20)" },

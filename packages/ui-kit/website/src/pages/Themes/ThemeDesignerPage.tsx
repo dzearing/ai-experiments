@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { SplitPane, Segmented, Button, Accordion, AccordionItem, AccordionHeader, AccordionContent, Dropdown, Tabs, Card, Input, Select, Alert, Switch, Checkbox, useToast, useTheme } from '@ui-kit/react';
+import { SplitPane, Segmented, Button, Accordion, AccordionItem, AccordionHeader, AccordionContent, Dropdown, Tabs, Card, Input, Select, Switch, Checkbox, useToast, useTheme, FontPicker } from '@ui-kit/react';
 import {
   generateRuntimeThemeTokens,
   contrastRatio,
@@ -198,6 +198,62 @@ function getSurfaceTokenMapping(surfaceName: string, tokens: Record<string, stri
 // Storage key for active custom theme (must match ThemeSwitcher)
 const ACTIVE_CUSTOM_THEME_KEY = 'uikit-active-custom-theme';
 
+// Helper to parse a stored font stack into an array of individual font values
+// Uses JSON format to correctly preserve font values that may contain commas
+function parseFontStack(fontFamily: string): string[] {
+  if (!fontFamily) return [];
+
+  // Try to parse as JSON array (new format)
+  if (fontFamily.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(fontFamily);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+    } catch {
+      // Not valid JSON, fall through to legacy parsing
+    }
+  }
+
+  // Fallback for legacy storage - split by commas while respecting quotes
+  // Note: This may not correctly handle font values that contain commas
+  const fonts: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  let quoteChar = '';
+
+  for (let i = 0; i < fontFamily.length; i++) {
+    const char = fontFamily[i];
+
+    if ((char === '"' || char === "'") && (i === 0 || fontFamily[i - 1] !== '\\')) {
+      if (!inQuotes) {
+        inQuotes = true;
+        quoteChar = char;
+      } else if (char === quoteChar) {
+        inQuotes = false;
+      }
+      current += char;
+    } else if (char === ',' && !inQuotes) {
+      const trimmed = current.trim();
+      if (trimmed) fonts.push(trimmed);
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+
+  const trimmed = current.trim();
+  if (trimmed) fonts.push(trimmed);
+
+  return fonts;
+}
+
+// Helper to join an array of font values into a stored font stack string
+// Uses JSON format to preserve font values that may contain commas
+function joinFontStack(fonts: string[]): string {
+  return JSON.stringify(fonts);
+}
+
 // Surface token property suffixes
 const SURFACE_PROPS = ['bg', 'bg-hover', 'bg-pressed', 'bg-focus', 'text', 'text-soft', 'text-softer', 'text-strong', 'text-stronger', 'text-hover', 'text-pressed', 'border', 'border-soft', 'border-strong', 'border-stronger', 'border-hover', 'border-pressed', 'border-focus', 'shadow', 'icon'] as const;
 
@@ -255,6 +311,8 @@ export function ThemeDesignerPage() {
   const [initialized, setInitialized] = useState(false);
   const [surfaceContrast, setSurfaceContrast] = useState(0.5); // Controls tonal surface step size
   const previewRef = useRef<HTMLDivElement>(null);
+  const initialConfigRef = useRef<RuntimeThemeConfig>(DEFAULT_CONFIG); // Stores original config for reset
+  const initialThemeNameRef = useRef<string>('My Theme'); // Stores original theme name for reset
   const { showToast } = useToast();
   const { theme: currentTheme } = useTheme();
 
@@ -265,6 +323,9 @@ export function ThemeDesignerPage() {
       const customThemeId = themeValue.replace('custom:', '');
       const storedTheme = getStoredTheme(customThemeId);
       if (storedTheme) {
+        // Store initial state for reset
+        initialConfigRef.current = storedTheme.config;
+        initialThemeNameRef.current = storedTheme.name;
         setConfig(storedTheme.config);
         setThemeName(storedTheme.name);
         setBaseTheme(themeValue);
@@ -275,6 +336,9 @@ export function ThemeDesignerPage() {
     // Check if we have a stored version in localStorage (for built-in themes)
     const storedTheme = getStoredTheme(themeValue);
     if (storedTheme) {
+      // Store initial state for reset
+      initialConfigRef.current = storedTheme.config;
+      initialThemeNameRef.current = storedTheme.name;
       setConfig(storedTheme.config);
       setThemeName(storedTheme.name);
       setBaseTheme(themeValue);
@@ -285,6 +349,16 @@ export function ThemeDesignerPage() {
     const themeData = getThemeById(themeValue);
     if (themeData) {
       // Map theme data to config (use defaults for properties not in ThemeDefinition)
+      // For fonts from built-in themes, convert plain CSS strings to JSON array format
+      const convertFontToJson = (fontValue: string | undefined): string | undefined => {
+        if (!fontValue) return undefined;
+        // If already in JSON format, return as-is
+        if (fontValue.startsWith('[')) return fontValue;
+        // Otherwise, parse the CSS font string and convert to JSON
+        const parsed = parseFontStack(fontValue);
+        return parsed.length > 0 ? joinFontStack(parsed) : undefined;
+      };
+
       const newConfig: RuntimeThemeConfig = {
         primary: themeData.colors?.primary || DEFAULT_CONFIG.primary,
         secondary: themeData.colors?.secondary,
@@ -299,10 +373,18 @@ export function ThemeDesignerPage() {
         sizeScale: themeData.spacing?.scale ?? DEFAULT_CONFIG.sizeScale,
         glowIntensity: DEFAULT_CONFIG.glowIntensity,
         accessibilityLevel: themeData.accessibility?.level ?? DEFAULT_CONFIG.accessibilityLevel,
+        // Load typography from theme
+        fontSans: convertFontToJson(themeData.typography?.fontSans),
+        fontMono: convertFontToJson(themeData.typography?.fontMono),
+        fontSerif: convertFontToJson(themeData.typography?.fontSerif),
       };
 
+      const newThemeName = themeData.name || 'My Theme';
+      // Store initial state for reset
+      initialConfigRef.current = newConfig;
+      initialThemeNameRef.current = newThemeName;
       setConfig(newConfig);
-      setThemeName(themeData.name || 'My Theme');
+      setThemeName(newThemeName);
       setBaseTheme(themeValue);
     } else {
       console.warn('Theme not found:', themeValue);
@@ -446,7 +528,9 @@ export function ThemeDesignerPage() {
   };
 
   const handleResetTheme = () => {
-    setConfig(DEFAULT_CONFIG);
+    // Reset to the initial state when the current theme was loaded
+    setConfig(initialConfigRef.current);
+    setThemeName(initialThemeNameRef.current);
   };
 
   const getContrastDisplay = (bg: string, text: string) => {
@@ -508,6 +592,79 @@ export function ThemeDesignerPage() {
           </AccordionContent>
         </AccordionItem>
 
+        {/* Typography */}
+        <AccordionItem id="typography">
+          <AccordionHeader itemId="typography">Typography</AccordionHeader>
+          <AccordionContent itemId="typography">
+            <div className={styles.accordionBody}>
+              <div className={styles.formField}>
+                <label className={styles.fieldLabel}>Sans-Serif Font Stack</label>
+                <FontPicker
+                  mode="stack"
+                  value={config.fontSans ? parseFontStack(config.fontSans) : []}
+                  onChange={(fonts: string[]) => handleConfigChange('fontSans', fonts.length > 0 ? joinFontStack(fonts) : undefined)}
+                  placeholder="Add sans-serif font..."
+                  size="sm"
+                />
+                <p className={styles.hint}>Primary UI font for body text and controls.</p>
+              </div>
+              <div className={styles.formField}>
+                <label className={styles.fieldLabel}>Monospace Font Stack</label>
+                <FontPicker
+                  mode="stack"
+                  value={config.fontMono ? parseFontStack(config.fontMono) : []}
+                  onChange={(fonts: string[]) => handleConfigChange('fontMono', fonts.length > 0 ? joinFontStack(fonts) : undefined)}
+                  placeholder="Add monospace font..."
+                  size="sm"
+                />
+                <p className={styles.hint}>Code blocks, technical content, and data.</p>
+              </div>
+              <div className={styles.formField}>
+                <label className={styles.fieldLabel}>Serif Font Stack</label>
+                <FontPicker
+                  mode="stack"
+                  value={config.fontSerif ? parseFontStack(config.fontSerif) : []}
+                  onChange={(fonts: string[]) => handleConfigChange('fontSerif', fonts.length > 0 ? joinFontStack(fonts) : undefined)}
+                  placeholder="Add serif font..."
+                  size="sm"
+                />
+                <p className={styles.hint}>Long-form content and editorial text.</p>
+              </div>
+              <div className={styles.formField}>
+                <div className={styles.sliderHeader}>
+                  <label className={styles.fieldLabel}>Base Font Size</label>
+                  <span className={styles.sliderValue}>{config.fontBaseSize ?? 15}px</span>
+                </div>
+                <input
+                  type="range"
+                  min="12"
+                  max="20"
+                  step="1"
+                  value={config.fontBaseSize ?? 15}
+                  onChange={(e) => handleConfigChange('fontBaseSize', parseInt(e.target.value, 10))}
+                  className={styles.slider}
+                />
+              </div>
+              <div className={styles.formField}>
+                <div className={styles.sliderHeader}>
+                  <label className={styles.fieldLabel}>Font Scale</label>
+                  <span className={styles.sliderValue}>{(config.fontScale ?? 1).toFixed(2)}x</span>
+                </div>
+                <input
+                  type="range"
+                  min="0.8"
+                  max="1.3"
+                  step="0.05"
+                  value={config.fontScale ?? 1}
+                  onChange={(e) => handleConfigChange('fontScale', parseFloat(e.target.value))}
+                  className={styles.slider}
+                />
+                <p className={styles.hint}>Scales all font sizes proportionally.</p>
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
         {/* Sizing & Shape */}
         <AccordionItem id="sizing">
           <AccordionHeader itemId="sizing">Sizing &amp; Shape</AccordionHeader>
@@ -523,7 +680,7 @@ export function ThemeDesignerPage() {
                     { value: 'pill', label: 'Pill' },
                   ]}
                   value={config.radiusStyle}
-                  onChange={(v) => handleConfigChange('radiusStyle', v as RadiiStyle)}
+                  onChange={(v: string) => handleConfigChange('radiusStyle', v as RadiiStyle)}
                   size="sm"
                   fullWidth
                 />
@@ -601,7 +758,7 @@ export function ThemeDesignerPage() {
                     { value: 'AAA', label: 'AAA (7:1)' },
                   ]}
                   value={config.accessibilityLevel}
-                  onChange={(v) => handleConfigChange('accessibilityLevel', v as AccessibilityLevel)}
+                  onChange={(v: string) => handleConfigChange('accessibilityLevel', v as AccessibilityLevel)}
                   size="sm"
                   fullWidth
                 />
@@ -684,7 +841,7 @@ export function ThemeDesignerPage() {
             { value: 'dark', label: 'Dark' },
           ]}
           value={previewMode}
-          onChange={(v) => setPreviewMode(v as 'light' | 'dark')}
+          onChange={(v: string) => setPreviewMode(v as 'light' | 'dark')}
           size="sm"
         />
         <div className={styles.previewActions}>

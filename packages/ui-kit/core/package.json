@@ -17,8 +17,6 @@
       "import": "./dist/runtime/bootstrap.js"
     },
     "./bootstrap.iife.js": "./dist/bootstrap.min.js",
-    "./tokens.css": "./dist/tokens.css",
-    "./styles.css": "./dist/tokens.css",
     "./surfaces.js": {
       "types": "./dist/surfaces.d.ts",
       "import": "./dist/surfaces.js"
@@ -42,7 +40,6 @@
   ],
   "scripts": {
     "build": "tsx scripts/build.ts",
-    "build:tokens": "tsx scripts/build-tokens.ts",
     "build:themes": "tsx scripts/build-themes.ts",
     "dev": "tsx watch scripts/build.ts",
     "clean": "rm -rf dist",

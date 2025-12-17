@@ -22,10 +22,12 @@ const config: StorybookConfig = {
     },
   ],
   viteFinal: async (config) => {
-    // Resolve @ui-kit/react to source so CSS modules are processed correctly
+    // Point packages to source files for hot reloading during development
     config.resolve = config.resolve || {};
     config.resolve.alias = {
       ...config.resolve.alias,
+      '@ui-kit/core/bootstrap.js': path.resolve(__dirname, '../../core/src/runtime/bootstrap.ts'),
+      '@ui-kit/core': path.resolve(__dirname, '../../core/src'),
       '@ui-kit/react': path.resolve(__dirname, '../../react/src'),
     };
     return config;

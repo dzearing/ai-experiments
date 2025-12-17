@@ -43,6 +43,9 @@ export type { PanelProps, PanelVariant, PanelPadding } from './components/Panel'
 export { Divider } from './components/Divider';
 export type { DividerProps, DividerOrientation } from './components/Divider';
 
+export { DraggableReorder } from './components/DraggableReorder';
+export type { DraggableReorderProps } from './components/DraggableReorder';
+
 export { Stack } from './components/Stack';
 export type { StackProps, StackDirection, StackAlign, StackJustify, StackGap } from './components/Stack';
 
@@ -174,6 +177,10 @@ export { Dropdown } from './components/Dropdown';
 export type { DropdownProps, DropdownOption, OptionState } from './components/Dropdown';
 export { useTypeToSelect } from './components/Dropdown';
 export type { UseTypeToSelectOptions, UseTypeToSelectReturn } from './components/Dropdown';
+
+// FontPicker (specialized font selection dropdown)
+export { FontPicker } from './components/FontPicker';
+export type { FontPickerProps, FontOption } from './components/FontPicker';
 
 // List
 export { List, ListItem, ListItemText, ListGroup, ListDivider } from './components/List';

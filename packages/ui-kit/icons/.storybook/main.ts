@@ -31,14 +31,12 @@ const config: StorybookConfig = {
     },
   ],
   viteFinal: async (config: InlineConfig) => {
-    // Point @ui-kit/react to source files for live CSS updates during development
-    // Keep /style.css pointing to dist since it's the bundled CSS output
+    // Point packages to source files for hot reloading during development
     config.resolve = config.resolve || {};
     config.resolve.alias = {
       ...config.resolve.alias,
-      // CSS imports go to dist
-      '@ui-kit/react/style.css': path.resolve(__dirname, '../../react/dist/style.css'),
-      // Component imports go to source for hot reloading
+      '@ui-kit/core/bootstrap.js': path.resolve(__dirname, '../../core/src/runtime/bootstrap.ts'),
+      '@ui-kit/core': path.resolve(__dirname, '../../core/src'),
       '@ui-kit/react': path.resolve(__dirname, '../../react/src'),
     };
     return config;

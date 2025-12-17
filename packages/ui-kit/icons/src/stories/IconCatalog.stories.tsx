@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import {
   Input,
   Button,
@@ -95,16 +95,14 @@ interface IconCatalogProps {
   columns?: number;
 }
 
+// Build icon data once at module load time
+const allIconData = buildIconData();
+
 function IconCatalog({ size = 24, showNames = true, columns = 8 }: IconCatalogProps) {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [copiedIcon, setCopiedIcon] = useState<string | null>(null);
-  const [iconData, setIconData] = useState<IconData[]>([]);
-
-  // Build icon data on mount
-  useEffect(() => {
-    setIconData(buildIconData());
-  }, []);
+  const iconData = allIconData;
 
   const filteredIcons = useMemo(() => {
     let filtered = iconData;

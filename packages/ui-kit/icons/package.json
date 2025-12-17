@@ -193,6 +193,10 @@
       "types": "./dist/GridViewIcon.d.ts",
       "import": "./dist/GridViewIcon.js"
     },
+    "./GripperIcon": {
+      "types": "./dist/GripperIcon.d.ts",
+      "import": "./dist/GripperIcon.js"
+    },
     "./Heading1Icon": {
       "types": "./dist/Heading1Icon.d.ts",
       "import": "./dist/Heading1Icon.js"

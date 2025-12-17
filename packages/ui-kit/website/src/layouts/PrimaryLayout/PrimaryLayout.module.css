@@ -1,7 +1,8 @@
 .layout {
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .header {
@@ -89,4 +90,8 @@
 
 .main {
   flex: 1;
+  min-height: 0; /* Allow flex item to shrink below content size */
+  overflow: auto; /* Allow pages to scroll within main, but not body */
+  display: flex;
+  flex-direction: column;
 }
