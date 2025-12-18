@@ -50,23 +50,25 @@ export function Dialog({
       closeOnBackdrop={closeOnBackdrop}
       closeOnEscape={closeOnEscape}
     >
-      {title && (
-        <div className={styles.header}>
-          <h2 className={styles.title}>{title}</h2>
-          <button
-            type="button"
-            className={styles.closeButton}
-            onClick={onClose}
-            aria-label="Close dialog"
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          </button>
-        </div>
-      )}
-      <div className={styles.content}>{children}</div>
-      {footer && <div className={styles.footer}>{footer}</div>}
+      <div className={styles.dialog}>
+        {title && (
+          <div className={styles.header}>
+            <h2 className={styles.title}>{title}</h2>
+            <button
+              type="button"
+              className={styles.closeButton}
+              onClick={onClose}
+              aria-label="Close dialog"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            </button>
+          </div>
+        )}
+        <div className={styles.content}>{children}</div>
+        {footer && <div className={styles.footer}>{footer}</div>}
+      </div>
     </Modal>
   );
 }

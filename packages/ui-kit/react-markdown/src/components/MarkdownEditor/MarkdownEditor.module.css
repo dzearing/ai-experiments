@@ -26,13 +26,10 @@
 .editorContainer {
   display: flex;
   flex-direction: column;
-  flex: 1;
-  height: 100%;
+  flex: 1 1 auto;
   min-height: 0;
   position: relative;
   background: var(--softer-bg, #f8f9fa);
-  border: 1px solid var(--softer-border, var(--base-border, #e1e4e8));
-  border-radius: var(--radius-md, 8px);
   overflow: hidden;
   font-family: var(--font-mono, ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace);
   font-size: var(--text-sm, 13px);
@@ -41,7 +38,8 @@
 
 /* Ensure CodeMirror fills the container */
 .editorContainer :global(.cm-editor) {
-  height: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
   outline: none;
 }
 
@@ -49,11 +47,6 @@
   overflow: auto;
 }
 
-/* Focus styling for the container */
-.editorContainer:focus-within {
-  border-color: var(--primary-bg, #0066cc);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-bg, #0066cc) 20%, transparent);
-}
 
 /* Search panel styling (CodeMirror default panel, mostly hidden by custom panel) */
 .editorContainer :global(.cm-search) {

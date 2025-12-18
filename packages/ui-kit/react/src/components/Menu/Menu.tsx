@@ -3,11 +3,16 @@ import {
   useRef,
   useEffect,
   useCallback,
+  useMemo,
+  cloneElement,
+  isValidElement,
   type ReactNode,
+  type ReactElement,
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { SurfaceAnimation, getAnimationDirection } from '../Animation';
 import styles from './Menu.module.css';
 
 /**
@@ -162,6 +167,7 @@ export function Menu({
   className,
 }: MenuProps) {
   const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const [exiting, setExiting] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const [submenu, setSubmenu] = useState<SubmenuState | null>(null);
   const [detectedDir, setDetectedDir] = useState<'ltr' | 'rtl'>('ltr');
@@ -231,13 +237,14 @@ export function Menu({
   const focusableSubmenuItems = getFocusableItems(submenuItems);
 
   // Calculate menu position for portal rendering
-  const calculatePosition = useCallback(() => {
+  const calculatePosition = useCallback((menuElement?: HTMLDivElement | null) => {
     const trigger = triggerRef.current;
     if (!trigger) return;
 
     const triggerRect = trigger.getBoundingClientRect();
-    const menuWidth = 220;
-    const menuHeight = 400;
+    // Use actual menu dimensions if available, otherwise estimate
+    const menuWidth = menuElement?.offsetWidth ?? 220;
+    const menuHeight = menuElement?.offsetHeight ?? 400;
 
     let top = 0;
     let left = 0;
@@ -297,15 +304,31 @@ export function Menu({
     setMenuPosition({ top, left });
   }, [position]);
 
-  // Close menu
+  // Callback ref to position menu after it mounts with actual dimensions
+  const menuCallbackRef = useCallback((node: HTMLDivElement | null) => {
+    if (node) {
+      // Store ref for other uses
+      (menuRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+      // Reposition with actual dimensions
+      calculatePosition(node);
+    }
+  }, [calculatePosition]);
+
+  // Close menu with exit animation
   const closeMenu = useCallback(() => {
-    setIsOpen(false);
+    setExiting(true);
     setFocusedIndex(-1);
     setSubmenu(null);
     if (hoverTimeoutRef.current) {
       clearTimeout(hoverTimeoutRef.current);
       hoverTimeoutRef.current = null;
     }
+  }, []);
+
+  // Handle exit animation complete
+  const handleExitComplete = useCallback(() => {
+    setExiting(false);
+    setIsOpen(false);
   }, [setIsOpen]);
 
   // Close submenu
@@ -724,6 +747,16 @@ export function Menu({
   const hasAnyIcons = flatItems.some((item) => item.icon);
   const submenuHasAnyIcons = submenuItems.some((item) => item.icon);
 
+  // Compute animation direction from position
+  const animationDirection = useMemo(() => {
+    return getAnimationDirection(position);
+  }, [position]);
+
+  // Compute submenu animation direction
+  const submenuAnimationDirection = useMemo(() => {
+    return effectiveDir === 'rtl' ? 'left' : 'right';
+  }, [effectiveDir]);
+
   // Track item index for ref assignment
   let itemRefIndex = 0;
 
@@ -846,56 +879,84 @@ export function Menu({
   // Reset itemRefIndex before each render
   itemRefIndex = 0;
 
-  const menuContent = isOpen && (
-    <div
-      ref={menuRef}
-      className={`${styles.menu} ${className || ''}`}
-      style={{ top: menuPosition.top, left: menuPosition.left }}
-      role="menu"
-      aria-orientation="vertical"
-      onKeyDown={handleMenuKeyDown}
-    >
-      {renderMenuItems(items)}
+  // Show menu when open or during exit animation
+  const shouldShowMenu = isOpen || exiting;
 
-      {/* Submenu */}
-      {submenu !== null && submenuItems.length > 0 && (
-        <div
-          className={`${styles.submenu} ${
-            effectiveDir === 'rtl' ? styles.submenuRtl : styles.submenuLtr
-          }`}
-          role="menu"
-          aria-label={flatItems[submenu.parentIndex]?.label}
-          style={{
-            top:
-              (itemRefs.current[submenu.parentIndex]?.offsetTop ?? 0) +
-              menuPosition.top,
-            left:
-              effectiveDir === 'rtl'
-                ? menuPosition.left - 220
-                : menuPosition.left + 220,
-          }}
-        >
-          {submenuItems.map((subItem, subIndex) =>
-            renderMenuItem(
-              subItem,
-              subIndex,
-              submenuItemRefs,
-              submenu.focusedIndex === subIndex,
-              handleSubmenuItemMouseEnter,
-              (item) => {
-                if (!item.disabled) {
-                  onSelect(item.value);
-                  closeMenu();
-                }
-              },
-              false,
-              submenuHasAnyIcons
-            )
-          )}
-        </div>
-      )}
-    </div>
+  const menuContent = shouldShowMenu && (
+    <SurfaceAnimation
+      isVisible={isOpen && !exiting}
+      direction={animationDirection}
+      onExitComplete={handleExitComplete}
+      style={{
+        position: 'fixed',
+        zIndex: 10000,
+        top: menuPosition.top,
+        left: menuPosition.left,
+      }}
+    >
+      <div
+        ref={menuCallbackRef}
+        className={`${styles.menu} ${className || ''}`}
+        role="menu"
+        aria-orientation="vertical"
+        onKeyDown={handleMenuKeyDown}
+      >
+        {renderMenuItems(items)}
+
+        {/* Submenu */}
+        {submenu !== null && submenuItems.length > 0 && (
+          <SurfaceAnimation
+            isVisible={true}
+            direction={submenuAnimationDirection}
+            style={{
+              position: 'fixed',
+              zIndex: 10001,
+              top:
+                (itemRefs.current[submenu.parentIndex]?.offsetTop ?? 0) +
+                menuPosition.top,
+              left:
+                effectiveDir === 'rtl'
+                  ? menuPosition.left - 220
+                  : menuPosition.left + 220,
+            }}
+          >
+            <div
+              className={`${styles.submenu} ${
+                effectiveDir === 'rtl' ? styles.submenuRtl : styles.submenuLtr
+              }`}
+              role="menu"
+              aria-label={flatItems[submenu.parentIndex]?.label}
+            >
+              {submenuItems.map((subItem, subIndex) =>
+                renderMenuItem(
+                  subItem,
+                  subIndex,
+                  submenuItemRefs,
+                  submenu.focusedIndex === subIndex,
+                  handleSubmenuItemMouseEnter,
+                  (item) => {
+                    if (!item.disabled) {
+                      onSelect(item.value);
+                      closeMenu();
+                    }
+                  },
+                  false,
+                  submenuHasAnyIcons
+                )
+              )}
+            </div>
+          </SurfaceAnimation>
+        )}
+      </div>
+    </SurfaceAnimation>
   );
+
+  // Clone child to pass data-state for pressed styling
+  const triggerChild = isValidElement(children)
+    ? cloneElement(children as ReactElement<{ 'data-state'?: string }>, {
+        'data-state': isOpen ? 'open' : undefined,
+      })
+    : children;
 
   return (
     <div ref={wrapperRef} className={styles.wrapper}>
@@ -908,7 +969,7 @@ export function Menu({
         aria-haspopup="menu"
         aria-expanded={isOpen}
       >
-        {children}
+        {triggerChild}
       </div>
       {typeof document !== 'undefined' && createPortal(menuContent, document.body)}
     </div>

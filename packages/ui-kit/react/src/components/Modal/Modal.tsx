@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useState, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useFocusTrap } from '../../hooks';
+import { SurfaceAnimation } from '../Animation';
 import styles from './Modal.module.css';
 
 /**
@@ -68,17 +69,19 @@ export function Modal({
     event.stopPropagation();
   };
 
+  // Handle exit animation complete
+  const handleExitComplete = useCallback(() => {
+    setVisible(false);
+    setExiting(false);
+  }, []);
+
   useEffect(() => {
     if (open) {
       setVisible(true);
       setExiting(false);
     } else if (visible) {
       setExiting(true);
-      const timer = setTimeout(() => {
-        setVisible(false);
-        setExiting(false);
-      }, 200); // Match duration-normal
-      return () => clearTimeout(timer);
+      // Note: visible will be set to false in handleExitComplete
     }
   }, [open, visible]);
 
@@ -98,15 +101,23 @@ export function Modal({
 
   const modal = (
     <div className={`${styles.backdrop} ${exiting ? styles.exiting : ''}`} onClick={handleBackdropClick}>
-      <div
-        ref={modalRef}
-        className={`${styles.modal} ${styles[size]} ${exiting ? styles.exiting : ''}`}
-        onClick={handleContentClick}
-        role="dialog"
-        aria-modal="true"
+      <SurfaceAnimation
+        isVisible={open && !exiting}
+        direction="center"
+        duration={200}
+        onExitComplete={handleExitComplete}
+        className={styles[size]}
       >
-        {children}
-      </div>
+        <div
+          ref={modalRef}
+          className={styles.modal}
+          onClick={handleContentClick}
+          role="dialog"
+          aria-modal="true"
+        >
+          {children}
+        </div>
+      </SurfaceAnimation>
     </div>
   );
 

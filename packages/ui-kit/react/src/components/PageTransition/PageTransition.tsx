@@ -95,10 +95,16 @@ export function PageTransition({
     { key: transitionKey, content: children, state: 'idle', direction: 'forward' }
   ]);
 
-  const isInitialMount = useRef(true);
+  // Track known keys and their history indices to detect actual navigation
+  const knownKeysRef = useRef<Map<string, number>>(new Map([[transitionKey, historyIndex ?? 0]]));
   const prevKeyRef = useRef(transitionKey);
   const prevHistoryIndexRef = useRef(historyIndex ?? 0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Track current layer keys via ref to avoid stale closure issues
+  const layerKeysRef = useRef<Set<string>>(new Set([transitionKey]));
+  // Don't animate during initial load phase (first 100ms)
+  const mountTimeRef = useRef(Date.now());
+  const isInitialLoadRef = useRef(true);
 
   // Cleanup timer on unmount
   useEffect(() => {
@@ -109,15 +115,9 @@ export function PageTransition({
 
   // Use useLayoutEffect to update layers synchronously before paint
   useLayoutEffect(() => {
-    // Skip on initial mount
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      prevKeyRef.current = transitionKey;
-      prevHistoryIndexRef.current = historyIndex ?? 0;
-      return;
-    }
+    const currentHistoryIndex = historyIndex ?? 0;
 
-    // If key hasn't changed, just update content in place
+    // If key hasn't changed from previous render, just update content in place
     if (transitionKey === prevKeyRef.current) {
       setLayers(prev => prev.map(layer =>
         layer.key === transitionKey ? { ...layer, content: children } : layer
@@ -125,14 +125,57 @@ export function PageTransition({
       return;
     }
 
+    // Check if this key already exists in our layer set (handles initial mount and refresh)
+    // Using a ref avoids stale closure issues with the layers state
+    if (layerKeysRef.current.has(transitionKey)) {
+      // Key already exists - just update refs and content without animation
+      prevKeyRef.current = transitionKey;
+      prevHistoryIndexRef.current = currentHistoryIndex;
+      knownKeysRef.current.set(transitionKey, currentHistoryIndex);
+      setLayers([{ key: transitionKey, content: children, state: 'idle', direction: 'forward' }]);
+      return;
+    }
+
+    // Skip animations during initial load phase (first 100ms after mount)
+    // This handles apps that do redirects during startup (e.g., auth redirects)
+    const timeSinceMount = Date.now() - mountTimeRef.current;
+    if (isInitialLoadRef.current && timeSinceMount < 100) {
+      prevKeyRef.current = transitionKey;
+      prevHistoryIndexRef.current = currentHistoryIndex;
+      knownKeysRef.current.set(transitionKey, currentHistoryIndex);
+      layerKeysRef.current.add(transitionKey);
+      setLayers([{ key: transitionKey, content: children, state: 'idle', direction: 'forward' }]);
+      return;
+    }
+    // Mark initial load phase as complete after first real navigation
+    isInitialLoadRef.current = false;
+
+    // Check if this is a key we've seen before (back/forward nav) or a new key
+    const isKnownKey = knownKeysRef.current.has(transitionKey);
+
     // Determine direction - historyIndex takes precedence over direction prop
     let direction: TransitionDirection;
     if (historyIndex !== undefined) {
-      direction = historyIndex > prevHistoryIndexRef.current ? 'forward' : 'back';
-      prevHistoryIndexRef.current = historyIndex;
+      // If indices are the same and key is unknown, skip (refresh on non-initial page)
+      if (currentHistoryIndex === prevHistoryIndexRef.current && !isKnownKey) {
+        knownKeysRef.current.set(transitionKey, currentHistoryIndex);
+        prevKeyRef.current = transitionKey;
+        setLayers([{ key: transitionKey, content: children, state: 'idle', direction: 'forward' }]);
+        return;
+      }
+      direction = currentHistoryIndex > prevHistoryIndexRef.current ? 'forward' : 'back';
+      prevHistoryIndexRef.current = currentHistoryIndex;
     } else {
       direction = directionProp;
     }
+
+    // Store this key's index for future reference
+    if (!isKnownKey) {
+      knownKeysRef.current.set(transitionKey, currentHistoryIndex);
+    }
+
+    // Add new key to layer keys set
+    layerKeysRef.current.add(transitionKey);
 
     // Key changed - create new entering layer and mark existing as exiting
     onTransitionStart?.();
@@ -156,13 +199,16 @@ export function PageTransition({
       window.scrollTo({ top: 0, behavior: 'instant' });
     }
 
-    // After animation, remove exiting layers
+    // After animation, remove exiting layers and clean up layerKeysRef
     timerRef.current = setTimeout(() => {
-      setLayers(prev =>
-        prev
+      setLayers(prev => {
+        const remainingLayers = prev
           .filter(layer => layer.state !== 'exiting')
-          .map(layer => ({ ...layer, state: 'idle' as const }))
-      );
+          .map(layer => ({ ...layer, state: 'idle' as const }));
+        // Update layerKeysRef to only contain keys still in layers
+        layerKeysRef.current = new Set(remainingLayers.map(l => l.key));
+        return remainingLayers;
+      });
       onTransitionEnd?.();
     }, duration);
 

@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { Button, type ButtonVariant, type ButtonSize } from '../Button';
 import { Tooltip, type TooltipPosition } from '../Tooltip';
-import styles from './IconButton.module.css';
+import styles from '../Button/Button.module.css';
 
 /**
  * IconButton component
@@ -48,10 +48,10 @@ export function IconButton({
   className,
   ...props
 }: IconButtonProps) {
+  // Only add shape class - size is handled by Button and compound selectors
+  // (e.g., .square.sm in Button.module.css applies width for square icon buttons)
   const classNames = [
-    styles.iconButton,
     styles[shape],
-    styles[size],
     className,
   ]
     .filter(Boolean)

@@ -42,7 +42,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
       value,
       onChange,
       height,
-      minHeight = '200px',
+      minHeight,
       maxHeight,
       readOnly = false,
       autoFocus = false,
@@ -136,12 +136,14 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
       }
     }, [view, onEditorReady, editorRef]);
 
-    // Build container styles
-    const containerStyle: React.CSSProperties = useMemo(() => ({
-      height,
-      minHeight,
-      maxHeight,
-    }), [height, minHeight, maxHeight]);
+    // Build container styles - only set if explicitly provided
+    const containerStyle: React.CSSProperties = useMemo(() => {
+      const style: React.CSSProperties = {};
+      if (height !== undefined) style.height = height;
+      if (minHeight !== undefined) style.minHeight = minHeight;
+      if (maxHeight !== undefined) style.maxHeight = maxHeight;
+      return style;
+    }, [height, minHeight, maxHeight]);
 
     // Build class names
     const containerClasses = [

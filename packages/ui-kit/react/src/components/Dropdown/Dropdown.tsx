@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { Chip } from '../Chip';
+import { SurfaceAnimation, getAnimationDirection } from '../Animation';
 import { useTypeToSelect } from './useTypeToSelect';
 import styles from './Dropdown.module.css';
 
@@ -178,6 +179,7 @@ export function Dropdown<T = string>({
 
   // State
   const [isOpen, setIsOpen] = useState(false);
+  const [exiting, setExiting] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const [searchQuery, setSearchQuery] = useState('');
   const [menuPosition, setMenuPosition] = useState<{ top: number; left?: number; right?: number; width: number }>({ top: 0, left: 0, width: 0 });
@@ -355,11 +357,17 @@ export function Dropdown<T = string>({
     setFocusedIndex(0);
   }, [disabled, calculatePosition]);
 
-  // Close dropdown
+  // Close dropdown with exit animation
   const closeDropdown = useCallback(() => {
-    setIsOpen(false);
+    setExiting(true);
     setFocusedIndex(-1);
     setSearchQuery('');
+  }, []);
+
+  // Handle exit animation complete
+  const handleExitComplete = useCallback(() => {
+    setExiting(false);
+    setIsOpen(false);
   }, []);
 
   // Toggle dropdown
@@ -667,14 +675,31 @@ export function Dropdown<T = string>({
   const hasValue = selectedOptions.length > 0;
   const showClearButton = clearable && hasValue && !disabled;
 
-  const menuContent = isOpen && (
+  // Compute animation direction from position
+  const animationDirection = useMemo(() => {
+    return getAnimationDirection(position);
+  }, [position]);
+
+  // Show menu when open or during exit animation
+  const shouldShowMenu = isOpen || exiting;
+
+  const menuContent = shouldShowMenu && (
+    <SurfaceAnimation
+      isVisible={isOpen && !exiting}
+      direction={animationDirection}
+      onExitComplete={handleExitComplete}
+      style={{
+        position: 'fixed',
+        zIndex: 10000,
+        top: menuPosition.top,
+        left: menuPosition.left,
+        right: menuPosition.right,
+      }}
+    >
     <div
       ref={menuRef}
       className={styles.menu}
       style={{
-        top: menuPosition.top,
-        left: menuPosition.left,
-        right: menuPosition.right,
         minWidth: menuPosition.width,
       }}
       role="listbox"
@@ -707,6 +732,7 @@ export function Dropdown<T = string>({
         )}
       </div>
     </div>
+    </SurfaceAnimation>
   );
 
   return (

@@ -23,7 +23,7 @@ import styles from './Button.module.css';
 
 export type ButtonVariant = 'default' | 'primary' | 'danger' | 'ghost' | 'outline';
 export type ButtonSize = 'sm' | 'md' | 'lg';
-export type ButtonShape = 'pill';
+export type ButtonShape = 'pill' | 'square' | 'round';
 
 interface ButtonBaseProps {
   /** Button variant */

@@ -1,0 +1,85 @@
+.auth {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: var(--base-bg);
+}
+
+.authCard {
+  width: 100%;
+  max-width: 400px;
+  padding: var(--space-8);
+  text-align: center;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-8);
+}
+
+.logoIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-xl);
+  border-radius: var(--radius-md);
+}
+
+.logoText {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  color: var(--soft-fg);
+}
+
+.title {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-semibold);
+  margin: 0 0 var(--space-2);
+  color: var(--soft-fg);
+}
+
+.subtitle {
+  font-size: var(--text-base);
+  color: var(--soft-fg-soft);
+  margin: 0 0 var(--space-8);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.error {
+  font-size: var(--text-sm);
+  color: var(--base-fg-danger);
+  margin: 0;
+  text-align: left;
+}
+
+.submitButton {
+  width: 100%;
+}
+
+.terms {
+  font-size: var(--text-sm);
+  color: var(--soft-fg-soft);
+  margin: 0;
+}

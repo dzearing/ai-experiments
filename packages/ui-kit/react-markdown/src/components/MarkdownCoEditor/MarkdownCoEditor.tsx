@@ -44,6 +44,10 @@ export interface MarkdownCoEditorProps {
   onModeChange?: (mode: ViewMode) => void;
   /** Show the mode switcher toolbar */
   showModeSwitch?: boolean;
+  /** Content to render at the start (left) of the toolbar */
+  toolbarStart?: React.ReactNode;
+  /** Content to render at the end (right) of the toolbar */
+  toolbarEnd?: React.ReactNode;
   /** Height of the editor container */
   height?: string | number;
   /** Min height */
@@ -72,6 +76,8 @@ export interface MarkdownCoEditorProps {
   coAuthors?: CoAuthor[];
   /** Callback when co-author positions change (e.g., due to user typing) */
   onCoAuthorsChange?: (coAuthors: CoAuthor[]) => void;
+  /** Full page mode - removes card styling for edge-to-edge layouts */
+  fullPage?: boolean;
   /** Additional class name */
   className?: string;
 }
@@ -107,6 +113,8 @@ export const MarkdownCoEditor = forwardRef<MarkdownCoEditorRef, MarkdownCoEditor
       mode: controlledMode,
       onModeChange,
       showModeSwitch = true,
+      toolbarStart,
+      toolbarEnd,
       height,
       minHeight = '300px',
       maxHeight,
@@ -121,6 +129,7 @@ export const MarkdownCoEditor = forwardRef<MarkdownCoEditorRef, MarkdownCoEditor
       splitOrientation = 'horizontal',
       coAuthors = [],
       onCoAuthorsChange,
+      fullPage = false,
       className,
     },
     ref
@@ -183,11 +192,10 @@ export const MarkdownCoEditor = forwardRef<MarkdownCoEditorRef, MarkdownCoEditor
     }), [currentMarkdown, currentMode, isValueControlled, isModeControlled, onModeChange]);
 
     // Calculate container style
-    const containerStyle: React.CSSProperties = {
-      height,
-      minHeight,
-      maxHeight,
-    };
+    // In fullPage mode, rely on flex to fill container instead of explicit heights
+    const containerStyle: React.CSSProperties = fullPage
+      ? { maxHeight }
+      : { height, minHeight, maxHeight };
 
     const showEditor = currentMode === 'edit' || currentMode === 'split';
     const showPreview = currentMode === 'preview' || currentMode === 'split';
@@ -197,34 +205,55 @@ export const MarkdownCoEditor = forwardRef<MarkdownCoEditorRef, MarkdownCoEditor
       ? VIEW_MODE_OPTIONS.filter(opt => opt.value !== 'edit')
       : VIEW_MODE_OPTIONS;
 
+    // Build class names
+    const containerClasses = [
+      styles.coEditor,
+      fullPage && styles.fullPage,
+      className,
+    ].filter(Boolean).join(' ');
+
     return (
-      <div className={`${styles.coEditor} ${className || ''}`} style={containerStyle}>
+      <div className={containerClasses} style={containerStyle}>
         {/* Mode switcher toolbar */}
-        {showModeSwitch && (
+        {(showModeSwitch || toolbarStart || toolbarEnd) && (
           <div className={styles.toolbar}>
-            {/* Co-author avatars */}
-            {coAuthors.length > 0 && (
-              <div className={styles.coAuthorAvatars}>
-                {coAuthors.map((author) => (
-                  <div
-                    key={author.id}
-                    className={`${styles.avatar} ${author.isAI ? styles.aiAvatar : ''}`}
-                    style={{ '--avatar-color': author.color } as React.CSSProperties}
-                    title={author.name}
-                  >
-                    {author.isAI ? '✦' : author.name.charAt(0).toUpperCase()}
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className={styles.modeSwitcher}>
-              <Segmented
-                options={modeOptions}
-                value={currentMode}
-                onChange={handleModeChange}
-                size="sm"
-                aria-label="Editor view mode"
-              />
+            {/* Start section */}
+            <div className={styles.toolbarStart}>
+              {toolbarStart}
+            </div>
+
+            {/* Center section with mode switcher and co-author avatars */}
+            <div className={styles.toolbarCenter}>
+              {/* Co-author avatars */}
+              {coAuthors.length > 0 && (
+                <div className={styles.coAuthorAvatars}>
+                  {coAuthors.map((author) => (
+                    <div
+                      key={author.id}
+                      className={`${styles.avatar} ${author.isAI ? styles.aiAvatar : ''}`}
+                      style={{ '--avatar-color': author.color } as React.CSSProperties}
+                      title={author.name}
+                    >
+                      {author.isAI ? '✦' : author.name.charAt(0).toUpperCase()}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {showModeSwitch && (
+                <div className={styles.modeSwitcher}>
+                  <Segmented
+                    options={modeOptions}
+                    value={currentMode}
+                    onChange={handleModeChange}
+                    aria-label="Editor view mode"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* End section */}
+            <div className={styles.toolbarEnd}>
+              {toolbarEnd}
             </div>
           </div>
         )}
@@ -240,7 +269,6 @@ export const MarkdownCoEditor = forwardRef<MarkdownCoEditorRef, MarkdownCoEditor
                     ref={editorRef}
                     value={currentMarkdown}
                     onChange={handleMarkdownChange}
-                    height="100%"
                     readOnly={readOnly}
                     autoFocus={autoFocus}
                     placeholder={placeholder}
@@ -277,7 +305,6 @@ export const MarkdownCoEditor = forwardRef<MarkdownCoEditorRef, MarkdownCoEditor
                     ref={editorRef}
                     value={currentMarkdown}
                     onChange={handleMarkdownChange}
-                    height="100%"
                     readOnly={readOnly}
                     autoFocus={autoFocus}
                     placeholder={placeholder}

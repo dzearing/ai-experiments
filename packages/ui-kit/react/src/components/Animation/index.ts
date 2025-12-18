@@ -10,6 +10,9 @@ export type { SlideProps, SlideInProps, SlideDirection } from './Slide';
 export { Scale, ScaleIn } from './Scale';
 export type { ScaleProps, ScaleInProps, ScaleOrigin } from './Scale';
 
+export { SurfaceAnimation, getAnimationDirection } from './SurfaceAnimation';
+export type { SurfaceAnimationProps, SurfaceDirection } from './SurfaceAnimation';
+
 export { Transition, AnimatePresence } from './Transition';
 export type { TransitionProps, AnimatePresenceProps } from './Transition';
 

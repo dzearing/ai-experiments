@@ -1,16 +1,21 @@
+/* Reset Modal's default padding for structured Dialog layout */
+.dialog {
+  margin: calc(-1 * var(--space-6));
+}
+
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: var(--space-4) var(--space-6);
-  border-bottom: 1px solid var(--soft-border);
+  border-bottom: 1px solid var(--strong-border);
 }
 
 .title {
   margin: 0;
   font-size: var(--text-lg);
   font-weight: var(--weight-semibold);
-  color: var(--soft-fg);
+  color: var(--strong-fg);
 }
 
 .closeButton {
@@ -21,15 +26,15 @@
   height: 32px;
   border: none;
   background: transparent;
-  color: var(--soft-fg-soft);
+  color: var(--strong-fg-soft);
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all var(--duration-fast) var(--ease-default);
 }
 
 .closeButton:hover {
-  background: var(--base-bg-hover);
-  color: var(--soft-fg);
+  background: var(--stronger-bg);
+  color: var(--strong-fg);
 }
 
 .closeButton:focus-visible {
@@ -47,7 +52,7 @@
   justify-content: flex-end;
   gap: var(--space-2);
   padding: var(--space-4) var(--space-6);
-  border-top: 1px solid var(--soft-border);
+  border-top: 1px solid var(--strong-border);
 }
 
 /* ==============================================

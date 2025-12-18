@@ -3,15 +3,12 @@
 }
 
 .popover {
-  position: fixed;
-  top: 0;
-  left: 0;
   background: var(--soft-bg);
   border: 1px solid var(--soft-border);
   border-radius: var(--radius-md);
   box-shadow: var(--soft-shadow);
-  z-index: 1050;
   min-width: 120px;
+  /* Initially invisible while position is calculated */
   opacity: 0;
   pointer-events: none;
 }
@@ -19,24 +16,4 @@
 .popover.visible {
   opacity: 1;
   pointer-events: auto;
-  animation: fadeIn var(--duration-fast) var(--ease-default);
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-/* ==============================================
-   Reduced Motion
-   ============================================== */
-
-@media (prefers-reduced-motion: reduce) {
-  .popover.visible {
-    animation: none;
-  }
 }

@@ -4,9 +4,11 @@ import {
   useEffect,
   useLayoutEffect,
   useCallback,
+  useMemo,
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { SurfaceAnimation, getAnimationDirection } from '../Animation';
 import styles from './Popover.module.css';
 
 /**
@@ -136,6 +138,7 @@ export function Popover({
   children,
 }: PopoverProps) {
   const [internalOpen, setInternalOpen] = useState(false);
+  const [exiting, setExiting] = useState(false);
   const [popoverState, setPopoverState] = useState<PopoverState | null>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -146,12 +149,28 @@ export function Popover({
   const setOpen = useCallback(
     (value: boolean) => {
       if (!isControlled) {
-        setInternalOpen(value);
+        if (value) {
+          setInternalOpen(true);
+        } else {
+          setExiting(true);
+        }
       }
-      onOpenChange?.(value);
+      if (value) {
+        onOpenChange?.(true);
+      }
+      // Note: onOpenChange(false) is called in handleExitComplete
     },
     [isControlled, onOpenChange],
   );
+
+  // Handle exit animation complete
+  const handleExitComplete = useCallback(() => {
+    setExiting(false);
+    if (!isControlled) {
+      setInternalOpen(false);
+    }
+    onOpenChange?.(false);
+  }, [isControlled, onOpenChange]);
 
   const togglePopover = () => {
     setOpen(!isOpen);
@@ -177,20 +196,20 @@ export function Popover({
 
   // Handle click outside and escape key
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen && !exiting) return;
 
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
       const clickedTrigger = triggerRef.current?.contains(target);
       const clickedPopover = popoverRef.current?.contains(target);
 
-      if (!clickedTrigger && !clickedPopover) {
+      if (!clickedTrigger && !clickedPopover && !exiting) {
         setOpen(false);
       }
     };
 
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === 'Escape' && !exiting) {
         setOpen(false);
       }
     };
@@ -202,25 +221,44 @@ export function Popover({
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleEscape);
     };
-  }, [isOpen, setOpen]);
+  }, [isOpen, exiting, setOpen]);
+
+  // Compute animation direction from actual position
+  const animationDirection = useMemo(() => {
+    const pos = popoverState?.actualPosition ?? position;
+    return getAnimationDirection(pos);
+  }, [popoverState?.actualPosition, position]);
+
+  // Show popover when open or during exit animation
+  const shouldShowPopover = isOpen || exiting;
 
   const popoverClasses = [
     styles.popover,
     popoverState ? styles.visible : '',
   ].filter(Boolean).join(' ');
 
-  const popover = isOpen ? (
-    <div
-      ref={popoverRef}
-      className={popoverClasses}
-      style={
-        popoverState
-          ? { transform: `translate(${popoverState.x}px, ${popoverState.y}px)` }
-          : undefined
-      }
+  const popoverContent = shouldShowPopover ? (
+    <SurfaceAnimation
+      isVisible={isOpen && !exiting}
+      direction={animationDirection}
+      onExitComplete={handleExitComplete}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        zIndex: 1050,
+        transform: popoverState
+          ? `translate(${popoverState.x}px, ${popoverState.y}px)`
+          : undefined,
+      }}
     >
-      {content}
-    </div>
+      <div
+        ref={popoverRef}
+        className={popoverClasses}
+      >
+        {content}
+      </div>
+    </SurfaceAnimation>
   ) : null;
 
   return (
@@ -228,7 +266,7 @@ export function Popover({
       <div ref={triggerRef} className={styles.trigger} onClick={togglePopover}>
         {children}
       </div>
-      {typeof document !== 'undefined' && popover && createPortal(popover, document.body)}
+      {typeof document !== 'undefined' && popoverContent && createPortal(popoverContent, document.body)}
     </>
   );
 }

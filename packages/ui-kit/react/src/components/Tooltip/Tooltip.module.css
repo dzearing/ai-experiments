@@ -20,9 +20,9 @@
   box-shadow: var(--shadow-md);
   pointer-events: none;
 
-  /* Use surface tokens which get set by .surface.inverted */
-  background: var(--surface-bg);
-  color: var(--surface-text);
+  /* Use inverted surface tokens */
+  background: var(--inverted-bg);
+  color: var(--inverted-fg);
 
   /* Start invisible, fade in when positioned */
   opacity: 0;
@@ -53,28 +53,28 @@
 /* Beak pointing down (tooltip above target) */
 .beak-top {
   bottom: -4px;
-  border-top-color: var(--surface-bg);
+  border-top-color: var(--inverted-bg);
   border-bottom: none;
 }
 
 /* Beak pointing up (tooltip below target) */
 .beak-bottom {
   top: -4px;
-  border-bottom-color: var(--surface-bg);
+  border-bottom-color: var(--inverted-bg);
   border-top: none;
 }
 
 /* Beak pointing right (tooltip to left of target) */
 .beak-left {
   right: -4px;
-  border-left-color: var(--surface-bg);
+  border-left-color: var(--inverted-bg);
   border-right: none;
 }
 
 /* Beak pointing left (tooltip to right of target) */
 .beak-right {
   left: -4px;
-  border-right-color: var(--surface-bg);
+  border-right-color: var(--inverted-bg);
   border-left: none;
 }
 

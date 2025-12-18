@@ -1,0 +1,196 @@
+/**
+ * SurfaceAnimation styles
+ *
+ * Provides consistent enter/exit animations for raised surfaces:
+ * - Directional (menus, popovers, dropdowns): slide + fade from source direction
+ * - Centered (dialogs, modals): scale + fade from center
+ */
+
+.surface {
+  will-change: opacity, transform;
+}
+
+/* ==============================================
+   Direction: Down (surface below trigger)
+   ============================================== */
+
+.directionDown {
+  animation: surfaceEnterDown var(--surface-duration, 150ms) var(--ease-default);
+}
+
+.directionDown.exiting {
+  animation: surfaceExitDown var(--surface-duration, 150ms) var(--ease-default) forwards;
+}
+
+@keyframes surfaceEnterDown {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--surface-distance, 8px) * -1));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes surfaceExitDown {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(calc(var(--surface-distance, 8px) * -1));
+  }
+}
+
+/* ==============================================
+   Direction: Up (surface above trigger)
+   ============================================== */
+
+.directionUp {
+  animation: surfaceEnterUp var(--surface-duration, 150ms) var(--ease-default);
+}
+
+.directionUp.exiting {
+  animation: surfaceExitUp var(--surface-duration, 150ms) var(--ease-default) forwards;
+}
+
+@keyframes surfaceEnterUp {
+  from {
+    opacity: 0;
+    transform: translateY(var(--surface-distance, 8px));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes surfaceExitUp {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(var(--surface-distance, 8px));
+  }
+}
+
+/* ==============================================
+   Direction: Right (surface to right of trigger)
+   ============================================== */
+
+.directionRight {
+  animation: surfaceEnterRight var(--surface-duration, 150ms) var(--ease-default);
+}
+
+.directionRight.exiting {
+  animation: surfaceExitRight var(--surface-duration, 150ms) var(--ease-default) forwards;
+}
+
+@keyframes surfaceEnterRight {
+  from {
+    opacity: 0;
+    transform: translateX(calc(var(--surface-distance, 8px) * -1));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes surfaceExitRight {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(calc(var(--surface-distance, 8px) * -1));
+  }
+}
+
+/* ==============================================
+   Direction: Left (surface to left of trigger)
+   ============================================== */
+
+.directionLeft {
+  animation: surfaceEnterLeft var(--surface-duration, 150ms) var(--ease-default);
+}
+
+.directionLeft.exiting {
+  animation: surfaceExitLeft var(--surface-duration, 150ms) var(--ease-default) forwards;
+}
+
+@keyframes surfaceEnterLeft {
+  from {
+    opacity: 0;
+    transform: translateX(var(--surface-distance, 8px));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes surfaceExitLeft {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(var(--surface-distance, 8px));
+  }
+}
+
+/* ==============================================
+   Direction: Center (dialogs, modals)
+   ============================================== */
+
+.directionCenter {
+  animation: surfaceEnterCenter var(--surface-duration, 150ms) var(--ease-default);
+}
+
+.directionCenter.exiting {
+  animation: surfaceExitCenter var(--surface-duration, 150ms) var(--ease-default) forwards;
+}
+
+@keyframes surfaceEnterCenter {
+  from {
+    opacity: 0;
+    transform: scale(var(--surface-scale, 0.95));
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes surfaceExitCenter {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(var(--surface-scale, 0.95));
+  }
+}
+
+/* ==============================================
+   Reduced Motion
+   ============================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .surface {
+    animation: none !important;
+  }
+
+  .surface.exiting {
+    animation: none !important;
+    opacity: 0;
+  }
+}

@@ -8,7 +8,11 @@
   font-weight: var(--weight-medium);
   line-height: 1.25;
   cursor: pointer;
-  transition: all var(--duration-fast) var(--ease-default);
+  transition:
+    background-color var(--duration-fast) var(--ease-default),
+    color var(--duration-fast) var(--ease-default),
+    border-color var(--duration-fast) var(--ease-default),
+    outline-offset var(--duration-fast) var(--ease-default);
   white-space: nowrap;
   text-decoration: none; /* For anchor elements rendered as buttons */
 }
@@ -25,19 +29,22 @@
   cursor: not-allowed;
 }
 
-/* Sizes */
+/* Sizes - explicit heights for consistency */
 .sm {
-  padding: var(--space-1) var(--space-3);
+  height: 28px;
+  padding: 0 var(--space-3);
   font-size: var(--text-sm);
 }
 
 .md {
-  padding: var(--space-2) var(--space-4);
+  height: 36px;
+  padding: 0 var(--space-4);
   font-size: var(--text-base);
 }
 
 .lg {
-  padding: var(--space-3) var(--space-6);
+  height: 44px;
+  padding: 0 var(--space-6);
   font-size: var(--text-lg);
 }
 
@@ -68,10 +75,12 @@
 .primary:hover:not(:disabled) {
   background: var(--primary-bg-hover);
   color: var(--primary-fg);
+  border-color: var(--primary-border-hover);
 }
 
 .primary:active:not(:disabled) {
   background: var(--primary-bg-pressed);
+  border-color: var(--primary-border-pressed);
 }
 
 .danger {
@@ -83,25 +92,29 @@
 .danger:hover:not(:disabled) {
   background: var(--danger-bg-hover);
   color: var(--danger-fg);
+  border-color: var(--danger-border-hover);
 }
 
 .danger:active:not(:disabled) {
   background: var(--danger-bg-pressed);
+  border-color: var(--danger-border-pressed);
 }
 
 .ghost {
   background: transparent;
-  color: var(--base-fg-soft);
+  color: var(--base-fg);
   border-color: transparent;
 }
 
 .ghost:hover:not(:disabled) {
-  background: var(--base-bg-hover);
-  color: var(--base-fg);
+  background: var(--strong-bg);
+  color: var(--strong-fg);
+  border-color: var(--strong-border);
 }
 
 .ghost:active:not(:disabled) {
-  background: var(--base-bg-pressed);
+  background: var(--strong-bg-pressed);
+  border-color: var(--strong-border-pressed);
 }
 
 .outline {
@@ -111,14 +124,40 @@
 }
 
 .outline:hover:not(:disabled) {
-  background: var(--base-bg-hover);
-  color: var(--base-fg);
-  border-color: var(--base-border-hover);
+  background: var(--strong-bg);
+  color: var(--strong-fg);
+  border-color: var(--strong-border);
 }
 
 .outline:active:not(:disabled) {
-  background: var(--base-bg-pressed);
-  border-color: var(--base-border-pressed);
+  background: var(--strong-bg-pressed);
+  border-color: var(--strong-border-pressed);
+}
+
+/* Open state (for menu triggers) - same as active/pressed */
+.button[data-state="open"].default:not(:disabled) {
+  background: var(--strong-bg-pressed);
+  border-color: var(--strong-border-pressed);
+}
+
+.button[data-state="open"].primary:not(:disabled) {
+  background: var(--primary-bg-pressed);
+  border-color: var(--primary-border-pressed);
+}
+
+.button[data-state="open"].danger:not(:disabled) {
+  background: var(--danger-bg-pressed);
+  border-color: var(--danger-border-pressed);
+}
+
+.button[data-state="open"].ghost:not(:disabled) {
+  background: var(--strong-bg-pressed);
+  border-color: var(--strong-border-pressed);
+}
+
+.button[data-state="open"].outline:not(:disabled) {
+  background: var(--strong-bg-pressed);
+  border-color: var(--strong-border-pressed);
 }
 
 /* Full Width */
@@ -131,6 +170,35 @@
 /* Pill: fully rounded corners */
 .pill {
   border-radius: 9999px;
+}
+
+/* Square: icon-only button with 1:1 aspect ratio */
+.square {
+  aspect-ratio: 1;
+  padding: 0;
+}
+
+/* Round: circular icon button */
+.round {
+  aspect-ratio: 1;
+  padding: 0;
+  border-radius: 9999px;
+}
+
+/* Fixed sizes for square/round shapes */
+.square.sm,
+.round.sm {
+  width: 28px;
+}
+
+.square.md,
+.round.md {
+  width: 36px;
+}
+
+.square.lg,
+.round.lg {
+  width: 44px;
 }
 
 /* Icon */

@@ -11,12 +11,14 @@
 }
 
 .modal {
-  background: var(--soft-bg);
+  width: 100%;
+  background: var(--strong-bg);
+  border: 1px solid var(--strong-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-xl);
+  padding: var(--space-6);
   max-height: calc(100vh - var(--space-8));
   overflow: auto;
-  animation: slideIn var(--duration-normal) var(--ease-default);
 }
 
 /* Sizes */
@@ -65,34 +67,8 @@
   }
 }
 
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-20px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes slideOut {
-  from {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(-20px) scale(0.95);
-  }
-}
-
 .backdrop.exiting {
   animation: fadeOut var(--duration-normal) var(--ease-default) forwards;
-}
-
-.modal.exiting {
-  animation: slideOut var(--duration-normal) var(--ease-default) forwards;
 }
 
 /* ==============================================
@@ -104,15 +80,8 @@
     animation: none;
   }
 
-  .modal {
-    animation: none;
-  }
-
   .backdrop.exiting {
     animation: none;
-  }
-
-  .modal.exiting {
-    animation: none;
+    opacity: 0;
   }
 }

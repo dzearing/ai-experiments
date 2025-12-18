@@ -253,3 +253,4 @@ export { ThemeProvider, useTheme } from './context/ThemeProvider';
 
 // Hooks
 export { useFocusTrap } from './hooks';
+export { useHistoryIndex, type NavigationType, type UseHistoryIndexOptions } from './hooks';

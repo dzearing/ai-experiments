@@ -46,30 +46,52 @@ Wrapper for animating page-level route transitions in single-page applications.
 
 ## Usage
 
+### With React Router (Recommended)
+
+Use the \`useHistoryIndex\` hook for automatic direction detection with React Router:
+
+\`\`\`tsx
+import { useLocation, useNavigationType } from 'react-router-dom';
+import { PageTransition, useHistoryIndex } from '@ui-kit/react';
+
+function App() {
+  const location = useLocation();
+  const navigationType = useNavigationType();
+  const historyIndex = useHistoryIndex({
+    locationKey: location.key,
+    navigationType,
+  });
+
+  return (
+    <PageTransition
+      transitionKey={location.key}
+      historyIndex={historyIndex}
+    >
+      <Routes location={location}>
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
+      </Routes>
+    </PageTransition>
+  );
+}
+\`\`\`
+
+### Basic Usage (Manual Direction)
+
 \`\`\`tsx
 import { PageTransition } from '@ui-kit/react';
 import { useState } from 'react';
 
-// Basic usage with manual direction
 const [page, setPage] = useState('home');
 
 <PageTransition transitionKey={page} direction="forward">
   {page === 'home' ? <HomePage /> : <AboutPage />}
 </PageTransition>
+\`\`\`
 
-// With automatic direction detection
-const [historyIndex, setHistoryIndex] = useState(0);
+### With Callbacks
 
-const navigate = (newPage, isBack = false) => {
-  setHistoryIndex(prev => isBack ? prev - 1 : prev + 1);
-  setPage(newPage);
-};
-
-<PageTransition transitionKey={page} historyIndex={historyIndex}>
-  <CurrentPage />
-</PageTransition>
-
-// With callbacks
+\`\`\`tsx
 <PageTransition
   transitionKey={page}
   onTransitionStart={() => console.log('started')}

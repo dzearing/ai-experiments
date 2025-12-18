@@ -328,7 +328,6 @@ export function Tooltip({
 
   const tooltipClasses = [
     styles.tooltip,
-    'surface inverted',
     tooltipState ? styles.visible : '',
     multiline ? styles.multiline : '',
   ].filter(Boolean).join(' ');
