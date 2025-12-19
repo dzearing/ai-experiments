@@ -35,7 +35,7 @@ export function DocumentEditor() {
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { getDocument, updateDocument } = useDocuments();
-  const { setSaveState } = useSave();
+  const { executeSave } = useSave();
 
   const [document, setDocument] = useState<Document | null>(null);
   const [content, setContent] = useState('');
@@ -43,11 +43,9 @@ export function DocumentEditor() {
   const [viewMode, setViewMode] = useState<ViewMode>('edit');
   const [isPublic, setIsPublic] = useState(false);
 
-  // Refs for debounced saving
-  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Refs for tracking what's been saved (to detect changes)
   const lastSavedContentRef = useRef<string>('');
   const lastSavedTitleRef = useRef<string>('');
-  const savedIndicatorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Redirect if not authenticated (wait for auth to finish loading first)
   useEffect(() => {
@@ -77,23 +75,10 @@ export function DocumentEditor() {
     loadDocument();
   }, [documentId, getDocument]);
 
-  // Cleanup timeouts on unmount
-  useEffect(() => {
-    return () => {
-      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-      if (savedIndicatorTimeoutRef.current) clearTimeout(savedIndicatorTimeoutRef.current);
-    };
-  }, []);
-
-  // Debounced save function
+  // Debounced save function - uses SaveContext to ensure save completes even after navigation
   const debouncedSave = useCallback(
     (newContent: string, newTitle: string) => {
       if (!documentId) return;
-
-      // Clear existing timeout
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
 
       // Check if anything changed
       const contentChanged = newContent !== lastSavedContentRef.current;
@@ -103,39 +88,27 @@ export function DocumentEditor() {
         return;
       }
 
-      // Set saving state immediately to show user we're tracking changes
-      setSaveState('saving');
+      // Capture current values for the save closure
+      const contentToSave = newContent;
+      const titleToSave = newTitle;
 
-      // Debounce the actual save
-      saveTimeoutRef.current = setTimeout(async () => {
-        try {
-          const updates: Partial<Document> = {};
-          if (contentChanged) updates.content = newContent;
-          if (titleChanged) updates.title = newTitle;
+      // Execute save through the context - this ensures:
+      // 1. Save continues even if component unmounts (navigation)
+      // 2. beforeunload warning is shown if user tries to close page
+      // 3. Save state indicator updates correctly
+      executeSave(async () => {
+        const updates: Partial<Document> = {};
+        if (contentChanged) updates.content = contentToSave;
+        if (titleChanged) updates.title = titleToSave;
 
-          await updateDocument(documentId, updates);
+        await updateDocument(documentId, updates);
 
-          lastSavedContentRef.current = newContent;
-          lastSavedTitleRef.current = newTitle;
-
-          setSaveState('saved');
-
-          // Clear saved indicator timeout if it exists
-          if (savedIndicatorTimeoutRef.current) {
-            clearTimeout(savedIndicatorTimeoutRef.current);
-          }
-
-          // Return to idle after showing "saved" for a bit
-          savedIndicatorTimeoutRef.current = setTimeout(() => {
-            setSaveState('idle');
-          }, 2000);
-        } catch (error) {
-          console.error('Failed to save document:', error);
-          setSaveState('idle');
-        }
-      }, 1000); // 1 second debounce
+        // Update refs after successful save
+        lastSavedContentRef.current = contentToSave;
+        lastSavedTitleRef.current = titleToSave;
+      });
     },
-    [documentId, updateDocument]
+    [documentId, updateDocument, executeSave]
   );
 
   // Handle content change - also syncs H1 heading to title
