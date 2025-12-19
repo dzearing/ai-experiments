@@ -120,7 +120,7 @@ export interface DropdownProps<T = string> {
 
 // Chevron icon
 const ChevronIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+  <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
     <path d="M4.47 5.47a.75.75 0 011.06 0L8 7.94l2.47-2.47a.75.75 0 111.06 1.06l-3 3a.75.75 0 01-1.06 0l-3-3a.75.75 0 010-1.06z" />
   </svg>
 );
@@ -177,12 +177,17 @@ export function Dropdown<T = string>({
   const [internalValue, setInternalValue] = useState<T | T[] | undefined>(defaultValue);
   const value = isControlled ? controlledValue : internalValue;
 
-  // State
-  const [isOpen, setIsOpen] = useState(false);
-  const [exiting, setExiting] = useState(false);
+  // Dropdown state machine: 'closed' | 'open' | 'closing'
+  // - closed: dropdown is fully closed
+  // - open: dropdown is fully open
+  // - closing: exit animation in progress
+  const [dropdownState, setDropdownState] = useState<'closed' | 'open' | 'closing'>('closed');
   const [focusedIndex, setFocusedIndex] = useState(-1);
+
+  // Derived state for convenience (used by keyboard handlers and effects)
+  const isOpen = dropdownState !== 'closed';
   const [searchQuery, setSearchQuery] = useState('');
-  const [menuPosition, setMenuPosition] = useState<{ top: number; left?: number; right?: number; width: number }>({ top: 0, left: 0, width: 0 });
+  const [menuPosition, setMenuPosition] = useState<{ top?: number; bottom?: number; left?: number; right?: number; width: number }>({ top: 0, left: 0, width: 0 });
 
   // Refs
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -231,7 +236,7 @@ export function Dropdown<T = string>({
       if (mode === 'single') {
         handleValueChange(option.value);
         if (shouldCloseOnSelect) {
-          setIsOpen(false);
+          setDropdownState('closed'); // Immediate close without animation for selection
           setSearchQuery('');
           triggerRef.current?.focus();
         }
@@ -247,7 +252,7 @@ export function Dropdown<T = string>({
         handleValueChange(newValues as T[]);
 
         if (shouldCloseOnSelect) {
-          setIsOpen(false);
+          setDropdownState('closed'); // Immediate close without animation for selection
           setSearchQuery('');
           triggerRef.current?.focus();
         }
@@ -289,8 +294,7 @@ export function Dropdown<T = string>({
     // Use clientWidth to exclude scrollbar from calculations
     const viewportWidth = document.documentElement.clientWidth;
 
-    // Determine vertical position
-    let top: number;
+    // Determine vertical placement
     let verticalPlacement = position.startsWith('bottom') ? 'bottom' : 'top';
 
     // Check if preferred vertical placement fits
@@ -308,11 +312,22 @@ export function Dropdown<T = string>({
       }
     }
 
-    top = verticalPlacement === 'bottom' ? rect.bottom + gap : rect.top - menuHeight - gap;
+    // Calculate vertical position
+    // For 'bottom' placement: use top CSS property (menu appears below trigger)
+    // For 'top' placement: use bottom CSS property (menu appears above trigger, bottom edge aligns to trigger top)
+    let top: number | undefined;
+    let bottom: number | undefined;
 
-    // Vertical safety bounds
-    if (top < viewportPadding) {
-      top = viewportPadding;
+    if (verticalPlacement === 'bottom') {
+      top = rect.bottom + gap;
+      // Safety bounds
+      if (top < viewportPadding) {
+        top = viewportPadding;
+      }
+    } else {
+      // Use bottom CSS property: distance from viewport bottom to where we want the menu's bottom edge
+      // We want menu's bottom edge at rect.top - gap
+      bottom = window.innerHeight - rect.top + gap;
     }
 
     // Determine horizontal position
@@ -325,9 +340,9 @@ export function Dropdown<T = string>({
 
       // Check for left overflow - if menu would extend past left edge, fall back to left positioning
       if (rect.right - estimatedMenuWidth < viewportPadding) {
-        setMenuPosition({ top, left: viewportPadding, right: undefined, width: rect.width });
+        setMenuPosition({ top, bottom, left: viewportPadding, right: undefined, width: rect.width });
       } else {
-        setMenuPosition({ top, left: undefined, right, width: rect.width });
+        setMenuPosition({ top, bottom, left: undefined, right, width: rect.width });
       }
     } else {
       // For 'start' alignment: use CSS 'left'
@@ -338,14 +353,14 @@ export function Dropdown<T = string>({
         // Try end alignment instead (use right positioning)
         const right = viewportWidth - rect.right;
         if (rect.right - estimatedMenuWidth >= viewportPadding) {
-          setMenuPosition({ top, left: undefined, right, width: rect.width });
+          setMenuPosition({ top, bottom, left: undefined, right, width: rect.width });
           return;
         }
         // Both would overflow, pin to right edge
         left = viewportWidth - estimatedMenuWidth - viewportPadding;
       }
 
-      setMenuPosition({ top, left, right: undefined, width: rect.width });
+      setMenuPosition({ top, bottom, left, right: undefined, width: rect.width });
     }
   }, [position]);
 
@@ -353,21 +368,20 @@ export function Dropdown<T = string>({
   const openDropdown = useCallback(() => {
     if (disabled) return;
     calculatePosition();
-    setIsOpen(true);
+    setDropdownState('open');
     setFocusedIndex(0);
   }, [disabled, calculatePosition]);
 
   // Close dropdown with exit animation
   const closeDropdown = useCallback(() => {
-    setExiting(true);
+    setDropdownState('closing');
     setFocusedIndex(-1);
     setSearchQuery('');
   }, []);
 
   // Handle exit animation complete
   const handleExitComplete = useCallback(() => {
-    setExiting(false);
-    setIsOpen(false);
+    setDropdownState('closed');
   }, []);
 
   // Toggle dropdown
@@ -412,7 +426,8 @@ export function Dropdown<T = string>({
         case 'Enter':
         case ' ':
           event.preventDefault();
-          if (!isOpen) {
+          // If closed or closing, open the dropdown
+          if (dropdownState !== 'open') {
             openDropdown();
           } else if (focusedIndex >= 0 && focusedIndex < filteredOptions.length) {
             handleSelect(filteredOptions[focusedIndex]);
@@ -491,6 +506,7 @@ export function Dropdown<T = string>({
     },
     [
       isOpen,
+      dropdownState,
       searchable,
       focusedIndex,
       filteredOptions,
@@ -680,18 +696,19 @@ export function Dropdown<T = string>({
     return getAnimationDirection(position);
   }, [position]);
 
-  // Show menu when open or during exit animation
-  const shouldShowMenu = isOpen || exiting;
+  // Show menu when open or during closing animation
+  const shouldShowMenu = dropdownState !== 'closed';
 
   const menuContent = shouldShowMenu && (
     <SurfaceAnimation
-      isVisible={isOpen && !exiting}
+      isVisible={dropdownState === 'open'}
       direction={animationDirection}
       onExitComplete={handleExitComplete}
       style={{
         position: 'fixed',
         zIndex: 10000,
         top: menuPosition.top,
+        bottom: menuPosition.bottom,
         left: menuPosition.left,
         right: menuPosition.right,
       }}
@@ -758,22 +775,24 @@ export function Dropdown<T = string>({
         <div className={styles.valueContainer}>{renderSelectedValue()}</div>
         <div className={styles.indicators}>
           {loading && <LoadingSpinner />}
-          {showClearButton && (
-            <button
-              type="button"
-              className={styles.clearButton}
-              onClick={handleClear}
-              aria-label="Clear selection"
-              tabIndex={-1}
-            >
-              <ClearIcon />
-            </button>
-          )}
+          {/* Clear button placeholder - actual button is rendered outside */}
+          {showClearButton && <span className={styles.clearButtonSpacer} />}
           <span className={`${styles.arrow} ${isOpen ? styles.arrowOpen : ''}`}>
             <ChevronIcon />
           </span>
         </div>
       </button>
+      {showClearButton && (
+        <button
+          type="button"
+          className={styles.clearButton}
+          onClick={handleClear}
+          aria-label="Clear selection"
+          tabIndex={-1}
+        >
+          <ClearIcon />
+        </button>
+      )}
       {typeof document !== 'undefined' && createPortal(menuContent, document.body)}
     </div>
   );

@@ -49,53 +49,17 @@
   margin-bottom: var(--space-8);
 }
 
-.backButton {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) 0;
-  margin-bottom: var(--space-4);
-  font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-  color: var(--base-fg-soft);
-  background: none;
-  border: none;
-  cursor: pointer;
-  transition: color var(--duration-fast) var(--ease-default);
-}
-
-.backButton:hover {
-  color: var(--base-fg);
-}
-
-.backButton svg {
-  width: 16px;
-  height: 16px;
-}
-
-.headerContent {
+.headerRow {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
-}
-
-.headerInfo {
-  flex: 1;
-  min-width: 0;
-}
-
-.headerInfo h1 {
-  font-size: var(--text-2xl);
-  font-weight: var(--weight-semibold);
-  margin: 0 0 var(--space-2);
-  color: var(--base-fg);
 }
 
 .description {
   font-size: var(--text-base);
   color: var(--base-fg-soft);
-  margin: 0;
+  margin: var(--space-2) 0 0;
 }
 
 /* Section */

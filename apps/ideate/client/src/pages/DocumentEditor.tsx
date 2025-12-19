@@ -4,11 +4,20 @@ import { Button, IconButton, Spinner } from '@ui-kit/react';
 import { ArrowLeftIcon } from '@ui-kit/icons/ArrowLeftIcon';
 import { ShareIcon } from '@ui-kit/icons/ShareIcon';
 import { LinkIcon } from '@ui-kit/icons/LinkIcon';
-import { MarkdownCoEditor, type ViewMode } from '@ui-kit/react-markdown';
+import { MarkdownCoEditor, type ViewMode, type MarkdownEditorRef } from '@ui-kit/react-markdown';
 import { useAuth } from '../contexts/AuthContext';
 import { useDocuments, type Document } from '../contexts/DocumentContext';
 import { useSave } from '../contexts/SaveContext';
 import styles from './DocumentEditor.module.css';
+
+/**
+ * Check if a document is newly created (just has title and blank line).
+ * New docs have content matching: "# Title\n\n"
+ */
+function isNewDocument(content: string, title: string): boolean {
+  const expectedContent = `# ${title}\n\n`;
+  return content === expectedContent;
+}
 
 /**
  * Extract the first H1 heading from markdown content.
@@ -46,6 +55,8 @@ export function DocumentEditor() {
   // Refs for tracking what's been saved (to detect changes)
   const lastSavedContentRef = useRef<string>('');
   const lastSavedTitleRef = useRef<string>('');
+  // Track if we've set initial cursor position
+  const initialCursorSetRef = useRef(false);
 
   // Redirect if not authenticated (wait for auth to finish loading first)
   useEffect(() => {
@@ -144,6 +155,20 @@ export function DocumentEditor() {
     await updateDocument(documentId, { isPublic: newIsPublic });
   }, [documentId, isPublic, updateDocument]);
 
+  // Handle editor ready - set initial cursor position
+  const handleEditorReady = useCallback((editor: MarkdownEditorRef) => {
+    if (initialCursorSetRef.current || !document) return;
+    initialCursorSetRef.current = true;
+
+    // For new documents (just title + blank line), go to line 3
+    // For existing documents, go to start (line 1)
+    if (isNewDocument(content, document.title)) {
+      editor.goToLine(3);
+    } else {
+      editor.goToLine(1);
+    }
+  }, [document, content]);
+
   // Show loading while auth is being checked
   if (isAuthLoading || !user) {
     return (
@@ -182,6 +207,7 @@ export function DocumentEditor() {
         placeholder="Start writing..."
         autoFocus
         fullPage
+        onEditorReady={handleEditorReady}
         toolbarStart={
           <>
             <IconButton

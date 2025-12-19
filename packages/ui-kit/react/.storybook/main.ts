@@ -1,14 +1,30 @@
 import type { StorybookConfig } from '@storybook/react-vite';
 import path from 'path';
-import type { InlineConfig } from 'vite';
+import { fileURLToPath } from 'url';
+import type { Plugin } from 'vite';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Workaround for pnpm + Storybook 10 path resolution issue
+// https://github.com/storybookjs/storybook/issues/29620
+function storybookPnpmFix(): Plugin {
+  return {
+    name: 'storybook-pnpm-fix',
+    enforce: 'pre',
+    resolveId(id) {
+      // Redirect .mjs requests to the actual exports
+      if (id.includes('@storybook/react/dist/') && id.endsWith('.mjs')) {
+        const exportPath = id.replace('@storybook/react/dist/', '@storybook/react/').replace('.mjs', '');
+        return this.resolve(exportPath);
+      }
+      return null;
+    },
+  };
+}
 
 const config: StorybookConfig = {
   stories: ['../src/**/*.stories.@(ts|tsx)'],
-  addons: [
-    '@storybook/addon-links',
-    '@storybook/addon-essentials',
-    '@storybook/addon-interactions',
-  ],
+  addons: ['@storybook/addon-docs'],
   framework: {
     name: '@storybook/react-vite',
     options: {},
@@ -22,14 +38,9 @@ const config: StorybookConfig = {
       to: '/themes',
     },
   ],
-  viteFinal: async (config: InlineConfig) => {
-    // Point packages to source files for hot reloading during development
-    config.resolve = config.resolve || {};
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      '@ui-kit/core/bootstrap.js': path.resolve(__dirname, '../../core/src/runtime/bootstrap.ts'),
-      '@ui-kit/core': path.resolve(__dirname, '../../core/src'),
-    };
+  viteFinal: async (config) => {
+    config.plugins = config.plugins || [];
+    config.plugins.unshift(storybookPnpmFix());
     return config;
   },
 };

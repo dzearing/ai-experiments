@@ -254,7 +254,7 @@ export function Segmented({
       className={containerClassNames}
       role="radiogroup"
       aria-label={ariaLabel}
-      tabIndex={disabled ? -1 : 0}
+      tabIndex={-1}
       onKeyDown={handleKeyDown}
     >
       {/* Animated indicator - behind segments */}
@@ -289,7 +289,7 @@ export function Segmented({
             className={segmentClassNames}
             onClick={() => handleSegmentClick(option.value)}
             disabled={isDisabled}
-            tabIndex={-1}
+            tabIndex={isActive ? 0 : -1}
             title={iconOnly ? String(option.label) : undefined}
           >
             {option.icon && <span className={styles.segmentIcon}>{option.icon}</span>}

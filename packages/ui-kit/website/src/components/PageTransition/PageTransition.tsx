@@ -1,4 +1,4 @@
-import { useRef, useLayoutEffect, useState, type ReactElement } from 'react';
+import { useRef, useLayoutEffect, useState } from 'react';
 import { useLocation, useNavigationType, useOutlet } from 'react-router-dom';
 import styles from './PageTransition.module.css';
 

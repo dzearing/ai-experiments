@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@ui-kit/core": "workspace:*",
+    "@ui-kit/icons": "workspace:*",
     "@ui-kit/react": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

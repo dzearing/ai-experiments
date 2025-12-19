@@ -337,10 +337,12 @@
   "componentTokens": {
     "description": "Shortcut tokens for common component patterns",
     "tokens": {
+      "control-height-sm": { "default": "28px" },
+      "control-height-md": { "default": "36px" },
+      "control-height-lg": { "default": "44px" },
       "button-padding-x": { "default": "var(--space-4)" },
       "button-padding-y": { "default": "var(--space-2)" },
       "button-radius": { "default": "var(--radius-md)" },
-      "input-height": { "default": "40px" },
       "input-padding-x": { "default": "var(--space-3)" },
       "card-padding": { "default": "var(--space-4)" },
       "modal-padding": { "default": "var(--space-6)" },

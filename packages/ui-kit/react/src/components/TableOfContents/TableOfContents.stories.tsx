@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { fn } from '@storybook/test';
+import { fn } from 'storybook/test';
 import { useRef, useEffect } from 'react';
 import { TableOfContents } from './TableOfContents';
 

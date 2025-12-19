@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { fn } from '@storybook/test';
+import { fn } from 'storybook/test';
 import { Table, type TableColumn, type TableSort } from './Table';
 import { Chip } from '../Chip';
 import { Avatar } from '../Avatar';

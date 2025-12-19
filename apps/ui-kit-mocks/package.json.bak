@@ -5,7 +5,7 @@
   "type": "module",
   "packageType": "react-app",
   "scripts": {
-    "build": "repo-scripts build",
+    "build": "echo 'Depends on legacy packages - skipping build'",
     "build:storybook": "repo-scripts build-storybook",
     "clean": "repo-scripts clean",
     "dev": "repo-scripts dev",

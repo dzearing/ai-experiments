@@ -207,7 +207,7 @@ export const FormExample: Story = {
         <Input id="formPassword" type="password" placeholder="Create a strong password" error />
       </FormField>
       <FormActions>
-        <Button variant="ghost">Cancel</Button>
+        <Button variant="default">Cancel</Button>
         <Button variant="primary">Create Account</Button>
       </FormActions>
     </Form>

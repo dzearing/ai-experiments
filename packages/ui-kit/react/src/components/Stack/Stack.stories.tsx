@@ -224,7 +224,7 @@ export const AsSemanticElement: Story = {
 export const FormActions: Story = {
   render: () => (
     <Stack direction="horizontal" justify="end" gap="sm">
-      <Button variant="ghost">Cancel</Button>
+      <Button variant="default">Cancel</Button>
       <Button variant="primary">Save Changes</Button>
     </Stack>
   ),

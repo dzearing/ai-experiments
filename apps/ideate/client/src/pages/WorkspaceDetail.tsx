@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from '@ui-kit/router';
-import { Button, Input, Modal, Spinner } from '@ui-kit/react';
+import { useNavigate, useParams, Link } from '@ui-kit/router';
+import { Breadcrumb, Button, Input, Modal, Spinner } from '@ui-kit/react';
 import { AddIcon } from '@ui-kit/icons/AddIcon';
 import { FileIcon } from '@ui-kit/icons/FileIcon';
-import { ArrowLeftIcon } from '@ui-kit/icons/ArrowLeftIcon';
 import { useAuth } from '../contexts/AuthContext';
 import { useWorkspaces } from '../contexts/WorkspaceContext';
 import { useDocuments, type DocumentMetadata } from '../contexts/DocumentContext';
@@ -123,21 +122,21 @@ export function WorkspaceDetail() {
       <div className={styles.container}>
         {/* Header */}
         <header className={styles.header}>
-          <button className={styles.backButton} onClick={() => navigate('/workspaces')}>
-            <ArrowLeftIcon />
-            Back to Workspaces
-          </button>
-          <div className={styles.headerContent}>
-            <div className={styles.headerInfo}>
-              <h1>{workspace.name}</h1>
-              {workspace.description && (
-                <p className={styles.description}>{workspace.description}</p>
-              )}
-            </div>
+          <div className={styles.headerRow}>
+            <Breadcrumb
+              items={[
+                { label: 'Workspaces', href: '/workspaces' },
+                { label: workspace.name },
+              ]}
+              linkComponent={Link}
+            />
             <Button icon={<AddIcon />} onClick={() => setShowNewDocModal(true)}>
               New Document
             </Button>
           </div>
+          {workspace.description && (
+            <p className={styles.description}>{workspace.description}</p>
+          )}
         </header>
 
         {/* Documents Section */}

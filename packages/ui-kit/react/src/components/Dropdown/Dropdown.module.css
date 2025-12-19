@@ -23,7 +23,10 @@
   border: 1px solid var(--softer-border);
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all var(--duration-fast) var(--ease-default);
+  transition:
+    background-color var(--duration-fast) var(--ease-default),
+    border-color var(--duration-fast) var(--ease-default),
+    outline-offset var(--duration-fast) var(--ease-default);
   text-align: start;
   min-width: 0;
 }
@@ -52,23 +55,23 @@
   background: var(--base-bg-disabled);
 }
 
-/* Size variants */
+/* Size variants - Use centralized control height tokens */
 .sm .trigger {
   padding: var(--space-1) var(--space-2);
   font-size: var(--text-sm);
-  min-height: 32px;
+  height: var(--control-height-sm, 28px);
 }
 
 .md .trigger {
   padding: var(--space-2) var(--space-3);
   font-size: var(--text-base);
-  min-height: 40px;
+  height: var(--control-height-md, 36px);
 }
 
 .lg .trigger {
   padding: var(--space-3) var(--space-4);
   font-size: var(--text-lg);
-  min-height: 48px;
+  height: var(--control-height-lg, 44px);
 }
 
 /* Value container */
@@ -129,7 +132,17 @@
   transform: rotate(180deg);
 }
 
+.clearButtonSpacer {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
 .clearButton {
+  position: absolute;
+  right: calc(var(--space-2) + 20px + var(--space-1));
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -140,6 +153,7 @@
   cursor: pointer;
   border-radius: var(--radius-sm);
   transition: all var(--duration-fast) var(--ease-default);
+  z-index: 1;
 }
 
 .clearButton:hover {
@@ -149,11 +163,11 @@
 
 /* Error state */
 .error .trigger {
-  border-color: var(--danger-border);
+  border-color: var(--feedback-danger-border);
 }
 
 .error .trigger:focus-visible {
-  outline-color: var(--danger-border);
+  outline-color: var(--feedback-danger-border);
 }
 
 /* Disabled state */

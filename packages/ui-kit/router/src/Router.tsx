@@ -16,13 +16,18 @@ export interface RouterProps {
 
 /**
  * Create initial location from current browser URL
+ * Uses key from history.state if available (for back/forward navigation),
+ * otherwise generates a new key
  */
 function createLocation(): Location {
+  // Try to get the key from history state (preserved during back/forward nav)
+  const stateKey = (window.history.state as { key?: string } | null)?.key;
+
   return {
     pathname: window.location.pathname,
     search: window.location.search,
     hash: window.location.hash,
-    key: generateLocationKey(),
+    key: stateKey || generateLocationKey(),
   };
 }
 
@@ -53,6 +58,15 @@ export function Router({ children, basePath = '', disableLinkInterception = fals
   const [location, setLocation] = useState<Location>(createLocation);
   const [navigationType, setNavigationType] = useState<NavigationType>('PUSH');
 
+  // Store initial location key in history.state if not already present
+  // This ensures the key is preserved on page refresh
+  useEffect(() => {
+    const stateKey = (window.history.state as { key?: string } | null)?.key;
+    if (!stateKey) {
+      window.history.replaceState({ key: location.key }, '');
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Handle popstate (browser back/forward)
   useEffect(() => {
     const handlePopState = () => {
@@ -75,12 +89,16 @@ export function Router({ children, basePath = '', disableLinkInterception = fals
 
       const { pathname, search, hash } = parseUrl(to);
       const url = `${pathname}${search}${hash}`;
+      const key = generateLocationKey();
+
+      // Store the key in history.state so it's preserved during back/forward navigation
+      const historyState = { ...((options?.state as object) ?? {}), key };
 
       if (options?.replace) {
-        window.history.replaceState(options?.state ?? null, '', url);
+        window.history.replaceState(historyState, '', url);
         setNavigationType('REPLACE');
       } else {
-        window.history.pushState(options?.state ?? null, '', url);
+        window.history.pushState(historyState, '', url);
         setNavigationType('PUSH');
       }
 
@@ -88,7 +106,7 @@ export function Router({ children, basePath = '', disableLinkInterception = fals
         pathname,
         search,
         hash,
-        key: generateLocationKey(),
+        key,
       });
     },
     []
@@ -99,6 +117,9 @@ export function Router({ children, basePath = '', disableLinkInterception = fals
     if (disableLinkInterception) return;
 
     const handleClick = (e: MouseEvent) => {
+      // Don't handle if already prevented (e.g., by Link component)
+      if (e.defaultPrevented) return;
+
       // Only handle left clicks
       if (e.button !== 0) return;
 

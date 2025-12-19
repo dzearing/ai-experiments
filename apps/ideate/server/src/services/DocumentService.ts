@@ -111,7 +111,7 @@ export class DocumentService {
       updatedAt: now,
     };
 
-    const content = `# ${title}\n\nStart writing here...`;
+    const content = `# ${title}\n\n`;
 
     // Save metadata
     await fs.writeFile(

@@ -74,7 +74,7 @@ import { Input, Button } from '@ui-kit/react';
   </FormRow>
 
   <FormActions align="end">
-    <Button variant="ghost">Cancel</Button>
+    <Button variant="default">Cancel</Button>
     <Button variant="primary">Submit</Button>
   </FormActions>
 </Form>
@@ -98,7 +98,7 @@ export const BasicForm: Story = {
         <Input id="password" type="password" placeholder="Enter password" />
       </FormField>
       <FormActions>
-        <Button variant="ghost">Cancel</Button>
+        <Button variant="default">Cancel</Button>
         <Button variant="primary">Sign In</Button>
       </FormActions>
     </Form>
@@ -161,7 +161,7 @@ export const TwoColumnLayout: Story = {
         </FormField>
       </FormRow>
       <FormActions>
-        <Button variant="ghost">Cancel</Button>
+        <Button variant="default">Cancel</Button>
         <Button variant="primary">Submit</Button>
       </FormActions>
     </Form>

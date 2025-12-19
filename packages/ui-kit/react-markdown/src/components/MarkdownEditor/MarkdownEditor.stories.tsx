@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { fn } from '@storybook/test';
+import { fn } from 'storybook/test';
 import { useState, useRef, useEffect } from 'react';
 import { Button, Stack, Text } from '@ui-kit/react';
 import { MarkdownEditor, type MarkdownEditorRef, type CoAuthor } from './MarkdownEditor';

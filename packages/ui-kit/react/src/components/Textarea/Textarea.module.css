@@ -7,7 +7,10 @@
   font-family: var(--font-sans);
   resize: vertical;
   min-height: 80px;
-  transition: all var(--duration-fast) var(--ease-default);
+  transition:
+    background-color var(--duration-fast) var(--ease-default),
+    border-color var(--duration-fast) var(--ease-default),
+    outline-offset var(--duration-fast) var(--ease-default);
 }
 
 .textarea::placeholder {
@@ -21,8 +24,8 @@
 .textarea:focus {
   background: var(--softer-bg-focus);
   border-color: var(--focus-ring);
-  outline: none;
-  box-shadow: 0 0 0 2px var(--focus-ring);
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
 }
 
 .textarea:disabled {
@@ -53,12 +56,12 @@
 
 /* Error state */
 .error {
-  border-color: var(--danger-border);
+  border-color: var(--feedback-danger-border);
 }
 
 .error:focus {
-  border-color: var(--danger-border);
-  box-shadow: 0 0 0 2px var(--danger-bg);
+  border-color: var(--feedback-danger-border);
+  outline-color: var(--feedback-danger-border);
 }
 
 /* Full width */
