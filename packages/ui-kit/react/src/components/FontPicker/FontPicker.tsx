@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, type ReactNode } from 'react
 import { Dropdown, type DropdownOption, type OptionState } from '../Dropdown';
 import { IconButton } from '../IconButton';
 import { DraggableReorder } from '../DraggableReorder';
-import { CloseIcon } from '@ui-kit/icons';
+import { CloseIcon } from '@ui-kit/icons/CloseIcon';
 import styles from './FontPicker.module.css';
 
 /**

@@ -56,7 +56,7 @@ Choose the approach that best fits your use case:
 
 Best for modern React applications. Each icon is a separate module for optimal tree-shaking.
 
-### Direct Import (Best Tree-Shaking)
+### Import Icons Individually
 
 ```tsx
 // Import only what you use - each icon is ~1KB
@@ -77,14 +77,7 @@ function Toolbar() {
 }
 ```
 
-### Barrel Import (Convenient for Development)
-
-```tsx
-// Convenient but relies on bundler optimization
-import { SaveIcon, EditIcon, DeleteIcon } from '@ui-kit/icons';
-```
-
-> **Note:** Barrel imports work well with modern bundlers (Vite, webpack 5, esbuild) that support tree-shaking. For maximum control, use direct imports.
+> **Note:** There is no barrel export. Each icon must be imported individually to ensure optimal bundle size.
 
 ### Props API
 
@@ -296,7 +289,7 @@ Best when you need maximum control, custom animations, or want to avoid any exte
 
 ### Copy from Source
 
-SVG files are located at `src/svgs/{category}/{name}.svg`. Copy the content directly:
+SVG files are located at `src/svgs/{name}.svg`. Copy the content directly:
 
 ```tsx
 function CustomSaveIcon({ size = 24, className }) {
@@ -415,9 +408,11 @@ button:hover .icon {
 
 ## Adding New Icons
 
-1. Drop an SVG file into `src/svgs/{category}/`
-2. Run `pnpm build`
-3. The icon is automatically available in all formats
+See [ICON_GUIDE.md](../../../ICON_GUIDE.md) for detailed instructions.
+
+1. Create `src/svgs/my-icon.svg` with your SVG
+2. Create `src/svgs/my-icon.json` with metadata (name, category, keywords)
+3. Run `pnpm build`
 
 ### SVG Requirements
 

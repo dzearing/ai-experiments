@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@ui-kit/router';
 import {
   Button,
   Card,
@@ -9,7 +9,11 @@ import {
   IconButton,
   useTheme,
 } from '@ui-kit/react';
-import { ArrowLeftIcon, UserIcon, GearIcon, EditIcon, LinkIcon } from '@ui-kit/icons';
+import { ArrowLeftIcon } from '@ui-kit/icons/ArrowLeftIcon';
+import { UserIcon } from '@ui-kit/icons/UserIcon';
+import { GearIcon } from '@ui-kit/icons/GearIcon';
+import { EditIcon } from '@ui-kit/icons/EditIcon';
+import { LinkIcon } from '@ui-kit/icons/LinkIcon';
 import { useAuth } from '../contexts/AuthContext';
 import styles from './Settings.module.css';
 

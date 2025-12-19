@@ -5,13 +5,10 @@
   "description": "Scalable icon library with React components, SVG sprites, WOFF2 fonts, and PNG exports",
   "type": "module",
   "sideEffects": false,
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "import": "./dist/types.js"
     },
     "./AddIcon": {
       "types": "./dist/AddIcon.d.ts",
@@ -285,6 +282,10 @@
       "types": "./dist/MoonIcon.d.ts",
       "import": "./dist/MoonIcon.js"
     },
+    "./MoreHorizontalIcon": {
+      "types": "./dist/MoreHorizontalIcon.d.ts",
+      "import": "./dist/MoreHorizontalIcon.js"
+    },
     "./NextTrackIcon": {
       "types": "./dist/NextTrackIcon.d.ts",
       "import": "./dist/NextTrackIcon.js"
@@ -468,8 +469,6 @@
     "@types/react": "^19.0.0",
     "@vitejs/plugin-react": "^4.4.1",
     "esbuild": "^0.20.0",
-    "js-yaml": "^4.1.0",
-    "@types/js-yaml": "^4.0.9",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "sharp": "^0.33.5",

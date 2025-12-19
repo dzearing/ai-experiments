@@ -174,6 +174,13 @@ The application requires workspace selection before functionality is available. 
 - Functional components with hooks
 - Type imports: `import type { Foo }` or `import { type Foo, Bar }`
 
+### File Organization
+
+- **1 export per file** - Each file exports a single function/component plus its related types
+- **Tests colocated with source** - Test files live next to source files (e.g., `Button.tsx` and `Button.test.tsx`)
+- **No utility barrel files** - Avoid `utils.ts` or similar catch-all files; split into individual files
+- **500 line limit** - Source files should be 500 lines or less; break up larger files into smaller utilities
+
 ### Git Workflow
 
 - Feature branches: `feature/`, `fix/`, `chore/`

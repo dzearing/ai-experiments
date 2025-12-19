@@ -105,10 +105,18 @@ export interface MarkdownEditorRef {
   setSelection: (start: number, end: number) => void;
 
   // Navigation
-  /** Navigate to a specific line number */
+  /** Navigate to a specific line number (moves cursor) */
   goToLine: (line: number) => void;
   /** Scroll to bring a position into view */
   scrollToPosition: (position: number) => void;
+  /** Scroll to show a specific line at the top (does not move cursor) */
+  scrollToLine: (line: number) => void;
+  /** Get the first visible line number in the viewport (1-indexed) */
+  getFirstVisibleLine: () => number;
+  /** Get the last visible line number in the viewport (1-indexed) */
+  getLastVisibleLine: () => number;
+  /** Get total number of lines in document */
+  getLineCount: () => number;
 
   // Folding
   /** Fold all foldable regions */

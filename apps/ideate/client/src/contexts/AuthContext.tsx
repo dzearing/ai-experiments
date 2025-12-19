@@ -30,9 +30,17 @@ function getAvatarUrl(nickname: string): string {
   return `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(nickname)}&backgroundColor=2563eb&textColor=ffffff`;
 }
 
-// Generate a simple ID from nickname
+// Generate a deterministic ID from nickname (consistent across logins)
 function generateId(nickname: string): string {
-  return `user-${nickname.toLowerCase().replace(/\s+/g, '-')}-${Date.now().toString(36)}`;
+  const normalized = nickname.toLowerCase().replace(/\s+/g, '-');
+  // Simple hash for consistency - same nickname always produces same ID
+  let hash = 0;
+  for (let i = 0; i < normalized.length; i++) {
+    const char = normalized.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return `user-${normalized}-${Math.abs(hash).toString(36)}`;
 }
 
 interface AuthProviderProps {

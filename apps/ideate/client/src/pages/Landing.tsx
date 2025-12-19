@@ -1,7 +1,12 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@ui-kit/router';
 import { Button, Card, IconButton, useTheme } from '@ui-kit/react';
-import { UsersIcon, LinkIcon, GearIcon, SunIcon, MoonIcon, SunMoonIcon } from '@ui-kit/icons';
+import { UsersIcon } from '@ui-kit/icons/UsersIcon';
+import { LinkIcon } from '@ui-kit/icons/LinkIcon';
+import { GearIcon } from '@ui-kit/icons/GearIcon';
+import { SunIcon } from '@ui-kit/icons/SunIcon';
+import { MoonIcon } from '@ui-kit/icons/MoonIcon';
+import { SunMoonIcon } from '@ui-kit/icons/SunMoonIcon';
 import { useAuth } from '../contexts/AuthContext';
 import styles from './Landing.module.css';
 

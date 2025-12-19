@@ -201,12 +201,29 @@
   width: 44px;
 }
 
-/* Icon */
+/* Icon - scales based on button size */
 .icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+
+.icon > svg {
+  width: var(--button-icon-size, 20px);
+  height: var(--button-icon-size, 20px);
+}
+
+.sm .icon > svg {
+  --button-icon-size: 16px;
+}
+
+.md .icon > svg {
+  --button-icon-size: 20px;
+}
+
+.lg .icon > svg {
+  --button-icon-size: 24px;
 }
 
 .label {

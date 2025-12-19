@@ -1,0 +1,69 @@
+.resourceCard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: var(--space-5);
+  cursor: pointer;
+  transition: transform var(--duration-fast) var(--ease-default),
+    box-shadow var(--duration-fast) var(--ease-default);
+  text-align: left;
+  border: none;
+  background: var(--soft-bg);
+}
+
+.resourceCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: var(--space-3);
+}
+
+.resourceIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background-color: var(--primary-bg);
+  color: var(--primary-fg);
+  border-radius: var(--radius-md);
+}
+
+.resourceIcon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.cardActions {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.resourceTitle {
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  margin: 0 0 var(--space-1);
+  color: var(--base-fg);
+}
+
+.resourceDescription {
+  font-size: var(--text-sm);
+  color: var(--base-fg-soft);
+  margin: 0 0 var(--space-1);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.resourceMeta {
+  font-size: var(--text-sm);
+  color: var(--base-fg-soft);
+  margin: 0;
+}

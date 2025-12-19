@@ -1,0 +1,12 @@
+{
+  "name": "save",
+  "category": "actions",
+  "keywords": [
+    "actions",
+    "disk",
+    "floppy",
+    "persist",
+    "save",
+    "store"
+  ]
+}

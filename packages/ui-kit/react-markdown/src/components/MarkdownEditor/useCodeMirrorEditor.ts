@@ -397,6 +397,56 @@ export function useCodeMirrorEditor(options: UseCodeMirrorEditorOptions): UseCod
       });
     },
 
+    scrollToLine: (line: number) => {
+      const view = viewRef.current;
+      if (!view) return;
+
+      const doc = view.state.doc;
+      const lineCount = doc.lines;
+      const targetLine = Math.max(1, Math.min(line, lineCount));
+      const lineInfo = doc.line(targetLine);
+
+      // Only scroll, don't change selection
+      view.dispatch({
+        effects: EditorView.scrollIntoView(lineInfo.from, { y: 'start' }),
+      });
+    },
+
+    getFirstVisibleLine: () => {
+      const view = viewRef.current;
+      if (!view) return 1;
+
+      // Get the line block at the top of the visible viewport
+      // lineBlockAtHeight gives us the line that intersects a given vertical position
+      const scrollTop = view.scrollDOM.scrollTop;
+      const lineBlock = view.lineBlockAtHeight(scrollTop);
+
+      // Get the document line number for this position
+      const line = view.state.doc.lineAt(lineBlock.from);
+      return line.number;
+    },
+
+    getLastVisibleLine: () => {
+      const view = viewRef.current;
+      if (!view) return 1;
+
+      // Get the line block at the bottom of the visible viewport
+      const scrollTop = view.scrollDOM.scrollTop;
+      const clientHeight = view.scrollDOM.clientHeight;
+      const bottomPos = scrollTop + clientHeight;
+      const lineBlock = view.lineBlockAtHeight(bottomPos);
+
+      // Get the document line number for this position
+      const line = view.state.doc.lineAt(lineBlock.from);
+      return line.number;
+    },
+
+    getLineCount: () => {
+      const view = viewRef.current;
+      if (!view) return 0;
+      return view.state.doc.lines;
+    },
+
     foldAll: () => {
       const view = viewRef.current;
       if (view) foldAll(view);

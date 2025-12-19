@@ -23,7 +23,7 @@ async function build() {
   await rm(DIST_DIR, { recursive: true, force: true });
   await mkdir(DIST_DIR, { recursive: true });
 
-  // Generate React components (this also creates src/index.ts)
+  // Generate React components
   const icons = await generateComponents();
 
   // Build TypeScript with Vite first (Vite cleans the dist folder)
@@ -56,7 +56,7 @@ async function build() {
 
 /**
  * Updates package.json with explicit exports for each icon component.
- * This avoids wildcard exports which expose internal structure as public API.
+ * No barrel/index export - each icon must be imported individually.
  */
 async function updatePackageExports(icons: IconInfo[]) {
   log('\n=== Updating Package Exports ===', 'cyan');
@@ -64,16 +64,16 @@ async function updatePackageExports(icons: IconInfo[]) {
   const packageJsonPath = join(ROOT_DIR, 'package.json');
   const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf-8'));
 
-  // Build explicit exports object
+  // Build explicit exports object - NO barrel export
   const exports: Record<string, { types: string; import: string } | string> = {
-    // Main barrel export
-    '.': {
-      types: './dist/index.d.ts',
-      import: './dist/index.js',
+    // Types export for consumers who need type definitions
+    './types': {
+      types: './dist/types.d.ts',
+      import: './dist/types.js',
     },
   };
 
-  // Add explicit export for each icon
+  // Add explicit export for each icon (individual imports only)
   for (const icon of icons) {
     exports[`./${icon.componentName}`] = {
       types: `./dist/${icon.componentName}.d.ts`,
@@ -91,8 +91,13 @@ async function updatePackageExports(icons: IconInfo[]) {
 
   packageJson.exports = exports;
 
+  // Remove main/module/types since there's no barrel export
+  delete packageJson.main;
+  delete packageJson.module;
+  delete packageJson.types;
+
   await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
-  log(`Updated package.json with ${icons.length} explicit icon exports`, 'green');
+  log(`Updated package.json with ${icons.length} explicit icon exports (no barrel)`, 'green');
 }
 
 build().catch((error) => {

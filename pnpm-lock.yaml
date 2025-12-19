@@ -48,15 +48,15 @@ importers:
       '@ui-kit/react-markdown':
         specifier: workspace:*
         version: link:../../../packages/ui-kit/react-markdown
+      '@ui-kit/router':
+        specifier: workspace:*
+        version: link:../../../packages/ui-kit/router
       react:
         specifier: ^19.1.0
         version: 19.1.0
       react-dom:
         specifier: ^19.1.0
         version: 19.1.0(react@19.1.0)
-      react-router-dom:
-        specifier: ^7.6.3
-        version: 7.6.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -758,6 +758,39 @@ importers:
       vite:
         specifier: ^5.0.0
         version: 5.4.19(@types/node@24.0.13)(lightningcss@1.30.1)
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@24.0.13)(jsdom@27.3.0(postcss@8.5.6))(lightningcss@1.30.1)
+
+  packages/ui-kit/router:
+    devDependencies:
+      '@testing-library/jest-dom':
+        specifier: ^6.6.3
+        version: 6.6.3
+      '@testing-library/react':
+        specifier: ^14.0.0
+        version: 14.3.1(@types/react@19.1.8)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      '@types/react':
+        specifier: ^19.1.8
+        version: 19.1.8
+      jsdom:
+        specifier: ^27.3.0
+        version: 27.3.0(postcss@8.5.6)
+      react:
+        specifier: ^19.1.0
+        version: 19.1.0
+      react-dom:
+        specifier: ^19.1.0
+        version: 19.1.0(react@19.1.0)
+      typescript:
+        specifier: ^5.4.0
+        version: 5.8.3
+      vite:
+        specifier: ^5.0.0
+        version: 5.4.19(@types/node@24.0.13)(lightningcss@1.30.1)
+      vite-plugin-dts:
+        specifier: ^4.5.4
+        version: 4.5.4(@types/node@24.0.13)(rollup@4.45.0)(typescript@5.8.3)(vite@5.4.19(@types/node@24.0.13)(lightningcss@1.30.1))
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@24.0.13)(jsdom@27.3.0(postcss@8.5.6))(lightningcss@1.30.1)

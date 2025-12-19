@@ -40,6 +40,8 @@ interface ButtonBaseProps {
   iconAfter?: ReactNode;
   /** Button content */
   children?: ReactNode;
+  /** Additional class name */
+  className?: string;
 }
 
 export interface ButtonAsButtonProps
@@ -47,7 +49,7 @@ export interface ButtonAsButtonProps
     Omit<ButtonHTMLAttributes<HTMLButtonElement>, keyof ButtonBaseProps> {
   /** Render as button (default) */
   as?: 'button';
-  /** href is not allowed for button */
+  /** href for navigation - renders as anchor when provided */
   href?: never;
 }
 
@@ -55,8 +57,8 @@ export interface ButtonAsAnchorProps
   extends ButtonBaseProps,
     Omit<AnchorHTMLAttributes<HTMLAnchorElement>, keyof ButtonBaseProps> {
   /** Render as anchor for navigation */
-  as: 'a';
-  /** URL to navigate to */
+  as?: 'a';
+  /** URL to navigate to - when inside Router, uses client-side navigation */
   href: string;
 }
 
@@ -64,7 +66,6 @@ export type ButtonProps = ButtonAsButtonProps | ButtonAsAnchorProps;
 
 export function Button(props: ButtonProps) {
   const {
-    as = 'button',
     variant = 'default',
     size = 'md',
     fullWidth = false,
@@ -95,16 +96,18 @@ export function Button(props: ButtonProps) {
     </>
   );
 
-  if (as === 'a') {
-    const anchorProps = rest as Omit<AnchorHTMLAttributes<HTMLAnchorElement>, keyof ButtonBaseProps>;
+  // Render as anchor if href is provided
+  if ('href' in props && props.href) {
+    const { as: _, href, ...anchorProps } = rest as AnchorHTMLAttributes<HTMLAnchorElement> & { as?: 'a'; href: string };
     return (
-      <a className={classNames} {...anchorProps}>
+      <a className={classNames} href={href} {...anchorProps}>
         {content}
       </a>
     );
   }
 
-  const buttonProps = rest as Omit<ButtonHTMLAttributes<HTMLButtonElement>, keyof ButtonBaseProps>;
+  // Default: button element
+  const { as: _, ...buttonProps } = rest as ButtonHTMLAttributes<HTMLButtonElement> & { as?: 'button' };
   return (
     <button className={classNames} {...buttonProps}>
       {content}

@@ -3,7 +3,6 @@ dist/
 
 # Generated source files (regenerated on build)
 src/components/
-src/index.ts
 
 # Dependencies
 node_modules/

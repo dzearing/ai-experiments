@@ -1,6 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { Button } from './Button';
-import { AddIcon, CloseIcon, ArrowRightIcon } from '@ui-kit/icons';
+import { AddIcon } from '@ui-kit/icons/AddIcon';
+import { CloseIcon } from '@ui-kit/icons/CloseIcon';
+import { ArrowRightIcon } from '@ui-kit/icons/ArrowRightIcon';
 
 const meta: Meta<typeof Button> = {
   title: 'Actions/Button',

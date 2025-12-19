@@ -5,17 +5,15 @@ import { IconButton } from '../IconButton';
 import { Stack } from '../Stack';
 import { Text } from '../Text';
 import { Panel } from '../Panel';
-import {
-  UndoIcon,
-  RedoIcon,
-  BoldIcon,
-  ItalicIcon,
-  UnderlineIcon,
-  AlignLeftIcon,
-  AlignCenterIcon,
-  AlignRightIcon,
-  GearIcon,
-} from '@ui-kit/icons';
+import { UndoIcon } from '@ui-kit/icons/UndoIcon';
+import { RedoIcon } from '@ui-kit/icons/RedoIcon';
+import { BoldIcon } from '@ui-kit/icons/BoldIcon';
+import { ItalicIcon } from '@ui-kit/icons/ItalicIcon';
+import { UnderlineIcon } from '@ui-kit/icons/UnderlineIcon';
+import { AlignLeftIcon } from '@ui-kit/icons/AlignLeftIcon';
+import { AlignCenterIcon } from '@ui-kit/icons/AlignCenterIcon';
+import { AlignRightIcon } from '@ui-kit/icons/AlignRightIcon';
+import { GearIcon } from '@ui-kit/icons/GearIcon';
 
 /**
  * # Toolbar

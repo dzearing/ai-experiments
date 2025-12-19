@@ -1,0 +1,11 @@
+{
+  "name": "restore",
+  "category": "actions",
+  "keywords": [
+    "actions",
+    "resize",
+    "restore",
+    "unmaximize",
+    "window"
+  ]
+}

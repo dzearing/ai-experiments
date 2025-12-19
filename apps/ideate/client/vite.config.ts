@@ -18,6 +18,7 @@ export default defineConfig({
       '@ui-kit/react/style.css': path.resolve(__dirname, '../../../packages/ui-kit/react/dist/style.css'),
       '@ui-kit/react': path.resolve(__dirname, '../../../packages/ui-kit/react/src'),
       '@ui-kit/react-markdown': path.resolve(__dirname, '../../../packages/ui-kit/react-markdown/src'),
+      '@ui-kit/router': path.resolve(__dirname, '../../../packages/ui-kit/router/src'),
     },
   },
   server: {

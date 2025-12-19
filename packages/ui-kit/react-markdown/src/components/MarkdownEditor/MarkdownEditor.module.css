@@ -45,6 +45,17 @@
 
 .editorContainer :global(.cm-scroller) {
   overflow: auto;
+  align-items: stretch;
+}
+
+/* Content fills remaining space, gutters stay fixed width */
+.editorContainer :global(.cm-content) {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.editorContainer :global(.cm-gutters) {
+  flex: 0 0 auto;
 }
 
 

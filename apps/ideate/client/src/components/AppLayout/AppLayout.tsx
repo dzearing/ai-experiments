@@ -1,13 +1,30 @@
-import { Outlet, useNavigate } from 'react-router-dom';
-import { Avatar, IconButton, Menu, useTheme } from '@ui-kit/react';
-import { GearIcon, LogoutIcon, SunIcon, MoonIcon, SunMoonIcon } from '@ui-kit/icons';
+import { Outlet, useNavigate, useLocation, useNavigationType, useIsActive } from '@ui-kit/router';
+import { Avatar, Button, IconButton, Menu, PageTransition, useHistoryIndex, useTheme } from '@ui-kit/react';
+import { GearIcon } from '@ui-kit/icons/GearIcon';
+import { LogoutIcon } from '@ui-kit/icons/LogoutIcon';
+import { SunIcon } from '@ui-kit/icons/SunIcon';
+import { MoonIcon } from '@ui-kit/icons/MoonIcon';
+import { SunMoonIcon } from '@ui-kit/icons/SunMoonIcon';
+import { FileIcon } from '@ui-kit/icons/FileIcon';
+import { FolderIcon } from '@ui-kit/icons/FolderIcon';
 import { useAuth } from '../../contexts/AuthContext';
+import { SaveIndicator } from '../SaveIndicator';
 import styles from './AppLayout.module.css';
 
 export function AppLayout() {
   const { user, signOut } = useAuth();
   const { mode, setMode } = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
+  const navigationType = useNavigationType();
+  const historyIndex = useHistoryIndex({
+    locationKey: location.key,
+    navigationType,
+  });
+
+  // Active state for nav buttons
+  const isDashboardActive = useIsActive('/dashboard');
+  const isWorkspacesActive = useIsActive('/workspaces');
 
   const handleSignOut = async () => {
     await signOut();
@@ -22,9 +39,28 @@ export function AppLayout() {
             <span className={styles.logoIcon}>I</span>
             <span className={styles.logoText}>Ideate</span>
           </button>
+          <nav className={styles.nav}>
+            <Button
+              href="/dashboard"
+              variant={isDashboardActive ? 'primary' : 'ghost'}
+              icon={<FileIcon />}
+            >
+              Documents
+            </Button>
+            <Button
+              href="/workspaces"
+              variant={isWorkspacesActive ? 'primary' : 'ghost'}
+              icon={<FolderIcon />}
+            >
+              Workspaces
+            </Button>
+          </nav>
         </div>
 
         <div className={styles.headerRight}>
+          {/* Save Indicator */}
+          <SaveIndicator />
+
           {/* Theme Toggle */}
           <Menu
             items={[
@@ -70,7 +106,12 @@ export function AppLayout() {
       </header>
 
       <main className={styles.main}>
-        <Outlet />
+        <PageTransition
+          transitionKey={location.key}
+          historyIndex={historyIndex}
+        >
+          <Outlet />
+        </PageTransition>
       </main>
     </div>
   );

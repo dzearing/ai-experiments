@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   Input,
   Button,
@@ -9,14 +9,11 @@ import {
   Stack,
   FocusZone,
   BidirectionalFocusZone,
+  Spinner,
 } from '@ui-kit/react';
 import styles from './IconCatalog.module.css';
 
-// Import all icons - this works because Storybook runs after build
-// The index.ts is generated during build
-import * as AllIcons from '../index';
-
-// Import metadata for search keywords
+// Import metadata for search keywords and icon list
 import iconsMetadata from '../../dist/metadata/icons.json';
 
 interface IconData {
@@ -24,67 +21,7 @@ interface IconData {
   componentName: string;
   category: string;
   keywords: string[];
-  Component: React.ComponentType<{ size?: number; title?: string; className?: string }>;
-}
-
-// Build a map of icon names to their metadata keywords
-const keywordsMap: Record<string, string[]> = {};
-for (const icon of iconsMetadata.icons) {
-  keywordsMap[icon.name] = icon.keywords;
-}
-
-// Build icon data from the imported icons
-function buildIconData(): IconData[] {
-  const icons: IconData[] = [];
-
-  for (const [componentName, Component] of Object.entries(AllIcons)) {
-    // Skip non-icon exports (types, etc.)
-    // Note: forwardRef components have typeof 'object', not 'function'
-    if (!componentName.endsWith('Icon') || !Component) {
-      continue;
-    }
-
-    // Convert component name to kebab-case icon name
-    const name = componentName
-      .replace(/Icon$/, '')
-      .replace(/([A-Z])/g, '-$1')
-      .toLowerCase()
-      .replace(/^-/, '');
-
-    // Determine category from name patterns
-    const category = getCategory(name);
-
-    // Use keywords from metadata, fallback to name-based keywords
-    const keywords = keywordsMap[name] || [name, ...name.split('-'), componentName.toLowerCase()];
-
-    icons.push({
-      name,
-      componentName,
-      category,
-      keywords,
-      Component: Component as IconData['Component'],
-    });
-  }
-
-  return icons.sort((a, b) => a.name.localeCompare(b.name));
-}
-
-function getCategory(name: string): string {
-  const categoryPatterns: Record<string, string[]> = {
-    navigation: ['arrow', 'chevron', 'menu', 'home', 'back', 'forward', 'expand', 'collapse', 'close'],
-    status: ['check', 'error', 'warning', 'info', 'x-circle'],
-    editor: ['bold', 'italic', 'underline', 'strikethrough', 'heading', 'list', 'quote', 'code', 'link', 'image', 'table', 'indent', 'outdent'],
-    actions: ['save', 'edit', 'delete', 'add', 'remove', 'copy', 'cut', 'paste', 'undo', 'redo', 'search', 'filter', 'download', 'upload', 'share', 'export', 'refresh', 'sync', 'play', 'pause', 'stop', 'zoom', 'minimize', 'maximize', 'restore', 'pop', 'rewind', 'fast', 'next', 'previous'],
-    misc: ['settings', 'gear', 'user', 'users', 'folder', 'file', 'calendar', 'clock', 'bell', 'star', 'heart', 'comment', 'chat', 'hourglass'],
-  };
-
-  const lowerName = name.toLowerCase();
-  for (const [category, patterns] of Object.entries(categoryPatterns)) {
-    if (patterns.some((p) => lowerName.includes(p))) {
-      return category;
-    }
-  }
-  return 'misc';
+  Component: React.ComponentType<{ size?: number; title?: string; className?: string }> | null;
 }
 
 const categories = ['all', 'actions', 'navigation', 'status', 'editor', 'misc'];
@@ -95,14 +32,42 @@ interface IconCatalogProps {
   columns?: number;
 }
 
-// Build icon data once at module load time
-const allIconData = buildIconData();
-
 function IconCatalog({ size = 24, showNames = true, columns = 8 }: IconCatalogProps) {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [copiedIcon, setCopiedIcon] = useState<string | null>(null);
-  const iconData = allIconData;
+  const [iconData, setIconData] = useState<IconData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Dynamically import all icons on mount
+  useEffect(() => {
+    async function loadIcons() {
+      const icons: IconData[] = [];
+
+      for (const iconMeta of iconsMetadata.icons) {
+        try {
+          // Dynamic import for each icon
+          const module = await import(`../components/${iconMeta.componentName}.tsx`);
+          const Component = module[iconMeta.componentName];
+
+          icons.push({
+            name: iconMeta.name,
+            componentName: iconMeta.componentName,
+            category: iconMeta.category,
+            keywords: iconMeta.keywords,
+            Component,
+          });
+        } catch (error) {
+          console.warn(`Failed to load icon: ${iconMeta.componentName}`, error);
+        }
+      }
+
+      setIconData(icons.sort((a, b) => a.name.localeCompare(b.name)));
+      setIsLoading(false);
+    }
+
+    loadIcons();
+  }, []);
 
   const filteredIcons = useMemo(() => {
     let filtered = iconData;
@@ -139,6 +104,16 @@ function IconCatalog({ size = 24, showNames = true, columns = 8 }: IconCatalogPr
     return counts;
   }, [iconData]);
 
+  if (isLoading) {
+    return (
+      <div className={styles.catalog}>
+        <Stack gap={2} align="center" style={{ padding: '4rem' }}>
+          <Spinner size="lg" />
+          <Text color="soft">Loading icons...</Text>
+        </Stack>
+      </div>
+    );
+  }
 
   if (iconData.length === 0) {
     return (
@@ -146,7 +121,7 @@ function IconCatalog({ size = 24, showNames = true, columns = 8 }: IconCatalogPr
         <Stack gap={2}>
           <Heading level={1}>Icon Catalog</Heading>
           <Text color="soft">
-            Loading icons... If this persists, run <code>pnpm build</code> first.
+            No icons found. Run <code>pnpm build</code> first.
           </Text>
         </Stack>
       </div>
@@ -204,7 +179,7 @@ function IconCatalog({ size = 24, showNames = true, columns = 8 }: IconCatalogPr
               title={`Click to copy: import { ${componentName} } from '@ui-kit/icons/${componentName}';`}
             >
               <div className={styles.iconWrapper}>
-                <Component size={size} />
+                {Component && <Component size={size} />}
               </div>
               {showNames && (
                 <span className={styles.iconName}>

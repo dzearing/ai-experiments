@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Dropdown, Segmented, useTheme } from '@ui-kit/react';
-import { SunIcon, MoonIcon, SunMoonIcon } from '@ui-kit/icons';
+import { SunIcon } from '@ui-kit/icons/SunIcon';
+import { MoonIcon } from '@ui-kit/icons/MoonIcon';
+import { SunMoonIcon } from '@ui-kit/icons/SunMoonIcon';
 import { generateRuntimeThemeTokens } from '@ui-kit/core';
 import { getStoredThemes, getAllThemeOptions, type StoredTheme } from '../../utils/themeStorage';
 import styles from './ThemeSwitcher.module.css';

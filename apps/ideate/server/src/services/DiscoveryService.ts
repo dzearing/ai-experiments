@@ -39,7 +39,7 @@ export class DiscoveryService {
    */
   stop(): void {
     if (this.publishedService) {
-      this.publishedService.stop();
+      this.publishedService.stop?.();
       this.publishedService = null;
     }
 
@@ -112,7 +112,7 @@ export class DiscoveryService {
       const publicDocs = await this.documentService.getPublicDocuments();
 
       // Stop current service
-      this.publishedService.stop();
+      this.publishedService.stop?.();
 
       // Republish with updated info
       this.publishedService = this.bonjour.publish({

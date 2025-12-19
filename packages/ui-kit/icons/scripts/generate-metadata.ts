@@ -1,6 +1,5 @@
-import { mkdir, writeFile, readFile } from 'fs/promises';
+import { mkdir, writeFile } from 'fs/promises';
 import { join, dirname } from 'path';
-import yaml from 'js-yaml';
 import { getSvgFiles, readIconFile, log, colors, type IconInfo } from './utils';
 
 const ROOT_DIR = join(dirname(import.meta.url.replace('file://', '')), '..');
@@ -8,37 +7,16 @@ const SVGS_DIR = join(ROOT_DIR, 'src/svgs');
 const DIST_DIR = join(ROOT_DIR, 'dist');
 const METADATA_DIR = join(DIST_DIR, 'metadata');
 
-interface CategoryDef {
-  displayName: string;
-  description: string;
-  order: number;
-  subcategories?: string[];
-}
-
-interface CategoriesYaml {
-  categories: Record<string, CategoryDef>;
-}
-
 /**
- * Load categories from YAML file
+ * Default category definitions
  */
-async function loadCategories(): Promise<CategoriesYaml['categories']> {
-  try {
-    const categoriesPath = join(SVGS_DIR, 'categories.yaml');
-    const content = await readFile(categoriesPath, 'utf-8');
-    const parsed = yaml.load(content) as CategoriesYaml;
-    return parsed.categories || {};
-  } catch {
-    log('Warning: Could not load categories.yaml, using defaults', 'yellow');
-    return {
-      actions: { displayName: 'Actions', description: 'Action icons', order: 1 },
-      navigation: { displayName: 'Navigation', description: 'Navigation icons', order: 2 },
-      status: { displayName: 'Status', description: 'Status icons', order: 3 },
-      editor: { displayName: 'Editor', description: 'Editor icons', order: 4 },
-      misc: { displayName: 'Miscellaneous', description: 'Miscellaneous icons', order: 5 },
-    };
-  }
-}
+const DEFAULT_CATEGORIES: Record<string, { displayName: string; description: string; order: number }> = {
+  actions: { displayName: 'Actions', description: 'Icons for user actions and operations', order: 1 },
+  navigation: { displayName: 'Navigation', description: 'Arrows, chevrons, and navigation controls', order: 2 },
+  status: { displayName: 'Status', description: 'Success, error, warning, and info indicators', order: 3 },
+  editor: { displayName: 'Editor', description: 'Rich text editing controls', order: 4 },
+  misc: { displayName: 'Miscellaneous', description: 'General purpose icons', order: 5 },
+};
 
 /**
  * Build search index for fast keyword lookup
@@ -92,9 +70,6 @@ export async function generateMetadata(icons?: IconInfo[]): Promise<void> {
   // Ensure metadata directory exists
   await mkdir(METADATA_DIR, { recursive: true });
 
-  // Load categories
-  const categoriesDef = await loadCategories();
-
   // If icons not provided, read from SVG files
   if (!icons) {
     const svgFiles = await getSvgFiles(SVGS_DIR);
@@ -111,13 +86,12 @@ export async function generateMetadata(icons?: IconInfo[]): Promise<void> {
     filePath: icon.relativePath,
   }));
 
-  // Build category metadata
-  const categoryMetadata = Object.entries(categoriesDef).map(([id, def]) => ({
+  // Build category metadata from default categories
+  const categoryMetadata = Object.entries(DEFAULT_CATEGORIES).map(([id, def]) => ({
     id,
     displayName: def.displayName,
     description: def.description,
     order: def.order,
-    subcategories: def.subcategories,
     iconCount: icons!.filter((i) => i.category === id).length,
   }));
 

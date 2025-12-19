@@ -1,15 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { IconButton } from './IconButton';
-import {
-  AddIcon,
-  CloseIcon,
-  GearIcon,
-  HeartIcon,
-  TrashIcon,
-  EditIcon,
-  SearchIcon,
-  MenuIcon,
-} from '@ui-kit/icons';
+import { AddIcon } from '@ui-kit/icons/AddIcon';
+import { CloseIcon } from '@ui-kit/icons/CloseIcon';
+import { GearIcon } from '@ui-kit/icons/GearIcon';
+import { HeartIcon } from '@ui-kit/icons/HeartIcon';
+import { TrashIcon } from '@ui-kit/icons/TrashIcon';
+import { EditIcon } from '@ui-kit/icons/EditIcon';
+import { SearchIcon } from '@ui-kit/icons/SearchIcon';
+import { MenuIcon } from '@ui-kit/icons/MenuIcon';
 
 const meta: Meta<typeof IconButton> = {
   title: 'Actions/IconButton',

@@ -5,11 +5,15 @@ import {
   useCallback,
   type ReactNode,
 } from 'react';
+import { useAuth } from './AuthContext';
+
+const API_URL = 'http://localhost:3002';
 
 export interface DocumentMetadata {
   id: string;
   title: string;
   ownerId: string;
+  workspaceId?: string;
   collaboratorIds: string[];
   isPublic: boolean;
   shareCode?: string;
@@ -25,11 +29,11 @@ interface DocumentContextValue {
   documents: DocumentMetadata[];
   isLoading: boolean;
   error: string | null;
-  fetchDocuments: () => Promise<void>;
-  createDocument: (title: string) => Promise<Document>;
+  fetchDocuments: (workspaceId?: string) => Promise<void>;
+  createDocument: (title: string, workspaceId?: string) => Promise<Document>;
   getDocument: (id: string) => Promise<Document | null>;
-  updateDocument: (id: string, updates: Partial<Document>) => Promise<void>;
-  deleteDocument: (id: string) => Promise<void>;
+  updateDocument: (id: string, updates: Partial<Document>) => Promise<Document | null>;
+  deleteDocument: (id: string) => Promise<boolean>;
 }
 
 const DocumentContext = createContext<DocumentContextValue | null>(null);
@@ -39,99 +43,145 @@ interface DocumentProviderProps {
 }
 
 export function DocumentProvider({ children }: DocumentProviderProps) {
+  const { user } = useAuth();
   const [documents, setDocuments] = useState<DocumentMetadata[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchDocuments = useCallback(async () => {
+  const fetchDocuments = useCallback(async (workspaceId?: string) => {
+    if (!user) return;
+
     setIsLoading(true);
     setError(null);
+
     try {
-      // TODO: Fetch from server
-      // Mock data for now
-      setDocuments([
-        {
-          id: 'doc-1',
-          title: 'Getting Started',
-          ownerId: 'user-1',
-          collaboratorIds: [],
-          isPublic: false,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+      const url = workspaceId
+        ? `${API_URL}/api/documents?workspaceId=${workspaceId}`
+        : `${API_URL}/api/documents`;
+
+      const response = await fetch(url, {
+        headers: {
+          'x-user-id': user.id,
         },
-      ]);
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch documents');
+      }
+
+      const data = await response.json();
+      setDocuments(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch documents');
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [user]);
 
-  const createDocument = useCallback(async (title: string): Promise<Document> => {
-    // TODO: Create on server
-    const newDoc: Document = {
-      id: `doc-${Date.now()}`,
-      title,
-      content: `# ${title}\n\nStart writing here...`,
-      ownerId: 'user-1',
-      collaboratorIds: [],
-      isPublic: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    setDocuments((prev) => [...prev, newDoc]);
-    return newDoc;
-  }, []);
+  const createDocument = useCallback(
+    async (title: string, workspaceId?: string): Promise<Document> => {
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
 
-  const getDocument = useCallback(async (id: string): Promise<Document | null> => {
-    // TODO: Fetch from server
-    // First check if we already have it in memory
-    let metadata = documents.find((d) => d.id === id);
-
-    // If not found and documents haven't been loaded, use mock data
-    // In a real app, this would fetch from the server
-    if (!metadata && id === 'doc-1') {
-      metadata = {
-        id: 'doc-1',
-        title: 'Getting Started',
-        ownerId: 'user-1',
-        collaboratorIds: [],
-        isPublic: false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      // Add to documents so subsequent calls find it
-      setDocuments((prev) => {
-        if (prev.find(d => d.id === id)) return prev;
-        return [...prev, metadata!];
+      const response = await fetch(`${API_URL}/api/documents`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user.id,
+        },
+        body: JSON.stringify({ title, workspaceId }),
       });
-    }
 
-    if (!metadata) return null;
-    return {
-      ...metadata,
-      content: `# ${metadata.title}\n\nThis is the content of the document.`,
-    };
-  }, [documents]);
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to create document');
+      }
 
-  const updateDocument = useCallback(
-    async (id: string, updates: Partial<Document>) => {
-      // TODO: Update on server
-      setDocuments((prev) =>
-        prev.map((doc) =>
-          doc.id === id
-            ? { ...doc, ...updates, updatedAt: new Date().toISOString() }
-            : doc
-        )
-      );
+      const document = await response.json();
+      setDocuments((prev) => [document, ...prev]);
+      return document;
     },
-    []
+    [user]
   );
 
-  const deleteDocument = useCallback(async (id: string) => {
-    // TODO: Delete on server
-    setDocuments((prev) => prev.filter((doc) => doc.id !== id));
-  }, []);
+  const getDocument = useCallback(
+    async (id: string): Promise<Document | null> => {
+      if (!user) return null;
+
+      try {
+        const response = await fetch(`${API_URL}/api/documents/${id}`, {
+          headers: {
+            'x-user-id': user.id,
+          },
+        });
+
+        if (!response.ok) {
+          return null;
+        }
+
+        return await response.json();
+      } catch {
+        return null;
+      }
+    },
+    [user]
+  );
+
+  const updateDocument = useCallback(
+    async (id: string, updates: Partial<Document>): Promise<Document | null> => {
+      if (!user) return null;
+
+      try {
+        const response = await fetch(`${API_URL}/api/documents/${id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': user.id,
+          },
+          body: JSON.stringify(updates),
+        });
+
+        if (!response.ok) {
+          return null;
+        }
+
+        const document = await response.json();
+        setDocuments((prev) =>
+          prev.map((d) => (d.id === id ? document : d))
+        );
+        return document;
+      } catch {
+        return null;
+      }
+    },
+    [user]
+  );
+
+  const deleteDocument = useCallback(
+    async (id: string): Promise<boolean> => {
+      if (!user) return false;
+
+      try {
+        const response = await fetch(`${API_URL}/api/documents/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'x-user-id': user.id,
+          },
+        });
+
+        if (!response.ok) {
+          return false;
+        }
+
+        setDocuments((prev) => prev.filter((d) => d.id !== id));
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [user]
+  );
 
   const value: DocumentContextValue = {
     documents,

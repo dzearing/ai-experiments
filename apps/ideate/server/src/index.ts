@@ -6,6 +6,7 @@ import { config } from 'dotenv';
 
 import { authRouter } from './routes/auth.js';
 import { documentsRouter } from './routes/documents.js';
+import { workspacesRouter } from './routes/workspaces.js';
 import { CollaborationHandler } from './websocket/CollaborationHandler.js';
 import { DiscoveryService } from './services/DiscoveryService.js';
 
@@ -13,7 +14,7 @@ import { DiscoveryService } from './services/DiscoveryService.js';
 config();
 
 const PORT = process.env.PORT || 3002;
-const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5174';
+const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5190';
 
 // Create Express app
 const app = express();
@@ -33,6 +34,7 @@ app.get('/health', (_req, res) => {
 // Routes
 app.use('/api/auth', authRouter);
 app.use('/api/documents', documentsRouter);
+app.use('/api/workspaces', workspacesRouter);
 
 // Create HTTP server
 const server = createServer(app);

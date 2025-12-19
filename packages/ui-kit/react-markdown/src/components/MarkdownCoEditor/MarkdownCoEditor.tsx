@@ -29,6 +29,18 @@ export type { CoAuthor } from '../MarkdownEditor';
 
 export type ViewMode = 'edit' | 'preview' | 'split';
 
+// Scroll sync helper - sets scroll from percentage (0-1)
+function setScrollPercent(element: HTMLElement, percent: number): void {
+  const maxScroll = element.scrollHeight - element.clientHeight;
+  element.scrollTop = percent * maxScroll;
+}
+
+// Scroll sync helper - gets scroll percentage (0-1)
+function getScrollPercent(element: HTMLElement): number {
+  const maxScroll = element.scrollHeight - element.clientHeight;
+  return maxScroll > 0 ? element.scrollTop / maxScroll : 0;
+}
+
 export interface MarkdownCoEditorProps {
   /** Initial markdown content (uncontrolled) */
   defaultValue?: string;
@@ -139,6 +151,10 @@ export const MarkdownCoEditor = forwardRef<MarkdownCoEditorRef, MarkdownCoEditor
     const [internalMode, setInternalMode] = useState<ViewMode>(defaultMode);
 
     const editorRef = useRef<MarkdownEditorRef>(null);
+    const previewRef = useRef<HTMLDivElement>(null);
+    const editorPaneRef = useRef<HTMLDivElement>(null);
+    const scrollSourceRef = useRef<'editor' | 'preview' | null>(null);
+    const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Determine if controlled
     const isValueControlled = value !== undefined;
@@ -170,6 +186,113 @@ export const MarkdownCoEditor = forwardRef<MarkdownCoEditorRef, MarkdownCoEditor
         setInternalMarkdown(value);
       }
     }, [value, isValueControlled]);
+
+    // Scroll sync for split mode
+    // Uses line-based sync for editor->preview (handles folded sections)
+    // Uses direct scroll manipulation for smooth performance
+    useEffect(() => {
+      if (currentMode !== 'split') return;
+
+      let cmScroller: HTMLElement | null = null;
+      let previewPane: HTMLElement | null = null;
+      let setupTimeoutId: ReturnType<typeof setTimeout> | null = null;
+      let rafId: number | null = null;
+
+      // Handle editor scroll -> sync preview using LINE-BASED approach
+      // This correctly handles folded sections by using document line numbers
+      const handleEditorScroll = () => {
+        if (!previewPane || scrollSourceRef.current === 'preview') return;
+        if (!editorRef.current) return;
+
+        scrollSourceRef.current = 'editor';
+
+        // Cancel any pending RAF to prevent buildup
+        if (rafId) cancelAnimationFrame(rafId);
+
+        rafId = requestAnimationFrame(() => {
+          if (!previewPane || !editorRef.current) return;
+
+          // Get visible line range in the editor (accounts for folded sections)
+          const firstVisibleLine = editorRef.current.getFirstVisibleLine();
+          const lastVisibleLine = editorRef.current.getLastVisibleLine();
+          const totalLines = editorRef.current.getLineCount();
+
+          // Use the center of the visible range for better alignment
+          const centerLine = (firstVisibleLine + lastVisibleLine) / 2;
+
+          // Calculate what percentage through the document this line is
+          const linePercent = totalLines > 1 ? (centerLine - 1) / (totalLines - 1) : 0;
+
+          // Scroll preview to same percentage through its content
+          setScrollPercent(previewPane, linePercent);
+
+          // Clear scroll source after a short delay
+          if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+          scrollTimeoutRef.current = setTimeout(() => {
+            scrollSourceRef.current = null;
+          }, 16);
+        });
+      };
+
+      // Handle preview scroll -> sync editor
+      // Uses direct scroll manipulation for smooth performance
+      const handlePreviewScroll = () => {
+        if (!cmScroller || scrollSourceRef.current === 'editor') return;
+
+        scrollSourceRef.current = 'preview';
+
+        // Cancel any pending RAF
+        if (rafId) cancelAnimationFrame(rafId);
+
+        rafId = requestAnimationFrame(() => {
+          if (!cmScroller || !previewPane) return;
+
+          // Get preview scroll percentage and apply directly to editor
+          const percent = getScrollPercent(previewPane);
+          setScrollPercent(cmScroller, percent);
+
+          // Clear scroll source after a short delay
+          if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+          scrollTimeoutRef.current = setTimeout(() => {
+            scrollSourceRef.current = null;
+          }, 16);
+        });
+      };
+
+      // Setup scroll listeners after DOM is ready
+      const setupScrollSync = () => {
+        const editorPane = editorPaneRef.current;
+        previewPane = previewRef.current;
+
+        if (!editorPane || !previewPane) {
+          // Retry setup if refs aren't ready yet
+          setupTimeoutId = setTimeout(setupScrollSync, 50);
+          return;
+        }
+
+        cmScroller = editorPane.querySelector('.cm-scroller') as HTMLElement | null;
+        if (!cmScroller) {
+          setupTimeoutId = setTimeout(setupScrollSync, 50);
+          return;
+        }
+
+        cmScroller.addEventListener('scroll', handleEditorScroll, { passive: true });
+        previewPane.addEventListener('scroll', handlePreviewScroll, { passive: true });
+      };
+
+      // Use requestAnimationFrame to ensure DOM is painted
+      requestAnimationFrame(() => {
+        setupScrollSync();
+      });
+
+      return () => {
+        if (setupTimeoutId) clearTimeout(setupTimeoutId);
+        if (rafId) cancelAnimationFrame(rafId);
+        if (cmScroller) cmScroller.removeEventListener('scroll', handleEditorScroll);
+        if (previewPane) previewPane.removeEventListener('scroll', handlePreviewScroll);
+        if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+      };
+    }, [currentMode]);
 
     // Imperative handle
     useImperativeHandle(ref, () => ({
@@ -264,7 +387,7 @@ export const MarkdownCoEditor = forwardRef<MarkdownCoEditorRef, MarkdownCoEditor
           {currentMode === 'split' ? (
             <SplitPane
               first={
-                <div className={styles.editorPane}>
+                <div ref={editorPaneRef} className={styles.editorPane}>
                   <MarkdownEditor
                     ref={editorRef}
                     value={currentMarkdown}
@@ -282,7 +405,7 @@ export const MarkdownCoEditor = forwardRef<MarkdownCoEditorRef, MarkdownCoEditor
               }
               second={
                 <div className={styles.previewPane}>
-                  <div className={styles.previewContent}>
+                  <div ref={previewRef} className={styles.previewContent}>
                     <MarkdownRenderer
                       content={currentMarkdown}
                       showLineNumbers={showLineNumbers}

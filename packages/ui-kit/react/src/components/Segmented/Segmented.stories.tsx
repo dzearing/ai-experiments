@@ -2,14 +2,12 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { fn } from '@storybook/test';
 import { useState } from 'react';
 import { Segmented } from './Segmented';
-import {
-  ListViewIcon,
-  GridViewIcon,
-  BoardIcon,
-  AlignLeftIcon,
-  AlignCenterIcon,
-  AlignRightIcon,
-} from '@ui-kit/icons';
+import { ListViewIcon } from '@ui-kit/icons/ListViewIcon';
+import { GridViewIcon } from '@ui-kit/icons/GridViewIcon';
+import { BoardIcon } from '@ui-kit/icons/BoardIcon';
+import { AlignLeftIcon } from '@ui-kit/icons/AlignLeftIcon';
+import { AlignCenterIcon } from '@ui-kit/icons/AlignCenterIcon';
+import { AlignRightIcon } from '@ui-kit/icons/AlignRightIcon';
 
 const meta: Meta<typeof Segmented> = {
   title: 'Navigation/Segmented',

@@ -1,15 +1,19 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@ui-kit/router';
 import { Button, Card, Input, Modal, Spinner } from '@ui-kit/react';
-import { AddIcon, FileIcon, LinkIcon } from '@ui-kit/icons';
+import { AddIcon } from '@ui-kit/icons/AddIcon';
+import { FileIcon } from '@ui-kit/icons/FileIcon';
+import { LinkIcon } from '@ui-kit/icons/LinkIcon';
 import { useAuth } from '../contexts/AuthContext';
-import { useDocuments, type DocumentMetadata } from '../contexts/DocumentContext';
+import { useDocuments } from '../contexts/DocumentContext';
 import { useNetwork, type NetworkDocument } from '../contexts/NetworkContext';
+import { DocumentCard } from '../components/DocumentCard';
+import { getTimeAgo } from '../utils/timeAgo';
 import styles from './Dashboard.module.css';
 
 export function Dashboard() {
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { documents, isLoading, fetchDocuments, createDocument } = useDocuments();
   const { networkDocuments, isDiscovering, startDiscovery, stopDiscovery } =
     useNetwork();
@@ -17,12 +21,12 @@ export function Dashboard() {
   const [newDocTitle, setNewDocTitle] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
-  // Redirect if not authenticated
+  // Redirect if not authenticated (wait for auth to load first)
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isAuthLoading && !isAuthenticated) {
       navigate('/auth');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthLoading, isAuthenticated, navigate]);
 
   // Fetch documents on mount
   useEffect(() => {
@@ -157,26 +161,6 @@ export function Dashboard() {
   );
 }
 
-interface DocumentCardProps {
-  document: DocumentMetadata;
-  onClick: () => void;
-}
-
-function DocumentCard({ document, onClick }: DocumentCardProps) {
-  const updatedDate = new Date(document.updatedAt);
-  const timeAgo = getTimeAgo(updatedDate);
-
-  return (
-    <Card className={styles.documentCard} onClick={onClick}>
-      <div className={styles.documentIcon}>
-        <FileIcon />
-      </div>
-      <h3 className={styles.documentTitle}>{document.title}</h3>
-      <p className={styles.documentMeta}>Updated {timeAgo}</p>
-    </Card>
-  );
-}
-
 interface NetworkDocumentItemProps {
   document: NetworkDocument;
 }
@@ -217,14 +201,4 @@ function EmptyState({ icon, title, description, action }: EmptyStateProps) {
       {action && <div className={styles.emptyStateAction}>{action}</div>}
     </div>
   );
-}
-
-function getTimeAgo(date: Date): string {
-  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
-
-  if (seconds < 60) return 'just now';
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
-  return date.toLocaleDateString();
 }

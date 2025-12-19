@@ -19,12 +19,11 @@ pnpm add @ui-kit/icons
 
 ## Usage
 
-### React Components (Recommended)
+### React Components
 
-For best tree-shaking, import icons directly:
+Import icons individually for optimal tree-shaking:
 
 ```tsx
-// Direct import - best tree-shaking
 import { SaveIcon } from '@ui-kit/icons/SaveIcon';
 import { EditIcon } from '@ui-kit/icons/EditIcon';
 
@@ -42,12 +41,7 @@ function Toolbar() {
 }
 ```
 
-Or use barrel imports (relies on bundler optimization):
-
-```tsx
-// Barrel import - convenient for development
-import { SaveIcon, EditIcon, DeleteIcon } from '@ui-kit/icons';
-```
+**Note:** There is no barrel export. Each icon must be imported individually to ensure optimal bundle size.
 
 ### Icon Props
 
@@ -124,8 +118,8 @@ pnpm build
 
 # Build outputs:
 # dist/
-#   index.js          - Barrel export
 #   {IconName}.js     - Individual icon components
+#   types.js          - TypeScript type definitions
 #   sprite/           - SVG sprite sheet
 #   font/             - Icon font CSS and icon map
 #   metadata/         - Icon metadata and search index
@@ -133,18 +127,20 @@ pnpm build
 
 ## Adding New Icons
 
-1. Drop SVG file into `src/svgs/<category>/`
-2. Run `pnpm build`
-3. Done! The icon is automatically available as a React component
+See [ICON_GUIDE.md](./ICON_GUIDE.md) for detailed instructions.
+
+**Quick start:**
+1. Create `src/svgs/my-icon.svg` with your SVG
+2. Create `src/svgs/my-icon.json` with metadata (name, category, keywords)
+3. Run `pnpm build`
 
 The build process:
-- Reads all SVGs from `src/svgs/`
+- Reads all SVGs and JSON metadata from `src/svgs/`
 - Generates React components in `src/components/` (gitignored)
-- Generates `src/index.ts` barrel export (gitignored)
 - Builds to `dist/` with all formats
 - **Updates `package.json` exports map** with explicit entries for each icon
 
-**Single source of truth**: Only the SVGs in `src/svgs/` are committed. Everything else is generated.
+**Single source of truth**: Only the SVGs and JSON metadata in `src/svgs/` are committed. Everything else is generated.
 
 ### Package Exports
 
@@ -153,12 +149,13 @@ The build automatically generates explicit exports in `package.json` for each ic
 - **Stable API contract** - Only declared exports are public
 - **No accidental exposure** - Internal files/folders cannot be imported
 - **Type safety** - Each export includes TypeScript definitions
+- **No barrel export** - Each icon must be imported individually
 
 Example of generated exports:
 ```json
 {
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./types": { "types": "./dist/types.d.ts", "import": "./dist/types.js" },
     "./CloseIcon": { "types": "./dist/CloseIcon.d.ts", "import": "./dist/CloseIcon.js" },
     "./ChevronDownIcon": { "types": "./dist/ChevronDownIcon.d.ts", "import": "./dist/ChevronDownIcon.js" },
     "./sprite.svg": "./dist/sprite/sprite.svg",

@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from 'fs/promises';
 import { join, dirname } from 'path';
 import { optimize } from 'svgo';
-import { getSvgFiles, readIconFile, pascalCase, log, colors, type IconInfo } from './utils';
+import { getSvgFiles, readIconFile, log, colors, type IconInfo } from './utils';
 
 const ROOT_DIR = join(dirname(import.meta.url.replace('file://', '')), '..');
 const SVGS_DIR = join(ROOT_DIR, 'src/svgs');
@@ -54,7 +54,13 @@ function generateComponentCode(icon: IconInfo, optimizedContent: string): string
     .replace(/`/g, '\\`')
     .replace(/\$\{/g, '\\${');
 
-  return `import { forwardRef } from 'react';
+  return `/**
+ * AUTO-GENERATED FILE - DO NOT EDIT
+ *
+ * This file was automatically generated from src/svgs/${icon.name}.svg
+ * To add or modify icons, see ICON_GUIDE.md at the root of this package.
+ */
+import { forwardRef } from 'react';
 import type { IconProps } from '../utils/types';
 
 const svgContent = \`${escapedContent}\`;
@@ -92,25 +98,6 @@ ${icon.componentName}.displayName = '${icon.componentName}';
 }
 
 /**
- * Generate index barrel file
- */
-function generateIndexFile(icons: IconInfo[]): string {
-  const exports = icons
-    .sort((a, b) => a.componentName.localeCompare(b.componentName))
-    .map((icon) => `export { ${icon.componentName} } from './components/${icon.componentName}';`)
-    .join('\n');
-
-  return `// Auto-generated file - do not edit manually
-// Run 'pnpm build' to regenerate
-
-${exports}
-
-// Types
-export type { IconProps, IconMetadata, CategoryMetadata, IconLibraryMetadata } from './utils/types';
-`;
-}
-
-/**
  * Main function to generate all components
  */
 export async function generateComponents(): Promise<IconInfo[]> {
@@ -119,7 +106,7 @@ export async function generateComponents(): Promise<IconInfo[]> {
   // Ensure components directory exists
   await mkdir(COMPONENTS_DIR, { recursive: true });
 
-  // Get all SVG files
+  // Get all SVG files from flat directory
   const svgFiles = await getSvgFiles(SVGS_DIR);
   log(`Found ${svgFiles.length} SVG files`, 'blue');
 
@@ -152,10 +139,7 @@ export async function generateComponents(): Promise<IconInfo[]> {
     }
   }
 
-  // Generate index file
-  const indexContent = generateIndexFile(icons);
-  await writeFile(join(ROOT_DIR, 'src/index.ts'), indexContent);
-  log(`\nGenerated index.ts with ${icons.length} exports`, 'green');
+  log(`\nGenerated ${icons.length} components`, 'green');
 
   return icons;
 }

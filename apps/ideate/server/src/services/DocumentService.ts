@@ -7,6 +7,7 @@ export interface DocumentMetadata {
   id: string;
   title: string;
   ownerId: string;
+  workspaceId?: string;
   collaboratorIds: string[];
   isPublic: boolean;
   shareCode?: string;
@@ -51,8 +52,9 @@ export class DocumentService {
 
   /**
    * List all documents for a user (owned or collaborated).
+   * Optionally filter by workspaceId.
    */
-  async listDocuments(userId: string): Promise<DocumentMetadata[]> {
+  async listDocuments(userId: string, workspaceId?: string): Promise<DocumentMetadata[]> {
     try {
       const files = await fs.readdir(DOCUMENTS_DIR);
       const metaFiles = files.filter((f) => f.endsWith('.meta.json'));
@@ -65,12 +67,17 @@ export class DocumentService {
         const metadata: DocumentMetadata = JSON.parse(content);
 
         // Include if user is owner or collaborator
-        if (
-          metadata.ownerId === userId ||
-          metadata.collaboratorIds.includes(userId)
-        ) {
-          documents.push(metadata);
+        const hasAccess = metadata.ownerId === userId ||
+          metadata.collaboratorIds.includes(userId);
+
+        if (!hasAccess) continue;
+
+        // Filter by workspaceId if provided
+        if (workspaceId !== undefined) {
+          if (metadata.workspaceId !== workspaceId) continue;
         }
+
+        documents.push(metadata);
       }
 
       // Sort by updated date, newest first
@@ -89,7 +96,7 @@ export class DocumentService {
   /**
    * Create a new document.
    */
-  async createDocument(userId: string, title: string): Promise<Document> {
+  async createDocument(userId: string, title: string, workspaceId?: string): Promise<Document> {
     const id = uuidv4();
     const now = new Date().toISOString();
 
@@ -97,6 +104,7 @@ export class DocumentService {
       id,
       title,
       ownerId: userId,
+      workspaceId,
       collaboratorIds: [],
       isPublic: false,
       createdAt: now,

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@ui-kit/router';
 import { Button, Card, Input, Spinner } from '@ui-kit/react';
 import { useAuth } from '../contexts/AuthContext';
 import styles from './Auth.module.css';

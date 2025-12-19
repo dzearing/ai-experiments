@@ -10,41 +10,17 @@ import {
   Code,
   Segmented,
   BidirectionalFocusZone,
+  Spinner,
 } from '@ui-kit/react';
-import * as AllIcons from '../index';
 import styles from './FontSubsetGenerator.module.css';
+
+// Import metadata for icon list
+import iconsMetadata from '../../dist/metadata/icons.json';
 
 interface IconData {
   name: string;
   componentName: string;
-  Component: React.ComponentType<{ size?: number; className?: string }>;
-}
-
-function getIconName(componentName: string) {
-  return componentName
-    .replace(/Icon$/, '')
-    .replace(/([A-Z])/g, '-$1')
-    .toLowerCase()
-    .replace(/^-/, '');
-}
-
-function buildIconData(): IconData[] {
-  const icons: IconData[] = [];
-
-  for (const [componentName, Component] of Object.entries(AllIcons)) {
-    // Note: forwardRef components have typeof 'object', not 'function'
-    if (!componentName.endsWith('Icon') || !Component) {
-      continue;
-    }
-
-    icons.push({
-      name: getIconName(componentName),
-      componentName,
-      Component: Component as IconData['Component'],
-    });
-  }
-
-  return icons.sort((a, b) => a.name.localeCompare(b.name));
+  Component: React.ComponentType<{ size?: number; className?: string }> | null;
 }
 
 type ExportFormat = 'woff2' | 'dataUri' | 'css';
@@ -62,10 +38,34 @@ function FontSubsetGenerator() {
   const [fontFamily, setFontFamily] = useState('ui-kit-icons-subset');
   const [generatedOutput, setGeneratedOutput] = useState<string | null>(null);
   const [iconData, setIconData] = useState<IconData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Build icon data on mount
+  // Dynamically import all icons on mount
   useEffect(() => {
-    setIconData(buildIconData());
+    async function loadIcons() {
+      const icons: IconData[] = [];
+
+      for (const iconMeta of iconsMetadata.icons) {
+        try {
+          // Dynamic import for each icon
+          const module = await import(`../components/${iconMeta.componentName}.tsx`);
+          const Component = module[iconMeta.componentName];
+
+          icons.push({
+            name: iconMeta.name,
+            componentName: iconMeta.componentName,
+            Component,
+          });
+        } catch (error) {
+          console.warn(`Failed to load icon: ${iconMeta.componentName}`, error);
+        }
+      }
+
+      setIconData(icons.sort((a, b) => a.name.localeCompare(b.name)));
+      setIsLoading(false);
+    }
+
+    loadIcons();
   }, []);
 
   const filteredIcons = useMemo(() => {
@@ -192,6 +192,17 @@ To generate a real subset:
     }
   }, [generatedOutput]);
 
+  if (isLoading) {
+    return (
+      <div className={styles.generator}>
+        <Stack gap={2} align="center" style={{ padding: '4rem' }}>
+          <Spinner size="lg" />
+          <Text color="soft">Loading icons...</Text>
+        </Stack>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.generator}>
       <Stack gap="lg">
@@ -236,7 +247,7 @@ To generate a real subset:
                   title={name}
                 >
                   <div className={styles.iconWrapper}>
-                    <Component size={24} />
+                    {Component && <Component size={24} />}
                   </div>
                   <span className={styles.iconName}>{name}</span>
                 </button>

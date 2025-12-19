@@ -4,17 +4,18 @@ import { DocumentService } from '../services/DocumentService.js';
 export const documentsRouter = Router();
 const documentService = new DocumentService();
 
-// List documents
+// List documents (optionally filter by workspaceId query param)
 documentsRouter.get('/', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
+    const workspaceId = req.query.workspaceId as string | undefined;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
       return;
     }
 
-    const documents = await documentService.listDocuments(userId);
+    const documents = await documentService.listDocuments(userId, workspaceId);
     res.json(documents);
   } catch (error) {
     console.error('List documents error:', error);
@@ -26,7 +27,7 @@ documentsRouter.get('/', async (req: Request, res: Response) => {
 documentsRouter.post('/', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { title } = req.body;
+    const { title, workspaceId } = req.body;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
@@ -38,7 +39,7 @@ documentsRouter.post('/', async (req: Request, res: Response) => {
       return;
     }
 
-    const document = await documentService.createDocument(userId, title);
+    const document = await documentService.createDocument(userId, title, workspaceId);
     res.status(201).json(document);
   } catch (error) {
     console.error('Create document error:', error);

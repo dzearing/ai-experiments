@@ -1,9 +1,5 @@
-import { readdir, readFile, stat } from 'fs/promises';
-import { join, basename, dirname, extname } from 'path';
-import yaml from 'js-yaml';
-
-// Cache for icon keywords loaded from YAML
-let keywordsCache: Record<string, string[]> | null = null;
+import { readdir, readFile } from 'fs/promises';
+import { join, basename, dirname } from 'path';
 
 /**
  * Convert kebab-case to PascalCase
@@ -26,28 +22,20 @@ export function titleCase(str: string): string {
 }
 
 /**
- * Get all SVG files recursively from a directory
+ * Icon metadata from JSON file
+ */
+interface IconJsonMetadata {
+  name: string;
+  category: string;
+  keywords: string[];
+}
+
+/**
+ * Get all SVG files from the flat svgs directory
  */
 export async function getSvgFiles(dir: string): Promise<string[]> {
-  const files: string[] = [];
-
-  async function walk(currentDir: string) {
-    const entries = await readdir(currentDir);
-
-    for (const entry of entries) {
-      const fullPath = join(currentDir, entry);
-      const stats = await stat(fullPath);
-
-      if (stats.isDirectory()) {
-        await walk(fullPath);
-      } else if (entry.endsWith('.svg')) {
-        files.push(fullPath);
-      }
-    }
-  }
-
-  await walk(dir);
-  return files.sort();
+  const entries = await readdir(dir);
+  return entries.filter((entry) => entry.endsWith('.svg')).map((entry) => join(dir, entry));
 }
 
 /**
@@ -67,79 +55,6 @@ export function extractSvgContent(svgString: string): string {
 }
 
 /**
- * Parse icon name from file path
- */
-export function parseIconPath(filePath: string, baseDir: string): {
-  name: string;
-  category: string;
-  componentName: string;
-  relativePath: string;
-} {
-  const relativePath = filePath.replace(baseDir + '/', '');
-  const parts = relativePath.split('/');
-
-  // Handle root-level SVGs (like DragHandle.svg)
-  const category = parts.length > 1 ? parts[0] : 'misc';
-  const fileName = basename(filePath, '.svg');
-  const name = fileName.toLowerCase().replace(/[A-Z]/g, (m) => '-' + m.toLowerCase()).replace(/^-/, '');
-
-  return {
-    name,
-    category,
-    componentName: pascalCase(name) + 'Icon',
-    relativePath,
-  };
-}
-
-/**
- * Load icon keywords from YAML file
- */
-async function loadIconKeywords(svgsDir: string): Promise<Record<string, string[]>> {
-  if (keywordsCache) {
-    return keywordsCache;
-  }
-
-  try {
-    const keywordsPath = join(svgsDir, 'icon-keywords.yaml');
-    const content = await readFile(keywordsPath, 'utf-8');
-    const parsed = yaml.load(content) as { icons: Record<string, string[]> };
-    keywordsCache = parsed.icons || {};
-    return keywordsCache;
-  } catch {
-    // File doesn't exist or is invalid, return empty
-    keywordsCache = {};
-    return keywordsCache;
-  }
-}
-
-/**
- * Generate default keywords for an icon based on its name
- */
-export async function generateDefaultKeywords(name: string, category: string, svgsDir?: string): Promise<string[]> {
-  const words = name.split('-');
-  const keywords = new Set<string>();
-
-  // Add the full name
-  keywords.add(name.replace(/-/g, ' '));
-
-  // Add individual words
-  words.forEach((word) => keywords.add(word));
-
-  // Add category
-  keywords.add(category);
-
-  // Load keywords from YAML if svgsDir provided
-  if (svgsDir) {
-    const yamlKeywords = await loadIconKeywords(svgsDir);
-    if (yamlKeywords[name]) {
-      yamlKeywords[name].forEach((keyword) => keywords.add(keyword.toLowerCase()));
-    }
-  }
-
-  return Array.from(keywords);
-}
-
-/**
  * Icon info extracted from SVG file
  */
 export interface IconInfo {
@@ -153,21 +68,37 @@ export interface IconInfo {
 }
 
 /**
- * Read and parse an SVG file
+ * Read and parse an SVG file with its JSON metadata
  */
 export async function readIconFile(filePath: string, baseDir: string): Promise<IconInfo> {
   const svgString = await readFile(filePath, 'utf-8');
   const svgContent = extractSvgContent(svgString);
-  const { name, category, componentName, relativePath } = parseIconPath(filePath, baseDir);
+
+  const fileName = basename(filePath, '.svg');
+  const jsonPath = join(dirname(filePath), `${fileName}.json`);
+
+  // Read metadata from JSON file
+  let metadata: IconJsonMetadata;
+  try {
+    const jsonContent = await readFile(jsonPath, 'utf-8');
+    metadata = JSON.parse(jsonContent);
+  } catch {
+    // Fallback if JSON doesn't exist
+    metadata = {
+      name: fileName,
+      category: 'misc',
+      keywords: [fileName.replace(/-/g, ' ')],
+    };
+  }
 
   return {
-    name,
-    displayName: titleCase(name),
-    category,
-    componentName,
-    relativePath,
+    name: metadata.name,
+    displayName: titleCase(metadata.name),
+    category: metadata.category,
+    componentName: pascalCase(metadata.name) + 'Icon',
+    relativePath: `${fileName}.svg`,
     svgContent,
-    keywords: await generateDefaultKeywords(name, category, baseDir),
+    keywords: metadata.keywords,
   };
 }
 

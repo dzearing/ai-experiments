@@ -5,11 +5,12 @@ import dts from 'vite-plugin-dts';
 import { readdirSync, statSync } from 'fs';
 import { join } from 'path';
 
-// Get all component entry points
+// Get all component entry points (no barrel/index file)
 function getComponentEntries() {
   const componentsDir = resolve(__dirname, 'src/components');
   const entries: Record<string, string> = {
-    index: resolve(__dirname, 'src/index.ts'),
+    // Types export for consumers who need type definitions
+    types: resolve(__dirname, 'src/utils/types.ts'),
   };
 
   try {
@@ -17,7 +18,8 @@ function getComponentEntries() {
     for (const file of files) {
       if (file.endsWith('.tsx') && !file.includes('.stories.') && !file.includes('.test.')) {
         const name = file.replace('.tsx', '');
-        entries[`icons/${name}`] = resolve(componentsDir, file);
+        // Each icon is its own entry point - no barrel file
+        entries[name] = resolve(componentsDir, file);
       }
     }
   } catch {
@@ -33,6 +35,14 @@ export default defineConfig({
     dts({
       include: ['src'],
       exclude: ['src/**/*.stories.tsx', 'src/**/*.test.tsx'],
+      // Flatten the output to match JS file locations
+      beforeWriteFile: (filePath, content) => {
+        // Rewrite paths like dist/components/AddIcon.d.ts to dist/AddIcon.d.ts
+        const newPath = filePath
+          .replace('/components/', '/')
+          .replace('/utils/', '/');
+        return { filePath: newPath, content };
+      },
     }),
   ],
   build: {

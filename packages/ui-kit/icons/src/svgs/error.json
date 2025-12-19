@@ -1,0 +1,12 @@
+{
+  "name": "error",
+  "category": "status",
+  "keywords": [
+    "alert",
+    "danger",
+    "error",
+    "exclamation",
+    "fail",
+    "status"
+  ]
+}

@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useCallback, type ReactNode, type PointerEvent as ReactPointerEvent } from 'react';
-import { GripperIcon } from '@ui-kit/icons';
+import { GripperIcon } from '@ui-kit/icons/GripperIcon';
 import styles from './DraggableReorder.module.css';
 
 /**
