@@ -1,0 +1,119 @@
+.join {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: var(--base-bg);
+}
+
+.joinCard {
+  width: 100%;
+  max-width: 400px;
+  padding: var(--space-8);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.logoIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-xl);
+  border-radius: var(--radius-md);
+}
+
+.logoText {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  color: var(--soft-fg);
+}
+
+.title {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-semibold);
+  margin: 0;
+  color: var(--soft-fg);
+}
+
+.subtitle {
+  font-size: var(--text-base);
+  color: var(--soft-fg-soft);
+  margin: 0;
+}
+
+.loadingText {
+  font-size: var(--text-base);
+  color: var(--soft-fg-soft);
+  margin: 0;
+}
+
+.workspaceName {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
+  color: var(--primary-bg);
+  padding: var(--space-4) var(--space-6);
+  background: var(--soft-bg);
+  border-radius: var(--radius-md);
+  margin: var(--space-2) 0;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  margin-top: var(--space-4);
+}
+
+.joinButton {
+  width: 100%;
+}
+
+.successIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  background: var(--success-bg, #22c55e);
+  color: white;
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  border-radius: 50%;
+}
+
+.errorIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  background: var(--base-fg-danger);
+  color: white;
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  border-radius: 50%;
+}
+
+.errorText {
+  font-size: var(--text-base);
+  color: var(--base-fg-danger);
+  margin: 0;
+}

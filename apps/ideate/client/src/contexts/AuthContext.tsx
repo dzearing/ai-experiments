@@ -11,8 +11,6 @@ export interface User {
   id: string;
   name: string;
   avatarUrl: string;
-  /** User's collaboration color for avatars and cursors */
-  color: string;
 }
 
 interface AuthContextValue {
@@ -26,31 +24,6 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 const STORAGE_KEY = 'ideate-user';
-
-// Collaboration colors matching the server palette
-const COLLABORATOR_COLORS = [
-  '#FF6B6B', // Red
-  '#4ECDC4', // Teal
-  '#45B7D1', // Blue
-  '#96CEB4', // Green
-  '#FFEAA7', // Yellow
-  '#DDA0DD', // Plum
-  '#98D8C8', // Mint
-  '#F7DC6F', // Gold
-];
-
-// Generate a deterministic color based on nickname
-function getUserColor(nickname: string): string {
-  const normalized = nickname.toLowerCase();
-  let hash = 0;
-  for (let i = 0; i < normalized.length; i++) {
-    const char = normalized.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  const colorIndex = Math.abs(hash) % COLLABORATOR_COLORS.length;
-  return COLLABORATOR_COLORS[colorIndex];
-}
 
 // Generate a simple avatar URL from nickname (no longer used for background, Avatar handles it)
 function getAvatarUrl(nickname: string): string {
@@ -96,9 +69,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
           }
         }
 
-        // Migrate: add color if not present
-        if (!parsed.color && parsed.name) {
-          parsed.color = getUserColor(parsed.name);
+        // Migrate: remove deprecated color field if present
+        if (parsed.color) {
+          delete parsed.color;
           needsSave = true;
         }
 
@@ -124,7 +97,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       id: generateId(trimmed),
       name: trimmed,
       avatarUrl: getAvatarUrl(trimmed),
-      color: getUserColor(trimmed),
     };
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newUser));

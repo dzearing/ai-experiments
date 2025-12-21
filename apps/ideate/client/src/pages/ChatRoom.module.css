@@ -1,0 +1,277 @@
+.chatRoom {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--base-bg);
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--base-border);
+  background: var(--soft-bg);
+  flex-shrink: 0;
+}
+
+.roomName {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  color: var(--soft-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Connection status */
+.connectionDot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+  transition: background-color var(--duration-fast) var(--ease-default);
+}
+
+.connectionDot[data-status="connected"] {
+  background-color: var(--success-bg);
+}
+
+.connectionDot[data-status="connecting"] {
+  background-color: var(--warning-bg);
+  animation: pulse 1.5s infinite;
+}
+
+.connectionDot[data-status="disconnected"] {
+  background-color: var(--danger-bg);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Messages container */
+.messagesContainer {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Empty state */
+.emptyState {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--base-fg-soft);
+  font-size: var(--text-base);
+}
+
+.emptyState p {
+  margin: 0;
+}
+
+/* Date groups */
+.dateGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.dateDivider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4) 0;
+}
+
+.dateLabel {
+  font-size: var(--text-sm);
+  color: var(--base-fg-soft);
+  background: var(--base-bg);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--base-border);
+}
+
+/* Messages */
+.message {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: var(--space-2);
+  max-width: 85%;
+}
+
+.avatar {
+  flex-shrink: 0;
+}
+
+/* Hide avatar for consecutive messages from same sender */
+.avatar.hidden {
+  visibility: hidden;
+}
+
+/* Default: other users' messages use strong surface */
+.messageContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  background: var(--strong-bg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--strong-border);
+  min-width: 0;
+  flex: 1;
+  max-width: fit-content;
+}
+
+.senderName {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--strong-fg-primary);
+}
+
+.messageText {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--strong-fg);
+  line-height: var(--leading-normal);
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.messageTime {
+  font-size: var(--text-xs);
+  color: var(--strong-fg-soft);
+  align-self: flex-end;
+}
+
+/* Own messages use primary surface */
+.ownMessage .messageContent {
+  background: var(--primary-bg);
+  border-color: var(--primary-border);
+}
+
+.ownMessage .senderName {
+  color: var(--primary-fg-primary);
+}
+
+.ownMessage .messageText {
+  color: var(--primary-fg);
+}
+
+.ownMessage .messageTime {
+  color: var(--primary-fg-soft);
+}
+
+/* Typing indicator */
+.typingIndicator {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  color: var(--base-fg-soft);
+  font-size: var(--text-sm);
+  flex-shrink: 0;
+}
+
+.typingDots {
+  display: flex;
+  gap: 3px;
+}
+
+.typingDots span {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--base-fg-soft);
+  animation: typingBounce 1.4s infinite ease-in-out both;
+}
+
+.typingDots span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.typingDots span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes typingBounce {
+  0%, 80%, 100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.typingText {
+  font-style: italic;
+}
+
+/* Input container */
+.inputContainer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--base-border);
+  background: var(--soft-bg);
+  flex-shrink: 0;
+}
+
+.messageInput {
+  flex: 1;
+}
+
+/* Loading */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 400px;
+  gap: var(--space-4);
+  color: var(--base-fg-soft);
+}
+
+/* Not Found */
+.notFound {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 400px;
+  gap: var(--space-4);
+  text-align: center;
+  padding: var(--space-8);
+}
+
+.notFound h2 {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
+  margin: 0;
+  color: var(--base-fg);
+}
+
+.notFound p {
+  font-size: var(--text-base);
+  color: var(--base-fg-soft);
+  margin: 0;
+}

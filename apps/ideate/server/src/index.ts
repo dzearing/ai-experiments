@@ -8,10 +8,12 @@ import { join } from 'path';
 import { authRouter } from './routes/auth.js';
 import { documentsRouter } from './routes/documents.js';
 import { workspacesRouter } from './routes/workspaces.js';
+import { chatroomsRouter } from './routes/chatrooms.js';
 import { createDiagnosticsRouter } from './routes/diagnostics.js';
 import { CollaborationHandler } from './websocket/CollaborationHandler.js';
 import { YjsCollaborationHandler } from './websocket/YjsCollaborationHandler.js';
 import { DiagnosticsHandler } from './websocket/DiagnosticsHandler.js';
+import { ChatWebSocketHandler } from './websocket/ChatWebSocketHandler.js';
 import { DiscoveryService } from './services/DiscoveryService.js';
 import { DocumentService } from './services/DocumentService.js';
 
@@ -41,6 +43,7 @@ app.get('/health', (_req, res) => {
 app.use('/api/auth', authRouter);
 app.use('/api/documents', documentsRouter);
 app.use('/api/workspaces', workspacesRouter);
+app.use('/api/chatrooms', chatroomsRouter);
 
 // Create HTTP server
 const server = createServer(app);
@@ -91,6 +94,14 @@ diagnosticsWss.on('connection', (ws, req) => {
   diagnosticsHandler.handleConnection(ws, req);
 });
 
+// Create WebSocket server for chat (JSON-based protocol)
+const chatWss = new WebSocketServer({ noServer: true });
+const chatHandler = new ChatWebSocketHandler();
+
+chatWss.on('connection', (ws, req) => {
+  chatHandler.handleConnection(ws, req);
+});
+
 // Mount diagnostics router (no auth required)
 app.use('/api/diagnostics', createDiagnosticsRouter(yjsHandler));
 
@@ -120,6 +131,11 @@ server.on('upgrade', (request, socket, head) => {
     diagnosticsWss.handleUpgrade(request, socket, head, (ws) => {
       diagnosticsWss.emit('connection', ws, request);
     });
+  } else if (pathname.startsWith('/chat-ws')) {
+    // Chat WebSocket (supports /chat-ws/room-id)
+    chatWss.handleUpgrade(request, socket, head, (ws) => {
+      chatWss.emit('connection', ws, request);
+    });
   } else {
     socket.destroy();
   }
@@ -133,6 +149,7 @@ server.listen(PORT, () => {
   console.log(`Ideate server running on http://localhost:${PORT}`);
   console.log(`WebSocket (legacy) available at ws://localhost:${PORT}/ws`);
   console.log(`WebSocket (Yjs) available at ws://localhost:${PORT}/yjs`);
+  console.log(`WebSocket (Chat) available at ws://localhost:${PORT}/chat-ws`);
   console.log(`Diagnostics API at http://localhost:${PORT}/api/diagnostics`);
   console.log(`Diagnostics WebSocket at ws://localhost:${PORT}/diagnostics-ws`);
 

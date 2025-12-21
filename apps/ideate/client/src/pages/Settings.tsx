@@ -15,6 +15,7 @@ import { GearIcon } from '@ui-kit/icons/GearIcon';
 import { EditIcon } from '@ui-kit/icons/EditIcon';
 import { LinkIcon } from '@ui-kit/icons/LinkIcon';
 import { useAuth } from '../contexts/AuthContext';
+import { useSession } from '../contexts/SessionContext';
 import styles from './Settings.module.css';
 
 const AVAILABLE_THEMES = [
@@ -48,6 +49,7 @@ const DEFAULT_VIEW_OPTIONS = [
 export function Settings() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { session } = useSession();
   const { theme, mode, setTheme, setMode } = useTheme();
 
   const handleSignOut = async () => {
@@ -83,7 +85,7 @@ export function Settings() {
         {/* Profile Section */}
         <SettingsSection title="Profile" icon={<UserIcon />}>
           <Card className={styles.profileCard}>
-            <Avatar fallback={user.name} size="lg" color={user.color} />
+            <Avatar fallback={user.name} size="lg" color={session?.color} />
             <div className={styles.profileInfo}>
               <h3>{user.name}</h3>
             </div>

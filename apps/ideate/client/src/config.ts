@@ -36,3 +36,4 @@ export const WS_URL = getWsUrl();
 // Specific WebSocket endpoints
 export const YJS_WS_URL = `${WS_URL}/yjs`;
 export const DIAGNOSTICS_WS_URL = `${WS_URL}/diagnostics-ws`;
+export const CHAT_WS_URL = `${WS_URL}/chat-ws`;

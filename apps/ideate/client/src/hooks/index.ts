@@ -6,5 +6,7 @@ export type {
   ConnectionState,
 } from './useYjsCollaboration';
 
+export { useChatSocket } from './useChatSocket';
+
 // Re-export Extension type for convenience
 export type { Extension } from '@codemirror/state';

@@ -9,8 +9,15 @@ export interface WorkspaceMetadata {
   description: string;
   ownerId: string;
   memberIds: string[];
+  shareToken?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface WorkspacePreview {
+  id: string;
+  name: string;
+  ownerName?: string;
 }
 
 export interface Workspace extends WorkspaceMetadata {
@@ -194,6 +201,171 @@ export class WorkspaceService {
       return true;
     } catch {
       return false;
+    }
+  }
+
+  /**
+   * Generate or get existing share token for a workspace.
+   * Only the owner can generate share tokens.
+   */
+  async generateShareToken(
+    workspaceId: string,
+    userId: string,
+    regenerate: boolean = false
+  ): Promise<string | null> {
+    try {
+      const metaContent = await fs.readFile(
+        this.getMetadataPath(workspaceId),
+        'utf-8'
+      );
+      const metadata: WorkspaceMetadata = JSON.parse(metaContent);
+
+      // Only owner can generate share tokens
+      if (metadata.ownerId !== userId) {
+        return null;
+      }
+
+      // Return existing token if available and not regenerating
+      if (metadata.shareToken && !regenerate) {
+        return metadata.shareToken;
+      }
+
+      // Generate new token
+      const shareToken = uuidv4();
+      const updatedMetadata: WorkspaceMetadata = {
+        ...metadata,
+        shareToken,
+        updatedAt: new Date().toISOString(),
+      };
+
+      await fs.writeFile(
+        this.getMetadataPath(workspaceId),
+        JSON.stringify(updatedMetadata, null, 2),
+        'utf-8'
+      );
+
+      return shareToken;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Get the current share token for a workspace.
+   * Only the owner can view the share token.
+   */
+  async getShareToken(
+    workspaceId: string,
+    userId: string
+  ): Promise<string | null> {
+    try {
+      const metaContent = await fs.readFile(
+        this.getMetadataPath(workspaceId),
+        'utf-8'
+      );
+      const metadata: WorkspaceMetadata = JSON.parse(metaContent);
+
+      // Only owner can view share token
+      if (metadata.ownerId !== userId) {
+        return null;
+      }
+
+      return metadata.shareToken || null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Get workspace preview by share token (for join page).
+   * Does not require authentication.
+   */
+  async getWorkspaceByShareToken(
+    token: string
+  ): Promise<WorkspacePreview | null> {
+    try {
+      await this.ensureDirectoryExists();
+
+      let files: string[];
+      try {
+        files = await fs.readdir(WORKSPACES_DIR);
+      } catch {
+        return null;
+      }
+
+      const metaFiles = files.filter((f) => f.endsWith('.meta.json'));
+
+      for (const file of metaFiles) {
+        const metaPath = path.join(WORKSPACES_DIR, file);
+        const content = await fs.readFile(metaPath, 'utf-8');
+        const metadata: WorkspaceMetadata = JSON.parse(content);
+
+        if (metadata.shareToken === token) {
+          return {
+            id: metadata.id,
+            name: metadata.name,
+          };
+        }
+      }
+
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Join a workspace using a share token.
+   * Adds the user to the workspace's memberIds.
+   */
+  async joinWorkspaceByToken(
+    token: string,
+    userId: string
+  ): Promise<Workspace | null> {
+    try {
+      await this.ensureDirectoryExists();
+
+      let files: string[];
+      try {
+        files = await fs.readdir(WORKSPACES_DIR);
+      } catch {
+        return null;
+      }
+
+      const metaFiles = files.filter((f) => f.endsWith('.meta.json'));
+
+      for (const file of metaFiles) {
+        const metaPath = path.join(WORKSPACES_DIR, file);
+        const content = await fs.readFile(metaPath, 'utf-8');
+        const metadata: WorkspaceMetadata = JSON.parse(content);
+
+        if (metadata.shareToken === token) {
+          // User is already owner
+          if (metadata.ownerId === userId) {
+            return { ...metadata };
+          }
+
+          // User is already a member
+          if (metadata.memberIds.includes(userId)) {
+            return { ...metadata };
+          }
+
+          // Add user to members
+          const updatedMetadata: WorkspaceMetadata = {
+            ...metadata,
+            memberIds: [...metadata.memberIds, userId],
+            updatedAt: new Date().toISOString(),
+          };
+
+          await fs.writeFile(metaPath, JSON.stringify(updatedMetadata, null, 2), 'utf-8');
+
+          return { ...updatedMetadata };
+        }
+      }
+
+      return null;
+    } catch {
+      return null;
     }
   }
 }

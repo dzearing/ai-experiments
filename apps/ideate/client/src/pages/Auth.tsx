@@ -1,21 +1,37 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from '@ui-kit/router';
+import { useState, useEffect, useMemo } from 'react';
+import { useNavigate, useLocation } from '@ui-kit/router';
 import { Button, Card, Input, Spinner } from '@ui-kit/react';
 import { useAuth } from '../contexts/AuthContext';
 import styles from './Auth.module.css';
 
+function getReturnTo(search: string): string {
+  const params = new URLSearchParams(search);
+  const returnTo = params.get('returnTo');
+
+  // Security: only allow relative paths starting with /
+  if (returnTo && returnTo.startsWith('/') && !returnTo.startsWith('//')) {
+    return returnTo;
+  }
+
+  return '/dashboard';
+}
+
 export function Auth() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { signIn, isLoading, isAuthenticated } = useAuth();
   const [nickname, setNickname] = useState('');
   const [error, setError] = useState('');
 
-  // Redirect to dashboard if already authenticated
+  // Get the return URL from query params
+  const returnTo = useMemo(() => getReturnTo(location.search), [location.search]);
+
+  // Redirect to returnTo if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard');
+      navigate(returnTo);
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, returnTo]);
 
   if (isAuthenticated) {
     return null;
@@ -38,7 +54,7 @@ export function Auth() {
 
     try {
       await signIn(trimmed);
-      navigate('/dashboard');
+      navigate(returnTo);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to sign in');
     }

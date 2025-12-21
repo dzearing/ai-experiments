@@ -62,8 +62,9 @@ export class DocumentService {
   /**
    * List all documents for a user (owned or collaborated).
    * Optionally filter by workspaceId.
+   * If isWorkspaceMember is true, include all documents in the workspace.
    */
-  async listDocuments(userId: string, workspaceId?: string): Promise<DocumentMetadata[]> {
+  async listDocuments(userId: string, workspaceId?: string, isWorkspaceMember: boolean = false): Promise<DocumentMetadata[]> {
     try {
       const files = await fs.readdir(DOCUMENTS_DIR);
       const metaFiles = files.filter((f) => f.endsWith('.meta.json'));
@@ -75,16 +76,17 @@ export class DocumentService {
         const content = await fs.readFile(metaPath, 'utf-8');
         const metadata: DocumentMetadata = JSON.parse(content);
 
-        // Include if user is owner or collaborator
-        const hasAccess = metadata.ownerId === userId ||
-          metadata.collaboratorIds.includes(userId);
-
-        if (!hasAccess) continue;
-
         // Filter by workspaceId if provided
         if (workspaceId !== undefined) {
           if (metadata.workspaceId !== workspaceId) continue;
         }
+
+        // Include if user is owner, collaborator, or workspace member
+        const hasDirectAccess = metadata.ownerId === userId ||
+          metadata.collaboratorIds.includes(userId);
+        const hasWorkspaceAccess = isWorkspaceMember && metadata.workspaceId === workspaceId;
+
+        if (!hasDirectAccess && !hasWorkspaceAccess) continue;
 
         documents.push(metadata);
       }

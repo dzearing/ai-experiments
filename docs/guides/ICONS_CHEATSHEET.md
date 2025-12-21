@@ -40,6 +40,7 @@ import { IconName } from '@claude-flow/ui-kit-icons';
 - `RestoreIcon` - Restore/revert
 - `SaveIcon` - Save/disk
 - `SearchIcon` - Search/magnifying glass
+- `SendIcon` - Send/paper airplane (chat messages)
 - `ShareIcon` - Share/network
 - `SyncIcon` - Sync/circular arrows
 - `UndoIcon` - Undo arrow

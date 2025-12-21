@@ -67,13 +67,20 @@
   margin-bottom: var(--space-10);
 }
 
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
 .sectionTitle {
   display: flex;
   align-items: center;
   gap: var(--space-2);
   font-size: var(--text-lg);
   font-weight: var(--weight-semibold);
-  margin: 0 0 var(--space-4);
+  margin: 0;
   color: var(--base-fg);
 }
 
@@ -258,4 +265,73 @@
 
 .deleteWarning strong {
   color: var(--base-fg);
+}
+
+/* Header Top */
+.headerTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+/* Share Modal */
+.shareDescription {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--base-fg-soft);
+}
+
+.shareLinkLoading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  color: var(--base-fg-soft);
+}
+
+.shareLinkContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.shareLinkBox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--soft-bg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--base-border);
+}
+
+.shareLinkBox svg {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  color: var(--base-fg-soft);
+}
+
+.shareLinkInput {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: var(--text-sm);
+  color: var(--base-fg);
+  outline: none;
+  min-width: 0;
+}
+
+.shareLinkActions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.shareError {
+  margin: 0;
+  padding: var(--space-4);
+  text-align: center;
+  color: var(--base-fg-danger);
 }

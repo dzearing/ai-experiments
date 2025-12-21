@@ -1,40 +1,68 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useParams, Link } from '@ui-kit/router';
 import { Breadcrumb, Button, Input, Modal, Spinner } from '@ui-kit/react';
 import { AddIcon } from '@ui-kit/icons/AddIcon';
 import { FileIcon } from '@ui-kit/icons/FileIcon';
+import { ChatIcon } from '@ui-kit/icons/ChatIcon';
+import { ShareIcon } from '@ui-kit/icons/ShareIcon';
+import { LinkIcon } from '@ui-kit/icons/LinkIcon';
 import { useAuth } from '../contexts/AuthContext';
-import { useWorkspaces } from '../contexts/WorkspaceContext';
+import { useWorkspaces, type Workspace } from '../contexts/WorkspaceContext';
 import { useDocuments, type DocumentMetadata } from '../contexts/DocumentContext';
+import { useChat, type ChatRoomMetadata } from '../contexts/ChatContext';
 import { DocumentCard } from '../components/DocumentCard';
+import { ChatRoomCard } from '../components/ChatRoomCard';
 import styles from './WorkspaceDetail.module.css';
 
 export function WorkspaceDetail() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
-  const { getWorkspace } = useWorkspaces();
+  const { getWorkspace, generateShareLink } = useWorkspaces();
   const { documents, isLoading, fetchDocuments, createDocument, updateDocument, deleteDocument } = useDocuments();
+  const { chatRooms, isLoading: isLoadingChatRooms, fetchChatRooms, createChatRoom, updateChatRoom, deleteChatRoom } = useChat();
 
-  const [workspace, setWorkspace] = useState<{
-    id: string;
-    name: string;
-    description: string;
-  } | null>(null);
+  const [workspace, setWorkspace] = useState<Workspace | null>(null);
   const [isLoadingWorkspace, setIsLoadingWorkspace] = useState(true);
+
+  // Document modal states
   const [showNewDocModal, setShowNewDocModal] = useState(false);
   const [newDocTitle, setNewDocTitle] = useState('');
-  const [isCreating, setIsCreating] = useState(false);
+  const [isCreatingDoc, setIsCreatingDoc] = useState(false);
 
   // Delete document state
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDeleteDocModal, setShowDeleteDocModal] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<DocumentMetadata | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeletingDoc, setIsDeletingDoc] = useState(false);
 
   // Rename document state
-  const [showRenameModal, setShowRenameModal] = useState(false);
-  const [renameTitle, setRenameTitle] = useState('');
-  const [isRenaming, setIsRenaming] = useState(false);
+  const [showRenameDocModal, setShowRenameDocModal] = useState(false);
+  const [renameDocTitle, setRenameDocTitle] = useState('');
+  const [isRenamingDoc, setIsRenamingDoc] = useState(false);
+
+  // Chat room modal states
+  const [showNewChatModal, setShowNewChatModal] = useState(false);
+  const [newChatName, setNewChatName] = useState('');
+  const [isCreatingChat, setIsCreatingChat] = useState(false);
+
+  // Delete chat room state
+  const [showDeleteChatModal, setShowDeleteChatModal] = useState(false);
+  const [selectedChatRoom, setSelectedChatRoom] = useState<ChatRoomMetadata | null>(null);
+  const [isDeletingChat, setIsDeletingChat] = useState(false);
+
+  // Rename chat room state
+  const [showRenameChatModal, setShowRenameChatModal] = useState(false);
+  const [renameChatName, setRenameChatName] = useState('');
+  const [isRenamingChat, setIsRenamingChat] = useState(false);
+
+  // Share modal state
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareLink, setShareLink] = useState<string | null>(null);
+  const [isGeneratingLink, setIsGeneratingLink] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  // Check if current user is the owner
+  const isOwner = workspace?.ownerId === user?.id;
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -57,76 +85,197 @@ export function WorkspaceDetail() {
     loadWorkspace();
   }, [workspaceId, user, getWorkspace]);
 
-  // Fetch documents for this workspace
+  // Fetch documents and chat rooms for this workspace
   useEffect(() => {
     if (workspaceId && user) {
       fetchDocuments(workspaceId);
+      fetchChatRooms(workspaceId);
     }
-  }, [workspaceId, user, fetchDocuments]);
+  }, [workspaceId, user, fetchDocuments, fetchChatRooms]);
 
+  // Document handlers
   const handleCreateDocument = async () => {
     if (!newDocTitle.trim() || !workspaceId) return;
 
-    setIsCreating(true);
+    setIsCreatingDoc(true);
     try {
       const doc = await createDocument(newDocTitle.trim(), workspaceId);
       setShowNewDocModal(false);
       setNewDocTitle('');
       navigate(`/doc/${doc.id}`);
     } finally {
-      setIsCreating(false);
+      setIsCreatingDoc(false);
     }
   };
 
-  const openDeleteModal = (doc: DocumentMetadata) => {
+  const openDeleteDocModal = (doc: DocumentMetadata) => {
     setSelectedDocument(doc);
-    setShowDeleteModal(true);
+    setShowDeleteDocModal(true);
   };
 
-  const closeDeleteModal = () => {
-    setShowDeleteModal(false);
+  const closeDeleteDocModal = () => {
+    setShowDeleteDocModal(false);
     setSelectedDocument(null);
   };
 
   const handleDeleteDocument = async () => {
     if (!selectedDocument) return;
 
-    setIsDeleting(true);
+    setIsDeletingDoc(true);
     try {
       const success = await deleteDocument(selectedDocument.id);
       if (success) {
-        closeDeleteModal();
+        closeDeleteDocModal();
       }
     } finally {
-      setIsDeleting(false);
+      setIsDeletingDoc(false);
     }
   };
 
-  const openRenameModal = (doc: DocumentMetadata) => {
+  const openRenameDocModal = (doc: DocumentMetadata) => {
     setSelectedDocument(doc);
-    setRenameTitle(doc.title);
-    setShowRenameModal(true);
+    setRenameDocTitle(doc.title);
+    setShowRenameDocModal(true);
   };
 
-  const closeRenameModal = () => {
-    setShowRenameModal(false);
+  const closeRenameDocModal = () => {
+    setShowRenameDocModal(false);
     setSelectedDocument(null);
-    setRenameTitle('');
+    setRenameDocTitle('');
   };
 
   const handleRenameDocument = async () => {
-    if (!selectedDocument || !renameTitle.trim()) return;
+    if (!selectedDocument || !renameDocTitle.trim()) return;
 
-    setIsRenaming(true);
+    setIsRenamingDoc(true);
     try {
-      const result = await updateDocument(selectedDocument.id, { title: renameTitle.trim() });
+      const result = await updateDocument(selectedDocument.id, { title: renameDocTitle.trim() });
       if (result) {
-        closeRenameModal();
+        closeRenameDocModal();
       }
     } finally {
-      setIsRenaming(false);
+      setIsRenamingDoc(false);
     }
   };
+
+  // Chat room handlers
+  const handleCreateChatRoom = async () => {
+    if (!newChatName.trim() || !workspaceId) return;
+
+    setIsCreatingChat(true);
+    try {
+      const chatRoom = await createChatRoom(newChatName.trim(), workspaceId);
+      setShowNewChatModal(false);
+      setNewChatName('');
+      navigate(`/chat/${chatRoom.id}`);
+    } finally {
+      setIsCreatingChat(false);
+    }
+  };
+
+  const openDeleteChatModal = (chatRoom: ChatRoomMetadata) => {
+    setSelectedChatRoom(chatRoom);
+    setShowDeleteChatModal(true);
+  };
+
+  const closeDeleteChatModal = () => {
+    setShowDeleteChatModal(false);
+    setSelectedChatRoom(null);
+  };
+
+  const handleDeleteChatRoom = async () => {
+    if (!selectedChatRoom) return;
+
+    setIsDeletingChat(true);
+    try {
+      const success = await deleteChatRoom(selectedChatRoom.id);
+      if (success) {
+        closeDeleteChatModal();
+      }
+    } finally {
+      setIsDeletingChat(false);
+    }
+  };
+
+  const openRenameChatModal = (chatRoom: ChatRoomMetadata) => {
+    setSelectedChatRoom(chatRoom);
+    setRenameChatName(chatRoom.name);
+    setShowRenameChatModal(true);
+  };
+
+  const closeRenameChatModal = () => {
+    setShowRenameChatModal(false);
+    setSelectedChatRoom(null);
+    setRenameChatName('');
+  };
+
+  const handleRenameChatRoom = async () => {
+    if (!selectedChatRoom || !renameChatName.trim()) return;
+
+    setIsRenamingChat(true);
+    try {
+      const result = await updateChatRoom(selectedChatRoom.id, { name: renameChatName.trim() });
+      if (result) {
+        closeRenameChatModal();
+      }
+    } finally {
+      setIsRenamingChat(false);
+    }
+  };
+
+  // Share handlers
+  const handleOpenShareModal = useCallback(async () => {
+    if (!workspaceId) return;
+
+    setShowShareModal(true);
+    setIsGeneratingLink(true);
+    setLinkCopied(false);
+
+    try {
+      const token = await generateShareLink(workspaceId);
+      if (token) {
+        const link = `${window.location.origin}/join/${token}`;
+        setShareLink(link);
+      }
+    } finally {
+      setIsGeneratingLink(false);
+    }
+  }, [workspaceId, generateShareLink]);
+
+  const handleRegenerateLink = useCallback(async () => {
+    if (!workspaceId) return;
+
+    setIsGeneratingLink(true);
+    setLinkCopied(false);
+
+    try {
+      const token = await generateShareLink(workspaceId, true);
+      if (token) {
+        const link = `${window.location.origin}/join/${token}`;
+        setShareLink(link);
+      }
+    } finally {
+      setIsGeneratingLink(false);
+    }
+  }, [workspaceId, generateShareLink]);
+
+  const handleCopyLink = useCallback(async () => {
+    if (!shareLink) return;
+
+    try {
+      await navigator.clipboard.writeText(shareLink);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy link:', err);
+    }
+  }, [shareLink]);
+
+  const closeShareModal = useCallback(() => {
+    setShowShareModal(false);
+    setShareLink(null);
+    setLinkCopied(false);
+  }, []);
 
   if (!user || isLoadingWorkspace) {
     return (
@@ -153,7 +302,7 @@ export function WorkspaceDetail() {
       <div className={styles.container}>
         {/* Header */}
         <header className={styles.header}>
-          <div className={styles.headerRow}>
+          <div className={styles.headerTop}>
             <Breadcrumb
               items={[
                 { label: 'Workspaces', href: '/workspaces' },
@@ -161,9 +310,16 @@ export function WorkspaceDetail() {
               ]}
               linkComponent={Link}
             />
-            <Button icon={<AddIcon />} onClick={() => setShowNewDocModal(true)}>
-              New Document
-            </Button>
+            {isOwner && (
+              <Button
+                size="sm"
+                variant="ghost"
+                icon={<ShareIcon />}
+                onClick={handleOpenShareModal}
+              >
+                Share
+              </Button>
+            )}
           </div>
           {workspace.description && (
             <p className={styles.description}>{workspace.description}</p>
@@ -172,10 +328,15 @@ export function WorkspaceDetail() {
 
         {/* Documents Section */}
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>
-            <FileIcon />
-            Documents
-          </h2>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>
+              <FileIcon />
+              Documents
+            </h2>
+            <Button size="sm" icon={<AddIcon />} onClick={() => setShowNewDocModal(true)}>
+              New Document
+            </Button>
+          </div>
 
           {isLoading ? (
             <div className={styles.loadingSection}>
@@ -199,9 +360,52 @@ export function WorkspaceDetail() {
                   key={doc.id}
                   document={doc}
                   onClick={() => navigate(`/doc/${doc.id}`)}
-                  onEdit={() => openRenameModal(doc)}
-                  onDelete={() => openDeleteModal(doc)}
+                  onEdit={() => openRenameDocModal(doc)}
+                  onDelete={() => openDeleteDocModal(doc)}
                   showActions={doc.ownerId === user?.id}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Chats Section */}
+        <section className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>
+              <ChatIcon />
+              Chats
+            </h2>
+            <Button size="sm" icon={<AddIcon />} onClick={() => setShowNewChatModal(true)}>
+              New Chat Room
+            </Button>
+          </div>
+
+          {isLoadingChatRooms ? (
+            <div className={styles.loadingSection}>
+              <Spinner />
+            </div>
+          ) : chatRooms.length === 0 ? (
+            <EmptyState
+              icon={<ChatIcon />}
+              title="No chat rooms yet"
+              description="Create your first chat room in this workspace"
+              action={
+                <Button icon={<AddIcon />} onClick={() => setShowNewChatModal(true)}>
+                  Create Chat Room
+                </Button>
+              }
+            />
+          ) : (
+            <div className={styles.documentGrid}>
+              {chatRooms.map((chatRoom) => (
+                <ChatRoomCard
+                  key={chatRoom.id}
+                  chatRoom={chatRoom}
+                  onClick={() => navigate(`/chat/${chatRoom.id}`)}
+                  onEdit={() => openRenameChatModal(chatRoom)}
+                  onDelete={() => openDeleteChatModal(chatRoom)}
+                  showActions={chatRoom.ownerId === user?.id}
                 />
               ))}
             </div>
@@ -227,42 +431,42 @@ export function WorkspaceDetail() {
             <Button
               variant="primary"
               onClick={handleCreateDocument}
-              disabled={!newDocTitle.trim() || isCreating}
+              disabled={!newDocTitle.trim() || isCreatingDoc}
             >
-              {isCreating ? <Spinner size="sm" /> : 'Create'}
+              {isCreatingDoc ? <Spinner size="sm" /> : 'Create'}
             </Button>
           </div>
         </div>
       </Modal>
 
       {/* Rename Document Modal */}
-      <Modal open={showRenameModal} onClose={closeRenameModal}>
+      <Modal open={showRenameDocModal} onClose={closeRenameDocModal}>
         <div className={styles.modalContent}>
           <h2>Rename Document</h2>
           <Input
             placeholder="Enter new title"
-            value={renameTitle}
-            onChange={(e) => setRenameTitle(e.target.value)}
+            value={renameDocTitle}
+            onChange={(e) => setRenameDocTitle(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleRenameDocument()}
             autoFocus
           />
           <div className={styles.modalActions}>
-            <Button variant="ghost" onClick={closeRenameModal}>
+            <Button variant="ghost" onClick={closeRenameDocModal}>
               Cancel
             </Button>
             <Button
               variant="primary"
               onClick={handleRenameDocument}
-              disabled={!renameTitle.trim() || isRenaming}
+              disabled={!renameDocTitle.trim() || isRenamingDoc}
             >
-              {isRenaming ? <Spinner size="sm" /> : 'Rename'}
+              {isRenamingDoc ? <Spinner size="sm" /> : 'Rename'}
             </Button>
           </div>
         </div>
       </Modal>
 
       {/* Delete Document Modal */}
-      <Modal open={showDeleteModal} onClose={closeDeleteModal}>
+      <Modal open={showDeleteDocModal} onClose={closeDeleteDocModal}>
         <div className={styles.modalContent}>
           <h2>Delete Document</h2>
           <p className={styles.deleteWarning}>
@@ -270,15 +474,143 @@ export function WorkspaceDetail() {
             This action cannot be undone.
           </p>
           <div className={styles.modalActions}>
-            <Button variant="ghost" onClick={closeDeleteModal}>
+            <Button variant="ghost" onClick={closeDeleteDocModal}>
               Cancel
             </Button>
             <Button
               variant="danger"
               onClick={handleDeleteDocument}
-              disabled={isDeleting}
+              disabled={isDeletingDoc}
             >
-              {isDeleting ? <Spinner size="sm" /> : 'Delete'}
+              {isDeletingDoc ? <Spinner size="sm" /> : 'Delete'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* New Chat Room Modal */}
+      <Modal open={showNewChatModal} onClose={() => setShowNewChatModal(false)}>
+        <div className={styles.modalContent}>
+          <h2>Create New Chat Room</h2>
+          <Input
+            placeholder="Enter a name for your chat room"
+            value={newChatName}
+            onChange={(e) => setNewChatName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleCreateChatRoom()}
+            autoFocus
+          />
+          <div className={styles.modalActions}>
+            <Button variant="ghost" onClick={() => setShowNewChatModal(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleCreateChatRoom}
+              disabled={!newChatName.trim() || isCreatingChat}
+            >
+              {isCreatingChat ? <Spinner size="sm" /> : 'Create'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Rename Chat Room Modal */}
+      <Modal open={showRenameChatModal} onClose={closeRenameChatModal}>
+        <div className={styles.modalContent}>
+          <h2>Rename Chat Room</h2>
+          <Input
+            placeholder="Enter new name"
+            value={renameChatName}
+            onChange={(e) => setRenameChatName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleRenameChatRoom()}
+            autoFocus
+          />
+          <div className={styles.modalActions}>
+            <Button variant="ghost" onClick={closeRenameChatModal}>
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleRenameChatRoom}
+              disabled={!renameChatName.trim() || isRenamingChat}
+            >
+              {isRenamingChat ? <Spinner size="sm" /> : 'Rename'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Chat Room Modal */}
+      <Modal open={showDeleteChatModal} onClose={closeDeleteChatModal}>
+        <div className={styles.modalContent}>
+          <h2>Delete Chat Room</h2>
+          <p className={styles.deleteWarning}>
+            Are you sure you want to delete <strong>{selectedChatRoom?.name}</strong>?
+            This action cannot be undone.
+          </p>
+          <div className={styles.modalActions}>
+            <Button variant="ghost" onClick={closeDeleteChatModal}>
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleDeleteChatRoom}
+              disabled={isDeletingChat}
+            >
+              {isDeletingChat ? <Spinner size="sm" /> : 'Delete'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Share Modal */}
+      <Modal open={showShareModal} onClose={closeShareModal}>
+        <div className={styles.modalContent}>
+          <h2>Share Workspace</h2>
+          <p className={styles.shareDescription}>
+            Anyone with this link can join your workspace.
+          </p>
+
+          {isGeneratingLink ? (
+            <div className={styles.shareLinkLoading}>
+              <Spinner size="sm" />
+              <span>Generating link...</span>
+            </div>
+          ) : shareLink ? (
+            <div className={styles.shareLinkContainer}>
+              <div className={styles.shareLinkBox}>
+                <LinkIcon />
+                <input
+                  type="text"
+                  value={shareLink}
+                  readOnly
+                  className={styles.shareLinkInput}
+                  onClick={(e) => (e.target as HTMLInputElement).select()}
+                />
+              </div>
+              <div className={styles.shareLinkActions}>
+                <Button
+                  variant="primary"
+                  onClick={handleCopyLink}
+                >
+                  {linkCopied ? 'Copied!' : 'Copy Link'}
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={handleRegenerateLink}
+                  disabled={isGeneratingLink}
+                >
+                  Regenerate
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <p className={styles.shareError}>Failed to generate share link.</p>
+          )}
+
+          <div className={styles.modalActions}>
+            <Button variant="ghost" onClick={closeShareModal}>
+              Close
             </Button>
           </div>
         </div>

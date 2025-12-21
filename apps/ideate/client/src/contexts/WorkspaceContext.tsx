@@ -22,6 +22,12 @@ export interface Workspace extends WorkspaceMetadata {
   // Additional workspace data can be added here
 }
 
+export interface WorkspacePreview {
+  id: string;
+  name: string;
+  ownerName?: string;
+}
+
 interface WorkspaceContextValue {
   workspaces: WorkspaceMetadata[];
   isLoading: boolean;
@@ -34,6 +40,9 @@ interface WorkspaceContextValue {
     updates: Partial<Pick<Workspace, 'name' | 'description'>>
   ) => Promise<Workspace | null>;
   deleteWorkspace: (id: string) => Promise<boolean>;
+  generateShareLink: (workspaceId: string, regenerate?: boolean) => Promise<string | null>;
+  getWorkspacePreview: (token: string) => Promise<WorkspacePreview | null>;
+  joinWorkspace: (token: string) => Promise<Workspace | null>;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
@@ -182,6 +191,86 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
     [user]
   );
 
+  const generateShareLink = useCallback(
+    async (workspaceId: string, regenerate: boolean = false): Promise<string | null> => {
+      if (!user) return null;
+
+      try {
+        const response = await fetch(`${API_URL}/api/workspaces/${workspaceId}/share`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': user.id,
+          },
+          body: JSON.stringify({ regenerate }),
+        });
+
+        if (!response.ok) {
+          return null;
+        }
+
+        const data = await response.json();
+        return data.token || null;
+      } catch {
+        return null;
+      }
+    },
+    [user]
+  );
+
+  const getWorkspacePreview = useCallback(
+    async (token: string): Promise<WorkspacePreview | null> => {
+      // This endpoint doesn't require authentication
+      try {
+        const response = await fetch(`${API_URL}/api/workspaces/join/${token}`);
+
+        if (!response.ok) {
+          return null;
+        }
+
+        return await response.json();
+      } catch {
+        return null;
+      }
+    },
+    []
+  );
+
+  const joinWorkspace = useCallback(
+    async (token: string): Promise<Workspace | null> => {
+      if (!user) return null;
+
+      try {
+        const response = await fetch(`${API_URL}/api/workspaces/join/${token}`, {
+          method: 'POST',
+          headers: {
+            'x-user-id': user.id,
+          },
+        });
+
+        if (!response.ok) {
+          return null;
+        }
+
+        const workspace = await response.json();
+
+        // Add to local workspaces list if not already present
+        setWorkspaces((prev) => {
+          const exists = prev.some((w) => w.id === workspace.id);
+          if (exists) {
+            return prev.map((w) => (w.id === workspace.id ? workspace : w));
+          }
+          return [workspace, ...prev];
+        });
+
+        return workspace;
+      } catch {
+        return null;
+      }
+    },
+    [user]
+  );
+
   const value: WorkspaceContextValue = {
     workspaces,
     isLoading,
@@ -191,6 +280,9 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
     getWorkspace,
     updateWorkspace,
     deleteWorkspace,
+    generateShareLink,
+    getWorkspacePreview,
+    joinWorkspace,
   };
 
   return (

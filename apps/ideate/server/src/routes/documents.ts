@@ -1,8 +1,10 @@
 import { Router, type Request, type Response } from 'express';
 import { DocumentService } from '../services/DocumentService.js';
+import { WorkspaceService } from '../services/WorkspaceService.js';
 
 export const documentsRouter = Router();
 const documentService = new DocumentService();
+const workspaceService = new WorkspaceService();
 
 // List documents (optionally filter by workspaceId query param)
 documentsRouter.get('/', async (req: Request, res: Response) => {
@@ -15,7 +17,14 @@ documentsRouter.get('/', async (req: Request, res: Response) => {
       return;
     }
 
-    const documents = await documentService.listDocuments(userId, workspaceId);
+    // If filtering by workspace, check if user has workspace access
+    let isWorkspaceMember = false;
+    if (workspaceId) {
+      const workspace = await workspaceService.getWorkspace(workspaceId, userId);
+      isWorkspaceMember = workspace !== null;
+    }
+
+    const documents = await documentService.listDocuments(userId, workspaceId, isWorkspaceMember);
     res.json(documents);
   } catch (error) {
     console.error('List documents error:', error);

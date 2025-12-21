@@ -354,6 +354,10 @@
       "types": "./dist/SearchIcon.d.ts",
       "import": "./dist/SearchIcon.js"
     },
+    "./SendIcon": {
+      "types": "./dist/SendIcon.d.ts",
+      "import": "./dist/SendIcon.js"
+    },
     "./ShareIcon": {
       "types": "./dist/ShareIcon.d.ts",
       "import": "./dist/ShareIcon.js"
