@@ -83,7 +83,7 @@ export function Settings() {
         {/* Profile Section */}
         <SettingsSection title="Profile" icon={<UserIcon />}>
           <Card className={styles.profileCard}>
-            <Avatar src={user.avatarUrl} fallback={user.name} size="lg" />
+            <Avatar fallback={user.name} size="lg" color={user.color} />
             <div className={styles.profileInfo}>
               <h3>{user.name}</h3>
             </div>

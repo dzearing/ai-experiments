@@ -34,8 +34,9 @@ public
 .env
 .env.local
 
-# Test results
+# Playwright test artifacts
 test-results/
+playwright-report/
 
 # Temporary files (logs, sessions, feedback)
 temp/

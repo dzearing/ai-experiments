@@ -55,6 +55,8 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
       showLineNumbers = true,
       tabSize = 2,
       coAuthors = [],
+      extensions: externalExtensions = [],
+      disableBuiltInHistory = false,
       className,
     },
     ref
@@ -94,8 +96,15 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
       setIsSearchOpen(false);
     }, []);
 
-    // Additional extensions for co-authors (must be included in initial state)
-    const additionalExtensions = useMemo(() => [coAuthorExtension], []);
+    // Additional extensions for co-authors + external extensions (must be included in initial state)
+    // When using Yjs (disableBuiltInHistory=true), yCollab handles cursor sync internally,
+    // so we skip our custom coAuthorExtension to avoid conflicts
+    const additionalExtensions = useMemo(
+      () => disableBuiltInHistory
+        ? [...externalExtensions]  // yCollab handles cursors via awareness
+        : [coAuthorExtension, ...externalExtensions],
+      [externalExtensions, disableBuiltInHistory]
+    );
 
     // Initialize CodeMirror
     const { containerRef, view, editorRef } = useCodeMirrorEditor({
@@ -110,6 +119,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
       showLineNumbers,
       tabSize,
       extensions: additionalExtensions,
+      disableBuiltInHistory,
     });
 
     // Set up co-author decorations with position change tracking
@@ -117,7 +127,8 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
     // 1. Dispatching coAuthor position updates to the editor
     // 2. Detecting when positions change due to document edits
     // 3. Notifying parent via onCoAuthorsChange callback
-    useCoAuthorDecorations(view, coAuthors, onCoAuthorsChange);
+    // When using Yjs (disableBuiltInHistory=true), yCollab handles cursor sync
+    useCoAuthorDecorations(view, coAuthors, onCoAuthorsChange, disableBuiltInHistory);
 
     // Expose imperative handle
     useImperativeHandle(ref, () => editorRef, [editorRef]);

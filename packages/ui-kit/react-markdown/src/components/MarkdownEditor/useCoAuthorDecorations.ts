@@ -336,16 +336,21 @@ export function getMappedCoAuthors(view: EditorView): CoAuthor[] {
  * @param view - The CodeMirror EditorView instance
  * @param coAuthors - Co-author positions from parent component
  * @param onCoAuthorsChange - Callback when positions change due to document edits
+ * @param disabled - Skip all logic (used when yCollab handles cursors instead)
  */
 export function useCoAuthorDecorations(
   view: EditorView | null,
   coAuthors: CoAuthor[],
-  onCoAuthorsChange?: (coAuthors: CoAuthor[]) => void
+  onCoAuthorsChange?: (coAuthors: CoAuthor[]) => void,
+  disabled?: boolean
 ): Extension {
   // Track the last positions we sent to parent to avoid infinite loops
   const lastReportedPositionsRef = useRef<string>('');
   // Track whether we've done the initial dispatch
   const initialDispatchDoneRef = useRef(false);
+
+  // When disabled (e.g., yCollab handles cursors), skip all logic but maintain hook call order
+  const isDisabled = disabled ?? false;
   // Stable callback ref
   const onCoAuthorsChangeRef = useRef(onCoAuthorsChange);
   onCoAuthorsChangeRef.current = onCoAuthorsChange;
@@ -362,6 +367,7 @@ export function useCoAuthorDecorations(
   // After initial setup, all updates should go through the imperative API
   // (applyRemoteUpdate or updateCoAuthors)
   useEffect(() => {
+    if (isDisabled) return; // Skip when yCollab handles cursors
     if (!view || initialDispatchDoneRef.current) return;
     if (coAuthors.length === 0) return;
 
@@ -387,10 +393,11 @@ export function useCoAuthorDecorations(
       console.warn('Failed to dispatch initial coAuthors:', e);
       initialDispatchDoneRef.current = false; // Allow retry
     }
-  }, [view, coAuthors, serializePositions]);
+  }, [view, coAuthors, serializePositions, isDisabled]);
 
   // Monitor for position changes from document edits and report to parent
   useEffect(() => {
+    if (isDisabled) return; // Skip when yCollab handles cursors
     if (!view || !onCoAuthorsChangeRef.current) return;
 
     // Use MutationObserver to detect document changes and check position updates
@@ -426,7 +433,7 @@ export function useCoAuthorDecorations(
       observer.disconnect();
       if (frameId) cancelAnimationFrame(frameId);
     };
-  }, [view, serializePositions]);
+  }, [view, serializePositions, isDisabled]);
 
   // Return the extension (memoized)
   return useMemo(() => coAuthorExtension, []);

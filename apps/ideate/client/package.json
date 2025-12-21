@@ -17,6 +17,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/view": "^6.39.0",
     "@ui-kit/core": "workspace:*",
     "@ui-kit/icons": "workspace:*",
     "@ui-kit/react": "workspace:*",
@@ -24,7 +26,11 @@
     "@ui-kit/router": "workspace:*",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "y-codemirror.next": "^0.3.5",
+    "y-indexeddb": "^9.0.12",
+    "y-websocket": "^3.0.0",
+    "yjs": "^13.6.28"
   },
   "devDependencies": {
     "@eslint/js": "^9.29.0",

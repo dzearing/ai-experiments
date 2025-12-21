@@ -87,26 +87,7 @@
   /* No special styles needed - contained in center */
 }
 
-.avatar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--avatar-color, #6495ed);
-  color: white;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: default;
-  user-select: none;
-  transition: transform 0.15s ease;
-}
-
-.avatar:hover {
-  transform: scale(1.1);
-}
-
+/* AI avatar styling (applied to Avatar component) */
 .aiAvatar {
   font-size: 14px;
 }

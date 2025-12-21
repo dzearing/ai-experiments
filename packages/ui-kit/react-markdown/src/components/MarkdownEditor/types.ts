@@ -156,6 +156,16 @@ export interface MarkdownEditorProps {
   showLineNumbers?: boolean;
   /** Tab size in spaces (default: 2) */
   tabSize?: number;
+  /**
+   * Additional CodeMirror extensions to add to the editor.
+   * Useful for collaborative editing (Yjs) or custom functionality.
+   */
+  extensions?: import('@codemirror/state').Extension[];
+  /**
+   * Disable built-in history (undo/redo) extension.
+   * Set to true when using external undo manager (e.g., Yjs UndoManager).
+   */
+  disableBuiltInHistory?: boolean;
 
   // Size
   /** Editor height */

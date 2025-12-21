@@ -1,0 +1,225 @@
+.diagnostics {
+  height: 100vh;
+  background: var(--base-bg);
+}
+
+.splitPane {
+  height: 100%;
+}
+
+/* Left Pane */
+.leftPane {
+  height: 100%;
+  padding: var(--space-4);
+  overflow: auto;
+  min-width: 0;
+}
+
+/* Right Pane */
+.rightPane {
+  height: 100%;
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: var(--space-4);
+  color: var(--base-fg-muted);
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.header h1 {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-semibold);
+  margin: 0;
+  color: var(--base-fg);
+}
+
+.connectionStatus {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.connected {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.disconnected {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+/* Stats Cards - always 4 columns with wrapping */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+.statCard {
+  padding: var(--space-4);
+  text-align: center;
+}
+
+.statValue {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  color: var(--base-fg);
+  margin-bottom: var(--space-1);
+}
+
+.statLabel {
+  font-size: var(--text-sm);
+  color: var(--base-fg-muted);
+}
+
+/* Responsive Grid Layouts for Documents/Clients */
+.gridOneCol {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.gridTwoCol {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+/* Table Cards */
+.tableCard {
+  padding: var(--space-4);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.tableCard h2 {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  margin: 0 0 var(--space-4);
+  color: var(--base-fg);
+  flex-shrink: 0;
+}
+
+/* Table wrapper for horizontal scrolling */
+.tableWrapper {
+  overflow-x: auto;
+  min-width: 0;
+  width: 100%;
+  flex: 1;
+}
+
+/* Document cell styling */
+.documentCell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+}
+
+.documentTitle {
+  font-weight: var(--weight-medium);
+  color: var(--base-fg);
+}
+
+.documentId {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--base-fg-muted);
+}
+
+.clientInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.clientId {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--base-fg-muted);
+}
+
+/* Event Log */
+.eventLogCard {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.eventLogHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+.eventLogHeader h2 {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  margin: 0;
+  color: var(--base-fg);
+}
+
+.eventLogControls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.filterSelect {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--base-border);
+  background: var(--base-bg);
+  color: var(--base-fg);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.filterSelect:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.eventLog {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  background: var(--base-bg-subtle);
+  border-radius: var(--radius-md);
+}

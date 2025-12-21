@@ -45,6 +45,8 @@ interface UseCodeMirrorEditorOptions {
   tabSize?: number;
   /** Additional extensions */
   extensions?: Extension[];
+  /** Disable built-in history (undo/redo) for use with external undo manager (e.g., Yjs) */
+  disableBuiltInHistory?: boolean;
 }
 
 interface UseCodeMirrorEditorResult {
@@ -72,6 +74,7 @@ export function useCodeMirrorEditor(options: UseCodeMirrorEditorOptions): UseCod
     showLineNumbers = true,
     tabSize = 2,
     extensions: additionalExtensions = [],
+    disableBuiltInHistory = false,
   } = options;
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -93,11 +96,15 @@ export function useCodeMirrorEditor(options: UseCodeMirrorEditorOptions): UseCod
     const exts: Extension[] = [
       // Markdown with nested code block highlighting
       markdown({ codeLanguages: languages }),
+    ];
 
-      // History (undo/redo)
-      history(),
-      keymap.of(historyKeymap),
+    // History (undo/redo) - skip when using external undo manager (e.g., Yjs)
+    if (!disableBuiltInHistory) {
+      exts.push(history());
+      exts.push(keymap.of(historyKeymap));
+    }
 
+    exts.push(
       // Default keybindings
       keymap.of(defaultKeymap),
       keymap.of([indentWithTab]),
@@ -125,7 +132,7 @@ export function useCodeMirrorEditor(options: UseCodeMirrorEditorOptions): UseCod
 
       // Folding
       foldingExtension,
-    ];
+    );
 
     // Optional line numbers
     if (showLineNumbers) {
@@ -144,7 +151,7 @@ export function useCodeMirrorEditor(options: UseCodeMirrorEditorOptions): UseCod
 
     return exts;
   // Note: onOpenSearch is accessed via ref to avoid recreating extensions
-  }, [showLineNumbers, placeholder, readOnly, tabSize]);
+  }, [showLineNumbers, placeholder, readOnly, tabSize, disableBuiltInHistory]);
 
   // Create update listener extension
   const updateListener = useMemo(() => {
@@ -187,9 +194,15 @@ export function useCodeMirrorEditor(options: UseCodeMirrorEditorOptions): UseCod
   useEffect(() => {
     if (!containerRef.current) return;
 
+    // Always initialize with the provided value.
+    // When using Yjs (disableBuiltInHistory=true), the caller should pass
+    // the current Y.Text content as value to ensure sync.
+    // yCollab will then observe future changes.
+    const initialDoc = value;
+
     // Create initial state with compartment for dynamic updates
     const state = EditorState.create({
-      doc: value,
+      doc: initialDoc,
       extensions: [
         extensionCompartment.current.of([
           ...baseExtensions,
@@ -221,6 +234,10 @@ export function useCodeMirrorEditor(options: UseCodeMirrorEditorOptions): UseCod
   useEffect(() => {
     const view = viewRef.current;
     if (!view) return;
+
+    // Skip when using external content source (e.g., Yjs)
+    // The external source manages all content updates
+    if (disableBuiltInHistory) return;
 
     // Skip if this change originated from inside the editor
     if (isInternalChange.current) return;
@@ -268,7 +285,7 @@ export function useCodeMirrorEditor(options: UseCodeMirrorEditorOptions): UseCod
       // Don't add to undo history for external updates
       annotations: Transaction.addToHistory.of(false),
     });
-  }, [value]);
+  }, [value, disableBuiltInHistory]);
 
   // Update extensions when they change
   useEffect(() => {

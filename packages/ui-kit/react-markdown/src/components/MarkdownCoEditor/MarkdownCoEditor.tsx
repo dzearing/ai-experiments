@@ -20,9 +20,10 @@
  */
 
 import { useState, useRef, useImperativeHandle, forwardRef, useCallback, useEffect } from 'react';
-import { Segmented, SplitPane, type SegmentOption, type SplitPaneOrientation } from '@ui-kit/react';
+import { Avatar, Segmented, SplitPane, type SegmentOption, type SplitPaneOrientation } from '@ui-kit/react';
 import { MarkdownEditor, type MarkdownEditorRef, type CoAuthor } from '../MarkdownEditor';
 import { MarkdownRenderer } from '../MarkdownRenderer';
+import type { Extension } from '@codemirror/state';
 import styles from './MarkdownCoEditor.module.css';
 
 export type { CoAuthor } from '../MarkdownEditor';
@@ -90,6 +91,16 @@ export interface MarkdownCoEditorProps {
   onCoAuthorsChange?: (coAuthors: CoAuthor[]) => void;
   /** Full page mode - removes card styling for edge-to-edge layouts */
   fullPage?: boolean;
+  /**
+   * Additional CodeMirror extensions to add to the editor.
+   * Useful for collaborative editing (Yjs) or custom functionality.
+   */
+  extensions?: Extension[];
+  /**
+   * Disable built-in history (undo/redo) extension.
+   * Set to true when using external undo manager (e.g., Yjs UndoManager).
+   */
+  disableBuiltInHistory?: boolean;
   /** Additional class name */
   className?: string;
 }
@@ -142,6 +153,8 @@ export const MarkdownCoEditor = forwardRef<MarkdownCoEditorRef, MarkdownCoEditor
       coAuthors = [],
       onCoAuthorsChange,
       fullPage = false,
+      extensions = [],
+      disableBuiltInHistory = false,
       className,
     },
     ref
@@ -351,14 +364,14 @@ export const MarkdownCoEditor = forwardRef<MarkdownCoEditorRef, MarkdownCoEditor
               {coAuthors.length > 0 && (
                 <div className={styles.coAuthorAvatars}>
                   {coAuthors.map((author) => (
-                    <div
+                    <Avatar
                       key={author.id}
-                      className={`${styles.avatar} ${author.isAI ? styles.aiAvatar : ''}`}
-                      style={{ '--avatar-color': author.color } as React.CSSProperties}
+                      size="sm"
+                      fallback={author.isAI ? '✦' : author.name}
+                      color={author.color}
                       title={author.name}
-                    >
-                      {author.isAI ? '✦' : author.name.charAt(0).toUpperCase()}
-                    </div>
+                      className={author.isAI ? styles.aiAvatar : undefined}
+                    />
                   ))}
                 </div>
               )}
@@ -400,6 +413,8 @@ export const MarkdownCoEditor = forwardRef<MarkdownCoEditorRef, MarkdownCoEditor
                     showLineNumbers={showLineNumbers}
                     coAuthors={coAuthors}
                     onCoAuthorsChange={onCoAuthorsChange}
+                    extensions={extensions}
+                    disableBuiltInHistory={disableBuiltInHistory}
                   />
                 </div>
               }
@@ -436,6 +451,8 @@ export const MarkdownCoEditor = forwardRef<MarkdownCoEditorRef, MarkdownCoEditor
                     showLineNumbers={showLineNumbers}
                     coAuthors={coAuthors}
                     onCoAuthorsChange={onCoAuthorsChange}
+                    extensions={extensions}
+                    disableBuiltInHistory={disableBuiltInHistory}
                   />
                 </div>
               )}

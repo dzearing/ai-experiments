@@ -6,8 +6,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useAuth } from './AuthContext';
-
-const API_URL = 'http://localhost:3002';
+import { API_URL } from '../config';
 
 export interface WorkspaceMetadata {
   id: string;

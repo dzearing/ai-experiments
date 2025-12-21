@@ -1,6 +1,7 @@
 packages:
   - 'packages/*'
   - 'packages/ui-kit/*'
+  - 'packages/ideate/*'
   - 'apps/*'
   - 'apps/v1/*'
   - 'apps/ideate/*'

@@ -2,13 +2,14 @@ import { Router, Routes, Route } from '@ui-kit/router';
 import { AuthProvider } from './contexts/AuthContext';
 import { DocumentProvider } from './contexts/DocumentContext';
 import { NetworkProvider } from './contexts/NetworkContext';
-import { SaveProvider } from './contexts/SaveContext';
+import { SessionProvider } from './contexts/SessionContext';
 import { WorkspaceProvider } from './contexts/WorkspaceContext';
 
 // Pages
 import { Landing } from './pages/Landing';
 import { Auth } from './pages/Auth';
 import { Dashboard } from './pages/Dashboard';
+import { Diagnostics } from './pages/Diagnostics';
 import { DocumentEditor } from './pages/DocumentEditor';
 import { Settings } from './pages/Settings';
 import { Workspaces } from './pages/Workspaces';
@@ -19,16 +20,17 @@ import { AppLayout } from './components/AppLayout/AppLayout';
 
 export function App() {
   return (
-    <Router>
-      <AuthProvider>
-        <DocumentProvider>
-          <WorkspaceProvider>
-            <SaveProvider>
+    <SessionProvider>
+      <Router>
+        <AuthProvider>
+          <DocumentProvider>
+            <WorkspaceProvider>
               <NetworkProvider>
                 <Routes>
                   {/* Public routes */}
                   <Route path="/" component={Landing} />
                   <Route path="/auth" component={Auth} />
+                  <Route path="/diagnostics" component={Diagnostics} />
 
                   {/* Protected routes with app layout */}
                   <Route component={AppLayout}>
@@ -40,10 +42,10 @@ export function App() {
                   </Route>
                 </Routes>
               </NetworkProvider>
-            </SaveProvider>
-          </WorkspaceProvider>
-        </DocumentProvider>
-      </AuthProvider>
-    </Router>
+            </WorkspaceProvider>
+          </DocumentProvider>
+        </AuthProvider>
+      </Router>
+    </SessionProvider>
   );
 }

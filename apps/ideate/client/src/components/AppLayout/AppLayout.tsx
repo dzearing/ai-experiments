@@ -8,11 +8,12 @@ import { SunMoonIcon } from '@ui-kit/icons/SunMoonIcon';
 import { FileIcon } from '@ui-kit/icons/FileIcon';
 import { FolderIcon } from '@ui-kit/icons/FolderIcon';
 import { useAuth } from '../../contexts/AuthContext';
-import { SaveIndicator } from '../SaveIndicator';
+import { useSession } from '../../contexts/SessionContext';
 import styles from './AppLayout.module.css';
 
 export function AppLayout() {
   const { user, signOut } = useAuth();
+  const { session } = useSession();
   const { mode, setMode } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -58,9 +59,6 @@ export function AppLayout() {
         </div>
 
         <div className={styles.headerRight}>
-          {/* Save Indicator */}
-          <SaveIndicator />
-
           {/* Theme Toggle */}
           <Menu
             items={[
@@ -95,7 +93,7 @@ export function AppLayout() {
               position="bottom-end"
             >
               <IconButton
-                icon={<Avatar src={user.avatarUrl} fallback={user.name} size="sm" />}
+                icon={<Avatar fallback={user.name} size="sm" color={session?.color} />}
                 variant="ghost"
                 shape="round"
                 aria-label="User menu"

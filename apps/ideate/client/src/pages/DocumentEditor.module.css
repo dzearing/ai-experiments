@@ -98,3 +98,75 @@
 .textarea::placeholder {
   color: var(--base-fg-soft);
 }
+
+/* Connection status indicator */
+.connectionDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: var(--space-2);
+  flex-shrink: 0;
+  transition: background-color var(--duration-fast) var(--ease-default);
+}
+
+.connectionDot[data-status="connected"] {
+  background-color: var(--color-success, #22c55e);
+}
+
+.connectionDot[data-status="connecting"] {
+  background-color: var(--color-warning, #f59e0b);
+  animation: pulse 1.5s infinite;
+}
+
+.connectionDot[data-status="disconnected"] {
+  background-color: var(--color-error, #ef4444);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Collaborative cursor styles (y-codemirror.next) */
+/* Override yCollab's default opacity: 0 and fade-in animation */
+:global(.cm-ySelectionInfo) {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  padding: var(--space-0-5) var(--space-1-5);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans) !important;
+  font-size: var(--text-sm) !important;
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10;
+  /* Force visibility - yCollab defaults to opacity: 0 with fade-in */
+  opacity: 1 !important;
+  transition: none !important;
+}
+
+:global(.cm-ySelectionCaret) {
+  position: relative;
+  border-left: 2px solid;
+  margin-left: -1px;
+  margin-right: -1px;
+  pointer-events: none;
+}
+
+/* Local user selection - use ui-kit tokens */
+:global(.cm-selectionBackground) {
+  background: var(--selection-bg);
+}
+
+:global(.cm-content)::selection,
+:global(.cm-content) *::selection {
+  background: var(--selection-bg);
+  color: var(--selection-text);
+}
+

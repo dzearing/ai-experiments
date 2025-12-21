@@ -11,7 +11,7 @@ export { CodeBlock, type CodeBlockProps } from './components/MarkdownRenderer/re
 export { Heading, type HeadingProps } from './components/MarkdownRenderer/renderers/Heading';
 export { Link, type LinkProps } from './components/MarkdownRenderer/renderers/Link';
 
-export { MarkdownEditor, type MarkdownEditorProps, type MarkdownEditorRef } from './components/MarkdownEditor';
+export { MarkdownEditor, type MarkdownEditorProps, type MarkdownEditorRef, type CoAuthor } from './components/MarkdownEditor';
 
 export {
   MarkdownCoEditor,

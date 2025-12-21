@@ -182,6 +182,46 @@ export const editorTheme = EditorView.theme({
   '.cm-lineWrapping': {
     wordBreak: 'break-word',
   },
+
+  // =========================================================================
+  // yCollab remote cursor styles (y-codemirror.next)
+  // These styles are used when collaborative editing with Yjs
+  // =========================================================================
+
+  // Remote user selection highlight
+  '.yRemoteSelection': {
+    backgroundColor: 'var(--yCollab-selection-color, rgba(100, 150, 250, 0.3))',
+    borderRadius: '2px',
+  },
+
+  // Remote user cursor caret
+  '.yRemoteSelectionHead': {
+    position: 'absolute',
+    borderLeft: '2px solid var(--yCollab-cursor-color, #3b82f6)',
+    borderTop: 'none',
+    borderBottom: 'none',
+    height: '1em',
+    boxSizing: 'border-box',
+  },
+
+  // Remote user cursor label (name tag)
+  '.yRemoteSelectionHead::after': {
+    content: 'attr(data-name)',
+    position: 'absolute',
+    bottom: '100%',
+    left: '-2px',
+    backgroundColor: 'var(--yCollab-cursor-color, #3b82f6)',
+    color: 'white',
+    fontSize: '11px',
+    fontFamily: 'var(--font-sans, system-ui, -apple-system, sans-serif)',
+    fontWeight: '600',
+    padding: '2px 6px',
+    borderRadius: '4px',
+    whiteSpace: 'nowrap',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.2)',
+    zIndex: '10',
+    pointerEvents: 'none',
+  },
 });
 
 /**

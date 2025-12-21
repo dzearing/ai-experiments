@@ -1,13 +1,15 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from '@ui-kit/router';
 import { Button, IconButton, Spinner } from '@ui-kit/react';
 import { ArrowLeftIcon } from '@ui-kit/icons/ArrowLeftIcon';
 import { ShareIcon } from '@ui-kit/icons/ShareIcon';
 import { LinkIcon } from '@ui-kit/icons/LinkIcon';
-import { MarkdownCoEditor, type ViewMode, type MarkdownEditorRef } from '@ui-kit/react-markdown';
+import { MarkdownCoEditor, type ViewMode, type MarkdownEditorRef, type CoAuthor } from '@ui-kit/react-markdown';
 import { useAuth } from '../contexts/AuthContext';
 import { useDocuments, type Document } from '../contexts/DocumentContext';
-import { useSave } from '../contexts/SaveContext';
+import { useSession } from '../contexts/SessionContext';
+import { useYjsCollaboration, type CoAuthor as YjsCoAuthor } from '../hooks/useYjsCollaboration';
+import { YJS_WS_URL } from '../config';
 import styles from './DocumentEditor.module.css';
 
 /**
@@ -39,24 +41,42 @@ function extractFirstH1(markdown: string): string | null {
   return null;
 }
 
+/**
+ * Map Yjs CoAuthor format to MarkdownEditor CoAuthor format
+ */
+function mapYjsCoAuthorsToEditor(yjsCoAuthors: YjsCoAuthor[]): CoAuthor[] {
+  return yjsCoAuthors.map((author) => ({
+    id: String(author.clientId),
+    name: author.name,
+    color: author.color,
+    isAI: false,
+    selectionStart: author.cursor?.anchor ?? 0,
+    selectionEnd: author.cursor?.head ?? 0,
+  }));
+}
+
 export function DocumentEditor() {
   const { documentId } = useParams<{ documentId: string }>();
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { getDocument, updateDocument } = useDocuments();
-  const { executeSave } = useSave();
+  const { session } = useSession();
 
   const [document, setDocument] = useState<Document | null>(null);
-  const [content, setContent] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('edit');
   const [isPublic, setIsPublic] = useState(false);
 
-  // Refs for tracking what's been saved (to detect changes)
-  const lastSavedContentRef = useRef<string>('');
+  // Ref for tracking the last saved title (to detect title changes)
   const lastSavedTitleRef = useRef<string>('');
   // Track if we've set initial cursor position
   const initialCursorSetRef = useRef(false);
+
+  // User info for awareness (use server-assigned session color)
+  const localUser = useMemo(() => ({
+    name: user?.name || 'Anonymous',
+    color: session?.color || '#888888',
+  }), [user?.name, session?.color]);
 
   // Redirect if not authenticated (wait for auth to finish loading first)
   useEffect(() => {
@@ -74,9 +94,7 @@ export function DocumentEditor() {
         const doc = await getDocument(documentId);
         if (doc) {
           setDocument(doc);
-          setContent(doc.content);
           setIsPublic(doc.isPublic);
-          lastSavedContentRef.current = doc.content;
           lastSavedTitleRef.current = doc.title;
         }
       } finally {
@@ -86,66 +104,62 @@ export function DocumentEditor() {
     loadDocument();
   }, [documentId, getDocument]);
 
-  // Debounced save function - uses SaveContext to ensure save completes even after navigation
-  const debouncedSave = useCallback(
-    (newContent: string, newTitle: string) => {
+  // Sync title to server (content is handled by Yjs)
+  const syncTitleToServer = useCallback(
+    async (newTitle: string) => {
       if (!documentId) return;
+      if (newTitle === lastSavedTitleRef.current) return;
 
-      // Check if anything changed
-      const contentChanged = newContent !== lastSavedContentRef.current;
-      const titleChanged = newTitle !== lastSavedTitleRef.current;
-
-      if (!contentChanged && !titleChanged) {
-        return;
-      }
-
-      // Capture current values for the save closure
-      const contentToSave = newContent;
-      const titleToSave = newTitle;
-
-      // Execute save through the context - this ensures:
-      // 1. Save continues even if component unmounts (navigation)
-      // 2. beforeunload warning is shown if user tries to close page
-      // 3. Save state indicator updates correctly
-      executeSave(async () => {
-        const updates: Partial<Document> = {};
-        if (contentChanged) updates.content = contentToSave;
-        if (titleChanged) updates.title = titleToSave;
-
-        await updateDocument(documentId, updates);
-
-        // Update refs after successful save
-        lastSavedContentRef.current = contentToSave;
-        lastSavedTitleRef.current = titleToSave;
-      });
+      lastSavedTitleRef.current = newTitle;
+      await updateDocument(documentId, { title: newTitle });
     },
-    [documentId, updateDocument, executeSave]
+    [documentId, updateDocument]
   );
 
-  // Handle content change - also syncs H1 heading to title
-  const handleContentChange = useCallback((newContent: string) => {
-    setContent(newContent);
+  // Handle Yjs content changes - extract title from H1 and sync metadata
+  // Content is persisted by Yjs (.yjs files), only title needs REST sync
+  const handleYjsContentChange = useCallback((newContent: string) => {
     if (document) {
       // Extract H1 heading and sync to title if it changed
       const h1Heading = extractFirstH1(newContent);
-      const newTitle = h1Heading !== null ? h1Heading : document.title;
 
       // Update document title if H1 changed
       if (h1Heading !== null && h1Heading !== document.title) {
-        setDocument({ ...document, title: newTitle });
+        setDocument({ ...document, title: h1Heading });
+        syncTitleToServer(h1Heading);
       }
-
-      debouncedSave(newContent, newTitle);
     }
-  }, [document, debouncedSave]);
+  }, [document, syncTitleToServer]);
 
-  // Handle title change
+  // Initialize Yjs collaboration (only when document is loaded)
+  const {
+    extensions,
+    connectionState,
+    coAuthors: yjsCoAuthors,
+    getContent,
+    isSynced,
+  } = useYjsCollaboration({
+    documentId: documentId || '',
+    serverUrl: YJS_WS_URL,
+    initialContent: document?.content || '',
+    localUser,
+    onChange: handleYjsContentChange,
+    enableOfflinePersistence: true,
+  });
+
+  // Map Yjs co-authors to editor format
+  const editorCoAuthors = useMemo(
+    () => mapYjsCoAuthorsToEditor(yjsCoAuthors),
+    [yjsCoAuthors]
+  );
+
+  // Handle title change from input field
   const handleTitleChange = useCallback((newTitle: string) => {
     if (document) {
       setDocument({ ...document, title: newTitle });
-      debouncedSave(content, newTitle);
+      syncTitleToServer(newTitle);
     }
-  }, [document, content, debouncedSave]);
+  }, [document, syncTitleToServer]);
 
   // Toggle network visibility
   const handleTogglePublic = useCallback(async () => {
@@ -160,6 +174,7 @@ export function DocumentEditor() {
     if (initialCursorSetRef.current || !document) return;
     initialCursorSetRef.current = true;
 
+    const content = getContent();
     // For new documents (just title + blank line), go to line 3
     // For existing documents, go to start (line 1)
     if (isNewDocument(content, document.title)) {
@@ -167,7 +182,21 @@ export function DocumentEditor() {
     } else {
       editor.goToLine(1);
     }
-  }, [document, content]);
+  }, [document, getContent]);
+
+  // Connection status indicator
+  const connectionIndicator = useMemo(() => {
+    switch (connectionState) {
+      case 'connected':
+        return <span className={styles.connectionDot} data-status="connected" title="Connected" />;
+      case 'connecting':
+        return <span className={styles.connectionDot} data-status="connecting" title="Connecting..." />;
+      case 'disconnected':
+        return <span className={styles.connectionDot} data-status="disconnected" title="Offline" />;
+      default:
+        return null;
+    }
+  }, [connectionState]);
 
   // Show loading while auth is being checked
   if (isAuthLoading || !user) {
@@ -178,11 +207,11 @@ export function DocumentEditor() {
     );
   }
 
-  if (isLoading) {
+  if (isLoading || !isSynced) {
     return (
       <div className={styles.loading}>
         <Spinner size="lg" />
-        <p>Loading document...</p>
+        <p>{isLoading ? 'Loading document...' : 'Connecting...'}</p>
       </div>
     );
   }
@@ -197,17 +226,23 @@ export function DocumentEditor() {
     );
   }
 
+  // Get the current synced content from Y.Text
+  // This is the authoritative content after WebSocket sync
+  const syncedContent = getContent();
+
   return (
     <div className={styles.editor}>
       <MarkdownCoEditor
-        value={content}
-        onChange={handleContentChange}
+        defaultValue={syncedContent}
         defaultMode={viewMode}
         onModeChange={setViewMode}
         placeholder="Start writing..."
         autoFocus
         fullPage
         onEditorReady={handleEditorReady}
+        extensions={extensions}
+        disableBuiltInHistory={true}
+        coAuthors={editorCoAuthors}
         toolbarStart={
           <>
             <IconButton
@@ -216,6 +251,7 @@ export function DocumentEditor() {
               onClick={() => navigate('/dashboard')}
               aria-label="Back to dashboard"
             />
+            {connectionIndicator}
             <input
               type="text"
               className={styles.titleInput}

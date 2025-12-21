@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { Router, Routes, Route, Outlet, Link } from './index';
 import {
@@ -358,7 +358,7 @@ describe('useRouterContext', () => {
   });
 
   it('returns context when inside Router', () => {
-    let context: ReturnType<typeof useRouterContext> = null;
+    let context: ReturnType<typeof useRouterContext>;
 
     function TestComponent() {
       context = useRouterContext();
@@ -371,9 +371,9 @@ describe('useRouterContext', () => {
       </Router>
     );
 
-    expect(context).not.toBeNull();
-    expect(context?.location).toBeDefined();
-    expect(context?.navigate).toBeDefined();
+    expect(context!).not.toBeNull();
+    expect(context!.location).toBeDefined();
+    expect(context!.navigate).toBeDefined();
   });
 });
 
@@ -453,8 +453,6 @@ describe('anchor click interception', () => {
   });
 
   it('does not intercept external links', async () => {
-    const originalLocation = window.location.href;
-
     render(
       <Router>
         <a href="https://example.com">External</a>
