@@ -5,7 +5,7 @@ import { AddIcon } from '@ui-kit/icons/AddIcon';
 import { FileIcon } from '@ui-kit/icons/FileIcon';
 import { LinkIcon } from '@ui-kit/icons/LinkIcon';
 import { useAuth } from '../contexts/AuthContext';
-import { useDocuments } from '../contexts/DocumentContext';
+import { useDocuments, type DocumentMetadata } from '../contexts/DocumentContext';
 import { useNetwork, type NetworkDocument } from '../contexts/NetworkContext';
 import { DocumentCard } from '../components/DocumentCard';
 import { getTimeAgo } from '../utils/timeAgo';
@@ -14,12 +14,22 @@ import styles from './Dashboard.module.css';
 export function Dashboard() {
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
-  const { documents, isLoading, fetchDocuments, createDocument } = useDocuments();
+  const { documents, isLoading, fetchDocuments, createDocument, updateDocument, deleteDocument } = useDocuments();
   const { networkDocuments, isDiscovering, startDiscovery, stopDiscovery } =
     useNetwork();
   const [showNewDocModal, setShowNewDocModal] = useState(false);
   const [newDocTitle, setNewDocTitle] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+
+  // Rename document state
+  const [showRenameModal, setShowRenameModal] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<DocumentMetadata | null>(null);
+  const [renameTitle, setRenameTitle] = useState('');
+  const [isRenaming, setIsRenaming] = useState(false);
+
+  // Delete document state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Redirect if not authenticated (wait for auth to load first)
   useEffect(() => {
@@ -49,6 +59,56 @@ export function Dashboard() {
       navigate(`/doc/${doc.id}`);
     } finally {
       setIsCreating(false);
+    }
+  };
+
+  const openRenameModal = (doc: DocumentMetadata) => {
+    setSelectedDocument(doc);
+    setRenameTitle(doc.title);
+    setShowRenameModal(true);
+  };
+
+  const closeRenameModal = () => {
+    setShowRenameModal(false);
+    setSelectedDocument(null);
+    setRenameTitle('');
+  };
+
+  const handleRenameDocument = async () => {
+    if (!selectedDocument || !renameTitle.trim()) return;
+
+    setIsRenaming(true);
+    try {
+      const result = await updateDocument(selectedDocument.id, { title: renameTitle.trim() });
+      if (result) {
+        closeRenameModal();
+      }
+    } finally {
+      setIsRenaming(false);
+    }
+  };
+
+  const openDeleteModal = (doc: DocumentMetadata) => {
+    setSelectedDocument(doc);
+    setShowDeleteModal(true);
+  };
+
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false);
+    setSelectedDocument(null);
+  };
+
+  const handleDeleteDocument = async () => {
+    if (!selectedDocument) return;
+
+    setIsDeleting(true);
+    try {
+      const success = await deleteDocument(selectedDocument.id);
+      if (success) {
+        closeDeleteModal();
+      }
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -93,6 +153,9 @@ export function Dashboard() {
                   key={doc.id}
                   document={doc}
                   onClick={() => navigate(`/doc/${doc.id}`)}
+                  onEdit={() => openRenameModal(doc)}
+                  onDelete={() => openDeleteModal(doc)}
+                  showActions={doc.ownerId === user?.id}
                 />
               ))}
             </div>
@@ -153,6 +216,55 @@ export function Dashboard() {
               disabled={!newDocTitle.trim() || isCreating}
             >
               {isCreating ? <Spinner size="sm" /> : 'Create'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Rename Document Modal */}
+      <Modal open={showRenameModal} onClose={closeRenameModal}>
+        <div className={styles.modalContent}>
+          <h2>Rename Document</h2>
+          <Input
+            placeholder="Enter new title"
+            value={renameTitle}
+            onChange={(e) => setRenameTitle(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleRenameDocument()}
+            autoFocus
+          />
+          <div className={styles.modalActions}>
+            <Button variant="ghost" onClick={closeRenameModal}>
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleRenameDocument}
+              disabled={!renameTitle.trim() || isRenaming}
+            >
+              {isRenaming ? <Spinner size="sm" /> : 'Rename'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Document Modal */}
+      <Modal open={showDeleteModal} onClose={closeDeleteModal}>
+        <div className={styles.modalContent}>
+          <h2>Delete Document</h2>
+          <p className={styles.deleteWarning}>
+            Are you sure you want to delete <strong>{selectedDocument?.title}</strong>?
+            This action cannot be undone.
+          </p>
+          <div className={styles.modalActions}>
+            <Button variant="ghost" onClick={closeDeleteModal}>
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleDeleteDocument}
+              disabled={isDeleting}
+            >
+              {isDeleting ? <Spinner size="sm" /> : 'Delete'}
             </Button>
           </div>
         </div>

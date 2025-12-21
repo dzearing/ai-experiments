@@ -246,3 +246,14 @@
   gap: var(--space-2);
   margin-top: var(--space-2);
 }
+
+.deleteWarning {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--base-fg-soft);
+  line-height: var(--leading-relaxed);
+}
+
+.deleteWarning strong {
+  color: var(--base-fg);
+}

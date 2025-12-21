@@ -5,18 +5,20 @@ import { ResourceCard } from '../ResourceCard';
 export interface DocumentCardProps {
   document: DocumentMetadata;
   onClick: () => void;
+  onEdit?: () => void;
   onDelete?: () => void;
-  showDelete?: boolean;
+  showActions?: boolean;
 }
 
-export function DocumentCard({ document, onClick, onDelete, showDelete = false }: DocumentCardProps) {
+export function DocumentCard({ document, onClick, onEdit, onDelete, showActions = false }: DocumentCardProps) {
   return (
     <ResourceCard
       icon={<FileIcon />}
       title={document.title}
       updatedAt={document.updatedAt}
       onClick={onClick}
-      onDelete={showDelete ? onDelete : undefined}
+      onEdit={showActions ? onEdit : undefined}
+      onDelete={showActions ? onDelete : undefined}
     />
   );
 }
