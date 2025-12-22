@@ -33,6 +33,8 @@ interface DocumentContextValue {
   getDocument: (id: string) => Promise<Document | null>;
   updateDocument: (id: string, updates: Partial<Document>) => Promise<Document | null>;
   deleteDocument: (id: string) => Promise<boolean>;
+  /** Direct setter for real-time updates via WebSocket */
+  setDocuments: React.Dispatch<React.SetStateAction<DocumentMetadata[]>>;
 }
 
 const DocumentContext = createContext<DocumentContextValue | null>(null);
@@ -191,6 +193,7 @@ export function DocumentProvider({ children }: DocumentProviderProps) {
     getDocument,
     updateDocument,
     deleteDocument,
+    setDocuments,
   };
 
   return (

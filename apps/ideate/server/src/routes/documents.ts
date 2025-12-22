@@ -1,10 +1,19 @@
 import { Router, type Request, type Response } from 'express';
 import { DocumentService } from '../services/DocumentService.js';
 import { WorkspaceService } from '../services/WorkspaceService.js';
+import type { WorkspaceWebSocketHandler } from '../websocket/WorkspaceWebSocketHandler.js';
 
-export const documentsRouter = Router();
 const documentService = new DocumentService();
 const workspaceService = new WorkspaceService();
+
+// Store the workspace handler reference for notifications
+let workspaceWsHandler: WorkspaceWebSocketHandler | null = null;
+
+export function setWorkspaceHandler(handler: WorkspaceWebSocketHandler): void {
+  workspaceWsHandler = handler;
+}
+
+export const documentsRouter = Router();
 
 // List documents (optionally filter by workspaceId query param)
 documentsRouter.get('/', async (req: Request, res: Response) => {
@@ -49,6 +58,12 @@ documentsRouter.post('/', async (req: Request, res: Response) => {
     }
 
     const document = await documentService.createDocument(userId, title, workspaceId);
+
+    // Notify workspace subscribers of new document
+    if (workspaceId && workspaceWsHandler) {
+      workspaceWsHandler.notifyResourceCreated(workspaceId, document.id, 'document', document);
+    }
+
     res.status(201).json(document);
   } catch (error) {
     console.error('Create document error:', error);
@@ -100,6 +115,11 @@ documentsRouter.patch('/:id', async (req: Request, res: Response) => {
       return;
     }
 
+    // Notify workspace subscribers of updated document
+    if (document.workspaceId && workspaceWsHandler) {
+      workspaceWsHandler.notifyResourceUpdated(document.workspaceId, document.id, 'document', document);
+    }
+
     res.json(document);
   } catch (error) {
     console.error('Update document error:', error);
@@ -118,11 +138,20 @@ documentsRouter.delete('/:id', async (req: Request, res: Response) => {
       return;
     }
 
+    // Get document metadata before deletion for notification
+    const document = await documentService.getDocument(id, userId);
+    const workspaceId = document?.workspaceId;
+
     const success = await documentService.deleteDocument(id, userId);
 
     if (!success) {
       res.status(404).json({ error: 'Document not found' });
       return;
+    }
+
+    // Notify workspace subscribers of deleted document
+    if (workspaceId && workspaceWsHandler) {
+      workspaceWsHandler.notifyResourceDeleted(workspaceId, id, 'document');
     }
 
     res.json({ success: true });

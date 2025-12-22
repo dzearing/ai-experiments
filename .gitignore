@@ -41,6 +41,12 @@ playwright-report/
 # Temporary files (logs, sessions, feedback)
 temp/
 
+# Typescript files.
+*.tsbuildinfo
+
+# Runtime data (yjs docs, uploads, etc.)
+**/data/yjs-docs/
+
 # Generated CSS module type definitions
 *.css.d.ts
 

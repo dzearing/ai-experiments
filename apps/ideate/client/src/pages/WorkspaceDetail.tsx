@@ -10,6 +10,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useWorkspaces, type Workspace } from '../contexts/WorkspaceContext';
 import { useDocuments, type DocumentMetadata } from '../contexts/DocumentContext';
 import { useChat, type ChatRoomMetadata } from '../contexts/ChatContext';
+import { useSession } from '../contexts/SessionContext';
+import { useWorkspaceSocket, type ResourcePresence } from '../hooks/useWorkspaceSocket';
 import { DocumentCard } from '../components/DocumentCard';
 import { ChatRoomCard } from '../components/ChatRoomCard';
 import styles from './WorkspaceDetail.module.css';
@@ -19,11 +21,65 @@ export function WorkspaceDetail() {
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { getWorkspace, generateShareLink } = useWorkspaces();
-  const { documents, isLoading, fetchDocuments, createDocument, updateDocument, deleteDocument } = useDocuments();
-  const { chatRooms, isLoading: isLoadingChatRooms, fetchChatRooms, createChatRoom, updateChatRoom, deleteChatRoom } = useChat();
+  const { documents, isLoading, fetchDocuments, createDocument, updateDocument, deleteDocument, setDocuments } = useDocuments();
+  const { chatRooms, isLoading: isLoadingChatRooms, fetchChatRooms, createChatRoom, updateChatRoom, deleteChatRoom, setChatRooms } = useChat();
+  const { session } = useSession();
 
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
   const [isLoadingWorkspace, setIsLoadingWorkspace] = useState(true);
+
+  // Presence tracking for resources
+  const [resourcePresence, setResourcePresence] = useState<Map<string, ResourcePresence[]>>(new Map());
+
+  // Handle real-time resource events
+  const handleResourceCreated = useCallback((resourceId: string, resourceType: 'document' | 'chatroom', data: unknown) => {
+    if (resourceType === 'document') {
+      const doc = data as DocumentMetadata;
+      setDocuments?.(prev => {
+        // Avoid duplicates
+        if (prev.some(d => d.id === resourceId)) return prev;
+        return [doc, ...prev];
+      });
+    } else {
+      const chatRoom = data as ChatRoomMetadata;
+      setChatRooms?.(prev => {
+        if (prev.some(c => c.id === resourceId)) return prev;
+        return [chatRoom, ...prev];
+      });
+    }
+  }, [setDocuments, setChatRooms]);
+
+  const handleResourceUpdated = useCallback((resourceId: string, resourceType: 'document' | 'chatroom', data: unknown) => {
+    if (resourceType === 'document') {
+      const doc = data as DocumentMetadata;
+      setDocuments?.(prev => prev.map(d => d.id === resourceId ? doc : d));
+    } else {
+      const chatRoom = data as ChatRoomMetadata;
+      setChatRooms?.(prev => prev.map(c => c.id === resourceId ? chatRoom : c));
+    }
+  }, [setDocuments, setChatRooms]);
+
+  const handleResourceDeleted = useCallback((resourceId: string, resourceType: 'document' | 'chatroom') => {
+    if (resourceType === 'document') {
+      setDocuments?.(prev => prev.filter(d => d.id !== resourceId));
+    } else {
+      setChatRooms?.(prev => prev.filter(c => c.id !== resourceId));
+    }
+  }, [setDocuments, setChatRooms]);
+
+  const handlePresenceUpdate = useCallback((presence: Map<string, ResourcePresence[]>) => {
+    setResourcePresence(new Map(presence));
+  }, []);
+
+  // Connect to workspace WebSocket for real-time updates
+  useWorkspaceSocket({
+    workspaceId,
+    sessionColor: session?.color,
+    onResourceCreated: handleResourceCreated,
+    onResourceUpdated: handleResourceUpdated,
+    onResourceDeleted: handleResourceDeleted,
+    onPresenceUpdate: handlePresenceUpdate,
+  });
 
   // Document modal states
   const [showNewDocModal, setShowNewDocModal] = useState(false);
@@ -363,6 +419,7 @@ export function WorkspaceDetail() {
                   onEdit={() => openRenameDocModal(doc)}
                   onDelete={() => openDeleteDocModal(doc)}
                   showActions={doc.ownerId === user?.id}
+                  presence={resourcePresence.get(doc.id)}
                 />
               ))}
             </div>
@@ -406,6 +463,7 @@ export function WorkspaceDetail() {
                   onEdit={() => openRenameChatModal(chatRoom)}
                   onDelete={() => openDeleteChatModal(chatRoom)}
                   showActions={chatRoom.ownerId === user?.id}
+                  presence={resourcePresence.get(chatRoom.id)}
                 />
               ))}
             </div>

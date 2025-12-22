@@ -37,6 +37,8 @@ interface ChatContextValue {
   getChatRoom: (id: string) => Promise<ChatRoomMetadata | null>;
   updateChatRoom: (id: string, updates: Partial<ChatRoomMetadata>) => Promise<ChatRoomMetadata | null>;
   deleteChatRoom: (id: string) => Promise<boolean>;
+  /** Direct setter for real-time updates via WebSocket */
+  setChatRooms: React.Dispatch<React.SetStateAction<ChatRoomMetadata[]>>;
 }
 
 const ChatContext = createContext<ChatContextValue | null>(null);
@@ -193,6 +195,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
     getChatRoom,
     updateChatRoom,
     deleteChatRoom,
+    setChatRooms,
   };
 
   return (

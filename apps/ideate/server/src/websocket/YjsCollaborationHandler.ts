@@ -551,7 +551,7 @@ export class YjsCollaborationHandler extends EventEmitter {
         resolveReady!();
         // Emit room_ready event after content is loaded so diagnostics can update
         this.recordEvent('room_ready', roomName, undefined, {
-          docSize: Y.encodeStateAsUpdate(room.doc).length,
+          docSize: Y.encodeStateAsUpdate(room!.doc).length,
         });
       }).catch((error) => {
         console.error(`[Yjs] Failed to load persisted doc for room "${roomName}":`, error);

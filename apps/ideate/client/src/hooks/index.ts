@@ -8,5 +8,12 @@ export type {
 
 export { useChatSocket } from './useChatSocket';
 
+export { useWorkspaceSocket } from './useWorkspaceSocket';
+export type {
+  ResourcePresence,
+  WorkspaceMessage,
+  UseWorkspaceSocketOptions,
+} from './useWorkspaceSocket';
+
 // Re-export Extension type for convenience
 export type { Extension } from '@codemirror/state';

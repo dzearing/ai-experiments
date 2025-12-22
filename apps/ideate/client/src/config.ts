@@ -37,3 +37,4 @@ export const WS_URL = getWsUrl();
 export const YJS_WS_URL = `${WS_URL}/yjs`;
 export const DIAGNOSTICS_WS_URL = `${WS_URL}/diagnostics-ws`;
 export const CHAT_WS_URL = `${WS_URL}/chat-ws`;
+export const WORKSPACE_WS_URL = `${WS_URL}/workspace-ws`;

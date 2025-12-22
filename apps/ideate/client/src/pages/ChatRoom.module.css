@@ -3,6 +3,7 @@
   flex-direction: column;
   height: 100%;
   min-height: 0;
+  overflow: hidden; /* Chat manages its own scrolling internally */
   background: var(--base-bg);
 }
 
@@ -10,10 +11,25 @@
 .header {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  justify-content: space-between;
+  gap: var(--space-4);
   padding: var(--space-3) var(--space-4);
   border-bottom: 1px solid var(--base-border);
   background: var(--soft-bg);
+  flex-shrink: 0;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  flex: 1;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
   flex-shrink: 0;
 }
 
@@ -105,75 +121,128 @@
   border: 1px solid var(--base-border);
 }
 
-/* Messages */
+/* Messages - Condensed slack-like format */
 .message {
   display: flex;
   flex-direction: row;
   align-items: flex-start;
-  gap: var(--space-2);
-  max-width: 85%;
+  gap: var(--space-3);
+  padding: var(--space-1) 0;
+}
+
+/* Consecutive message from same sender - more compact */
+.message.consecutive {
+  padding-top: 0;
 }
 
 .avatar {
   flex-shrink: 0;
+  margin-top: 2px;
 }
 
-/* Hide avatar for consecutive messages from same sender */
+/* Hide avatar placeholder for consecutive messages from same sender */
 .avatar.hidden {
+  width: 32px; /* Match sm avatar size */
   visibility: hidden;
 }
 
-/* Default: other users' messages use strong surface */
+/* Message content - no bubble, flat design */
 .messageContent {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-2) var(--space-3);
-  background: var(--strong-bg);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--strong-border);
+  gap: var(--space-0-5);
   min-width: 0;
   flex: 1;
-  max-width: fit-content;
+}
+
+/* Header with name and timestamp inline */
+.messageHeader {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
 }
 
 .senderName {
   font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-  color: var(--strong-fg-primary);
+  font-weight: var(--weight-semibold);
+  color: var(--base-fg);
 }
 
-.messageText {
-  margin: 0;
-  font-size: var(--text-base);
-  color: var(--strong-fg);
-  line-height: var(--leading-normal);
-  word-wrap: break-word;
-  white-space: pre-wrap;
+/* Color-coded sender name */
+.senderName[data-color] {
+  color: var(--sender-color, var(--base-fg));
 }
 
 .messageTime {
   font-size: var(--text-xs);
-  color: var(--strong-fg-soft);
-  align-self: flex-end;
+  color: var(--base-fg-soft);
 }
 
-/* Own messages use primary surface */
-.ownMessage .messageContent {
-  background: var(--primary-bg);
-  border-color: var(--primary-border);
+/* Message text - markdown ready */
+.messageText {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--base-fg);
+  line-height: var(--leading-relaxed);
+  word-wrap: break-word;
+  white-space: pre-wrap;
 }
 
-.ownMessage .senderName {
-  color: var(--primary-fg-primary);
+/* Markdown-ready code blocks */
+.messageText code {
+  background: var(--soft-bg);
+  padding: 0.125em 0.375em;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+.messageText pre {
+  background: var(--soft-bg);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+  margin: var(--space-2) 0;
+}
+
+.messageText pre code {
+  background: none;
+  padding: 0;
+}
+
+/* Own messages - highlighted with strong surface */
+.ownMessage {
+  background: var(--strong-bg);
+  margin-left: calc(-1 * var(--space-3));
+  margin-right: calc(-1 * var(--space-3));
+  padding-left: var(--space-3);
+  padding-right: var(--space-3);
+  padding-top: var(--space-2);
+  padding-bottom: var(--space-2);
+  border-radius: var(--radius-md);
+}
+
+/* Consecutive own messages - pull up to eliminate gap, no top radius */
+.ownMessage.consecutive {
+  margin-top: calc(-1 * var(--space-2)); /* Compensate for dateGroup gap */
+  padding-top: var(--space-1);
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+/* Own message followed by another own message - no bottom radius */
+.ownMessage:has(+ .ownMessage) {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  padding-bottom: var(--space-1);
 }
 
 .ownMessage .messageText {
-  color: var(--primary-fg);
+  color: var(--strong-fg);
 }
 
 .ownMessage .messageTime {
-  color: var(--primary-fg-soft);
+  color: var(--strong-fg-soft);
 }
 
 /* Typing indicator */

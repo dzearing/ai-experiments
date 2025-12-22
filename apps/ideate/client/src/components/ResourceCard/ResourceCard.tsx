@@ -3,6 +3,8 @@ import { MoreHorizontalIcon } from '@ui-kit/icons/MoreHorizontalIcon';
 import { EditIcon } from '@ui-kit/icons/EditIcon';
 import { TrashIcon } from '@ui-kit/icons/TrashIcon';
 import { getTimeAgo } from '../../utils/timeAgo';
+import { AvatarGroup } from '../AvatarGroup';
+import type { ResourcePresence } from '../../hooks/useWorkspaceSocket';
 import styles from './ResourceCard.module.css';
 
 export interface ResourceCardProps {
@@ -20,6 +22,8 @@ export interface ResourceCardProps {
   onEdit?: () => void;
   /** Delete handler (shows delete option in menu if provided) */
   onDelete?: () => void;
+  /** Presence info for users viewing this resource */
+  presence?: ResourcePresence[];
 }
 
 export function ResourceCard({
@@ -30,6 +34,7 @@ export function ResourceCard({
   onClick,
   onEdit,
   onDelete,
+  presence = [],
 }: ResourceCardProps) {
   const updatedDate = typeof updatedAt === 'string' ? new Date(updatedAt) : updatedAt;
   const timeAgo = getTimeAgo(updatedDate);
@@ -77,7 +82,12 @@ export function ResourceCard({
       {description && (
         <p className={styles.resourceDescription}>{description}</p>
       )}
-      <p className={styles.resourceMeta}>Updated {timeAgo}</p>
+      <div className={styles.cardFooter}>
+        <p className={styles.resourceMeta}>Updated {timeAgo}</p>
+        {presence.length > 0 && (
+          <AvatarGroup presence={presence} maxVisible={3} size="xs" />
+        )}
+      </div>
     </Card>
   );
 }

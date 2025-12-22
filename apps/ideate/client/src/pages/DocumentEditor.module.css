@@ -3,6 +3,7 @@
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  overflow: hidden; /* Editor manages its own scrolling internally */
 }
 
 /* Title input in toolbar */

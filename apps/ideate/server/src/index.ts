@@ -6,14 +6,15 @@ import { config } from 'dotenv';
 import { join } from 'path';
 
 import { authRouter } from './routes/auth.js';
-import { documentsRouter } from './routes/documents.js';
+import { documentsRouter, setWorkspaceHandler as setDocumentsWorkspaceHandler } from './routes/documents.js';
 import { workspacesRouter } from './routes/workspaces.js';
-import { chatroomsRouter } from './routes/chatrooms.js';
+import { chatroomsRouter, setWorkspaceHandler as setChatroomsWorkspaceHandler } from './routes/chatrooms.js';
 import { createDiagnosticsRouter } from './routes/diagnostics.js';
 import { CollaborationHandler } from './websocket/CollaborationHandler.js';
 import { YjsCollaborationHandler } from './websocket/YjsCollaborationHandler.js';
 import { DiagnosticsHandler } from './websocket/DiagnosticsHandler.js';
 import { ChatWebSocketHandler } from './websocket/ChatWebSocketHandler.js';
+import { WorkspaceWebSocketHandler } from './websocket/WorkspaceWebSocketHandler.js';
 import { DiscoveryService } from './services/DiscoveryService.js';
 import { DocumentService } from './services/DocumentService.js';
 
@@ -21,7 +22,6 @@ import { DocumentService } from './services/DocumentService.js';
 config();
 
 const PORT = process.env.PORT || 3002;
-const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5190';
 
 // Create Express app
 const app = express();
@@ -102,6 +102,21 @@ chatWss.on('connection', (ws, req) => {
   chatHandler.handleConnection(ws, req);
 });
 
+// Create WebSocket server for workspace updates (JSON-based protocol)
+const workspaceWss = new WebSocketServer({ noServer: true });
+const workspaceHandler = new WorkspaceWebSocketHandler();
+
+workspaceWss.on('connection', (ws, req) => {
+  workspaceHandler.handleConnection(ws, req);
+});
+
+// Export workspace handler for use in routes
+export { workspaceHandler };
+
+// Wire up workspace handler to routes for real-time notifications
+setDocumentsWorkspaceHandler(workspaceHandler);
+setChatroomsWorkspaceHandler(workspaceHandler);
+
 // Mount diagnostics router (no auth required)
 app.use('/api/diagnostics', createDiagnosticsRouter(yjsHandler));
 
@@ -136,6 +151,11 @@ server.on('upgrade', (request, socket, head) => {
     chatWss.handleUpgrade(request, socket, head, (ws) => {
       chatWss.emit('connection', ws, request);
     });
+  } else if (pathname === '/workspace-ws') {
+    // Workspace updates WebSocket
+    workspaceWss.handleUpgrade(request, socket, head, (ws) => {
+      workspaceWss.emit('connection', ws, request);
+    });
   } else {
     socket.destroy();
   }
@@ -150,6 +170,7 @@ server.listen(PORT, () => {
   console.log(`WebSocket (legacy) available at ws://localhost:${PORT}/ws`);
   console.log(`WebSocket (Yjs) available at ws://localhost:${PORT}/yjs`);
   console.log(`WebSocket (Chat) available at ws://localhost:${PORT}/chat-ws`);
+  console.log(`WebSocket (Workspace) available at ws://localhost:${PORT}/workspace-ws`);
   console.log(`Diagnostics API at http://localhost:${PORT}/api/diagnostics`);
   console.log(`Diagnostics WebSocket at ws://localhost:${PORT}/diagnostics-ws`);
 

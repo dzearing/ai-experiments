@@ -9,6 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useDocuments, type Document } from '../contexts/DocumentContext';
 import { useSession } from '../contexts/SessionContext';
 import { useYjsCollaboration, type CoAuthor as YjsCoAuthor } from '../hooks/useYjsCollaboration';
+import { useWorkspaceSocket } from '../hooks/useWorkspaceSocket';
 import { YJS_WS_URL } from '../config';
 import styles from './DocumentEditor.module.css';
 
@@ -77,6 +78,27 @@ export function DocumentEditor() {
     name: user?.name || 'Anonymous',
     color: session?.color || '#888888',
   }), [user?.name, session?.color]);
+
+  // Workspace presence tracking - notify other users that we're viewing this document
+  const { isConnected, joinResource, leaveResource } = useWorkspaceSocket({
+    workspaceId: document?.workspaceId,
+    sessionColor: session?.color,
+  });
+
+  // Join document presence when WebSocket is connected
+  // Server handles deduplication and grace period cancellation for reconnects
+  useEffect(() => {
+    if (isConnected && document?.workspaceId && documentId) {
+      joinResource(documentId, 'document');
+    }
+  }, [isConnected, document?.workspaceId, documentId, joinResource]);
+
+  // Leave resource on unmount
+  useEffect(() => {
+    return () => {
+      leaveResource();
+    };
+  }, [leaveResource]);
 
   // Redirect if not authenticated (wait for auth to finish loading first)
   useEffect(() => {

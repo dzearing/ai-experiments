@@ -107,6 +107,9 @@ export type { SkeletonProps, SkeletonVariant } from './components/Skeleton';
 export { Avatar } from './components/Avatar';
 export type { AvatarProps, AvatarSize } from './components/Avatar';
 
+export { AvatarGroup } from './components/AvatarGroup';
+export type { AvatarGroupProps } from './components/AvatarGroup';
+
 export { Chip } from './components/Chip';
 export type { ChipProps, ChipVariant, ChipSize } from './components/Chip';
 

@@ -1,12 +1,13 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from '@ui-kit/router';
-import { Avatar, Button, IconButton, Input, Spinner } from '@ui-kit/react';
+import { Avatar, AvatarGroup, Button, IconButton, Input, Spinner } from '@ui-kit/react';
 import { ArrowLeftIcon } from '@ui-kit/icons/ArrowLeftIcon';
 import { SendIcon } from '@ui-kit/icons/SendIcon';
 import { useAuth } from '../contexts/AuthContext';
 import { useSession } from '../contexts/SessionContext';
 import { useChat, type ChatRoomMetadata, type ChatMessage } from '../contexts/ChatContext';
 import { useChatSocket } from '../hooks/useChatSocket';
+import { useWorkspaceSocket, type ResourcePresence } from '../hooks/useWorkspaceSocket';
 import styles from './ChatRoom.module.css';
 
 function formatTime(dateString: string): string {
@@ -67,6 +68,39 @@ export function ChatRoom() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Track active users in this chat room
+  const [activeUsers, setActiveUsers] = useState<ResourcePresence[]>([]);
+
+  // Handle presence updates from workspace socket
+  const handlePresenceUpdate = useCallback((presence: Map<string, ResourcePresence[]>) => {
+    if (chatRoomId) {
+      const chatRoomPresence = presence.get(chatRoomId) || [];
+      setActiveUsers(chatRoomPresence);
+    }
+  }, [chatRoomId]);
+
+  // Workspace presence tracking - notify other users that we're viewing this chat room
+  const { isConnected: isWorkspaceConnected, joinResource, leaveResource } = useWorkspaceSocket({
+    workspaceId: chatRoom?.workspaceId,
+    sessionColor: session?.color,
+    onPresenceUpdate: handlePresenceUpdate,
+  });
+
+  // Join chat room presence when WebSocket is connected
+  // Server handles deduplication and grace period cancellation for reconnects
+  useEffect(() => {
+    if (isWorkspaceConnected && chatRoom?.workspaceId && chatRoomId) {
+      joinResource(chatRoomId, 'chatroom');
+    }
+  }, [isWorkspaceConnected, chatRoom?.workspaceId, chatRoomId, joinResource]);
+
+  // Leave resource on unmount
+  useEffect(() => {
+    return () => {
+      leaveResource();
+    };
+  }, [leaveResource]);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -221,14 +255,29 @@ export function ChatRoom() {
     <div className={styles.chatRoom}>
       {/* Header */}
       <header className={styles.header}>
-        <IconButton
-          icon={<ArrowLeftIcon />}
-          variant="ghost"
-          onClick={() => navigate(`/workspace/${chatRoom.workspaceId}`)}
-          aria-label="Back to workspace"
-        />
-        <span className={styles.connectionDot} data-status={connectionStatus} />
-        <h1 className={styles.roomName}>{chatRoom.name}</h1>
+        <div className={styles.headerLeft}>
+          <IconButton
+            icon={<ArrowLeftIcon />}
+            variant="ghost"
+            onClick={() => navigate(`/workspace/${chatRoom.workspaceId}`)}
+            aria-label="Back to workspace"
+          />
+          <span className={styles.connectionDot} data-status={connectionStatus} />
+          <h1 className={styles.roomName}>{chatRoom.name}</h1>
+        </div>
+        {activeUsers.length > 0 && (
+          <div className={styles.headerRight}>
+            <AvatarGroup max={5} size="sm">
+              {activeUsers.map((presence) => (
+                <Avatar
+                  key={presence.userId}
+                  fallback={presence.userName}
+                  color={presence.userColor}
+                />
+              ))}
+            </AvatarGroup>
+          </div>
+        )}
       </header>
 
       {/* Messages */}
@@ -244,27 +293,39 @@ export function ChatRoom() {
                 <span className={styles.dateLabel}>{formatDate(group.messages[0].createdAt)}</span>
               </div>
               {group.messages.map((message, index) => {
-                // Check if previous message is from same sender (to hide avatar)
+                // Check if previous message is from same sender (to hide avatar/header)
                 const prevMessage = index > 0 ? group.messages[index - 1] : null;
-                const showAvatar = !prevMessage || prevMessage.senderId !== message.senderId;
-                const showName = showAvatar && message.senderId !== user.id;
+                const isConsecutive = prevMessage && prevMessage.senderId === message.senderId;
+                const showHeader = !isConsecutive;
                 const isOwnMessage = message.senderId === user.id;
 
                 return (
-                  <div key={message.id} className={`${styles.message} ${isOwnMessage ? styles.ownMessage : ''}`}>
-                    <div className={`${styles.avatar} ${!showAvatar ? styles.hidden : ''}`}>
-                      <Avatar
-                        size="sm"
-                        fallback={message.senderName}
-                        color={message.senderColor}
-                      />
+                  <div
+                    key={message.id}
+                    className={`${styles.message} ${isOwnMessage ? styles.ownMessage : ''} ${isConsecutive ? styles.consecutive : ''}`}
+                  >
+                    <div className={`${styles.avatar} ${isConsecutive ? styles.hidden : ''}`}>
+                      {!isConsecutive && (
+                        <Avatar
+                          size="sm"
+                          fallback={message.senderName}
+                          color={message.senderColor}
+                        />
+                      )}
                     </div>
                     <div className={styles.messageContent}>
-                      {showName && (
-                        <span className={styles.senderName}>{message.senderName}</span>
+                      {showHeader && (
+                        <div className={styles.messageHeader}>
+                          <span
+                            className={styles.senderName}
+                            style={{ color: message.senderColor }}
+                          >
+                            {message.senderName}
+                          </span>
+                          <span className={styles.messageTime}>{formatTime(message.createdAt)}</span>
+                        </div>
                       )}
                       <p className={styles.messageText}>{message.content}</p>
-                      <span className={styles.messageTime}>{formatTime(message.createdAt)}</span>
                     </div>
                   </div>
                 );

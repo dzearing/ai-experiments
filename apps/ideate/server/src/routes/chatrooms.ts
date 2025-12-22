@@ -1,10 +1,19 @@
 import { Router, type Request, type Response } from 'express';
 import { ChatRoomService } from '../services/ChatRoomService.js';
 import { WorkspaceService } from '../services/WorkspaceService.js';
+import type { WorkspaceWebSocketHandler } from '../websocket/WorkspaceWebSocketHandler.js';
 
-export const chatroomsRouter = Router();
 const chatRoomService = new ChatRoomService();
 const workspaceService = new WorkspaceService();
+
+// Store the workspace handler reference for notifications
+let workspaceWsHandler: WorkspaceWebSocketHandler | null = null;
+
+export function setWorkspaceHandler(handler: WorkspaceWebSocketHandler): void {
+  workspaceWsHandler = handler;
+}
+
+export const chatroomsRouter = Router();
 
 // List chat rooms (requires workspaceId query param)
 chatroomsRouter.get('/', async (req: Request, res: Response) => {
@@ -56,6 +65,12 @@ chatroomsRouter.post('/', async (req: Request, res: Response) => {
     }
 
     const chatRoom = await chatRoomService.createChatRoom(userId, name, workspaceId);
+
+    // Notify workspace subscribers of new chat room
+    if (workspaceWsHandler) {
+      workspaceWsHandler.notifyResourceCreated(workspaceId, chatRoom.id, 'chatroom', chatRoom);
+    }
+
     res.status(201).json(chatRoom);
   } catch (error) {
     console.error('Create chat room error:', error);
@@ -118,6 +133,11 @@ chatroomsRouter.patch('/:id', async (req: Request, res: Response) => {
       return;
     }
 
+    // Notify workspace subscribers of updated chat room
+    if (workspaceWsHandler) {
+      workspaceWsHandler.notifyResourceUpdated(chatRoom.workspaceId, chatRoom.id, 'chatroom', chatRoom);
+    }
+
     res.json(chatRoom);
   } catch (error) {
     console.error('Update chat room error:', error);
@@ -136,11 +156,20 @@ chatroomsRouter.delete('/:id', async (req: Request, res: Response) => {
       return;
     }
 
+    // Get chat room metadata before deletion for notification
+    const chatRoomMeta = await chatRoomService.getChatRoomInternal(id);
+    const workspaceId = chatRoomMeta?.workspaceId;
+
     const success = await chatRoomService.deleteChatRoom(id, userId);
 
     if (!success) {
       res.status(404).json({ error: 'Chat room not found' });
       return;
+    }
+
+    // Notify workspace subscribers of deleted chat room
+    if (workspaceId && workspaceWsHandler) {
+      workspaceWsHandler.notifyResourceDeleted(workspaceId, id, 'chatroom');
     }
 
     res.json({ success: true });
