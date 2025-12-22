@@ -1,8 +1,7 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from '@ui-kit/router';
-import { Avatar, AvatarGroup, Button, IconButton, Input, Spinner } from '@ui-kit/react';
+import { Avatar, AvatarGroup, Button, ChatInput, IconButton, Spinner, type ChatInputSubmitData } from '@ui-kit/react';
 import { ArrowLeftIcon } from '@ui-kit/icons/ArrowLeftIcon';
-import { SendIcon } from '@ui-kit/icons/SendIcon';
 import { useAuth } from '../contexts/AuthContext';
 import { useSession } from '../contexts/SessionContext';
 import { useChat, type ChatRoomMetadata, type ChatMessage } from '../contexts/ChatContext';
@@ -62,12 +61,9 @@ export function ChatRoom() {
 
   const [chatRoom, setChatRoom] = useState<ChatRoomMetadata | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [messageInput, setMessageInput] = useState('');
   const [typingUsers, setTypingUsers] = useState<Map<string, string>>(new Map());
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Track active users in this chat room
   const [activeUsers, setActiveUsers] = useState<ResourcePresence[]>([]);
@@ -146,7 +142,6 @@ export function ChatRoom() {
     isConnected,
     isConnecting,
     sendMessage,
-    sendTyping,
     sendStopTyping,
   } = useChatSocket({
     roomId: chatRoomId || '',
@@ -162,47 +157,13 @@ export function ChatRoom() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Handle input change with typing indicator
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setMessageInput(e.target.value);
+  // Handle chat input submit
+  const handleChatSubmit = useCallback((data: ChatInputSubmitData) => {
+    if (!data.content.trim()) return;
 
-    // Send typing indicator
-    sendTyping();
-
-    // Clear previous timeout and set new one for stop typing
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-    typingTimeoutRef.current = setTimeout(() => {
-      sendStopTyping();
-    }, 2000);
-  }, [sendTyping, sendStopTyping]);
-
-  // Handle send message
-  const handleSendMessage = useCallback(() => {
-    const content = messageInput.trim();
-    if (!content) return;
-
-    sendMessage(content);
-    setMessageInput('');
+    sendMessage(data.content);
     sendStopTyping();
-
-    // Clear typing timeout
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-
-    // Focus input
-    inputRef.current?.focus();
-  }, [messageInput, sendMessage, sendStopTyping]);
-
-  // Handle enter key
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  }, [handleSendMessage]);
+  }, [sendMessage, sendStopTyping]);
 
   // Group messages by date
   const messageGroups = useMemo(() => groupMessagesByDate(messages), [messages]);
@@ -350,21 +311,12 @@ export function ChatRoom() {
 
       {/* Input */}
       <div className={styles.inputContainer}>
-        <Input
-          ref={inputRef}
-          className={styles.messageInput}
+        <ChatInput
           placeholder="Type a message..."
-          value={messageInput}
-          onChange={handleInputChange}
-          onKeyDown={handleKeyDown}
+          onSubmit={handleChatSubmit}
           disabled={!isConnected}
-        />
-        <Button
-          variant="primary"
-          icon={<SendIcon />}
-          onClick={handleSendMessage}
-          disabled={!messageInput.trim() || !isConnected}
-          aria-label="Send message"
+          historyKey={`chatroom-${chatRoomId}`}
+          fullWidth
         />
       </div>
     </div>

@@ -94,7 +94,7 @@ interface TooltipState {
 }
 
 const OFFSET = 8; // Distance from target
-const BEAK_SIZE = 6; // Size of the beak/arrow
+const BEAK_SIZE = 8; // Size of the beak/arrow
 const VIEWPORT_PADDING = 8; // Minimum distance from viewport edge
 
 function calculatePosition(
@@ -292,8 +292,9 @@ export function Tooltip({
     ? cloneElement(children as ReactElement<Record<string, unknown>>, {
         ref: (node: HTMLElement | null) => {
           triggerRef.current = node;
-          // Forward ref if children has one
-          const childRef = (children as { ref?: React.Ref<HTMLElement> }).ref;
+          // Forward ref if children has one (React 19: ref is now in props)
+          const childProps = children.props as { ref?: React.Ref<HTMLElement> };
+          const childRef = childProps.ref;
           if (typeof childRef === 'function') {
             childRef(node);
           } else if (childRef && typeof childRef === 'object') {

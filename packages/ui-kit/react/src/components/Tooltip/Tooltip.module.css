@@ -1,7 +1,7 @@
 /**
  * Tooltip styles
  *
- * Uses surface.inverted for automatic theme-aware inverted colors
+ * Uses surface.stronger for solid, high-contrast tooltips
  * See TOKEN_GUIDE.md for surface reference
  */
 
@@ -9,20 +9,20 @@
   position: fixed;
   top: 0;
   left: 0;
-  padding: var(--space-1) var(--space-2);
+  padding: var(--space-2);
   border-radius: var(--radius-sm);
   font-family: var(--font-sans);
   font-size: var(--text-sm);
   line-height: var(--leading-tight);
   white-space: nowrap;
-  max-width: 280px;
   z-index: 10000;
   box-shadow: var(--shadow-md);
   pointer-events: none;
+  border: 1px solid var(--stronger-border);
 
-  /* Use inverted surface tokens */
-  background: var(--inverted-bg);
-  color: var(--inverted-fg);
+  /* Use stronger surface tokens */
+  background: var(--stronger-bg);
+  color: var(--stronger-fg);
 
   /* Start invisible, fade in when positioned */
   opacity: 0;
@@ -47,34 +47,34 @@
   position: absolute;
   width: 0;
   height: 0;
-  border: 6px solid transparent;
+  border: 8px solid transparent;
 }
 
 /* Beak pointing down (tooltip above target) */
 .beak-top {
-  bottom: -4px;
-  border-top-color: var(--inverted-bg);
+  bottom: -8px;
+  border-top-color: var(--stronger-bg);
   border-bottom: none;
 }
 
 /* Beak pointing up (tooltip below target) */
 .beak-bottom {
-  top: -4px;
-  border-bottom-color: var(--inverted-bg);
+  top: -8px;
+  border-bottom-color: var(--stronger-bg);
   border-top: none;
 }
 
 /* Beak pointing right (tooltip to left of target) */
 .beak-left {
-  right: -4px;
-  border-left-color: var(--inverted-bg);
+  right: -8px;
+  border-left-color: var(--stronger-bg);
   border-right: none;
 }
 
 /* Beak pointing left (tooltip to right of target) */
 .beak-right {
-  left: -4px;
-  border-right-color: var(--inverted-bg);
+  left: -8px;
+  border-right-color: var(--stronger-bg);
   border-left: none;
 }
 
