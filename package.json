@@ -34,7 +34,8 @@
   "pnpm": {
     "overrides": {
       "glob@<9": "^11.0.0",
-      "inflight": "npm:@esm2cjs/inflight@^2.0.0"
+      "inflight": "npm:@esm2cjs/inflight@^2.0.0",
+      "rollup": "4.44.1"
     }
   },
   "packageManager": "pnpm@9.0.0"

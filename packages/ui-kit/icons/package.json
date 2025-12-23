@@ -390,6 +390,14 @@
       "types": "./dist/TableIcon.d.ts",
       "import": "./dist/TableIcon.js"
     },
+    "./ThumbsDownIcon": {
+      "types": "./dist/ThumbsDownIcon.d.ts",
+      "import": "./dist/ThumbsDownIcon.js"
+    },
+    "./ThumbsUpIcon": {
+      "types": "./dist/ThumbsUpIcon.d.ts",
+      "import": "./dist/ThumbsUpIcon.js"
+    },
     "./TrashIcon": {
       "types": "./dist/TrashIcon.d.ts",
       "import": "./dist/TrashIcon.js"

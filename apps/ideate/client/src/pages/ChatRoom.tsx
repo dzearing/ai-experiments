@@ -1,22 +1,16 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from '@ui-kit/router';
-import { Avatar, AvatarGroup, Button, IconButton, Spinner, Menu, Modal } from '@ui-kit/react';
-import { ChatInput, type ChatInputSubmitData } from '@ui-kit/react-chat';
-import { MarkdownRenderer } from '@ui-kit/react-markdown';
+import { Avatar, AvatarGroup, Button, IconButton, Spinner, Modal } from '@ui-kit/react';
+import { ChatInput, ChatMessage, type ChatInputSubmitData } from '@ui-kit/react-chat';
 import { ArrowLeftIcon } from '@ui-kit/icons/ArrowLeftIcon';
 import { EditIcon } from '@ui-kit/icons/EditIcon';
 import { TrashIcon } from '@ui-kit/icons/TrashIcon';
 import { useAuth } from '../contexts/AuthContext';
 import { useSession } from '../contexts/SessionContext';
-import { useChat, type ChatRoomMetadata, type ChatMessage } from '../contexts/ChatContext';
+import { useChat, type ChatRoomMetadata, type ChatMessage as ChatMessageData } from '../contexts/ChatContext';
 import { useChatSocket } from '../hooks/useChatSocket';
 import { useWorkspaceSocket, type ResourcePresence } from '../hooks/useWorkspaceSocket';
 import styles from './ChatRoom.module.css';
-
-function formatTime(dateString: string): string {
-  const date = new Date(dateString);
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
@@ -35,10 +29,10 @@ function formatDate(dateString: string): string {
 
 interface MessageGroup {
   date: string;
-  messages: ChatMessage[];
+  messages: ChatMessageData[];
 }
 
-function groupMessagesByDate(messages: ChatMessage[]): MessageGroup[] {
+function groupMessagesByDate(messages: ChatMessageData[]): MessageGroup[] {
   const groups: MessageGroup[] = [];
   let currentGroup: MessageGroup | null = null;
 
@@ -66,7 +60,7 @@ export function ChatRoom() {
   const [chatRoom, setChatRoom] = useState<ChatRoomMetadata | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [typingUsers, setTypingUsers] = useState<Map<string, string>>(new Map());
-  const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(null);
+  const [editingMessage, setEditingMessage] = useState<ChatMessageData | null>(null);
   const [escapeCount, setEscapeCount] = useState(0);
   const escapeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -175,7 +169,7 @@ export function ChatRoom() {
   }, [sendMessage, sendStopTyping]);
 
   // Handle menu actions
-  const handleMessageMenuSelect = useCallback((value: string, message: ChatMessage) => {
+  const handleMessageMenuSelect = useCallback((value: string, message: ChatMessageData) => {
     if (value === 'edit') {
       setEditingMessage(message);
       setEscapeCount(0);
@@ -324,60 +318,22 @@ export function ChatRoom() {
               {group.messages.map((message, index) => {
                 // Check if previous message is from same sender (to hide avatar/name)
                 const prevMessage = index > 0 ? group.messages[index - 1] : null;
-                const isConsecutive = prevMessage && prevMessage.senderId === message.senderId;
+                const isConsecutive = prevMessage !== null && prevMessage.senderId === message.senderId;
                 const isOwnMessage = message.senderId === user.id;
 
                 return (
-                  <div
+                  <ChatMessage
                     key={message.id}
-                    className={`${styles.message} ${isOwnMessage ? styles.ownMessage : ''} ${isConsecutive ? styles.consecutive : ''}`}
-                  >
-                    {/* Column 1: Avatar + Name */}
-                    <div className={`${styles.avatarColumn} ${isConsecutive ? styles.hidden : ''}`}>
-                      {!isConsecutive && (
-                        <>
-                          <Avatar
-                            size="xs"
-                            fallback={message.senderName}
-                            color={message.senderColor}
-                          />
-                          <span
-                            className={styles.senderName}
-                            style={{ color: message.senderColor }}
-                          >
-                            {message.senderName}
-                          </span>
-                        </>
-                      )}
-                    </div>
-
-                    {/* Column 2: Time (clickable menu for own messages) */}
-                    {isOwnMessage ? (
-                      <Menu
-                        items={messageMenuItems}
-                        onSelect={(value) => handleMessageMenuSelect(value, message)}
-                        position="bottom-start"
-                      >
-                        <button className={styles.messageTimeButton}>
-                          {formatTime(message.createdAt)}
-                        </button>
-                      </Menu>
-                    ) : (
-                      <span className={styles.messageTime}>{formatTime(message.createdAt)}</span>
-                    )}
-
-                    {/* Column 3: Content */}
-                    <div className={styles.messageContent}>
-                      <MarkdownRenderer
-                        content={message.content}
-                        enableDeepLinks={false}
-                        showLineNumbers={false}
-                        imageAuthor={message.senderName}
-                        imageTimestamp={message.createdAt}
-                        className={styles.messageText}
-                      />
-                    </div>
-                  </div>
+                    id={message.id}
+                    content={message.content}
+                    timestamp={message.createdAt}
+                    senderName={message.senderName}
+                    senderColor={message.senderColor}
+                    isOwn={isOwnMessage}
+                    isConsecutive={isConsecutive}
+                    menuItems={isOwnMessage ? messageMenuItems : undefined}
+                    onMenuSelect={(value) => handleMessageMenuSelect(value, message)}
+                  />
                 );
               })}
             </div>

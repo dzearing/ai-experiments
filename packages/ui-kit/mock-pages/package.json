@@ -2,7 +2,7 @@
   "name": "@ui-kit/mock-pages",
   "version": "0.0.1",
   "private": true,
-  "description": "Mock UI pages for testing UI-Kit themes",
+  "description": "Example pages and demos showcasing UI-Kit component libraries",
   "type": "module",
   "scripts": {
     "dev": "storybook dev -p 6007",
@@ -13,6 +13,10 @@
   },
   "dependencies": {
     "@ui-kit/core": "workspace:*",
+    "@ui-kit/icons": "workspace:*",
+    "@ui-kit/react": "workspace:*",
+    "@ui-kit/react-chat": "workspace:*",
+    "@ui-kit/react-markdown": "workspace:*",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },

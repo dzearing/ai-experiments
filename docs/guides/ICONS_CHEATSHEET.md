@@ -64,6 +64,8 @@ import { IconName } from '@claude-flow/ui-kit-icons';
 - `InfoCircleIcon` - Information in circle
 - `LoadingIcon` - Loading indicator
 - `SpinnerIcon` - Spinner/circular loading
+- `ThumbsUpIcon` - Thumbs up (positive feedback/approval)
+- `ThumbsDownIcon` - Thumbs down (negative feedback/disapproval)
 - `WarningIcon` - Warning/alert
 - `WarningTriangleIcon` - Warning triangle
 - `XIcon` - X mark

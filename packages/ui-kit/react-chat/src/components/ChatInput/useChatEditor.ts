@@ -21,8 +21,8 @@ export interface UseChatEditorOptions {
   placeholder?: string;
   /** Disabled state */
   disabled?: boolean;
-  /** Change handler - called on each edit */
-  onChange?: (isEmpty: boolean) => void;
+  /** Change handler - called on each edit with empty state and plain text content */
+  onChange?: (isEmpty: boolean, content: string) => void;
   /** Focus callback */
   onFocus?: () => void;
   /** Blur callback */
@@ -154,7 +154,9 @@ export function useChatEditor(options: UseChatEditorOptions = {}) {
     ],
     editable: !disabled,
     onUpdate: ({ editor }) => {
-      onChange?.(editor.isEmpty);
+      // Get plain text content for slash command detection
+      const textContent = editor.getText();
+      onChange?.(editor.isEmpty, textContent);
     },
     onFocus: () => {
       onFocus?.();

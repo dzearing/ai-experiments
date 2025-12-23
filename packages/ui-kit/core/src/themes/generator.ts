@@ -453,6 +453,31 @@ function evaluateDerivation(
     return bgColor ? getContrastingTextColor(bgColor) : '#000000';
   }
 
+  // "contrastOpacity(bg, opacity)" - contrast color with specified opacity (0-100)
+  // Returns rgba() with the contrasting color (black or white) at the given opacity
+  const contrastOpacityMatch = ruleStr.match(/contrastOpacity\(([^,]+),\s*([\d.]+)\)/);
+  if (contrastOpacityMatch) {
+    const bgRef = contrastOpacityMatch[1].trim();
+    const opacity = parseFloat(contrastOpacityMatch[2]);
+    // Get the background color
+    let bgColor: string;
+    if (bgRef === 'bg') {
+      bgColor = tokens[`--${surfaceName}-bg`] || (isDark ? '#0f0f0f' : '#fafafa');
+    } else if (bgRef.includes('.')) {
+      const [surface, token] = bgRef.split('.');
+      bgColor = tokens[`--${surface}-${token}`] || (isDark ? '#0f0f0f' : '#fafafa');
+    } else {
+      bgColor = tokens[`--${surfaceName}-${bgRef}`] || (isDark ? '#0f0f0f' : '#fafafa');
+    }
+    // Get the contrast color and apply opacity
+    const contrastColor = getContrastingTextColor(bgColor);
+    if (contrastColor === '#ffffff') {
+      return `rgba(255, 255, 255, ${opacity / 100})`;
+    } else {
+      return `rgba(0, 0, 0, ${opacity / 100})`;
+    }
+  }
+
   // "accessibleColor(color, bgRef)" - ensure color is accessible on background
   // Example: accessibleColor(semantic:success, bg) - returns success color adjusted for contrast
   const accessibleMatch = ruleStr.match(/accessibleColor\(([^,]+),\s*([^)]+)\)/);

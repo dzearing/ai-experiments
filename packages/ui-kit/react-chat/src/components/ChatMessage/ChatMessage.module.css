@@ -1,0 +1,246 @@
+/* ChatMessage - 3 column layout: Avatar | Time | Content */
+.message {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+/* First message from a sender - add spacing above */
+.message:not(.consecutive) {
+  margin-top: var(--space-2);
+}
+
+/* Consecutive messages - no extra spacing */
+.message.consecutive {
+  /* No margin - content flows like multiline text */
+}
+
+/* Column 1: Avatar + Name stacked */
+.avatarColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+  width: 72px;
+  align-self: flex-start;
+}
+
+/* Hide avatar column for consecutive messages or when hidden */
+.avatarColumn.hidden {
+  visibility: hidden;
+}
+
+.senderName {
+  font-size: 11px;
+  font-weight: var(--weight-medium);
+  text-align: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Column 2: Timestamp */
+.timestamp {
+  flex-shrink: 0;
+  width: 64px; /* Fixed width for alignment */
+  font-size: 11px;
+  color: var(--base-fg-soft);
+  white-space: nowrap;
+  transition: opacity var(--duration-fast) var(--ease-default);
+}
+
+/* Clickable timestamp button */
+.timestampButton {
+  flex-shrink: 0;
+  width: 64px;
+  font-size: 11px;
+  color: var(--base-fg-soft);
+  white-space: nowrap;
+  transition: opacity var(--duration-fast) var(--ease-default),
+              color var(--duration-fast) var(--ease-default);
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+
+.timestampButton:hover {
+  color: var(--base-fg);
+}
+
+/* First message from sender - always show timestamp */
+.message:not(.consecutive) .timestamp,
+.message:not(.consecutive) .timestampButton {
+  opacity: 1;
+}
+
+/* Consecutive messages - only show on hover */
+.message.consecutive .timestamp,
+.message.consecutive .timestampButton {
+  opacity: 0;
+}
+
+.message.consecutive:hover .timestamp,
+.message.consecutive:hover .timestampButton {
+  opacity: 1;
+}
+
+/* Column 3: Message content */
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Markdown content styling */
+.markdownContent {
+  font-size: var(--text-sm);
+  color: var(--base-fg);
+  line-height: var(--leading-relaxed);
+  word-wrap: break-word;
+}
+
+/* Inline code */
+.markdownContent code {
+  background: var(--strong-bg);
+  border: 1px solid var(--strong-border);
+  padding: 0.1em 0.4em;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  color: var(--strong-fg);
+}
+
+.markdownContent pre {
+  background: var(--soft-bg);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+  margin: var(--space-2) 0;
+}
+
+.markdownContent pre code {
+  background: none;
+  padding: 0;
+  border: none;
+}
+
+/* Highlighted/Own message style */
+.highlighted {
+  background: var(--strong-bg);
+  margin-left: calc(-1 * var(--space-4));
+  margin-right: calc(-1 * var(--space-4));
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+  padding-top: var(--space-1);
+  padding-bottom: var(--space-1);
+  border-radius: var(--radius-md);
+}
+
+/* Consecutive highlighted messages - seamless connection */
+.highlighted.consecutive {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+/* Highlighted followed by another highlighted - no bottom radius */
+.highlighted:has(+ .highlighted) {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.highlighted .markdownContent {
+  color: var(--strong-fg);
+}
+
+.highlighted .timestamp,
+.highlighted .timestampButton {
+  color: var(--strong-fg-soft);
+}
+
+/* Streaming indicator */
+.streamingIndicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: var(--space-1);
+  vertical-align: middle;
+}
+
+.streamingDot {
+  width: 4px;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: var(--base-fg-soft);
+  animation: streamingPulse 1.4s infinite ease-in-out both;
+}
+
+.streamingDot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.streamingDot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes streamingPulse {
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Tool calls section */
+.toolCalls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+  padding: var(--space-2);
+  background: var(--soft-bg);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--soft-border);
+}
+
+.toolCall {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+}
+
+.toolName {
+  font-family: var(--font-mono);
+  color: var(--base-fg);
+  background: var(--strong-bg);
+  padding: 0.1em 0.4em;
+  border-radius: var(--radius-sm);
+}
+
+.toolStatus {
+  color: var(--success-fg);
+  font-size: var(--text-xs);
+}
+
+/* Plain text content (for user messages without markdown) */
+.plainText {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--base-fg);
+  line-height: var(--leading-relaxed);
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.highlighted .plainText {
+  color: var(--strong-fg);
+}

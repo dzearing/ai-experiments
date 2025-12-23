@@ -364,14 +364,14 @@ export const MarkdownCoEditor = forwardRef<MarkdownCoEditorRef, MarkdownCoEditor
               {coAuthors.length > 0 && (
                 <div className={styles.coAuthorAvatars}>
                   {coAuthors.map((author) => (
-                    <Avatar
-                      key={author.id}
-                      size="sm"
-                      fallback={author.isAI ? '✦' : author.name}
-                      color={author.color}
-                      title={author.name}
-                      className={author.isAI ? styles.aiAvatar : undefined}
-                    />
+                    <span key={author.id} title={author.name}>
+                      <Avatar
+                        size="sm"
+                        fallback={author.isAI ? '✦' : author.name}
+                        color={author.color}
+                        className={author.isAI ? styles.aiAvatar : undefined}
+                      />
+                    </span>
                   ))}
                 </div>
               )}

@@ -15,5 +15,14 @@ export type {
   UseWorkspaceSocketOptions,
 } from './useWorkspaceSocket';
 
+export { useGlobalKeyboard } from './useGlobalKeyboard';
+export type { UseGlobalKeyboardOptions } from './useGlobalKeyboard';
+
+export { useFacilitatorSocket } from './useFacilitatorSocket';
+export type {
+  UseFacilitatorSocketOptions,
+  UseFacilitatorSocketReturn,
+} from './useFacilitatorSocket';
+
 // Re-export Extension type for convenience
 export type { Extension } from '@codemirror/state';

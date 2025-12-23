@@ -5,6 +5,8 @@ import { ChatProvider } from './contexts/ChatContext';
 import { NetworkProvider } from './contexts/NetworkContext';
 import { SessionProvider } from './contexts/SessionContext';
 import { WorkspaceProvider } from './contexts/WorkspaceContext';
+import { FacilitatorProvider } from './contexts/FacilitatorContext';
+import { FacilitatorOverlay } from './components/FacilitatorOverlay';
 
 // Pages
 import { Landing } from './pages/Landing';
@@ -26,31 +28,35 @@ export function App() {
     <SessionProvider>
       <Router>
         <AuthProvider>
-          <DocumentProvider>
-            <ChatProvider>
-              <WorkspaceProvider>
-                <NetworkProvider>
-                  <Routes>
-                    {/* Public routes */}
-                    <Route path="/" component={Landing} />
-                    <Route path="/auth" component={Auth} />
-                    <Route path="/join/:token" component={JoinWorkspace} />
-                    <Route path="/diagnostics" component={Diagnostics} />
+          <FacilitatorProvider>
+            <DocumentProvider>
+              <ChatProvider>
+                <WorkspaceProvider>
+                  <NetworkProvider>
+                    <Routes>
+                      {/* Public routes */}
+                      <Route path="/" component={Landing} />
+                      <Route path="/auth" component={Auth} />
+                      <Route path="/join/:token" component={JoinWorkspace} />
+                      <Route path="/diagnostics" component={Diagnostics} />
 
-                    {/* Protected routes with app layout */}
-                    <Route component={AppLayout}>
-                      <Route path="/dashboard" component={Dashboard} />
-                      <Route path="/workspaces" component={Workspaces} />
-                      <Route path="/workspace/:workspaceId" component={WorkspaceDetail} />
-                      <Route path="/doc/:documentId" component={DocumentEditor} />
-                      <Route path="/chat/:chatRoomId" component={ChatRoom} />
-                      <Route path="/settings" component={Settings} />
-                    </Route>
-                  </Routes>
-                </NetworkProvider>
-              </WorkspaceProvider>
-            </ChatProvider>
-          </DocumentProvider>
+                      {/* Protected routes with app layout */}
+                      <Route component={AppLayout}>
+                        <Route path="/dashboard" component={Dashboard} />
+                        <Route path="/workspaces" component={Workspaces} />
+                        <Route path="/workspace/:workspaceId" component={WorkspaceDetail} />
+                        <Route path="/doc/:documentId" component={DocumentEditor} />
+                        <Route path="/chat/:chatRoomId" component={ChatRoom} />
+                        <Route path="/settings" component={Settings} />
+                      </Route>
+                    </Routes>
+                    {/* Global facilitator overlay */}
+                    <FacilitatorOverlay />
+                  </NetworkProvider>
+                </WorkspaceProvider>
+              </ChatProvider>
+            </DocumentProvider>
+          </FacilitatorProvider>
         </AuthProvider>
       </Router>
     </SessionProvider>

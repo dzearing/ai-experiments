@@ -5,6 +5,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useImperativeHandle,
   type ReactNode,
   type KeyboardEvent,
   type ClipboardEvent,
@@ -27,6 +28,8 @@ import { useMessageHistory } from './useMessageHistory';
 import { useChatEditor } from './useChatEditor';
 import { getImageChipsInOrder } from './ImageChipExtension';
 import { LinkDialog } from './LinkDialog';
+import { SlashCommandPopover, filterCommands } from './SlashCommandPopover';
+import type { SlashCommand, SlashCommandResult } from './SlashCommand.types';
 import styles from './ChatInput.module.css';
 
 export type ChatInputSize = 'sm' | 'md' | 'lg';
@@ -51,6 +54,16 @@ export interface ChatInputSubmitData {
   content: string;
   /** Array of images referenced in the message (in content order) */
   images: ChatInputImage[];
+}
+
+/**
+ * Ref handle exposed by ChatInput
+ */
+export interface ChatInputRef {
+  /** Focus the editor */
+  focus: () => void;
+  /** Clear the editor content */
+  clear: () => void;
 }
 
 export interface ChatInputProps {
@@ -101,9 +114,24 @@ export interface ChatInputProps {
 
   /** Custom class name */
   className?: string;
+
+  /** Available slash commands */
+  commands?: SlashCommand[];
+
+  /**
+   * Called when a slash command is executed.
+   * Return SlashCommandResult or true if handled, false if not.
+   */
+  onCommand?: (command: string, args: string) => SlashCommandResult | boolean | void;
+
+  /**
+   * Called when content changes.
+   * Receives isEmpty flag and plain text content.
+   */
+  onChange?: (isEmpty: boolean, content: string) => void;
 }
 
-export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
+export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
   (
     {
       size = 'md',
@@ -122,6 +150,9 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
       initialContent,
       placeholder = 'Type a message...',
       className = '',
+      commands = [],
+      onCommand,
+      onChange,
     },
     ref
   ) => {
@@ -137,18 +168,36 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
     const [escapePressed, setEscapePressed] = useState(false);
     const [previewImage, setPreviewImage] = useState<ChatInputImage | null>(null);
 
+    // Slash command state
+    const [isCommandPopoverOpen, setIsCommandPopoverOpen] = useState(false);
+    const [commandQuery, setCommandQuery] = useState('');
+    const [commandSelectedIndex, setCommandSelectedIndex] = useState(0);
+
     // Refs
     const containerRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const editorRef = useRef<ReturnType<typeof useChatEditor>>(null);
 
     // History hook
     const { getHistory, addToHistory } = useMessageHistory(historyKey, maxHistoryItems);
+
+    // Ref to hold current executeCommand to avoid dependency issues
+    const executeCommandRef = useRef<((cmd: SlashCommand) => void) | null>(null);
 
     // Handle Enter key at TipTap level (before newline insertion)
     const handleEnterKey = useCallback(
       (event: { shiftKey: boolean; ctrlKey: boolean; metaKey: boolean }): boolean => {
         const { shiftKey, ctrlKey, metaKey } = event;
         const modKey = ctrlKey || metaKey;
+
+        // If command popover is open, select the highlighted command
+        if (isCommandPopoverOpen && commands.length > 0) {
+          const filteredCmds = filterCommands(commands, commandQuery);
+          if (filteredCmds.length > 0 && filteredCmds[commandSelectedIndex]) {
+            executeCommandRef.current?.(filteredCmds[commandSelectedIndex]);
+            return true; // Prevent default
+          }
+        }
 
         if (isMultilineMode) {
           if (modKey) {
@@ -171,7 +220,7 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
           return false;
         }
       },
-      [isMultilineMode]
+      [isMultilineMode, isCommandPopoverOpen, commands, commandQuery, commandSelectedIndex]
     );
 
     // Ref to hold current handleSubmit to avoid dependency issues
@@ -181,15 +230,120 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
     const editor = useChatEditor({
       placeholder,
       disabled,
-      onChange: (editorIsEmpty) => {
+      onChange: (editorIsEmpty, content) => {
         setIsEmpty(editorIsEmpty);
         // Reset history navigation when typing
         if (historyIndex !== -1) {
           setHistoryIndex(-1);
         }
+
+        // Slash command detection
+        if (commands.length > 0 && content) {
+          const trimmedContent = content.trim();
+          if (trimmedContent.startsWith('/')) {
+            // Extract the command query (text after /)
+            const spaceIndex = trimmedContent.indexOf(' ');
+            const query = spaceIndex === -1
+              ? trimmedContent.slice(1)
+              : trimmedContent.slice(1, spaceIndex);
+
+            setCommandQuery(query);
+
+            // Check if there are matching commands
+            const matchingCommands = filterCommands(commands, query);
+            if (matchingCommands.length > 0) {
+              setIsCommandPopoverOpen(true);
+              // Reset selection when query changes
+              setCommandSelectedIndex(0);
+            } else {
+              setIsCommandPopoverOpen(false);
+            }
+          } else {
+            setIsCommandPopoverOpen(false);
+            setCommandQuery('');
+          }
+        } else {
+          setIsCommandPopoverOpen(false);
+          setCommandQuery('');
+        }
+
+        // Call external onChange handler
+        onChange?.(editorIsEmpty, content);
       },
       onEnterKey: handleEnterKey,
     });
+
+    // Keep editorRef updated for use in imperative handle
+    useEffect(() => {
+      editorRef.current = editor;
+    }, [editor]);
+
+    // Expose focus and clear methods via ref
+    useImperativeHandle(
+      ref,
+      () => ({
+        focus: () => {
+          // Try to focus, with retry for when editor isn't ready yet
+          const attemptFocus = (retries = 10) => {
+            const currentEditor = editorRef.current;
+            if (currentEditor) {
+              currentEditor.commands.focus('end');
+            } else if (retries > 0) {
+              // Editor not ready yet, retry after a short delay
+              setTimeout(() => attemptFocus(retries - 1), 50);
+            }
+          };
+          attemptFocus();
+        },
+        clear: () => {
+          editorRef.current?.commands.clearContent();
+          setIsEmpty(true);
+        },
+      }),
+      [] // No dependencies - uses refs which are always current
+    );
+
+    // Execute a slash command
+    const executeCommand = useCallback(
+      (cmd: SlashCommand) => {
+        if (!editor || !onCommand) return;
+
+        // Get full content to extract args
+        const content = editor.getText().trim();
+        const spaceIndex = content.indexOf(' ');
+        const args = spaceIndex !== -1 ? content.slice(spaceIndex + 1).trim() : '';
+
+        // Execute the command
+        const result = onCommand(cmd.name, args);
+
+        // Handle result
+        const shouldClearInput =
+          result === true ||
+          (typeof result === 'object' && result.clearInput !== false && result.handled);
+
+        if (shouldClearInput) {
+          editor.commands.clearContent();
+          setIsEmpty(true);
+        }
+
+        // Close popover
+        setIsCommandPopoverOpen(false);
+        setCommandQuery('');
+        setCommandSelectedIndex(0);
+      },
+      [editor, onCommand]
+    );
+
+    // Keep executeCommandRef current
+    executeCommandRef.current = executeCommand;
+
+    // Handle command selection from popover
+    const handleCommandSelect = useCallback(
+      (cmd: SlashCommand) => {
+        executeCommand(cmd);
+      },
+      [executeCommand]
+    );
 
     // Get images sorted by their position in content
     const imagesInContentOrder = useMemo((): ChatInputImage[] => {
@@ -339,6 +493,43 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
         const { key, ctrlKey, metaKey } = e;
         const modKey = ctrlKey || metaKey;
 
+        // Command popover keyboard navigation
+        if (isCommandPopoverOpen && commands.length > 0) {
+          const filteredCmds = filterCommands(commands, commandQuery);
+
+          if (key === 'ArrowUp') {
+            e.preventDefault();
+            setCommandSelectedIndex((prev) =>
+              prev <= 0 ? filteredCmds.length - 1 : prev - 1
+            );
+            return;
+          }
+
+          if (key === 'ArrowDown') {
+            e.preventDefault();
+            setCommandSelectedIndex((prev) =>
+              prev >= filteredCmds.length - 1 ? 0 : prev + 1
+            );
+            return;
+          }
+
+          if (key === 'Tab') {
+            e.preventDefault();
+            if (filteredCmds[commandSelectedIndex]) {
+              executeCommandRef.current?.(filteredCmds[commandSelectedIndex]);
+            }
+            return;
+          }
+
+          if (key === 'Escape') {
+            e.preventDefault();
+            setIsCommandPopoverOpen(false);
+            setCommandQuery('');
+            setCommandSelectedIndex(0);
+            return;
+          }
+        }
+
         // Escape handling - requires two consecutive presses to clear
         if (key === 'Escape') {
           e.preventDefault();
@@ -421,7 +612,7 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
           openLinkDialog();
         }
       },
-      [isMultilineMode, editor, historyKey, navigateHistory, openLinkDialog, escapePressed]
+      [isMultilineMode, editor, historyKey, navigateHistory, openLinkDialog, escapePressed, isCommandPopoverOpen, commands, commandQuery, commandSelectedIndex]
     );
 
     // Convert file to base64 data URL for persistence
@@ -653,14 +844,7 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
 
     return (
       <div
-        ref={(node) => {
-          containerRef.current = node;
-          if (typeof ref === 'function') {
-            ref(node);
-          } else if (ref) {
-            ref.current = node;
-          }
-        }}
+        ref={containerRef}
         className={containerClasses}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
@@ -676,6 +860,23 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
           className={styles.hiddenFileInput}
           tabIndex={-1}
         />
+
+        {/* Slash command popover */}
+        {commands.length > 0 && (
+          <SlashCommandPopover
+            isOpen={isCommandPopoverOpen}
+            query={commandQuery}
+            commands={commands}
+            selectedIndex={commandSelectedIndex}
+            onSelectionChange={setCommandSelectedIndex}
+            onSelect={handleCommandSelect}
+            onClose={() => {
+              setIsCommandPopoverOpen(false);
+              setCommandQuery('');
+              setCommandSelectedIndex(0);
+            }}
+          />
+        )}
 
         {/* Image well - shows thumbnails in content order, no remove buttons */}
         {imagesInContentOrder.length > 0 && (

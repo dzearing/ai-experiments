@@ -38,3 +38,4 @@ export const YJS_WS_URL = `${WS_URL}/yjs`;
 export const DIAGNOSTICS_WS_URL = `${WS_URL}/diagnostics-ws`;
 export const CHAT_WS_URL = `${WS_URL}/chat-ws`;
 export const WORKSPACE_WS_URL = `${WS_URL}/workspace-ws`;
+export const FACILITATOR_WS_URL = `${WS_URL}/facilitator-ws`;

@@ -16,6 +16,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@anthropic-ai/claude-code": "^1.0.41",
     "bonjour-service": "^1.2.1",
     "cors": "^2.8.5",
     "dotenv": "^17.0.1",

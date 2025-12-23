@@ -1,26 +1,138 @@
 import type { Preview, Decorator } from '@storybook/react';
 import { useEffect } from 'react';
-import '../src/styles/global.css';
+import {
+  getAllThemeOptions,
+  getStoredTheme,
+  generateRuntimeThemeTokens,
+  type StoredTheme,
+} from '@ui-kit/core';
+import './preview.css';
 
-// Theme decorator that applies theme and mode from toolbar
+// Custom theme CSS style element ID
+const CUSTOM_THEME_STYLE_ID = 'uikit-custom-theme';
+
+// Get theme options (includes custom themes from localStorage)
+const getThemeItems = () =>
+  getAllThemeOptions()
+    .filter((opt) => !opt.isDivider)
+    .map((opt) => ({
+      value: opt.value,
+      title: opt.label,
+    }));
+
+// Initial theme items
+let themeItems = getThemeItems();
+
+// Listen for theme save events from the Theme Designer
+if (typeof window !== 'undefined') {
+  window.addEventListener('uikit-theme-saved', () => {
+    themeItems = getThemeItems();
+  });
+}
+
+// Dynamically load theme CSS file
+const loadThemeCSS = (theme: string, mode: string) => {
+  const themeId = 'ui-kit-theme-css';
+  const existingLink = document.getElementById(themeId) as HTMLLinkElement | null;
+
+  const filename = `${theme}-${mode}.css`;
+  const href = `/themes/${filename}`;
+
+  if (existingLink) {
+    existingLink.href = href;
+  } else {
+    const link = document.createElement('link');
+    link.id = themeId;
+    link.rel = 'stylesheet';
+    link.href = href;
+    document.head.appendChild(link);
+  }
+};
+
+// Apply custom theme overrides on top of base theme
+const applyCustomTheme = (storedTheme: StoredTheme, mode: 'light' | 'dark', baseTheme: string) => {
+  const lightTokens = generateRuntimeThemeTokens(storedTheme.config, 'light');
+  const darkTokens = generateRuntimeThemeTokens(storedTheme.config, 'dark');
+
+  const css = `
+/* Custom theme overrides - applied on top of base theme */
+:root[data-theme="${baseTheme}"][data-mode="light"],
+:root[data-mode="light"] {
+${Object.entries(lightTokens).map(([k, v]) => `  ${k}: ${v} !important;`).join('\n')}
+}
+:root[data-theme="${baseTheme}"][data-mode="dark"],
+:root[data-mode="dark"] {
+${Object.entries(darkTokens).map(([k, v]) => `  ${k}: ${v} !important;`).join('\n')}
+}
+  `.trim();
+
+  // Remove existing custom theme style
+  const existingStyle = document.getElementById(CUSTOM_THEME_STYLE_ID);
+  if (existingStyle) {
+    existingStyle.remove();
+  }
+
+  // Inject new style
+  const style = document.createElement('style');
+  style.id = CUSTOM_THEME_STYLE_ID;
+  style.textContent = css;
+  document.head.appendChild(style);
+};
+
+// Remove custom theme CSS overrides
+const removeCustomTheme = () => {
+  const existingStyle = document.getElementById(CUSTOM_THEME_STYLE_ID);
+  if (existingStyle) {
+    existingStyle.remove();
+  }
+};
+
+// Theme decorator that applies theme, mode, and direction from toolbar
 const withTheme: Decorator = (Story, context) => {
-  const { theme, mode } = context.globals;
+  const { theme, mode, direction } = context.globals;
+  const isFullscreen = context.parameters?.layout === 'fullscreen';
 
   useEffect(() => {
-    // Set data attributes on the document root
-    document.documentElement.dataset.theme = theme;
-    document.documentElement.dataset.mode = mode;
+    // Check if it's a custom theme
+    if (theme.startsWith('custom:')) {
+      const customThemeId = theme.replace('custom:', '');
+      const customTheme = getStoredTheme(customThemeId);
 
-    // Apply mode-specific class for CSS targeting
+      if (customTheme) {
+        // Load the base theme CSS (use custom theme's baseTheme or 'default')
+        const baseTheme = customTheme.baseTheme || 'default';
+        loadThemeCSS(baseTheme, mode);
+
+        // Apply custom theme overrides
+        applyCustomTheme(customTheme, mode as 'light' | 'dark', baseTheme);
+
+        // Set data attributes for base theme
+        document.documentElement.dataset.theme = baseTheme;
+      }
+    } else {
+      // Built-in theme - load CSS and remove any custom overrides
+      loadThemeCSS(theme, mode);
+      removeCustomTheme();
+      document.documentElement.dataset.theme = theme;
+    }
+
+    // Common settings
+    document.documentElement.dataset.mode = mode;
     document.documentElement.classList.remove('light', 'dark');
     document.documentElement.classList.add(mode);
-
-    // Also apply to body for stories rendered in iframe
-    document.body.dataset.theme = theme;
+    document.documentElement.dir = direction;
+    document.body.dir = direction;
+    document.body.dataset.theme = document.documentElement.dataset.theme;
     document.body.dataset.mode = mode;
-  }, [theme, mode]);
+  }, [theme, mode, direction]);
 
-  return <Story />;
+  const wrapperClass = isFullscreen ? 'storyWrapper fullscreen' : 'storyWrapper';
+
+  return (
+    <div className={wrapperClass} dir={direction}>
+      <Story />
+    </div>
+  );
 };
 
 const preview: Preview = {
@@ -31,7 +143,25 @@ const preview: Preview = {
         date: /Date$/i,
       },
     },
-    layout: 'fullscreen',
+    backgrounds: {
+      disable: true,
+    },
+    options: {
+      storySort: {
+        order: [
+          'Actions',
+          'Inputs',
+          'Layout',
+          'Data Display',
+          'Typography',
+          'Navigation',
+          'Feedback',
+          'Overlays',
+          'Animation',
+          'Example Pages',
+        ],
+      },
+    },
   },
   globalTypes: {
     theme: {
@@ -40,31 +170,7 @@ const preview: Preview = {
       defaultValue: 'default',
       toolbar: {
         icon: 'paintbrush',
-        items: [
-          // Core themes
-          { value: 'default', title: 'Default' },
-          { value: 'minimal', title: 'Minimal' },
-          { value: 'high-contrast', title: 'High Contrast' },
-          // Microsoft family
-          { value: 'github', title: 'GitHub' },
-          { value: 'linkedin', title: 'LinkedIn' },
-          { value: 'teams', title: 'Teams' },
-          { value: 'onedrive', title: 'OneDrive' },
-          { value: 'fluent', title: 'Fluent' },
-          // Creative/Novelty
-          { value: 'terminal', title: 'Terminal' },
-          { value: 'matrix', title: 'Matrix' },
-          { value: 'cyberpunk', title: 'Cyberpunk' },
-          { value: 'sketchy', title: 'Sketchy' },
-          { value: 'art-deco', title: 'Art Deco' },
-          { value: 'retro', title: 'Retro' },
-          // Nature/Mood
-          { value: 'ocean', title: 'Ocean' },
-          { value: 'forest', title: 'Forest' },
-          { value: 'sunset', title: 'Sunset' },
-          { value: 'midnight', title: 'Midnight' },
-          { value: 'arctic', title: 'Arctic' },
-        ],
+        items: themeItems,
         dynamicTitle: true,
       },
     },
@@ -77,6 +183,19 @@ const preview: Preview = {
         items: [
           { value: 'light', title: 'Light', icon: 'sun' },
           { value: 'dark', title: 'Dark', icon: 'moon' },
+        ],
+        dynamicTitle: true,
+      },
+    },
+    direction: {
+      name: 'Direction',
+      description: 'Text direction (LTR/RTL)',
+      defaultValue: 'ltr',
+      toolbar: {
+        icon: 'transfer',
+        items: [
+          { value: 'ltr', title: 'LTR (Left to Right)', icon: 'arrowrightalt' },
+          { value: 'rtl', title: 'RTL (Right to Left)', icon: 'arrowleftalt' },
         ],
         dynamicTitle: true,
       },

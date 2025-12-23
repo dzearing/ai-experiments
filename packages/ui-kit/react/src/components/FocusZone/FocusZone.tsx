@@ -2,8 +2,11 @@ import {
   useRef,
   useCallback,
   useEffect,
+  useImperativeHandle,
+  forwardRef,
   type HTMLAttributes,
   type KeyboardEvent,
+  type ForwardedRef,
 } from 'react';
 
 /**
@@ -34,18 +37,24 @@ export interface FocusZoneProps extends HTMLAttributes<HTMLDivElement> {
 const DEFAULT_SELECTOR =
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([disabled])';
 
-export function FocusZone({
-  direction = 'vertical',
-  wrap = false,
-  selector = DEFAULT_SELECTOR,
-  onFocusChange,
-  onKeyDown,
-  onFocus,
-  children,
-  ...props
-}: FocusZoneProps) {
+export const FocusZone = forwardRef(function FocusZone(
+  {
+    direction = 'vertical',
+    wrap = false,
+    selector = DEFAULT_SELECTOR,
+    onFocusChange,
+    onKeyDown,
+    onFocus,
+    children,
+    ...props
+  }: FocusZoneProps,
+  ref: ForwardedRef<HTMLDivElement>
+) {
   const containerRef = useRef<HTMLDivElement>(null);
   const activeIndexRef = useRef<number>(0);
+
+  // Forward the ref
+  useImperativeHandle(ref, () => containerRef.current!, []);
 
   const getFocusableElements = useCallback((): HTMLElement[] => {
     if (!containerRef.current) return [];
@@ -170,6 +179,4 @@ export function FocusZone({
       {children}
     </div>
   );
-}
-
-FocusZone.displayName = 'FocusZone';
+});

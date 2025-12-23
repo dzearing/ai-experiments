@@ -15,6 +15,7 @@ import { YjsCollaborationHandler } from './websocket/YjsCollaborationHandler.js'
 import { DiagnosticsHandler } from './websocket/DiagnosticsHandler.js';
 import { ChatWebSocketHandler } from './websocket/ChatWebSocketHandler.js';
 import { WorkspaceWebSocketHandler } from './websocket/WorkspaceWebSocketHandler.js';
+import { FacilitatorWebSocketHandler } from './websocket/FacilitatorWebSocketHandler.js';
 import { DiscoveryService } from './services/DiscoveryService.js';
 import { DocumentService } from './services/DocumentService.js';
 
@@ -110,6 +111,14 @@ workspaceWss.on('connection', (ws, req) => {
   workspaceHandler.handleConnection(ws, req);
 });
 
+// Create WebSocket server for facilitator chat (JSON-based protocol)
+const facilitatorWss = new WebSocketServer({ noServer: true });
+const facilitatorHandler = new FacilitatorWebSocketHandler();
+
+facilitatorWss.on('connection', (ws, req) => {
+  facilitatorHandler.handleConnection(ws, req);
+});
+
 // Export workspace handler for use in routes
 export { workspaceHandler };
 
@@ -156,6 +165,11 @@ server.on('upgrade', (request, socket, head) => {
     workspaceWss.handleUpgrade(request, socket, head, (ws) => {
       workspaceWss.emit('connection', ws, request);
     });
+  } else if (pathname === '/facilitator-ws') {
+    // Facilitator chat WebSocket
+    facilitatorWss.handleUpgrade(request, socket, head, (ws) => {
+      facilitatorWss.emit('connection', ws, request);
+    });
   } else {
     socket.destroy();
   }
@@ -171,6 +185,7 @@ server.listen(PORT, () => {
   console.log(`WebSocket (Yjs) available at ws://localhost:${PORT}/yjs`);
   console.log(`WebSocket (Chat) available at ws://localhost:${PORT}/chat-ws`);
   console.log(`WebSocket (Workspace) available at ws://localhost:${PORT}/workspace-ws`);
+  console.log(`WebSocket (Facilitator) available at ws://localhost:${PORT}/facilitator-ws`);
   console.log(`Diagnostics API at http://localhost:${PORT}/api/diagnostics`);
   console.log(`Diagnostics WebSocket at ws://localhost:${PORT}/diagnostics-ws`);
 

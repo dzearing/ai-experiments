@@ -51,6 +51,12 @@
   color: var(--base-fg);
 }
 
+/* Focus is handled by the animated focus indicator when animated=true */
+.animated .tab:focus-visible {
+  outline: none;
+}
+
+/* Fallback focus ring when not animated */
 .tab:focus-visible {
   outline: var(--focus-ring-width) solid var(--focus-ring);
   outline-offset: var(--focus-ring-offset);
@@ -66,27 +72,29 @@
 }
 
 /* ==============================================
-   Default variant - border bottom with animated indicator
+   Default variant - selection underline only (no divider)
    ============================================== */
-
-.default {
-  border-bottom: 1px solid var(--base-border);
-}
-
-/* Hide the individual tab underlines when using animated indicator */
-.default.animated .tab {
-  border-bottom: none;
-}
 
 /* Non-animated fallback: show individual tab underlines */
 .default:not(.animated) .tab {
-  border-bottom: 3px solid transparent;
-  margin-bottom: -1px;
-  border-radius: 0 0 2px 2px;
+  position: relative;
 }
 
-.default:not(.animated) .tab.active {
-  border-bottom-color: var(--primary-bg);
+.default:not(.animated) .tab::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--primary-bg);
+  border-radius: 2px;
+  transform: scaleX(0);
+  transition: transform var(--duration-fast) var(--ease-default);
+}
+
+.default:not(.animated) .tab.active::after {
+  transform: scaleX(1);
 }
 
 /* ==============================================
@@ -180,14 +188,36 @@
     0 calc(-1 * var(--glow-spread-lg, 24px)) calc(var(--glow-spread-lg, 48px) * 1.2) 8px color-mix(in srgb, var(--glow-color, var(--primary-bg)) calc(var(--glow-opacity, 45%) * 0.4), transparent);
 }
 
-/* Indicator position for default variant (on the border) */
+/* Indicator position for default variant */
 .default .indicator {
-  bottom: -1px;
+  bottom: 0;
 }
 
 /* Indicator position for underline variant */
 .underline .indicator {
   bottom: 0;
+}
+
+/* ==============================================
+   Animated Focus Indicator
+   ============================================== */
+
+.focusIndicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border: var(--focus-ring-width, 2px) solid var(--focus-ring);
+  border-radius: var(--radius-sm);
+  pointer-events: none;
+  transition: transform var(--duration-normal) var(--ease-default),
+    width var(--duration-normal) var(--ease-default);
+  will-change: transform, width;
+}
+
+/* Position adjustments for different variants */
+.pills .focusIndicator {
+  border-radius: var(--radius-md);
 }
 
 /* ==============================================
@@ -204,6 +234,10 @@
 
 @media (prefers-reduced-motion: reduce) {
   .indicator {
+    transition: none;
+  }
+
+  .focusIndicator {
     transition: none;
   }
 
