@@ -71,6 +71,14 @@ export type { TooltipProps, TooltipPosition } from './components/Tooltip';
 export { Popover } from './components/Popover';
 export type { PopoverProps, PopoverPosition } from './components/Popover';
 
+export { ImagePreview, useImageZoom } from './components/ImagePreview';
+export type {
+  ImagePreviewProps,
+  ZoomState,
+  UseImageZoomOptions,
+  UseImageZoomReturn,
+} from './components/ImagePreview';
+
 // Navigation
 export { Tabs } from './components/Tabs';
 export type { TabsProps, TabItem, TabsVariant } from './components/Tabs';
@@ -112,6 +120,14 @@ export type { AvatarGroupProps } from './components/AvatarGroup';
 
 export { Chip } from './components/Chip';
 export type { ChipProps, ChipVariant, ChipSize } from './components/Chip';
+
+export { RelativeTime, formatRelativeTime, formatFullDate, getUpdateInterval } from './components/RelativeTime';
+export type {
+  RelativeTimeProps,
+  RelativeTimeFormat,
+  RelativeTimeSize,
+  RelativeTimeColor,
+} from './components/RelativeTime';
 
 // Typography
 export { Text } from './components/Text';

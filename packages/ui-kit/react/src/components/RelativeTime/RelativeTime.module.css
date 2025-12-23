@@ -1,0 +1,44 @@
+/**
+ * RelativeTime styles
+ *
+ * Uses design tokens for consistent typography.
+ */
+
+.relativeTime {
+  font-family: var(--font-sans);
+  white-space: nowrap;
+}
+
+/* Sizes */
+.size-xs {
+  font-size: var(--text-xs);
+  line-height: var(--leading-tight);
+}
+
+.size-sm {
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+}
+
+.size-base {
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+}
+
+.size-lg {
+  font-size: var(--text-lg);
+  line-height: var(--leading-relaxed);
+}
+
+/* Colors */
+.default {
+  color: var(--base-fg);
+}
+
+.soft {
+  color: var(--base-fg-softer);
+}
+
+.inherit {
+  color: inherit;
+}

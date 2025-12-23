@@ -447,3 +447,25 @@ export const EmptyContent: Story = {
     content: '',
   },
 };
+
+export const ImageChips: Story = {
+  args: {
+    content: `
+# Chat Message with Image Chips
+
+Here's a message with an inline image chip: <span data-image-chip data-id="test-123" data-name="Image #1" data-thumbnail-url="https://picsum.photos/200/150">Image #1</span>
+
+And another one: <span data-image-chip data-id="test-456" data-name="Image #2" data-thumbnail-url="https://picsum.photos/200/150?random=2">Image #2</span>
+
+The image chips should render as styled chips with tooltips showing the image preview on hover.
+    `,
+    showLineNumbers: false,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Image chips are rendered from raw HTML spans with data-image-chip attribute. Hover over the chips to see image previews.',
+      },
+    },
+  },
+};

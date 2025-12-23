@@ -1,10 +1,11 @@
-import { Node, mergeAttributes } from '@tiptap/core';
+import { Node, mergeAttributes, type Editor } from '@tiptap/core';
 import { ReactNodeViewRenderer } from '@tiptap/react';
 import { ImageChipNodeView } from './ImageChipNodeView';
 
 export interface ImageChipAttributes {
   id: string;
   name: string;
+  thumbnailUrl?: string;
 }
 
 export interface ImageChipPosition {
@@ -41,6 +42,11 @@ export const ImageChipExtension = Node.create({
         default: 'Image',
         parseHTML: (element) => element.getAttribute('data-name'),
         renderHTML: (attributes) => ({ 'data-name': attributes.name }),
+      },
+      thumbnailUrl: {
+        default: null,
+        parseHTML: (element) => element.getAttribute('data-thumbnail-url'),
+        renderHTML: (attributes) => attributes.thumbnailUrl ? { 'data-thumbnail-url': attributes.thumbnailUrl } : {},
       },
     };
   },
@@ -118,11 +124,11 @@ export const ImageChipExtension = Node.create({
 /**
  * Get all image chips in document order with their positions
  */
-export function getImageChipsInOrder(editor: { state: { doc: { descendants: (callback: (node: { type: { name: string }; attrs: { id: string } }, pos: number) => boolean | void) => void } } }): ImageChipPosition[] {
+export function getImageChipsInOrder(editor: Editor): ImageChipPosition[] {
   const chips: ImageChipPosition[] = [];
   editor.state.doc.descendants((node, pos) => {
     if (node.type.name === 'imageChip') {
-      chips.push({ id: node.attrs.id, pos });
+      chips.push({ id: node.attrs.id as string, pos });
     }
   });
   return chips;
@@ -131,7 +137,7 @@ export function getImageChipsInOrder(editor: { state: { doc: { descendants: (cal
 /**
  * Select/focus a chip by ID
  */
-export function selectChipById(editor: { state: { doc: { descendants: (callback: (node: { type: { name: string }; attrs: { id: string }; nodeSize: number }, pos: number) => boolean | void) => void } }; chain: () => { focus: () => { setNodeSelection: (pos: number) => { run: () => boolean } } } }, id: string): boolean {
+export function selectChipById(editor: Editor, id: string): boolean {
   let found = false;
   let chipPos = -1;
   editor.state.doc.descendants((node, pos) => {

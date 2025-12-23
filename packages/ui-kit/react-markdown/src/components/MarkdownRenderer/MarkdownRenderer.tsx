@@ -15,10 +15,11 @@
  * - --syntax-* tokens for code highlighting
  */
 
-import { useMemo, useCallback, type ComponentType } from 'react';
+import { useMemo, useCallback, useState, type ComponentType } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
+import { Chip, Tooltip, ImagePreview } from '@ui-kit/react';
 import { parseDeepLink, navigateToHash } from '../../utils/deepLinkParser';
 import { useStreamingMarkdown } from '../../hooks/useStreamingMarkdown';
 import { useDeepLink } from '../../hooks/useDeepLink';
@@ -54,6 +55,10 @@ export interface MarkdownRendererProps {
     heading?: ComponentType<HeadingProps>;
     link?: ComponentType<LinkProps>;
   };
+  /** Author name for image preview captions */
+  imageAuthor?: string;
+  /** Timestamp for image preview captions */
+  imageTimestamp?: Date | number | string;
   /** Additional class name */
   className?: string;
 }
@@ -69,8 +74,13 @@ export function MarkdownRenderer({
   showLineNumbers = true,
   collapsibleCodeBlocks = false,
   components: customComponents,
+  imageAuthor,
+  imageTimestamp,
   className,
 }: MarkdownRendererProps) {
+  // State for image preview
+  const [previewImage, setPreviewImage] = useState<{ src: string; name: string } | null>(null);
+
   // Handle streaming
   const {
     displayContent,
@@ -301,6 +311,60 @@ export function MarkdownRenderer({
     em: ({ children }: any) => <em className={styles.emphasis}>{children}</em>,
     del: ({ children }: any) => <del className={styles.strikethrough}>{children}</del>,
     u: ({ children }: any) => <u className={styles.underline}>{children}</u>,
+
+    // Custom span handler for image chips
+    span: (spanProps: any) => {
+      const { node, children, ...props } = spanProps;
+
+      // Check if this is an image chip (data-image-chip attribute exists)
+      // In rehype/hast, data attributes are camelCased in node.properties
+      // In the rendered props, they may be passed differently
+      const nodeProps = node?.properties || {};
+      const hasImageChip = 'dataImageChip' in nodeProps ||
+        'data-image-chip' in props ||
+        props['dataImageChip'] !== undefined;
+
+      if (hasImageChip) {
+        const name = nodeProps['dataName'] || props['data-name'] || props['dataName'] || children;
+        const thumbnailUrl = nodeProps['dataThumbnailUrl'] || props['data-thumbnail-url'] || props['dataThumbnailUrl'];
+
+        if (thumbnailUrl) {
+          return (
+            <Tooltip
+              content={
+                <img
+                  src={thumbnailUrl}
+                  alt={String(name)}
+                  className={styles.imageChipPreview}
+                />
+              }
+              position="top"
+              multiline
+            >
+              <button
+                type="button"
+                className={styles.imageChipWrapper}
+                onClick={() => setPreviewImage({ src: thumbnailUrl, name: String(name) })}
+                aria-label={`Preview ${name}`}
+              >
+                <Chip size="sm">
+                  {name}
+                </Chip>
+              </button>
+            </Tooltip>
+          );
+        }
+
+        return (
+          <Chip size="sm">
+            {name}
+          </Chip>
+        );
+      }
+
+      // Default span rendering
+      return <span {...props}>{children}</span>;
+    },
   }), [
     customComponents,
     showLineNumbers,
@@ -309,21 +373,34 @@ export function MarkdownRenderer({
     handleLineClick,
     handleHeadingClick,
     handleInternalLinkClick,
+    setPreviewImage,
   ]);
 
   return (
-    <div className={`${styles.markdown} ${className || ''}`}>
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeRaw]}
-        components={markdownComponents}
-      >
-        {displayContent}
-      </ReactMarkdown>
+    <>
+      <div className={`${styles.markdown} ${className || ''}`}>
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeRaw]}
+          components={markdownComponents}
+        >
+          {displayContent}
+        </ReactMarkdown>
 
-      {/* Streaming cursor */}
-      {isStreaming && <span className={styles.streamingCursor} aria-hidden="true" />}
-    </div>
+        {/* Streaming cursor */}
+        {isStreaming && <span className={styles.streamingCursor} aria-hidden="true" />}
+      </div>
+
+      {/* Image preview */}
+      <ImagePreview
+        open={previewImage !== null}
+        onClose={() => setPreviewImage(null)}
+        src={previewImage?.src || ''}
+        name={previewImage?.name}
+        username={imageAuthor}
+        timestamp={imageTimestamp}
+      />
+    </>
   );
 }
 

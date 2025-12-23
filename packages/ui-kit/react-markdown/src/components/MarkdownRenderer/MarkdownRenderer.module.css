@@ -225,13 +225,13 @@
    ========================================== */
 
 .inlineCode {
-  padding: 0.15em 0.4em;
-  background: var(--softer-bg, #f6f8fa);
-  border: 1px solid var(--softer-border, #e1e4e8);
-  border-radius: var(--radius-sm, 4px);
-  font-family: var(--font-mono, ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace);
+  padding: 0.1em 0.4em;
+  background: var(--strong-bg);
+  border: 1px solid var(--strong-border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
   font-size: 0.9em;
-  color: var(--softer-fg, var(--base-fg, #24292e));
+  color: var(--strong-fg);
 }
 
 /* ==========================================
@@ -337,4 +337,25 @@
   50% {
     opacity: 0;
   }
+}
+
+/* ==========================================
+   Image Chip Preview
+   ========================================== */
+
+.imageChipWrapper {
+  display: inline-block;
+  padding: 0;
+  margin: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+}
+
+.imageChipPreview {
+  max-width: 300px;
+  max-height: 200px;
+  border-radius: var(--radius-md, 6px);
+  object-fit: contain;
 }

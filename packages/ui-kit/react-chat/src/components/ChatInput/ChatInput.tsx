@@ -12,7 +12,7 @@ import {
   type ChangeEvent,
 } from 'react';
 import { EditorContent } from '@tiptap/react';
-import { Button, IconButton, Spinner, Tooltip } from '@ui-kit/react';
+import { Button, IconButton, Spinner, Tooltip, ImagePreview } from '@ui-kit/react';
 import { SendIcon } from '@ui-kit/icons/SendIcon';
 import { BoldIcon } from '@ui-kit/icons/BoldIcon';
 import { ItalicIcon } from '@ui-kit/icons/ItalicIcon';
@@ -25,7 +25,7 @@ import { StrikethroughIcon } from '@ui-kit/icons/StrikethroughIcon';
 import { UnderlineIcon } from '@ui-kit/icons/UnderlineIcon';
 import { useMessageHistory } from './useMessageHistory';
 import { useChatEditor } from './useChatEditor';
-import { getImageChipsInOrder, selectChipById } from './ImageChipExtension';
+import { getImageChipsInOrder } from './ImageChipExtension';
 import { LinkDialog } from './LinkDialog';
 import styles from './ChatInput.module.css';
 
@@ -118,7 +118,7 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
     ref
   ) => {
     // State - images is a Map keyed by ID for fast lookup
-    const [imagesMap, setImagesMap] = useState<Map<string, Omit<ChatInputImage, 'name'>>>(new Map());
+    const [imagesMap, setImagesMap] = useState<Map<string, Omit<ChatInputImage, 'id' | 'name'>>>(new Map());
     const [isMultilineMode, setIsMultilineMode] = useState(initialMultiline);
     const [isDragging, setIsDragging] = useState(false);
     const [historyIndex, setHistoryIndex] = useState(-1);
@@ -127,6 +127,7 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
     const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
     const [selectedText, setSelectedText] = useState('');
     const [escapePressed, setEscapePressed] = useState(false);
+    const [previewImage, setPreviewImage] = useState<ChatInputImage | null>(null);
 
     // Refs
     const containerRef = useRef<HTMLDivElement>(null);
@@ -191,10 +192,6 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
           let changed = false;
           for (const id of prev.keys()) {
             if (!chipIds.has(id)) {
-              const imageData = prev.get(id);
-              if (imageData) {
-                URL.revokeObjectURL(imageData.thumbnailUrl);
-              }
               newMap.delete(id);
               changed = true;
             }
@@ -245,15 +242,12 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
 
       // Reset state
       editor?.commands.clearContent();
-
-      // Revoke blob URLs
-      imagesMap.forEach((img) => URL.revokeObjectURL(img.thumbnailUrl));
       setImagesMap(new Map());
 
       setHistoryIndex(-1);
       setDraftContent('');
       setIsEmpty(true);
-    }, [getContent, imagesInContentOrder, imagesMap, addToHistory, onSubmit, editor]);
+    }, [getContent, imagesInContentOrder, addToHistory, onSubmit, editor]);
 
     // Navigate history
     const navigateHistory = useCallback(
@@ -305,7 +299,6 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
           if (escapePressed) {
             // Second consecutive Escape - clear content
             editor?.commands.clearContent();
-            imagesMap.forEach((img) => URL.revokeObjectURL(img.thumbnailUrl));
             setImagesMap(new Map());
             if (isMultilineMode) {
               setIsMultilineMode(false);
@@ -401,8 +394,18 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
           openLinkDialog();
         }
       },
-      [isMultilineMode, handleSubmit, editor, historyKey, navigateHistory, imagesMap, openLinkDialog, escapePressed]
+      [isMultilineMode, handleSubmit, editor, historyKey, navigateHistory, openLinkDialog, escapePressed]
     );
+
+    // Convert file to base64 data URL for persistence
+    const fileToDataUrl = useCallback((file: File): Promise<string> => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }, []);
 
     // Add image and insert chip inline
     const addImage = useCallback(
@@ -412,7 +415,9 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
         }
 
         const imageId = `img-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-        const thumbnailUrl = URL.createObjectURL(file);
+
+        // Convert to base64 data URL for persistence (blob URLs don't survive serialization)
+        const thumbnailUrl = await fileToDataUrl(file);
 
         // Add to images map (without name - name is determined by position)
         setImagesMap((prev) => {
@@ -429,7 +434,7 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
         // The name will be determined by position and updated by the effect
         if (editor) {
           const tempName = `Image #${imagesMap.size + 1}`;
-          editor.commands.insertImageChip({ id: imageId, name: tempName });
+          editor.commands.insertImageChip({ id: imageId, name: tempName, thumbnailUrl });
         }
 
         // Upload if callback provided
@@ -465,17 +470,15 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
           }
         }
       },
-      [imagesMap.size, maxImages, onImageUpload, editor]
+      [imagesMap.size, maxImages, onImageUpload, editor, fileToDataUrl]
     );
 
-    // Handle well item click - select the corresponding chip
+    // Handle well item click - open image preview
     const handleWellItemClick = useCallback(
-      (imageId: string) => {
-        if (editor) {
-          selectChipById(editor, imageId);
-        }
+      (image: ChatInputImage) => {
+        setPreviewImage(image);
       },
-      [editor]
+      []
     );
 
     // Handle link insertion from dialog
@@ -651,8 +654,8 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
                 <button
                   type="button"
                   className={styles.imageThumbnail}
-                  onClick={() => handleWellItemClick(image.id)}
-                  aria-label={`Select ${image.name}`}
+                  onClick={() => handleWellItemClick(image)}
+                  aria-label={`Preview ${image.name}`}
                 >
                   <img src={image.thumbnailUrl} alt={image.name} />
                   <span className={styles.imageThumbnailName}>
@@ -833,6 +836,14 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
           onClose={() => setIsLinkDialogOpen(false)}
           onSubmit={handleLinkSubmit}
           initialDisplayText={selectedText}
+        />
+
+        {/* Image preview */}
+        <ImagePreview
+          open={previewImage !== null}
+          onClose={() => setPreviewImage(null)}
+          src={previewImage?.thumbnailUrl || ''}
+          name={previewImage?.name}
         />
       </div>
     );

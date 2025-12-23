@@ -187,13 +187,15 @@
   word-wrap: break-word;
 }
 
-/* Markdown-ready code blocks */
+/* Inline code - matches ChatInput styling */
 .messageText code {
-  background: var(--soft-bg);
-  padding: 0.125em 0.375em;
+  background: var(--strong-bg);
+  border: 1px solid var(--strong-border);
+  padding: 0.1em 0.4em;
   border-radius: var(--radius-sm);
   font-family: var(--font-mono);
   font-size: 0.9em;
+  color: var(--strong-fg);
 }
 
 .messageText pre {

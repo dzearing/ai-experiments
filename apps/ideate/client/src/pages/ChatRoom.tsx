@@ -292,6 +292,8 @@ export function ChatRoom() {
                         content={message.content}
                         enableDeepLinks={false}
                         showLineNumbers={false}
+                        imageAuthor={message.senderName}
+                        imageTimestamp={message.createdAt}
                         className={styles.messageText}
                       />
                     </div>

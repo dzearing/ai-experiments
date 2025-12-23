@@ -11,7 +11,7 @@ export const CodeExtension = Code.extend({
       // Exit code mark when pressing backtick at the end
       '`': ({ editor }) => {
         const { state } = editor;
-        const { selection, doc } = state;
+        const { selection } = state;
         const { $from, empty } = selection;
 
         // Only handle if selection is empty (cursor, not selection)
@@ -26,16 +26,6 @@ export const CodeExtension = Code.extend({
         if (!isInCode) {
           return false;
         }
-
-        // Check if we're at the end of the code mark
-        // Get the position after the current character
-        const posAfter = $from.pos;
-        const nodeAfter = doc.nodeAt(posAfter);
-
-        // If there's no node after or the node after doesn't have the code mark,
-        // we're at the end of the code mark
-        const marksAfter = $from.marksAcross($from);
-        const codeMarkAfter = marksAfter?.some(mark => mark.type === codeMark);
 
         // Check if the character before cursor has code mark
         // and the position is at the boundary
@@ -53,7 +43,7 @@ export const CodeExtension = Code.extend({
       // Also handle ArrowRight at end to exit code mark
       'ArrowRight': ({ editor }) => {
         const { state } = editor;
-        const { selection } = state;
+        const { selection, doc } = state;
         const { $from, empty } = selection;
 
         if (!empty) {
@@ -67,13 +57,31 @@ export const CodeExtension = Code.extend({
           return false;
         }
 
-        // Check if we're at the end of the current text node
+        // Check if we're at the end of the code mark by looking at what's after
+        const posAfter = $from.pos;
+        const nodeAfter = doc.nodeAt(posAfter);
+
+        // If there's text after without the code mark, just move normally
+        if (nodeAfter) {
+          const marksAfter = nodeAfter.marks;
+          const hasCodeAfter = marksAfter.some(mark => mark.type === codeMark);
+          if (hasCodeAfter) {
+            // Still in code, let default handle it
+            return false;
+          }
+        }
+
+        // Check if we're at the end of the current text node with code mark
         const parentOffset = $from.parentOffset;
         const parentSize = $from.parent.content.size;
 
-        if (parentOffset === parentSize) {
-          // At the end of parent, exit the code mark
-          editor.chain().unsetCode().run();
+        if (parentOffset >= parentSize - 1 || !nodeAfter) {
+          // At the end of code mark - insert a zero-width space and move cursor there
+          // This gives the cursor a clear visual position outside the code
+          editor.chain()
+            .unsetCode()
+            .insertContent('\u200B') // Zero-width space
+            .run();
           return true;
         }
 

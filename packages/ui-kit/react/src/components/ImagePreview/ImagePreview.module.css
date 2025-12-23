@@ -1,0 +1,199 @@
+/**
+ * ImagePreview - Fullscreen image viewer with zoom/pan
+ */
+
+/* Backdrop overlay */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal, 1000);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.9);
+  /* Clip zoomed image at viewport edges */
+  overflow: hidden;
+  animation: backdropFadeIn 200ms ease-out;
+}
+
+.backdrop.exiting {
+  animation: backdropFadeOut 200ms ease-in forwards;
+}
+
+@keyframes backdropFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes backdropFadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Close button */
+.closeButton {
+  position: absolute;
+  top: var(--spacing, 16px);
+  right: var(--spacing, 16px);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: var(--radius-full, 50%);
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-normal, 200ms) ease,
+    color var(--duration-normal, 200ms) ease;
+}
+
+.closeButton:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.closeButton:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}
+
+.closeButton svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Image container */
+.imageContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Allow image to extend beyond container when zoomed */
+  overflow: visible;
+  touch-action: none;
+  user-select: none;
+}
+
+/* Image element */
+.image {
+  /* Initial size constraints - image fits within viewport */
+  max-width: calc(100vw - var(--spacing-large20, 48px));
+  max-height: calc(100vh - 120px);
+  object-fit: contain;
+  /* Scale from top-left for consistent zoom behavior */
+  transform-origin: 0 0;
+  will-change: transform;
+  pointer-events: none;
+}
+
+/* Caption container */
+.captionContainer {
+  position: absolute;
+  bottom: var(--spacing, 16px);
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100vw - var(--spacing-large20, 48px));
+  animation: captionFadeIn 200ms ease-out;
+}
+
+@keyframes captionFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* Caption content */
+.caption {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-small20, 4px);
+  padding: var(--spacing-small10, 8px) var(--spacing, 16px);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  border-radius: var(--radius-medium, 8px);
+  font-size: var(--font-size-small, 13px);
+  line-height: var(--line-height-normal, 1.5);
+  color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+}
+
+.captionName {
+  font-weight: var(--font-weight-medium, 500);
+  color: white;
+}
+
+.captionSeparator {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.captionAuthor {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Zoom hint */
+.hint {
+  position: absolute;
+  bottom: var(--spacing-large10, 24px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: var(--spacing-small20, 4px) var(--spacing-small10, 8px);
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: var(--radius-small, 4px);
+  font-size: var(--font-size-xs, 11px);
+  color: rgba(255, 255, 255, 0.5);
+  pointer-events: none;
+  animation: hintFadeIn 400ms ease-out 500ms backwards;
+}
+
+/* Move hint up when caption is visible */
+.captionContainer + .hint {
+  bottom: calc(var(--spacing-large20, 48px) + 40px);
+}
+
+@keyframes hintFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .backdrop.exiting,
+  .captionContainer,
+  .hint {
+    animation: none;
+  }
+
+  .closeButton {
+    transition: none;
+  }
+
+  .image {
+    will-change: auto;
+  }
+}
