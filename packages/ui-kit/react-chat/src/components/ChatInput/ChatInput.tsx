@@ -93,6 +93,12 @@ export interface ChatInputProps {
   /** Disabled state */
   disabled?: boolean;
 
+  /** Auto focus the editor on mount */
+  autoFocus?: boolean;
+
+  /** Initial content to populate the editor with */
+  initialContent?: string;
+
   /** Custom class name */
   className?: string;
 }
@@ -112,6 +118,8 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
       maxHistoryItems = 50,
       maxImages = 10,
       disabled = false,
+      autoFocus = false,
+      initialContent,
       placeholder = 'Type a message...',
       className = '',
     },
@@ -136,6 +144,39 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
     // History hook
     const { getHistory, addToHistory } = useMessageHistory(historyKey, maxHistoryItems);
 
+    // Handle Enter key at TipTap level (before newline insertion)
+    const handleEnterKey = useCallback(
+      (event: { shiftKey: boolean; ctrlKey: boolean; metaKey: boolean }): boolean => {
+        const { shiftKey, ctrlKey, metaKey } = event;
+        const modKey = ctrlKey || metaKey;
+
+        if (isMultilineMode) {
+          if (modKey) {
+            handleSubmitRef.current?.();
+            setIsMultilineMode(false);
+            return true; // Prevent newline
+          }
+          // In multiline mode without mod key, allow newline
+          return false;
+        } else {
+          if (modKey && !shiftKey) {
+            setIsMultilineMode(true);
+            return false; // Allow newline insertion when entering multiline mode
+          }
+          if (!shiftKey) {
+            handleSubmitRef.current?.();
+            return true; // Prevent newline
+          }
+          // Shift+Enter in single-line mode, allow newline (switches to multiline implicitly)
+          return false;
+        }
+      },
+      [isMultilineMode]
+    );
+
+    // Ref to hold current handleSubmit to avoid dependency issues
+    const handleSubmitRef = useRef<(() => void) | null>(null);
+
     // TipTap editor
     const editor = useChatEditor({
       placeholder,
@@ -147,6 +188,7 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
           setHistoryIndex(-1);
         }
       },
+      onEnterKey: handleEnterKey,
     });
 
     // Get images sorted by their position in content
@@ -209,19 +251,20 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
       };
     }, [editor, renumberAllChips]);
 
-    // Get content from editor
-    // Use getHTML() to preserve HTML formatting like <u> for underline
-    // The MarkdownRenderer uses rehypeRaw to handle HTML in markdown
+    // Get content from editor as markdown
+    // Uses tiptap-markdown extension to serialize editor content to markdown
     const getContent = useCallback((): string => {
       if (!editor) return '';
-      // Get HTML content and convert to a format suitable for markdown rendering
-      const html = editor.getHTML();
-      // Remove wrapper <p> tags if it's a single paragraph
-      const singleParagraph = html.match(/^<p>(.*)<\/p>$/s);
-      if (singleParagraph) {
-        return singleParagraph[1];
+      // Use tiptap-markdown's getMarkdown() for proper markdown serialization
+      // This handles line breaks, formatting, etc. correctly
+      const markdownStorage = editor.storage.markdown;
+      if (markdownStorage && typeof markdownStorage.getMarkdown === 'function') {
+        // Call with proper this context
+        const markdown = markdownStorage.getMarkdown() as string;
+        return markdown;
       }
-      return html;
+      // Fallback to HTML if markdown extension not available
+      return editor.getHTML();
     }, [editor]);
 
     // Handle submit
@@ -248,6 +291,9 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
       setDraftContent('');
       setIsEmpty(true);
     }, [getContent, imagesInContentOrder, addToHistory, onSubmit, editor]);
+
+    // Keep handleSubmitRef current
+    handleSubmitRef.current = handleSubmit;
 
     // Navigate history
     const navigateHistory = useCallback(
@@ -290,7 +336,7 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
     // Handle keyboard events
     const handleKeyDown = useCallback(
       (e: KeyboardEvent<HTMLDivElement>) => {
-        const { key, ctrlKey, metaKey, shiftKey } = e;
+        const { key, ctrlKey, metaKey } = e;
         const modKey = ctrlKey || metaKey;
 
         // Escape handling - requires two consecutive presses to clear
@@ -316,27 +362,8 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
           setEscapePressed(false);
         }
 
-        // Submit handling
-        if (key === 'Enter') {
-          if (isMultilineMode) {
-            if (modKey) {
-              e.preventDefault();
-              handleSubmit();
-              setIsMultilineMode(false);
-            }
-          } else {
-            if (modKey && !shiftKey) {
-              e.preventDefault();
-              setIsMultilineMode(true);
-              return;
-            }
-            if (!shiftKey) {
-              e.preventDefault();
-              handleSubmit();
-            }
-          }
-          return;
-        }
+        // Enter key is now handled at the TipTap level via onEnterKey callback
+        // to prevent newline insertion before we can intercept it
 
         // History navigation with smart cursor behavior
         if (editor && historyKey) {
@@ -394,7 +421,7 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
           openLinkDialog();
         }
       },
-      [isMultilineMode, handleSubmit, editor, historyKey, navigateHistory, openLinkDialog, escapePressed]
+      [isMultilineMode, editor, historyKey, navigateHistory, openLinkDialog, escapePressed]
     );
 
     // Convert file to base64 data URL for persistence
@@ -593,6 +620,21 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
         editor.setEditable(!disabled);
       }
     }, [editor, disabled]);
+
+    // Set initial content when provided
+    useEffect(() => {
+      if (editor && initialContent) {
+        editor.commands.setContent(initialContent);
+        setIsEmpty(false);
+      }
+    }, [editor, initialContent]);
+
+    // Auto focus when enabled
+    useEffect(() => {
+      if (editor && autoFocus) {
+        editor.commands.focus('end');
+      }
+    }, [editor, autoFocus]);
 
     // Build class names
     const containerClasses = [

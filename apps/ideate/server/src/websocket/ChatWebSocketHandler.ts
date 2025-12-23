@@ -6,16 +6,18 @@ import { WorkspaceService } from '../services/WorkspaceService.js';
 
 // Message types for the chat WebSocket protocol
 interface ClientMessage {
-  type: 'message' | 'join' | 'typing' | 'stop_typing';
+  type: 'message' | 'update_message' | 'delete_message' | 'join' | 'typing' | 'stop_typing';
   content?: string;
+  messageId?: string;
   userId?: string;
   userName?: string;
 }
 
 interface ServerMessage {
-  type: 'message' | 'join' | 'leave' | 'typing' | 'stop_typing' | 'error' | 'history';
+  type: 'message' | 'message_updated' | 'message_deleted' | 'join' | 'leave' | 'typing' | 'stop_typing' | 'error' | 'history';
   message?: ChatMessage;
   messages?: ChatMessage[];
+  messageId?: string;
   userId?: string;
   userName?: string;
   error?: string;
@@ -167,6 +169,12 @@ export class ChatWebSocketHandler {
         case 'message':
           await this.handleChatMessage(client, room, clientMessage.content || '');
           break;
+        case 'update_message':
+          await this.handleUpdateMessage(client, room, clientMessage.messageId || '', clientMessage.content || '');
+          break;
+        case 'delete_message':
+          await this.handleDeleteMessage(client, room, clientMessage.messageId || '');
+          break;
         case 'typing':
           this.broadcast(room, {
             type: 'typing',
@@ -181,7 +189,7 @@ export class ChatWebSocketHandler {
           }, client);
           break;
         default:
-          console.warn(`[Chat] Unknown message type: ${clientMessage.type}`);
+          console.warn(`[Chat] Unknown message type: ${(clientMessage as ClientMessage).type}`);
       }
     } catch (error) {
       console.error('[Chat] Error handling message:', error);
@@ -213,6 +221,71 @@ export class ChatWebSocketHandler {
     } catch (error) {
       console.error('[Chat] Error saving message:', error);
       this.send(client.ws, { type: 'error', error: 'Failed to save message' });
+    }
+  }
+
+  /**
+   * Handle an update message request from a client.
+   */
+  private async handleUpdateMessage(client: ChatClient, room: ChatRoom, messageId: string, content: string): Promise<void> {
+    if (!messageId || !content.trim()) {
+      this.send(client.ws, { type: 'error', error: 'Message ID and content are required' });
+      return;
+    }
+
+    try {
+      const updatedMessage = await this.chatRoomService.updateMessage(
+        client.roomId,
+        messageId,
+        client.userId,
+        content.trim()
+      );
+
+      if (!updatedMessage) {
+        this.send(client.ws, { type: 'error', error: 'Failed to update message - not found or unauthorized' });
+        return;
+      }
+
+      // Broadcast to ALL clients in the room (including sender)
+      this.broadcast(room, {
+        type: 'message_updated',
+        message: updatedMessage,
+      });
+    } catch (error) {
+      console.error('[Chat] Error updating message:', error);
+      this.send(client.ws, { type: 'error', error: 'Failed to update message' });
+    }
+  }
+
+  /**
+   * Handle a delete message request from a client.
+   */
+  private async handleDeleteMessage(client: ChatClient, room: ChatRoom, messageId: string): Promise<void> {
+    if (!messageId) {
+      this.send(client.ws, { type: 'error', error: 'Message ID is required' });
+      return;
+    }
+
+    try {
+      const success = await this.chatRoomService.deleteMessage(
+        client.roomId,
+        messageId,
+        client.userId
+      );
+
+      if (!success) {
+        this.send(client.ws, { type: 'error', error: 'Failed to delete message - not found or unauthorized' });
+        return;
+      }
+
+      // Broadcast to ALL clients in the room (including sender)
+      this.broadcast(room, {
+        type: 'message_deleted',
+        messageId,
+      });
+    } catch (error) {
+      console.error('[Chat] Error deleting message:', error);
+      this.send(client.ws, { type: 'error', error: 'Failed to delete message' });
     }
   }
 

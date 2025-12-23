@@ -3,9 +3,10 @@ import { CHAT_WS_URL } from '../config';
 import type { ChatMessage } from '../contexts/ChatContext';
 
 interface ServerMessage {
-  type: 'message' | 'join' | 'leave' | 'typing' | 'stop_typing' | 'error' | 'history';
+  type: 'message' | 'message_updated' | 'message_deleted' | 'join' | 'leave' | 'typing' | 'stop_typing' | 'error' | 'history';
   message?: ChatMessage;
   messages?: ChatMessage[];
+  messageId?: string;
   userId?: string;
   userName?: string;
   error?: string;
@@ -29,6 +30,8 @@ interface UseChatSocketReturn {
   isConnected: boolean;
   isConnecting: boolean;
   sendMessage: (content: string) => void;
+  updateMessage: (messageId: string, content: string) => void;
+  deleteMessage: (messageId: string) => void;
   sendTyping: () => void;
   sendStopTyping: () => void;
 }
@@ -99,6 +102,18 @@ export function useChatSocket({
               onMessage?.(data.message);
             }
             break;
+          case 'message_updated':
+            if (data.message) {
+              setMessages((prev) =>
+                prev.map((m) => (m.id === data.message!.id ? data.message! : m))
+              );
+            }
+            break;
+          case 'message_deleted':
+            if (data.messageId) {
+              setMessages((prev) => prev.filter((m) => m.id !== data.messageId));
+            }
+            break;
           case 'join':
             if (data.userId && data.userName) {
               onUserJoin?.(data.userId, data.userName);
@@ -154,6 +169,25 @@ export function useChatSocket({
     }
   }, []);
 
+  const updateMessage = useCallback((messageId: string, content: string) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({
+        type: 'update_message',
+        messageId,
+        content,
+      }));
+    }
+  }, []);
+
+  const deleteMessage = useCallback((messageId: string) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({
+        type: 'delete_message',
+        messageId,
+      }));
+    }
+  }, []);
+
   const sendTyping = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({
@@ -175,6 +209,8 @@ export function useChatSocket({
     isConnected,
     isConnecting,
     sendMessage,
+    updateMessage,
+    deleteMessage,
     sendTyping,
     sendStopTyping,
   };

@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ChatInput } from './ChatInput';
+import { MarkdownRenderer } from '@ui-kit/react-markdown';
 import styles from './ChatInput.module.css';
 
 // Helper to create a mock image paste event
@@ -133,7 +134,8 @@ describe('ChatInput', () => {
       const user = userEvent.setup();
       render(<ChatInput />);
 
-      const toggleButton = screen.getByRole('button', { name: /multiline/i });
+      // aria-label changes based on mode, so match either
+      const toggleButton = screen.getByRole('button', { name: /switch to (multiline|single line) mode/i });
 
       // Initially single-line mode
       expect(toggleButton).not.toHaveClass(styles.active);
@@ -144,17 +146,316 @@ describe('ChatInput', () => {
       expect(toggleButton).toHaveClass(styles.active);
     });
 
-    it('enters multiline mode on Meta+Enter in single-line mode', async () => {
+    it('enters multiline mode on Ctrl+Enter in single-line mode', async () => {
       const user = userEvent.setup();
       render(<ChatInput />);
 
       const editor = screen.getByRole('textbox');
-      const toggleButton = screen.getByRole('button', { name: /multiline/i });
+      const toggleButton = screen.getByRole('button', { name: /switch to (multiline|single line) mode/i });
 
       await user.click(editor);
-      await user.keyboard('{Meta>}{Enter}{/Meta}');
+      // Use Ctrl+Enter (Mod-Enter in TipTap maps to Ctrl in jsdom)
+      await user.keyboard('{Control>}{Enter}{/Control}');
 
       expect(toggleButton).toHaveClass(styles.active);
+    });
+  });
+
+  describe('single-line mode Enter behavior', () => {
+    it('submits when Enter is pressed without inserting newline', async () => {
+      const user = userEvent.setup();
+      const onSubmit = vi.fn();
+      render(<ChatInput onSubmit={onSubmit} />);
+
+      const editor = screen.getByRole('textbox');
+      await user.click(editor);
+
+      // Type a sentence
+      await user.type(editor, 'Hello world');
+
+      // Press Enter (in single-line mode, should submit without inserting newline)
+      await user.keyboard('{Enter}');
+
+      // Should submit the full content
+      expect(onSubmit).toHaveBeenCalledWith({
+        content: 'Hello world',
+        images: [],
+      });
+
+      // Input should be cleared (no leftover content)
+      expect(editor).toHaveTextContent('');
+    });
+
+    it('Ctrl+Enter enters multiline mode without submitting and inserts newline', async () => {
+      const user = userEvent.setup();
+      const onSubmit = vi.fn();
+      render(<ChatInput onSubmit={onSubmit} />);
+
+      const editor = screen.getByRole('textbox');
+      const toggleButton = screen.getByRole('button', { name: /switch to (multiline|single line) mode/i });
+
+      await user.click(editor);
+      await user.type(editor, 'First line');
+
+      // Ctrl+Enter should switch to multiline mode
+      await user.keyboard('{Control>}{Enter}{/Control}');
+
+      // Should NOT have submitted
+      expect(onSubmit).not.toHaveBeenCalled();
+
+      // Multiline button should show as active/selected
+      expect(toggleButton).toHaveClass(styles.active);
+    });
+
+    it('Ctrl+Enter enters multiline mode and shows active toggle', async () => {
+      const user = userEvent.setup();
+      const onSubmit = vi.fn();
+      render(<ChatInput onSubmit={onSubmit} />);
+
+      const editor = screen.getByRole('textbox');
+      const toggleButton = screen.getByRole('button', { name: /switch to (multiline|single line) mode/i });
+
+      await user.click(editor);
+      await user.type(editor, 'First line');
+
+      // Ctrl+Enter should switch to multiline mode (Mod-Enter in TipTap)
+      await user.keyboard('{Control>}{Enter}{/Control}');
+
+      // Should NOT have submitted
+      expect(onSubmit).not.toHaveBeenCalled();
+
+      // Multiline button should show as active/selected
+      expect(toggleButton).toHaveClass(styles.active);
+    });
+  });
+
+  describe('multiline mode Enter behavior', () => {
+    it('Enter inserts newline in multiline mode', async () => {
+      const user = userEvent.setup();
+      const onSubmit = vi.fn();
+      render(<ChatInput onSubmit={onSubmit} multiline />);
+
+      const editor = screen.getByRole('textbox');
+      const toggleButton = screen.getByRole('button', { name: /switch to (multiline|single line) mode/i });
+
+      // Should start in multiline mode
+      expect(toggleButton).toHaveClass(styles.active);
+
+      await user.click(editor);
+      await user.type(editor, 'First line');
+      await user.keyboard('{Enter}');
+      await user.type(editor, 'Second line');
+
+      // Should NOT have submitted
+      expect(onSubmit).not.toHaveBeenCalled();
+
+      // Editor should contain both lines (check for both text contents)
+      expect(editor.textContent).toContain('First line');
+      expect(editor.textContent).toContain('Second line');
+    });
+
+    it('Ctrl+Enter submits in multiline mode', async () => {
+      const user = userEvent.setup();
+      const onSubmit = vi.fn();
+      render(<ChatInput onSubmit={onSubmit} multiline />);
+
+      const editor = screen.getByRole('textbox');
+
+      await user.click(editor);
+      await user.type(editor, 'First line');
+      await user.keyboard('{Enter}');
+      await user.type(editor, 'Second line');
+
+      // Ctrl+Enter should submit
+      await user.keyboard('{Control>}{Enter}{/Control}');
+
+      expect(onSubmit).toHaveBeenCalled();
+      // Content should include both lines (actual format depends on HTML/markdown conversion)
+      const submitData = onSubmit.mock.calls[0][0];
+      expect(submitData.content).toContain('First line');
+      expect(submitData.content).toContain('Second line');
+    });
+
+    it('Ctrl+Enter submits content in multiline mode', async () => {
+      const user = userEvent.setup();
+      const onSubmit = vi.fn();
+      render(<ChatInput onSubmit={onSubmit} multiline />);
+
+      const editor = screen.getByRole('textbox');
+
+      await user.click(editor);
+      await user.type(editor, 'Hello multiline');
+
+      // Ctrl+Enter should submit (Mod-Enter in TipTap)
+      await user.keyboard('{Control>}{Enter}{/Control}');
+
+      expect(onSubmit).toHaveBeenCalledWith({
+        content: 'Hello multiline',
+        images: [],
+      });
+    });
+
+    it('multiline button shows selected state when in multiline mode', async () => {
+      const user = userEvent.setup();
+      render(<ChatInput />);
+
+      const toggleButton = screen.getByRole('button', { name: /switch to (multiline|single line) mode/i });
+
+      // Initially single-line - button not active
+      expect(toggleButton).not.toHaveClass(styles.active);
+
+      // Switch to multiline via Ctrl+Enter
+      const editor = screen.getByRole('textbox');
+      await user.click(editor);
+      await user.keyboard('{Control>}{Enter}{/Control}');
+
+      // Button should now be active
+      expect(toggleButton).toHaveClass(styles.active);
+
+      // Click button to switch back to single-line
+      await user.click(toggleButton);
+
+      // Button should no longer be active
+      expect(toggleButton).not.toHaveClass(styles.active);
+    });
+
+    it('exits multiline mode after Ctrl+Enter submit', async () => {
+      const user = userEvent.setup();
+      const onSubmit = vi.fn();
+      render(<ChatInput onSubmit={onSubmit} multiline />);
+
+      const editor = screen.getByRole('textbox');
+      const toggleButton = screen.getByRole('button', { name: /switch to (multiline|single line) mode/i });
+
+      // Should start in multiline mode
+      expect(toggleButton).toHaveClass(styles.active);
+
+      await user.click(editor);
+      await user.type(editor, 'Test message');
+
+      // Submit with Ctrl+Enter
+      await user.keyboard('{Control>}{Enter}{/Control}');
+
+      expect(onSubmit).toHaveBeenCalled();
+
+      // Should exit multiline mode after submit
+      expect(toggleButton).not.toHaveClass(styles.active);
+    });
+
+    it('submits after entering multiline mode via Ctrl+Enter and typing more', async () => {
+      const user = userEvent.setup();
+      const onSubmit = vi.fn();
+      render(<ChatInput onSubmit={onSubmit} />);
+
+      const editor = screen.getByRole('textbox');
+      const toggleButton = screen.getByRole('button', { name: /switch to (multiline|single line) mode/i });
+
+      // Start in single-line mode
+      expect(toggleButton).not.toHaveClass(styles.active);
+
+      await user.click(editor);
+      await user.type(editor, 'First line');
+
+      // Enter multiline mode with Ctrl+Enter
+      await user.keyboard('{Control>}{Enter}{/Control}');
+
+      // Should now be in multiline mode
+      expect(toggleButton).toHaveClass(styles.active);
+      expect(onSubmit).not.toHaveBeenCalled();
+
+      // Type more content
+      await user.type(editor, 'Second line');
+
+      // Submit with Ctrl+Enter
+      await user.keyboard('{Control>}{Enter}{/Control}');
+
+      // Should have submitted
+      expect(onSubmit).toHaveBeenCalled();
+      const submitData = onSubmit.mock.calls[0][0];
+      expect(submitData.content).toContain('First line');
+      expect(submitData.content).toContain('Second line');
+    });
+
+    it('multiline content is not blank when submitted', async () => {
+      const user = userEvent.setup();
+      const onSubmit = vi.fn();
+      render(<ChatInput onSubmit={onSubmit} />);
+
+      const editor = screen.getByRole('textbox');
+
+      await user.click(editor);
+
+      // Type "line 1"
+      await user.type(editor, 'line 1');
+
+      // Press Ctrl+Enter to enter multiline mode and insert newline
+      await user.keyboard('{Control>}{Enter}{/Control}');
+
+      // Type "line 2"
+      await user.type(editor, 'line 2');
+
+      // Press Ctrl+Enter to submit
+      await user.keyboard('{Control>}{Enter}{/Control}');
+
+      // Should have submitted with non-empty content containing both lines
+      expect(onSubmit).toHaveBeenCalled();
+      const submitData = onSubmit.mock.calls[0][0];
+
+      // Content should NOT be blank
+      expect(submitData.content).not.toBe('');
+      expect(submitData.content.length).toBeGreaterThan(0);
+
+      // Content should contain both lines
+      expect(submitData.content).toContain('line 1');
+      expect(submitData.content).toContain('line 2');
+    });
+
+    it('multiline content renders correctly in MarkdownRenderer', async () => {
+      const user = userEvent.setup();
+      const onSubmit = vi.fn();
+      const { unmount } = render(<ChatInput onSubmit={onSubmit} />);
+
+      const editor = screen.getByRole('textbox');
+
+      await user.click(editor);
+
+      // Type "line 1"
+      await user.type(editor, 'line 1');
+
+      // Press Ctrl+Enter to enter multiline mode and insert newline
+      await user.keyboard('{Control>}{Enter}{/Control}');
+
+      // Type "line 2" - now in multiline mode
+      await user.type(editor, 'line 2');
+
+      // Press regular Enter to add another line (in multiline mode, Enter adds newline)
+      await user.keyboard('{Enter}');
+
+      // Type "line 3"
+      await user.type(editor, 'line 3');
+
+      // Press Ctrl+Enter to submit (in multiline mode)
+      await user.keyboard('{Control>}{Enter}{/Control}');
+
+      // Should have submitted
+      expect(onSubmit).toHaveBeenCalled();
+      const submitData = onSubmit.mock.calls[0][0];
+
+      // Unmount ChatInput and render MarkdownRenderer with the submitted content
+      unmount();
+
+      const { container } = render(
+        <MarkdownRenderer content={submitData.content} />
+      );
+
+      // The rendered output should contain all three lines as visible text
+      expect(container.textContent).toContain('line 1');
+      expect(container.textContent).toContain('line 2');
+      expect(container.textContent).toContain('line 3');
+
+      // Each line should be in its own paragraph (or at least visible)
+      const paragraphs = container.querySelectorAll('p');
+      expect(paragraphs.length).toBeGreaterThanOrEqual(3);
     });
   });
 
@@ -191,7 +492,7 @@ describe('ChatInput', () => {
       expect(container.querySelector(`.${styles.toolbar}`)).not.toBeInTheDocument();
 
       // Click multiline toggle
-      const toggleButton = screen.getByRole('button', { name: /multiline/i });
+      const toggleButton = screen.getByRole('button', { name: /switch to (multiline|single line) mode/i });
       await user.click(toggleButton);
 
       // Toolbar should now be visible

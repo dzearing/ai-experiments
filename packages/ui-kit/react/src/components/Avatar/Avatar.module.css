@@ -17,6 +17,12 @@
   border-radius: var(--radius-full);
 }
 
+.avatar.xxs {
+  width: 20px;
+  height: 20px;
+  font-size: 10px;
+}
+
 .avatar.xs {
   width: 24px;
   height: 24px;

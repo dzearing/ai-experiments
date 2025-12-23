@@ -1,9 +1,11 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from '@ui-kit/router';
-import { Avatar, AvatarGroup, Button, IconButton, Spinner } from '@ui-kit/react';
+import { Avatar, AvatarGroup, Button, IconButton, Spinner, Menu, Modal } from '@ui-kit/react';
 import { ChatInput, type ChatInputSubmitData } from '@ui-kit/react-chat';
 import { MarkdownRenderer } from '@ui-kit/react-markdown';
 import { ArrowLeftIcon } from '@ui-kit/icons/ArrowLeftIcon';
+import { EditIcon } from '@ui-kit/icons/EditIcon';
+import { TrashIcon } from '@ui-kit/icons/TrashIcon';
 import { useAuth } from '../contexts/AuthContext';
 import { useSession } from '../contexts/SessionContext';
 import { useChat, type ChatRoomMetadata, type ChatMessage } from '../contexts/ChatContext';
@@ -64,6 +66,9 @@ export function ChatRoom() {
   const [chatRoom, setChatRoom] = useState<ChatRoomMetadata | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [typingUsers, setTypingUsers] = useState<Map<string, string>>(new Map());
+  const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(null);
+  const [escapeCount, setEscapeCount] = useState(0);
+  const escapeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -144,6 +149,8 @@ export function ChatRoom() {
     isConnected,
     isConnecting,
     sendMessage,
+    updateMessage,
+    deleteMessage,
     sendStopTyping,
   } = useChatSocket({
     roomId: chatRoomId || '',
@@ -166,6 +173,65 @@ export function ChatRoom() {
     sendMessage(data.content);
     sendStopTyping();
   }, [sendMessage, sendStopTyping]);
+
+  // Handle menu actions
+  const handleMessageMenuSelect = useCallback((value: string, message: ChatMessage) => {
+    if (value === 'edit') {
+      setEditingMessage(message);
+      setEscapeCount(0);
+    } else if (value === 'delete') {
+      deleteMessage(message.id);
+    }
+  }, [deleteMessage]);
+
+  // Handle edit overlay submit
+  const handleEditSubmit = useCallback((data: ChatInputSubmitData) => {
+    if (!editingMessage || !data.content.trim()) return;
+
+    updateMessage(editingMessage.id, data.content);
+    setEditingMessage(null);
+    setEscapeCount(0);
+  }, [editingMessage, updateMessage]);
+
+  // Handle edit overlay escape (press twice to close)
+  const handleEditKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Clear any existing timeout
+      if (escapeTimeoutRef.current) {
+        clearTimeout(escapeTimeoutRef.current);
+      }
+
+      if (escapeCount === 0) {
+        setEscapeCount(1);
+        // Reset after 1.5 seconds
+        escapeTimeoutRef.current = setTimeout(() => {
+          setEscapeCount(0);
+        }, 1500);
+      } else {
+        // Second escape press - close the overlay
+        setEditingMessage(null);
+        setEscapeCount(0);
+      }
+    }
+  }, [escapeCount]);
+
+  // Cleanup escape timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (escapeTimeoutRef.current) {
+        clearTimeout(escapeTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Menu items for message actions
+  const messageMenuItems = useMemo(() => [
+    { value: 'edit', label: 'Edit', icon: <EditIcon /> },
+    { value: 'delete', label: 'Delete', icon: <TrashIcon />, danger: true },
+  ], []);
 
   // Group messages by date
   const messageGroups = useMemo(() => groupMessagesByDate(messages), [messages]);
@@ -256,10 +322,9 @@ export function ChatRoom() {
                 <span className={styles.dateLabel}>{formatDate(group.messages[0].createdAt)}</span>
               </div>
               {group.messages.map((message, index) => {
-                // Check if previous message is from same sender (to hide avatar/header)
+                // Check if previous message is from same sender (to hide avatar/name)
                 const prevMessage = index > 0 ? group.messages[index - 1] : null;
                 const isConsecutive = prevMessage && prevMessage.senderId === message.senderId;
-                const showHeader = !isConsecutive;
                 const isOwnMessage = message.senderId === user.id;
 
                 return (
@@ -267,27 +332,42 @@ export function ChatRoom() {
                     key={message.id}
                     className={`${styles.message} ${isOwnMessage ? styles.ownMessage : ''} ${isConsecutive ? styles.consecutive : ''}`}
                   >
-                    <div className={`${styles.avatar} ${isConsecutive ? styles.hidden : ''}`}>
+                    {/* Column 1: Avatar + Name */}
+                    <div className={`${styles.avatarColumn} ${isConsecutive ? styles.hidden : ''}`}>
                       {!isConsecutive && (
-                        <Avatar
-                          size="sm"
-                          fallback={message.senderName}
-                          color={message.senderColor}
-                        />
-                      )}
-                    </div>
-                    <div className={styles.messageContent}>
-                      {showHeader && (
-                        <div className={styles.messageHeader}>
+                        <>
+                          <Avatar
+                            size="xs"
+                            fallback={message.senderName}
+                            color={message.senderColor}
+                          />
                           <span
                             className={styles.senderName}
                             style={{ color: message.senderColor }}
                           >
                             {message.senderName}
                           </span>
-                          <span className={styles.messageTime}>{formatTime(message.createdAt)}</span>
-                        </div>
+                        </>
                       )}
+                    </div>
+
+                    {/* Column 2: Time (clickable menu for own messages) */}
+                    {isOwnMessage ? (
+                      <Menu
+                        items={messageMenuItems}
+                        onSelect={(value) => handleMessageMenuSelect(value, message)}
+                        position="bottom-start"
+                      >
+                        <button className={styles.messageTimeButton}>
+                          {formatTime(message.createdAt)}
+                        </button>
+                      </Menu>
+                    ) : (
+                      <span className={styles.messageTime}>{formatTime(message.createdAt)}</span>
+                    )}
+
+                    {/* Column 3: Content */}
+                    <div className={styles.messageContent}>
                       <MarkdownRenderer
                         content={message.content}
                         enableDeepLinks={false}
@@ -328,6 +408,36 @@ export function ChatRoom() {
           fullWidth
         />
       </div>
+
+      {/* Edit Message Modal */}
+      <Modal
+        open={editingMessage !== null}
+        onClose={() => setEditingMessage(null)}
+        closeOnEscape={false}
+        size="lg"
+      >
+        {editingMessage && (
+          <div
+            className={styles.editOverlay}
+            onKeyDown={handleEditKeyDown}
+          >
+            <div className={styles.editOverlayHeader}>
+              <h3>Edit message</h3>
+              <span className={styles.editOverlayHint}>
+                {escapeCount > 0 ? 'Press Escape again to cancel' : 'Press Escape twice to cancel'}
+              </span>
+            </div>
+            <ChatInput
+              placeholder="Edit your message..."
+              onSubmit={handleEditSubmit}
+              initialContent={editingMessage.content}
+              historyKey={`edit-${editingMessage.id}`}
+              fullWidth
+              autoFocus
+            />
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

@@ -299,6 +299,185 @@ test.describe('Chat Room Lifecycle', () => {
   });
 });
 
+test.describe('Message Edit and Delete', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearIndexedDB(page);
+    await signIn(page);
+  });
+
+  test('can edit own message', async ({ page }) => {
+    // Step 1: Go to workspace and create chat room
+    await ensureWorkspace(page);
+    const chatName = `Edit Test ${Date.now()}`;
+    await createChatRoom(page, chatName);
+    await waitForChatConnection(page);
+
+    // Step 2: Send a message
+    const originalMessage = 'Original message to edit';
+    await sendMessage(page, originalMessage);
+
+    // Wait for message to appear
+    await expect(async () => {
+      const found = await hasMessage(page, originalMessage);
+      expect(found).toBe(true);
+    }).toPass({ timeout: 5000 });
+
+    // Step 3: Click on the timestamp to open menu (own messages have clickable timestamp)
+    const timestampButton = page.locator('[class*="messageTimeButton"]').first();
+    await expect(timestampButton).toBeVisible({ timeout: 5000 });
+    await timestampButton.click();
+
+    // Step 4: Click Edit in the menu
+    const editOption = page.locator('text="Edit"').first();
+    await expect(editOption).toBeVisible({ timeout: 3000 });
+    await editOption.click();
+
+    // Step 5: Edit modal should appear - clear and type new content
+    await page.waitForTimeout(500);
+    const editInput = page.locator('[class*="editOverlay"] input, [class*="editOverlay"] [contenteditable="true"]').first();
+    await expect(editInput).toBeVisible({ timeout: 5000 });
+
+    // Clear existing content and type new message
+    await editInput.click();
+    await page.keyboard.press('Meta+a'); // Select all
+    const editedMessage = 'Edited message content';
+    await editInput.fill(editedMessage);
+    await editInput.press('Enter');
+
+    // Step 6: Verify message was updated
+    await page.waitForTimeout(1000);
+    await expect(async () => {
+      const found = await hasMessage(page, editedMessage);
+      expect(found).toBe(true);
+    }).toPass({ timeout: 5000 });
+
+    // Original message should no longer be visible
+    const hasOriginal = await hasMessage(page, originalMessage);
+    expect(hasOriginal).toBe(false);
+
+    console.log('Message edited successfully');
+  });
+
+  test('can delete own message', async ({ page }) => {
+    // Step 1: Go to workspace and create chat room
+    await ensureWorkspace(page);
+    const chatName = `Delete Test ${Date.now()}`;
+    await createChatRoom(page, chatName);
+    await waitForChatConnection(page);
+
+    // Step 2: Send a message
+    const messageToDelete = 'This message will be deleted';
+    await sendMessage(page, messageToDelete);
+
+    // Wait for message to appear
+    await expect(async () => {
+      const found = await hasMessage(page, messageToDelete);
+      expect(found).toBe(true);
+    }).toPass({ timeout: 5000 });
+
+    // Step 3: Click on the timestamp to open menu
+    const timestampButton = page.locator('[class*="messageTimeButton"]').first();
+    await expect(timestampButton).toBeVisible({ timeout: 5000 });
+    await timestampButton.click();
+
+    // Step 4: Click Delete in the menu
+    const deleteOption = page.locator('text="Delete"').first();
+    await expect(deleteOption).toBeVisible({ timeout: 3000 });
+    await deleteOption.click();
+
+    // Step 5: Verify message was deleted
+    await page.waitForTimeout(1000);
+    await expect(async () => {
+      const found = await hasMessage(page, messageToDelete);
+      expect(found).toBe(false);
+    }).toPass({ timeout: 5000 });
+
+    // Verify empty state appears (since it was the only message)
+    const emptyState = page.locator('text=/no messages|start the conversation/i').first();
+    await expect(emptyState).toBeVisible({ timeout: 5000 });
+
+    console.log('Message deleted successfully');
+  });
+
+  test('deleted message syncs to other users', async ({ browser }) => {
+    // Create two browser contexts
+    const context1 = await browser.newContext();
+    const context2 = await browser.newContext();
+
+    const page1 = await context1.newPage();
+    const page2 = await context2.newPage();
+
+    // Sign in with same user on both
+    await context1.addInitScript((user) => {
+      localStorage.setItem('ideate-user', JSON.stringify(user));
+    }, TEST_USER);
+
+    await context2.addInitScript((user) => {
+      localStorage.setItem('ideate-user', JSON.stringify(user));
+    }, TEST_USER);
+
+    try {
+      // User 1 creates chat room
+      await page1.goto('/workspaces');
+      await page1.waitForTimeout(1000);
+
+      const workspaceCards = page1.locator('[class*="workspaceCard"], [class*="resourceCard"]');
+      if (await workspaceCards.count() > 0) {
+        await workspaceCards.first().click();
+      } else {
+        const newWorkspaceBtn = page1.locator('button:has-text("New Workspace")');
+        await newWorkspaceBtn.click();
+        await page1.fill('input[placeholder*="workspace" i], input[placeholder*="name" i]', `Sync Delete Test ${Date.now()}`);
+        await page1.locator('button:has-text("Create")').last().click();
+      }
+      await page1.waitForURL(/\/workspace\/.+/);
+
+      const chatName = `Sync Delete Chat ${Date.now()}`;
+      await page1.locator('button:has-text("New Chat Room")').first().click();
+      await page1.waitForTimeout(500);
+      await page1.locator('input[placeholder*="chat" i]').first().fill(chatName);
+      await page1.locator('button:has-text("Create")').last().click();
+      await page1.waitForURL(/\/chat\/.+/, { timeout: 10000 });
+      await expect(page1.locator('[data-status="connected"]').first()).toBeVisible({ timeout: 10000 });
+
+      const chatUrl = page1.url();
+
+      // User 2 joins
+      await page2.goto(chatUrl);
+      await expect(page2.locator('[data-status="connected"]').first()).toBeVisible({ timeout: 10000 });
+
+      // User 1 sends a message
+      const testMessage = 'Message to delete for sync test';
+      await page1.locator('input[placeholder*="message" i]').first().fill(testMessage);
+      await page1.locator('input[placeholder*="message" i]').first().press('Enter');
+
+      // Wait for User 2 to see the message
+      await expect(async () => {
+        const messages = await getMessages(page2);
+        expect(messages.some(m => m.includes(testMessage))).toBe(true);
+      }).toPass({ timeout: 10000 });
+
+      // User 1 deletes the message
+      const timestampButton = page1.locator('[class*="messageTimeButton"]').first();
+      await timestampButton.click();
+      const deleteOption = page1.locator('text="Delete"').first();
+      await deleteOption.click();
+
+      // Verify User 2 sees the deletion in real-time
+      await expect(async () => {
+        const messages = await getMessages(page2);
+        expect(messages.some(m => m.includes(testMessage))).toBe(false);
+      }).toPass({ timeout: 10000 });
+
+      console.log('Delete synced to other user');
+
+    } finally {
+      await context1.close();
+      await context2.close();
+    }
+  });
+});
+
 test.describe('Multi-User Chat', () => {
   test('two users can chat in real-time', async ({ browser }) => {
     // Create two browser contexts (simulating same user on two devices/tabs)

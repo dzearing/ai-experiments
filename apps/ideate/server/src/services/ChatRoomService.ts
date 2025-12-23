@@ -296,6 +296,87 @@ export class ChatRoomService {
   }
 
   /**
+   * Update a message in a chat room.
+   * Only the sender can update their own message.
+   */
+  async updateMessage(
+    chatRoomId: string,
+    messageId: string,
+    senderId: string,
+    newContent: string
+  ): Promise<ChatMessage | null> {
+    try {
+      const content = await fs.readFile(this.getMessagesPath(chatRoomId), 'utf-8');
+      const lines = content.trim().split('\n').filter(line => line.length > 0);
+      const messages: ChatMessage[] = lines.map(line => JSON.parse(line));
+
+      const messageIndex = messages.findIndex(m => m.id === messageId);
+      if (messageIndex === -1) {
+        return null;
+      }
+
+      const message = messages[messageIndex];
+
+      // Only sender can update their own message
+      if (message.senderId !== senderId) {
+        return null;
+      }
+
+      // Update the message content
+      message.content = newContent;
+
+      // Write all messages back
+      const newContent2 = messages.map(m => JSON.stringify(m)).join('\n') + '\n';
+      await fs.writeFile(this.getMessagesPath(chatRoomId), newContent2, 'utf-8');
+
+      return message;
+    } catch (error) {
+      console.error('Update message error:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Delete a message from a chat room.
+   * Only the sender can delete their own message.
+   */
+  async deleteMessage(
+    chatRoomId: string,
+    messageId: string,
+    senderId: string
+  ): Promise<boolean> {
+    try {
+      const content = await fs.readFile(this.getMessagesPath(chatRoomId), 'utf-8');
+      const lines = content.trim().split('\n').filter(line => line.length > 0);
+      const messages: ChatMessage[] = lines.map(line => JSON.parse(line));
+
+      const messageIndex = messages.findIndex(m => m.id === messageId);
+      if (messageIndex === -1) {
+        return false;
+      }
+
+      const message = messages[messageIndex];
+
+      // Only sender can delete their own message
+      if (message.senderId !== senderId) {
+        return false;
+      }
+
+      // Remove the message
+      messages.splice(messageIndex, 1);
+
+      // Write all messages back
+      const newContent = messages.map(m => JSON.stringify(m)).join('\n') + (messages.length > 0 ? '\n' : '');
+      await fs.writeFile(this.getMessagesPath(chatRoomId), newContent, 'utf-8');
+
+      return true;
+    } catch (error) {
+      console.error('Delete message error:', error);
+      return false;
+    }
+  }
+
+  /**
    * Add a participant to a chat room.
    */
   async addParticipant(chatRoomId: string, userId: string): Promise<boolean> {

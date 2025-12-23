@@ -102,7 +102,7 @@
 .dateGroup {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  /* No gap - spacing handled by individual messages */
 }
 
 .dateDivider {
@@ -121,61 +121,108 @@
   border: 1px solid var(--base-border);
 }
 
-/* Messages - Condensed slack-like format */
+/* Messages - 3 column layout: Avatar | Time | Content */
 .message {
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
-  gap: var(--space-3);
-  padding: var(--space-1) 0;
-}
-
-/* Consecutive message from same sender - more compact */
-.message.consecutive {
-  padding-top: 0;
-}
-
-.avatar {
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-/* Hide avatar placeholder for consecutive messages from same sender */
-.avatar.hidden {
-  width: 32px; /* Match sm avatar size */
-  visibility: hidden;
-}
-
-/* Message content - no bubble, flat design */
-.messageContent {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-0-5);
-  min-width: 0;
-  flex: 1;
-}
-
-/* Header with name and timestamp inline */
-.messageHeader {
-  display: flex;
   align-items: baseline;
   gap: var(--space-2);
 }
 
-.senderName {
-  font-size: var(--text-sm);
-  font-weight: var(--weight-semibold);
+/* First message from a sender - add spacing above */
+.message:not(.consecutive) {
+  margin-top: var(--space-2);
+}
+
+/* First message after date divider - no extra margin needed */
+.dateDivider + .message:not(.consecutive) {
+  margin-top: 0;
+}
+
+/* Consecutive messages - no extra spacing, just line-height */
+.message.consecutive {
+  /* No margin or padding - content flows like multiline text */
+}
+
+/* Column 1: Avatar + Name stacked */
+.avatarColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+  width: 48px;
+  align-self: flex-start;
+}
+
+/* Hide avatar column for consecutive messages */
+.avatarColumn.hidden {
+  visibility: hidden;
+}
+
+/* Column 2: Timestamp */
+.messageTime {
+  flex-shrink: 0;
+  width: 56px; /* Fixed width for alignment */
+  font-size: 10px;
+  color: var(--base-fg-soft);
+  white-space: nowrap;
+  transition: opacity var(--duration-fast) var(--ease-default);
+}
+
+/* Clickable timestamp button for own messages */
+.messageTimeButton {
+  flex-shrink: 0;
+  width: 56px; /* Fixed width for alignment */
+  font-size: 10px;
+  color: var(--base-fg-soft);
+  white-space: nowrap;
+  transition: opacity var(--duration-fast) var(--ease-default),
+              color var(--duration-fast) var(--ease-default);
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+
+.messageTimeButton:hover {
   color: var(--base-fg);
 }
 
-/* Color-coded sender name */
-.senderName[data-color] {
-  color: var(--sender-color, var(--base-fg));
+/* First message from sender - always show timestamp */
+.message:not(.consecutive) .messageTime,
+.message:not(.consecutive) .messageTimeButton {
+  opacity: 1;
 }
 
-.messageTime {
-  font-size: var(--text-xs);
-  color: var(--base-fg-soft);
+/* Consecutive messages - only show on hover */
+.message.consecutive .messageTime,
+.message.consecutive .messageTimeButton {
+  opacity: 0;
+}
+
+.message.consecutive:hover .messageTime,
+.message.consecutive:hover .messageTimeButton {
+  opacity: 1;
+}
+
+/* Column 3: Message content */
+.messageContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.senderName {
+  font-size: 10px;
+  font-weight: var(--weight-medium);
+  text-align: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Message text - markdown ready */
@@ -214,19 +261,17 @@
 /* Own messages - highlighted with strong surface */
 .ownMessage {
   background: var(--strong-bg);
-  margin-left: calc(-1 * var(--space-3));
-  margin-right: calc(-1 * var(--space-3));
-  padding-left: var(--space-3);
-  padding-right: var(--space-3);
-  padding-top: var(--space-2);
-  padding-bottom: var(--space-2);
+  margin-left: calc(-1 * var(--space-4));
+  margin-right: calc(-1 * var(--space-4));
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+  padding-top: var(--space-1);
+  padding-bottom: var(--space-1);
   border-radius: var(--radius-md);
 }
 
-/* Consecutive own messages - pull up to eliminate gap, no top radius */
+/* Consecutive own messages - seamless connection */
 .ownMessage.consecutive {
-  margin-top: calc(-1 * var(--space-2)); /* Compensate for dateGroup gap */
-  padding-top: var(--space-1);
   border-top-left-radius: 0;
   border-top-right-radius: 0;
 }
@@ -235,7 +280,6 @@
 .ownMessage:has(+ .ownMessage) {
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
-  padding-bottom: var(--space-1);
 }
 
 .ownMessage .messageText {
@@ -344,4 +388,36 @@
   font-size: var(--text-base);
   color: var(--base-fg-soft);
   margin: 0;
+}
+
+/* Edit Message Overlay */
+.editOverlay {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 600px;
+  padding: var(--space-4);
+  background: var(--popout-bg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+}
+
+.editOverlayHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.editOverlayHeader h3 {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  color: var(--popout-text);
+}
+
+.editOverlayHint {
+  font-size: var(--text-sm);
+  color: var(--popout-text-soft);
 }

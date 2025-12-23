@@ -540,6 +540,9 @@ importers:
       '@types/react-dom':
         specifier: ^19.1.6
         version: 19.1.6(@types/react@19.1.8)
+      '@ui-kit/react-markdown':
+        specifier: workspace:*
+        version: link:../react-markdown
       jsdom:
         specifier: ^27.3.0
         version: 27.3.0(postcss@8.5.6)
