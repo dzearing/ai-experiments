@@ -22,7 +22,21 @@ export default defineConfig({
       fileName: 'index',
     },
     rollupOptions: {
-      external: ['react', 'react-dom', 'react/jsx-runtime', '@ui-kit/react', '@ui-kit/core', '@ui-kit/icons'],
+      external: [
+        'react',
+        'react-dom',
+        'react/jsx-runtime',
+        '@ui-kit/react',
+        '@ui-kit/core',
+        '@ui-kit/icons',
+        '@tiptap/core',
+        '@tiptap/react',
+        '@tiptap/starter-kit',
+        '@tiptap/extension-placeholder',
+        '@tiptap/extension-link',
+        '@tiptap/pm',
+        'tiptap-markdown',
+      ],
       output: {
         globals: {
           react: 'React',

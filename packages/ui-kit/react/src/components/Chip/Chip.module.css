@@ -4,7 +4,7 @@
   gap: var(--space-1);
   font-weight: var(--weight-medium);
   border-radius: var(--radius-full);
-  border: none;
+  border: 1px solid transparent;
   transition: all var(--duration-fast) var(--ease-default);
 }
 
@@ -31,12 +31,19 @@
 
 /* Variants */
 .default {
-  background: var(--base-bg);
-  color: var(--base-fg);
+  background: var(--strong-bg);
+  color: var(--strong-fg);
+  border-color: var(--strong-border);
+}
+
+.default:hover:not(.disabled) {
+  background: var(--strong-bg-hover);
+  border-color: var(--strong-border-hover);
 }
 
 .default.clickable:hover:not(.disabled) {
-  background: var(--base-bg-hover);
+  background: var(--strong-bg-hover);
+  border-color: var(--strong-border-hover);
 }
 
 .default.selected {

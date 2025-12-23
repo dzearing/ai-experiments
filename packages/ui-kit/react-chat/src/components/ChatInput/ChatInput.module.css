@@ -70,6 +70,7 @@
   border: 1px dashed var(--base-border);
 }
 
+/* Image thumbnail in well - clickable to select corresponding chip */
 .imageThumbnail {
   display: flex;
   align-items: center;
@@ -147,6 +148,12 @@
   margin: 0 var(--space-1);
 }
 
+/* Toolbar button active state */
+.toolbarButtonActive {
+  background: var(--primary-bg) !important;
+  color: var(--primary-fg) !important;
+}
+
 /* Input wrapper */
 .inputWrapper {
   display: flex;
@@ -174,10 +181,16 @@
   line-height: var(--leading-normal);
 }
 
-/* Contenteditable editor */
+/* TipTap editor container */
 .editor {
   min-height: 24px;
   max-height: 200px;
+  overflow-y: auto;
+}
+
+/* TipTap ProseMirror editor */
+.editor :global(.ProseMirror) {
+  min-height: 24px;
   background: transparent;
   border: none;
   outline: none !important;
@@ -186,19 +199,129 @@
   font-size: var(--text-base);
   color: var(--softer-fg);
   line-height: var(--leading-normal);
-  overflow-y: auto;
   word-break: break-word;
   white-space: pre-wrap;
 }
 
-.editor:focus {
+.editor :global(.ProseMirror):focus {
   outline: none !important;
   box-shadow: none !important;
 }
 
-.editor::selection {
+.editor :global(.ProseMirror)::selection,
+.editor :global(.ProseMirror) *::selection {
   background: var(--selection-bg);
   color: var(--selection-text);
+}
+
+/* TipTap placeholder */
+.editor :global(.ProseMirror.is-editor-empty:first-child::before) {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--softer-fg-soft);
+  font-style: italic;
+  opacity: 0.7;
+  pointer-events: none;
+  height: 0;
+}
+
+/* WYSIWYG formatting styles */
+.editor :global(.ProseMirror) strong {
+  font-weight: var(--weight-bold);
+}
+
+.editor :global(.ProseMirror) em {
+  font-style: italic;
+}
+
+.editor :global(.ProseMirror) s {
+  text-decoration: line-through;
+}
+
+.editor :global(.ProseMirror) u {
+  text-decoration: underline;
+}
+
+.editor :global(.ProseMirror) code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--strong-bg);
+  border: 1px solid var(--strong-border);
+  padding: 0.1em 0.4em;
+  border-radius: var(--radius-sm);
+  color: var(--strong-fg);
+}
+
+.editor :global(.ProseMirror) a {
+  color: var(--link-fg);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.editor :global(.ProseMirror) a:hover {
+  text-decoration: none;
+}
+
+.editor :global(.ProseMirror) blockquote {
+  border-left: 3px solid var(--base-border);
+  padding-left: var(--space-3);
+  margin-left: 0;
+  margin-right: 0;
+  color: var(--softer-fg-soft);
+  font-style: italic;
+}
+
+.editor :global(.ProseMirror) ul,
+.editor :global(.ProseMirror) ol {
+  padding-left: var(--space-4);
+  margin: var(--space-1) 0;
+}
+
+.editor :global(.ProseMirror) li {
+  margin: var(--space-0-5) 0;
+}
+
+.editor :global(.ProseMirror) h1,
+.editor :global(.ProseMirror) h2,
+.editor :global(.ProseMirror) h3 {
+  font-weight: var(--weight-semibold);
+  margin: var(--space-2) 0 var(--space-1);
+}
+
+.editor :global(.ProseMirror) h1 {
+  font-size: var(--text-xl);
+}
+
+.editor :global(.ProseMirror) h2 {
+  font-size: var(--text-lg);
+}
+
+.editor :global(.ProseMirror) h3 {
+  font-size: var(--text-base);
+}
+
+.editor :global(.ProseMirror) pre {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--base-bg);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  margin: var(--space-2) 0;
+}
+
+.editor :global(.ProseMirror) pre code {
+  background: transparent;
+  padding: 0;
+  color: inherit;
+}
+
+.editor :global(.ProseMirror) p {
+  margin: 0;
+}
+
+.editor :global(.ProseMirror) p + p {
+  margin-top: var(--space-2);
 }
 
 /* Size-specific editor adjustments */
@@ -218,64 +341,6 @@
 
 .lg .placeholder {
   font-size: var(--text-lg);
-}
-
-/* Inline image chip - styled like a default button */
-.imageChip {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-0-5) var(--space-1-5);
-  background: var(--base-bg);
-  border: 1px solid var(--base-border);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-  color: var(--base-fg);
-  vertical-align: middle;
-  margin: 0 var(--space-0-5);
-  cursor: default;
-  user-select: all;
-  transition:
-    background-color var(--duration-fast) var(--ease-default),
-    border-color var(--duration-fast) var(--ease-default);
-}
-
-.imageChip:hover {
-  background: var(--base-bg-hover);
-  border-color: var(--base-border-hover);
-}
-
-.imageChipLabel {
-  white-space: nowrap;
-}
-
-.imageChipRemove {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  padding: 0;
-  margin: 0;
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-xs);
-  color: var(--base-fg-soft);
-  cursor: pointer;
-  transition:
-    background-color var(--duration-fast) var(--ease-default),
-    color var(--duration-fast) var(--ease-default);
-}
-
-.imageChipRemove:hover {
-  background: var(--feedback-danger-bg);
-  color: var(--feedback-danger-fg);
-}
-
-.imageChipRemove svg {
-  width: 12px;
-  height: 12px;
 }
 
 /* Actions */
@@ -350,11 +415,7 @@
     transition: none;
   }
 
-  .imageChip {
-    transition: none;
-  }
-
-  .imageChipRemove {
+  .imageThumbnail {
     transition: none;
   }
 }
