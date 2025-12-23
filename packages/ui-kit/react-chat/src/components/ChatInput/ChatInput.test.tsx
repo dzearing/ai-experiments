@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ChatInput } from './ChatInput';
+import styles from './ChatInput.module.css';
 
 describe('ChatInput', () => {
   beforeEach(() => {
@@ -105,12 +106,12 @@ describe('ChatInput', () => {
       const toggleButton = screen.getByRole('button', { name: /multiline/i });
 
       // Initially single-line mode
-      expect(toggleButton).not.toHaveClass('active');
+      expect(toggleButton).not.toHaveClass(styles.active);
 
       await user.click(toggleButton);
 
       // Now multiline mode
-      expect(toggleButton).toHaveClass('active');
+      expect(toggleButton).toHaveClass(styles.active);
     });
 
     it('enters multiline mode on Meta+Enter in single-line mode', async () => {
@@ -123,31 +124,31 @@ describe('ChatInput', () => {
       await user.click(editor);
       await user.keyboard('{Meta>}{Enter}{/Meta}');
 
-      expect(toggleButton).toHaveClass('active');
+      expect(toggleButton).toHaveClass(styles.active);
     });
   });
 
   describe('size variants', () => {
     it('applies size class', () => {
       const { container, rerender } = render(<ChatInput size="sm" />);
-      expect(container.firstChild).toHaveClass('sm');
+      expect(container.firstChild).toHaveClass(styles.sm);
 
       rerender(<ChatInput size="lg" />);
-      expect(container.firstChild).toHaveClass('lg');
+      expect(container.firstChild).toHaveClass(styles.lg);
     });
   });
 
   describe('fullWidth', () => {
     it('applies fullWidth class', () => {
       const { container } = render(<ChatInput fullWidth />);
-      expect(container.firstChild).toHaveClass('fullWidth');
+      expect(container.firstChild).toHaveClass(styles.fullWidth);
     });
   });
 
   describe('error state', () => {
     it('applies error class', () => {
       const { container } = render(<ChatInput error />);
-      expect(container.firstChild).toHaveClass('error');
+      expect(container.firstChild).toHaveClass(styles.error);
     });
   });
 
@@ -157,14 +158,14 @@ describe('ChatInput', () => {
       const { container } = render(<ChatInput />);
 
       // Toolbar should not be visible initially
-      expect(container.querySelector('.toolbar')).not.toBeInTheDocument();
+      expect(container.querySelector(`.${styles.toolbar}`)).not.toBeInTheDocument();
 
       // Click multiline toggle
       const toggleButton = screen.getByRole('button', { name: /multiline/i });
       await user.click(toggleButton);
 
       // Toolbar should now be visible
-      expect(container.querySelector('.toolbar')).toBeInTheDocument();
+      expect(container.querySelector(`.${styles.toolbar}`)).toBeInTheDocument();
     });
   });
 });

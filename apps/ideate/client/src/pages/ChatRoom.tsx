@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from '@ui-kit/router';
-import { Avatar, AvatarGroup, Button, ChatInput, IconButton, Spinner, type ChatInputSubmitData } from '@ui-kit/react';
+import { Avatar, AvatarGroup, Button, IconButton, Spinner } from '@ui-kit/react';
+import { ChatInput, type ChatInputSubmitData } from '@ui-kit/react-chat';
 import { MarkdownRenderer } from '@ui-kit/react-markdown';
 import { ArrowLeftIcon } from '@ui-kit/icons/ArrowLeftIcon';
 import { useAuth } from '../contexts/AuthContext';

@@ -11,10 +11,7 @@ import {
   type ChangeEvent,
   type MouseEvent,
 } from 'react';
-import { Button } from '../Button';
-import { IconButton } from '../IconButton';
-import { Spinner } from '../Spinner';
-import { Tooltip } from '../Tooltip';
+import { Button, IconButton, Spinner, Tooltip } from '@ui-kit/react';
 import { SendIcon } from '@ui-kit/icons/SendIcon';
 import { BoldIcon } from '@ui-kit/icons/BoldIcon';
 import { ItalicIcon } from '@ui-kit/icons/ItalicIcon';

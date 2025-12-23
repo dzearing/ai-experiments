@@ -1,0 +1,42 @@
+/* Global reset for consistent sizing */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body, #storybook-root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--base-bg);
+  color: var(--base-fg);
+  font-family: var(--font-sans);
+}
+
+/* Story wrapper - consistent padding on all sides */
+.storyWrapper {
+  padding: var(--space-4, 1rem);
+  box-sizing: border-box;
+  background: var(--base-bg);
+  color: var(--base-fg);
+  border-radius: var(--radius-md);
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* Fullscreen stories - no padding, fill viewport exactly */
+.storyWrapper.fullscreen {
+  padding: 0;
+  min-height: 100vh;
+  border-radius: 0;
+  overflow: auto;
+}
+
+/* Full height only in canvas view, not docs */
+#storybook-root > .storyWrapper {
+  min-height: 100vh;
+}
+
+#storybook-root > .storyWrapper.fullscreen {
+  min-height: 100vh;
+}

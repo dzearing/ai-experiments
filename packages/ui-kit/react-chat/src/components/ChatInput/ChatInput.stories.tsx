@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { ChatInput, type ChatInputSubmitData } from './ChatInput';
 
 const meta: Meta<typeof ChatInput> = {
-  title: 'Inputs/ChatInput',
+  title: 'React Chat/ChatInput',
   component: ChatInput,
   tags: ['autodocs'],
   parameters: {

@@ -33,14 +33,6 @@ export type { SelectProps, SelectSize } from './components/Select';
 export { Slider } from './components/Slider';
 export type { SliderProps, SliderSize } from './components/Slider';
 
-export { ChatInput, useMessageHistory } from './components/ChatInput';
-export type {
-  ChatInputProps,
-  ChatInputSize,
-  ChatInputImage,
-  ChatInputSubmitData,
-} from './components/ChatInput';
-
 // Layout
 export { Card } from './components/Card';
 export type { CardProps } from './components/Card';

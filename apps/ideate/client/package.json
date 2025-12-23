@@ -22,6 +22,7 @@
     "@ui-kit/core": "workspace:*",
     "@ui-kit/icons": "workspace:*",
     "@ui-kit/react": "workspace:*",
+    "@ui-kit/react-chat": "workspace:*",
     "@ui-kit/react-markdown": "workspace:*",
     "@ui-kit/router": "workspace:*",
     "react": "^19.1.0",
