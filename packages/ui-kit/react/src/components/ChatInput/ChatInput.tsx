@@ -314,8 +314,9 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
           currentText += node.textContent || '';
         } else if (node.nodeType === Node.ELEMENT_NODE) {
           const element = node as HTMLElement;
+          const tagName = element.tagName;
 
-          if (element.tagName === 'BR') {
+          if (tagName === 'BR') {
             currentText += '\n';
           } else if (element.classList.contains(styles.imageChip)) {
             // Flush current text
@@ -329,8 +330,15 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
               imageId: element.dataset.imageId || '',
               imageName: element.dataset.imageName || '',
             });
-          } else {
+          } else if (tagName === 'DIV' || tagName === 'P') {
+            // Block elements create new lines if there's content before them
+            if (currentText !== '' && !currentText.endsWith('\n')) {
+              currentText += '\n';
+            }
             // Process children
+            element.childNodes.forEach(processNode);
+          } else {
+            // Process children for other elements (spans, etc.)
             element.childNodes.forEach(processNode);
           }
         }
@@ -671,9 +679,9 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
               wrapSelection('*', '*');
               handleInput();
               break;
-            case 'u': // Underline
+            case 'u': // Underline (using HTML tag for markdown compatibility)
               e.preventDefault();
-              wrapSelection('__', '__');
+              wrapSelection('<u>', '</u>');
               handleInput();
               break;
             case 's': // Strikethrough (Ctrl+Shift+S)
@@ -986,7 +994,7 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
                 size="sm"
                 variant="ghost"
                 onClick={() => {
-                  wrapSelection('__', '__');
+                  wrapSelection('<u>', '</u>');
                   handleInput();
                 }}
                 disabled={disabled}

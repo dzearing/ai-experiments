@@ -18,6 +18,7 @@
 import { useMemo, useCallback, type ComponentType } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import { parseDeepLink, navigateToHash } from '../../utils/deepLinkParser';
 import { useStreamingMarkdown } from '../../hooks/useStreamingMarkdown';
 import { useDeepLink } from '../../hooks/useDeepLink';
@@ -299,6 +300,7 @@ export function MarkdownRenderer({
     strong: ({ children }: any) => <strong className={styles.strong}>{children}</strong>,
     em: ({ children }: any) => <em className={styles.emphasis}>{children}</em>,
     del: ({ children }: any) => <del className={styles.strikethrough}>{children}</del>,
+    u: ({ children }: any) => <u className={styles.underline}>{children}</u>,
   }), [
     customComponents,
     showLineNumbers,
@@ -313,6 +315,7 @@ export function MarkdownRenderer({
     <div className={`${styles.markdown} ${className || ''}`}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeRaw]}
         components={markdownComponents}
       >
         {displayContent}

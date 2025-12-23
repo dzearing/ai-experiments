@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from '@ui-kit/router';
 import { Avatar, AvatarGroup, Button, ChatInput, IconButton, Spinner, type ChatInputSubmitData } from '@ui-kit/react';
+import { MarkdownRenderer } from '@ui-kit/react-markdown';
 import { ArrowLeftIcon } from '@ui-kit/icons/ArrowLeftIcon';
 import { useAuth } from '../contexts/AuthContext';
 import { useSession } from '../contexts/SessionContext';
@@ -286,7 +287,12 @@ export function ChatRoom() {
                           <span className={styles.messageTime}>{formatTime(message.createdAt)}</span>
                         </div>
                       )}
-                      <p className={styles.messageText}>{message.content}</p>
+                      <MarkdownRenderer
+                        content={message.content}
+                        enableDeepLinks={false}
+                        showLineNumbers={false}
+                        className={styles.messageText}
+                      />
                     </div>
                   </div>
                 );

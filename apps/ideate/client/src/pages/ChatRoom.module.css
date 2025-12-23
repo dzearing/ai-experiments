@@ -185,7 +185,6 @@
   color: var(--base-fg);
   line-height: var(--leading-relaxed);
   word-wrap: break-word;
-  white-space: pre-wrap;
 }
 
 /* Markdown-ready code blocks */
