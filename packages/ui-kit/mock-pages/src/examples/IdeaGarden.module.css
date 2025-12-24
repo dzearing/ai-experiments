@@ -1,0 +1,387 @@
+/* Idea Garden - Card-based ideation canvas */
+/* All spacing uses 4px grid: 4, 8, 12, 16, 20, 24, 32, 40, 48 */
+
+/* ============================================
+   MAIN LAYOUT
+   ============================================ */
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--surface-bg);
+}
+
+/* ============================================
+   HEADER
+   ============================================ */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: var(--soft-bg);
+  border-bottom: 1px solid var(--soft-border);
+  flex-shrink: 0;
+  gap: 16px;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.headerDivider {
+  height: 24px;
+  margin: 0 4px;
+}
+
+/* ============================================
+   MAIN CONTENT AREA
+   ============================================ */
+.mainContent {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ============================================
+   GARDEN AREA (Card Grid)
+   ============================================ */
+.gardenArea {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  background: var(--surface-bg);
+}
+
+.gardenAreaWithPanel {
+  /* When panel is open, reduce width */
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  align-content: start;
+}
+
+/* ============================================
+   IDEA CARDS
+   ============================================ */
+.ideaCard {
+  cursor: pointer;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.ideaCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.ideaCardFocused {
+  outline: 2px solid var(--action-bg);
+  outline-offset: 2px;
+}
+
+.ideaCardNew {
+  border-style: dashed;
+}
+
+.cardContent {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cardTitle {
+  flex: 1;
+}
+
+.cardDescription {
+  line-height: 1.5;
+}
+
+.cardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+/* ============================================
+   REFINEMENT INDICATOR
+   ============================================ */
+.refinementIndicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.refinementDots {
+  display: flex;
+  gap: 4px;
+}
+
+.refinementDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--soft-border);
+}
+
+.refinementDotFilled {
+  background: var(--action-bg);
+}
+
+/* ============================================
+   PRESENCE DOT
+   ============================================ */
+.presenceDot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.presenceDotCircle {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.presenceDotName {
+  font-size: 12px;
+  color: var(--soft-fg-soft);
+}
+
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 24px;
+  min-height: 400px;
+}
+
+.emptyIcon {
+  color: var(--soft-fg-soft);
+  margin-bottom: 24px;
+}
+
+.emptyDescription {
+  margin-top: 8px;
+  max-width: 400px;
+  line-height: 1.5;
+}
+
+/* ============================================
+   INPUT AREA
+   ============================================ */
+.inputArea {
+  flex-shrink: 0;
+  padding: 16px 24px 20px;
+  background: var(--soft-bg);
+  border-top: 1px solid var(--soft-border);
+}
+
+.inputContainer {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.inputWrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.input {
+  flex: 1;
+}
+
+.voiceButtonRecording {
+  background: var(--color-error) !important;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+}
+
+/* ============================================
+   FOCUS CONTEXT BAR
+   ============================================ */
+.focusContext {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--surface-bg);
+  border-radius: 8px;
+  border: 1px solid var(--soft-border);
+}
+
+.focusLabel {
+  font-size: 13px;
+  color: var(--soft-fg-soft);
+}
+
+.focusIdea {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--action-bg);
+}
+
+/* ============================================
+   AI PROCESSING INDICATOR
+   ============================================ */
+.aiProcessing {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--surface-bg);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--soft-fg-soft);
+}
+
+.aiDots {
+  display: flex;
+  gap: 4px;
+}
+
+.aiDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--action-bg);
+  animation: bounce 1.4s ease-in-out infinite;
+}
+
+.aiDot:nth-child(2) { animation-delay: 0.2s; }
+.aiDot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes bounce {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.3); }
+}
+
+/* ============================================
+   SUGGESTIONS
+   ============================================ */
+.suggestions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ============================================
+   DETAIL PANEL (Non-modal sidebar)
+   ============================================ */
+.detailPanel {
+  width: 360px;
+  flex-shrink: 0;
+  background: var(--soft-bg);
+  border-left: 1px solid var(--soft-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.detailHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--soft-border);
+  gap: 12px;
+}
+
+.detailContent {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.detailSection {
+  padding: 16px 0;
+}
+
+.detailSection:first-child {
+  padding-top: 0;
+}
+
+.sectionLabel {
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 12px;
+}
+
+.sectionContent {
+  /* Content wrapper */
+}
+
+/* ============================================
+   RELATED IDEAS
+   ============================================ */
+.relatedIdeas {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.relatedIdea {
+  justify-content: flex-start;
+  width: 100%;
+}
+
+/* ============================================
+   EVOLUTION THREAD
+   ============================================ */
+.evolutionThread {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-left: 2px solid var(--soft-border);
+  padding-left: 12px;
+  margin-left: 4px;
+}
+
+.evolutionItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ============================================
+   ACTION BUTTONS
+   ============================================ */
+.actionButtons {
+  display: flex;
+  gap: 8px;
+}

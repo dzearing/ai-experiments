@@ -2,15 +2,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--base-bg);
-  color: var(--base-fg);
+  /* Use a reliable blue that works in both light and dark modes */
+  background: var(--action-bg, #3b82f6);
+  color: var(--action-fg, #ffffff);
   overflow: hidden;
   flex-shrink: 0;
   border-radius: var(--radius-md);
-  /* Subtle border for contrast against backgrounds */
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  /* Soft inset shadow for depth and edge definition */
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
 }
 
 .avatar.rounded {

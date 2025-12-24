@@ -67,6 +67,13 @@ export class FacilitatorWebSocketHandler {
   }
 
   /**
+   * Get the underlying FacilitatorService for diagnostics.
+   */
+  getService(): FacilitatorService {
+    return this.facilitatorService;
+  }
+
+  /**
    * Handle a new WebSocket connection.
    * URL format: /facilitator-ws?userId=xxx&userName=xxx
    */

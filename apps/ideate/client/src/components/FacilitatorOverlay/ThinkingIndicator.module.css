@@ -1,7 +1,7 @@
 /**
  * ThinkingIndicator styles
  *
- * Animated progress indicator similar to Claude Code's thinking state.
+ * Animated progress indicator with spinner and shimmer text.
  */
 
 .container {
@@ -11,53 +11,20 @@
   padding: var(--space-3) var(--space-4);
   font-family: var(--font-mono);
   font-size: var(--text-sm);
-  color: var(--warning-fg, #e6994c);
+  color: var(--softer-fg);
   background: var(--softer-bg);
-  border-top: 1px solid var(--soft-border);
+  border-top: 1px solid var(--softer-border);
 }
 
 .spinner {
-  display: inline-block;
-  animation: spin 1s linear infinite, glow 2s ease-in-out infinite;
-  color: var(--warning-fg, #e6994c);
+  color: var(--softer-fg-primary);
 }
 
 .verb {
   font-weight: var(--weight-medium);
-  color: var(--warning-fg, #e6994c);
-  animation: fadeInOut 3s ease-in-out infinite;
 }
 
 .details {
-  color: var(--soft-fg-softer);
+  color: var(--softer-fg-soft);
   font-size: var(--text-xs);
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes glow {
-  0%, 100% {
-    opacity: 1;
-    filter: brightness(1);
-  }
-  50% {
-    opacity: 0.7;
-    filter: brightness(1.2);
-  }
-}
-
-@keyframes fadeInOut {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.8;
-  }
 }

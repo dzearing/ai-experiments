@@ -1,6 +1,7 @@
 export { ChatInput } from './ChatInput';
 export type {
   ChatInputProps,
+  ChatInputRef,
   ChatInputSize,
   ChatInputImage,
   ChatInputSubmitData,

@@ -23,16 +23,46 @@ export interface StreamCallbacks {
  * Service for orchestrating facilitator chat with Claude.
  * Handles message processing, streaming responses, and tool integration.
  */
+/** Diagnostic entry for a request */
+interface DiagnosticEntry {
+  timestamp: string;
+  messageId: string;
+  userMessage: string;
+  iterations: number;
+  toolCalls: Array<{ name: string; input: Record<string, unknown>; output?: string }>;
+  responseLength: number;
+  durationMs: number;
+  error?: string;
+}
+
 export class FacilitatorService {
   private personaService: PersonaService;
   private chatService: FacilitatorChatService;
   private toolsService: MCPToolsService;
   private persona: Persona | null = null;
 
+  // Diagnostic tracking (keep last 50 entries)
+  private diagnosticLog: DiagnosticEntry[] = [];
+  private static MAX_DIAGNOSTIC_ENTRIES = 50;
+
   constructor() {
     this.personaService = new PersonaService();
     this.chatService = new FacilitatorChatService();
     this.toolsService = new MCPToolsService();
+  }
+
+  /**
+   * Get diagnostic log for debugging.
+   */
+  getDiagnostics(): DiagnosticEntry[] {
+    return [...this.diagnosticLog];
+  }
+
+  private addDiagnosticEntry(entry: DiagnosticEntry): void {
+    this.diagnosticLog.push(entry);
+    if (this.diagnosticLog.length > FacilitatorService.MAX_DIAGNOSTIC_ENTRIES) {
+      this.diagnosticLog.shift();
+    }
   }
 
   /**
@@ -86,6 +116,9 @@ export class FacilitatorService {
     // Save the user message
     await this.chatService.addMessage(userId, 'user', content);
 
+    // Start timing for diagnostics
+    const startTime = Date.now();
+
     // Get persona and history
     const persona = await this.getPersona();
     const history = await this.chatService.getMessages(userId);
@@ -106,11 +139,15 @@ export class FacilitatorService {
     const toolCalls: FacilitatorMessage['toolCalls'] = [];
 
     // Max tool iterations to prevent infinite loops
-    const maxToolIterations = 5;
+    const maxToolIterations = 20;
     let toolIteration = 0;
+
+    // Diagnostic logging for debugging
+    console.log(`[FacilitatorService] Starting response for message: "${content.slice(0, 50)}..."`);
 
     try {
       while (toolIteration < maxToolIterations) {
+        console.log(`[FacilitatorService] Iteration ${toolIteration + 1}/${maxToolIterations}`);
         // Use the query function from @anthropic-ai/claude-code
         const response = query({
           prompt: fullPrompt,
@@ -136,10 +173,40 @@ export class FacilitatorService {
                 if (block.type === 'text') {
                   const text = block.text;
                   iterationResponse += text;
+                } else if (block.type === 'tool_use') {
+                  // SDK native tool use (Read, Write, Bash, etc.)
+                  const sdkToolCall = block as { type: 'tool_use'; name: string; input: Record<string, unknown> };
+                  callbacks.onToolUse({
+                    name: sdkToolCall.name,
+                    input: sdkToolCall.input || {},
+                  });
+                  toolCalls.push({
+                    name: sdkToolCall.name,
+                    input: sdkToolCall.input || {},
+                  });
                 }
               }
             } else if (typeof msgContent === 'string') {
               iterationResponse += msgContent;
+            }
+          } else if (message.type === 'user') {
+            // User message (tool result from SDK)
+            const userMsg = message as { type: 'user'; message: { content: unknown[] } };
+            if (Array.isArray(userMsg.message?.content)) {
+              for (const block of userMsg.message.content) {
+                if ((block as { type?: string }).type === 'tool_result') {
+                  const toolResult = block as { type: 'tool_result'; tool_use_id?: string; content?: string };
+                  // Find matching tool call and mark complete
+                  const lastPendingTool = toolCalls.find(tc => !tc.output);
+                  if (lastPendingTool) {
+                    lastPendingTool.output = toolResult.content || 'completed';
+                    callbacks.onToolResult({
+                      name: lastPendingTool.name,
+                      output: lastPendingTool.output,
+                    });
+                  }
+                }
+              }
             }
           } else if (message.type === 'result') {
             // Final result message
@@ -190,12 +257,13 @@ export class FacilitatorService {
             // Add the text before tool use to the response (if any)
             const textBeforeTool = iterationResponse.slice(0, iterationResponse.indexOf('<tool_use>')).trim();
             if (textBeforeTool) {
+              console.log(`[FacilitatorService] Streaming text before tool (${textBeforeTool.length} chars): "${textBeforeTool.slice(0, 50)}..."`);
               fullResponse += textBeforeTool + '\n\n';
               callbacks.onTextChunk(textBeforeTool + '\n\n', messageId);
             }
 
-            // Continue conversation with tool result
-            fullPrompt = `${fullPrompt}\n\nAssistant: ${iterationResponse}\n\nTool Result:\n\`\`\`json\n${resultOutput}\n\`\`\`\n\nPlease continue your response to the user based on the tool result.`;
+            // Continue conversation with tool result - tell AI not to repeat previous text
+            fullPrompt = `${fullPrompt}\n\nAssistant: ${iterationResponse}\n\nTool Result:\n\`\`\`json\n${resultOutput}\n\`\`\`\n\nIMPORTANT: Do NOT repeat any text you've already said. Continue with NEW content only based on the tool result. If the task is complete, simply acknowledge with a brief response.`;
 
           } catch (parseError) {
             console.error('[FacilitatorService] Failed to parse tool request:', parseError);
@@ -206,6 +274,7 @@ export class FacilitatorService {
           }
         } else {
           // No tool use, add to full response and we're done
+          console.log(`[FacilitatorService] Final response (${iterationResponse.length} chars): "${iterationResponse.slice(0, 100)}..."`);
           fullResponse += iterationResponse;
           callbacks.onTextChunk(iterationResponse, messageId);
           break;
@@ -213,7 +282,7 @@ export class FacilitatorService {
       }
 
       if (toolIteration >= maxToolIterations) {
-        const warningMsg = '\n\n*Note: Maximum tool iterations reached.*';
+        const warningMsg = '\n\n*I\'ve reached my action limit for this request. Let me know if you need me to continue.*';
         fullResponse += warningMsg;
         callbacks.onTextChunk(warningMsg, messageId);
       }
@@ -231,10 +300,33 @@ export class FacilitatorService {
         ...assistantMessage,
         id: messageId, // Use the ID we've been streaming to
       });
+
+      // Add diagnostic entry
+      this.addDiagnosticEntry({
+        timestamp: new Date().toISOString(),
+        messageId,
+        userMessage: content.slice(0, 200),
+        iterations: toolIteration + 1,
+        toolCalls: toolCalls.map(tc => ({ name: tc.name, input: tc.input || {}, output: tc.output })),
+        responseLength: fullResponse.length,
+        durationMs: Date.now() - startTime,
+      });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('[FacilitatorService] Error processing message:', error);
       callbacks.onError(errorMessage);
+
+      // Add diagnostic entry for error
+      this.addDiagnosticEntry({
+        timestamp: new Date().toISOString(),
+        messageId,
+        userMessage: content.slice(0, 200),
+        iterations: toolIteration + 1,
+        toolCalls: toolCalls.map(tc => ({ name: tc.name, input: tc.input || {}, output: tc.output })),
+        responseLength: fullResponse.length,
+        durationMs: Date.now() - startTime,
+        error: errorMessage,
+      });
     }
   }
 
@@ -277,7 +369,26 @@ After calling a tool, you will receive the result and can then respond to the us
 - Use tools when the user asks about their workspaces, documents, or needs to search/create/modify content
 - If asked about the Ideate platform, explain its features
 - When presenting document or workspace information, format it nicely with markdown
-- If a tool call fails, explain the error to the user and suggest alternatives`;
+- If a tool call fails, explain the error to the user and suggest alternatives
+
+## CRITICAL: Document Operations
+
+**Renaming documents:**
+- To rename a document, use \`document_update\` with the documentId and new title
+- NEVER delete and recreate a document to rename it - this changes the document ID and loses collaboration history
+- The document ID must remain stable - only the title changes
+
+**Moving documents:**
+- Use \`document_move\` to move a document between workspaces
+- NEVER delete and recreate to move a document
+
+## CRITICAL: Workspace Context
+
+When creating documents within a specific workspace:
+- You MUST include the workspaceId parameter in the document_create call
+- Documents created without a workspaceId go to global scope, not the workspace
+- Always verify you have the correct workspaceId before creating documents
+- If unsure which workspace, ask the user or use workspace_list to find it first`;
   }
 
   /**

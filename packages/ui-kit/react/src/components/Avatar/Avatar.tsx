@@ -77,7 +77,7 @@ export function Avatar({
 
   return (
     <div
-      className={`${styles.avatar} ${styles[size]} ${rounded ? styles.rounded : ''}`}
+      className={`avatar ${styles.avatar} ${styles[size]} ${rounded ? styles.rounded : ''}`}
       style={style}
     >
       {src ? (

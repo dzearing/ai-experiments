@@ -13,6 +13,86 @@ export interface ChatMessageToolCall {
 }
 
 /**
+ * Extract filename from path
+ */
+function getFileName(path: string): string {
+  const parts = path.split('/');
+  return parts[parts.length - 1] || path;
+}
+
+/**
+ * Generate a human-readable description for a tool call
+ */
+function formatToolDescription(name: string, input?: Record<string, unknown>): React.ReactNode {
+  const bold = (text: string) => <strong>{text}</strong>;
+
+  switch (name) {
+    // Claude Code SDK tools
+    case 'Read':
+      return <>Reading {input?.file_path ? bold(getFileName(String(input.file_path))) : 'file'}</>;
+    case 'Write':
+      return <>Writing {input?.file_path ? bold(getFileName(String(input.file_path))) : 'file'}</>;
+    case 'Edit':
+      return <>Editing {input?.file_path ? bold(getFileName(String(input.file_path))) : 'file'}</>;
+    case 'Bash':
+      const cmd = input?.command ? String(input.command).split(' ')[0] : '';
+      return <>Running {cmd ? bold(cmd) : 'command'}</>;
+    case 'Glob':
+      return <>Finding files {input?.pattern ? <>matching {bold(String(input.pattern))}</> : ''}</>;
+    case 'Grep':
+      return <>Searching for {input?.pattern ? bold(String(input.pattern)) : 'pattern'}</>;
+    case 'WebFetch':
+      return <>Fetching {input?.url ? bold(new URL(String(input.url)).hostname) : 'URL'}</>;
+    case 'WebSearch':
+      return <>Searching web for {input?.query ? bold(String(input.query)) : 'query'}</>;
+    case 'Task':
+      return <>Running sub-task</>;
+    case 'LSP':
+      return <>Querying language server</>;
+
+    // Workspace tools
+    case 'workspace_list':
+      return <>Listing workspaces</>;
+    case 'workspace_get':
+      return <>Getting workspace {input?.workspaceId ? bold(String(input.workspaceId).slice(0, 8)) : ''}</>;
+    case 'workspace_create':
+      return <>Creating workspace {input?.name ? bold(String(input.name)) : ''}</>;
+    case 'workspace_update':
+      return <>Updating workspace {input?.name ? bold(String(input.name)) : ''}</>;
+    case 'workspace_delete':
+      return <>Deleting workspace {input?.workspaceId ? bold(String(input.workspaceId).slice(0, 8)) : ''}</>;
+
+    // Document tools
+    case 'document_list':
+      return <>Listing documents{input?.workspaceId ? <> in {bold(String(input.workspaceId).slice(0, 8))}</> : <> (global scope)</>}</>;
+    case 'document_get':
+      return <>Reading document {input?.documentId ? bold(String(input.documentId).slice(0, 8)) : ''}</>;
+    case 'document_create':
+      return (
+        <>
+          Creating {input?.title ? bold(String(input.title)) : 'document'}
+          {input?.workspaceId ? <> in {bold(String(input.workspaceId).slice(0, 8))}</> : <> (global scope)</>}
+        </>
+      );
+    case 'document_update':
+      return <>Updating document {input?.title ? bold(String(input.title)) : ''}</>;
+    case 'document_delete':
+      return <>Deleting document {input?.documentId ? bold(String(input.documentId).slice(0, 8)) : ''}</>;
+    case 'document_move':
+      return <>Moving document {input?.workspaceId ? <>to {bold(String(input.workspaceId).slice(0, 8))}</> : <>to global scope</>}</>;
+
+    // Search/analysis tools
+    case 'search_documents':
+      return <>Searching for {input?.query ? bold(String(input.query)) : 'documents'}</>;
+    case 'summarize_document':
+      return <>Summarizing document</>;
+
+    default:
+      return <>{name.replace(/_/g, ' ')}</>;
+  }
+}
+
+/**
  * Props for the ChatMessage component
  */
 export interface ChatMessageProps {
@@ -195,14 +275,20 @@ export function ChatMessage({
         {/* Tool calls */}
         {Array.isArray(toolCalls) && toolCalls.length > 0 && (
           <div className={styles.toolCalls}>
-            {toolCalls.map((toolCall, index) => (
-              <div key={index} className={styles.toolCall}>
-                <span className={styles.toolName}>{toolCall.name}</span>
-                {toolCall.output && (
-                  <span className={styles.toolStatus}>completed</span>
-                )}
-              </div>
-            ))}
+            {toolCalls.map((toolCall, index) => {
+              const isComplete = !!toolCall.output;
+              return (
+                <div
+                  key={index}
+                  className={`${styles.toolCall} ${isComplete ? styles.toolComplete : styles.toolRunning}`}
+                >
+                  <span className={styles.toolIcon}>{isComplete ? '✓' : '○'}</span>
+                  <span className={styles.toolDescription}>
+                    {formatToolDescription(toolCall.name, toolCall.input)}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

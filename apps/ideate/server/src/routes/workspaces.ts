@@ -1,8 +1,16 @@
 import { Router, type Request, type Response } from 'express';
 import { WorkspaceService } from '../services/WorkspaceService.js';
+import type { WorkspaceWebSocketHandler } from '../websocket/WorkspaceWebSocketHandler.js';
 
 export const workspacesRouter = Router();
 const workspaceService = new WorkspaceService();
+
+// WebSocket handler for real-time notifications (injected from main server)
+let workspaceWsHandler: WorkspaceWebSocketHandler | null = null;
+
+export function setWorkspaceHandler(handler: WorkspaceWebSocketHandler): void {
+  workspaceWsHandler = handler;
+}
 
 // Get workspace preview by share token (no auth required)
 workspacesRouter.get('/join/:token', async (req: Request, res: Response) => {
@@ -87,6 +95,12 @@ workspacesRouter.post('/', async (req: Request, res: Response) => {
       name,
       description || ''
     );
+
+    // Notify the user via WebSocket that a workspace was created
+    if (workspaceWsHandler) {
+      workspaceWsHandler.notifyWorkspaceCreated(userId, workspace.id, workspace);
+    }
+
     res.status(201).json(workspace);
   } catch (error) {
     console.error('Create workspace error:', error);
@@ -138,6 +152,13 @@ workspacesRouter.patch('/:id', async (req: Request, res: Response) => {
       return;
     }
 
+    // Notify subscribers via WebSocket that the workspace was updated
+    if (workspaceWsHandler) {
+      workspaceWsHandler.notifyWorkspaceUpdated(id, workspace);
+      // Also notify the owner in case they're on the workspaces list page
+      workspaceWsHandler.notifyUserWorkspacesChanged(userId, workspace);
+    }
+
     res.json(workspace);
   } catch (error) {
     console.error('Update workspace error:', error);
@@ -161,6 +182,13 @@ workspacesRouter.delete('/:id', async (req: Request, res: Response) => {
     if (!success) {
       res.status(404).json({ error: 'Workspace not found' });
       return;
+    }
+
+    // Notify subscribers via WebSocket that the workspace was deleted
+    if (workspaceWsHandler) {
+      workspaceWsHandler.notifyWorkspaceDeleted(id);
+      // Also notify the user in case they're on the workspaces list page
+      workspaceWsHandler.notifyUserWorkspacesChanged(userId);
     }
 
     res.json({ success: true });

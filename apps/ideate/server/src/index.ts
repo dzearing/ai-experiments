@@ -7,8 +7,9 @@ import { join } from 'path';
 
 import { authRouter } from './routes/auth.js';
 import { documentsRouter, setWorkspaceHandler as setDocumentsWorkspaceHandler } from './routes/documents.js';
-import { workspacesRouter } from './routes/workspaces.js';
+import { workspacesRouter, setWorkspaceHandler as setWorkspacesWsHandler } from './routes/workspaces.js';
 import { chatroomsRouter, setWorkspaceHandler as setChatroomsWorkspaceHandler } from './routes/chatrooms.js';
+import { setWorkspaceHandler as setMCPToolsWorkspaceHandler } from './services/MCPToolsService.js';
 import { createDiagnosticsRouter } from './routes/diagnostics.js';
 import { CollaborationHandler } from './websocket/CollaborationHandler.js';
 import { YjsCollaborationHandler } from './websocket/YjsCollaborationHandler.js';
@@ -122,12 +123,14 @@ facilitatorWss.on('connection', (ws, req) => {
 // Export workspace handler for use in routes
 export { workspaceHandler };
 
-// Wire up workspace handler to routes for real-time notifications
+// Wire up workspace handler to routes and services for real-time notifications
 setDocumentsWorkspaceHandler(workspaceHandler);
 setChatroomsWorkspaceHandler(workspaceHandler);
+setMCPToolsWorkspaceHandler(workspaceHandler);
+setWorkspacesWsHandler(workspaceHandler);
 
 // Mount diagnostics router (no auth required)
-app.use('/api/diagnostics', createDiagnosticsRouter(yjsHandler));
+app.use('/api/diagnostics', createDiagnosticsRouter(yjsHandler, facilitatorHandler.getService()));
 
 // Session management endpoint - get or create a session with assigned color
 app.post('/api/session', (req, res) => {

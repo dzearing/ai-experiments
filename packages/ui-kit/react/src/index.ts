@@ -111,6 +111,9 @@ export type { SpinnerProps, SpinnerSize } from './components/Spinner';
 export { Skeleton } from './components/Skeleton';
 export type { SkeletonProps, SkeletonVariant } from './components/Skeleton';
 
+export { ShimmerText } from './components/ShimmerText';
+export type { ShimmerTextProps } from './components/ShimmerText';
+
 // Data Display
 export { Avatar } from './components/Avatar';
 export type { AvatarProps, AvatarSize } from './components/Avatar';

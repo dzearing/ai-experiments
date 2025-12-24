@@ -18,6 +18,10 @@ export type WorkspaceMessageType =
   | 'resource_created'
   | 'resource_updated'
   | 'resource_deleted'
+  | 'workspace_created'
+  | 'workspace_updated'
+  | 'workspace_deleted'
+  | 'workspaces_changed'
   | 'presence_join'
   | 'presence_leave'
   | 'presence_sync';
@@ -452,5 +456,60 @@ export class WorkspaceWebSocketHandler {
       }
     });
     return presence;
+  }
+
+  /**
+   * Notify a specific user that their workspace list has changed.
+   * Called when a workspace is created, updated, or deleted.
+   */
+  notifyUserWorkspacesChanged(userId: string, data?: unknown): void {
+    this.clients.forEach((client) => {
+      if (client.userId === userId) {
+        this.sendToClient(client.ws, {
+          type: 'workspaces_changed',
+          data,
+        });
+      }
+    });
+    console.log(`[WorkspaceWS] Notified user ${userId} of workspace list change`);
+  }
+
+  /**
+   * Notify a user that a workspace was created
+   */
+  notifyWorkspaceCreated(userId: string, workspaceId: string, data: unknown): void {
+    this.clients.forEach((client) => {
+      if (client.userId === userId) {
+        this.sendToClient(client.ws, {
+          type: 'workspace_created',
+          workspaceId,
+          data,
+        });
+      }
+    });
+    console.log(`[WorkspaceWS] Notified user ${userId} of workspace created: ${workspaceId}`);
+  }
+
+  /**
+   * Notify subscribers that a workspace was updated
+   */
+  notifyWorkspaceUpdated(workspaceId: string, data: unknown): void {
+    this.broadcastToWorkspace(workspaceId, {
+      type: 'workspace_updated',
+      workspaceId,
+      data,
+    });
+    console.log(`[WorkspaceWS] Notified subscribers of workspace updated: ${workspaceId}`);
+  }
+
+  /**
+   * Notify subscribers that a workspace was deleted
+   */
+  notifyWorkspaceDeleted(workspaceId: string): void {
+    this.broadcastToWorkspace(workspaceId, {
+      type: 'workspace_deleted',
+      workspaceId,
+    });
+    console.log(`[WorkspaceWS] Notified subscribers of workspace deleted: ${workspaceId}`);
   }
 }

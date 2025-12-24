@@ -198,10 +198,11 @@ export class DocumentService {
 
       const now = new Date().toISOString();
 
-      // Update metadata
+      // Update metadata (workspaceId can be set to undefined to move to global scope)
       const updatedMetadata: DocumentMetadata = {
         ...metadata,
         title: updates.title ?? metadata.title,
+        workspaceId: 'workspaceId' in updates ? updates.workspaceId : metadata.workspaceId,
         isPublic: updates.isPublic ?? metadata.isPublic,
         collaboratorIds: updates.collaboratorIds ?? metadata.collaboratorIds,
         updatedAt: now,

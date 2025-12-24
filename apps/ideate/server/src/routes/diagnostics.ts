@@ -1,10 +1,14 @@
 import { Router, type Request, type Response } from 'express';
 import type { YjsCollaborationHandler } from '../websocket/YjsCollaborationHandler.js';
+import type { FacilitatorService } from '../services/FacilitatorService.js';
 
 /**
- * Create diagnostics router with access to the Yjs handler.
+ * Create diagnostics router with access to handlers.
  */
-export function createDiagnosticsRouter(yjsHandler: YjsCollaborationHandler): Router {
+export function createDiagnosticsRouter(
+  yjsHandler: YjsCollaborationHandler,
+  facilitatorService?: FacilitatorService
+): Router {
   const router = Router();
 
   /**
@@ -129,6 +133,27 @@ export function createDiagnosticsRouter(yjsHandler: YjsCollaborationHandler): Ro
     } catch (error) {
       console.error('Diagnostics stats error:', error);
       res.status(500).json({ error: 'Failed to get stats' });
+    }
+  });
+
+  /**
+   * GET /api/diagnostics/facilitator
+   * Returns facilitator AI request history and diagnostics.
+   */
+  router.get('/facilitator', (_req: Request, res: Response) => {
+    try {
+      if (!facilitatorService) {
+        res.status(501).json({ error: 'Facilitator service not available' });
+        return;
+      }
+      const diagnostics = facilitatorService.getDiagnostics();
+      res.json({
+        count: diagnostics.length,
+        entries: diagnostics,
+      });
+    } catch (error) {
+      console.error('Diagnostics facilitator error:', error);
+      res.status(500).json({ error: 'Failed to get facilitator diagnostics' });
     }
   });
 

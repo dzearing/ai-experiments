@@ -203,32 +203,58 @@
 .toolCalls {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: 2px;
   margin-top: var(--space-2);
-  padding: var(--space-2);
+  padding: var(--space-2) var(--space-3);
   background: var(--soft-bg);
   border-radius: var(--radius-sm);
   border: 1px solid var(--soft-border);
+  font-size: var(--text-xs);
 }
 
 .toolCall {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: var(--text-xs);
+  padding: 2px 0;
 }
 
-.toolName {
-  font-family: var(--font-mono);
-  color: var(--base-fg);
-  background: var(--strong-bg);
-  padding: 0.1em 0.4em;
-  border-radius: var(--radius-sm);
+.toolIcon {
+  flex-shrink: 0;
+  width: 14px;
+  text-align: center;
+  font-size: 10px;
 }
 
-.toolStatus {
+.toolRunning .toolIcon {
+  color: var(--base-fg-soft);
+  animation: toolPulse 1.5s infinite ease-in-out;
+}
+
+.toolComplete .toolIcon {
   color: var(--success-fg);
-  font-size: var(--text-xs);
+}
+
+@keyframes toolPulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+.toolDescription {
+  color: var(--base-fg-soft);
+}
+
+.toolDescription strong {
+  color: var(--base-fg);
+  font-weight: var(--weight-medium);
+}
+
+.toolComplete .toolDescription {
+  color: var(--base-fg-softer);
+}
+
+.toolComplete .toolDescription strong {
+  color: var(--base-fg-soft);
 }
 
 /* Plain text content (for user messages without markdown) */

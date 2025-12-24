@@ -1,0 +1,43 @@
+/**
+ * ShimmerText styles
+ *
+ * Creates an animated shimmer effect using gradient clipping.
+ * Uses JS-driven random positioning with CSS transitions for smooth easing.
+ * Two gradient layers at different opacities create depth.
+ */
+
+.shimmerText {
+  display: inline;
+  color: var(--base-fg);
+}
+
+.shimmerText.active {
+  /*
+   * Layer 1: Main shimmer gradient (full opacity)
+   * Layer 2: Secondary shimmer at 50% opacity for depth
+   * Positions are driven by CSS custom properties set via JS
+   */
+  background:
+    linear-gradient(
+      90deg,
+      var(--base-fg) 0%,
+      var(--base-fg) 35%,
+      var(--base-fg-primary) 50%,
+      var(--base-fg) 65%,
+      var(--base-fg) 100%
+    ),
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      transparent 25%,
+      color-mix(in srgb, var(--base-fg-primary) 50%, transparent) 50%,
+      transparent 75%,
+      transparent 100%
+    );
+  background-size: 400% 100%, 300% 100%;
+  background-position: var(--shimmer-x1, 50%) 0, var(--shimmer-x2, 60%) 0;
+  background-clip: text, text;
+  -webkit-background-clip: text, text;
+  -webkit-text-fill-color: transparent;
+  transition: background-position var(--shimmer-duration, 1000ms) ease-in-out;
+}

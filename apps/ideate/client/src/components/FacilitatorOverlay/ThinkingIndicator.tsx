@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { Spinner, ShimmerText } from '@ui-kit/react';
 import styles from './ThinkingIndicator.module.css';
 
 // Progress verbs that cycle randomly
@@ -94,8 +95,12 @@ export function ThinkingIndicator({ isActive }: ThinkingIndicatorProps) {
 
   return (
     <div className={styles.container}>
-      <span className={styles.spinner}>✱</span>
-      <span className={styles.verb}>{currentVerb}...</span>
+      <span className={styles.spinner}>
+        <Spinner size="sm" />
+      </span>
+      <ShimmerText isActive durationRange={[600, 1200]}>
+        <span className={styles.verb}>{currentVerb}...</span>
+      </ShimmerText>
       <span className={styles.details}>
         (esc to interrupt · {formatTime(elapsedSeconds)})
       </span>

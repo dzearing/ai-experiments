@@ -3,10 +3,12 @@ import {
   useContext,
   useState,
   useCallback,
+  useEffect,
+  useRef,
   type ReactNode,
 } from 'react';
 import { useAuth } from './AuthContext';
-import { API_URL } from '../config';
+import { API_URL, WORKSPACE_WS_URL } from '../config';
 
 export interface WorkspaceMetadata {
   id: string;
@@ -270,6 +272,92 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
     },
     [user]
   );
+
+  // WebSocket for receiving workspace list change notifications
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<number | null>(null);
+  const isCleaningUpRef = useRef(false);
+  const fetchWorkspacesRef = useRef(fetchWorkspaces);
+
+  // Keep ref up to date
+  useEffect(() => {
+    fetchWorkspacesRef.current = fetchWorkspaces;
+  }, [fetchWorkspaces]);
+
+  // WebSocket connection for receiving workspace notifications
+  useEffect(() => {
+    if (!user) return;
+
+    const connect = () => {
+      if (isCleaningUpRef.current) return;
+      if (wsRef.current?.readyState === WebSocket.OPEN || wsRef.current?.readyState === WebSocket.CONNECTING) {
+        return;
+      }
+
+      const params = new URLSearchParams({
+        userId: user.id,
+        userName: user.name,
+        userColor: '#888888',
+      });
+
+      const ws = new WebSocket(`${WORKSPACE_WS_URL}?${params}`);
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        console.log('[WorkspaceContext] WebSocket connected for workspace notifications');
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+
+          // Handle workspace list change notifications
+          if (message.type === 'workspace_created' ||
+              message.type === 'workspace_updated' ||
+              message.type === 'workspace_deleted' ||
+              message.type === 'workspaces_changed') {
+            console.log('[WorkspaceContext] Received workspace change notification:', message.type);
+            // Refresh the workspace list
+            fetchWorkspacesRef.current();
+          }
+        } catch (err) {
+          console.error('[WorkspaceContext] Failed to parse WebSocket message:', err);
+        }
+      };
+
+      ws.onclose = () => {
+        if (wsRef.current !== ws) return; // Stale WebSocket
+        wsRef.current = null;
+
+        // Reconnect if not cleaning up
+        if (!isCleaningUpRef.current) {
+          reconnectTimeoutRef.current = window.setTimeout(() => {
+            console.log('[WorkspaceContext] Reconnecting WebSocket...');
+            connect();
+          }, 3000);
+        }
+      };
+
+      ws.onerror = (err) => {
+        console.error('[WorkspaceContext] WebSocket error:', err);
+      };
+    };
+
+    isCleaningUpRef.current = false;
+    connect();
+
+    return () => {
+      isCleaningUpRef.current = true;
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+    };
+  }, [user]);
 
   const value: WorkspaceContextValue = {
     workspaces,

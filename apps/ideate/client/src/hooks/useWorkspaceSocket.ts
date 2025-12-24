@@ -27,6 +27,14 @@ export interface UseWorkspaceSocketOptions {
   onResourceUpdated?: (resourceId: string, resourceType: 'document' | 'chatroom', data: unknown) => void;
   onResourceDeleted?: (resourceId: string, resourceType: 'document' | 'chatroom') => void;
   onPresenceUpdate?: (presence: Map<string, ResourcePresence[]>) => void;
+  /** Called when a new workspace is created (for this user) */
+  onWorkspaceCreated?: (workspaceId: string, data: unknown) => void;
+  /** Called when a workspace is updated */
+  onWorkspaceUpdated?: (workspaceId: string, data: unknown) => void;
+  /** Called when a workspace is deleted */
+  onWorkspaceDeleted?: (workspaceId: string) => void;
+  /** Called when the user's workspace list has changed (general refresh trigger) */
+  onWorkspacesChanged?: (data?: unknown) => void;
 }
 
 export function useWorkspaceSocket({
@@ -36,6 +44,10 @@ export function useWorkspaceSocket({
   onResourceUpdated,
   onResourceDeleted,
   onPresenceUpdate,
+  onWorkspaceCreated,
+  onWorkspaceUpdated,
+  onWorkspaceDeleted,
+  onWorkspacesChanged,
 }: UseWorkspaceSocketOptions) {
   const { user } = useAuth();
   const wsRef = useRef<WebSocket | null>(null);
@@ -67,13 +79,21 @@ export function useWorkspaceSocket({
   const onResourceUpdatedRef = useRef(onResourceUpdated);
   const onResourceDeletedRef = useRef(onResourceDeleted);
   const onPresenceUpdateRef = useRef(onPresenceUpdate);
+  const onWorkspaceCreatedRef = useRef(onWorkspaceCreated);
+  const onWorkspaceUpdatedRef = useRef(onWorkspaceUpdated);
+  const onWorkspaceDeletedRef = useRef(onWorkspaceDeleted);
+  const onWorkspacesChangedRef = useRef(onWorkspacesChanged);
 
   useEffect(() => {
     onResourceCreatedRef.current = onResourceCreated;
     onResourceUpdatedRef.current = onResourceUpdated;
     onResourceDeletedRef.current = onResourceDeleted;
     onPresenceUpdateRef.current = onPresenceUpdate;
-  }, [onResourceCreated, onResourceUpdated, onResourceDeleted, onPresenceUpdate]);
+    onWorkspaceCreatedRef.current = onWorkspaceCreated;
+    onWorkspaceUpdatedRef.current = onWorkspaceUpdated;
+    onWorkspaceDeletedRef.current = onWorkspaceDeleted;
+    onWorkspacesChangedRef.current = onWorkspacesChanged;
+  }, [onResourceCreated, onResourceUpdated, onResourceDeleted, onPresenceUpdate, onWorkspaceCreated, onWorkspaceUpdated, onWorkspaceDeleted, onWorkspacesChanged]);
 
   // Stable connect function that reads from refs
   const connect = useCallback(() => {
@@ -229,6 +249,28 @@ export function useWorkspaceSocket({
         }
         break;
       }
+
+      case 'workspace_created':
+        if (message.workspaceId) {
+          onWorkspaceCreatedRef.current?.(message.workspaceId, message.data);
+        }
+        break;
+
+      case 'workspace_updated':
+        if (message.workspaceId) {
+          onWorkspaceUpdatedRef.current?.(message.workspaceId, message.data);
+        }
+        break;
+
+      case 'workspace_deleted':
+        if (message.workspaceId) {
+          onWorkspaceDeletedRef.current?.(message.workspaceId);
+        }
+        break;
+
+      case 'workspaces_changed':
+        onWorkspacesChangedRef.current?.(message.data);
+        break;
     }
   }, []);
 

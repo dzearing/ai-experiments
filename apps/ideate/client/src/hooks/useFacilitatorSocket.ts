@@ -128,6 +128,12 @@ export function useFacilitatorSocket({
             if (data.messageId && data.text) {
               // If this is a new message, create it
               if (currentMessageIdRef.current !== data.messageId) {
+                // Mark previous message as complete if exists
+                if (currentMessageIdRef.current) {
+                  updateMessage(currentMessageIdRef.current, {
+                    isStreaming: false,
+                  });
+                }
                 currentMessageIdRef.current = data.messageId;
                 addMessage({
                   id: data.messageId,
@@ -259,8 +265,7 @@ export function useFacilitatorSocket({
       if (currentMessageIdRef.current) {
         updateMessage(currentMessageIdRef.current, {
           isStreaming: false,
-          content: (prev: string) => prev + '\n\n*[Thinking stopped]*',
-        } as any);
+        });
         currentMessageIdRef.current = null;
       }
 

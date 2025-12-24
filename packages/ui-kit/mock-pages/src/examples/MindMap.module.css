@@ -1,0 +1,549 @@
+/* Mind Map Canvas Container */
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--color-body-background);
+}
+
+/* Header/Toolbar */
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing);
+  padding: var(--spacing-small10) var(--spacing);
+  border-bottom: 1px solid var(--color-body-border);
+  background: var(--color-panel-background);
+}
+
+.titleSection {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small10);
+  flex: 1;
+}
+
+.title {
+  font-size: var(--font-size-h4);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-body-text);
+  margin: 0;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small10);
+}
+
+/* Main Layout */
+.mainLayout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Canvas Area */
+.canvasArea {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: var(--color-body-backgroundSubtle);
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  cursor: grab;
+}
+
+.canvas:active {
+  cursor: grabbing;
+}
+
+/* Grid background for canvas */
+.canvasGrid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle, var(--color-body-border) 1px, transparent 1px);
+  background-size: 24px 24px;
+  opacity: 0.5;
+}
+
+/* Mind Map Nodes */
+.nodeGroup {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.node {
+  position: absolute;
+  padding: var(--spacing-small10) var(--spacing);
+  border-radius: var(--radius-large);
+  background: var(--color-panel-background);
+  border: 2px solid var(--color-body-border);
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+  transition: transform var(--duration-fast), box-shadow var(--duration-fast);
+  white-space: nowrap;
+}
+
+.node:hover {
+  transform: scale(1.02);
+  box-shadow: var(--shadow-cardHover);
+}
+
+.nodeCentral {
+  background: var(--color-buttonPrimary-background);
+  border-color: var(--color-buttonPrimary-backgroundHover);
+  color: var(--color-buttonPrimary-text);
+  font-size: var(--font-size-large);
+  font-weight: var(--font-weight-semibold);
+  padding: var(--spacing) var(--spacing-large10);
+}
+
+.nodeSelected {
+  border-color: var(--color-focus);
+  box-shadow: 0 0 0 3px var(--color-focus-ring);
+}
+
+.nodeSecondary {
+  background: var(--color-inset-background);
+}
+
+.nodeAiSuggested {
+  border-style: dashed;
+  border-color: var(--color-accent-purple);
+  opacity: 0.85;
+}
+
+.nodeAiSuggested::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 16px;
+  height: 16px;
+  background: var(--color-accent-purple);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nodeLabel {
+  font-size: var(--font-size);
+  color: var(--color-body-text);
+}
+
+/* Connections */
+.connections {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.connection {
+  stroke: #6b7280;
+  stroke-width: 3;
+  fill: none;
+}
+
+.connectionHighlight {
+  stroke: var(--color-buttonPrimary-background);
+  stroke-width: 3;
+}
+
+.connectionAi {
+  stroke: var(--color-accent-purple);
+  stroke-dasharray: 5 5;
+}
+
+/* User Cursors */
+.userCursor {
+  position: absolute;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.cursorPointer {
+  width: 20px;
+  height: 20px;
+  transform: rotate(-45deg);
+  border-radius: 0 50% 50% 50%;
+}
+
+.cursorLabel {
+  position: absolute;
+  top: 20px;
+  left: 12px;
+  padding: 2px 6px;
+  border-radius: var(--radius-small);
+  font-size: var(--font-size-small);
+  color: white;
+  white-space: nowrap;
+}
+
+/* Sidebar Panel */
+.sidebar {
+  width: 320px;
+  border-left: 1px solid var(--color-body-border);
+  background: var(--color-panel-background);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebarHeader {
+  padding: var(--spacing);
+  border-bottom: 1px solid var(--color-body-border);
+}
+
+.sidebarContent {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing);
+}
+
+.sidebarSection {
+  margin-bottom: var(--spacing-large10);
+}
+
+.sidebarSectionTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small10);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-body-textSoft10);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--spacing-small10);
+}
+
+/* AI Insights */
+.aiInsight {
+  padding: var(--spacing-small10);
+  border-radius: var(--radius-default);
+  background: var(--color-inset-background);
+  margin-bottom: var(--spacing-small10);
+  cursor: pointer;
+  transition: background var(--duration-fast);
+}
+
+.aiInsight:hover {
+  background: var(--color-inset-backgroundHover);
+}
+
+.aiInsightHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small10);
+  margin-bottom: 4px;
+}
+
+.aiInsightIcon {
+  color: var(--color-accent-purple);
+}
+
+.aiInsightTitle {
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-body-text);
+}
+
+.aiInsightDescription {
+  font-size: var(--font-size-small);
+  color: var(--color-body-textSoft10);
+  line-height: var(--line-height-normal);
+}
+
+/* Presence Indicators */
+.presenceBar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small10);
+}
+
+.presenceCount {
+  font-size: var(--font-size-small);
+  color: var(--color-body-textSoft10);
+}
+
+/* Cluster/Theme Card */
+.clusterCard {
+  padding: var(--spacing-small10);
+  border-radius: var(--radius-default);
+  background: var(--color-inset-background);
+  margin-bottom: var(--spacing-small10);
+}
+
+.clusterHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.clusterName {
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-body-text);
+}
+
+.clusterCount {
+  font-size: var(--font-size-small);
+  color: var(--color-body-textSoft10);
+}
+
+.clusterTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* Toolbar */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small10);
+  padding: var(--spacing-small10);
+  background: var(--color-panel-background);
+  border-radius: var(--radius-default);
+  box-shadow: var(--shadow-card);
+}
+
+.toolbarFloating {
+  position: absolute;
+  bottom: var(--spacing);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+}
+
+/* Zoom Controls */
+.zoomControls {
+  position: absolute;
+  bottom: var(--spacing);
+  right: var(--spacing);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 50;
+}
+
+/* Mini Map */
+.miniMap {
+  position: absolute;
+  bottom: var(--spacing);
+  left: var(--spacing);
+  width: 150px;
+  height: 100px;
+  background: var(--color-panel-background);
+  border: 1px solid var(--color-body-border);
+  border-radius: var(--radius-default);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  z-index: 50;
+}
+
+.miniMapViewport {
+  position: absolute;
+  border: 2px solid var(--color-buttonPrimary-background);
+  background: var(--color-buttonPrimary-background);
+  opacity: 0.2;
+  border-radius: 2px;
+}
+
+.miniMapNode {
+  position: absolute;
+  width: 8px;
+  height: 4px;
+  background: var(--color-body-textSoft20);
+  border-radius: 1px;
+}
+
+/* Quick Add Input */
+.quickAdd {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small10);
+  padding: var(--spacing-small10);
+  background: var(--color-inset-background);
+  border-radius: var(--radius-default);
+  margin-bottom: var(--spacing);
+}
+
+.quickAddInput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  font-size: var(--font-size);
+  color: var(--color-body-text);
+  outline: none;
+}
+
+.quickAddInput::placeholder {
+  color: var(--color-body-textSoft20);
+}
+
+/* Session Info */
+.sessionInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing);
+  padding: var(--spacing-small10) var(--spacing);
+  background: var(--color-inset-background);
+  border-bottom: 1px solid var(--color-body-border);
+  font-size: var(--font-size-small);
+}
+
+.sessionTimer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-body-textSoft10);
+}
+
+.sessionParticipants {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small10);
+  margin-left: auto;
+}
+
+/* AI Chat Panel */
+.aiChat {
+  border-top: 1px solid var(--color-body-border);
+  padding: var(--spacing);
+  background: var(--color-inset-background);
+}
+
+.aiChatHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small10);
+  margin-bottom: var(--spacing-small10);
+}
+
+.aiChatTitle {
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-accent-purple);
+}
+
+.aiChatMessage {
+  font-size: var(--font-size-small);
+  color: var(--color-body-text);
+  line-height: var(--line-height-normal);
+  margin-bottom: var(--spacing-small10);
+}
+
+.aiChatActions {
+  display: flex;
+  gap: var(--spacing-small10);
+}
+
+/* Energy/Momentum Indicator */
+.energyIndicator {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small10);
+  padding: var(--spacing-small10);
+  background: var(--color-inset-background);
+  border-radius: var(--radius-default);
+}
+
+.energyLabel {
+  font-size: var(--font-size-small);
+  color: var(--color-body-textSoft10);
+}
+
+.energyBar {
+  flex: 1;
+  height: 4px;
+  background: var(--color-body-border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.energyFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-success), var(--color-warning));
+  transition: width var(--duration-normal);
+}
+
+/* Collaboration Stats */
+.collabStats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-small10);
+}
+
+.statCard {
+  padding: var(--spacing-small10);
+  background: var(--color-inset-background);
+  border-radius: var(--radius-default);
+  text-align: center;
+}
+
+.statValue {
+  font-size: var(--font-size-large);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-body-text);
+}
+
+.statLabel {
+  font-size: var(--font-size-small);
+  color: var(--color-body-textSoft10);
+}
+
+/* Modal Overlay for Node Edit */
+.nodeEditModal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  background: var(--color-panel-background);
+  border-radius: var(--radius-large);
+  box-shadow: var(--shadow-dialog);
+  padding: var(--spacing);
+  z-index: 200;
+}
+
+/* Empty Canvas State */
+.emptyCanvas {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  max-width: 400px;
+}
+
+.emptyCanvasIcon {
+  font-size: 64px;
+  color: var(--color-body-textSoft20);
+  margin-bottom: var(--spacing);
+}
+
+.emptyCanvasTitle {
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-body-text);
+  margin-bottom: var(--spacing-small10);
+}
+
+.emptyCanvasDescription {
+  font-size: var(--font-size);
+  color: var(--color-body-textSoft10);
+  line-height: var(--line-height-normal);
+  margin-bottom: var(--spacing);
+}
