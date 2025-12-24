@@ -8,6 +8,7 @@ import { MarkdownCoEditor, type ViewMode, type MarkdownEditorRef, type CoAuthor 
 import { useAuth } from '../contexts/AuthContext';
 import { useDocuments, type Document } from '../contexts/DocumentContext';
 import { useSession } from '../contexts/SessionContext';
+import { useFacilitator } from '../contexts/FacilitatorContext';
 import { useYjsCollaboration, type CoAuthor as YjsCoAuthor } from '../hooks/useYjsCollaboration';
 import { useWorkspaceSocket } from '../hooks/useWorkspaceSocket';
 import { YJS_WS_URL } from '../config';
@@ -62,8 +63,25 @@ export function DocumentEditor() {
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { getDocument, updateDocument } = useDocuments();
   const { session } = useSession();
+  const { setNavigationContext } = useFacilitator();
 
   const [document, setDocument] = useState<Document | null>(null);
+
+  // Update facilitator navigation context when document changes
+  useEffect(() => {
+    if (document) {
+      setNavigationContext({
+        currentPage: 'Document Editor',
+        documentId: documentId,
+        documentTitle: document.title,
+        workspaceId: document.workspaceId,
+      });
+    }
+
+    return () => {
+      setNavigationContext({});
+    };
+  }, [documentId, document?.title, document?.workspaceId, setNavigationContext]);
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('edit');
   const [isPublic, setIsPublic] = useState(false);

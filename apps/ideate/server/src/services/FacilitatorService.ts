@@ -2,6 +2,20 @@ import { query, type SDKAssistantMessage } from '@anthropic-ai/claude-code';
 import { PersonaService, type Persona } from './PersonaService.js';
 import { FacilitatorChatService, type FacilitatorMessage } from './FacilitatorChatService.js';
 import { MCPToolsService, type ToolDefinition } from './MCPToolsService.js';
+import { buildFacilitatorPrompt, buildContextSection } from '../prompts/facilitatorPrompt.js';
+
+/**
+ * Navigation context - where the user is in the app
+ */
+export interface NavigationContext {
+  workspaceId?: string;
+  workspaceName?: string;
+  documentId?: string;
+  documentTitle?: string;
+  chatRoomId?: string;
+  chatRoomName?: string;
+  currentPage?: string;
+}
 
 /**
  * Callbacks for streaming Claude responses
@@ -75,17 +89,17 @@ export class FacilitatorService {
   /**
    * Initialize the service by loading the facilitator persona.
    */
-  async initialize(): Promise<void> {
-    this.persona = await this.personaService.getFacilitatorPersona();
+  initialize(): void {
+    this.persona = this.personaService.getFacilitatorPersona();
     console.log(`[FacilitatorService] Loaded persona: ${this.persona.name}`);
   }
 
   /**
    * Get the persona (load if not already loaded).
    */
-  private async getPersona(): Promise<Persona> {
+  private getPersona(): Persona {
     if (!this.persona) {
-      this.persona = await this.personaService.getFacilitatorPersona();
+      this.persona = this.personaService.getFacilitatorPersona();
     }
     return this.persona;
   }
@@ -111,6 +125,7 @@ export class FacilitatorService {
     userId: string,
     userName: string,
     content: string,
+    navigationContext: NavigationContext,
     callbacks: StreamCallbacks
   ): Promise<void> {
     // Save the user message
@@ -120,11 +135,11 @@ export class FacilitatorService {
     const startTime = Date.now();
 
     // Get persona and history
-    const persona = await this.getPersona();
+    const persona = this.getPersona();
     const history = await this.chatService.getMessages(userId);
 
-    // Build the system prompt
-    const systemPrompt = this.buildSystemPrompt(persona, userName);
+    // Build the system prompt with navigation context
+    const systemPrompt = this.buildSystemPrompt(persona, userName, navigationContext);
 
     // Build the full prompt with conversation history
     const conversationHistory = this.buildConversationHistory(history.slice(0, -1)); // Exclude the just-added user message
@@ -333,7 +348,7 @@ export class FacilitatorService {
   /**
    * Build the system prompt with persona, user context, and available tools.
    */
-  private buildSystemPrompt(persona: Persona, userName: string): string {
+  private buildSystemPrompt(persona: Persona, userName: string, navigationContext: NavigationContext): string {
     const toolDefinitions = this.toolsService.getToolDefinitions();
 
     const toolsDescription = toolDefinitions.map((tool) => {
@@ -343,52 +358,27 @@ export class FacilitatorService {
       return `**${tool.name}**: ${tool.description}${params ? '\nParameters:\n' + params : ''}`;
     }).join('\n\n');
 
-    return `${persona.systemPrompt}
+    // Build current context description
+    const contextParts: string[] = [];
+    if (navigationContext.currentPage) {
+      contextParts.push(`Current page: ${navigationContext.currentPage}`);
+    }
+    if (navigationContext.workspaceName && navigationContext.workspaceId) {
+      contextParts.push(`Current workspace: "${navigationContext.workspaceName}" (ID: ${navigationContext.workspaceId})`);
+    }
+    if (navigationContext.documentTitle && navigationContext.documentId) {
+      contextParts.push(`Current document: "${navigationContext.documentTitle}" (ID: ${navigationContext.documentId})`);
+    }
+    if (navigationContext.chatRoomName && navigationContext.chatRoomId) {
+      contextParts.push(`Current chat room: "${navigationContext.chatRoomName}" (ID: ${navigationContext.chatRoomId})`);
+    }
 
-You are chatting with ${userName}. Address them by name occasionally to make the conversation more personal.
-
-## Available Tools
-
-You have access to the following tools to help users with their workspaces and documents:
-
-${toolsDescription}
-
-## Tool Usage
-
-When you need to use a tool, output a tool request in this exact format:
-<tool_use>
-{"name": "tool_name", "input": {"param1": "value1", "param2": "value2"}}
-</tool_use>
-
-After calling a tool, you will receive the result and can then respond to the user with the information.
-
-## Guidelines
-
-- Be concise but helpful
-- Use markdown formatting when appropriate
-- Use tools when the user asks about their workspaces, documents, or needs to search/create/modify content
-- If asked about the Ideate platform, explain its features
-- When presenting document or workspace information, format it nicely with markdown
-- If a tool call fails, explain the error to the user and suggest alternatives
-
-## CRITICAL: Document Operations
-
-**Renaming documents:**
-- To rename a document, use \`document_update\` with the documentId and new title
-- NEVER delete and recreate a document to rename it - this changes the document ID and loses collaboration history
-- The document ID must remain stable - only the title changes
-
-**Moving documents:**
-- Use \`document_move\` to move a document between workspaces
-- NEVER delete and recreate to move a document
-
-## CRITICAL: Workspace Context
-
-When creating documents within a specific workspace:
-- You MUST include the workspaceId parameter in the document_create call
-- Documents created without a workspaceId go to global scope, not the workspace
-- Always verify you have the correct workspaceId before creating documents
-- If unsure which workspace, ask the user or use workspace_list to find it first`;
+    return buildFacilitatorPrompt({
+      personaPrompt: persona.systemPrompt,
+      userName,
+      contextSection: buildContextSection(contextParts),
+      toolsDescription,
+    });
   }
 
   /**

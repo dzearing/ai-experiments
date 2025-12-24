@@ -5,6 +5,7 @@ import { AddIcon } from '@ui-kit/icons/AddIcon';
 import { FolderIcon } from '@ui-kit/icons/FolderIcon';
 import { useAuth } from '../contexts/AuthContext';
 import { useWorkspaces, type WorkspaceMetadata } from '../contexts/WorkspaceContext';
+import { useFacilitator } from '../contexts/FacilitatorContext';
 import { WorkspaceCard } from '../components/WorkspaceCard';
 import styles from './Workspaces.module.css';
 
@@ -20,6 +21,7 @@ export function Workspaces() {
     updateWorkspace,
     deleteWorkspace,
   } = useWorkspaces();
+  const { setNavigationContext } = useFacilitator();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -42,6 +44,17 @@ export function Workspaces() {
   useEffect(() => {
     fetchWorkspaces();
   }, [fetchWorkspaces]);
+
+  // Update facilitator navigation context
+  useEffect(() => {
+    setNavigationContext({
+      currentPage: 'Workspaces List',
+    });
+
+    return () => {
+      setNavigationContext({});
+    };
+  }, [setNavigationContext]);
 
   const resetForm = () => {
     setFormName('');

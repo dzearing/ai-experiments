@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { FACILITATOR_WS_URL } from '../config';
-import { useFacilitator, type FacilitatorMessage } from '../contexts/FacilitatorContext';
+import { useFacilitator, type FacilitatorMessage, type NavigationContext } from '../contexts/FacilitatorContext';
 
 /**
  * Server message types for the facilitator WebSocket protocol
@@ -74,7 +74,11 @@ export function useFacilitatorSocket({
     setMessages,
     addMessage,
     updateMessage,
+    navigationContext,
   } = useFacilitator();
+
+  // Track navigation context changes to send updates to server
+  const navigationContextRef = useRef<NavigationContext>(navigationContext);
 
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
@@ -214,6 +218,20 @@ export function useFacilitatorSocket({
     };
   }, [isOpen, connectionState, connect]);
 
+  // Send context updates to server when navigation context changes
+  useEffect(() => {
+    navigationContextRef.current = navigationContext;
+
+    // Send context update if connected
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({
+        type: 'context_update',
+        context: navigationContext,
+      }));
+      console.log('[Facilitator] Sent context update:', navigationContext);
+    }
+  }, [navigationContext]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -234,6 +252,7 @@ export function useFacilitatorSocket({
       wsRef.current.send(JSON.stringify({
         type: 'message',
         content,
+        context: navigationContextRef.current,
       }));
     } else {
       console.warn('[Facilitator] Cannot send message: WebSocket not connected');

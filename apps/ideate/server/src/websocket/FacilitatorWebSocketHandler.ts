@@ -5,11 +5,25 @@ import { FacilitatorService } from '../services/FacilitatorService.js';
 import type { FacilitatorMessage } from '../services/FacilitatorChatService.js';
 
 /**
+ * Navigation context from the client - where the user is in the app
+ */
+interface NavigationContext {
+  workspaceId?: string;
+  workspaceName?: string;
+  documentId?: string;
+  documentTitle?: string;
+  chatRoomId?: string;
+  chatRoomName?: string;
+  currentPage?: string;
+}
+
+/**
  * Client message types for the facilitator WebSocket protocol
  */
 interface ClientMessage {
-  type: 'message' | 'clear_history';
+  type: 'message' | 'clear_history' | 'context_update';
   content?: string;
+  context?: NavigationContext;
 }
 
 /**
@@ -43,6 +57,8 @@ interface FacilitatorClient {
   userId: string;
   userName: string;
   clientId: number;
+  /** Current navigation context */
+  context: NavigationContext;
 }
 
 /**
@@ -94,6 +110,7 @@ export class FacilitatorWebSocketHandler {
       userId,
       userName,
       clientId,
+      context: {},
     };
 
     this.clients.set(ws, client);
@@ -127,10 +144,21 @@ export class FacilitatorWebSocketHandler {
 
       switch (clientMessage.type) {
         case 'message':
+          // Update context if provided with the message
+          if (clientMessage.context) {
+            client.context = clientMessage.context;
+          }
           await this.handleChatMessage(client, clientMessage.content || '');
           break;
         case 'clear_history':
           await this.handleClearHistory(client);
+          break;
+        case 'context_update':
+          // Update the client's navigation context
+          if (clientMessage.context) {
+            client.context = clientMessage.context;
+            console.log(`[Facilitator] Client ${client.clientId} context updated:`, client.context);
+          }
           break;
         default:
           console.warn(`[Facilitator] Unknown message type: ${(clientMessage as ClientMessage).type}`);
@@ -155,6 +183,7 @@ export class FacilitatorWebSocketHandler {
         client.userId,
         client.userName,
         content.trim(),
+        client.context,
         {
           onTextChunk: (text, messageId) => {
             this.send(client.ws, {

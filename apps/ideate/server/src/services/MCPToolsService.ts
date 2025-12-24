@@ -639,8 +639,12 @@ export class MCPToolsService {
     }
 
     // Notify about document update
+    console.log(`[MCPToolsService] Document updated: ${document.id}, workspaceId: ${document.workspaceId}, handler: ${!!workspaceWsHandler}`);
     if (document.workspaceId && workspaceWsHandler) {
+      console.log(`[MCPToolsService] Sending notification for document update in workspace ${document.workspaceId}`);
       workspaceWsHandler.notifyResourceUpdated(document.workspaceId, document.id, 'document', document);
+    } else {
+      console.log(`[MCPToolsService] Skipping notification - workspaceId: ${document.workspaceId}, handler: ${!!workspaceWsHandler}`);
     }
 
     return {

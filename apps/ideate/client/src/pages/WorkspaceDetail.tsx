@@ -11,6 +11,7 @@ import { useWorkspaces, type Workspace } from '../contexts/WorkspaceContext';
 import { useDocuments, type DocumentMetadata } from '../contexts/DocumentContext';
 import { useChat, type ChatRoomMetadata } from '../contexts/ChatContext';
 import { useSession } from '../contexts/SessionContext';
+import { useFacilitator } from '../contexts/FacilitatorContext';
 import { useWorkspaceSocket, type ResourcePresence } from '../hooks/useWorkspaceSocket';
 import { DocumentCard } from '../components/DocumentCard';
 import { ChatRoomCard } from '../components/ChatRoomCard';
@@ -24,6 +25,7 @@ export function WorkspaceDetail() {
   const { documents, isLoading, fetchDocuments, createDocument, updateDocument, deleteDocument, setDocuments } = useDocuments();
   const { chatRooms, isLoading: isLoadingChatRooms, fetchChatRooms, createChatRoom, updateChatRoom, deleteChatRoom, setChatRooms } = useChat();
   const { session } = useSession();
+  const { setNavigationContext } = useFacilitator();
 
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
   const [isLoadingWorkspace, setIsLoadingWorkspace] = useState(true);
@@ -140,6 +142,20 @@ export function WorkspaceDetail() {
 
     loadWorkspace();
   }, [workspaceId, user, getWorkspace]);
+
+  // Update facilitator navigation context when workspace changes
+  useEffect(() => {
+    setNavigationContext({
+      currentPage: 'Workspace Detail',
+      workspaceId: workspaceId,
+      workspaceName: workspace?.name,
+    });
+
+    // Clear context when leaving the page
+    return () => {
+      setNavigationContext({});
+    };
+  }, [workspaceId, workspace?.name, setNavigationContext]);
 
   // Fetch documents and chat rooms for this workspace
   useEffect(() => {

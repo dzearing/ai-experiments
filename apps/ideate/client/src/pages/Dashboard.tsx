@@ -7,6 +7,7 @@ import { LinkIcon } from '@ui-kit/icons/LinkIcon';
 import { useAuth } from '../contexts/AuthContext';
 import { useDocuments, type DocumentMetadata } from '../contexts/DocumentContext';
 import { useNetwork, type NetworkDocument } from '../contexts/NetworkContext';
+import { useFacilitator } from '../contexts/FacilitatorContext';
 import { DocumentCard } from '../components/DocumentCard';
 import { getTimeAgo } from '../utils/timeAgo';
 import styles from './Dashboard.module.css';
@@ -17,6 +18,7 @@ export function Dashboard() {
   const { documents, isLoading, fetchDocuments, createDocument, updateDocument, deleteDocument } = useDocuments();
   const { networkDocuments, isDiscovering, startDiscovery, stopDiscovery } =
     useNetwork();
+  const { setNavigationContext } = useFacilitator();
   const [showNewDocModal, setShowNewDocModal] = useState(false);
   const [newDocTitle, setNewDocTitle] = useState('');
   const [isCreating, setIsCreating] = useState(false);
@@ -48,6 +50,17 @@ export function Dashboard() {
     startDiscovery();
     return () => stopDiscovery();
   }, [startDiscovery, stopDiscovery]);
+
+  // Update facilitator navigation context
+  useEffect(() => {
+    setNavigationContext({
+      currentPage: 'Dashboard (Global Documents)',
+    });
+
+    return () => {
+      setNavigationContext({});
+    };
+  }, [setNavigationContext]);
 
   const handleCreateDocument = async () => {
     if (!newDocTitle.trim()) return;

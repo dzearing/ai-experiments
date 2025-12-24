@@ -1,6 +1,10 @@
-import * as fs from 'fs/promises';
+import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
 import { homedir } from 'os';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
  * Persona configuration loaded from markdown
@@ -9,10 +13,14 @@ export interface Persona {
   name: string;
   systemPrompt: string;
   rawContent: string;
+  source: 'user' | 'default';
 }
 
-// Directory for persona files
-const PERSONAS_DIR = path.join(homedir(), 'Ideate', 'personas');
+// User override directory (in home folder)
+const USER_PERSONAS_DIR = path.join(homedir(), 'Ideate', 'personas');
+// Default personas directory (in the repo)
+const DEFAULT_PERSONAS_DIR = path.join(__dirname, '..', 'personas');
+
 const DEFAULT_FACILITATOR_NAME = 'Facilitator';
 
 // Default facilitator system prompt if no persona file exists
@@ -30,58 +38,69 @@ If you're unsure about something, ask clarifying questions.`;
 
 /**
  * Service for loading and managing personas.
+ *
+ * Personas are loaded with the following priority:
+ * 1. User override: ~/Ideate/personas/{name}.md
+ * 2. Default: src/personas/{name}.md (in repo)
+ * 3. Fallback: hardcoded default prompt
  */
 export class PersonaService {
   private personaCache: Map<string, Persona> = new Map();
 
-  constructor() {
-    this.ensureDirectoryExists();
-  }
-
-  private async ensureDirectoryExists(): Promise<void> {
-    try {
-      await fs.mkdir(PERSONAS_DIR, { recursive: true });
-    } catch (error) {
-      console.error('Failed to create personas directory:', error);
-    }
-  }
-
-  private getPersonaPath(name: string): string {
-    return path.join(PERSONAS_DIR, `${name}.md`);
-  }
-
   /**
    * Load a persona from its markdown file.
-   * Returns cached version if available.
+   * Checks user override directory first, then falls back to defaults.
    */
-  async getPersona(name: string): Promise<Persona> {
+  getPersona(name: string): Persona {
     // Check cache first
     const cached = this.personaCache.get(name);
     if (cached) {
       return cached;
     }
 
-    // Try to load from file
-    try {
-      const content = await fs.readFile(this.getPersonaPath(name), 'utf-8');
-      const persona = this.parsePersonaMarkdown(name, content);
-      this.personaCache.set(name, persona);
-      return persona;
-    } catch {
-      // Return default persona
-      const defaultPersona: Persona = {
-        name: DEFAULT_FACILITATOR_NAME,
-        systemPrompt: DEFAULT_FACILITATOR_PROMPT,
-        rawContent: '',
-      };
-      return defaultPersona;
+    // Try user override first
+    const userPath = path.join(USER_PERSONAS_DIR, `${name}.md`);
+    if (fs.existsSync(userPath)) {
+      try {
+        const content = fs.readFileSync(userPath, 'utf-8');
+        const persona = this.parsePersonaMarkdown(name, content, 'user');
+        this.personaCache.set(name, persona);
+        console.log(`[PersonaService] Loaded persona "${name}" from user override: ${userPath}`);
+        return persona;
+      } catch (error) {
+        console.error(`[PersonaService] Failed to load user persona "${name}":`, error);
+      }
     }
+
+    // Try default from repo
+    const defaultPath = path.join(DEFAULT_PERSONAS_DIR, `${name}.md`);
+    if (fs.existsSync(defaultPath)) {
+      try {
+        const content = fs.readFileSync(defaultPath, 'utf-8');
+        const persona = this.parsePersonaMarkdown(name, content, 'default');
+        this.personaCache.set(name, persona);
+        console.log(`[PersonaService] Loaded persona "${name}" from defaults: ${defaultPath}`);
+        return persona;
+      } catch (error) {
+        console.error(`[PersonaService] Failed to load default persona "${name}":`, error);
+      }
+    }
+
+    // Return hardcoded fallback
+    console.log(`[PersonaService] Using hardcoded fallback for persona "${name}"`);
+    const fallbackPersona: Persona = {
+      name: DEFAULT_FACILITATOR_NAME,
+      systemPrompt: DEFAULT_FACILITATOR_PROMPT,
+      rawContent: '',
+      source: 'default',
+    };
+    return fallbackPersona;
   }
 
   /**
    * Get the facilitator persona specifically.
    */
-  async getFacilitatorPersona(): Promise<Persona> {
+  getFacilitatorPersona(): Persona {
     return this.getPersona('facilitator');
   }
 
@@ -96,7 +115,7 @@ export class PersonaService {
    *
    * Any additional content becomes part of rawContent.
    */
-  private parsePersonaMarkdown(name: string, content: string): Persona {
+  private parsePersonaMarkdown(name: string, content: string, source: 'user' | 'default'): Persona {
     const lines = content.split('\n');
     let personaName = name;
     let systemPrompt = '';
@@ -138,6 +157,7 @@ export class PersonaService {
       name: personaName,
       systemPrompt: systemPrompt.trim() || DEFAULT_FACILITATOR_PROMPT,
       rawContent: content,
+      source,
     };
   }
 
@@ -146,27 +166,5 @@ export class PersonaService {
    */
   clearCache(): void {
     this.personaCache.clear();
-  }
-
-  /**
-   * Create a default facilitator persona file if it doesn't exist.
-   */
-  async createDefaultFacilitatorPersona(): Promise<void> {
-    const facilitatorPath = this.getPersonaPath('facilitator');
-
-    try {
-      await fs.access(facilitatorPath);
-      // File exists, don't overwrite
-    } catch {
-      // File doesn't exist, create it
-      const defaultContent = `# ${DEFAULT_FACILITATOR_NAME}
-
-## System Prompt
-
-${DEFAULT_FACILITATOR_PROMPT}
-`;
-      await fs.writeFile(facilitatorPath, defaultContent, 'utf-8');
-      console.log('[PersonaService] Created default facilitator persona');
-    }
   }
 }

@@ -31,6 +31,26 @@ export interface FacilitatorMessage {
 export type FacilitatorConnectionState = 'disconnected' | 'connecting' | 'connected' | 'error';
 
 /**
+ * Navigation context - where the user currently is in the app
+ */
+export interface NavigationContext {
+  /** Current workspace ID (if viewing a workspace) */
+  workspaceId?: string;
+  /** Current workspace name */
+  workspaceName?: string;
+  /** Current document ID (if viewing a document) */
+  documentId?: string;
+  /** Current document title */
+  documentTitle?: string;
+  /** Current chat room ID (if in a chat room) */
+  chatRoomId?: string;
+  /** Current chat room name */
+  chatRoomName?: string;
+  /** Current page/route name */
+  currentPage?: string;
+}
+
+/**
  * Context value for the facilitator chat
  */
 interface FacilitatorContextValue {
@@ -44,6 +64,8 @@ interface FacilitatorContextValue {
   isLoading: boolean;
   /** Error message if connection failed */
   error: string | null;
+  /** Current navigation context (where the user is in the app) */
+  navigationContext: NavigationContext;
 
   /** Toggle the facilitator overlay */
   toggle: () => void;
@@ -67,6 +89,8 @@ interface FacilitatorContextValue {
   addMessage: (message: FacilitatorMessage) => void;
   /** Update a message by ID */
   updateMessage: (id: string, updates: Partial<FacilitatorMessage>) => void;
+  /** Update navigation context */
+  setNavigationContext: (context: NavigationContext) => void;
 }
 
 const FacilitatorContext = createContext<FacilitatorContextValue | null>(null);
@@ -85,6 +109,7 @@ export function FacilitatorProvider({ children }: FacilitatorProviderProps) {
   const [connectionState, setConnectionState] = useState<FacilitatorConnectionState>('disconnected');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [navigationContext, setNavigationContext] = useState<NavigationContext>({});
 
   // Toggle overlay
   const toggle = useCallback(() => {
@@ -145,6 +170,7 @@ export function FacilitatorProvider({ children }: FacilitatorProviderProps) {
     connectionState,
     isLoading,
     error,
+    navigationContext,
     toggle,
     open,
     close,
@@ -156,6 +182,7 @@ export function FacilitatorProvider({ children }: FacilitatorProviderProps) {
     setError,
     addMessage,
     updateMessage,
+    setNavigationContext,
   };
 
   return (

@@ -1,4 +1,4 @@
-import Bonjour, { type Service } from 'bonjour-service';
+import { Bonjour, type Service } from 'bonjour-service';
 import { DocumentService } from './DocumentService.js';
 
 const SERVICE_TYPE = 'ideate';
