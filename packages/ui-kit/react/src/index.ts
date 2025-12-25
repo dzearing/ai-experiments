@@ -15,6 +15,9 @@ export type { IconButtonProps, IconButtonVariant, IconButtonSize, IconButtonShap
 export { Input } from './components/Input';
 export type { InputProps, InputSize } from './components/Input';
 
+export { SearchInput } from './components/SearchInput';
+export type { SearchInputProps, SearchInputSize } from './components/SearchInput';
+
 export { Textarea } from './components/Textarea';
 export type { TextareaProps, TextareaSize } from './components/Textarea';
 

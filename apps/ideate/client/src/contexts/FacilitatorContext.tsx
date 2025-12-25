@@ -66,6 +66,8 @@ interface FacilitatorContextValue {
   error: string | null;
   /** Current navigation context (where the user is in the app) */
   navigationContext: NavigationContext;
+  /** Pending persona change request (presetId or '__custom__') */
+  pendingPersonaChange: string | null;
 
   /** Toggle the facilitator overlay */
   toggle: () => void;
@@ -91,6 +93,10 @@ interface FacilitatorContextValue {
   updateMessage: (id: string, updates: Partial<FacilitatorMessage>) => void;
   /** Update navigation context */
   setNavigationContext: (context: NavigationContext) => void;
+  /** Request a persona change (will be processed by WebSocket when connected) */
+  requestPersonaChange: (presetId: string) => void;
+  /** Clear pending persona change (called after WebSocket processes it) */
+  clearPendingPersonaChange: () => void;
 }
 
 const FacilitatorContext = createContext<FacilitatorContextValue | null>(null);
@@ -110,6 +116,7 @@ export function FacilitatorProvider({ children }: FacilitatorProviderProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [navigationContext, setNavigationContext] = useState<NavigationContext>({});
+  const [pendingPersonaChange, setPendingPersonaChange] = useState<string | null>(null);
 
   // Toggle overlay
   const toggle = useCallback(() => {
@@ -157,6 +164,16 @@ export function FacilitatorProvider({ children }: FacilitatorProviderProps) {
     setMessages([]);
   }, []);
 
+  // Request a persona change
+  const requestPersonaChange = useCallback((presetId: string) => {
+    setPendingPersonaChange(presetId);
+  }, []);
+
+  // Clear pending persona change
+  const clearPendingPersonaChange = useCallback(() => {
+    setPendingPersonaChange(null);
+  }, []);
+
   // Global keyboard shortcut: Ctrl/Cmd + .
   useGlobalKeyboard({
     key: '.',
@@ -171,6 +188,7 @@ export function FacilitatorProvider({ children }: FacilitatorProviderProps) {
     isLoading,
     error,
     navigationContext,
+    pendingPersonaChange,
     toggle,
     open,
     close,
@@ -183,6 +201,8 @@ export function FacilitatorProvider({ children }: FacilitatorProviderProps) {
     addMessage,
     updateMessage,
     setNavigationContext,
+    requestPersonaChange,
+    clearPendingPersonaChange,
   };
 
   return (

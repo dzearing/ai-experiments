@@ -73,6 +73,13 @@ import { Card, CardTitle, CardDescription } from '@claude-flow/ui-kit-react';
         defaultValue: { summary: 'md' },
       },
     },
+    selected: {
+      control: 'boolean',
+      description: 'Whether the card is in a selected state',
+      table: {
+        defaultValue: { summary: 'false' },
+      },
+    },
   },
 };
 
@@ -355,6 +362,66 @@ export const ListOfCards: Story = {
     docs: {
       description: {
         story: 'Cards can be used in lists to create structured, scannable content.',
+      },
+    },
+  },
+};
+
+export const Selected: Story = {
+  args: {
+    selected: true,
+    padding: 'md',
+    children: (
+      <>
+        <CardTitle>Selected Card</CardTitle>
+        <CardDescription>
+          This card is in a selected state with primary accent styling.
+        </CardDescription>
+      </>
+    ),
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Cards can be marked as selected for use in selection UI patterns like option grids.',
+      },
+    },
+  },
+};
+
+export const SelectableGrid: Story = {
+  render: () => {
+    const options = [
+      { id: 'professional', name: 'Professional', description: 'Formal, concise, business-focused' },
+      { id: 'friendly', name: 'Friendly', description: 'Warm, conversational, encouraging' },
+      { id: 'technical', name: 'Technical', description: 'Detailed, precise, code-focused' },
+      { id: 'creative', name: 'Creative', description: 'Imaginative, expressive, original' },
+    ];
+    const selectedId = 'friendly';
+
+    return (
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+        gap: '16px',
+      }}>
+        {options.map((option) => (
+          <Card
+            key={option.id}
+            selected={option.id === selectedId}
+            style={{ cursor: 'pointer' }}
+          >
+            <CardTitle>{option.name}</CardTitle>
+            <CardDescription>{option.description}</CardDescription>
+          </Card>
+        ))}
+      </div>
+    );
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Use the `selected` prop to create selectable card grids for settings or option selection.',
       },
     },
   },

@@ -4,30 +4,44 @@ import styles from './Card.module.css';
 /**
  * Card component
  *
- * Surfaces used:
- * - card (default)
+ * Uses the tonal surface system for proper token inheritance:
+ * - Default: `surface soft` - soft background with base tokens
+ * - Selected: `surface primary` - primary background with remapped tokens
+ *
+ * Content inside the card should use --base-* tokens, which the surface
+ * system will automatically remap to the appropriate colors.
  *
  * Tokens used:
- * - --card-bg, --card-text, --card-text-soft, --card-text-strong
- * - --card-border, --card-shadow
- * - --space-4, --space-6 (padding)
- * - --radius-lg
+ * - --base-bg, --base-fg, --base-border (via surface system)
+ * - --space-3, --space-4, --space-6 (padding)
+ * - --radius-lg, --shadow-sm
  */
 
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
   /** Card padding size */
   padding?: 'sm' | 'md' | 'lg';
+  /** Whether the card is in a selected state */
+  selected?: boolean;
   /** Card content */
   children: ReactNode;
 }
 
 export function Card({
   padding = 'md',
+  selected = false,
   className,
   children,
   ...props
 }: CardProps) {
-  const classNames = [styles.card, styles[padding], className]
+  const classNames = [
+    styles.card,
+    styles[padding],
+    selected && styles.selected,
+    // Apply surface system classes
+    'surface',
+    selected ? 'primary' : 'soft',
+    className,
+  ]
     .filter(Boolean)
     .join(' ');
 

@@ -18,6 +18,11 @@ Visual representation of a user or entity.
 - Team member lists
 - Account menus
 
+## Types
+
+- **person** (default): Circular avatar for human users
+- **bot**: Octagonal avatar for AI/bot entities
+
 ## Fallback Behavior
 
 1. **Image**: Displays if \`src\` is provided and loads successfully
@@ -152,6 +157,88 @@ The \`color\` prop allows custom background colors for avatars, useful for:
 white or black text based on the background color's luminance (WCAG formula).
 Light backgrounds like Yellow and Gold will show dark text for readability.
         `,
+      },
+    },
+  },
+};
+
+export const BotAvatar: Story = {
+  args: {
+    type: 'bot',
+    fallback: 'AI',
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Bot avatars use an octagonal shape to visually distinguish AI/bot entities from human users.',
+      },
+    },
+  },
+};
+
+export const BotSizes: Story = {
+  render: () => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+      <Avatar type="bot" size="xs" fallback="AI" />
+      <Avatar type="bot" size="sm" fallback="AI" />
+      <Avatar type="bot" size="md" fallback="AI" />
+      <Avatar type="bot" size="lg" fallback="AI" />
+      <Avatar type="bot" size="xl" fallback="AI" />
+    </div>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story: 'Bot avatars scale consistently across all size variants.',
+      },
+    },
+  },
+};
+
+export const BotWithEmoji: Story = {
+  render: () => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+      <Avatar type="bot" size="lg" fallback="🤖" />
+      <Avatar type="bot" size="lg" fallback="🦉" />
+      <Avatar type="bot" size="lg" fallback="💡" />
+      <Avatar type="bot" size="lg" fallback="🧠" />
+      <Avatar type="bot" size="lg" fallback="⭐" />
+    </div>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story: 'Bot avatars work well with emoji fallbacks for visual variety.',
+      },
+    },
+  },
+};
+
+export const PersonVsBot: Story = {
+  render: () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <div>
+        <p style={{ marginBottom: '12px', fontWeight: 500 }}>Person (circular)</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <Avatar type="person" size="lg" fallback="JD" />
+          <Avatar type="person" size="lg" fallback="AB" color="#4ECDC4" />
+          <Avatar type="person" size="lg" src="https://i.pravatar.cc/150?u=person" />
+        </div>
+      </div>
+      <div>
+        <p style={{ marginBottom: '12px', fontWeight: 500 }}>Bot (octagonal)</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <Avatar type="bot" size="lg" fallback="AI" />
+          <Avatar type="bot" size="lg" fallback="🤖" color="#6366f1" />
+          <Avatar type="bot" size="lg" fallback="FA" color="#10b981" />
+        </div>
+      </div>
+    </div>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story: 'Comparison of person (circular) and bot (octagonal) avatar types. The distinct shapes help users quickly identify human vs AI participants in conversations.',
       },
     },
   },

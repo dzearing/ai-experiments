@@ -10,6 +10,7 @@ import styles from './Avatar.module.css';
  */
 
 export type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+export type AvatarType = 'person' | 'bot';
 
 export interface AvatarProps {
   /** Image source */
@@ -20,10 +21,12 @@ export interface AvatarProps {
   fallback?: ReactNode;
   /** Avatar size */
   size?: AvatarSize;
-  /** Whether avatar is rounded square or circle */
+  /** Whether avatar is rounded square or circle (only applies to person type) */
   rounded?: boolean;
   /** Custom background color (e.g., for session/collaboration colors) */
   color?: string;
+  /** Avatar type - person (circular) or bot (octagonal) */
+  type?: AvatarType;
 }
 
 function getInitials(name: string): string {
@@ -68,16 +71,20 @@ export function Avatar({
   size = 'md',
   rounded = true,
   color,
+  type = 'person',
 }: AvatarProps) {
   const displayFallback = typeof fallback === 'string' ? getInitials(fallback) : fallback;
 
   const style = color
-    ? { backgroundColor: color, color: getContrastingTextColor(color), borderColor: 'transparent' }
+    ? { backgroundColor: color, color: getContrastingTextColor(color) }
     : undefined;
 
-  return (
+  const isBot = type === 'bot';
+  const shapeClass = isBot ? styles.bot : (rounded ? styles.rounded : '');
+
+  const avatarElement = (
     <div
-      className={`avatar ${styles.avatar} ${styles[size]} ${rounded ? styles.rounded : ''}`}
+      className={`avatar ${styles.avatar} ${styles[size]} ${shapeClass}`}
       style={style}
     >
       {src ? (
@@ -87,5 +94,16 @@ export function Avatar({
       )}
     </div>
   );
+
+  // Bot avatars need a wrapper to render the octagonal border
+  if (isBot) {
+    return (
+      <div className={`${styles.botWrapper} ${styles[size]}`}>
+        {avatarElement}
+      </div>
+    );
+  }
+
+  return avatarElement;
 }
 Avatar.displayName = 'Avatar';

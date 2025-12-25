@@ -17,6 +17,8 @@ import { DocumentEditor } from './pages/DocumentEditor';
 import { ChatRoom } from './pages/ChatRoom';
 import { JoinWorkspace } from './pages/JoinWorkspace';
 import { Settings } from './pages/Settings';
+import { FacilitatorSettings } from './pages/FacilitatorSettings';
+import { PersonaEditor } from './pages/PersonaEditor';
 import { Workspaces } from './pages/Workspaces';
 import { WorkspaceDetail } from './pages/WorkspaceDetail';
 
@@ -48,6 +50,8 @@ export function App() {
                         <Route path="/doc/:documentId" component={DocumentEditor} />
                         <Route path="/chat/:chatRoomId" component={ChatRoom} />
                         <Route path="/settings" component={Settings} />
+                        <Route path="/settings/facilitator" component={FacilitatorSettings} />
+                        <Route path="/facilitator-persona" component={PersonaEditor} />
                       </Route>
                     </Routes>
                     {/* Global facilitator overlay */}

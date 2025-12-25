@@ -1,9 +1,15 @@
 .card {
-  background: var(--soft-bg);
-  color: var(--soft-fg);
-  border: 1px solid var(--soft-border);
+  /* Use base tokens so surface system can override them when selected */
+  background: var(--base-bg);
+  color: var(--base-fg);
+  border: 1px solid var(--base-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
+}
+
+/* Selected state uses surface system - .surface.primary applied via className */
+.card.selected {
+  border-width: 2px;
 }
 
 .sm {
@@ -19,14 +25,14 @@
 }
 
 .title {
-  color: var(--soft-fg-strong);
+  color: var(--base-fg-strong);
   font-size: var(--text-lg);
   font-weight: var(--weight-semibold);
   margin-bottom: var(--space-2);
 }
 
 .description {
-  color: var(--soft-fg-soft);
+  color: var(--base-fg-soft);
   font-size: var(--text-sm);
   margin: 0;
 }

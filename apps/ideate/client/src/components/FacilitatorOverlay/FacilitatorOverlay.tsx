@@ -1,15 +1,24 @@
 import { useEffect, useCallback, useState, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Slide, Button, IconButton } from '@ui-kit/react';
+import { useNavigate } from '@ui-kit/router';
+import { Slide, Button, IconButton, Avatar } from '@ui-kit/react';
 import { CloseIcon } from '@ui-kit/icons/CloseIcon';
 import { TrashIcon } from '@ui-kit/icons/TrashIcon';
 import { HelpIcon } from '@ui-kit/icons/HelpIcon';
+import { GearIcon } from '@ui-kit/icons/GearIcon';
 import { ChatInput, ChatMessage, type ChatInputSubmitData, type ChatInputRef, type SlashCommand } from '@ui-kit/react-chat';
+import { AVATAR_IMAGES } from '../../constants/avatarImages';
 import { useFacilitator } from '../../contexts/FacilitatorContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useFacilitatorSocket } from '../../hooks/useFacilitatorSocket';
 import { ThinkingIndicator } from './ThinkingIndicator';
+import { API_URL } from '../../config';
 import styles from './FacilitatorOverlay.module.css';
+
+interface FacilitatorSettings {
+  name: string;
+  avatar: string;
+}
 
 interface QueuedMessage {
   id: string;
@@ -25,6 +34,7 @@ interface QueuedMessage {
  * Slides up from the bottom of the screen with a semi-transparent backdrop.
  */
 export function FacilitatorOverlay() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const {
     isOpen,
@@ -60,10 +70,49 @@ export function FacilitatorOverlay() {
   const [isBackdropVisible, setIsBackdropVisible] = useState(isOpen);
   const [queuedMessages, setQueuedMessages] = useState<QueuedMessage[]>([]);
   const [inputContent, setInputContent] = useState('');
+  const [facilitatorSettings, setFacilitatorSettings] = useState<FacilitatorSettings>({
+    name: 'Facilitator',
+    avatar: 'robot',
+  });
   const panelRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatInputRef = useRef<ChatInputRef>(null);
   const isProcessingQueueRef = useRef(false);
+
+  // Fetch facilitator settings and check for persona reload when overlay opens
+  useEffect(() => {
+    const fetchSettingsAndCheckReload = async () => {
+      try {
+        // Fetch settings
+        const settingsRes = await fetch(`${API_URL}/api/personas/settings`);
+        if (settingsRes.ok) {
+          const data = await settingsRes.json();
+          setFacilitatorSettings(data);
+        }
+
+        // Check if persona was changed and needs reload
+        if (isOpen) {
+          const reloadRes = await fetch(`${API_URL}/api/personas/check-reload`);
+          if (reloadRes.ok) {
+            const { needsReload } = await reloadRes.json();
+            if (needsReload) {
+              // Clear messages and show greeting with new persona
+              clearMessages();
+              addMessage({
+                id: `greeting-${Date.now()}`,
+                role: 'assistant',
+                content: `Hello! I'm ${facilitatorSettings.name}, your facilitator. My personality has been updated. How can I help you today?`,
+                timestamp: Date.now(),
+              });
+            }
+          }
+        }
+      } catch (err) {
+        console.error('[FacilitatorOverlay] Failed to fetch settings:', err);
+      }
+    };
+    fetchSettingsAndCheckReload();
+  }, [isOpen, clearMessages, addMessage, facilitatorSettings.name]);
 
   // Sync backdrop visibility with isOpen, but delay hiding for exit animation
   useEffect(() => {
@@ -247,6 +296,12 @@ Type a message to get started!`;
     [clearMessages, addMessage, socketClearHistory]
   );
 
+  // Handle navigating to settings
+  const handleOpenSettings = useCallback(() => {
+    close();
+    navigate('/settings/facilitator');
+  }, [close, navigate]);
+
   // Get status indicator class
   const getStatusClass = () => {
     switch (connectionState) {
@@ -285,7 +340,7 @@ Type a message to get started!`;
           {/* Header */}
           <header className={styles.header}>
             <div className={styles.headerLeft}>
-              <h2 className={styles.title}>Facilitator</h2>
+              <h2 className={styles.title}>{facilitatorSettings.name}</h2>
               <span
                 className={`${styles.statusIndicator} ${getStatusClass()}`}
                 title={`Connection: ${connectionState}`}
@@ -294,6 +349,13 @@ Type a message to get started!`;
             <div className={styles.shortcutHint}>
               <span className={styles.shortcutKey}>Esc</span>
               <span>to close</span>
+              <IconButton
+                icon={<GearIcon />}
+                variant="ghost"
+                size="sm"
+                onClick={handleOpenSettings}
+                aria-label="Facilitator settings"
+              />
               <IconButton
                 icon={<CloseIcon />}
                 variant="ghost"
@@ -336,19 +398,30 @@ Type a message to get started!`;
                   const isConsecutive = prevMessage?.role === message.role;
                   const isUser = message.role === 'user';
 
+                  // Get bot avatar image
+                  const botAvatarSrc = AVATAR_IMAGES[facilitatorSettings.avatar] || AVATAR_IMAGES.robot;
+
                   return (
                     <ChatMessage
                       key={message.id}
                       id={message.id}
                       content={message.content}
                       timestamp={message.timestamp}
-                      senderName={isUser ? (user?.name || 'You') : 'Facilitator'}
+                      senderName={isUser ? (user?.name || 'You') : facilitatorSettings.name}
                       senderColor={isUser ? undefined : '#6366f1'}
                       isOwn={isUser}
                       isConsecutive={isConsecutive}
                       renderMarkdown={!isUser}
                       isStreaming={message.isStreaming}
                       toolCalls={message.toolCalls}
+                      avatar={!isUser ? (
+                        <Avatar
+                          type="bot"
+                          src={botAvatarSrc}
+                          alt={facilitatorSettings.name}
+                          size="md"
+                        />
+                      ) : undefined}
                     />
                   );
                 })}

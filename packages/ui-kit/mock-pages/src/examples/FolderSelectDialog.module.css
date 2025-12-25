@@ -1,0 +1,497 @@
+/* Folder Select Dialog - Windows-style folder browser */
+
+/* ============================================
+   DIALOG CONTAINER
+   ============================================ */
+.dialogOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.dialog {
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  width: 800px;
+  max-width: 90vw;
+  height: 600px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ============================================
+   DIALOG HEADER
+   ============================================ */
+.dialogHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  background: var(--softer-bg);
+  border-bottom: 1px solid var(--soft-border);
+  flex-shrink: 0;
+}
+
+.dialogTitle {
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-lg);
+}
+
+/* ============================================
+   TOOLBAR
+   ============================================ */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: var(--soft-bg);
+  border-bottom: 1px solid var(--soft-border);
+  flex-shrink: 0;
+}
+
+.navButtons {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.breadcrumbContainer {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: var(--base-bg);
+  border: 1px solid var(--soft-border);
+  border-radius: var(--radius-md);
+  height: var(--control-height-md, 36px);
+  padding-inline: var(--space-3);
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  overflow: hidden;
+}
+
+.breadcrumbSegment {
+  display: inline-flex;
+  align-items: center;
+}
+
+.breadcrumbItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  white-space: nowrap;
+  color: var(--soft-fg);
+  cursor: pointer;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  transition: background var(--duration-fast) var(--ease-default);
+}
+
+.breadcrumbItem:hover {
+  background: var(--softer-bg);
+  color: var(--soft-fg-primary);
+}
+
+.breadcrumbSeparator {
+  display: inline-flex;
+  align-items: center;
+  color: var(--soft-fg-softer);
+  flex-shrink: 0;
+}
+
+
+.viewButtons {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--soft-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.viewButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2);
+  background: transparent;
+  border: none;
+  color: var(--soft-fg-soft);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-default);
+}
+
+.viewButton:hover {
+  background: var(--softer-bg);
+  color: var(--soft-fg);
+}
+
+.viewButton.active {
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+}
+
+.viewButton + .viewButton {
+  border-left: 1px solid var(--soft-border);
+}
+
+/* ============================================
+   MAIN CONTENT
+   ============================================ */
+.mainContent {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ============================================
+   SIDEBAR
+   ============================================ */
+.sidebar {
+  width: 180px;
+  background: var(--softer-bg);
+  border-right: 1px solid var(--soft-border);
+  padding: var(--space-2);
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.sidebarSection {
+  margin-bottom: var(--space-3);
+}
+
+.sidebarTitle {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--soft-fg-softer);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: var(--space-1) var(--space-2);
+  margin-bottom: var(--space-1);
+}
+
+.sidebarItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  color: var(--soft-fg);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-default);
+}
+
+.sidebarItem:hover {
+  background: var(--soft-bg);
+}
+
+.sidebarItem.active {
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+}
+
+.sidebarIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  color: inherit;
+}
+
+.sidebarLabel {
+  font-size: var(--text-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ============================================
+   FILE/FOLDER LIST
+   ============================================ */
+.fileList {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-3);
+}
+
+/* Details View */
+.detailsView {
+  display: flex;
+  flex-direction: column;
+}
+
+.detailsHeader {
+  display: grid;
+  grid-template-columns: minmax(200px, 1fr) 120px 150px;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--softer-bg);
+  border-bottom: 1px solid var(--soft-border);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--soft-fg-soft);
+  position: sticky;
+  top: 0;
+}
+
+.detailsRow {
+  display: grid;
+  grid-template-columns: minmax(200px, 1fr) 120px 150px;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--soft-border);
+  color: var(--soft-fg);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-default);
+}
+
+.detailsRow:hover {
+  background: var(--softer-bg);
+}
+
+.detailsRow.selected {
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+}
+
+.detailsName {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.detailsIcon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  color: inherit;
+}
+
+.detailsLabel {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.detailsSize,
+.detailsDate {
+  font-size: var(--text-sm);
+  color: var(--soft-fg-soft);
+}
+
+.detailsRow.selected .detailsSize,
+.detailsRow.selected .detailsDate {
+  color: inherit;
+  opacity: 0.8;
+}
+
+/* Tiles View */
+.tilesView {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--space-3);
+}
+
+.tileItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--softer-bg);
+  color: var(--softer-fg);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-default);
+}
+
+.tileItem:hover {
+  border-color: var(--soft-border);
+  background: var(--soft-bg);
+}
+
+.tileItem.selected {
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+  border-color: var(--primary-border);
+}
+
+.tileIcon {
+  font-size: 32px;
+  color: inherit;
+  flex-shrink: 0;
+}
+
+.tileInfo {
+  min-width: 0;
+}
+
+.tileName {
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tileMeta {
+  font-size: var(--text-xs);
+  color: var(--soft-fg-soft);
+  margin-top: 2px;
+}
+
+.tileItem.selected .tileMeta {
+  color: inherit;
+  opacity: 0.8;
+}
+
+/* Icons View (Large Icons) */
+.iconsView {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: var(--space-4);
+  justify-items: center;
+}
+
+.iconItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--soft-fg);
+  cursor: pointer;
+  width: 100px;
+  transition: background var(--duration-fast) var(--ease-default);
+}
+
+.iconItem:hover {
+  background: var(--softer-bg);
+}
+
+.iconItem.selected {
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+}
+
+.iconLarge {
+  font-size: 48px;
+  color: inherit;
+}
+
+.iconName {
+  font-size: var(--text-sm);
+  text-align: center;
+  word-break: break-word;
+  line-height: var(--leading-tight);
+}
+
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--soft-fg-soft);
+  gap: var(--space-3);
+}
+
+.emptyIcon {
+  font-size: 48px;
+  opacity: 0.5;
+}
+
+/* ============================================
+   DIALOG FOOTER
+   ============================================ */
+.dialogFooter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--softer-bg);
+  border-top: 1px solid var(--soft-border);
+  flex-shrink: 0;
+}
+
+.folderInput {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 1;
+}
+
+.folderInputLabel {
+  font-size: var(--text-sm);
+  color: var(--soft-fg-soft);
+  white-space: nowrap;
+}
+
+.folderInputField {
+  flex: 1;
+}
+
+.dialogActions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* ============================================
+   NEW FOLDER DIALOG
+   ============================================ */
+.newFolderDialog {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-4);
+  width: 320px;
+  z-index: 10;
+}
+
+.newFolderTitle {
+  font-weight: var(--weight-semibold);
+  margin-bottom: var(--space-3);
+}
+
+.newFolderActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+/* ============================================
+   STATUS BAR
+   ============================================ */
+.statusBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-1) var(--space-4);
+  background: var(--softer-bg);
+  border-top: 1px solid var(--soft-border);
+  font-size: var(--text-xs);
+  color: var(--soft-fg-soft);
+}

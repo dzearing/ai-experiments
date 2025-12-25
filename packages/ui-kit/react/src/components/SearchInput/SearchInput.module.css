@@ -1,0 +1,144 @@
+/**
+ * SearchInput styles
+ *
+ * Surfaces: softer
+ * See TOKEN_GUIDE.md for token reference
+ */
+
+.wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--softer-bg);
+  border: 1px solid var(--softer-border);
+  border-radius: var(--radius-full);
+  box-sizing: border-box;
+  transition:
+    background-color var(--duration-fast) var(--ease-default),
+    border-color var(--duration-fast) var(--ease-default),
+    outline-offset var(--duration-fast) var(--ease-default);
+}
+
+.wrapper:hover {
+  background: var(--softer-bg-hover);
+}
+
+/* ==============================================
+   Focus States
+   ============================================== */
+
+.wrapper:focus-within {
+  background: var(--softer-bg-pressed);
+  border-color: var(--focus-ring);
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* ==============================================
+   Icon Styling
+   ============================================== */
+
+.icon {
+  flex-shrink: 0;
+  color: var(--softer-fg-soft);
+  pointer-events: none;
+}
+
+/* ==============================================
+   Input Element
+   ============================================== */
+
+.input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--softer-fg);
+  font-family: var(--font-sans);
+}
+
+.input::placeholder {
+  color: var(--softer-fg-soft);
+  font-style: italic;
+  opacity: 0.7;
+}
+
+.input::selection {
+  background: var(--selection-bg);
+  color: var(--selection-text);
+}
+
+/* Hide the default search cancel button for consistent styling */
+.input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* ==============================================
+   Size Variants - MUST match control height standards
+   ============================================== */
+
+/* Small (28px) */
+.sm {
+  height: var(--control-height-sm, 28px);
+  padding-inline: var(--space-2);
+}
+
+.sm .icon {
+  width: 14px;
+  height: 14px;
+}
+
+.sm .input {
+  font-size: var(--text-sm);
+}
+
+/* Medium (36px) - default */
+.md {
+  height: var(--control-height-md, 36px);
+  padding-inline: var(--space-3);
+}
+
+.md .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.md .input {
+  font-size: var(--text-base);
+}
+
+/* Large (44px) */
+.lg {
+  height: var(--control-height-lg, 44px);
+  padding-inline: var(--space-4);
+}
+
+.lg .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.lg .input {
+  font-size: var(--text-lg);
+}
+
+/* ==============================================
+   Full Width
+   ============================================== */
+
+.fullWidth {
+  display: flex;
+  width: 100%;
+}
+
+/* ==============================================
+   Reduced Motion
+   ============================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .wrapper {
+    transition: none;
+  }
+}

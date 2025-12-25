@@ -513,6 +513,71 @@ These tokens don't change based on color mode and can be used anywhere.
 }
 ```
 
+### Selectable List Items with Icons
+
+When building selectable lists (file browsers, menus, etc.), icons should follow the same color rules as text:
+
+```css
+/* List container uses soft background */
+.list {
+  background: var(--soft-bg);
+}
+
+/* Unselected items: icons use the surface's foreground color */
+.list-item {
+  color: var(--soft-fg);
+}
+
+.list-item-icon {
+  color: var(--soft-fg);  /* Same as text - icons are part of content */
+}
+
+/* Selected items: switch to primary surface */
+.list-item.selected {
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+}
+
+/* Icons inherit from parent - automatically get primary-fg */
+.list-item.selected .list-item-icon {
+  color: inherit;
+}
+
+/* Hover state (unselected) */
+.list-item:hover:not(.selected) {
+  background: var(--soft-bg-hover);
+}
+```
+
+**Key principles:**
+- **Icons are content** - they follow the same color rules as text
+- **Unselected state**: Use the containing surface's `--{group}-fg` token
+- **Selected state**: Use `color: inherit` so icons automatically get the selection foreground color
+- **Never use semantic colors (warning, success, etc.) for generic icons** - only use them when the icon conveys that specific meaning
+
+**Example for different icon types:**
+```css
+/* Generic icons (folders, files) - use standard foreground */
+.folder-icon {
+  color: var(--soft-fg);
+}
+
+/* Status icons - use semantic colors when conveying meaning */
+.status-icon.success {
+  color: var(--soft-fg-success);
+}
+
+.status-icon.error {
+  color: var(--soft-fg-danger);
+}
+
+/* Selected state resets all icons to inherit */
+.list-item.selected .folder-icon,
+.list-item.selected .status-icon {
+  color: inherit;
+}
+```
+
 ---
 
 ## Accessibility

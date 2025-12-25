@@ -9,6 +9,7 @@ import { authRouter } from './routes/auth.js';
 import { documentsRouter, setWorkspaceHandler as setDocumentsWorkspaceHandler } from './routes/documents.js';
 import { workspacesRouter, setWorkspaceHandler as setWorkspacesWsHandler } from './routes/workspaces.js';
 import { chatroomsRouter, setWorkspaceHandler as setChatroomsWorkspaceHandler } from './routes/chatrooms.js';
+import { personasRouter } from './routes/personas.js';
 import { setWorkspaceHandler as setMCPToolsWorkspaceHandler } from './services/MCPToolsService.js';
 import { createDiagnosticsRouter } from './routes/diagnostics.js';
 import { CollaborationHandler } from './websocket/CollaborationHandler.js';
@@ -46,6 +47,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/documents', documentsRouter);
 app.use('/api/workspaces', workspacesRouter);
 app.use('/api/chatrooms', chatroomsRouter);
+app.use('/api/personas', personasRouter);
 
 // Create HTTP server
 const server = createServer(app);

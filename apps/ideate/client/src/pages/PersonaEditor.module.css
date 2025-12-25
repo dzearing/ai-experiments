@@ -1,0 +1,114 @@
+.personaEditor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--base-bg);
+}
+
+.loading,
+.error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  height: 100%;
+  color: var(--base-fg-soft);
+}
+
+.error p {
+  color: var(--danger-fg);
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--base-border);
+  background: var(--panel-bg);
+  flex-shrink: 0;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.headerLeft h1 {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  margin: 0;
+  color: var(--base-fg);
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.savingIndicator {
+  font-size: var(--text-sm);
+  color: var(--base-fg-soft);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.unsavedIndicator {
+  font-size: var(--text-sm);
+  color: var(--warning-fg);
+}
+
+/* Editor Container */
+.editorContainer {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Help Text */
+.helpText {
+  padding: var(--space-4);
+  border-top: 1px solid var(--base-border);
+  background: var(--panel-bg);
+  flex-shrink: 0;
+}
+
+.helpText h3 {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  margin: 0 0 var(--space-2);
+  color: var(--base-fg);
+}
+
+.helpText p {
+  font-size: var(--text-sm);
+  color: var(--base-fg-soft);
+  margin: 0 0 var(--space-2);
+}
+
+.helpText ul {
+  margin: 0;
+  padding-left: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--base-fg-soft);
+}
+
+.helpText li {
+  margin-bottom: var(--space-1);
+}
+
+.helpText code {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  background: var(--inset-bg);
+  padding: var(--space-0-5) var(--space-1);
+  border-radius: var(--radius-sm);
+}

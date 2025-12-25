@@ -6,7 +6,7 @@ import { useFacilitator, type FacilitatorMessage, type NavigationContext } from 
  * Server message types for the facilitator WebSocket protocol
  */
 interface ServerMessage {
-  type: 'text_chunk' | 'tool_use' | 'tool_result' | 'message_complete' | 'history' | 'error';
+  type: 'text_chunk' | 'tool_use' | 'tool_result' | 'message_complete' | 'history' | 'error' | 'persona_changed' | 'greeting' | 'loading';
   /** Text content chunk (for streaming) */
   text?: string;
   /** Message ID being updated */
@@ -23,6 +23,10 @@ interface ServerMessage {
   messages?: FacilitatorMessage[];
   /** Error message */
   error?: string;
+  /** Persona name (for persona_changed) */
+  personaName?: string;
+  /** Loading state (for loading) */
+  isLoading?: boolean;
 }
 
 /**
@@ -47,6 +51,8 @@ export interface UseFacilitatorSocketReturn {
   clearHistory: () => void;
   /** Cancel the current AI operation */
   cancelOperation: () => void;
+  /** Change the facilitator persona */
+  changePersona: (presetId: string) => void;
   /** Whether the WebSocket is connected */
   isConnected: boolean;
 }
@@ -75,6 +81,8 @@ export function useFacilitatorSocket({
     addMessage,
     updateMessage,
     navigationContext,
+    pendingPersonaChange,
+    clearPendingPersonaChange,
   } = useFacilitator();
 
   // Track navigation context changes to send updates to server
@@ -198,6 +206,32 @@ export function useFacilitatorSocket({
               setIsLoading(false);
             }
             break;
+
+          case 'persona_changed':
+            // Persona has been changed - clear all messages to prepare for new greeting
+            setMessages([]);
+            console.log('[Facilitator] Persona changed to:', data.personaName);
+            break;
+
+          case 'greeting':
+            // Greeting message from new persona
+            if (data.messageId && data.text) {
+              addMessage({
+                id: data.messageId,
+                role: 'assistant',
+                content: data.text,
+                timestamp: Date.now(),
+                isStreaming: false,
+              });
+              console.log('[Facilitator] Greeting received from:', data.personaName);
+            }
+            break;
+
+          case 'loading':
+            // Loading state update (e.g., generating greeting)
+            setIsLoading(data.isLoading ?? false);
+            console.log('[Facilitator] Loading state:', data.isLoading);
+            break;
         }
       } catch (error) {
         console.error('[Facilitator] Failed to parse message:', error);
@@ -231,6 +265,18 @@ export function useFacilitatorSocket({
       console.log('[Facilitator] Sent context update:', navigationContext);
     }
   }, [navigationContext]);
+
+  // Process pending persona changes when connected
+  useEffect(() => {
+    if (pendingPersonaChange && wsRef.current?.readyState === WebSocket.OPEN) {
+      console.log('[Facilitator] Processing pending persona change:', pendingPersonaChange);
+      wsRef.current.send(JSON.stringify({
+        type: 'persona_change',
+        presetId: pendingPersonaChange,
+      }));
+      clearPendingPersonaChange();
+    }
+  }, [pendingPersonaChange, clearPendingPersonaChange, connectionState]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -294,10 +340,32 @@ export function useFacilitatorSocket({
     }
   }, [updateMessage, setIsLoading]);
 
+  // Change the facilitator persona
+  const changePersona = useCallback((presetId: string) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      // Cancel any current operation
+      if (currentMessageIdRef.current) {
+        updateMessage(currentMessageIdRef.current, {
+          isStreaming: false,
+        });
+        currentMessageIdRef.current = null;
+      }
+
+      wsRef.current.send(JSON.stringify({
+        type: 'persona_change',
+        presetId,
+      }));
+      console.log('[Facilitator] Sent persona_change request:', presetId);
+    } else {
+      console.warn('[Facilitator] Cannot change persona: WebSocket not connected');
+    }
+  }, [updateMessage]);
+
   return {
     sendMessage,
     clearHistory,
     cancelOperation,
+    changePersona,
     isConnected: connectionState === 'connected',
   };
 }

@@ -1,8 +1,17 @@
 import { query, type SDKAssistantMessage } from '@anthropic-ai/claude-code';
+import { createHash } from 'crypto';
 import { PersonaService, type Persona } from './PersonaService.js';
 import { FacilitatorChatService, type FacilitatorMessage } from './FacilitatorChatService.js';
 import { MCPToolsService, type ToolDefinition } from './MCPToolsService.js';
 import { buildFacilitatorPrompt, buildContextSection } from '../prompts/facilitatorPrompt.js';
+
+/**
+ * Cache entry for pre-generated greetings
+ */
+interface GreetingCache {
+  greetings: string[];
+  usedIndices: Set<number>;
+}
 
 /**
  * Navigation context - where the user is in the app
@@ -59,10 +68,25 @@ export class FacilitatorService {
   private diagnosticLog: DiagnosticEntry[] = [];
   private static MAX_DIAGNOSTIC_ENTRIES = 50;
 
+  // Greeting cache: key = hash of (displayName + persona systemPrompt)
+  private greetingCache: Map<string, GreetingCache> = new Map();
+  private static GREETINGS_PER_PERSONA = 20;
+
   constructor() {
     this.personaService = new PersonaService();
     this.chatService = new FacilitatorChatService();
     this.toolsService = new MCPToolsService();
+  }
+
+  /**
+   * Generate a cache key for greetings based on display name and persona.
+   */
+  private getGreetingCacheKey(displayName: string, persona: Persona): string {
+    const hash = createHash('sha256')
+      .update(displayName + persona.systemPrompt)
+      .digest('hex')
+      .slice(0, 16);
+    return `${displayName}-${hash}`;
   }
 
   /**
@@ -95,6 +119,234 @@ export class FacilitatorService {
   }
 
   /**
+   * Reload the persona from disk/settings.
+   * Call this when the user changes their persona selection.
+   */
+  reloadPersona(): Persona {
+    this.personaService.reloadPersona();
+    this.persona = this.personaService.getFacilitatorPersona();
+    console.log(`[FacilitatorService] Reloaded persona: ${this.persona.name}`);
+    return this.persona;
+  }
+
+  /**
+   * Set the persona by preset ID.
+   * This loads the preset directly without requiring a user file.
+   */
+  setPersonaByPreset(presetId: string): Persona {
+    const preset = this.personaService.getPreset(presetId);
+    if (preset) {
+      this.persona = preset;
+      console.log(`[FacilitatorService] Set persona from preset: ${this.persona.name} (${presetId})`);
+    } else {
+      // Fallback to default facilitator persona
+      this.persona = this.personaService.getFacilitatorPersona();
+      console.log(`[FacilitatorService] Preset "${presetId}" not found, using default: ${this.persona.name}`);
+    }
+    return this.persona;
+  }
+
+  /**
+   * Set a custom persona (from user file).
+   */
+  setCustomPersona(): Persona {
+    const userPersona = this.personaService.getUserPersona();
+    if (userPersona) {
+      this.persona = userPersona;
+      console.log(`[FacilitatorService] Set custom user persona: ${this.persona.name}`);
+    } else {
+      this.persona = this.personaService.getFacilitatorPersona();
+      console.log(`[FacilitatorService] No custom persona found, using default: ${this.persona.name}`);
+    }
+    return this.persona;
+  }
+
+  /**
+   * Get the current persona name.
+   */
+  getPersonaName(): string {
+    return this.getPersona().name;
+  }
+
+  /**
+   * Generate a greeting message using the current persona.
+   * Uses cached greetings when available for instant response.
+   * On first request for a persona, generates 20 greetings in batch and caches them.
+   * @param userName - The user's name
+   * @param displayName - Optional display name to use instead of persona.name (from settings)
+   */
+  async generateGreeting(userName: string, displayName?: string): Promise<string> {
+    const persona = this.getPersona();
+    const botName = displayName || persona.name;
+    const cacheKey = this.getGreetingCacheKey(botName, persona);
+
+    console.log(`[FacilitatorService] generateGreeting: botName="${botName}", persona="${persona.name}", cacheKey="${cacheKey}"`);
+    console.log(`[FacilitatorService] Cache has ${this.greetingCache.size} entries, keys: [${Array.from(this.greetingCache.keys()).join(', ')}]`);
+
+    // Check cache first
+    const cached = this.greetingCache.get(cacheKey);
+    if (cached && cached.greetings.length > 0) {
+      const greeting = this.pickRandomGreeting(cached);
+      if (greeting) {
+        console.log(`[FacilitatorService] CACHE HIT! Using cached greeting (${cached.greetings.length - cached.usedIndices.size} remaining)`);
+        return greeting;
+      }
+    }
+
+    // No cache or all greetings used - generate batch and return first one
+    console.log(`[FacilitatorService] CACHE MISS - Generating ${FacilitatorService.GREETINGS_PER_PERSONA} greetings for cache...`);
+    const greetings = await this.generateGreetingBatch(userName, botName, persona);
+
+    if (greetings.length > 0) {
+      // Cache the greetings
+      const newCache: GreetingCache = {
+        greetings,
+        usedIndices: new Set([0]), // Mark first one as used
+      };
+      this.greetingCache.set(cacheKey, newCache);
+      console.log(`[FacilitatorService] Cached ${greetings.length} greetings for key: ${cacheKey}`);
+      return greetings[0];
+    }
+
+    // Fallback if batch generation fails
+    return `Hello ${userName}! I'm ${botName}. How can I help you today?`;
+  }
+
+  /**
+   * Get a random greeting from the cache without making an API call.
+   * Used for /clear command to show a new greeting instantly.
+   * @param _userName - The user's name (unused, kept for API consistency)
+   * @param displayName - Optional display name to use instead of persona.name
+   * @returns A greeting from cache, or null if no cached greetings available
+   */
+  getRandomCachedGreeting(_userName: string, displayName?: string): string | null {
+    const persona = this.getPersona();
+    const botName = displayName || persona.name;
+    const cacheKey = this.getGreetingCacheKey(botName, persona);
+
+    const cached = this.greetingCache.get(cacheKey);
+    if (!cached || cached.greetings.length === 0) {
+      return null;
+    }
+
+    return this.pickRandomGreeting(cached);
+  }
+
+  /**
+   * Pick a random greeting from the cache that hasn't been used yet.
+   * If all greetings have been used, resets the used indices and picks again.
+   */
+  private pickRandomGreeting(cache: GreetingCache): string | null {
+    if (cache.greetings.length === 0) return null;
+
+    // If all greetings used, reset
+    if (cache.usedIndices.size >= cache.greetings.length) {
+      console.log('[FacilitatorService] All greetings used, resetting cache');
+      cache.usedIndices.clear();
+    }
+
+    // Find unused indices
+    const unusedIndices: number[] = [];
+    for (let i = 0; i < cache.greetings.length; i++) {
+      if (!cache.usedIndices.has(i)) {
+        unusedIndices.push(i);
+      }
+    }
+
+    if (unusedIndices.length === 0) return null;
+
+    // Pick random unused index
+    const randomIdx = unusedIndices[Math.floor(Math.random() * unusedIndices.length)];
+    cache.usedIndices.add(randomIdx);
+    return cache.greetings[randomIdx];
+  }
+
+  /**
+   * Generate a batch of greetings for caching.
+   */
+  private async generateGreetingBatch(userName: string, botName: string, persona: Persona): Promise<string[]> {
+    const count = FacilitatorService.GREETINGS_PER_PERSONA;
+
+    // Prompt that asks for multiple greetings in a structured format
+    const batchPrompt = `You are "${botName}", an AI assistant. Here is your personality:
+
+${persona.systemPrompt}
+
+A user named "${userName}" will open a chat with you. Generate ${count} different greeting messages, each 1-2 sentences. Stay fully in character. Each greeting should:
+- Introduce yourself by name ("${botName}")
+- Be warm and welcoming
+- Offer to help
+- Be unique and varied (different wording, tone variations)
+
+Output ONLY the greetings, one per line, numbered 1-${count}. No other text.
+
+Example format:
+1. Hello ${userName}! I'm ${botName}, ready to assist you today.
+2. Welcome, ${userName}! ${botName} here - what can I help you with?
+...and so on`;
+
+    try {
+      const response = query({
+        prompt: batchPrompt,
+        options: {
+          permissionMode: 'bypassPermissions',
+          maxTurns: 1,
+        },
+      });
+
+      let fullResponse = '';
+      for await (const message of response) {
+        if (message.type === 'assistant') {
+          const assistantMsg = message as SDKAssistantMessage;
+          const msgContent = assistantMsg.message.content;
+          if (Array.isArray(msgContent)) {
+            for (const block of msgContent) {
+              if (block.type === 'text') {
+                fullResponse += block.text;
+              }
+            }
+          } else if (typeof msgContent === 'string') {
+            fullResponse += msgContent;
+          }
+        } else if (message.type === 'result' && message.subtype === 'success' && message.result) {
+          if (!fullResponse) {
+            fullResponse = message.result;
+          }
+        }
+      }
+
+      // Parse the numbered list
+      const greetings = this.parseGreetingBatch(fullResponse);
+      console.log(`[FacilitatorService] Parsed ${greetings.length} greetings from batch response`);
+      return greetings;
+    } catch (error) {
+      console.error('[FacilitatorService] Error generating greeting batch:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Parse numbered greetings from the batch response.
+   */
+  private parseGreetingBatch(response: string): string[] {
+    const greetings: string[] = [];
+    const lines = response.split('\n');
+
+    for (const line of lines) {
+      // Match lines starting with number + period or number + parenthesis
+      const match = line.match(/^\s*\d+[\.\)]\s*(.+)/);
+      if (match && match[1]) {
+        const greeting = match[1].trim();
+        if (greeting.length > 10) { // Sanity check for valid greeting
+          greetings.push(greeting);
+        }
+      }
+    }
+
+    return greetings;
+  }
+
+  /**
    * Get the persona (load if not already loaded).
    */
   private getPersona(): Persona {
@@ -120,13 +372,15 @@ export class FacilitatorService {
 
   /**
    * Process a user message and stream the response via callbacks.
+   * @param displayName - Optional display name to use instead of persona.name (from settings)
    */
   async processMessage(
     userId: string,
     userName: string,
     content: string,
     navigationContext: NavigationContext,
-    callbacks: StreamCallbacks
+    callbacks: StreamCallbacks,
+    displayName?: string
   ): Promise<void> {
     // Save the user message
     await this.chatService.addMessage(userId, 'user', content);
@@ -139,7 +393,7 @@ export class FacilitatorService {
     const history = await this.chatService.getMessages(userId);
 
     // Build the system prompt with navigation context
-    const systemPrompt = this.buildSystemPrompt(persona, userName, navigationContext);
+    const systemPrompt = this.buildSystemPrompt(persona, userName, navigationContext, displayName);
 
     // Build the full prompt with conversation history
     const conversationHistory = this.buildConversationHistory(history.slice(0, -1)); // Exclude the just-added user message
@@ -347,8 +601,9 @@ export class FacilitatorService {
 
   /**
    * Build the system prompt with persona, user context, and available tools.
+   * @param displayName - Optional display name to use instead of persona.name (from settings)
    */
-  private buildSystemPrompt(persona: Persona, userName: string, navigationContext: NavigationContext): string {
+  private buildSystemPrompt(persona: Persona, userName: string, navigationContext: NavigationContext, displayName?: string): string {
     const toolDefinitions = this.toolsService.getToolDefinitions();
 
     const toolsDescription = toolDefinitions.map((tool) => {
@@ -373,8 +628,14 @@ export class FacilitatorService {
       contextParts.push(`Current chat room: "${navigationContext.chatRoomName}" (ID: ${navigationContext.chatRoomId})`);
     }
 
+    // Add display name instruction to persona prompt if different from persona name
+    let personaPrompt = persona.systemPrompt;
+    if (displayName && displayName !== persona.name) {
+      personaPrompt = `Your name is "${displayName}". Always refer to yourself as "${displayName}". ${personaPrompt}`;
+    }
+
     return buildFacilitatorPrompt({
-      personaPrompt: persona.systemPrompt,
+      personaPrompt,
       userName,
       contextSection: buildContextSection(contextParts),
       toolsDescription,

@@ -3,6 +3,7 @@ import { WebSocket } from 'ws';
 import type { IncomingMessage } from 'http';
 import { FacilitatorService } from '../services/FacilitatorService.js';
 import type { FacilitatorMessage } from '../services/FacilitatorChatService.js';
+import { getFacilitatorSettings } from '../routes/personas.js';
 
 /**
  * Navigation context from the client - where the user is in the app
@@ -21,16 +22,18 @@ interface NavigationContext {
  * Client message types for the facilitator WebSocket protocol
  */
 interface ClientMessage {
-  type: 'message' | 'clear_history' | 'context_update';
+  type: 'message' | 'clear_history' | 'context_update' | 'persona_change';
   content?: string;
   context?: NavigationContext;
+  /** Preset ID for persona_change (or '__custom__' for user persona) */
+  presetId?: string;
 }
 
 /**
  * Server message types for the facilitator WebSocket protocol
  */
 interface ServerMessage {
-  type: 'text_chunk' | 'tool_use' | 'tool_result' | 'message_complete' | 'history' | 'error';
+  type: 'text_chunk' | 'tool_use' | 'tool_result' | 'message_complete' | 'history' | 'error' | 'persona_changed' | 'greeting' | 'loading';
   /** Text content chunk (for streaming) */
   text?: string;
   /** Message ID being updated */
@@ -47,6 +50,10 @@ interface ServerMessage {
   messages?: FacilitatorMessage[];
   /** Error message */
   error?: string;
+  /** Persona name (for persona_changed) */
+  personaName?: string;
+  /** Loading state (true = loading, false = done) */
+  isLoading?: boolean;
 }
 
 /**
@@ -59,6 +66,8 @@ interface FacilitatorClient {
   clientId: number;
   /** Current navigation context */
   context: NavigationContext;
+  /** Version counter for persona changes - used to cancel stale greeting generations */
+  personaChangeVersion: number;
 }
 
 /**
@@ -111,6 +120,7 @@ export class FacilitatorWebSocketHandler {
       userName,
       clientId,
       context: {},
+      personaChangeVersion: 0,
     };
 
     this.clients.set(ws, client);
@@ -160,6 +170,9 @@ export class FacilitatorWebSocketHandler {
             console.log(`[Facilitator] Client ${client.clientId} context updated:`, client.context);
           }
           break;
+        case 'persona_change':
+          await this.handlePersonaChange(client, clientMessage.presetId || '');
+          break;
         default:
           console.warn(`[Facilitator] Unknown message type: ${(clientMessage as ClientMessage).type}`);
       }
@@ -177,6 +190,9 @@ export class FacilitatorWebSocketHandler {
 
     // Ensure service is initialized
     await this.initialize();
+
+    // Get the display name from settings
+    const settings = getFacilitatorSettings();
 
     try {
       await this.facilitatorService.processMessage(
@@ -219,7 +235,8 @@ export class FacilitatorWebSocketHandler {
               error,
             });
           },
-        }
+        },
+        settings.name  // Pass display name from settings
       );
     } catch (error) {
       console.error('[Facilitator] Error processing message:', error);
@@ -229,14 +246,131 @@ export class FacilitatorWebSocketHandler {
 
   /**
    * Handle a clear history request from a client.
+   * After clearing, sends a new greeting (from cache if available, otherwise generates one).
    */
   private async handleClearHistory(client: FacilitatorClient): Promise<void> {
+    console.log(`[Facilitator] handleClearHistory called for client ${client.clientId}`);
     try {
       await this.facilitatorService.clearHistory(client.userId);
       this.send(client.ws, { type: 'history', messages: [] });
+      console.log(`[Facilitator] Sent empty history for client ${client.clientId}`);
+
+      // Get display name from settings
+      const settings = getFacilitatorSettings();
+      console.log(`[Facilitator] Settings: name="${settings.name}"`);
+
+      // Try to get a cached greeting (instant, no API call)
+      let greeting = this.facilitatorService.getRandomCachedGreeting(
+        client.userName,
+        settings.name
+      );
+      console.log(`[Facilitator] getRandomCachedGreeting returned: ${greeting ? `"${greeting.slice(0, 50)}..."` : 'null'}`);
+
+      if (greeting) {
+        // Send the cached greeting immediately
+        const greetingMessageId = `msg-greeting-${Date.now()}`;
+        console.log(`[Facilitator] Sending cached greeting with id ${greetingMessageId}`);
+        this.send(client.ws, {
+          type: 'greeting',
+          text: greeting,
+          messageId: greetingMessageId,
+        });
+        console.log(`[Facilitator] Sent cached greeting on clear for client ${client.clientId}`);
+      } else {
+        // No cache exists - generate greetings (this will populate the cache for next time)
+        console.log(`[Facilitator] No cached greetings, generating for client ${client.clientId}...`);
+        this.send(client.ws, { type: 'loading', isLoading: true });
+
+        greeting = await this.facilitatorService.generateGreeting(client.userName, settings.name);
+        console.log(`[Facilitator] Generated greeting: "${greeting?.slice(0, 50)}..."`);
+
+        const greetingMessageId = `msg-greeting-${Date.now()}`;
+        console.log(`[Facilitator] Sending generated greeting with id ${greetingMessageId}`);
+        this.send(client.ws, {
+          type: 'greeting',
+          text: greeting,
+          messageId: greetingMessageId,
+        });
+        this.send(client.ws, { type: 'loading', isLoading: false });
+        console.log(`[Facilitator] Generated and sent greeting on clear for client ${client.clientId}`);
+      }
     } catch (error) {
       console.error('[Facilitator] Error clearing history:', error);
       this.send(client.ws, { type: 'error', error: 'Failed to clear history' });
+    }
+  }
+
+  /**
+   * Handle a persona change request from a client.
+   * This clears history, changes persona, and generates a greeting.
+   * Uses a version counter to cancel stale greeting generations.
+   */
+  private async handlePersonaChange(client: FacilitatorClient, presetId: string): Promise<void> {
+    const CUSTOM_PRESET_ID = '__custom__';
+
+    // Increment version to cancel any in-progress greeting generation
+    client.personaChangeVersion++;
+    const currentVersion = client.personaChangeVersion;
+
+    try {
+      console.log(`[Facilitator] Client ${client.clientId} changing persona to: ${presetId} (v${currentVersion})`);
+
+      // Get display name from settings
+      const settings = getFacilitatorSettings();
+
+      // 1. Change the persona
+      let personaName: string;
+      if (presetId === CUSTOM_PRESET_ID) {
+        const persona = this.facilitatorService.setCustomPersona();
+        personaName = persona.name;
+      } else {
+        const persona = this.facilitatorService.setPersonaByPreset(presetId);
+        personaName = persona.name;
+      }
+
+      // 2. Clear chat history
+      await this.facilitatorService.clearHistory(client.userId);
+
+      // 3. Send persona_changed + empty history to client
+      this.send(client.ws, {
+        type: 'persona_changed',
+        personaName,
+      });
+      this.send(client.ws, { type: 'history', messages: [] });
+
+      // 4. Signal loading state - greeting generation starting
+      this.send(client.ws, { type: 'loading', isLoading: true });
+
+      // 5. Generate greeting with the new persona (pass display name from settings)
+      console.log(`[Facilitator] Generating greeting for ${client.userName} from ${personaName} (display: ${settings.name})...`);
+      const greeting = await this.facilitatorService.generateGreeting(client.userName, settings.name);
+
+      // Check if a newer persona change has started - if so, don't send this greeting
+      if (client.personaChangeVersion !== currentVersion) {
+        console.log(`[Facilitator] Discarding stale greeting (v${currentVersion}, current: v${client.personaChangeVersion})`);
+        return;
+      }
+
+      // 6. Send greeting as a complete assistant message
+      const greetingMessageId = `msg-greeting-${Date.now()}`;
+      this.send(client.ws, {
+        type: 'greeting',
+        text: greeting,
+        messageId: greetingMessageId,
+        personaName,
+      });
+
+      // 7. Signal loading complete
+      this.send(client.ws, { type: 'loading', isLoading: false });
+
+      console.log(`[Facilitator] Persona change complete for client ${client.clientId} (v${currentVersion})`);
+    } catch (error) {
+      // Only send error if this is still the current version
+      if (client.personaChangeVersion === currentVersion) {
+        console.error('[Facilitator] Error changing persona:', error);
+        this.send(client.ws, { type: 'loading', isLoading: false });
+        this.send(client.ws, { type: 'error', error: 'Failed to change persona' });
+      }
     }
   }
 

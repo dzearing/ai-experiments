@@ -8,12 +8,83 @@
   overflow: hidden;
   flex-shrink: 0;
   border-radius: var(--radius-md);
+  /* 2px border ensures contrast on any background */
+  border: 2px solid var(--base-bg);
+  box-sizing: border-box;
 }
 
 .avatar.rounded {
   border-radius: var(--radius-full);
 }
 
+/* Bot avatar wrapper - provides the border in octagonal shape */
+.botWrapper {
+  display: inline-flex;
+  flex-shrink: 0;
+  /* Regular octagon mask for the border */
+  --octagon-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M35 3 L65 3 Q69 3 72 6 L94 28 Q97 31 97 35 L97 65 Q97 69 94 72 L72 94 Q69 97 65 97 L35 97 Q31 97 28 94 L6 72 Q3 69 3 65 L3 35 Q3 31 6 28 L28 6 Q31 3 35 3 Z' fill='black'/%3E%3C/svg%3E");
+  mask-image: var(--octagon-svg);
+  mask-size: 100% 100%;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-image: var(--octagon-svg);
+  -webkit-mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  background: var(--base-bg);
+  padding: 2px;
+}
+
+/* Bot avatar inner content - no border, fills the wrapper */
+.avatar.bot {
+  border: none;
+  border-radius: 0;
+  width: 100%;
+  height: 100%;
+  /* Same octagon mask for the inner content */
+  --octagon-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M35 3 L65 3 Q69 3 72 6 L94 28 Q97 31 97 35 L97 65 Q97 69 94 72 L72 94 Q69 97 65 97 L35 97 Q31 97 28 94 L6 72 Q3 69 3 65 L3 35 Q3 31 6 28 L28 6 Q31 3 35 3 Z' fill='black'/%3E%3C/svg%3E");
+  mask-image: var(--octagon-svg);
+  mask-size: 100% 100%;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-image: var(--octagon-svg);
+  -webkit-mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+}
+
+/* Bot wrapper sizes - outer dimensions */
+.botWrapper.xxs {
+  width: 20px;
+  height: 20px;
+}
+
+.botWrapper.xs {
+  width: 24px;
+  height: 24px;
+}
+
+.botWrapper.sm {
+  width: 32px;
+  height: 32px;
+}
+
+.botWrapper.md {
+  width: 40px;
+  height: 40px;
+}
+
+.botWrapper.lg {
+  width: 48px;
+  height: 48px;
+}
+
+.botWrapper.xl {
+  width: 64px;
+  height: 64px;
+}
+
+/* Non-bot avatar sizes */
 .avatar.xxs {
   width: 20px;
   height: 20px;
@@ -47,6 +118,42 @@
 .avatar.xl {
   width: 64px;
   height: 64px;
+  font-size: var(--text-xl);
+}
+
+/* Bot avatars inherit size from wrapper, override fixed sizes */
+.avatar.bot.xxs,
+.avatar.bot.xs,
+.avatar.bot.sm,
+.avatar.bot.md,
+.avatar.bot.lg,
+.avatar.bot.xl {
+  width: 100%;
+  height: 100%;
+}
+
+/* Bot avatar font sizes */
+.botWrapper.xxs .avatar {
+  font-size: 10px;
+}
+
+.botWrapper.xs .avatar {
+  font-size: var(--text-xs);
+}
+
+.botWrapper.sm .avatar {
+  font-size: var(--text-sm);
+}
+
+.botWrapper.md .avatar {
+  font-size: var(--text-base);
+}
+
+.botWrapper.lg .avatar {
+  font-size: var(--text-lg);
+}
+
+.botWrapper.xl .avatar {
   font-size: var(--text-xl);
 }
 
