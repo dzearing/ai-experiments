@@ -3,7 +3,7 @@ import { Spinner, ShimmerText } from '@ui-kit/react';
 import styles from './ThinkingIndicator.module.css';
 
 // Progress verbs that cycle randomly
-const PROGRESS_VERBS = [
+const DEFAULT_PROGRESS_VERBS = [
   'Thinking',
   'Puzzling',
   'Pondering',
@@ -21,9 +21,17 @@ const PROGRESS_VERBS = [
   'Deliberating',
 ];
 
-interface ThinkingIndicatorProps {
+export interface ThinkingIndicatorProps {
   /** Whether the indicator is active */
   isActive: boolean;
+  /** Custom progress verbs to cycle through */
+  progressVerbs?: string[];
+  /** Whether to show the escape hint */
+  showEscapeHint?: boolean;
+  /** Custom escape hint text */
+  escapeHintText?: string;
+  /** Additional class name */
+  className?: string;
 }
 
 /**
@@ -32,8 +40,14 @@ interface ThinkingIndicatorProps {
  * Shows an animated progress indicator while the AI is thinking.
  * Displays cycling progress verbs, elapsed time, and escape hint.
  */
-export function ThinkingIndicator({ isActive }: ThinkingIndicatorProps) {
-  const [currentVerb, setCurrentVerb] = useState(PROGRESS_VERBS[0]);
+export function ThinkingIndicator({
+  isActive,
+  progressVerbs = DEFAULT_PROGRESS_VERBS,
+  showEscapeHint = true,
+  escapeHintText = 'esc to interrupt',
+  className,
+}: ThinkingIndicatorProps) {
+  const [currentVerb, setCurrentVerb] = useState(progressVerbs[0]);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const startTimeRef = useRef<number>(Date.now());
   const verbIndexRef = useRef(0);
@@ -44,10 +58,10 @@ export function ThinkingIndicator({ isActive }: ThinkingIndicatorProps) {
       startTimeRef.current = Date.now();
       setElapsedSeconds(0);
       // Pick a random starting verb
-      verbIndexRef.current = Math.floor(Math.random() * PROGRESS_VERBS.length);
-      setCurrentVerb(PROGRESS_VERBS[verbIndexRef.current]);
+      verbIndexRef.current = Math.floor(Math.random() * progressVerbs.length);
+      setCurrentVerb(progressVerbs[verbIndexRef.current]);
     }
-  }, [isActive]);
+  }, [isActive, progressVerbs]);
 
   // Update elapsed time every second
   useEffect(() => {
@@ -66,8 +80,8 @@ export function ThinkingIndicator({ isActive }: ThinkingIndicatorProps) {
     if (!isActive) return;
 
     const cycleVerb = () => {
-      verbIndexRef.current = (verbIndexRef.current + 1) % PROGRESS_VERBS.length;
-      setCurrentVerb(PROGRESS_VERBS[verbIndexRef.current]);
+      verbIndexRef.current = (verbIndexRef.current + 1) % progressVerbs.length;
+      setCurrentVerb(progressVerbs[verbIndexRef.current]);
     };
 
     // Random interval between 2-4 seconds
@@ -82,7 +96,7 @@ export function ThinkingIndicator({ isActive }: ThinkingIndicatorProps) {
     let timeoutRef = scheduleNext();
 
     return () => clearTimeout(timeoutRef);
-  }, [isActive]);
+  }, [isActive, progressVerbs]);
 
   if (!isActive) return null;
 
@@ -93,8 +107,12 @@ export function ThinkingIndicator({ isActive }: ThinkingIndicatorProps) {
     return `${mins}m ${secs}s`;
   };
 
+  const containerClassName = className
+    ? `${styles.container} ${className}`
+    : styles.container;
+
   return (
-    <div className={styles.container}>
+    <div className={containerClassName}>
       <span className={styles.spinner}>
         <Spinner size="sm" />
       </span>
@@ -102,10 +120,12 @@ export function ThinkingIndicator({ isActive }: ThinkingIndicatorProps) {
         <span className={styles.verb}>{currentVerb}...</span>
       </ShimmerText>
       <span className={styles.details}>
-        (esc to interrupt · {formatTime(elapsedSeconds)})
+        ({showEscapeHint && `${escapeHintText} · `}{formatTime(elapsedSeconds)})
       </span>
     </div>
   );
 }
+
+ThinkingIndicator.displayName = 'ThinkingIndicator';
 
 export default ThinkingIndicator;

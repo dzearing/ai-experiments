@@ -1,0 +1,81 @@
+/* Modal container */
+.modal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 400px;
+  max-width: 480px;
+}
+
+/* Title */
+.title {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  color: var(--base-fg);
+}
+
+/* Form fields container */
+.formFields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Processing state */
+.processing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-8) var(--space-4);
+  color: var(--base-fg-soft);
+}
+
+/* Individual field */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.field label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--base-fg);
+}
+
+.hint {
+  font-size: var(--text-sm);
+  color: var(--base-fg-soft);
+  margin: 0;
+  line-height: var(--leading-relaxed);
+}
+
+/* Row for side-by-side fields */
+.row {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.row .field {
+  flex: 1;
+}
+
+/* Error message */
+.error {
+  padding: var(--space-3);
+  background: var(--danger-bg);
+  color: var(--danger-fg);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+}
+
+/* Footer actions */
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}

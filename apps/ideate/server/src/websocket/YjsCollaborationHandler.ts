@@ -1017,4 +1017,81 @@ export class YjsCollaborationHandler extends EventEmitter {
       memoryUsage: process.memoryUsage(),
     };
   }
+
+  // ==========================================
+  // Server-Side Editing API (for AI agents)
+  // ==========================================
+
+  /**
+   * Get or create a room and return its Y.Doc and awareness.
+   * Used by AI agents to edit documents programmatically.
+   */
+  async getOrCreateRoomForAgent(roomName: string): Promise<{
+    doc: Y.Doc;
+    text: Y.Text;
+    awareness: awarenessProtocol.Awareness;
+    clientId: number;
+  }> {
+    const room = this.getOrCreateRoom(roomName);
+
+    // Wait for room to be initialized (content loaded)
+    await room.ready;
+
+    // Generate a unique client ID for the agent
+    const clientId = this.clientIdCounter++;
+
+    return {
+      doc: room.doc,
+      text: room.doc.getText('content'),
+      awareness: room.awareness,
+      clientId,
+    };
+  }
+
+  /**
+   * Set awareness state for an AI agent.
+   * This makes the agent's cursor visible to other users.
+   */
+  setAgentAwareness(
+    roomName: string,
+    clientId: number,
+    user: { name: string; color: string },
+    cursor?: { anchor: number; head: number }
+  ): void {
+    const room = this.rooms.get(roomName);
+    if (!room) return;
+
+    // Create awareness state for the agent
+    const state: Record<string, unknown> = { user };
+    if (cursor) {
+      state.cursor = cursor;
+    }
+
+    // Manually encode and broadcast awareness update
+    // Since the agent isn't a real client, we need to set the state directly
+    room.awareness.states.set(clientId, state);
+
+    // Update meta to track clock
+    const currentMeta = room.awareness.meta.get(clientId);
+    const clock = currentMeta ? currentMeta.clock + 1 : 1;
+    room.awareness.meta.set(clientId, { clock, lastUpdated: Date.now() });
+
+    // Broadcast the awareness update to all clients
+    this.broadcastAwareness(room, [clientId]);
+  }
+
+  /**
+   * Remove awareness state for an AI agent.
+   */
+  removeAgentAwareness(roomName: string, clientId: number): void {
+    const room = this.rooms.get(roomName);
+    if (!room) return;
+
+    // Broadcast removal first
+    this.broadcastAwarenessRemoval(room, [clientId]);
+
+    // Then remove from awareness
+    room.awareness.states.delete(clientId);
+    room.awareness.meta.delete(clientId);
+  }
 }

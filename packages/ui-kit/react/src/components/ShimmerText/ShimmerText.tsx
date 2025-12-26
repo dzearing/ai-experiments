@@ -33,7 +33,10 @@ export function ShimmerText({
 }: ShimmerTextProps) {
   const [position, setPosition] = useState({ x1: 50, x2: 60 });
   const [duration, setDuration] = useState(1000);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Extract values to use as stable dependencies
+  const [minDuration, maxDuration] = durationRange;
 
   useEffect(() => {
     if (!isActive) return;
@@ -44,7 +47,6 @@ export function ShimmerText({
       // Secondary gradient offset slightly from primary
       const newX2 = Math.random() * 100;
       // Random duration within range
-      const [minDuration, maxDuration] = durationRange;
       const newDuration = minDuration + Math.random() * (maxDuration - minDuration);
 
       setPosition({ x1: newX1, x2: newX2 });
@@ -62,7 +64,7 @@ export function ShimmerText({
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [isActive, durationRange]);
+  }, [isActive, minDuration, maxDuration]);
 
   const combinedClassName = `${styles.shimmerText} ${isActive ? styles.active : ''} ${className}`.trim();
 

@@ -2,9 +2,11 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 import { WORKSPACE_WS_URL } from '../config';
 import { useAuth } from '../contexts/AuthContext';
 
+export type ResourceType = 'document' | 'chatroom' | 'idea';
+
 export interface ResourcePresence {
   resourceId: string;
-  resourceType: 'document' | 'chatroom';
+  resourceType: ResourceType;
   userId: string;
   userName: string;
   userColor: string;
@@ -15,7 +17,7 @@ export interface WorkspaceMessage {
   type: string;
   workspaceId?: string;
   resourceId?: string;
-  resourceType?: 'document' | 'chatroom';
+  resourceType?: ResourceType;
   data?: unknown;
 }
 
@@ -23,9 +25,9 @@ export interface UseWorkspaceSocketOptions {
   workspaceId: string | undefined;
   /** User's session color for presence display */
   sessionColor?: string;
-  onResourceCreated?: (resourceId: string, resourceType: 'document' | 'chatroom', data: unknown) => void;
-  onResourceUpdated?: (resourceId: string, resourceType: 'document' | 'chatroom', data: unknown) => void;
-  onResourceDeleted?: (resourceId: string, resourceType: 'document' | 'chatroom') => void;
+  onResourceCreated?: (resourceId: string, resourceType: ResourceType, data: unknown) => void;
+  onResourceUpdated?: (resourceId: string, resourceType: ResourceType, data: unknown) => void;
+  onResourceDeleted?: (resourceId: string, resourceType: ResourceType) => void;
   onPresenceUpdate?: (presence: Map<string, ResourcePresence[]>) => void;
   /** Called when a new workspace is created (for this user) */
   onWorkspaceCreated?: (workspaceId: string, data: unknown) => void;
@@ -299,7 +301,7 @@ export function useWorkspaceSocket({
   }, [workspaceId, userId, connect]);
 
   // Method to join a resource (for presence tracking)
-  const joinResource = useCallback((resourceId: string, resourceType: 'document' | 'chatroom') => {
+  const joinResource = useCallback((resourceId: string, resourceType: ResourceType) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({
         type: 'presence_join',

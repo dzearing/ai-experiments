@@ -1,17 +1,15 @@
-import { useEffect, useCallback, useState, useRef, useMemo } from 'react';
+import { useEffect, useCallback, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from '@ui-kit/router';
 import { Slide, Button, IconButton, Avatar } from '@ui-kit/react';
 import { CloseIcon } from '@ui-kit/icons/CloseIcon';
-import { TrashIcon } from '@ui-kit/icons/TrashIcon';
-import { HelpIcon } from '@ui-kit/icons/HelpIcon';
 import { GearIcon } from '@ui-kit/icons/GearIcon';
-import { ChatInput, ChatMessage, type ChatInputSubmitData, type ChatInputRef, type SlashCommand } from '@ui-kit/react-chat';
+import { ChatInput, ChatMessage, ThinkingIndicator, type ChatInputSubmitData, type ChatInputRef } from '@ui-kit/react-chat';
 import { AVATAR_IMAGES } from '../../constants/avatarImages';
 import { useFacilitator } from '../../contexts/FacilitatorContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useFacilitatorSocket } from '../../hooks/useFacilitatorSocket';
-import { ThinkingIndicator } from './ThinkingIndicator';
+import { useChatCommands } from '../../hooks/useChatCommands';
 import { API_URL } from '../../config';
 import styles from './FacilitatorOverlay.module.css';
 
@@ -47,25 +45,6 @@ export function FacilitatorOverlay() {
     clearMessages,
     addMessage,
   } = useFacilitator();
-
-  // Define slash commands
-  const slashCommands: SlashCommand[] = useMemo(
-    () => [
-      {
-        name: 'clear',
-        description: 'Clear all chat history',
-        icon: <TrashIcon />,
-        usage: '/clear',
-      },
-      {
-        name: 'help',
-        description: 'Show available commands and features',
-        icon: <HelpIcon />,
-        usage: '/help',
-      },
-    ],
-    []
-  );
 
   const [isBackdropVisible, setIsBackdropVisible] = useState(isOpen);
   const [queuedMessages, setQueuedMessages] = useState<QueuedMessage[]>([]);
@@ -143,6 +122,32 @@ export function FacilitatorOverlay() {
     userId: user?.id || '',
     userName: user?.name || 'Anonymous',
     onError: (err) => console.error('[Facilitator] Socket error:', err),
+  });
+
+  // Chat commands (/clear, /help)
+  const { commands, handleCommand } = useChatCommands({
+    clearMessages,
+    clearServerHistory: socketClearHistory,
+    addMessage: (msg) => addMessage({
+      id: msg.id,
+      role: msg.role === 'system' ? 'assistant' : msg.role,
+      content: msg.content,
+      timestamp: msg.timestamp,
+    }),
+    helpText: `## Available Commands
+
+- **/clear** - Clear all chat history
+- **/help** - Show this help message
+
+## Features
+
+- Ask questions about your workspaces and documents
+- Create, edit, and search documents
+- Get summaries of your content
+- Press **Ctrl+.** (or **Cmd+.** on Mac) to toggle this overlay
+- Press **Escape** to close
+
+Type a message to get started!`,
   });
 
   // Process queued messages when AI finishes thinking
@@ -252,49 +257,6 @@ export function FacilitatorOverlay() {
   const removeQueuedMessage = useCallback((id: string) => {
     setQueuedMessages((prev) => prev.filter((msg) => msg.id !== id));
   }, []);
-
-  // Handle slash commands
-  const handleCommand = useCallback(
-    (command: string, _args: string) => {
-      switch (command) {
-        case 'clear':
-          clearMessages();
-          // Also clear server-side history
-          socketClearHistory();
-          return { handled: true, clearInput: true };
-
-        case 'help':
-          // Add a system message explaining the features
-          const helpMessage = `## Available Commands
-
-- **/clear** - Clear all chat history
-- **/help** - Show this help message
-
-## Features
-
-- Ask questions about your workspaces and documents
-- Create, edit, and search documents
-- Get summaries of your content
-- Press **Ctrl+.** (or **Cmd+.** on Mac) to toggle this overlay
-- Press **Escape** to close
-
-Type a message to get started!`;
-
-          // Add help as an assistant message
-          addMessage({
-            id: `help-${Date.now()}`,
-            role: 'assistant',
-            content: helpMessage,
-            timestamp: Date.now(),
-          });
-          return { handled: true, clearInput: true };
-
-        default:
-          return { handled: false };
-      }
-    },
-    [clearMessages, addMessage, socketClearHistory]
-  );
 
   // Handle navigating to settings
   const handleOpenSettings = useCallback(() => {
@@ -466,7 +428,7 @@ Type a message to get started!`;
               disabled={connectionState === 'connecting'}
               historyKey="facilitator"
               fullWidth
-              commands={slashCommands}
+              commands={commands}
               onCommand={handleCommand}
             />
           </div>

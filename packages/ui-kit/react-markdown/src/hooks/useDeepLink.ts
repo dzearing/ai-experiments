@@ -38,7 +38,17 @@ export function useDeepLink(
   enabled: boolean = true,
   options: DeepLinkOptions = {}
 ): UseDeepLinkReturn {
-  const opts = { ...DEFAULT_OPTIONS, ...options };
+  // Memoize options to prevent infinite re-renders
+  const { onHashChange, highlightDuration, scrollOffset, smoothScroll } = options;
+  const opts = {
+    onHashChange: onHashChange ?? DEFAULT_OPTIONS.onHashChange,
+    highlightDuration: highlightDuration ?? DEFAULT_OPTIONS.highlightDuration,
+    scrollOffset: scrollOffset ?? DEFAULT_OPTIONS.scrollOffset,
+    smoothScroll: smoothScroll ?? DEFAULT_OPTIONS.smoothScroll,
+  };
+  // Use refs to avoid stale closures while keeping effect dependencies stable
+  const optsRef = useRef(opts);
+  optsRef.current = opts;
 
   const [activeLink, setActiveLink] = useState<DeepLink | null>(null);
   const [isHighlighting, setIsHighlighting] = useState(false);
@@ -68,10 +78,10 @@ export function useDeepLink(
 
       if (link) {
         scheduleHighlightClear();
-        opts.onHashChange?.(link);
+        optsRef.current.onHashChange?.(link);
 
         // Scroll to target
-        scrollToTarget(link, opts);
+        scrollToTarget(link, optsRef.current);
       }
     };
 
@@ -87,7 +97,7 @@ export function useDeepLink(
         clearTimeout(highlightTimeoutRef.current);
       }
     };
-  }, [enabled, opts, scheduleHighlightClear]);
+  }, [enabled, scheduleHighlightClear]);
 
   // Scroll to line
   const scrollToLine = useCallback((line: number) => {

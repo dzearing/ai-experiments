@@ -9,13 +9,14 @@ This guide defines the standards and best practices for creating components in `
 3. [Standard Root Element Props](#standard-root-element-props)
 4. [Polymorphic Components (the `as` Prop)](#polymorphic-components-the-as-prop)
 5. [Naming Conventions](#naming-conventions)
-6. [Sizing Standards](#sizing-standards)
-7. [Token Usage](#token-usage)
-8. [Accessibility Requirements](#accessibility-requirements)
-9. [Animation Guidelines](#animation-guidelines)
-10. [Story Documentation](#story-documentation)
-11. [Testing Requirements](#testing-requirements)
-12. [Checklist](#checklist)
+6. [Common Patterns and Anti-Patterns](#common-patterns-and-anti-patterns)
+7. [Sizing Standards](#sizing-standards)
+8. [Token Usage](#token-usage)
+9. [Accessibility Requirements](#accessibility-requirements)
+10. [Animation Guidelines](#animation-guidelines)
+11. [Story Documentation](#story-documentation)
+12. [Testing Requirements](#testing-requirements)
+13. [Checklist](#checklist)
 
 ---
 
@@ -486,6 +487,46 @@ export const AsElement: Story = {
   - `fullWidth` - boolean
   - `icon` - leading icon
   - `iconAfter` - trailing icon
+
+---
+
+## Common Patterns and Anti-Patterns
+
+### Button Icons: Always Use Props, Not Children
+
+**CRITICAL:** Never place icons directly in Button children. Always use the `icon` or `iconAfter` props. This ensures proper spacing and alignment are handled by the Button's CSS.
+
+```tsx
+// ❌ WRONG - Icon in children breaks spacing/alignment
+<Button variant="primary">
+  <Spinner />
+  Processing...
+</Button>
+
+// ✅ CORRECT - Use icon prop for proper spacing
+<Button variant="primary" icon={<Spinner />}>
+  Processing...
+</Button>
+
+// ✅ CORRECT - Conditional icon for loading states
+<Button
+  variant="primary"
+  icon={isLoading ? <Spinner /> : undefined}
+  disabled={isLoading}
+>
+  {isLoading ? 'Processing...' : 'Submit'}
+</Button>
+
+// ✅ CORRECT - Trailing icon
+<Button iconAfter={<ArrowRightIcon />}>
+  Next
+</Button>
+```
+
+The `icon` and `iconAfter` props:
+- Apply consistent `gap` via the `.icon` CSS class
+- Ensure proper vertical alignment
+- Handle sizing automatically based on button size
 
 ---
 

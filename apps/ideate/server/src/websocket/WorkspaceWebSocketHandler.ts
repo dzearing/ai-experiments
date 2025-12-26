@@ -1,10 +1,13 @@
 import { WebSocket, type RawData } from 'ws';
 import type { IncomingMessage } from 'http';
 
+// Resource types supported by the workspace handler
+export type ResourceType = 'document' | 'chatroom' | 'idea';
+
 // Presence info for a user viewing a resource
 export interface ResourcePresence {
   resourceId: string;
-  resourceType: 'document' | 'chatroom';
+  resourceType: ResourceType;
   userId: string;
   userName: string;
   userColor: string;
@@ -30,7 +33,7 @@ export interface WorkspaceMessage {
   type: WorkspaceMessageType;
   workspaceId?: string;
   resourceId?: string;
-  resourceType?: 'document' | 'chatroom';
+  resourceType?: ResourceType;
   data?: unknown;
 }
 
@@ -43,7 +46,7 @@ interface ClientInfo {
   // Track what resource the client is currently viewing
   currentResource?: {
     id: string;
-    type: 'document' | 'chatroom';
+    type: ResourceType;
   };
 }
 
@@ -61,7 +64,7 @@ export class WorkspaceWebSocketHandler {
   // Map of resourceId to set of client IDs viewing it
   private resourcePresence = new Map<string, Set<string>>();
   // Map of userId to pending leave timeout (for grace period handling)
-  private pendingLeaves = new Map<string, { timeout: NodeJS.Timeout; resourceId: string; resourceType: 'document' | 'chatroom' }>();
+  private pendingLeaves = new Map<string, { timeout: NodeJS.Timeout; resourceId: string; resourceType: ResourceType }>();
 
   private clientIdCounter = 0;
 
@@ -169,7 +172,7 @@ export class WorkspaceWebSocketHandler {
   private joinResource(
     clientId: string,
     resourceId: string,
-    resourceType: 'document' | 'chatroom'
+    resourceType: ResourceType
   ): void {
     const client = this.clients.get(clientId);
     if (!client) return;
@@ -298,7 +301,7 @@ export class WorkspaceWebSocketHandler {
   private broadcastPresenceLeave(
     workspaceIds: Set<string>,
     resourceId: string,
-    resourceType: 'document' | 'chatroom',
+    resourceType: ResourceType,
     userId: string,
     userName: string
   ): void {
@@ -385,7 +388,7 @@ export class WorkspaceWebSocketHandler {
   notifyResourceCreated(
     workspaceId: string,
     resourceId: string,
-    resourceType: 'document' | 'chatroom',
+    resourceType: ResourceType,
     data: unknown
   ): void {
     this.broadcastToWorkspace(workspaceId, {
@@ -404,7 +407,7 @@ export class WorkspaceWebSocketHandler {
   notifyResourceUpdated(
     workspaceId: string,
     resourceId: string,
-    resourceType: 'document' | 'chatroom',
+    resourceType: ResourceType,
     data: unknown
   ): void {
     this.broadcastToWorkspace(workspaceId, {
@@ -423,7 +426,7 @@ export class WorkspaceWebSocketHandler {
   notifyResourceDeleted(
     workspaceId: string,
     resourceId: string,
-    resourceType: 'document' | 'chatroom'
+    resourceType: ResourceType
   ): void {
     this.broadcastToWorkspace(workspaceId, {
       type: 'resource_deleted',

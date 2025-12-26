@@ -113,7 +113,19 @@
   flex: 1;
 }
 
-/* Split mode - SplitPane handles layout */
+/* Split mode - side by side layout */
+.content.split {
+  flex-direction: row;
+}
+
+.content.split .editorPane {
+  flex: 1;
+  border-right: 1px solid var(--soft-border, #e0e0e0);
+}
+
+.content.split .previewPane {
+  flex: 1;
+}
 
 /* ==============================================
    Editor Pane

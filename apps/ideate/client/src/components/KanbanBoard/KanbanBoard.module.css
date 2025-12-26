@@ -1,0 +1,81 @@
+.kanbanBoard {
+  display: flex;
+  gap: var(--space-4);
+  height: 100%;
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* Lane */
+.lane {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 280px;
+  max-width: 400px;
+  height: 100%;
+  min-height: 0;
+  background: var(--softer-bg);
+  border-radius: var(--radius-lg);
+}
+
+.laneHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  background: var(--soft-bg);
+  border-bottom: 1px solid var(--soft-border);
+  flex-shrink: 0;
+}
+
+.laneTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  margin: 0;
+  color: var(--soft-fg);
+}
+
+.laneCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 var(--space-2);
+  background: var(--strong-bg);
+  color: var(--strong-fg);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+}
+
+.laneContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  overflow-y: auto;
+  flex: 1;
+  transition: background-color var(--duration-fast) var(--ease-default);
+}
+
+.laneContent.dragOver {
+  background: var(--primary-bg-disabled);
+}
+
+.emptyLane {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+  color: var(--softer-fg-softer);
+  font-size: var(--text-sm);
+  min-height: 100px;
+}

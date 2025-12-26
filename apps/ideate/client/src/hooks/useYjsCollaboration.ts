@@ -324,15 +324,27 @@ export function useYjsCollaboration(
   // Note: We intentionally don't update initialContentRef after first render
   // because it's only used for initial document setup, not for re-syncing
 
-  // Get or create cache entry - this is stable for the lifetime of the hook instance
-  // useState initializer runs once per component mount, and survives StrictMode remounts
-  const [cache] = useState(() => getOrCreateDocument(documentId, serverUrl));
+  // Get or create cache entry - needs to update when documentId changes
+  // Use useMemo so we get a new cache when documentId changes
+  const cache = useMemo(() => getOrCreateDocument(documentId, serverUrl), [documentId, serverUrl]);
 
   // State
   const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
   const [coAuthors, setCoAuthors] = useState<CoAuthor[]>([]);
   const [isSynced, setIsSynced] = useState(false);
-  const [extensions, setExtensions] = useState<Extension[]>([]);
+
+  // Extensions ref - prevents recreation on every render
+  // We use a ref to store the actual extensions and a version counter to trigger re-renders
+  const extensionsRef = useRef<Extension[]>([]);
+  const [extensionsVersion, setExtensionsVersion] = useState(0);
+
+  // Helper to update extensions once - prevents recreation on subsequent calls
+  const setExtensionsOnce = useCallback((newExtensions: Extension[]) => {
+    if (extensionsRef.current.length === 0 && newExtensions.length > 0) {
+      extensionsRef.current = newExtensions;
+      setExtensionsVersion(v => v + 1);
+    }
+  }, []);
 
   const { doc, text, undoManager } = cache;
 
@@ -402,7 +414,7 @@ export function useYjsCollaboration(
         yCollab(text, wsProvider.awareness, { undoManager }),
         keymap.of(yUndoManagerKeymap),
       ];
-      setExtensions(existingExtensions);
+      setExtensionsOnce(existingExtensions);
 
       // Sync connection state
       if (wsProvider.wsconnected) {
@@ -526,12 +538,12 @@ export function useYjsCollaboration(
       setUserAwareness();
 
       // Create extensions with awareness for cursor sync
-      // Extensions must be fresh for each editor instance - yCollab binds to CodeMirror state
+      // Extensions must be created once to maintain yCollab binding
       const newExtensions = [
         yCollab(text, wsProvider.awareness, { undoManager }),
         keymap.of(yUndoManagerKeymap),
       ];
-      setExtensions(newExtensions);
+      setExtensionsOnce(newExtensions);
 
       // Ensure user field persists after awareness changes
       // yCollab may update cursor position without preserving user field
@@ -631,7 +643,7 @@ export function useYjsCollaboration(
         yCollab(text, null, { undoManager }),
         keymap.of(yUndoManagerKeymap),
       ];
-      setExtensions(newExtensions);
+      setExtensionsOnce(newExtensions);
     }
 
     // Observe text changes
@@ -704,12 +716,16 @@ export function useYjsCollaboration(
   // Get awareness from provider (might be null if not connected)
   const awareness = cache.wsProvider?.awareness ?? null;
 
+  // Use extensionsVersion to trigger re-memo when extensions change
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _extensionsVersion = extensionsVersion;
+
   return useMemo(() => ({
     doc,
     text,
     awareness,
     undoManager,
-    extensions,
+    extensions: extensionsRef.current,
     connectionState,
     coAuthors,
     isSynced,
@@ -724,7 +740,7 @@ export function useYjsCollaboration(
     text,
     awareness,
     undoManager,
-    extensions,
+    extensionsVersion, // Triggers re-memo when extensions are set
     connectionState,
     coAuthors,
     isSynced,

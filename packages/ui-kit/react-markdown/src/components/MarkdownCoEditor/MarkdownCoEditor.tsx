@@ -20,7 +20,7 @@
  */
 
 import { useState, useRef, useImperativeHandle, forwardRef, useCallback, useEffect } from 'react';
-import { Avatar, Segmented, SplitPane, type SegmentOption, type SplitPaneOrientation } from '@ui-kit/react';
+import { Avatar, Segmented, type SegmentOption } from '@ui-kit/react';
 import { MarkdownEditor, type MarkdownEditorRef, type CoAuthor } from '../MarkdownEditor';
 import { MarkdownRenderer } from '../MarkdownRenderer';
 import type { Extension } from '@codemirror/state';
@@ -83,8 +83,8 @@ export interface MarkdownCoEditorProps {
   streaming?: boolean;
   /** Streaming speed */
   streamingSpeed?: number;
-  /** Split pane orientation (horizontal = side-by-side, vertical = stacked) */
-  splitOrientation?: SplitPaneOrientation;
+  /** @deprecated Split pane orientation - no longer used, kept for API compatibility */
+  splitOrientation?: 'horizontal' | 'vertical';
   /** Co-authors with their cursor positions */
   coAuthors?: CoAuthor[];
   /** Callback when co-author positions change (e.g., due to user typing) */
@@ -103,6 +103,11 @@ export interface MarkdownCoEditorProps {
   disableBuiltInHistory?: boolean;
   /** Additional class name */
   className?: string;
+  /**
+   * Pause scroll synchronization between editor and preview.
+   * Useful during rapid document updates (e.g., AI streaming edits).
+   */
+  pauseScrollSync?: boolean;
 }
 
 export interface MarkdownCoEditorRef {
@@ -149,13 +154,14 @@ export const MarkdownCoEditor = forwardRef<MarkdownCoEditorRef, MarkdownCoEditor
       showLineNumbers = true,
       streaming = false,
       streamingSpeed,
-      splitOrientation = 'horizontal',
+      splitOrientation: _splitOrientation = 'horizontal', // deprecated, kept for API compatibility
       coAuthors = [],
       onCoAuthorsChange,
       fullPage = false,
       extensions = [],
       disableBuiltInHistory = false,
       className,
+      pauseScrollSync = false,
     },
     ref
   ) {
@@ -204,7 +210,7 @@ export const MarkdownCoEditor = forwardRef<MarkdownCoEditorRef, MarkdownCoEditor
     // Uses line-based sync for editor->preview (handles folded sections)
     // Uses direct scroll manipulation for smooth performance
     useEffect(() => {
-      if (currentMode !== 'split') return;
+      if (currentMode !== 'split' || pauseScrollSync) return;
 
       let cmScroller: HTMLElement | null = null;
       let previewPane: HTMLElement | null = null;
@@ -305,7 +311,7 @@ export const MarkdownCoEditor = forwardRef<MarkdownCoEditorRef, MarkdownCoEditor
         if (previewPane) previewPane.removeEventListener('scroll', handlePreviewScroll);
         if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
       };
-    }, [currentMode]);
+    }, [currentMode, pauseScrollSync]);
 
     // Imperative handle
     useImperativeHandle(ref, () => ({
@@ -336,6 +342,30 @@ export const MarkdownCoEditor = forwardRef<MarkdownCoEditorRef, MarkdownCoEditor
     const showEditor = currentMode === 'edit' || currentMode === 'split';
     const showPreview = currentMode === 'preview' || currentMode === 'split';
 
+    // Track previous showEditor state to detect visibility changes
+    const prevShowEditorRef = useRef(showEditor);
+
+    // Force editor content sync when transitioning from hidden to visible
+    // This handles the case where Yjs content was updated while editor was off-screen
+    useEffect(() => {
+      const wasHidden = !prevShowEditorRef.current;
+      const isNowVisible = showEditor;
+      prevShowEditorRef.current = showEditor;
+
+      // Only act when transitioning from hidden to visible
+      if (!wasHidden || !isNowVisible) return;
+
+      // When editor becomes visible, force it to sync with current value
+      // by setting the markdown content directly
+      const rafId = requestAnimationFrame(() => {
+        if (editorRef.current && currentMarkdown) {
+          editorRef.current.setMarkdown(currentMarkdown);
+        }
+      });
+
+      return () => cancelAnimationFrame(rafId);
+    }, [showEditor, currentMarkdown]);
+
     // Filter mode options in read-only mode
     const modeOptions = readOnly
       ? VIEW_MODE_OPTIONS.filter(opt => opt.value !== 'edit')
@@ -364,12 +394,15 @@ export const MarkdownCoEditor = forwardRef<MarkdownCoEditorRef, MarkdownCoEditor
               {coAuthors.length > 0 && (
                 <div className={styles.coAuthorAvatars}>
                   {coAuthors.map((author) => (
-                    <span key={author.id} title={author.name}>
+                    <span
+                      key={author.id}
+                      title={author.name}
+                      className={author.isAI ? styles.aiAvatar : undefined}
+                    >
                       <Avatar
                         size="sm"
                         fallback={author.isAI ? '✦' : author.name}
                         color={author.color}
-                        className={author.isAI ? styles.aiAvatar : undefined}
                       />
                     </span>
                   ))}
@@ -394,83 +427,50 @@ export const MarkdownCoEditor = forwardRef<MarkdownCoEditorRef, MarkdownCoEditor
           </div>
         )}
 
-        {/* Content area */}
+        {/* Content area - SINGLE editor instance across all modes to maintain Yjs sync */}
         <div className={`${styles.content} ${styles[currentMode]}`}>
-          {/* Split mode uses SplitPane for resizing */}
-          {currentMode === 'split' ? (
-            <SplitPane
-              first={
-                <div ref={editorPaneRef} className={styles.editorPane}>
-                  <MarkdownEditor
-                    ref={editorRef}
-                    value={currentMarkdown}
-                    onChange={handleMarkdownChange}
-                    readOnly={readOnly}
-                    autoFocus={autoFocus}
-                    placeholder={placeholder}
-                    onEditorReady={onEditorReady}
-                    onSelectionChange={onSelectionChange}
-                    showLineNumbers={showLineNumbers}
-                    coAuthors={coAuthors}
-                    onCoAuthorsChange={onCoAuthorsChange}
-                    extensions={extensions}
-                    disableBuiltInHistory={disableBuiltInHistory}
-                  />
-                </div>
-              }
-              second={
-                <div className={styles.previewPane}>
-                  <div ref={previewRef} className={styles.previewContent}>
-                    <MarkdownRenderer
-                      content={currentMarkdown}
-                      showLineNumbers={showLineNumbers}
-                      streaming={streaming}
-                      streamingSpeed={streamingSpeed}
-                    />
-                  </div>
-                </div>
-              }
-              orientation={splitOrientation}
-              defaultSize="50%"
-              minSize={150}
-            />
-          ) : (
-            <>
-              {/* Editor pane (edit mode only) */}
-              {showEditor && (
-                <div className={styles.editorPane}>
-                  <MarkdownEditor
-                    ref={editorRef}
-                    value={currentMarkdown}
-                    onChange={handleMarkdownChange}
-                    readOnly={readOnly}
-                    autoFocus={autoFocus}
-                    placeholder={placeholder}
-                    onEditorReady={onEditorReady}
-                    onSelectionChange={onSelectionChange}
-                    showLineNumbers={showLineNumbers}
-                    coAuthors={coAuthors}
-                    onCoAuthorsChange={onCoAuthorsChange}
-                    extensions={extensions}
-                    disableBuiltInHistory={disableBuiltInHistory}
-                  />
-                </div>
-              )}
+          {/*
+            Editor pane - Always rendered when extensions are provided (for Yjs collaboration)
+            or when editor should be shown. Hidden visually in preview mode.
+            IMPORTANT: Single instance ensures Yjs bindings stay consistent across mode switches.
+          */}
+          {(showEditor || extensions.length > 0) && (
+            <div
+              ref={editorPaneRef}
+              className={styles.editorPane}
+              style={!showEditor ? { position: 'absolute', left: '-9999px', opacity: 0 } : undefined}
+              aria-hidden={!showEditor}
+            >
+              <MarkdownEditor
+                ref={editorRef}
+                value={currentMarkdown}
+                onChange={handleMarkdownChange}
+                readOnly={readOnly}
+                autoFocus={autoFocus && showEditor}
+                placeholder={placeholder}
+                onEditorReady={onEditorReady}
+                onSelectionChange={onSelectionChange}
+                showLineNumbers={showLineNumbers}
+                coAuthors={coAuthors}
+                onCoAuthorsChange={onCoAuthorsChange}
+                extensions={extensions}
+                disableBuiltInHistory={disableBuiltInHistory}
+              />
+            </div>
+          )}
 
-              {/* Preview pane (preview mode only) */}
-              {showPreview && (
-                <div className={styles.previewPane}>
-                  <div className={styles.previewContent}>
-                    <MarkdownRenderer
-                      content={currentMarkdown}
-                      showLineNumbers={showLineNumbers}
-                      streaming={streaming}
-                      streamingSpeed={streamingSpeed}
-                    />
-                  </div>
-                </div>
-              )}
-            </>
+          {/* Preview pane - shown in preview and split modes */}
+          {showPreview && (
+            <div className={styles.previewPane}>
+              <div ref={previewRef} className={styles.previewContent}>
+                <MarkdownRenderer
+                  content={currentMarkdown}
+                  showLineNumbers={showLineNumbers}
+                  streaming={streaming}
+                  streamingSpeed={streamingSpeed}
+                />
+              </div>
+            </div>
           )}
         </div>
       </div>

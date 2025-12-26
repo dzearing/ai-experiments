@@ -10,6 +10,7 @@ import { documentsRouter, setWorkspaceHandler as setDocumentsWorkspaceHandler } 
 import { workspacesRouter, setWorkspaceHandler as setWorkspacesWsHandler } from './routes/workspaces.js';
 import { chatroomsRouter, setWorkspaceHandler as setChatroomsWorkspaceHandler } from './routes/chatrooms.js';
 import { personasRouter } from './routes/personas.js';
+import { ideasRouter, setIdeasWorkspaceHandler } from './routes/ideas.js';
 import { setWorkspaceHandler as setMCPToolsWorkspaceHandler } from './services/MCPToolsService.js';
 import { createDiagnosticsRouter } from './routes/diagnostics.js';
 import { CollaborationHandler } from './websocket/CollaborationHandler.js';
@@ -18,6 +19,7 @@ import { DiagnosticsHandler } from './websocket/DiagnosticsHandler.js';
 import { ChatWebSocketHandler } from './websocket/ChatWebSocketHandler.js';
 import { WorkspaceWebSocketHandler } from './websocket/WorkspaceWebSocketHandler.js';
 import { FacilitatorWebSocketHandler } from './websocket/FacilitatorWebSocketHandler.js';
+import { IdeaAgentWebSocketHandler } from './websocket/IdeaAgentWebSocketHandler.js';
 import { DiscoveryService } from './services/DiscoveryService.js';
 import { DocumentService } from './services/DocumentService.js';
 
@@ -48,6 +50,7 @@ app.use('/api/documents', documentsRouter);
 app.use('/api/workspaces', workspacesRouter);
 app.use('/api/chatrooms', chatroomsRouter);
 app.use('/api/personas', personasRouter);
+app.use('/api/ideas', ideasRouter);
 
 // Create HTTP server
 const server = createServer(app);
@@ -122,6 +125,14 @@ facilitatorWss.on('connection', (ws, req) => {
   facilitatorHandler.handleConnection(ws, req);
 });
 
+// Create WebSocket server for idea agent chat (JSON-based protocol)
+const ideaAgentWss = new WebSocketServer({ noServer: true });
+const ideaAgentHandler = new IdeaAgentWebSocketHandler(yjsHandler);
+
+ideaAgentWss.on('connection', (ws, req) => {
+  ideaAgentHandler.handleConnection(ws, req);
+});
+
 // Export workspace handler for use in routes
 export { workspaceHandler };
 
@@ -130,6 +141,7 @@ setDocumentsWorkspaceHandler(workspaceHandler);
 setChatroomsWorkspaceHandler(workspaceHandler);
 setMCPToolsWorkspaceHandler(workspaceHandler);
 setWorkspacesWsHandler(workspaceHandler);
+setIdeasWorkspaceHandler(workspaceHandler);
 
 // Mount diagnostics router (no auth required)
 app.use('/api/diagnostics', createDiagnosticsRouter(yjsHandler, facilitatorHandler.getService()));
@@ -175,6 +187,11 @@ server.on('upgrade', (request, socket, head) => {
     facilitatorWss.handleUpgrade(request, socket, head, (ws) => {
       facilitatorWss.emit('connection', ws, request);
     });
+  } else if (pathname === '/idea-agent-ws') {
+    // Idea agent chat WebSocket
+    ideaAgentWss.handleUpgrade(request, socket, head, (ws) => {
+      ideaAgentWss.emit('connection', ws, request);
+    });
   } else {
     socket.destroy();
   }
@@ -184,18 +201,28 @@ server.on('upgrade', (request, socket, head) => {
 const discoveryService = new DiscoveryService();
 
 // Start server
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
   console.log(`Ideate server running on http://localhost:${PORT}`);
   console.log(`WebSocket (legacy) available at ws://localhost:${PORT}/ws`);
   console.log(`WebSocket (Yjs) available at ws://localhost:${PORT}/yjs`);
   console.log(`WebSocket (Chat) available at ws://localhost:${PORT}/chat-ws`);
   console.log(`WebSocket (Workspace) available at ws://localhost:${PORT}/workspace-ws`);
   console.log(`WebSocket (Facilitator) available at ws://localhost:${PORT}/facilitator-ws`);
+  console.log(`WebSocket (IdeaAgent) available at ws://localhost:${PORT}/idea-agent-ws`);
   console.log(`Diagnostics API at http://localhost:${PORT}/api/diagnostics`);
   console.log(`Diagnostics WebSocket at ws://localhost:${PORT}/diagnostics-ws`);
 
   // Start mDNS discovery
   discoveryService.start();
+
+  // Initialize idea agent (pre-generate greetings for instant response)
+  console.log('[Startup] Initializing Idea Agent greeting cache...');
+  try {
+    await ideaAgentHandler.initialize();
+    console.log('[Startup] Idea Agent greeting cache ready');
+  } catch (error) {
+    console.error('[Startup] Failed to initialize Idea Agent greetings:', error);
+  }
 });
 
 // Graceful shutdown

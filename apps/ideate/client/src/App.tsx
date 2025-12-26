@@ -2,6 +2,7 @@ import { Router, Routes, Route } from '@ui-kit/router';
 import { AuthProvider } from './contexts/AuthContext';
 import { DocumentProvider } from './contexts/DocumentContext';
 import { ChatProvider } from './contexts/ChatContext';
+import { IdeasProvider } from './contexts/IdeasContext';
 import { NetworkProvider } from './contexts/NetworkContext';
 import { SessionProvider } from './contexts/SessionContext';
 import { WorkspaceProvider } from './contexts/WorkspaceContext';
@@ -21,6 +22,7 @@ import { FacilitatorSettings } from './pages/FacilitatorSettings';
 import { PersonaEditor } from './pages/PersonaEditor';
 import { Workspaces } from './pages/Workspaces';
 import { WorkspaceDetail } from './pages/WorkspaceDetail';
+import { Ideas } from './pages/Ideas';
 
 // Layouts
 import { AppLayout } from './components/AppLayout/AppLayout';
@@ -33,31 +35,35 @@ export function App() {
           <FacilitatorProvider>
             <DocumentProvider>
               <ChatProvider>
-                <WorkspaceProvider>
-                  <NetworkProvider>
-                    <Routes>
-                      {/* Public routes */}
-                      <Route path="/" component={Landing} />
-                      <Route path="/auth" component={Auth} />
-                      <Route path="/join/:token" component={JoinWorkspace} />
-                      <Route path="/diagnostics" component={Diagnostics} />
+                <IdeasProvider>
+                  <WorkspaceProvider>
+                    <NetworkProvider>
+                      <Routes>
+                        {/* Public routes */}
+                        <Route path="/" component={Landing} />
+                        <Route path="/auth" component={Auth} />
+                        <Route path="/join/:token" component={JoinWorkspace} />
+                        <Route path="/diagnostics" component={Diagnostics} />
 
-                      {/* Protected routes with app layout */}
-                      <Route component={AppLayout}>
-                        <Route path="/dashboard" component={Dashboard} />
-                        <Route path="/workspaces" component={Workspaces} />
-                        <Route path="/workspace/:workspaceId" component={WorkspaceDetail} />
-                        <Route path="/doc/:documentId" component={DocumentEditor} />
-                        <Route path="/chat/:chatRoomId" component={ChatRoom} />
-                        <Route path="/settings" component={Settings} />
-                        <Route path="/settings/facilitator" component={FacilitatorSettings} />
-                        <Route path="/facilitator-persona" component={PersonaEditor} />
-                      </Route>
-                    </Routes>
-                    {/* Global facilitator overlay */}
-                    <FacilitatorOverlay />
-                  </NetworkProvider>
-                </WorkspaceProvider>
+                        {/* Protected routes with app layout */}
+                        <Route component={AppLayout}>
+                          <Route path="/dashboard" component={Dashboard} />
+                          <Route path="/workspaces" component={Workspaces} />
+                          <Route path="/workspace/:workspaceId" component={WorkspaceDetail} />
+                          <Route path="/workspace/:workspaceId/ideas" component={Ideas} />
+                          <Route path="/ideas" component={Ideas} />
+                          <Route path="/doc/:documentId" component={DocumentEditor} />
+                          <Route path="/chat/:chatRoomId" component={ChatRoom} />
+                          <Route path="/settings" component={Settings} />
+                          <Route path="/settings/facilitator" component={FacilitatorSettings} />
+                          <Route path="/facilitator-persona" component={PersonaEditor} />
+                        </Route>
+                      </Routes>
+                      {/* Global facilitator overlay */}
+                      <FacilitatorOverlay />
+                    </NetworkProvider>
+                  </WorkspaceProvider>
+                </IdeasProvider>
               </ChatProvider>
             </DocumentProvider>
           </FacilitatorProvider>

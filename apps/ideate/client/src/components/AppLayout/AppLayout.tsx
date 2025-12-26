@@ -7,6 +7,7 @@ import { MoonIcon } from '@ui-kit/icons/MoonIcon';
 import { SunMoonIcon } from '@ui-kit/icons/SunMoonIcon';
 import { FileIcon } from '@ui-kit/icons/FileIcon';
 import { FolderIcon } from '@ui-kit/icons/FolderIcon';
+import { BoardIcon } from '@ui-kit/icons/BoardIcon';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSession } from '../../contexts/SessionContext';
 import styles from './AppLayout.module.css';
@@ -25,6 +26,7 @@ export function AppLayout() {
 
   // Active state for nav buttons
   const isDashboardActive = useIsActive('/dashboard');
+  const isIdeasActive = useIsActive('/ideas');
   const isWorkspacesActive = useIsActive('/workspaces');
 
   const handleSignOut = async () => {
@@ -47,6 +49,13 @@ export function AppLayout() {
               icon={<FileIcon />}
             >
               Documents
+            </Button>
+            <Button
+              href="/ideas"
+              variant={isIdeasActive ? 'primary' : 'ghost'}
+              icon={<BoardIcon />}
+            >
+              Ideas
             </Button>
             <Button
               href="/workspaces"
