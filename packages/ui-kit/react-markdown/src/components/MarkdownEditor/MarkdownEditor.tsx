@@ -99,10 +99,14 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
     // Additional extensions for co-authors + external extensions (must be included in initial state)
     // When using Yjs (disableBuiltInHistory=true), yCollab handles cursor sync internally,
     // so we skip our custom coAuthorExtension to avoid conflicts
+    // IMPORTANT: Use stable reference to avoid extension reconfiguration which breaks ySync
     const additionalExtensions = useMemo(
-      () => disableBuiltInHistory
-        ? [...externalExtensions]  // yCollab handles cursors via awareness
-        : [coAuthorExtension, ...externalExtensions],
+      () => {
+        console.log('[MarkdownEditor] Creating additionalExtensions, externalExtensions count:', externalExtensions.length);
+        return disableBuiltInHistory
+          ? [...externalExtensions]  // yCollab handles cursors via awareness
+          : [coAuthorExtension, ...externalExtensions];
+      },
       [externalExtensions, disableBuiltInHistory]
     );
 

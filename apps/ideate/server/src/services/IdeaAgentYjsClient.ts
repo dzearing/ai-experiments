@@ -1,4 +1,4 @@
-import type * as Y from 'yjs';
+import * as Y from 'yjs';
 import type { YjsCollaborationHandler } from '../websocket/YjsCollaborationHandler.js';
 import type { DocumentEdit } from './IdeaAgentService.js';
 
@@ -144,6 +144,9 @@ export class IdeaAgentYjsClient {
     // Set initial cursor position
     this.updateCursor(roomName, pos);
 
+    // Log start of streaming
+    console.log(`[IdeaAgentYjsClient] Starting to stream ${content.length} chars to room "${roomName}"`);
+
     // Stream each character
     for (let i = 0; i < content.length; i++) {
       const char = content[i];
@@ -157,6 +160,11 @@ export class IdeaAgentYjsClient {
 
       // Progress callback
       onProgress?.(i + 1, content.length);
+
+      // Log progress every 100 chars
+      if ((i + 1) % 100 === 0) {
+        console.log(`[IdeaAgentYjsClient] Streamed ${i + 1}/${content.length} chars`);
+      }
 
       // Small delay for visual effect (not too slow)
       if (i < content.length - 1) {
@@ -187,16 +195,21 @@ export class IdeaAgentYjsClient {
 
   /**
    * Update the agent's cursor position.
+   * Converts absolute position to Yjs relative position for proper yCollab cursor display.
    */
   updateCursor(roomName: string, position: number): void {
     const session = this.sessions.get(roomName);
     if (!session) return;
 
+    // Convert absolute position to relative position for yCollab compatibility
+    // yCollab expects RelativePosition objects, not raw integer positions
+    const relativePos = Y.createRelativePositionFromTypeIndex(session.text, position);
+
     this.yjsHandler.setAgentAwareness(
       roomName,
       session.clientId,
       IdeaAgentYjsClient.AGENT_USER,
-      { anchor: position, head: position }
+      { anchor: relativePos, head: relativePos }
     );
   }
 

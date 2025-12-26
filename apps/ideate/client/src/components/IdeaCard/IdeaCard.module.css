@@ -78,14 +78,19 @@
 .tags {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-1);
+  gap: 4px;
   align-items: center;
 }
 
 .tagOverflow {
-  font-size: var(--text-sm);
+  font-size: 10px;
   color: var(--base-fg-soft);
   font-weight: var(--weight-medium);
+}
+
+/* Updated timestamp */
+.updatedAt {
+  margin-top: var(--space-1);
 }
 
 /* Progress */
@@ -112,31 +117,8 @@
 .footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-top: var(--space-1);
-}
-
-/* Rating Dots */
-.rating {
-  display: flex;
-  gap: 3px;
-}
-
-.ratingDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--base-border);
-}
-
-.ratingDot.filled {
-  background: var(--base-fg-primary);
-}
-
-/* Badges */
-.badges {
-  display: flex;
   gap: var(--space-1);
+  margin-top: var(--space-1);
 }
 
 .chatBadge {

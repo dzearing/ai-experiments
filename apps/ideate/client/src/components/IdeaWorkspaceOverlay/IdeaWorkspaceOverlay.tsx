@@ -185,6 +185,12 @@ export function IdeaWorkspaceOverlay({
   const [isBackdropVisible, setIsBackdropVisible] = useState(open);
   const chatInputRef = useRef<ChatInputRef>(null);
 
+  // Memoized handler for local editor changes
+  // Using a stable callback prevents extension reconfiguration on every render
+  const handleEditorChange = useCallback((newContent: string) => {
+    setContent(newContent);
+  }, []);
+
   // User color for Yjs awareness
   const userColor = useMemo(() => {
     // Generate a consistent color from user ID
@@ -575,12 +581,7 @@ export function IdeaWorkspaceOverlay({
                     <MarkdownCoEditor
                       key={`editor-${documentId}`}
                       value={content}
-                      onChange={(newContent) => {
-                        // Fallback sync: If Yjs observer doesn't fire, this ensures state updates
-                        if (newContent !== content) {
-                          setContent(newContent);
-                        }
-                      }}
+                      onChange={handleEditorChange}
                       defaultMode={viewMode}
                       onModeChange={setViewMode}
                       placeholder="Start writing your idea..."

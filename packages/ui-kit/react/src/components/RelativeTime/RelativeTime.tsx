@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, type HTMLAttributes } from 'react';
+import { useState, useEffect, useCallback, useMemo, type HTMLAttributes } from 'react';
 import { Tooltip } from '../Tooltip';
 import {
   formatRelativeTime,
@@ -108,13 +108,13 @@ export function RelativeTime({
   className,
   ...props
 }: RelativeTimeProps) {
-  // Normalize timestamp to Date
-  const date =
-    timestamp instanceof Date
-      ? timestamp
-      : typeof timestamp === 'number'
-        ? new Date(timestamp)
-        : new Date(timestamp);
+  // Normalize timestamp to Date - memoize to prevent infinite re-renders
+  const date = useMemo(() => {
+    if (timestamp instanceof Date) return timestamp;
+    return typeof timestamp === 'number'
+      ? new Date(timestamp)
+      : new Date(timestamp);
+  }, [timestamp instanceof Date ? timestamp.getTime() : timestamp]);
 
   // State for the formatted string
   const [formattedTime, setFormattedTime] = useState(() =>

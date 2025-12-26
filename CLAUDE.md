@@ -145,7 +145,12 @@ The application requires workspace selection before functionality is available. 
 
 ### Server Restart Required
 
-**CRITICAL**: When modifying ANY server files (`/apps/v1/server/*.js`), you MUST manually restart the server. The development server does not auto-restart. Always remind users: **"Please restart your server to apply these changes"**
+**CRITICAL**: When modifying ANY Node.js server files (e.g., `/apps/*/server/`), you MUST restart the server yourself. Node servers do not auto-restart like client dev servers with hot reload.
+
+**You are responsible for restarting the server** - do not ask the user to restart. Use the appropriate command to restart the server process after making server-side changes:
+- Kill any existing server process if needed
+- Start the server again with the appropriate dev command
+- Verify the server is running before continuing
 
 ### Dialog Patterns
 

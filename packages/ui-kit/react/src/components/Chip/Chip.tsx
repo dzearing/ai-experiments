@@ -10,7 +10,7 @@ import styles from './Chip.module.css';
  */
 
 export type ChipVariant = 'default' | 'primary' | 'outline' | 'success' | 'warning' | 'error' | 'info';
-export type ChipSize = 'sm' | 'md';
+export type ChipSize = 'xs' | 'sm' | 'md';
 
 export interface ChipProps {
   /** Chip label */

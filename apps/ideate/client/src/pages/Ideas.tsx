@@ -114,7 +114,13 @@ export function Ideas() {
     setFilter({ ...filter, source: value as IdeaSource | 'all' });
   };
 
-  const handleCardClick = useCallback(async (ideaId: string) => {
+  // Select a card (single click or keyboard navigation)
+  const handleCardSelect = useCallback((ideaId: string) => {
+    setSelectedIdeaId(ideaId);
+  }, [setSelectedIdeaId]);
+
+  // Open a card (double click or Enter key)
+  const handleCardOpen = useCallback(async (ideaId: string) => {
     setSelectedIdeaId(ideaId);
     setIsLoadingIdea(true);
 
@@ -189,7 +195,8 @@ export function Ideas() {
         <div className={styles.boardContainer}>
           <KanbanBoard
             workspaceId={workspaceId}
-            onCardClick={handleCardClick}
+            onCardSelect={handleCardSelect}
+            onCardOpen={handleCardOpen}
             selectedIdeaId={selectedIdeaId}
             onAddIdea={handleNewIdea}
           />

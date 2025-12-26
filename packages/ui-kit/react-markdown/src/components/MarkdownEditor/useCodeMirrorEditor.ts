@@ -90,6 +90,8 @@ export function useCodeMirrorEditor(options: UseCodeMirrorEditorOptions): UseCod
   const isInternalChange = useRef(false);
   // Track the last value we synchronized to prevent loops
   const lastSyncedValue = useRef(value);
+  // Track if initial Yjs sync has occurred (for disableBuiltInHistory mode)
+  const hasReceivedInitialYjsContent = useRef(false);
 
   // Build base extensions (memoized to prevent recreation)
   const baseExtensions = useMemo(() => {
@@ -227,6 +229,8 @@ export function useCodeMirrorEditor(options: UseCodeMirrorEditorOptions): UseCod
       newView.destroy();
       viewRef.current = null;
       setView(null);
+      // Reset Yjs initial sync flag for next mount
+      hasReceivedInitialYjsContent.current = false;
     };
   }, []); // Only run once on mount
 
@@ -235,10 +239,6 @@ export function useCodeMirrorEditor(options: UseCodeMirrorEditorOptions): UseCod
     const view = viewRef.current;
     if (!view) return;
 
-    // Skip when using external content source (e.g., Yjs)
-    // The external source manages all content updates
-    if (disableBuiltInHistory) return;
-
     // Skip if this change originated from inside the editor
     if (isInternalChange.current) return;
 
@@ -246,6 +246,21 @@ export function useCodeMirrorEditor(options: UseCodeMirrorEditorOptions): UseCod
     const currentValue = view.state.doc.toString();
     if (value === currentValue) return;
     if (value === lastSyncedValue.current) return;
+
+    // When using external content source (e.g., Yjs), only allow the initial sync.
+    // After initial sync, ySync extension handles all content updates.
+    if (disableBuiltInHistory) {
+      // Skip if we've already received initial Yjs content
+      if (hasReceivedInitialYjsContent.current) return;
+
+      // Only sync if we're receiving meaningful content (not template/empty)
+      // This handles the case where Y.Text syncs and has actual content
+      const isReceivingMeaningfulContent = value.length > currentValue.length && value.trim().length > 0;
+      if (!isReceivingMeaningfulContent) return;
+
+      // Mark that we've received initial Yjs content
+      hasReceivedInitialYjsContent.current = true;
+    }
 
     // External change detected - update editor while preserving cursor
     lastSyncedValue.current = value;

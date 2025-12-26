@@ -1,5 +1,5 @@
 import { useCallback, useState, type DragEvent } from 'react';
-import { IconButton } from '@ui-kit/react';
+import { IconButton, FocusZone } from '@ui-kit/react';
 import { AddIcon } from '@ui-kit/icons/AddIcon';
 import { IdeaCard } from '../IdeaCard';
 import type { IdeaStatus, IdeaMetadata } from '../../types/idea';
@@ -10,7 +10,10 @@ interface KanbanLaneProps {
   title: string;
   ideas: IdeaMetadata[];
   onDrop: (ideaId: string, targetStatus: IdeaStatus) => void;
-  onCardClick: (ideaId: string) => void;
+  /** Called when a card is selected (single click or keyboard focus) */
+  onCardSelect: (ideaId: string) => void;
+  /** Called when a card is opened (double click or Enter) */
+  onCardOpen: (ideaId: string) => void;
   selectedIdeaId: string | null;
   showAddButton: boolean;
   onAddIdea?: () => void;
@@ -22,7 +25,8 @@ export function KanbanLane({
   title,
   ideas,
   onDrop,
-  onCardClick,
+  onCardSelect,
+  onCardOpen,
   selectedIdeaId,
   showAddButton,
   onAddIdea,
@@ -78,18 +82,27 @@ export function KanbanLane({
         )}
       </header>
 
-      <div
+      <FocusZone
+        direction="vertical"
         className={`${styles.laneContent} ${isDragOver ? styles.dragOver : ''}`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
+        onFocusChange={(element) => {
+          // Select the card when it receives focus via keyboard
+          const ideaId = element.getAttribute('data-idea-id');
+          if (ideaId) {
+            onCardSelect(ideaId);
+          }
+        }}
       >
         {ideas.map((idea) => (
           <IdeaCard
             key={idea.id}
             idea={idea}
             isSelected={idea.id === selectedIdeaId}
-            onClick={() => onCardClick(idea.id)}
+            onSelect={() => onCardSelect(idea.id)}
+            onOpen={() => onCardOpen(idea.id)}
           />
         ))}
 
@@ -98,7 +111,7 @@ export function KanbanLane({
             Drop ideas here
           </div>
         )}
-      </div>
+      </FocusZone>
     </div>
   );
 }

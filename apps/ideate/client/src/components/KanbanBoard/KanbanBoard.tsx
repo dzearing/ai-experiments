@@ -6,7 +6,10 @@ import styles from './KanbanBoard.module.css';
 
 interface KanbanBoardProps {
   workspaceId?: string;
-  onCardClick: (ideaId: string) => void;
+  /** Called when a card is selected (single click or keyboard) */
+  onCardSelect: (ideaId: string) => void;
+  /** Called when a card is opened (double click or Enter) */
+  onCardOpen: (ideaId: string) => void;
   selectedIdeaId: string | null;
   onAddIdea?: () => void;
 }
@@ -20,7 +23,8 @@ const LANES: { status: IdeaStatus; title: string; showAddButton: boolean }[] = [
 
 export function KanbanBoard({
   workspaceId,
-  onCardClick,
+  onCardSelect,
+  onCardOpen,
   selectedIdeaId,
   onAddIdea,
 }: KanbanBoardProps) {
@@ -42,7 +46,8 @@ export function KanbanBoard({
           title={title}
           ideas={ideasByStatus[status]}
           onDrop={handleDrop}
-          onCardClick={onCardClick}
+          onCardSelect={onCardSelect}
+          onCardOpen={onCardOpen}
           selectedIdeaId={selectedIdeaId}
           showAddButton={showAddButton}
           onAddIdea={onAddIdea}

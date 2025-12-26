@@ -1,5 +1,5 @@
-import { useCallback, type DragEvent } from 'react';
-import { Card, Chip, Progress } from '@ui-kit/react';
+import { useCallback, type DragEvent, type KeyboardEvent } from 'react';
+import { Card, Chip, Progress, RelativeTime } from '@ui-kit/react';
 import { StarIcon } from '@ui-kit/icons/StarIcon';
 import { ChatIcon } from '@ui-kit/icons/ChatIcon';
 import { ClockIcon } from '@ui-kit/icons/ClockIcon';
@@ -9,7 +9,10 @@ import styles from './IdeaCard.module.css';
 interface IdeaCardProps {
   idea: IdeaMetadata;
   isSelected: boolean;
-  onClick: () => void;
+  /** Called on single click - selects the card */
+  onSelect: () => void;
+  /** Called on double click or Enter - opens the card */
+  onOpen: () => void;
 }
 
 const MAX_VISIBLE_TAGS = 3;
@@ -17,7 +20,8 @@ const MAX_VISIBLE_TAGS = 3;
 export function IdeaCard({
   idea,
   isSelected,
-  onClick,
+  onSelect,
+  onOpen,
 }: IdeaCardProps) {
   const {
     id,
@@ -25,9 +29,9 @@ export function IdeaCard({
     summary,
     tags,
     source,
-    rating,
     status,
     execution,
+    updatedAt,
   } = idea;
 
   // Filter out priority tags - only show category tags
@@ -43,12 +47,23 @@ export function IdeaCard({
     e.dataTransfer.effectAllowed = 'move';
   }, [id, status]);
 
+  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onOpen();
+    }
+  }, [onOpen]);
+
   return (
     <Card
       className={`${styles.ideaCard} ${isSelected ? `${styles.selected} surface primary` : ''}`}
-      onClick={onClick}
+      onClick={onSelect}
+      onDoubleClick={onOpen}
+      onKeyDown={handleKeyDown}
       selected={isSelected}
+      tabIndex={0}
       data-testid="idea-card"
+      data-idea-id={id}
     >
       <div
         className={styles.cardInner}
@@ -75,7 +90,7 @@ export function IdeaCard({
         {visibleTags.length > 0 && (
           <div className={styles.tags}>
             {visibleTags.map((tag) => (
-              <Chip key={tag} variant="default" size="sm">
+              <Chip key={tag} variant="default" size="xs">
                 {tag}
               </Chip>
             ))}
@@ -84,6 +99,15 @@ export function IdeaCard({
             )}
           </div>
         )}
+
+        {/* Last modified time */}
+        <RelativeTime
+          timestamp={updatedAt}
+          size="xs"
+          color="soft"
+          format="short"
+          className={styles.updatedAt}
+        />
 
         {/* Progress (for executing ideas) */}
         {isExecuting && execution && (
@@ -98,27 +122,14 @@ export function IdeaCard({
           </div>
         )}
 
-        {/* Footer */}
-        <div className={styles.footer}>
-          {/* Rating Dots */}
-          <div className={styles.rating}>
-            {[1, 2, 3, 4].map((dot) => (
-              <span
-                key={dot}
-                className={`${styles.ratingDot} ${dot <= rating ? styles.filled : ''}`}
-              />
-            ))}
+        {/* Footer - only show if there are badges */}
+        {isExecuting && execution?.chatRoomId && (
+          <div className={styles.footer}>
+            <span className={styles.chatBadge} title="Has Chat Room">
+              <ChatIcon />
+            </span>
           </div>
-
-          {/* Badges */}
-          <div className={styles.badges}>
-            {isExecuting && execution?.chatRoomId && (
-              <span className={styles.chatBadge} title="Has Chat Room">
-                <ChatIcon />
-              </span>
-            )}
-          </div>
-        </div>
+        )}
       </div>
     </Card>
   );

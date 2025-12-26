@@ -8,6 +8,13 @@
   transition: all var(--duration-fast) var(--ease-default);
 }
 
+.chip.xs {
+  padding: 1px 6px;
+  font-size: 10px;
+  height: 18px;
+  gap: 2px;
+}
+
 .chip.sm {
   padding: 2px var(--space-2);
   font-size: var(--text-xs);

@@ -526,8 +526,12 @@ export class YjsCollaborationHandler extends EventEmitter {
       // Set up doc update observer for broadcasting
       doc.on('update', (update: Uint8Array, origin: unknown) => {
         // Don't broadcast if origin is a WebSocket (to avoid loops)
-        if (origin instanceof WebSocket) return;
+        if (origin instanceof WebSocket) {
+          console.log(`[Yjs] Doc update from WebSocket, skipping broadcast for room "${roomName}"`);
+          return;
+        }
 
+        console.log(`[Yjs] Doc update from non-WebSocket origin in room "${roomName}", update size: ${update.length}`);
         this.broadcastUpdate(room!, update);
       });
 
@@ -660,10 +664,17 @@ export class YjsCollaborationHandler extends EventEmitter {
    * Broadcast an update to all clients in a room.
    */
   private broadcastUpdate(room: YjsRoom, update: Uint8Array): void {
+    if (room.clients.size === 0) {
+      console.log(`[Yjs] broadcastUpdate: No clients in room "${room.name}", skipping`);
+      return;
+    }
+
     const encoder = encoding.createEncoder();
     encoding.writeVarUint(encoder, MESSAGE_SYNC);
     syncProtocol.writeUpdate(encoder, update);
     const message = encoding.toUint8Array(encoder);
+
+    console.log(`[Yjs] Broadcasting update to ${room.clients.size} clients in room "${room.name}", size: ${update.length}`);
 
     for (const client of room.clients) {
       this.send(client.ws, message);
@@ -1051,17 +1062,24 @@ export class YjsCollaborationHandler extends EventEmitter {
   /**
    * Set awareness state for an AI agent.
    * This makes the agent's cursor visible to other users.
+   *
+   * The cursor should use Yjs RelativePosition objects (from Y.createRelativePositionFromTypeIndex)
+   * for proper display by yCollab on the client side.
    */
   setAgentAwareness(
     roomName: string,
     clientId: number,
     user: { name: string; color: string },
-    cursor?: { anchor: number; head: number }
+    cursor?: { anchor: Y.RelativePosition; head: Y.RelativePosition }
   ): void {
     const room = this.rooms.get(roomName);
-    if (!room) return;
+    if (!room) {
+      console.log(`[Yjs] setAgentAwareness: room "${roomName}" not found`);
+      return;
+    }
 
     // Create awareness state for the agent
+    // yCollab expects: { user: { name, color }, cursor: { anchor: RelativePosition, head: RelativePosition } | null }
     const state: Record<string, unknown> = { user };
     if (cursor) {
       state.cursor = cursor;
@@ -1075,6 +1093,11 @@ export class YjsCollaborationHandler extends EventEmitter {
     const currentMeta = room.awareness.meta.get(clientId);
     const clock = currentMeta ? currentMeta.clock + 1 : 1;
     room.awareness.meta.set(clientId, { clock, lastUpdated: Date.now() });
+
+    // Log every 100th update to avoid spam
+    if (clock % 100 === 1) {
+      console.log(`[Yjs] setAgentAwareness: broadcasting cursor for clientId ${clientId} in room "${roomName}", clients: ${room.clients.size}`);
+    }
 
     // Broadcast the awareness update to all clients
     this.broadcastAwareness(room, [clientId]);
