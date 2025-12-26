@@ -3,86 +3,9 @@ import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { IndexeddbPersistence } from 'y-indexeddb';
 import { yCollab, yUndoManagerKeymap } from 'y-codemirror.next';
-import { keymap, EditorView, ViewPlugin, ViewUpdate } from '@codemirror/view';
-import { Transaction } from '@codemirror/state';
+import { keymap } from '@codemirror/view';
 import type { Extension } from '@codemirror/state';
 import { getContrastingTextColor } from '@ui-kit/core';
-
-/**
- * Custom ViewPlugin that syncs Y.Text changes to CodeMirror.
- * This is a workaround for when ySync from y-codemirror.next doesn't work correctly.
- */
-function createYTextSyncPlugin(ytext: Y.Text): Extension {
-  return ViewPlugin.fromClass(
-    class {
-      private view: EditorView;
-      private ytext: Y.Text;
-      private observer: (event: Y.YTextEvent, transaction: Y.Transaction) => void;
-      private isApplyingRemote = false;
-
-      constructor(view: EditorView) {
-        this.view = view;
-        this.ytext = ytext;
-
-        this.observer = (event: Y.YTextEvent, transaction: Y.Transaction) => {
-          // Skip if this change came from our own dispatch
-          if (this.isApplyingRemote) return;
-
-          // Skip if this is a local change (origin is our plugin or the ySyncConfig)
-          // Check for various origins that indicate local changes
-          const origin = transaction.origin;
-          if (origin && typeof origin === 'object' && 'ytext' in origin) {
-            // This is from ySync, skip to avoid double-applying
-            return;
-          }
-
-          // Build CodeMirror changes from Yjs delta
-          const changes: { from: number; to: number; insert: string }[] = [];
-          let pos = 0;
-
-          for (const op of event.delta) {
-            if (op.retain !== undefined) {
-              pos += op.retain;
-            } else if (op.insert !== undefined) {
-              const text = typeof op.insert === 'string' ? op.insert : '';
-              changes.push({ from: pos, to: pos, insert: text });
-              pos += text.length;
-            } else if (op.delete !== undefined) {
-              changes.push({ from: pos, to: pos + op.delete, insert: '' });
-            }
-          }
-
-          if (changes.length > 0) {
-            this.isApplyingRemote = true;
-            try {
-              this.view.dispatch({
-                changes,
-                annotations: [Transaction.remote.of(true)],
-              });
-            } finally {
-              this.isApplyingRemote = false;
-            }
-          }
-        };
-
-        this.ytext.observe(this.observer);
-      }
-
-      update(update: ViewUpdate) {
-        // Handle local changes: send them to Y.Text
-        // Skip if this is a remote change or if we're applying remote changes
-        if (this.isApplyingRemote) return;
-        if (update.transactions.some(tr => tr.annotation(Transaction.remote))) return;
-
-        // This is handled by ySync, so we don't need to do anything here
-      }
-
-      destroy() {
-        this.ytext.unobserve(this.observer);
-      }
-    }
-  );
-}
 
 /**
  * Convert an rgb/rgba color string to hex format.
@@ -538,12 +461,10 @@ export function useYjsCollaboration(
       // CRITICAL: Also set extensions when provider already exists
       // This handles StrictMode remounts and component re-renders
       // NOTE: yCollab() returns an ARRAY - must spread to avoid nested arrays
-      const customSyncPlugin = createYTextSyncPlugin(text);
       const yCollabExts = yCollab(text, wsProvider.awareness, { undoManager }) as Extension[];
       const existingExtensions = [
         ...yCollabExts,
         keymap.of(yUndoManagerKeymap),
-        customSyncPlugin, // Add our custom sync plugin
       ];
       setExtensionsOnce(existingExtensions);
 
@@ -674,14 +595,9 @@ export function useYjsCollaboration(
       // We must spread it to avoid nested arrays which CodeMirror won't properly handle
       const yCollabExtensions = yCollab(text, wsProvider.awareness, { undoManager }) as Extension[];
 
-      // Add custom Y.Text sync plugin as a fallback for when ySync doesn't work
-      // This directly observes Y.Text and dispatches changes to CodeMirror
-      const customSyncPlugin = createYTextSyncPlugin(text);
-
       const newExtensions = [
         ...yCollabExtensions,
         keymap.of(yUndoManagerKeymap),
-        customSyncPlugin, // Add our custom sync plugin
       ];
       setExtensionsOnce(newExtensions);
 
@@ -788,20 +704,17 @@ export function useYjsCollaboration(
     } else {
       // No server - create extensions without awareness
       // NOTE: yCollab() returns an ARRAY - must spread to avoid nested arrays
-      const customSyncPlugin = createYTextSyncPlugin(text);
       const yCollabExtsLocal = yCollab(text, null, { undoManager }) as Extension[];
       const newExtensions = [
         ...yCollabExtsLocal,
         keymap.of(yUndoManagerKeymap),
-        customSyncPlugin, // Add our custom sync plugin
       ];
       setExtensionsOnce(newExtensions);
     }
 
     // Observe text changes
     const textObserver = () => {
-      const content = text.toString();
-      onChangeRef.current?.(content);
+      onChangeRef.current?.(text.toString());
     };
     text.observe(textObserver);
 

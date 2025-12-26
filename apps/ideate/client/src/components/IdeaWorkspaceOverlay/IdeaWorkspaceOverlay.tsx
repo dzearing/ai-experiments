@@ -160,15 +160,10 @@ export function IdeaWorkspaceOverlay({
 
   const isNewIdea = !idea;
 
-  // Session ID for new ideas - regenerate when overlay opens for a new idea
-  const [sessionId, setSessionId] = useState(() => generateSessionId());
-
-  // Regenerate session ID when overlay opens for a new idea
-  useEffect(() => {
-    if (open && isNewIdea) {
-      setSessionId(generateSessionId());
-    }
-  }, [open, isNewIdea]);
+  // Session ID for new ideas - generated once per component instance
+  // We use a ref to ensure the session ID is stable during the overlay lifecycle
+  // A new session ID is only created when the component remounts (e.g., navigating away and back)
+  const [sessionId] = useState(() => generateSessionId());
 
   // Document ID for Yjs room: idea-doc-{ideaId} or idea-doc-new-{sessionId}
   const documentId = useMemo(() => {
@@ -578,9 +573,10 @@ export function IdeaWorkspaceOverlay({
                 <div className={styles.editorPane}>
                   <div className={styles.editorContent}>
                     {/* Key based on documentId ensures fresh editor for each idea */}
+                    {/* Use defaultValue (uncontrolled) when using Yjs to avoid conflicts with ySync */}
                     <MarkdownCoEditor
                       key={`editor-${documentId}`}
-                      value={content}
+                      defaultValue={content}
                       onChange={handleEditorChange}
                       defaultMode={viewMode}
                       onModeChange={setViewMode}

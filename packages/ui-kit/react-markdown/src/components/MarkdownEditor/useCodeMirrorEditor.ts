@@ -9,8 +9,8 @@
  */
 
 import { useEffect, useRef, useMemo, useState } from 'react';
-import { EditorState, Transaction, Compartment, type Extension } from '@codemirror/state';
-import { EditorView, lineNumbers, drawSelection, placeholder as placeholderExt, keymap } from '@codemirror/view';
+import { EditorState, Transaction, Compartment, type Extension, Annotation } from '@codemirror/state';
+import { EditorView, lineNumbers, drawSelection, placeholder as placeholderExt, keymap, ViewPlugin, ViewUpdate } from '@codemirror/view';
 import { markdown } from '@codemirror/lang-markdown';
 import { languages } from '@codemirror/language-data';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
@@ -21,6 +21,76 @@ import { baseSearchExtension, createSearchKeybindings } from './extensions/searc
 import { foldingExtension, foldAll, unfoldAll } from './extensions/folding';
 import { setCoAuthorsEffect, getMappedCoAuthors } from './useCoAuthorDecorations';
 import type { MarkdownEditorRef, RemoteEdit, CoAuthor } from './types';
+
+// Debug logging for Yjs tile errors - set to true to enable
+const DEBUG_YJS_UPDATES = true;
+
+// ySync annotation from y-codemirror.next
+const ySyncAnnotation = Annotation.define<unknown>();
+
+// Debug extension that logs transaction details
+const yjsDebugExtension = ViewPlugin.fromClass(class {
+  private updateCount = 0;
+  private lastDocLength = 0;
+  private lastLineCount = 0;
+  private isUpdating = false;
+
+  constructor(view: EditorView) {
+    this.lastDocLength = view.state.doc.length;
+    this.lastLineCount = view.state.doc.lines;
+    if (DEBUG_YJS_UPDATES) {
+      console.log('[YjsDebug] Editor initialized:', {
+        docLength: this.lastDocLength,
+        lineCount: this.lastLineCount
+      });
+    }
+  }
+
+  update(update: ViewUpdate) {
+    if (!DEBUG_YJS_UPDATES) return;
+
+    // Check if we're recursively updating (potential issue)
+    if (this.isUpdating) {
+      console.warn('[YjsDebug] ⚠️ RECURSIVE UPDATE DETECTED!');
+    }
+
+    this.isUpdating = true;
+    this.updateCount++;
+
+    const newDocLength = update.state.doc.length;
+    const newLineCount = update.state.doc.lines;
+
+    // Log each transaction
+    for (const tr of update.transactions) {
+      const isRemote = tr.annotation(ySyncAnnotation) !== undefined;
+      const isAddToHistory = tr.annotation(Transaction.addToHistory);
+      const hasDocChanges = tr.docChanged;
+      const hasSelectionChanges = tr.selection !== undefined;
+
+      // Only log if something interesting happened
+      if (hasDocChanges || this.updateCount % 50 === 0) {
+        console.log(`[YjsDebug] Update #${this.updateCount}:`, {
+          isRemote,
+          isAddToHistory,
+          hasDocChanges,
+          hasSelectionChanges,
+          docLength: `${this.lastDocLength} → ${newDocLength}`,
+          lineCount: `${this.lastLineCount} → ${newLineCount}`,
+          changeDesc: hasDocChanges ? tr.changes.desc.toString() : 'none'
+        });
+      }
+
+      // Warn if doc is growing rapidly (potential infinite loop)
+      if (newDocLength > this.lastDocLength + 1000) {
+        console.warn('[YjsDebug] ⚠️ Large doc growth:', newDocLength - this.lastDocLength, 'chars');
+      }
+    }
+
+    this.lastDocLength = newDocLength;
+    this.lastLineCount = newLineCount;
+    this.isUpdating = false;
+  }
+});
 
 interface UseCodeMirrorEditorOptions {
   /** Initial or controlled value */
@@ -206,6 +276,8 @@ export function useCodeMirrorEditor(options: UseCodeMirrorEditorOptions): UseCod
     const state = EditorState.create({
       doc: initialDoc,
       extensions: [
+        // Debug extension FIRST to catch all updates
+        ...(DEBUG_YJS_UPDATES ? [yjsDebugExtension] : []),
         extensionCompartment.current.of([
           ...baseExtensions,
           updateListener,
@@ -214,10 +286,93 @@ export function useCodeMirrorEditor(options: UseCodeMirrorEditorOptions): UseCod
       ],
     });
 
-    // Create view
+    // Track tile error recovery state
+    let tileErrorCount = 0;
+    let lastTileErrorTime = 0;
+
+    // Create view with error recovery for Yjs tile errors
     const newView = new EditorView({
       state,
       parent: containerRef.current,
+      // Wrap dispatch to catch and recover from tile errors during Yjs sync
+      dispatchTransactions: (trs, view) => {
+        try {
+          if (DEBUG_YJS_UPDATES) {
+            console.log('[YjsDebug] Dispatching', trs.length, 'transactions, doc:', {
+              length: view.state.doc.length,
+              lines: view.state.doc.lines,
+            });
+          }
+          // Call default dispatch
+          view.update(trs);
+          // Reset error count on success
+          tileErrorCount = 0;
+        } catch (error) {
+          // Check if this is the tile error we're trying to recover from
+          const isTileError = error instanceof TypeError &&
+            error.message.includes("Cannot destructure property 'tile'");
+
+          if (isTileError) {
+            const now = Date.now();
+            tileErrorCount++;
+
+            // If we've had multiple tile errors in quick succession, the view is corrupted
+            // Reset the entire view state - this is the nuclear option but ensures recovery
+            if (tileErrorCount >= 3 || (now - lastTileErrorTime < 100 && tileErrorCount >= 2)) {
+              console.warn('[YjsDebug] ⚠️ Multiple tile errors - full state reset');
+
+              // Get the document content from transactions
+              let finalDoc = view.state.doc;
+              for (const tr of trs) {
+                if (tr.docChanged) {
+                  finalDoc = tr.changes.apply(finalDoc);
+                }
+              }
+
+              // Completely recreate editor state with all extensions from the compartment
+              // This is expensive but guarantees recovery from corrupted tile state
+              try {
+                const newState = EditorState.create({
+                  doc: finalDoc.toString(),
+                  extensions: [
+                    extensionCompartment.current.of([
+                      ...baseExtensions,
+                      updateListener,
+                      ...additionalExtensions,
+                    ]),
+                  ],
+                });
+                view.setState(newState);
+                console.log('[YjsDebug] ✅ Full state reset completed, doc length:', finalDoc.length);
+                tileErrorCount = 0;
+              } catch (resetError) {
+                console.error('[YjsDebug] Failed to reset state:', resetError);
+              }
+
+              lastTileErrorTime = now;
+              return;
+            }
+
+            lastTileErrorTime = now;
+            console.warn('[YjsDebug] ⚠️ Tile error caught during Yjs sync, skipping update');
+            if (DEBUG_YJS_UPDATES) {
+              console.warn('[YjsDebug] Tile error count:', tileErrorCount);
+            }
+            return;
+          }
+
+          // For other errors, log context and re-throw
+          if (DEBUG_YJS_UPDATES) {
+            console.error('[YjsDebug] 🚨 ERROR! Context:', {
+              docLength: view.state.doc.length,
+              docLines: view.state.doc.lines,
+              transactionCount: trs.length,
+              error: error instanceof Error ? error.message : 'unknown',
+            });
+          }
+          throw error;
+        }
+      },
     });
 
     viewRef.current = newView;

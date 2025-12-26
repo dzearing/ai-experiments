@@ -565,8 +565,9 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
 
           // Check if on first/last line for multiline mode
           const $from = editor.state.selection.$from;
-          const isOnFirstLine = $from.before($from.depth) <= 1;
-          const isOnLastLine = $from.after($from.depth) >= docSize - 1;
+          // Guard against depth 0 which has no "before" position
+          const isOnFirstLine = $from.depth === 0 || $from.before($from.depth) <= 1;
+          const isOnLastLine = $from.depth === 0 || $from.after($from.depth) >= docSize - 1;
 
           if (key === 'ArrowUp') {
             // In single-line mode, or on first line in multiline mode

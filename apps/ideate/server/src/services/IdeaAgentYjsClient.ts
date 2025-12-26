@@ -49,8 +49,14 @@ export class IdeaAgentYjsClient {
     color: '#8b5cf6', // Purple
   };
 
-  /** Delay between characters when streaming (ms) */
-  private static readonly STREAM_CHAR_DELAY = 10;
+  /** Delay between batches when streaming (ms) */
+  private static readonly STREAM_BATCH_DELAY = 50;
+
+  /** Number of characters per batch when streaming */
+  private static readonly STREAM_BATCH_SIZE = 20;
+
+  /** Update cursor position every N batches (reduces awareness update frequency) */
+  private static readonly CURSOR_UPDATE_INTERVAL = 5;
 
   constructor(yjsHandler: YjsCollaborationHandler) {
     this.yjsHandler = yjsHandler;
@@ -147,30 +153,45 @@ export class IdeaAgentYjsClient {
     // Log start of streaming
     console.log(`[IdeaAgentYjsClient] Starting to stream ${content.length} chars to room "${roomName}"`);
 
-    // Stream each character
-    for (let i = 0; i < content.length; i++) {
-      const char = content[i];
+    const batchSize = IdeaAgentYjsClient.STREAM_BATCH_SIZE;
+    const batchDelay = IdeaAgentYjsClient.STREAM_BATCH_DELAY;
 
-      // Insert character
-      session.text.insert(pos, char);
-      pos++;
+    // Stream in batches to prevent overwhelming CodeMirror's view update system
+    const cursorInterval = IdeaAgentYjsClient.CURSOR_UPDATE_INTERVAL;
+    let batchCount = 0;
 
-      // Update cursor position
-      this.updateCursor(roomName, pos);
+    for (let i = 0; i < content.length; i += batchSize) {
+      // Get the next batch of characters
+      const batch = content.slice(i, Math.min(i + batchSize, content.length));
+
+      // Insert batch as a single operation
+      session.text.insert(pos, batch);
+      pos += batch.length;
+      batchCount++;
+
+      // Update cursor position only every N batches to reduce awareness update frequency
+      // This prevents overwhelming yCollab's decoration system which can cause tile errors
+      if (batchCount % cursorInterval === 0) {
+        this.updateCursor(roomName, pos);
+      }
 
       // Progress callback
-      onProgress?.(i + 1, content.length);
+      const charsInserted = Math.min(i + batchSize, content.length);
+      onProgress?.(charsInserted, content.length);
 
-      // Log progress every 100 chars
-      if ((i + 1) % 100 === 0) {
-        console.log(`[IdeaAgentYjsClient] Streamed ${i + 1}/${content.length} chars`);
+      // Log progress every 200 chars (less frequent logging)
+      if (charsInserted % 200 < batchSize) {
+        console.log(`[IdeaAgentYjsClient] Streamed ${charsInserted}/${content.length} chars`);
       }
 
-      // Small delay for visual effect (not too slow)
-      if (i < content.length - 1) {
-        await this.delay(IdeaAgentYjsClient.STREAM_CHAR_DELAY);
+      // Delay between batches (not after last batch)
+      if (i + batchSize < content.length) {
+        await this.delay(batchDelay);
       }
     }
+
+    // Final cursor update to ensure cursor is at correct end position
+    this.updateCursor(roomName, pos);
 
     console.log(`[IdeaAgentYjsClient] Streamed ${content.length} chars to room "${roomName}"`);
   }

@@ -441,9 +441,15 @@ export const MarkdownCoEditor = forwardRef<MarkdownCoEditorRef, MarkdownCoEditor
               style={!showEditor ? { position: 'absolute', left: '-9999px', opacity: 0 } : undefined}
               aria-hidden={!showEditor}
             >
+              {/* When using Yjs (disableBuiltInHistory), use uncontrolled mode to avoid
+                  conflicts between ySync and React state updates. ySync handles all
+                  document synchronization; React state is only for the preview pane. */}
               <MarkdownEditor
                 ref={editorRef}
-                value={currentMarkdown}
+                {...(disableBuiltInHistory
+                  ? { defaultValue: currentMarkdown }
+                  : { value: currentMarkdown }
+                )}
                 onChange={handleMarkdownChange}
                 readOnly={readOnly}
                 autoFocus={autoFocus && showEditor}
