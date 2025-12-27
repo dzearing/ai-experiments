@@ -272,6 +272,29 @@ export class IdeaService {
   }
 
   /**
+   * Get full idea by ID without auth check.
+   * For server-side use only (e.g., Yjs initialization).
+   */
+  async getIdeaByIdNoAuth(id: string): Promise<Idea | null> {
+    try {
+      const metaContent = await fs.readFile(this.getMetadataPath(id), 'utf-8');
+      const metadata: IdeaMetadata = JSON.parse(metaContent);
+
+      // Try to read description
+      let description: string | undefined;
+      try {
+        description = await fs.readFile(this.getDescriptionPath(id), 'utf-8');
+      } catch {
+        // No description file
+      }
+
+      return { ...metadata, description };
+    } catch {
+      return null;
+    }
+  }
+
+  /**
    * Update an idea.
    */
   async updateIdea(

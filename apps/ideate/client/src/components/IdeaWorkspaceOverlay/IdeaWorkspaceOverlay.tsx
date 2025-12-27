@@ -1,8 +1,8 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Slide, Button, IconButton, SplitPane, Spinner } from '@ui-kit/react';
+import { Slide, Button, IconButton, SplitPane, Spinner, Dialog } from '@ui-kit/react';
 import { TrashIcon } from '@ui-kit/icons/TrashIcon';
-import { ChatPanel, ChatInput, ThinkingIndicator, type ChatInputSubmitData, type ChatInputRef, type ChatPanelMessage } from '@ui-kit/react-chat';
+import { ChatPanel, ChatInput, ThinkingIndicator, MessageQueue, type ChatInputSubmitData, type ChatInputRef, type ChatPanelMessage, type QueuedMessage } from '@ui-kit/react-chat';
 import { MarkdownCoEditor, type ViewMode, type CoAuthor } from '@ui-kit/react-markdown';
 import { useAuth } from '../../contexts/AuthContext';
 import { useIdeas } from '../../contexts/IdeasContext';
@@ -177,6 +177,10 @@ export function IdeaWorkspaceOverlay({
   const [isInitialized, setIsInitialized] = useState(false);
 
   const [isBackdropVisible, setIsBackdropVisible] = useState(open);
+  const [queuedMessages, setQueuedMessages] = useState<QueuedMessage[]>([]);
+  const [inputContent, setInputContent] = useState('');
+  const [showConfirmClose, setShowConfirmClose] = useState(false);
+  const isProcessingQueueRef = useRef(false);
   const chatInputRef = useRef<ChatInputRef>(null);
 
   // Memoized handler for local editor changes
@@ -260,6 +264,7 @@ export function IdeaWorkspaceOverlay({
     addLocalMessage,
     clearHistory,
     updateIdeaContext,
+    cancelRequest,
   } = useIdeaAgent({
     ideaId: idea?.id || null,
     userId: user?.id || '',
@@ -364,14 +369,53 @@ export function IdeaWorkspaceOverlay({
     }
   }, [open]);
 
-  // Handle escape key
-  useEffect(() => {
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && open) {
-        onClose();
-      }
-    };
+  // Handle cancel operation
+  const handleCancelOperation = useCallback(() => {
+    cancelRequest();
+    // Add a system message indicating the operation was stopped
+    addLocalMessage({
+      id: `system-${Date.now()}`,
+      role: 'assistant',
+      content: '*User interrupted.*',
+      timestamp: Date.now(),
+    });
+  }, [cancelRequest, addLocalMessage]);
 
+  // Handle close with unsaved changes check
+  const handleCloseRequest = useCallback(() => {
+    if (hasDocumentChanges.current && isInitialized) {
+      setShowConfirmClose(true);
+    } else {
+      onClose();
+    }
+  }, [onClose, isInitialized]);
+
+  // Handle escape key - cancel if busy, check unsaved changes if not
+  const handleEscape = useCallback(
+    (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        // If AI is busy and input is empty, cancel the operation
+        if (isAgentThinking && !inputContent.trim()) {
+          event.preventDefault();
+          handleCancelOperation();
+          return;
+        }
+
+        // If input has text, let the ChatInput handle Escape (clear input)
+        if (inputContent.trim()) {
+          return;
+        }
+
+        // Otherwise, check for unsaved changes before closing
+        event.preventDefault();
+        handleCloseRequest();
+      }
+    },
+    [isAgentThinking, inputContent, handleCancelOperation, handleCloseRequest]
+  );
+
+  // Add/remove escape key listener when open
+  useEffect(() => {
     if (open) {
       document.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden';
@@ -381,7 +425,7 @@ export function IdeaWorkspaceOverlay({
       document.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = '';
     };
-  }, [open, onClose]);
+  }, [open, handleEscape]);
 
   // Update agent context when form changes
   useEffect(() => {
@@ -483,12 +527,50 @@ export function IdeaWorkspaceOverlay({
     }
   }, [parsedContent, isNewIdea, idea, workspaceId, createIdea, updateIdea, onSuccess, onClose, content]);
 
+  // Process queued messages when AI finishes thinking
+  useEffect(() => {
+    if (!isAgentThinking && queuedMessages.length > 0 && !isProcessingQueueRef.current) {
+      isProcessingQueueRef.current = true;
+
+      // Get the first queued message
+      const [nextMessage, ...remaining] = queuedMessages;
+      setQueuedMessages(remaining);
+
+      // Send the message
+      sendAgentMessage(nextMessage.content);
+
+      isProcessingQueueRef.current = false;
+    }
+  }, [isAgentThinking, queuedMessages, sendAgentMessage]);
+
   const handleChatSubmit = useCallback((data: ChatInputSubmitData) => {
     const { content } = data;
-    if (content.trim()) {
-      sendAgentMessage(content.trim());
+    if (!content.trim()) return;
+
+    // If AI is busy, queue the message
+    if (isAgentThinking) {
+      const queuedMessage: QueuedMessage = {
+        id: `queued-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+        content: content.trim(),
+        timestamp: Date.now(),
+      };
+      setQueuedMessages((prev) => [...prev, queuedMessage]);
+      setInputContent('');
+      return;
     }
-  }, [sendAgentMessage]);
+
+    // Otherwise send immediately
+    sendAgentMessage(content.trim());
+    setInputContent('');
+  }, [sendAgentMessage, isAgentThinking]);
+
+  const handleInputChange = useCallback((_isEmpty: boolean, content: string) => {
+    setInputContent(content);
+  }, []);
+
+  const removeQueuedMessage = useCallback((id: string) => {
+    setQueuedMessages((prev) => prev.filter((msg) => msg.id !== id));
+  }, []);
 
   const handleClearChat = useCallback(() => {
     clearHistory();
@@ -559,14 +641,20 @@ export function IdeaWorkspaceOverlay({
                     className={styles.chatPanel}
                   />
 
-                  <ThinkingIndicator isActive={isAgentThinking} showEscapeHint={false} />
+                  <ThinkingIndicator isActive={isAgentThinking} showEscapeHint={isAgentThinking && !inputContent.trim()} />
+
+                  <MessageQueue
+                    messages={queuedMessages}
+                    onRemove={removeQueuedMessage}
+                  />
 
                   <div className={styles.chatInputContainer}>
                     <ChatInput
                       ref={chatInputRef}
-                      placeholder={isAgentThinking ? "Agent is thinking..." : "Ask the agent... (type / for commands)"}
+                      placeholder={isAgentThinking ? "Type to queue message..." : "Ask the agent... (type / for commands)"}
                       onSubmit={handleChatSubmit}
-                      disabled={!isConnected || isAgentThinking}
+                      onChange={handleInputChange}
+                      disabled={!isConnected}
                       historyKey={`idea-agent-${idea?.id || 'new'}`}
                       fullWidth
                       commands={commands}
@@ -607,7 +695,7 @@ export function IdeaWorkspaceOverlay({
 
                   {/* Footer */}
                   <footer className={styles.footer}>
-                    <Button variant="ghost" onClick={onClose} disabled={isSaving}>
+                    <Button variant="ghost" onClick={handleCloseRequest} disabled={isSaving}>
                       Cancel
                     </Button>
                     <Button
@@ -625,6 +713,33 @@ export function IdeaWorkspaceOverlay({
           </div>
         </div>
       </Slide>
+
+      {/* Confirm close dialog */}
+      <Dialog
+        open={showConfirmClose}
+        onClose={() => setShowConfirmClose(false)}
+        title="Discard changes?"
+        size="sm"
+        footer={
+          <div className={styles.dialogFooter}>
+            <Button variant="ghost" onClick={() => setShowConfirmClose(false)}>
+              Keep Editing
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                setShowConfirmClose(false);
+                hasDocumentChanges.current = false;
+                onClose();
+              }}
+            >
+              Discard
+            </Button>
+          </div>
+        }
+      >
+        <p>You have unsaved changes. Are you sure you want to close without saving?</p>
+      </Dialog>
     </div>
   );
 

@@ -22,6 +22,7 @@ import { FacilitatorWebSocketHandler } from './websocket/FacilitatorWebSocketHan
 import { IdeaAgentWebSocketHandler } from './websocket/IdeaAgentWebSocketHandler.js';
 import { DiscoveryService } from './services/DiscoveryService.js';
 import { DocumentService } from './services/DocumentService.js';
+import { IdeaService } from './services/IdeaService.js';
 
 // Load environment variables
 config();
@@ -65,6 +66,8 @@ wss.on('connection', (ws, req) => {
 
 // Document service for reading markdown files
 const documentService = new DocumentService();
+// Idea service for reading ideas (including description for Yjs initialization)
+const ideaService = new IdeaService();
 
 // Create WebSocket server for Yjs collaboration (binary protocol)
 // y-websocket client connects here with room name in path: /yjs/room-name
@@ -82,6 +85,38 @@ const yjsHandler = new YjsCollaborationHandler({
   // This prevents duplication when multiple clients connect simultaneously
   getInitialContent: async (documentId: string) => {
     try {
+      // Handle idea documents: idea-doc-{ideaId}
+      if (documentId.startsWith('idea-doc-') && !documentId.startsWith('idea-doc-new-')) {
+        const ideaId = documentId.replace('idea-doc-', '');
+        // Use internal method to get idea without auth check (server-side initialization)
+        const idea = await ideaService.getIdeaInternal(ideaId);
+        if (idea) {
+          // Also get the description
+          const fullIdea = await ideaService.getIdeaByIdNoAuth(ideaId);
+          if (fullIdea) {
+            // Build markdown from idea data
+            const parts: string[] = [];
+            parts.push(`# ${fullIdea.title || 'Untitled Idea'}`);
+            parts.push('');
+            parts.push('## Summary');
+            parts.push(fullIdea.summary || '_Add a brief summary of your idea..._');
+            parts.push('');
+            if (fullIdea.tags && fullIdea.tags.length > 0) {
+              parts.push(`Tags: ${fullIdea.tags.join(', ')}`);
+            } else {
+              parts.push('Tags: _none_');
+            }
+            parts.push('');
+            parts.push('---');
+            parts.push('');
+            parts.push(fullIdea.description || '_Describe your idea in detail..._');
+            return parts.join('\n');
+          }
+        }
+        return null;
+      }
+
+      // Fall back to document service for regular documents
       return await documentService.getDocumentContent(documentId);
     } catch {
       return null;

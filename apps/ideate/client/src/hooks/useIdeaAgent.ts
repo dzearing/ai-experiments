@@ -93,6 +93,8 @@ export interface UseIdeaAgentReturn {
   clearHistory: () => void;
   /** Update the idea context */
   updateIdeaContext: (context: IdeaContext) => void;
+  /** Cancel the current request */
+  cancelRequest: () => void;
 }
 
 /**
@@ -405,6 +407,24 @@ export function useIdeaAgent({
     }
   }, []);
 
+  // Cancel current request
+  const cancelRequest = useCallback(() => {
+    if (wsRef.current?.readyState === WebSocket.OPEN && isLoading) {
+      wsRef.current.send(JSON.stringify({
+        type: 'cancel',
+      }));
+
+      // Mark any streaming message as complete
+      if (currentMessageIdRef.current) {
+        updateMessage(currentMessageIdRef.current, { isStreaming: false });
+        currentMessageIdRef.current = null;
+      }
+
+      setIsLoading(false);
+      setIsEditingDocument(false);
+    }
+  }, [isLoading, updateMessage]);
+
   return {
     messages,
     isConnected,
@@ -416,6 +436,7 @@ export function useIdeaAgent({
     addLocalMessage: addMessage,
     clearHistory,
     updateIdeaContext,
+    cancelRequest,
   };
 }
 

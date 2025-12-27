@@ -164,3 +164,11 @@
   border-top: 1px solid var(--soft-border);
   flex-shrink: 0;
 }
+
+/* Dialog footer */
+.dialogFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}

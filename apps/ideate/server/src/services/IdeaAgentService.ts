@@ -2,6 +2,7 @@ import { query, type SDKAssistantMessage } from '@anthropic-ai/claude-agent-sdk'
 import { IdeaAgentChatService, type IdeaAgentMessage } from './IdeaAgentChatService.js';
 import { IdeaAgentYjsClient } from './IdeaAgentYjsClient.js';
 import type { YjsCollaborationHandler } from '../websocket/YjsCollaborationHandler.js';
+import { buildIdeaAgentSystemPrompt } from '../prompts/ideaAgentPrompt.js';
 
 /**
  * Cache entry for pre-generated greetings
@@ -75,128 +76,6 @@ export interface IdeaSuggestion {
   type: 'title' | 'summary' | 'description' | 'tags';
   value: string | string[];
   reason?: string;
-}
-
-/**
- * Build document with line numbers for position-based editing
- */
-function buildDocumentWithPositions(content: string): string {
-  const lines = content.split('\n');
-  const result: string[] = [];
-  let charPos = 0;
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    result.push(`[${charPos}] ${line}`);
-    charPos += line.length + 1; // +1 for newline
-  }
-
-  return result.join('\n');
-}
-
-/**
- * Build the system prompt for the idea agent
- */
-function buildSystemPrompt(_idea: IdeaContext, isNewIdea: boolean, documentContent: string | null): string {
-  // For new ideas, we create from scratch
-  if (isNewIdea) {
-    return `You are an Idea Agent - a creative AI assistant helping users create and develop ideas.
-
-## Current State
-This is a NEW idea. The document is empty or has placeholder content.
-
-## Your Role
-When the user describes an idea (even briefly), create a complete document for them.
-
-## Response Format
-IMPORTANT: Always put your conversational response FIRST, then the idea data block at the END.
-
-1. First, write your brief acknowledgment/response (1-2 sentences)
-2. Then, on a new line, output the JSON block:
-
-<idea_update>
-{
-  "title": "The idea title",
-  "summary": "A brief 1-2 sentence summary",
-  "description": "Detailed description with markdown formatting",
-  "tags": ["tag1", "tag2", "tag3"]
-}
-</idea_update>
-
-## Guidelines
-- Be creative but practical
-- Extrapolate intelligently from brief descriptions
-- Use markdown formatting in description
-- Suggest 3-5 relevant tags`;
-  }
-
-  // For existing ideas, we make targeted position-based edits
-  // Show document with character positions for precise editing
-  const docWithPositions = documentContent ? buildDocumentWithPositions(documentContent) : '(empty)';
-
-  return `You are an Idea Agent - a creative AI assistant helping users develop and refine their idea.
-
-## Current Document (with character positions)
-Each line shows [charPosition] followed by the line content:
-\`\`\`
-${docWithPositions}
-\`\`\`
-
-Document length: ${documentContent?.length || 0} characters
-
-## Your Role
-You help users refine, expand, and improve their existing idea document.
-
-## When to Edit
-Edit the document when:
-- The user asks to update, change, or improve something
-- The user provides more details that should be added
-- The user wants to expand or refine a section
-
-DO NOT edit when:
-- The user is just asking questions about the idea
-- The user wants to discuss without making changes
-
-## Response Format
-IMPORTANT: Always put your conversational response FIRST, then edits at the END.
-
-1. First, write your brief response/acknowledgment (1-2 sentences)
-2. If making edits, add the edit block at the very end:
-
-<document_edits>
-[
-  {"action": "replace", "start": 0, "end": 15, "text": "# New Title", "expected": "# Old Title"},
-  {"action": "insert", "position": 50, "text": "inserted text", "before": "text before", "after": "text after"},
-  {"action": "delete", "start": 100, "end": 120, "expected": "text being deleted"}
-]
-</document_edits>
-
-## Edit Operations (use character positions from the document above)
-- **replace**: Replace characters from \`start\` to \`end\` with \`text\`
-  - \`expected\`: The EXACT text currently at positions start-end (for validation)
-- **insert**: Insert \`text\` at \`position\`
-  - \`before\`: ~10 chars BEFORE the insertion point (optional but recommended)
-  - \`after\`: ~10 chars AFTER the insertion point (optional but recommended)
-- **delete**: Delete characters from \`start\` to \`end\`
-  - \`expected\`: The EXACT text being deleted (for validation)
-
-## Edit Guidelines
-- Use the [charPosition] markers to find exact positions
-- Positions are 0-indexed character offsets
-- ALWAYS include validation fields (expected/before/after) - they prevent errors
-- Apply edits in order - positions refer to the ORIGINAL document
-- Keep edits minimal and targeted
-
-## CRITICAL: Newline Handling
-When inserting new content, you MUST include proper newlines (\\n) to maintain formatting:
-- When adding a new list item, START your text with "\\n" to put it on a new line
-- When adding after a list item, the text should be: "\\n- **New Item**: description"
-- When adding a new section, include "\\n\\n" before the heading
-- Example: To add a feature after "Shopping Lists", insert at the END of that line:
-  \`{"action": "insert", "position": 847, "text": "\\n- **New Feature**: Description here"}\`
-
-WRONG: \`"text": "- **Time Tracking**: Log time"\` (missing leading newline)
-RIGHT: \`"text": "\\n- **Time Tracking**: Log time"\` (has leading newline)`;
 }
 
 /**
@@ -354,7 +233,7 @@ export class IdeaAgentService {
     ideaId: string,
     userId: string,
     content: string,
-    ideaContext: IdeaContext,
+    _ideaContext: IdeaContext,
     callbacks: StreamCallbacks,
     documentRoomName?: string
   ): Promise<void> {
@@ -388,7 +267,7 @@ export class IdeaAgentService {
     console.log(`[IdeaAgentService] isNewIdea=${isNewIdea}, hasRealContent=${hasRealContent}, docLength=${documentContent?.length || 0}`);
 
     // Build the system prompt with idea context and document content
-    const systemPrompt = buildSystemPrompt(ideaContext, isNewIdea, documentContent);
+    const systemPrompt = buildIdeaAgentSystemPrompt(isNewIdea, documentContent);
 
     // Build the full prompt with conversation history
     const conversationHistory = this.buildConversationHistory(history.slice(0, -1));

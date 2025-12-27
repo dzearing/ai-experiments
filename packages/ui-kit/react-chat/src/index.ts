@@ -20,6 +20,10 @@ export type { ChatPanelProps, ChatPanelMessage } from './components/ChatPanel';
 export { ThinkingIndicator } from './components/ThinkingIndicator';
 export type { ThinkingIndicatorProps } from './components/ThinkingIndicator';
 
+// MessageQueue component and related types
+export { MessageQueue } from './components/MessageQueue';
+export type { MessageQueueProps, QueuedMessage } from './components/MessageQueue';
+
 // Slash command types
 export type {
   SlashCommand,
