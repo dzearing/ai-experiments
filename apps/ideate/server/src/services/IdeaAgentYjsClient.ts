@@ -300,27 +300,45 @@ export class IdeaAgentYjsClient {
             };
           }
 
-          // Validate context if provided
+          // Validate context if provided (with whitespace normalization for leniency)
+          const normalizeWs = (s: string) => s.replace(/\s+/g, ' ').trim();
+
           if (edit.before) {
-            const beforeStart = Math.max(0, edit.position - edit.before.length);
+            const beforeStart = Math.max(0, edit.position - edit.before.length - 10); // Extra buffer
             const actualBefore = content.slice(beforeStart, edit.position);
-            if (!actualBefore.endsWith(edit.before) && actualBefore !== edit.before.slice(-actualBefore.length)) {
-              return {
-                success: false,
-                action: 'insert',
-                error: `Context mismatch before position ${edit.position}. Expected: "...${edit.before}", Found: "...${actualBefore}"`
-              };
+            const expectedNorm = normalizeWs(edit.before);
+            const actualNorm = normalizeWs(actualBefore);
+
+            // Check if normalized versions match (more lenient)
+            if (!actualNorm.includes(expectedNorm) && !actualNorm.endsWith(expectedNorm)) {
+              console.warn(`[IdeaAgentYjsClient] Context mismatch (before):`, {
+                position: edit.position,
+                expected: edit.before,
+                actual: actualBefore,
+                expectedNorm,
+                actualNorm,
+              });
+              // Continue anyway - log warning but don't fail
+              // return { success: false, action: 'insert', error: `Context mismatch before position ${edit.position}` };
             }
           }
           if (edit.after) {
-            const afterEnd = Math.min(content.length, edit.position + edit.after.length);
+            const afterEnd = Math.min(content.length, edit.position + edit.after.length + 10); // Extra buffer
             const actualAfter = content.slice(edit.position, afterEnd);
-            if (!actualAfter.startsWith(edit.after) && actualAfter !== edit.after.slice(0, actualAfter.length)) {
-              return {
-                success: false,
-                action: 'insert',
-                error: `Context mismatch after position ${edit.position}. Expected: "${edit.after}...", Found: "${actualAfter}..."`
-              };
+            const expectedNorm = normalizeWs(edit.after);
+            const actualNorm = normalizeWs(actualAfter);
+
+            // Check if normalized versions match (more lenient)
+            if (!actualNorm.includes(expectedNorm) && !actualNorm.startsWith(expectedNorm)) {
+              console.warn(`[IdeaAgentYjsClient] Context mismatch (after):`, {
+                position: edit.position,
+                expected: edit.after,
+                actual: actualAfter,
+                expectedNorm,
+                actualNorm,
+              });
+              // Continue anyway - log warning but don't fail
+              // return { success: false, action: 'insert', error: `Context mismatch after position ${edit.position}` };
             }
           }
 

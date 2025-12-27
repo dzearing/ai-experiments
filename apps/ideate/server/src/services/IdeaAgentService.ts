@@ -184,9 +184,19 @@ IMPORTANT: Always put your conversational response FIRST, then edits at the END.
 - Use the [charPosition] markers to find exact positions
 - Positions are 0-indexed character offsets
 - ALWAYS include validation fields (expected/before/after) - they prevent errors
-- When replacing a line, include the newline character in your range
 - Apply edits in order - positions refer to the ORIGINAL document
-- Keep edits minimal and targeted`;
+- Keep edits minimal and targeted
+
+## CRITICAL: Newline Handling
+When inserting new content, you MUST include proper newlines (\\n) to maintain formatting:
+- When adding a new list item, START your text with "\\n" to put it on a new line
+- When adding after a list item, the text should be: "\\n- **New Item**: description"
+- When adding a new section, include "\\n\\n" before the heading
+- Example: To add a feature after "Shopping Lists", insert at the END of that line:
+  \`{"action": "insert", "position": 847, "text": "\\n- **New Feature**: Description here"}\`
+
+WRONG: \`"text": "- **Time Tracking**: Log time"\` (missing leading newline)
+RIGHT: \`"text": "\\n- **Time Tracking**: Log time"\` (has leading newline)`;
 }
 
 /**
@@ -354,14 +364,9 @@ export class IdeaAgentService {
     // Get history for context
     const history = await this.chatService.getMessages(ideaId);
 
-    // Determine if this is a new idea (empty document)
-    const isNewIdea = !ideaContext.title.trim() ||
-                      ideaContext.title === 'Untitled Idea' ||
-                      ideaContext.id === 'new';
-
-    // Get current document content for existing ideas
+    // Get current document content first (we need this to determine if it's a new idea)
     let documentContent: string | null = null;
-    if (!isNewIdea && this.yjsClient && documentRoomName) {
+    if (this.yjsClient && documentRoomName) {
       try {
         await this.yjsClient.connect(documentRoomName);
         documentContent = this.yjsClient.getContent(documentRoomName);
@@ -369,6 +374,18 @@ export class IdeaAgentService {
         console.error('[IdeaAgentService] Error fetching document content:', error);
       }
     }
+
+    // Determine if this is a new idea based on DOCUMENT CONTENT, not just ideaContext.id
+    // The document is "new" if it has no content or only has placeholder content
+    const placeholderContent = '# Untitled Idea\n\n## Summary\n_Add a brief summary of your idea..._\n\nTags: _none_\n\n---\n\n_Describe your idea in detail..._';
+    const hasRealContent = documentContent &&
+                           documentContent.trim().length > 0 &&
+                           documentContent.trim() !== placeholderContent.trim() &&
+                           !documentContent.includes('_Add a brief summary of your idea..._');
+
+    const isNewIdea = !hasRealContent;
+
+    console.log(`[IdeaAgentService] isNewIdea=${isNewIdea}, hasRealContent=${hasRealContent}, docLength=${documentContent?.length || 0}`);
 
     // Build the system prompt with idea context and document content
     const systemPrompt = buildSystemPrompt(ideaContext, isNewIdea, documentContent);

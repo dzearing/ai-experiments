@@ -160,9 +160,8 @@ export function IdeaWorkspaceOverlay({
 
   const isNewIdea = !idea;
 
-  // Session ID for new ideas - generated once per component instance
-  // We use a ref to ensure the session ID is stable during the overlay lifecycle
-  // A new session ID is only created when the component remounts (e.g., navigating away and back)
+  // Session ID for new ideas - stable per component instance
+  // Content is cleared on close instead of creating a new room
   const [sessionId] = useState(() => generateSessionId());
 
   // Document ID for Yjs room: idea-doc-{ideaId} or idea-doc-new-{sessionId}
@@ -233,11 +232,11 @@ export function IdeaWorkspaceOverlay({
   const parsedContent = useMemo(() => parseMarkdownContent(content), [content]);
 
   // Build idea context for the agent
-  const ideaContext: IdeaContext | null = useMemo(() => {
-    if (!parsedContent.title.trim()) return null;
+  // Always provide a context (even if minimal) so the agent can generate new ideas
+  const ideaContext: IdeaContext = useMemo(() => {
     return {
       id: idea?.id || 'new',
-      title: parsedContent.title.trim(),
+      title: parsedContent.title.trim() || 'New Idea',
       summary: parsedContent.summary.trim(),
       description: parsedContent.description.trim() || undefined,
       tags: parsedContent.tags,
@@ -329,12 +328,19 @@ export function IdeaWorkspaceOverlay({
     setError(null);
   }, [isYjsSynced, isInitialized, idea, content, yjsSetContent]);
 
-  // Reset initialized state when overlay closes
+  // Reset state when overlay closes
   useEffect(() => {
     if (!open) {
       setIsInitialized(false);
+      // For new ideas, clear the content when closing so next open starts fresh
+      if (isNewIdea) {
+        setContent('');
+        setError(null);
+        // Clear the Yjs document content
+        yjsSetContent('');
+      }
     }
-  }, [open]);
+  }, [open, isNewIdea, yjsSetContent]);
 
   // Sync backdrop visibility with open state
   useEffect(() => {
