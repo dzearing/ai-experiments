@@ -1,29 +1,9 @@
 .container {
-  border-top: 1px solid var(--color-divider-background, #e5e5e5);
-  background: var(--color-panel-background, #f8f8f8);
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  padding: var(--spacing-small10, 8px) var(--spacing, 16px);
-  border-bottom: 1px solid var(--color-divider-background, #e5e5e5);
-}
-
-.label {
-  font-size: var(--font-size-small10, 12px);
-  font-weight: var(--font-weight-medium, 500);
-  color: var(--color-body-textSoft20, #666);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.list {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-small20, 4px);
-  padding: var(--spacing-small10, 8px);
-  max-height: 150px;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  max-height: 120px;
   overflow-y: auto;
 }
 
@@ -31,12 +11,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--spacing-small10, 8px);
-  padding: var(--spacing-small10, 8px) var(--spacing-small10, 8px);
-  background: var(--color-body-background, #fff);
-  border-radius: var(--radius-small, 4px);
-  border: 1px solid var(--color-divider-background, #e5e5e5);
-  font-size: var(--font-size-small10, 13px);
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  background: var(--strong-bg);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
 }
 
 .content {
@@ -44,5 +23,5 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--color-body-text, #333);
+  color: var(--strong-fg);
 }

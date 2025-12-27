@@ -250,8 +250,34 @@ export class IdeaAgentYjsClient {
   }
 
   /**
-   * Apply a single position-based edit operation to the document.
-   * Validates expected content before applying for safety.
+   * Find text near an approximate position.
+   * Searches in expanding rings around the hint position.
+   */
+  private findTextNearPosition(content: string, text: string, hintPosition: number): number {
+    // First try exact position
+    if (content.slice(hintPosition).startsWith(text)) {
+      return hintPosition;
+    }
+
+    // Search in expanding rings: ±100, ±300, ±500, then full document
+    const searchRanges = [100, 300, 500];
+    for (const range of searchRanges) {
+      const searchStart = Math.max(0, hintPosition - range);
+      const searchEnd = Math.min(content.length, hintPosition + range);
+      const searchRegion = content.slice(searchStart, searchEnd);
+      const foundIndex = searchRegion.indexOf(text);
+      if (foundIndex >= 0) {
+        return searchStart + foundIndex;
+      }
+    }
+
+    // Last resort: search entire document
+    return content.indexOf(text);
+  }
+
+  /**
+   * Apply a single text-anchored edit operation to the document.
+   * Uses text strings to reliably find edit locations.
    * Shows cursor movement during the edit.
    */
   async applyEdit(roomName: string, edit: DocumentEdit): Promise<EditResult> {
@@ -261,117 +287,95 @@ export class IdeaAgentYjsClient {
     try {
       switch (edit.action) {
         case 'replace': {
-          // Validate position bounds
-          if (edit.start < 0 || edit.end > content.length || edit.start > edit.end) {
+          // Find startText near the hint position
+          const startIndex = this.findTextNearPosition(content, edit.startText, edit.start);
+          if (startIndex < 0) {
             return {
               success: false,
               action: 'replace',
-              error: `Invalid position: start=${edit.start}, end=${edit.end}, docLength=${content.length}`
+              error: `Start text not found: "${edit.startText.slice(0, 50)}..."`
             };
           }
 
-          // Validate expected content matches
-          const actualText = content.slice(edit.start, edit.end);
-          if (edit.expected && actualText !== edit.expected) {
+          // Find endText after startText
+          const searchAfterStart = content.slice(startIndex);
+          const endTextIndex = searchAfterStart.indexOf(edit.endText);
+          if (endTextIndex < 0) {
             return {
               success: false,
               action: 'replace',
-              error: `Content mismatch at ${edit.start}-${edit.end}. Expected: "${edit.expected.slice(0, 30)}...", Found: "${actualText.slice(0, 30)}..."`
+              error: `End text not found after start: "${edit.endText.slice(0, 50)}..."`
             };
           }
+
+          const replaceStart = startIndex;
+          const replaceEnd = startIndex + endTextIndex + edit.endText.length;
+
+          console.log(`[IdeaAgentYjsClient] Replace: found range ${replaceStart}-${replaceEnd} (hint: ${edit.start})`);
 
           // Show cursor at edit location
-          this.updateCursor(roomName, edit.start);
+          this.updateCursor(roomName, replaceStart);
           await this.delay(50);
 
           // Delete old text and stream new text
-          session.text.delete(edit.start, edit.end - edit.start);
-          await this.streamContent(roomName, edit.text, edit.start);
+          session.text.delete(replaceStart, replaceEnd - replaceStart);
+          await this.streamContent(roomName, edit.text, replaceStart);
           return { success: true, action: 'replace' };
         }
 
         case 'insert': {
-          // Validate position bounds
-          if (edit.position < 0 || edit.position > content.length) {
+          // Find afterText near the hint position
+          const afterIndex = this.findTextNearPosition(content, edit.afterText, edit.start);
+          if (afterIndex < 0) {
             return {
               success: false,
               action: 'insert',
-              error: `Invalid position: ${edit.position}, docLength=${content.length}`
+              error: `Anchor text not found: "${edit.afterText.slice(0, 50)}..."`
             };
           }
 
-          // Validate context if provided (with whitespace normalization for leniency)
-          const normalizeWs = (s: string) => s.replace(/\s+/g, ' ').trim();
+          // Insert position is right after the anchor text
+          const insertPosition = afterIndex + edit.afterText.length;
 
-          if (edit.before) {
-            const beforeStart = Math.max(0, edit.position - edit.before.length - 10); // Extra buffer
-            const actualBefore = content.slice(beforeStart, edit.position);
-            const expectedNorm = normalizeWs(edit.before);
-            const actualNorm = normalizeWs(actualBefore);
-
-            // Check if normalized versions match (more lenient)
-            if (!actualNorm.includes(expectedNorm) && !actualNorm.endsWith(expectedNorm)) {
-              console.warn(`[IdeaAgentYjsClient] Context mismatch (before):`, {
-                position: edit.position,
-                expected: edit.before,
-                actual: actualBefore,
-                expectedNorm,
-                actualNorm,
-              });
-              // Continue anyway - log warning but don't fail
-              // return { success: false, action: 'insert', error: `Context mismatch before position ${edit.position}` };
-            }
-          }
-          if (edit.after) {
-            const afterEnd = Math.min(content.length, edit.position + edit.after.length + 10); // Extra buffer
-            const actualAfter = content.slice(edit.position, afterEnd);
-            const expectedNorm = normalizeWs(edit.after);
-            const actualNorm = normalizeWs(actualAfter);
-
-            // Check if normalized versions match (more lenient)
-            if (!actualNorm.includes(expectedNorm) && !actualNorm.startsWith(expectedNorm)) {
-              console.warn(`[IdeaAgentYjsClient] Context mismatch (after):`, {
-                position: edit.position,
-                expected: edit.after,
-                actual: actualAfter,
-                expectedNorm,
-                actualNorm,
-              });
-              // Continue anyway - log warning but don't fail
-              // return { success: false, action: 'insert', error: `Context mismatch after position ${edit.position}` };
-            }
-          }
+          console.log(`[IdeaAgentYjsClient] Insert: position ${insertPosition} (after "${edit.afterText.slice(0, 30)}...")`);
 
           // Stream the inserted content
-          await this.streamContent(roomName, edit.text, edit.position);
+          await this.streamContent(roomName, edit.text, insertPosition);
           return { success: true, action: 'insert' };
         }
 
         case 'delete': {
-          // Validate position bounds
-          if (edit.start < 0 || edit.end > content.length || edit.start > edit.end) {
+          // Find startText near the hint position
+          const startIndex = this.findTextNearPosition(content, edit.startText, edit.start);
+          if (startIndex < 0) {
             return {
               success: false,
               action: 'delete',
-              error: `Invalid position: start=${edit.start}, end=${edit.end}, docLength=${content.length}`
+              error: `Start text not found: "${edit.startText.slice(0, 50)}..."`
             };
           }
 
-          // Validate expected content matches
-          const actualText = content.slice(edit.start, edit.end);
-          if (edit.expected && actualText !== edit.expected) {
+          // Find endText after startText
+          const searchAfterStart = content.slice(startIndex);
+          const endTextIndex = searchAfterStart.indexOf(edit.endText);
+          if (endTextIndex < 0) {
             return {
               success: false,
               action: 'delete',
-              error: `Content mismatch at ${edit.start}-${edit.end}. Expected: "${edit.expected.slice(0, 30)}...", Found: "${actualText.slice(0, 30)}..."`
+              error: `End text not found after start: "${edit.endText.slice(0, 50)}..."`
             };
           }
+
+          const deleteStart = startIndex;
+          const deleteEnd = startIndex + endTextIndex + edit.endText.length;
+
+          console.log(`[IdeaAgentYjsClient] Delete: found range ${deleteStart}-${deleteEnd} (hint: ${edit.start})`);
 
           // Show cursor at delete location
-          this.updateCursor(roomName, edit.start);
+          this.updateCursor(roomName, deleteStart);
           await this.delay(50);
 
-          session.text.delete(edit.start, edit.end - edit.start);
+          session.text.delete(deleteStart, deleteEnd - deleteStart);
           return { success: true, action: 'delete' };
         }
 
@@ -386,17 +390,23 @@ export class IdeaAgentYjsClient {
 
   /**
    * Apply multiple edit operations in sequence.
+   * Tracks position offsets as edits modify document length.
    * Each edit is applied with visible cursor movement.
    */
   async applyEdits(roomName: string, edits: DocumentEdit[]): Promise<EditResult[]> {
     const results: EditResult[] = [];
+    let cumulativeOffset = 0; // Track how much the document has shifted
 
     for (const edit of edits) {
-      const result = await this.applyEdit(roomName, edit);
+      // Adjust positions based on cumulative offset from previous edits
+      const adjustedEdit = this.adjustEditPositions(edit, cumulativeOffset);
+
+      const result = await this.applyEdit(roomName, adjustedEdit);
       results.push(result);
 
-      // Small pause between edits for visual clarity
+      // Update offset based on this edit's effect on document length
       if (result.success) {
+        cumulativeOffset += this.calculateEditOffset(edit);
         await this.delay(100);
       }
     }
@@ -406,6 +416,43 @@ export class IdeaAgentYjsClient {
 
     console.log(`[IdeaAgentYjsClient] Applied ${edits.length} edits to room "${roomName}"`);
     return results;
+  }
+
+  /**
+   * Adjust edit positions based on cumulative offset from previous edits.
+   */
+  private adjustEditPositions(edit: DocumentEdit, offset: number): DocumentEdit {
+    if (offset === 0) return edit;
+
+    switch (edit.action) {
+      case 'replace':
+        return { ...edit, start: edit.start + offset, end: edit.end + offset };
+      case 'insert':
+        return { ...edit, position: edit.position + offset };
+      case 'delete':
+        return { ...edit, start: edit.start + offset, end: edit.end + offset };
+      default:
+        return edit;
+    }
+  }
+
+  /**
+   * Calculate how much an edit changes the document length.
+   */
+  private calculateEditOffset(edit: DocumentEdit): number {
+    switch (edit.action) {
+      case 'replace':
+        // New text length minus old text length
+        return edit.text.length - (edit.end - edit.start);
+      case 'insert':
+        // Inserted text length
+        return edit.text.length;
+      case 'delete':
+        // Negative because we removed text
+        return -(edit.end - edit.start);
+      default:
+        return 0;
+    }
   }
 
   /**

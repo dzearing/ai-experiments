@@ -25,7 +25,11 @@ When the user describes an idea (even briefly), create a complete document for t
 ## Response Format
 IMPORTANT: Always put your conversational response FIRST, then the idea data block at the END.
 
-1. First, write your brief acknowledgment/response (1-2 sentences)
+**Use present tense** since your message appears while the document is being created:
+- Good: "I'm creating a comprehensive outline..." or "I'm adding the core features..."
+- Bad: "I've created..." or "I've added..." (past tense sounds wrong while edits are streaming)
+
+1. First, write your brief acknowledgment/response (1-2 sentences, present tense)
 2. Then, on a new line, output the JSON block:
 
 <idea_update>

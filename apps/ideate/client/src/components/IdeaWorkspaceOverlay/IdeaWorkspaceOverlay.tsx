@@ -527,17 +527,17 @@ export function IdeaWorkspaceOverlay({
     }
   }, [parsedContent, isNewIdea, idea, workspaceId, createIdea, updateIdea, onSuccess, onClose, content]);
 
-  // Process queued messages when AI finishes thinking
+  // Process queued messages when AI finishes thinking - combine all into one message
   useEffect(() => {
     if (!isAgentThinking && queuedMessages.length > 0 && !isProcessingQueueRef.current) {
       isProcessingQueueRef.current = true;
 
-      // Get the first queued message
-      const [nextMessage, ...remaining] = queuedMessages;
-      setQueuedMessages(remaining);
+      // Combine all queued messages into one
+      const combinedContent = queuedMessages.map(msg => msg.content).join('\n');
+      setQueuedMessages([]);
 
-      // Send the message
-      sendAgentMessage(nextMessage.content);
+      // Send as a single message
+      sendAgentMessage(combinedContent);
 
       isProcessingQueueRef.current = false;
     }
@@ -727,6 +727,7 @@ export function IdeaWorkspaceOverlay({
             </Button>
             <Button
               variant="danger"
+              autoFocus
               onClick={() => {
                 setShowConfirmClose(false);
                 hasDocumentChanges.current = false;

@@ -35,13 +35,18 @@ export interface IdeaUpdate {
 }
 
 /**
- * Position-based edit operation types for modifying existing documents
- * Each edit includes an `expected` field for validation before applying
+ * Text-anchored edit operation types for modifying existing documents.
+ * Uses text strings to reliably find edit locations (positions are approximate hints).
+ *
+ * - `start`: Approximate character position (hint for faster search)
+ * - `startText`: Unique text string that marks the START of the edit range
+ * - `endText`: Text string that marks the END of the edit range (last content before end)
+ * - `text`: New content (for replace/insert)
  */
 export type DocumentEdit =
-  | { action: 'replace'; start: number; end: number; text: string; expected: string }
-  | { action: 'insert'; position: number; text: string; before?: string; after?: string }
-  | { action: 'delete'; start: number; end: number; expected: string };
+  | { action: 'replace'; start: number; startText: string; endText: string; text: string }
+  | { action: 'insert'; start: number; afterText: string; text: string }
+  | { action: 'delete'; start: number; startText: string; endText: string };
 
 /**
  * Token usage information

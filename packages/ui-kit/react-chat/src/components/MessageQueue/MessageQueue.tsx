@@ -48,25 +48,18 @@ export function MessageQueue({
 
   return (
     <div className={containerClasses}>
-      <div className={styles.header}>
-        <span className={styles.label}>
-          {label} ({messages.length})
-        </span>
-      </div>
-      <div className={styles.list}>
-        {messages.map((msg) => (
-          <div key={msg.id} className={styles.item}>
-            <span className={styles.content}>{msg.content}</span>
-            <IconButton
-              icon={<CloseIcon />}
-              variant="ghost"
-              size="sm"
-              onClick={() => onRemove(msg.id)}
-              aria-label="Remove from queue"
-            />
-          </div>
-        ))}
-      </div>
+      {messages.map((msg) => (
+        <div key={msg.id} className={styles.item}>
+          <span className={styles.content}>{msg.content}</span>
+          <IconButton
+            icon={<CloseIcon />}
+            variant="ghost"
+            size="sm"
+            onClick={() => onRemove(msg.id)}
+            aria-label="Remove from queue"
+          />
+        </div>
+      ))}
     </div>
   );
 }
