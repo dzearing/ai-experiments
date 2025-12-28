@@ -642,6 +642,95 @@ function generateComponentTokensFromRules(tokens: Record<string, string>): void 
   }
 }
 
+/**
+ * Composite an rgba color over a solid hex background
+ */
+function compositeRgbaOverHex(rgba: string, hexBg: string): string {
+  // Parse rgba(r, g, b, a)
+  const rgbaMatch = rgba.match(/rgba?\((\d+),\s*(\d+),\s*(\d+),?\s*([\d.]+)?\)/);
+  if (!rgbaMatch) return hexBg; // fallback to bg if can't parse
+
+  const fgR = parseInt(rgbaMatch[1], 10);
+  const fgG = parseInt(rgbaMatch[2], 10);
+  const fgB = parseInt(rgbaMatch[3], 10);
+  const alpha = parseFloat(rgbaMatch[4] || '1');
+
+  const bgRgb = hexToRgb(hexBg);
+  if (!bgRgb) return hexBg;
+
+  // Alpha compositing: result = fg * alpha + bg * (1 - alpha)
+  const r = Math.round(fgR * alpha + bgRgb.r * (1 - alpha));
+  const g = Math.round(fgG * alpha + bgRgb.g * (1 - alpha));
+  const b = Math.round(fgB * alpha + bgRgb.b * (1 - alpha));
+
+  return rgbToHex(r, g, b);
+}
+
+/**
+ * Evaluate a derivation rule for surface overrides
+ * Supports: contrast(token), contrastOpacity(token, opacity)
+ */
+function evaluateSurfaceDerivation(
+  rule: string,
+  resolvedTokens: Record<string, string>,
+  isDark: boolean
+): string {
+  // "contrast(primary-bg)" - get contrasting text color (black or white)
+  const contrastMatch = rule.match(/^contrast\(([^)]+)\)$/);
+  if (contrastMatch) {
+    const tokenRef = contrastMatch[1].trim();
+    let bgColor = resolvedTokens[tokenRef];
+
+    if (bgColor) {
+      // If bg is rgba, composite it over base-bg to get effective color
+      if (bgColor.startsWith('rgba')) {
+        const baseBg = resolvedTokens['base-bg'];
+        if (baseBg && baseBg.startsWith('#')) {
+          bgColor = compositeRgbaOverHex(bgColor, baseBg);
+        }
+      }
+
+      // Only process if we have a valid hex color
+      if (bgColor.startsWith('#')) {
+        return getContrastingTextColor(bgColor);
+      }
+    }
+    return isDark ? '#000000' : '#ffffff';
+  }
+
+  // "contrastOpacity(primary-bg, 85)" - contrast color with opacity
+  const contrastOpacityMatch = rule.match(/^contrastOpacity\(([^,]+),\s*([\d.]+)\)$/);
+  if (contrastOpacityMatch) {
+    const tokenRef = contrastOpacityMatch[1].trim();
+    const opacity = parseFloat(contrastOpacityMatch[2]);
+    let bgColor = resolvedTokens[tokenRef];
+
+    if (bgColor) {
+      // If bg is rgba, composite it over base-bg to get effective color
+      if (bgColor.startsWith('rgba')) {
+        const baseBg = resolvedTokens['base-bg'];
+        if (baseBg && baseBg.startsWith('#')) {
+          bgColor = compositeRgbaOverHex(bgColor, baseBg);
+        }
+      }
+
+      // Only process if we have a valid hex color
+      if (bgColor.startsWith('#')) {
+        const contrastColor = getContrastingTextColor(bgColor);
+        if (contrastColor === '#ffffff') {
+          return `rgba(255, 255, 255, ${opacity / 100})`;
+        } else {
+          return `rgba(0, 0, 0, ${opacity / 100})`;
+        }
+      }
+    }
+    return isDark ? `rgba(0, 0, 0, ${opacity / 100})` : `rgba(255, 255, 255, ${opacity / 100})`;
+  }
+
+  // Return rule as-is if not recognized (might be a literal value)
+  return rule;
+}
+
 // Color utility helpers
 function shiftHue(hex: string, degrees: number): string {
   const rgb = hexToRgb(hex);
@@ -869,9 +958,27 @@ function generateSurfaceClasses(mode: 'light' | 'dark'): string[] {
         continue;
       }
 
+      // First pass: collect resolved values so derivations can reference them
+      const resolvedOverrides: Record<string, string> = {};
+
+      // Process bg tokens first (they don't have derivations typically)
+      for (const [token, value] of Object.entries(overrides)) {
+        if (typeof value === 'string' && !value.startsWith('derive:')) {
+          resolvedOverrides[token] = value;
+        }
+      }
+
+      // Second pass: process derivations
+      for (const [token, value] of Object.entries(overrides)) {
+        if (typeof value === 'string' && value.startsWith('derive:')) {
+          const derivationRule = value.slice(7); // Remove 'derive:' prefix
+          resolvedOverrides[token] = evaluateSurfaceDerivation(derivationRule, resolvedOverrides, mode === 'dark');
+        }
+      }
+
       lines.push(`  /* &.${surfaceName} - ${config.description} */`);
       lines.push(`  &.${surfaceName} {`);
-      for (const [token, value] of Object.entries(overrides)) {
+      for (const [token, value] of Object.entries(resolvedOverrides)) {
         lines.push(`    --${token}: ${value};`);
       }
       lines.push('  }');

@@ -108,8 +108,25 @@ export type { BannerProps, BannerVariant } from './components/Banner';
 export { Progress } from './components/Progress';
 export type { ProgressProps, ProgressVariant, ProgressSize } from './components/Progress';
 
+export { ProgressDots } from './components/ProgressDots';
+export type { ProgressDotsProps, ProgressDotsSize } from './components/ProgressDots';
+
 export { Spinner } from './components/Spinner';
 export type { SpinnerProps, SpinnerSize } from './components/Spinner';
+
+export { TypingIndicator } from './components/TypingIndicator';
+export type {
+  TypingIndicatorProps,
+  TypingIndicatorSize,
+  TypingIndicatorVariant,
+} from './components/TypingIndicator';
+
+export { BusyIndicator } from './components/BusyIndicator';
+export type {
+  BusyIndicatorProps,
+  BusyIndicatorSize,
+  BusyIndicatorVariant,
+} from './components/BusyIndicator';
 
 export { Skeleton } from './components/Skeleton';
 export type { SkeletonProps, SkeletonVariant } from './components/Skeleton';

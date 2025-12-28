@@ -97,12 +97,27 @@ import { Button, Card, Text, Heading, Avatar, Chip, Input, Stack } from '@ui-kit
 <Button variant="outline">View details</Button>    // Alternative secondary
 <Button variant="danger">Delete</Button>           // Destructive action
 
-// With icons
-import { SaveIcon } from '@ui-kit/icons/SaveIcon';
-<Button variant="primary" icon={<SaveIcon />}>Save</Button>
-
 // Pill shape for suggestion chips
 <Button variant="default" size="sm" shape="pill">Suggestion</Button>
+```
+
+### Button Icons
+
+**ALWAYS use `icon` or `iconAfter` props for icons in buttons.**
+
+The Button component wraps children in a `.label` span that has `flex: 1`. Placing icons inline as children causes misalignment.
+
+```tsx
+// ✅ CORRECT - Use icon props
+import { SaveIcon } from '@ui-kit/icons/SaveIcon';
+import { ArrowRightIcon } from '@ui-kit/icons/ArrowRightIcon';
+
+<Button variant="primary" icon={<SaveIcon />}>Save</Button>          // Icon before
+<Button variant="primary" iconAfter={<ArrowRightIcon />}>Next</Button>  // Icon after
+
+// ❌ WRONG - Never place icons inline as children
+<Button variant="primary">Save <SaveIcon /></Button>     // Misaligned!
+<Button variant="primary"><SaveIcon /> Save</Button>     // Misaligned!
 ```
 
 ### Chip Variants
@@ -275,11 +290,11 @@ import { SendIcon } from '@ui-kit/icons/SendIcon';
       <Text weight="medium">Card Title</Text>
       <Chip size="sm" variant="success">Active</Chip>
     </div>
-    <Text size="small" color="secondary">
+    <Text size="sm" color="soft">
       Supporting description text goes here.
     </Text>
     <div className={styles.cardFooter}>
-      <Text size="small" color="secondary">Updated 2h ago</Text>
+      <Text size="sm" color="soft">Updated 2h ago</Text>
     </div>
   </Stack>
 </Card>
@@ -290,7 +305,7 @@ import { SendIcon } from '@ui-kit/icons/SendIcon';
 ```tsx
 <header className={styles.header}>
   <div className={styles.headerLeft}>
-    <Heading level={1} size="h4">Page Title</Heading>
+    <Heading level={1} size={4}>Page Title</Heading>
     <Chip size="sm" variant="default">Status</Chip>
   </div>
   <div className={styles.headerRight}>
@@ -308,8 +323,8 @@ import { SendIcon } from '@ui-kit/icons/SendIcon';
 // Use Stack for layout, not custom flex divs
 <Stack direction="column" align="center" gap="md" className={styles.emptyState}>
   <LightbulbIcon size={64} />
-  <Heading level={2} size="h3">No Items Yet</Heading>
-  <Text color="secondary" className={styles.emptyDescription}>
+  <Heading level={2} size={3}>No Items Yet</Heading>
+  <Text color="soft" className={styles.emptyDescription}>
     Get started by creating your first item.
   </Text>
   <Button variant="primary">Create Item</Button>
@@ -325,9 +340,65 @@ import { SendIcon } from '@ui-kit/icons/SendIcon';
     aria-label="Message input"
   />
   <IconButton variant="ghost" icon={<SendIcon />} aria-label="Send" />
-  <IconButton variant="secondary" icon={<MicIcon />} aria-label="Voice input" />
+  <IconButton variant="default" icon={<MicIcon />} aria-label="Voice input" />
 </div>
 ```
+
+### Selectable Cards
+
+**Use `strong` surface for default state and `primary` surface for selected state.**
+
+This ensures:
+- Proper visual hierarchy (elevated, interactive appearance)
+- Correct hover states that don't conflict with selection
+- Nested components (Text, etc.) inherit correct foreground colors
+
+```css
+/* ✅ CORRECT - Strong surface (default), Primary surface (selected) */
+.selectableCard {
+  background: var(--strong-bg);
+  color: var(--strong-fg);
+  border: 2px solid var(--strong-border);
+  cursor: pointer;
+}
+
+.selectableCard:hover {
+  background: var(--strong-bg-hover);
+  border-color: var(--strong-border-hover);
+}
+
+.selectableCardSelected {
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+  border-color: var(--primary-border);
+}
+
+.selectableCardSelected:hover {
+  background: var(--primary-bg-hover);
+  border-color: var(--primary-border-hover);
+}
+
+/* ❌ WRONG - softer surface for selectable items */
+.broken {
+  background: var(--softer-bg);  /* Too recessed for interactive items */
+}
+
+/* ❌ WRONG - mixing surfaces on hover */
+.broken:hover {
+  background: var(--soft-bg);  /* Different surface = inconsistent hover */
+}
+
+/* ❌ WRONG - using disabled tokens for selection */
+.brokenSelected {
+  background: var(--primary-bg-disabled);  /* Disabled != selected! */
+}
+```
+
+**Why not `soft` or `softer`?**
+- `softer` is for recessed/input areas, not interactive cards
+- `soft` is for passive containers, not clickable elements
+- `strong` signals "this is elevated and clickable"
+- `primary` signals "this is the active/selected choice"
 
 ---
 

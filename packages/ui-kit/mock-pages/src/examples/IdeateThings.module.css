@@ -1,0 +1,600 @@
+/* IdeateThings - Contextual organization for ideas */
+
+/* ============================================
+   MAIN LAYOUT
+   ============================================ */
+.container {
+  display: flex;
+  height: 100vh;
+  background: var(--base-bg);
+  color: var(--base-fg);
+}
+
+/* ============================================
+   TREE PANEL (LEFT)
+   ============================================ */
+.treePanel {
+  display: flex;
+  flex-direction: column;
+  width: 360px;
+  min-width: 300px;
+  background: var(--soft-bg);
+  border-right: 1px solid var(--soft-border);
+  flex-shrink: 0;
+}
+
+.treePanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--soft-border);
+}
+
+/* ============================================
+   SEARCH ROW (Search + Filter + View Toggle)
+   ============================================ */
+.searchRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+}
+
+.searchWrapper {
+  flex: 1;
+  min-width: 0;
+}
+
+/* New Thing button row */
+.newButtonRow {
+  padding: 0 var(--space-4) var(--space-3);
+}
+
+.newButton {
+  width: 100%;
+}
+
+/* ============================================
+   TAG FILTER
+   ============================================ */
+.tagFilter {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: 0 var(--space-4) var(--space-3);
+}
+
+.filterIcon {
+  color: var(--soft-fg-soft);
+  flex-shrink: 0;
+  margin-top: var(--space-1);
+  width: 14px;
+  height: 14px;
+}
+
+.tagFilterList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.tagFilterItem {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--soft-border);
+  background: transparent;
+  color: var(--soft-fg-soft);
+  font-size: var(--text-xs);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-default);
+}
+
+.tagFilterItem:hover {
+  border-color: var(--soft-border-hover);
+  color: var(--soft-fg);
+}
+
+.tagFilterActive {
+  background: var(--primary-bg);
+  border-color: var(--primary-border);
+  color: var(--primary-fg);
+}
+
+.tagFilterActive:hover {
+  background: var(--primary-bg-hover);
+}
+
+.moreTagsIndicator {
+  font-size: var(--text-xs);
+  color: var(--soft-fg-softer);
+  padding: var(--space-1);
+}
+
+/* Tag filter dropdown (positioned below search row) */
+.tagFilterDropdown {
+  padding: var(--space-2) var(--space-4);
+  background: var(--softer-bg);
+  border-bottom: 1px solid var(--soft-border);
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+/* Active filter indicator */
+.activeFilter {
+  padding: var(--space-2) var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ============================================
+   TREE CONTAINER
+   ============================================ */
+.treeContainer {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-2) var(--space-4);
+}
+
+/* Custom label for TreeView nodes */
+.treeNodeLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 1;
+  min-width: 0;
+}
+
+.thingIcon {
+  color: var(--soft-fg-soft);
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+}
+
+.thingName {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tagPreview {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+  margin-left: auto;
+}
+
+.miniTag {
+  font-size: var(--text-xs);
+  color: var(--soft-fg-softer);
+}
+
+.moreTag {
+  font-size: var(--text-xs);
+  color: var(--soft-fg-softer);
+}
+
+.ideaCountBadge {
+  background: var(--strong-bg);
+  color: var(--strong-fg);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  min-width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-10);
+  text-align: center;
+  gap: var(--space-4);
+}
+
+.emptyIcon {
+  width: 48px;
+  height: 48px;
+  color: var(--soft-fg-softer);
+  opacity: 0.5;
+}
+
+/* ============================================
+   DETAIL PANEL (RIGHT)
+   ============================================ */
+.detailPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--base-bg);
+  border-left: 1px solid var(--base-border);
+  overflow-y: auto;
+}
+
+.detailHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--base-border);
+}
+
+.detailTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* ============================================
+   BREADCRUMB
+   ============================================ */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-6);
+  background: var(--softer-bg);
+  border-bottom: 1px solid var(--softer-border);
+  flex-wrap: wrap;
+}
+
+.breadcrumbIcon {
+  color: var(--softer-fg-soft);
+  width: 14px;
+  height: 14px;
+}
+
+.breadcrumbSegment {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.breadcrumbSeparator {
+  color: var(--softer-fg-softer);
+  width: 12px;
+  height: 12px;
+}
+
+.breadcrumbItem {
+  font-size: var(--text-sm);
+  color: var(--softer-fg-primary);
+  cursor: pointer;
+}
+
+.breadcrumbItem:hover {
+  text-decoration: underline;
+}
+
+.breadcrumbCurrent {
+  font-size: var(--text-sm);
+  color: var(--softer-fg);
+  font-weight: var(--weight-medium);
+}
+
+/* Parents bar (multiple parents) */
+.parentsBar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  background: var(--softer-bg);
+  border-bottom: 1px solid var(--softer-border);
+  flex-wrap: wrap;
+}
+
+.parentLink {
+  color: var(--softer-fg-primary);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.parentLink:hover {
+  text-decoration: underline;
+}
+
+.parentSeparator {
+  color: var(--softer-fg-softer);
+  margin: 0 var(--space-1);
+}
+
+/* ============================================
+   DETAIL SECTIONS
+   ============================================ */
+.detailContent {
+  flex: 1;
+  padding: var(--space-4) var(--space-6);
+}
+
+.detailSection {
+  margin-bottom: var(--space-6);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+
+.sectionLabel {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-2);
+}
+
+/* ============================================
+   TAGS LIST
+   ============================================ */
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* ============================================
+   CHILD LIST
+   ============================================ */
+.childList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.childItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--softer-bg);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--softer-fg);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-default);
+}
+
+.childItem:hover {
+  background: var(--softer-bg-hover);
+}
+
+/* ============================================
+   IDEAS SUMMARY
+   ============================================ */
+.ideaSummary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+}
+
+.ideaStat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-3);
+  background: var(--softer-bg);
+  border-radius: var(--radius-md);
+}
+
+.ideaStatValue {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  color: var(--softer-fg-strong);
+}
+
+.ideaStatLabel {
+  font-size: var(--text-xs);
+  color: var(--softer-fg-soft);
+  text-transform: uppercase;
+}
+
+/* ============================================
+   AI FACILITATOR
+   ============================================ */
+.facilitatorSection {
+  margin-top: var(--space-6);
+  padding: var(--space-4);
+  background: var(--info-bg);
+  border: 1px solid var(--info-border);
+  border-radius: var(--radius-lg);
+}
+
+.facilitatorHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.facilitatorIcon {
+  color: var(--info-fg-primary);
+  width: 16px;
+  height: 16px;
+}
+
+.facilitatorPrompt {
+  margin-bottom: var(--space-3);
+}
+
+.facilitatorInput {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.facilitatorInput input {
+  flex: 1;
+}
+
+/* ============================================
+   SELECTOR MODAL
+   ============================================ */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.selectorModal {
+  width: 480px;
+  max-width: 90vw;
+  max-height: 80vh;
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
+  border-radius: var(--radius-xl);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.selectorHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--soft-border);
+}
+
+.selectorSearch {
+  padding: var(--space-3) var(--space-4);
+}
+
+.currentContext {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0 var(--space-4) var(--space-3);
+  padding: var(--space-3);
+  background: var(--primary-bg);
+  border-radius: var(--radius-md);
+}
+
+.currentContextValue {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--primary-fg);
+}
+
+.currentContextValue .thingIcon {
+  color: var(--primary-fg-soft);
+}
+
+/* ============================================
+   RECENT SECTION
+   ============================================ */
+.recentSection {
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 1px solid var(--soft-border);
+}
+
+.recentHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.recentIcon {
+  color: var(--soft-fg-soft);
+  width: 14px;
+  height: 14px;
+}
+
+.recentList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.recentItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  background: var(--softer-bg);
+  border: 1px solid var(--softer-border);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  color: var(--softer-fg);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-default);
+}
+
+.recentItem:hover {
+  background: var(--softer-bg-hover);
+  border-color: var(--softer-border-hover);
+}
+
+.recentItem .thingIcon {
+  width: 14px;
+  height: 14px;
+}
+
+/* ============================================
+   SELECTOR TREE
+   ============================================ */
+.selectorTree {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-2) 0;
+}
+
+/* ============================================
+   FOCUS STATES
+   ============================================ */
+.treeNode:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: calc(-1 * var(--focus-ring-width));
+}
+
+.toggleButton:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.tagFilterItem:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .treePanel {
+    width: 100%;
+    max-height: 50vh;
+    border-right: none;
+    border-bottom: 1px solid var(--soft-border);
+  }
+
+  .detailPanel {
+    min-height: 50vh;
+    border-left: none;
+    border-top: 1px solid var(--base-border);
+  }
+
+  .ideaSummary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

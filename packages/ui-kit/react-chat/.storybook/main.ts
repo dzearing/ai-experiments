@@ -41,6 +41,25 @@ const config: StorybookConfig = {
   viteFinal: async (config) => {
     config.plugins = config.plugins || [];
     config.plugins.unshift(storybookPnpmFix());
+
+    // Alias workspace packages to source for HMR
+    config.resolve = config.resolve || {};
+    config.resolve.alias = [
+      // Spread existing aliases if any
+      ...(Array.isArray(config.resolve.alias) ? config.resolve.alias : []),
+      // @ui-kit/core subpath exports
+      { find: '@ui-kit/core/bootstrap.js', replacement: path.resolve(__dirname, '../../core/src/runtime/bootstrap.ts') },
+      { find: '@ui-kit/core/surfaces.js', replacement: path.resolve(__dirname, '../../core/src/surfaces.ts') },
+      { find: '@ui-kit/core/dev.js', replacement: path.resolve(__dirname, '../../core/src/dev/index.ts') },
+      { find: '@ui-kit/core', replacement: path.resolve(__dirname, '../../core/src/index.ts') },
+      // @ui-kit/icons - match any icon import
+      { find: /^@ui-kit\/icons\/(.+)$/, replacement: path.resolve(__dirname, '../../icons/src/components/$1.tsx') },
+      // @ui-kit/react
+      { find: '@ui-kit/react', replacement: path.resolve(__dirname, '../../react/src/index.ts') },
+      // @ui-kit/react-markdown
+      { find: '@ui-kit/react-markdown', replacement: path.resolve(__dirname, '../../react-markdown/src/index.ts') },
+    ];
+
     return config;
   },
 };

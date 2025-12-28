@@ -124,6 +124,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Icon sizing based on chip size */
+.xs .icon svg {
+  width: 8px;
+  height: 8px;
+}
+
+.sm .icon svg {
+  width: 8px;
+  height: 8px;
+}
+
+.md .icon svg {
+  width: 14px;
+  height: 14px;
 }
 
 .label {

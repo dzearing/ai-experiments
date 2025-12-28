@@ -246,6 +246,10 @@
       "types": "./dist/LinkIcon.d.ts",
       "import": "./dist/LinkIcon.js"
     },
+    "./ListIcon": {
+      "types": "./dist/ListIcon.d.ts",
+      "import": "./dist/ListIcon.js"
+    },
     "./ListBulletIcon": {
       "types": "./dist/ListBulletIcon.d.ts",
       "import": "./dist/ListBulletIcon.js"
@@ -401,6 +405,10 @@
     "./TrashIcon": {
       "types": "./dist/TrashIcon.d.ts",
       "import": "./dist/TrashIcon.js"
+    },
+    "./TreeIcon": {
+      "types": "./dist/TreeIcon.d.ts",
+      "import": "./dist/TreeIcon.js"
     },
     "./UnderlineIcon": {
       "types": "./dist/UnderlineIcon.d.ts",

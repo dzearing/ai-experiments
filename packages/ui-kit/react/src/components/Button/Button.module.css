@@ -227,7 +227,7 @@
 }
 
 .label {
-  flex: 1;
+  /* No flex: 1 - let justify-content: center handle alignment */
 }
 
 /* ==============================================

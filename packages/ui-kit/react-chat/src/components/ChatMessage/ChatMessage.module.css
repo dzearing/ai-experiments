@@ -166,37 +166,8 @@
 /* Streaming indicator */
 .streamingIndicator {
   display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  margin-left: var(--space-1);
+  margin-inline-start: var(--space-1);
   vertical-align: middle;
-}
-
-.streamingDot {
-  width: 4px;
-  height: 4px;
-  border-radius: var(--radius-full);
-  background: var(--base-fg-soft);
-  animation: streamingPulse 1.4s infinite ease-in-out both;
-}
-
-.streamingDot:nth-child(1) {
-  animation-delay: -0.32s;
-}
-
-.streamingDot:nth-child(2) {
-  animation-delay: -0.16s;
-}
-
-@keyframes streamingPulse {
-  0%, 80%, 100% {
-    transform: scale(0.6);
-    opacity: 0.4;
-  }
-  40% {
-    transform: scale(1);
-    opacity: 1;
-  }
 }
 
 /* Tool calls section */

@@ -1,0 +1,77 @@
+/**
+ * ProgressDots styles
+ *
+ * Surfaces: soft (pending), primary (active/complete)
+ * See TOKEN_GUIDE.md for token reference
+ */
+
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* ==============================================
+   Dot Base Styles
+   ============================================== */
+
+.dot {
+  border-radius: var(--radius-full);
+  background: var(--soft-border);
+  transition: background var(--duration-fast) var(--ease-default),
+    box-shadow var(--duration-fast) var(--ease-default);
+}
+
+/* ==============================================
+   Size Variants
+   ============================================== */
+
+.sm .dot {
+  width: 6px;
+  height: 6px;
+}
+
+.sm {
+  gap: var(--space-1);
+}
+
+.md .dot {
+  width: 8px;
+  height: 8px;
+}
+
+.md {
+  gap: var(--space-1);
+}
+
+.lg .dot {
+  width: 10px;
+  height: 10px;
+}
+
+.lg {
+  gap: var(--space-2);
+}
+
+/* ==============================================
+   State Variants
+   ============================================== */
+
+.complete {
+  background: var(--primary-bg);
+}
+
+.current {
+  background: var(--primary-bg);
+  box-shadow: 0 0 0 3px var(--primary-bg-disabled);
+}
+
+/* ==============================================
+   Reduced Motion
+   ============================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .dot {
+    transition: none;
+  }
+}

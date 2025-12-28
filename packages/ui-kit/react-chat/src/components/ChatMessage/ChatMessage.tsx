@@ -1,5 +1,5 @@
 import { type ReactNode, type MouseEvent } from 'react';
-import { Avatar, Menu, type MenuItem } from '@ui-kit/react';
+import { Avatar, Menu, BusyIndicator, type MenuItem } from '@ui-kit/react';
 import { MarkdownRenderer } from '@ui-kit/react-markdown';
 import styles from './ChatMessage.module.css';
 
@@ -265,11 +265,11 @@ export function ChatMessage({
 
         {/* Streaming indicator */}
         {isStreaming && (
-          <span className={styles.streamingIndicator} aria-label="Generating response">
-            <span className={styles.streamingDot} />
-            <span className={styles.streamingDot} />
-            <span className={styles.streamingDot} />
-          </span>
+          <BusyIndicator
+            size="md"
+            label="Generating response"
+            className={styles.streamingIndicator}
+          />
         )}
 
         {/* Tool calls */}
