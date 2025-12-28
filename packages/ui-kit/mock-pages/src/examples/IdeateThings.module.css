@@ -211,6 +211,641 @@
 }
 
 /* ============================================
+   ONBOARDING EMPTY STATES
+   ============================================ */
+
+/* Full-width onboarding wrapper - centers content in the entire viewport */
+.onboardingFullWidth {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8);
+  overflow-y: auto;
+  background: linear-gradient(
+    135deg,
+    var(--base-bg) 0%,
+    var(--softer-bg) 50%,
+    var(--base-bg) 100%
+  );
+}
+
+/* ============================================
+   WELCOME STATE - Engaging, warm design
+   ============================================ */
+
+.welcomeContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-8);
+  max-width: 640px;
+  width: 100%;
+  padding: var(--space-6);
+}
+
+.welcomeHero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-5);
+  width: 100%;
+  text-align: center;
+}
+
+.welcomeGreeting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.welcomeWave {
+  font-size: var(--text-4xl);
+  animation: wave 1.5s ease-in-out;
+}
+
+@keyframes wave {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(20deg); }
+  50% { transform: rotate(-10deg); }
+  75% { transform: rotate(15deg); }
+}
+
+.welcomeInputWrapper {
+  display: flex;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 480px;
+  padding: var(--space-4);
+  background: var(--soft-bg);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--soft-border);
+  transition: box-shadow var(--duration-normal) var(--ease-default),
+              border-color var(--duration-normal) var(--ease-default);
+}
+
+.welcomeInputWrapper:focus-within {
+  border-color: var(--primary-border);
+  box-shadow: var(--shadow-xl), 0 0 0 3px var(--primary-bg);
+}
+
+.welcomeInput {
+  flex: 1;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-base);
+  background: var(--base-bg);
+  border: 1px solid var(--base-border);
+  border-radius: var(--radius-lg);
+  color: var(--base-fg);
+  outline: none;
+  transition: border-color var(--duration-fast) var(--ease-default);
+}
+
+.welcomeInput::placeholder {
+  color: var(--base-fg-softer);
+}
+
+.welcomeInput:focus {
+  border-color: var(--primary-border);
+}
+
+/* Preview cards showing what Things look like */
+.welcomePreview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.welcomePreviewLabel {
+  text-align: center;
+}
+
+.welcomePreviewCards {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.welcomePreviewCard {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
+  border-radius: var(--radius-lg);
+  transition: transform var(--duration-fast) var(--ease-default),
+              box-shadow var(--duration-fast) var(--ease-default);
+}
+
+.welcomePreviewCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.welcomePreviewIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+  border-radius: var(--radius-md);
+}
+
+.welcomePreviewIcon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.welcomePreviewName {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--soft-fg);
+}
+
+.welcomePreviewTag {
+  font-size: var(--text-xs);
+  color: var(--soft-fg-soft);
+  background: var(--softer-bg);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-full);
+}
+
+.welcomePreviewCardAdd {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: transparent;
+  border: 2px dashed var(--soft-border);
+  border-radius: var(--radius-lg);
+  color: var(--soft-fg-soft);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-default),
+              color var(--duration-fast) var(--ease-default);
+}
+
+.welcomePreviewCardAdd:hover {
+  border-color: var(--primary-border);
+  color: var(--primary-fg);
+}
+
+.welcomePreviewCardAdd svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Feature hints - subtle, horizontal */
+.welcomeHints {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-6);
+  background: var(--softer-bg);
+  border-radius: var(--radius-xl);
+  flex-wrap: wrap;
+}
+
+.welcomeHint {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.welcomeHintIcon {
+  width: 16px;
+  height: 16px;
+  color: var(--primary-fg);
+  flex-shrink: 0;
+}
+
+.welcomeHintDivider {
+  width: 1px;
+  height: 20px;
+  background: var(--softer-border);
+}
+
+/* Alternative action */
+.welcomeAlt {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--softer-border);
+  width: 100%;
+  max-width: 400px;
+  justify-content: center;
+}
+
+/* ============================================
+   OTHER ONBOARDING STATES
+   ============================================ */
+
+.onboardingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-6);
+  max-width: 800px;
+  margin: 0 auto;
+  gap: var(--space-8);
+}
+
+.onboardingHero {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.onboardingIconGroup {
+  position: relative;
+  margin-bottom: var(--space-2);
+}
+
+.onboardingHeroIcon {
+  width: 56px;
+  height: 56px;
+  color: var(--primary-fg);
+}
+
+.onboardingAccentIcon {
+  position: absolute;
+  bottom: -4px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  color: var(--warning-fg);
+}
+
+.onboardingSubtitle {
+  max-width: 100%;
+  line-height: var(--line-normal);
+}
+
+.onboardingActions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+/* Feature cards for welcome state */
+.onboardingFeatures {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+}
+
+.featureCard {
+  display: flex;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--softer-bg);
+  border-radius: var(--radius-lg);
+  text-align: left;
+}
+
+.featureIcon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+  border-radius: var(--radius-md);
+}
+
+.featureIcon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.featureContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.inlineCode {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  background: var(--strong-bg);
+  color: var(--strong-fg);
+  padding: 2px var(--space-1);
+  border-radius: var(--radius-sm);
+}
+
+/* Quick start grid */
+.quickStartGrid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.quickStartCard {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--softer-bg);
+  border: 1px solid var(--softer-border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  text-align: left;
+  transition: all var(--duration-fast) var(--ease-default);
+}
+
+.quickStartCard:hover {
+  background: var(--softer-bg-hover);
+  border-color: var(--softer-border-hover);
+}
+
+.quickStartIcon {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+  border-radius: var(--radius-md);
+}
+
+.quickStartIcon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.quickStartContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.quickStartArrow {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: var(--softer-fg-soft);
+}
+
+/* ============================================
+   ROTATING CAROUSEL
+   ============================================ */
+.carouselContainer {
+  width: 100%;
+  min-height: 180px; /* Prevent layout shift */
+  position: relative;
+}
+
+/* Base layer styles - default is visible */
+.carouselLayer {
+  position: relative;
+}
+
+.carouselLayer .exampleCard {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Layer B is positioned absolutely to overlay Layer A */
+.carouselLayerB {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+/* Exit animation - fading out */
+.carouselLayerExit .exampleCard {
+  animation: fadeScaleOut 700ms var(--ease-default) forwards;
+}
+
+/* Enter animation - start hidden, then animate in */
+.carouselLayerEnter .exampleCard {
+  opacity: 0;
+  transform: scale(0.92);
+  animation: fadeScaleIn 700ms var(--ease-default) forwards;
+}
+
+/* Crossfade animations */
+@keyframes fadeScaleOut {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+}
+
+@keyframes fadeScaleIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Examples grid */
+.examplesGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.exampleCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  background: var(--softer-bg);
+  border: 1px solid var(--softer-border);
+  border-radius: var(--radius-md);
+}
+
+/* Custom card surfaces are registered dynamically via registerCardSurfaces() */
+
+.exampleHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.exampleIcon {
+  width: 18px;
+  height: 18px;
+  color: var(--primary-fg);
+}
+
+.exampleTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.exampleDescription {
+  line-height: var(--line-relaxed);
+}
+
+.exampleChildren {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+  padding-top: var(--space-1);
+  border-top: 1px solid var(--softer-border);
+}
+
+.exampleChildList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.exampleChild {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--softer-fg-soft);
+}
+
+.exampleChildIcon {
+  width: 12px;
+  height: 12px;
+}
+
+.exampleContextBox {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  width: 100%;
+  /* Colors applied via .surface.info class in JSX */
+}
+
+.contextHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.contextIcon {
+  width: 18px;
+  height: 18px;
+  color: var(--base-fg-info);
+}
+
+/* Chat-first state */
+.chatFirstHero {
+  width: 100%;
+  max-width: 400px;
+}
+
+.chatBubbleStack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.chatBubbleUser {
+  align-self: flex-end;
+  max-width: 85%;
+  padding: var(--space-3) var(--space-4);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+  border-radius: var(--radius-lg) var(--radius-lg) var(--radius-sm) var(--radius-lg);
+  font-size: var(--text-sm);
+  font-style: italic;
+}
+
+.chatBubbleAgent {
+  align-self: flex-start;
+  max-width: 85%;
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--softer-bg);
+  border: 1px solid var(--softer-border);
+  border-radius: var(--radius-lg) var(--radius-lg) var(--radius-lg) var(--radius-sm);
+}
+
+.chatBubbleIcon {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: var(--success-fg);
+  margin-top: 2px;
+}
+
+.chatPromptExamples {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  text-align: center;
+}
+
+.promptList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.promptExample {
+  padding: var(--space-2) var(--space-4);
+  background: var(--softer-bg);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--softer-fg);
+  font-style: italic;
+}
+
+/* Tip box - uses warning surface class for proper a11y */
+.onboardingTip {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  width: 100%;
+  /* Colors applied via .surface.warning class in JSX */
+}
+
+.tipIcon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  color: var(--base-fg-warning);
+  margin-top: 2px;
+}
+
+/* ============================================
    DETAIL PANEL (RIGHT)
    ============================================ */
 .detailPanel {
@@ -219,6 +854,16 @@
   flex-direction: column;
   background: var(--base-bg);
   border-left: 1px solid var(--base-border);
+  overflow-y: auto;
+}
+
+/* FRE content inside detail panel */
+.freDetailContent {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
   overflow-y: auto;
 }
 
