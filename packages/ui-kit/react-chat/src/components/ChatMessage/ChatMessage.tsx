@@ -137,6 +137,9 @@ export interface ChatMessageProps {
 
   /** Additional CSS class */
   className?: string;
+
+  /** Callback when a link is clicked in the message content */
+  onLinkClick?: (href: string) => void;
 }
 
 /**
@@ -175,6 +178,7 @@ export function ChatMessage({
   onMenuSelect,
   avatar,
   className = '',
+  onLinkClick,
 }: ChatMessageProps) {
   const handleMenuSelect = (value: string) => {
     onMenuSelect?.(value, id);
@@ -258,6 +262,7 @@ export function ChatMessage({
             imageAuthor={senderName}
             imageTimestamp={typeof timestamp === 'string' ? timestamp : new Date(timestamp).toISOString()}
             className={styles.markdownContent}
+            onDeepLinkClick={onLinkClick}
           />
         ) : (
           <p className={styles.plainText}>{content}</p>

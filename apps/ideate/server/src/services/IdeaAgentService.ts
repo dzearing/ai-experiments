@@ -57,6 +57,22 @@ export interface TokenUsage {
 }
 
 /**
+ * Open question for the user to resolve
+ */
+export interface OpenQuestion {
+  id: string;
+  question: string;
+  context?: string;
+  selectionType: 'single' | 'multiple';
+  options: Array<{
+    id: string;
+    label: string;
+    description?: string;
+  }>;
+  allowCustom: boolean;
+}
+
+/**
  * Callbacks for streaming agent responses
  */
 export interface StreamCallbacks {
@@ -72,6 +88,8 @@ export interface StreamCallbacks {
   onDocumentEditEnd?: () => void;
   /** Called with token usage updates during streaming */
   onTokenUsage?: (usage: TokenUsage) => void;
+  /** Called when open questions are extracted from the response */
+  onOpenQuestions?: (questions: OpenQuestion[]) => void;
 }
 
 /**
@@ -159,16 +177,37 @@ function parseDocumentEdits(response: string): { edits: DocumentEdit[] | null; c
 }
 
 /**
+ * Parse open questions from agent response
+ * Questions block can appear before the chat response
+ */
+function parseOpenQuestions(response: string): { questions: OpenQuestion[] | null; responseWithoutQuestions: string } {
+  const questionsMatch = response.match(/<open_questions>\s*([\s\S]*?)\s*<\/open_questions>/);
+
+  if (!questionsMatch) {
+    return { questions: null, responseWithoutQuestions: response };
+  }
+
+  try {
+    const questions = JSON.parse(questionsMatch[1]) as OpenQuestion[];
+    // Remove the questions block from the response
+    const responseWithoutQuestions = response.replace(/<open_questions>[\s\S]*?<\/open_questions>/, '').trim();
+    return { questions, responseWithoutQuestions };
+  } catch {
+    console.error('[IdeaAgentService] Failed to parse open questions JSON');
+    return { questions: null, responseWithoutQuestions: response };
+  }
+}
+
+/**
  * Check if a partial response contains the start of an edit block
  */
 function findEditBlockStart(text: string): number {
   const ideaUpdateStart = text.indexOf('<idea_update>');
   const docEditsStart = text.indexOf('<document_edits>');
+  const openQuestionsStart = text.indexOf('<open_questions>');
 
-  if (ideaUpdateStart >= 0 && docEditsStart >= 0) {
-    return Math.min(ideaUpdateStart, docEditsStart);
-  }
-  return ideaUpdateStart >= 0 ? ideaUpdateStart : docEditsStart;
+  const starts = [ideaUpdateStart, docEditsStart, openQuestionsStart].filter(s => s >= 0);
+  return starts.length > 0 ? Math.min(...starts) : -1;
 }
 
 /**
@@ -287,6 +326,8 @@ export class IdeaAgentService {
     let fullResponse = '';
     let streamedChatLength = 0; // How much we've already streamed to the client
     let foundEditBlock = false; // Have we hit an edit block?
+    let questionsSent = false; // Have we sent open questions?
+    let questionCount = 0; // Number of questions (for fixing link text)
     let totalInputTokens = 0;
     let totalOutputTokens = 0;
 
@@ -340,6 +381,28 @@ export class IdeaAgentService {
 
           if (newText) {
             fullResponse += newText;
+
+            // Check for open questions block and send immediately when found
+            // This should happen FIRST, before any text chunks
+            if (!questionsSent && fullResponse.includes('</open_questions>')) {
+              const { questions, responseWithoutQuestions } = parseOpenQuestions(fullResponse);
+              if (questions && questions.length > 0) {
+                console.log(`[IdeaAgentService] Found ${questions.length} open questions, sending to client`);
+                callbacks.onOpenQuestions?.(questions);
+                questionsSent = true;
+                questionCount = questions.length;
+                // Update fullResponse to exclude the questions block
+                fullResponse = responseWithoutQuestions;
+              }
+            }
+
+            // Fix question count in link if agent got it wrong
+            if (questionCount > 0) {
+              fullResponse = fullResponse.replace(
+                /\[resolve \d+ open questions?\]/gi,
+                `[resolve ${questionCount} open question${questionCount === 1 ? '' : 's'}]`
+              );
+            }
 
             // Stream chat text until we hit an edit block
             if (!foundEditBlock) {
@@ -490,7 +553,7 @@ export class IdeaAgentService {
    */
   private findSafeStreamEnd(text: string): number {
     // Look for potential partial tags at the end
-    const potentialTagStarts = ['<idea_update', '<document_edits', '<idea', '<doc'];
+    const potentialTagStarts = ['<idea_update', '<document_edits', '<open_questions', '<idea', '<doc', '<open'];
     let safeEnd = text.length;
 
     for (const tagStart of potentialTagStarts) {

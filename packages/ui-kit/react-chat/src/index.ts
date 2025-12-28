@@ -33,3 +33,15 @@ export type {
 
 // Hooks
 export { useMessageHistory } from './components/ChatInput/useMessageHistory';
+
+// OpenQuestionsResolver component and related types
+export { OpenQuestionsResolver } from './components/OpenQuestionsResolver';
+export type {
+  OpenQuestionsResolverProps,
+  OpenQuestionsResolverLabels,
+  SelectionType,
+  QuestionOption,
+  OpenQuestion,
+  QuestionAnswer,
+  OpenQuestionsResult,
+} from './components/OpenQuestionsResolver';

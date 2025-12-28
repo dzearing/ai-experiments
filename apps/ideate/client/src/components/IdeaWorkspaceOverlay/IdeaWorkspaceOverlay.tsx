@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Slide, Button, IconButton, SplitPane, Spinner, Dialog } from '@ui-kit/react';
 import { TrashIcon } from '@ui-kit/icons/TrashIcon';
-import { ChatPanel, ChatInput, ThinkingIndicator, MessageQueue, type ChatInputSubmitData, type ChatInputRef, type ChatPanelMessage, type QueuedMessage } from '@ui-kit/react-chat';
+import { ChatPanel, ChatInput, ThinkingIndicator, MessageQueue, OpenQuestionsResolver, type ChatInputSubmitData, type ChatInputRef, type ChatPanelMessage, type QueuedMessage } from '@ui-kit/react-chat';
 import { MarkdownCoEditor, type ViewMode, type CoAuthor } from '@ui-kit/react-markdown';
 import { useAuth } from '../../contexts/AuthContext';
 import { useIdeas } from '../../contexts/IdeasContext';
@@ -260,6 +260,10 @@ export function IdeaWorkspaceOverlay({
     isLoading: isAgentThinking,
     isEditingDocument,
     tokenUsage,
+    openQuestions,
+    showQuestionsResolver,
+    setShowQuestionsResolver,
+    resolveQuestions,
     sendMessage: sendAgentMessage,
     addLocalMessage,
     clearHistory,
@@ -576,6 +580,13 @@ export function IdeaWorkspaceOverlay({
     clearHistory();
   }, [clearHistory]);
 
+  // Handle link clicks in chat messages
+  const handleLinkClick = useCallback((href: string) => {
+    if (href === '#resolve' && openQuestions && openQuestions.length > 0) {
+      setShowQuestionsResolver(true);
+    }
+  }, [openQuestions, setShowQuestionsResolver]);
+
   // Empty state for chat panel
   const chatEmptyState = (
     <div className={styles.chatEmptyState}>
@@ -639,6 +650,7 @@ export function IdeaWorkspaceOverlay({
                     messages={chatMessages}
                     emptyState={chatEmptyState}
                     className={styles.chatPanel}
+                    onLinkClick={handleLinkClick}
                   />
 
                   <ThinkingIndicator isActive={isAgentThinking} showEscapeHint={isAgentThinking && !inputContent.trim()} />
@@ -661,6 +673,18 @@ export function IdeaWorkspaceOverlay({
                       onCommand={handleCommand}
                     />
                   </div>
+
+                  {/* Open Questions Resolver Overlay */}
+                  {showQuestionsResolver && openQuestions && openQuestions.length > 0 && (
+                    <div className={styles.questionsResolverOverlay}>
+                      <OpenQuestionsResolver
+                        questions={openQuestions}
+                        onComplete={resolveQuestions}
+                        onDismiss={() => setShowQuestionsResolver(false)}
+                        variant="centered"
+                      />
+                    </div>
+                  )}
                 </div>
               }
               second={

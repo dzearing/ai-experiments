@@ -40,11 +40,19 @@
 
 /* Chat pane (left side) - full height */
 .chatPane {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
   width: 100%;
   background: var(--base-bg);
+}
+
+/* Questions resolver overlay - covers the chat pane */
+.questionsResolverOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
 }
 
 .chatHeader {

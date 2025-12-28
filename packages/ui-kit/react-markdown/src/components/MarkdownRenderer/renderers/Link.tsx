@@ -52,21 +52,20 @@ export function Link({
   // Handle internal hash links
   if (isHashLink) {
     const handleClick = (e: React.MouseEvent) => {
-      if (onInternalLinkClick) {
-        e.preventDefault();
-        onInternalLinkClick(href);
-      }
+      e.preventDefault();
+      onInternalLinkClick?.(href);
     };
 
+    // Use button styling as link to avoid URL changes
     return (
-      <a
-        href={href}
+      <button
+        type="button"
         className={styles.link}
         title={title}
         onClick={handleClick}
       >
         {children}
-      </a>
+      </button>
     );
   }
 

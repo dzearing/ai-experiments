@@ -46,11 +46,13 @@ When the document contains "Open Questions" and the user provides an answer:
    - If user specifies target audience → update summary/description
    - If user makes a decision → reflect it in the appropriate section
 4. **Re-evaluate remaining questions** - some may now be answered implicitly
+5. **REMOVE empty sections** - if all questions are answered, delete the entire "## Open Questions" section (header and all)
 
 Example: If user says "It's for small teams, not enterprise" in response to "Who is the target audience?":
 - DELETE the target audience question
 - ADD "Target Audience: Small teams" to the description
 - REMOVE any enterprise-focused features if present
+- If this was the last open question, DELETE the entire "## Open Questions" section header too
 
 DO NOT edit when:
 - The user is asking YOU questions about the idea (wanting information, not making changes)
@@ -100,6 +102,7 @@ Edits use **text strings** to find locations reliably. The `start` position is j
 - For deleting a bullet: startText="- Question text", endText="?" (or end of line content)
 - Keep edits minimal and targeted
 - Edits are applied in order
+- **Remove empty sections**: If all content under a section header is removed, delete the header too. Don't leave orphaned headers with no content.
 
 ## CRITICAL: Markdown Formatting Rules
 Proper markdown requires specific spacing. Follow these rules EXACTLY:
@@ -156,3 +159,47 @@ To delete a single bullet from a list (e.g., removing an answered Open Question)
 `{"action": "delete", "start": 1500, "startText": "- Do users need cloud sync", "endText": "?"}`
 
 This deletes from "- Do users..." through the "?" at the end.
+
+## Interactive Open Questions (REQUIRED when open questions exist)
+
+**CRITICAL**: If your edits add or modify open questions in the document, you MUST:
+1. Output the `<open_questions>` JSON block FIRST (before your chat message)
+2. Include a `[resolve N open questions](#resolve)` link in your chat response
+
+This lets users answer questions interactively while edits are applied.
+
+**Format**:
+1. First, output the questions block (BEFORE your chat message):
+<open_questions>
+[
+  {
+    "id": "unique-id",
+    "question": "The question to ask?",
+    "context": "Optional context about why this matters",
+    "selectionType": "single",
+    "options": [
+      {"id": "opt1", "label": "**Option 1** - One to three sentences describing what this option means."},
+      {"id": "opt2", "label": "**Option 2** - Explanation of this alternative and its implications."}
+    ],
+    "allowCustom": true
+  }
+]
+</open_questions>
+
+2. Then write your response, including a link where N is the EXACT count of questions in your JSON array:
+"I'm updating your document now. You can [resolve N open questions](#resolve) while I work."
+
+**CRITICAL**: Count your questions! If you have 5 questions, say "5 open questions". If you have 3, say "3". The number MUST match the count in the `<open_questions>` array above.
+
+3. Finally, add the `<document_edits>` block.
+
+**CRITICAL: Consistency Rule**
+The questions in your `<open_questions>` JSON block MUST be the EXACT SAME questions that appear in the document's "## Open Questions" section. If the document lists 5 open questions, your JSON MUST contain 5 questions. If it lists 3, your JSON MUST contain 3. They must match exactly.
+
+**Guidelines**:
+- Keep questions focused on user-facing decisions (not technical)
+- Provide 2-4 clear options per question
+- **Option format**: Each option label should be "**Option Name** - One to three sentences describing what this option means and its implications."
+- Use `selectionType: "single"` for mutually exclusive choices
+- Use `selectionType: "multiple"` when multiple options can be combined
+- Set `allowCustom: true` if users might have unique answers

@@ -62,6 +62,9 @@ export interface ChatPanelProps {
 
   /** Called when a menu item is selected */
   onMessageMenuSelect?: (value: string, messageId: string) => void;
+
+  /** Called when a link is clicked in a message */
+  onLinkClick?: (href: string) => void;
 }
 
 /**
@@ -90,6 +93,7 @@ export function ChatPanel({
   renderAvatar,
   messageMenuItems,
   onMessageMenuSelect,
+  onLinkClick,
 }: ChatPanelProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -129,6 +133,7 @@ export function ChatPanel({
                 avatar={renderAvatar ? renderAvatar(message) : message.avatar}
                 menuItems={messageMenuItems}
                 onMenuSelect={onMessageMenuSelect}
+                onLinkClick={onLinkClick}
               />
             );
           })}

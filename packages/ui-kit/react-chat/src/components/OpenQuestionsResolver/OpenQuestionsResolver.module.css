@@ -1,0 +1,301 @@
+/**
+ * OpenQuestionsResolver styles
+ *
+ * Surfaces: soft (card), strong (options), primary (selected options)
+ */
+
+/* ==============================================
+   Container
+   ============================================== */
+
+.container {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.fullscreen {
+  display: flex;
+  flex-direction: column;
+  background: var(--base-bg);
+}
+
+/* ==============================================
+   Backdrop (centered variant)
+   ============================================== */
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--base-bg);
+  opacity: 0.8;
+  z-index: 10;
+}
+
+/* ==============================================
+   Centered Card
+   ============================================== */
+
+.card {
+  position: absolute;
+  top: var(--space-6);
+  bottom: var(--space-6);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 560px;
+  background: var(--soft-bg);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 20;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--soft-border);
+}
+
+.cardHeaderCenter {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.cardHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.cardBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.questionContext {
+  /* Gap is handled by parent .cardBody */
+}
+
+.cardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: var(--space-4);
+  border-top: 1px solid var(--soft-border);
+  background: var(--softer-bg);
+}
+
+.footerActions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* ==============================================
+   Fullscreen Variant
+   ============================================== */
+
+.fullOverlayProgress {
+  flex-shrink: 0;
+}
+
+.fullOverlayHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-6);
+  background: var(--soft-bg);
+  border-bottom: 1px solid var(--soft-border);
+}
+
+.stepperContainer {
+  display: flex;
+  align-items: center;
+}
+
+.stepperItem {
+  display: flex;
+  align-items: center;
+}
+
+.stepperDot {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background: var(--softer-bg);
+  border: 2px solid var(--soft-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--soft-fg-soft);
+  transition: all var(--duration-fast) var(--ease-default);
+}
+
+.stepperItemComplete .stepperDot {
+  background: var(--success-bg);
+  border-color: var(--success-border);
+  color: var(--success-fg);
+}
+
+.stepperItemCurrent .stepperDot {
+  background: var(--primary-bg);
+  border-color: var(--primary-border);
+  color: var(--primary-fg);
+}
+
+.stepperLine {
+  width: 40px;
+  height: 2px;
+  background: var(--soft-border);
+  margin: 0 var(--space-2);
+}
+
+.stepperItemComplete + .stepperItem .stepperLine,
+.stepperItemComplete .stepperLine {
+  background: var(--success-bg);
+}
+
+.fullOverlayContent {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+  padding: var(--space-8) var(--space-6);
+}
+
+.fullOverlayQuestion {
+  width: 100%;
+  max-width: 640px;
+}
+
+.fullOverlayTitle {
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-2);
+}
+
+.fullOverlayContext {
+  margin-bottom: var(--space-6);
+}
+
+.fullOverlayOptions {
+  margin-top: var(--space-4);
+}
+
+.fullOverlayFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: var(--space-4) var(--space-6);
+  background: var(--soft-bg);
+  border-top: 1px solid var(--soft-border);
+}
+
+/* ==============================================
+   Question Options
+   ============================================== */
+
+.optionsList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  /* Capture focus ring color at this level (outside .surface.primary) for child cards */
+  --options-focus-ring: var(--focus-ring);
+}
+
+/*
+ * Selectable card pattern:
+ * - Default: uses strong color group (elevated, interactive)
+ * - Selected: applies .surface.primary class for proper token scoping
+ * This ensures nested components (Text, etc.) inherit correct colors
+ */
+.optionCard {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-2);
+  background: var(--strong-bg);
+  color: var(--strong-fg);
+  border: 2px solid var(--strong-border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) var(--ease-default),
+    background var(--duration-fast) var(--ease-default),
+    outline-offset var(--duration-fast) var(--ease-default);
+}
+
+.optionCard:hover {
+  background: var(--strong-bg-hover);
+  border-color: var(--strong-border-hover);
+}
+
+.optionCard:focus-visible {
+  /* Use --options-focus-ring captured on parent (outside .surface.primary scope) */
+  outline: var(--focus-ring-width) solid var(--options-focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/*
+ * Selected state uses .surface.primary pattern:
+ * - background/color use base-* tokens (which are remapped on primary surface)
+ * - This ensures all nested text colors are properly derived
+ */
+.optionCardSelected {
+  background: var(--base-bg);
+  color: var(--base-fg);
+  border-color: var(--base-border);
+}
+
+.optionCardSelected:hover {
+  background: var(--base-bg-hover);
+  border-color: var(--base-border-hover);
+}
+
+.optionSelector {
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.optionContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.customInput {
+  margin-top: var(--space-3);
+}
+
+.optionLabel {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+}
+
+/* Remove default markdown paragraph margins in option labels */
+.optionLabel p {
+  margin: 0;
+}
+
+/* ==============================================
+   Reduced Motion
+   ============================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .optionCard,
+  .stepperDot {
+    transition: none;
+  }
+}

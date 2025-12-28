@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { IDEA_AGENT_WS_URL } from '../config';
+import type { OpenQuestion, OpenQuestionsResult } from '@ui-kit/react-chat';
 
 /**
  * Idea context to send to the agent
@@ -36,7 +37,7 @@ export interface TokenUsage {
  * Server message types for the idea agent WebSocket protocol
  */
 interface ServerMessage {
-  type: 'text_chunk' | 'message_complete' | 'history' | 'error' | 'greeting' | 'document_edit_start' | 'document_edit_end' | 'token_usage';
+  type: 'text_chunk' | 'message_complete' | 'history' | 'error' | 'greeting' | 'document_edit_start' | 'document_edit_end' | 'token_usage' | 'open_questions';
   /** Text content chunk (for streaming) */
   text?: string;
   /** Message ID being updated */
@@ -49,6 +50,8 @@ interface ServerMessage {
   error?: string;
   /** Token usage information */
   usage?: TokenUsage;
+  /** Open questions for user to resolve (for open_questions type) */
+  questions?: OpenQuestion[];
 }
 
 /**
@@ -85,6 +88,14 @@ export interface UseIdeaAgentReturn {
   error: string | null;
   /** Current token usage (updated during streaming) */
   tokenUsage: TokenUsage | null;
+  /** Open questions from the agent (null if none) */
+  openQuestions: OpenQuestion[] | null;
+  /** Whether the questions resolver overlay should be shown */
+  showQuestionsResolver: boolean;
+  /** Set whether the questions resolver overlay should be shown */
+  setShowQuestionsResolver: (show: boolean) => void;
+  /** Resolve questions and send summary to agent */
+  resolveQuestions: (result: OpenQuestionsResult) => void;
   /** Send a message to the agent */
   sendMessage: (content: string) => void;
   /** Add a local message (for system messages like help) */
@@ -115,6 +126,8 @@ export function useIdeaAgent({
   const [isEditingDocument, setIsEditingDocument] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tokenUsage, setTokenUsage] = useState<TokenUsage | null>(null);
+  const [openQuestions, setOpenQuestions] = useState<OpenQuestion[] | null>(null);
+  const [showQuestionsResolver, setShowQuestionsResolver] = useState(false);
 
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -321,6 +334,13 @@ export function useIdeaAgent({
               setTokenUsage(data.usage);
             }
             break;
+
+          case 'open_questions':
+            // Store open questions for user to resolve
+            if (data.questions && data.questions.length > 0) {
+              setOpenQuestions(data.questions);
+            }
+            break;
         }
       } catch (err) {
         console.error('[IdeaAgent] Failed to parse message:', err);
@@ -425,6 +445,44 @@ export function useIdeaAgent({
     }
   }, [isLoading, updateMessage]);
 
+  // Resolve open questions and send summary to agent
+  const resolveQuestions = useCallback((result: OpenQuestionsResult) => {
+    // Close the resolver overlay
+    setShowQuestionsResolver(false);
+
+    // Only send summary if completed (not dismissed)
+    if (result.completed && openQuestions) {
+      // Build human-readable summary
+      const summaryLines = ['Here are my answers to the open questions:'];
+
+      for (const answer of result.answers) {
+        const question = openQuestions.find(q => q.id === answer.questionId);
+        if (!question) continue;
+
+        const selectedLabels = answer.selectedOptionIds
+          .map(optId => {
+            if (optId === 'custom') return answer.customText || 'Custom response';
+            const opt = question.options.find(o => o.id === optId);
+            return opt?.label || optId;
+          })
+          .filter(Boolean);
+
+        if (selectedLabels.length > 0) {
+          const shortQuestion = question.question.replace(/\?$/, '');
+          summaryLines.push(`- **${shortQuestion}**: ${selectedLabels.join(', ')}`);
+        }
+      }
+
+      const summary = summaryLines.join('\n');
+
+      // Send as user message
+      sendMessage(summary);
+
+      // Only clear questions after completing (not dismissing)
+      setOpenQuestions(null);
+    }
+  }, [openQuestions, sendMessage]);
+
   return {
     messages,
     isConnected,
@@ -432,6 +490,10 @@ export function useIdeaAgent({
     isEditingDocument,
     error,
     tokenUsage,
+    openQuestions,
+    showQuestionsResolver,
+    setShowQuestionsResolver,
+    resolveQuestions,
     sendMessage,
     addLocalMessage: addMessage,
     clearHistory,

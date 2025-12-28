@@ -17,10 +17,26 @@ interface ClientMessage {
 }
 
 /**
+ * Open question for the user to resolve
+ */
+interface OpenQuestion {
+  id: string;
+  question: string;
+  context?: string;
+  selectionType: 'single' | 'multiple';
+  options: Array<{
+    id: string;
+    label: string;
+    description?: string;
+  }>;
+  allowCustom: boolean;
+}
+
+/**
  * Server message types for the idea agent WebSocket protocol
  */
 interface ServerMessage {
-  type: 'text_chunk' | 'message_complete' | 'history' | 'error' | 'greeting' | 'document_edit_start' | 'document_edit_end' | 'token_usage';
+  type: 'text_chunk' | 'message_complete' | 'history' | 'error' | 'greeting' | 'document_edit_start' | 'document_edit_end' | 'token_usage' | 'open_questions';
   /** Text content chunk (for streaming) */
   text?: string;
   /** Message ID being updated */
@@ -36,6 +52,8 @@ interface ServerMessage {
     inputTokens: number;
     outputTokens: number;
   };
+  /** Open questions for user to resolve */
+  questions?: OpenQuestion[];
 }
 
 /**
@@ -249,6 +267,14 @@ export class IdeaAgentWebSocketHandler {
                   inputTokens: usage.inputTokens,
                   outputTokens: usage.outputTokens,
                 },
+              });
+            }
+          },
+          onOpenQuestions: (questions) => {
+            if (!client.cancelled && questions.length > 0) {
+              this.send(client.ws, {
+                type: 'open_questions',
+                questions,
               });
             }
           },

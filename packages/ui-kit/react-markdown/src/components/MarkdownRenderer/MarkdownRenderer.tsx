@@ -136,11 +136,18 @@ export function MarkdownRenderer({
   // Handle internal link click
   const handleInternalLinkClick = useCallback((href: string) => {
     if (href.startsWith('#')) {
+      // If there's a callback, let it handle the link (e.g., #resolve action links)
+      // Don't navigate/scroll - the callback decides what to do
+      if (onDeepLinkClick) {
+        onDeepLinkClick(href);
+        return;
+      }
+
+      // No callback - try to scroll to deep link if it's a valid format
       const hash = href.slice(1);
       const link = parseDeepLink(hash);
       if (link) {
         scrollToLink(link);
-        onDeepLinkClick?.(href);
       }
     }
   }, [scrollToLink, onDeepLinkClick]);

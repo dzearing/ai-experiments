@@ -419,37 +419,31 @@ export class IdeaAgentYjsClient {
   }
 
   /**
-   * Adjust edit positions based on cumulative offset from previous edits.
+   * Adjust edit start hint based on cumulative offset from previous edits.
+   * With text-anchored edits, this only adjusts the approximate `start` hint.
    */
   private adjustEditPositions(edit: DocumentEdit, offset: number): DocumentEdit {
     if (offset === 0) return edit;
-
-    switch (edit.action) {
-      case 'replace':
-        return { ...edit, start: edit.start + offset, end: edit.end + offset };
-      case 'insert':
-        return { ...edit, position: edit.position + offset };
-      case 'delete':
-        return { ...edit, start: edit.start + offset, end: edit.end + offset };
-      default:
-        return edit;
-    }
+    // Only adjust the `start` hint - text anchors (startText, endText, afterText) are found dynamically
+    return { ...edit, start: edit.start + offset };
   }
 
   /**
    * Calculate how much an edit changes the document length.
+   * This is an estimate since we don't know exact matched text lengths.
    */
   private calculateEditOffset(edit: DocumentEdit): number {
     switch (edit.action) {
       case 'replace':
-        // New text length minus old text length
-        return edit.text.length - (edit.end - edit.start);
+        // Approximate: assume replaced range is similar length to startText+endText
+        // This is just a hint adjustment, so exactness isn't critical
+        return edit.text.length - (edit.startText.length + edit.endText.length);
       case 'insert':
         // Inserted text length
         return edit.text.length;
       case 'delete':
-        // Negative because we removed text
-        return -(edit.end - edit.start);
+        // Approximate deletion length
+        return -(edit.startText.length + edit.endText.length);
       default:
         return 0;
     }
