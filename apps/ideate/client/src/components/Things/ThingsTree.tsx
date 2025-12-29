@@ -1,5 +1,5 @@
 import { useCallback, useState, useMemo, useEffect, useRef } from 'react';
-import { Button, SearchInput, TreeView, Chip, Segmented, Input, type TreeNode } from '@ui-kit/react';
+import { Button, IconButton, SearchInput, TreeView, Chip, Segmented, Input, Dialog, type TreeNode } from '@ui-kit/react';
 import { AddIcon } from '@ui-kit/icons/AddIcon';
 import { FilterIcon } from '@ui-kit/icons/FilterIcon';
 import { FolderIcon } from '@ui-kit/icons/FolderIcon';
@@ -14,11 +14,13 @@ import type { ThingMetadata, ThingType } from '../../types/thing';
 import styles from './ThingsTree.module.css';
 
 interface ThingsTreeProps {
-  onSelect: (thing: ThingMetadata) => void;
+  onSelect: (thing: ThingMetadata | null) => void;
   onCreateNew: (parentId?: string) => void;
   selectedId?: string | null;
   /** Called when inline editing is available, provides a function to trigger it */
   onInlineEditReady?: (startEdit: () => void) => void;
+  /** Called when a thing is renamed */
+  onRename?: (id: string, newName: string) => void;
 }
 
 type ViewType = 'tree' | 'list';
@@ -37,12 +39,25 @@ function getThingIcon(type: ThingType) {
   }
 }
 
+/** Options for building tree nodes with editing support */
+interface BuildTreeNodesOptions {
+  editingId?: string | null;
+  editingName?: string;
+  onRenameChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onRenameKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  onRenameBlur?: () => void;
+  renameInputRef?: React.RefObject<HTMLInputElement | null>;
+}
+
 /** Build TreeNode[] from ThingMetadata[] for TreeView component */
 function buildTreeNodes(
   things: ThingMetadata[],
   parentId: string | null = null,
-  visited: Set<string> = new Set()
+  visited: Set<string> = new Set(),
+  options: BuildTreeNodesOptions = {}
 ): TreeNode[] {
+  const { editingId, editingName, onRenameChange, onRenameKeyDown, onRenameBlur, renameInputRef } = options;
+
   // Get children of this parent
   const children = parentId === null
     ? things.filter(t => t.parentIds.length === 0) // Root things
@@ -58,13 +73,29 @@ function buildTreeNodes(
         ? thing.ideaCounts.new + thing.ideaCounts.exploring + thing.ideaCounts.ready
         : 0;
 
-      const childNodes = buildTreeNodes(things, thing.id, newVisited);
+      const childNodes = buildTreeNodes(things, thing.id, newVisited, options);
+      const isEditing = editingId === thing.id;
 
       return {
         id: thing.id,
         type: thing.type === 'category' || thing.type === 'project' ? 'folder' : 'file',
         icon: getThingIcon(thing.type),
-        label: (
+        label: isEditing ? (
+          <div className={styles.renameInputWrapper}>
+            <Input
+              ref={renameInputRef as React.RefObject<HTMLInputElement>}
+              value={editingName || ''}
+              onChange={onRenameChange}
+              onKeyDown={onRenameKeyDown}
+              onBlur={onRenameBlur}
+              size="sm"
+              fullWidth
+              autoFocus
+              onClick={(e) => e.stopPropagation()}
+              className={styles.inlineInput}
+            />
+          </div>
+        ) : (
           <div className={styles.treeNodeLabel}>
             <span className={styles.thingName}>{thing.name}</span>
             {thing.tags.length > 0 && (
@@ -116,19 +147,29 @@ function generateTempId(): string {
   return `temp-${Date.now()}-${++tempIdCounter}`;
 }
 
-export function ThingsTree({ onSelect, onCreateNew: _onCreateNew, selectedId, onInlineEditReady }: ThingsTreeProps) {
-  const { things, expandedIds, setExpandedIds, isLoading, filter, setFilter, createThing } = useThings();
+export function ThingsTree({ onSelect, onCreateNew: _onCreateNew, selectedId, onInlineEditReady, onRename }: ThingsTreeProps) {
+  const { things, expandedIds, setExpandedIds, isLoading, filter, setFilter, createThing, updateThing, deleteThing } = useThings();
   const [viewType, setViewType] = useState<ViewType>('tree');
   const [searchValue, setSearchValue] = useState('');
   const [tagFilter, setTagFilter] = useState<string | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
 
-  // Inline editing state
+  // Inline editing state (for creating new things)
   const [pendingThing, setPendingThing] = useState<PendingThing | null>(null);
   const [lastCreatedId, setLastCreatedId] = useState<string | null>(null);
   const [insertAfterId, setInsertAfterId] = useState<string | null>(null);
   const [indentLevel, setIndentLevel] = useState(0);
   const pendingInputRef = useRef<HTMLInputElement>(null);
+
+  // Rename editing state (for existing things)
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
+  const renameInputRef = useRef<HTMLInputElement>(null);
+  const treeContainerRef = useRef<HTMLDivElement>(null);
+
+  // Delete confirmation dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   // Filter things by search query and tag
   const filteredThings = useMemo(() => {
@@ -145,6 +186,17 @@ export function ThingsTree({ onSelect, onCreateNew: _onCreateNew, selectedId, on
   }, [things, searchValue, tagFilter]);
 
   const allTags = useMemo(() => collectAllTags(things), [things]);
+
+  // Helper to refocus the TreeView for keyboard navigation
+  const refocusTree = useCallback(() => {
+    // Use a longer timeout to ensure dialogs/modals have fully closed
+    // and their focus trap cleanup has completed
+    setTimeout(() => {
+      // Focus the TreeView's container (the element with role="tree")
+      const treeElement = treeContainerRef.current?.querySelector('[role="tree"]') as HTMLElement;
+      treeElement?.focus();
+    }, 50);
+  }, []);
 
   // Handle pending input keydown
   const handlePendingKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -194,11 +246,12 @@ export function ThingsTree({ onSelect, onCreateNew: _onCreateNew, selectedId, on
       e.stopPropagation();
       if (pendingThing.name.trim()) {
         const parentId = pendingThing.parentId;
-        // Commit and create another
+        // Commit and create another - pass insertAfterId for correct positioning
         createThing({
           name: pendingThing.name.trim(),
           type: 'item',
           parentIds: parentId ? [parentId] : [],
+          insertAfterId: insertAfterId || undefined,
         }).then(created => {
           if (created) {
             setLastCreatedId(created.id);
@@ -220,7 +273,7 @@ export function ThingsTree({ onSelect, onCreateNew: _onCreateNew, selectedId, on
           }
         });
       } else {
-        // Empty - cancel
+        // Empty - cancel and refocus tree for keyboard navigation
         setPendingThing(null);
         setInsertAfterId(null);
         setIndentLevel(0);
@@ -229,6 +282,7 @@ export function ThingsTree({ onSelect, onCreateNew: _onCreateNew, selectedId, on
           if (lastCreated) onSelect(lastCreated);
           setLastCreatedId(null);
         }
+        refocusTree();
       }
     } else if (e.key === 'Escape') {
       e.preventDefault();
@@ -241,8 +295,9 @@ export function ThingsTree({ onSelect, onCreateNew: _onCreateNew, selectedId, on
         if (lastCreated) onSelect(lastCreated);
         setLastCreatedId(null);
       }
+      refocusTree();
     }
-  }, [pendingThing, createThing, things, onSelect, lastCreatedId, insertAfterId, indentLevel, setExpandedIds, expandedIds]);
+  }, [pendingThing, createThing, things, onSelect, lastCreatedId, insertAfterId, indentLevel, setExpandedIds, expandedIds, refocusTree]);
 
   // Handle pending input change
   const handlePendingChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -250,18 +305,152 @@ export function ThingsTree({ onSelect, onCreateNew: _onCreateNew, selectedId, on
     setPendingThing({ ...pendingThing, name: e.target.value });
   }, [pendingThing]);
 
+  // Start renaming a thing
+  const startRename = useCallback((thingId: string) => {
+    const thing = things.find(t => t.id === thingId);
+    if (thing) {
+      setEditingId(thingId);
+      setEditingName(thing.name);
+      // Focus the input after render
+      setTimeout(() => {
+        renameInputRef.current?.focus();
+        renameInputRef.current?.select();
+      }, 0);
+    }
+  }, [things]);
+
+  // Save rename
+  const saveRename = useCallback(async () => {
+    if (!editingId || !editingName.trim()) {
+      setEditingId(null);
+      setEditingName('');
+      refocusTree();
+      return;
+    }
+
+    const trimmedName = editingName.trim();
+    const thing = things.find(t => t.id === editingId);
+
+    // Only update if name changed
+    if (thing && thing.name !== trimmedName) {
+      await updateThing(editingId, { name: trimmedName });
+      onRename?.(editingId, trimmedName);
+    }
+
+    setEditingId(null);
+    setEditingName('');
+    refocusTree();
+  }, [editingId, editingName, things, updateThing, onRename, refocusTree]);
+
+  // Cancel rename
+  const cancelRename = useCallback(() => {
+    setEditingId(null);
+    setEditingName('');
+    refocusTree();
+  }, [refocusTree]);
+
+  // Handle rename input keydown
+  const handleRenameKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Always stop propagation to prevent TreeView from handling arrow keys etc.
+    e.stopPropagation();
+
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      saveRename();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      cancelRename();
+    }
+  }, [saveRename, cancelRename]);
+
+  // Handle rename input change
+  const handleRenameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditingName(e.target.value);
+  }, []);
+
+  // Handle rename input blur
+  const handleRenameBlur = useCallback(() => {
+    saveRename();
+  }, [saveRename]);
+
+  // Handle delete confirmation
+  const handleConfirmDelete = useCallback(async () => {
+    if (pendingDeleteId) {
+      // Find the index of the deleted thing to select the next one
+      const currentIndex = things.findIndex(t => t.id === pendingDeleteId);
+
+      await deleteThing(pendingDeleteId);
+
+      // Select the next thing (or previous if we deleted the last one)
+      const remainingThings = things.filter(t => t.id !== pendingDeleteId);
+      if (remainingThings.length > 0) {
+        // Try to select the item at the same index, or the last item if we were at the end
+        const nextIndex = Math.min(currentIndex, remainingThings.length - 1);
+        const nextThing = remainingThings[nextIndex];
+        if (nextThing) {
+          onSelect(nextThing);
+        }
+      } else {
+        // No remaining items - clear selection to show empty state
+        onSelect(null);
+      }
+    }
+    setDeleteDialogOpen(false);
+    setPendingDeleteId(null);
+    refocusTree();
+  }, [pendingDeleteId, deleteThing, things, onSelect, refocusTree]);
+
+  // Handle delete cancel
+  const handleCancelDelete = useCallback(() => {
+    setDeleteDialogOpen(false);
+    setPendingDeleteId(null);
+    refocusTree();
+  }, [refocusTree]);
+
+  // Handle immediate delete (Ctrl/Cmd+Delete, no confirmation)
+  const handleConfirmDeleteImmediate = useCallback(async (thingId: string) => {
+    // Find the index of the deleted thing to select the next one
+    const currentIndex = things.findIndex(t => t.id === thingId);
+
+    await deleteThing(thingId);
+
+    // Select the next thing (or previous if we deleted the last one)
+    const remainingThings = things.filter(t => t.id !== thingId);
+    if (remainingThings.length > 0) {
+      const nextIndex = Math.min(currentIndex, remainingThings.length - 1);
+      const nextThing = remainingThings[nextIndex];
+      if (nextThing) {
+        onSelect(nextThing);
+      }
+    } else {
+      // No remaining items - clear selection to show empty state
+      onSelect(null);
+    }
+    refocusTree();
+  }, [things, deleteThing, onSelect, refocusTree]);
+
   // Build tree data for TreeView - include pending item after insertAfterId
   const treeData = useMemo(() => {
     let nodes: TreeNode[];
 
+    // Options for inline rename editing
+    const editOptions: BuildTreeNodesOptions = {
+      editingId,
+      editingName,
+      onRenameChange: handleRenameChange,
+      onRenameKeyDown: handleRenameKeyDown,
+      onRenameBlur: handleRenameBlur,
+      renameInputRef,
+    };
+
     if (searchValue || tagFilter) {
       // When filtering, show matching items as roots
       const matchingIds = filteredThings.map(t => t.id);
-      nodes = buildTreeNodes(things, null).filter(node =>
+      nodes = buildTreeNodes(things, null, new Set(), editOptions).filter(node =>
         matchingIds.includes(node.id) || hasMatchingDescendant(node, matchingIds)
       );
     } else {
-      nodes = buildTreeNodes(things);
+      nodes = buildTreeNodes(things, null, new Set(), editOptions);
     }
 
     // Add pending item if exists
@@ -315,8 +504,13 @@ export function ThingsTree({ onSelect, onCreateNew: _onCreateNew, selectedId, on
       }
     }
 
+    // For list view, flatten the tree into a single-level list
+    if (viewType === 'list') {
+      return flattenTreeNodes(nodes);
+    }
+
     return nodes;
-  }, [things, filteredThings, searchValue, tagFilter, pendingThing, handlePendingChange, handlePendingKeyDown, insertAfterId]);
+  }, [things, filteredThings, searchValue, tagFilter, pendingThing, handlePendingChange, handlePendingKeyDown, insertAfterId, editingId, editingName, handleRenameChange, handleRenameKeyDown, handleRenameBlur, viewType]);
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -348,6 +542,25 @@ export function ThingsTree({ onSelect, onCreateNew: _onCreateNew, selectedId, on
     }, 0);
   }, [things]);
 
+  // Start inline editing after a specific thing (as a sibling)
+  const startInlineEditAfter = useCallback((afterThingId: string) => {
+    const afterThing = things.find(t => t.id === afterThingId);
+    if (!afterThing) return;
+
+    const tempId = generateTempId();
+    // Use same parent as the thing we're inserting after (sibling)
+    const parentId = afterThing.parentIds[0] || null;
+    const depth = parentId ? getDepthForParent(things, parentId) + 1 : 0;
+
+    setInsertAfterId(afterThingId);
+    setPendingThing({ tempId, name: '', parentId, depth });
+
+    // Focus input after render
+    setTimeout(() => {
+      pendingInputRef.current?.focus();
+    }, 0);
+  }, [things]);
+
   // Handle button click - start inline editing instead of opening modal
   const handleCreateClick = useCallback(() => {
     startInlineEdit();
@@ -371,7 +584,6 @@ export function ThingsTree({ onSelect, onCreateNew: _onCreateNew, selectedId, on
             { value: 'tree', label: <IndentIcon />, 'aria-label': 'Tree view' },
             { value: 'list', label: <ListViewIcon />, 'aria-label': 'List view' },
           ]}
-          size="sm"
         />
       </div>
 
@@ -384,12 +596,11 @@ export function ThingsTree({ onSelect, onCreateNew: _onCreateNew, selectedId, on
           fullWidth
           wrapperClassName={styles.searchWrapper}
         />
-        <Button
+        <IconButton
           variant={tagFilter ? 'primary' : 'ghost'}
           icon={<FilterIcon />}
           aria-label="Filter by tag"
           onClick={() => setFilterOpen(!filterOpen)}
-          size="sm"
         />
       </div>
 
@@ -433,7 +644,35 @@ export function ThingsTree({ onSelect, onCreateNew: _onCreateNew, selectedId, on
         </div>
       )}
 
-      <div className={styles.treeContent}>
+      <div
+        ref={treeContainerRef}
+        className={styles.treeContent}
+        tabIndex={0}
+        onKeyDown={(e) => {
+          // F2 to rename selected thing
+          if (e.key === 'F2' && selectedId && !editingId && !pendingThing) {
+            e.preventDefault();
+            startRename(selectedId);
+          }
+          // Ctrl/Cmd+Enter to create new thing after selected item
+          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && selectedId && !editingId && !pendingThing) {
+            e.preventDefault();
+            startInlineEditAfter(selectedId);
+          }
+          // Delete/Backspace to delete selected thing
+          if ((e.key === 'Delete' || e.key === 'Backspace') && selectedId && !editingId && !pendingThing) {
+            e.preventDefault();
+            if (e.ctrlKey || e.metaKey) {
+              // Ctrl/Cmd+Delete: delete immediately without confirmation
+              handleConfirmDeleteImmediate(selectedId);
+            } else {
+              // Delete alone: show confirmation dialog
+              setPendingDeleteId(selectedId);
+              setDeleteDialogOpen(true);
+            }
+          }
+        }}
+      >
         {isLoading ? (
           <div className={styles.loading}>Loading...</div>
         ) : treeData.length === 0 ? (
@@ -463,6 +702,28 @@ export function ThingsTree({ onSelect, onCreateNew: _onCreateNew, selectedId, on
           />
         )}
       </div>
+
+      {/* Delete confirmation dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleCancelDelete}
+        title="Delete Thing"
+        size="sm"
+        footer={
+          <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'flex-end' }}>
+            <Button variant="ghost" onClick={handleCancelDelete}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={handleConfirmDelete} data-autofocus>
+              Delete
+            </Button>
+          </div>
+        }
+      >
+        <p style={{ margin: 0 }}>
+          Are you sure you want to delete "{things.find(t => t.id === pendingDeleteId)?.name}"?
+        </p>
+      </Dialog>
     </div>
   );
 }
@@ -473,6 +734,22 @@ function hasMatchingDescendant(node: TreeNode, matchingIds: string[]): boolean {
   return node.children.some(child =>
     matchingIds.includes(child.id) || hasMatchingDescendant(child, matchingIds)
   );
+}
+
+/** Flatten tree nodes into a single-level list (remove children/nesting) */
+function flattenTreeNodes(nodes: TreeNode[]): TreeNode[] {
+  const flattened: TreeNode[] = [];
+  const flatten = (nodeList: TreeNode[]) => {
+    for (const node of nodeList) {
+      // Add node without children for flat list view
+      flattened.push({ ...node, children: undefined });
+      if (node.children) {
+        flatten(node.children);
+      }
+    }
+  };
+  flatten(nodes);
+  return flattened;
 }
 
 /** Recursively insert a node after a target ID in the tree */

@@ -335,10 +335,28 @@ export function ThingsProvider({ children }: ThingsProviderProps) {
       }
 
       const thing = await response.json();
-      // Root items (no parent) are prepended to appear at top where input was
-      // Child items are appended to appear at end of siblings where input was
-      const isRootItem = !thing.parentIds || thing.parentIds.length === 0;
-      setThings((prev) => isRootItem ? [thing, ...prev] : [...prev, thing]);
+
+      // Insert at correct position
+      if (input.insertAfterId) {
+        // Insert after a specific item
+        setThings((prev) => {
+          const insertIndex = prev.findIndex(t => t.id === input.insertAfterId);
+          if (insertIndex !== -1) {
+            // Insert right after the target item
+            return [
+              ...prev.slice(0, insertIndex + 1),
+              thing,
+              ...prev.slice(insertIndex + 1),
+            ];
+          }
+          // Fallback: prepend if target not found
+          return [thing, ...prev];
+        });
+      } else {
+        // No specific position - PREPEND at beginning (matches UI where input shows at top)
+        setThings((prev) => [thing, ...prev]);
+      }
+
       return thing;
     },
     [user]
@@ -399,7 +417,7 @@ export function ThingsProvider({ children }: ThingsProviderProps) {
     [user]
   );
 
-  // Delete a thing
+  // Delete a thing (server cascade-deletes children, so remove them from local state too)
   const deleteThing = useCallback(
     async (id: string): Promise<boolean> => {
       if (!user) return false;
@@ -416,7 +434,22 @@ export function ThingsProvider({ children }: ThingsProviderProps) {
           return false;
         }
 
-        setThings((prev) => prev.filter((t) => t.id !== id));
+        // Remove the deleted thing AND all its descendants from local state
+        setThings((prev) => {
+          // Collect all descendant IDs recursively
+          const idsToRemove = new Set<string>([id]);
+          const collectDescendants = (parentId: string) => {
+            for (const thing of prev) {
+              if (thing.parentIds.includes(parentId) && !idsToRemove.has(thing.id)) {
+                idsToRemove.add(thing.id);
+                collectDescendants(thing.id);
+              }
+            }
+          };
+          collectDescendants(id);
+
+          return prev.filter((t) => !idsToRemove.has(t.id));
+        });
         return true;
       } catch {
         return false;

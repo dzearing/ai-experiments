@@ -61,6 +61,8 @@ export interface CreateThingInput {
   parentIds?: string[];
   workspaceId?: string;
   content?: string;
+  /** Insert after this thing ID (client-side positioning, not sent to server) */
+  insertAfterId?: string;
 }
 
 /** Input for updating a thing */

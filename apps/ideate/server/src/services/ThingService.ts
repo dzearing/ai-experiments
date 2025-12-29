@@ -409,7 +409,7 @@ export class ThingService {
   }
 
   /**
-   * Delete a thing.
+   * Delete a thing and all its children (cascade delete).
    */
   async deleteThing(id: string, userId: string): Promise<boolean> {
     try {
@@ -419,6 +419,12 @@ export class ThingService {
       // Only owner can delete
       if (metadata.ownerId !== userId) {
         return false;
+      }
+
+      // First, recursively delete all children
+      const children = await this.getChildren(id, userId, metadata.workspaceId, true);
+      for (const child of children) {
+        await this.deleteThing(child.id, userId);
       }
 
       // Delete metadata

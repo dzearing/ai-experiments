@@ -46,9 +46,12 @@ export function useFocusTrap(
       });
     };
 
-    // Focus the first focusable element
+    // Focus the element with [data-autofocus], or first focusable element
     const focusableElements = getFocusableElements();
-    if (focusableElements.length > 0) {
+    const autoFocusElement = containerRef.current.querySelector<HTMLElement>('[data-autofocus]');
+    if (autoFocusElement && focusableElements.includes(autoFocusElement)) {
+      autoFocusElement.focus();
+    } else if (focusableElements.length > 0) {
       focusableElements[0].focus();
     }
 

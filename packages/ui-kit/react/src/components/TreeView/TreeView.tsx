@@ -431,6 +431,14 @@ export function TreeView({
   );
 
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    // Don't handle keyboard events when focus is on an input/textarea
+    // This allows inline editing to work without TreeView intercepting keys
+    const target = e.target as HTMLElement;
+    const tagName = target.tagName.toLowerCase();
+    if (tagName === 'input' || tagName === 'textarea' || target.isContentEditable) {
+      return;
+    }
+
     // Initialize focus if not set
     let currentFocusedId = focusedNodeId;
     if (!currentFocusedId && flatNodes.length > 0) {
@@ -544,6 +552,14 @@ export function TreeView({
       setFocusedNodeId(flatNodes[0]?.id || '');
     }
   }, [focusedNodeId, flatNodes]);
+
+  // Sync focusedNodeId with selectedId when selection changes externally
+  // This ensures keyboard navigation works after programmatic selection
+  useEffect(() => {
+    if (selectedId && selectedId !== focusedNodeId) {
+      setFocusedNodeId(selectedId);
+    }
+  }, [selectedId, focusedNodeId]);
 
   const handleNodeClick = (node: FlatNode) => {
     setFocusedNodeId(node.id);

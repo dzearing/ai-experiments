@@ -134,8 +134,8 @@ export function Things() {
     };
   }, [selectedThingId, getThing]);
 
-  const handleSelect = useCallback((thing: ThingMetadata) => {
-    setSelectedThingId(thing.id);
+  const handleSelect = useCallback((thing: ThingMetadata | null) => {
+    setSelectedThingId(thing?.id ?? null);
   }, [setSelectedThingId]);
 
   const handleCreateNew = useCallback((parentId?: string) => {

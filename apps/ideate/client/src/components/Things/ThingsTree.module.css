@@ -6,14 +6,13 @@
   flex: 1;
   min-height: 0;
   background: var(--soft-bg);
-  border-right: 1px solid var(--soft-border);
 }
 
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-4);
+  padding: var(--space-2) var(--space-3);
   border-bottom: 1px solid var(--soft-border);
 }
 
@@ -93,7 +92,8 @@
 }
 
 /* Inline input within tree node */
-.pendingInputWrapper {
+.pendingInputWrapper,
+.renameInputWrapper {
   display: flex;
   flex: 1;
   min-width: 0;
@@ -102,6 +102,16 @@
 .inlineInput {
   flex: 1;
   min-width: 0;
+}
+
+/* Focus outline for keyboard navigation */
+.treeContent:focus {
+  outline: none;
+}
+
+.treeContent:focus-visible {
+  outline: 2px solid var(--primary-border);
+  outline-offset: -2px;
 }
 
 .loading {
