@@ -75,6 +75,60 @@ ideasRouter.get('/by-lane', async (req: Request, res: Response) => {
   }
 });
 
+// Get ideas by thing ID
+ideasRouter.get('/by-thing/:thingId', async (req: Request, res: Response) => {
+  try {
+    const userId = req.headers['x-user-id'] as string;
+    const { thingId } = req.params;
+    const workspaceId = req.query.workspaceId as string | undefined;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User ID required' });
+      return;
+    }
+
+    // If filtering by workspace, check if user has workspace access
+    let isWorkspaceMember = false;
+    if (workspaceId) {
+      const workspace = await workspaceService.getWorkspace(workspaceId, userId);
+      isWorkspaceMember = workspace !== null;
+    }
+
+    const ideas = await ideaService.getIdeasByThingId(thingId, userId, workspaceId, isWorkspaceMember);
+    res.json(ideas);
+  } catch (error) {
+    console.error('[Ideas] Get ideas by thing error:', error);
+    res.status(500).json({ error: 'Failed to get ideas by thing' });
+  }
+});
+
+// Get idea counts by thing ID
+ideasRouter.get('/counts-by-thing/:thingId', async (req: Request, res: Response) => {
+  try {
+    const userId = req.headers['x-user-id'] as string;
+    const { thingId } = req.params;
+    const workspaceId = req.query.workspaceId as string | undefined;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User ID required' });
+      return;
+    }
+
+    // If filtering by workspace, check if user has workspace access
+    let isWorkspaceMember = false;
+    if (workspaceId) {
+      const workspace = await workspaceService.getWorkspace(workspaceId, userId);
+      isWorkspaceMember = workspace !== null;
+    }
+
+    const counts = await ideaService.getIdeaCountsByThingId(thingId, userId, workspaceId, isWorkspaceMember);
+    res.json(counts);
+  } catch (error) {
+    console.error('[Ideas] Get idea counts by thing error:', error);
+    res.status(500).json({ error: 'Failed to get idea counts by thing' });
+  }
+});
+
 // Get single idea
 ideasRouter.get('/:id', async (req: Request, res: Response) => {
   try {
@@ -110,7 +164,7 @@ ideasRouter.get('/:id', async (req: Request, res: Response) => {
 ideasRouter.post('/', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { title, summary, tags, rating, source, workspaceId, description } = req.body;
+    const { title, summary, tags, rating, source, workspaceId, thingIds, description } = req.body;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
@@ -129,6 +183,7 @@ ideasRouter.post('/', async (req: Request, res: Response) => {
       rating,
       source,
       workspaceId,
+      thingIds,
       description,
     });
 
@@ -262,7 +317,7 @@ ideasRouter.patch('/:id', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
     const { id } = req.params;
-    const { title, summary, tags, description, workspaceId } = req.body;
+    const { title, summary, tags, description, workspaceId, thingIds } = req.body;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
@@ -275,6 +330,7 @@ ideasRouter.patch('/:id', async (req: Request, res: Response) => {
       tags,
       description,
       workspaceId,
+      thingIds,
     });
 
     if (!idea) {

@@ -1,0 +1,100 @@
+/* ==============================================
+   RotatingCarousel Component Styles
+
+   Provides crossfade animations for rotating content sets
+   with staggered item animations.
+
+   The component uses a stacking approach:
+   - Container provides positioning context only
+   - Enter layer is relative and establishes size
+   - Exit layer is absolute and overlays exactly
+   - Both layers receive the user's grid/flex className
+   ============================================== */
+
+/* Container - just provides positioning context
+   Does NOT receive the user's grid className */
+.carouselContainer {
+  position: relative;
+  width: 100%;
+}
+
+/* Base layer - relative, establishes the layout size
+   Receives the user's grid/flex className */
+.carouselLayer {
+  position: relative;
+}
+
+/* Exit layer - absolutely positioned to overlay the enter layer exactly
+   Receives the user's grid/flex className */
+.carouselLayerExit {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Enter layer - relative positioning, establishes layout
+   Receives the user's grid/flex className */
+.carouselLayerEnter {
+  position: relative;
+}
+
+/* Individual carousel items */
+.carouselItem {
+  opacity: 1;
+  will-change: opacity;
+}
+
+/* Exit animation - fade out */
+.carouselItemExit {
+  animation-name: carouselFadeOut;
+  animation-duration: var(--animation-duration, 600ms);
+  animation-timing-function: var(--ease-default, ease-out);
+  animation-fill-mode: forwards;
+  animation-delay: var(--stagger-delay, 0ms);
+}
+
+/* Enter animation - fade in */
+.carouselItemEnter {
+  opacity: 0;
+  animation-name: carouselFadeIn;
+  animation-duration: var(--animation-duration, 600ms);
+  animation-timing-function: var(--ease-default, ease-out);
+  animation-fill-mode: forwards;
+  animation-delay: var(--stagger-delay, 0ms);
+}
+
+/* ==============================================
+   Keyframe Animations
+   ============================================== */
+
+@keyframes carouselFadeOut {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes carouselFadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* ==============================================
+   Reduced Motion Preferences
+   ============================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .carouselItem,
+  .carouselItemEnter,
+  .carouselItemExit {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

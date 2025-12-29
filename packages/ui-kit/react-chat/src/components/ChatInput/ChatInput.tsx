@@ -29,6 +29,7 @@ import { useChatEditor } from './useChatEditor';
 import { getImageChipsInOrder } from './ImageChipExtension';
 import { LinkDialog } from './LinkDialog';
 import { SlashCommandPopover, filterCommands } from './SlashCommandPopover';
+import { ThingReferencePopover, filterThings, type ThingReference } from './ThingReferencePopover';
 import type { SlashCommand, SlashCommandResult } from './SlashCommand.types';
 import styles from './ChatInput.module.css';
 
@@ -129,6 +130,18 @@ export interface ChatInputProps {
    * Receives isEmpty flag and plain text content.
    */
   onChange?: (isEmpty: boolean, content: string) => void;
+
+  /** Available things for ^ reference autocomplete */
+  things?: ThingReference[];
+
+  /** Recently used things (shown when ^ is typed without query) */
+  recentThings?: ThingReference[];
+
+  /**
+   * Called when a thing reference is selected.
+   * The thing will be inserted as [[thing:id]] in the content.
+   */
+  onThingSelect?: (thing: ThingReference) => void;
 }
 
 export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
@@ -153,6 +166,9 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
       commands = [],
       onCommand,
       onChange,
+      things = [],
+      recentThings = [],
+      onThingSelect,
     },
     ref
   ) => {
@@ -173,6 +189,12 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
     const [commandQuery, setCommandQuery] = useState('');
     const [commandSelectedIndex, setCommandSelectedIndex] = useState(0);
 
+    // Thing reference state (^ autocomplete)
+    const [isThingPopoverOpen, setIsThingPopoverOpen] = useState(false);
+    const [thingQuery, setThingQuery] = useState('');
+    const [thingSelectedIndex, setThingSelectedIndex] = useState(0);
+    const [thingCaretPosition, setThingCaretPosition] = useState<number | null>(null);
+
     // Refs
     const containerRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -183,6 +205,35 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
 
     // Ref to hold current executeCommand to avoid dependency issues
     const executeCommandRef = useRef<((cmd: SlashCommand) => void) | null>(null);
+
+    // Ref to hold current executeThingSelect to avoid dependency issues
+    const executeThingSelectRef = useRef<((thing: ThingReference) => void) | null>(null);
+
+    // Handle Tab key at TipTap level (for autocomplete selection)
+    const handleTabKey = useCallback(
+      (): boolean => {
+        // If command popover is open, select the highlighted command
+        if (isCommandPopoverOpen && commands.length > 0) {
+          const filteredCmds = filterCommands(commands, commandQuery);
+          if (filteredCmds.length > 0 && filteredCmds[commandSelectedIndex]) {
+            executeCommandRef.current?.(filteredCmds[commandSelectedIndex]);
+            return true; // Prevent default
+          }
+        }
+
+        // If thing popover is open, select the highlighted thing
+        if (isThingPopoverOpen && things.length > 0) {
+          const displayThings = thingQuery ? filterThings(things, thingQuery) : (recentThings.length > 0 ? recentThings : things.slice(0, 10));
+          if (displayThings.length > 0 && displayThings[thingSelectedIndex]) {
+            executeThingSelectRef.current?.(displayThings[thingSelectedIndex]);
+            return true; // Prevent default
+          }
+        }
+
+        return false; // Let default Tab behavior happen
+      },
+      [isCommandPopoverOpen, commands, commandQuery, commandSelectedIndex, isThingPopoverOpen, things, recentThings, thingQuery, thingSelectedIndex]
+    );
 
     // Handle Enter key at TipTap level (before newline insertion)
     const handleEnterKey = useCallback(
@@ -195,6 +246,15 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
           const filteredCmds = filterCommands(commands, commandQuery);
           if (filteredCmds.length > 0 && filteredCmds[commandSelectedIndex]) {
             executeCommandRef.current?.(filteredCmds[commandSelectedIndex]);
+            return true; // Prevent default
+          }
+        }
+
+        // If thing popover is open, select the highlighted thing
+        if (isThingPopoverOpen && things.length > 0) {
+          const displayThings = thingQuery ? filterThings(things, thingQuery) : (recentThings.length > 0 ? recentThings : things.slice(0, 10));
+          if (displayThings.length > 0 && displayThings[thingSelectedIndex]) {
+            executeThingSelectRef.current?.(displayThings[thingSelectedIndex]);
             return true; // Prevent default
           }
         }
@@ -220,7 +280,7 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
           return false;
         }
       },
-      [isMultilineMode, isCommandPopoverOpen, commands, commandQuery, commandSelectedIndex]
+      [isMultilineMode, isCommandPopoverOpen, commands, commandQuery, commandSelectedIndex, isThingPopoverOpen, things, recentThings, thingQuery, thingSelectedIndex]
     );
 
     // Ref to hold current handleSubmit to avoid dependency issues
@@ -267,10 +327,59 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
           setCommandQuery('');
         }
 
+        // Thing reference detection (^)
+        if (things.length > 0 && content) {
+          // Find the last ^ character and check if we're in a thing reference
+          const lastCaretPos = content.lastIndexOf('^');
+          if (lastCaretPos !== -1) {
+            // Check if ^ is at the start or after a space (not part of a word)
+            const charBefore = lastCaretPos > 0 ? content[lastCaretPos - 1] : ' ';
+            if (charBefore === ' ' || charBefore === '\n' || lastCaretPos === 0) {
+              // Extract the query after ^
+              const afterCaret = content.slice(lastCaretPos + 1);
+              // Query ends at space or end of string
+              const spaceIndex = afterCaret.search(/\s/);
+              const query = spaceIndex === -1 ? afterCaret : afterCaret.slice(0, spaceIndex);
+
+              // Only show if cursor is still in the query (no space after yet in the query part)
+              if (spaceIndex === -1 || afterCaret.length === spaceIndex) {
+                setThingQuery(query);
+                setThingCaretPosition(lastCaretPos);
+
+                // Check if there are matching things
+                const matchingThings = query ? filterThings(things, query) : (recentThings.length > 0 ? recentThings : things.slice(0, 10));
+                if (matchingThings.length > 0) {
+                  setIsThingPopoverOpen(true);
+                  setThingSelectedIndex(0);
+                } else {
+                  setIsThingPopoverOpen(false);
+                }
+              } else {
+                setIsThingPopoverOpen(false);
+                setThingQuery('');
+                setThingCaretPosition(null);
+              }
+            } else {
+              setIsThingPopoverOpen(false);
+              setThingQuery('');
+              setThingCaretPosition(null);
+            }
+          } else {
+            setIsThingPopoverOpen(false);
+            setThingQuery('');
+            setThingCaretPosition(null);
+          }
+        } else {
+          setIsThingPopoverOpen(false);
+          setThingQuery('');
+          setThingCaretPosition(null);
+        }
+
         // Call external onChange handler
         onChange?.(editorIsEmpty, content);
       },
       onEnterKey: handleEnterKey,
+      onTabKey: handleTabKey,
     });
 
     // Keep editorRef updated for use in imperative handle
@@ -336,6 +445,54 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
 
     // Keep executeCommandRef current
     executeCommandRef.current = executeCommand;
+
+    // Execute a thing selection - replace ^query with a colored chip
+    const executeThingSelect = useCallback(
+      (thing: ThingReference) => {
+        if (!editor) return;
+
+        // Get current content
+        const content = editor.getText();
+
+        // Find the ^ trigger position we're responding to
+        if (thingCaretPosition !== null) {
+          // Calculate the end of the current query
+          const afterCaret = content.slice(thingCaretPosition + 1);
+          const spaceIndex = afterCaret.search(/\s/);
+          const queryLength = spaceIndex === -1 ? afterCaret.length : spaceIndex;
+
+          // TipTap positions start at 1 (position 0 is document start), so add 1
+          const from = thingCaretPosition + 1;
+          const to = thingCaretPosition + 1 + 1 + queryLength;
+
+          // Delete the ^query text and insert the thing chip
+          editor.chain()
+            .focus()
+            .deleteRange({ from, to })
+            .run();
+
+          // Insert the thing chip using our custom command
+          editor.commands.insertThingChip({
+            id: thing.id,
+            name: thing.name,
+            type: thing.type,
+          });
+        }
+
+        // Call external handler
+        onThingSelect?.(thing);
+
+        // Close popover
+        setIsThingPopoverOpen(false);
+        setThingQuery('');
+        setThingSelectedIndex(0);
+        setThingCaretPosition(null);
+      },
+      [editor, thingCaretPosition, onThingSelect]
+    );
+
+    // Keep executeThingSelectRef current
+    executeThingSelectRef.current = executeThingSelect;
 
     // Handle command selection from popover
     const handleCommandSelect = useCallback(
@@ -530,6 +687,44 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
           }
         }
 
+        // Thing popover keyboard navigation
+        if (isThingPopoverOpen && things.length > 0) {
+          const displayThings = thingQuery ? filterThings(things, thingQuery) : (recentThings.length > 0 ? recentThings : things.slice(0, 10));
+
+          if (key === 'ArrowUp') {
+            e.preventDefault();
+            setThingSelectedIndex((prev) =>
+              prev <= 0 ? displayThings.length - 1 : prev - 1
+            );
+            return;
+          }
+
+          if (key === 'ArrowDown') {
+            e.preventDefault();
+            setThingSelectedIndex((prev) =>
+              prev >= displayThings.length - 1 ? 0 : prev + 1
+            );
+            return;
+          }
+
+          if (key === 'Tab') {
+            e.preventDefault();
+            if (displayThings[thingSelectedIndex]) {
+              executeThingSelectRef.current?.(displayThings[thingSelectedIndex]);
+            }
+            return;
+          }
+
+          if (key === 'Escape') {
+            e.preventDefault();
+            setIsThingPopoverOpen(false);
+            setThingQuery('');
+            setThingSelectedIndex(0);
+            setThingCaretPosition(null);
+            return;
+          }
+        }
+
         // Escape handling - requires two consecutive presses to clear
         if (key === 'Escape') {
           e.preventDefault();
@@ -613,7 +808,7 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
           openLinkDialog();
         }
       },
-      [isMultilineMode, editor, historyKey, navigateHistory, openLinkDialog, escapePressed, isCommandPopoverOpen, commands, commandQuery, commandSelectedIndex]
+      [isMultilineMode, editor, historyKey, navigateHistory, openLinkDialog, escapePressed, isCommandPopoverOpen, commands, commandQuery, commandSelectedIndex, isThingPopoverOpen, things, recentThings, thingQuery, thingSelectedIndex]
     );
 
     // Convert file to base64 data URL for persistence
@@ -875,6 +1070,25 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
               setIsCommandPopoverOpen(false);
               setCommandQuery('');
               setCommandSelectedIndex(0);
+            }}
+          />
+        )}
+
+        {/* Thing reference popover (^ autocomplete) */}
+        {things.length > 0 && (
+          <ThingReferencePopover
+            isOpen={isThingPopoverOpen}
+            query={thingQuery}
+            things={things}
+            recentThings={recentThings}
+            selectedIndex={thingSelectedIndex}
+            onSelectionChange={setThingSelectedIndex}
+            onSelect={executeThingSelect}
+            onClose={() => {
+              setIsThingPopoverOpen(false);
+              setThingQuery('');
+              setThingSelectedIndex(0);
+              setThingCaretPosition(null);
             }}
           />
         )}

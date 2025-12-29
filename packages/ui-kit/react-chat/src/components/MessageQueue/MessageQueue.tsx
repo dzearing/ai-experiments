@@ -37,7 +37,7 @@ export interface MessageQueueProps {
 export function MessageQueue({
   messages,
   onRemove,
-  label = 'Queued',
+  label: _label = 'Queued',
   className = '',
 }: MessageQueueProps) {
   if (messages.length === 0) {

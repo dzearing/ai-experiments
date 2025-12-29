@@ -35,6 +35,7 @@ export interface IdeaMetadata {
   status: IdeaStatus;
   ownerId: string;
   workspaceId?: string;           // undefined = global (user's personal ideas)
+  thingIds: string[];             // References to Things (many-to-many)
   createdAt: string;
   updatedAt: string;
   statusChangedAt: string;
@@ -53,6 +54,7 @@ export interface CreateIdeaInput {
   rating?: 1 | 2 | 3 | 4;
   source?: IdeaSource;
   workspaceId?: string;
+  thingIds?: string[];
   description?: string;
 }
 
@@ -62,6 +64,7 @@ export interface UpdateIdeaInput {
   tags?: string[];
   description?: string;
   workspaceId?: string;
+  thingIds?: string[];
 }
 
 // =========================================================================
@@ -191,6 +194,44 @@ export class IdeaService {
   }
 
   /**
+   * Get ideas linked to a specific thing.
+   */
+  async getIdeasByThingId(
+    thingId: string,
+    userId: string,
+    workspaceId?: string,
+    isWorkspaceMember: boolean = false
+  ): Promise<IdeaMetadata[]> {
+    const allIdeas = await this.listIdeas(userId, workspaceId, undefined, isWorkspaceMember);
+    return allIdeas.filter(idea => idea.thingIds?.includes(thingId));
+  }
+
+  /**
+   * Get idea counts grouped by status for a thing.
+   */
+  async getIdeaCountsByThingId(
+    thingId: string,
+    userId: string,
+    workspaceId?: string,
+    isWorkspaceMember: boolean = false
+  ): Promise<{ new: number; exploring: number; executing: number; archived: number }> {
+    const ideas = await this.getIdeasByThingId(thingId, userId, workspaceId, isWorkspaceMember);
+
+    const counts = {
+      new: 0,
+      exploring: 0,
+      executing: 0,
+      archived: 0,
+    };
+
+    for (const idea of ideas) {
+      counts[idea.status]++;
+    }
+
+    return counts;
+  }
+
+  /**
    * Create a new idea.
    */
   async createIdea(userId: string, input: CreateIdeaInput): Promise<Idea> {
@@ -207,6 +248,7 @@ export class IdeaService {
       status: 'new',
       ownerId: userId,
       workspaceId: input.workspaceId,
+      thingIds: input.thingIds || [],
       createdAt: now,
       updatedAt: now,
       statusChangedAt: now,
@@ -319,6 +361,7 @@ export class IdeaService {
         summary: updates.summary ?? metadata.summary,
         tags: updates.tags ?? metadata.tags,
         workspaceId: 'workspaceId' in updates ? updates.workspaceId : metadata.workspaceId,
+        thingIds: updates.thingIds ?? metadata.thingIds ?? [],
         updatedAt: now,
       };
 

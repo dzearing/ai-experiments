@@ -16,6 +16,9 @@ export type { SurfaceAnimationProps, SurfaceDirection } from './SurfaceAnimation
 export { Transition, AnimatePresence } from './Transition';
 export type { TransitionProps, AnimatePresenceProps } from './Transition';
 
+export { RotatingCarousel } from './RotatingCarousel';
+export type { RotatingCarouselProps, RotatingCarouselSetProps } from './RotatingCarousel';
+
 export {
   useAnimatePresence,
   useAnimationState,

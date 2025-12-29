@@ -179,6 +179,7 @@ export {
   ScaleIn,
   Transition,
   AnimatePresence,
+  RotatingCarousel,
   useAnimatePresence,
   useAnimationState,
 } from './components/Animation';
@@ -194,6 +195,8 @@ export type {
   ScaleOrigin,
   TransitionProps,
   AnimatePresenceProps,
+  RotatingCarouselProps,
+  RotatingCarouselSetProps,
   AnimationState,
   UseAnimatePresenceOptions,
   UseAnimatePresenceReturn,

@@ -24,6 +24,12 @@ export interface NavigationContext {
   chatRoomId?: string;
   chatRoomName?: string;
   currentPage?: string;
+  /** Active Thing ID (if viewing/selected a Thing) */
+  activeThingId?: string;
+  /** Active Thing name */
+  activeThingName?: string;
+  /** Referenced Thing IDs from ^thing-name references in message */
+  referencedThingIds?: string[];
 }
 
 /**
@@ -626,6 +632,12 @@ Example format:
     }
     if (navigationContext.chatRoomName && navigationContext.chatRoomId) {
       contextParts.push(`Current chat room: "${navigationContext.chatRoomName}" (ID: ${navigationContext.chatRoomId})`);
+    }
+    if (navigationContext.activeThingName && navigationContext.activeThingId) {
+      contextParts.push(`Active Thing: "${navigationContext.activeThingName}" (ID: ${navigationContext.activeThingId})`);
+    }
+    if (navigationContext.referencedThingIds && navigationContext.referencedThingIds.length > 0) {
+      contextParts.push(`Referenced Things (from ^thing-name mentions): ${navigationContext.referencedThingIds.join(', ')}`);
     }
 
     // Add display name instruction to persona prompt if different from persona name

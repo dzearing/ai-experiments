@@ -528,6 +528,61 @@ The `icon` and `iconAfter` props:
 - Ensure proper vertical alignment
 - Handle sizing automatically based on button size
 
+### Text Layout: Always Use Stack for Vertical Content
+
+**CRITICAL:** Container components like `Panel`, `Card`, etc. do NOT automatically stack or space their children. The `Text` component renders as a `<span>` (inline element) by default, which means multiple Text elements will flow **horizontally on the same line** with no gap.
+
+```tsx
+// ❌ WRONG - Text renders inline, will appear on same line with no gap
+<Panel padding="lg">
+  <Text weight="medium">Title</Text>
+  <Text size="sm" color="soft">Description</Text>
+</Panel>
+// Result: "TitleDescription" on one line
+
+// ❌ WRONG - Even with line breaks in JSX, inline elements still flow horizontally
+<Panel padding="lg">
+  <Text weight="medium">Title</Text>
+  <Text size="sm" color="soft">Description</Text>
+</Panel>
+// Result: "TitleDescription" on one line (JSX whitespace is ignored)
+
+// ✅ CORRECT - Use Stack to create vertical layout with proper gap
+<Panel padding="lg">
+  <Stack gap="xs">
+    <Text weight="medium">Title</Text>
+    <Text size="sm" color="soft">Description</Text>
+  </Stack>
+</Panel>
+// Result: Title on line 1, Description on line 2, with spacing
+
+// ✅ CORRECT - Or use Text as="p" for block-level elements (but still needs explicit gap)
+<Panel padding="lg">
+  <Stack gap="xs">
+    <Text as="p" weight="medium">Title</Text>
+    <Text as="p" size="sm" color="soft">Description</Text>
+  </Stack>
+</Panel>
+```
+
+**Key Rules:**
+1. **Never assume containers provide layout** - Panel, Card, etc. are styling wrappers only
+2. **Always use Stack for vertical content** - Wrap multiple elements in `<Stack>` or `<Stack gap="...">`
+3. **Text is inline by default** - Multiple Text elements will flow horizontally without Stack
+4. **Choose appropriate gap** - Stack defaults to `gap="md"` but be intentional about sizing
+
+**Stack defaults:**
+- `direction="vertical"` - Children stack top to bottom
+- `gap="md"` - Medium spacing between children
+
+**Standard gap sizes for text:**
+| Gap | Use Case |
+|-----|----------|
+| `xs` | Title + subtitle, label + helper text (tighter coupling) |
+| `sm` | Related paragraphs, form field groups |
+| `md` | Section content, card body elements (Stack default) |
+| `lg` | Major sections within a container |
+
 ---
 
 ## Sizing Standards
@@ -1312,6 +1367,12 @@ Before submitting a new component, verify all items:
 - [ ] Controlled example (if component supports controlled mode)
 - [ ] Alignment test with other controls (for interactive controls)
 - [ ] RTL story (for components with directional behavior)
+
+### Layout in Stories
+- [ ] Multiple text elements wrapped in `<Stack gap="...">` for vertical layout
+- [ ] Explicit gap values used (xs, sm, md, lg) - never rely on implicit spacing
+- [ ] No inline Text elements placed side-by-side without Stack wrapper
+- [ ] Container children (Panel, Card) have explicit layout, not just raw content
 
 ### Testing
 - [ ] Renders correctly

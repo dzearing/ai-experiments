@@ -3,6 +3,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { DocumentProvider } from './contexts/DocumentContext';
 import { ChatProvider } from './contexts/ChatContext';
 import { IdeasProvider } from './contexts/IdeasContext';
+import { ThingsProvider } from './contexts/ThingsContext';
 import { NetworkProvider } from './contexts/NetworkContext';
 import { SessionProvider } from './contexts/SessionContext';
 import { WorkspaceProvider } from './contexts/WorkspaceContext';
@@ -23,6 +24,7 @@ import { PersonaEditor } from './pages/PersonaEditor';
 import { Workspaces } from './pages/Workspaces';
 import { WorkspaceDetail } from './pages/WorkspaceDetail';
 import { Ideas } from './pages/Ideas';
+import { Things } from './pages/Things';
 
 // Layouts
 import { AppLayout } from './components/AppLayout/AppLayout';
@@ -35,8 +37,9 @@ export function App() {
           <FacilitatorProvider>
             <DocumentProvider>
               <ChatProvider>
-                <IdeasProvider>
-                  <WorkspaceProvider>
+                <ThingsProvider>
+                  <IdeasProvider>
+                    <WorkspaceProvider>
                     <NetworkProvider>
                       <Routes>
                         {/* Public routes */}
@@ -52,6 +55,8 @@ export function App() {
                           <Route path="/workspace/:workspaceId" component={WorkspaceDetail} />
                           <Route path="/workspace/:workspaceId/ideas" component={Ideas} />
                           <Route path="/ideas" component={Ideas} />
+                          <Route path="/workspace/:workspaceId/things" component={Things} />
+                          <Route path="/things" component={Things} />
                           <Route path="/doc/:documentId" component={DocumentEditor} />
                           <Route path="/chat/:chatRoomId" component={ChatRoom} />
                           <Route path="/settings" component={Settings} />
@@ -62,8 +67,9 @@ export function App() {
                       {/* Global facilitator overlay */}
                       <FacilitatorOverlay />
                     </NetworkProvider>
-                  </WorkspaceProvider>
-                </IdeasProvider>
+                    </WorkspaceProvider>
+                  </IdeasProvider>
+                </ThingsProvider>
               </ChatProvider>
             </DocumentProvider>
           </FacilitatorProvider>

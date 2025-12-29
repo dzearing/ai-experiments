@@ -168,7 +168,7 @@ function findNode(nodes: TreeNode[], id: string): TreeNode | null {
 
 export function TreeView({
   data,
-  height = 400,
+  height,
   itemHeight = 32,
   selectable = false,
   selectedId: controlledSelectedId,
@@ -197,9 +197,34 @@ export function TreeView({
   const [scrollTop, setScrollTop] = useState(0);
   const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);
   const [isTreeFocused, setIsTreeFocused] = useState(false);
+  const [measuredHeight, setMeasuredHeight] = useState<number>(400);
 
   // Refs
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Measure container height when not provided
+  useEffect(() => {
+    if (height !== undefined) return;
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (entry) {
+        setMeasuredHeight(entry.contentRect.height);
+      }
+    });
+
+    resizeObserver.observe(container);
+    // Initial measurement
+    setMeasuredHeight(container.clientHeight || 400);
+
+    return () => resizeObserver.disconnect();
+  }, [height]);
+
+  // Use provided height or measured height
+  const effectiveHeight = height ?? measuredHeight;
 
   // Controlled vs uncontrolled
   const isSelectionControlled = controlledSelectedId !== undefined;
@@ -258,7 +283,7 @@ export function TreeView({
   // Virtualization calculations
   const visibleStartIndex = Math.floor(scrollTop / itemHeight);
   const visibleEndIndex = Math.min(
-    Math.ceil((scrollTop + height) / itemHeight),
+    Math.ceil((scrollTop + effectiveHeight) / itemHeight),
     flatNodes.length
   );
 
@@ -332,15 +357,15 @@ export function TreeView({
       const nodeTop = nodeIndex * itemHeight;
       const nodeBottom = nodeTop + itemHeight;
       const viewportTop = scrollTop;
-      const viewportBottom = scrollTop + height;
+      const viewportBottom = scrollTop + effectiveHeight;
 
       if (nodeTop < viewportTop) {
         containerRef.current?.scrollTo({ top: nodeTop, behavior: 'instant' });
       } else if (nodeBottom > viewportBottom) {
-        containerRef.current?.scrollTo({ top: nodeBottom - height, behavior: 'instant' });
+        containerRef.current?.scrollTo({ top: nodeBottom - effectiveHeight, behavior: 'instant' });
       }
     },
-    [flatNodes, itemHeight, scrollTop, height]
+    [flatNodes, itemHeight, scrollTop, effectiveHeight]
   );
 
   // Keyboard navigation
@@ -365,12 +390,12 @@ export function TreeView({
           targetIndex = flatNodes.length - 1;
           break;
         case 'pageUp':
-          targetIndex = Math.max(0, currentIndex - Math.floor(height / itemHeight));
+          targetIndex = Math.max(0, currentIndex - Math.floor(effectiveHeight / itemHeight));
           break;
         case 'pageDown':
           targetIndex = Math.min(
             flatNodes.length - 1,
-            currentIndex + Math.floor(height / itemHeight)
+            currentIndex + Math.floor(effectiveHeight / itemHeight)
           );
           break;
       }
@@ -395,7 +420,7 @@ export function TreeView({
     [
       focusedNodeId,
       flatNodes,
-      height,
+      effectiveHeight,
       itemHeight,
       scrollNodeIntoView,
       selectable,
@@ -536,7 +561,7 @@ export function TreeView({
     <div
       ref={containerRef}
       className={`${styles.container} ${className || ''}`}
-      style={{ height }}
+      style={height !== undefined ? { height } : undefined}
       onScroll={handleScroll}
       onFocus={() => {
         setIsTreeFocused(true);

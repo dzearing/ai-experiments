@@ -48,6 +48,10 @@ export interface NavigationContext {
   chatRoomName?: string;
   /** Current page/route name */
   currentPage?: string;
+  /** Active Thing ID (if viewing/selected a Thing) */
+  activeThingId?: string;
+  /** Active Thing name */
+  activeThingName?: string;
 }
 
 /**

@@ -32,6 +32,8 @@ export interface IdeaMetadata {
   status: IdeaStatus;
   ownerId: string;
   workspaceId?: string;
+  /** References to Things (many-to-many) */
+  thingIds: string[];
   createdAt: string;
   updatedAt: string;
   statusChangedAt: string;
@@ -59,6 +61,7 @@ export interface CreateIdeaInput {
   tags?: string[];
   rating?: 1 | 2 | 3 | 4;
   workspaceId?: string;
+  thingIds?: string[];
   description?: string;
 }
 
@@ -69,4 +72,5 @@ export interface UpdateIdeaInput {
   tags?: string[];
   description?: string;
   workspaceId?: string;
+  thingIds?: string[];
 }

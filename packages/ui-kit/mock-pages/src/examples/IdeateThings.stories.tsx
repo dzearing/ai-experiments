@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   Button,
   Chip,
@@ -7,12 +7,18 @@ import {
   IconButton,
   List,
   ListItem,
+  RotatingCarousel,
   SearchInput,
   Segmented,
   Text,
   TreeView,
   type TreeNode,
 } from '@ui-kit/react';
+import {
+  injectSurfaceStyles,
+  getSurfaceClassName,
+  getRandomSurfaceName,
+} from '@ui-kit/core';
 import { AddIcon } from '@ui-kit/icons/AddIcon';
 import { ArrowRightIcon } from '@ui-kit/icons/ArrowRightIcon';
 import { ChatIcon } from '@ui-kit/icons/ChatIcon';
@@ -296,7 +302,7 @@ function EmptyStateWelcome({ onCreateThing, onStartChat }: OnboardingProps) {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
           />
-          <Button variant="primary" disabled={!inputValue.trim()}>
+          <Button variant="primary" disabled={!inputValue.trim()} onClick={onCreateThing}>
             Add Thing
           </Button>
         </div>
@@ -417,212 +423,8 @@ function EmptyStateQuickStart({ onCreateThing, onImportFromGit, onStartChat }: O
 }
 
 // ============================================
-// ROTATING CAROUSEL COMPONENT
+// CAROUSEL CARD COMPONENTS
 // ============================================
-
-// ============================================
-// CUSTOM SURFACE REGISTRATION SYSTEM
-// ============================================
-
-interface SurfaceDefinition {
-  name: string;
-  /** Hue and saturation values - lightness is computed for light/dark modes */
-  bgHsl: [number, number];
-}
-
-/** 32 cohesive surface definitions - hue and saturation only, lightness derived per color scheme */
-const SURFACE_PALETTE: SurfaceDefinition[] = [
-  // Reds & Pinks (0-30)
-  { name: 'crimson', bgHsl: [0, 85] },
-  { name: 'rose', bgHsl: [350, 85] },
-  { name: 'ruby', bgHsl: [340, 80] },
-  { name: 'coral', bgHsl: [16, 90] },
-  // Oranges & Yellows (30-60)
-  { name: 'tangerine', bgHsl: [25, 92] },
-  { name: 'amber', bgHsl: [38, 95] },
-  { name: 'honey', bgHsl: [45, 90] },
-  { name: 'gold', bgHsl: [50, 88] },
-  // Yellow-Greens (60-100)
-  { name: 'lime', bgHsl: [80, 70] },
-  { name: 'olive', bgHsl: [75, 50] },
-  { name: 'moss', bgHsl: [95, 55] },
-  { name: 'chartreuse', bgHsl: [90, 75] },
-  // Greens (100-160)
-  { name: 'sage', bgHsl: [140, 60] },
-  { name: 'emerald', bgHsl: [130, 70] },
-  { name: 'forest', bgHsl: [150, 65] },
-  { name: 'mint', bgHsl: [160, 75] },
-  // Cyans & Teals (160-200)
-  { name: 'teal', bgHsl: [175, 80] },
-  { name: 'aqua', bgHsl: [185, 85] },
-  { name: 'cyan', bgHsl: [190, 88] },
-  { name: 'cerulean', bgHsl: [195, 82] },
-  // Blues (200-240)
-  { name: 'sky', bgHsl: [200, 90] },
-  { name: 'ocean', bgHsl: [210, 85] },
-  { name: 'steel', bgHsl: [215, 45] },
-  { name: 'cobalt', bgHsl: [230, 80] },
-  // Purples & Indigos (240-280)
-  { name: 'indigo', bgHsl: [250, 75] },
-  { name: 'grape', bgHsl: [260, 70] },
-  { name: 'lavender', bgHsl: [270, 70] },
-  { name: 'violet', bgHsl: [280, 75] },
-  // Magentas & Pinks (280-360)
-  { name: 'plum', bgHsl: [290, 65] },
-  { name: 'fuchsia', bgHsl: [300, 80] },
-  { name: 'mauve', bgHsl: [320, 65] },
-  { name: 'pink', bgHsl: [330, 75] },
-];
-
-/**
- * Generates surface CSS for a given color scheme (light or dark mode)
- * Light mode: soft pastel backgrounds with dark text
- * Dark mode: rich saturated backgrounds with light text
- */
-function generateSurfaceCSS(name: string, h: number, s: number, isLightMode: boolean): string {
-  if (isLightMode) {
-    // Light mode: visible pastel backgrounds with dark text
-    const bgL = 85; // Lower lightness for more visible color
-    const bgS = Math.min(s * 0.75, 70); // Higher saturation for vibrant pastels
-
-    // Dark text for light backgrounds
-    const textL = 20;
-    const softTextL = 35;
-    const iconL = 30;
-    const textS = Math.min(s * 0.8, 50);
-    const softTextS = Math.min(s * 0.6, 40);
-    const iconS = Math.min(s * 0.7, 60);
-
-    // More visible border
-    const borderL = 72;
-    const borderS = Math.min(s * 0.6, 55);
-
-    return `
-      .cardSurface-${name} {
-        --card-bg: hsl(${h}, ${bgS}%, ${bgL}%);
-        --card-text: hsl(${h}, ${textS}%, ${textL}%);
-        --card-text-soft: hsl(${h}, ${softTextS}%, ${softTextL}%);
-        --card-border: hsl(${h}, ${borderS}%, ${borderL}%);
-        --card-icon: hsl(${h}, ${iconS}%, ${iconL}%);
-        background: var(--card-bg);
-        border-color: var(--card-border);
-        color: var(--card-text);
-      }
-      .cardSurface-${name} .${styles.exampleIcon} {
-        color: var(--card-icon);
-      }
-      .cardSurface-${name} .${styles.exampleDescription} {
-        color: var(--card-text-soft);
-      }
-      .cardSurface-${name} .${styles.exampleChildren} {
-        border-color: var(--card-border);
-      }
-      .cardSurface-${name} .${styles.exampleChild} {
-        color: var(--card-text-soft);
-      }
-    `;
-  } else {
-    // Dark mode: rich saturated backgrounds with light text
-    const bgL = 28;
-    const bgS = Math.min(s + 10, 95);
-
-    // Light text for dark backgrounds
-    const textL = 95;
-    const softTextL = 80;
-    const iconL = 88;
-    const textS = Math.min(s * 0.3, 25);
-    const softTextS = Math.min(s * 0.25, 20);
-    const iconS = Math.min(s * 0.5, 50);
-
-    // Subtle lighter border
-    const borderL = 38;
-    const borderS = Math.min(s + 5, 90);
-
-    return `
-      .cardSurface-${name} {
-        --card-bg: hsl(${h}, ${bgS}%, ${bgL}%);
-        --card-text: hsl(${h}, ${textS}%, ${textL}%);
-        --card-text-soft: hsl(${h}, ${softTextS}%, ${softTextL}%);
-        --card-border: hsl(${h}, ${borderS}%, ${borderL}%);
-        --card-icon: hsl(${h}, ${iconS}%, ${iconL}%);
-        background: var(--card-bg);
-        border-color: var(--card-border);
-        color: var(--card-text);
-      }
-      .cardSurface-${name} .${styles.exampleIcon} {
-        color: var(--card-icon);
-      }
-      .cardSurface-${name} .${styles.exampleDescription} {
-        color: var(--card-text-soft);
-      }
-      .cardSurface-${name} .${styles.exampleChildren} {
-        border-color: var(--card-border);
-      }
-      .cardSurface-${name} .${styles.exampleChild} {
-        color: var(--card-text-soft);
-      }
-    `;
-  }
-}
-
-/**
- * Registers custom surface CSS classes for card color coding.
- * Call once at app initialization. Generates accessible color pairs for both light and dark modes.
- */
-function registerCardSurfaces(): void {
-  const styleId = 'card-surfaces-custom';
-
-  // Remove existing style element to allow updates during development
-  const existingStyle = document.getElementById(styleId);
-  if (existingStyle) {
-    existingStyle.remove();
-  }
-
-  // Generate light mode styles (default)
-  const lightCSS = SURFACE_PALETTE.map(({ name, bgHsl }) => {
-    const [h, s] = bgHsl;
-    return generateSurfaceCSS(name, h, s, true);
-  }).join('\n');
-
-  // Generate dark mode styles
-  const darkCSS = SURFACE_PALETTE.map(({ name, bgHsl }) => {
-    const [h, s] = bgHsl;
-    return generateSurfaceCSS(name, h, s, false);
-  }).join('\n');
-
-  // Support data-mode="dark" attribute (used by Storybook and design system)
-  const darkModeCSS = SURFACE_PALETTE.map(({ name, bgHsl }) => {
-    const [h, s] = bgHsl;
-    return generateSurfaceCSS(name, h, s, false).replace(
-      new RegExp(`\\.cardSurface-${name}`, 'g'),
-      `[data-mode="dark"] .cardSurface-${name}`
-    );
-  }).join('\n');
-
-  const css = `
-    /* Light mode (default) */
-    ${lightCSS}
-
-    /* Dark mode via data-mode attribute */
-    ${darkModeCSS}
-  `;
-
-  const style = document.createElement('style');
-  style.id = styleId;
-  style.textContent = css;
-  document.head.appendChild(style);
-}
-
-/** Get all available surface class names */
-function getSurfaceNames(): string[] {
-  return SURFACE_PALETTE.map(s => `cardSurface-${s.name}`);
-}
-
-/** Get a random surface class name */
-function getRandomSurface(): string {
-  const surfaces = getSurfaceNames();
-  return surfaces[Math.floor(Math.random() * surfaces.length)];
-}
 
 interface ExampleThingCard {
   name: string;
@@ -633,21 +435,20 @@ interface ExampleThingCard {
   surfaceClass?: string;
 }
 
-interface RotatingCarouselProps {
-  /** Array of card sets to rotate through */
-  cardSets: ExampleThingCard[][];
-  /** Interval in milliseconds between rotations (default: 5000) */
-  interval?: number;
-  /** Stagger delay between each card animation in ms (default: 100) */
-  staggerDelay?: number;
-}
-
-/** Single card component to avoid duplication */
-function CarouselCard({ example, staggerDelay, index }: { example: ExampleThingCard; staggerDelay: number; index: number }) {
+/** Single card component for the carousel */
+function CarouselCard({
+  example,
+  className,
+  style
+}: {
+  example: ExampleThingCard;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
   return (
     <div
-      className={`${styles.exampleCard} ${example.surfaceClass || ''}`}
-      style={{ animationDelay: `${index * staggerDelay}ms` }}
+      className={`${styles.exampleCard} ${example.surfaceClass || ''} ${className || ''}`}
+      style={style}
     >
       <div className={styles.exampleHeader}>
         <FolderIcon className={styles.exampleIcon} />
@@ -676,75 +477,11 @@ function CarouselCard({ example, staggerDelay, index }: { example: ExampleThingC
   );
 }
 
-/**
- * RotatingCarousel - Displays cards that rotate through different sets
- * with staggered scale/fade animations (crossfade effect).
- *
- * Simple approach: render outgoing and incoming sets with their respective
- * animations. Use keys to ensure animations restart properly.
- */
-function RotatingCarousel({ cardSets, interval = 5000, staggerDelay = 150 }: RotatingCarouselProps) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [prevIndex, setPrevIndex] = useState<number | null>(null);
-  const [animationKey, setAnimationKey] = useState(0);
-
-  useEffect(() => {
-    if (cardSets.length <= 1) return;
-
-    const rotate = () => {
-      const nextIndex = (currentIndex + 1) % cardSets.length;
-      setPrevIndex(currentIndex);
-      setCurrentIndex(nextIndex);
-      setAnimationKey(k => k + 1);
-
-      // Clear prevIndex after animation completes
-      setTimeout(() => {
-        setPrevIndex(null);
-      }, 800); // Slightly longer than animation to ensure it's done
-    };
-
-    const intervalId = setInterval(rotate, interval);
-
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, [cardSets.length, currentIndex, interval]);
-
-  const currentCards = cardSets[currentIndex] || [];
-  const prevCards = prevIndex !== null ? cardSets[prevIndex] : null;
-
-  return (
-    <div className={styles.carouselContainer}>
-      {/* Previous cards - fading out (rendered behind) */}
-      {prevCards && (
-        <div
-          key={`prev-${animationKey}`}
-          className={`${styles.examplesGrid} ${styles.carouselLayer} ${styles.carouselLayerExit}`}
-        >
-          {prevCards.map((example, i) => (
-            <CarouselCard key={i} example={example} staggerDelay={staggerDelay} index={i} />
-          ))}
-        </div>
-      )}
-
-      {/* Current cards - fading in (rendered on top) */}
-      <div
-        key={`current-${animationKey}`}
-        className={`${styles.examplesGrid} ${styles.carouselLayer} ${prevIndex !== null ? styles.carouselLayerEnter : ''} ${prevCards ? styles.carouselLayerB : ''}`}
-      >
-        {currentCards.map((example, i) => (
-          <CarouselCard key={i} example={example} staggerDelay={staggerDelay} index={i} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
 /** Examples state - shows visual samples */
 function EmptyStateExamples({ onCreateThing, onStartChat }: OnboardingProps) {
-  // Register custom surface CSS classes on mount
+  // Register dynamic surface CSS classes on mount
   useEffect(() => {
-    registerCardSurfaces();
+    injectSurfaceStyles();
   }, []);
 
   // Multiple sets of example things to rotate through - with random surfaces assigned
@@ -853,7 +590,7 @@ function EmptyStateExamples({ onCreateThing, onStartChat }: OnboardingProps) {
     return baseSets.map(set =>
       set.map(card => ({
         ...card,
-        surfaceClass: getRandomSurface(),
+        surfaceClass: getSurfaceClassName(getRandomSurfaceName()),
       }))
     );
   }, []);
@@ -865,7 +602,15 @@ function EmptyStateExamples({ onCreateThing, onStartChat }: OnboardingProps) {
         <Text color="soft">Here are some examples of Things you can make:</Text>
       </div>
 
-      <RotatingCarousel cardSets={exampleThingSets} interval={3000} staggerDelay={150} />
+      <RotatingCarousel
+        className={styles.examplesGrid}
+        sets={exampleThingSets}
+        interval={3000}
+        staggerDelay={150}
+        renderItem={(card, index) => (
+          <CarouselCard key={index} example={card} />
+        )}
+      />
 
       <div className={`${styles.exampleContextBox} surface strong`}>
         <div className={styles.contextHeader}>

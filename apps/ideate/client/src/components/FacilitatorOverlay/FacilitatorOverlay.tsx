@@ -1,13 +1,14 @@
-import { useEffect, useCallback, useState, useRef } from 'react';
+import { useEffect, useCallback, useState, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from '@ui-kit/router';
 import { Slide, Button, IconButton, Avatar } from '@ui-kit/react';
 import { CloseIcon } from '@ui-kit/icons/CloseIcon';
 import { GearIcon } from '@ui-kit/icons/GearIcon';
-import { ChatInput, ChatMessage, ThinkingIndicator, type ChatInputSubmitData, type ChatInputRef } from '@ui-kit/react-chat';
+import { ChatInput, ChatMessage, ThinkingIndicator, type ChatInputSubmitData, type ChatInputRef, type ThingReference } from '@ui-kit/react-chat';
 import { AVATAR_IMAGES } from '../../constants/avatarImages';
 import { useFacilitator } from '../../contexts/FacilitatorContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useThings } from '../../contexts/ThingsContext';
 import { useFacilitatorSocket } from '../../hooks/useFacilitatorSocket';
 import { useChatCommands } from '../../hooks/useChatCommands';
 import { API_URL } from '../../config';
@@ -34,6 +35,7 @@ interface QueuedMessage {
 export function FacilitatorOverlay() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { things, getBreadcrumb } = useThings();
   const {
     isOpen,
     messages,
@@ -45,6 +47,25 @@ export function FacilitatorOverlay() {
     clearMessages,
     addMessage,
   } = useFacilitator();
+
+  // Convert things to ThingReference format for chat autocomplete
+  const thingReferences = useMemo((): ThingReference[] => {
+    return things.map((thing) => {
+      // Build path from breadcrumb
+      const breadcrumb = getBreadcrumb(thing.id);
+      const path = breadcrumb.length > 1
+        ? breadcrumb.slice(0, -1).map(t => t.name).join(' > ')
+        : undefined;
+
+      return {
+        id: thing.id,
+        name: thing.name,
+        type: thing.type,
+        tags: thing.tags,
+        path,
+      };
+    });
+  }, [things, getBreadcrumb]);
 
   const [isBackdropVisible, setIsBackdropVisible] = useState(isOpen);
   const [queuedMessages, setQueuedMessages] = useState<QueuedMessage[]>([]);
@@ -422,7 +443,7 @@ Type a message to get started!`,
           <div className={styles.inputContainer}>
             <ChatInput
               ref={chatInputRef}
-              placeholder={isLoading ? "Type to queue message..." : "Ask the facilitator... (type / for commands)"}
+              placeholder={isLoading ? "Type to queue message..." : "Ask the facilitator... (type / for commands, ^ for things)"}
               onSubmit={handleSendMessage}
               onChange={handleInputChange}
               disabled={connectionState === 'connecting'}
@@ -430,6 +451,7 @@ Type a message to get started!`,
               fullWidth
               commands={commands}
               onCommand={handleCommand}
+              things={thingReferences}
             />
           </div>
         </div>

@@ -2,7 +2,7 @@ import { WebSocket, type RawData } from 'ws';
 import type { IncomingMessage } from 'http';
 
 // Resource types supported by the workspace handler
-export type ResourceType = 'document' | 'chatroom' | 'idea';
+export type ResourceType = 'document' | 'chatroom' | 'idea' | 'thing';
 
 // Presence info for a user viewing a resource
 export interface ResourcePresence {

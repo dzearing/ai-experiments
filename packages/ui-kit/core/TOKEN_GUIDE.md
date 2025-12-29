@@ -687,6 +687,138 @@ Always respect the user's motion preferences:
 
 ---
 
+## Dynamic Surface Colors
+
+For scenarios requiring custom-colored surfaces beyond the standard semantic groups (e.g., color-coded cards, category indicators, or themed content areas), the Dynamic Surface Color system generates accessible, theme-aware color surface classes from any HSL hue.
+
+### Overview
+
+Dynamic surfaces create cohesive color palettes that:
+- Work in both light and dark modes automatically
+- Maintain proper contrast for accessibility
+- Generate matching background, text, border, and icon colors
+
+### Usage
+
+```typescript
+import {
+  generateSurfaceColors,
+  generateSurfaceFromPreset,
+  injectSurfaceStyles,
+  getSurfaceClassName,
+  SURFACE_PRESETS,
+  SURFACE_PRESET_NAMES,
+} from '@ui-kit/core';
+
+// Generate colors for a custom hue/saturation
+const colors = generateSurfaceColors(16, 90, 'light');
+// Returns: { bg, text, textSoft, border, icon } as HSL strings
+
+// Use preset surfaces (32 presets available)
+const coralColors = generateSurfaceFromPreset('coral', 'dark');
+
+// Inject all preset surfaces as CSS classes
+injectSurfaceStyles();
+// Creates .dynamicSurface-rose, .dynamicSurface-coral, etc.
+
+// Get class name for a preset
+const className = getSurfaceClassName('coral'); // 'dynamicSurface-coral'
+```
+
+### Preset Surfaces (32 colors)
+
+The system includes 32 preset surface definitions covering the full color spectrum:
+
+| Category | Presets |
+|----------|---------|
+| **Reds & Pinks** | crimson, rose, ruby, coral |
+| **Oranges & Yellows** | tangerine, amber, honey, gold |
+| **Yellow-Greens** | lime, olive, moss, chartreuse |
+| **Greens** | sage, emerald, forest, mint |
+| **Cyans & Teals** | teal, aqua, cyan, cerulean |
+| **Blues** | sky, ocean, steel, cobalt |
+| **Purples & Indigos** | indigo, grape, lavender, violet |
+| **Magentas & Pinks** | plum, fuchsia, mauve, pink |
+
+### CSS Variables
+
+Each dynamic surface sets these CSS custom properties:
+
+```css
+.dynamicSurface-coral {
+  --surface-bg: hsl(16, 67%, 85%);      /* Background */
+  --surface-text: hsl(16, 40%, 20%);    /* Primary text */
+  --surface-text-soft: hsl(16, 24%, 35%); /* Secondary text */
+  --surface-border: hsl(16, 33%, 72%);  /* Border */
+  --surface-icon: hsl(16, 42%, 30%);    /* Icon color */
+}
+```
+
+### In Components
+
+```tsx
+// After calling injectSurfaceStyles() in your app initialization
+function ColoredCard({ color, children }) {
+  return (
+    <div className={getSurfaceClassName(color)}>
+      {children}
+    </div>
+  );
+}
+
+// Usage
+<ColoredCard color="coral">Coral colored content</ColoredCard>
+<ColoredCard color="sky">Sky blue content</ColoredCard>
+```
+
+### Custom Hues
+
+Generate surfaces for any hue value:
+
+```typescript
+// Generate a custom purple surface
+const customColors = generateSurfaceColors(285, 70, 'light');
+
+// Apply as inline styles
+<div style={{
+  background: customColors.bg,
+  color: customColors.text,
+  borderColor: customColors.border,
+}}>
+  Custom purple content
+</div>
+```
+
+### Dark Mode Support
+
+Dynamic surfaces automatically adapt to dark mode via the `data-mode="dark"` attribute:
+
+```css
+/* Light mode - pastel backgrounds, dark text */
+.dynamicSurface-coral {
+  --surface-bg: hsl(16, 67%, 85%);
+  --surface-text: hsl(16, 40%, 20%);
+}
+
+/* Dark mode - rich backgrounds, light text */
+[data-mode="dark"] .dynamicSurface-coral {
+  --surface-bg: hsl(16, 95%, 28%);
+  --surface-text: hsl(16, 25%, 95%);
+}
+```
+
+### Configuration Options
+
+```typescript
+injectSurfaceStyles({
+  classPrefix: 'myApp',           // Default: 'dynamicSurface'
+  darkModeSelector: '.dark',      // Default: '[data-mode="dark"]'
+  styleId: 'my-surface-styles',   // Default: 'dynamic-surface-styles'
+});
+```
+
+---
+
 ## See Also
 
 - [Token Cheatsheet](/docs/guides/TOKEN_CHEATSHEET.md) - Quick reference

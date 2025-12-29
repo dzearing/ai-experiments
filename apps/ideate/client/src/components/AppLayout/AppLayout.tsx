@@ -8,6 +8,7 @@ import { SunMoonIcon } from '@ui-kit/icons/SunMoonIcon';
 import { FileIcon } from '@ui-kit/icons/FileIcon';
 import { FolderIcon } from '@ui-kit/icons/FolderIcon';
 import { BoardIcon } from '@ui-kit/icons/BoardIcon';
+import { TreeIcon } from '@ui-kit/icons/TreeIcon';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSession } from '../../contexts/SessionContext';
 import styles from './AppLayout.module.css';
@@ -26,6 +27,7 @@ export function AppLayout() {
 
   // Active state for nav buttons
   const isDashboardActive = useIsActive('/dashboard');
+  const isThingsActive = useIsActive('/things');
   const isIdeasActive = useIsActive('/ideas');
   const isWorkspacesActive = useIsActive('/workspaces');
 
@@ -44,11 +46,11 @@ export function AppLayout() {
           </button>
           <nav className={styles.nav}>
             <Button
-              href="/dashboard"
-              variant={isDashboardActive ? 'primary' : 'ghost'}
-              icon={<FileIcon />}
+              href="/things"
+              variant={isThingsActive ? 'primary' : 'ghost'}
+              icon={<TreeIcon />}
             >
-              Documents
+              Things
             </Button>
             <Button
               href="/ideas"
@@ -56,6 +58,13 @@ export function AppLayout() {
               icon={<BoardIcon />}
             >
               Ideas
+            </Button>
+            <Button
+              href="/dashboard"
+              variant={isDashboardActive ? 'primary' : 'ghost'}
+              icon={<FileIcon />}
+            >
+              Documents
             </Button>
             <Button
               href="/workspaces"

@@ -1,6 +1,9 @@
-/* Container - scrollable with fixed height for virtualization */
+/* Container - scrollable, fills available space when no explicit height */
 .container {
   width: 100%;
+  height: 100%;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   position: relative;
@@ -8,6 +11,10 @@
 }
 
 /* No focus ring on container - focus is shown on individual nodes */
+.container:focus,
+.container:focus-visible {
+  outline: none;
+}
 
 /* Content wrapper - sets total height for scroll */
 .content {

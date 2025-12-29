@@ -14,6 +14,7 @@ import Link from '@tiptap/extension-link';
 import Underline from '@tiptap/extension-underline';
 import { Markdown } from 'tiptap-markdown';
 import { ImageChipExtension } from './ImageChipExtension';
+import { ThingChipExtension } from './ThingChipExtension';
 import { CodeExtension } from './CodeExtension';
 
 export interface UseChatEditorOptions {
@@ -32,6 +33,11 @@ export interface UseChatEditorOptions {
    * Return true to prevent default behavior (newline insertion).
    */
   onEnterKey?: (event: { shiftKey: boolean; ctrlKey: boolean; metaKey: boolean }) => boolean;
+  /**
+   * Tab key handler - called when Tab is pressed.
+   * Return true to prevent default behavior (focus change).
+   */
+  onTabKey?: () => boolean;
 }
 
 export function useChatEditor(options: UseChatEditorOptions = {}) {
@@ -42,26 +48,43 @@ export function useChatEditor(options: UseChatEditorOptions = {}) {
     onFocus,
     onBlur,
     onEnterKey,
+    onTabKey,
   } = options;
 
-  // Use a ref to hold the current onEnterKey callback
+  // Use refs to hold the current callbacks
   // This ensures the extension always accesses the latest callback
   // since TipTap extensions are created once and don't get re-created on prop changes
   const onEnterKeyRef = useRef(onEnterKey);
+  const onTabKeyRef = useRef(onTabKey);
 
-  // Keep the ref updated with the latest callback
+  // Keep the refs updated with the latest callbacks
   useEffect(() => {
     onEnterKeyRef.current = onEnterKey;
   }, [onEnterKey]);
 
-  // Create a custom extension for handling Enter key at the editor level
-  // This runs before TipTap's default behavior, preventing unwanted newlines
+  useEffect(() => {
+    onTabKeyRef.current = onTabKey;
+  }, [onTabKey]);
+
+  // Create a custom extension for handling special keys at the editor level
+  // This runs before TipTap's default behavior, preventing unwanted actions
   // We register separate shortcuts for each modifier combination since TipTap
   // handles keyboard shortcuts this way and it works reliably in tests
-  const EnterKeyExtension = Extension.create({
-    name: 'enterKeyHandler',
+  const KeyboardExtension = Extension.create({
+    name: 'keyboardHandler',
     addKeyboardShortcuts() {
       return {
+        // Tab key - for autocomplete selection
+        Tab: () => {
+          const currentOnTabKey = onTabKeyRef.current;
+          if (currentOnTabKey) {
+            const shouldPreventDefault = currentOnTabKey();
+            if (shouldPreventDefault) {
+              return true; // Prevent TipTap from handling Tab
+            }
+          }
+          return false; // Let TipTap handle it normally
+        },
         // Regular Enter key (no modifiers)
         Enter: () => {
           const currentOnEnterKey = onEnterKeyRef.current;
@@ -150,7 +173,8 @@ export function useChatEditor(options: UseChatEditorOptions = {}) {
         transformCopiedText: true,
       }),
       ImageChipExtension,
-      EnterKeyExtension,
+      ThingChipExtension,
+      KeyboardExtension,
     ],
     editable: !disabled,
     onUpdate: ({ editor }) => {

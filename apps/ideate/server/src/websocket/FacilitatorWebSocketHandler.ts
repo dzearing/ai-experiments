@@ -16,6 +16,12 @@ interface NavigationContext {
   chatRoomId?: string;
   chatRoomName?: string;
   currentPage?: string;
+  /** Active Thing ID (if viewing/selected a Thing) */
+  activeThingId?: string;
+  /** Active Thing name */
+  activeThingName?: string;
+  /** Referenced Thing IDs from ^thing-name references in message */
+  referencedThingIds?: string[];
 }
 
 /**

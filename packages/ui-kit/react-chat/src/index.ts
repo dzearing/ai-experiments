@@ -31,6 +31,9 @@ export type {
   SlashCommandProps,
 } from './components/ChatInput/SlashCommand.types';
 
+// Thing reference types (for ^ autocomplete)
+export type { ThingReference } from './components/ChatInput/ThingReferencePopover';
+
 // Hooks
 export { useMessageHistory } from './components/ChatInput/useMessageHistory';
 

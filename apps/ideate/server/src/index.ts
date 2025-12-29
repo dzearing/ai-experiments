@@ -11,6 +11,7 @@ import { workspacesRouter, setWorkspaceHandler as setWorkspacesWsHandler } from 
 import { chatroomsRouter, setWorkspaceHandler as setChatroomsWorkspaceHandler } from './routes/chatrooms.js';
 import { personasRouter } from './routes/personas.js';
 import { ideasRouter, setIdeasWorkspaceHandler } from './routes/ideas.js';
+import { thingsRouter, setThingsWorkspaceHandler } from './routes/things.js';
 import { setWorkspaceHandler as setMCPToolsWorkspaceHandler } from './services/MCPToolsService.js';
 import { createDiagnosticsRouter } from './routes/diagnostics.js';
 import { CollaborationHandler } from './websocket/CollaborationHandler.js';
@@ -52,6 +53,7 @@ app.use('/api/workspaces', workspacesRouter);
 app.use('/api/chatrooms', chatroomsRouter);
 app.use('/api/personas', personasRouter);
 app.use('/api/ideas', ideasRouter);
+app.use('/api/things', thingsRouter);
 
 // Create HTTP server
 const server = createServer(app);
@@ -177,6 +179,7 @@ setChatroomsWorkspaceHandler(workspaceHandler);
 setMCPToolsWorkspaceHandler(workspaceHandler);
 setWorkspacesWsHandler(workspaceHandler);
 setIdeasWorkspaceHandler(workspaceHandler);
+setThingsWorkspaceHandler(workspaceHandler);
 
 // Mount diagnostics router (no auth required)
 app.use('/api/diagnostics', createDiagnosticsRouter(yjsHandler, facilitatorHandler.getService()));
