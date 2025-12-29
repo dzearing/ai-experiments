@@ -1,5 +1,6 @@
 import { query, type SDKAssistantMessage } from '@anthropic-ai/claude-code';
 import { createHash } from 'crypto';
+import { tmpdir } from 'os';
 import { PersonaService, type Persona } from './PersonaService.js';
 import { FacilitatorChatService, type FacilitatorMessage } from './FacilitatorChatService.js';
 import { MCPToolsService, type ToolDefinition } from './MCPToolsService.js';
@@ -77,6 +78,9 @@ export class FacilitatorService {
   // Greeting cache: key = hash of (displayName + persona systemPrompt)
   private greetingCache: Map<string, GreetingCache> = new Map();
   private static GREETINGS_PER_PERSONA = 20;
+
+  // Isolated working directory to prevent loading CLAUDE.md from monorepo
+  private static ISOLATED_CWD = tmpdir();
 
   constructor() {
     this.personaService = new PersonaService();
@@ -297,6 +301,7 @@ Example format:
         options: {
           permissionMode: 'bypassPermissions',
           maxTurns: 1,
+          cwd: FacilitatorService.ISOLATED_CWD, // Prevent loading CLAUDE.md from monorepo
         },
       });
 
@@ -379,6 +384,7 @@ Example format:
   /**
    * Process a user message and stream the response via callbacks.
    * @param displayName - Optional display name to use instead of persona.name (from settings)
+   * @param abortSignal - Optional AbortSignal to cancel the operation
    */
   async processMessage(
     userId: string,
@@ -386,7 +392,8 @@ Example format:
     content: string,
     navigationContext: NavigationContext,
     callbacks: StreamCallbacks,
-    displayName?: string
+    displayName?: string,
+    abortSignal?: AbortSignal
   ): Promise<void> {
     // Save the user message
     await this.chatService.addMessage(userId, 'user', content);
@@ -422,6 +429,14 @@ Example format:
 
     try {
       while (toolIteration < maxToolIterations) {
+        // Check if aborted before starting a new iteration
+        if (abortSignal?.aborted) {
+          console.log(`[FacilitatorService] Operation aborted before iteration ${toolIteration + 1}`);
+          const abortError = new Error('Operation aborted');
+          abortError.name = 'AbortError';
+          throw abortError;
+        }
+
         console.log(`[FacilitatorService] Iteration ${toolIteration + 1}/${maxToolIterations}`);
         // Use the query function from @anthropic-ai/claude-code
         const response = query({
@@ -430,6 +445,7 @@ Example format:
             customSystemPrompt: systemPrompt,
             model: 'sonnet',
             permissionMode: 'bypassPermissions', // Auto-accept for server-side use
+            cwd: FacilitatorService.ISOLATED_CWD, // Prevent loading CLAUDE.md from monorepo
           },
         });
 
@@ -437,6 +453,13 @@ Example format:
 
         // Process streaming messages
         for await (const message of response) {
+          // Check if aborted during streaming
+          if (abortSignal?.aborted) {
+            console.log(`[FacilitatorService] Operation aborted during streaming`);
+            const abortError = new Error('Operation aborted');
+            abortError.name = 'AbortError';
+            throw abortError;
+          }
           if (message.type === 'assistant') {
             // Handle assistant message
             const assistantMsg = message as SDKAssistantMessage;
@@ -587,6 +610,11 @@ Example format:
         durationMs: Date.now() - startTime,
       });
     } catch (error) {
+      // Re-throw abort errors without logging
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw error;
+      }
+
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('[FacilitatorService] Error processing message:', error);
       callbacks.onError(errorMessage);

@@ -12,7 +12,7 @@ import { EditIcon } from '@ui-kit/icons/EditIcon';
 import { TrashIcon } from '@ui-kit/icons/TrashIcon';
 import { DownloadIcon } from '@ui-kit/icons/DownloadIcon';
 import { useThings } from '../../contexts/ThingsContext';
-import { useFacilitator } from '../../contexts/FacilitatorContext';
+import { ImportDialog } from './ImportDialog';
 import type { PendingThing } from './InlineThingEditor';
 import type { ThingMetadata, ThingType } from '../../types/thing';
 import styles from './ThingsTree.module.css';
@@ -153,7 +153,6 @@ function generateTempId(): string {
 
 export function ThingsTree({ onSelect, onCreateNew: _onCreateNew, selectedId, onInlineEditReady, onRename }: ThingsTreeProps) {
   const { things, expandedIds, setExpandedIds, isLoading, filter, setFilter, createThing, updateThing, deleteThing } = useThings();
-  const { openWithMessage } = useFacilitator();
   const [viewType, setViewType] = useState<ViewType>('tree');
   const [searchValue, setSearchValue] = useState('');
   const [tagFilter, setTagFilter] = useState<string | null>(null);
@@ -180,6 +179,10 @@ export function ThingsTree({ onSelect, onCreateNew: _onCreateNew, selectedId, on
   const [contextMenuTargetId, setContextMenuTargetId] = useState<string | null>(null);
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
+
+  // Import dialog state
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [importTargetThing, setImportTargetThing] = useState<ThingMetadata | null>(null);
 
   // Filter things by search query and tag
   const filteredThings = useMemo(() => {
@@ -477,16 +480,15 @@ export function ThingsTree({ onSelect, onCreateNew: _onCreateNew, selectedId, on
       case 'import': {
         const thing = things.find(t => t.id === contextMenuTargetId);
         if (thing) {
-          openWithMessage(
-            `I want to import things for "${thing.name}". What options do you have for importing content into this thing?`
-          );
+          setImportTargetThing(thing);
+          setImportDialogOpen(true);
         }
         break;
       }
     }
     setContextMenuTargetId(null);
     setContextMenuOpen(false);
-  }, [contextMenuTargetId, startRename, things, openWithMessage]);
+  }, [contextMenuTargetId, startRename, things]);
 
   // Handle right-click on tree to capture target and open menu
   const handleTreeContextMenu = useCallback((e: React.MouseEvent) => {
@@ -818,6 +820,18 @@ export function ThingsTree({ onSelect, onCreateNew: _onCreateNew, selectedId, on
       >
         <span style={{ display: 'none' }} />
       </Menu>
+
+      {/* Import dialog */}
+      {importTargetThing && (
+        <ImportDialog
+          open={importDialogOpen}
+          onClose={() => {
+            setImportDialogOpen(false);
+            setImportTargetThing(null);
+          }}
+          targetThing={importTargetThing}
+        />
+      )}
     </div>
   );
 }

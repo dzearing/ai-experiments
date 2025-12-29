@@ -21,6 +21,7 @@ import { ChatWebSocketHandler } from './websocket/ChatWebSocketHandler.js';
 import { WorkspaceWebSocketHandler } from './websocket/WorkspaceWebSocketHandler.js';
 import { FacilitatorWebSocketHandler } from './websocket/FacilitatorWebSocketHandler.js';
 import { IdeaAgentWebSocketHandler } from './websocket/IdeaAgentWebSocketHandler.js';
+import { ImportWebSocketHandler } from './websocket/ImportWebSocketHandler.js';
 import { DiscoveryService } from './services/DiscoveryService.js';
 import { DocumentService } from './services/DocumentService.js';
 import { IdeaService } from './services/IdeaService.js';
@@ -170,6 +171,14 @@ ideaAgentWss.on('connection', (ws, req) => {
   ideaAgentHandler.handleConnection(ws, req);
 });
 
+// Create WebSocket server for import agent (JSON-based protocol)
+const importWss = new WebSocketServer({ noServer: true });
+const importHandler = new ImportWebSocketHandler();
+
+importWss.on('connection', (ws, req) => {
+  importHandler.handleConnection(ws, req);
+});
+
 // Export workspace handler for use in routes
 export { workspaceHandler };
 
@@ -230,6 +239,11 @@ server.on('upgrade', (request, socket, head) => {
     ideaAgentWss.handleUpgrade(request, socket, head, (ws) => {
       ideaAgentWss.emit('connection', ws, request);
     });
+  } else if (pathname === '/import-ws') {
+    // Import agent WebSocket
+    importWss.handleUpgrade(request, socket, head, (ws) => {
+      importWss.emit('connection', ws, request);
+    });
   } else {
     socket.destroy();
   }
@@ -247,6 +261,7 @@ server.listen(PORT, async () => {
   console.log(`WebSocket (Workspace) available at ws://localhost:${PORT}/workspace-ws`);
   console.log(`WebSocket (Facilitator) available at ws://localhost:${PORT}/facilitator-ws`);
   console.log(`WebSocket (IdeaAgent) available at ws://localhost:${PORT}/idea-agent-ws`);
+  console.log(`WebSocket (Import) available at ws://localhost:${PORT}/import-ws`);
   console.log(`Diagnostics API at http://localhost:${PORT}/api/diagnostics`);
   console.log(`Diagnostics WebSocket at ws://localhost:${PORT}/diagnostics-ws`);
 

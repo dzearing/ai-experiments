@@ -28,7 +28,7 @@ interface NavigationContext {
  * Client message types for the facilitator WebSocket protocol
  */
 interface ClientMessage {
-  type: 'message' | 'clear_history' | 'context_update' | 'persona_change';
+  type: 'message' | 'clear_history' | 'context_update' | 'persona_change' | 'cancel';
   content?: string;
   context?: NavigationContext;
   /** Preset ID for persona_change (or '__custom__' for user persona) */
@@ -74,6 +74,8 @@ interface FacilitatorClient {
   context: NavigationContext;
   /** Version counter for persona changes - used to cancel stale greeting generations */
   personaChangeVersion: number;
+  /** AbortController for the current operation (if any) */
+  currentAbortController: AbortController | null;
 }
 
 /**
@@ -127,6 +129,7 @@ export class FacilitatorWebSocketHandler {
       clientId,
       context: {},
       personaChangeVersion: 0,
+      currentAbortController: null,
     };
 
     this.clients.set(ws, client);
@@ -179,6 +182,9 @@ export class FacilitatorWebSocketHandler {
         case 'persona_change':
           await this.handlePersonaChange(client, clientMessage.presetId || '');
           break;
+        case 'cancel':
+          this.handleCancel(client);
+          break;
         default:
           console.warn(`[Facilitator] Unknown message type: ${(clientMessage as ClientMessage).type}`);
       }
@@ -200,6 +206,10 @@ export class FacilitatorWebSocketHandler {
     // Get the display name from settings
     const settings = getFacilitatorSettings();
 
+    // Create an AbortController for this operation
+    const abortController = new AbortController();
+    client.currentAbortController = abortController;
+
     try {
       await this.facilitatorService.processMessage(
         client.userId,
@@ -208,6 +218,8 @@ export class FacilitatorWebSocketHandler {
         client.context,
         {
           onTextChunk: (text, messageId) => {
+            // Don't send if aborted
+            if (abortController.signal.aborted) return;
             this.send(client.ws, {
               type: 'text_chunk',
               text,
@@ -215,6 +227,7 @@ export class FacilitatorWebSocketHandler {
             });
           },
           onToolUse: ({ name, input }) => {
+            if (abortController.signal.aborted) return;
             this.send(client.ws, {
               type: 'tool_use',
               toolName: name,
@@ -222,6 +235,7 @@ export class FacilitatorWebSocketHandler {
             });
           },
           onToolResult: ({ name, output }) => {
+            if (abortController.signal.aborted) return;
             this.send(client.ws, {
               type: 'tool_result',
               toolName: name,
@@ -229,6 +243,8 @@ export class FacilitatorWebSocketHandler {
             });
           },
           onComplete: (message) => {
+            // Don't send completion if aborted
+            if (abortController.signal.aborted) return;
             this.send(client.ws, {
               type: 'message_complete',
               messageId: message.id,
@@ -236,17 +252,39 @@ export class FacilitatorWebSocketHandler {
             });
           },
           onError: (error) => {
+            if (abortController.signal.aborted) return;
             this.send(client.ws, {
               type: 'error',
               error,
             });
           },
         },
-        settings.name  // Pass display name from settings
+        settings.name,  // Pass display name from settings
+        abortController.signal  // Pass abort signal
       );
     } catch (error) {
+      // Ignore abort errors
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.log(`[Facilitator] Client ${client.clientId} operation aborted`);
+        return;
+      }
       console.error('[Facilitator] Error processing message:', error);
       this.send(client.ws, { type: 'error', error: 'Failed to process message' });
+    } finally {
+      client.currentAbortController = null;
+    }
+  }
+
+  /**
+   * Handle a cancel request from a client.
+   */
+  private handleCancel(client: FacilitatorClient): void {
+    if (client.currentAbortController) {
+      console.log(`[Facilitator] Cancelling operation for client ${client.clientId}`);
+      client.currentAbortController.abort();
+      client.currentAbortController = null;
+    } else {
+      console.log(`[Facilitator] No operation to cancel for client ${client.clientId}`);
     }
   }
 

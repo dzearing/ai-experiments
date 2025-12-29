@@ -369,6 +369,32 @@ export function MarkdownRenderer({
         );
       }
 
+      // Check if this is a thing chip (data-thing-chip attribute exists)
+      const hasThingChip = 'dataThingChip' in nodeProps ||
+        'data-thing-chip' in props ||
+        props['dataThingChip'] !== undefined;
+
+      if (hasThingChip) {
+        const name = nodeProps['dataName'] || props['data-name'] || props['dataName'] || children;
+        const thingType = nodeProps['dataType'] || props['data-type'] || props['dataType'] || 'item';
+
+        // Map thing type to chip variant
+        const getThingVariant = (type: string): 'primary' | 'success' | 'warning' | 'info' => {
+          switch (type) {
+            case 'category': return 'primary';
+            case 'project': return 'success';
+            case 'feature': return 'warning';
+            default: return 'info';
+          }
+        };
+
+        return (
+          <Chip size="sm" variant={getThingVariant(thingType)}>
+            ^{name}
+          </Chip>
+        );
+      }
+
       // Default span rendering
       return <span {...props}>{children}</span>;
     },

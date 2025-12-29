@@ -211,10 +211,10 @@
 
 .queuedMessage {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-2);
-  padding: var(--space-1) var(--space-2);
+  padding: var(--space-2);
   background: var(--soft-bg);
   border: 1px solid var(--soft-border);
   border-radius: var(--radius-sm);
@@ -224,7 +224,9 @@
 .queuedContent {
   flex: 1;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   color: var(--soft-fg);
+  white-space: pre-wrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
 }

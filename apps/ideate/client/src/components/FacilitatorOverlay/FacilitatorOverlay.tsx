@@ -19,11 +19,6 @@ interface FacilitatorSettings {
   avatar: string;
 }
 
-interface QueuedMessage {
-  id: string;
-  content: string;
-  timestamp: number;
-}
 
 /**
  * FacilitatorOverlay component
@@ -70,7 +65,7 @@ export function FacilitatorOverlay() {
   }, [things, getBreadcrumb]);
 
   const [isBackdropVisible, setIsBackdropVisible] = useState(isOpen);
-  const [queuedMessages, setQueuedMessages] = useState<QueuedMessage[]>([]);
+  const [queuedContent, setQueuedContent] = useState('');
   const [inputContent, setInputContent] = useState('');
   const [facilitatorSettings, setFacilitatorSettings] = useState<FacilitatorSettings>({
     name: 'Facilitator',
@@ -173,24 +168,24 @@ export function FacilitatorOverlay() {
 Type a message to get started!`,
   });
 
-  // Process queued messages when AI finishes thinking
+  // Process queued content when AI finishes thinking
   useEffect(() => {
-    if (!isLoading && queuedMessages.length > 0 && !isProcessingQueueRef.current) {
+    if (!isLoading && queuedContent && !isProcessingQueueRef.current) {
       isProcessingQueueRef.current = true;
 
-      // Get the first queued message
-      const [nextMessage, ...remaining] = queuedMessages;
-      setQueuedMessages(remaining);
+      // Send the entire queued content
+      const contentToSend = queuedContent;
+      setQueuedContent('');
 
       // Add to context and send
-      contextSendMessage(nextMessage.content);
+      contextSendMessage(contentToSend);
       if (isConnected) {
-        socketSendMessage(nextMessage.content);
+        socketSendMessage(contentToSend);
       }
 
       isProcessingQueueRef.current = false;
     }
-  }, [isLoading, queuedMessages, contextSendMessage, socketSendMessage, isConnected]);
+  }, [isLoading, queuedContent, contextSendMessage, socketSendMessage, isConnected]);
 
   // Process pending message when connected (from openWithMessage)
   useEffect(() => {
@@ -208,8 +203,8 @@ Type a message to get started!`,
     // Add a system message indicating the operation was stopped
     addMessage({
       id: `system-${Date.now()}`,
-      role: 'assistant',
-      content: '*Thinking stopped by user.*',
+      role: 'system',
+      content: 'Thinking stopped by user.',
       timestamp: Date.now(),
     });
   }, [cancelOperation, addMessage]);
@@ -256,14 +251,9 @@ Type a message to get started!`,
       const { content } = data;
       if (!content.trim()) return;
 
-      // If AI is busy, queue the message
+      // If AI is busy, append to queued content
       if (isLoading) {
-        const queuedMessage: QueuedMessage = {
-          id: `queued-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-          content: content.trim(),
-          timestamp: Date.now(),
-        };
-        setQueuedMessages((prev) => [...prev, queuedMessage]);
+        setQueuedContent((prev) => prev ? `${prev}\n${content.trim()}` : content.trim());
         setInputContent('');
         return;
       }
@@ -286,9 +276,15 @@ Type a message to get started!`,
     setInputContent(content);
   }, []);
 
-  // Remove a queued message
-  const removeQueuedMessage = useCallback((id: string) => {
-    setQueuedMessages((prev) => prev.filter((msg) => msg.id !== id));
+  // Clear the queued content
+  const clearQueuedContent = useCallback(() => {
+    setQueuedContent('');
+  }, []);
+
+  // Handle editing queued content (when user presses Up at cursor position 0)
+  const handleEditQueue = useCallback((_concatenatedContent: string) => {
+    // Clear the queue - the content is already set in the input by ChatInput
+    setQueuedContent('');
   }, []);
 
   // Handle navigating to settings
@@ -392,6 +388,7 @@ Type a message to get started!`,
                   const prevMessage = index > 0 ? messages[index - 1] : null;
                   const isConsecutive = prevMessage?.role === message.role;
                   const isUser = message.role === 'user';
+                  const isSystem = message.role === 'system';
 
                   // Get bot avatar image
                   const botAvatarSrc = AVATAR_IMAGES[facilitatorSettings.avatar] || AVATAR_IMAGES.robot;
@@ -405,11 +402,12 @@ Type a message to get started!`,
                       senderName={isUser ? (user?.name || 'You') : facilitatorSettings.name}
                       senderColor={isUser ? undefined : '#6366f1'}
                       isOwn={isUser}
-                      isConsecutive={isConsecutive}
+                      isSystem={isSystem}
+                      isConsecutive={isConsecutive && !isSystem}
                       renderMarkdown={!isUser}
                       isStreaming={message.isStreaming}
                       toolCalls={message.toolCalls}
-                      avatar={!isUser ? (
+                      avatar={!isUser && !isSystem ? (
                         <Avatar
                           type="bot"
                           src={botAvatarSrc}
@@ -428,25 +426,23 @@ Type a message to get started!`,
           {/* Thinking indicator */}
           <ThinkingIndicator isActive={isLoading} />
 
-          {/* Queued messages */}
-          {queuedMessages.length > 0 && (
+          {/* Queued content */}
+          {queuedContent && (
             <div className={styles.queueContainer}>
               <div className={styles.queueHeader}>
-                <span className={styles.queueLabel}>Queued ({queuedMessages.length})</span>
+                <span className={styles.queueLabel}>Queued</span>
               </div>
               <div className={styles.queueList}>
-                {queuedMessages.map((msg) => (
-                  <div key={msg.id} className={styles.queuedMessage}>
-                    <span className={styles.queuedContent}>{msg.content}</span>
-                    <IconButton
-                      icon={<CloseIcon />}
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeQueuedMessage(msg.id)}
-                      aria-label="Remove from queue"
-                    />
-                  </div>
-                ))}
+                <div className={styles.queuedMessage}>
+                  <span className={styles.queuedContent}>{queuedContent}</span>
+                  <IconButton
+                    icon={<CloseIcon />}
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearQueuedContent}
+                    aria-label="Clear queued message"
+                  />
+                </div>
               </div>
             </div>
           )}
@@ -464,6 +460,8 @@ Type a message to get started!`,
               commands={commands}
               onCommand={handleCommand}
               things={thingReferences}
+              queuedMessages={queuedContent ? [queuedContent] : []}
+              onEditQueue={handleEditQueue}
             />
           </div>
         </div>

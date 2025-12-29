@@ -114,6 +114,9 @@ export interface ChatMessageProps {
   /** Whether this message is from the current user (highlights the message) */
   isOwn?: boolean;
 
+  /** Whether this is a system message (full-width, distinct styling) */
+  isSystem?: boolean;
+
   /** Whether this is a consecutive message from the same sender (hides avatar/name) */
   isConsecutive?: boolean;
 
@@ -170,6 +173,7 @@ export function ChatMessage({
   senderName,
   senderColor,
   isOwn = false,
+  isSystem = false,
   isConsecutive = false,
   renderMarkdown = true,
   isStreaming = false,
@@ -190,6 +194,27 @@ export function ChatMessage({
       e.preventDefault();
     }
   };
+
+  // System messages have a simplified layout
+  if (isSystem) {
+    return (
+      <div className={`${styles.systemMessage} ${className}`} data-message-id={id}>
+        <div className={styles.systemContent}>
+          {renderMarkdown ? (
+            <MarkdownRenderer
+              content={content}
+              enableDeepLinks={false}
+              showLineNumbers={false}
+              className={styles.systemMarkdown}
+              onDeepLinkClick={onLinkClick}
+            />
+          ) : (
+            <p className={styles.systemText}>{content}</p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   const messageClasses = [
     styles.message,

@@ -142,6 +142,20 @@ export interface ChatInputProps {
    * The thing will be inserted as [[thing:id]] in the content.
    */
   onThingSelect?: (thing: ThingReference) => void;
+
+  /**
+   * Queued messages waiting to be sent.
+   * When user presses Up at cursor position 0 with queued messages,
+   * they will be concatenated and moved to the input for editing.
+   */
+  queuedMessages?: string[];
+
+  /**
+   * Called when user wants to edit queued messages (Up arrow at position 0).
+   * Receives concatenated content of all queued messages.
+   * Parent should clear the queue and let the user edit.
+   */
+  onEditQueue?: (concatenatedContent: string) => void;
 }
 
 export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
@@ -169,6 +183,8 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
       things = [],
       recentThings = [],
       onThingSelect,
+      queuedMessages = [],
+      onEditQueue,
     },
     ref
   ) => {
@@ -572,7 +588,9 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
       if (markdownStorage && typeof markdownStorage.getMarkdown === 'function') {
         // Call with proper this context
         const markdown = markdownStorage.getMarkdown() as string;
-        return markdown;
+        // Normalize double newlines (paragraph breaks) to single newlines
+        // This keeps multiline input as simple line breaks, not paragraph spacing
+        return markdown.replace(/\n\n+/g, '\n');
       }
       // Fallback to HTML if markdown extension not available
       return editor.getHTML();
@@ -769,7 +787,29 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
             if (!isMultilineMode || isOnFirstLine) {
               e.preventDefault();
               if (isAtStart) {
-                // Already at start - navigate history, keep cursor at start
+                // Check for queued messages first - if present, edit them instead of history
+                if (queuedMessages.length > 0 && onEditQueue) {
+                  const concatenated = queuedMessages.join('\n').trim();
+                  onEditQueue(concatenated);
+                  // Convert newlines to paragraphs for TipTap (it treats plain \n as spaces)
+                  const lines = concatenated.split('\n');
+                  const htmlContent = lines.length > 1
+                    ? lines.map(line => `<p>${line}</p>`).join('')
+                    : concatenated;
+                  // Set the editor content with proper paragraph structure
+                  editor.commands.setContent(htmlContent);
+                  // Enter multiline mode if there are multiple lines
+                  if (concatenated.includes('\n')) {
+                    setIsMultilineMode(true);
+                  }
+                  // Move cursor to end
+                  setTimeout(() => {
+                    const newDocSize = editor.state.doc.content.size;
+                    editor.commands.setTextSelection(newDocSize);
+                  }, 0);
+                  return;
+                }
+                // No queued messages - navigate history, keep cursor at start
                 navigateHistory(1);
                 // Move cursor to start after content change
                 setTimeout(() => editor.commands.setTextSelection(0), 0);
@@ -808,7 +848,7 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
           openLinkDialog();
         }
       },
-      [isMultilineMode, editor, historyKey, navigateHistory, openLinkDialog, escapePressed, isCommandPopoverOpen, commands, commandQuery, commandSelectedIndex, isThingPopoverOpen, things, recentThings, thingQuery, thingSelectedIndex]
+      [isMultilineMode, editor, historyKey, navigateHistory, openLinkDialog, escapePressed, isCommandPopoverOpen, commands, commandQuery, commandSelectedIndex, isThingPopoverOpen, things, recentThings, thingQuery, thingSelectedIndex, queuedMessages, onEditQueue]
     );
 
     // Convert file to base64 data URL for persistence

@@ -12,7 +12,7 @@ import { useGlobalKeyboard } from '../hooks/useGlobalKeyboard';
  */
 export interface FacilitatorMessage {
   id: string;
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: number;
   /** For streaming responses, indicates if the message is still being generated */

@@ -241,3 +241,31 @@
 .highlighted .plainText {
   color: var(--strong-fg);
 }
+
+/* System message - full width, distinct styling */
+.systemMessage {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-2) var(--space-4);
+  margin: var(--space-2) 0;
+}
+
+.systemContent {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
+  border-radius: var(--radius-full);
+  max-width: 90%;
+}
+
+.systemMarkdown,
+.systemText {
+  margin: 0;
+  font-size: var(--text-xs);
+  font-style: italic;
+  color: var(--soft-fg-soft);
+  text-align: center;
+}

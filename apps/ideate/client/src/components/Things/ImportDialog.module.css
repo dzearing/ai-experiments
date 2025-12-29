@@ -1,0 +1,202 @@
+/* ImportDialog - Multi-step wizard for importing content */
+
+/* ============================================
+   FOOTER
+   ============================================ */
+
+.footer {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+/* ============================================
+   COMMON STYLES
+   ============================================ */
+
+.stepDescription {
+  margin-bottom: var(--space-4);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.field + .field {
+  margin-top: var(--space-4);
+}
+
+.label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--soft-fg);
+}
+
+.required {
+  color: var(--danger-fg);
+}
+
+.hint {
+  margin-top: var(--space-1);
+}
+
+.error {
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-4);
+  color: var(--danger-fg);
+}
+
+/* ============================================
+   SOURCE SELECTION STEP
+   ============================================ */
+
+.sourceStep {
+  display: flex;
+  flex-direction: column;
+}
+
+.sourceCards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.sourceCard {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--softer-bg);
+  border: 1px solid var(--softer-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color var(--duration-fast) var(--ease-default),
+              background-color var(--duration-fast) var(--ease-default),
+              transform var(--duration-fast) var(--ease-default);
+}
+
+.sourceCard:hover {
+  border-color: var(--primary-border);
+  background: var(--soft-bg);
+}
+
+.sourceCard:active {
+  transform: scale(0.99);
+}
+
+.sourceIcon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  color: var(--primary-fg);
+}
+
+.sourceInfo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* ============================================
+   CONFIGURATION STEP
+   ============================================ */
+
+.configStep {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ============================================
+   PROGRESS STEP
+   ============================================ */
+
+.progressStep {
+  display: flex;
+  flex-direction: column;
+}
+
+.progressList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.progressItem {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+}
+
+.progressIcon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkIcon {
+  width: 16px;
+  height: 16px;
+  color: var(--primary-fg);
+}
+
+.errorIcon {
+  width: 16px;
+  height: 16px;
+  color: var(--danger-fg);
+}
+
+.pendingDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--softer-border);
+}
+
+.progressContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 1;
+}
+
+.progressLabel {
+  line-height: 1.4;
+}
+
+/* Status-based styling */
+.progressItem.complete .progressLabel {
+  color: var(--soft-fg);
+}
+
+.progressItem.running .progressLabel {
+  color: var(--base-fg);
+  font-weight: var(--weight-medium);
+}
+
+.progressItem.pending .progressLabel {
+  color: var(--softer-fg);
+}
+
+.progressItem.error .progressLabel {
+  color: var(--danger-fg);
+}
+
+/* ============================================
+   REDUCED MOTION
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .sourceCard {
+    transition: none;
+  }
+}
