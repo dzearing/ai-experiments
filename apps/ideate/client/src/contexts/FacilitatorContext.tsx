@@ -72,6 +72,8 @@ interface FacilitatorContextValue {
   navigationContext: NavigationContext;
   /** Pending persona change request (presetId or '__custom__') */
   pendingPersonaChange: string | null;
+  /** Pending message to send when facilitator opens (for automated actions) */
+  pendingMessage: string | null;
 
   /** Toggle the facilitator overlay */
   toggle: () => void;
@@ -101,6 +103,10 @@ interface FacilitatorContextValue {
   requestPersonaChange: (presetId: string) => void;
   /** Clear pending persona change (called after WebSocket processes it) */
   clearPendingPersonaChange: () => void;
+  /** Open facilitator and queue a message to send (useful for automated actions like Import) */
+  openWithMessage: (content: string) => void;
+  /** Clear pending message (called after WebSocket processes it) */
+  clearPendingMessage: () => void;
 }
 
 const FacilitatorContext = createContext<FacilitatorContextValue | null>(null);
@@ -121,6 +127,7 @@ export function FacilitatorProvider({ children }: FacilitatorProviderProps) {
   const [error, setError] = useState<string | null>(null);
   const [navigationContext, setNavigationContext] = useState<NavigationContext>({});
   const [pendingPersonaChange, setPendingPersonaChange] = useState<string | null>(null);
+  const [pendingMessage, setPendingMessage] = useState<string | null>(null);
 
   // Toggle overlay
   const toggle = useCallback(() => {
@@ -178,6 +185,17 @@ export function FacilitatorProvider({ children }: FacilitatorProviderProps) {
     setPendingPersonaChange(null);
   }, []);
 
+  // Open facilitator and queue a message to send (useful for automated actions like Import)
+  const openWithMessage = useCallback((content: string) => {
+    setPendingMessage(content);
+    setIsOpen(true);
+  }, []);
+
+  // Clear pending message (called after WebSocket processes it)
+  const clearPendingMessage = useCallback(() => {
+    setPendingMessage(null);
+  }, []);
+
   // Global keyboard shortcut: Ctrl/Cmd + .
   useGlobalKeyboard({
     key: '.',
@@ -193,6 +211,7 @@ export function FacilitatorProvider({ children }: FacilitatorProviderProps) {
     error,
     navigationContext,
     pendingPersonaChange,
+    pendingMessage,
     toggle,
     open,
     close,
@@ -207,6 +226,8 @@ export function FacilitatorProvider({ children }: FacilitatorProviderProps) {
     setNavigationContext,
     requestPersonaChange,
     clearPendingPersonaChange,
+    openWithMessage,
+    clearPendingMessage,
   };
 
   return (

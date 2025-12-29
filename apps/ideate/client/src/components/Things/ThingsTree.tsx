@@ -1,5 +1,5 @@
 import { useCallback, useState, useMemo, useEffect, useRef } from 'react';
-import { Button, IconButton, SearchInput, TreeView, Chip, Segmented, Input, Dialog, type TreeNode } from '@ui-kit/react';
+import { Button, IconButton, SearchInput, TreeView, Chip, Segmented, Input, Dialog, Menu, type TreeNode, type MenuItemType } from '@ui-kit/react';
 import { AddIcon } from '@ui-kit/icons/AddIcon';
 import { FilterIcon } from '@ui-kit/icons/FilterIcon';
 import { FolderIcon } from '@ui-kit/icons/FolderIcon';
@@ -8,7 +8,11 @@ import { CodeIcon } from '@ui-kit/icons/CodeIcon';
 import { GearIcon } from '@ui-kit/icons/GearIcon';
 import { IndentIcon } from '@ui-kit/icons/IndentIcon';
 import { ListViewIcon } from '@ui-kit/icons/ListViewIcon';
+import { EditIcon } from '@ui-kit/icons/EditIcon';
+import { TrashIcon } from '@ui-kit/icons/TrashIcon';
+import { DownloadIcon } from '@ui-kit/icons/DownloadIcon';
 import { useThings } from '../../contexts/ThingsContext';
+import { useFacilitator } from '../../contexts/FacilitatorContext';
 import type { PendingThing } from './InlineThingEditor';
 import type { ThingMetadata, ThingType } from '../../types/thing';
 import styles from './ThingsTree.module.css';
@@ -149,6 +153,7 @@ function generateTempId(): string {
 
 export function ThingsTree({ onSelect, onCreateNew: _onCreateNew, selectedId, onInlineEditReady, onRename }: ThingsTreeProps) {
   const { things, expandedIds, setExpandedIds, isLoading, filter, setFilter, createThing, updateThing, deleteThing } = useThings();
+  const { openWithMessage } = useFacilitator();
   const [viewType, setViewType] = useState<ViewType>('tree');
   const [searchValue, setSearchValue] = useState('');
   const [tagFilter, setTagFilter] = useState<string | null>(null);
@@ -170,6 +175,11 @@ export function ThingsTree({ onSelect, onCreateNew: _onCreateNew, selectedId, on
   // Delete confirmation dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+
+  // Context menu state
+  const [contextMenuTargetId, setContextMenuTargetId] = useState<string | null>(null);
+  const [contextMenuOpen, setContextMenuOpen] = useState(false);
+  const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
 
   // Filter things by search query and tag
   const filteredThings = useMemo(() => {
@@ -428,6 +438,77 @@ export function ThingsTree({ onSelect, onCreateNew: _onCreateNew, selectedId, on
     }
     refocusTree();
   }, [things, deleteThing, onSelect, refocusTree]);
+
+  // Context menu items
+  const contextMenuItems: MenuItemType[] = useMemo(() => [
+    {
+      value: 'rename',
+      label: 'Rename',
+      icon: <EditIcon />,
+      shortcut: 'F2',
+    },
+    {
+      value: 'delete',
+      label: 'Delete',
+      icon: <TrashIcon />,
+      shortcut: '⌫',
+      danger: true,
+    },
+    { type: 'divider' },
+    {
+      value: 'import',
+      label: 'Import...',
+      icon: <DownloadIcon />,
+    },
+  ], []);
+
+  // Handle context menu selection
+  const handleContextMenuSelect = useCallback((value: string) => {
+    if (!contextMenuTargetId) return;
+
+    switch (value) {
+      case 'rename':
+        startRename(contextMenuTargetId);
+        break;
+      case 'delete':
+        setPendingDeleteId(contextMenuTargetId);
+        setDeleteDialogOpen(true);
+        break;
+      case 'import': {
+        const thing = things.find(t => t.id === contextMenuTargetId);
+        if (thing) {
+          openWithMessage(
+            `I want to import things for "${thing.name}". What options do you have for importing content into this thing?`
+          );
+        }
+        break;
+      }
+    }
+    setContextMenuTargetId(null);
+    setContextMenuOpen(false);
+  }, [contextMenuTargetId, startRename, things, openWithMessage]);
+
+  // Handle right-click on tree to capture target and open menu
+  const handleTreeContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    // Find the clicked tree item
+    const target = e.target as HTMLElement;
+    const treeItem = target.closest('[role="treeitem"]');
+    if (treeItem) {
+      const itemId = treeItem.getAttribute('data-id');
+      if (itemId) {
+        setContextMenuTargetId(itemId);
+        setContextMenuPosition({ x: e.clientX, y: e.clientY });
+        setContextMenuOpen(true);
+      }
+    }
+  }, []);
+
+  // Handle context menu close
+  const handleContextMenuClose = useCallback(() => {
+    setContextMenuOpen(false);
+    setContextMenuTargetId(null);
+  }, []);
 
   // Build tree data for TreeView - include pending item after insertAfterId
   const treeData = useMemo(() => {
@@ -690,16 +771,18 @@ export function ThingsTree({ onSelect, onCreateNew: _onCreateNew, selectedId, on
             )}
           </div>
         ) : (
-          <TreeView
-            data={treeData}
-            selectable
-            selectedId={selectedId || undefined}
-            onSelect={handleNodeSelect}
-            expandedIds={Array.from(expandedIds)}
-            onExpandedChange={handleExpandedChange}
-            defaultExpandAll
-            aria-label="Things hierarchy"
-          />
+          <div onContextMenu={handleTreeContextMenu}>
+            <TreeView
+              data={treeData}
+              selectable
+              selectedId={selectedId || undefined}
+              onSelect={handleNodeSelect}
+              expandedIds={Array.from(expandedIds)}
+              onExpandedChange={handleExpandedChange}
+              defaultExpandAll
+              aria-label="Things hierarchy"
+            />
+          </div>
         )}
       </div>
 
@@ -724,6 +807,17 @@ export function ThingsTree({ onSelect, onCreateNew: _onCreateNew, selectedId, on
           Are you sure you want to delete "{things.find(t => t.id === pendingDeleteId)?.name}"?
         </p>
       </Dialog>
+
+      {/* Context menu - positioned at click location */}
+      <Menu
+        items={contextMenuItems}
+        onSelect={handleContextMenuSelect}
+        isOpen={contextMenuOpen}
+        onOpenChange={(open) => !open && handleContextMenuClose()}
+        anchorPosition={{ top: contextMenuPosition.y, left: contextMenuPosition.x }}
+      >
+        <span style={{ display: 'none' }} />
+      </Menu>
     </div>
   );
 }

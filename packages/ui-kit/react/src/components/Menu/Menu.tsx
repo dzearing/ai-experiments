@@ -108,6 +108,8 @@ export interface MenuProps {
   contextMenu?: boolean;
   /** Additional class name for the menu */
   className?: string;
+  /** Anchor position for programmatic positioning (overrides trigger-based positioning) */
+  anchorPosition?: { top: number; left: number };
 }
 
 /** Time to wait before expanding submenu on hover (ms) */
@@ -165,6 +167,7 @@ export function Menu({
   onOpenChange,
   contextMenu = false,
   className,
+  anchorPosition,
 }: MenuProps) {
   const [internalIsOpen, setInternalIsOpen] = useState(false);
   const [exiting, setExiting] = useState(false);
@@ -238,10 +241,6 @@ export function Menu({
 
   // Calculate menu position for portal rendering
   const calculatePosition = useCallback((menuElement?: HTMLDivElement | null) => {
-    const trigger = triggerRef.current;
-    if (!trigger) return;
-
-    const triggerRect = trigger.getBoundingClientRect();
     // Use actual menu dimensions if available, otherwise estimate
     const menuWidth = menuElement?.offsetWidth ?? 220;
     const menuHeight = menuElement?.offsetHeight ?? 400;
@@ -249,39 +248,51 @@ export function Menu({
     let top = 0;
     let left = 0;
 
-    switch (position) {
-      case 'bottom-start':
-        top = triggerRect.bottom + 4;
-        left = triggerRect.left;
-        break;
-      case 'bottom-end':
-        top = triggerRect.bottom + 4;
-        left = triggerRect.right - menuWidth;
-        break;
-      case 'top-start':
-        top = triggerRect.top - menuHeight - 4;
-        left = triggerRect.left;
-        break;
-      case 'top-end':
-        top = triggerRect.top - menuHeight - 4;
-        left = triggerRect.right - menuWidth;
-        break;
-      case 'right-start':
-        top = triggerRect.top;
-        left = triggerRect.right + 4;
-        break;
-      case 'right-end':
-        top = triggerRect.bottom - menuHeight;
-        left = triggerRect.right + 4;
-        break;
-      case 'left-start':
-        top = triggerRect.top;
-        left = triggerRect.left - menuWidth - 4;
-        break;
-      case 'left-end':
-        top = triggerRect.bottom - menuHeight;
-        left = triggerRect.left - menuWidth - 4;
-        break;
+    // If anchorPosition is provided, use it directly (for programmatic context menus)
+    if (anchorPosition) {
+      top = anchorPosition.top;
+      left = anchorPosition.left;
+    } else {
+      // Otherwise, calculate from trigger element
+      const trigger = triggerRef.current;
+      if (!trigger) return;
+
+      const triggerRect = trigger.getBoundingClientRect();
+
+      switch (position) {
+        case 'bottom-start':
+          top = triggerRect.bottom + 4;
+          left = triggerRect.left;
+          break;
+        case 'bottom-end':
+          top = triggerRect.bottom + 4;
+          left = triggerRect.right - menuWidth;
+          break;
+        case 'top-start':
+          top = triggerRect.top - menuHeight - 4;
+          left = triggerRect.left;
+          break;
+        case 'top-end':
+          top = triggerRect.top - menuHeight - 4;
+          left = triggerRect.right - menuWidth;
+          break;
+        case 'right-start':
+          top = triggerRect.top;
+          left = triggerRect.right + 4;
+          break;
+        case 'right-end':
+          top = triggerRect.bottom - menuHeight;
+          left = triggerRect.right + 4;
+          break;
+        case 'left-start':
+          top = triggerRect.top;
+          left = triggerRect.left - menuWidth - 4;
+          break;
+        case 'left-end':
+          top = triggerRect.bottom - menuHeight;
+          left = triggerRect.left - menuWidth - 4;
+          break;
+      }
     }
 
     // Ensure menu stays within viewport
@@ -302,7 +313,7 @@ export function Menu({
     }
 
     setMenuPosition({ top, left });
-  }, [position]);
+  }, [position, anchorPosition]);
 
   // Callback ref to position menu after it mounts with actual dimensions
   const menuCallbackRef = useCallback((node: HTMLDivElement | null) => {

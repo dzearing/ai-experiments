@@ -46,6 +46,8 @@ export function FacilitatorOverlay() {
     sendMessage: contextSendMessage,
     clearMessages,
     addMessage,
+    pendingMessage,
+    clearPendingMessage,
   } = useFacilitator();
 
   // Convert things to ThingReference format for chat autocomplete
@@ -189,6 +191,16 @@ Type a message to get started!`,
       isProcessingQueueRef.current = false;
     }
   }, [isLoading, queuedMessages, contextSendMessage, socketSendMessage, isConnected]);
+
+  // Process pending message when connected (from openWithMessage)
+  useEffect(() => {
+    if (pendingMessage && isConnected && !isLoading) {
+      // Add user message to context and send to server
+      contextSendMessage(pendingMessage);
+      socketSendMessage(pendingMessage);
+      clearPendingMessage();
+    }
+  }, [pendingMessage, isConnected, isLoading, contextSendMessage, socketSendMessage, clearPendingMessage]);
 
   // Handle cancel operation
   const handleCancelOperation = useCallback(() => {

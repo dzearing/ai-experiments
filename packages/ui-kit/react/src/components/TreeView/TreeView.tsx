@@ -612,6 +612,7 @@ export function TreeView({
             return (
               <div
                 key={node.id}
+                data-id={node.id}
                 className={nodeClassNames}
                 style={{
                   height: itemHeight,
