@@ -4,7 +4,7 @@ import { CodeIcon } from '@ui-kit/icons/CodeIcon';
 import { FolderIcon } from '@ui-kit/icons/FolderIcon';
 import { CheckIcon } from '@ui-kit/icons/CheckIcon';
 import { CloseIcon } from '@ui-kit/icons/CloseIcon';
-import { useImportAgent, type ImportStep } from '../../hooks/useImportAgent';
+import { useImportAgent, type ImportStep, type ImportSubTask } from '../../hooks/useImportAgent';
 import { useThings } from '../../contexts/ThingsContext';
 import type { ThingMetadata } from '../../types/thing';
 import styles from './ImportDialog.module.css';
@@ -32,6 +32,8 @@ export function ImportDialog({ open, onClose, targetThing }: ImportDialogProps) 
     error: importError,
     isComplete,
     reset: resetImport,
+    subTasks,
+    isDecomposed,
   } = useImportAgent();
 
   // Wizard state
@@ -87,6 +89,9 @@ export function ImportDialog({ open, onClose, targetThing }: ImportDialogProps) 
     setValidationError(null);
     setStep('progress');
 
+    // Reset any previous import state (for retries)
+    resetImport();
+
     // Start the import via WebSocket
     startImport({
       sourceType: sourceType!,
@@ -96,7 +101,7 @@ export function ImportDialog({ open, onClose, targetThing }: ImportDialogProps) 
       targetThingId: targetThing.id,
       workspaceId: targetThing.workspaceId,
     });
-  }, [sourceType, gitUrl, localPath, instructions, targetThing, startImport]);
+  }, [sourceType, gitUrl, localPath, instructions, targetThing, startImport, resetImport]);
 
   // Cancel the import
   const handleCancel = useCallback(() => {
@@ -194,37 +199,70 @@ export function ImportDialog({ open, onClose, targetThing }: ImportDialogProps) 
   );
 
   // Render progress step
-  const renderProgressStep = () => (
-    <div className={styles.progressStep}>
-      <div className={styles.progressList}>
-        {progressSteps.map((progressStep: ImportStep) => (
-          <div
-            key={progressStep.id}
-            className={`${styles.progressItem} ${styles[progressStep.status]}`}
-          >
-            <div className={styles.progressIcon}>
-              {progressStep.status === 'complete' && <CheckIcon className={styles.checkIcon} />}
-              {progressStep.status === 'running' && <Spinner size="sm" />}
-              {progressStep.status === 'error' && <CloseIcon className={styles.errorIcon} />}
-              {progressStep.status === 'pending' && <span className={styles.pendingDot} />}
+  const renderProgressStep = () => {
+    const completedSubTasks = subTasks.filter(st => st.status === 'complete').length;
+
+    return (
+      <div className={styles.progressStep}>
+        <div className={styles.progressList}>
+          {progressSteps.map((progressStep: ImportStep) => (
+            <div
+              key={progressStep.id}
+              className={`${styles.progressItem} ${styles[progressStep.status]}`}
+            >
+              <div className={styles.progressIcon}>
+                {progressStep.status === 'complete' && <CheckIcon className={styles.checkIcon} />}
+                {progressStep.status === 'running' && <Spinner size="sm" />}
+                {progressStep.status === 'error' && <CloseIcon className={styles.errorIcon} />}
+                {progressStep.status === 'pending' && <span className={styles.pendingDot} />}
+              </div>
+              <div className={styles.progressContent}>
+                <Text size="sm" className={styles.progressLabel}>{progressStep.label}</Text>
+                {progressStep.detail && (
+                  <Text size="xs" color="soft">{progressStep.detail}</Text>
+                )}
+              </div>
             </div>
-            <div className={styles.progressContent}>
-              <Text size="sm" className={styles.progressLabel}>{progressStep.label}</Text>
-              {progressStep.detail && (
-                <Text size="xs" color="soft">{progressStep.detail}</Text>
-              )}
+          ))}
+        </div>
+
+        {/* Sub-tasks grid for decomposed imports */}
+        {isDecomposed && subTasks.length > 0 && (
+          <div className={styles.subTasksContainer}>
+            <div className={styles.subTasksHeader}>
+              <Text className={styles.subTasksTitle}>Parallel Analysis</Text>
+              <span className={styles.subTasksCount}>
+                {completedSubTasks}/{subTasks.length}
+              </span>
+            </div>
+            <div className={styles.subTasksGrid}>
+              {subTasks.map((subTask: ImportSubTask) => (
+                <div
+                  key={subTask.id}
+                  className={`${styles.subTaskItem} ${styles[subTask.status]}`}
+                  title={subTask.error || subTask.name}
+                >
+                  <div className={styles.subTaskIcon}>
+                    {subTask.status === 'complete' && <CheckIcon className={styles.checkIcon} />}
+                    {subTask.status === 'running' && <Spinner size="sm" />}
+                    {subTask.status === 'error' && <CloseIcon className={styles.errorIcon} />}
+                    {subTask.status === 'pending' && <span className={styles.pendingDot} />}
+                  </div>
+                  <span className={styles.subTaskName}>{subTask.name}</span>
+                </div>
+              ))}
             </div>
           </div>
-        ))}
-      </div>
+        )}
 
-      {error && (
-        <div className={styles.error}>
-          <Text size="sm">{error}</Text>
-        </div>
-      )}
-    </div>
-  );
+        {error && (
+          <div className={styles.error}>
+            <Text size="sm">{error}</Text>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   // Render footer based on current step
   const renderFooter = () => {
@@ -262,6 +300,16 @@ export function ImportDialog({ open, onClose, targetThing }: ImportDialogProps) 
           <Button variant="primary" onClick={handleClose}>
             Done
           </Button>
+        ) : error && !isRunning ? (
+          // Show Retry when there's an error and not currently running
+          <>
+            <Button variant="ghost" onClick={handleClose}>
+              Cancel
+            </Button>
+            <Button variant="primary" onClick={handleStartImport}>
+              Retry
+            </Button>
+          </>
         ) : (
           <Button variant="ghost" onClick={handleCancel}>
             Cancel
@@ -278,10 +326,24 @@ export function ImportDialog({ open, onClose, targetThing }: ImportDialogProps) 
     }
   }, [isRunning, handleClose]);
 
+  // Handle submit based on current step
+  const handleDialogSubmit = useCallback(() => {
+    if (step === 'config') {
+      handleStartImport();
+    } else if (step === 'progress') {
+      if (isComplete) {
+        handleClose();
+      } else if (error && !isRunning) {
+        handleStartImport(); // Retry
+      }
+    }
+  }, [step, isComplete, error, isRunning, handleStartImport, handleClose]);
+
   return (
     <Dialog
       open={open}
       onClose={handleDialogClose}
+      onSubmit={handleDialogSubmit}
       title={`Import into "${targetThing.name}"`}
       size="md"
       footer={renderFooter()}

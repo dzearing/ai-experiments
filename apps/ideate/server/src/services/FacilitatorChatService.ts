@@ -92,15 +92,17 @@ export class FacilitatorChatService {
 
   /**
    * Add a message to the user's facilitator chat.
+   * @param messageId - Optional custom ID (used for assistant messages to match diagnostics)
    */
   async addMessage(
     userId: string,
     role: 'user' | 'assistant',
     content: string,
-    toolCalls?: FacilitatorMessage['toolCalls']
+    toolCalls?: FacilitatorMessage['toolCalls'],
+    messageId?: string
   ): Promise<FacilitatorMessage> {
     const message: FacilitatorMessage = {
-      id: uuidv4(),
+      id: messageId || uuidv4(),
       userId,
       role,
       content,

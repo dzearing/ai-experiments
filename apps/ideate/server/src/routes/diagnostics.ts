@@ -1,6 +1,23 @@
 import { Router, type Request, type Response } from 'express';
 import type { YjsCollaborationHandler } from '../websocket/YjsCollaborationHandler.js';
 import type { FacilitatorService } from '../services/FacilitatorService.js';
+import {
+  ClaudeDiagnosticsService,
+  type SessionType,
+} from '../services/ClaudeDiagnosticsService.js';
+
+// Singleton instance for Claude diagnostics
+let claudeDiagnosticsService: ClaudeDiagnosticsService | null = null;
+
+/**
+ * Get the Claude diagnostics service singleton
+ */
+export function getClaudeDiagnosticsService(): ClaudeDiagnosticsService {
+  if (!claudeDiagnosticsService) {
+    claudeDiagnosticsService = new ClaudeDiagnosticsService();
+  }
+  return claudeDiagnosticsService;
+}
 
 /**
  * Create diagnostics router with access to handlers.
@@ -10,6 +27,12 @@ export function createDiagnosticsRouter(
   facilitatorService?: FacilitatorService
 ): Router {
   const router = Router();
+
+  // Initialize Claude diagnostics service with facilitator service reference
+  const claudeService = getClaudeDiagnosticsService();
+  if (facilitatorService) {
+    claudeService.setFacilitatorService(facilitatorService);
+  }
 
   /**
    * GET /api/diagnostics
@@ -153,6 +176,73 @@ export function createDiagnosticsRouter(
       });
     } catch (error) {
       console.error('Diagnostics facilitator error:', error);
+      res.status(500).json({ error: 'Failed to get facilitator diagnostics' });
+    }
+  });
+
+  // ========== Claude Diagnostics Routes ==========
+
+  /**
+   * GET /api/diagnostics/claude/sessions
+   * Returns all chat sessions from all 3 systems (facilitator, chatroom, ideaagent).
+   */
+  router.get('/claude/sessions', async (_req: Request, res: Response) => {
+    try {
+      const sessions = await claudeService.listAllSessions();
+      res.json({
+        count: sessions.length,
+        sessions,
+      });
+    } catch (error) {
+      console.error('Claude sessions error:', error);
+      res.status(500).json({ error: 'Failed to get claude sessions' });
+    }
+  });
+
+  /**
+   * GET /api/diagnostics/claude/sessions/:type/:sessionId/messages
+   * Returns messages for a specific session.
+   * Query params:
+   *   - limit: Max number of messages (default: 100)
+   */
+  router.get('/claude/sessions/:type/:sessionId/messages', async (req: Request, res: Response) => {
+    try {
+      const { type, sessionId } = req.params;
+      const { limit } = req.query;
+
+      // Validate session type
+      const validTypes: SessionType[] = ['facilitator', 'chatroom', 'ideaagent'];
+      if (!validTypes.includes(type as SessionType)) {
+        res.status(400).json({ error: `Invalid session type. Must be one of: ${validTypes.join(', ')}` });
+        return;
+      }
+
+      const maxMessages = Math.min(parseInt(limit as string) || 100, 500);
+      const messages = await claudeService.getSessionMessages(type as SessionType, sessionId, maxMessages);
+
+      res.json({
+        count: messages.length,
+        messages,
+      });
+    } catch (error) {
+      console.error('Claude session messages error:', error);
+      res.status(500).json({ error: 'Failed to get session messages' });
+    }
+  });
+
+  /**
+   * GET /api/diagnostics/claude/facilitator-diagnostics
+   * Returns facilitator AI diagnostics (iterations, tool calls, durations).
+   */
+  router.get('/claude/facilitator-diagnostics', (_req: Request, res: Response) => {
+    try {
+      const diagnostics = claudeService.getFacilitatorDiagnostics();
+      res.json({
+        count: diagnostics.length,
+        entries: diagnostics,
+      });
+    } catch (error) {
+      console.error('Claude facilitator diagnostics error:', error);
       res.status(500).json({ error: 'Failed to get facilitator diagnostics' });
     }
   });

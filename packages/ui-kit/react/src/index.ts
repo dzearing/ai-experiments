@@ -11,6 +11,9 @@ export type { ButtonProps, ButtonVariant, ButtonSize } from './components/Button
 export { IconButton } from './components/IconButton';
 export type { IconButtonProps, IconButtonVariant, IconButtonSize, IconButtonShape } from './components/IconButton';
 
+export { CopyButton } from './components/CopyButton';
+export type { CopyButtonProps, CopyButtonVariant, CopyButtonSize } from './components/CopyButton';
+
 // Inputs
 export { Input } from './components/Input';
 export type { InputProps, InputSize } from './components/Input';

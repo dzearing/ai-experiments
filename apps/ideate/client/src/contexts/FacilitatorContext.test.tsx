@@ -104,7 +104,7 @@ describe('FacilitatorContext', () => {
       expect(result.current.messages).toHaveLength(1);
       expect(result.current.messages[0]).toMatchObject({
         role: 'user',
-        content: 'Hello, facilitator!',
+        parts: [{ type: 'text', text: 'Hello, facilitator!' }],
       });
       expect(result.current.messages[0].id).toBeDefined();
       expect(result.current.messages[0].timestamp).toBeDefined();
@@ -116,7 +116,7 @@ describe('FacilitatorContext', () => {
       const message: FacilitatorMessage = {
         id: 'test-1',
         role: 'assistant',
-        content: 'Hello! How can I help?',
+        parts: [{ type: 'text', text: 'Hello! How can I help?' }],
         timestamp: Date.now(),
       };
 
@@ -134,7 +134,7 @@ describe('FacilitatorContext', () => {
       const message: FacilitatorMessage = {
         id: 'test-1',
         role: 'assistant',
-        content: 'Hello...',
+        parts: [{ type: 'text', text: 'Hello...' }],
         timestamp: Date.now(),
         isStreaming: true,
       };
@@ -145,14 +145,14 @@ describe('FacilitatorContext', () => {
 
       act(() => {
         result.current.updateMessage('test-1', {
-          content: 'Hello! How can I help?',
+          parts: [{ type: 'text', text: 'Hello! How can I help?' }],
           isStreaming: false,
         });
       });
 
       expect(result.current.messages[0]).toMatchObject({
         id: 'test-1',
-        content: 'Hello! How can I help?',
+        parts: [{ type: 'text', text: 'Hello! How can I help?' }],
         isStreaming: false,
       });
     });
@@ -164,23 +164,25 @@ describe('FacilitatorContext', () => {
         result.current.addMessage({
           id: 'msg-1',
           role: 'user',
-          content: 'First',
+          parts: [{ type: 'text', text: 'First' }],
           timestamp: 1000,
         });
         result.current.addMessage({
           id: 'msg-2',
           role: 'assistant',
-          content: 'Second',
+          parts: [{ type: 'text', text: 'Second' }],
           timestamp: 2000,
         });
       });
 
       act(() => {
-        result.current.updateMessage('msg-1', { content: 'Updated First' });
+        result.current.updateMessage('msg-1', { parts: [{ type: 'text', text: 'Updated First' }] });
       });
 
-      expect(result.current.messages[0].content).toBe('Updated First');
-      expect(result.current.messages[1].content).toBe('Second');
+      const msg1TextPart = result.current.messages[0].parts.find(p => p.type === 'text');
+      const msg2TextPart = result.current.messages[1].parts.find(p => p.type === 'text');
+      expect(msg1TextPart?.type === 'text' && msg1TextPart.text).toBe('Updated First');
+      expect(msg2TextPart?.type === 'text' && msg2TextPart.text).toBe('Second');
     });
 
     it('clears all messages with clearMessages()', () => {
@@ -202,8 +204,8 @@ describe('FacilitatorContext', () => {
       const { result } = renderHook(() => useFacilitator(), { wrapper });
 
       const messages: FacilitatorMessage[] = [
-        { id: '1', role: 'user', content: 'Hi', timestamp: 1000 },
-        { id: '2', role: 'assistant', content: 'Hello!', timestamp: 2000 },
+        { id: '1', role: 'user', parts: [{ type: 'text', text: 'Hi' }], timestamp: 1000 },
+        { id: '2', role: 'assistant', parts: [{ type: 'text', text: 'Hello!' }], timestamp: 2000 },
       ];
 
       act(() => {

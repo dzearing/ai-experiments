@@ -229,7 +229,7 @@ export function Tooltip({
     setTooltipState(state);
   }, [position]);
 
-  // Update position when tooltip becomes visible
+  // Update position when tooltip becomes visible or content changes
   useLayoutEffect(() => {
     if (shouldShow && isActive) {
       // Need a frame for the tooltip to render and get its dimensions
@@ -237,7 +237,7 @@ export function Tooltip({
         updatePosition();
       });
     }
-  }, [shouldShow, isActive, updatePosition]);
+  }, [shouldShow, isActive, updatePosition, content]);
 
   // Handle scroll dismiss
   useEffect(() => {

@@ -30,6 +30,58 @@ import { Table, TableHead, TableBody, TableRow, TableCell } from './renderers/Ta
 import type { DeepLink } from '../../types/deepLink';
 import styles from './MarkdownRenderer.module.css';
 
+/**
+ * Preprocess markdown content to convert Thing references to HTML spans
+ * that can be rendered as Thing chips.
+ *
+ * Supported formats:
+ * - ^[DisplayName](id:uuid) - new format with embedded ID
+ * - ^ThingName or ^{Thing Name With Spaces} - legacy format
+ */
+function preprocessThingReferences(content: string): string {
+  // First, handle new format: ^[DisplayName](id:uuid)
+  let processed = content.replace(
+    /\^\[([^\]]+)\]\(id:([^)]+)\)/g,
+    (_match, displayName, id) => {
+      // Escape HTML special characters in the name
+      const escapedName = displayName
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+
+      return `<span data-thing-chip data-name="${escapedName}" data-id="${id}">^${escapedName}</span>`;
+    }
+  );
+
+  // Then handle legacy format: ^{name with spaces} or ^simple-name or ^@scoped/package-name
+  // The pattern handles:
+  // - ^word (simple names)
+  // - ^word-with-dashes
+  // - ^@scoped/package (npm-style scoped packages)
+  // - ^{words with spaces} (names in braces)
+  processed = processed.replace(
+    /\^(\{[^}]+\}|@[\w-]+\/[\w-]+|[\w@/.-]+)/g,
+    (_match, name) => {
+      // Remove braces if present
+      const thingName = name.startsWith('{') && name.endsWith('}')
+        ? name.slice(1, -1)
+        : name;
+
+      // Escape HTML special characters in the name
+      const escapedName = thingName
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+
+      return `<span data-thing-chip data-name="${escapedName}">^${escapedName}</span>`;
+    }
+  );
+
+  return processed;
+}
+
 export interface MarkdownRendererProps {
   /** Markdown content to render */
   content: string;
@@ -83,12 +135,18 @@ export function MarkdownRenderer({
 
   // Handle streaming
   const {
-    displayContent,
+    displayContent: rawDisplayContent,
     isStreaming,
   } = useStreamingMarkdown(content, streaming, {
     speed: streamingSpeed,
     onComplete: onStreamComplete,
   });
+
+  // Preprocess content to convert ^ThingName syntax to HTML spans
+  const displayContent = useMemo(
+    () => preprocessThingReferences(rawDisplayContent),
+    [rawDisplayContent]
+  );
 
   // Handle deep linking
   const {

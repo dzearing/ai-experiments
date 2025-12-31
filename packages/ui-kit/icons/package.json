@@ -186,6 +186,10 @@
       "types": "./dist/GearIcon.d.ts",
       "import": "./dist/GearIcon.js"
     },
+    "./GlobeIcon": {
+      "types": "./dist/GlobeIcon.d.ts",
+      "import": "./dist/GlobeIcon.js"
+    },
     "./GridViewIcon": {
       "types": "./dist/GridViewIcon.d.ts",
       "import": "./dist/GridViewIcon.js"
@@ -241,6 +245,10 @@
     "./ItalicIcon": {
       "types": "./dist/ItalicIcon.d.ts",
       "import": "./dist/ItalicIcon.js"
+    },
+    "./LightbulbIcon": {
+      "types": "./dist/LightbulbIcon.d.ts",
+      "import": "./dist/LightbulbIcon.js"
     },
     "./LinkIcon": {
       "types": "./dist/LinkIcon.d.ts",

@@ -12,6 +12,13 @@ export interface IdeaContext {
   description?: string;
   tags: string[];
   status: string;
+  /** Optional Thing context when creating an idea linked to a Thing */
+  thingContext?: {
+    id: string;
+    name: string;
+    type: string;
+    description?: string;
+  };
 }
 
 /**
@@ -218,6 +225,7 @@ export function useIdeaAgent({
 
       // Send initial idea context if available
       if (ideaContextRef.current) {
+        console.log('[IdeaAgent] Sending idea context:', ideaContextRef.current.title, 'thingContext:', ideaContextRef.current.thingContext);
         ws.send(JSON.stringify({
           type: 'idea_update',
           idea: ideaContextRef.current,

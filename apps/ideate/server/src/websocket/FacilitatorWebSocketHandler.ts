@@ -50,6 +50,8 @@ interface ServerMessage {
   toolInput?: Record<string, unknown>;
   /** Tool output (for tool_result) */
   toolOutput?: string;
+  /** Timestamp when tool started (for tool_use timing display) */
+  startTime?: number;
   /** Complete message object (for history/message_complete) */
   message?: FacilitatorMessage;
   /** Array of messages (for history) */
@@ -226,20 +228,23 @@ export class FacilitatorWebSocketHandler {
               messageId,
             });
           },
-          onToolUse: ({ name, input }) => {
+          onToolUse: ({ name, input, messageId }) => {
             if (abortController.signal.aborted) return;
             this.send(client.ws, {
               type: 'tool_use',
               toolName: name,
               toolInput: input,
+              messageId,
+              startTime: Date.now(),
             });
           },
-          onToolResult: ({ name, output }) => {
+          onToolResult: ({ name, output, messageId }) => {
             if (abortController.signal.aborted) return;
             this.send(client.ws, {
               type: 'tool_result',
               toolName: name,
               toolOutput: output,
+              messageId,
             });
           },
           onComplete: (message) => {
@@ -290,54 +295,14 @@ export class FacilitatorWebSocketHandler {
 
   /**
    * Handle a clear history request from a client.
-   * After clearing, sends a new greeting (from cache if available, otherwise generates one).
+   * Clears history and starts a fresh session (no greeting).
    */
   private async handleClearHistory(client: FacilitatorClient): Promise<void> {
     console.log(`[Facilitator] handleClearHistory called for client ${client.clientId}`);
     try {
       await this.facilitatorService.clearHistory(client.userId);
       this.send(client.ws, { type: 'history', messages: [] });
-      console.log(`[Facilitator] Sent empty history for client ${client.clientId}`);
-
-      // Get display name from settings
-      const settings = getFacilitatorSettings();
-      console.log(`[Facilitator] Settings: name="${settings.name}"`);
-
-      // Try to get a cached greeting (instant, no API call)
-      let greeting = this.facilitatorService.getRandomCachedGreeting(
-        client.userName,
-        settings.name
-      );
-      console.log(`[Facilitator] getRandomCachedGreeting returned: ${greeting ? `"${greeting.slice(0, 50)}..."` : 'null'}`);
-
-      if (greeting) {
-        // Send the cached greeting immediately
-        const greetingMessageId = `msg-greeting-${Date.now()}`;
-        console.log(`[Facilitator] Sending cached greeting with id ${greetingMessageId}`);
-        this.send(client.ws, {
-          type: 'greeting',
-          text: greeting,
-          messageId: greetingMessageId,
-        });
-        console.log(`[Facilitator] Sent cached greeting on clear for client ${client.clientId}`);
-      } else {
-        // No cache exists - generate greetings (this will populate the cache for next time)
-        console.log(`[Facilitator] No cached greetings, generating for client ${client.clientId}...`);
-        this.send(client.ws, { type: 'loading', isLoading: true });
-
-        greeting = await this.facilitatorService.generateGreeting(client.userName, settings.name);
-        console.log(`[Facilitator] Generated greeting: "${greeting?.slice(0, 50)}..."`);
-
-        const greetingMessageId = `msg-greeting-${Date.now()}`;
-        console.log(`[Facilitator] Sending generated greeting with id ${greetingMessageId}`);
-        this.send(client.ws, {
-          type: 'greeting',
-          text: greeting,
-          messageId: greetingMessageId,
-        });
-        this.send(client.ws, { type: 'loading', isLoading: false });
-        console.log(`[Facilitator] Generated and sent greeting on clear for client ${client.clientId}`);
-      }
+      console.log(`[Facilitator] Cleared history for client ${client.clientId}`);
     } catch (error) {
       console.error('[Facilitator] Error clearing history:', error);
       this.send(client.ws, { type: 'error', error: 'Failed to clear history' });

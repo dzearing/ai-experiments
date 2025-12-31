@@ -51,15 +51,11 @@
   color: var(--base-fg);
 }
 
-/* Focus is handled by the animated focus indicator when animated=true */
-.animated .tab:focus-visible {
-  outline: none;
-}
-
-/* Fallback focus ring when not animated */
+/* Focus ring for keyboard navigation (uses :focus-visible so mouse clicks don't show it) */
 .tab:focus-visible {
   outline: var(--focus-ring-width) solid var(--focus-ring);
   outline-offset: var(--focus-ring-offset);
+  border-radius: var(--radius-md);
 }
 
 .tab.active {
@@ -199,28 +195,6 @@
 }
 
 /* ==============================================
-   Animated Focus Indicator
-   ============================================== */
-
-.focusIndicator {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  border: var(--focus-ring-width, 2px) solid var(--focus-ring);
-  border-radius: var(--radius-sm);
-  pointer-events: none;
-  transition: transform var(--duration-normal) var(--ease-default),
-    width var(--duration-normal) var(--ease-default);
-  will-change: transform, width;
-}
-
-/* Position adjustments for different variants */
-.pills .focusIndicator {
-  border-radius: var(--radius-md);
-}
-
-/* ==============================================
    Tab Panel
    ============================================== */
 
@@ -234,10 +208,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .indicator {
-    transition: none;
-  }
-
-  .focusIndicator {
     transition: none;
   }
 

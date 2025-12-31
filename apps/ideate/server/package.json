@@ -5,7 +5,7 @@
   "type": "module",
   "main": "./dist/index.js",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "npx --yes kill-port 3002 && tsx watch src/index.ts",
     "build": "tsc && cp src/prompts/*.md dist/prompts/ && mkdir -p dist/personas/presets && cp src/personas/*.md dist/personas/ && cp src/personas/presets/*.md dist/personas/presets/",
     "start": "node dist/index.js",
     "lint": "eslint src",

@@ -113,7 +113,7 @@ export function PersonaEditor() {
         addMessage({
           id: `system-${Date.now()}`,
           role: 'assistant',
-          content: '*Facilitator recalibrated with prompt changes.*',
+          parts: [{ type: 'text', text: '*Facilitator recalibrated with prompt changes.*' }],
           timestamp: Date.now(),
         });
       }

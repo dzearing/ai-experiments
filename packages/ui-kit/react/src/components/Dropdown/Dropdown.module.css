@@ -182,6 +182,7 @@
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);
   max-height: 300px;
+  min-width: 200px;
   overflow: hidden;
   display: flex;
   flex-direction: column;

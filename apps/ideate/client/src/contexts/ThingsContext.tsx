@@ -545,9 +545,14 @@ export function ThingsProvider({ children }: ThingsProviderProps) {
       name: t.name,
       type: t.type,
       parentIds: t.parentIds,
+      icon: t.icon,
+      color: t.color,
+      tags: t.tags,
     }));
   }, [things]);
 
+  // Note: This context is large. Consider splitting into separate contexts
+  // (e.g., ThingsDataContext, ThingsSelectionContext) for better performance.
   const value: ThingsContextValue = {
     things,
     isLoading,

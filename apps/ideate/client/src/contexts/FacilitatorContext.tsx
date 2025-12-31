@@ -8,21 +8,48 @@ import {
 import { useGlobalKeyboard } from '../hooks/useGlobalKeyboard';
 
 /**
+ * A tool call within a message
+ */
+export interface ToolCall {
+  name: string;
+  input: Record<string, unknown>;
+  output?: string;
+  /** When the tool call started (for timing display) */
+  startTime?: number;
+}
+
+/**
+ * A text content part within a message
+ */
+export interface TextPart {
+  type: 'text';
+  text: string;
+}
+
+/**
+ * A tool calls part within a message (groups tool calls together)
+ */
+export interface ToolCallsPart {
+  type: 'tool_calls';
+  calls: ToolCall[];
+}
+
+/**
+ * A message part - either text or tool calls
+ */
+export type MessagePart = TextPart | ToolCallsPart;
+
+/**
  * A message in the facilitator chat
  */
 export interface FacilitatorMessage {
   id: string;
   role: 'user' | 'assistant' | 'system';
-  content: string;
+  /** Message parts in order - text and tool calls can be interleaved */
+  parts: MessagePart[];
   timestamp: number;
   /** For streaming responses, indicates if the message is still being generated */
   isStreaming?: boolean;
-  /** Tool calls made during this response */
-  toolCalls?: Array<{
-    name: string;
-    input: Record<string, unknown>;
-    output?: string;
-  }>;
 }
 
 /**
@@ -95,8 +122,11 @@ interface FacilitatorContextValue {
   setError: (error: string | null) => void;
   /** Add a message */
   addMessage: (message: FacilitatorMessage) => void;
-  /** Update a message by ID */
-  updateMessage: (id: string, updates: Partial<FacilitatorMessage>) => void;
+  /** Update a message by ID - supports callback-based updates for parts */
+  updateMessage: (id: string, updates: Partial<FacilitatorMessage> | {
+    parts?: MessagePart[] | ((prev: MessagePart[]) => MessagePart[]);
+    isStreaming?: boolean;
+  }) => void;
   /** Update navigation context */
   setNavigationContext: (context: NavigationContext) => void;
   /** Request a persona change (will be processed by WebSocket when connected) */
@@ -149,10 +179,28 @@ export function FacilitatorProvider({ children }: FacilitatorProviderProps) {
     setMessages((prev) => [...prev, message]);
   }, []);
 
-  // Update a message
-  const updateMessage = useCallback((id: string, updates: Partial<FacilitatorMessage>) => {
+  // Update a message - supports callback-based updates for parts
+  const updateMessage = useCallback((id: string, updates: Partial<FacilitatorMessage> | { parts?: MessagePart[] | ((prev: MessagePart[]) => MessagePart[]); isStreaming?: boolean }) => {
     setMessages((prev) =>
-      prev.map((msg) => (msg.id === id ? { ...msg, ...updates } : msg))
+      prev.map((msg) => {
+        if (msg.id !== id) return msg;
+
+        const newMsg = { ...msg };
+
+        // Handle callback-based parts update
+        if (typeof updates.parts === 'function') {
+          newMsg.parts = updates.parts(msg.parts);
+        } else if (updates.parts !== undefined) {
+          newMsg.parts = updates.parts;
+        }
+
+        // Handle other updates (like isStreaming)
+        if ('isStreaming' in updates) {
+          newMsg.isStreaming = updates.isStreaming;
+        }
+
+        return newMsg;
+      })
     );
   }, []);
 
@@ -161,7 +209,7 @@ export function FacilitatorProvider({ children }: FacilitatorProviderProps) {
     const userMessage: FacilitatorMessage = {
       id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
       role: 'user',
-      content,
+      parts: [{ type: 'text', text: content }],
       timestamp: Date.now(),
     };
     addMessage(userMessage);

@@ -27,6 +27,7 @@ import { UnderlineIcon } from '@ui-kit/icons/UnderlineIcon';
 import { useMessageHistory } from './useMessageHistory';
 import { useChatEditor } from './useChatEditor';
 import { getImageChipsInOrder } from './ImageChipExtension';
+import { getThingChipsInOrder } from './ThingChipExtension';
 import { LinkDialog } from './LinkDialog';
 import { SlashCommandPopover, filterCommands } from './SlashCommandPopover';
 import { ThingReferencePopover, filterThings, type ThingReference } from './ThingReferencePopover';
@@ -50,11 +51,21 @@ export interface ChatInputImage {
   uploadedUrl?: string;
 }
 
+/** Thing reference extracted from chat input */
+export interface ChatInputThingReference {
+  /** Thing ID */
+  id: string;
+  /** Thing display name */
+  name: string;
+}
+
 export interface ChatInputSubmitData {
   /** Markdown text content */
   content: string;
   /** Array of images referenced in the message (in content order) */
   images: ChatInputImage[];
+  /** Array of Thing references from ^thing chips (in content order) */
+  thingReferences: ChatInputThingReference[];
 }
 
 /**
@@ -606,10 +617,14 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
         addToHistory(content);
       }
 
-      // Call onSubmit with images in content order
+      // Get Thing references from the editor
+      const thingRefs = editor ? getThingChipsInOrder(editor) : [];
+
+      // Call onSubmit with images and thing references
       onSubmit?.({
         content,
         images: [...imagesInContentOrder],
+        thingReferences: thingRefs,
       });
 
       // Reset state

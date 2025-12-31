@@ -57,7 +57,7 @@ export function FacilitatorOverlay() {
       return {
         id: thing.id,
         name: thing.name,
-        type: thing.type,
+        type: thing.type as ThingReference['type'],
         tags: thing.tags,
         path,
       };
@@ -98,7 +98,7 @@ export function FacilitatorOverlay() {
               addMessage({
                 id: `greeting-${Date.now()}`,
                 role: 'assistant',
-                content: `Hello! I'm ${facilitatorSettings.name}, your facilitator. My personality has been updated. How can I help you today?`,
+                parts: [{ type: 'text', text: `Hello! I'm ${facilitatorSettings.name}, your facilitator. My personality has been updated. How can I help you today?` }],
                 timestamp: Date.now(),
               });
             }
@@ -149,7 +149,7 @@ export function FacilitatorOverlay() {
     addMessage: (msg) => addMessage({
       id: msg.id,
       role: msg.role === 'system' ? 'assistant' : msg.role,
-      content: msg.content,
+      parts: [{ type: 'text', text: msg.content }],
       timestamp: msg.timestamp,
     }),
     helpText: `## Available Commands
@@ -204,7 +204,7 @@ Type a message to get started!`,
     addMessage({
       id: `system-${Date.now()}`,
       role: 'system',
-      content: 'Thinking stopped by user.',
+      parts: [{ type: 'text', text: 'Thinking stopped by user.' }],
       timestamp: Date.now(),
     });
   }, [cancelOperation, addMessage]);
@@ -248,8 +248,11 @@ Type a message to get started!`,
   // Handle sending a message
   const handleSendMessage = useCallback(
     (data: ChatInputSubmitData) => {
-      const { content } = data;
+      const { content, thingReferences } = data;
       if (!content.trim()) return;
+
+      // Extract Thing IDs from references
+      const thingIds = thingReferences?.map(ref => ref.id) || [];
 
       // If AI is busy, append to queued content
       if (isLoading) {
@@ -261,9 +264,9 @@ Type a message to get started!`,
       // Add user message to context
       contextSendMessage(content);
 
-      // Send to server via WebSocket
+      // Send to server via WebSocket with Thing IDs
       if (isConnected) {
-        socketSendMessage(content);
+        socketSendMessage(content, thingIds);
       }
 
       setInputContent('');
@@ -397,16 +400,15 @@ Type a message to get started!`,
                     <ChatMessage
                       key={message.id}
                       id={message.id}
-                      content={message.content}
+                      parts={message.parts}
                       timestamp={message.timestamp}
                       senderName={isUser ? (user?.name || 'You') : facilitatorSettings.name}
                       senderColor={isUser ? undefined : '#6366f1'}
                       isOwn={isUser}
                       isSystem={isSystem}
                       isConsecutive={isConsecutive && !isSystem}
-                      renderMarkdown={!isUser}
+                      renderMarkdown={true}
                       isStreaming={message.isStreaming}
-                      toolCalls={message.toolCalls}
                       avatar={!isUser && !isSystem ? (
                         <Avatar
                           type="bot"

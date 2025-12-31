@@ -1,11 +1,17 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Button, Input, Chip, Spinner } from '@ui-kit/react';
-import { EditIcon } from '@ui-kit/icons/EditIcon';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Button, Input, Chip, Spinner, Dropdown, type DropdownOption } from '@ui-kit/react';
 import { TrashIcon } from '@ui-kit/icons/TrashIcon';
 import { AddIcon } from '@ui-kit/icons/AddIcon';
 import { ChevronRightIcon } from '@ui-kit/icons/ChevronRightIcon';
 import { useThings } from '../../contexts/ThingsContext';
-import type { Thing, ThingMetadata, ThingType } from '../../types/thing';
+import { useAuth } from '../../contexts/AuthContext';
+import { API_URL } from '../../config';
+import { ThingStylePicker } from './ThingStylePicker';
+import { ThingLinks, type ThingLinksRef } from './ThingLinks';
+import { ThingProperties, type ThingPropertiesRef } from './ThingProperties';
+import { ThingDocuments } from './ThingDocuments';
+import { ThingIdeas } from './ThingIdeas';
+import type { Thing, ThingMetadata, ThingType, ThingLink, ThingIcon, ThingColor } from '../../types/thing';
 import styles from './ThingDetail.module.css';
 
 interface ThingDetailProps {
@@ -23,13 +29,22 @@ const TYPE_LABELS: Record<ThingType, string> = {
   item: 'Item',
 };
 
+// Predefined type options for the dropdown
+const PREDEFINED_TYPE_OPTIONS: DropdownOption<string>[] = [
+  { value: 'category', label: 'Category' },
+  { value: 'project', label: 'Project' },
+  { value: 'feature', label: 'Feature' },
+  { value: 'item', label: 'Item' },
+];
+
 export function ThingDetail({
   thingId,
-  onEdit,
+  onEdit: _onEdit,
   onDelete,
   onCreateChild,
   onNavigate,
 }: ThingDetailProps) {
+  const { user } = useAuth();
   const { getThing, getChildren, getBreadcrumb, updateThing } = useThings();
   const [thing, setThing] = useState<Thing | null>(null);
   const [children, setChildren] = useState<ThingMetadata[]>([]);
@@ -37,6 +52,18 @@ export function ThingDetail({
   const [isLoading, setIsLoading] = useState(true);
   const [newTag, setNewTag] = useState('');
   const [isAddingTag, setIsAddingTag] = useState(false);
+
+  // Inline title editing
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editingTitle, setEditingTitle] = useState('');
+  const titleInputRef = useRef<HTMLInputElement>(null);
+
+  // Refs for child components
+  const linksRef = useRef<ThingLinksRef>(null);
+  const propertiesRef = useRef<ThingPropertiesRef>(null);
+
+  // Type dropdown with custom values
+  const [typeSearchQuery, setTypeSearchQuery] = useState('');
 
   // Load thing details
   useEffect(() => {
@@ -97,6 +124,153 @@ export function ThingDetail({
     }
   };
 
+  // Icon and color handlers
+  const handleIconChange = useCallback(async (icon: ThingIcon | null) => {
+    if (!thing) return;
+    const updated = await updateThing(thingId, { icon });
+    if (updated) {
+      setThing(updated);
+    }
+  }, [thing, thingId, updateThing]);
+
+  const handleColorChange = useCallback(async (color: ThingColor | null) => {
+    if (!thing) return;
+    const updated = await updateThing(thingId, { color });
+    if (updated) {
+      setThing(updated);
+    }
+  }, [thing, thingId, updateThing]);
+
+  // Title inline editing handlers
+  const startEditingTitle = useCallback(() => {
+    if (!thing) return;
+    setEditingTitle(thing.name);
+    setIsEditingTitle(true);
+    setTimeout(() => {
+      titleInputRef.current?.focus();
+      titleInputRef.current?.select();
+    }, 0);
+  }, [thing]);
+
+  const saveTitle = useCallback(async () => {
+    if (!thing || !editingTitle.trim()) {
+      setIsEditingTitle(false);
+      return;
+    }
+    const trimmedTitle = editingTitle.trim();
+    if (trimmedTitle !== thing.name) {
+      const updated = await updateThing(thingId, { name: trimmedTitle });
+      if (updated) {
+        setThing(updated);
+      }
+    }
+    setIsEditingTitle(false);
+  }, [thing, editingTitle, thingId, updateThing]);
+
+  const handleTitleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      saveTitle();
+    } else if (e.key === 'Escape') {
+      setIsEditingTitle(false);
+    }
+  }, [saveTitle]);
+
+  // Type change handler
+  const handleTypeChange = useCallback(async (value: string | string[]) => {
+    if (!thing) return;
+    const newType = Array.isArray(value) ? value[0] : value;
+    if (newType && newType !== thing.type) {
+      const updated = await updateThing(thingId, { type: newType as ThingType });
+      if (updated) {
+        setThing(updated);
+      }
+    }
+    setTypeSearchQuery('');
+  }, [thing, thingId, updateThing]);
+
+  // Build type options including current type and search query
+  const typeOptions = (() => {
+    const options = [...PREDEFINED_TYPE_OPTIONS];
+
+    // Add current type if it's custom (not in predefined options)
+    if (thing?.type && !PREDEFINED_TYPE_OPTIONS.some(opt => opt.value === thing.type)) {
+      options.push({ value: thing.type, label: thing.type });
+    }
+
+    // Add search query as option if it doesn't match existing options
+    if (typeSearchQuery && !options.some(opt =>
+      opt.value.toLowerCase() === typeSearchQuery.toLowerCase() ||
+      opt.label.toLowerCase() === typeSearchQuery.toLowerCase()
+    )) {
+      options.push({ value: typeSearchQuery, label: typeSearchQuery });
+    }
+
+    return options;
+  })();
+
+  // Link handlers
+  const handleAddLink = useCallback(async (link: Omit<ThingLink, 'id' | 'createdAt'>) => {
+    if (!user) return;
+    const response = await fetch(`${API_URL}/api/things/${thingId}/links`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': user.id,
+      },
+      body: JSON.stringify(link),
+    });
+    if (response.ok) {
+      const updated = await getThing(thingId);
+      if (updated) setThing(updated);
+    }
+  }, [user, thingId, getThing]);
+
+  const handleUpdateLink = useCallback(async (linkId: string, updates: Partial<ThingLink>) => {
+    if (!user) return;
+    const response = await fetch(`${API_URL}/api/things/${thingId}/links/${linkId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': user.id,
+      },
+      body: JSON.stringify(updates),
+    });
+    if (response.ok) {
+      const updated = await getThing(thingId);
+      if (updated) setThing(updated);
+    }
+  }, [user, thingId, getThing]);
+
+  const handleRemoveLink = useCallback(async (linkId: string) => {
+    if (!user) return;
+    const response = await fetch(`${API_URL}/api/things/${thingId}/links/${linkId}`, {
+      method: 'DELETE',
+      headers: { 'x-user-id': user.id },
+    });
+    if (response.ok) {
+      const updated = await getThing(thingId);
+      if (updated) setThing(updated);
+    }
+  }, [user, thingId, getThing]);
+
+  // Properties handlers
+  const handlePropertiesChange = useCallback(async (properties: Record<string, string>) => {
+    if (!user) return;
+    const response = await fetch(`${API_URL}/api/things/${thingId}/properties`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': user.id,
+      },
+      body: JSON.stringify({ properties }),
+    });
+    if (response.ok) {
+      const updated = await getThing(thingId);
+      if (updated) setThing(updated);
+    }
+  }, [user, thingId, getThing]);
+
   if (isLoading) {
     return (
       <div className={styles.loading}>
@@ -133,21 +307,51 @@ export function ThingDetail({
 
       {/* Header */}
       <header className={styles.header}>
+        <ThingStylePicker
+          icon={thing.icon}
+          color={thing.color}
+          onIconChange={handleIconChange}
+          onColorChange={handleColorChange}
+        />
         <div className={styles.headerMain}>
-          <h1 className={styles.name}>{thing.name}</h1>
-          <span className={styles.type}>{TYPE_LABELS[thing.type]}</span>
+          {isEditingTitle ? (
+            <Input
+              ref={titleInputRef}
+              value={editingTitle}
+              onChange={(e) => setEditingTitle(e.target.value)}
+              onKeyDown={handleTitleKeyDown}
+              onBlur={saveTitle}
+              size="lg"
+              className={styles.titleInput}
+              autoFocus
+            />
+          ) : (
+            <h1
+              className={styles.name}
+              onClick={startEditingTitle}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && startEditingTitle()}
+              title="Click to edit"
+            >
+              {thing.name}
+            </h1>
+          )}
+          <Dropdown
+            options={typeOptions}
+            value={thing.type}
+            onChange={handleTypeChange}
+            searchable
+            searchPlaceholder="Search or add type..."
+            onSearch={setTypeSearchQuery}
+            size="sm"
+            placeholder="Select type"
+            className={styles.typeDropdown}
+          />
         </div>
         <div className={styles.headerActions}>
           <Button
             variant="ghost"
-            size="sm"
-            icon={<EditIcon />}
-            onClick={() => onEdit(thing)}
-            aria-label="Edit"
-          />
-          <Button
-            variant="ghost"
-            size="sm"
             icon={<TrashIcon />}
             onClick={() => onDelete(thing.id)}
             aria-label="Delete"
@@ -165,7 +369,17 @@ export function ThingDetail({
 
       {/* Tags */}
       <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Tags</h2>
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>Tags</h2>
+          <span className={styles.sectionDivider} />
+          <Button
+            variant="ghost"
+            icon={<AddIcon />}
+            onClick={() => setIsAddingTag(true)}
+          >
+            Add tag
+          </Button>
+        </div>
         <div className={styles.tags}>
           {thing.tags.map((tag) => (
             <Chip
@@ -176,7 +390,7 @@ export function ThingDetail({
               #{tag}
             </Chip>
           ))}
-          {isAddingTag ? (
+          {isAddingTag && (
             <Input
               value={newTag}
               onChange={(e) => setNewTag(e.target.value)}
@@ -191,15 +405,6 @@ export function ThingDetail({
               autoFocus
               className={styles.tagInput}
             />
-          ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              icon={<AddIcon />}
-              onClick={() => setIsAddingTag(true)}
-            >
-              Add tag
-            </Button>
           )}
         </div>
       </section>
@@ -229,13 +434,72 @@ export function ThingDetail({
         </section>
       )}
 
+      {/* Links */}
+      <section className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>Links</h2>
+          <span className={styles.sectionDivider} />
+          <Button
+            variant="ghost"
+            icon={<AddIcon />}
+            onClick={() => linksRef.current?.startAdd()}
+          >
+            Add link
+          </Button>
+        </div>
+        <ThingLinks
+          ref={linksRef}
+          links={thing.links || []}
+          onAdd={handleAddLink}
+          onUpdate={handleUpdateLink}
+          onRemove={handleRemoveLink}
+          hideAddButton
+        />
+      </section>
+
+      {/* Properties */}
+      <section className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>Properties</h2>
+          <span className={styles.sectionDivider} />
+          <Button
+            variant="ghost"
+            icon={<AddIcon />}
+            onClick={() => propertiesRef.current?.startAdd()}
+          >
+            Add property
+          </Button>
+        </div>
+        <ThingProperties
+          ref={propertiesRef}
+          properties={thing.properties || {}}
+          onChange={handlePropertiesChange}
+        />
+      </section>
+
+      {/* Documents */}
+      <section className={styles.section}>
+        <ThingDocuments thingId={thingId} />
+      </section>
+
+      {/* Ideas */}
+      <section className={styles.section}>
+        <ThingIdeas
+          thingId={thingId}
+          thingName={thing.name}
+          thingType={thing.type}
+          thingDescription={thing.description}
+          workspaceId={thing.workspaceId}
+        />
+      </section>
+
       {/* Children */}
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>Children</h2>
+          <span className={styles.sectionDivider} />
           <Button
             variant="ghost"
-            size="sm"
             icon={<AddIcon />}
             onClick={() => onCreateChild(thing.id)}
           >

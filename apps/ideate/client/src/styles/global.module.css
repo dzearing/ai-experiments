@@ -30,12 +30,6 @@
   overflow: hidden;
 }
 
-/* Focus visible styles */
-:global(:focus-visible) {
-  outline: var(--focus-ring-width) solid var(--focus-ring);
-  outline-offset: var(--focus-ring-offset);
-}
-
 /* Scrollbar styling */
 :global(::-webkit-scrollbar) {
   width: 8px;

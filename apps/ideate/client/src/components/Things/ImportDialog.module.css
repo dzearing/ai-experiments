@@ -192,6 +192,116 @@
 }
 
 /* ============================================
+   SUB-TASKS (PARALLEL AGENTS)
+   ============================================ */
+
+.subTasksContainer {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  background: var(--softer-bg);
+  border: 1px solid var(--softer-border);
+  border-radius: var(--radius-md);
+}
+
+.subTasksHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.subTasksTitle {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--base-fg);
+}
+
+.subTasksCount {
+  font-size: var(--text-xs);
+  color: var(--soft-fg);
+  background: var(--soft-bg);
+  padding: var(--space-0-5) var(--space-2);
+  border-radius: var(--radius-full);
+}
+
+.subTasksGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-2);
+}
+
+.subTaskItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background: var(--base-bg);
+  border: 1px solid var(--softer-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+}
+
+.subTaskItem.running {
+  border-color: var(--primary-border);
+  background: var(--primary-bg);
+}
+
+.subTaskItem.complete {
+  border-color: var(--success-border);
+  background: var(--success-bg);
+}
+
+.subTaskItem.error {
+  border-color: var(--danger-border);
+  background: var(--danger-bg);
+}
+
+.subTaskIcon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.subTaskIcon .checkIcon {
+  width: 14px;
+  height: 14px;
+  color: var(--success-fg);
+}
+
+.subTaskIcon .errorIcon {
+  width: 14px;
+  height: 14px;
+}
+
+.subTaskName {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--base-fg);
+}
+
+.subTaskItem.pending .subTaskName {
+  color: var(--softer-fg);
+}
+
+.subTaskItem.running .subTaskName {
+  color: var(--primary-fg);
+  font-weight: var(--weight-medium);
+}
+
+.subTaskItem.complete .subTaskName {
+  color: var(--soft-fg);
+}
+
+.subTaskItem.error .subTaskName {
+  color: var(--danger-fg);
+}
+
+/* ============================================
    REDUCED MOTION
    ============================================ */
 

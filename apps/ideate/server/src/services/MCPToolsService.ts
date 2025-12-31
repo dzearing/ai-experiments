@@ -1,6 +1,9 @@
 import { WorkspaceService } from './WorkspaceService.js';
 import { DocumentService, type Document } from './DocumentService.js';
+import { ThingService, type ThingIcon, type ThingColor } from './ThingService.js';
 import type { WorkspaceWebSocketHandler } from '../websocket/WorkspaceWebSocketHandler.js';
+import { readFile } from 'fs/promises';
+import { existsSync } from 'fs';
 
 /**
  * Tool definition for Claude SDK
@@ -47,10 +50,12 @@ export function setWorkspaceHandler(handler: WorkspaceWebSocketHandler): void {
 export class MCPToolsService {
   private workspaceService: WorkspaceService;
   private documentService: DocumentService;
+  private thingService: ThingService;
 
   constructor() {
     this.workspaceService = new WorkspaceService();
     this.documentService = new DocumentService();
+    this.thingService = new ThingService();
   }
 
   /**
@@ -274,6 +279,234 @@ export class MCPToolsService {
           required: ['documentId'],
         },
       },
+
+      // Thing tools
+      {
+        name: 'thing_get',
+        description: 'Get full details about a Thing including its properties, links, and documents. Use this to learn about a project, feature, or any entity the user has defined.',
+        input_schema: {
+          type: 'object',
+          properties: {
+            thingId: {
+              type: 'string',
+              description: 'The ID of the Thing to retrieve',
+            },
+            name: {
+              type: 'string',
+              description: 'The display name of the Thing (for UI display purposes)',
+            },
+          },
+          required: ['thingId'],
+        },
+      },
+      {
+        name: 'thing_read_linked_files',
+        description: 'Read the contents of local files linked to a Thing. Returns the file contents for all file-type links.',
+        input_schema: {
+          type: 'object',
+          properties: {
+            thingId: {
+              type: 'string',
+              description: 'The ID of the Thing whose linked files to read',
+            },
+          },
+          required: ['thingId'],
+        },
+      },
+      {
+        name: 'thing_list',
+        description: 'List all Things accessible to the user. Optionally filter by workspace.',
+        input_schema: {
+          type: 'object',
+          properties: {
+            workspaceId: {
+              type: 'string',
+              description: 'Optional workspace ID to filter Things',
+            },
+          },
+        },
+      },
+      {
+        name: 'thing_search',
+        description: 'Search for Things by name, tags, or description.',
+        input_schema: {
+          type: 'object',
+          properties: {
+            query: {
+              type: 'string',
+              description: 'Search query to find in Thing names, descriptions, and tags',
+            },
+            workspaceId: {
+              type: 'string',
+              description: 'Optional workspace ID to limit search scope',
+            },
+          },
+          required: ['query'],
+        },
+      },
+
+      // Thing CRUD tools
+      {
+        name: 'thing_create',
+        description: 'Create a new Thing (project, feature, category, item, etc). Returns the created Thing.',
+        input_schema: {
+          type: 'object',
+          properties: {
+            name: {
+              type: 'string',
+              description: 'Name of the Thing',
+            },
+            type: {
+              type: 'string',
+              description: 'Type of the Thing (e.g., category, project, feature, item, package, component)',
+            },
+            description: {
+              type: 'string',
+              description: 'Optional description of the Thing',
+            },
+            parentId: {
+              type: 'string',
+              description: 'ID of the parent Thing. If not provided, creates at root level.',
+            },
+            workspaceId: {
+              type: 'string',
+              description: 'Optional workspace ID to create the Thing in',
+            },
+            tags: {
+              type: 'string',
+              description: 'Comma-separated list of tags',
+            },
+            icon: {
+              type: 'string',
+              description: 'Icon identifier (folder, file, code, gear, package, etc.)',
+            },
+            color: {
+              type: 'string',
+              description: 'Color identifier (blue, green, purple, orange, red, teal, pink, yellow, gray)',
+            },
+          },
+          required: ['name'],
+        },
+      },
+      {
+        name: 'thing_update',
+        description: 'Update an existing Thing. Only update fields that need to change.',
+        input_schema: {
+          type: 'object',
+          properties: {
+            thingId: {
+              type: 'string',
+              description: 'The ID of the Thing to update',
+            },
+            name: {
+              type: 'string',
+              description: 'New name for the Thing',
+            },
+            type: {
+              type: 'string',
+              description: 'New type for the Thing',
+            },
+            description: {
+              type: 'string',
+              description: 'New description for the Thing',
+            },
+            tags: {
+              type: 'string',
+              description: 'Comma-separated list of tags (replaces existing tags)',
+            },
+            icon: {
+              type: 'string',
+              description: 'New icon identifier',
+            },
+            color: {
+              type: 'string',
+              description: 'New color identifier',
+            },
+          },
+          required: ['thingId'],
+        },
+      },
+      {
+        name: 'thing_delete',
+        description: 'Delete a Thing. This will also delete all child Things.',
+        input_schema: {
+          type: 'object',
+          properties: {
+            thingId: {
+              type: 'string',
+              description: 'The ID of the Thing to delete',
+            },
+          },
+          required: ['thingId'],
+        },
+      },
+      {
+        name: 'thing_move',
+        description: 'Move a Thing to a different parent. Use to reorganize the Thing hierarchy.',
+        input_schema: {
+          type: 'object',
+          properties: {
+            thingId: {
+              type: 'string',
+              description: 'The ID of the Thing to move',
+            },
+            newParentId: {
+              type: 'string',
+              description: 'The ID of the new parent Thing. Use "root" to move to root level.',
+            },
+          },
+          required: ['thingId', 'newParentId'],
+        },
+      },
+      {
+        name: 'thing_add_link',
+        description: 'Add a link to a Thing. Links can be files, URLs, GitHub repos, or packages.',
+        input_schema: {
+          type: 'object',
+          properties: {
+            thingId: {
+              type: 'string',
+              description: 'The ID of the Thing to add the link to',
+            },
+            type: {
+              type: 'string',
+              description: 'Type of link: file, url, github, or package',
+              enum: ['file', 'url', 'github', 'package'],
+            },
+            label: {
+              type: 'string',
+              description: 'Display label for the link',
+            },
+            target: {
+              type: 'string',
+              description: 'The link target (file path, URL, etc.)',
+            },
+            description: {
+              type: 'string',
+              description: 'Optional description of what the link points to',
+            },
+          },
+          required: ['thingId', 'type', 'label', 'target'],
+        },
+      },
+      {
+        name: 'thing_remove_link',
+        description: 'Remove a link from a Thing by its ID.',
+        input_schema: {
+          type: 'object',
+          properties: {
+            thingId: {
+              type: 'string',
+              description: 'The ID of the Thing containing the link',
+            },
+            linkId: {
+              type: 'string',
+              description: 'The ID of the link to remove',
+            },
+          },
+          required: ['thingId', 'linkId'],
+        },
+      },
     ];
   }
 
@@ -369,6 +602,87 @@ export class MCPToolsService {
           return await this.summarizeDocument(
             input.documentId as string,
             userId
+          );
+
+        // Thing tools
+        case 'thing_get':
+          return await this.thingGet(
+            input.thingId as string,
+            userId
+          );
+
+        case 'thing_read_linked_files':
+          return await this.thingReadLinkedFiles(
+            input.thingId as string,
+            userId
+          );
+
+        case 'thing_list':
+          return await this.thingList(
+            userId,
+            input.workspaceId as string | undefined
+          );
+
+        case 'thing_search':
+          return await this.thingSearch(
+            userId,
+            input.query as string,
+            input.workspaceId as string | undefined
+          );
+
+        case 'thing_create':
+          return await this.thingCreate(
+            userId,
+            input.name as string,
+            input.type as string | undefined,
+            input.description as string | undefined,
+            input.parentId as string | undefined,
+            input.workspaceId as string | undefined,
+            input.tags as string | undefined,
+            input.icon as string | undefined,
+            input.color as string | undefined
+          );
+
+        case 'thing_update':
+          return await this.thingUpdate(
+            input.thingId as string,
+            userId,
+            input.name as string | undefined,
+            input.type as string | undefined,
+            input.description as string | undefined,
+            input.tags as string | undefined,
+            input.icon as string | undefined,
+            input.color as string | undefined
+          );
+
+        case 'thing_delete':
+          return await this.thingDelete(
+            input.thingId as string,
+            userId
+          );
+
+        case 'thing_move':
+          return await this.thingMove(
+            input.thingId as string,
+            userId,
+            input.newParentId as string
+          );
+
+        case 'thing_add_link':
+          return await this.thingAddLink(
+            input.thingId as string,
+            userId,
+            input.type as 'file' | 'url' | 'github' | 'package',
+            input.label as string,
+            input.target as string,
+            input.description as string | undefined
+          );
+
+        case 'thing_remove_link':
+          return await this.thingRemoveLink(
+            input.thingId as string,
+            userId,
+            input.linkId as string
           );
 
         default:
@@ -842,6 +1156,405 @@ export class MCPToolsService {
         preview: paragraphs.join('\n\n'),
         wordCount: document.content.split(/\s+/).length,
         characterCount: document.content.length,
+      },
+    };
+  }
+
+  // =========================================================================
+  // Thing Tools
+  // =========================================================================
+
+  private async thingGet(
+    thingId: string,
+    userId: string
+  ): Promise<ToolResult> {
+    const thing = await this.thingService.getThing(thingId, userId);
+
+    if (!thing) {
+      return {
+        success: false,
+        error: 'Thing not found or access denied',
+      };
+    }
+
+    // Build path hierarchy by traversing parents
+    const path: { id: string; name: string }[] = [];
+    if (thing.parentIds.length > 0) {
+      // Build path from first parent (primary path)
+      let currentParentId: string | undefined = thing.parentIds[0];
+      const visited = new Set<string>();
+
+      while (currentParentId && !visited.has(currentParentId)) {
+        visited.add(currentParentId);
+        const parent = await this.thingService.getThing(currentParentId, userId);
+        if (parent) {
+          path.unshift({ id: parent.id, name: parent.name });
+          currentParentId = parent.parentIds[0];
+        } else {
+          break;
+        }
+      }
+    }
+
+    // Build path string (e.g., "Root > Parent > Child")
+    const pathString = path.length > 0
+      ? path.map(p => p.name).join(' > ')
+      : '(root)';
+
+    return {
+      success: true,
+      data: {
+        id: thing.id,
+        name: thing.name,
+        type: thing.type,
+        description: thing.description,
+        tags: thing.tags,
+        path: pathString,
+        pathHierarchy: path,
+        parentIds: thing.parentIds,
+        icon: thing.icon,
+        color: thing.color,
+        properties: thing.properties,
+        links: thing.links?.map(link => ({
+          type: link.type,
+          label: link.label,
+          target: link.target,
+          description: link.description,
+        })),
+        documents: thing.documents?.map(doc => ({
+          title: doc.title,
+          content: doc.content,
+        })),
+        ideaCounts: thing.ideaCounts,
+        createdAt: thing.createdAt,
+        updatedAt: thing.updatedAt,
+      },
+    };
+  }
+
+  private async thingReadLinkedFiles(
+    thingId: string,
+    userId: string
+  ): Promise<ToolResult> {
+    const thing = await this.thingService.getThing(thingId, userId);
+
+    if (!thing) {
+      return {
+        success: false,
+        error: 'Thing not found or access denied',
+      };
+    }
+
+    // Get all file-type links
+    const fileLinks = (thing.links || []).filter(link => link.type === 'file');
+
+    if (fileLinks.length === 0) {
+      return {
+        success: true,
+        data: {
+          thingId: thing.id,
+          thingName: thing.name,
+          files: [],
+          message: 'No file links found for this Thing',
+        },
+      };
+    }
+
+    // Read each linked file
+    const files: Array<{
+      path: string;
+      label: string;
+      content?: string;
+      error?: string;
+    }> = [];
+
+    for (const link of fileLinks) {
+      const filePath = link.target;
+
+      try {
+        if (!existsSync(filePath)) {
+          files.push({
+            path: filePath,
+            label: link.label,
+            error: 'File not found',
+          });
+          continue;
+        }
+
+        const content = await readFile(filePath, 'utf-8');
+        files.push({
+          path: filePath,
+          label: link.label,
+          content,
+        });
+      } catch (err) {
+        files.push({
+          path: filePath,
+          label: link.label,
+          error: err instanceof Error ? err.message : 'Failed to read file',
+        });
+      }
+    }
+
+    return {
+      success: true,
+      data: {
+        thingId: thing.id,
+        thingName: thing.name,
+        files,
+      },
+    };
+  }
+
+  private async thingList(
+    userId: string,
+    workspaceId?: string
+  ): Promise<ToolResult> {
+    const things = await this.thingService.listThings(userId, workspaceId);
+
+    return {
+      success: true,
+      data: {
+        count: things.length,
+        things: things.map(thing => ({
+          id: thing.id,
+          name: thing.name,
+          type: thing.type,
+          description: thing.description,
+          tags: thing.tags,
+          parentIds: thing.parentIds,
+          icon: thing.icon,
+          color: thing.color,
+        })),
+      },
+    };
+  }
+
+  private async thingSearch(
+    userId: string,
+    query: string,
+    workspaceId?: string
+  ): Promise<ToolResult> {
+    const things = await this.thingService.searchThings(userId, query, workspaceId);
+
+    return {
+      success: true,
+      data: {
+        query,
+        count: things.length,
+        things: things.map(thing => ({
+          id: thing.id,
+          name: thing.name,
+          type: thing.type,
+          description: thing.description,
+          tags: thing.tags,
+          icon: thing.icon,
+          color: thing.color,
+        })),
+      },
+    };
+  }
+
+  private async thingCreate(
+    userId: string,
+    name: string,
+    type?: string,
+    description?: string,
+    parentId?: string,
+    workspaceId?: string,
+    tags?: string,
+    icon?: string,
+    color?: string
+  ): Promise<ToolResult> {
+    const input = {
+      name,
+      type: type || 'item',
+      description,
+      parentIds: parentId ? [parentId] : [],
+      workspaceId,
+      tags: tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+      icon: icon as ThingIcon | undefined,
+      color: color as ThingColor | undefined,
+    };
+
+    const thing = await this.thingService.createThing(userId, input);
+
+    // Notify workspace if applicable
+    if (workspaceId && workspaceWsHandler) {
+      workspaceWsHandler.notifyResourceCreated(workspaceId, thing.id, 'thing', thing);
+    }
+
+    return {
+      success: true,
+      data: {
+        id: thing.id,
+        name: thing.name,
+        type: thing.type,
+        description: thing.description,
+        message: `Thing "${name}" created successfully`,
+      },
+    };
+  }
+
+  private async thingUpdate(
+    thingId: string,
+    userId: string,
+    name?: string,
+    type?: string,
+    description?: string,
+    tags?: string,
+    icon?: string,
+    color?: string
+  ): Promise<ToolResult> {
+    const updates: Record<string, unknown> = {};
+    if (name !== undefined) updates.name = name;
+    if (type !== undefined) updates.type = type;
+    if (description !== undefined) updates.description = description;
+    if (tags !== undefined) updates.tags = tags.split(',').map(t => t.trim()).filter(Boolean);
+    if (icon !== undefined) updates.icon = icon;
+    if (color !== undefined) updates.color = color;
+
+    const thing = await this.thingService.updateThing(thingId, userId, updates);
+
+    if (!thing) {
+      return {
+        success: false,
+        error: 'Thing not found or access denied',
+      };
+    }
+
+    // Notify workspace if applicable
+    if (thing.workspaceId && workspaceWsHandler) {
+      workspaceWsHandler.notifyResourceUpdated(thing.workspaceId, thing.id, 'thing', thing);
+    }
+
+    return {
+      success: true,
+      data: {
+        id: thing.id,
+        name: thing.name,
+        type: thing.type,
+        message: 'Thing updated successfully',
+      },
+    };
+  }
+
+  private async thingDelete(
+    thingId: string,
+    userId: string
+  ): Promise<ToolResult> {
+    // Get the thing first to know its workspace
+    const existingThing = await this.thingService.getThing(thingId, userId);
+    const workspaceId = existingThing?.workspaceId;
+
+    const success = await this.thingService.deleteThing(thingId, userId);
+
+    if (!success) {
+      return {
+        success: false,
+        error: 'Thing not found or you do not have permission to delete it',
+      };
+    }
+
+    // Notify workspace if applicable
+    if (workspaceId && workspaceWsHandler) {
+      workspaceWsHandler.notifyResourceDeleted(workspaceId, thingId, 'thing');
+    }
+
+    return {
+      success: true,
+      data: {
+        message: 'Thing deleted successfully',
+      },
+    };
+  }
+
+  private async thingMove(
+    thingId: string,
+    userId: string,
+    newParentId: string
+  ): Promise<ToolResult> {
+    // Handle "root" as a special case for moving to root level
+    const parentIds = newParentId === 'root' ? [] : [newParentId];
+
+    const thing = await this.thingService.updateThing(thingId, userId, { parentIds });
+
+    if (!thing) {
+      return {
+        success: false,
+        error: 'Thing not found or access denied',
+      };
+    }
+
+    // Notify workspace if applicable
+    if (thing.workspaceId && workspaceWsHandler) {
+      workspaceWsHandler.notifyResourceUpdated(thing.workspaceId, thing.id, 'thing', thing);
+    }
+
+    const destination = newParentId === 'root' ? 'root level' : `parent ${newParentId}`;
+    return {
+      success: true,
+      data: {
+        id: thing.id,
+        name: thing.name,
+        parentIds: thing.parentIds,
+        message: `Thing "${thing.name}" moved to ${destination}`,
+      },
+    };
+  }
+
+  private async thingAddLink(
+    thingId: string,
+    userId: string,
+    type: 'file' | 'url' | 'github' | 'package',
+    label: string,
+    target: string,
+    description?: string
+  ): Promise<ToolResult> {
+    const link = await this.thingService.addLink(thingId, userId, {
+      type,
+      label,
+      target,
+      description,
+    });
+
+    if (!link) {
+      return {
+        success: false,
+        error: 'Thing not found or access denied',
+      };
+    }
+
+    return {
+      success: true,
+      data: {
+        linkId: link.id,
+        type: link.type,
+        label: link.label,
+        target: link.target,
+        message: `Link "${label}" added to Thing`,
+      },
+    };
+  }
+
+  private async thingRemoveLink(
+    thingId: string,
+    userId: string,
+    linkId: string
+  ): Promise<ToolResult> {
+    const success = await this.thingService.removeLink(thingId, userId, linkId);
+
+    if (!success) {
+      return {
+        success: false,
+        error: 'Thing or link not found, or access denied',
+      };
+    }
+
+    return {
+      success: true,
+      data: {
+        message: 'Link removed successfully',
       },
     };
   }

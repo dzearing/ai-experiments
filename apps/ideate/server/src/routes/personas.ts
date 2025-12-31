@@ -1,15 +1,51 @@
 import { Router, type Request, type Response } from 'express';
 import { PersonaService, type PresetInfo, type Persona } from '../services/PersonaService.js';
+import { homedir } from 'os';
+import * as path from 'path';
+import * as fs from 'fs';
 
 export const personasRouter = Router();
 const personaService = new PersonaService();
 
-// In-memory settings storage (in production, this would be persisted)
-const facilitatorSettings = {
+// Settings file path
+const SETTINGS_DIR = path.join(homedir(), 'Ideate', 'settings');
+const SETTINGS_FILE = path.join(SETTINGS_DIR, 'facilitator.json');
+
+// Default settings
+const DEFAULT_SETTINGS = {
   name: 'Facilitator',
   avatar: 'robot',
   selectedPreset: null as string | null,
 };
+
+// Load settings from disk or use defaults
+function loadSettings(): typeof DEFAULT_SETTINGS {
+  try {
+    if (fs.existsSync(SETTINGS_FILE)) {
+      const data = fs.readFileSync(SETTINGS_FILE, 'utf-8');
+      const loaded = JSON.parse(data);
+      return { ...DEFAULT_SETTINGS, ...loaded };
+    }
+  } catch (error) {
+    console.error('[Personas] Error loading settings:', error);
+  }
+  return { ...DEFAULT_SETTINGS };
+}
+
+// Save settings to disk
+function saveSettings(settings: typeof DEFAULT_SETTINGS): void {
+  try {
+    if (!fs.existsSync(SETTINGS_DIR)) {
+      fs.mkdirSync(SETTINGS_DIR, { recursive: true });
+    }
+    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2), 'utf-8');
+  } catch (error) {
+    console.error('[Personas] Error saving settings:', error);
+  }
+}
+
+// Load settings on startup
+const facilitatorSettings = loadSettings();
 
 // Flag to indicate persona needs reloading when facilitator opens
 let personaReloadNeeded = false;
@@ -162,6 +198,9 @@ personasRouter.put('/settings', (req: Request, res: Response) => {
     if (selectedPreset !== undefined) {
       facilitatorSettings.selectedPreset = selectedPreset;
     }
+
+    // Persist to disk
+    saveSettings(facilitatorSettings);
 
     res.json(facilitatorSettings);
   } catch (error) {

@@ -64,6 +64,23 @@ export const ThingChipExtension = Node.create({
     ];
   },
 
+  // Custom markdown serialization - output as ^[DisplayName](id:uuid) format
+  // This allows the LLM to see both the display name and ID in the message content
+  addStorage() {
+    return {
+      markdown: {
+        serialize(state: { write: (text: string) => void }, node: { attrs: { id: string; name: string } }) {
+          // Format: ^[DisplayName](id:uuid) - similar to markdown link syntax
+          // Include trailing space to separate from following text
+          state.write(`^[${node.attrs.name}](id:${node.attrs.id}) `);
+        },
+        parse: {
+          // No parsing from markdown needed
+        },
+      },
+    };
+  },
+
   addNodeView() {
     return ReactNodeViewRenderer(ThingChipNodeView);
   },
@@ -73,12 +90,12 @@ export const ThingChipExtension = Node.create({
       insertThingChip:
         (attrs: ThingChipAttributes) =>
         ({ chain }) => {
+          // Insert only the chip - the trailing space is handled by markdown serialization
           return chain()
             .insertContent({
               type: this.name,
               attrs,
             })
-            .insertContent(' ')
             .run();
         },
       removeThingChip:

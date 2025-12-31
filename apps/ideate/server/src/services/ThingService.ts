@@ -2,12 +2,17 @@ import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { homedir } from 'os';
+import { DocumentService } from './DocumentService.js';
 
 // =========================================================================
 // Types
 // =========================================================================
 
-export type ThingType = 'category' | 'project' | 'feature' | 'item';
+/** Predefined thing types (for suggestions) */
+export const PREDEFINED_THING_TYPES = ['category', 'project', 'feature', 'item'] as const;
+
+/** Thing type classification - allows custom string values */
+export type ThingType = string;
 
 export interface ThingAttachment {
   id: string;
@@ -25,6 +30,44 @@ export interface ThingIdeaCounts {
   archived: number;
 }
 
+/** Link types for Thing links */
+export type ThingLinkType = 'file' | 'url' | 'github' | 'package';
+
+/** A link attached to a Thing */
+export interface ThingLink {
+  id: string;
+  type: ThingLinkType;
+  /** Display label for the link */
+  label: string;
+  /** The URL, file path, or identifier */
+  target: string;
+  /** Optional description */
+  description?: string;
+  createdAt: string;
+}
+
+/** Inline document stored with a Thing */
+export interface ThingDocument {
+  id: string;
+  title: string;
+  /** Markdown content */
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Curated icon set for Things */
+export type ThingIcon =
+  | 'folder' | 'file' | 'code' | 'gear' | 'star' | 'heart'
+  | 'home' | 'calendar' | 'chat' | 'user' | 'users' | 'bell'
+  | 'link' | 'image' | 'clock' | 'check-circle' | 'warning'
+  | 'info' | 'table' | 'list-task' | 'package' | 'globe';
+
+/** Color palette for Things */
+export type ThingColor =
+  | 'default' | 'blue' | 'green' | 'purple' | 'orange'
+  | 'red' | 'teal' | 'pink' | 'yellow' | 'gray';
+
 export interface ThingMetadata {
   id: string;
   name: string;
@@ -39,13 +82,25 @@ export interface ThingMetadata {
   createdAt: string;
   updatedAt: string;
   lastAccessedAt: string;
+  /** Sort order for stable positioning (lower = earlier in list) */
+  order?: number;
   attachments: ThingAttachment[];
   /** Cached idea counts (updated when ideas change) */
   ideaCounts?: ThingIdeaCounts;
+  /** Links to external resources (files, URLs, GitHub repos, packages) */
+  links?: ThingLink[];
+  /** Custom key-value properties */
+  properties?: Record<string, string>;
+  /** Icon identifier for display */
+  icon?: ThingIcon;
+  /** Background color for chips/badges */
+  color?: ThingColor;
 }
 
 export interface Thing extends ThingMetadata {
   content?: string;    // Extended markdown content from .content.md
+  /** Inline documents stored with the Thing */
+  documents?: ThingDocument[];
 }
 
 export interface CreateThingInput {
@@ -56,6 +111,16 @@ export interface CreateThingInput {
   parentIds?: string[];
   workspaceId?: string;
   content?: string;
+  /** Insert after this thing ID (used to calculate order) */
+  insertAfterId?: string;
+  /** Initial links */
+  links?: Omit<ThingLink, 'id' | 'createdAt'>[];
+  /** Initial properties */
+  properties?: Record<string, string>;
+  /** Initial icon */
+  icon?: ThingIcon;
+  /** Initial color */
+  color?: ThingColor;
 }
 
 export interface UpdateThingInput {
@@ -66,6 +131,14 @@ export interface UpdateThingInput {
   parentIds?: string[];
   workspaceId?: string;
   content?: string;
+  /** Update links (replaces all links) */
+  links?: ThingLink[];
+  /** Update properties (replaces all properties) */
+  properties?: Record<string, string>;
+  /** Update icon */
+  icon?: ThingIcon | null;
+  /** Update color */
+  color?: ThingColor | null;
 }
 
 export interface ThingFilter {
@@ -87,7 +160,10 @@ const ATTACHMENTS_DIR = path.join(THINGS_DIR, 'attachments');
 // =========================================================================
 
 export class ThingService {
+  private documentService: DocumentService;
+
   constructor() {
+    this.documentService = new DocumentService();
     this.ensureDirectoryExists();
   }
 
@@ -106,6 +182,10 @@ export class ThingService {
 
   private getContentPath(id: string): string {
     return path.join(THINGS_DIR, `${id}.content.md`);
+  }
+
+  private getDocumentsPath(id: string): string {
+    return path.join(THINGS_DIR, `${id}.documents.json`);
   }
 
   private getAttachmentsDir(id: string): string {
@@ -174,14 +254,26 @@ export class ThingService {
 
   /**
    * Get full graph of things for tree building.
-   * Returns all accessible things without filtering.
+   * Returns all accessible things with stable sort order (by createdAt, then name).
+   * This ensures the tree doesn't reorder when items are accessed.
    */
   async getThingsGraph(
     userId: string,
     workspaceId?: string,
     isWorkspaceMember: boolean = false
   ): Promise<ThingMetadata[]> {
-    return this.listThings(userId, workspaceId, isWorkspaceMember);
+    const things = await this.listThings(userId, workspaceId, isWorkspaceMember);
+
+    // Sort by order field for stable insertion-based ordering
+    // Fallback to createdAt for things without order (legacy data)
+    things.sort((a, b) => {
+      const orderA = a.order ?? new Date(a.createdAt).getTime();
+      const orderB = b.order ?? new Date(b.createdAt).getTime();
+      if (orderA !== orderB) return orderA - orderB;
+      return a.name.localeCompare(b.name);
+    });
+
+    return things;
   }
 
   /**
@@ -257,6 +349,16 @@ export class ThingService {
     const id = uuidv4();
     const now = new Date().toISOString();
 
+    // Build initial links with IDs and timestamps
+    const links: ThingLink[] = input.links?.map(link => ({
+      ...link,
+      id: uuidv4(),
+      createdAt: now,
+    })) || [];
+
+    // Calculate order based on insertAfterId
+    const order = await this.calculateOrder(userId, input.parentIds || [], input.insertAfterId);
+
     const metadata: ThingMetadata = {
       id,
       name: input.name,
@@ -269,7 +371,12 @@ export class ThingService {
       createdAt: now,
       updatedAt: now,
       lastAccessedAt: now,
+      order,
       attachments: [],
+      links: links.length > 0 ? links : undefined,
+      properties: input.properties,
+      icon: input.icon,
+      color: input.color,
     };
 
     // Save metadata
@@ -285,6 +392,94 @@ export class ThingService {
     }
 
     return { ...metadata, content: input.content };
+  }
+
+  /**
+   * Calculate the order value for a new thing based on insertion position.
+   */
+  private async calculateOrder(
+    userId: string,
+    parentIds: string[],
+    insertAfterId?: string
+  ): Promise<number> {
+    try {
+      // Get all things to find siblings
+      const allThings = await this.listThingsInternal(userId);
+
+      // Find siblings (things with same first parent, or root things if no parent)
+      const parentId = parentIds[0] || null;
+      const siblings = allThings
+        .filter(t => {
+          if (parentId === null) {
+            return t.parentIds.length === 0;
+          }
+          return t.parentIds.includes(parentId);
+        })
+        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+      if (siblings.length === 0) {
+        // No siblings, start at 0
+        return 0;
+      }
+
+      if (!insertAfterId) {
+        // Insert at beginning - use order smaller than smallest
+        const minOrder = siblings[0].order ?? 0;
+        return minOrder - 1;
+      }
+
+      // Find the thing we're inserting after
+      const afterIndex = siblings.findIndex(t => t.id === insertAfterId);
+      if (afterIndex === -1) {
+        // Target not found among siblings, insert at end
+        const maxOrder = siblings[siblings.length - 1].order ?? 0;
+        return maxOrder + 1;
+      }
+
+      const afterThing = siblings[afterIndex];
+      const afterOrder = afterThing.order ?? 0;
+
+      if (afterIndex === siblings.length - 1) {
+        // Inserting after the last sibling
+        return afterOrder + 1;
+      }
+
+      // Insert between afterThing and the next sibling
+      const nextThing = siblings[afterIndex + 1];
+      const nextOrder = nextThing.order ?? afterOrder + 2;
+
+      // Use midpoint for fractional ordering
+      return (afterOrder + nextOrder) / 2;
+    } catch {
+      // Fallback to timestamp-based order
+      return Date.now();
+    }
+  }
+
+  /**
+   * Internal list without access control (for order calculation).
+   */
+  private async listThingsInternal(userId: string): Promise<ThingMetadata[]> {
+    try {
+      const files = await fs.readdir(THINGS_DIR);
+      const metaFiles = files.filter(f => f.endsWith('.meta.json'));
+      const things: ThingMetadata[] = [];
+
+      for (const file of metaFiles) {
+        const metaPath = path.join(THINGS_DIR, file);
+        const content = await fs.readFile(metaPath, 'utf-8');
+        const metadata: ThingMetadata = JSON.parse(content);
+
+        // Only include user's own things for order calculation
+        if (metadata.ownerId === userId) {
+          things.push(metadata);
+        }
+      }
+
+      return things;
+    } catch {
+      return [];
+    }
   }
 
   /**
@@ -311,7 +506,16 @@ export class ThingService {
         // No content file
       }
 
-      return { ...metadata, content };
+      // Try to read documents
+      let documents: ThingDocument[] | undefined;
+      try {
+        const docsContent = await fs.readFile(this.getDocumentsPath(id), 'utf-8');
+        documents = JSON.parse(docsContent);
+      } catch {
+        // No documents file
+      }
+
+      return { ...metadata, content, documents };
     } catch (error) {
       return null;
     }
@@ -372,6 +576,14 @@ export class ThingService {
         parentIds: updates.parentIds ?? metadata.parentIds,
         workspaceId: 'workspaceId' in updates ? updates.workspaceId : metadata.workspaceId,
         updatedAt: now,
+        // Handle links (replace all)
+        links: 'links' in updates ? updates.links : metadata.links,
+        // Handle properties (replace all)
+        properties: 'properties' in updates ? updates.properties : metadata.properties,
+        // Handle icon (null = remove)
+        icon: 'icon' in updates ? (updates.icon ?? undefined) : metadata.icon,
+        // Handle color (null = remove)
+        color: 'color' in updates ? (updates.color ?? undefined) : metadata.color,
       };
 
       await fs.writeFile(
@@ -402,7 +614,16 @@ export class ThingService {
         // No content file
       }
 
-      return { ...updatedMetadata, content };
+      // Read documents
+      let documents: ThingDocument[] | undefined;
+      try {
+        const docsContent = await fs.readFile(this.getDocumentsPath(id), 'utf-8');
+        documents = JSON.parse(docsContent);
+      } catch {
+        // No documents file
+      }
+
+      return { ...updatedMetadata, content, documents };
     } catch (error) {
       return null;
     }
@@ -427,12 +648,22 @@ export class ThingService {
         await this.deleteThing(child.id, userId);
       }
 
+      // Delete associated standalone documents (cascade delete)
+      await this.documentService.deleteDocumentsByThingId(id);
+
       // Delete metadata
       await fs.unlink(this.getMetadataPath(id));
 
       // Delete content if exists
       try {
         await fs.unlink(this.getContentPath(id));
+      } catch {
+        // File didn't exist
+      }
+
+      // Delete documents if exists
+      try {
+        await fs.unlink(this.getDocumentsPath(id));
       } catch {
         // File didn't exist
       }
@@ -666,5 +897,438 @@ export class ThingService {
       if (success) deleted++;
     }
     return deleted;
+  }
+
+  // =========================================================================
+  // Links
+  // =========================================================================
+
+  /**
+   * Add a link to a thing.
+   */
+  async addLink(
+    thingId: string,
+    userId: string,
+    link: Omit<ThingLink, 'id' | 'createdAt'>
+  ): Promise<ThingLink | null> {
+    try {
+      const metaContent = await fs.readFile(this.getMetadataPath(thingId), 'utf-8');
+      const metadata: ThingMetadata = JSON.parse(metaContent);
+
+      // Only owner can add links
+      if (metadata.ownerId !== userId) {
+        return null;
+      }
+
+      const now = new Date().toISOString();
+      const newLink: ThingLink = {
+        ...link,
+        id: uuidv4(),
+        createdAt: now,
+      };
+
+      // Initialize links array if needed
+      if (!metadata.links) {
+        metadata.links = [];
+      }
+      metadata.links.push(newLink);
+      metadata.updatedAt = now;
+
+      await fs.writeFile(
+        this.getMetadataPath(thingId),
+        JSON.stringify(metadata, null, 2),
+        'utf-8'
+      );
+
+      return newLink;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Update a link on a thing.
+   */
+  async updateLink(
+    thingId: string,
+    userId: string,
+    linkId: string,
+    updates: Partial<Omit<ThingLink, 'id' | 'createdAt'>>
+  ): Promise<ThingLink | null> {
+    try {
+      const metaContent = await fs.readFile(this.getMetadataPath(thingId), 'utf-8');
+      const metadata: ThingMetadata = JSON.parse(metaContent);
+
+      // Only owner can update links
+      if (metadata.ownerId !== userId) {
+        return null;
+      }
+
+      const linkIndex = metadata.links?.findIndex(l => l.id === linkId) ?? -1;
+      if (linkIndex === -1 || !metadata.links) {
+        return null;
+      }
+
+      const updatedLink: ThingLink = {
+        ...metadata.links[linkIndex],
+        ...updates,
+      };
+      metadata.links[linkIndex] = updatedLink;
+      metadata.updatedAt = new Date().toISOString();
+
+      await fs.writeFile(
+        this.getMetadataPath(thingId),
+        JSON.stringify(metadata, null, 2),
+        'utf-8'
+      );
+
+      return updatedLink;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Remove a link from a thing.
+   */
+  async removeLink(
+    thingId: string,
+    userId: string,
+    linkId: string
+  ): Promise<boolean> {
+    try {
+      const metaContent = await fs.readFile(this.getMetadataPath(thingId), 'utf-8');
+      const metadata: ThingMetadata = JSON.parse(metaContent);
+
+      // Only owner can remove links
+      if (metadata.ownerId !== userId) {
+        return false;
+      }
+
+      const linkIndex = metadata.links?.findIndex(l => l.id === linkId) ?? -1;
+      if (linkIndex === -1 || !metadata.links) {
+        return false;
+      }
+
+      metadata.links.splice(linkIndex, 1);
+      // Clean up empty array
+      if (metadata.links.length === 0) {
+        metadata.links = undefined;
+      }
+      metadata.updatedAt = new Date().toISOString();
+
+      await fs.writeFile(
+        this.getMetadataPath(thingId),
+        JSON.stringify(metadata, null, 2),
+        'utf-8'
+      );
+
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  // =========================================================================
+  // Properties
+  // =========================================================================
+
+  /**
+   * Set properties for a thing (replaces all properties).
+   */
+  async setProperties(
+    thingId: string,
+    userId: string,
+    properties: Record<string, string> | null
+  ): Promise<boolean> {
+    try {
+      const metaContent = await fs.readFile(this.getMetadataPath(thingId), 'utf-8');
+      const metadata: ThingMetadata = JSON.parse(metaContent);
+
+      // Only owner can update properties
+      if (metadata.ownerId !== userId) {
+        return false;
+      }
+
+      metadata.properties = properties ?? undefined;
+      metadata.updatedAt = new Date().toISOString();
+
+      await fs.writeFile(
+        this.getMetadataPath(thingId),
+        JSON.stringify(metadata, null, 2),
+        'utf-8'
+      );
+
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  // =========================================================================
+  // Documents (stored in {id}.documents.json)
+  // =========================================================================
+
+  /**
+   * Get documents for a thing.
+   */
+  async getDocuments(thingId: string, userId: string): Promise<ThingDocument[]> {
+    try {
+      // Verify access
+      const metadata = await this.getThingInternal(thingId);
+      if (!metadata || metadata.ownerId !== userId) {
+        return [];
+      }
+
+      const docsContent = await fs.readFile(this.getDocumentsPath(thingId), 'utf-8');
+      return JSON.parse(docsContent);
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Add a document to a thing.
+   */
+  async addDocument(
+    thingId: string,
+    userId: string,
+    doc: Omit<ThingDocument, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<ThingDocument | null> {
+    try {
+      // Verify ownership
+      const metadata = await this.getThingInternal(thingId);
+      if (!metadata || metadata.ownerId !== userId) {
+        return null;
+      }
+
+      // Load existing documents
+      let documents: ThingDocument[] = [];
+      try {
+        const docsContent = await fs.readFile(this.getDocumentsPath(thingId), 'utf-8');
+        documents = JSON.parse(docsContent);
+      } catch {
+        // No documents file yet
+      }
+
+      const now = new Date().toISOString();
+      const newDoc: ThingDocument = {
+        ...doc,
+        id: uuidv4(),
+        createdAt: now,
+        updatedAt: now,
+      };
+      documents.push(newDoc);
+
+      await fs.writeFile(
+        this.getDocumentsPath(thingId),
+        JSON.stringify(documents, null, 2),
+        'utf-8'
+      );
+
+      // Update thing's updatedAt
+      await this.touchThing(thingId);
+
+      return newDoc;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Update a document on a thing.
+   */
+  async updateDocument(
+    thingId: string,
+    userId: string,
+    docId: string,
+    updates: Partial<Omit<ThingDocument, 'id' | 'createdAt' | 'updatedAt'>>
+  ): Promise<ThingDocument | null> {
+    try {
+      // Verify ownership
+      const metadata = await this.getThingInternal(thingId);
+      if (!metadata || metadata.ownerId !== userId) {
+        return null;
+      }
+
+      // Load documents
+      let documents: ThingDocument[] = [];
+      try {
+        const docsContent = await fs.readFile(this.getDocumentsPath(thingId), 'utf-8');
+        documents = JSON.parse(docsContent);
+      } catch {
+        return null; // No documents file
+      }
+
+      const docIndex = documents.findIndex(d => d.id === docId);
+      if (docIndex === -1) {
+        return null;
+      }
+
+      const updatedDoc: ThingDocument = {
+        ...documents[docIndex],
+        ...updates,
+        updatedAt: new Date().toISOString(),
+      };
+      documents[docIndex] = updatedDoc;
+
+      await fs.writeFile(
+        this.getDocumentsPath(thingId),
+        JSON.stringify(documents, null, 2),
+        'utf-8'
+      );
+
+      // Update thing's updatedAt
+      await this.touchThing(thingId);
+
+      return updatedDoc;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Remove a document from a thing.
+   */
+  async removeDocument(
+    thingId: string,
+    userId: string,
+    docId: string
+  ): Promise<boolean> {
+    try {
+      // Verify ownership
+      const metadata = await this.getThingInternal(thingId);
+      if (!metadata || metadata.ownerId !== userId) {
+        return false;
+      }
+
+      // Load documents
+      let documents: ThingDocument[] = [];
+      try {
+        const docsContent = await fs.readFile(this.getDocumentsPath(thingId), 'utf-8');
+        documents = JSON.parse(docsContent);
+      } catch {
+        return false; // No documents file
+      }
+
+      const docIndex = documents.findIndex(d => d.id === docId);
+      if (docIndex === -1) {
+        return false;
+      }
+
+      documents.splice(docIndex, 1);
+
+      if (documents.length === 0) {
+        // Delete file if no documents left
+        try {
+          await fs.unlink(this.getDocumentsPath(thingId));
+        } catch {
+          // Ignore
+        }
+      } else {
+        await fs.writeFile(
+          this.getDocumentsPath(thingId),
+          JSON.stringify(documents, null, 2),
+          'utf-8'
+        );
+      }
+
+      // Update thing's updatedAt
+      await this.touchThing(thingId);
+
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  // =========================================================================
+  // Visual (icon, color)
+  // =========================================================================
+
+  /**
+   * Set icon for a thing.
+   */
+  async setIcon(
+    thingId: string,
+    userId: string,
+    icon: ThingIcon | null
+  ): Promise<boolean> {
+    try {
+      const metaContent = await fs.readFile(this.getMetadataPath(thingId), 'utf-8');
+      const metadata: ThingMetadata = JSON.parse(metaContent);
+
+      // Only owner can update icon
+      if (metadata.ownerId !== userId) {
+        return false;
+      }
+
+      metadata.icon = icon ?? undefined;
+      metadata.updatedAt = new Date().toISOString();
+
+      await fs.writeFile(
+        this.getMetadataPath(thingId),
+        JSON.stringify(metadata, null, 2),
+        'utf-8'
+      );
+
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Set color for a thing.
+   */
+  async setColor(
+    thingId: string,
+    userId: string,
+    color: ThingColor | null
+  ): Promise<boolean> {
+    try {
+      const metaContent = await fs.readFile(this.getMetadataPath(thingId), 'utf-8');
+      const metadata: ThingMetadata = JSON.parse(metaContent);
+
+      // Only owner can update color
+      if (metadata.ownerId !== userId) {
+        return false;
+      }
+
+      metadata.color = color ?? undefined;
+      metadata.updatedAt = new Date().toISOString();
+
+      await fs.writeFile(
+        this.getMetadataPath(thingId),
+        JSON.stringify(metadata, null, 2),
+        'utf-8'
+      );
+
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  // =========================================================================
+  // Helpers
+  // =========================================================================
+
+  /**
+   * Update updatedAt timestamp without other changes.
+   */
+  private async touchThing(thingId: string): Promise<void> {
+    try {
+      const metaContent = await fs.readFile(this.getMetadataPath(thingId), 'utf-8');
+      const metadata: ThingMetadata = JSON.parse(metaContent);
+      metadata.updatedAt = new Date().toISOString();
+      await fs.writeFile(
+        this.getMetadataPath(thingId),
+        JSON.stringify(metadata, null, 2),
+        'utf-8'
+      );
+    } catch {
+      // Ignore errors
+    }
   }
 }

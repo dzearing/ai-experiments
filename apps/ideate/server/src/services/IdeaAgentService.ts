@@ -13,6 +13,16 @@ interface GreetingCache {
 }
 
 /**
+ * Thing context for contextual greetings
+ */
+export interface ThingContext {
+  id: string;
+  name: string;
+  type: string;
+  description?: string;
+}
+
+/**
  * Idea context provided to the agent
  */
 export interface IdeaContext {
@@ -22,6 +32,8 @@ export interface IdeaContext {
   description?: string;
   tags: string[];
   status: string;
+  /** Optional Thing context when creating an idea linked to a Thing */
+  thingContext?: ThingContext;
 }
 
 /**
@@ -574,13 +586,28 @@ export class IdeaAgentService {
    * Generate an initial greeting/prompt for a new idea chat.
    * For new ideas (no real content yet), uses cached general greetings.
    * For existing ideas with content, generates a context-specific greeting.
+   * For ideas linked to a Thing, generates contextual greetings based on Thing type.
    */
   async generateGreeting(ideaContext: IdeaContext | null): Promise<string> {
-    // For new ideas or ideas without meaningful content, use cached greetings
+    console.log('[IdeaAgentService] generateGreeting called with:', {
+      id: ideaContext?.id,
+      title: ideaContext?.title,
+      thingContext: ideaContext?.thingContext,
+    });
+
+    // For new ideas or ideas without meaningful content
     if (!ideaContext ||
         ideaContext.id === 'new' ||
         !ideaContext.title.trim() ||
         ideaContext.title === 'Untitled Idea') {
+
+      // If this is a new idea linked to a Thing, generate a Thing-specific greeting
+      if (ideaContext?.thingContext) {
+        console.log('[IdeaAgentService] Generating Thing-specific greeting for:', ideaContext.thingContext.name);
+        return this.generateThingContextGreeting(ideaContext.thingContext);
+      }
+
+      console.log('[IdeaAgentService] Using cached new idea greeting');
       return this.getNewIdeaGreeting();
     }
 
@@ -591,6 +618,106 @@ export class IdeaAgentService {
     } else {
       return `I see you're working on **"${ideaContext.title}"**.\n\n> ${ideaContext.summary}\n\nLet's develop this idea together! You can start by telling me more about what you have in mind, or I can help you:\n- Expand on the concept\n- Explore different angles\n- Add a detailed description\n- Refine the title or summary`;
     }
+  }
+
+  /**
+   * Generate a contextual greeting when creating an idea for a specific Thing.
+   * The greeting is tailored based on the Thing's type and description.
+   */
+  private generateThingContextGreeting(thingContext: ThingContext): string {
+    const { name, type, description } = thingContext;
+
+    // Determine contextual prompts based on Thing type
+    const typeContexts: Record<string, { activity: string; examples: string }> = {
+      // Development-related types
+      'project': {
+        activity: 'adding a new feature or improvement',
+        examples: 'a new capability, enhancement, bug fix, or architectural change'
+      },
+      'feature': {
+        activity: 'developing or enhancing',
+        examples: 'implementation details, edge cases, user interactions, or refinements'
+      },
+      'component': {
+        activity: 'designing or building',
+        examples: 'a new component variant, prop, behavior, or visual treatment'
+      },
+      'category': {
+        activity: 'organizing or expanding',
+        examples: 'a new sub-category, item, or organizational structure'
+      },
+      'item': {
+        activity: 'developing or refining',
+        examples: 'an enhancement, variation, or related concept'
+      },
+      // Content-related types
+      'book': {
+        activity: 'writing content for',
+        examples: 'a new chapter, section, appendix, or revision'
+      },
+      'chapter': {
+        activity: 'adding content to',
+        examples: 'a new section, scene, concept, or revision'
+      },
+      'article': {
+        activity: 'writing or expanding',
+        examples: 'a new section, point, example, or revision'
+      },
+      'documentation': {
+        activity: 'improving',
+        examples: 'a new guide, example, clarification, or restructuring'
+      },
+      // Design-related types
+      'design': {
+        activity: 'creating or refining',
+        examples: 'a new visual treatment, layout, or design pattern'
+      },
+      'library': {
+        activity: 'adding to',
+        examples: 'a new utility, component, helper, or enhancement'
+      },
+      'package': {
+        activity: 'extending',
+        examples: 'a new export, feature, or capability'
+      },
+      'ui-kit': {
+        activity: 'designing components for',
+        examples: 'a new component, variant, or design pattern'
+      },
+      // Application types
+      'app': {
+        activity: 'adding features to',
+        examples: 'a new screen, workflow, feature, or enhancement'
+      },
+      'application': {
+        activity: 'adding features to',
+        examples: 'a new screen, workflow, feature, or enhancement'
+      },
+      'service': {
+        activity: 'extending',
+        examples: 'a new endpoint, capability, or integration'
+      },
+      'api': {
+        activity: 'designing endpoints for',
+        examples: 'a new route, method, or data model'
+      },
+    };
+
+    // Get context for this type (case-insensitive match)
+    const normalizedType = type.toLowerCase().replace(/[^a-z]/g, '');
+    const context = typeContexts[normalizedType] || {
+      activity: 'developing ideas for',
+      examples: 'a new concept, enhancement, or related idea'
+    };
+
+    // Build the greeting with Thing context
+    const descriptionHint = description
+      ? `\n\n*${description}*`
+      : '';
+
+    return `So what's on your mind regarding **${name}**?${descriptionHint}
+
+Share your idea for ${context.activity} **${name}** - whether it's ${context.examples}. I'll help you develop it into a complete idea.`;
   }
 
   /**
@@ -691,16 +818,17 @@ export class IdeaAgentService {
 Generate ${count} different greeting messages for when a user opens the idea workspace to create a NEW idea. Each greeting should:
 1. Be warm, brief, and encouraging (1-2 sentences)
 2. PRIORITIZE asking the user to describe their idea briefly in chat (this is primary!)
-3. Mention you'll help extrapolate and fill in the document (title, summary, description, tags)
+3. Mention you'll help extrapolate and fill in the idea (title, summary, description, tags)
 4. Optionally mention they can also type directly in the editor (secondary option)
 5. Be unique and varied in tone and wording
+6. NEVER use the word "document" - always refer to the output as an "idea"
 
-The workflow: User briefly describes idea in chat → Agent extrapolates and writes the document.
+The workflow: User briefly describes idea in chat → Agent extrapolates and writes up the idea.
 
 Output ONLY the greetings, one per line, numbered 1-${count}. No other text.
 
 Example format:
-1. What's your idea? Give me a quick description here and I'll draft the full document for you.
+1. What's your idea? Give me a quick description here and I'll help you develop it fully.
 2. Share your idea with me! I'll turn your brief into a complete title, summary, and description.
 ...and so on`;
 
@@ -774,16 +902,16 @@ Example format:
    */
   private getFallbackGreetings(): string[] {
     return [
-      "What's your idea? Give me a quick description and I'll draft the full document for you.",
+      "What's your idea? Give me a quick description and I'll help you develop it fully.",
       "Share your idea with me! I'll turn your brief into a complete title, summary, and description.",
-      "Tell me about your idea! I'll extrapolate it into a full document with all the details.",
-      "Got an idea? Describe it briefly and I'll flesh it out in the document for you.",
+      "Tell me about your idea! I'll extrapolate it into a fully fleshed out concept.",
+      "Got an idea? Describe it briefly and I'll help you flesh it out.",
       "What are you thinking? Share your concept and I'll write up the title, summary, and tags.",
-      "Drop your idea here! I'll expand it into a complete document you can refine.",
-      "Pitch me your idea! I'll turn it into a structured document with all the pieces.",
-      "What's on your mind? Tell me your idea and I'll draft the details for you.",
-      "Share your concept! I'll extrapolate it into a full idea document.",
-      "Let's capture your idea! Describe it briefly and I'll write it up for you.",
+      "Drop your idea here! I'll expand it into a complete concept you can refine.",
+      "Pitch me your idea! I'll turn it into a structured idea with all the pieces.",
+      "What's on your mind? Tell me your idea and I'll help you develop the details.",
+      "Share your concept! I'll extrapolate it into a fully developed idea.",
+      "Let's capture your idea! Describe it briefly and I'll help you write it up.",
     ];
   }
 

@@ -179,6 +179,13 @@ The application requires workspace selection before functionality is available. 
 - Functional components with hooks
 - Type imports: `import type { Foo }` or `import { type Foo, Bar }`
 
+### UI Component Guidelines
+
+- **Button sizes** - Prefer default (regular) size. Only use `size="sm"` when space is very constrained.
+- **Button with icon** - Use the `icon` prop: `<Button icon={<MyIcon />}>Label</Button>`
+- **Icon-only buttons** - Use `IconButton` (not `Button` with just an icon child): `<IconButton icon={<MyIcon />} aria-label="Description" />`
+- **IconButton** renders as a square button, appropriate for icon-only actions
+
 ### File Organization
 
 - **1 export per file** - Each file exports a single function/component plus its related types

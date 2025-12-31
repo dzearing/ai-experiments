@@ -85,9 +85,7 @@ export function Tabs({
 }: TabsProps) {
   const [internalValue, setInternalValue] = useState(defaultValue || items[0]?.value);
   const [indicatorStyle, setIndicatorStyle] = useState<IndicatorStyle | null>(null);
-  const [focusIndicatorStyle, setFocusIndicatorStyle] = useState<IndicatorStyle | null>(null);
   const [isInitialRender, setIsInitialRender] = useState(true);
-  const [isFocused, setIsFocused] = useState(false);
 
   const tabListRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
@@ -118,12 +116,6 @@ export function Tabs({
     const position = getIndicatorPosition(activeTab);
     setIndicatorStyle(position);
   }, [animated, variant, activeValue, getIndicatorPosition]);
-
-  // Update focus indicator position
-  const updateFocusIndicator = useCallback((element: HTMLElement | null) => {
-    const position = getIndicatorPosition(element);
-    setFocusIndicatorStyle(position);
-  }, [getIndicatorPosition]);
 
   // Update indicator on mount and when active value changes
   useLayoutEffect(() => {
@@ -160,35 +152,17 @@ export function Tabs({
     }
   };
 
-  // Handle focus changes from FocusZone - update focus indicator and select tab
+  // Handle focus changes from FocusZone - select tab on keyboard navigation
   const handleFocusChange = useCallback(
     (element: HTMLElement) => {
-      updateFocusIndicator(element);
       // Find the tab value from the focused element
       const value = element.getAttribute('data-value');
       if (value) {
         handleTabClick(value);
       }
     },
-    [updateFocusIndicator, handleTabClick]
+    [handleTabClick]
   );
-
-  // Handle focus entering/leaving the tablist
-  const handleTabListFocus = useCallback(() => {
-    setIsFocused(true);
-    // Update focus indicator to current active tab when entering
-    const activeTab = activeValue ? tabRefs.current.get(activeValue) ?? null : null;
-    if (activeTab) {
-      updateFocusIndicator(activeTab);
-    }
-  }, [activeValue, updateFocusIndicator]);
-
-  const handleTabListBlur = useCallback((e: React.FocusEvent<HTMLDivElement>) => {
-    // Only blur if focus is leaving the tablist entirely
-    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-      setIsFocused(false);
-    }
-  }, []);
 
   // Generate IDs for tabs and panels
   const getTabId = (value: string) => `${baseId}-tab-${value}`;
@@ -224,16 +198,6 @@ export function Tabs({
         }
       : undefined;
 
-  // Focus indicator style (follows the focused tab)
-  const focusIndicatorCSSStyle: CSSProperties | undefined =
-    focusIndicatorStyle && animated
-      ? {
-          transform: `translateX(${focusIndicatorStyle.left}px)`,
-          width: `${focusIndicatorStyle.width}px`,
-          transition: isInitialRender ? 'none' : undefined,
-        }
-      : undefined;
-
   return (
     <div className={containerClassNames}>
       <FocusZone
@@ -243,8 +207,6 @@ export function Tabs({
         role="tablist"
         ref={tabListRef}
         onFocusChange={handleFocusChange}
-        onFocus={handleTabListFocus}
-        onBlur={handleTabListBlur}
         selector="button:not([disabled])"
       >
         {items.map((item) => {
@@ -273,14 +235,6 @@ export function Tabs({
           <div
             className={styles.indicator}
             style={indicatorCSSStyle}
-            aria-hidden="true"
-          />
-        )}
-        {/* Animated focus indicator */}
-        {animated && isFocused && focusIndicatorStyle && (
-          <div
-            className={styles.focusIndicator}
-            style={focusIndicatorCSSStyle}
             aria-hidden="true"
           />
         )}

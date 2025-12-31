@@ -1,5 +1,6 @@
 .facilitatorSettings {
-  min-height: 100%;
+  flex: 1;
+  overflow-y: auto;
   padding: var(--space-6);
 }
 

@@ -13,6 +13,8 @@ import { TrashIcon } from '@ui-kit/icons/TrashIcon';
 import { DownloadIcon } from '@ui-kit/icons/DownloadIcon';
 import { useThings } from '../../contexts/ThingsContext';
 import { ImportDialog } from './ImportDialog';
+import { getThingIcon as getCustomIcon } from './IconPicker';
+import { getThingColor } from './ColorPicker';
 import type { PendingThing } from './InlineThingEditor';
 import type { ThingMetadata, ThingType } from '../../types/thing';
 import styles from './ThingsTree.module.css';
@@ -29,7 +31,8 @@ interface ThingsTreeProps {
 
 type ViewType = 'tree' | 'list';
 
-function getThingIcon(type: ThingType) {
+/** Get type-based fallback icon */
+function getTypeIcon(type: ThingType) {
   switch (type) {
     case 'category':
       return <FolderIcon className={styles.thingIcon} />;
@@ -41,6 +44,14 @@ function getThingIcon(type: ThingType) {
     default:
       return <FileIcon className={styles.thingIcon} />;
   }
+}
+
+/** Get icon for a thing - custom icon if set, otherwise type-based */
+function getThingIconElement(thing: ThingMetadata) {
+  if (thing.icon) {
+    return <span className={styles.thingIcon}>{getCustomIcon(thing.icon)}</span>;
+  }
+  return getTypeIcon(thing.type);
 }
 
 /** Options for building tree nodes with editing support */
@@ -80,10 +91,13 @@ function buildTreeNodes(
       const childNodes = buildTreeNodes(things, thing.id, newVisited, options);
       const isEditing = editingId === thing.id;
 
+      // Get color style if custom color is set
+      const colorStyle = thing.color ? { '--thing-color': getThingColor(thing.color) } as React.CSSProperties : undefined;
+
       return {
         id: thing.id,
         type: thing.type === 'category' || thing.type === 'project' ? 'folder' : 'file',
-        icon: getThingIcon(thing.type),
+        icon: getThingIconElement(thing),
         label: isEditing ? (
           <div className={styles.renameInputWrapper}>
             <Input
@@ -100,7 +114,8 @@ function buildTreeNodes(
             />
           </div>
         ) : (
-          <div className={styles.treeNodeLabel}>
+          <div className={styles.treeNodeLabel} style={colorStyle}>
+            {thing.color && <span className={styles.colorDot} />}
             <span className={styles.thingName}>{thing.name}</span>
             {thing.tags.length > 0 && (
               <span className={styles.tagPreview}>
@@ -605,6 +620,14 @@ export function ThingsTree({ onSelect, onCreateNew: _onCreateNew, selectedId, on
     // Don't select pending items
     if (node?.data && !(node.data as { isPending?: boolean }).isPending) {
       onSelect(node.data as ThingMetadata);
+      // Keep focus on the tree after selection completes
+      // Use setTimeout to ensure focus happens after React updates and any side effects
+      setTimeout(() => {
+        const treeElement = treeContainerRef.current?.querySelector('[role="tree"]') as HTMLElement;
+        if (treeElement && !treeContainerRef.current?.contains(document.activeElement)) {
+          treeElement.focus();
+        }
+      }, 50);
     }
   }, [onSelect]);
 

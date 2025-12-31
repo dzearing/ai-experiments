@@ -10,7 +10,13 @@ export type {
 
 // ChatMessage component and related types
 export { ChatMessage } from './components/ChatMessage';
-export type { ChatMessageProps, ChatMessageToolCall } from './components/ChatMessage';
+export type {
+  ChatMessageProps,
+  ChatMessageToolCall,
+  ChatMessageTextPart,
+  ChatMessageToolCallsPart,
+  ChatMessagePart,
+} from './components/ChatMessage';
 
 // ChatPanel component and related types
 export { ChatPanel } from './components/ChatPanel';

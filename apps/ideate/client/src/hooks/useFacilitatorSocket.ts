@@ -1,6 +1,59 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { FACILITATOR_WS_URL } from '../config';
-import { useFacilitator, type FacilitatorMessage, type NavigationContext } from '../contexts/FacilitatorContext';
+import { useFacilitator, type FacilitatorMessage, type NavigationContext, type MessagePart, type ToolCall } from '../contexts/FacilitatorContext';
+
+/**
+ * Server-side message format (from FacilitatorChatService)
+ */
+interface ServerFacilitatorMessage {
+  id: string;
+  userId?: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: number;
+  toolCalls?: ToolCall[];
+}
+
+/**
+ * Migrate old message format (content/toolCalls) to new parts format.
+ * Handles server-side messages that have content/toolCalls instead of parts.
+ */
+function migrateMessage(msg: ServerFacilitatorMessage | FacilitatorMessage): FacilitatorMessage {
+  // Type guard: check if message already has valid parts array
+  const hasValidParts = 'parts' in msg && Array.isArray(msg.parts) && msg.parts.length > 0;
+
+  if (hasValidParts) {
+    return msg as FacilitatorMessage;
+  }
+
+  // Convert old format (content/toolCalls) to new format (parts)
+  const parts: MessagePart[] = [];
+
+  // Get content from either format
+  const content = 'content' in msg ? msg.content : undefined;
+  const toolCalls = 'toolCalls' in msg ? msg.toolCalls : undefined;
+
+  if (content && typeof content === 'string') {
+    parts.push({ type: 'text', text: content });
+  }
+
+  if (toolCalls && Array.isArray(toolCalls) && toolCalls.length > 0) {
+    parts.push({ type: 'tool_calls', calls: toolCalls });
+  }
+
+  // If no content and no tools, add empty text part
+  if (parts.length === 0) {
+    parts.push({ type: 'text', text: '' });
+  }
+
+  return {
+    id: msg.id,
+    role: msg.role as 'user' | 'assistant' | 'system',
+    parts,
+    timestamp: msg.timestamp,
+    isStreaming: 'isStreaming' in msg ? msg.isStreaming : undefined,
+  };
+}
 
 /**
  * Server message types for the facilitator WebSocket protocol
@@ -17,10 +70,12 @@ interface ServerMessage {
   toolInput?: Record<string, unknown>;
   /** Tool output (for tool_result) */
   toolOutput?: string;
+  /** Timestamp when tool started (for tool_use timing display) */
+  startTime?: number;
   /** Complete message object (for history/message_complete) */
-  message?: FacilitatorMessage;
-  /** Array of messages (for history) */
-  messages?: FacilitatorMessage[];
+  message?: ServerFacilitatorMessage | FacilitatorMessage;
+  /** Array of messages (for history) - server sends old format with content/toolCalls */
+  messages?: ServerFacilitatorMessage[];
   /** Error message */
   error?: string;
   /** Persona name (for persona_changed) */
@@ -46,7 +101,7 @@ export interface UseFacilitatorSocketOptions {
  */
 export interface UseFacilitatorSocketReturn {
   /** Send a message to the facilitator */
-  sendMessage: (content: string) => void;
+  sendMessage: (content: string, thingIds?: string[]) => void;
   /** Clear chat history on the server */
   clearHistory: () => void;
   /** Cancel the current AI operation */
@@ -129,9 +184,9 @@ export function useFacilitatorSocket({
 
         switch (data.type) {
           case 'history':
-            // Load message history
+            // Load message history - migrate old format to new parts format
             if (data.messages) {
-              setMessages(data.messages);
+              setMessages(data.messages.map(migrateMessage));
             }
             break;
 
@@ -150,40 +205,91 @@ export function useFacilitatorSocket({
                 addMessage({
                   id: data.messageId,
                   role: 'assistant',
-                  content: data.text,
+                  parts: [{ type: 'text', text: data.text }],
                   timestamp: Date.now(),
                   isStreaming: true,
                 });
               } else {
-                // Append to existing message
+                // Append to existing message - check if last part is text
                 updateMessage(data.messageId, {
-                  content: (prev: string) => prev + data.text,
-                } as any); // Type hack for callback-based update
+                  parts: (prev: MessagePart[]) => {
+                    const lastPart = prev[prev.length - 1];
+                    if (lastPart?.type === 'text') {
+                      // Append to existing text part
+                      return [
+                        ...prev.slice(0, -1),
+                        { type: 'text' as const, text: lastPart.text + data.text },
+                      ];
+                    } else {
+                      // Add new text part (text after tools)
+                      return [...prev, { type: 'text' as const, text: data.text! }];
+                    }
+                  },
+                });
               }
             }
             break;
 
           case 'tool_use':
-            // Tool is being invoked
-            if (currentMessageIdRef.current && data.toolName) {
-              updateMessage(currentMessageIdRef.current, {
-                toolCalls: (prev: FacilitatorMessage['toolCalls']) => [
-                  ...(prev || []),
-                  { name: data.toolName!, input: data.toolInput || {} },
-                ],
-              } as any);
+            // Tool is being invoked - use messageId from server
+            if (data.messageId && data.toolName) {
+              const newToolCall: ToolCall = {
+                name: data.toolName,
+                input: data.toolInput || {},
+                startTime: data.startTime,
+              };
+
+              // If this message doesn't exist yet, create it (tool may arrive before text)
+              if (currentMessageIdRef.current !== data.messageId) {
+                if (currentMessageIdRef.current) {
+                  updateMessage(currentMessageIdRef.current, { isStreaming: false });
+                }
+                currentMessageIdRef.current = data.messageId;
+                addMessage({
+                  id: data.messageId,
+                  role: 'assistant',
+                  parts: [{ type: 'tool_calls', calls: [newToolCall] }],
+                  timestamp: Date.now(),
+                  isStreaming: true,
+                });
+              } else {
+                // Add to existing message - check if last part is tool_calls
+                updateMessage(data.messageId, {
+                  parts: (prev: MessagePart[]) => {
+                    const lastPart = prev[prev.length - 1];
+                    if (lastPart?.type === 'tool_calls') {
+                      // Add to existing tool_calls part
+                      return [
+                        ...prev.slice(0, -1),
+                        { type: 'tool_calls' as const, calls: [...lastPart.calls, newToolCall] },
+                      ];
+                    } else {
+                      // Add new tool_calls part
+                      return [...prev, { type: 'tool_calls' as const, calls: [newToolCall] }];
+                    }
+                  },
+                });
+              }
             }
             break;
 
           case 'tool_result':
-            // Tool finished executing
-            if (currentMessageIdRef.current && data.toolName) {
-              updateMessage(currentMessageIdRef.current, {
-                toolCalls: (prev: FacilitatorMessage['toolCalls']) =>
-                  prev?.map((tc) =>
-                    tc.name === data.toolName ? { ...tc, output: data.toolOutput } : tc
-                  ),
-              } as any);
+            // Tool finished executing - find and update the tool call
+            if (data.messageId && data.toolName) {
+              updateMessage(data.messageId, {
+                parts: (prev: MessagePart[]) =>
+                  prev.map((part) => {
+                    if (part.type !== 'tool_calls') return part;
+                    return {
+                      ...part,
+                      calls: part.calls.map((tc) =>
+                        tc.name === data.toolName && !tc.output
+                          ? { ...tc, output: data.toolOutput }
+                          : tc
+                      ),
+                    };
+                  }),
+              });
             }
             break;
 
@@ -219,7 +325,7 @@ export function useFacilitatorSocket({
               addMessage({
                 id: data.messageId,
                 role: 'assistant',
-                content: data.text,
+                parts: [{ type: 'text', text: data.text }],
                 timestamp: Date.now(),
                 isStreaming: false,
               });
@@ -292,13 +398,18 @@ export function useFacilitatorSocket({
   }, []);
 
   // Send message to server
-  const sendMessage = useCallback((content: string) => {
+  const sendMessage = useCallback((content: string, thingIds?: string[]) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       setIsLoading(true);
+      // Include Thing IDs in context as referencedThingIds
+      const contextWithThings = {
+        ...navigationContextRef.current,
+        ...(thingIds && thingIds.length > 0 ? { referencedThingIds: thingIds } : {}),
+      };
       wsRef.current.send(JSON.stringify({
         type: 'message',
         content,
-        context: navigationContextRef.current,
+        context: contextWithThings,
       }));
     } else {
       console.warn('[Facilitator] Cannot send message: WebSocket not connected');

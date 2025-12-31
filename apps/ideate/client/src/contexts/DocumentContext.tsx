@@ -13,6 +13,8 @@ export interface DocumentMetadata {
   title: string;
   ownerId: string;
   workspaceId?: string;
+  /** Associated Thing ID (if document belongs to a Thing) */
+  thingId?: string;
   collaboratorIds: string[];
   isPublic: boolean;
   shareCode?: string;
@@ -24,12 +26,22 @@ export interface Document extends DocumentMetadata {
   content: string;
 }
 
+interface FetchDocumentsOptions {
+  workspaceId?: string;
+  thingId?: string;
+}
+
+interface CreateDocumentOptions {
+  workspaceId?: string;
+  thingId?: string;
+}
+
 interface DocumentContextValue {
   documents: DocumentMetadata[];
   isLoading: boolean;
   error: string | null;
-  fetchDocuments: (workspaceId?: string) => Promise<void>;
-  createDocument: (title: string, workspaceId?: string) => Promise<Document>;
+  fetchDocuments: (options?: FetchDocumentsOptions) => Promise<void>;
+  createDocument: (title: string, options?: CreateDocumentOptions) => Promise<Document>;
   getDocument: (id: string) => Promise<Document | null>;
   updateDocument: (id: string, updates: Partial<Document>) => Promise<Document | null>;
   deleteDocument: (id: string) => Promise<boolean>;
@@ -49,15 +61,24 @@ export function DocumentProvider({ children }: DocumentProviderProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchDocuments = useCallback(async (workspaceId?: string) => {
+  const fetchDocuments = useCallback(async (options?: FetchDocumentsOptions) => {
     if (!user) return;
 
     setIsLoading(true);
     setError(null);
 
     try {
-      const url = workspaceId
-        ? `${API_URL}/api/documents?workspaceId=${workspaceId}`
+      const params = new URLSearchParams();
+      if (options?.workspaceId) {
+        params.set('workspaceId', options.workspaceId);
+      }
+      if (options?.thingId) {
+        params.set('thingId', options.thingId);
+      }
+
+      const queryString = params.toString();
+      const url = queryString
+        ? `${API_URL}/api/documents?${queryString}`
         : `${API_URL}/api/documents`;
 
       const response = await fetch(url, {
@@ -80,7 +101,7 @@ export function DocumentProvider({ children }: DocumentProviderProps) {
   }, [user]);
 
   const createDocument = useCallback(
-    async (title: string, workspaceId?: string): Promise<Document> => {
+    async (title: string, options?: CreateDocumentOptions): Promise<Document> => {
       if (!user) {
         throw new Error('User not authenticated');
       }
@@ -91,7 +112,11 @@ export function DocumentProvider({ children }: DocumentProviderProps) {
           'Content-Type': 'application/json',
           'x-user-id': user.id,
         },
-        body: JSON.stringify({ title, workspaceId }),
+        body: JSON.stringify({
+          title,
+          workspaceId: options?.workspaceId,
+          thingId: options?.thingId,
+        }),
       });
 
       if (!response.ok) {

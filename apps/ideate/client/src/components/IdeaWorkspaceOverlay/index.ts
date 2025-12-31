@@ -1,2 +1,2 @@
-export { IdeaWorkspaceOverlay, type IdeaWorkspaceOverlayProps } from './IdeaWorkspaceOverlay';
+export { IdeaWorkspaceOverlay, type IdeaWorkspaceOverlayProps, type ThingContext } from './IdeaWorkspaceOverlay';
 export { default } from './IdeaWorkspaceOverlay';

@@ -163,7 +163,7 @@ export function WorkspaceDetail() {
   // Fetch documents and chat rooms for this workspace
   useEffect(() => {
     if (workspaceId && user) {
-      fetchDocuments(workspaceId);
+      fetchDocuments({ workspaceId });
       fetchChatRooms(workspaceId);
     }
   }, [workspaceId, user, fetchDocuments, fetchChatRooms]);
@@ -174,7 +174,7 @@ export function WorkspaceDetail() {
 
     setIsCreatingDoc(true);
     try {
-      const doc = await createDocument(newDocTitle.trim(), workspaceId);
+      const doc = await createDocument(newDocTitle.trim(), { workspaceId });
       setShowNewDocModal(false);
       setNewDocTitle('');
       navigate(`/doc/${doc.id}`);

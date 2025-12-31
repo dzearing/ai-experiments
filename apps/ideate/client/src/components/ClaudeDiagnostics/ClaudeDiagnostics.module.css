@@ -1,0 +1,430 @@
+/* Claude Diagnostics Styles */
+
+.container {
+  height: 100%;
+  overflow: hidden;
+}
+
+.splitPane {
+  height: 100%;
+}
+
+/* ======================================
+   Session List (Left Pane)
+   ====================================== */
+
+.sessionListPane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--soft-bg);
+}
+
+.sessionListHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--soft-border);
+  background: var(--base-bg);
+}
+
+.sessionListTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.filterBar {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.sessionList {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--base-bg);
+}
+
+.sessionRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  cursor: pointer;
+  border-bottom: 1px solid var(--soft-border);
+  transition: background-color var(--duration-fast);
+}
+
+.sessionRow:hover {
+  background: var(--base-bg-hover);
+}
+
+.sessionRow.selected {
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+}
+
+.sessionRow.selected .sessionName {
+  color: var(--primary-fg);
+}
+
+.sessionRow.selected .sessionMeta {
+  opacity: 0.85;
+}
+
+.sessionIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  flex-shrink: 0;
+}
+
+.sessionIcon.facilitator {
+  background: var(--info-bg);
+  color: var(--info-fg);
+}
+
+.sessionIcon.chatroom {
+  background: var(--success-bg);
+  color: var(--success-fg);
+}
+
+.sessionIcon.ideaagent {
+  background: var(--warning-bg);
+  color: var(--warning-fg);
+}
+
+.sessionIcon.importagent {
+  background: var(--info-bg);
+  color: var(--info-fg);
+}
+
+.sessionInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.sessionName {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sessionMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ======================================
+   Session Detail (Right Pane)
+   ====================================== */
+
+.sessionDetailPane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background: var(--base-bg);
+}
+
+.detailHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--soft-border);
+  background: var(--soft-bg);
+  min-height: 56px;
+}
+
+.tabContent {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Target the Tabs component wrapper */
+.tabContent > div {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.tabContent [role="tablist"] {
+  padding: 0 var(--space-4);
+  border-bottom: 1px solid var(--soft-border);
+  background: var(--soft-bg);
+}
+
+.tabContent [role="tabpanel"] {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  height: 100%;
+}
+
+/* ======================================
+   Activity Tab
+   ====================================== */
+
+.activityTab {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--base-bg);
+}
+
+.messageRow {
+  border-bottom: 1px solid var(--soft-border);
+}
+
+.messageRow:hover {
+  background: var(--base-bg-hover);
+}
+
+.messageHeader {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  min-height: 44px;
+}
+
+.timestamp {
+  font-family: var(--font-mono);
+  min-width: 85px;
+  flex-shrink: 0;
+}
+
+.messagePreview {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.expandIcon {
+  color: var(--base-fg-softer);
+  transition: transform var(--duration-fast);
+  flex-shrink: 0;
+}
+
+.expandIcon.expanded {
+  transform: rotate(90deg);
+}
+
+.messageDetail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  padding-left: calc(var(--space-4) + 100px);
+  background: var(--soft-bg);
+  border-top: 1px solid var(--soft-border);
+}
+
+.messageContentCard {
+  padding: var(--space-2);
+}
+
+.toolCallsSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.toolCallsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.toolCall {
+  padding: var(--space-2);
+  border-left: 3px solid var(--info-bg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.toolCallHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+/* System Prompt Section */
+.systemPromptSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  user-select: none;
+}
+
+.sectionHeader:hover {
+  opacity: 0.8;
+}
+
+.systemPromptCard {
+  padding: var(--space-2);
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.systemPromptCode {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: var(--text-xs);
+}
+
+.rawJsonSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.rawJson {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.diagnosticsSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.diagnosticError {
+  border-left: 3px solid var(--danger-bg);
+}
+
+.errorText {
+  color: var(--danger-fg);
+  font-size: var(--text-sm);
+}
+
+/* ======================================
+   Context Tab
+   ====================================== */
+
+.contextTab {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  overflow-y: auto;
+  background: var(--base-bg);
+}
+
+.contextSection {
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.sectionTitle {
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--soft-border);
+  margin-bottom: var(--space-2);
+}
+
+.sectionSubtitle {
+  margin-top: var(--space-2);
+}
+
+.lastActivityRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: var(--space-2);
+  margin-top: var(--space-2);
+  border-top: 1px solid var(--soft-border);
+}
+
+.diagnosticsList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.diagnosticEntry {
+  padding: var(--space-2);
+}
+
+.diagnosticEntry.hasError {
+  border-left: 3px solid var(--danger-bg);
+}
+
+.diagnosticStats {
+  display: flex;
+  gap: var(--space-6);
+  flex-wrap: wrap;
+}
+
+.diagnosticStat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.diagnosticErrorText {
+  margin-top: var(--space-2);
+}
+
+/* ======================================
+   Empty & Loading States
+   ====================================== */
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: var(--space-8);
+  text-align: center;
+  background: var(--base-bg);
+}
+
+.loadingState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  height: 100%;
+  background: var(--base-bg);
+}

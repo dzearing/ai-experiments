@@ -47,6 +47,7 @@ export function App() {
                         <Route path="/auth" component={Auth} />
                         <Route path="/join/:token" component={JoinWorkspace} />
                         <Route path="/diagnostics" component={Diagnostics} />
+                        <Route path="/diagnostics/:tab" component={Diagnostics} />
 
                         {/* Protected routes with app layout */}
                         <Route component={AppLayout}>
@@ -56,7 +57,9 @@ export function App() {
                           <Route path="/workspace/:workspaceId/ideas" component={Ideas} />
                           <Route path="/ideas" component={Ideas} />
                           <Route path="/workspace/:workspaceId/things" component={Things} />
+                          <Route path="/workspace/:workspaceId/things/:thingId" component={Things} />
                           <Route path="/things" component={Things} />
+                          <Route path="/things/:thingId" component={Things} />
                           <Route path="/doc/:documentId" component={DocumentEditor} />
                           <Route path="/chat/:chatRoomId" component={ChatRoom} />
                           <Route path="/settings" component={Settings} />

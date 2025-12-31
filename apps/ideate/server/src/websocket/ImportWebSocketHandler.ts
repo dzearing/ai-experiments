@@ -1,7 +1,7 @@
 import type { RawData } from 'ws';
 import { WebSocket } from 'ws';
 import type { IncomingMessage } from 'http';
-import { ImportAgentService, type ImportRequest, type ImportStep } from '../services/ImportAgentService.js';
+import { ImportAgentService, type ImportRequest, type ImportStep, type ImportSubTask } from '../services/ImportAgentService.js';
 import type { ThingMetadata } from '../services/ThingService.js';
 
 /**
@@ -16,13 +16,20 @@ interface ClientMessage {
  * Server message types for the import WebSocket protocol
  */
 interface ServerMessage {
-  type: 'step_start' | 'step_update' | 'step_complete' | 'step_error' | 'complete' | 'error';
+  type: 'step_start' | 'step_update' | 'step_complete' | 'step_error' | 'complete' | 'error'
+    | 'subtasks_start' | 'subtask_update' | 'subtasks_complete';
   step?: { id: string; label: string };
   stepId?: string;
   update?: { status?: ImportStep['status']; detail?: string };
   detail?: string;
   error?: string;
   createdThings?: ThingMetadata[];
+  // Sub-task fields
+  totalTasks?: number;
+  taskNames?: string[];
+  subTask?: ImportSubTask;
+  completed?: number;
+  total?: number;
 }
 
 /**
@@ -171,6 +178,27 @@ export class ImportWebSocketHandler {
               error,
             });
             client.importService = null;
+          },
+          // Sub-task callbacks for decomposed imports
+          onSubTasksStart: (totalTasks, taskNames) => {
+            this.send(client.ws, {
+              type: 'subtasks_start',
+              totalTasks,
+              taskNames,
+            });
+          },
+          onSubTaskUpdate: (subTask) => {
+            this.send(client.ws, {
+              type: 'subtask_update',
+              subTask,
+            });
+          },
+          onSubTasksComplete: (completed, total) => {
+            this.send(client.ws, {
+              type: 'subtasks_complete',
+              completed,
+              total,
+            });
           },
         }
       );

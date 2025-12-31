@@ -1,9 +1,23 @@
 import { query, type SDKAssistantMessage } from '@anthropic-ai/claude-code';
 import { ThingService, type CreateThingInput, type ThingMetadata } from './ThingService.js';
+import { getImportAgentChatService } from './ImportAgentChatService.js';
+import { getJobOrchestrator, type SubTask } from './JobOrchestrator.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { execSync } from 'child_process';
 import { tmpdir, homedir } from 'os';
+
+/**
+ * Information about a discovered package
+ */
+interface PackageInfo {
+  name: string;
+  path: string;
+  relativePath: string;
+  description?: string;
+  version?: string;
+  hasReadme: boolean;
+}
 
 /**
  * Import request from the client
@@ -29,6 +43,16 @@ export interface ImportStep {
 }
 
 /**
+ * Sub-task progress information
+ */
+export interface ImportSubTask {
+  id: string;
+  name: string;
+  status: 'pending' | 'running' | 'complete' | 'error';
+  error?: string;
+}
+
+/**
  * Callbacks for streaming import progress
  */
 export interface ImportCallbacks {
@@ -38,6 +62,20 @@ export interface ImportCallbacks {
   onStepError: (stepId: string, error: string) => void;
   onComplete: (createdThings: ThingMetadata[]) => void;
   onError: (error: string) => void;
+  // Sub-task callbacks for decomposed jobs
+  onSubTasksStart?: (totalTasks: number, taskNames: string[]) => void;
+  onSubTaskUpdate?: (subTask: ImportSubTask) => void;
+  onSubTasksComplete?: (completed: number, total: number) => void;
+}
+
+/**
+ * Link to be created for a Thing
+ */
+interface ThingLinkPlan {
+  type: 'file' | 'url' | 'github' | 'package';
+  label: string;
+  target: string;
+  description?: string;
 }
 
 /**
@@ -46,8 +84,18 @@ export interface ImportCallbacks {
 interface ThingPlan {
   name: string;
   description?: string;
-  type?: 'category' | 'project' | 'feature' | 'item';
+  type?: string;  // Allow custom types like 'package', 'component', 'service'
   tags?: string[];
+  /** File paths, URLs, or package references related to this thing */
+  links?: ThingLinkPlan[];
+  /** Key-value properties (version, author, etc.) */
+  properties?: Record<string, string>;
+  /** Documentation content (README, etc.) */
+  content?: string;
+  /** Icon identifier */
+  icon?: string;
+  /** Color identifier */
+  color?: string;
   children?: ThingPlan[];
 }
 
@@ -82,6 +130,15 @@ export class ImportAgentService {
     let stepCounter = 0;
 
     const nextStepId = () => `step-${++stepCounter}`;
+
+    // Create a session for diagnostics
+    const chatService = getImportAgentChatService();
+    const sessionId = await chatService.createSession(
+      request.userId,
+      request.sourceType,
+      request.sourceType === 'git' ? request.gitUrl! : request.localPath!,
+      request.targetThingId
+    );
 
     try {
       // Step 1: Access source
@@ -149,7 +206,7 @@ export class ImportAgentService {
       const analyzeStepId = nextStepId();
       callbacks.onStepStart({ id: analyzeStepId, label: 'Planning Thing structure...' });
 
-      const plan = await this.analyzeWithClaude(sourceContent, request.instructions, callbacks, analyzeStepId);
+      const plan = await this.analyzeWithClaude(sourceContent, request.instructions, callbacks, analyzeStepId, sessionId, chatService, sourcePath);
 
       if (this.abortController?.signal.aborted) {
         throw new Error('Import cancelled');
@@ -160,7 +217,7 @@ export class ImportAgentService {
 
       // Step 3: Create Things
       const createStepId = nextStepId();
-      callbacks.onStepStart({ id: createStepId, label: 'Creating Things...' });
+      callbacks.onStepStart({ id: createStepId, label: thingCount === 1 ? 'Creating a Thing...' : `Creating ${thingCount} Things...` });
 
       await this.createThingsFromPlan(
         plan,
@@ -169,10 +226,11 @@ export class ImportAgentService {
         request.workspaceId,
         createdThings,
         callbacks,
-        createStepId
+        createStepId,
+        sourcePath  // Pass source path to resolve absolute paths
       );
 
-      callbacks.onStepComplete(createStepId, `Created ${createdThings.length} Things`);
+      callbacks.onStepComplete(createStepId, createdThings.length === 1 ? 'Created 1 Thing' : `Created ${createdThings.length} Things`);
 
       // Clean up temp directory if git
       if (request.sourceType === 'git' && sourcePath.startsWith(tmpdir())) {
@@ -183,40 +241,95 @@ export class ImportAgentService {
         }
       }
 
+      // Update session status to completed
+      await chatService.updateSessionStatus(sessionId, 'completed', { thingsCreated: createdThings.length });
+
       callbacks.onComplete(createdThings);
     } catch (error) {
-      if ((error as Error).message === 'Import cancelled') {
-        callbacks.onError('Import cancelled by user');
-      } else {
-        callbacks.onError(error instanceof Error ? error.message : 'Unknown error');
-      }
+      const errorMessage = (error as Error).message === 'Import cancelled'
+        ? 'Import cancelled by user'
+        : (error instanceof Error ? error.message : 'Unknown error');
+
+      // Update session status to error
+      await chatService.updateSessionStatus(sessionId, 'error', { error: errorMessage });
+
+      callbacks.onError(errorMessage);
     } finally {
       this.abortController = null;
     }
   }
 
   /**
-   * Get a summary of directory structure with counts
+   * Get a summary of directory structure with counts and metadata
    */
   private async getDirectoryStructure(
     dirPath: string,
     depth = 0,
     maxDepth = 3,
-    counts = { folders: 0, files: 0 }
+    counts = { folders: 0, files: 0 },
+    rootPath?: string
   ): Promise<{ content: string; folderCount: number; fileCount: number }> {
     if (depth > maxDepth) {
       return { content: '', folderCount: counts.folders, fileCount: counts.files };
     }
 
+    const actualRootPath = rootPath || dirPath;
     const entries = await fs.readdir(dirPath, { withFileTypes: true });
     const lines: string[] = [];
     const indent = '  '.repeat(depth);
+    const relativePath = path.relative(actualRootPath, dirPath) || '.';
 
     // Filter out common non-essential directories
     const filteredEntries = entries.filter(e => {
       const name = e.name;
-      return !['node_modules', '.git', '.next', 'dist', 'build', '__pycache__', '.venv', 'venv'].includes(name);
+      return !['node_modules', '.git', '.next', 'dist', 'build', '__pycache__', '.venv', 'venv', '.turbo', '.cache'].includes(name);
     });
+
+    // Check for package.json and README at this level
+    const hasPackageJson = filteredEntries.some(e => e.name === 'package.json');
+    const readmeEntry = filteredEntries.find(e => e.name.toLowerCase().startsWith('readme'));
+
+    // If this is a package directory, include metadata
+    if (hasPackageJson) {
+      try {
+        const pkgPath = path.join(dirPath, 'package.json');
+        const pkgContent = await fs.readFile(pkgPath, 'utf-8');
+        const pkg = JSON.parse(pkgContent);
+        lines.push(`${indent}📦 PACKAGE: ${pkg.name || path.basename(dirPath)}`);
+        lines.push(`${indent}   Path: ${relativePath}`);
+        if (pkg.description) lines.push(`${indent}   Description: ${pkg.description}`);
+        if (pkg.version) lines.push(`${indent}   Version: ${pkg.version}`);
+        if (pkg.author) lines.push(`${indent}   Author: ${typeof pkg.author === 'string' ? pkg.author : pkg.author.name}`);
+        if (pkg.license) lines.push(`${indent}   License: ${pkg.license}`);
+        if (pkg.main) lines.push(`${indent}   Main: ${pkg.main}`);
+        if (pkg.dependencies) {
+          const deps = Object.keys(pkg.dependencies).slice(0, 5).join(', ');
+          const more = Object.keys(pkg.dependencies).length > 5 ? ` +${Object.keys(pkg.dependencies).length - 5} more` : '';
+          lines.push(`${indent}   Dependencies: ${deps}${more}`);
+        }
+      } catch {
+        // Ignore package.json read errors
+      }
+    }
+
+    // Note README and other docs as available files
+    if (readmeEntry) {
+      lines.push(`${indent}   Docs: ${readmeEntry.name} (available at ${relativePath}/${readmeEntry.name})`);
+    }
+
+    // Check for other important docs
+    const docFiles = filteredEntries.filter(e =>
+      !e.isDirectory() &&
+      (e.name.toLowerCase().includes('contributing') ||
+       e.name.toLowerCase().includes('changelog') ||
+       e.name.toLowerCase().includes('api') ||
+       e.name.toLowerCase().endsWith('.md'))
+    );
+    for (const doc of docFiles.slice(0, 3)) {
+      if (!doc.name.toLowerCase().startsWith('readme')) {
+        lines.push(`${indent}   Docs: ${doc.name} (available at ${relativePath}/${doc.name})`);
+      }
+    }
 
     for (const entry of filteredEntries.slice(0, 50)) { // Limit entries per directory
       if (entry.isDirectory()) {
@@ -226,10 +339,12 @@ export class ImportAgentService {
           path.join(dirPath, entry.name),
           depth + 1,
           maxDepth,
-          counts
+          counts,
+          actualRootPath
         );
         if (subResult.content) lines.push(subResult.content);
-      } else {
+      } else if (!['package.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml'].includes(entry.name) &&
+                 !entry.name.toLowerCase().startsWith('readme')) {
         counts.files++;
         lines.push(`${indent}📄 ${entry.name}`);
       }
@@ -247,19 +362,395 @@ export class ImportAgentService {
   }
 
   /**
+   * Find all packages in a directory (looks for package.json files)
+   */
+  private async findPackages(dirPath: string, rootPath?: string): Promise<PackageInfo[]> {
+    const packages: PackageInfo[] = [];
+    const actualRootPath = rootPath || dirPath;
+
+    try {
+      const entries = await fs.readdir(dirPath, { withFileTypes: true });
+
+      // Check if this directory is a package
+      const hasPackageJson = entries.some(e => e.name === 'package.json');
+      if (hasPackageJson) {
+        try {
+          const pkgPath = path.join(dirPath, 'package.json');
+          const pkgContent = await fs.readFile(pkgPath, 'utf-8');
+          const pkg = JSON.parse(pkgContent);
+          const hasReadme = entries.some(e => e.name.toLowerCase().startsWith('readme'));
+
+          packages.push({
+            name: pkg.name || path.basename(dirPath),
+            path: dirPath,
+            relativePath: path.relative(actualRootPath, dirPath) || '.',
+            description: pkg.description,
+            version: pkg.version,
+            hasReadme,
+          });
+        } catch {
+          // Ignore package.json read errors
+        }
+      }
+
+      // Recursively search subdirectories (skip common non-essential dirs)
+      const skipDirs = ['node_modules', '.git', '.next', 'dist', 'build', '__pycache__', '.venv', 'venv', '.turbo', '.cache'];
+      for (const entry of entries) {
+        if (entry.isDirectory() && !skipDirs.includes(entry.name)) {
+          const subPackages = await this.findPackages(path.join(dirPath, entry.name), actualRootPath);
+          packages.push(...subPackages);
+        }
+      }
+    } catch {
+      // Ignore directory read errors
+    }
+
+    return packages;
+  }
+
+  /**
+   * Get detailed info about a single package for analysis
+   */
+  private async getPackageDetails(pkg: PackageInfo): Promise<string> {
+    const lines: string[] = [];
+    lines.push(`📦 PACKAGE: ${pkg.name}`);
+    lines.push(`   Path: ${pkg.relativePath}`);
+    if (pkg.description) lines.push(`   Description: ${pkg.description}`);
+    if (pkg.version) lines.push(`   Version: ${pkg.version}`);
+
+    // Read package.json for more details
+    try {
+      const pkgPath = path.join(pkg.path, 'package.json');
+      const pkgContent = await fs.readFile(pkgPath, 'utf-8');
+      const pkgJson = JSON.parse(pkgContent);
+
+      if (pkgJson.author) {
+        lines.push(`   Author: ${typeof pkgJson.author === 'string' ? pkgJson.author : pkgJson.author.name}`);
+      }
+      if (pkgJson.license) lines.push(`   License: ${pkgJson.license}`);
+      if (pkgJson.main) lines.push(`   Main: ${pkgJson.main}`);
+      if (pkgJson.dependencies) {
+        const deps = Object.keys(pkgJson.dependencies).slice(0, 5).join(', ');
+        const more = Object.keys(pkgJson.dependencies).length > 5 ? ` +${Object.keys(pkgJson.dependencies).length - 5} more` : '';
+        lines.push(`   Dependencies: ${deps}${more}`);
+      }
+    } catch {
+      // Ignore errors
+    }
+
+    // List available docs
+    if (pkg.hasReadme) {
+      lines.push(`   Docs: README.md (available at ${pkg.relativePath}/README.md)`);
+    }
+
+    // List directory contents (shallow)
+    try {
+      const entries = await fs.readdir(pkg.path, { withFileTypes: true });
+      const filtered = entries.filter(e =>
+        !['node_modules', '.git', 'dist', 'build', 'package.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml'].includes(e.name) &&
+        !e.name.toLowerCase().startsWith('readme')
+      );
+
+      for (const entry of filtered.slice(0, 15)) {
+        if (entry.isDirectory()) {
+          lines.push(`   📁 ${entry.name}/`);
+        } else {
+          lines.push(`   📄 ${entry.name}`);
+        }
+      }
+      if (filtered.length > 15) {
+        lines.push(`   ... and ${filtered.length - 15} more entries`);
+      }
+    } catch {
+      // Ignore errors
+    }
+
+    return lines.join('\n');
+  }
+
+  /**
+   * Create a prompt for analyzing a single package
+   */
+  private createPackageAnalysisPrompt(packageDetails: string, instructions: string): string {
+    return `You are a JSON generator. You MUST output ONLY valid JSON with no other text.
+
+TASK: Analyze this package and create a Thing with rich metadata.
+
+PACKAGE INFO:
+${packageDetails}
+
+USER INSTRUCTIONS:
+${instructions}
+
+OUTPUT FORMAT (required schema):
+{
+  "name": "string (required - MUST be the exact package name from package.json, e.g. '@ui-kit/icons', 'lodash', 'react')",
+  "description": "string (required - concise summary of purpose, 1-2 sentences)",
+  "type": "package",
+  "tags": ["array", "of", "relevant", "tags"],
+  "links": [
+    {
+      "type": "file",
+      "label": "Package folder",
+      "target": "relative/path/to/folder"
+    }
+  ],
+  "properties": {
+    "version": "from package.json if available",
+    "author": "from package.json if available",
+    "license": "from package.json if available"
+  },
+  "icon": "package",
+  "color": "blue|green|purple|orange|teal|pink (based on purpose)"
+}
+
+CRITICAL NAMING RULE: The "name" field MUST be the EXACT package name from package.json (the "name" field in package.json). Do NOT rename it to something "friendly" like "Icon Library" - use the actual name like "@ui-kit/icons".
+
+CRITICAL: Your response must be a single JSON object (not an array). Start with '{' and end with '}'. No explanations, no markdown.`;
+  }
+
+  /**
+   * Parse a package analysis response
+   */
+  private parsePackageResponse(response: string): ThingPlan {
+    let jsonStr = response.trim();
+
+    // Try to extract JSON from markdown code blocks
+    const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+    if (jsonMatch) {
+      jsonStr = jsonMatch[1].trim();
+    }
+
+    // Try to find object directly
+    const objectMatch = jsonStr.match(/\{[\s\S]*\}/);
+    if (objectMatch) {
+      jsonStr = objectMatch[0];
+    }
+
+    if (!jsonStr.startsWith('{')) {
+      throw new Error('Response does not contain valid JSON object');
+    }
+
+    return JSON.parse(jsonStr) as ThingPlan;
+  }
+
+  /**
+   * Analyze source using decomposition for large imports
+   */
+  private async analyzeWithDecomposition(
+    sourcePath: string,
+    instructions: string,
+    callbacks: ImportCallbacks,
+    stepId: string
+  ): Promise<ThingPlan[]> {
+    // Find all packages
+    const packages = await this.findPackages(sourcePath);
+
+    if (packages.length === 0) {
+      // No packages found, fall back to regular analysis
+      return [];
+    }
+
+    callbacks.onStepUpdate(stepId, { detail: `Found ${packages.length} packages, analyzing each...` });
+
+    // Create sub-tasks for each package
+    const subTasks: SubTask<ThingPlan>[] = await Promise.all(
+      packages.map(async (pkg) => {
+        const details = await this.getPackageDetails(pkg);
+        const prompt = this.createPackageAnalysisPrompt(details, instructions);
+
+        return {
+          id: `pkg-${pkg.name}`,
+          name: `Analyzing ${pkg.name}`,
+          prompt,
+          parseResponse: (response: string) => {
+            const plan = this.parsePackageResponse(response);
+            // Ensure the path is set correctly
+            if (!plan.links) plan.links = [];
+            const hasPathLink = plan.links.some(l => l.type === 'file' && l.target === pkg.relativePath);
+            if (!hasPathLink) {
+              plan.links.unshift({
+                type: 'file',
+                label: 'Package folder',
+                target: pkg.relativePath || '.',
+              });
+            }
+            return plan;
+          },
+        };
+      })
+    );
+
+    // Notify that sub-tasks are starting
+    const taskNames = packages.map(pkg => pkg.name);
+    callbacks.onSubTasksStart?.(packages.length, taskNames);
+
+    // Use the orchestrator to run sub-tasks
+    const orchestrator = getJobOrchestrator();
+    let completedCount = 0;
+
+    const results = await orchestrator.run(
+      {
+        id: `import-${Date.now()}`,
+        type: 'import',
+        input: { sourcePath, instructions },
+        context: {
+          userId: 'system',
+          abortSignal: this.abortController?.signal,
+        },
+        shouldDecompose: () => true, // We already decomposed
+        decompose: () => subTasks,
+        aggregate: (outputs: ThingPlan[]) => outputs,
+        executeDirect: async () => [], // Won't be called since shouldDecompose returns true
+      },
+      {
+        onSubTaskStart: (task, index, total) => {
+          callbacks.onSubTaskUpdate?.({
+            id: task.id,
+            name: task.name,
+            status: 'running',
+          });
+          callbacks.onStepUpdate(stepId, {
+            detail: `Analyzing ${task.name} (${index + 1}/${total})...`
+          });
+        },
+        onSubTaskComplete: (task, _output, _index) => {
+          completedCount++;
+          callbacks.onSubTaskUpdate?.({
+            id: task.id,
+            name: task.name,
+            status: 'complete',
+          });
+          callbacks.onSubTasksComplete?.(completedCount, packages.length);
+          callbacks.onStepUpdate(stepId, {
+            detail: `Completed ${completedCount}/${packages.length} packages`
+          });
+        },
+        onSubTaskError: (task, error, _index) => {
+          callbacks.onSubTaskUpdate?.({
+            id: task.id,
+            name: task.name,
+            status: 'error',
+            error: error.message,
+          });
+          console.error(`[ImportAgentService] Failed to analyze ${task.name}:`, error.message);
+        },
+      },
+      {
+        concurrency: 3,
+        retries: 1,
+        continueOnError: true,
+        model: 'haiku', // Use haiku for individual packages (faster, cheaper)
+      }
+    );
+
+    return results;
+  }
+
+  /**
+   * Threshold for decomposition (number of packages)
+   */
+  private readonly DECOMPOSITION_THRESHOLD = 5;
+
+  /**
+   * Check if user instructions indicate they want multiple items (vs a single specific item)
+   */
+  private instructionsRequestMultiple(instructions: string): boolean {
+    const lower = instructions.toLowerCase();
+
+    // Keywords that indicate wanting multiple items
+    const multipleKeywords = [
+      'all packages', 'all the packages', 'every package', 'each package',
+      'all components', 'all modules', 'all libraries',
+      'everything', 'import all', 'add all', 'scan all',
+      'all of them', 'the whole', 'entire',
+    ];
+
+    // Keywords that indicate wanting a single specific item
+    const singleKeywords = [
+      'the icons package', 'icons package',
+      'the react package', 'react package',
+      'the core package', 'core package',
+      'add the ', 'just the ', 'only the ',
+      'this package', 'that package',
+      'single', 'just one', 'only one',
+    ];
+
+    // Check for single-item indicators first (more specific)
+    for (const keyword of singleKeywords) {
+      if (lower.includes(keyword)) {
+        return false; // User wants a single item
+      }
+    }
+
+    // Check for multiple-item indicators
+    for (const keyword of multipleKeywords) {
+      if (lower.includes(keyword)) {
+        return true; // User wants multiple items
+      }
+    }
+
+    // Default: if instructions are short and mention "package" (singular), assume single
+    if (lower.includes('package') && !lower.includes('packages')) {
+      return false;
+    }
+
+    // Default to false (single) to avoid over-importing
+    return false;
+  }
+
+  /**
    * Analyze source with Claude to generate a Thing plan
    */
   private async analyzeWithClaude(
     sourceContent: string,
     instructions: string,
     callbacks: ImportCallbacks,
-    stepId: string
+    stepId: string,
+    sessionId: string,
+    chatService: ReturnType<typeof getImportAgentChatService>,
+    sourcePath?: string  // Optional path for decomposition
   ): Promise<ThingPlan[]> {
+    // Check if we should use decomposition for large imports
+    // Only decompose if: 1) there are many packages, AND 2) user asked for multiple items
+    if (sourcePath && this.instructionsRequestMultiple(instructions)) {
+      const packages = await this.findPackages(sourcePath);
+      if (packages.length >= this.DECOMPOSITION_THRESHOLD) {
+        console.log(`[ImportAgentService] Using decomposition for ${packages.length} packages (user requested multiple)`);
+        callbacks.onStepUpdate(stepId, {
+          detail: `Large import detected (${packages.length} packages). Using parallel analysis...`
+        });
+
+        const decomposedResults = await this.analyzeWithDecomposition(
+          sourcePath,
+          instructions,
+          callbacks,
+          stepId
+        );
+
+        if (decomposedResults.length > 0) {
+          // Log for diagnostics
+          await chatService.addMessage(
+            sessionId,
+            'assistant',
+            `Used decomposition to analyze ${packages.length} packages. Successfully analyzed ${decomposedResults.length}.`,
+            { model: 'haiku' }
+          );
+          return decomposedResults;
+        }
+        // Fall through to regular analysis if decomposition returned nothing
+        console.log('[ImportAgentService] Decomposition returned no results, falling back to regular analysis');
+      }
+    } else if (sourcePath) {
+      console.log(`[ImportAgentService] Skipping decomposition - user instructions indicate single item request`);
+    }
+
     callbacks.onStepUpdate(stepId, { detail: 'Analyzing file structure...' });
+    const startTime = Date.now();
 
     const prompt = `You are a JSON generator. You MUST output ONLY valid JSON with no other text.
 
-TASK: Analyze this source content and create a hierarchical structure of "Things" based on user instructions.
+TASK: Analyze this source content and create Things based on user instructions.
 
 SOURCE CONTENT:
 ${sourceContent}
@@ -270,15 +761,62 @@ ${instructions}
 OUTPUT FORMAT (required schema):
 [
   {
-    "name": "string (required)",
-    "description": "string (optional)",
-    "type": "category|project|feature|item (default: item)",
-    "tags": ["array", "of", "strings"],
-    "children": [/* nested Things with same schema */]
+    "name": "string (required - see naming rules below)",
+    "description": "string (required - concise summary of purpose, 1-2 sentences)",
+    "type": "string (e.g., 'package', 'component', 'service', 'library', 'app', 'config', 'category', 'project', 'feature', 'item')",
+    "tags": ["array", "of", "relevant", "tags"],
+    "links": [
+      {
+        "type": "file",
+        "label": "/absolute/path/to/package/folder/",
+        "target": "path/to/folder"
+      },
+      {
+        "type": "file",
+        "label": ".../README.md",
+        "target": "path/to/README.md"
+      }
+    ],
+    "properties": {
+      "version": "from package.json if available",
+      "author": "from package.json if available",
+      "license": "from package.json if available"
+    },
+    "icon": "package|folder|code|gear|file|globe (based on type)",
+    "color": "blue|green|purple|orange|teal|pink (based on type/purpose)",
+    "children": [/* nested Things - ONLY if user explicitly asks for children/sub-items */]
   }
 ]
 
-CRITICAL: Your response must start with '[' and end with ']'. No explanations, no markdown, no text before or after the JSON array. Just the raw JSON array.`;
+CRITICAL RULES - FOLLOW EXACTLY:
+
+1. **FOLLOW USER INSTRUCTIONS LITERALLY**
+   - If user says "add the icons package", create ONLY ONE Thing for that specific package
+   - If user says "add all packages", then add multiple Things
+   - If user says "add X with its components", then include children
+   - Do NOT create children/sub-items unless the user explicitly requests them
+   - Do NOT expand or elaborate beyond what was asked
+
+2. **NAMING - Use the actual package/project name**
+   - For npm packages: Use the EXACT name from package.json (e.g., "@ui-kit/icons", "react", "lodash")
+   - Do NOT rename packages to "friendly" names like "Icon Library" or "React Framework"
+   - The name field should match what you'd type in "npm install <name>"
+   - For non-packages: Use the folder name or a descriptive name based on user instructions
+
+3. **SCOPE - Only create what was asked**
+   - If user asks for ONE specific package, return an array with ONE item
+   - If user asks for "all packages" or "everything", then return multiple items
+   - When in doubt, create fewer Things rather than more
+
+4. Include a link to the package folder path (target = relative path)
+5. Include README link if it exists
+6. Description should be 1-2 sentences summarizing purpose
+7. Extract version, author, license from package.json as properties
+
+CRITICAL: Your response must start with '[' and end with ']'. No explanations, no markdown. Just the raw JSON array.`;
+
+    // Store the user message (prompt) for diagnostics
+    await chatService.addMessage(sessionId, 'user', `Instructions: ${instructions}\n\nSource content: ${sourceContent.slice(0, 500)}...`);
 
     try {
       const response = query({
@@ -293,6 +831,8 @@ CRITICAL: Your response must start with '[' and end with ']'. No explanations, n
       let fullResponse = '';
       let lastUpdateTime = Date.now();
       const updateInterval = 500; // Update every 500ms
+      let totalInputTokens = 0;
+      let totalOutputTokens = 0;
 
       for await (const message of response) {
         if (this.abortController?.signal.aborted) {
@@ -302,6 +842,13 @@ CRITICAL: Your response must start with '[' and end with ']'. No explanations, n
         if (message.type === 'assistant') {
           const assistantMsg = message as SDKAssistantMessage;
           const msgContent = assistantMsg.message.content;
+
+          // Extract usage info if available
+          const usage = (assistantMsg.message as { usage?: { input_tokens?: number; output_tokens?: number } }).usage;
+          if (usage) {
+            if (usage.input_tokens) totalInputTokens = usage.input_tokens;
+            if (usage.output_tokens) totalOutputTokens = usage.output_tokens;
+          }
 
           if (Array.isArray(msgContent)) {
             for (const block of msgContent) {
@@ -330,8 +877,24 @@ CRITICAL: Your response must start with '[' and end with ']'. No explanations, n
           if (!fullResponse) {
             fullResponse = message.result;
           }
+          // Extract final usage from result if available
+          const resultUsage = (message as { usage?: { input_tokens?: number; output_tokens?: number } }).usage;
+          if (resultUsage) {
+            if (resultUsage.input_tokens) totalInputTokens = resultUsage.input_tokens;
+            if (resultUsage.output_tokens) totalOutputTokens = resultUsage.output_tokens;
+          }
         }
       }
+
+      // Store the assistant response with diagnostics
+      const durationMs = Date.now() - startTime;
+      await chatService.addMessage(sessionId, 'assistant', fullResponse, {
+        model: 'sonnet',
+        durationMs,
+        tokenUsage: totalInputTokens > 0 || totalOutputTokens > 0
+          ? { inputTokens: totalInputTokens, outputTokens: totalOutputTokens }
+          : undefined,
+      });
 
       // Parse the JSON response
       let jsonStr = fullResponse.trim();
@@ -389,7 +952,8 @@ CRITICAL: Your response must start with '[' and end with ']'. No explanations, n
     workspaceId: string | undefined,
     createdThings: ThingMetadata[],
     callbacks: ImportCallbacks,
-    stepId: string
+    stepId: string,
+    sourcePath: string  // Root path to resolve absolute file paths
   ): Promise<void> {
     for (const plan of plans) {
       if (this.abortController?.signal.aborted) {
@@ -398,6 +962,69 @@ CRITICAL: Your response must start with '[' and end with ']'. No explanations, n
 
       callbacks.onStepUpdate(stepId, { detail: `Creating "${plan.name}"...` });
 
+      // Convert links from plan format to CreateThingInput format
+      // Make file paths absolute by prepending sourcePath
+      // Keep Claude's labels (already formatted as absolute or .../relative)
+      const links = plan.links?.map(link => {
+        if (link.type !== 'file') {
+          return {
+            type: link.type as 'file' | 'url' | 'github' | 'package',
+            label: link.label,
+            target: link.target,
+            description: link.description,
+          };
+        }
+
+        // Make target absolute
+        const absoluteTarget = path.isAbsolute(link.target)
+          ? link.target
+          : path.join(sourcePath, link.target);
+
+        // Determine if it's a folder (ends with / or is the package root)
+        const isFolder = link.target.endsWith('/') ||
+          link.target === '.' ||
+          link.target === '' ||
+          !path.extname(link.target);
+
+        // Format the target with trailing / for folders
+        const formattedTarget = isFolder && !absoluteTarget.endsWith('/')
+          ? absoluteTarget + '/'
+          : absoluteTarget;
+
+        // Format label: use absolute path for package root (. or empty target),
+        // otherwise use .../filename format for relative paths
+        let label: string;
+        if (!link.target || link.target === '.' || link.target === './') {
+          // Source root - show full absolute path
+          label = formattedTarget;
+        } else {
+          // Any file or subfolder - show as relative .../name
+          const fileName = path.basename(absoluteTarget);
+          label = isFolder ? `.../${fileName}/` : `.../${fileName}`;
+        }
+
+        return {
+          type: 'file' as const,
+          label,
+          target: formattedTarget,
+          description: link.description,
+        };
+      });
+
+      // Map icon string to valid ThingIcon type
+      const validIcons = ['folder', 'file', 'code', 'gear', 'star', 'heart', 'home', 'calendar',
+        'chat', 'user', 'users', 'bell', 'link', 'image', 'clock', 'check-circle', 'warning',
+        'info', 'table', 'list-task', 'package', 'globe'] as const;
+      const icon = plan.icon && validIcons.includes(plan.icon as typeof validIcons[number])
+        ? plan.icon as typeof validIcons[number]
+        : undefined;
+
+      // Map color string to valid ThingColor type
+      const validColors = ['default', 'blue', 'green', 'purple', 'orange', 'red', 'teal', 'pink', 'yellow', 'gray'] as const;
+      const color = plan.color && validColors.includes(plan.color as typeof validColors[number])
+        ? plan.color as typeof validColors[number]
+        : undefined;
+
       const input: CreateThingInput = {
         name: plan.name,
         description: plan.description,
@@ -405,6 +1032,10 @@ CRITICAL: Your response must start with '[' and end with ']'. No explanations, n
         tags: plan.tags || [],
         parentIds: [parentId],
         workspaceId,
+        links,
+        properties: plan.properties,
+        icon,
+        color,
       };
 
       const created = await this.thingService.createThing(userId, input);
@@ -419,7 +1050,8 @@ CRITICAL: Your response must start with '[' and end with ']'. No explanations, n
           workspaceId,
           createdThings,
           callbacks,
-          stepId
+          stepId,
+          sourcePath  // Pass through for nested items
         );
       }
     }

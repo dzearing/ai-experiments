@@ -14,7 +14,7 @@ import type { Thing, ThingMetadata } from '../types/thing';
 import styles from './Things.module.css';
 
 export function Things() {
-  const { workspaceId } = useParams<{ workspaceId?: string }>();
+  const { workspaceId, thingId: urlThingId } = useParams<{ workspaceId?: string; thingId?: string }>();
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { session } = useSession();
@@ -25,13 +25,10 @@ export function Things() {
     setSelectedThingId,
     fetchThingsGraph,
     setThings,
-    getThing,
     deleteThing,
   } = useThings();
   const { setNavigationContext, open: openFacilitator } = useFacilitator();
 
-  const [selectedThing, setSelectedThing] = useState<Thing | null>(null);
-  const [isLoadingThing, setIsLoadingThing] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createParentId, setCreateParentId] = useState<string | undefined>();
   const [startInlineEdit, setStartInlineEdit] = useState<(() => void) | null>(null);
@@ -59,12 +56,8 @@ export function Things() {
     if (resourceType === 'thing') {
       const thing = data as ThingMetadata;
       setThings(prev => prev.map(t => t.id === thing.id ? thing : t));
-      // Update selected thing if it's the one being updated
-      if (selectedThingId === thing.id) {
-        setSelectedThing(prev => prev ? { ...prev, ...thing } : null);
-      }
     }
-  }, [setThings, selectedThingId]);
+  }, [setThings]);
 
   const handleResourceDeleted = useCallback((
     resourceId: string,
@@ -74,7 +67,6 @@ export function Things() {
       setThings(prev => prev.filter(t => t.id !== resourceId));
       if (selectedThingId === resourceId) {
         setSelectedThingId(null);
-        setSelectedThing(null);
       }
     }
   }, [setThings, selectedThingId, setSelectedThingId]);
@@ -101,42 +93,38 @@ export function Things() {
     }
   }, [workspaceId, user, fetchThingsGraph]);
 
+  // Sync selectedThingId from URL on mount/URL change
+  useEffect(() => {
+    if (urlThingId && urlThingId !== selectedThingId) {
+      setSelectedThingId(urlThingId);
+    }
+  }, [urlThingId, selectedThingId, setSelectedThingId]);
+
+  // Get the selected thing's name from the things array for navigation context
+  const selectedThingName = selectedThingId
+    ? things.find(t => t.id === selectedThingId)?.name
+    : undefined;
+
   // Update navigation context for Facilitator
   useEffect(() => {
     setNavigationContext({
       currentPage: 'Things',
       workspaceId,
       activeThingId: selectedThingId || undefined,
-      activeThingName: selectedThing?.name,
+      activeThingName: selectedThingName,
     });
     return () => setNavigationContext({});
-  }, [workspaceId, selectedThingId, selectedThing?.name, setNavigationContext]);
-
-  // Load selected thing details
-  useEffect(() => {
-    if (!selectedThingId) {
-      setSelectedThing(null);
-      return;
-    }
-
-    let mounted = true;
-    setIsLoadingThing(true);
-
-    getThing(selectedThingId).then(thing => {
-      if (mounted) {
-        setSelectedThing(thing);
-        setIsLoadingThing(false);
-      }
-    });
-
-    return () => {
-      mounted = false;
-    };
-  }, [selectedThingId, getThing]);
+  }, [workspaceId, selectedThingId, selectedThingName, setNavigationContext]);
 
   const handleSelect = useCallback((thing: ThingMetadata | null) => {
-    setSelectedThingId(thing?.id ?? null);
-  }, [setSelectedThingId]);
+    const thingId = thing?.id ?? null;
+    setSelectedThingId(thingId);
+    // Update URL without triggering React Router navigation
+    // This avoids re-renders while keeping URL in sync
+    const basePath = workspaceId ? `/workspace/${workspaceId}/things` : '/things';
+    const newUrl = thingId ? `${basePath}/${thingId}` : basePath;
+    window.history.replaceState(null, '', newUrl);
+  }, [setSelectedThingId, workspaceId]);
 
   const handleCreateNew = useCallback((parentId?: string) => {
     setCreateParentId(parentId);
@@ -155,13 +143,15 @@ export function Things() {
     const deleted = await deleteThing(thingId);
     if (deleted && selectedThingId === thingId) {
       setSelectedThingId(null);
-      setSelectedThing(null);
     }
   }, [deleteThing, selectedThingId, setSelectedThingId]);
 
   const handleNavigate = useCallback((thingId: string) => {
     setSelectedThingId(thingId);
-  }, [setSelectedThingId]);
+    // Update URL to reflect navigation
+    const basePath = workspaceId ? `/workspace/${workspaceId}/things` : '/things';
+    navigate(`${basePath}/${thingId}`);
+  }, [setSelectedThingId, navigate, workspaceId]);
 
   const handleInlineEditReady = useCallback((startEdit: () => void) => {
     setStartInlineEdit(() => startEdit);
@@ -193,11 +183,11 @@ export function Things() {
         }
         second={
           <div className={styles.detailPanel}>
-            {isLoading || isLoadingThing ? (
+            {isLoading ? (
               <div className={styles.loading}>
                 <Spinner size="lg" />
               </div>
-            ) : selectedThingId && selectedThing ? (
+            ) : selectedThingId ? (
               <ThingDetail
                 thingId={selectedThingId}
                 onEdit={handleEdit}

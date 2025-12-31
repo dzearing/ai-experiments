@@ -201,7 +201,7 @@ thingsRouter.get('/:id', async (req: Request, res: Response) => {
 thingsRouter.post('/', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { name, description, type, tags, parentIds, workspaceId, content } = req.body;
+    const { name, description, type, tags, parentIds, workspaceId, content, insertAfterId, links, properties, icon, color } = req.body;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
@@ -221,6 +221,11 @@ thingsRouter.post('/', async (req: Request, res: Response) => {
       parentIds,
       workspaceId,
       content,
+      insertAfterId,
+      links,
+      properties,
+      icon,
+      color,
     });
 
     // Notify workspace subscribers of new thing
@@ -240,22 +245,23 @@ thingsRouter.patch('/:id', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
     const { id } = req.params;
-    const { name, description, type, tags, parentIds, workspaceId, content } = req.body;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
       return;
     }
 
-    const thing = await thingService.updateThing(id, userId, {
-      name,
-      description,
-      type,
-      tags,
-      parentIds,
-      workspaceId,
-      content,
-    });
+    // Only include fields that were actually sent in the request body
+    // This ensures 'in' checks work correctly in updateThing
+    const updates: Record<string, unknown> = {};
+    const allowedFields = ['name', 'description', 'type', 'tags', 'parentIds', 'workspaceId', 'content', 'links', 'properties', 'icon', 'color'];
+    for (const field of allowedFields) {
+      if (field in req.body) {
+        updates[field] = req.body[field];
+      }
+    }
+
+    const thing = await thingService.updateThing(id, userId, updates);
 
     if (!thing) {
       res.status(404).json({ error: 'Thing not found or access denied' });
@@ -406,6 +412,285 @@ thingsRouter.get('/:id/attachments/:attachmentId/download', async (req: Request,
   } catch (error) {
     console.error('[Things] Download attachment error:', error);
     res.status(500).json({ error: 'Failed to download attachment' });
+  }
+});
+
+// =========================================================================
+// Links
+// =========================================================================
+
+// Add link
+thingsRouter.post('/:id/links', async (req: Request, res: Response) => {
+  try {
+    const userId = req.headers['x-user-id'] as string;
+    const { id } = req.params;
+    const { type, label, target, description } = req.body;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User ID required' });
+      return;
+    }
+
+    if (!type || !label || !target) {
+      res.status(400).json({ error: 'Type, label, and target are required' });
+      return;
+    }
+
+    const link = await thingService.addLink(id, userId, {
+      type,
+      label,
+      target,
+      description,
+    });
+
+    if (!link) {
+      res.status(404).json({ error: 'Thing not found or access denied' });
+      return;
+    }
+
+    // Get updated thing for notification
+    const thing = await thingService.getThing(id, userId, false);
+    if (thing?.workspaceId && workspaceWsHandler) {
+      workspaceWsHandler.notifyResourceUpdated(thing.workspaceId, thing.id, 'thing', thing);
+    }
+
+    res.status(201).json(link);
+  } catch (error) {
+    console.error('[Things] Add link error:', error);
+    res.status(500).json({ error: 'Failed to add link' });
+  }
+});
+
+// Update link
+thingsRouter.patch('/:id/links/:linkId', async (req: Request, res: Response) => {
+  try {
+    const userId = req.headers['x-user-id'] as string;
+    const { id, linkId } = req.params;
+    const { type, label, target, description } = req.body;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User ID required' });
+      return;
+    }
+
+    const link = await thingService.updateLink(id, userId, linkId, {
+      type,
+      label,
+      target,
+      description,
+    });
+
+    if (!link) {
+      res.status(404).json({ error: 'Link not found or access denied' });
+      return;
+    }
+
+    // Get updated thing for notification
+    const thing = await thingService.getThing(id, userId, false);
+    if (thing?.workspaceId && workspaceWsHandler) {
+      workspaceWsHandler.notifyResourceUpdated(thing.workspaceId, thing.id, 'thing', thing);
+    }
+
+    res.json(link);
+  } catch (error) {
+    console.error('[Things] Update link error:', error);
+    res.status(500).json({ error: 'Failed to update link' });
+  }
+});
+
+// Remove link
+thingsRouter.delete('/:id/links/:linkId', async (req: Request, res: Response) => {
+  try {
+    const userId = req.headers['x-user-id'] as string;
+    const { id, linkId } = req.params;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User ID required' });
+      return;
+    }
+
+    const success = await thingService.removeLink(id, userId, linkId);
+
+    if (!success) {
+      res.status(404).json({ error: 'Link not found or access denied' });
+      return;
+    }
+
+    // Get updated thing for notification
+    const thing = await thingService.getThing(id, userId, false);
+    if (thing?.workspaceId && workspaceWsHandler) {
+      workspaceWsHandler.notifyResourceUpdated(thing.workspaceId, thing.id, 'thing', thing);
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('[Things] Remove link error:', error);
+    res.status(500).json({ error: 'Failed to remove link' });
+  }
+});
+
+// =========================================================================
+// Properties
+// =========================================================================
+
+// Set properties (replaces all properties)
+thingsRouter.put('/:id/properties', async (req: Request, res: Response) => {
+  try {
+    const userId = req.headers['x-user-id'] as string;
+    const { id } = req.params;
+    const { properties } = req.body;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User ID required' });
+      return;
+    }
+
+    const success = await thingService.setProperties(id, userId, properties);
+
+    if (!success) {
+      res.status(404).json({ error: 'Thing not found or access denied' });
+      return;
+    }
+
+    // Get updated thing for notification
+    const thing = await thingService.getThing(id, userId, false);
+    if (thing?.workspaceId && workspaceWsHandler) {
+      workspaceWsHandler.notifyResourceUpdated(thing.workspaceId, thing.id, 'thing', thing);
+    }
+
+    res.json({ success: true, properties: thing?.properties });
+  } catch (error) {
+    console.error('[Things] Set properties error:', error);
+    res.status(500).json({ error: 'Failed to set properties' });
+  }
+});
+
+// =========================================================================
+// Documents (inline documents stored with the Thing)
+// =========================================================================
+
+// Get documents
+thingsRouter.get('/:id/documents', async (req: Request, res: Response) => {
+  try {
+    const userId = req.headers['x-user-id'] as string;
+    const { id } = req.params;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User ID required' });
+      return;
+    }
+
+    const documents = await thingService.getDocuments(id, userId);
+    res.json(documents);
+  } catch (error) {
+    console.error('[Things] Get documents error:', error);
+    res.status(500).json({ error: 'Failed to get documents' });
+  }
+});
+
+// Add document
+thingsRouter.post('/:id/documents', async (req: Request, res: Response) => {
+  try {
+    const userId = req.headers['x-user-id'] as string;
+    const { id } = req.params;
+    const { title, content } = req.body;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User ID required' });
+      return;
+    }
+
+    if (!title) {
+      res.status(400).json({ error: 'Title is required' });
+      return;
+    }
+
+    const document = await thingService.addDocument(id, userId, {
+      title,
+      content: content || '',
+    });
+
+    if (!document) {
+      res.status(404).json({ error: 'Thing not found or access denied' });
+      return;
+    }
+
+    // Get updated thing for notification
+    const thing = await thingService.getThing(id, userId, false);
+    if (thing?.workspaceId && workspaceWsHandler) {
+      workspaceWsHandler.notifyResourceUpdated(thing.workspaceId, thing.id, 'thing', thing);
+    }
+
+    res.status(201).json(document);
+  } catch (error) {
+    console.error('[Things] Add document error:', error);
+    res.status(500).json({ error: 'Failed to add document' });
+  }
+});
+
+// Update document
+thingsRouter.patch('/:id/documents/:docId', async (req: Request, res: Response) => {
+  try {
+    const userId = req.headers['x-user-id'] as string;
+    const { id, docId } = req.params;
+    const { title, content } = req.body;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User ID required' });
+      return;
+    }
+
+    const document = await thingService.updateDocument(id, userId, docId, {
+      title,
+      content,
+    });
+
+    if (!document) {
+      res.status(404).json({ error: 'Document not found or access denied' });
+      return;
+    }
+
+    // Get updated thing for notification
+    const thing = await thingService.getThing(id, userId, false);
+    if (thing?.workspaceId && workspaceWsHandler) {
+      workspaceWsHandler.notifyResourceUpdated(thing.workspaceId, thing.id, 'thing', thing);
+    }
+
+    res.json(document);
+  } catch (error) {
+    console.error('[Things] Update document error:', error);
+    res.status(500).json({ error: 'Failed to update document' });
+  }
+});
+
+// Remove document
+thingsRouter.delete('/:id/documents/:docId', async (req: Request, res: Response) => {
+  try {
+    const userId = req.headers['x-user-id'] as string;
+    const { id, docId } = req.params;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User ID required' });
+      return;
+    }
+
+    const success = await thingService.removeDocument(id, userId, docId);
+
+    if (!success) {
+      res.status(404).json({ error: 'Document not found or access denied' });
+      return;
+    }
+
+    // Get updated thing for notification
+    const thing = await thingService.getThing(id, userId, false);
+    if (thing?.workspaceId && workspaceWsHandler) {
+      workspaceWsHandler.notifyResourceUpdated(thing.workspaceId, thing.id, 'thing', thing);
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('[Things] Remove document error:', error);
+    res.status(500).json({ error: 'Failed to remove document' });
   }
 });
 
@@ -678,5 +963,58 @@ thingsRouter.post('/agent/execute', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('[Things] Agent execute error:', error);
     res.status(500).json({ error: 'Failed to execute command' });
+  }
+});
+
+// =========================================================================
+// Utilities
+// =========================================================================
+
+// Open a file or folder with the system's default application
+thingsRouter.post('/open-path', async (req: Request, res: Response) => {
+  try {
+    const userId = req.headers['x-user-id'] as string;
+    const { path: filePath } = req.body;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User ID required' });
+      return;
+    }
+
+    if (!filePath || typeof filePath !== 'string') {
+      res.status(400).json({ error: 'Path is required' });
+      return;
+    }
+
+    // Security: Only allow absolute paths and basic validation
+    if (!filePath.startsWith('/') && !filePath.match(/^[A-Za-z]:\\/)) {
+      res.status(400).json({ error: 'Invalid path format' });
+      return;
+    }
+
+    // Use the appropriate command based on platform
+    const { exec } = await import('child_process');
+    const { promisify } = await import('util');
+    const execAsync = promisify(exec);
+
+    const platform = process.platform;
+    let command: string;
+
+    if (platform === 'darwin') {
+      // macOS
+      command = `open "${filePath}"`;
+    } else if (platform === 'win32') {
+      // Windows
+      command = `start "" "${filePath}"`;
+    } else {
+      // Linux and others
+      command = `xdg-open "${filePath}"`;
+    }
+
+    await execAsync(command);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('[Things] Open path error:', error);
+    res.status(500).json({ error: 'Failed to open path' });
   }
 });

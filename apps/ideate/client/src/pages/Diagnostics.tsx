@@ -1,8 +1,10 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
-import { Avatar, Button, Card, Spinner, SplitPane, Table, type TableColumn } from '@ui-kit/react';
+import { Avatar, Button, Card, Spinner, SplitPane, Table, Tabs, type TableColumn } from '@ui-kit/react';
+import { useParams, useNavigate } from '@ui-kit/router';
 import { RefreshIcon } from '@ui-kit/icons/RefreshIcon';
 import { TrashIcon } from '@ui-kit/icons/TrashIcon';
 import { DIAGNOSTICS_WS_URL } from '../config';
+import { ClaudeDiagnostics } from '../components/ClaudeDiagnostics';
 import styles from './Diagnostics.module.css';
 
 interface DiagnosticEvent {
@@ -83,7 +85,10 @@ const EVENT_TYPE_COLORS: Record<string, string> = {
   persist: '#84cc16',
 };
 
-export function Diagnostics() {
+/**
+ * Overview tab content - the original diagnostics view
+ */
+function OverviewContent() {
   const [snapshot, setSnapshot] = useState<DiagnosticSnapshot | null>(null);
   const [events, setEvents] = useState<DiagnosticEvent[]>([]);
   const [isConnected, setIsConnected] = useState(false);
@@ -405,7 +410,7 @@ export function Diagnostics() {
 
   if (!snapshot) {
     return (
-      <div className={styles.diagnostics}>
+      <div className={styles.overviewContent}>
         <div className={styles.loading}>
           <Spinner size="lg" />
           <p>Connecting to diagnostics server...</p>
@@ -536,7 +541,7 @@ export function Diagnostics() {
   );
 
   return (
-    <div className={styles.diagnostics}>
+    <div className={styles.overviewContent}>
       <SplitPane
         first={leftPane}
         second={rightPane}
@@ -545,6 +550,50 @@ export function Diagnostics() {
         minSize={300}
         className={styles.splitPane}
       />
+    </div>
+  );
+}
+
+/**
+ * Main Diagnostics page component with tabs.
+ * Overview tab shows server diagnostics, Claude tab shows chat session diagnostics.
+ */
+export function Diagnostics() {
+  const { tab } = useParams<{ tab?: string }>();
+  const navigate = useNavigate();
+
+  // Default to 'overview' if no tab specified
+  const activeTab = tab === 'claude' ? 'claude' : 'overview';
+
+  // Tab items without content - we render content separately
+  const tabItems = [
+    { value: 'overview', label: 'Overview', content: null },
+    { value: 'claude', label: 'Claude', content: null },
+  ];
+
+  const handleTabChange = useCallback((newTab: string) => {
+    // Use /diagnostics for overview (default), /diagnostics/claude for claude
+    navigate(newTab === 'overview' ? '/diagnostics' : `/diagnostics/${newTab}`);
+  }, [navigate]);
+
+  return (
+    <div className={styles.diagnostics}>
+      {/* Page Header with centered tabs */}
+      <header className={styles.pageHeader}>
+        <h1>Diagnostics</h1>
+        <Tabs
+          items={tabItems}
+          value={activeTab}
+          onChange={handleTabChange}
+          variant="underline"
+          className={styles.headerTabs}
+        />
+      </header>
+
+      {/* Tab Content */}
+      <div className={styles.tabContent}>
+        {activeTab === 'overview' ? <OverviewContent /> : <ClaudeDiagnostics />}
+      </div>
     </div>
   );
 }

@@ -157,7 +157,23 @@
   width: 16px;
   height: 16px;
   flex-shrink: 0;
-  color: var(--soft-fg-soft);
+  color: inherit; /* Inherit from TreeView's .icon wrapper - selected state sets color */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.thingIcon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.colorDot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  background: var(--thing-color, var(--soft-fg-soft));
 }
 
 .thingName {

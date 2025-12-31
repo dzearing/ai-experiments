@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useCallback, type ReactNode } from 'react';
 import { Modal, type ModalSize } from '../Modal';
 import styles from './Dialog.module.css';
 
@@ -18,6 +18,8 @@ export interface DialogProps {
   open: boolean;
   /** Callback when dialog should close */
   onClose: () => void;
+  /** Callback when dialog should submit (Enter outside inputs, Ctrl/Cmd+Enter in inputs) */
+  onSubmit?: () => void;
   /** Dialog title */
   title?: ReactNode;
   /** Dialog size */
@@ -35,6 +37,7 @@ export interface DialogProps {
 export function Dialog({
   open,
   onClose,
+  onSubmit,
   title,
   size = 'md',
   footer,
@@ -42,6 +45,29 @@ export function Dialog({
   closeOnEscape = true,
   children,
 }: DialogProps) {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (!onSubmit || e.key !== 'Enter') return;
+
+    const target = e.target as HTMLElement;
+    const tagName = target.tagName.toLowerCase();
+    const isTextInput = tagName === 'input' || tagName === 'textarea';
+
+    // In text inputs: require Ctrl/Cmd+Enter
+    // Outside text inputs: plain Enter submits
+    if (isTextInput) {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        onSubmit();
+      }
+    } else {
+      // Don't submit if Enter is pressed on a button (let it activate the button)
+      if (tagName !== 'button') {
+        e.preventDefault();
+        onSubmit();
+      }
+    }
+  }, [onSubmit]);
+
   return (
     <Modal
       open={open}
@@ -50,7 +76,7 @@ export function Dialog({
       closeOnBackdrop={closeOnBackdrop}
       closeOnEscape={closeOnEscape}
     >
-      <div className={styles.dialog}>
+      <div className={styles.dialog} onKeyDown={handleKeyDown}>
         {title && (
           <div className={styles.header}>
             <h2 className={styles.title}>{title}</h2>

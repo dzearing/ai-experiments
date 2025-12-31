@@ -261,7 +261,7 @@ export function DocumentEditor() {
       <div className={styles.notFound}>
         <h2>Document not found</h2>
         <p>The document you're looking for doesn't exist or you don't have access.</p>
-        <Button onClick={() => navigate('/dashboard')}>Back to Dashboard</Button>
+        <Button onClick={() => navigate(-1)}>Go Back</Button>
       </div>
     );
   }
@@ -288,8 +288,8 @@ export function DocumentEditor() {
             <IconButton
               icon={<ArrowLeftIcon />}
               variant="ghost"
-              onClick={() => navigate('/dashboard')}
-              aria-label="Back to dashboard"
+              onClick={() => navigate(-1)}
+              aria-label="Go back"
             />
             {connectionIndicator}
             <input

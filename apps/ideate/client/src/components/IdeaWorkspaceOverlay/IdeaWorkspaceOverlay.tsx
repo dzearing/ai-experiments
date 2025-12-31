@@ -128,6 +128,14 @@ function parseMarkdownContent(content: string): {
   return { title, summary, tags, description };
 }
 
+/** Thing context for contextual greetings */
+export interface ThingContext {
+  id: string;
+  name: string;
+  type: string;
+  description?: string;
+}
+
 export interface IdeaWorkspaceOverlayProps {
   /** Idea to edit (null for creating a new idea) */
   idea: Idea | null;
@@ -139,6 +147,10 @@ export interface IdeaWorkspaceOverlayProps {
   workspaceId?: string;
   /** Callback when idea is created or updated */
   onSuccess?: (idea: Idea) => void;
+  /** Thing IDs to pre-link when creating a new idea */
+  initialThingIds?: string[];
+  /** Thing context for contextual greetings when creating ideas for a Thing */
+  initialThingContext?: ThingContext;
 }
 
 /**
@@ -154,6 +166,8 @@ export function IdeaWorkspaceOverlay({
   onClose,
   workspaceId,
   onSuccess,
+  initialThingIds,
+  initialThingContext,
 }: IdeaWorkspaceOverlayProps) {
   const { user } = useAuth();
   const { createIdea, updateIdea } = useIdeas();
@@ -245,8 +259,10 @@ export function IdeaWorkspaceOverlay({
       description: parsedContent.description.trim() || undefined,
       tags: parsedContent.tags,
       status: idea?.status || 'new',
+      // Include Thing context for contextual greetings when creating ideas for a Thing
+      thingContext: initialThingContext,
     };
-  }, [idea, parsedContent]);
+  }, [idea, parsedContent, initialThingContext]);
 
   // Stable error handler to prevent unnecessary reconnects
   const handleAgentError = useCallback((err: string) => {
@@ -277,6 +293,13 @@ export function IdeaWorkspaceOverlay({
     documentRoomName: documentId,
     onError: handleAgentError,
   });
+
+  // Update the agent when ideaContext changes (especially thingContext)
+  useEffect(() => {
+    if (isConnected && ideaContext) {
+      updateIdeaContext(ideaContext);
+    }
+  }, [isConnected, ideaContext, updateIdeaContext]);
 
   // Chat commands (/clear, /help)
   const { commands, handleCommand } = useChatCommands({
@@ -500,6 +523,7 @@ export function IdeaWorkspaceOverlay({
           tags,
           description: description.trim() || undefined,
           workspaceId,
+          thingIds: initialThingIds,
         };
         const newIdea = await createIdea(input);
         // Mark as saved so auto-save doesn't trigger

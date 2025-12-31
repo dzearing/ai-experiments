@@ -9,6 +9,8 @@ export interface DocumentMetadata {
   title: string;
   ownerId: string;
   workspaceId?: string;
+  /** Associated Thing ID (if document belongs to a Thing) */
+  thingId?: string;
   collaboratorIds: string[];
   isPublic: boolean;
   shareCode?: string;
@@ -61,10 +63,18 @@ export class DocumentService {
 
   /**
    * List all documents for a user (owned or collaborated).
-   * Optionally filter by workspaceId.
+   * Optionally filter by workspaceId or thingId.
    * If isWorkspaceMember is true, include all documents in the workspace.
+   *
+   * When thingId is provided, only returns documents for that Thing.
+   * When thingId is not provided, excludes Thing documents (they only appear in Thing detail).
    */
-  async listDocuments(userId: string, workspaceId?: string, isWorkspaceMember: boolean = false): Promise<DocumentMetadata[]> {
+  async listDocuments(
+    userId: string,
+    workspaceId?: string,
+    isWorkspaceMember: boolean = false,
+    thingId?: string
+  ): Promise<DocumentMetadata[]> {
     try {
       const files = await fs.readdir(DOCUMENTS_DIR);
       const metaFiles = files.filter((f) => f.endsWith('.meta.json'));
@@ -75,6 +85,15 @@ export class DocumentService {
         const metaPath = path.join(DOCUMENTS_DIR, file);
         const content = await fs.readFile(metaPath, 'utf-8');
         const metadata: DocumentMetadata = JSON.parse(content);
+
+        // Filter by thingId
+        if (thingId !== undefined) {
+          // Only include documents for this specific Thing
+          if (metadata.thingId !== thingId) continue;
+        } else {
+          // Exclude Thing documents from main document list
+          if (metadata.thingId) continue;
+        }
 
         // Filter by workspaceId if provided
         if (workspaceId !== undefined) {
@@ -106,8 +125,14 @@ export class DocumentService {
 
   /**
    * Create a new document.
+   * @param thingId - Optional Thing ID to associate this document with
    */
-  async createDocument(userId: string, title: string, workspaceId?: string): Promise<Document> {
+  async createDocument(
+    userId: string,
+    title: string,
+    workspaceId?: string,
+    thingId?: string
+  ): Promise<Document> {
     const id = uuidv4();
     const now = new Date().toISOString();
 
@@ -116,6 +141,7 @@ export class DocumentService {
       title,
       ownerId: userId,
       workspaceId,
+      thingId,
       collaboratorIds: [],
       isPublic: false,
       createdAt: now,
@@ -522,6 +548,46 @@ export class DocumentService {
       }
       console.error(`[DocumentService] Failed to delete Yjs state for ${id}:`, error);
       return false;
+    }
+  }
+
+  /**
+   * Delete all documents associated with a Thing.
+   * Used for cascade delete when a Thing is deleted.
+   */
+  async deleteDocumentsByThingId(thingId: string): Promise<number> {
+    try {
+      const files = await fs.readdir(DOCUMENTS_DIR);
+      const metaFiles = files.filter((f) => f.endsWith('.meta.json'));
+
+      let deletedCount = 0;
+
+      for (const file of metaFiles) {
+        const metaPath = path.join(DOCUMENTS_DIR, file);
+        const content = await fs.readFile(metaPath, 'utf-8');
+        const metadata: DocumentMetadata = JSON.parse(content);
+
+        if (metadata.thingId === thingId) {
+          // Delete all files for this document
+          try {
+            await fs.unlink(this.getMetadataPath(metadata.id));
+          } catch { /* ignore */ }
+          try {
+            await fs.unlink(this.getDocumentPath(metadata.id));
+          } catch { /* ignore */ }
+          try {
+            await fs.unlink(this.getYjsPath(metadata.id));
+          } catch { /* ignore */ }
+
+          deletedCount++;
+          console.log(`[DocumentService] Deleted document ${metadata.id} for Thing ${thingId}`);
+        }
+      }
+
+      return deletedCount;
+    } catch (error) {
+      console.error(`[DocumentService] Failed to delete documents for Thing ${thingId}:`, error);
+      return 0;
     }
   }
 }

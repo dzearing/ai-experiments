@@ -25,16 +25,33 @@ export interface ImportStep {
 }
 
 /**
+ * Sub-task progress for decomposed imports
+ */
+export interface ImportSubTask {
+  id: string;
+  name: string;
+  status: 'pending' | 'running' | 'complete' | 'error';
+  error?: string;
+}
+
+/**
  * Server message types
  */
 interface ServerMessage {
-  type: 'step_start' | 'step_update' | 'step_complete' | 'step_error' | 'complete' | 'error';
+  type: 'step_start' | 'step_update' | 'step_complete' | 'step_error' | 'complete' | 'error'
+    | 'subtasks_start' | 'subtask_update' | 'subtasks_complete';
   step?: { id: string; label: string };
   stepId?: string;
   update?: { status?: ImportStep['status']; detail?: string };
   detail?: string;
   error?: string;
   createdThings?: ThingMetadata[];
+  // Sub-task fields
+  totalTasks?: number;
+  taskNames?: string[];
+  subTask?: ImportSubTask;
+  completed?: number;
+  total?: number;
 }
 
 /**
@@ -57,6 +74,10 @@ export interface UseImportAgentReturn {
   createdThings: ThingMetadata[];
   /** Reset the state for a new import */
   reset: () => void;
+  /** Sub-tasks for decomposed imports */
+  subTasks: ImportSubTask[];
+  /** Whether decomposition is active (parallel sub-tasks running) */
+  isDecomposed: boolean;
 }
 
 /**
@@ -71,6 +92,8 @@ export function useImportAgent(): UseImportAgentReturn {
   const [error, setError] = useState<string | null>(null);
   const [isComplete, setIsComplete] = useState(false);
   const [createdThings, setCreatedThings] = useState<ThingMetadata[]>([]);
+  const [subTasks, setSubTasks] = useState<ImportSubTask[]>([]);
+  const [isDecomposed, setIsDecomposed] = useState(false);
 
   // Reset state for a new import
   const reset = useCallback(() => {
@@ -79,6 +102,8 @@ export function useImportAgent(): UseImportAgentReturn {
     setError(null);
     setIsComplete(false);
     setCreatedThings([]);
+    setSubTasks([]);
+    setIsDecomposed(false);
   }, []);
 
   // Handle incoming WebSocket messages
@@ -138,6 +163,33 @@ export function useImportAgent(): UseImportAgentReturn {
         case 'error':
           setIsRunning(false);
           setError(message.error || 'Unknown error');
+          break;
+
+        // Sub-task messages for decomposed imports
+        case 'subtasks_start':
+          if (message.taskNames) {
+            setIsDecomposed(true);
+            // Initialize all sub-tasks as pending
+            setSubTasks(message.taskNames.map((name, index) => ({
+              id: `subtask-${index}`,
+              name,
+              status: 'pending',
+            })));
+          }
+          break;
+
+        case 'subtask_update':
+          if (message.subTask) {
+            setSubTasks(prev => prev.map(st =>
+              st.name === message.subTask!.name
+                ? { ...st, ...message.subTask }
+                : st
+            ));
+          }
+          break;
+
+        case 'subtasks_complete':
+          // All sub-tasks are done (final notification)
           break;
       }
     } catch (err) {
@@ -215,5 +267,7 @@ export function useImportAgent(): UseImportAgentReturn {
     isComplete,
     createdThings,
     reset,
+    subTasks,
+    isDecomposed,
   };
 }

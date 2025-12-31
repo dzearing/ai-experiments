@@ -147,8 +147,9 @@ export class IdeaAgentWebSocketHandler {
       this.handleDisconnect(client);
     });
 
-    // Send message history, then greeting if no history
-    this.sendHistoryAndGreeting(client);
+    // Note: We defer sendHistoryAndGreeting until we receive the first idea_update
+    // This allows us to include thingContext in the greeting generation.
+    // The client sends idea_update immediately after connecting.
   }
 
   /**
@@ -183,8 +184,15 @@ export class IdeaAgentWebSocketHandler {
         case 'idea_update':
           // Update the idea context and document room name
           if (clientMessage.idea) {
+            const isFirstContext = !client.ideaContext;
             client.ideaContext = clientMessage.idea;
-            console.log(`[IdeaAgent] Client ${client.clientId} idea context updated:`, client.ideaContext.title);
+            console.log(`[IdeaAgent] Client ${client.clientId} idea context updated:`, client.ideaContext.title, 'thingContext:', client.ideaContext.thingContext);
+
+            // If this is the first context we received, now send history and greeting
+            // (we deferred this from connection time to get thingContext)
+            if (isFirstContext) {
+              await this.sendHistoryAndGreeting(client);
+            }
           }
           if (clientMessage.documentRoomName) {
             client.documentRoomName = clientMessage.documentRoomName;
@@ -289,22 +297,14 @@ export class IdeaAgentWebSocketHandler {
 
   /**
    * Handle a clear history request from a client.
+   * Clears history and starts a fresh session (no greeting).
    */
   private async handleClearHistory(client: IdeaAgentClient): Promise<void> {
     try {
       const chatId = getChatId(client);
       await this.ideaAgentService.clearHistory(chatId);
       this.send(client.ws, { type: 'history', messages: [] });
-
-      // Send a new greeting from cache (instant) or generate one
-      const cachedGreeting = this.ideaAgentService.getRandomCachedGreeting();
-      const greeting = cachedGreeting || await this.ideaAgentService.generateGreeting(client.ideaContext);
-      const greetingMessageId = `msg-greeting-${Date.now()}`;
-      this.send(client.ws, {
-        type: 'greeting',
-        text: greeting,
-        messageId: greetingMessageId,
-      });
+      console.log(`[IdeaAgent] Cleared history for client ${client.clientId}`);
     } catch (error) {
       console.error('[IdeaAgent] Error clearing history:', error);
       this.send(client.ws, { type: 'error', error: 'Failed to clear history' });

@@ -17,6 +17,7 @@ import { createDiagnosticsRouter } from './routes/diagnostics.js';
 import { CollaborationHandler } from './websocket/CollaborationHandler.js';
 import { YjsCollaborationHandler } from './websocket/YjsCollaborationHandler.js';
 import { DiagnosticsHandler } from './websocket/DiagnosticsHandler.js';
+import { ClaudeDiagnosticsHandler } from './websocket/ClaudeDiagnosticsHandler.js';
 import { ChatWebSocketHandler } from './websocket/ChatWebSocketHandler.js';
 import { WorkspaceWebSocketHandler } from './websocket/WorkspaceWebSocketHandler.js';
 import { FacilitatorWebSocketHandler } from './websocket/FacilitatorWebSocketHandler.js';
@@ -139,6 +140,14 @@ diagnosticsWss.on('connection', (ws, req) => {
   diagnosticsHandler.handleConnection(ws, req);
 });
 
+// Create WebSocket server for Claude diagnostics (JSON-based protocol)
+const claudeDiagnosticsWss = new WebSocketServer({ noServer: true });
+const claudeDiagnosticsHandler = new ClaudeDiagnosticsHandler();
+
+claudeDiagnosticsWss.on('connection', (ws, req) => {
+  claudeDiagnosticsHandler.handleConnection(ws, req);
+});
+
 // Create WebSocket server for chat (JSON-based protocol)
 const chatWss = new WebSocketServer({ noServer: true });
 const chatHandler = new ChatWebSocketHandler();
@@ -219,6 +228,11 @@ server.on('upgrade', (request, socket, head) => {
     diagnosticsWss.handleUpgrade(request, socket, head, (ws) => {
       diagnosticsWss.emit('connection', ws, request);
     });
+  } else if (pathname === '/claude-diagnostics-ws') {
+    // Claude diagnostics WebSocket for chat session monitoring
+    claudeDiagnosticsWss.handleUpgrade(request, socket, head, (ws) => {
+      claudeDiagnosticsWss.emit('connection', ws, request);
+    });
   } else if (pathname.startsWith('/chat-ws')) {
     // Chat WebSocket (supports /chat-ws/room-id)
     chatWss.handleUpgrade(request, socket, head, (ws) => {
@@ -264,6 +278,7 @@ server.listen(PORT, async () => {
   console.log(`WebSocket (Import) available at ws://localhost:${PORT}/import-ws`);
   console.log(`Diagnostics API at http://localhost:${PORT}/api/diagnostics`);
   console.log(`Diagnostics WebSocket at ws://localhost:${PORT}/diagnostics-ws`);
+  console.log(`Claude Diagnostics WebSocket at ws://localhost:${PORT}/claude-diagnostics-ws`);
 
   // Start mDNS discovery
   discoveryService.start();

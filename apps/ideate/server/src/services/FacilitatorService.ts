@@ -1,10 +1,21 @@
-import { query, type SDKAssistantMessage } from '@anthropic-ai/claude-code';
+import {
+  query,
+  type SDKAssistantMessage,
+  type SDKSystemMessage,
+  type SDKResultMessage,
+  type SDKPartialAssistantMessage,
+  type SDKMessage,
+} from '@anthropic-ai/claude-agent-sdk';
 import { createHash } from 'crypto';
 import { tmpdir } from 'os';
+import { readFile } from 'fs/promises';
+import { existsSync } from 'fs';
 import { PersonaService, type Persona } from './PersonaService.js';
 import { FacilitatorChatService, type FacilitatorMessage } from './FacilitatorChatService.js';
 import { MCPToolsService, type ToolDefinition } from './MCPToolsService.js';
+import { ThingService } from './ThingService.js';
 import { buildFacilitatorPrompt, buildContextSection } from '../prompts/facilitatorPrompt.js';
+import { createFacilitatorMcpServer } from './FacilitatorMcpTools.js';
 
 /**
  * Cache entry for pre-generated greetings
@@ -40,19 +51,37 @@ export interface StreamCallbacks {
   /** Called for each text chunk during streaming */
   onTextChunk: (text: string, messageId: string) => void;
   /** Called when a tool is being invoked */
-  onToolUse: (info: { name: string; input: Record<string, unknown> }) => void;
+  onToolUse: (info: { name: string; input: Record<string, unknown>; messageId: string }) => void;
   /** Called when a tool returns a result */
-  onToolResult: (info: { name: string; output: string }) => void;
+  onToolResult: (info: { name: string; output: string; messageId: string }) => void;
   /** Called when the response is complete */
   onComplete: (message: FacilitatorMessage) => void;
   /** Called when an error occurs */
   onError: (error: string) => void;
+  /** Called when thinking progress is available (optional) */
+  onThinking?: (text: string, messageId: string) => void;
+  /** Called when system init event is received (optional) */
+  onSystemInit?: (info: {
+    model: string;
+    tools: string[];
+    mcpServers: { name: string; status: string }[];
+  }) => void;
+  /** Called for raw SDK events for diagnostics (optional) */
+  onRawEvent?: (event: SDKMessage) => void;
 }
 
 /**
  * Service for orchestrating facilitator chat with Claude.
  * Handles message processing, streaming responses, and tool integration.
  */
+/** Raw SDK event for diagnostics */
+export interface RawSDKEvent {
+  timestamp: number;
+  type: string;
+  subtype?: string;
+  data: unknown;
+}
+
 /** Diagnostic entry for a request */
 interface DiagnosticEntry {
   timestamp: string;
@@ -63,12 +92,30 @@ interface DiagnosticEntry {
   responseLength: number;
   durationMs: number;
   error?: string;
+  // Enhanced diagnostics (P0)
+  systemPrompt?: string;
+  model?: string;
+  tokenUsage?: {
+    inputTokens: number;
+    outputTokens: number;
+  };
+  // Raw SDK events for full diagnostics
+  rawEvents?: RawSDKEvent[];
+  // Session init info
+  sessionInfo?: {
+    sessionId: string;
+    tools: string[];
+    mcpServers: { name: string; status: string }[];
+  };
+  // Cost info
+  totalCostUsd?: number;
 }
 
 export class FacilitatorService {
   private personaService: PersonaService;
   private chatService: FacilitatorChatService;
   private toolsService: MCPToolsService;
+  private thingService: ThingService;
   private persona: Persona | null = null;
 
   // Diagnostic tracking (keep last 50 entries)
@@ -86,6 +133,7 @@ export class FacilitatorService {
     this.personaService = new PersonaService();
     this.chatService = new FacilitatorChatService();
     this.toolsService = new MCPToolsService();
+    this.thingService = new ThingService();
   }
 
   /**
@@ -405,12 +453,15 @@ Example format:
     const persona = this.getPersona();
     const history = await this.chatService.getMessages(userId);
 
-    // Build the system prompt with navigation context
-    const systemPrompt = this.buildSystemPrompt(persona, userName, navigationContext, displayName);
+    // Build the system prompt with navigation context (includes Thing context for referenced Things)
+    const systemPrompt = await this.buildSystemPrompt(persona, userName, navigationContext, userId, displayName);
+
+    // Create the MCP server with native tools for proper streaming
+    const mcpServer = createFacilitatorMcpServer(this.toolsService, userId);
 
     // Build the full prompt with conversation history
     const conversationHistory = this.buildConversationHistory(history.slice(0, -1)); // Exclude the just-added user message
-    let fullPrompt = conversationHistory
+    const fullPrompt = conversationHistory
       ? `${conversationHistory}\n\nUser: ${content}`
       : content;
 
@@ -420,194 +471,238 @@ Example format:
     let fullResponse = '';
     const toolCalls: FacilitatorMessage['toolCalls'] = [];
 
-    // Max tool iterations to prevent infinite loops
-    const maxToolIterations = 20;
-    let toolIteration = 0;
+    // Token usage tracking for diagnostics
+    let totalInputTokens = 0;
+    let totalOutputTokens = 0;
+    let totalCostUsd = 0;
+    let detectedModel = 'sonnet'; // Track the model used (will be updated from system init)
+
+    // Track raw SDK events for diagnostics
+    const rawEvents: RawSDKEvent[] = [];
+    let sessionInfo: DiagnosticEntry['sessionInfo'] | undefined;
 
     // Diagnostic logging for debugging
     console.log(`[FacilitatorService] Starting response for message: "${content.slice(0, 50)}..."`);
 
     try {
-      while (toolIteration < maxToolIterations) {
-        // Check if aborted before starting a new iteration
+      // Check if aborted before starting
+      if (abortSignal?.aborted) {
+        console.log(`[FacilitatorService] Operation aborted before start`);
+        const abortError = new Error('Operation aborted');
+        abortError.name = 'AbortError';
+        throw abortError;
+      }
+
+      // Use the query function from @anthropic-ai/claude-agent-sdk
+      // With native MCP tools, the SDK handles tool iterations automatically
+      const response = query({
+        prompt: fullPrompt,
+        options: {
+          systemPrompt: systemPrompt,
+          model: 'sonnet',
+          permissionMode: 'bypassPermissions', // Auto-accept for server-side use
+          allowDangerouslySkipPermissions: true, // Required for bypassPermissions
+          cwd: FacilitatorService.ISOLATED_CWD, // Prevent loading CLAUDE.md from monorepo
+          includePartialMessages: true, // Enable streaming events for thinking, etc.
+          maxThinkingTokens: 8000, // Enable extended thinking
+          tools: [], // Disable built-in tools - only MCP tools are available
+          mcpServers: { facilitator: mcpServer }, // Native MCP tools for proper streaming
+          maxTurns: 20, // Allow up to 20 tool iterations
+        },
+      });
+
+      // Process streaming messages
+      // With native MCP tools, the SDK handles tool calls/results automatically
+      for await (const message of response) {
+        // Check if aborted during streaming
         if (abortSignal?.aborted) {
-          console.log(`[FacilitatorService] Operation aborted before iteration ${toolIteration + 1}`);
+          console.log(`[FacilitatorService] Operation aborted during streaming`);
           const abortError = new Error('Operation aborted');
           abortError.name = 'AbortError';
           throw abortError;
         }
 
-        console.log(`[FacilitatorService] Iteration ${toolIteration + 1}/${maxToolIterations}`);
-        // Use the query function from @anthropic-ai/claude-code
-        const response = query({
-          prompt: fullPrompt,
-          options: {
-            customSystemPrompt: systemPrompt,
-            model: 'sonnet',
-            permissionMode: 'bypassPermissions', // Auto-accept for server-side use
-            cwd: FacilitatorService.ISOLATED_CWD, // Prevent loading CLAUDE.md from monorepo
-          },
+        // Store raw event for diagnostics
+        rawEvents.push({
+          timestamp: Date.now(),
+          type: message.type,
+          subtype: 'subtype' in message ? (message as { subtype?: string }).subtype : undefined,
+          data: message,
         });
 
-        let iterationResponse = '';
+        // Call raw event callback if provided
+        callbacks.onRawEvent?.(message);
 
-        // Process streaming messages
-        for await (const message of response) {
-          // Check if aborted during streaming
-          if (abortSignal?.aborted) {
-            console.log(`[FacilitatorService] Operation aborted during streaming`);
-            const abortError = new Error('Operation aborted');
-            abortError.name = 'AbortError';
-            throw abortError;
+        if (message.type === 'system' && 'subtype' in message && message.subtype === 'init') {
+          // System init message - capture model, tools, MCP servers
+          const systemMsg = message as SDKSystemMessage;
+          detectedModel = systemMsg.model;
+          sessionInfo = {
+            sessionId: systemMsg.session_id,
+            tools: systemMsg.tools,
+            mcpServers: systemMsg.mcp_servers,
+          };
+          console.log(`[FacilitatorService] Session initialized: model=${detectedModel}, tools=${systemMsg.tools.length}, mcp=${systemMsg.mcp_servers.length}`);
+
+          // Call system init callback if provided
+          callbacks.onSystemInit?.({
+            model: systemMsg.model,
+            tools: systemMsg.tools,
+            mcpServers: systemMsg.mcp_servers,
+          });
+        } else if (message.type === 'stream_event') {
+          // Partial message - includes thinking blocks and text deltas during streaming
+          const partialMsg = message as SDKPartialAssistantMessage;
+          const event = partialMsg.event;
+
+          // Handle streaming content
+          if (event.type === 'content_block_delta' && 'delta' in event) {
+            const delta = event.delta as { type: string; thinking?: string; text?: string };
+            if (delta.type === 'thinking_delta' && delta.thinking) {
+              // Streaming thinking content
+              callbacks.onThinking?.(delta.thinking, messageId);
+            } else if (delta.type === 'text_delta' && delta.text) {
+              // Stream text chunks as they arrive
+              fullResponse += delta.text;
+              callbacks.onTextChunk(delta.text, messageId);
+            }
           }
-          if (message.type === 'assistant') {
-            // Handle assistant message
-            const assistantMsg = message as SDKAssistantMessage;
-            const msgContent = assistantMsg.message.content;
+        } else if (message.type === 'assistant') {
+          // Handle assistant message - contains tool_use blocks for MCP tools
+          const assistantMsg = message as SDKAssistantMessage;
+          const msgContent = assistantMsg.message.content;
 
-            // Process content blocks
-            if (Array.isArray(msgContent)) {
-              for (const block of msgContent) {
-                if (block.type === 'text') {
-                  const text = block.text;
-                  iterationResponse += text;
-                } else if (block.type === 'tool_use') {
-                  // SDK native tool use (Read, Write, Bash, etc.)
-                  const sdkToolCall = block as { type: 'tool_use'; name: string; input: Record<string, unknown> };
-                  callbacks.onToolUse({
-                    name: sdkToolCall.name,
-                    input: sdkToolCall.input || {},
-                  });
-                  toolCalls.push({
-                    name: sdkToolCall.name,
-                    input: sdkToolCall.input || {},
+          // Extract usage info if available
+          const usage = (assistantMsg.message as { usage?: { input_tokens?: number; output_tokens?: number } }).usage;
+          if (usage) {
+            if (usage.input_tokens) totalInputTokens = usage.input_tokens;
+            if (usage.output_tokens) totalOutputTokens = usage.output_tokens;
+          }
+
+          // Process content blocks
+          if (Array.isArray(msgContent)) {
+            for (const block of msgContent) {
+              if (block.type === 'text') {
+                // Text content (may already be streamed via text_delta)
+                const text = block.text;
+                // Only add if not already streamed (check if fullResponse doesn't end with this text)
+                if (!fullResponse.endsWith(text)) {
+                  fullResponse += text;
+                  callbacks.onTextChunk(text, messageId);
+                }
+              } else if (block.type === 'thinking') {
+                // Thinking block in final response
+                const thinkingBlock = block as { type: 'thinking'; thinking: string };
+                callbacks.onThinking?.(thinkingBlock.thinking, messageId);
+              } else if (block.type === 'tool_use') {
+                // MCP or SDK native tool use
+                const sdkToolCall = block as { type: 'tool_use'; name: string; input: Record<string, unknown> };
+                console.log(`[FacilitatorService] Tool use: ${sdkToolCall.name}`, sdkToolCall.input);
+                callbacks.onToolUse({
+                  name: sdkToolCall.name,
+                  input: sdkToolCall.input || {},
+                  messageId,
+                });
+                toolCalls.push({
+                  name: sdkToolCall.name,
+                  input: sdkToolCall.input || {},
+                });
+              }
+            }
+          } else if (typeof msgContent === 'string') {
+            if (!fullResponse.endsWith(msgContent)) {
+              fullResponse += msgContent;
+              callbacks.onTextChunk(msgContent, messageId);
+            }
+          }
+        } else if (message.type === 'user') {
+          // User message (tool result from SDK/MCP)
+          const userMsg = message as { type: 'user'; message: { content: unknown[] } };
+          if (Array.isArray(userMsg.message?.content)) {
+            for (const block of userMsg.message.content) {
+              if ((block as { type?: string }).type === 'tool_result') {
+                const toolResult = block as { type: 'tool_result'; tool_use_id?: string; content?: string };
+                // Find matching tool call and mark complete
+                const lastPendingTool = toolCalls.find(tc => !tc.output);
+                if (lastPendingTool) {
+                  lastPendingTool.output = toolResult.content || 'completed';
+                  console.log(`[FacilitatorService] Tool result: ${lastPendingTool.name}`);
+                  callbacks.onToolResult({
+                    name: lastPendingTool.name,
+                    output: lastPendingTool.output,
+                    messageId,
                   });
                 }
               }
-            } else if (typeof msgContent === 'string') {
-              iterationResponse += msgContent;
-            }
-          } else if (message.type === 'user') {
-            // User message (tool result from SDK)
-            const userMsg = message as { type: 'user'; message: { content: unknown[] } };
-            if (Array.isArray(userMsg.message?.content)) {
-              for (const block of userMsg.message.content) {
-                if ((block as { type?: string }).type === 'tool_result') {
-                  const toolResult = block as { type: 'tool_result'; tool_use_id?: string; content?: string };
-                  // Find matching tool call and mark complete
-                  const lastPendingTool = toolCalls.find(tc => !tc.output);
-                  if (lastPendingTool) {
-                    lastPendingTool.output = toolResult.content || 'completed';
-                    callbacks.onToolResult({
-                      name: lastPendingTool.name,
-                      output: lastPendingTool.output,
-                    });
-                  }
-                }
-              }
-            }
-          } else if (message.type === 'result') {
-            // Final result message
-            if (message.subtype === 'success' && message.result) {
-              // If we haven't received streaming content, use the final result
-              if (!iterationResponse) {
-                iterationResponse = message.result;
-              }
-            } else if (message.subtype === 'error_during_execution') {
-              callbacks.onError('An error occurred during processing');
-              return;
             }
           }
-        }
+        } else if (message.type === 'result') {
+          // Final result message - contains full usage stats
+          const resultMsg = message as SDKResultMessage;
 
-        // Check for tool use in the response
-        const toolUseMatch = iterationResponse.match(/<tool_use>\s*([\s\S]*?)\s*<\/tool_use>/);
-
-        if (toolUseMatch) {
-          toolIteration++;
-
-          // Parse the tool request
-          try {
-            const toolRequest = JSON.parse(toolUseMatch[1]);
-            const toolName = toolRequest.name;
-            const toolInput = toolRequest.input || {};
-
-            // Record the tool call
-            toolCalls.push({
-              name: toolName,
-              input: toolInput,
-            });
-
-            // Notify about tool use
-            callbacks.onToolUse({ name: toolName, input: toolInput });
-
-            // Execute the tool
-            console.log(`[FacilitatorService] Executing tool: ${toolName}`, toolInput);
-            const toolResult = await this.toolsService.executeTool(toolName, toolInput, userId);
-
-            // Notify about tool result
-            const resultOutput = JSON.stringify(toolResult.data || { error: toolResult.error }, null, 2);
-            callbacks.onToolResult({ name: toolName, output: resultOutput });
-
-            // Update the tool call with output
-            toolCalls[toolCalls.length - 1].output = resultOutput;
-
-            // Add the text before tool use to the response (if any)
-            const textBeforeTool = iterationResponse.slice(0, iterationResponse.indexOf('<tool_use>')).trim();
-            if (textBeforeTool) {
-              console.log(`[FacilitatorService] Streaming text before tool (${textBeforeTool.length} chars): "${textBeforeTool.slice(0, 50)}..."`);
-              fullResponse += textBeforeTool + '\n\n';
-              callbacks.onTextChunk(textBeforeTool + '\n\n', messageId);
-            }
-
-            // Continue conversation with tool result - tell AI not to repeat previous text
-            fullPrompt = `${fullPrompt}\n\nAssistant: ${iterationResponse}\n\nTool Result:\n\`\`\`json\n${resultOutput}\n\`\`\`\n\nIMPORTANT: Do NOT repeat any text you've already said. Continue with NEW content only based on the tool result. If the task is complete, simply acknowledge with a brief response.`;
-
-          } catch (parseError) {
-            console.error('[FacilitatorService] Failed to parse tool request:', parseError);
-            // If we can't parse the tool request, just return the response as-is
-            fullResponse += iterationResponse;
-            callbacks.onTextChunk(iterationResponse, messageId);
-            break;
+          // Extract usage from result
+          if (resultMsg.usage) {
+            totalInputTokens = resultMsg.usage.input_tokens ?? 0;
+            totalOutputTokens = resultMsg.usage.output_tokens ?? 0;
           }
-        } else {
-          // No tool use, add to full response and we're done
-          console.log(`[FacilitatorService] Final response (${iterationResponse.length} chars): "${iterationResponse.slice(0, 100)}..."`);
-          fullResponse += iterationResponse;
-          callbacks.onTextChunk(iterationResponse, messageId);
-          break;
+
+          // Extract cost
+          if ('total_cost_usd' in resultMsg) {
+            totalCostUsd = resultMsg.total_cost_usd;
+          }
+
+          if (resultMsg.subtype === 'success' && 'result' in resultMsg) {
+            // If we haven't received streaming content, use the final result
+            if (!fullResponse) {
+              fullResponse = resultMsg.result;
+              callbacks.onTextChunk(fullResponse, messageId);
+            }
+          } else if (resultMsg.subtype === 'error_during_execution') {
+            const errors = 'errors' in resultMsg ? (resultMsg.errors as string[]).join(', ') : 'Unknown error';
+            callbacks.onError(`An error occurred during processing: ${errors}`);
+            return;
+          } else if (resultMsg.subtype === 'error_max_turns') {
+            console.log(`[FacilitatorService] Max turns reached`);
+            const warningMsg = '\n\n*I\'ve reached my action limit for this request. Let me know if you need me to continue.*';
+            fullResponse += warningMsg;
+            callbacks.onTextChunk(warningMsg, messageId);
+          }
         }
       }
 
-      if (toolIteration >= maxToolIterations) {
-        const warningMsg = '\n\n*I\'ve reached my action limit for this request. Let me know if you need me to continue.*';
-        fullResponse += warningMsg;
-        callbacks.onTextChunk(warningMsg, messageId);
-      }
+      console.log(`[FacilitatorService] Final response (${fullResponse.length} chars): "${fullResponse.slice(0, 100)}..."`);
 
-      // Save the assistant message
+      // Save the assistant message with the same ID we've been streaming to
       const assistantMessage = await this.chatService.addMessage(
         userId,
         'assistant',
         fullResponse || 'I apologize, but I was unable to generate a response.',
-        toolCalls.length > 0 ? toolCalls : undefined
+        toolCalls.length > 0 ? toolCalls : undefined,
+        messageId // Pass the ID so diagnostics can be matched
       );
 
       // Call complete callback
-      callbacks.onComplete({
-        ...assistantMessage,
-        id: messageId, // Use the ID we've been streaming to
-      });
+      callbacks.onComplete(assistantMessage);
 
-      // Add diagnostic entry
+      // Add diagnostic entry with enhanced data including raw SDK events
       this.addDiagnosticEntry({
         timestamp: new Date().toISOString(),
         messageId,
         userMessage: content.slice(0, 200),
-        iterations: toolIteration + 1,
+        iterations: toolCalls.length + 1, // Approximate iterations based on tool calls
         toolCalls: toolCalls.map(tc => ({ name: tc.name, input: tc.input || {}, output: tc.output })),
         responseLength: fullResponse.length,
         durationMs: Date.now() - startTime,
+        // Enhanced diagnostics (P0)
+        systemPrompt,
+        model: detectedModel,
+        tokenUsage: totalInputTokens > 0 || totalOutputTokens > 0
+          ? { inputTokens: totalInputTokens, outputTokens: totalOutputTokens }
+          : undefined,
+        // Full diagnostics with raw SDK events
+        rawEvents: rawEvents.length > 0 ? rawEvents : undefined,
+        sessionInfo,
+        totalCostUsd: totalCostUsd > 0 ? totalCostUsd : undefined,
       });
     } catch (error) {
       // Re-throw abort errors without logging
@@ -619,16 +714,26 @@ Example format:
       console.error('[FacilitatorService] Error processing message:', error);
       callbacks.onError(errorMessage);
 
-      // Add diagnostic entry for error
+      // Add diagnostic entry for error with enhanced data including raw SDK events
       this.addDiagnosticEntry({
         timestamp: new Date().toISOString(),
         messageId,
         userMessage: content.slice(0, 200),
-        iterations: toolIteration + 1,
+        iterations: toolCalls.length + 1, // Approximate iterations based on tool calls
         toolCalls: toolCalls.map(tc => ({ name: tc.name, input: tc.input || {}, output: tc.output })),
         responseLength: fullResponse.length,
         durationMs: Date.now() - startTime,
         error: errorMessage,
+        // Enhanced diagnostics (P0)
+        systemPrompt,
+        model: detectedModel,
+        tokenUsage: totalInputTokens > 0 || totalOutputTokens > 0
+          ? { inputTokens: totalInputTokens, outputTokens: totalOutputTokens }
+          : undefined,
+        // Full diagnostics with raw SDK events
+        rawEvents: rawEvents.length > 0 ? rawEvents : undefined,
+        sessionInfo,
+        totalCostUsd: totalCostUsd > 0 ? totalCostUsd : undefined,
       });
     }
   }
@@ -637,7 +742,13 @@ Example format:
    * Build the system prompt with persona, user context, and available tools.
    * @param displayName - Optional display name to use instead of persona.name (from settings)
    */
-  private buildSystemPrompt(persona: Persona, userName: string, navigationContext: NavigationContext, displayName?: string): string {
+  private async buildSystemPrompt(
+    persona: Persona,
+    userName: string,
+    navigationContext: NavigationContext,
+    userId: string,
+    displayName?: string
+  ): Promise<string> {
     const toolDefinitions = this.toolsService.getToolDefinitions();
 
     const toolsDescription = toolDefinitions.map((tool) => {
@@ -664,8 +775,14 @@ Example format:
     if (navigationContext.activeThingName && navigationContext.activeThingId) {
       contextParts.push(`Active Thing: "${navigationContext.activeThingName}" (ID: ${navigationContext.activeThingId})`);
     }
+
+    // Build Thing context for referenced Things
+    let thingContext = '';
     if (navigationContext.referencedThingIds && navigationContext.referencedThingIds.length > 0) {
-      contextParts.push(`Referenced Things (from ^thing-name mentions): ${navigationContext.referencedThingIds.join(', ')}`);
+      thingContext = await this.buildThingContext(navigationContext.referencedThingIds, userId);
+      if (thingContext) {
+        contextParts.push(`\n--- Referenced Things Context ---\n${thingContext}`);
+      }
     }
 
     // Add display name instruction to persona prompt if different from persona name
@@ -680,6 +797,108 @@ Example format:
       contextSection: buildContextSection(contextParts),
       toolsDescription,
     });
+  }
+
+  /**
+   * Build context string for referenced Things.
+   * Includes Thing metadata, properties, documents, and linked file contents.
+   */
+  private async buildThingContext(thingIds: string[], userId: string): Promise<string> {
+    const contextParts: string[] = [];
+
+    for (const thingId of thingIds) {
+      try {
+        const thing = await this.thingService.getThing(thingId, userId);
+        if (!thing) continue;
+
+        // Build path hierarchy
+        const pathNames: string[] = [];
+        if (thing.parentIds.length > 0) {
+          let currentParentId: string | undefined = thing.parentIds[0];
+          const visited = new Set<string>();
+          while (currentParentId && !visited.has(currentParentId)) {
+            visited.add(currentParentId);
+            const parent = await this.thingService.getThing(currentParentId, userId);
+            if (parent) {
+              pathNames.unshift(parent.name);
+              currentParentId = parent.parentIds[0];
+            } else {
+              break;
+            }
+          }
+        }
+        const pathString = pathNames.length > 0 ? pathNames.join(' > ') : '(root)';
+
+        const parts: string[] = [];
+        parts.push(`## Thing: ${thing.name}`);
+        parts.push(`- ID: ${thing.id}`);
+        parts.push(`- Path: ${pathString}`);
+        parts.push(`- Type: ${thing.type}`);
+        if (thing.description) {
+          parts.push(`- Description: ${thing.description}`);
+        }
+        if (thing.tags.length > 0) {
+          parts.push(`- Tags: ${thing.tags.join(', ')}`);
+        }
+
+        // Include properties
+        if (thing.properties && Object.keys(thing.properties).length > 0) {
+          parts.push(`\n### Properties:`);
+          for (const [key, value] of Object.entries(thing.properties)) {
+            parts.push(`- ${key}: ${value}`);
+          }
+        }
+
+        // Include links summary
+        if (thing.links && thing.links.length > 0) {
+          parts.push(`\n### Links:`);
+          for (const link of thing.links) {
+            parts.push(`- [${link.type}] ${link.label}: ${link.target}${link.description ? ` - ${link.description}` : ''}`);
+          }
+        }
+
+        // Include inline documents
+        if (thing.documents && thing.documents.length > 0) {
+          parts.push(`\n### Documents:`);
+          for (const doc of thing.documents) {
+            parts.push(`#### ${doc.title}`);
+            parts.push(doc.content || '(empty)');
+          }
+        }
+
+        // Read linked local files
+        const fileLinks = (thing.links || []).filter(link => link.type === 'file');
+        if (fileLinks.length > 0) {
+          parts.push(`\n### Linked File Contents:`);
+          for (const link of fileLinks) {
+            const filePath = link.target;
+            try {
+              if (existsSync(filePath)) {
+                const content = await readFile(filePath, 'utf-8');
+                // Truncate very large files
+                const truncatedContent = content.length > 10000
+                  ? content.slice(0, 10000) + '\n... (truncated)'
+                  : content;
+                parts.push(`\n#### ${link.label} (${filePath}):`);
+                parts.push('```');
+                parts.push(truncatedContent);
+                parts.push('```');
+              } else {
+                parts.push(`\n#### ${link.label}: File not found at ${filePath}`);
+              }
+            } catch (err) {
+              parts.push(`\n#### ${link.label}: Error reading file - ${err instanceof Error ? err.message : 'unknown error'}`);
+            }
+          }
+        }
+
+        contextParts.push(parts.join('\n'));
+      } catch (err) {
+        console.error(`[FacilitatorService] Error building context for Thing ${thingId}:`, err);
+      }
+    }
+
+    return contextParts.join('\n\n');
   }
 
   /**
