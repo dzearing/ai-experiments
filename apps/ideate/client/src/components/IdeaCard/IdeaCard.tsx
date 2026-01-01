@@ -64,12 +64,10 @@ export function IdeaCard({
       tabIndex={0}
       data-testid="idea-card"
       data-idea-id={id}
+      draggable
+      onDragStart={handleDragStart}
     >
-      <div
-        className={styles.cardInner}
-        draggable
-        onDragStart={handleDragStart}
-      >
+      <div className={styles.cardInner}>
         {/* Header with title and AI badge */}
         <div className={styles.header}>
           <h3 className={styles.title}>{title}</h3>
