@@ -7,13 +7,11 @@ import {
   Progress,
   SplitPane,
   Spinner,
-  Tabs,
   Text,
   Checkbox,
 } from '@ui-kit/react';
 import { ChatPanel, ChatInput, type ChatPanelMessage } from '@ui-kit/react-chat';
 import { MarkdownCoEditor, type ViewMode } from '@ui-kit/react-markdown';
-import { AddIcon } from '@ui-kit/icons/AddIcon';
 import { ArrowRightIcon } from '@ui-kit/icons/ArrowRightIcon';
 import { CheckCircleIcon } from '@ui-kit/icons/CheckCircleIcon';
 import { ChevronDownIcon } from '@ui-kit/icons/ChevronDownIcon';
