@@ -186,7 +186,6 @@ export class IdeaAgentWebSocketHandler {
           if (clientMessage.idea) {
             const isFirstContext = !client.ideaContext;
             client.ideaContext = clientMessage.idea;
-            console.log(`[IdeaAgent] Client ${client.clientId} idea context updated:`, client.ideaContext.title, 'thingContext:', client.ideaContext.thingContext);
 
             // If this is the first context we received, now send history and greeting
             // (we deferred this from connection time to get thingContext)

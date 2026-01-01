@@ -225,7 +225,6 @@ export function useIdeaAgent({
 
       // Send initial idea context if available
       if (ideaContextRef.current) {
-        console.log('[IdeaAgent] Sending idea context:', ideaContextRef.current.title, 'thingContext:', ideaContextRef.current.thingContext);
         ws.send(JSON.stringify({
           type: 'idea_update',
           idea: ideaContextRef.current,

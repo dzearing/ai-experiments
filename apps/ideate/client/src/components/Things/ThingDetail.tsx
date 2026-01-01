@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Button, Input, Chip, Spinner, Dropdown, type DropdownOption } from '@ui-kit/react';
+import { Button, IconButton, Input, Chip, Spinner, Dropdown, Tabs, type DropdownOption, type TabItem } from '@ui-kit/react';
 import { TrashIcon } from '@ui-kit/icons/TrashIcon';
 import { AddIcon } from '@ui-kit/icons/AddIcon';
 import { ChevronRightIcon } from '@ui-kit/icons/ChevronRightIcon';
@@ -359,179 +359,176 @@ export function ThingDetail({
         </div>
       </header>
 
-      {/* Description */}
+      {/* Description (no label) */}
       {thing.description && (
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Description</h2>
-          <p className={styles.description}>{thing.description}</p>
-        </section>
+        <p className={styles.descriptionBlock}>{thing.description}</p>
       )}
 
-      {/* Tags */}
-      <section className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>Tags</h2>
-          <span className={styles.sectionDivider} />
+      {/* Tags (inline, no label) */}
+      <div className={styles.tagsBlock}>
+        {thing.tags.map((tag) => (
+          <Chip
+            key={tag}
+            size="sm"
+            onRemove={() => handleRemoveTag(tag)}
+          >
+            #{tag}
+          </Chip>
+        ))}
+        {isAddingTag ? (
+          <Input
+            value={newTag}
+            onChange={(e) => setNewTag(e.target.value)}
+            onKeyDown={handleTagKeyDown}
+            onBlur={() => {
+              if (!newTag.trim()) {
+                setIsAddingTag(false);
+              }
+            }}
+            placeholder="New tag..."
+            size="sm"
+            autoFocus
+            className={styles.tagInput}
+          />
+        ) : thing.tags.length > 0 ? (
+          <IconButton
+            icon={<AddIcon />}
+            onClick={() => setIsAddingTag(true)}
+            aria-label="Add tag"
+            size="sm"
+            variant="ghost"
+          />
+        ) : (
           <Button
             variant="ghost"
+            size="sm"
             icon={<AddIcon />}
             onClick={() => setIsAddingTag(true)}
           >
             Add tag
           </Button>
-        </div>
-        <div className={styles.tags}>
-          {thing.tags.map((tag) => (
-            <Chip
-              key={tag}
-              size="sm"
-              onRemove={() => handleRemoveTag(tag)}
-            >
-              #{tag}
-            </Chip>
-          ))}
-          {isAddingTag && (
-            <Input
-              value={newTag}
-              onChange={(e) => setNewTag(e.target.value)}
-              onKeyDown={handleTagKeyDown}
-              onBlur={() => {
-                if (!newTag.trim()) {
-                  setIsAddingTag(false);
-                }
-              }}
-              placeholder="New tag..."
-              size="sm"
-              autoFocus
-              className={styles.tagInput}
-            />
-          )}
-        </div>
-      </section>
-
-      {/* Idea Counts */}
-      {thing.ideaCounts && (
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Ideas</h2>
-          <div className={styles.ideaCounts}>
-            <div className={styles.ideaCountItem}>
-              <span className={styles.ideaCountValue}>{thing.ideaCounts.new}</span>
-              <span className={styles.ideaCountLabel}>New</span>
-            </div>
-            <div className={styles.ideaCountItem}>
-              <span className={styles.ideaCountValue}>{thing.ideaCounts.exploring}</span>
-              <span className={styles.ideaCountLabel}>Exploring</span>
-            </div>
-            <div className={styles.ideaCountItem}>
-              <span className={styles.ideaCountValue}>{thing.ideaCounts.ready}</span>
-              <span className={styles.ideaCountLabel}>Ready</span>
-            </div>
-            <div className={styles.ideaCountItem}>
-              <span className={styles.ideaCountValue}>{thing.ideaCounts.archived}</span>
-              <span className={styles.ideaCountLabel}>Archived</span>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Links */}
-      <section className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>Links</h2>
-          <span className={styles.sectionDivider} />
-          <Button
-            variant="ghost"
-            icon={<AddIcon />}
-            onClick={() => linksRef.current?.startAdd()}
-          >
-            Add link
-          </Button>
-        </div>
-        <ThingLinks
-          ref={linksRef}
-          links={thing.links || []}
-          onAdd={handleAddLink}
-          onUpdate={handleUpdateLink}
-          onRemove={handleRemoveLink}
-          hideAddButton
-        />
-      </section>
-
-      {/* Properties */}
-      <section className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>Properties</h2>
-          <span className={styles.sectionDivider} />
-          <Button
-            variant="ghost"
-            icon={<AddIcon />}
-            onClick={() => propertiesRef.current?.startAdd()}
-          >
-            Add property
-          </Button>
-        </div>
-        <ThingProperties
-          ref={propertiesRef}
-          properties={thing.properties || {}}
-          onChange={handlePropertiesChange}
-        />
-      </section>
-
-      {/* Documents */}
-      <section className={styles.section}>
-        <ThingDocuments thingId={thingId} />
-      </section>
-
-      {/* Ideas */}
-      <section className={styles.section}>
-        <ThingIdeas
-          thingId={thingId}
-          thingName={thing.name}
-          thingType={thing.type}
-          thingDescription={thing.description}
-          workspaceId={thing.workspaceId}
-        />
-      </section>
-
-      {/* Children */}
-      <section className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>Children</h2>
-          <span className={styles.sectionDivider} />
-          <Button
-            variant="ghost"
-            icon={<AddIcon />}
-            onClick={() => onCreateChild(thing.id)}
-          >
-            Add child
-          </Button>
-        </div>
-        {children.length > 0 ? (
-          <ul className={styles.childrenList}>
-            {children.map((child) => (
-              <li key={child.id}>
-                <button
-                  className={styles.childItem}
-                  onClick={() => onNavigate(child.id)}
-                >
-                  <span className={styles.childName}>{child.name}</span>
-                  <span className={styles.childType}>{TYPE_LABELS[child.type]}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className={styles.noChildren}>No children yet</p>
         )}
-      </section>
+      </div>
 
-      {/* Content */}
-      {thing.content && (
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Content</h2>
-          <div className={styles.content}>{thing.content}</div>
-        </section>
-      )}
+      {/* Tabbed content */}
+      <Tabs
+        items={[
+          {
+            value: 'ideas',
+            label: 'Ideas',
+            content: (
+              <ThingIdeas
+                thingId={thingId}
+                thingName={thing.name}
+                thingType={thing.type}
+                thingDescription={thing.description}
+                workspaceId={thing.workspaceId}
+              />
+            ),
+          },
+          {
+            value: 'documents',
+            label: 'Documents',
+            content: <ThingDocuments thingId={thingId} />,
+          },
+          {
+            value: 'about',
+            label: 'About',
+            content: (
+              <div className={styles.aboutTab}>
+                {/* Links and Properties - 2 columns on wide screens */}
+                <div className={styles.twoColumnSection}>
+                  {/* Links */}
+                  <section className={styles.columnSection}>
+                    <div className={styles.sectionHeader}>
+                      <h2 className={styles.sectionTitle}>Links</h2>
+                      <span className={styles.sectionDivider} />
+                      <Button
+                        variant="ghost"
+                        icon={<AddIcon />}
+                        onClick={() => linksRef.current?.startAdd()}
+                      >
+                        Add link
+                      </Button>
+                    </div>
+                    <ThingLinks
+                      ref={linksRef}
+                      links={thing.links || []}
+                      onAdd={handleAddLink}
+                      onUpdate={handleUpdateLink}
+                      onRemove={handleRemoveLink}
+                      hideAddButton
+                    />
+                  </section>
+
+                  {/* Properties */}
+                  <section className={styles.columnSection}>
+                    <div className={styles.sectionHeader}>
+                      <h2 className={styles.sectionTitle}>Properties</h2>
+                      <span className={styles.sectionDivider} />
+                      <Button
+                        variant="ghost"
+                        icon={<AddIcon />}
+                        onClick={() => propertiesRef.current?.startAdd()}
+                      >
+                        Add property
+                      </Button>
+                    </div>
+                    <ThingProperties
+                      ref={propertiesRef}
+                      properties={thing.properties || {}}
+                      onChange={handlePropertiesChange}
+                    />
+                  </section>
+                </div>
+
+                {/* Children */}
+                <section className={styles.section}>
+                  <div className={styles.sectionHeader}>
+                    <h2 className={styles.sectionTitle}>Children</h2>
+                    <span className={styles.sectionDivider} />
+                    <Button
+                      variant="ghost"
+                      icon={<AddIcon />}
+                      onClick={() => onCreateChild(thing.id)}
+                    >
+                      Add child
+                    </Button>
+                  </div>
+                  {children.length > 0 ? (
+                    <ul className={styles.childrenList}>
+                      {children.map((child) => (
+                        <li key={child.id}>
+                          <button
+                            className={styles.childItem}
+                            onClick={() => onNavigate(child.id)}
+                          >
+                            <span className={styles.childName}>{child.name}</span>
+                            <span className={styles.childType}>{TYPE_LABELS[child.type]}</span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className={styles.noChildren}>No children yet</p>
+                  )}
+                </section>
+
+                {/* Content */}
+                {thing.content && (
+                  <section className={styles.section}>
+                    <h2 className={styles.sectionTitle}>Content</h2>
+                    <div className={styles.content}>{thing.content}</div>
+                  </section>
+                )}
+              </div>
+            ),
+          },
+        ] satisfies TabItem[]}
+        defaultValue="ideas"
+        variant="underline"
+        className={styles.tabs}
+      />
     </div>
   );
 }

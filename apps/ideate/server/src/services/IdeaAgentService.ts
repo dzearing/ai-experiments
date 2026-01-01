@@ -603,11 +603,8 @@ export class IdeaAgentService {
 
       // If this is a new idea linked to a Thing, generate a Thing-specific greeting
       if (ideaContext?.thingContext) {
-        console.log('[IdeaAgentService] Generating Thing-specific greeting for:', ideaContext.thingContext.name);
         return this.generateThingContextGreeting(ideaContext.thingContext);
       }
-
-      console.log('[IdeaAgentService] Using cached new idea greeting');
       return this.getNewIdeaGreeting();
     }
 

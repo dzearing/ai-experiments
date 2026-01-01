@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from '@ui-kit/router';
 import { Spinner, SplitPane } from '@ui-kit/react';
 import { useAuth } from '../contexts/AuthContext';
@@ -93,12 +93,16 @@ export function Things() {
     }
   }, [workspaceId, user, fetchThingsGraph]);
 
-  // Sync selectedThingId from URL on mount/URL change
+  // Sync selectedThingId from URL on mount/URL change only
+  // Using a ref to track the last URL we synced from, to avoid re-syncing
+  // when selectedThingId changes from user interaction
+  const lastSyncedUrlThingId = useRef<string | undefined>(undefined);
   useEffect(() => {
-    if (urlThingId && urlThingId !== selectedThingId) {
+    if (urlThingId && urlThingId !== lastSyncedUrlThingId.current) {
+      lastSyncedUrlThingId.current = urlThingId;
       setSelectedThingId(urlThingId);
     }
-  }, [urlThingId, selectedThingId, setSelectedThingId]);
+  }, [urlThingId, setSelectedThingId]);
 
   // Get the selected thing's name from the things array for navigation context
   const selectedThingName = selectedThingId
@@ -119,8 +123,7 @@ export function Things() {
   const handleSelect = useCallback((thing: ThingMetadata | null) => {
     const thingId = thing?.id ?? null;
     setSelectedThingId(thingId);
-    // Update URL without triggering React Router navigation
-    // This avoids re-renders while keeping URL in sync
+    // Update URL without triggering router navigation (avoids re-renders/focus loss)
     const basePath = workspaceId ? `/workspace/${workspaceId}/things` : '/things';
     const newUrl = thingId ? `${basePath}/${thingId}` : basePath;
     window.history.replaceState(null, '', newUrl);

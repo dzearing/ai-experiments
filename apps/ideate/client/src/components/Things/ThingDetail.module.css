@@ -69,7 +69,7 @@
   align-items: flex-start;
   gap: var(--space-3);
   padding: var(--space-4);
-  border-bottom: 1px solid var(--base-border);
+  padding-bottom: var(--space-2);
 }
 
 .headerVisual {
@@ -192,44 +192,63 @@
   line-height: 1.5;
 }
 
-/* Tags */
-.tags {
+/* Description block (below header, no label) */
+.descriptionBlock {
+  margin: 0;
+  padding: 0 var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--base-fg-soft);
+  line-height: 1.6;
+}
+
+/* Tags block (inline below description, no label) */
+.tagsBlock {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
   align-items: center;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--base-border);
 }
 
 .tagInput {
   width: 100px;
 }
 
-/* Idea Counts */
-.ideaCounts {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--space-3);
-}
-
-.ideaCountItem {
+/* Tabs container */
+.tabs {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-3);
-  background: var(--soft-bg);
-  border-radius: var(--radius-md);
+  padding: var(--space-4);
 }
 
-.ideaCountValue {
-  font-size: var(--text-xl);
-  font-weight: var(--weight-semibold);
-  color: var(--base-fg);
+/* About tab container */
+.aboutTab {
+  display: flex;
+  flex-direction: column;
 }
 
-.ideaCountLabel {
-  font-size: var(--text-xs);
-  color: var(--base-fg-soft);
+/* Two column section for Links and Properties */
+.twoColumnSection {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--base-border);
+}
+
+@media (min-width: 768px) {
+  .twoColumnSection {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.columnSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
 /* Children List */
