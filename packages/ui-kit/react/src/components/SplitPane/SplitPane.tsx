@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect, type ReactNode, type CSSProperties } from 'react';
+import { useState, useCallback, useRef, useLayoutEffect, type ReactNode, type CSSProperties } from 'react';
 import { Sizer } from '../Sizer';
 import styles from './SplitPane.module.css';
 
@@ -80,6 +80,7 @@ export function SplitPane({
   const [sizeBeforeCollapse, setSizeBeforeCollapse] = useState<number>(parseSize(defaultSize));
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const hasInitializedRef = useRef(false);
 
   const isSizeControlled = controlledSize !== undefined;
   const isCollapsedControlled = controlledCollapsed !== undefined;
@@ -87,17 +88,25 @@ export function SplitPane({
   const currentSize = isSizeControlled ? parseSize(controlledSize) : internalSize;
   const isCollapsed = isCollapsedControlled ? controlledCollapsed : internalCollapsed;
 
-  // Initialize size based on percentage
-  useEffect(() => {
+  // Initialize size based on percentage - use useLayoutEffect for synchronous calculation
+  useLayoutEffect(() => {
+    if (hasInitializedRef.current) return;
     if (typeof defaultSize === 'string' && defaultSize.endsWith('%') && containerRef.current) {
       const container = containerRef.current;
       const containerSize = orientation === 'horizontal'
         ? container.clientWidth
         : container.clientHeight;
-      const percentage = parseInt(defaultSize, 10) / 100;
-      const calculatedSize = Math.round(containerSize * percentage);
-      setInternalSize(calculatedSize);
-      setSizeBeforeCollapse(calculatedSize);
+
+      // Only calculate if container has valid size
+      if (containerSize > 0) {
+        const percentage = parseInt(defaultSize, 10) / 100;
+        const calculatedSize = Math.round(containerSize * percentage);
+        setInternalSize(calculatedSize);
+        setSizeBeforeCollapse(calculatedSize);
+        hasInitializedRef.current = true;
+      }
+    } else if (typeof defaultSize === 'number') {
+      hasInitializedRef.current = true;
     }
   }, [defaultSize, orientation]);
 

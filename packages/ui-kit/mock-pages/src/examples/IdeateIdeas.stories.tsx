@@ -509,8 +509,8 @@ function IdeateIdeasComponent({
 
   const columns: { status: IdeaStatus; title: string }[] = [
     { status: 'new', title: 'New' },
-    { status: 'exploring', title: 'Exploring' },
-    { status: 'ready', title: 'Ready' },
+    { status: 'exploring', title: 'Planning' },
+    { status: 'ready', title: 'In Progress' },
     { status: 'archived', title: 'Archived' },
   ];
 
@@ -582,7 +582,7 @@ function IdeateIdeasComponent({
 // ============================================
 
 const meta: Meta<typeof IdeateIdeasComponent> = {
-  title: 'Example Pages/Ideate Ideas',
+  title: 'Example Pages/Ideate Ideas/Board',
   component: IdeateIdeasComponent,
   parameters: {
     layout: 'fullscreen',

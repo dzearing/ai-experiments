@@ -1,0 +1,704 @@
+/* IdeaUserFlow.module.css */
+/* Dialog-based idea creation and exploration flow */
+
+/* ============================================
+   DIALOG OVERLAY & CONTAINER
+   ============================================ */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8);
+}
+
+.dialog {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto 1fr auto;
+  width: 100%;
+  max-width: 1200px;
+  height: 80vh;
+  max-height: 800px;
+  border: 1px solid var(--base-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+}
+
+/* ============================================
+   DIALOG HEADER
+   ============================================ */
+
+.dialogHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--base-border);
+  background: var(--soft-bg);
+}
+
+.dialogHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.dialogHeaderCenter {
+  flex: 1;
+  text-align: center;
+}
+
+.dialogHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* ============================================
+   DIALOG BODY (Two-column layout with SplitPane)
+   ============================================ */
+
+.dialogBody {
+  display: flex;
+  overflow: hidden;
+}
+
+/* ============================================
+   CHAT SECTION (LEFT)
+   ============================================ */
+
+.chatSection {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--soft-bg);
+  overflow: hidden;
+}
+
+.chatPanel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.chatHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--base-border);
+}
+
+.chatHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.connectionStatus {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--soft-fg-soft);
+}
+
+.connectionDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--soft-fg-softer);
+}
+
+.connected .connectionDot {
+  background: var(--success-fg);
+}
+
+.chatMessages {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.systemMessage {
+  text-align: center;
+  padding: var(--space-3);
+  background: var(--softer-bg);
+  border-radius: var(--radius-lg);
+}
+
+.chatMessage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: 95%;
+}
+
+.chatMessageUser {
+  align-self: flex-end;
+}
+
+.chatMessageAssistant {
+  align-self: flex-start;
+}
+
+.chatMessageHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.chatAvatar {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.chatAvatarUser {
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+}
+
+.chatAvatarAssistant {
+  background: var(--info-bg);
+  color: var(--info-fg);
+}
+
+.chatAvatarAssistant svg {
+  width: 16px;
+  height: 16px;
+}
+
+.agentLabel {
+  color: var(--info-fg);
+  font-weight: var(--weight-medium);
+}
+
+.timestamp {
+  margin-left: auto;
+}
+
+.chatBubble {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  white-space: pre-wrap;
+  line-height: var(--leading-relaxed);
+}
+
+.chatBubbleUser {
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+  border-bottom-right-radius: var(--radius-sm);
+}
+
+.chatBubbleAssistant {
+  background: var(--softer-bg);
+  border: 1px solid var(--softer-border);
+  color: var(--softer-fg);
+  border-bottom-left-radius: var(--radius-sm);
+}
+
+.thinkingIndicator {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  color: var(--soft-fg-soft);
+}
+
+.chatInputArea {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-top: 1px solid var(--base-border);
+  background: var(--soft-bg);
+}
+
+.chatInput {
+  flex: 1 1 0%;
+  min-width: 0;
+}
+
+/* Ensure ChatInput container fills the wrapper */
+.chatInput > * {
+  flex: 1 1 0%;
+  width: 100%;
+}
+
+/* ============================================
+   DOCUMENT SECTION (RIGHT)
+   ============================================ */
+
+.docSection {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--base-bg);
+  overflow: hidden;
+}
+
+.docHeader {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* VS Code-style Tabs */
+.vscodeTabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+  padding-top: var(--space-1);
+  background: var(--stronger-bg);
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+
+.vscodeTab {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border: none;
+  border-right: 1px solid var(--stronger-border);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  background: var(--strong-bg);
+  color: var(--strong-fg);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--duration-fast), color var(--duration-fast);
+}
+
+.vscodeTab:hover {
+  background: var(--strong-bg-hover);
+  color: var(--strong-fg);
+}
+
+.vscodeTabActive {
+  padding-top: var(--space-3);
+  background: var(--base-bg);
+  color: var(--base-fg);
+  border-top: 3px solid var(--primary-bg);
+}
+
+.resourceTab {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: none;
+  background: none;
+  color: var(--soft-fg-soft);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all var(--duration-fast);
+  white-space: nowrap;
+}
+
+.resourceTab:hover {
+  color: var(--soft-fg);
+  background: var(--softer-bg);
+}
+
+.resourceTab svg {
+  width: 16px;
+  height: 16px;
+}
+
+.resourceTabActive {
+  color: var(--soft-fg-primary);
+  border-bottom-color: var(--primary-bg);
+}
+
+.resourceTabActive:hover {
+  color: var(--soft-fg-primary);
+}
+
+.resourceTabAdd {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: none;
+  color: var(--soft-fg-softer);
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  margin-left: var(--space-2);
+}
+
+.resourceTabAdd:hover {
+  background: var(--softer-bg);
+  color: var(--soft-fg);
+}
+
+.resourceTabAdd svg {
+  width: 16px;
+  height: 16px;
+}
+
+.resourceContent {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ============================================
+   DOCUMENT EDITOR
+   ============================================ */
+
+.docEditor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.docToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 1px solid var(--base-border);
+  background: var(--soft-bg);
+}
+
+.docContent {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4) var(--space-6);
+}
+
+.docPreview {
+  max-width: 700px;
+}
+
+.docTitle {
+  margin-bottom: var(--space-4);
+}
+
+.docContentSection {
+  margin-bottom: var(--space-4);
+}
+
+.docDivider {
+  height: 1px;
+  background: var(--base-border);
+  margin: var(--space-4) 0;
+}
+
+.docDescription {
+  white-space: pre-wrap;
+  line-height: var(--leading-relaxed);
+}
+
+.docForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 700px;
+}
+
+.formField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.formSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.titleInput {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
+}
+
+/* ============================================
+   PLAN VIEW
+   ============================================ */
+
+.planView {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.planToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--base-border);
+  background: var(--soft-bg);
+}
+
+.planProgress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.planContent {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4);
+}
+
+.planPhase {
+  margin-bottom: var(--space-3);
+  border: 1px solid var(--base-border);
+  border-radius: var(--radius-lg);
+  background: var(--soft-bg);
+  overflow: hidden;
+}
+
+.planPhaseHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: none;
+  background: none;
+  color: var(--soft-fg);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  text-align: left;
+  cursor: pointer;
+}
+
+.planPhaseHeader:hover {
+  background: var(--soft-bg-hover);
+}
+
+.planPhaseToggle {
+  display: flex;
+  color: var(--soft-fg-softer);
+}
+
+.planPhaseToggle svg {
+  width: 16px;
+  height: 16px;
+}
+
+.planPhaseNumber {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.planPhaseTitle {
+  flex: 1;
+}
+
+.planPhaseProgress {
+  display: flex;
+  align-items: center;
+  color: var(--soft-fg-soft);
+  font-size: var(--text-sm);
+}
+
+.planPhaseProgress svg {
+  width: 18px;
+  height: 18px;
+}
+
+.planPhaseContent {
+  padding: 0 var(--space-4) var(--space-4);
+  padding-left: calc(var(--space-4) + 16px + var(--space-3) + 24px + var(--space-3));
+}
+
+.planPhaseDescription {
+  margin-bottom: var(--space-3);
+}
+
+.planTasks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.planTask {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.planTaskTitle {
+  font-size: var(--text-sm);
+}
+
+.planTaskCompleted {
+  text-decoration: line-through;
+  color: var(--soft-fg-softer);
+}
+
+.planTaskInProgress {
+  color: var(--primary-fg);
+}
+
+.planTaskInProgress .planTaskTitle {
+  font-weight: var(--weight-medium);
+}
+
+/* ============================================
+   DIAGRAM VIEW
+   ============================================ */
+
+.diagramView {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.diagramToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--base-border);
+  background: var(--soft-bg);
+}
+
+.diagramContent {
+  flex: 1;
+  padding: var(--space-4);
+  overflow: auto;
+}
+
+.diagramBox {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 300px;
+  background: var(--softer-bg);
+  border: 1px dashed var(--softer-border);
+  border-radius: var(--radius-lg);
+}
+
+.diagramNode {
+  position: absolute;
+  padding: var(--space-3) var(--space-4);
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  transition: all var(--duration-fast);
+  white-space: nowrap;
+}
+
+.diagramNode:hover {
+  border-color: var(--primary-border);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ============================================
+   DIALOG FOOTER
+   ============================================ */
+
+.dialogFooter {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--base-border);
+  background: var(--soft-bg);
+}
+
+.footerLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.footerRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+.suggestedResponses {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.suggestedResponse {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  background: var(--softer-bg);
+  border: 1px solid var(--softer-border);
+  border-radius: var(--radius-full);
+  color: var(--soft-fg);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: all var(--duration-fast);
+  white-space: nowrap;
+}
+
+.suggestedResponse:hover {
+  background: var(--primary-bg-soft);
+  border-color: var(--primary-border);
+  color: var(--primary-fg);
+}
+
+/* ============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================ */
+
+@media (max-width: 900px) {
+  .dialog {
+    max-height: 90vh;
+  }
+
+  .dialogBody {
+    flex-direction: column;
+  }
+
+  .chatSection {
+    border-bottom: 1px solid var(--base-border);
+  }
+
+  .suggestedResponses {
+    display: none;
+  }
+}

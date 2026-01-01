@@ -29,6 +29,7 @@
   border: none;
   background: transparent;
   color: var(--base-fg-soft);
+  font-family: var(--font-sans);
   font-size: var(--text-base);
   font-weight: var(--weight-medium);
   cursor: pointer;

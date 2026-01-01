@@ -1,0 +1,478 @@
+/* ExploringIdea.module.css */
+/* Layout: Chat LEFT, Resources RIGHT (mirrors idea creation) */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--base-bg);
+  color: var(--base-fg);
+}
+
+/* ============================================
+   HEADER
+   ============================================ */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--base-border);
+  background: var(--soft-bg);
+  flex-shrink: 0;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* ============================================
+   MAIN CONTENT: CHAT LEFT, RESOURCES RIGHT
+   ============================================ */
+
+.mainContent {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ============================================
+   LEFT: CHAT PANEL
+   ============================================ */
+
+.chatPanel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--soft-bg);
+}
+
+.chatHeader {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--base-border);
+}
+
+.chatMessages {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.systemMessage {
+  text-align: center;
+  padding: var(--space-3);
+  background: var(--softer-bg);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-3);
+}
+
+.chatMessage {
+  display: flex;
+  gap: var(--space-3);
+  max-width: 95%;
+}
+
+.chatMessageUser {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.chatMessageAssistant {
+  align-self: flex-start;
+}
+
+.chatAvatar {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.chatAvatarUser {
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+}
+
+.chatAvatarAssistant {
+  background: var(--info-bg);
+  color: var(--info-fg);
+}
+
+.chatAvatarAssistant svg {
+  width: 16px;
+  height: 16px;
+}
+
+.chatBubble {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  white-space: pre-wrap;
+}
+
+.chatBubbleUser {
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+}
+
+.chatBubbleAssistant {
+  background: var(--softer-bg);
+  border: 1px solid var(--softer-border);
+  color: var(--softer-fg);
+}
+
+.thinkingIndicator {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  color: var(--soft-fg-soft);
+}
+
+.chatInputArea {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--base-border);
+}
+
+.chatInputArea > *:first-child {
+  flex: 1;
+}
+
+.chatSuggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: 0 var(--space-4) var(--space-3);
+}
+
+/* ============================================
+   RIGHT: RESOURCES PANEL
+   ============================================ */
+
+.resourcesPanel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background: var(--base-bg);
+}
+
+/* Resource Tabs */
+.resourceTabs {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0 var(--space-4);
+  border-bottom: 1px solid var(--base-border);
+  background: var(--soft-bg);
+  overflow-x: auto;
+}
+
+.resourceTab {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: none;
+  background: none;
+  color: var(--soft-fg-soft);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all var(--duration-fast);
+  white-space: nowrap;
+}
+
+.resourceTab:hover {
+  color: var(--soft-fg);
+  background: var(--softer-bg);
+}
+
+.resourceTab svg {
+  width: 16px;
+  height: 16px;
+}
+
+.resourceTabActive {
+  color: var(--soft-fg-primary);
+  border-bottom-color: var(--primary-bg);
+}
+
+.resourceTabActive:hover {
+  color: var(--soft-fg-primary);
+}
+
+.resourceTabAdd {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: none;
+  color: var(--soft-fg-softer);
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  margin-left: var(--space-3);
+}
+
+.resourceTabAdd:hover {
+  background: var(--softer-bg);
+  color: var(--soft-fg);
+}
+
+.resourceTabAdd svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Resource Content Area */
+.resourceView {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.resourceContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.resourceToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--base-border);
+  background: var(--soft-bg);
+}
+
+/* ============================================
+   IDEA DOC VIEW
+   ============================================ */
+
+.markdownContent {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4);
+  font-size: var(--text-base);
+  line-height: var(--leading-relaxed);
+}
+
+/* ============================================
+   PLAN VIEW
+   ============================================ */
+
+.planProgress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-right: auto;
+}
+
+.planContent {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4);
+}
+
+.planPhase {
+  margin-bottom: var(--space-3);
+  border: 1px solid var(--base-border);
+  border-radius: var(--radius-lg);
+  background: var(--soft-bg);
+  overflow: hidden;
+}
+
+.planPhaseHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: none;
+  background: none;
+  color: var(--soft-fg);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  text-align: left;
+  cursor: pointer;
+}
+
+.planPhaseHeader:hover {
+  background: var(--soft-bg-hover);
+}
+
+.planPhaseToggle {
+  display: flex;
+  color: var(--soft-fg-softer);
+}
+
+.planPhaseToggle svg {
+  width: 16px;
+  height: 16px;
+}
+
+.planPhaseNumber {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.planPhaseTitle {
+  flex: 1;
+}
+
+.planPhaseProgress {
+  display: flex;
+  align-items: center;
+  color: var(--soft-fg-soft);
+  font-size: var(--text-sm);
+}
+
+.planPhaseProgress svg {
+  width: 18px;
+  height: 18px;
+}
+
+.planPhaseContent {
+  padding: 0 var(--space-4) var(--space-4);
+  padding-left: calc(var(--space-4) + 24px + var(--space-3) + 16px + var(--space-3));
+}
+
+.planPhaseDescription {
+  margin-bottom: var(--space-3);
+  color: var(--soft-fg-soft);
+}
+
+.planTasks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.planTask {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.planTaskTitle {
+  flex: 1;
+  font-size: var(--text-sm);
+}
+
+.planTaskCompleted {
+  text-decoration: line-through;
+  color: var(--soft-fg-softer);
+}
+
+.planAddTask {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  background: none;
+  color: var(--soft-fg-softer);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  border-radius: var(--radius-md);
+}
+
+.planAddTask:hover {
+  background: var(--soft-bg-hover);
+  color: var(--soft-fg);
+}
+
+.planAddTask svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ============================================
+   DIAGRAM VIEW
+   ============================================ */
+
+.diagramPlaceholder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-4);
+}
+
+.diagramBox {
+  flex: 1;
+  position: relative;
+  background: var(--softer-bg);
+  border: 1px dashed var(--softer-border);
+  border-radius: var(--radius-lg);
+  min-height: 300px;
+}
+
+.diagramNode {
+  position: absolute;
+  padding: var(--space-3) var(--space-4);
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  transition: all var(--duration-fast);
+}
+
+.diagramNode:hover {
+  border-color: var(--primary-border);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+
+.emptyResource {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-12);
+  color: var(--base-fg-softer);
+}
+
+.emptyResource svg {
+  width: 48px;
+  height: 48px;
+  opacity: 0.5;
+}

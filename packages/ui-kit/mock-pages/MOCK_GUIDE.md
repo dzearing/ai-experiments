@@ -4,6 +4,142 @@ This guide ensures consistent, accessible, and themable mock pages that properly
 
 ---
 
+## ⛔ CRITICAL: Color Group Rules (Read This First!)
+
+**The #1 cause of broken mocks is mixing color groups.** This section is mandatory reading.
+
+### The Golden Rule
+
+> **If you use a background from a color group, ALL foreground/text colors in that element MUST come from the SAME group.**
+
+This is because contrast is only guaranteed within a group. Mixing groups can result in unreadable text.
+
+### How Color Groups Work
+
+Each group has a complete set of tokens that are designed to work together:
+
+```
+--{group}-bg          ← Background
+--{group}-bg-hover    ← Background on hover
+--{group}-fg          ← Primary text (guaranteed contrast with bg)
+--{group}-fg-soft     ← Secondary text (guaranteed contrast with bg)
+--{group}-fg-softer   ← Tertiary text (guaranteed contrast with bg)
+--{group}-border      ← Border color
+```
+
+### ✅ CORRECT Examples
+
+```css
+/* soft background → soft foreground colors */
+.header {
+  background: var(--soft-bg);
+  color: var(--soft-fg);           /* ✅ Same group */
+  border: 1px solid var(--soft-border);  /* ✅ Same group */
+}
+
+.headerSubtext {
+  color: var(--soft-fg-soft);      /* ✅ Same group */
+}
+
+/* softer background → softer foreground colors */
+.inputArea {
+  background: var(--softer-bg);
+  color: var(--softer-fg);         /* ✅ Same group */
+}
+
+/* primary background → primary foreground colors */
+.selectedItem {
+  background: var(--primary-bg);
+  color: var(--primary-fg);        /* ✅ Same group */
+}
+
+/* warning background → warning foreground colors */
+.warningBanner {
+  background: var(--warning-bg);
+  color: var(--warning-fg);        /* ✅ Same group */
+}
+```
+
+### ❌ WRONG Examples (These WILL break)
+
+```css
+/* ❌ WRONG: soft background with base foreground */
+.broken1 {
+  background: var(--soft-bg);
+  color: var(--base-fg);           /* ❌ VIOLATION! */
+}
+
+/* ❌ WRONG: softer background with base foreground */
+.broken2 {
+  background: var(--softer-bg);
+  color: var(--base-fg-soft);      /* ❌ VIOLATION! */
+}
+
+/* ❌ WRONG: primary background with soft foreground */
+.broken3 {
+  background: var(--primary-bg);
+  color: var(--soft-fg);           /* ❌ VIOLATION! */
+}
+
+/* ❌ WRONG: soft background with base border */
+.broken4 {
+  background: var(--softer-bg);
+  border: 1px solid var(--base-border);  /* ❌ VIOLATION! */
+}
+```
+
+### Semantic Foreground Colors (Accent Colors on Surfaces)
+
+When you need an accent color (like a success or error indicator) on a colored surface, use the semantic foreground tokens:
+
+```css
+/* On a softer-bg surface, use softer-fg-* variants for accents */
+.toolCallOnSofterBg {
+  background: var(--softer-bg);
+  color: var(--softer-fg);
+}
+
+.toolCallOnSofterBg .successIcon {
+  color: var(--softer-fg-success);   /* ✅ Semantic color for softer surface */
+}
+
+.toolCallOnSofterBg .errorIcon {
+  color: var(--softer-fg-danger);    /* ✅ Semantic color for softer surface */
+}
+
+/* On a soft-bg surface, use soft-fg-* variants for accents */
+.tabOnSoftBg {
+  background: var(--soft-bg);
+}
+
+.tabOnSoftBg.active {
+  color: var(--soft-fg-primary);     /* ✅ Primary accent on soft surface */
+}
+```
+
+### ⚠️ Watch Out: Nested Components Override Colors!
+
+Components like `<Text>` have their own color styling. If you place them inside a colored surface, they may NOT inherit the parent's color:
+
+```tsx
+// ❌ WRONG: Text component has its own color, ignores parent
+<div className={styles.primaryBubble}>  {/* background: var(--primary-bg) */}
+  <Text>{message}</Text>                 {/* Text uses --base-fg internally! */}
+</div>
+
+// ✅ CORRECT: Use plain text to inherit color
+<div className={styles.primaryBubble}>  {/* background: var(--primary-bg); color: var(--primary-fg) */}
+  {message}                              {/* Inherits --primary-fg from parent */}
+</div>
+
+// ✅ ALSO CORRECT: Override Text color explicitly
+<div className={styles.primaryBubble}>
+  <Text color="inherit">{message}</Text> {/* Inherits from parent */}
+</div>
+```
+
+---
+
 ## Core Principle: Use Components First
 
 **Before writing custom HTML/CSS, always check if a `@ui-kit/react` component exists.**
@@ -184,22 +320,9 @@ import { SendIcon } from '@ui-kit/icons/SendIcon';
 
 ### The Golden Rule
 
-**Pick a color group for your background, use ONLY that group's tokens for foreground/border.**
+> ⛔ **See the "CRITICAL: Color Group Rules" section at the top of this document for comprehensive guidance.**
 
-```css
-/* ✅ CORRECT - All tokens from the same group */
-.card {
-  background: var(--soft-bg);
-  color: var(--soft-fg);
-  border: 1px solid var(--soft-border);
-}
-
-/* ❌ WRONG - Mixing groups breaks contrast */
-.broken {
-  background: var(--soft-bg);
-  color: var(--base-fg);  /* May not be readable! */
-}
-```
+In short: **Pick a color group for your background, use ONLY that group's tokens for foreground/border.**
 
 ### Available Color Groups
 
@@ -590,12 +713,16 @@ Add this to the top of your story file:
 
 ## Checklist Before Submitting
 
+### ⛔ CRITICAL (Will Break If Wrong)
+- [ ] **Color groups are NOT mixed** - Every element's bg/fg/border tokens come from the SAME group
+- [ ] **No `<Text>` inside colored surfaces** - Use plain text or `color="inherit"` on non-base backgrounds
+
+### Required
 - [ ] All UI components use `@ui-kit/react` where available
 - [ ] All icons use `@ui-kit/icons` (no inline SVGs)
 - [ ] All colors use design tokens (no hardcoded hex/rgba)
 - [ ] All spacing uses `--space-*` tokens
 - [ ] All typography uses `--text-*`, `--weight-*`, `--leading-*` tokens
-- [ ] Color tokens stay within their group (don't mix `--soft-fg` with `--base-bg`)
 - [ ] Interactive elements have proper focus styles
 - [ ] Icon buttons have `aria-label` attributes
 - [ ] Component gaps are documented at the top of the story file
@@ -609,6 +736,9 @@ Add this to the top of your story file:
 
 | Mistake | Fix |
 |---------|-----|
+| **`--soft-bg` with `--base-fg`** | **Use `--soft-fg` (same group!)** |
+| **`--softer-bg` with `--base-border`** | **Use `--softer-border` (same group!)** |
+| **`<Text>` inside primary-bg div** | **Use plain text or `color="inherit"`** |
 | `<div className={styles.button}>` | `<Button variant="default">` |
 | `variant="secondary"` on Chip | `variant="default"` or `variant="info"` |
 | Inline SVG icons | Import from `@ui-kit/icons` |
