@@ -77,6 +77,8 @@ export interface UseIdeaAgentOptions {
   documentRoomName?: string;
   /** Called when an error occurs */
   onError?: (error: string) => void;
+  /** Whether the agent is enabled (controls WebSocket connection) */
+  enabled?: boolean;
 }
 
 /**
@@ -126,6 +128,7 @@ export function useIdeaAgent({
   ideaContext,
   documentRoomName,
   onError,
+  enabled = true,
 }: UseIdeaAgentOptions): UseIdeaAgentReturn {
   const [messages, setMessages] = useState<IdeaAgentMessage[]>([]);
   const [isConnected, setIsConnected] = useState(false);
@@ -141,11 +144,16 @@ export function useIdeaAgent({
   const currentMessageIdRef = useRef<string | null>(null);
   const ideaContextRef = useRef<IdeaContext | null>(ideaContext);
   const documentRoomNameRef = useRef<string | undefined>(documentRoomName);
+  const enabledRef = useRef(enabled);
 
   // Keep refs updated
   useEffect(() => {
     ideaContextRef.current = ideaContext;
   }, [ideaContext]);
+
+  useEffect(() => {
+    enabledRef.current = enabled;
+  }, [enabled]);
 
   // Track previous values to detect actual changes
   const prevIdeaIdRef = useRef<string | null>(null);
@@ -155,8 +163,39 @@ export function useIdeaAgent({
     documentRoomNameRef.current = documentRoomName;
   }, [documentRoomName]);
 
+  // Disconnect and clear state when disabled
+  useEffect(() => {
+    if (!enabled) {
+      console.log('[IdeaAgent] Disabled, disconnecting');
+      setMessages([]);
+      setError(null);
+      setIsLoading(false);
+      setIsEditingDocument(false);
+      setTokenUsage(null);
+      setOpenQuestions(null);
+      currentMessageIdRef.current = null;
+
+      // Reset tracking refs so next enable starts fresh
+      prevIdeaIdRef.current = null;
+      prevDocumentRoomNameRef.current = undefined;
+
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+        setIsConnected(false);
+      }
+
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+    }
+  }, [enabled]);
+
   // Reset state when ideaId or documentRoomName actually changes (new session)
   useEffect(() => {
+    if (!enabled) return;
+
     const ideaIdChanged = prevIdeaIdRef.current !== null && prevIdeaIdRef.current !== ideaId;
     const roomNameChanged = prevDocumentRoomNameRef.current !== undefined && prevDocumentRoomNameRef.current !== documentRoomName;
 
@@ -180,7 +219,7 @@ export function useIdeaAgent({
     // Update refs for next comparison
     prevIdeaIdRef.current = ideaId;
     prevDocumentRoomNameRef.current = documentRoomName;
-  }, [ideaId, documentRoomName]);
+  }, [enabled, ideaId, documentRoomName]);
 
   // Add a message
   const addMessage = useCallback((message: IdeaAgentMessage) => {
@@ -237,12 +276,14 @@ export function useIdeaAgent({
       setIsConnected(false);
       console.log('[IdeaAgent] WebSocket disconnected');
 
-      // Attempt to reconnect after 3 seconds
-      reconnectTimeoutRef.current = setTimeout(() => {
-        if (userId) {
-          connect();
-        }
-      }, 3000);
+      // Only attempt to reconnect if still enabled
+      if (enabledRef.current) {
+        reconnectTimeoutRef.current = setTimeout(() => {
+          if (userId && enabledRef.current) {
+            connect();
+          }
+        }, 3000);
+      }
     };
 
     ws.onerror = (event) => {
@@ -355,9 +396,9 @@ export function useIdeaAgent({
     };
   }, [ideaId, userId, userName, addMessage, updateMessage, onError]);
 
-  // Connect when userId is available (ideaId can be null for new ideas)
+  // Connect when enabled and userId is available (ideaId can be null for new ideas)
   useEffect(() => {
-    if (userId && !isConnected) {
+    if (enabled && userId && !isConnected) {
       connect();
     }
 
@@ -366,7 +407,7 @@ export function useIdeaAgent({
         clearTimeout(reconnectTimeoutRef.current);
       }
     };
-  }, [userId, isConnected, connect]);
+  }, [enabled, userId, isConnected, connect]);
 
   // Cleanup on unmount
   useEffect(() => {

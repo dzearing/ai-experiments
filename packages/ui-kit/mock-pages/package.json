@@ -5,7 +5,7 @@
   "description": "Example pages and demos showcasing UI-Kit component libraries",
   "type": "module",
   "scripts": {
-    "dev": "storybook dev -p 6007",
+    "dev": "npx --yes kill-port 6007 && storybook dev -p 6007",
     "build": "storybook build",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",

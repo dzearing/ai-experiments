@@ -49,7 +49,8 @@ export function QuestionOptions({
       const options = containerRef.current.querySelectorAll<HTMLElement>("[role='option']");
       const targetIndex = Math.min(autoFocusIndex, options.length - 1);
       if (options[targetIndex]) {
-        options[targetIndex].focus();
+        // Use preventScroll to avoid scrolling the parent container
+        options[targetIndex].focus({ preventScroll: true });
       }
     }
   }, [question.id, autoFocusIndex]);
@@ -57,7 +58,8 @@ export function QuestionOptions({
   // Focus textarea when "Other" is selected
   useEffect(() => {
     if (isCustomSelected && textareaRef.current) {
-      textareaRef.current.focus();
+      // Use preventScroll to avoid scrolling the parent container
+      textareaRef.current.focus({ preventScroll: true });
     }
   }, [isCustomSelected]);
 
@@ -92,7 +94,7 @@ export function QuestionOptions({
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
       const optionCard = (e.target as HTMLElement).closest("[role='option']") as HTMLElement;
-      optionCard?.focus();
+      optionCard?.focus({ preventScroll: true });
       return;
     }
     // Stop propagation for navigation keys to keep focus in textarea

@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from '@ui-kit/router';
-import { Button, Input, Modal, Spinner } from '@ui-kit/react';
+import { Button, Input, Modal, Spinner, Text } from '@ui-kit/react';
 import { AddIcon } from '@ui-kit/icons/AddIcon';
 import { FileIcon } from '@ui-kit/icons/FileIcon';
 import { useDocuments, type DocumentMetadata } from '../../contexts/DocumentContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { DocumentCard } from '../DocumentCard';
 import { CreateDocumentDialog } from '../CreateDocumentDialog';
+import { DelayedSpinner } from '../DelayedSpinner';
 import styles from './ThingDocuments.module.css';
 
 export interface ThingDocumentsProps {
@@ -98,29 +99,20 @@ export function ThingDocuments({ thingId }: ThingDocumentsProps) {
 
   return (
     <div className={styles.container}>
-      {/* Section header with title and action */}
-      <div className={styles.header}>
-        <h2 className={styles.title}>Documents</h2>
-        <span className={styles.divider} />
-        <Button
-          icon={<AddIcon />}
-          onClick={() => setShowCreateDialog(true)}
-          variant="ghost"
-        >
-          New Document
-        </Button>
-      </div>
-
       {/* Loading state */}
-      {isLoading && (
-        <div className={styles.loading}>
-          <Spinner size="sm" />
-        </div>
-      )}
+      <DelayedSpinner loading={isLoading} className={styles.loading} />
 
       {/* Documents grid */}
       {!isLoading && documents.length > 0 && (
         <div className={styles.grid}>
+          {/* Create new document card */}
+          <button
+            className={styles.createCard}
+            onClick={() => setShowCreateDialog(true)}
+          >
+            <AddIcon className={styles.createIcon} />
+            <span>New Document</span>
+          </button>
           {documents.map((doc) => (
             <DocumentCard
               key={doc.id}
@@ -138,7 +130,10 @@ export function ThingDocuments({ thingId }: ThingDocumentsProps) {
       {!isLoading && documents.length === 0 && (
         <div className={styles.emptyState}>
           <FileIcon className={styles.emptyIcon} />
-          <p className={styles.emptyText}>No documents yet</p>
+          <Text color="soft">No documents yet!</Text>
+          <Button variant="primary" size="lg" icon={<AddIcon />} onClick={() => setShowCreateDialog(true)}>
+            Create your first Document
+          </Button>
         </div>
       )}
 

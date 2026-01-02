@@ -16,10 +16,13 @@ interface NewThingDialogProps {
 }
 
 const THING_TYPES: { value: ThingType; label: string }[] = [
-  { value: 'category', label: 'Category' },
+  { value: 'folder', label: 'Folder' },
+  { value: 'app', label: 'App' },
+  { value: 'package', label: 'Package' },
   { value: 'project', label: 'Project' },
-  { value: 'feature', label: 'Feature' },
-  { value: 'item', label: 'Item' },
+  { value: 'subject', label: 'Subject' },
+  { value: 'assignment', label: 'Assignment' },
+  { value: 'thing', label: 'Thing' },
 ];
 
 export function NewThingDialog({
@@ -32,7 +35,7 @@ export function NewThingDialog({
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [type, setType] = useState<ThingType>('project');
+  const [type, setType] = useState<ThingType>('folder');
   const [tagsInput, setTagsInput] = useState('');
   const [selectedParentId, setSelectedParentId] = useState<string | undefined>(parentId);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,10 +45,7 @@ export function NewThingDialog({
   const parentOptions = useMemo(() => {
     const options = [{ value: '', label: 'None (root level)' }];
     things.forEach(thing => {
-      // Only categories and projects can be parents
-      if (thing.type === 'category' || thing.type === 'project') {
-        options.push({ value: thing.id, label: thing.name });
-      }
+      options.push({ value: thing.id, label: thing.name });
     });
     return options;
   }, [things]);
@@ -53,7 +53,7 @@ export function NewThingDialog({
   const resetForm = useCallback(() => {
     setName('');
     setDescription('');
-    setType('project');
+    setType('folder');
     setTagsInput('');
     setSelectedParentId(parentId);
     setError(null);

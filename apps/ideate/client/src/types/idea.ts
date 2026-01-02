@@ -4,11 +4,65 @@ export type IdeaSource = 'user' | 'ai';
 /** Kanban lane statuses */
 export type IdeaStatus = 'new' | 'exploring' | 'executing' | 'archived';
 
+/** Execution mode - whether to run all phases or pause between each */
+export type ExecutionMode = 'all-phases' | 'phase-by-phase';
+
+// ============================================
+// PLAN DATA STRUCTURES
+// ============================================
+
+/** Individual task within a plan phase */
+export interface PlanTask {
+  id: string;
+  title: string;
+  completed: boolean;
+  inProgress?: boolean;
+}
+
+/** A phase in the implementation plan */
+export interface PlanPhase {
+  id: string;
+  title: string;
+  description?: string;
+  tasks: PlanTask[];
+  expanded?: boolean;
+}
+
+/** Complete implementation plan for an idea */
+export interface IdeaPlan {
+  phases: PlanPhase[];
+  workingDirectory: string;
+  repositoryUrl?: string;
+  branch?: string;
+  isClone?: boolean;
+  workspaceId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Options for starting execution */
+export interface ExecutionOptions {
+  mode: ExecutionMode;
+  startPhaseId?: string;
+}
+
+// ============================================
+// EXECUTION STATE
+// ============================================
+
 /** Execution state for ideas in the 'executing' status */
 export interface IdeaExecutionState {
   progressPercent: number;
   waitingForFeedback: boolean;
   chatRoomId?: string;
+  /** When execution started */
+  startedAt?: string;
+  /** Currently executing phase */
+  currentPhaseId?: string;
+  /** Currently executing task */
+  currentTaskId?: string;
+  /** Execution mode */
+  mode?: ExecutionMode;
 }
 
 /** Attachment metadata */
@@ -38,6 +92,9 @@ export interface IdeaMetadata {
   updatedAt: string;
   statusChangedAt: string;
   attachments: IdeaAttachment[];
+  /** Implementation plan (available when status is 'exploring' or later) */
+  plan?: IdeaPlan;
+  /** Execution state (available when status is 'executing') */
   execution?: IdeaExecutionState;
 }
 

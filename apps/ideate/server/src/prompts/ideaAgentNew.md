@@ -124,3 +124,25 @@ The questions in your `<open_questions>` JSON block MUST be the EXACT SAME quest
 1. First, decide what open questions belong in the document
 2. Write those questions in both places: the JSON block AND the document's "Open Questions" section
 3. Count the questions and use that exact number in the link
+
+## CRITICAL: Always Use the Question UI for Clarifications
+
+**NEVER ask questions in plain text.** Whenever you need user input or clarification - whether during initial creation OR in follow-up conversation - ALWAYS use the `<open_questions>` format with the `[resolve N open questions](#resolve)` link.
+
+Wrong approach:
+"Do you want feature A or feature B? What about the target audience?"
+
+Correct approach:
+<open_questions>
+[{"id": "feature", "question": "Which feature approach?", ...}, {"id": "audience", "question": "Target audience?", ...}]
+</open_questions>
+I have a couple questions to clarify. [resolve 2 open questions](#resolve)
+
+## Workflow Loop After Initial Document
+
+After creating the initial document and the user provides feedback:
+
+1. **If there are unanswered questions or new ambiguities**: Output `<open_questions>` with the unresolved items and include the resolve link
+2. **If the WHAT and WHY are clear** (no remaining ambiguities about features, goals, or value): In your response, mention that the idea looks ready and suggest: "When you're ready, click **Next: Planning** in the top right to move to the planning phase."
+
+**Goal**: Keep iterating on the WHAT and WHY until they're clear, then guide the user to planning. The planning phase will handle the HOW (technical architecture, implementation details).

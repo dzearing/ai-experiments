@@ -1,10 +1,28 @@
-import { useCallback, type DragEvent, type KeyboardEvent } from 'react';
-import { Card, Chip, Progress, RelativeTime } from '@ui-kit/react';
+import { useCallback, useState, useEffect, type DragEvent, type KeyboardEvent } from 'react';
+import { Card, Chip, Progress, RelativeTime, Spinner } from '@ui-kit/react';
 import { StarIcon } from '@ui-kit/icons/StarIcon';
 import { ChatIcon } from '@ui-kit/icons/ChatIcon';
 import { ClockIcon } from '@ui-kit/icons/ClockIcon';
 import type { IdeaMetadata } from '../../types/idea';
 import styles from './IdeaCard.module.css';
+
+/**
+ * Format duration from start time to now
+ */
+function formatDuration(startTime: string): string {
+  const start = new Date(startTime).getTime();
+  const seconds = Math.floor((Date.now() - start) / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+
+  if (hours > 0) {
+    return `${hours}h ${minutes % 60}m`;
+  }
+  if (minutes > 0) {
+    return `${minutes}m ${seconds % 60}s`;
+  }
+  return `${seconds}s`;
+}
 
 interface IdeaCardProps {
   idea: IdeaMetadata;
@@ -31,8 +49,29 @@ export function IdeaCard({
     source,
     status,
     execution,
+    plan,
     updatedAt,
   } = idea;
+
+  // Duration timer for executing ideas
+  const [duration, setDuration] = useState<string>('');
+
+  useEffect(() => {
+    if (status !== 'executing' || !execution?.startedAt) {
+      setDuration('');
+      return;
+    }
+
+    // Update immediately
+    setDuration(formatDuration(execution.startedAt));
+
+    // Update every second
+    const interval = setInterval(() => {
+      setDuration(formatDuration(execution.startedAt!));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [status, execution?.startedAt]);
 
   // Filter out priority tags - only show category tags
   const displayTags = tags.filter(t => !t.startsWith('priority:'));
@@ -40,6 +79,14 @@ export function IdeaCard({
   const hiddenTagCount = displayTags.length - MAX_VISIBLE_TAGS;
 
   const isExecuting = status === 'executing';
+  const isActivelyWorking = isExecuting && execution?.currentTaskId;
+
+  // Get phase info for display
+  const currentPhase = plan?.phases.find(p => p.id === execution?.currentPhaseId);
+  const totalPhases = plan?.phases.length || 0;
+  const currentPhaseIndex = currentPhase
+    ? (plan?.phases.findIndex(p => p.id === currentPhase.id) ?? 0) + 1
+    : 0;
 
   const handleDragStart = useCallback((e: DragEvent<HTMLDivElement>) => {
     e.dataTransfer.setData('text/plain', id);
@@ -110,7 +157,18 @@ export function IdeaCard({
         {/* Progress (for executing ideas) */}
         {isExecuting && execution && (
           <div className={styles.progressSection}>
-            <Progress value={execution.progressPercent} size="sm" />
+            <div className={styles.progressHeader}>
+              <div className={styles.progressBar}>
+                <Progress value={execution.progressPercent} size="sm" />
+              </div>
+              {isActivelyWorking && <Spinner size="sm" />}
+            </div>
+            <div className={styles.executionInfo}>
+              {duration && <span className={styles.duration}>{duration}</span>}
+              {currentPhaseIndex > 0 && (
+                <span className={styles.phaseInfo}>Phase {currentPhaseIndex}/{totalPhases}</span>
+              )}
+            </div>
             {execution.waitingForFeedback && (
               <div className={styles.waitState}>
                 <ClockIcon />

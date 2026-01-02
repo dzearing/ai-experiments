@@ -1,7 +1,7 @@
 import type { RawData } from 'ws';
 import { WebSocket } from 'ws';
 import type { IncomingMessage } from 'http';
-import { FacilitatorService } from '../services/FacilitatorService.js';
+import { FacilitatorService, type OpenQuestion } from '../services/FacilitatorService.js';
 import type { FacilitatorMessage } from '../services/FacilitatorChatService.js';
 import { getFacilitatorSettings } from '../routes/personas.js';
 
@@ -39,7 +39,7 @@ interface ClientMessage {
  * Server message types for the facilitator WebSocket protocol
  */
 interface ServerMessage {
-  type: 'text_chunk' | 'tool_use' | 'tool_result' | 'message_complete' | 'history' | 'error' | 'persona_changed' | 'greeting' | 'loading';
+  type: 'text_chunk' | 'tool_use' | 'tool_result' | 'message_complete' | 'history' | 'error' | 'persona_changed' | 'greeting' | 'loading' | 'open_questions';
   /** Text content chunk (for streaming) */
   text?: string;
   /** Message ID being updated */
@@ -62,6 +62,8 @@ interface ServerMessage {
   personaName?: string;
   /** Loading state (true = loading, false = done) */
   isLoading?: boolean;
+  /** Open questions for user clarification */
+  questions?: OpenQuestion[];
 }
 
 /**
@@ -245,6 +247,13 @@ export class FacilitatorWebSocketHandler {
               toolName: name,
               toolOutput: output,
               messageId,
+            });
+          },
+          onOpenQuestions: (questions) => {
+            if (abortController.signal.aborted) return;
+            this.send(client.ws, {
+              type: 'open_questions',
+              questions,
             });
           },
           onComplete: (message) => {

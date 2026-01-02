@@ -4,6 +4,8 @@
 
 .hasPanel {
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 
 .tabList {
@@ -200,6 +202,10 @@
    ============================================== */
 
 .tabPanel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
   padding: var(--space-4) 0;
 }
 

@@ -1,0 +1,358 @@
+import { query, type SDKAssistantMessage } from '@anthropic-ai/claude-agent-sdk';
+import { PlanAgentChatService, type PlanAgentMessage } from './PlanAgentChatService.js';
+import { buildPlanAgentSystemPrompt, type PlanIdeaContext } from '../prompts/planAgentPrompt.js';
+import type { IdeaPlan, PlanPhase } from './IdeaService.js';
+
+/**
+ * Token usage information
+ */
+export interface TokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+}
+
+/**
+ * Callbacks for streaming plan agent responses
+ */
+export interface PlanStreamCallbacks {
+  /** Called for each text chunk during streaming */
+  onTextChunk: (text: string, messageId: string) => void;
+  /** Called when a plan update is detected */
+  onPlanUpdate: (plan: Partial<IdeaPlan>) => void;
+  /** Called when the response is complete */
+  onComplete: (message: PlanAgentMessage) => void;
+  /** Called when an error occurs */
+  onError: (error: string) => void;
+  /** Called with token usage updates during streaming */
+  onTokenUsage?: (usage: TokenUsage) => void;
+}
+
+/**
+ * Parsed plan update from agent response
+ */
+interface ParsedPlanUpdate {
+  phases?: PlanPhase[];
+  workingDirectory?: string;
+  repositoryUrl?: string;
+  branch?: string;
+  isClone?: boolean;
+  workspaceId?: string;
+}
+
+/**
+ * Parse plan update from agent response
+ * Chat response comes FIRST (before the tag), plan block at END
+ */
+function parsePlanUpdate(response: string): { plan: ParsedPlanUpdate | null; chatResponse: string } {
+  const planMatch = response.match(/<plan_update>\s*([\s\S]*?)\s*<\/plan_update>/);
+
+  if (!planMatch) {
+    return { plan: null, chatResponse: response };
+  }
+
+  try {
+    const plan = JSON.parse(planMatch[1]) as ParsedPlanUpdate;
+    // Chat response is everything BEFORE the plan block
+    const chatResponse = response.slice(0, response.indexOf('<plan_update>')).trim() || "I've created the plan for you.";
+    return { plan, chatResponse };
+  } catch {
+    console.error('[PlanAgentService] Failed to parse plan update JSON');
+    return { plan: null, chatResponse: response };
+  }
+}
+
+/**
+ * Check if a partial response contains the start of a plan block
+ */
+function findPlanBlockStart(text: string): number {
+  const planStart = text.indexOf('<plan_update>');
+  return planStart;
+}
+
+/**
+ * Service for orchestrating plan agent chat with Claude.
+ * Handles message processing and streaming responses for implementation planning.
+ */
+export class PlanAgentService {
+  private chatService: PlanAgentChatService;
+
+  constructor() {
+    this.chatService = new PlanAgentChatService();
+  }
+
+  /**
+   * Get message history for an idea's plan chat.
+   */
+  async getHistory(ideaId: string): Promise<PlanAgentMessage[]> {
+    return this.chatService.getMessages(ideaId);
+  }
+
+  /**
+   * Clear message history for an idea's plan chat.
+   */
+  async clearHistory(ideaId: string): Promise<void> {
+    return this.chatService.clearMessages(ideaId);
+  }
+
+  /**
+   * Delete all plan chat data for an idea.
+   */
+  async deleteIdeaChat(ideaId: string): Promise<void> {
+    return this.chatService.deleteIdeaChat(ideaId);
+  }
+
+  /**
+   * Generate an initial greeting for the plan agent.
+   */
+  async generateGreeting(ideaContext: PlanIdeaContext): Promise<string> {
+    const { title, summary, thingContext } = ideaContext;
+
+    // Build a contextual greeting based on what we know
+    let greeting = `Let's create an implementation plan for **"${title}"**.`;
+
+    if (summary) {
+      greeting += `\n\n> ${summary}`;
+    }
+
+    if (thingContext) {
+      greeting += `\n\nThis idea is connected to **${thingContext.name}** (${thingContext.type}).`;
+    }
+
+    greeting += `\n\nTo create a good plan, I need to understand a few things:
+
+1. **Technology stack** - What languages, frameworks, or tools will we use?
+2. **Environment** - Is this for an existing project, or are we starting fresh?
+3. **Scope** - What's the minimum viable version look like?
+
+Feel free to share any details, and I'll start building out the phases and tasks.`;
+
+    return greeting;
+  }
+
+  /**
+   * Save a greeting message to plan chat history.
+   */
+  async saveGreeting(ideaId: string, greeting: string): Promise<void> {
+    await this.chatService.addMessage(ideaId, 'system', 'assistant', greeting);
+  }
+
+  /**
+   * Process a user message and stream the response via callbacks.
+   * Streams chat text in real-time, buffers plan blocks, then calls onPlanUpdate.
+   */
+  async processMessage(
+    ideaId: string,
+    userId: string,
+    content: string,
+    ideaContext: PlanIdeaContext,
+    callbacks: PlanStreamCallbacks
+  ): Promise<void> {
+    // Save the user message
+    await this.chatService.addMessage(ideaId, userId, 'user', content);
+
+    // Get history for context
+    const history = await this.chatService.getMessages(ideaId);
+
+    // Build the system prompt with idea context
+    const systemPrompt = buildPlanAgentSystemPrompt(ideaContext);
+
+    // Build the full prompt with conversation history
+    const conversationHistory = this.buildConversationHistory(history.slice(0, -1));
+    const fullPrompt = conversationHistory
+      ? `${conversationHistory}\n\nUser: ${content}`
+      : content;
+
+    // Generate message ID for the assistant response
+    const messageId = `msg-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
+    // Streaming state
+    let fullResponse = '';
+    let streamedChatLength = 0;
+    let foundPlanBlock = false;
+    let totalInputTokens = 0;
+    let totalOutputTokens = 0;
+
+    try {
+      console.log(`[PlanAgentService] Processing message for idea ${ideaId}: "${content.slice(0, 50)}..."`);
+
+      // Use the query function from @anthropic-ai/claude-agent-sdk
+      const response = query({
+        prompt: fullPrompt,
+        options: {
+          systemPrompt,
+          model: 'claude-sonnet-4-5-20250929',
+          tools: [],
+          permissionMode: 'bypassPermissions',
+          allowDangerouslySkipPermissions: true,
+          maxTurns: 1,
+        },
+      });
+
+      // Stream response in real-time
+      for await (const message of response) {
+        if (message.type === 'assistant') {
+          const assistantMsg = message as SDKAssistantMessage;
+          const msgContent = assistantMsg.message.content;
+
+          // Extract usage info if available
+          const usage = (assistantMsg.message as { usage?: { input_tokens?: number; output_tokens?: number } }).usage;
+          if (usage) {
+            if (usage.input_tokens) totalInputTokens = usage.input_tokens;
+            if (usage.output_tokens) {
+              totalOutputTokens = usage.output_tokens;
+              callbacks.onTokenUsage?.({
+                inputTokens: totalInputTokens,
+                outputTokens: totalOutputTokens,
+              });
+            }
+          }
+
+          // Extract text from message
+          let newText = '';
+          if (Array.isArray(msgContent)) {
+            for (const block of msgContent) {
+              if (block.type === 'text') {
+                newText += block.text;
+              }
+            }
+          } else if (typeof msgContent === 'string') {
+            newText = msgContent;
+          }
+
+          if (newText) {
+            fullResponse += newText;
+
+            // Stream chat text until we hit a plan block
+            if (!foundPlanBlock) {
+              const planBlockStart = findPlanBlockStart(fullResponse);
+
+              if (planBlockStart >= 0) {
+                // Found start of plan block - stream up to it, then stop streaming
+                foundPlanBlock = true;
+                const chatPortion = fullResponse.slice(streamedChatLength, planBlockStart).trim();
+                if (chatPortion) {
+                  callbacks.onTextChunk(chatPortion, messageId);
+                  streamedChatLength = planBlockStart;
+                }
+              } else {
+                // No plan block yet - stream new content
+                // But be careful: don't stream partial tags like "<plan"
+                const safeEnd = this.findSafeStreamEnd(fullResponse);
+                if (safeEnd > streamedChatLength) {
+                  const newChunk = fullResponse.slice(streamedChatLength, safeEnd);
+                  callbacks.onTextChunk(newChunk, messageId);
+                  streamedChatLength = safeEnd;
+                }
+              }
+            }
+          }
+        } else if (message.type === 'result') {
+          if (message.subtype === 'success' && message.result) {
+            if (!fullResponse) {
+              fullResponse = message.result;
+            }
+            // Extract final usage from result if available
+            const resultUsage = (message as { usage?: { input_tokens?: number; output_tokens?: number } }).usage;
+            if (resultUsage) {
+              if (resultUsage.input_tokens) totalInputTokens = resultUsage.input_tokens;
+              if (resultUsage.output_tokens) totalOutputTokens = resultUsage.output_tokens;
+              callbacks.onTokenUsage?.({
+                inputTokens: totalInputTokens,
+                outputTokens: totalOutputTokens,
+              });
+            }
+          } else if (message.subtype === 'error_during_execution') {
+            callbacks.onError('An error occurred during processing');
+            return;
+          }
+        }
+      }
+
+      // Final parse to get chat response and handle plan updates
+      let chatResponse = fullResponse;
+      const { plan, chatResponse: planChatResponse } = parsePlanUpdate(fullResponse);
+
+      if (plan) {
+        chatResponse = planChatResponse;
+
+        // Stream any remaining chat content not yet sent
+        if (chatResponse.length > streamedChatLength) {
+          callbacks.onTextChunk(chatResponse.slice(streamedChatLength), messageId);
+        }
+
+        // Notify about plan update
+        console.log(`[PlanAgentService] Plan update detected with ${plan.phases?.length || 0} phases`);
+        callbacks.onPlanUpdate({
+          phases: plan.phases,
+          workingDirectory: plan.workingDirectory || '',
+          repositoryUrl: plan.repositoryUrl,
+          branch: plan.branch,
+          isClone: plan.isClone,
+          workspaceId: plan.workspaceId,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+      } else {
+        // No plan update - stream any remaining content
+        if (fullResponse.length > streamedChatLength) {
+          callbacks.onTextChunk(fullResponse.slice(streamedChatLength), messageId);
+        }
+      }
+
+      // Save the assistant message (chat portion only)
+      const assistantMessage = await this.chatService.addMessage(
+        ideaId,
+        userId,
+        'assistant',
+        chatResponse || 'I apologize, but I was unable to generate a response.'
+      );
+
+      // Call complete callback
+      callbacks.onComplete({
+        ...assistantMessage,
+        id: messageId,
+      });
+
+      console.log(`[PlanAgentService] Completed response for idea ${ideaId} (${chatResponse.length} chars streamed)`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[PlanAgentService] Error processing message:', error);
+      callbacks.onError(errorMessage);
+    }
+  }
+
+  /**
+   * Find a safe point to stream up to, avoiding partial XML tags.
+   */
+  private findSafeStreamEnd(text: string): number {
+    const potentialTagStarts = ['<plan_update', '<plan'];
+    let safeEnd = text.length;
+
+    for (const tagStart of potentialTagStarts) {
+      for (let i = 1; i <= tagStart.length; i++) {
+        const partial = tagStart.slice(0, i);
+        if (text.endsWith(partial)) {
+          safeEnd = Math.min(safeEnd, text.length - partial.length);
+          break;
+        }
+      }
+    }
+
+    return safeEnd;
+  }
+
+  /**
+   * Build conversation history string from messages.
+   */
+  private buildConversationHistory(messages: PlanAgentMessage[]): string {
+    // Take last 20 messages to keep context manageable
+    const recentMessages = messages.slice(-20);
+
+    return recentMessages
+      .map((msg) => {
+        const role = msg.role === 'user' ? 'User' : 'Assistant';
+        return `${role}: ${msg.content}`;
+      })
+      .join('\n\n');
+  }
+}

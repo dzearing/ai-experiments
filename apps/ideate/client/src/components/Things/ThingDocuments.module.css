@@ -3,29 +3,10 @@
 .container {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-}
-
-/* Section header with title and action */
-.header {
-  display: flex;
-  align-items: center;
   gap: var(--space-3);
-}
-
-.title {
-  margin: 0;
-  font-size: var(--text-xs);
-  font-weight: var(--weight-medium);
-  color: var(--base-fg-soft);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.divider {
-  width: 1px;
-  height: 16px;
-  background: var(--base-border);
+  flex: 1;
+  min-height: 0;
+  height: 100%;
 }
 
 /* Loading state */
@@ -42,13 +23,54 @@
   gap: var(--space-3);
 }
 
+/* Create new document card */
+.createCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 120px;
+  padding: var(--space-4);
+  background: transparent;
+  border: 1px dashed var(--base-border);
+  border-radius: var(--radius-md);
+  color: var(--base-fg-soft);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-default),
+    border-color var(--duration-fast) var(--ease-default),
+    color var(--duration-fast) var(--ease-default);
+}
+
+.createCard:hover {
+  background: var(--soft-bg-hover);
+  border-color: var(--primary-border);
+  color: var(--base-fg);
+}
+
+.createCard:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.createIcon {
+  width: 24px;
+  height: 24px;
+  opacity: 0.7;
+}
+
 /* Empty state */
 .emptyState {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: var(--space-8) var(--space-4);
+  gap: var(--space-4);
+  flex: 1;
+  min-height: 200px;
   text-align: center;
   background-color: var(--softer-bg);
   border-radius: var(--radius-md);
@@ -56,15 +78,14 @@
 }
 
 .emptyIcon {
-  width: 32px;
-  height: 32px;
+  width: 48px;
+  height: 48px;
   color: var(--base-fg-soft);
-  margin-bottom: var(--space-2);
+  opacity: 0.6;
 }
 
 .emptyText {
   margin: 0;
-  font-size: var(--text-sm);
   color: var(--base-fg-soft);
 }
 

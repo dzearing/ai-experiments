@@ -1,7 +1,69 @@
-import { useContext, useCallback } from 'react';
+import { useContext, useCallback, useState, useEffect } from 'react';
 import { RouterContext, RouteMatchContext } from './context';
 import type { Location, NavigationType, NavigateFunction } from './context';
 import { isPathActive } from './isPathActive';
+
+type SearchParamsSetter = (
+  newParams: URLSearchParams | ((prev: URLSearchParams) => URLSearchParams),
+  options?: { replace?: boolean }
+) => void;
+
+/**
+ * Hook for reading and writing URL search params without triggering router re-renders.
+ *
+ * Unlike useLocation(), this hook manages search params independently from the router,
+ * allowing you to update the URL without causing component tree re-renders.
+ *
+ * @example
+ * ```tsx
+ * const [searchParams, setSearchParams] = useSearchParams();
+ * const tab = searchParams.get('tab') || 'default';
+ *
+ * const handleTabChange = (newTab: string) => {
+ *   setSearchParams(params => {
+ *     params.set('tab', newTab);
+ *     return params;
+ *   });
+ * };
+ * ```
+ */
+export function useSearchParams(): [URLSearchParams, SearchParamsSetter] {
+  // Initialize from current URL
+  const [searchParams, setSearchParamsState] = useState(
+    () => new URLSearchParams(window.location.search)
+  );
+
+  // Listen for popstate events (browser back/forward) to sync state
+  useEffect(() => {
+    const handlePopState = () => {
+      setSearchParamsState(new URLSearchParams(window.location.search));
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const setSearchParams = useCallback<SearchParamsSetter>((newParams, options) => {
+    const nextParams = typeof newParams === 'function'
+      ? newParams(new URLSearchParams(window.location.search))
+      : newParams;
+
+    // Update local state
+    setSearchParamsState(nextParams);
+
+    // Update URL without triggering router
+    const search = nextParams.toString();
+    const newUrl = `${window.location.pathname}${search ? `?${search}` : ''}${window.location.hash}`;
+
+    if (options?.replace === false) {
+      window.history.pushState(window.history.state, '', newUrl);
+    } else {
+      // Default to replace to avoid polluting history
+      window.history.replaceState(window.history.state, '', newUrl);
+    }
+  }, []);
+
+  return [searchParams, setSearchParams];
+}
 
 /**
  * Get the navigate function for programmatic navigation

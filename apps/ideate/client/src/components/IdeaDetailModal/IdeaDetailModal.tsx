@@ -15,7 +15,7 @@ interface IdeaDetailModalProps {
 
 const STATUS_OPTIONS = [
   { value: 'new', label: 'New' },
-  { value: 'exploring', label: 'Exploring' },
+  { value: 'exploring', label: 'Planning' },
   { value: 'executing', label: 'Executing' },
   { value: 'archived', label: 'Archived' },
 ];

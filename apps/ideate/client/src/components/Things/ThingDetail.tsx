@@ -1,10 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useSearchParams } from '@ui-kit/router';
 import { Button, IconButton, Input, Chip, Spinner, Dropdown, Tabs, type DropdownOption, type TabItem } from '@ui-kit/react';
 import { TrashIcon } from '@ui-kit/icons/TrashIcon';
 import { AddIcon } from '@ui-kit/icons/AddIcon';
 import { ChevronRightIcon } from '@ui-kit/icons/ChevronRightIcon';
 import { useThings } from '../../contexts/ThingsContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useDocuments } from '../../contexts/DocumentContext';
+import { useThingIdeas } from '../../hooks/useThingIdeas';
 import { API_URL } from '../../config';
 import { ThingStylePicker } from './ThingStylePicker';
 import { ThingLinks, type ThingLinksRef } from './ThingLinks';
@@ -22,19 +25,15 @@ interface ThingDetailProps {
   onNavigate: (thingId: string) => void;
 }
 
-const TYPE_LABELS: Record<ThingType, string> = {
-  category: 'Category',
-  project: 'Project',
-  feature: 'Feature',
-  item: 'Item',
-};
-
 // Predefined type options for the dropdown
 const PREDEFINED_TYPE_OPTIONS: DropdownOption<string>[] = [
-  { value: 'category', label: 'Category' },
+  { value: 'folder', label: 'Folder' },
+  { value: 'app', label: 'App' },
+  { value: 'package', label: 'Package' },
   { value: 'project', label: 'Project' },
-  { value: 'feature', label: 'Feature' },
-  { value: 'item', label: 'Item' },
+  { value: 'subject', label: 'Subject' },
+  { value: 'assignment', label: 'Assignment' },
+  { value: 'thing', label: 'Thing' },
 ];
 
 export function ThingDetail({
@@ -46,7 +45,25 @@ export function ThingDetail({
 }: ThingDetailProps) {
   const { user } = useAuth();
   const { getThing, getChildren, getBreadcrumb, updateThing } = useThings();
+  const { ideas } = useThingIdeas(thingId);
+  const { documents, fetchDocuments } = useDocuments();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [thing, setThing] = useState<Thing | null>(null);
+
+  // Get tab from URL params
+  const currentTab = searchParams.get('tab') || 'ideas';
+
+  // Handle tab change - update URL without triggering router re-render
+  const handleTabChange = useCallback((tab: string) => {
+    setSearchParams(params => {
+      if (tab === 'ideas') {
+        params.delete('tab');
+      } else {
+        params.set('tab', tab);
+      }
+      return params;
+    });
+  }, [setSearchParams]);
   const [children, setChildren] = useState<ThingMetadata[]>([]);
   const [breadcrumb, setBreadcrumb] = useState<ThingMetadata[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -91,6 +108,15 @@ export function ThingDetail({
       mounted = false;
     };
   }, [thingId, getThing, getChildren, getBreadcrumb]);
+
+  // Fetch documents for tab count
+  useEffect(() => {
+    fetchDocuments({ thingId });
+  }, [thingId, fetchDocuments]);
+
+  // Calculate counts for tab labels
+  const ideasCount = ideas.length;
+  const documentsCount = documents.length;
 
   const handleAddTag = useCallback(async () => {
     if (!thing || !newTag.trim()) return;
@@ -415,7 +441,7 @@ export function ThingDetail({
         items={[
           {
             value: 'ideas',
-            label: 'Ideas',
+            label: `Ideas (${ideasCount})`,
             content: (
               <ThingIdeas
                 thingId={thingId}
@@ -428,7 +454,7 @@ export function ThingDetail({
           },
           {
             value: 'documents',
-            label: 'Documents',
+            label: `Documents (${documentsCount})`,
             content: <ThingDocuments thingId={thingId} />,
           },
           {
@@ -504,7 +530,7 @@ export function ThingDetail({
                             onClick={() => onNavigate(child.id)}
                           >
                             <span className={styles.childName}>{child.name}</span>
-                            <span className={styles.childType}>{TYPE_LABELS[child.type]}</span>
+                            <span className={styles.childType}>{child.type.charAt(0).toUpperCase() + child.type.slice(1)}</span>
                           </button>
                         </li>
                       ))}
@@ -525,7 +551,8 @@ export function ThingDetail({
             ),
           },
         ] satisfies TabItem[]}
-        defaultValue="ideas"
+        value={currentTab}
+        onChange={handleTabChange}
         variant="underline"
         className={styles.tabs}
       />

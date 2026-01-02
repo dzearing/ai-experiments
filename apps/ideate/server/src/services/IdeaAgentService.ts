@@ -200,7 +200,12 @@ function parseOpenQuestions(response: string): { questions: OpenQuestion[] | nul
   }
 
   try {
-    const questions = JSON.parse(questionsMatch[1]) as OpenQuestion[];
+    const rawQuestions = JSON.parse(questionsMatch[1]) as OpenQuestion[];
+    // Default allowCustom to true so users can always provide custom answers
+    const questions = rawQuestions.map(q => ({
+      ...q,
+      allowCustom: q.allowCustom !== false, // Default to true unless explicitly false
+    }));
     // Remove the questions block from the response
     const responseWithoutQuestions = response.replace(/<open_questions>[\s\S]*?<\/open_questions>/, '').trim();
     return { questions, responseWithoutQuestions };

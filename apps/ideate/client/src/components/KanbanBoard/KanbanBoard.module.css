@@ -83,3 +83,32 @@
   font-size: var(--text-sm);
   min-height: 100px;
 }
+
+/* Compact variant for ThingIdeas */
+.compact {
+  gap: var(--space-2);
+  padding: 0;
+}
+
+.compact .lane {
+  min-width: 200px;
+  max-width: none;
+}
+
+.compact .laneHeader {
+  padding: var(--space-2) var(--space-3);
+}
+
+.compact .laneTitle {
+  font-size: var(--text-sm);
+}
+
+.compact .laneContent {
+  gap: var(--space-2);
+  padding: var(--space-2);
+}
+
+.compact .emptyLane {
+  padding: var(--space-4) var(--space-2);
+  min-height: 60px;
+}

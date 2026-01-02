@@ -34,6 +34,7 @@
 }
 
 .panel {
+  position: relative;
   width: 100%;
   min-width: 50vw;
   max-width: 900px;
@@ -229,4 +230,11 @@
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
+}
+
+/* Questions resolver overlay - covers the panel content */
+.questionsResolverOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
 }

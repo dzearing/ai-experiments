@@ -1,6 +1,7 @@
 import { WorkspaceService } from './WorkspaceService.js';
 import { DocumentService, type Document } from './DocumentService.js';
 import { ThingService, type ThingIcon, type ThingColor } from './ThingService.js';
+import { IdeaService, type IdeaStatus } from './IdeaService.js';
 import type { WorkspaceWebSocketHandler } from '../websocket/WorkspaceWebSocketHandler.js';
 import { readFile } from 'fs/promises';
 import { existsSync } from 'fs';
@@ -51,11 +52,13 @@ export class MCPToolsService {
   private workspaceService: WorkspaceService;
   private documentService: DocumentService;
   private thingService: ThingService;
+  private ideaService: IdeaService;
 
   constructor() {
     this.workspaceService = new WorkspaceService();
     this.documentService = new DocumentService();
     this.thingService = new ThingService();
+    this.ideaService = new IdeaService();
   }
 
   /**
@@ -507,6 +510,78 @@ export class MCPToolsService {
           required: ['thingId', 'linkId'],
         },
       },
+
+      // Idea tools
+      {
+        name: 'idea_create',
+        description: 'Create a new idea, optionally attached to Things. Use for project scaffolding, capturing new concepts, or follow-up work.',
+        input_schema: {
+          type: 'object',
+          properties: {
+            title: {
+              type: 'string',
+              description: 'Title of the idea',
+            },
+            summary: {
+              type: 'string',
+              description: 'Brief summary of the idea',
+            },
+            description: {
+              type: 'string',
+              description: 'Detailed description of the idea (markdown)',
+            },
+            thingIds: {
+              type: 'string',
+              description: 'Comma-separated list of Thing IDs to attach this idea to',
+            },
+            tags: {
+              type: 'string',
+              description: 'Comma-separated list of tags',
+            },
+            workspaceId: {
+              type: 'string',
+              description: 'Workspace ID to create the idea in',
+            },
+          },
+          required: ['title', 'summary'],
+        },
+      },
+      {
+        name: 'idea_list',
+        description: 'List ideas, optionally filtered by Thing ID, status, or workspace.',
+        input_schema: {
+          type: 'object',
+          properties: {
+            thingId: {
+              type: 'string',
+              description: 'Filter ideas by Thing ID',
+            },
+            status: {
+              type: 'string',
+              description: 'Filter by status: new, exploring, executing, or archived',
+              enum: ['new', 'exploring', 'executing', 'archived'],
+            },
+            workspaceId: {
+              type: 'string',
+              description: 'Filter by workspace ID',
+            },
+          },
+        },
+      },
+      {
+        name: 'idea_get',
+        description: 'Get detailed information about a specific idea by ID.',
+        input_schema: {
+          type: 'object',
+          properties: {
+            ideaId: {
+              type: 'string',
+              description: 'The ID of the idea to retrieve',
+            },
+          },
+          required: ['ideaId'],
+        },
+      },
     ];
   }
 
@@ -683,6 +758,32 @@ export class MCPToolsService {
             input.thingId as string,
             userId,
             input.linkId as string
+          );
+
+        // Idea tools
+        case 'idea_create':
+          return await this.ideaCreate(
+            userId,
+            input.title as string,
+            input.summary as string,
+            input.description as string | undefined,
+            input.thingIds as string | undefined,
+            input.tags as string | undefined,
+            input.workspaceId as string | undefined
+          );
+
+        case 'idea_list':
+          return await this.ideaList(
+            userId,
+            input.thingId as string | undefined,
+            input.status as IdeaStatus | undefined,
+            input.workspaceId as string | undefined
+          );
+
+        case 'idea_get':
+          return await this.ideaGet(
+            input.ideaId as string,
+            userId
           );
 
         default:
@@ -1379,18 +1480,29 @@ export class MCPToolsService {
 
     const thing = await this.thingService.createThing(userId, input);
 
-    // Notify workspace if applicable
+    // Notify workspace if applicable (for other connected clients)
     if (workspaceId && workspaceWsHandler) {
       workspaceWsHandler.notifyResourceCreated(workspaceId, thing.id, 'thing', thing);
     }
 
+    // Return full ThingMetadata so the client can immediately add it to state
+    // This ensures the Thing appears in the UI before the success checkmark shows
     return {
       success: true,
       data: {
-        id: thing.id,
-        name: thing.name,
-        type: thing.type,
-        description: thing.description,
+        thing: {
+          id: thing.id,
+          name: thing.name,
+          type: thing.type,
+          description: thing.description,
+          parentIds: thing.parentIds,
+          workspaceId: thing.workspaceId,
+          tags: thing.tags,
+          icon: thing.icon,
+          color: thing.color,
+          createdAt: thing.createdAt,
+          updatedAt: thing.updatedAt,
+        },
         message: `Thing "${name}" created successfully`,
       },
     };
@@ -1555,6 +1667,112 @@ export class MCPToolsService {
       success: true,
       data: {
         message: 'Link removed successfully',
+      },
+    };
+  }
+
+  // =========================================================================
+  // Idea Tools
+  // =========================================================================
+
+  private async ideaCreate(
+    userId: string,
+    title: string,
+    summary: string,
+    description?: string,
+    thingIds?: string,
+    tags?: string,
+    workspaceId?: string
+  ): Promise<ToolResult> {
+    const input = {
+      title,
+      summary,
+      description,
+      thingIds: thingIds ? thingIds.split(',').map(t => t.trim()).filter(Boolean) : [],
+      tags: tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+      workspaceId,
+      source: 'ai' as const,
+    };
+
+    const idea = await this.ideaService.createIdea(userId, input);
+
+    // Notify workspace if applicable
+    if (workspaceId && workspaceWsHandler) {
+      workspaceWsHandler.notifyResourceCreated(workspaceId, idea.id, 'idea', idea);
+    }
+
+    return {
+      success: true,
+      data: {
+        id: idea.id,
+        title: idea.title,
+        summary: idea.summary,
+        thingIds: idea.thingIds,
+        message: `Idea "${title}" created successfully`,
+      },
+    };
+  }
+
+  private async ideaList(
+    userId: string,
+    thingId?: string,
+    status?: IdeaStatus,
+    workspaceId?: string
+  ): Promise<ToolResult> {
+    let ideas = await this.ideaService.listIdeas(userId, workspaceId, status);
+
+    // Filter by thingId if provided
+    if (thingId) {
+      ideas = ideas.filter(idea => idea.thingIds.includes(thingId));
+    }
+
+    return {
+      success: true,
+      data: {
+        count: ideas.length,
+        ideas: ideas.map(idea => ({
+          id: idea.id,
+          title: idea.title,
+          summary: idea.summary,
+          status: idea.status,
+          thingIds: idea.thingIds,
+          tags: idea.tags,
+          rating: idea.rating,
+          updatedAt: idea.updatedAt,
+        })),
+      },
+    };
+  }
+
+  private async ideaGet(
+    ideaId: string,
+    userId: string
+  ): Promise<ToolResult> {
+    const idea = await this.ideaService.getIdea(ideaId, userId);
+
+    if (!idea) {
+      return {
+        success: false,
+        error: 'Idea not found or access denied',
+      };
+    }
+
+    return {
+      success: true,
+      data: {
+        id: idea.id,
+        title: idea.title,
+        summary: idea.summary,
+        description: idea.description,
+        status: idea.status,
+        thingIds: idea.thingIds,
+        tags: idea.tags,
+        rating: idea.rating,
+        source: idea.source,
+        plan: idea.plan,
+        execution: idea.execution,
+        createdAt: idea.createdAt,
+        updatedAt: idea.updatedAt,
       },
     };
   }

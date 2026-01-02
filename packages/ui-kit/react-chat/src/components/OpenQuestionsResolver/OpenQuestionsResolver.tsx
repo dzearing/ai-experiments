@@ -229,7 +229,7 @@ export function OpenQuestionsResolver({
 
       <div className={styles.card}>
         <div className={styles.cardHeader}>
-          <Text weight="medium">Open Question</Text>
+          <Text weight="medium">{questions.length === 1 ? 'Open Question' : 'Open Questions'}</Text>
           <div className={styles.cardHeaderCenter}>
             <ProgressDots current={currentIndex} total={questions.length} />
           </div>

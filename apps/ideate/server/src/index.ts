@@ -22,6 +22,8 @@ import { ChatWebSocketHandler } from './websocket/ChatWebSocketHandler.js';
 import { WorkspaceWebSocketHandler } from './websocket/WorkspaceWebSocketHandler.js';
 import { FacilitatorWebSocketHandler } from './websocket/FacilitatorWebSocketHandler.js';
 import { IdeaAgentWebSocketHandler } from './websocket/IdeaAgentWebSocketHandler.js';
+import { PlanAgentWebSocketHandler } from './websocket/PlanAgentWebSocketHandler.js';
+import { ExecutionAgentWebSocketHandler } from './websocket/ExecutionAgentWebSocketHandler.js';
 import { ImportWebSocketHandler } from './websocket/ImportWebSocketHandler.js';
 import { DiscoveryService } from './services/DiscoveryService.js';
 import { DocumentService } from './services/DocumentService.js';
@@ -188,6 +190,22 @@ importWss.on('connection', (ws, req) => {
   importHandler.handleConnection(ws, req);
 });
 
+// Create WebSocket server for plan agent chat (JSON-based protocol)
+const planAgentWss = new WebSocketServer({ noServer: true });
+const planAgentHandler = new PlanAgentWebSocketHandler();
+
+planAgentWss.on('connection', (ws, req) => {
+  planAgentHandler.handleConnection(ws, req);
+});
+
+// Create WebSocket server for execution agent (JSON-based protocol)
+const executionAgentWss = new WebSocketServer({ noServer: true });
+const executionAgentHandler = new ExecutionAgentWebSocketHandler(ideaService);
+
+executionAgentWss.on('connection', (ws, req) => {
+  executionAgentHandler.handleConnection(ws, req);
+});
+
 // Export workspace handler for use in routes
 export { workspaceHandler };
 
@@ -258,6 +276,16 @@ server.on('upgrade', (request, socket, head) => {
     importWss.handleUpgrade(request, socket, head, (ws) => {
       importWss.emit('connection', ws, request);
     });
+  } else if (pathname === '/plan-agent-ws') {
+    // Plan agent chat WebSocket
+    planAgentWss.handleUpgrade(request, socket, head, (ws) => {
+      planAgentWss.emit('connection', ws, request);
+    });
+  } else if (pathname === '/execution-agent-ws') {
+    // Execution agent WebSocket
+    executionAgentWss.handleUpgrade(request, socket, head, (ws) => {
+      executionAgentWss.emit('connection', ws, request);
+    });
   } else {
     socket.destroy();
   }
@@ -276,6 +304,8 @@ server.listen(PORT, async () => {
   console.log(`WebSocket (Facilitator) available at ws://localhost:${PORT}/facilitator-ws`);
   console.log(`WebSocket (IdeaAgent) available at ws://localhost:${PORT}/idea-agent-ws`);
   console.log(`WebSocket (Import) available at ws://localhost:${PORT}/import-ws`);
+  console.log(`WebSocket (PlanAgent) available at ws://localhost:${PORT}/plan-agent-ws`);
+  console.log(`WebSocket (ExecutionAgent) available at ws://localhost:${PORT}/execution-agent-ws`);
   console.log(`Diagnostics API at http://localhost:${PORT}/api/diagnostics`);
   console.log(`Diagnostics WebSocket at ws://localhost:${PORT}/diagnostics-ws`);
   console.log(`Claude Diagnostics WebSocket at ws://localhost:${PORT}/claude-diagnostics-ws`);

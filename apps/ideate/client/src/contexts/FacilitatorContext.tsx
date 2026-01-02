@@ -6,6 +6,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useGlobalKeyboard } from '../hooks/useGlobalKeyboard';
+import type { OpenQuestion, OpenQuestionsResult } from '@ui-kit/react-chat';
 
 /**
  * A tool call within a message
@@ -101,6 +102,10 @@ interface FacilitatorContextValue {
   pendingPersonaChange: string | null;
   /** Pending message to send when facilitator opens (for automated actions) */
   pendingMessage: string | null;
+  /** Current open questions from the facilitator */
+  openQuestions: OpenQuestion[] | null;
+  /** Whether to show the question resolver UI */
+  showQuestionsResolver: boolean;
 
   /** Toggle the facilitator overlay */
   toggle: () => void;
@@ -137,6 +142,12 @@ interface FacilitatorContextValue {
   openWithMessage: (content: string) => void;
   /** Clear pending message (called after WebSocket processes it) */
   clearPendingMessage: () => void;
+  /** Set open questions (from WebSocket) */
+  setOpenQuestions: (questions: OpenQuestion[] | null) => void;
+  /** Set whether to show the question resolver UI */
+  setShowQuestionsResolver: (show: boolean) => void;
+  /** Resolve open questions (send answers back) */
+  resolveQuestions: (result: OpenQuestionsResult) => void;
 }
 
 const FacilitatorContext = createContext<FacilitatorContextValue | null>(null);
@@ -158,6 +169,8 @@ export function FacilitatorProvider({ children }: FacilitatorProviderProps) {
   const [navigationContext, setNavigationContext] = useState<NavigationContext>({});
   const [pendingPersonaChange, setPendingPersonaChange] = useState<string | null>(null);
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
+  const [openQuestions, setOpenQuestions] = useState<OpenQuestion[] | null>(null);
+  const [showQuestionsResolver, setShowQuestionsResolver] = useState(false);
 
   // Toggle overlay
   const toggle = useCallback(() => {
@@ -244,6 +257,44 @@ export function FacilitatorProvider({ children }: FacilitatorProviderProps) {
     setPendingMessage(null);
   }, []);
 
+  // Resolve open questions - format answers and send as message
+  const resolveQuestions = useCallback((result: OpenQuestionsResult) => {
+    setShowQuestionsResolver(false);
+
+    if (result.completed && openQuestions) {
+      // Build human-readable summary of answers
+      const summaryLines = ['Here are my answers to the questions:'];
+
+      for (const answer of result.answers) {
+        const question = openQuestions.find(q => q.id === answer.questionId);
+        if (!question) continue;
+
+        // Get readable labels for selected options
+        const selectedLabels = answer.selectedOptionIds
+          .map(optId => {
+            if (optId === 'custom') return answer.customText;
+            const opt = question.options.find(o => o.id === optId);
+            return opt?.label;
+          })
+          .filter(Boolean);
+
+        // Truncate question for display
+        const shortQuestion = question.question.length > 50
+          ? question.question.slice(0, 50) + '...'
+          : question.question;
+
+        summaryLines.push(`- **${shortQuestion}**: ${selectedLabels.join(', ')}`);
+      }
+
+      const summary = summaryLines.join('\n');
+      sendMessage(summary);
+      setOpenQuestions(null);
+    } else if (result.dismissed) {
+      // User dismissed without completing
+      setOpenQuestions(null);
+    }
+  }, [openQuestions, sendMessage]);
+
   // Global keyboard shortcut: Ctrl/Cmd + .
   useGlobalKeyboard({
     key: '.',
@@ -276,6 +327,11 @@ export function FacilitatorProvider({ children }: FacilitatorProviderProps) {
     clearPendingPersonaChange,
     openWithMessage,
     clearPendingMessage,
+    openQuestions,
+    showQuestionsResolver,
+    setOpenQuestions,
+    setShowQuestionsResolver,
+    resolveQuestions,
   };
 
   return (

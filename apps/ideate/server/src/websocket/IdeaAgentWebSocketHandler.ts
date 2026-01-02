@@ -311,12 +311,58 @@ export class IdeaAgentWebSocketHandler {
   }
 
   /**
+   * Check if the greeting matches the current idea context.
+   * Returns true if the greeting is stale and should be regenerated.
+   */
+  private isGreetingStale(greeting: string, ideaContext: IdeaContext | null): boolean {
+    if (!ideaContext) return false;
+
+    const hasRealTitle = ideaContext.title &&
+      ideaContext.title.trim() &&
+      ideaContext.title !== 'New Idea' &&
+      ideaContext.title !== 'Untitled Idea';
+
+    if (!hasRealTitle) {
+      // For new/untitled ideas, greeting is stale if it mentions a specific title
+      // (i.e., it contains ** which is used for title formatting)
+      return greeting.includes('**"') && !greeting.includes('New Idea');
+    }
+
+    // For existing ideas with real titles, check if greeting mentions the correct title
+    // Greeting should contain the title if it's an existing idea
+    const expectedTitlePattern = `**"${ideaContext.title}"**`;
+    const hasCorrectTitle = greeting.includes(expectedTitlePattern);
+
+    // Stale if: has a real title but greeting doesn't mention it correctly
+    if (!hasCorrectTitle) {
+      // Check if it's using a generic "new idea" greeting when it shouldn't
+      const isGenericGreeting = greeting.includes("Let's bring your idea to life") ||
+        greeting.includes("What would you like to explore") && !greeting.includes('**"');
+      return isGenericGreeting;
+    }
+
+    return false;
+  }
+
+  /**
    * Send message history to a newly connected client, with greeting if no history.
    */
   private async sendHistoryAndGreeting(client: IdeaAgentClient): Promise<void> {
     try {
       const chatId = getChatId(client);
-      const messages = await this.ideaAgentService.getHistory(chatId);
+      let messages = await this.ideaAgentService.getHistory(chatId);
+
+      // Check if the first message (greeting) is stale and should be regenerated
+      if (messages.length > 0 && messages[0].role === 'assistant') {
+        const firstMessage = messages[0];
+        if (this.isGreetingStale(firstMessage.content, client.ideaContext)) {
+          console.log(`[IdeaAgent] Greeting is stale for client ${client.clientId}, regenerating`);
+          // Clear history to regenerate with correct context
+          await this.ideaAgentService.clearHistory(chatId);
+          messages = [];
+        }
+      }
+
       this.send(client.ws, { type: 'history', messages });
 
       // If no history, send a greeting and save it to prevent duplicates

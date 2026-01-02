@@ -18,6 +18,18 @@ import { buildFacilitatorPrompt, buildContextSection } from '../prompts/facilita
 import { createFacilitatorMcpServer } from './FacilitatorMcpTools.js';
 
 /**
+ * Open question type for user clarification
+ */
+export interface OpenQuestion {
+  id: string;
+  question: string;
+  context?: string;
+  selectionType: 'single' | 'multiple';
+  options: Array<{ id: string; label: string; description?: string }>;
+  allowCustom: boolean;
+}
+
+/**
  * Cache entry for pre-generated greetings
  */
 interface GreetingCache {
@@ -58,6 +70,8 @@ export interface StreamCallbacks {
   onComplete: (message: FacilitatorMessage) => void;
   /** Called when an error occurs */
   onError: (error: string) => void;
+  /** Called when open questions are available for user clarification */
+  onOpenQuestions?: (questions: OpenQuestion[]) => void;
   /** Called when thinking progress is available (optional) */
   onThinking?: (text: string, messageId: string) => void;
   /** Called when system init event is received (optional) */
@@ -109,6 +123,33 @@ interface DiagnosticEntry {
   };
   // Cost info
   totalCostUsd?: number;
+}
+
+/**
+ * Parse open questions from Claude response.
+ * Questions are in <open_questions> JSON blocks.
+ */
+function parseOpenQuestions(response: string): { questions: OpenQuestion[] | null; responseWithoutQuestions: string } {
+  const questionsMatch = response.match(/<open_questions>\s*([\s\S]*?)\s*<\/open_questions>/);
+
+  if (!questionsMatch) {
+    return { questions: null, responseWithoutQuestions: response };
+  }
+
+  try {
+    const rawQuestions = JSON.parse(questionsMatch[1]) as OpenQuestion[];
+    // Default allowCustom to true so users can always provide custom answers
+    const questions = rawQuestions.map(q => ({
+      ...q,
+      allowCustom: q.allowCustom !== false, // Default to true unless explicitly false
+    }));
+    // Remove the questions block from the response
+    const responseWithoutQuestions = response.replace(/<open_questions>[\s\S]*?<\/open_questions>/, '').trim();
+    return { questions, responseWithoutQuestions };
+  } catch {
+    console.error('[FacilitatorService] Failed to parse open questions JSON');
+    return { questions: null, responseWithoutQuestions: response };
+  }
 }
 
 export class FacilitatorService {
@@ -457,7 +498,8 @@ Example format:
     const systemPrompt = await this.buildSystemPrompt(persona, userName, navigationContext, userId, displayName);
 
     // Create the MCP server with native tools for proper streaming
-    const mcpServer = createFacilitatorMcpServer(this.toolsService, userId);
+    // Pass workspaceId from navigation context so tools auto-inject it when creating resources
+    const mcpServer = createFacilitatorMcpServer(this.toolsService, userId, navigationContext.workspaceId);
 
     // Build the full prompt with conversation history
     const conversationHistory = this.buildConversationHistory(history.slice(0, -1)); // Exclude the just-added user message
@@ -469,7 +511,9 @@ Example format:
     const messageId = `msg-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
     let fullResponse = '';
+    let pendingBuffer = ''; // Buffer for potential open_questions blocks
     const toolCalls: FacilitatorMessage['toolCalls'] = [];
+    let questionsSent = false; // Track if open questions have been sent
 
     // Token usage tracking for diagnostics
     let totalInputTokens = 0;
@@ -562,9 +606,36 @@ Example format:
               // Streaming thinking content
               callbacks.onThinking?.(delta.thinking, messageId);
             } else if (delta.type === 'text_delta' && delta.text) {
-              // Stream text chunks as they arrive
-              fullResponse += delta.text;
-              callbacks.onTextChunk(delta.text, messageId);
+              // Buffer text to prevent streaming <open_questions> markup to the client
+              pendingBuffer += delta.text;
+
+              // Check if we're inside an open_questions block
+              const hasOpenTag = pendingBuffer.includes('<open_questions>');
+              const hasCloseTag = pendingBuffer.includes('</open_questions>');
+
+              if (hasOpenTag && hasCloseTag) {
+                // Complete block received - parse and strip it before sending
+                const { questions, responseWithoutQuestions } = parseOpenQuestions(pendingBuffer);
+                if (questions && questions.length > 0 && !questionsSent) {
+                  callbacks.onOpenQuestions?.(questions);
+                  questionsSent = true;
+                  console.log(`[FacilitatorService] Sent ${questions.length} open questions`);
+                }
+                // Send the cleaned response
+                if (responseWithoutQuestions) {
+                  fullResponse += responseWithoutQuestions;
+                  callbacks.onTextChunk(responseWithoutQuestions, messageId);
+                }
+                pendingBuffer = '';
+              } else if (hasOpenTag && !hasCloseTag) {
+                // Still collecting open_questions block - don't send anything yet
+                // Keep buffering
+              } else {
+                // No open_questions block - safe to send
+                fullResponse += pendingBuffer;
+                callbacks.onTextChunk(pendingBuffer, messageId);
+                pendingBuffer = '';
+              }
             }
           }
         } else if (message.type === 'assistant') {
@@ -584,9 +655,19 @@ Example format:
             for (const block of msgContent) {
               if (block.type === 'text') {
                 // Text content (may already be streamed via text_delta)
-                const text = block.text;
+                let text = block.text;
+                // Strip open_questions if present (shouldn't happen if streaming worked, but safety)
+                if (text.includes('<open_questions>') && text.includes('</open_questions>')) {
+                  const { questions, responseWithoutQuestions } = parseOpenQuestions(text);
+                  if (questions && questions.length > 0 && !questionsSent) {
+                    callbacks.onOpenQuestions?.(questions);
+                    questionsSent = true;
+                    console.log(`[FacilitatorService] Sent ${questions.length} open questions (from assistant block)`);
+                  }
+                  text = responseWithoutQuestions;
+                }
                 // Only add if not already streamed (check if fullResponse doesn't end with this text)
-                if (!fullResponse.endsWith(text)) {
+                if (text && !fullResponse.endsWith(text)) {
                   fullResponse += text;
                   callbacks.onTextChunk(text, messageId);
                 }
@@ -610,9 +691,19 @@ Example format:
               }
             }
           } else if (typeof msgContent === 'string') {
-            if (!fullResponse.endsWith(msgContent)) {
-              fullResponse += msgContent;
-              callbacks.onTextChunk(msgContent, messageId);
+            let text = msgContent;
+            // Strip open_questions if present
+            if (text.includes('<open_questions>') && text.includes('</open_questions>')) {
+              const { questions, responseWithoutQuestions } = parseOpenQuestions(text);
+              if (questions && questions.length > 0 && !questionsSent) {
+                callbacks.onOpenQuestions?.(questions);
+                questionsSent = true;
+              }
+              text = responseWithoutQuestions;
+            }
+            if (text && !fullResponse.endsWith(text)) {
+              fullResponse += text;
+              callbacks.onTextChunk(text, messageId);
             }
           }
         } else if (message.type === 'user') {
@@ -621,12 +712,23 @@ Example format:
           if (Array.isArray(userMsg.message?.content)) {
             for (const block of userMsg.message.content) {
               if ((block as { type?: string }).type === 'tool_result') {
-                const toolResult = block as { type: 'tool_result'; tool_use_id?: string; content?: string };
+                const toolResult = block as { type: 'tool_result'; tool_use_id?: string; content?: unknown };
                 // Find matching tool call and mark complete
                 const lastPendingTool = toolCalls.find(tc => !tc.output);
                 if (lastPendingTool) {
-                  lastPendingTool.output = toolResult.content || 'completed';
-                  console.log(`[FacilitatorService] Tool result: ${lastPendingTool.name}`);
+                  // Handle MCP tool result content which might be an array of content blocks
+                  let outputContent = 'completed';
+                  if (typeof toolResult.content === 'string') {
+                    outputContent = toolResult.content;
+                  } else if (Array.isArray(toolResult.content)) {
+                    // Extract text from content array (MCP format)
+                    const textBlock = toolResult.content.find((c: unknown) => (c as { type?: string }).type === 'text');
+                    if (textBlock && typeof (textBlock as { text?: string }).text === 'string') {
+                      outputContent = (textBlock as { text: string }).text;
+                    }
+                  }
+                  lastPendingTool.output = outputContent;
+                  console.log(`[FacilitatorService] Tool result: ${lastPendingTool.name}, output type: ${typeof toolResult.content}, isArray: ${Array.isArray(toolResult.content)}`);
                   callbacks.onToolResult({
                     name: lastPendingTool.name,
                     output: lastPendingTool.output,
@@ -654,8 +756,20 @@ Example format:
           if (resultMsg.subtype === 'success' && 'result' in resultMsg) {
             // If we haven't received streaming content, use the final result
             if (!fullResponse) {
-              fullResponse = resultMsg.result;
-              callbacks.onTextChunk(fullResponse, messageId);
+              let text = resultMsg.result;
+              // Strip open_questions if present
+              if (text.includes('<open_questions>') && text.includes('</open_questions>')) {
+                const { questions, responseWithoutQuestions } = parseOpenQuestions(text);
+                if (questions && questions.length > 0 && !questionsSent) {
+                  callbacks.onOpenQuestions?.(questions);
+                  questionsSent = true;
+                }
+                text = responseWithoutQuestions;
+              }
+              fullResponse = text;
+              if (text) {
+                callbacks.onTextChunk(text, messageId);
+              }
             }
           } else if (resultMsg.subtype === 'error_during_execution') {
             const errors = 'errors' in resultMsg ? (resultMsg.errors as string[]).join(', ') : 'Unknown error';
@@ -668,6 +782,27 @@ Example format:
             callbacks.onTextChunk(warningMsg, messageId);
           }
         }
+      }
+
+      // Flush any remaining pending buffer
+      if (pendingBuffer) {
+        // Check for open_questions in remaining buffer
+        if (pendingBuffer.includes('<open_questions>') && pendingBuffer.includes('</open_questions>')) {
+          const { questions, responseWithoutQuestions } = parseOpenQuestions(pendingBuffer);
+          if (questions && questions.length > 0 && !questionsSent) {
+            callbacks.onOpenQuestions?.(questions);
+            questionsSent = true;
+          }
+          if (responseWithoutQuestions) {
+            fullResponse += responseWithoutQuestions;
+            callbacks.onTextChunk(responseWithoutQuestions, messageId);
+          }
+        } else {
+          // No complete open_questions block - just send the remaining text
+          fullResponse += pendingBuffer;
+          callbacks.onTextChunk(pendingBuffer, messageId);
+        }
+        pendingBuffer = '';
       }
 
       console.log(`[FacilitatorService] Final response (${fullResponse.length} chars): "${fullResponse.slice(0, 100)}..."`);

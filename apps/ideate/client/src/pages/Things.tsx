@@ -120,6 +120,35 @@ export function Things() {
     return () => setNavigationContext({});
   }, [workspaceId, selectedThingId, selectedThingName, setNavigationContext]);
 
+  // Update URL when selectedThingId changes (e.g., from auto-select on create)
+  // Use replaceState to avoid triggering router navigation
+  useEffect(() => {
+    if (selectedThingId) {
+      const basePath = workspaceId ? `/workspace/${workspaceId}/things` : '/things';
+      const expectedUrl = `${basePath}/${selectedThingId}`;
+      // Only update if URL doesn't already match (avoid unnecessary history entries)
+      if (!window.location.pathname.endsWith(selectedThingId)) {
+        window.history.replaceState(null, '', expectedUrl);
+      }
+    }
+  }, [selectedThingId, workspaceId]);
+
+  // Listen for facilitator:navigateToThing events (from Facilitator navigation actions)
+  // This is rarely needed now since thing_create auto-selects
+  useEffect(() => {
+    const handleNavigateToThing = (event: Event) => {
+      const customEvent = event as CustomEvent<{ thingId: string }>;
+      const { thingId } = customEvent.detail;
+      if (thingId && thingId !== selectedThingId) {
+        setSelectedThingId(thingId);
+        // URL will be updated by the selectedThingId effect above
+      }
+    };
+
+    window.addEventListener('facilitator:navigateToThing', handleNavigateToThing);
+    return () => window.removeEventListener('facilitator:navigateToThing', handleNavigateToThing);
+  }, [setSelectedThingId, selectedThingId]);
+
   const handleSelect = useCallback((thing: ThingMetadata | null) => {
     const thingId = thing?.id ?? null;
     setSelectedThingId(thingId);

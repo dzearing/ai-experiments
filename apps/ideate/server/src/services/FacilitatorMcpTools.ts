@@ -13,8 +13,9 @@ import { MCPToolsService } from './MCPToolsService.js';
 /**
  * Create the facilitator MCP server with custom tools.
  * Pass `userId` at creation time so tools know which user's data to access.
+ * Pass `workspaceId` to automatically inject into resource creation when not explicitly provided.
  */
-export function createFacilitatorMcpServer(toolsService: MCPToolsService, userId: string) {
+export function createFacilitatorMcpServer(toolsService: MCPToolsService, userId: string, workspaceId?: string) {
   return createSdkMcpServer({
     name: 'facilitator',
     version: '1.0.0',
@@ -81,13 +82,18 @@ export function createFacilitatorMcpServer(toolsService: MCPToolsService, userId
           type: z.string().optional().describe('Type of the Thing (category, project, feature, or item)'),
           description: z.string().optional().describe('Description of the Thing'),
           parentId: z.string().optional().describe('ID of the parent Thing (for hierarchy)'),
-          workspaceId: z.string().optional().describe('Workspace ID to associate the Thing with'),
+          workspaceId: z.string().optional().describe('Workspace ID to associate the Thing with (defaults to current workspace)'),
           tags: z.string().optional().describe('Comma-separated list of tags'),
           icon: z.string().optional().describe('Icon name for the Thing'),
           color: z.string().optional().describe('Color name for the Thing'),
         },
         async (args) => {
-          const result = await toolsService.executeTool('thing_create', args, userId);
+          // Auto-inject workspaceId from context if not explicitly provided
+          const toolArgs = {
+            ...args,
+            workspaceId: args.workspaceId || workspaceId,
+          };
+          const result = await toolsService.executeTool('thing_create', toolArgs, userId);
           return {
             content: [{
               type: 'text' as const,
@@ -194,10 +200,15 @@ export function createFacilitatorMcpServer(toolsService: MCPToolsService, userId
         {
           title: z.string().describe('Title of the document'),
           content: z.string().optional().describe('Initial content of the document (markdown)'),
-          workspaceId: z.string().optional().describe('Workspace ID to create the document in'),
+          workspaceId: z.string().optional().describe('Workspace ID to create the document in (defaults to current workspace)'),
         },
         async (args) => {
-          const result = await toolsService.executeTool('document_create', args, userId);
+          // Auto-inject workspaceId from context if not explicitly provided
+          const toolArgs = {
+            ...args,
+            workspaceId: args.workspaceId || workspaceId,
+          };
+          const result = await toolsService.executeTool('document_create', toolArgs, userId);
           return {
             content: [{
               type: 'text' as const,
@@ -454,6 +465,132 @@ export function createFacilitatorMcpServer(toolsService: MCPToolsService, userId
               }],
             };
           }
+        }
+      ),
+
+      // === Idea Tools ===
+      tool(
+        'idea_create',
+        'Create a new idea, optionally attached to Things. Use for project scaffolding, capturing new concepts, or follow-up work.',
+        {
+          title: z.string().describe('Title of the idea'),
+          summary: z.string().describe('Brief summary of the idea'),
+          description: z.string().optional().describe('Detailed description of the idea (markdown)'),
+          thingIds: z.string().optional().describe('Comma-separated list of Thing IDs to attach this idea to'),
+          tags: z.string().optional().describe('Comma-separated list of tags'),
+          workspaceId: z.string().optional().describe('Workspace ID to create the idea in (defaults to current workspace)'),
+        },
+        async (args) => {
+          // Auto-inject workspaceId from context if not explicitly provided
+          const toolArgs = {
+            ...args,
+            workspaceId: args.workspaceId || workspaceId,
+          };
+          const result = await toolsService.executeTool('idea_create', toolArgs, userId);
+          return {
+            content: [{
+              type: 'text' as const,
+              text: JSON.stringify(result.data || { error: result.error }, null, 2),
+            }],
+          };
+        }
+      ),
+
+      tool(
+        'idea_list',
+        'List ideas, optionally filtered by Thing ID, status, or workspace.',
+        {
+          thingId: z.string().optional().describe('Filter ideas by Thing ID'),
+          status: z.enum(['new', 'exploring', 'executing', 'archived']).optional().describe('Filter by status'),
+          workspaceId: z.string().optional().describe('Filter by workspace ID'),
+        },
+        async (args) => {
+          const result = await toolsService.executeTool('idea_list', args, userId);
+          return {
+            content: [{
+              type: 'text' as const,
+              text: JSON.stringify(result.data || { error: result.error }, null, 2),
+            }],
+          };
+        }
+      ),
+
+      tool(
+        'idea_get',
+        'Get detailed information about a specific idea by ID.',
+        {
+          ideaId: z.string().describe('The ID of the idea to retrieve'),
+        },
+        async (args) => {
+          const result = await toolsService.executeTool('idea_get', args, userId);
+          return {
+            content: [{
+              type: 'text' as const,
+              text: JSON.stringify(result.data || { error: result.error }, null, 2),
+            }],
+          };
+        }
+      ),
+
+      // === Navigation Action Tools ===
+      tool(
+        'navigate_to_thing',
+        'Navigate the user to view a Thing in the Things page. Returns a navigation action that the client will execute.',
+        {
+          thingId: z.string().describe('The Thing ID to navigate to'),
+        },
+        async (args) => {
+          return {
+            content: [{
+              type: 'text' as const,
+              text: JSON.stringify({
+                __action: 'navigate',
+                target: 'thing',
+                thingId: args.thingId,
+              }),
+            }],
+          };
+        }
+      ),
+
+      tool(
+        'open_idea_workspace',
+        'Open the idea workspace overlay. Can open an existing idea by ID, or open in "new" mode to create a new idea with an initial prompt for the idea agent.',
+        {
+          ideaId: z.string().optional().describe('The Idea ID to open (omit for new idea mode)'),
+          thingId: z.string().optional().describe('Thing ID to attach the idea to (required for new idea mode)'),
+          initialPrompt: z.string().optional().describe('Initial prompt to seed the idea agent when creating a new idea'),
+          closeFacilitator: z.boolean().optional().describe('Whether to close the Facilitator after opening (default: true)'),
+          focusInput: z.boolean().optional().describe('Whether to focus the chat input (default: true)'),
+        },
+        async (args) => {
+          return {
+            content: [{
+              type: 'text' as const,
+              text: JSON.stringify({
+                __action: 'open_idea_workspace',
+                ideaId: args.ideaId,
+                thingId: args.thingId,
+                initialPrompt: args.initialPrompt,
+                closeFacilitator: args.closeFacilitator ?? true,
+                focusInput: args.focusInput ?? true,
+              }),
+            }],
+          };
+        }
+      ),
+
+      tool(
+        'close_facilitator',
+        'Close the Facilitator overlay.',
+        {},
+        async () => {
+          return {
+            content: [{
+              type: 'text' as const,
+              text: JSON.stringify({ __action: 'close_facilitator' }),
+            }],
+          };
         }
       ),
     ],

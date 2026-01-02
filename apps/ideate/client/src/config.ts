@@ -41,3 +41,5 @@ export const WORKSPACE_WS_URL = `${WS_URL}/workspace-ws`;
 export const FACILITATOR_WS_URL = `${WS_URL}/facilitator-ws`;
 export const IDEA_AGENT_WS_URL = `${WS_URL}/idea-agent-ws`;
 export const CLAUDE_DIAGNOSTICS_WS_URL = `${WS_URL}/claude-diagnostics-ws`;
+export const PLAN_AGENT_WS_URL = `${WS_URL}/plan-agent-ws`;
+export const EXECUTION_AGENT_WS_URL = `${WS_URL}/execution-agent-ws`;

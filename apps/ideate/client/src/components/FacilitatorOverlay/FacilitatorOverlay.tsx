@@ -4,7 +4,7 @@ import { useNavigate } from '@ui-kit/router';
 import { Slide, Button, IconButton, Avatar } from '@ui-kit/react';
 import { CloseIcon } from '@ui-kit/icons/CloseIcon';
 import { GearIcon } from '@ui-kit/icons/GearIcon';
-import { ChatInput, ChatMessage, ThinkingIndicator, type ChatInputSubmitData, type ChatInputRef, type ThingReference } from '@ui-kit/react-chat';
+import { ChatInput, ChatMessage, ThinkingIndicator, OpenQuestionsResolver, type ChatInputSubmitData, type ChatInputRef, type ThingReference } from '@ui-kit/react-chat';
 import { AVATAR_IMAGES } from '../../constants/avatarImages';
 import { useFacilitator } from '../../contexts/FacilitatorContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -43,6 +43,10 @@ export function FacilitatorOverlay() {
     addMessage,
     pendingMessage,
     clearPendingMessage,
+    openQuestions,
+    showQuestionsResolver,
+    setShowQuestionsResolver,
+    resolveQuestions,
   } = useFacilitator();
 
   // Convert things to ThingReference format for chat autocomplete
@@ -72,7 +76,7 @@ export function FacilitatorOverlay() {
     avatar: 'robot',
   });
   const panelRef = useRef<HTMLDivElement>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const chatInputRef = useRef<ChatInputRef>(null);
   const isProcessingQueueRef = useRef(false);
 
@@ -242,7 +246,10 @@ Type a message to get started!`,
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = messagesContainerRef.current;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
   }, [messages]);
 
   // Handle sending a message
@@ -375,7 +382,7 @@ Type a message to get started!`,
           )}
 
           {/* Messages */}
-          <div className={styles.messagesContainer}>
+          <div ref={messagesContainerRef} className={styles.messagesContainer}>
             {messages.length === 0 ? (
               <div className={styles.emptyState}>
                 <h3 className={styles.emptyStateTitle}>
@@ -386,47 +393,56 @@ Type a message to get started!`,
                 </p>
               </div>
             ) : (
-              <>
-                {messages.map((message, index) => {
-                  const prevMessage = index > 0 ? messages[index - 1] : null;
-                  const isConsecutive = prevMessage?.role === message.role;
-                  const isUser = message.role === 'user';
-                  const isSystem = message.role === 'system';
+              messages.map((message, index) => {
+                const prevMessage = index > 0 ? messages[index - 1] : null;
+                const isConsecutive = prevMessage?.role === message.role;
+                const isUser = message.role === 'user';
+                const isSystem = message.role === 'system';
 
-                  // Get bot avatar image
-                  const botAvatarSrc = AVATAR_IMAGES[facilitatorSettings.avatar] || AVATAR_IMAGES.robot;
+                // Get bot avatar image
+                const botAvatarSrc = AVATAR_IMAGES[facilitatorSettings.avatar] || AVATAR_IMAGES.robot;
 
-                  return (
-                    <ChatMessage
-                      key={message.id}
-                      id={message.id}
-                      parts={message.parts}
-                      timestamp={message.timestamp}
-                      senderName={isUser ? (user?.name || 'You') : facilitatorSettings.name}
-                      senderColor={isUser ? undefined : '#6366f1'}
-                      isOwn={isUser}
-                      isSystem={isSystem}
-                      isConsecutive={isConsecutive && !isSystem}
-                      renderMarkdown={true}
-                      isStreaming={message.isStreaming}
-                      avatar={!isUser && !isSystem ? (
-                        <Avatar
-                          type="bot"
-                          src={botAvatarSrc}
-                          alt={facilitatorSettings.name}
-                          size="md"
-                        />
-                      ) : undefined}
-                    />
-                  );
-                })}
-                <div ref={messagesEndRef} />
-              </>
+                return (
+                  <ChatMessage
+                    key={message.id}
+                    id={message.id}
+                    parts={message.parts}
+                    timestamp={message.timestamp}
+                    senderName={isUser ? (user?.name || 'You') : facilitatorSettings.name}
+                    senderColor={isUser ? undefined : '#6366f1'}
+                    isOwn={isUser}
+                    isSystem={isSystem}
+                    isConsecutive={isConsecutive && !isSystem}
+                    renderMarkdown={true}
+                    isStreaming={message.isStreaming}
+                    avatar={!isUser && !isSystem ? (
+                      <Avatar
+                        type="bot"
+                        src={botAvatarSrc}
+                        alt={facilitatorSettings.name}
+                        size="md"
+                      />
+                    ) : undefined}
+                  />
+                );
+              })
             )}
           </div>
 
           {/* Thinking indicator */}
-          <ThinkingIndicator isActive={isLoading} />
+          <ThinkingIndicator isActive={isLoading} showEscapeHint={isLoading && !inputContent.trim()} />
+
+          {/* Question resolver overlay */}
+          {showQuestionsResolver && openQuestions && openQuestions.length > 0 && (
+            <div className={styles.questionsResolverOverlay}>
+              <OpenQuestionsResolver
+                questions={openQuestions}
+                onComplete={resolveQuestions}
+                onDismiss={() => setShowQuestionsResolver(false)}
+                variant="centered"
+              />
+            </div>
+          )}
 
           {/* Queued content */}
           {queuedContent && (

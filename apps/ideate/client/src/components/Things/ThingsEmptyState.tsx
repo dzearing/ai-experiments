@@ -23,7 +23,7 @@ interface ThingsEmptyStateProps {
 
 interface ExampleThingCard {
   name: string;
-  type: 'project' | 'category';
+  type: string;
   tags: string[];
   description: string;
   children: string[];
@@ -92,14 +92,14 @@ function FirstRunExperience({ onCreateThing, onStartChat }: Omit<ThingsEmptyStat
       [
         {
           name: 'my-app',
-          type: 'project',
+          type: 'app',
           tags: ['#github', '#react'],
           description: 'Git repo with README attached',
           children: ['components', 'api', 'docs'],
         },
         {
           name: 'Learning Rust',
-          type: 'category',
+          type: 'subject',
           tags: ['#learning', '#programming'],
           description: 'A learning path with course links and notes',
           children: ['Rust Book', 'Exercises', 'Projects'],
@@ -123,14 +123,14 @@ function FirstRunExperience({ onCreateThing, onStartChat }: Omit<ThingsEmptyStat
         },
         {
           name: 'Home Renovation',
-          type: 'category',
+          type: 'folder',
           tags: ['#personal', '#planning'],
           description: 'Kitchen remodel project tracking',
           children: ['Budget', 'Contractors', 'Timeline'],
         },
         {
           name: 'Recipe Collection',
-          type: 'category',
+          type: 'folder',
           tags: ['#cooking', '#reference'],
           description: 'Favorite recipes with notes',
           children: ['Italian', 'Desserts', 'Quick Meals'],
@@ -147,14 +147,14 @@ function FirstRunExperience({ onCreateThing, onStartChat }: Omit<ThingsEmptyStat
         },
         {
           name: 'Team Onboarding',
-          type: 'category',
+          type: 'folder',
           tags: ['#hr', '#process'],
           description: 'New hire documentation',
           children: ['Checklist', 'Resources', 'Training'],
         },
         {
           name: 'Client Projects',
-          type: 'category',
+          type: 'folder',
           tags: ['#clients', '#active'],
           description: 'Active client engagements',
           children: ['Acme Corp', 'StartupX', 'BigCo'],
@@ -164,21 +164,21 @@ function FirstRunExperience({ onCreateThing, onStartChat }: Omit<ThingsEmptyStat
       [
         {
           name: 'AI Research',
-          type: 'category',
+          type: 'subject',
           tags: ['#research', '#ai'],
           description: 'Papers and experiments',
           children: ['Papers', 'Notes', 'Experiments'],
         },
         {
           name: 'Course Notes',
-          type: 'category',
+          type: 'subject',
           tags: ['#learning', '#courses'],
           description: 'Online course materials',
           children: ['ML Basics', 'System Design', 'AWS'],
         },
         {
           name: 'Book Club',
-          type: 'category',
+          type: 'folder',
           tags: ['#reading', '#social'],
           description: 'Monthly book discussions',
           children: ['Current', 'Archive', 'Wishlist'],

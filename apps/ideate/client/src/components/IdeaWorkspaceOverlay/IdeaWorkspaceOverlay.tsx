@@ -1,16 +1,23 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Slide, Button, IconButton, SplitPane, Spinner, Dialog } from '@ui-kit/react';
+import { CloseIcon } from '@ui-kit/icons/CloseIcon';
 import { TrashIcon } from '@ui-kit/icons/TrashIcon';
+import { ArrowRightIcon } from '@ui-kit/icons/ArrowRightIcon';
+import { PlayIcon } from '@ui-kit/icons/PlayIcon';
+import { FileIcon } from '@ui-kit/icons/FileIcon';
+import { ListIcon } from '@ui-kit/icons/ListIcon';
 import { ChatPanel, ChatInput, ThinkingIndicator, MessageQueue, OpenQuestionsResolver, type ChatInputSubmitData, type ChatInputRef, type ChatPanelMessage, type QueuedMessage } from '@ui-kit/react-chat';
 import { MarkdownCoEditor, type ViewMode, type CoAuthor } from '@ui-kit/react-markdown';
 import { useAuth } from '../../contexts/AuthContext';
 import { useIdeas } from '../../contexts/IdeasContext';
 import { useIdeaAgent, type IdeaContext } from '../../hooks/useIdeaAgent';
+import { usePlanAgent, type PlanIdeaContext } from '../../hooks/usePlanAgent';
 import { useYjsCollaboration } from '../../hooks/useYjsCollaboration';
 import { useChatCommands } from '../../hooks/useChatCommands';
+import { PlanView } from '../PlanView';
 import { YJS_WS_URL } from '../../config';
-import type { Idea, CreateIdeaInput } from '../../types/idea';
+import type { Idea, CreateIdeaInput, IdeaPlan } from '../../types/idea';
 import styles from './IdeaWorkspaceOverlay.module.css';
 
 // Generate a unique session ID for new ideas
@@ -136,6 +143,9 @@ export interface ThingContext {
   description?: string;
 }
 
+/** Workspace phases */
+export type WorkspacePhase = 'ideation' | 'planning';
+
 export interface IdeaWorkspaceOverlayProps {
   /** Idea to edit (null for creating a new idea) */
   idea: Idea | null;
@@ -151,6 +161,12 @@ export interface IdeaWorkspaceOverlayProps {
   initialThingIds?: string[];
   /** Thing context for contextual greetings when creating ideas for a Thing */
   initialThingContext?: ThingContext;
+  /** Callback when idea status changes (e.g., moves to planning) - for kanban updates */
+  onStatusChange?: (idea: Idea, newStatus: string) => void;
+  /** Initial prompt to automatically send to the idea agent when creating a new idea */
+  initialPrompt?: string;
+  /** Initial phase when opening an existing idea */
+  initialPhase?: WorkspacePhase;
 }
 
 /**
@@ -168,11 +184,27 @@ export function IdeaWorkspaceOverlay({
   onSuccess,
   initialThingIds,
   initialThingContext,
+  onStatusChange,
+  initialPrompt,
+  initialPhase,
 }: IdeaWorkspaceOverlayProps) {
   const { user } = useAuth();
-  const { createIdea, updateIdea } = useIdeas();
+  const { createIdea, updateIdea, moveIdea } = useIdeas();
 
   const isNewIdea = !idea;
+
+  // Workspace phase - determines if we're in ideation or planning mode
+  // For new ideas, always start in ideation
+  // For existing ideas, check the idea status or use initialPhase
+  const [phase, setPhase] = useState<WorkspacePhase>(() => {
+    if (!idea) return 'ideation';
+    if (initialPhase) return initialPhase;
+    // If idea is already in exploring/planning status, start in planning phase
+    return idea.status === 'exploring' ? 'planning' : 'ideation';
+  });
+
+  // Track the current idea (may be created during ideation phase)
+  const [currentIdea, setCurrentIdea] = useState<Idea | null>(idea);
 
   // Session ID for new ideas - stable per component instance
   // Content is cleared on close instead of creating a new room
@@ -250,26 +282,46 @@ export function IdeaWorkspaceOverlay({
   const parsedContent = useMemo(() => parseMarkdownContent(content), [content]);
 
   // Build idea context for the agent
-  // Always provide a context (even if minimal) so the agent can generate new ideas
+  // For existing ideas, use the idea prop as the source of truth initially
+  // This ensures the agent has correct context before Yjs syncs
+  // For new ideas or after edits, fall back to parsedContent
   const ideaContext: IdeaContext = useMemo(() => {
+    // For existing ideas, prefer the idea prop data
+    // Only use parsedContent if it has been initialized with real content
+    // (not the default "Untitled Idea" template)
+    if (idea) {
+      const hasRealDocContent = isInitialized &&
+        parsedContent.title.trim() &&
+        parsedContent.title.trim() !== 'Untitled Idea';
+
+      return {
+        id: idea.id,
+        title: hasRealDocContent ? parsedContent.title.trim() : idea.title,
+        summary: hasRealDocContent ? (parsedContent.summary.trim() || idea.summary) : idea.summary,
+        description: hasRealDocContent ? (parsedContent.description.trim() || idea.description || undefined) : (idea.description || undefined),
+        tags: hasRealDocContent && parsedContent.tags.length > 0 ? parsedContent.tags : idea.tags,
+        status: idea.status,
+        thingContext: initialThingContext,
+      };
+    }
+    // For new ideas, use parsedContent
     return {
-      id: idea?.id || 'new',
+      id: 'new',
       title: parsedContent.title.trim() || 'New Idea',
       summary: parsedContent.summary.trim(),
       description: parsedContent.description.trim() || undefined,
       tags: parsedContent.tags,
-      status: idea?.status || 'new',
-      // Include Thing context for contextual greetings when creating ideas for a Thing
+      status: 'new',
       thingContext: initialThingContext,
     };
-  }, [idea, parsedContent, initialThingContext]);
+  }, [idea, parsedContent, initialThingContext, isInitialized]);
 
   // Stable error handler to prevent unnecessary reconnects
   const handleAgentError = useCallback((err: string) => {
     console.error('[IdeaWorkspace] Agent error:', err);
   }, []);
 
-  // Idea agent hook
+  // Idea agent hook - only enabled when overlay is open
   const {
     messages: agentMessages,
     isConnected,
@@ -292,6 +344,7 @@ export function IdeaWorkspaceOverlay({
     ideaContext,
     documentRoomName: documentId,
     onError: handleAgentError,
+    enabled: open,
   });
 
   // Update the agent when ideaContext changes (especially thingContext)
@@ -332,9 +385,67 @@ export function IdeaWorkspaceOverlay({
       senderColor: msg.role === 'user' ? undefined : '#8b5cf6',
       isOwn: msg.role === 'user',
       isStreaming: msg.isStreaming,
-      renderMarkdown: msg.role === 'assistant',
+      renderMarkdown: true, // Render markdown for all messages (including user's question answers)
     }));
   }, [agentMessages, user?.name]);
+
+  // Check if we have at least one agent response (not currently streaming)
+  const hasAgentResponse = useMemo(() => {
+    return agentMessages.some(msg => msg.role === 'assistant' && !msg.isStreaming);
+  }, [agentMessages]);
+
+  // Compute dynamic suggestions based on context and phase
+  const footerSuggestions = useMemo(() => {
+    // Don't show suggestions while agent is thinking or if no response yet
+    if (!hasAgentResponse || isAgentThinking) return [];
+
+    const suggestions: { label: string; message: string }[] = [];
+
+    // Phase-specific suggestions
+    if (phase === 'planning') {
+      // Planning phase suggestions
+      suggestions.push({ label: 'Create an implementation plan', message: 'Can you help me create an implementation plan?' });
+      suggestions.push({ label: 'Draw a diagram', message: 'Can you help me visualize the architecture with a diagram?' });
+      suggestions.push({ label: 'Create a UI mock', message: 'Can you help me create a UI mockup?' });
+      return suggestions;
+    }
+
+    // Ideation phase suggestions
+    // If there are open questions, suggest resolving them
+    if (openQuestions && openQuestions.length > 0) {
+      suggestions.push({
+        label: `Answer ${openQuestions.length} question${openQuestions.length > 1 ? 's' : ''}`,
+        message: 'I\'d like to answer the open questions'
+      });
+    }
+
+    // Check if the idea has substantive content
+    const hasSubstantiveContent = parsedContent.title.trim() &&
+      parsedContent.title !== 'Untitled Idea' &&
+      parsedContent.summary.trim();
+
+    if (hasSubstantiveContent) {
+      // If no open questions and content looks complete, suggest proceeding
+      if (!openQuestions || openQuestions.length === 0) {
+        suggestions.push({ label: 'Looks good!', message: 'The idea looks good to me!' });
+        suggestions.push({ label: 'Add more detail', message: 'Can you add more details to the description?' });
+      } else {
+        // Has content but also has questions
+        suggestions.push({ label: 'Expand features', message: 'Can you expand on the key features?' });
+        suggestions.push({ label: 'Clarify scope', message: 'Can you help clarify the scope?' });
+      }
+    } else {
+      // Idea is still being formed
+      suggestions.push({ label: 'Help me brainstorm', message: 'Help me brainstorm more ideas' });
+      suggestions.push({ label: 'Suggest features', message: 'What features would you suggest?' });
+    }
+
+    // Always offer to refine
+    suggestions.push({ label: 'Any concerns?', message: 'Do you have any concerns about this idea?' });
+
+    // Limit to 3 suggestions
+    return suggestions.slice(0, 3);
+  }, [hasAgentResponse, isAgentThinking, openQuestions, parsedContent, phase]);
 
   // Initialize Yjs document content when synced
   useEffect(() => {
@@ -395,6 +506,26 @@ export function IdeaWorkspaceOverlay({
       return () => clearTimeout(timerId);
     }
   }, [open]);
+
+  // Track if initial prompt has been sent
+  const initialPromptSentRef = useRef(false);
+
+  // Send initial prompt to agent when overlay opens and agent is connected
+  useEffect(() => {
+    if (open && isConnected && initialPrompt && !initialPromptSentRef.current) {
+      // Mark as sent immediately to prevent double-sending
+      initialPromptSentRef.current = true;
+      // Small delay to ensure agent is ready
+      const timerId = setTimeout(() => {
+        sendAgentMessage(initialPrompt);
+      }, 500);
+      return () => clearTimeout(timerId);
+    }
+    // Reset the flag when overlay closes
+    if (!open) {
+      initialPromptSentRef.current = false;
+    }
+  }, [open, isConnected, initialPrompt, sendAgentMessage]);
 
   // Handle cancel operation
   const handleCancelOperation = useCallback(() => {
@@ -553,7 +684,75 @@ export function IdeaWorkspaceOverlay({
     } finally {
       setIsSaving(false);
     }
-  }, [parsedContent, isNewIdea, idea, workspaceId, createIdea, updateIdea, onSuccess, onClose, content]);
+  }, [parsedContent, isNewIdea, idea, workspaceId, createIdea, updateIdea, onSuccess, onClose, content, initialThingIds]);
+
+  // Handle transition to planning mode
+  const handleStartPlanning = useCallback(async () => {
+    const { title, summary, tags, description } = parsedContent;
+
+    if (!title.trim() || title === 'Untitled Idea') {
+      setError('Title is required');
+      return;
+    }
+    if (!summary.trim()) {
+      setError('Summary is required');
+      return;
+    }
+
+    setIsSaving(true);
+    setError(null);
+
+    try {
+      let ideaToTransition: Idea;
+
+      if (isNewIdea || !currentIdea) {
+        // Create new idea first
+        const input: CreateIdeaInput = {
+          title: title.trim(),
+          summary: summary.trim(),
+          tags,
+          description: description.trim() || undefined,
+          workspaceId,
+          thingIds: initialThingIds,
+        };
+        ideaToTransition = await createIdea(input);
+        lastSavedContent.current = content;
+        hasDocumentChanges.current = false;
+      } else {
+        // Save existing idea
+        const updated = await updateIdea(currentIdea.id, {
+          title: title.trim(),
+          summary: summary.trim(),
+          tags,
+          description: description.trim() || undefined,
+        });
+        if (!updated) {
+          setError('Failed to update idea');
+          return;
+        }
+        ideaToTransition = updated;
+        lastSavedContent.current = content;
+        hasDocumentChanges.current = false;
+      }
+
+      // Move idea to 'exploring' (planning) status
+      await moveIdea(ideaToTransition.id, 'exploring');
+      const transitionedIdea = { ...ideaToTransition, status: 'exploring' as const };
+
+      // Update local state
+      setCurrentIdea(transitionedIdea);
+
+      // Notify parent for kanban update (but don't close)
+      onStatusChange?.(transitionedIdea, 'exploring');
+
+      // Transition to planning phase in the UI
+      setPhase('planning');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save idea');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [parsedContent, isNewIdea, currentIdea, workspaceId, createIdea, updateIdea, moveIdea, onStatusChange, content, initialThingIds]);
 
   // Process queued messages when AI finishes thinking - combine all into one message
   useEffect(() => {
@@ -611,14 +810,19 @@ export function IdeaWorkspaceOverlay({
     }
   }, [openQuestions, setShowQuestionsResolver]);
 
+  // NOTE: Questions resolver is now only shown when user clicks the "[resolve N questions](#resolve)" link
+  // This gives the user control over when to answer questions rather than interrupting their flow
+
   // Empty state for chat panel
   const chatEmptyState = (
     <div className={styles.chatEmptyState}>
-      <h3>Chat with the Idea Agent</h3>
+      <h3>Chat with the {phase === 'planning' ? 'Plan Agent' : 'Idea Agent'}</h3>
       <p>
-        {isNewIdea
-          ? 'Start typing in the editor, then ask the agent to help you develop your idea.'
-          : 'Ask questions, brainstorm, or get suggestions to improve your idea.'}
+        {phase === 'planning'
+          ? 'Ask for implementation plans, architecture diagrams, or UI mockups.'
+          : isNewIdea
+            ? 'Start typing in the editor, then ask the agent to help you develop your idea.'
+            : 'Ask questions, brainstorm, or get suggestions to improve your idea.'}
       </p>
     </div>
   );
@@ -642,6 +846,36 @@ export function IdeaWorkspaceOverlay({
           className={styles.overlay}
           onClick={(e) => e.stopPropagation()}
         >
+          {/* Header */}
+          <header className={styles.header}>
+            <h1 className={styles.headerTitle}>
+              {phase === 'planning'
+                ? 'Plan Your Idea'
+                : isNewIdea
+                  ? 'Create Your Idea'
+                  : 'Edit Idea'}
+            </h1>
+            <div className={styles.headerActions}>
+              {phase === 'ideation' && (
+                <Button
+                  variant="primary"
+                  onClick={handleStartPlanning}
+                  disabled={isSaving || !parsedContent.title.trim() || parsedContent.title === 'Untitled Idea' || !parsedContent.summary.trim()}
+                  icon={<ArrowRightIcon />}
+                >
+                  Next: Planning
+                </Button>
+              )}
+              <IconButton
+                icon={<CloseIcon />}
+                variant="ghost"
+                size="md"
+                onClick={handleCloseRequest}
+                aria-label="Close"
+              />
+            </div>
+          </header>
+
           {/* Main content */}
           <div className={styles.content}>
             <SplitPane
@@ -651,7 +885,7 @@ export function IdeaWorkspaceOverlay({
               first={
                 <div className={styles.chatPane}>
                   <div className={styles.chatHeader}>
-                    <span className={styles.chatTitle}>Idea Agent</span>
+                    <span className={styles.chatTitle}>{phase === 'planning' ? 'Plan Agent' : 'Idea Agent'}</span>
                     <span className={`${styles.connectionStatus} ${isConnected ? styles.connected : ''}`}>
                       {isEditingDocument ? 'Editing document...' : isConnected ? 'Connected' : 'Disconnected'}
                     </span>
@@ -687,10 +921,9 @@ export function IdeaWorkspaceOverlay({
                   <div className={styles.chatInputContainer}>
                     <ChatInput
                       ref={chatInputRef}
-                      placeholder={isAgentThinking ? "Type to queue message..." : "Ask the agent... (type / for commands)"}
+                      placeholder={!isConnected ? "Connecting..." : isAgentThinking ? "Type to queue message..." : "Ask the agent... (type / for commands)"}
                       onSubmit={handleChatSubmit}
                       onChange={handleInputChange}
-                      disabled={!isConnected}
                       historyKey={`idea-agent-${idea?.id || 'new'}`}
                       fullWidth
                       commands={commands}
@@ -740,25 +973,40 @@ export function IdeaWorkspaceOverlay({
                       </Button>
                     </div>
                   )}
-
-                  {/* Footer */}
-                  <footer className={styles.footer}>
-                    <Button variant="ghost" onClick={handleCloseRequest} disabled={isSaving}>
-                      Cancel
-                    </Button>
-                    <Button
-                      variant="primary"
-                      onClick={handleSave}
-                      disabled={isSaving || !parsedContent.title.trim() || parsedContent.title === 'Untitled Idea' || !parsedContent.summary.trim()}
-                      icon={isSaving ? <Spinner size="sm" /> : undefined}
-                    >
-                      {isSaving ? 'Saving...' : isNewIdea ? 'Create Idea' : 'Save Changes'}
-                    </Button>
-                  </footer>
                 </div>
               }
             />
           </div>
+
+          {/* Footer */}
+          <footer className={styles.footer}>
+            {/* Always render container to maintain layout */}
+            <div className={styles.footerSuggestions}>
+              {footerSuggestions.map((suggestion, index) => (
+                <Button
+                  key={index}
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => sendAgentMessage(suggestion.message)}
+                >
+                  {suggestion.label}
+                </Button>
+              ))}
+            </div>
+            <div className={styles.footerActions}>
+              <Button variant="ghost" onClick={handleCloseRequest} disabled={isSaving}>
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleSave}
+                disabled={isSaving || !parsedContent.title.trim() || parsedContent.title === 'Untitled Idea' || !parsedContent.summary.trim()}
+                icon={isSaving ? <Spinner size="sm" /> : undefined}
+              >
+                {isSaving ? 'Saving...' : isNewIdea ? 'Save Idea' : 'Save Changes'}
+              </Button>
+            </div>
+          </footer>
         </div>
       </Slide>
 

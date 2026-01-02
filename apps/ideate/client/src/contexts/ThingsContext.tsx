@@ -4,6 +4,7 @@ import {
   useState,
   useCallback,
   useMemo,
+  useEffect,
   type ReactNode,
 } from 'react';
 import { useAuth } from './AuthContext';
@@ -550,6 +551,39 @@ export function ThingsProvider({ children }: ThingsProviderProps) {
       tags: t.tags,
     }));
   }, [things]);
+
+  // Listen for Thing created from Facilitator tool calls
+  // This is a confirmed update - the server has created the Thing and returned its full data
+  // We add it immediately AND auto-select it so it appears selected in the tree
+  useEffect(() => {
+    const handleThingCreated = (event: Event) => {
+      const customEvent = event as CustomEvent<{ thing: ThingMetadata; autoSelect?: boolean }>;
+      const { thing, autoSelect = true } = customEvent.detail;
+      console.log('[ThingsContext] Received facilitator:thingCreated event:', thing);
+      if (thing) {
+        setThings(prev => {
+          // Don't add duplicates (in case WebSocket also notifies)
+          if (prev.some(t => t.id === thing.id)) {
+            console.log('[ThingsContext] Thing already exists, skipping:', thing.id);
+            return prev;
+          }
+          console.log('[ThingsContext] Adding new thing to state:', thing.name, thing.id);
+          // Prepend at the beginning
+          return [thing, ...prev];
+        });
+        // Auto-select the newly created Thing
+        if (autoSelect) {
+          console.log('[ThingsContext] Auto-selecting new thing:', thing.id);
+          setSelectedThingId(thing.id);
+        }
+      }
+    };
+
+    window.addEventListener('facilitator:thingCreated', handleThingCreated);
+    return () => window.removeEventListener('facilitator:thingCreated', handleThingCreated);
+  }, [setSelectedThingId]);
+
+  // Note: WebSocket notifications from useWorkspaceSocket also update state for multi-client sync
 
   // Note: This context is large. Consider splitting into separate contexts
   // (e.g., ThingsDataContext, ThingsSelectionContext) for better performance.

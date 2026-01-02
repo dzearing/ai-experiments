@@ -96,7 +96,7 @@ function buildTreeNodes(
 
       return {
         id: thing.id,
-        type: thing.type === 'category' || thing.type === 'project' ? 'folder' : 'file',
+        type: 'folder', // All things can have children
         icon: getThingIconElement(thing),
         label: isEditing ? (
           <div className={styles.renameInputWrapper}>
@@ -277,7 +277,7 @@ export function ThingsTree({ onSelect, onCreateNew: _onCreateNew, selectedId, on
         // Commit and create another - pass insertAfterId for correct positioning
         createThing({
           name: pendingThing.name.trim(),
-          type: 'item',
+          type: 'folder',
           parentIds: parentId ? [parentId] : [],
           insertAfterId: insertAfterId || undefined,
         }).then(created => {

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { FACILITATOR_WS_URL } from '../config';
 import { useFacilitator, type FacilitatorMessage, type NavigationContext, type MessagePart, type ToolCall } from '../contexts/FacilitatorContext';
+import type { OpenQuestion } from '@ui-kit/react-chat';
 
 /**
  * Server-side message format (from FacilitatorChatService)
@@ -59,7 +60,7 @@ function migrateMessage(msg: ServerFacilitatorMessage | FacilitatorMessage): Fac
  * Server message types for the facilitator WebSocket protocol
  */
 interface ServerMessage {
-  type: 'text_chunk' | 'tool_use' | 'tool_result' | 'message_complete' | 'history' | 'error' | 'persona_changed' | 'greeting' | 'loading';
+  type: 'text_chunk' | 'tool_use' | 'tool_result' | 'message_complete' | 'history' | 'error' | 'persona_changed' | 'greeting' | 'loading' | 'open_questions';
   /** Text content chunk (for streaming) */
   text?: string;
   /** Message ID being updated */
@@ -82,6 +83,8 @@ interface ServerMessage {
   personaName?: string;
   /** Loading state (for loading) */
   isLoading?: boolean;
+  /** Open questions for user to answer (for open_questions) */
+  questions?: OpenQuestion[];
 }
 
 /**
@@ -135,13 +138,57 @@ export function useFacilitatorSocket({
     setMessages,
     addMessage,
     updateMessage,
+    close,
     navigationContext,
     pendingPersonaChange,
     clearPendingPersonaChange,
+    setOpenQuestions,
+    setShowQuestionsResolver,
   } = useFacilitator();
 
   // Track navigation context changes to send updates to server
   const navigationContextRef = useRef<NavigationContext>(navigationContext);
+
+  // Handle navigation actions from tool results
+  const handleNavigationAction = useCallback((actionData: { __action: string; [key: string]: unknown }) => {
+    switch (actionData.__action) {
+      case 'navigate':
+        if (actionData.target === 'thing' && actionData.thingId) {
+          // If we're already on the Things page and the Thing is already selected
+          // (because thing_create auto-selected it), skip the navigation
+          const currentPath = window.location.pathname;
+          const thingId = actionData.thingId as string;
+          if (currentPath.includes('/things') && currentPath.includes(thingId)) {
+            console.log('[Facilitator] Already on Things page with this Thing selected, skipping navigate');
+            return;
+          }
+          // Navigate to thing page - dispatch event for router to handle
+          window.dispatchEvent(new CustomEvent('facilitator:navigateToThing', {
+            detail: { thingId }
+          }));
+        }
+        break;
+
+      case 'open_idea_workspace':
+        // Dispatch event for Ideas page / ThingDetail to handle
+        window.dispatchEvent(new CustomEvent('facilitator:openIdea', {
+          detail: {
+            ideaId: actionData.ideaId,
+            thingId: actionData.thingId,
+            initialPrompt: actionData.initialPrompt,
+            focusInput: actionData.focusInput ?? true,
+          }
+        }));
+        if (actionData.closeFacilitator !== false) {
+          close();
+        }
+        break;
+
+      case 'close_facilitator':
+        close();
+        break;
+    }
+  }, [close]);
 
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
@@ -290,6 +337,28 @@ export function useFacilitatorSocket({
                     };
                   }),
               });
+
+              // Check for navigation actions in tool output
+              if (data.toolOutput) {
+                try {
+                  const outputData = JSON.parse(data.toolOutput);
+                  if (outputData.__action) {
+                    handleNavigationAction(outputData);
+                  }
+
+                  // When thing_create succeeds, dispatch event with the created Thing data
+                  // This ensures the Thing appears in the UI immediately (confirmed update from server)
+                  console.log('[Facilitator] Tool result parsed:', data.toolName, 'has thing:', !!outputData.thing, outputData);
+                  if (data.toolName.includes('thing_create') && outputData.thing) {
+                    console.log('[Facilitator] Dispatching facilitator:thingCreated event with:', outputData.thing);
+                    window.dispatchEvent(new CustomEvent('facilitator:thingCreated', {
+                      detail: { thing: outputData.thing }
+                    }));
+                  }
+                } catch {
+                  // Not JSON or no action - ignore
+                }
+              }
             }
             break;
 
@@ -338,12 +407,21 @@ export function useFacilitatorSocket({
             setIsLoading(data.isLoading ?? false);
             console.log('[Facilitator] Loading state:', data.isLoading);
             break;
+
+          case 'open_questions':
+            // Open questions for user to resolve
+            if (data.questions && data.questions.length > 0) {
+              setOpenQuestions(data.questions);
+              setShowQuestionsResolver(true);
+              console.log('[Facilitator] Received open questions:', data.questions.length);
+            }
+            break;
         }
       } catch (error) {
         console.error('[Facilitator] Failed to parse message:', error);
       }
     };
-  }, [userId, userName, isOpen, setConnectionState, setError, setMessages, addMessage, updateMessage, setIsLoading, onError]);
+  }, [userId, userName, isOpen, setConnectionState, setError, setMessages, addMessage, updateMessage, setIsLoading, onError, setOpenQuestions, setShowQuestionsResolver]);
 
   // Connect when overlay opens, disconnect when it closes
   useEffect(() => {

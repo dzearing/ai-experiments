@@ -9,6 +9,7 @@ import { homedir } from 'os';
 
 export type IdeaStatus = 'new' | 'exploring' | 'executing' | 'archived';
 export type IdeaSource = 'user' | 'ai';
+export type ExecutionMode = 'all-phases' | 'phase-by-phase';
 
 export interface IdeaAttachment {
   id: string;
@@ -19,10 +20,46 @@ export interface IdeaAttachment {
   createdAt: string;
 }
 
+// Plan data structures
+export interface PlanTask {
+  id: string;
+  title: string;
+  completed: boolean;
+  inProgress?: boolean;
+}
+
+export interface PlanPhase {
+  id: string;
+  title: string;
+  description?: string;
+  tasks: PlanTask[];
+  expanded?: boolean;
+}
+
+export interface IdeaPlan {
+  phases: PlanPhase[];
+  workingDirectory: string;
+  repositoryUrl?: string;
+  branch?: string;
+  isClone?: boolean;
+  workspaceId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ExecutionOptions {
+  mode: ExecutionMode;
+  startPhaseId?: string;
+}
+
 export interface IdeaExecutionState {
   progressPercent: number;       // 0-100
   waitingForFeedback: boolean;
   chatRoomId?: string;           // Linked chat room for discussion
+  startedAt?: string;            // When execution started
+  currentPhaseId?: string;       // Currently executing phase
+  currentTaskId?: string;        // Currently executing task
+  mode?: ExecutionMode;          // Execution mode
 }
 
 export interface IdeaMetadata {
@@ -40,7 +77,8 @@ export interface IdeaMetadata {
   updatedAt: string;
   statusChangedAt: string;
   attachments: IdeaAttachment[];
-  execution?: IdeaExecutionState; // Only relevant when status === 'executing'
+  plan?: IdeaPlan;                // Implementation plan (when status is 'exploring' or later)
+  execution?: IdeaExecutionState; // Execution state (when status is 'executing')
 }
 
 export interface Idea extends IdeaMetadata {

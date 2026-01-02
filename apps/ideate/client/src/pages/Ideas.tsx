@@ -11,7 +11,9 @@ import { useSession } from '../contexts/SessionContext';
 import { useWorkspaceSocket, type ResourceType } from '../hooks/useWorkspaceSocket';
 import { KanbanBoard } from '../components/KanbanBoard';
 import { IdeaWorkspaceOverlay } from '../components/IdeaWorkspaceOverlay';
-import type { Idea, IdeaMetadata, IdeaSource } from '../types/idea';
+import { PlanningOverlay } from '../components/PlanningOverlay';
+import { ExecutionOverlay } from '../components/ExecutionOverlay';
+import type { Idea, IdeaMetadata, IdeaSource, IdeaPlan } from '../types/idea';
 import styles from './Ideas.module.css';
 
 export function Ideas() {
@@ -24,17 +26,29 @@ export function Ideas() {
     filter,
     setFilter,
     counts,
+    ideasByStatus,
     selectedIdeaId,
     setSelectedIdeaId,
     getIdea,
     fetchIdeasByLane,
     setIdeas,
+    moveIdea,
+    deleteIdea,
   } = useIdeas();
   const { setNavigationContext } = useFacilitator();
 
   const [showOverlay, setShowOverlay] = useState(false);
   const [editingIdea, setEditingIdea] = useState<Idea | null>(null);
   const [isLoadingIdea, setIsLoadingIdea] = useState(false);
+
+  // Planning overlay state
+  const [showPlanningOverlay, setShowPlanningOverlay] = useState(false);
+  const [planningIdea, setPlanningIdea] = useState<Idea | null>(null);
+
+  // Execution overlay state
+  const [showExecutionOverlay, setShowExecutionOverlay] = useState(false);
+  const [executionIdea, setExecutionIdea] = useState<Idea | null>(null);
+  const [executionPlan, setExecutionPlan] = useState<IdeaPlan | null>(null);
 
   // WebSocket for real-time updates
   const handleResourceCreated = useCallback((
@@ -103,6 +117,46 @@ export function Ideas() {
     return () => setNavigationContext({});
   }, [workspaceId, setNavigationContext]);
 
+  // Listen for facilitator:openIdea events (from Facilitator navigation actions)
+  useEffect(() => {
+    const handleOpenIdea = async (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        ideaId: string;
+        thingId?: string;
+        focusInput?: boolean;
+      }>;
+      const { ideaId } = customEvent.detail;
+
+      if (!ideaId) return;
+
+      setIsLoadingIdea(true);
+      try {
+        const idea = await getIdea(ideaId);
+        if (idea) {
+          setEditingIdea(idea);
+          setShowOverlay(true);
+          setSelectedIdeaId(ideaId);
+        }
+      } catch (err) {
+        console.error('[Ideas] Failed to open idea from facilitator:', err);
+      } finally {
+        setIsLoadingIdea(false);
+      }
+    };
+
+    window.addEventListener('facilitator:openIdea', handleOpenIdea);
+    return () => window.removeEventListener('facilitator:openIdea', handleOpenIdea);
+  }, [getIdea, setSelectedIdeaId]);
+
+  // Listen for facilitator:ideasChanged events (refetch when ideas are created/updated via Facilitator)
+  useEffect(() => {
+    const handleIdeasChanged = () => {
+      fetchIdeasByLane(workspaceId);
+    };
+    window.addEventListener('facilitator:ideasChanged', handleIdeasChanged);
+    return () => window.removeEventListener('facilitator:ideasChanged', handleIdeasChanged);
+  }, [fetchIdeasByLane, workspaceId]);
+
   // Filter options for Segmented control
   const filterOptions = [
     { value: 'all', label: `All (${counts.total})` },
@@ -128,8 +182,16 @@ export function Ideas() {
       // Fetch full idea with description
       const fullIdea = await getIdea(ideaId);
       if (fullIdea) {
-        setEditingIdea(fullIdea);
-        setShowOverlay(true);
+        // Open different overlay based on status
+        if (fullIdea.status === 'exploring') {
+          // Open planning overlay for ideas in exploring status
+          setPlanningIdea(fullIdea);
+          setShowPlanningOverlay(true);
+        } else {
+          // Open idea workspace for new ideas or editing
+          setEditingIdea(fullIdea);
+          setShowOverlay(true);
+        }
       }
     } catch (err) {
       console.error('Failed to load idea:', err);
@@ -152,6 +214,53 @@ export function Ideas() {
   const handleIdeaSuccess = useCallback((_idea: Idea) => {
     handleCloseOverlay();
   }, [handleCloseOverlay]);
+
+  // Handle status change from IdeaWorkspaceOverlay (e.g., transitioning to planning)
+  const handleStatusChange = useCallback((idea: Idea, newStatus: string) => {
+    if (newStatus === 'exploring') {
+      // Close the idea overlay and open planning overlay
+      setShowOverlay(false);
+      setEditingIdea(null);
+      setPlanningIdea(idea);
+      setShowPlanningOverlay(true);
+    }
+  }, []);
+
+  // Handle closing planning overlay
+  const handleClosePlanningOverlay = useCallback(() => {
+    setShowPlanningOverlay(false);
+    setPlanningIdea(null);
+    setSelectedIdeaId(null);
+  }, [setSelectedIdeaId]);
+
+  // Handle starting execution from PlanningOverlay
+  const handleStartExecution = useCallback((plan: IdeaPlan) => {
+    if (!planningIdea) return;
+
+    // Close planning overlay and open execution overlay
+    setShowPlanningOverlay(false);
+    setExecutionIdea(planningIdea);
+    setExecutionPlan(plan);
+    setPlanningIdea(null);
+    setShowExecutionOverlay(true);
+  }, [planningIdea]);
+
+  // Handle closing execution overlay
+  const handleCloseExecutionOverlay = useCallback(() => {
+    setShowExecutionOverlay(false);
+    setExecutionIdea(null);
+    setExecutionPlan(null);
+    setSelectedIdeaId(null);
+  }, [setSelectedIdeaId]);
+
+  // Handle execution complete
+  const handleExecutionComplete = useCallback(() => {
+    // TODO: Update idea status to 'completed' or move to next phase
+    console.log('[Ideas] Execution complete for idea:', executionIdea?.id);
+  }, [executionIdea]);
+
+  // Whether delete is disabled (when overlays are open)
+  const deleteDisabled = showOverlay || showPlanningOverlay || showExecutionOverlay;
 
   if (!user) return null;
 
@@ -194,11 +303,16 @@ export function Ideas() {
       ) : (
         <div className={styles.boardContainer}>
           <KanbanBoard
-            workspaceId={workspaceId}
+            ideasByStatus={ideasByStatus}
+            onMoveIdea={moveIdea}
+            onDeleteIdea={deleteIdea}
             onCardSelect={handleCardSelect}
             onCardOpen={handleCardOpen}
             selectedIdeaId={selectedIdeaId}
+            onClearSelection={() => setSelectedIdeaId(null)}
             onAddIdea={handleNewIdea}
+            workspaceId={workspaceId}
+            deleteDisabled={deleteDisabled}
           />
         </div>
       )}
@@ -210,7 +324,29 @@ export function Ideas() {
         onClose={handleCloseOverlay}
         workspaceId={workspaceId}
         onSuccess={handleIdeaSuccess}
+        onStatusChange={handleStatusChange}
       />
+
+      {/* Planning Overlay */}
+      {planningIdea && (
+        <PlanningOverlay
+          idea={planningIdea}
+          open={showPlanningOverlay}
+          onClose={handleClosePlanningOverlay}
+          onStartExecution={handleStartExecution}
+        />
+      )}
+
+      {/* Execution Overlay */}
+      {executionIdea && executionPlan && (
+        <ExecutionOverlay
+          idea={executionIdea}
+          plan={executionPlan}
+          open={showExecutionOverlay}
+          onClose={handleCloseExecutionOverlay}
+          onExecutionComplete={handleExecutionComplete}
+        />
+      )}
 
       {/* Loading indicator for idea fetch */}
       {isLoadingIdea && (

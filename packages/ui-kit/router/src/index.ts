@@ -19,6 +19,7 @@ export {
   useIsActive,
   useRouterContext,
   useNavigateHandler,
+  useSearchParams,
 } from './hooks';
 
 // Types
