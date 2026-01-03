@@ -69,6 +69,31 @@ function getRoleVariant(role: string): 'info' | 'success' | 'default' {
 }
 
 /**
+ * Get display label for message role
+ */
+function getRoleLabel(role: string): string {
+  switch (role) {
+    case 'user':
+      return 'REQUEST';
+    case 'assistant':
+      return 'RESPONSE';
+    default:
+      return role.toUpperCase();
+  }
+}
+
+/**
+ * Format duration in ms to human readable
+ */
+function formatDuration(ms: number): string {
+  if (ms < 1000) return `${ms}ms`;
+  if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+  const mins = Math.floor(ms / 60000);
+  const secs = ((ms % 60000) / 1000).toFixed(0);
+  return `${mins}m ${secs}s`;
+}
+
+/**
  * Format token count with commas
  */
 function formatTokens(count: number): string {
@@ -104,7 +129,10 @@ export function MessageRow({ message }: MessageRowProps) {
         <Text size="sm" color="soft" className={styles.timestamp}>
           {formatTime(message.timestamp)}
         </Text>
-        <Chip size="sm" variant={getRoleVariant(message.role)}>{message.role}</Chip>
+        <Chip size="sm" variant={getRoleVariant(message.role)}>{getRoleLabel(message.role)}</Chip>
+        {message.diagnostics?.durationMs !== undefined && (
+          <Text size="xs" color="soft">({formatDuration(message.diagnostics.durationMs)})</Text>
+        )}
         {message.toolCalls && message.toolCalls.length > 0 && (
           <Chip size="sm" variant="warning">{message.toolCalls.length} tools</Chip>
         )}

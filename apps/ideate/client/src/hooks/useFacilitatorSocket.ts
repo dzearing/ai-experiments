@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { FACILITATOR_WS_URL } from '../config';
 import { useFacilitator, type FacilitatorMessage, type NavigationContext, type MessagePart, type ToolCall } from '../contexts/FacilitatorContext';
 import type { OpenQuestion } from '@ui-kit/react-chat';
+import { useAgentProgress, type AgentProgressEvent } from './useAgentProgress';
 
 /**
  * Server-side message format (from FacilitatorChatService)
@@ -60,7 +61,7 @@ function migrateMessage(msg: ServerFacilitatorMessage | FacilitatorMessage): Fac
  * Server message types for the facilitator WebSocket protocol
  */
 interface ServerMessage {
-  type: 'text_chunk' | 'tool_use' | 'tool_result' | 'message_complete' | 'history' | 'error' | 'persona_changed' | 'greeting' | 'loading' | 'open_questions';
+  type: 'text_chunk' | 'tool_use' | 'tool_result' | 'message_complete' | 'history' | 'error' | 'persona_changed' | 'greeting' | 'loading' | 'open_questions' | 'agent_progress';
   /** Text content chunk (for streaming) */
   text?: string;
   /** Message ID being updated */
@@ -85,6 +86,8 @@ interface ServerMessage {
   isLoading?: boolean;
   /** Open questions for user to answer (for open_questions) */
   questions?: OpenQuestion[];
+  /** Agent progress event */
+  event?: AgentProgressEvent;
 }
 
 /**
@@ -113,6 +116,8 @@ export interface UseFacilitatorSocketReturn {
   changePersona: (presetId: string) => void;
   /** Whether the WebSocket is connected */
   isConnected: boolean;
+  /** Agent progress state */
+  progress: ReturnType<typeof useAgentProgress>;
 }
 
 /**
@@ -128,6 +133,9 @@ export function useFacilitatorSocket({
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentMessageIdRef = useRef<string | null>(null);
+
+  // Agent progress tracking
+  const progress = useAgentProgress();
 
   const {
     isOpen,
@@ -238,6 +246,9 @@ export function useFacilitatorSocket({
 
     ws.onclose = () => {
       setConnectionState('disconnected');
+      // Reset loading state on disconnect - prevents stuck indicators
+      setIsLoading(false);
+      progress.clearProgress();
       console.log('[Facilitator] WebSocket disconnected');
 
       // Attempt to reconnect after 3 seconds if overlay is still open
@@ -400,6 +411,7 @@ export function useFacilitatorSocket({
               });
               currentMessageIdRef.current = null;
               setIsLoading(false);
+              progress.clearProgress();
             }
             break;
 
@@ -409,6 +421,7 @@ export function useFacilitatorSocket({
               setError(data.error);
               onError?.(data.error);
               setIsLoading(false);
+              progress.clearProgress();
             }
             break;
 
@@ -444,6 +457,13 @@ export function useFacilitatorSocket({
               setOpenQuestions(data.questions);
               setShowQuestionsResolver(true);
               console.log('[Facilitator] Received open questions:', data.questions.length);
+            }
+            break;
+
+          case 'agent_progress':
+            // Handle agent progress event
+            if (data.event) {
+              progress.handleProgressEvent(data.event);
             }
             break;
         }
@@ -586,6 +606,7 @@ export function useFacilitatorSocket({
     cancelOperation,
     changePersona,
     isConnected: connectionState === 'connected',
+    progress,
   };
 }
 

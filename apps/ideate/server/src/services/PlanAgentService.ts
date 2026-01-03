@@ -6,6 +6,8 @@ import type { YjsCollaborationHandler } from '../websocket/YjsCollaborationHandl
 import type { IdeaPlan, PlanPhase } from './IdeaService.js';
 import type { DocumentEdit } from './IdeaAgentService.js';
 import { getClaudeDiagnosticsService } from '../routes/diagnostics.js';
+import type { AgentProgressCallbacks } from '../shared/agentProgress.js';
+import { createStatusEvent } from '../shared/agentProgressUtils.js';
 
 /**
  * Token usage information
@@ -42,7 +44,7 @@ export interface SuggestedResponse {
 /**
  * Callbacks for streaming plan agent responses
  */
-export interface PlanStreamCallbacks {
+export interface PlanStreamCallbacks extends AgentProgressCallbacks {
   /** Called for each text chunk during streaming */
   onTextChunk: (text: string, messageId: string) => void;
   /** Called when a plan update is detected */
@@ -384,6 +386,7 @@ Feel free to share any details, and I'll start building out the phases and tasks
 
             // Check for open questions block and send immediately when found
             if (!questionsSent && fullResponse.includes('</open_questions>')) {
+              callbacks.onProgressEvent?.(createStatusEvent('Extracting clarifying questions...'));
               const { questions, responseWithoutQuestions } = parseOpenQuestions(fullResponse);
               if (questions && questions.length > 0) {
                 console.log(`[PlanAgentService] Found ${questions.length} open questions, sending to client`);
@@ -450,11 +453,13 @@ Feel free to share any details, and I'll start building out the phases and tasks
       let chatResponse = fullResponseClean;
 
       // 1. Check for execution plan update (phases/tasks)
+      callbacks.onProgressEvent?.(createStatusEvent('Parsing implementation plan...'));
       const { plan, chatResponse: planChatResponse } = parsePlanUpdate(chatResponse);
       if (plan) {
         chatResponse = planChatResponse;
 
         // Notify about plan update
+        callbacks.onProgressEvent?.(createStatusEvent(`Creating ${plan.phases?.length || 0} phases...`));
         console.log(`[PlanAgentService] Plan update detected with ${plan.phases?.length || 0} phases`);
         callbacks.onPlanUpdate({
           phases: plan.phases,
@@ -476,6 +481,7 @@ Feel free to share any details, and I'll start building out the phases and tasks
           chatResponse = implPlanChatResponse;
 
           try {
+            callbacks.onProgressEvent?.(createStatusEvent('Writing design document...'));
             callbacks.onDocumentEditStart?.();
             console.log(`[PlanAgentService] Creating/replacing Implementation Plan document in room ${documentRoomName}`);
 
@@ -499,6 +505,7 @@ Feel free to share any details, and I'll start building out the phases and tasks
           chatResponse = editsChatResponse;
 
           try {
+            callbacks.onProgressEvent?.(createStatusEvent(`Applying ${edits.length} document edits...`));
             callbacks.onDocumentEditStart?.();
             console.log(`[PlanAgentService] Applying ${edits.length} edits to Implementation Plan in room ${documentRoomName}`);
 

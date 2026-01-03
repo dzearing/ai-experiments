@@ -3,6 +3,7 @@ import { IdeaAgentChatService, type IdeaAgentMessage } from './IdeaAgentChatServ
 import { IdeaAgentYjsClient } from './IdeaAgentYjsClient.js';
 import type { YjsCollaborationHandler } from '../websocket/YjsCollaborationHandler.js';
 import { buildIdeaAgentSystemPrompt } from '../prompts/ideaAgentPrompt.js';
+import type { AgentProgressCallbacks, AgentProgressEvent } from '../shared/agentProgress.js';
 
 /**
  * Cache entry for pre-generated greetings
@@ -95,7 +96,7 @@ export interface SuggestedResponse {
 /**
  * Callbacks for streaming agent responses
  */
-export interface StreamCallbacks {
+export interface StreamCallbacks extends AgentProgressCallbacks {
   /** Called for each text chunk during streaming */
   onTextChunk: (text: string, messageId: string) => void;
   /** Called when the response is complete */
@@ -261,6 +262,17 @@ function findEditBlockStart(text: string): number {
 }
 
 /**
+ * Create a status progress event for the Idea Agent
+ */
+function createStatusEvent(displayText: string): AgentProgressEvent {
+  return {
+    type: 'status',
+    timestamp: Date.now(),
+    displayText,
+  };
+}
+
+/**
  * Service for orchestrating idea agent chat with Claude.
  * Handles message processing and streaming responses for idea development.
  */
@@ -270,8 +282,6 @@ export class IdeaAgentService {
 
   // Greeting cache for new ideas
   private newIdeaGreetingCache: GreetingCache | null = null;
-  private static GREETINGS_COUNT = 20;
-  private isGeneratingGreetings = false;
 
   constructor(yjsHandler?: YjsCollaborationHandler) {
     this.chatService = new IdeaAgentChatService();
@@ -523,6 +533,7 @@ export class IdeaAgentService {
 
             try {
               callbacks.onDocumentEditStart?.();
+              callbacks.onProgressEvent?.(createStatusEvent('Creating idea document...'));
               console.log(`[IdeaAgentService] Creating new document in room ${documentRoomName}`);
 
               const markdownContent = buildMarkdownContent(update);
@@ -530,6 +541,12 @@ export class IdeaAgentService {
 
               this.yjsClient.clearCursor(documentRoomName);
               callbacks.onDocumentEditEnd?.();
+              callbacks.onProgressEvent?.({
+                type: 'tool_complete',
+                timestamp: Date.now(),
+                displayText: 'Created idea document',
+                success: true,
+              });
               console.log(`[IdeaAgentService] New document created`);
             } catch (error) {
               console.error('[IdeaAgentService] Error creating document:', error);
@@ -553,6 +570,7 @@ export class IdeaAgentService {
 
             try {
               callbacks.onDocumentEditStart?.();
+              callbacks.onProgressEvent?.(createStatusEvent(`Applying ${edits.length} edit${edits.length === 1 ? '' : 's'}...`));
               console.log(`[IdeaAgentService] Applying ${edits.length} position-based edits to room ${documentRoomName}`);
 
               const results = await this.yjsClient.applyEdits(documentRoomName, edits);
@@ -562,7 +580,14 @@ export class IdeaAgentService {
               }
 
               callbacks.onDocumentEditEnd?.();
-              console.log(`[IdeaAgentService] Edits applied: ${results.filter(r => r.success).length}/${edits.length} successful`);
+              const successCount = results.filter(r => r.success).length;
+              callbacks.onProgressEvent?.({
+                type: 'tool_complete',
+                timestamp: Date.now(),
+                displayText: `Updated idea document (${successCount} edit${successCount === 1 ? '' : 's'})`,
+                success: failedEdits.length === 0,
+              });
+              console.log(`[IdeaAgentService] Edits applied: ${successCount}/${edits.length} successful`);
             } catch (error) {
               console.error('[IdeaAgentService] Error applying edits:', error);
             }
@@ -637,13 +662,7 @@ export class IdeaAgentService {
    * For existing ideas with content, generates a context-specific greeting.
    * For ideas linked to a Thing, generates contextual greetings based on Thing type.
    */
-  async generateGreeting(ideaContext: IdeaContext | null): Promise<string> {
-    console.log('[IdeaAgentService] generateGreeting called with:', {
-      id: ideaContext?.id,
-      title: ideaContext?.title,
-      thingContext: ideaContext?.thingContext,
-    });
-
+  generateGreeting(ideaContext: IdeaContext | null): string {
     // For new ideas or ideas without meaningful content
     if (!ideaContext ||
         ideaContext.id === 'new' ||
@@ -770,13 +789,12 @@ Share your idea for ${context.activity} **${name}** - whether it's ${context.exa
    * Get a greeting for a new idea.
    * Uses cached greetings for instant response.
    */
-  async getNewIdeaGreeting(): Promise<string> {
-    await this.ensureGreetingsGenerated();
+  getNewIdeaGreeting(): string {
+    this.ensureGreetingsGenerated();
 
     if (this.newIdeaGreetingCache && this.newIdeaGreetingCache.greetings.length > 0) {
       const greeting = this.pickRandomGreeting(this.newIdeaGreetingCache);
       if (greeting) {
-        console.log(`[IdeaAgentService] Using cached greeting (${this.newIdeaGreetingCache.greetings.length - this.newIdeaGreetingCache.usedIndices.size} remaining)`);
         return greeting;
       }
     }
@@ -797,32 +815,19 @@ Share your idea for ${context.activity} **${name}** - whether it's ${context.exa
   }
 
   /**
-   * Ensure greetings have been generated.
+   * Ensure greetings cache is populated.
+   * Uses static fallback greetings to avoid expensive API calls on startup.
    */
-  private async ensureGreetingsGenerated(): Promise<void> {
+  private ensureGreetingsGenerated(): void {
     if (this.newIdeaGreetingCache && this.newIdeaGreetingCache.greetings.length > 0) {
       return;
     }
 
-    if (this.isGeneratingGreetings) {
-      // Wait for in-progress generation
-      while (this.isGeneratingGreetings) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-      return;
-    }
-
-    this.isGeneratingGreetings = true;
-    try {
-      const greetings = await this.generateGreetingBatch();
-      this.newIdeaGreetingCache = {
-        greetings,
-        usedIndices: new Set(),
-      };
-      console.log(`[IdeaAgentService] Generated ${greetings.length} greetings`);
-    } finally {
-      this.isGeneratingGreetings = false;
-    }
+    // Use static fallback greetings instead of making expensive API call
+    this.newIdeaGreetingCache = {
+      greetings: this.getFallbackGreetings(),
+      usedIndices: new Set(),
+    };
   }
 
   /**
@@ -851,96 +856,6 @@ Share your idea for ${context.activity} **${name}** - whether it's ${context.exa
     const randomIdx = unusedIndices[Math.floor(Math.random() * unusedIndices.length)];
     cache.usedIndices.add(randomIdx);
     return cache.greetings[randomIdx];
-  }
-
-  /**
-   * Generate a batch of greetings for caching.
-   */
-  private async generateGreetingBatch(): Promise<string[]> {
-    const count = IdeaAgentService.GREETINGS_COUNT;
-
-    const batchPrompt = `You are an "Idea Agent" - a creative AI assistant that helps users develop and refine their ideas.
-
-Generate ${count} different greeting messages for when a user opens the idea workspace to create a NEW idea. Each greeting should:
-1. Be warm, brief, and encouraging (1-2 sentences)
-2. PRIORITIZE asking the user to describe their idea briefly in chat (this is primary!)
-3. Mention you'll help extrapolate and fill in the idea (title, summary, description, tags)
-4. Optionally mention they can also type directly in the editor (secondary option)
-5. Be unique and varied in tone and wording
-6. NEVER use the word "document" - always refer to the output as an "idea"
-
-The workflow: User briefly describes idea in chat → Agent extrapolates and writes up the idea.
-
-Output ONLY the greetings, one per line, numbered 1-${count}. No other text.
-
-Example format:
-1. What's your idea? Give me a quick description here and I'll help you develop it fully.
-2. Share your idea with me! I'll turn your brief into a complete title, summary, and description.
-...and so on`;
-
-    try {
-      console.log(`[IdeaAgentService] Generating ${count} greetings...`);
-      const response = query({
-        prompt: batchPrompt,
-        options: {
-          model: 'claude-sonnet-4-5-20250929',
-          tools: [], // Empty array disables all built-in tools
-          permissionMode: 'bypassPermissions',
-          allowDangerouslySkipPermissions: true,
-          maxTurns: 1,
-        },
-      });
-
-      let fullResponse = '';
-      for await (const message of response) {
-        if (message.type === 'assistant') {
-          const assistantMsg = message as SDKAssistantMessage;
-          const msgContent = assistantMsg.message.content;
-          if (Array.isArray(msgContent)) {
-            for (const block of msgContent) {
-              if (block.type === 'text') {
-                fullResponse += block.text;
-              }
-            }
-          } else if (typeof msgContent === 'string') {
-            fullResponse += msgContent;
-          }
-        } else if (message.type === 'result' && message.subtype === 'success' && message.result) {
-          if (!fullResponse) {
-            fullResponse = message.result;
-          }
-        }
-      }
-
-      // Parse the numbered list
-      const greetings = this.parseGreetingBatch(fullResponse);
-      console.log(`[IdeaAgentService] Parsed ${greetings.length} greetings from batch response`);
-      return greetings;
-    } catch (error) {
-      console.error('[IdeaAgentService] Error generating greeting batch:', error);
-      return this.getFallbackGreetings();
-    }
-  }
-
-  /**
-   * Parse numbered greetings from the batch response.
-   */
-  private parseGreetingBatch(response: string): string[] {
-    const greetings: string[] = [];
-    const lines = response.split('\n');
-
-    for (const line of lines) {
-      // Match lines starting with number + period or number + parenthesis
-      const match = line.match(/^\s*\d+[\.\)]\s*(.+)/);
-      if (match && match[1]) {
-        const greeting = match[1].trim();
-        if (greeting.length > 20) { // Sanity check for valid greeting
-          greetings.push(greeting);
-        }
-      }
-    }
-
-    return greetings.length > 0 ? greetings : this.getFallbackGreetings();
   }
 
   /**

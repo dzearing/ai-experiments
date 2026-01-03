@@ -928,8 +928,16 @@ export function IdeaWorkspaceOverlay({
 
   // Handle link clicks in chat messages
   const handleLinkClick = useCallback((href: string) => {
-    if (href === '#resolve' && openQuestions && openQuestions.length > 0) {
-      setShowQuestionsResolver(true);
+    console.log('[IdeaWorkspaceOverlay] Link clicked:', href, {
+      openQuestions: openQuestions?.length ?? 0,
+      hasQuestions: !!openQuestions && openQuestions.length > 0,
+    });
+    if (href === '#resolve') {
+      if (openQuestions && openQuestions.length > 0) {
+        setShowQuestionsResolver(true);
+      } else {
+        console.warn('[IdeaWorkspaceOverlay] Cannot resolve questions - openQuestions is empty or null. Questions are not persisted across sessions.');
+      }
     }
   }, [openQuestions, setShowQuestionsResolver]);
 
@@ -1024,7 +1032,15 @@ export function IdeaWorkspaceOverlay({
                     onLinkClick={handleLinkClick}
                   />
 
-                  <ThinkingIndicator isActive={isAgentThinking} showEscapeHint={isAgentThinking && !inputContent.trim()} />
+                  <ThinkingIndicator
+                    isActive={isAgentThinking}
+                    statusText={
+                      phase === 'planning'
+                        ? planAgent.progress.currentEvent?.displayText
+                        : ideaAgent.progress.currentEvent?.displayText
+                    }
+                    showEscapeHint={isAgentThinking && !inputContent.trim()}
+                  />
 
                   <MessageQueue
                     messages={queuedMessages}

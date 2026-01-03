@@ -46,22 +46,20 @@ function getTypeIcon(type: ClaudeSession['type']): string {
  * Master list of all chat sessions.
  * Includes filter controls and clickable session rows.
  */
+
 /**
- * Get status label for in-flight request
+ * Check if a session has an active in-flight request
  */
-function getStatusLabel(status: InFlightRequest['status']): string {
-  switch (status) {
-    case 'pending':
-      return 'Starting...';
-    case 'streaming':
-      return 'Streaming...';
-    case 'completed':
-      return 'Done';
-    case 'error':
-      return 'Failed';
-    default:
-      return 'Unknown';
-  }
+function hasInFlightRequest(
+  session: ClaudeSession,
+  inFlightRequests: InFlightRequest[]
+): boolean {
+  return inFlightRequests.some(
+    (req) =>
+      req.sessionType === session.type &&
+      req.sessionId === session.id &&
+      (req.status === 'pending' || req.status === 'streaming')
+  );
 }
 
 export function SessionList({
@@ -115,38 +113,6 @@ export function SessionList({
         </div>
       </div>
 
-      {/* In-Flight Requests */}
-      {inFlightRequests.length > 0 && (
-        <div className={styles.inFlightSection}>
-          <Text size="xs" weight="semibold" color="soft" className={styles.inFlightHeader}>
-            Active Requests ({inFlightRequests.length})
-          </Text>
-          {inFlightRequests.map((request) => (
-            <div key={request.id} className={styles.inFlightRow}>
-              <div className={styles.inFlightSpinner}>
-                <Spinner size="sm" />
-              </div>
-              <div className={styles.inFlightInfo}>
-                <Text size="sm" weight="medium">
-                  {request.sessionType}: {request.sessionId.slice(0, 8)}...
-                </Text>
-                <div className={styles.inFlightMeta}>
-                  <Chip size="sm" variant={request.status === 'streaming' ? 'success' : 'default'}>
-                    {getStatusLabel(request.status)}
-                  </Chip>
-                  <Text size="xs" color="soft">
-                    {Math.round((Date.now() - request.startTime) / 1000)}s
-                  </Text>
-                </div>
-                <Text size="xs" color="soft" className={styles.inFlightMessage}>
-                  {request.userMessage.slice(0, 50)}{request.userMessage.length > 50 ? '...' : ''}
-                </Text>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
       {/* Session List */}
       <div className={styles.sessionList}>
         {filteredSessions.length === 0 ? (
@@ -158,30 +124,38 @@ export function SessionList({
             </Text>
           </div>
         ) : (
-          filteredSessions.map((session) => (
-            <div
-              key={`${session.type}-${session.id}`}
-              className={`${styles.sessionRow} ${
-                selectedSession?.id === session.id && selectedSession?.type === session.type
-                  ? styles.selected
-                  : ''
-              }`}
-              onClick={() => onSelectSession(session)}
-            >
-              <div className={`${styles.sessionIcon} ${styles[session.type]}`}>
-                {getTypeIcon(session.type)}
-              </div>
-              <div className={styles.sessionInfo}>
-                <Text size="sm" weight="medium" className={styles.sessionName}>
-                  {session.name}
-                </Text>
-                <div className={styles.sessionMeta}>
-                  <Chip size="sm" variant="default">{session.messageCount} msgs</Chip>
-                  <RelativeTime timestamp={session.lastActivity} format="short" size="sm" color="soft" />
+          filteredSessions.map((session) => {
+            const isBusy = hasInFlightRequest(session, inFlightRequests);
+            return (
+              <div
+                key={`${session.type}-${session.id}`}
+                className={`${styles.sessionRow} ${
+                  selectedSession?.id === session.id && selectedSession?.type === session.type
+                    ? styles.selected
+                    : ''
+                }`}
+                onClick={() => onSelectSession(session)}
+              >
+                <div className={`${styles.sessionIcon} ${styles[session.type]}`}>
+                  {getTypeIcon(session.type)}
                 </div>
+                <div className={styles.sessionInfo}>
+                  <Text size="sm" weight="medium" className={styles.sessionName}>
+                    {session.name}
+                  </Text>
+                  <div className={styles.sessionMeta}>
+                    <Chip size="sm" variant="default">{session.messageCount} msgs</Chip>
+                    <RelativeTime timestamp={session.lastActivity} format="short" size="sm" color="soft" />
+                  </div>
+                </div>
+                {isBusy && (
+                  <div className={styles.sessionSpinner}>
+                    <Spinner size="sm" />
+                  </div>
+                )}
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

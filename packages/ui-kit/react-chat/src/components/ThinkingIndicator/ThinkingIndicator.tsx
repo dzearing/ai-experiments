@@ -26,6 +26,8 @@ export interface ThinkingIndicatorProps {
   isActive: boolean;
   /** Custom progress verbs to cycle through */
   progressVerbs?: string[];
+  /** Specific status text that overrides cycling verbs (e.g., "Creating document...") */
+  statusText?: string;
   /** Whether to show the escape hint */
   showEscapeHint?: boolean;
   /** Custom escape hint text */
@@ -43,6 +45,7 @@ export interface ThinkingIndicatorProps {
 export function ThinkingIndicator({
   isActive,
   progressVerbs = DEFAULT_PROGRESS_VERBS,
+  statusText,
   showEscapeHint = true,
   escapeHintText = 'esc to interrupt',
   className,
@@ -75,9 +78,10 @@ export function ThinkingIndicator({
     return () => clearInterval(interval);
   }, [isActive]);
 
-  // Cycle through verbs every 2-4 seconds
+  // Cycle through verbs every 2-4 seconds (only when no specific statusText)
   useEffect(() => {
-    if (!isActive) return;
+    // Don't cycle when we have specific status text
+    if (!isActive || statusText) return;
 
     const cycleVerb = () => {
       verbIndexRef.current = (verbIndexRef.current + 1) % progressVerbs.length;
@@ -96,7 +100,7 @@ export function ThinkingIndicator({
     let timeoutRef = scheduleNext();
 
     return () => clearTimeout(timeoutRef);
-  }, [isActive, progressVerbs]);
+  }, [isActive, progressVerbs, statusText]);
 
   if (!isActive) return null;
 
@@ -111,13 +115,16 @@ export function ThinkingIndicator({
     ? `${styles.container} ${className}`
     : styles.container;
 
+  // Use specific statusText if provided, otherwise use cycling verb
+  const displayText = statusText || `${currentVerb}...`;
+
   return (
     <div className={containerClassName}>
       <span className={styles.spinner}>
         <Spinner size="sm" />
       </span>
       <ShimmerText isActive durationRange={[600, 1200]}>
-        <span className={styles.verb}>{currentVerb}...</span>
+        <span className={styles.verb}>{displayText}</span>
       </ShimmerText>
       <span className={styles.details}>
         ({showEscapeHint && `${escapeHintText} · `}{formatTime(elapsedSeconds)})

@@ -129,6 +129,15 @@ export function ClaudeDiagnostics() {
     />
   );
 
+  // Filter in-flight requests to only show ones for the selected session
+  const sessionInFlightRequests = selectedSession
+    ? inFlightRequests.filter(
+        (req) =>
+          req.sessionType === selectedSession.type &&
+          req.sessionId === selectedSession.id
+      )
+    : [];
+
   // Right pane: Session Detail or empty state
   const rightPane = selectedSession ? (
     <SessionDetail
@@ -137,6 +146,7 @@ export function ClaudeDiagnostics() {
       isLoading={isLoadingMessages}
       roleFilter={roleFilter}
       searchQuery={searchQuery}
+      inFlightRequests={sessionInFlightRequests}
     />
   ) : (
     <div className={styles.emptyState}>

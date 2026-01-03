@@ -4,6 +4,7 @@ import type { IncomingMessage } from 'http';
 import { IdeaAgentService, type IdeaContext } from '../services/IdeaAgentService.js';
 import type { IdeaAgentMessage } from '../services/IdeaAgentChatService.js';
 import type { YjsCollaborationHandler } from './YjsCollaborationHandler.js';
+import type { AgentProgressEvent } from '../shared/agentProgress.js';
 
 /**
  * Client message types for the idea agent WebSocket protocol
@@ -46,7 +47,7 @@ interface SuggestedResponse {
  * Server message types for the idea agent WebSocket protocol
  */
 interface ServerMessage {
-  type: 'text_chunk' | 'message_complete' | 'history' | 'error' | 'greeting' | 'document_edit_start' | 'document_edit_end' | 'token_usage' | 'open_questions' | 'suggested_responses';
+  type: 'text_chunk' | 'message_complete' | 'history' | 'error' | 'greeting' | 'document_edit_start' | 'document_edit_end' | 'token_usage' | 'open_questions' | 'suggested_responses' | 'agent_progress';
   /** Text content chunk (for streaming) */
   text?: string;
   /** Message ID being updated */
@@ -66,6 +67,8 @@ interface ServerMessage {
   questions?: OpenQuestion[];
   /** Suggested responses for the user */
   suggestions?: SuggestedResponse[];
+  /** Agent progress event */
+  event?: AgentProgressEvent;
 }
 
 /**
@@ -313,6 +316,14 @@ export class IdeaAgentWebSocketHandler {
               });
             }
           },
+          onProgressEvent: (event) => {
+            if (!client.cancelled) {
+              this.send(client.ws, {
+                type: 'agent_progress',
+                event,
+              });
+            }
+          },
         },
         client.documentRoomName || undefined
       );
@@ -397,7 +408,7 @@ export class IdeaAgentWebSocketHandler {
       if (messages.length === 0) {
         // Use client-provided initialGreeting if available (e.g., from facilitator),
         // otherwise generate one based on the idea context
-        const greeting = client.initialGreeting || await this.ideaAgentService.generateGreeting(client.ideaContext);
+        const greeting = client.initialGreeting || this.ideaAgentService.generateGreeting(client.ideaContext);
         const greetingMessageId = `msg-greeting-${Date.now()}`;
 
         // Save greeting to history first to prevent race conditions with other connections

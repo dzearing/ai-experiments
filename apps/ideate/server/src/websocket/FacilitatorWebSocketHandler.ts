@@ -4,6 +4,7 @@ import type { IncomingMessage } from 'http';
 import { FacilitatorService, type OpenQuestion } from '../services/FacilitatorService.js';
 import type { FacilitatorMessage } from '../services/FacilitatorChatService.js';
 import { getFacilitatorSettings } from '../routes/personas.js';
+import type { AgentProgressEvent } from '../shared/agentProgress.js';
 
 /**
  * Navigation context from the client - where the user is in the app
@@ -39,7 +40,7 @@ interface ClientMessage {
  * Server message types for the facilitator WebSocket protocol
  */
 interface ServerMessage {
-  type: 'text_chunk' | 'tool_use' | 'tool_result' | 'message_complete' | 'history' | 'error' | 'persona_changed' | 'greeting' | 'loading' | 'open_questions';
+  type: 'text_chunk' | 'tool_use' | 'tool_result' | 'message_complete' | 'history' | 'error' | 'persona_changed' | 'greeting' | 'loading' | 'open_questions' | 'agent_progress';
   /** Text content chunk (for streaming) */
   text?: string;
   /** Message ID being updated */
@@ -64,6 +65,8 @@ interface ServerMessage {
   isLoading?: boolean;
   /** Open questions for user clarification */
   questions?: OpenQuestion[];
+  /** Agent progress event */
+  event?: AgentProgressEvent;
 }
 
 /**
@@ -270,6 +273,13 @@ export class FacilitatorWebSocketHandler {
             this.send(client.ws, {
               type: 'error',
               error,
+            });
+          },
+          onProgressEvent: (event) => {
+            if (abortController.signal.aborted) return;
+            this.send(client.ws, {
+              type: 'agent_progress',
+              event,
             });
           },
         },

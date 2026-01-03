@@ -6,6 +6,7 @@ import {
   type SDKPartialAssistantMessage,
   type SDKMessage,
 } from '@anthropic-ai/claude-agent-sdk';
+import type { AgentProgressCallbacks } from '../shared/agentProgress.js';
 import { createHash } from 'crypto';
 import { tmpdir } from 'os';
 import { readFile } from 'fs/promises';
@@ -59,7 +60,7 @@ export interface NavigationContext {
 /**
  * Callbacks for streaming Claude responses
  */
-export interface StreamCallbacks {
+export interface StreamCallbacks extends AgentProgressCallbacks {
   /** Called for each text chunk during streaming */
   onTextChunk: (text: string, messageId: string) => void;
   /** Called when a tool is being invoked */

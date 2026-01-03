@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { IDEA_AGENT_WS_URL } from '../config';
 import type { OpenQuestion, OpenQuestionsResult } from '@ui-kit/react-chat';
+import { useAgentProgress, type AgentProgressEvent, type AgentProgressState } from './useAgentProgress';
 
 /**
  * Idea context to send to the agent
@@ -52,7 +53,7 @@ export interface SuggestedResponse {
  * Server message types for the idea agent WebSocket protocol
  */
 interface ServerMessage {
-  type: 'text_chunk' | 'message_complete' | 'history' | 'error' | 'greeting' | 'document_edit_start' | 'document_edit_end' | 'token_usage' | 'open_questions' | 'suggested_responses';
+  type: 'text_chunk' | 'message_complete' | 'history' | 'error' | 'greeting' | 'document_edit_start' | 'document_edit_end' | 'token_usage' | 'open_questions' | 'suggested_responses' | 'agent_progress';
   /** Text content chunk (for streaming) */
   text?: string;
   /** Message ID being updated */
@@ -69,6 +70,8 @@ interface ServerMessage {
   questions?: OpenQuestion[];
   /** Suggested responses for the user (for suggested_responses type) */
   suggestions?: SuggestedResponse[];
+  /** Agent progress event */
+  event?: AgentProgressEvent;
 }
 
 /**
@@ -131,6 +134,8 @@ export interface UseIdeaAgentReturn {
   updateIdeaContext: (context: IdeaContext) => void;
   /** Cancel the current request */
   cancelRequest: () => void;
+  /** Agent progress state */
+  progress: AgentProgressState;
 }
 
 /**
@@ -156,6 +161,9 @@ export function useIdeaAgent({
   const [openQuestions, setOpenQuestions] = useState<OpenQuestion[] | null>(null);
   const [suggestedResponses, setSuggestedResponses] = useState<SuggestedResponse[] | null>(null);
   const [showQuestionsResolver, setShowQuestionsResolver] = useState(false);
+
+  // Agent progress tracking
+  const progress = useAgentProgress();
 
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -295,6 +303,10 @@ export function useIdeaAgent({
 
     ws.onclose = () => {
       setIsConnected(false);
+      // Reset loading state on disconnect - prevents stuck indicators
+      setIsLoading(false);
+      setIsEditingDocument(false);
+      progress.clearProgress();
       console.log('[IdeaAgent] WebSocket disconnected');
 
       // Only attempt to reconnect if still enabled
@@ -352,6 +364,7 @@ export function useIdeaAgent({
               updateMessage(data.messageId, { isStreaming: false });
               currentMessageIdRef.current = null;
               setIsLoading(false);
+              progress.clearProgress();
             }
             break;
 
@@ -382,6 +395,7 @@ export function useIdeaAgent({
               onError?.(data.error);
               setIsLoading(false);
               setIsEditingDocument(false);
+              progress.clearProgress();
             }
             break;
 
@@ -415,6 +429,13 @@ export function useIdeaAgent({
             // Store suggested responses for the user
             if (data.suggestions && data.suggestions.length > 0) {
               setSuggestedResponses(data.suggestions);
+            }
+            break;
+
+          case 'agent_progress':
+            // Handle agent progress event
+            if (data.event) {
+              progress.handleProgressEvent(data.event);
             }
             break;
         }
@@ -603,6 +624,7 @@ export function useIdeaAgent({
     clearHistory,
     updateIdeaContext,
     cancelRequest,
+    progress,
   };
 }
 

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { PLAN_AGENT_WS_URL } from '../config';
 import type { IdeaPlan } from '../types/idea';
 import type { OpenQuestion, OpenQuestionsResult } from '@ui-kit/react-chat';
+import { useAgentProgress, type AgentProgressEvent } from './useAgentProgress';
 
 /**
  * Idea context to send to the plan agent
@@ -53,11 +54,13 @@ export interface SuggestedResponse {
  * Server message types for the plan agent WebSocket protocol
  */
 interface ServerMessage {
-  type: 'text_chunk' | 'message_complete' | 'history' | 'error' | 'greeting' | 'plan_update' | 'token_usage' | 'document_edit_start' | 'document_edit_end' | 'open_questions' | 'suggested_responses' | 'processing_start';
+  type: 'text_chunk' | 'message_complete' | 'history' | 'error' | 'greeting' | 'plan_update' | 'token_usage' | 'document_edit_start' | 'document_edit_end' | 'open_questions' | 'suggested_responses' | 'processing_start' | 'agent_progress';
   /** Text content chunk (for streaming) */
   text?: string;
   /** Message ID being updated */
   messageId?: string;
+  /** Agent progress event (for agent_progress) */
+  event?: AgentProgressEvent;
   /** Complete message object */
   message?: PlanAgentMessage;
   /** Array of messages (for history) */
@@ -136,6 +139,12 @@ export interface UsePlanAgentReturn {
   cancelRequest: () => void;
   /** Signal that the Yjs connection is ready */
   sendYjsReady: () => void;
+  /** Progress tracking for showing agent activity */
+  progress: {
+    currentEvent: AgentProgressEvent | null;
+    recentEvents: AgentProgressEvent[];
+    isProcessing: boolean;
+  };
 }
 
 /**
@@ -162,6 +171,9 @@ export function usePlanAgent({
   const [openQuestions, setOpenQuestions] = useState<OpenQuestion[] | null>(null);
   const [suggestedResponses, setSuggestedResponses] = useState<SuggestedResponse[] | null>(null);
   const [showQuestionsResolver, setShowQuestionsResolver] = useState(false);
+
+  // Shared progress tracking
+  const progress = useAgentProgress();
 
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -293,6 +305,10 @@ export function usePlanAgent({
 
     ws.onclose = () => {
       setIsConnected(false);
+      // Reset loading state on disconnect - prevents stuck indicators
+      setIsLoading(false);
+      setIsEditingDocument(false);
+      progress.clearProgress();
       console.log('[PlanAgent] WebSocket disconnected');
 
       // Only attempt to reconnect if still enabled
@@ -350,6 +366,7 @@ export function usePlanAgent({
               updateMessage(data.messageId, { isStreaming: false });
               currentMessageIdRef.current = null;
               setIsLoading(false);
+              progress.clearProgress();
             }
             break;
 
@@ -389,6 +406,7 @@ export function usePlanAgent({
               onError?.(data.error);
               setIsLoading(false);
               setIsEditingDocument(false);
+              progress.clearProgress();
             }
             break;
 
@@ -429,6 +447,14 @@ export function usePlanAgent({
             // Server is starting to process (e.g., auto-start after greeting)
             // Set loading state so the UI shows the thinking indicator
             setIsLoading(true);
+            progress.setProcessing(true);
+            break;
+
+          case 'agent_progress':
+            // Progress event from agent (status updates, tool progress)
+            if (data.event) {
+              progress.handleProgressEvent(data.event);
+            }
             break;
         }
       } catch (err) {
@@ -465,7 +491,17 @@ export function usePlanAgent({
 
   // Send message to server
   const sendMessage = useCallback((content: string) => {
-    if (!content.trim()) return;
+    console.log('[PlanAgent] sendMessage called:', {
+      contentLength: content?.length,
+      contentPreview: content?.slice(0, 100),
+      wsReadyState: wsRef.current?.readyState,
+      wsOpen: wsRef.current?.readyState === WebSocket.OPEN,
+    });
+
+    if (!content.trim()) {
+      console.log('[PlanAgent] sendMessage aborted: empty content');
+      return;
+    }
 
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       // Add user message locally first
@@ -475,6 +511,7 @@ export function usePlanAgent({
         content: content.trim(),
         timestamp: Date.now(),
       };
+      console.log('[PlanAgent] Adding user message locally:', userMessage.id);
       addMessage(userMessage);
 
       // Reset token usage and suggestions for new request
@@ -483,6 +520,7 @@ export function usePlanAgent({
 
       // Send to server
       setIsLoading(true);
+      console.log('[PlanAgent] Sending message to server');
       wsRef.current.send(JSON.stringify({
         type: 'message',
         content: content.trim(),
@@ -547,6 +585,15 @@ export function usePlanAgent({
 
   // Resolve open questions and send summary to agent
   const resolveQuestions = useCallback((result: OpenQuestionsResult) => {
+    console.log('[PlanAgent] resolveQuestions called:', {
+      completed: result.completed,
+      dismissed: result.dismissed,
+      answersCount: result.answers.length,
+      openQuestionsAvailable: !!openQuestions,
+      openQuestionsCount: openQuestions?.length,
+      wsConnected: wsRef.current?.readyState === WebSocket.OPEN,
+    });
+
     // Close the resolver overlay
     setShowQuestionsResolver(false);
 
@@ -557,7 +604,10 @@ export function usePlanAgent({
 
       for (const answer of result.answers) {
         const question = openQuestions.find(q => q.id === answer.questionId);
-        if (!question) continue;
+        if (!question) {
+          console.log('[PlanAgent] Question not found for answer:', answer.questionId);
+          continue;
+        }
 
         const selectedLabels = answer.selectedOptionIds
           .map(optId => {
@@ -574,12 +624,15 @@ export function usePlanAgent({
       }
 
       const summary = summaryLines.join('\n');
+      console.log('[PlanAgent] Sending resolved questions summary:', summary);
 
       // Send as user message
       sendMessage(summary);
 
       // Only clear questions after completing (not dismissing)
       setOpenQuestions(null);
+    } else {
+      console.log('[PlanAgent] Not sending summary - completed:', result.completed, 'openQuestions:', !!openQuestions);
     }
   }, [openQuestions, sendMessage]);
 
@@ -602,6 +655,11 @@ export function usePlanAgent({
     updateIdeaContext,
     cancelRequest,
     sendYjsReady,
+    progress: {
+      currentEvent: progress.currentEvent,
+      recentEvents: progress.recentEvents,
+      isProcessing: progress.isProcessing,
+    },
   };
 }
 

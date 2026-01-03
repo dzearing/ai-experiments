@@ -6,6 +6,7 @@ import type { PlanAgentMessage } from '../services/PlanAgentChatService.js';
 import type { PlanIdeaContext } from '../prompts/planAgentPrompt.js';
 import type { YjsCollaborationHandler } from './YjsCollaborationHandler.js';
 import type { IdeaPlan } from '../services/IdeaService.js';
+import type { AgentProgressEvent } from '../shared/agentProgress.js';
 
 /**
  * Client message types for the plan agent WebSocket protocol
@@ -22,7 +23,7 @@ interface ClientMessage {
  * Server message types for the plan agent WebSocket protocol
  */
 interface ServerMessage {
-  type: 'text_chunk' | 'message_complete' | 'history' | 'error' | 'greeting' | 'plan_update' | 'token_usage' | 'document_edit_start' | 'document_edit_end' | 'open_questions' | 'suggested_responses' | 'processing_start';
+  type: 'text_chunk' | 'message_complete' | 'history' | 'error' | 'greeting' | 'plan_update' | 'token_usage' | 'document_edit_start' | 'document_edit_end' | 'open_questions' | 'suggested_responses' | 'processing_start' | 'agent_progress';
   /** Text content chunk (for streaming) */
   text?: string;
   /** Message ID being updated */
@@ -44,6 +45,8 @@ interface ServerMessage {
   questions?: OpenQuestion[];
   /** Suggested responses for quick user replies (for suggested_responses) */
   suggestions?: SuggestedResponse[];
+  /** Agent progress event (for agent_progress) */
+  event?: AgentProgressEvent;
 }
 
 /**
@@ -65,6 +68,8 @@ interface PlanAgentClient {
   yjsReady: boolean;
   /** Pending auto-start function to execute when Yjs is ready */
   pendingAutoStart: (() => Promise<void>) | null;
+  /** Pending open questions that haven't been resolved yet */
+  pendingOpenQuestions: OpenQuestion[] | null;
 }
 
 /**
@@ -75,6 +80,8 @@ export class PlanAgentWebSocketHandler {
   private clients: Map<WebSocket, PlanAgentClient> = new Map();
   private clientIdCounter = 0;
   private planAgentService: PlanAgentService;
+  /** Pending open questions per idea ID - survives reconnects */
+  private pendingQuestionsByIdea: Map<string, OpenQuestion[]> = new Map();
 
   constructor(yjsHandler: YjsCollaborationHandler) {
     this.planAgentService = new PlanAgentService(yjsHandler);
@@ -108,6 +115,7 @@ export class PlanAgentWebSocketHandler {
       cancelled: false,
       yjsReady: false,
       pendingAutoStart: null,
+      pendingOpenQuestions: null,
     };
 
     this.clients.set(ws, client);
@@ -175,10 +183,21 @@ export class PlanAgentWebSocketHandler {
           client.yjsReady = true;
           console.log(`[PlanAgent] Client ${client.clientId} Yjs ready`);
           if (client.pendingAutoStart) {
-            console.log(`[PlanAgent] Executing pending auto-start for client ${client.clientId}`);
+            // Add a delay to ensure the Yjs connection is fully stabilized
+            // and the client is ready to receive streamed updates.
+            // Without this delay, the agent might start writing before the
+            // client's y-websocket provider is ready to process incoming updates.
+            console.log(`[PlanAgent] Waiting 300ms before auto-start for client ${client.clientId}`);
             const autoStart = client.pendingAutoStart;
             client.pendingAutoStart = null;
-            await autoStart();
+            setTimeout(async () => {
+              if (client.ws.readyState === client.ws.OPEN && !client.cancelled) {
+                console.log(`[PlanAgent] Executing pending auto-start for client ${client.clientId}`);
+                await autoStart();
+              } else {
+                console.log(`[PlanAgent] Skipping auto-start: ws closed or cancelled`);
+              }
+            }, 300);
           }
           break;
         default:
@@ -204,6 +223,13 @@ export class PlanAgentWebSocketHandler {
 
     // Reset cancel flag
     client.cancelled = false;
+
+    // Clear pending questions when user sends a message (they've responded)
+    if (client.pendingOpenQuestions || this.pendingQuestionsByIdea.has(client.ideaId)) {
+      console.log(`[PlanAgent] Clearing pending questions for idea ${client.ideaId} (user responded)`);
+      client.pendingOpenQuestions = null;
+      this.pendingQuestionsByIdea.delete(client.ideaId);
+    }
 
     try {
       await this.planAgentService.processMessage(
@@ -271,6 +297,10 @@ export class PlanAgentWebSocketHandler {
           },
           onOpenQuestions: (questions) => {
             if (!client.cancelled) {
+              // Store questions so they survive reconnects
+              this.pendingQuestionsByIdea.set(client.ideaId, questions);
+              client.pendingOpenQuestions = questions;
+              console.log(`[PlanAgent] Stored ${questions.length} open questions for idea ${client.ideaId}`);
               this.send(client.ws, {
                 type: 'open_questions',
                 questions,
@@ -282,6 +312,14 @@ export class PlanAgentWebSocketHandler {
               this.send(client.ws, {
                 type: 'suggested_responses',
                 suggestions,
+              });
+            }
+          },
+          onProgressEvent: (event) => {
+            if (!client.cancelled) {
+              this.send(client.ws, {
+                type: 'agent_progress',
+                event,
               });
             }
           },
@@ -319,10 +357,21 @@ export class PlanAgentWebSocketHandler {
       const messages = await this.planAgentService.getHistory(client.ideaId);
       this.send(client.ws, { type: 'history', messages });
 
+      // Send any pending open questions that survived reconnects
+      const pendingQuestions = this.pendingQuestionsByIdea.get(client.ideaId);
+      if (pendingQuestions && pendingQuestions.length > 0) {
+        console.log(`[PlanAgent] Restoring ${pendingQuestions.length} pending questions for idea ${client.ideaId}`);
+        client.pendingOpenQuestions = pendingQuestions;
+        this.send(client.ws, {
+          type: 'open_questions',
+          questions: pendingQuestions,
+        });
+      }
+
       // If no history, this is the first time entering planning for this idea
       // Send a greeting and auto-start the design process
       if (messages.length === 0 && client.ideaContext) {
-        const greeting = `Let me review **"${client.ideaContext.title}"** and create a design plan for you...`;
+        const greeting = `Let me review **"${client.ideaContext.title}"** so I can determine how we should approach this...`;
         const greetingMessageId = `msg-greeting-${Date.now()}`;
 
         // Save greeting to history first to prevent race conditions with other connections
@@ -353,9 +402,10 @@ export class PlanAgentWebSocketHandler {
         // This prevents the race condition where the agent writes to the Yjs doc
         // before the client has connected to receive the updates
         if (client.yjsReady) {
-          console.log(`[PlanAgent] Yjs already ready, executing auto-start immediately`);
-          // Small delay to let the greeting render
-          setTimeout(() => executeAutoStart(), 200);
+          // Even if Yjs is already marked ready, add a delay to ensure the
+          // connection is fully stabilized and the client can receive streamed updates
+          console.log(`[PlanAgent] Yjs already ready, waiting 300ms before auto-start`);
+          setTimeout(() => executeAutoStart(), 300);
         } else {
           console.log(`[PlanAgent] Waiting for Yjs ready signal before auto-start`);
           client.pendingAutoStart = executeAutoStart;

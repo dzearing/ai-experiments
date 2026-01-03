@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Tabs, Spinner, Text, Chip } from '@ui-kit/react';
 import { ActivityTab } from './ActivityTab';
 import { ContextTab } from './ContextTab';
-import type { ClaudeSession, SessionMessage, RoleFilter } from './types';
+import type { ClaudeSession, SessionMessage, RoleFilter, InFlightRequest } from './types';
 import styles from './ClaudeDiagnostics.module.css';
 
 interface SessionDetailProps {
@@ -11,6 +11,7 @@ interface SessionDetailProps {
   isLoading: boolean;
   roleFilter: RoleFilter;
   searchQuery: string;
+  inFlightRequests?: InFlightRequest[];
 }
 
 /**
@@ -39,6 +40,7 @@ export function SessionDetail({
   isLoading,
   roleFilter,
   searchQuery,
+  inFlightRequests = [],
 }: SessionDetailProps) {
   const [activeTab, setActiveTab] = useState('activity');
 
@@ -61,6 +63,7 @@ export function SessionDetail({
           messages={messages}
           roleFilter={roleFilter}
           searchQuery={searchQuery}
+          inFlightRequests={inFlightRequests}
         />
       ),
     },

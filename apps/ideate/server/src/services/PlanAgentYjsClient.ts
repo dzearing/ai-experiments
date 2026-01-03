@@ -207,6 +207,10 @@ export class PlanAgentYjsClient {
   ): Promise<void> {
     const session = await this.connect(roomName);
 
+    // Log room info for debugging streaming issues
+    const roomInfo = this.yjsHandler.getRoomInfo(roomName);
+    console.log(`[PlanAgentYjsClient] streamReplaceContent: room "${roomName}" has ${roomInfo?.clientCount ?? 0} clients`);
+
     // Clear existing content
     session.text.delete(0, session.text.length);
 
