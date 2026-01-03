@@ -154,18 +154,47 @@ export function useFacilitatorSocket({
     switch (actionData.__action) {
       case 'navigate':
         if (actionData.target === 'thing' && actionData.thingId) {
-          // If we're already on the Things page and the Thing is already selected
-          // (because thing_create auto-selected it), skip the navigation
           const currentPath = window.location.pathname;
           const thingId = actionData.thingId as string;
+
+          // If we're already on the Things page and the Thing is already selected, skip
           if (currentPath.includes('/things') && currentPath.includes(thingId)) {
             console.log('[Facilitator] Already on Things page with this Thing selected, skipping navigate');
             return;
           }
-          // Navigate to thing page - dispatch event for router to handle
-          window.dispatchEvent(new CustomEvent('facilitator:navigateToThing', {
-            detail: { thingId }
-          }));
+
+          // If we're on the Things page (but different Thing), dispatch event to select it
+          if (currentPath.includes('/things')) {
+            console.log('[Facilitator] On Things page, dispatching event to select Thing');
+            window.dispatchEvent(new CustomEvent('facilitator:navigateToThing', {
+              detail: { thingId }
+            }));
+            return;
+          }
+
+          // Not on Things page - need to navigate there
+          // Extract workspace ID from current path if present (e.g., /workspace/123/ideas)
+          const workspaceMatch = currentPath.match(/\/workspace\/([^/]+)/);
+          const workspaceId = workspaceMatch ? workspaceMatch[1] : null;
+
+          // Build the target URL
+          const targetUrl = workspaceId
+            ? `/workspace/${workspaceId}/things/${thingId}`
+            : `/things/${thingId}`;
+
+          console.log('[Facilitator] Navigating to Things page:', targetUrl);
+
+          // Use History API to navigate without full page reload
+          // The facilitator:navigateToThing event will be picked up by Things page when it mounts
+          window.history.pushState(null, '', targetUrl);
+          // Dispatch popstate to trigger router update
+          window.dispatchEvent(new PopStateEvent('popstate'));
+          // Also dispatch the event for when Things page mounts
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('facilitator:navigateToThing', {
+              detail: { thingId }
+            }));
+          }, 100);
         }
         break;
 
@@ -176,6 +205,7 @@ export function useFacilitatorSocket({
             ideaId: actionData.ideaId,
             thingId: actionData.thingId,
             initialPrompt: actionData.initialPrompt,
+            initialGreeting: actionData.initialGreeting,
             focusInput: actionData.focusInput ?? true,
           }
         }));

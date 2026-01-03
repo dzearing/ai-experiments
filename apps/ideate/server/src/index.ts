@@ -192,7 +192,7 @@ importWss.on('connection', (ws, req) => {
 
 // Create WebSocket server for plan agent chat (JSON-based protocol)
 const planAgentWss = new WebSocketServer({ noServer: true });
-const planAgentHandler = new PlanAgentWebSocketHandler();
+const planAgentHandler = new PlanAgentWebSocketHandler(yjsHandler);
 
 planAgentWss.on('connection', (ws, req) => {
   planAgentHandler.handleConnection(ws, req);

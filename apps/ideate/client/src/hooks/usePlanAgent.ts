@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { PLAN_AGENT_WS_URL } from '../config';
 import type { IdeaPlan } from '../types/idea';
+import type { OpenQuestion, OpenQuestionsResult } from '@ui-kit/react-chat';
 
 /**
  * Idea context to send to the plan agent
@@ -41,10 +42,18 @@ export interface TokenUsage {
 }
 
 /**
+ * Suggested response for quick user replies
+ */
+export interface SuggestedResponse {
+  label: string;
+  message: string;
+}
+
+/**
  * Server message types for the plan agent WebSocket protocol
  */
 interface ServerMessage {
-  type: 'text_chunk' | 'message_complete' | 'history' | 'error' | 'greeting' | 'plan_update' | 'token_usage';
+  type: 'text_chunk' | 'message_complete' | 'history' | 'error' | 'greeting' | 'plan_update' | 'token_usage' | 'document_edit_start' | 'document_edit_end' | 'open_questions' | 'suggested_responses' | 'processing_start';
   /** Text content chunk (for streaming) */
   text?: string;
   /** Message ID being updated */
@@ -59,6 +68,10 @@ interface ServerMessage {
   plan?: Partial<IdeaPlan>;
   /** Token usage information */
   usage?: TokenUsage;
+  /** Open questions for user to resolve (for open_questions type) */
+  questions?: OpenQuestion[];
+  /** Suggested responses for quick user replies (for suggested_responses type) */
+  suggestions?: SuggestedResponse[];
 }
 
 /**
@@ -73,10 +86,14 @@ export interface UsePlanAgentOptions {
   userName: string;
   /** Initial idea context */
   ideaContext: PlanIdeaContext | null;
+  /** Yjs document room name for Implementation Plan coauthoring */
+  documentRoomName?: string;
   /** Called when a plan update is received */
   onPlanUpdate?: (plan: Partial<IdeaPlan>) => void;
   /** Called when an error occurs */
   onError?: (error: string) => void;
+  /** Whether the agent is enabled (controls WebSocket connection) */
+  enabled?: boolean;
 }
 
 /**
@@ -89,12 +106,24 @@ export interface UsePlanAgentReturn {
   isConnected: boolean;
   /** Whether the agent is currently responding */
   isLoading: boolean;
+  /** Whether the agent is currently editing the Implementation Plan document */
+  isEditingDocument: boolean;
   /** Any error that occurred */
   error: string | null;
   /** Current token usage (updated during streaming) */
   tokenUsage: TokenUsage | null;
   /** Current plan data (updated when plan_update received) */
   plan: Partial<IdeaPlan> | null;
+  /** Open questions from the agent (null if none) */
+  openQuestions: OpenQuestion[] | null;
+  /** Suggested responses from the agent (null if none) */
+  suggestedResponses: SuggestedResponse[] | null;
+  /** Whether the questions resolver overlay should be shown */
+  showQuestionsResolver: boolean;
+  /** Set whether the questions resolver overlay should be shown */
+  setShowQuestionsResolver: (show: boolean) => void;
+  /** Resolve questions and send summary to agent */
+  resolveQuestions: (result: OpenQuestionsResult) => void;
   /** Send a message to the agent */
   sendMessage: (content: string) => void;
   /** Add a local message (for system messages like help) */
@@ -105,6 +134,8 @@ export interface UsePlanAgentReturn {
   updateIdeaContext: (context: PlanIdeaContext) => void;
   /** Cancel the current request */
   cancelRequest: () => void;
+  /** Signal that the Yjs connection is ready */
+  sendYjsReady: () => void;
 }
 
 /**
@@ -116,31 +147,78 @@ export function usePlanAgent({
   userId,
   userName,
   ideaContext,
+  documentRoomName,
   onPlanUpdate,
   onError,
+  enabled = true,
 }: UsePlanAgentOptions): UsePlanAgentReturn {
   const [messages, setMessages] = useState<PlanAgentMessage[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isEditingDocument, setIsEditingDocument] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tokenUsage, setTokenUsage] = useState<TokenUsage | null>(null);
   const [plan, setPlan] = useState<Partial<IdeaPlan> | null>(null);
+  const [openQuestions, setOpenQuestions] = useState<OpenQuestion[] | null>(null);
+  const [suggestedResponses, setSuggestedResponses] = useState<SuggestedResponse[] | null>(null);
+  const [showQuestionsResolver, setShowQuestionsResolver] = useState(false);
 
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentMessageIdRef = useRef<string | null>(null);
   const ideaContextRef = useRef<PlanIdeaContext | null>(ideaContext);
+  const documentRoomNameRef = useRef<string | undefined>(documentRoomName);
+  const enabledRef = useRef(enabled);
 
   // Keep refs updated
   useEffect(() => {
     ideaContextRef.current = ideaContext;
   }, [ideaContext]);
 
+  useEffect(() => {
+    documentRoomNameRef.current = documentRoomName;
+  }, [documentRoomName]);
+
+  useEffect(() => {
+    enabledRef.current = enabled;
+  }, [enabled]);
+
+  // Disconnect and clear state when disabled
+  useEffect(() => {
+    if (!enabled) {
+      console.log('[PlanAgent] Disabled, disconnecting');
+      setMessages([]);
+      setError(null);
+      setIsLoading(false);
+      setIsEditingDocument(false);
+      setPlan(null);
+      setTokenUsage(null);
+      setOpenQuestions(null);
+      setShowQuestionsResolver(false);
+      currentMessageIdRef.current = null;
+
+      // Close WebSocket connection
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+        setIsConnected(false);
+      }
+
+      // Clear any pending reconnect
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+    }
+  }, [enabled]);
+
   // Track previous values to detect actual changes
   const prevIdeaIdRef = useRef<string | null>(null);
 
   // Reset state when ideaId actually changes (new session)
   useEffect(() => {
+    if (!enabled) return;
+
     const ideaIdChanged = prevIdeaIdRef.current !== null && prevIdeaIdRef.current !== ideaId;
 
     // Only reset if we had a previous value and it changed
@@ -149,8 +227,12 @@ export function usePlanAgent({
       setMessages([]);
       setError(null);
       setIsLoading(false);
+      setIsEditingDocument(false);
       setPlan(null);
       setTokenUsage(null);
+      setOpenQuestions(null);
+      setSuggestedResponses(null);
+      setShowQuestionsResolver(false);
       currentMessageIdRef.current = null;
 
       // Close existing connection to force reconnect with new params
@@ -163,7 +245,7 @@ export function usePlanAgent({
 
     // Update refs for next comparison
     prevIdeaIdRef.current = ideaId;
-  }, [ideaId]);
+  }, [enabled, ideaId]);
 
   // Add a message
   const addMessage = useCallback((message: PlanAgentMessage) => {
@@ -204,6 +286,7 @@ export function usePlanAgent({
         ws.send(JSON.stringify({
           type: 'idea_update',
           idea: ideaContextRef.current,
+          documentRoomName: documentRoomNameRef.current,
         }));
       }
     };
@@ -212,12 +295,14 @@ export function usePlanAgent({
       setIsConnected(false);
       console.log('[PlanAgent] WebSocket disconnected');
 
-      // Attempt to reconnect after 3 seconds
-      reconnectTimeoutRef.current = setTimeout(() => {
-        if (userId && ideaId) {
-          connect();
-        }
-      }, 3000);
+      // Only attempt to reconnect if still enabled
+      if (enabledRef.current) {
+        reconnectTimeoutRef.current = setTimeout(() => {
+          if (userId && ideaId && enabledRef.current) {
+            connect();
+          }
+        }, 3000);
+      }
     };
 
     ws.onerror = (event) => {
@@ -303,6 +388,7 @@ export function usePlanAgent({
               setError(data.error);
               onError?.(data.error);
               setIsLoading(false);
+              setIsEditingDocument(false);
             }
             break;
 
@@ -312,6 +398,38 @@ export function usePlanAgent({
               setTokenUsage(data.usage);
             }
             break;
+
+          case 'document_edit_start':
+            // Agent started editing the Implementation Plan document
+            setIsEditingDocument(true);
+            console.log('[PlanAgent] Document editing started');
+            break;
+
+          case 'document_edit_end':
+            // Agent finished editing the Implementation Plan document
+            setIsEditingDocument(false);
+            console.log('[PlanAgent] Document editing finished');
+            break;
+
+          case 'open_questions':
+            // Store open questions for user to resolve
+            if (data.questions && data.questions.length > 0) {
+              setOpenQuestions(data.questions);
+            }
+            break;
+
+          case 'suggested_responses':
+            // Store suggested responses for quick user replies
+            if (data.suggestions && data.suggestions.length > 0) {
+              setSuggestedResponses(data.suggestions);
+            }
+            break;
+
+          case 'processing_start':
+            // Server is starting to process (e.g., auto-start after greeting)
+            // Set loading state so the UI shows the thinking indicator
+            setIsLoading(true);
+            break;
         }
       } catch (err) {
         console.error('[PlanAgent] Failed to parse message:', err);
@@ -319,9 +437,9 @@ export function usePlanAgent({
     };
   }, [ideaId, userId, userName, addMessage, updateMessage, onError, onPlanUpdate]);
 
-  // Connect when userId and ideaId are available
+  // Connect when enabled and userId and ideaId are available
   useEffect(() => {
-    if (userId && ideaId && !isConnected) {
+    if (enabled && userId && ideaId && !isConnected) {
       connect();
     }
 
@@ -330,7 +448,7 @@ export function usePlanAgent({
         clearTimeout(reconnectTimeoutRef.current);
       }
     };
-  }, [userId, ideaId, isConnected, connect]);
+  }, [enabled, userId, ideaId, isConnected, connect]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -359,8 +477,9 @@ export function usePlanAgent({
       };
       addMessage(userMessage);
 
-      // Reset token usage for new request
+      // Reset token usage and suggestions for new request
       setTokenUsage(null);
+      setSuggestedResponses(null);
 
       // Send to server
       setIsLoading(true);
@@ -393,6 +512,7 @@ export function usePlanAgent({
       wsRef.current.send(JSON.stringify({
         type: 'idea_update',
         idea: context,
+        documentRoomName: documentRoomNameRef.current,
       }));
     }
   }, []);
@@ -411,21 +531,77 @@ export function usePlanAgent({
       }
 
       setIsLoading(false);
+      setIsEditingDocument(false);
     }
   }, [isLoading, updateMessage]);
+
+  // Signal that the Yjs connection is ready
+  const sendYjsReady = useCallback(() => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      console.log('[PlanAgent] Sending yjs_ready signal');
+      wsRef.current.send(JSON.stringify({
+        type: 'yjs_ready',
+      }));
+    }
+  }, []);
+
+  // Resolve open questions and send summary to agent
+  const resolveQuestions = useCallback((result: OpenQuestionsResult) => {
+    // Close the resolver overlay
+    setShowQuestionsResolver(false);
+
+    // Only send summary if completed (not dismissed)
+    if (result.completed && openQuestions) {
+      // Build human-readable summary
+      const summaryLines = ['Here are my answers to the open questions:'];
+
+      for (const answer of result.answers) {
+        const question = openQuestions.find(q => q.id === answer.questionId);
+        if (!question) continue;
+
+        const selectedLabels = answer.selectedOptionIds
+          .map(optId => {
+            if (optId === 'custom') return answer.customText || 'Custom response';
+            const opt = question.options.find(o => o.id === optId);
+            return opt?.label || optId;
+          })
+          .filter(Boolean);
+
+        if (selectedLabels.length > 0) {
+          const shortQuestion = question.question.replace(/\?$/, '');
+          summaryLines.push(`- **${shortQuestion}**: ${selectedLabels.join(', ')}`);
+        }
+      }
+
+      const summary = summaryLines.join('\n');
+
+      // Send as user message
+      sendMessage(summary);
+
+      // Only clear questions after completing (not dismissing)
+      setOpenQuestions(null);
+    }
+  }, [openQuestions, sendMessage]);
 
   return {
     messages,
     isConnected,
     isLoading,
+    isEditingDocument,
     error,
     tokenUsage,
     plan,
+    openQuestions,
+    suggestedResponses,
+    showQuestionsResolver,
+    setShowQuestionsResolver,
+    resolveQuestions,
     sendMessage,
     addLocalMessage: addMessage,
     clearHistory,
     updateIdeaContext,
     cancelRequest,
+    sendYjsReady,
   };
 }
 

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
-import { SearchInput, Select, RelativeTime, Text, Chip, Button } from '@ui-kit/react';
+import { SearchInput, Select, RelativeTime, Text, Chip, Button, Spinner } from '@ui-kit/react';
 import { TrashIcon } from '@ui-kit/icons/TrashIcon';
-import type { ClaudeSession, RoleFilter } from './types';
+import type { ClaudeSession, RoleFilter, InFlightRequest } from './types';
 import styles from './ClaudeDiagnostics.module.css';
 
 interface SessionListProps {
@@ -13,6 +13,7 @@ interface SessionListProps {
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
   onClearSessions: () => void;
+  inFlightRequests?: InFlightRequest[];
 }
 
 const ROLE_FILTER_OPTIONS = [
@@ -32,6 +33,10 @@ function getTypeIcon(type: ClaudeSession['type']): string {
       return 'C';
     case 'ideaagent':
       return 'I';
+    case 'planagent':
+      return 'P';
+    case 'importagent':
+      return 'M';
     default:
       return '?';
   }
@@ -41,6 +46,24 @@ function getTypeIcon(type: ClaudeSession['type']): string {
  * Master list of all chat sessions.
  * Includes filter controls and clickable session rows.
  */
+/**
+ * Get status label for in-flight request
+ */
+function getStatusLabel(status: InFlightRequest['status']): string {
+  switch (status) {
+    case 'pending':
+      return 'Starting...';
+    case 'streaming':
+      return 'Streaming...';
+    case 'completed':
+      return 'Done';
+    case 'error':
+      return 'Failed';
+    default:
+      return 'Unknown';
+  }
+}
+
 export function SessionList({
   sessions,
   selectedSession,
@@ -50,6 +73,7 @@ export function SessionList({
   searchQuery,
   onSearchQueryChange,
   onClearSessions,
+  inFlightRequests = [],
 }: SessionListProps) {
   // Filter sessions by search query (matches name)
   const filteredSessions = useMemo(() => {
@@ -90,6 +114,38 @@ export function SessionList({
           />
         </div>
       </div>
+
+      {/* In-Flight Requests */}
+      {inFlightRequests.length > 0 && (
+        <div className={styles.inFlightSection}>
+          <Text size="xs" weight="semibold" color="soft" className={styles.inFlightHeader}>
+            Active Requests ({inFlightRequests.length})
+          </Text>
+          {inFlightRequests.map((request) => (
+            <div key={request.id} className={styles.inFlightRow}>
+              <div className={styles.inFlightSpinner}>
+                <Spinner size="sm" />
+              </div>
+              <div className={styles.inFlightInfo}>
+                <Text size="sm" weight="medium">
+                  {request.sessionType}: {request.sessionId.slice(0, 8)}...
+                </Text>
+                <div className={styles.inFlightMeta}>
+                  <Chip size="sm" variant={request.status === 'streaming' ? 'success' : 'default'}>
+                    {getStatusLabel(request.status)}
+                  </Chip>
+                  <Text size="xs" color="soft">
+                    {Math.round((Date.now() - request.startTime) / 1000)}s
+                  </Text>
+                </div>
+                <Text size="xs" color="soft" className={styles.inFlightMessage}>
+                  {request.userMessage.slice(0, 50)}{request.userMessage.length > 50 ? '...' : ''}
+                </Text>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Session List */}
       <div className={styles.sessionList}>

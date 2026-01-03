@@ -1,25 +1,28 @@
 import type { RawData } from 'ws';
 import { WebSocket } from 'ws';
 import type { IncomingMessage } from 'http';
-import { PlanAgentService } from '../services/PlanAgentService.js';
+import { PlanAgentService, type OpenQuestion, type SuggestedResponse } from '../services/PlanAgentService.js';
 import type { PlanAgentMessage } from '../services/PlanAgentChatService.js';
 import type { PlanIdeaContext } from '../prompts/planAgentPrompt.js';
+import type { YjsCollaborationHandler } from './YjsCollaborationHandler.js';
 import type { IdeaPlan } from '../services/IdeaService.js';
 
 /**
  * Client message types for the plan agent WebSocket protocol
  */
 interface ClientMessage {
-  type: 'message' | 'clear_history' | 'idea_update' | 'cancel';
+  type: 'message' | 'clear_history' | 'idea_update' | 'cancel' | 'yjs_ready';
   content?: string;
   idea?: PlanIdeaContext;
+  /** Document room name for Implementation Plan Yjs collaboration */
+  documentRoomName?: string;
 }
 
 /**
  * Server message types for the plan agent WebSocket protocol
  */
 interface ServerMessage {
-  type: 'text_chunk' | 'message_complete' | 'history' | 'error' | 'greeting' | 'plan_update' | 'token_usage';
+  type: 'text_chunk' | 'message_complete' | 'history' | 'error' | 'greeting' | 'plan_update' | 'token_usage' | 'document_edit_start' | 'document_edit_end' | 'open_questions' | 'suggested_responses' | 'processing_start';
   /** Text content chunk (for streaming) */
   text?: string;
   /** Message ID being updated */
@@ -37,6 +40,10 @@ interface ServerMessage {
     inputTokens: number;
     outputTokens: number;
   };
+  /** Open questions for the user (for open_questions) */
+  questions?: OpenQuestion[];
+  /** Suggested responses for quick user replies (for suggested_responses) */
+  suggestions?: SuggestedResponse[];
 }
 
 /**
@@ -50,8 +57,14 @@ interface PlanAgentClient {
   clientId: number;
   /** Current idea context */
   ideaContext: PlanIdeaContext | null;
+  /** Document room name for Implementation Plan Yjs collaboration */
+  documentRoomName: string | null;
   /** Cancel flag for ongoing operations */
   cancelled: boolean;
+  /** Whether the client's Yjs connection is ready */
+  yjsReady: boolean;
+  /** Pending auto-start function to execute when Yjs is ready */
+  pendingAutoStart: (() => Promise<void>) | null;
 }
 
 /**
@@ -63,8 +76,8 @@ export class PlanAgentWebSocketHandler {
   private clientIdCounter = 0;
   private planAgentService: PlanAgentService;
 
-  constructor() {
-    this.planAgentService = new PlanAgentService();
+  constructor(yjsHandler: YjsCollaborationHandler) {
+    this.planAgentService = new PlanAgentService(yjsHandler);
   }
 
   /**
@@ -91,7 +104,10 @@ export class PlanAgentWebSocketHandler {
       userName,
       clientId,
       ideaContext: null,
+      documentRoomName: null,
       cancelled: false,
+      yjsReady: false,
+      pendingAutoStart: null,
     };
 
     this.clients.set(ws, client);
@@ -134,10 +150,15 @@ export class PlanAgentWebSocketHandler {
           await this.handleClearHistory(client);
           break;
         case 'idea_update':
-          // Update the idea context
+          // Update the idea context and document room name
           if (clientMessage.idea) {
             const isFirstContext = !client.ideaContext;
             client.ideaContext = clientMessage.idea;
+
+            // Update document room name if provided
+            if (clientMessage.documentRoomName) {
+              client.documentRoomName = clientMessage.documentRoomName;
+            }
 
             // If this is the first context we received, now send history and greeting
             if (isFirstContext) {
@@ -148,6 +169,17 @@ export class PlanAgentWebSocketHandler {
         case 'cancel':
           client.cancelled = true;
           console.log(`[PlanAgent] Client ${client.clientId} cancelled current operation`);
+          break;
+        case 'yjs_ready':
+          // Client's Yjs connection is ready - execute pending auto-start if any
+          client.yjsReady = true;
+          console.log(`[PlanAgent] Client ${client.clientId} Yjs ready`);
+          if (client.pendingAutoStart) {
+            console.log(`[PlanAgent] Executing pending auto-start for client ${client.clientId}`);
+            const autoStart = client.pendingAutoStart;
+            client.pendingAutoStart = null;
+            await autoStart();
+          }
           break;
         default:
           console.warn(`[PlanAgent] Unknown message type: ${(clientMessage as ClientMessage).type}`);
@@ -160,8 +192,9 @@ export class PlanAgentWebSocketHandler {
 
   /**
    * Handle a chat message from a client.
+   * @param isAutoStart - If true, this is an auto-start message that shouldn't be saved to history
    */
-  private async handleChatMessage(client: PlanAgentClient, content: string): Promise<void> {
+  private async handleChatMessage(client: PlanAgentClient, content: string, isAutoStart = false): Promise<void> {
     if (!content.trim()) return;
 
     if (!client.ideaContext) {
@@ -222,7 +255,39 @@ export class PlanAgentWebSocketHandler {
               });
             }
           },
-        }
+          onDocumentEditStart: () => {
+            if (!client.cancelled) {
+              this.send(client.ws, {
+                type: 'document_edit_start',
+              });
+            }
+          },
+          onDocumentEditEnd: () => {
+            if (!client.cancelled) {
+              this.send(client.ws, {
+                type: 'document_edit_end',
+              });
+            }
+          },
+          onOpenQuestions: (questions) => {
+            if (!client.cancelled) {
+              this.send(client.ws, {
+                type: 'open_questions',
+                questions,
+              });
+            }
+          },
+          onSuggestedResponses: (suggestions) => {
+            if (!client.cancelled && suggestions.length > 0) {
+              this.send(client.ws, {
+                type: 'suggested_responses',
+                suggestions,
+              });
+            }
+          },
+        },
+        client.documentRoomName || undefined,
+        isAutoStart  // Skip saving user message for auto-start
       );
     } catch (error) {
       console.error('[PlanAgent] Error processing message:', error);
@@ -247,15 +312,17 @@ export class PlanAgentWebSocketHandler {
 
   /**
    * Send message history to a newly connected client, with greeting if no history.
+   * If no history exists, auto-starts the planning process once Yjs is ready.
    */
   private async sendHistoryAndGreeting(client: PlanAgentClient): Promise<void> {
     try {
       const messages = await this.planAgentService.getHistory(client.ideaId);
       this.send(client.ws, { type: 'history', messages });
 
-      // If no history, send a greeting and save it to prevent duplicates
+      // If no history, this is the first time entering planning for this idea
+      // Send a greeting and auto-start the design process
       if (messages.length === 0 && client.ideaContext) {
-        const greeting = await this.planAgentService.generateGreeting(client.ideaContext);
+        const greeting = `Let me review **"${client.ideaContext.title}"** and create a design plan for you...`;
         const greetingMessageId = `msg-greeting-${Date.now()}`;
 
         // Save greeting to history first to prevent race conditions with other connections
@@ -266,6 +333,33 @@ export class PlanAgentWebSocketHandler {
           text: greeting,
           messageId: greetingMessageId,
         });
+
+        // Define the auto-start function
+        const executeAutoStart = async () => {
+          if (client.ws.readyState !== client.ws.OPEN || client.cancelled) {
+            console.log(`[PlanAgent] Skipping auto-start: ws closed or cancelled`);
+            return;
+          }
+
+          // Signal to client that processing is starting (so it can show loading indicator)
+          this.send(client.ws, { type: 'processing_start' });
+
+          const autoStartPrompt = 'Review the idea and begin creating the implementation design. If you need to ask clarifying questions, use the open_questions format. Otherwise, start writing the design document.';
+          // Pass true for isAutoStart so the prompt isn't saved to chat history
+          await this.handleChatMessage(client, autoStartPrompt, true);
+        };
+
+        // Wait for Yjs to be ready before auto-starting
+        // This prevents the race condition where the agent writes to the Yjs doc
+        // before the client has connected to receive the updates
+        if (client.yjsReady) {
+          console.log(`[PlanAgent] Yjs already ready, executing auto-start immediately`);
+          // Small delay to let the greeting render
+          setTimeout(() => executeAutoStart(), 200);
+        } else {
+          console.log(`[PlanAgent] Waiting for Yjs ready signal before auto-start`);
+          client.pendingAutoStart = executeAutoStart;
+        }
       }
     } catch (error) {
       console.error('[PlanAgent] Error fetching history:', error);

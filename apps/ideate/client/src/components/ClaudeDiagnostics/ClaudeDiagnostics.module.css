@@ -102,6 +102,11 @@
   color: var(--warning-fg);
 }
 
+.sessionIcon.planagent {
+  background: #10b981;
+  color: white;
+}
+
 .sessionIcon.importagent {
   background: var(--info-bg);
   color: var(--info-fg);
@@ -126,6 +131,64 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
+}
+
+/* ======================================
+   In-Flight Requests Section
+   ====================================== */
+
+.inFlightSection {
+  border-bottom: 1px solid var(--border-color);
+  padding: var(--space-2);
+  background: var(--color-warning-backgroundSoft);
+}
+
+.inFlightHeader {
+  display: block;
+  margin-bottom: var(--space-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.inFlightRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background: var(--color-panel-background);
+  border-radius: var(--radius);
+  margin-bottom: var(--space-1);
+}
+
+.inFlightRow:last-child {
+  margin-bottom: 0;
+}
+
+.inFlightSpinner {
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.inFlightInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.inFlightMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.inFlightMessage {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-style: italic;
 }
 
 /* ======================================

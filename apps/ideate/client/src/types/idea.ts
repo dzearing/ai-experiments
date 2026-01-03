@@ -17,6 +17,8 @@ export interface PlanTask {
   title: string;
   completed: boolean;
   inProgress?: boolean;
+  /** Cross-reference to a section in the Implementation Plan document (e.g., "## Component Design") */
+  reference?: string;
 }
 
 /** A phase in the implementation plan */

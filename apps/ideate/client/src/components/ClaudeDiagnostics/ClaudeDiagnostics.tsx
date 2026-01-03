@@ -3,7 +3,7 @@ import { SplitPane, Spinner } from '@ui-kit/react';
 import { SessionList } from './SessionList';
 import { SessionDetail } from './SessionDetail';
 import { useClaudeDiagnosticsSocket } from '../../hooks/useClaudeDiagnosticsSocket';
-import type { ClaudeSession, SessionMessage, RoleFilter, SessionType } from './types';
+import type { ClaudeSession, SessionMessage, RoleFilter, SessionType, InFlightRequest } from './types';
 import styles from './ClaudeDiagnostics.module.css';
 
 /**
@@ -19,6 +19,7 @@ export function ClaudeDiagnostics() {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [inFlightRequests, setInFlightRequests] = useState<InFlightRequest[]>([]);
 
   // Handle session list updates
   const handleSessionList = useCallback((newSessions: ClaudeSession[]) => {
@@ -47,11 +48,39 @@ export function ClaudeDiagnostics() {
     setIsLoadingMessages(false);
   }, []);
 
+  // Handle in-flight request list
+  const handleInFlightList = useCallback((requests: InFlightRequest[]) => {
+    setInFlightRequests(requests);
+  }, []);
+
+  // Handle in-flight request updates
+  const handleInFlightUpdate = useCallback((request: InFlightRequest) => {
+    setInFlightRequests((prev) => {
+      // If completed or error, remove after a delay (handled by server)
+      // For now, update or add the request
+      const existing = prev.findIndex((r) => r.id === request.id);
+      if (request.status === 'completed' || request.status === 'error') {
+        // Remove from list
+        return prev.filter((r) => r.id !== request.id);
+      }
+      if (existing >= 0) {
+        // Update existing
+        const updated = [...prev];
+        updated[existing] = request;
+        return updated;
+      }
+      // Add new
+      return [...prev, request];
+    });
+  }, []);
+
   // Connect to WebSocket (lazy - only when this component is mounted)
   const { isConnected, getMessages, clearSessions } = useClaudeDiagnosticsSocket({
     onSessionList: handleSessionList,
     onSessionMessages: handleSessionMessages,
     onError: handleError,
+    onInFlightList: handleInFlightList,
+    onInFlightUpdate: handleInFlightUpdate,
   });
 
   // Handle session selection
@@ -96,6 +125,7 @@ export function ClaudeDiagnostics() {
       searchQuery={searchQuery}
       onSearchQueryChange={setSearchQuery}
       onClearSessions={handleClearSessions}
+      inFlightRequests={inFlightRequests}
     />
   );
 

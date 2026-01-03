@@ -41,10 +41,18 @@ export interface TokenUsage {
 }
 
 /**
+ * Suggested response for the user to quickly reply
+ */
+export interface SuggestedResponse {
+  label: string;
+  message: string;
+}
+
+/**
  * Server message types for the idea agent WebSocket protocol
  */
 interface ServerMessage {
-  type: 'text_chunk' | 'message_complete' | 'history' | 'error' | 'greeting' | 'document_edit_start' | 'document_edit_end' | 'token_usage' | 'open_questions';
+  type: 'text_chunk' | 'message_complete' | 'history' | 'error' | 'greeting' | 'document_edit_start' | 'document_edit_end' | 'token_usage' | 'open_questions' | 'suggested_responses';
   /** Text content chunk (for streaming) */
   text?: string;
   /** Message ID being updated */
@@ -59,6 +67,8 @@ interface ServerMessage {
   usage?: TokenUsage;
   /** Open questions for user to resolve (for open_questions type) */
   questions?: OpenQuestion[];
+  /** Suggested responses for the user (for suggested_responses type) */
+  suggestions?: SuggestedResponse[];
 }
 
 /**
@@ -75,6 +85,8 @@ export interface UseIdeaAgentOptions {
   ideaContext: IdeaContext | null;
   /** Yjs document room name for coauthoring */
   documentRoomName?: string;
+  /** Initial greeting to display instead of server-generated greeting */
+  initialGreeting?: string;
   /** Called when an error occurs */
   onError?: (error: string) => void;
   /** Whether the agent is enabled (controls WebSocket connection) */
@@ -99,6 +111,8 @@ export interface UseIdeaAgentReturn {
   tokenUsage: TokenUsage | null;
   /** Open questions from the agent (null if none) */
   openQuestions: OpenQuestion[] | null;
+  /** Suggested responses from the agent (null if none) */
+  suggestedResponses: SuggestedResponse[] | null;
   /** Whether the questions resolver overlay should be shown */
   showQuestionsResolver: boolean;
   /** Set whether the questions resolver overlay should be shown */
@@ -107,6 +121,8 @@ export interface UseIdeaAgentReturn {
   resolveQuestions: (result: OpenQuestionsResult) => void;
   /** Send a message to the agent */
   sendMessage: (content: string) => void;
+  /** Send a message to the agent without displaying it in the chat (silent/background) */
+  sendSilentMessage: (content: string) => void;
   /** Add a local message (for system messages like help) */
   addLocalMessage: (message: IdeaAgentMessage) => void;
   /** Clear chat history */
@@ -127,6 +143,7 @@ export function useIdeaAgent({
   userName,
   ideaContext,
   documentRoomName,
+  initialGreeting,
   onError,
   enabled = true,
 }: UseIdeaAgentOptions): UseIdeaAgentReturn {
@@ -137,6 +154,7 @@ export function useIdeaAgent({
   const [error, setError] = useState<string | null>(null);
   const [tokenUsage, setTokenUsage] = useState<TokenUsage | null>(null);
   const [openQuestions, setOpenQuestions] = useState<OpenQuestion[] | null>(null);
+  const [suggestedResponses, setSuggestedResponses] = useState<SuggestedResponse[] | null>(null);
   const [showQuestionsResolver, setShowQuestionsResolver] = useState(false);
 
   const wsRef = useRef<WebSocket | null>(null);
@@ -144,6 +162,7 @@ export function useIdeaAgent({
   const currentMessageIdRef = useRef<string | null>(null);
   const ideaContextRef = useRef<IdeaContext | null>(ideaContext);
   const documentRoomNameRef = useRef<string | undefined>(documentRoomName);
+  const initialGreetingRef = useRef<string | undefined>(initialGreeting);
   const enabledRef = useRef(enabled);
 
   // Keep refs updated
@@ -173,6 +192,7 @@ export function useIdeaAgent({
       setIsEditingDocument(false);
       setTokenUsage(null);
       setOpenQuestions(null);
+      setSuggestedResponses(null);
       currentMessageIdRef.current = null;
 
       // Reset tracking refs so next enable starts fresh
@@ -268,6 +288,7 @@ export function useIdeaAgent({
           type: 'idea_update',
           idea: ideaContextRef.current,
           documentRoomName: documentRoomNameRef.current,
+          initialGreeting: initialGreetingRef.current,
         }));
       }
     };
@@ -389,6 +410,13 @@ export function useIdeaAgent({
               setOpenQuestions(data.questions);
             }
             break;
+
+          case 'suggested_responses':
+            // Store suggested responses for the user
+            if (data.suggestions && data.suggestions.length > 0) {
+              setSuggestedResponses(data.suggestions);
+            }
+            break;
         }
       } catch (err) {
         console.error('[IdeaAgent] Failed to parse message:', err);
@@ -436,8 +464,9 @@ export function useIdeaAgent({
       };
       addMessage(userMessage);
 
-      // Reset token usage for new request
+      // Reset token usage and clear old suggestions for new request
       setTokenUsage(null);
+      setSuggestedResponses(null);
 
       // Send to server with document room name for coauthoring
       setIsLoading(true);
@@ -452,6 +481,31 @@ export function useIdeaAgent({
       setError('Not connected to idea agent service');
     }
   }, [addMessage]);
+
+  // Send message to server without displaying it in the chat (silent/background)
+  // Used for initial prompts from the facilitator - we don't want to show the user's
+  // prompt as a message since they already typed it in the facilitator chat
+  const sendSilentMessage = useCallback((content: string) => {
+    if (!content.trim()) return;
+
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      // Reset token usage and clear old suggestions for new request
+      setTokenUsage(null);
+      setSuggestedResponses(null);
+
+      // Send to server without adding a local user message
+      setIsLoading(true);
+      wsRef.current.send(JSON.stringify({
+        type: 'message',
+        content: content.trim(),
+        idea: ideaContextRef.current,
+        documentRoomName: documentRoomNameRef.current,
+      }));
+    } else {
+      console.warn('[IdeaAgent] Cannot send message: WebSocket not connected');
+      setError('Not connected to idea agent service');
+    }
+  }, []);
 
   // Clear history
   const clearHistory = useCallback(() => {
@@ -539,10 +593,12 @@ export function useIdeaAgent({
     error,
     tokenUsage,
     openQuestions,
+    suggestedResponses,
     showQuestionsResolver,
     setShowQuestionsResolver,
     resolveQuestions,
     sendMessage,
+    sendSilentMessage,
     addLocalMessage: addMessage,
     clearHistory,
     updateIdeaContext,

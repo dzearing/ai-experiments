@@ -7,6 +7,7 @@ import type {
   ServerMessage,
   ClientMessage,
   ClientClearSessionsMessage,
+  InFlightRequest,
 } from '../components/ClaudeDiagnostics/types';
 
 /**
@@ -21,6 +22,10 @@ export interface UseClaudeDiagnosticsSocketOptions {
   onError?: (error: string) => void;
   /** Callback when connection status changes */
   onConnectionChange?: (connected: boolean) => void;
+  /** Callback when in-flight request list is received */
+  onInFlightList?: (requests: InFlightRequest[]) => void;
+  /** Callback when an in-flight request is updated */
+  onInFlightUpdate?: (request: InFlightRequest) => void;
 }
 
 /**
@@ -131,6 +136,14 @@ export function useClaudeDiagnosticsSocket(
           message.sessionId,
           message.messages
         );
+        break;
+
+      case 'in_flight_list':
+        optionsRef.current.onInFlightList?.(message.inFlightRequests);
+        break;
+
+      case 'in_flight_update':
+        optionsRef.current.onInFlightUpdate?.(message.inFlightRequest);
         break;
 
       case 'error':

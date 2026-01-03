@@ -14,6 +14,8 @@ interface ClientMessage {
   idea?: IdeaContext;
   /** Document room name for Yjs collaboration (client provides this) */
   documentRoomName?: string;
+  /** Initial greeting to use instead of generating one */
+  initialGreeting?: string;
 }
 
 /**
@@ -33,10 +35,18 @@ interface OpenQuestion {
 }
 
 /**
+ * Suggested response for the user to quickly reply
+ */
+interface SuggestedResponse {
+  label: string;
+  message: string;
+}
+
+/**
  * Server message types for the idea agent WebSocket protocol
  */
 interface ServerMessage {
-  type: 'text_chunk' | 'message_complete' | 'history' | 'error' | 'greeting' | 'document_edit_start' | 'document_edit_end' | 'token_usage' | 'open_questions';
+  type: 'text_chunk' | 'message_complete' | 'history' | 'error' | 'greeting' | 'document_edit_start' | 'document_edit_end' | 'token_usage' | 'open_questions' | 'suggested_responses';
   /** Text content chunk (for streaming) */
   text?: string;
   /** Message ID being updated */
@@ -54,6 +64,8 @@ interface ServerMessage {
   };
   /** Open questions for user to resolve */
   questions?: OpenQuestion[];
+  /** Suggested responses for the user */
+  suggestions?: SuggestedResponse[];
 }
 
 /**
@@ -71,6 +83,8 @@ interface IdeaAgentClient {
   cancelled: boolean;
   /** Document room name for Yjs collaboration */
   documentRoomName: string | null;
+  /** Initial greeting provided by the client (overrides generated greeting) */
+  initialGreeting: string | null;
 }
 
 /**
@@ -128,6 +142,7 @@ export class IdeaAgentWebSocketHandler {
       ideaContext: null,
       cancelled: false,
       documentRoomName,
+      initialGreeting: null,
     };
 
     this.clients.set(ws, client);
@@ -186,6 +201,11 @@ export class IdeaAgentWebSocketHandler {
           if (clientMessage.idea) {
             const isFirstContext = !client.ideaContext;
             client.ideaContext = clientMessage.idea;
+
+            // Store initial greeting if provided (from facilitator)
+            if (clientMessage.initialGreeting) {
+              client.initialGreeting = clientMessage.initialGreeting;
+            }
 
             // If this is the first context we received, now send history and greeting
             // (we deferred this from connection time to get thingContext)
@@ -285,6 +305,14 @@ export class IdeaAgentWebSocketHandler {
               });
             }
           },
+          onSuggestedResponses: (suggestions) => {
+            if (!client.cancelled && suggestions.length > 0) {
+              this.send(client.ws, {
+                type: 'suggested_responses',
+                suggestions,
+              });
+            }
+          },
         },
         client.documentRoomName || undefined
       );
@@ -367,7 +395,9 @@ export class IdeaAgentWebSocketHandler {
 
       // If no history, send a greeting and save it to prevent duplicates
       if (messages.length === 0) {
-        const greeting = await this.ideaAgentService.generateGreeting(client.ideaContext);
+        // Use client-provided initialGreeting if available (e.g., from facilitator),
+        // otherwise generate one based on the idea context
+        const greeting = client.initialGreeting || await this.ideaAgentService.generateGreeting(client.ideaContext);
         const greetingMessageId = `msg-greeting-${Date.now()}`;
 
         // Save greeting to history first to prevent race conditions with other connections
@@ -378,6 +408,9 @@ export class IdeaAgentWebSocketHandler {
           text: greeting,
           messageId: greetingMessageId,
         });
+
+        // Clear the initial greeting after use so it's not reused on reconnect
+        client.initialGreeting = null;
       }
     } catch (error) {
       console.error('[IdeaAgent] Error fetching history:', error);

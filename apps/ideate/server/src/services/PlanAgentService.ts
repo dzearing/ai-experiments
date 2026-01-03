@@ -1,7 +1,11 @@
 import { query, type SDKAssistantMessage } from '@anthropic-ai/claude-agent-sdk';
 import { PlanAgentChatService, type PlanAgentMessage } from './PlanAgentChatService.js';
+import { PlanAgentYjsClient } from './PlanAgentYjsClient.js';
 import { buildPlanAgentSystemPrompt, type PlanIdeaContext } from '../prompts/planAgentPrompt.js';
+import type { YjsCollaborationHandler } from '../websocket/YjsCollaborationHandler.js';
 import type { IdeaPlan, PlanPhase } from './IdeaService.js';
+import type { DocumentEdit } from './IdeaAgentService.js';
+import { getClaudeDiagnosticsService } from '../routes/diagnostics.js';
 
 /**
  * Token usage information
@@ -9,6 +13,30 @@ import type { IdeaPlan, PlanPhase } from './IdeaService.js';
 export interface TokenUsage {
   inputTokens: number;
   outputTokens: number;
+}
+
+/**
+ * Open question for the user to resolve
+ */
+export interface OpenQuestion {
+  id: string;
+  question: string;
+  context?: string;
+  selectionType: 'single' | 'multiple';
+  options: Array<{
+    id: string;
+    label: string;
+    description?: string;
+  }>;
+  allowCustom: boolean;
+}
+
+/**
+ * Suggested response for quick user replies
+ */
+export interface SuggestedResponse {
+  label: string;
+  message: string;
 }
 
 /**
@@ -25,6 +53,14 @@ export interface PlanStreamCallbacks {
   onError: (error: string) => void;
   /** Called with token usage updates during streaming */
   onTokenUsage?: (usage: TokenUsage) => void;
+  /** Called when document editing starts */
+  onDocumentEditStart?: () => void;
+  /** Called when document editing ends */
+  onDocumentEditEnd?: () => void;
+  /** Called when open questions are extracted from the response */
+  onOpenQuestions?: (questions: OpenQuestion[]) => void;
+  /** Called when suggested responses are extracted from the response */
+  onSuggestedResponses?: (suggestions: SuggestedResponse[]) => void;
 }
 
 /**
@@ -62,22 +98,115 @@ function parsePlanUpdate(response: string): { plan: ParsedPlanUpdate | null; cha
 }
 
 /**
- * Check if a partial response contains the start of a plan block
+ * Parse implementation plan document update from agent response
  */
-function findPlanBlockStart(text: string): number {
+function parseImplPlanUpdate(response: string): { content: string | null; chatResponse: string } {
+  const implPlanMatch = response.match(/<impl_plan_update>\s*([\s\S]*?)\s*<\/impl_plan_update>/);
+
+  if (!implPlanMatch) {
+    return { content: null, chatResponse: response };
+  }
+
+  // The content is the markdown directly (not JSON)
+  const content = implPlanMatch[1].trim();
+  const chatResponse = response.slice(0, response.indexOf('<impl_plan_update>')).trim() || "I've updated the implementation plan.";
+  return { content, chatResponse };
+}
+
+/**
+ * Parse implementation plan document edits from agent response
+ */
+function parseImplPlanEdits(response: string): { edits: DocumentEdit[] | null; chatResponse: string } {
+  const editsMatch = response.match(/<impl_plan_edits>\s*([\s\S]*?)\s*<\/impl_plan_edits>/);
+
+  if (!editsMatch) {
+    return { edits: null, chatResponse: response };
+  }
+
+  try {
+    const edits = JSON.parse(editsMatch[1]) as DocumentEdit[];
+    const chatResponse = response.slice(0, response.indexOf('<impl_plan_edits>')).trim() || "I've made edits to the implementation plan.";
+    return { edits, chatResponse };
+  } catch {
+    console.error('[PlanAgentService] Failed to parse impl plan edits JSON');
+    return { edits: null, chatResponse: response };
+  }
+}
+
+/**
+ * Parse open questions from agent response
+ */
+function parseOpenQuestions(response: string): { questions: OpenQuestion[] | null; responseWithoutQuestions: string } {
+  const questionsMatch = response.match(/<open_questions>\s*([\s\S]*?)\s*<\/open_questions>/);
+
+  if (!questionsMatch) {
+    return { questions: null, responseWithoutQuestions: response };
+  }
+
+  try {
+    const rawQuestions = JSON.parse(questionsMatch[1]) as OpenQuestion[];
+    // Default allowCustom to true so users can always provide custom answers
+    const questions = rawQuestions.map(q => ({
+      ...q,
+      allowCustom: q.allowCustom !== false,
+    }));
+    // Remove the questions block from the response
+    const responseWithoutQuestions = response.replace(/<open_questions>[\s\S]*?<\/open_questions>/, '').trim();
+    return { questions, responseWithoutQuestions };
+  } catch {
+    console.error('[PlanAgentService] Failed to parse open questions JSON');
+    return { questions: null, responseWithoutQuestions: response };
+  }
+}
+
+/**
+ * Parse suggested responses from agent response
+ */
+function parseSuggestedResponses(response: string): { suggestions: SuggestedResponse[] | null; responseWithoutSuggestions: string } {
+  const suggestionsMatch = response.match(/<suggested_responses>\s*([\s\S]*?)\s*<\/suggested_responses>/);
+
+  if (!suggestionsMatch) {
+    return { suggestions: null, responseWithoutSuggestions: response };
+  }
+
+  try {
+    const suggestions = JSON.parse(suggestionsMatch[1]) as SuggestedResponse[];
+    const responseWithoutSuggestions = response.replace(/<suggested_responses>[\s\S]*?<\/suggested_responses>/, '').trim();
+    return { suggestions, responseWithoutSuggestions };
+  } catch {
+    console.error('[PlanAgentService] Failed to parse suggested responses JSON');
+    return { suggestions: null, responseWithoutSuggestions: response };
+  }
+}
+
+/**
+ * Check if a partial response contains the start of any special block
+ */
+function findBlockStart(text: string): number {
   const planStart = text.indexOf('<plan_update>');
-  return planStart;
+  const implPlanStart = text.indexOf('<impl_plan_update>');
+  const implEditsStart = text.indexOf('<impl_plan_edits>');
+  const openQuestionsStart = text.indexOf('<open_questions>');
+  const suggestionsStart = text.indexOf('<suggested_responses>');
+
+  const starts = [planStart, implPlanStart, implEditsStart, openQuestionsStart, suggestionsStart].filter(s => s >= 0);
+  return starts.length > 0 ? Math.min(...starts) : -1;
 }
 
 /**
  * Service for orchestrating plan agent chat with Claude.
  * Handles message processing and streaming responses for implementation planning.
+ * Supports editing the Implementation Plan document via Yjs.
  */
 export class PlanAgentService {
   private chatService: PlanAgentChatService;
+  private yjsClient: PlanAgentYjsClient | null = null;
 
-  constructor() {
+  constructor(yjsHandler?: YjsCollaborationHandler) {
     this.chatService = new PlanAgentChatService();
+    if (yjsHandler) {
+      this.yjsClient = new PlanAgentYjsClient(yjsHandler);
+    }
   }
 
   /**
@@ -139,19 +268,34 @@ Feel free to share any details, and I'll start building out the phases and tasks
   /**
    * Process a user message and stream the response via callbacks.
    * Streams chat text in real-time, buffers plan blocks, then calls onPlanUpdate.
+   * Handles Implementation Plan document edits via Yjs if documentRoomName provided.
+   * @param isAutoStart - If true, skip saving the user message (used for server-initiated auto-start)
    */
   async processMessage(
     ideaId: string,
     userId: string,
     content: string,
     ideaContext: PlanIdeaContext,
-    callbacks: PlanStreamCallbacks
+    callbacks: PlanStreamCallbacks,
+    documentRoomName?: string,
+    isAutoStart = false
   ): Promise<void> {
-    // Save the user message
-    await this.chatService.addMessage(ideaId, userId, 'user', content);
+    // Save the user message (unless this is an auto-start)
+    if (!isAutoStart) {
+      await this.chatService.addMessage(ideaId, userId, 'user', content);
+    }
 
     // Get history for context
     const history = await this.chatService.getMessages(ideaId);
+
+    // Connect to Yjs room if document editing is enabled
+    if (this.yjsClient && documentRoomName) {
+      try {
+        await this.yjsClient.connect(documentRoomName);
+      } catch (error) {
+        console.error('[PlanAgentService] Failed to connect to Yjs room:', error);
+      }
+    }
 
     // Build the system prompt with idea context
     const systemPrompt = buildPlanAgentSystemPrompt(ideaContext);
@@ -168,14 +312,20 @@ Feel free to share any details, and I'll start building out the phases and tasks
     // Streaming state
     let fullResponse = '';
     let streamedChatLength = 0;
-    let foundPlanBlock = false;
+    let foundBlockStart = false;
+    let questionsSent = false;
     let totalInputTokens = 0;
     let totalOutputTokens = 0;
+
+    // Track this request for diagnostics
+    const diagnosticsService = getClaudeDiagnosticsService();
+    const requestId = diagnosticsService.startRequest('planagent', ideaId, content.slice(0, 100));
 
     try {
       console.log(`[PlanAgentService] Processing message for idea ${ideaId}: "${content.slice(0, 50)}..."`);
 
       // Use the query function from @anthropic-ai/claude-agent-sdk
+      console.log(`[PlanAgentService] Starting query with model claude-sonnet-4-5-20250929...`);
       const response = query({
         prompt: fullPrompt,
         options: {
@@ -188,9 +338,19 @@ Feel free to share any details, and I'll start building out the phases and tasks
         },
       });
 
+      console.log(`[PlanAgentService] Query created, starting stream...`);
+      // Mark as streaming once we start receiving
+      let hasStartedStreaming = false;
+
       // Stream response in real-time
       for await (const message of response) {
+        console.log(`[PlanAgentService] Received message type: ${message.type}`);
         if (message.type === 'assistant') {
+          // Update diagnostics to streaming status on first content
+          if (!hasStartedStreaming) {
+            hasStartedStreaming = true;
+            diagnosticsService.updateRequest(requestId, { status: 'streaming' });
+          }
           const assistantMsg = message as SDKAssistantMessage;
           const msgContent = assistantMsg.message.content;
 
@@ -222,21 +382,33 @@ Feel free to share any details, and I'll start building out the phases and tasks
           if (newText) {
             fullResponse += newText;
 
-            // Stream chat text until we hit a plan block
-            if (!foundPlanBlock) {
-              const planBlockStart = findPlanBlockStart(fullResponse);
+            // Check for open questions block and send immediately when found
+            if (!questionsSent && fullResponse.includes('</open_questions>')) {
+              const { questions, responseWithoutQuestions } = parseOpenQuestions(fullResponse);
+              if (questions && questions.length > 0) {
+                console.log(`[PlanAgentService] Found ${questions.length} open questions, sending to client`);
+                callbacks.onOpenQuestions?.(questions);
+                questionsSent = true;
+                // Update fullResponse to exclude the questions block
+                fullResponse = responseWithoutQuestions;
+              }
+            }
 
-              if (planBlockStart >= 0) {
-                // Found start of plan block - stream up to it, then stop streaming
-                foundPlanBlock = true;
-                const chatPortion = fullResponse.slice(streamedChatLength, planBlockStart).trim();
+            // Stream chat text until we hit any special block
+            if (!foundBlockStart) {
+              const blockStartPos = findBlockStart(fullResponse);
+
+              if (blockStartPos >= 0) {
+                // Found start of special block - stream up to it, then stop streaming
+                foundBlockStart = true;
+                const chatPortion = fullResponse.slice(streamedChatLength, blockStartPos).trim();
                 if (chatPortion) {
                   callbacks.onTextChunk(chatPortion, messageId);
-                  streamedChatLength = planBlockStart;
+                  streamedChatLength = blockStartPos;
                 }
               } else {
-                // No plan block yet - stream new content
-                // But be careful: don't stream partial tags like "<plan"
+                // No special block yet - stream new content
+                // But be careful: don't stream partial tags
                 const safeEnd = this.findSafeStreamEnd(fullResponse);
                 if (safeEnd > streamedChatLength) {
                   const newChunk = fullResponse.slice(streamedChatLength, safeEnd);
@@ -268,17 +440,19 @@ Feel free to share any details, and I'll start building out the phases and tasks
         }
       }
 
-      // Final parse to get chat response and handle plan updates
-      let chatResponse = fullResponse;
-      const { plan, chatResponse: planChatResponse } = parsePlanUpdate(fullResponse);
+      // Parse suggested responses FIRST (before any streaming of remaining content)
+      // This ensures the <suggested_responses> block never gets streamed to the client
+      const { suggestions, responseWithoutSuggestions: fullResponseClean } = parseSuggestedResponses(fullResponse);
+      const suggestionsToSend = suggestions;
 
+      // Final parse to get chat response and handle various block types
+      // All block types are processed independently (not mutually exclusive)
+      let chatResponse = fullResponseClean;
+
+      // 1. Check for execution plan update (phases/tasks)
+      const { plan, chatResponse: planChatResponse } = parsePlanUpdate(chatResponse);
       if (plan) {
         chatResponse = planChatResponse;
-
-        // Stream any remaining chat content not yet sent
-        if (chatResponse.length > streamedChatLength) {
-          callbacks.onTextChunk(chatResponse.slice(streamedChatLength), messageId);
-        }
 
         // Notify about plan update
         console.log(`[PlanAgentService] Plan update detected with ${plan.phases?.length || 0} phases`);
@@ -292,11 +466,66 @@ Feel free to share any details, and I'll start building out the phases and tasks
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         });
-      } else {
-        // No plan update - stream any remaining content
-        if (fullResponse.length > streamedChatLength) {
-          callbacks.onTextChunk(fullResponse.slice(streamedChatLength), messageId);
+      }
+
+      // 2. Check for Implementation Plan document update (full replacement)
+      // Process independently - can have both plan_update AND impl_plan_update
+      if (this.yjsClient && documentRoomName) {
+        const { content: implPlanContent, chatResponse: implPlanChatResponse } = parseImplPlanUpdate(chatResponse);
+        if (implPlanContent) {
+          chatResponse = implPlanChatResponse;
+
+          try {
+            callbacks.onDocumentEditStart?.();
+            console.log(`[PlanAgentService] Creating/replacing Implementation Plan document in room ${documentRoomName}`);
+
+            await this.yjsClient.streamReplaceContent(documentRoomName, implPlanContent);
+            this.yjsClient.clearCursor(documentRoomName);
+
+            callbacks.onDocumentEditEnd?.();
+            console.log(`[PlanAgentService] Implementation Plan document updated`);
+          } catch (error) {
+            console.error('[PlanAgentService] Error updating Implementation Plan document:', error);
+            callbacks.onDocumentEditEnd?.();
+          }
         }
+      }
+
+      // 3. Check for Implementation Plan document edits (targeted changes)
+      // Process independently - impl_plan_edits and impl_plan_update are mutually exclusive
+      if (this.yjsClient && documentRoomName) {
+        const { edits, chatResponse: editsChatResponse } = parseImplPlanEdits(chatResponse);
+        if (edits && edits.length > 0) {
+          chatResponse = editsChatResponse;
+
+          try {
+            callbacks.onDocumentEditStart?.();
+            console.log(`[PlanAgentService] Applying ${edits.length} edits to Implementation Plan in room ${documentRoomName}`);
+
+            const results = await this.yjsClient.applyEdits(documentRoomName, edits);
+            const failedEdits = results.filter(r => !r.success);
+            if (failedEdits.length > 0) {
+              console.warn('[PlanAgentService] Some edits failed:', failedEdits);
+            }
+
+            callbacks.onDocumentEditEnd?.();
+            console.log(`[PlanAgentService] Edits applied: ${results.filter(r => r.success).length}/${edits.length} successful`);
+          } catch (error) {
+            console.error('[PlanAgentService] Error applying edits:', error);
+            callbacks.onDocumentEditEnd?.();
+          }
+        }
+      }
+
+      // Stream any remaining chat content not yet sent
+      if (chatResponse.length > streamedChatLength) {
+        callbacks.onTextChunk(chatResponse.slice(streamedChatLength), messageId);
+      }
+
+      // Send suggested responses (already parsed at start of final processing)
+      if (suggestionsToSend && suggestionsToSend.length > 0) {
+        console.log(`[PlanAgentService] Found ${suggestionsToSend.length} suggested responses`);
+        callbacks.onSuggestedResponses?.(suggestionsToSend);
       }
 
       // Save the assistant message (chat portion only)
@@ -313,10 +542,17 @@ Feel free to share any details, and I'll start building out the phases and tasks
         id: messageId,
       });
 
+      // Mark diagnostics request as complete
+      diagnosticsService.completeRequest(requestId);
+
       console.log(`[PlanAgentService] Completed response for idea ${ideaId} (${chatResponse.length} chars streamed)`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('[PlanAgentService] Error processing message:', error);
+
+      // Mark diagnostics request as failed
+      diagnosticsService.completeRequest(requestId, errorMessage);
+
       callbacks.onError(errorMessage);
     }
   }
@@ -325,7 +561,17 @@ Feel free to share any details, and I'll start building out the phases and tasks
    * Find a safe point to stream up to, avoiding partial XML tags.
    */
   private findSafeStreamEnd(text: string): number {
-    const potentialTagStarts = ['<plan_update', '<plan'];
+    const potentialTagStarts = [
+      '<plan_update',
+      '<impl_plan_update',
+      '<impl_plan_edits',
+      '<open_questions',
+      '<suggested_responses',
+      '<plan',
+      '<impl',
+      '<open',
+      '<suggested'
+    ];
     let safeEnd = text.length;
 
     for (const tagStart of potentialTagStarts) {

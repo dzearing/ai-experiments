@@ -5,7 +5,33 @@
 /**
  * Session type enum
  */
-export type SessionType = 'facilitator' | 'chatroom' | 'ideaagent' | 'importagent';
+export type SessionType = 'facilitator' | 'chatroom' | 'ideaagent' | 'planagent' | 'importagent';
+
+/**
+ * In-flight request status
+ */
+export type InFlightStatus = 'pending' | 'streaming' | 'completed' | 'error';
+
+/**
+ * In-flight request representation
+ */
+export interface InFlightRequest {
+  id: string;
+  sessionType: SessionType;
+  sessionId: string;
+  status: InFlightStatus;
+  startTime: number;
+  userMessage: string;
+  /** Partial response text (for streaming) */
+  partialResponse?: string;
+  /** Error message if failed */
+  error?: string;
+  /** Token usage so far */
+  tokenUsage?: {
+    inputTokens: number;
+    outputTokens: number;
+  };
+}
 
 /**
  * Unified session representation
@@ -119,11 +145,23 @@ export interface ServerPongMessage {
   type: 'pong';
 }
 
+export interface ServerInFlightUpdateMessage {
+  type: 'in_flight_update';
+  inFlightRequest: InFlightRequest;
+}
+
+export interface ServerInFlightListMessage {
+  type: 'in_flight_list';
+  inFlightRequests: InFlightRequest[];
+}
+
 export type ServerMessage =
   | ServerSessionListMessage
   | ServerSessionMessagesMessage
   | ServerErrorMessage
-  | ServerPongMessage;
+  | ServerPongMessage
+  | ServerInFlightUpdateMessage
+  | ServerInFlightListMessage;
 
 /**
  * WebSocket message types to server

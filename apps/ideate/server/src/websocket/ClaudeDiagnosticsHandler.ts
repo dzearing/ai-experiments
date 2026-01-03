@@ -5,6 +5,7 @@ import {
   type ClaudeSession,
   type SessionMessage,
   type SessionType,
+  type InFlightRequest,
 } from '../services/ClaudeDiagnosticsService.js';
 import { getClaudeDiagnosticsService } from '../routes/diagnostics.js';
 
@@ -22,13 +23,17 @@ interface ClientMessage {
  * Server message types
  */
 interface ServerMessage {
-  type: 'session_list' | 'session_messages' | 'session_update' | 'error' | 'pong';
+  type: 'session_list' | 'session_messages' | 'session_update' | 'in_flight_update' | 'in_flight_list' | 'error' | 'pong';
   sessions?: ClaudeSession[];
   messages?: SessionMessage[];
   session?: ClaudeSession;
   error?: string;
   sessionType?: SessionType;
   sessionId?: string;
+  /** In-flight request update */
+  inFlightRequest?: InFlightRequest;
+  /** List of all in-flight requests */
+  inFlightRequests?: InFlightRequest[];
 }
 
 /**
@@ -53,8 +58,16 @@ export class ClaudeDiagnosticsHandler {
   private pollInterval: NodeJS.Timeout | null = null;
   private static POLL_INTERVAL_MS = 30000;
 
+  // Cleanup function for in-flight update subscription
+  private unsubscribeInFlight: (() => void) | null = null;
+
   constructor() {
     this.claudeService = getClaudeDiagnosticsService();
+
+    // Subscribe to in-flight request updates
+    this.unsubscribeInFlight = this.claudeService.onInFlightUpdate((request) => {
+      this.broadcastInFlightUpdate(request);
+    });
   }
 
   /**
@@ -72,6 +85,9 @@ export class ClaudeDiagnosticsHandler {
 
     // Send full session list on connect
     await this.sendSessionList(ws);
+
+    // Send current in-flight requests
+    this.sendInFlightList(ws);
 
     // Handle client disconnect
     ws.on('close', () => {
@@ -254,6 +270,27 @@ export class ClaudeDiagnosticsHandler {
   }
 
   /**
+   * Send the current in-flight request list to a client.
+   */
+  private sendInFlightList(ws: WebSocket): void {
+    const inFlightRequests = this.claudeService.getInFlightRequests();
+    this.send(ws, {
+      type: 'in_flight_list',
+      inFlightRequests,
+    });
+  }
+
+  /**
+   * Broadcast an in-flight request update to all clients.
+   */
+  private broadcastInFlightUpdate(request: InFlightRequest): void {
+    this.broadcast({
+      type: 'in_flight_update',
+      inFlightRequest: request,
+    });
+  }
+
+  /**
    * Send a message to a single client.
    */
   private send(ws: WebSocket, message: ServerMessage): void {
@@ -286,6 +323,10 @@ export class ClaudeDiagnosticsHandler {
    */
   destroy(): void {
     this.stopPolling();
+    if (this.unsubscribeInFlight) {
+      this.unsubscribeInFlight();
+      this.unsubscribeInFlight = null;
+    }
     for (const client of this.clients) {
       client.close();
     }

@@ -155,10 +155,11 @@ After creating the Thing (which auto-selects it in the UI), open the idea worksp
 Call `open_idea_workspace` with:
 - `thingId`: The ID from the created thing
 - `initialPrompt`: A prompt that describes the project (pass along the user's original description)
+- `initialGreeting`: A contextual greeting that appears immediately (e.g., "I'm crafting an Idea doc for your Spotify clone web app! Give me a sec...")
 - `closeFacilitator`: true
 - `focusInput`: true
 
-The idea agent will receive the initial prompt and start the conversation.
+The `initialGreeting` appears instantly so the user knows what's happening. The idea agent then processes the `initialPrompt` and generates the idea document.
 
 ### Example Flow
 
@@ -168,11 +169,14 @@ The idea agent will receive the initial prompt and start the conversation.
 "I'll create a **Spotify Clone** project for you and open the idea workspace to start planning..."
 
 *Creates Thing with name "Spotify Clone", type "project" - this auto-selects the Thing in the UI*
-*Calls open_idea_workspace with thingId and initialPrompt: "I want to build a Spotify clone web app. Help me plan the key features and architecture."*
+*Calls open_idea_workspace with:*
+- *thingId: (from created thing)*
+- *initialPrompt: "I want to build a Spotify clone web app. Help me plan the key features and architecture."*
+- *initialGreeting: "I'm crafting an Idea doc for your Spotify clone web app! Give me a sec..."*
 
 "Done! I've created the project. The idea workspace is opening where you can plan the features with the Idea Agent..."
 
-*Facilitator closes, user is on Things page with Thing selected, Idea workspace overlay opens*
+*Facilitator closes, user is on Things page with Thing selected, Idea workspace overlay opens with contextual greeting*
 
 ### Key Principles
 

@@ -76,7 +76,7 @@ export function createFacilitatorMcpServer(toolsService: MCPToolsService, userId
 
       tool(
         'thing_create',
-        'Create a new Thing.',
+        'Create a new Thing. Automatically navigates user to the created Thing.',
         {
           name: z.string().describe('Name of the Thing'),
           type: z.string().optional().describe('Type of the Thing (category, project, feature, or item)'),
@@ -94,6 +94,23 @@ export function createFacilitatorMcpServer(toolsService: MCPToolsService, userId
             workspaceId: args.workspaceId || workspaceId,
           };
           const result = await toolsService.executeTool('thing_create', toolArgs, userId);
+
+          // If creation succeeded, include navigate action to take user to the Thing
+          const data = result.data as { thing?: { id?: string } } | undefined;
+          if (data?.thing?.id) {
+            return {
+              content: [{
+                type: 'text' as const,
+                text: JSON.stringify({
+                  ...data,
+                  __action: 'navigate',
+                  target: 'thing',
+                  thingId: data.thing.id,
+                }, null, 2),
+              }],
+            };
+          }
+
           return {
             content: [{
               type: 'text' as const,
@@ -560,6 +577,7 @@ export function createFacilitatorMcpServer(toolsService: MCPToolsService, userId
           ideaId: z.string().optional().describe('The Idea ID to open (omit for new idea mode)'),
           thingId: z.string().optional().describe('Thing ID to attach the idea to (required for new idea mode)'),
           initialPrompt: z.string().optional().describe('Initial prompt to seed the idea agent when creating a new idea'),
+          initialGreeting: z.string().optional().describe('Initial greeting from the agent (e.g., "I\'m crafting an Idea doc for your Spotify clone! Give me a sec...")'),
           closeFacilitator: z.boolean().optional().describe('Whether to close the Facilitator after opening (default: true)'),
           focusInput: z.boolean().optional().describe('Whether to focus the chat input (default: true)'),
         },
@@ -572,6 +590,7 @@ export function createFacilitatorMcpServer(toolsService: MCPToolsService, userId
                 ideaId: args.ideaId,
                 thingId: args.thingId,
                 initialPrompt: args.initialPrompt,
+                initialGreeting: args.initialGreeting,
                 closeFacilitator: args.closeFacilitator ?? true,
                 focusInput: args.focusInput ?? true,
               }),

@@ -4,6 +4,7 @@ import { homedir } from 'os';
 import type { FacilitatorMessage, FacilitatorChatMetadata } from './FacilitatorChatService.js';
 import type { ChatMessage, ChatRoomMetadata } from './ChatRoomService.js';
 import type { IdeaAgentMessage, IdeaAgentChatMetadata } from './IdeaAgentChatService.js';
+import type { PlanAgentMessage, PlanAgentChatMetadata } from './PlanAgentChatService.js';
 import type { FacilitatorService } from './FacilitatorService.js';
 import { getImportAgentChatService } from './ImportAgentChatService.js';
 
@@ -11,11 +12,38 @@ import { getImportAgentChatService } from './ImportAgentChatService.js';
 const FACILITATOR_DIR = path.join(homedir(), 'Ideate', 'facilitator');
 const CHATROOMS_DIR = path.join(homedir(), 'Ideate', 'chatrooms');
 const IDEA_AGENT_DIR = path.join(homedir(), 'Ideate', 'idea-agent');
+const PLAN_AGENT_DIR = path.join(homedir(), 'Ideate', 'plan-agent');
 
 /**
  * Unified session type across all chat systems
  */
-export type SessionType = 'facilitator' | 'chatroom' | 'ideaagent' | 'importagent';
+export type SessionType = 'facilitator' | 'chatroom' | 'ideaagent' | 'planagent' | 'importagent';
+
+/**
+ * In-flight request status
+ */
+export type InFlightStatus = 'pending' | 'streaming' | 'completed' | 'error';
+
+/**
+ * In-flight request representation
+ */
+export interface InFlightRequest {
+  id: string;
+  sessionType: SessionType;
+  sessionId: string;
+  status: InFlightStatus;
+  startTime: number;
+  userMessage: string;
+  /** Partial response text (for streaming) */
+  partialResponse?: string;
+  /** Error message if failed */
+  error?: string;
+  /** Token usage so far */
+  tokenUsage?: {
+    inputTokens: number;
+    outputTokens: number;
+  };
+}
 
 /**
  * Unified session representation
@@ -123,17 +151,119 @@ interface DiagnosticEntry {
 }
 
 /**
+ * Callback for in-flight request updates
+ */
+export type InFlightUpdateCallback = (request: InFlightRequest) => void;
+
+/**
  * Service for aggregating diagnostics data from all chat systems.
  * Provides unified view of sessions and messages across Facilitator, ChatRoom, and IdeaAgent.
  */
 export class ClaudeDiagnosticsService {
   private facilitatorService: FacilitatorService | null = null;
 
+  /** Active in-flight requests keyed by request ID */
+  private inFlightRequests: Map<string, InFlightRequest> = new Map();
+
+  /** Callbacks to notify when in-flight requests change */
+  private inFlightUpdateCallbacks: Set<InFlightUpdateCallback> = new Set();
+
   /**
    * Set the facilitator service reference for accessing diagnostics
    */
   setFacilitatorService(service: FacilitatorService): void {
     this.facilitatorService = service;
+  }
+
+  // ========== In-Flight Request Tracking ===========
+
+  /**
+   * Register a callback for in-flight request updates
+   */
+  onInFlightUpdate(callback: InFlightUpdateCallback): () => void {
+    this.inFlightUpdateCallbacks.add(callback);
+    return () => this.inFlightUpdateCallbacks.delete(callback);
+  }
+
+  /**
+   * Get all active in-flight requests
+   */
+  getInFlightRequests(): InFlightRequest[] {
+    return Array.from(this.inFlightRequests.values());
+  }
+
+  /**
+   * Start tracking an in-flight request
+   */
+  startRequest(
+    sessionType: SessionType,
+    sessionId: string,
+    userMessage: string
+  ): string {
+    const id = `req-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    const request: InFlightRequest = {
+      id,
+      sessionType,
+      sessionId,
+      status: 'pending',
+      startTime: Date.now(),
+      userMessage,
+    };
+    this.inFlightRequests.set(id, request);
+    this.notifyInFlightUpdate(request);
+    console.log(`[ClaudeDiagnostics] Started request ${id} for ${sessionType}:${sessionId}`);
+    return id;
+  }
+
+  /**
+   * Update an in-flight request's status
+   */
+  updateRequest(
+    requestId: string,
+    updates: Partial<Pick<InFlightRequest, 'status' | 'partialResponse' | 'tokenUsage' | 'error'>>
+  ): void {
+    const request = this.inFlightRequests.get(requestId);
+    if (!request) return;
+
+    Object.assign(request, updates);
+    this.notifyInFlightUpdate(request);
+  }
+
+  /**
+   * Complete an in-flight request (success or error)
+   */
+  completeRequest(
+    requestId: string,
+    error?: string
+  ): void {
+    const request = this.inFlightRequests.get(requestId);
+    if (!request) return;
+
+    request.status = error ? 'error' : 'completed';
+    if (error) request.error = error;
+
+    this.notifyInFlightUpdate(request);
+
+    // Remove from active requests after a short delay so UI can show completion
+    setTimeout(() => {
+      this.inFlightRequests.delete(requestId);
+    }, 2000);
+
+    const duration = Date.now() - request.startTime;
+    console.log(`[ClaudeDiagnostics] Completed request ${requestId} (${request.status}) in ${duration}ms`);
+  }
+
+  /**
+   * Notify all callbacks of an in-flight update
+   */
+  private notifyInFlightUpdate(request: InFlightRequest): void {
+    for (const callback of this.inFlightUpdateCallbacks) {
+      try {
+        callback(request);
+      } catch (error) {
+        console.error('[ClaudeDiagnostics] Error in in-flight update callback:', error);
+      }
+    }
   }
 
   /**
@@ -164,6 +294,10 @@ export class ClaudeDiagnosticsService {
     const ideaAgentSessions = await this.getIdeaAgentSessions();
     sessions.push(...ideaAgentSessions);
 
+    // Get plan agent sessions
+    const planAgentSessions = await this.getPlanAgentSessions();
+    sessions.push(...planAgentSessions);
+
     // Get import agent sessions
     const importAgentSessions = await this.getImportAgentSessions();
     sessions.push(...importAgentSessions);
@@ -189,6 +323,8 @@ export class ClaudeDiagnosticsService {
         return this.getChatRoomMessages(sessionId, limit);
       case 'ideaagent':
         return this.getIdeaAgentMessages(sessionId, limit);
+      case 'planagent':
+        return this.getPlanAgentMessages(sessionId, limit);
       case 'importagent':
         return this.getImportAgentMessages(sessionId, limit);
       default:
@@ -435,6 +571,73 @@ export class ClaudeDiagnosticsService {
     return messages;
   }
 
+  // ========== Private: Plan Agent ===========
+
+  private async getPlanAgentSessions(): Promise<ClaudeSession[]> {
+    const sessions: ClaudeSession[] = [];
+
+    try {
+      const files = await fs.readdir(PLAN_AGENT_DIR);
+      const metaFiles = files.filter((f) => f.endsWith('.meta.json'));
+
+      for (const file of metaFiles) {
+        try {
+          const metaPath = path.join(PLAN_AGENT_DIR, file);
+          const content = await fs.readFile(metaPath, 'utf-8');
+          const metadata: PlanAgentChatMetadata = JSON.parse(content);
+
+          sessions.push({
+            id: metadata.ideaId,
+            type: 'planagent',
+            name: `Plan: ${metadata.ideaId}`,
+            messageCount: metadata.messageCount,
+            lastActivity: new Date(metadata.lastUpdated).getTime(),
+            metadata: {
+              ideaId: metadata.ideaId,
+            },
+          });
+        } catch {
+          // Skip invalid files
+        }
+      }
+    } catch {
+      // Directory might not exist yet
+    }
+
+    return sessions;
+  }
+
+  private async getPlanAgentMessages(ideaId: string, limit: number): Promise<SessionMessage[]> {
+    const messages: SessionMessage[] = [];
+
+    try {
+      const messagesPath = path.join(PLAN_AGENT_DIR, `${ideaId}.messages.jsonl`);
+      const content = await fs.readFile(messagesPath, 'utf-8');
+      const lines = content.trim().split('\n').filter((line) => line.length > 0);
+
+      for (const line of lines.slice(-limit)) {
+        try {
+          const msg: PlanAgentMessage = JSON.parse(line);
+
+          messages.push({
+            id: msg.id,
+            sessionId: ideaId,
+            sessionType: 'planagent',
+            role: msg.role,
+            content: msg.content,
+            timestamp: msg.timestamp,
+          });
+        } catch {
+          // Skip invalid lines
+        }
+      }
+    } catch {
+      // File might not exist
+    }
+
+    return messages;
+  }
+
   // ========== Private: Import Agent ===========
 
   private async getImportAgentSessions(): Promise<ClaudeSession[]> {
@@ -524,6 +727,10 @@ export class ClaudeDiagnosticsService {
 
     if (!sessionType || sessionType === 'ideaagent') {
       await clearDir(IDEA_AGENT_DIR);
+    }
+
+    if (!sessionType || sessionType === 'planagent') {
+      await clearDir(PLAN_AGENT_DIR);
     }
 
     // Import agent sessions are managed by ImportAgentChatService

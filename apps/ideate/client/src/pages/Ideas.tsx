@@ -174,6 +174,7 @@ export function Ideas() {
   }, [setSelectedIdeaId]);
 
   // Open a card (double click or Enter key)
+  // Always uses IdeaWorkspaceOverlay which auto-detects the phase from idea status
   const handleCardOpen = useCallback(async (ideaId: string) => {
     setSelectedIdeaId(ideaId);
     setIsLoadingIdea(true);
@@ -182,16 +183,10 @@ export function Ideas() {
       // Fetch full idea with description
       const fullIdea = await getIdea(ideaId);
       if (fullIdea) {
-        // Open different overlay based on status
-        if (fullIdea.status === 'exploring') {
-          // Open planning overlay for ideas in exploring status
-          setPlanningIdea(fullIdea);
-          setShowPlanningOverlay(true);
-        } else {
-          // Open idea workspace for new ideas or editing
-          setEditingIdea(fullIdea);
-          setShowOverlay(true);
-        }
+        // Open in IdeaWorkspaceOverlay - it auto-detects phase based on idea.status
+        // (ideation for 'new'/'draft', planning for 'exploring')
+        setEditingIdea(fullIdea);
+        setShowOverlay(true);
       }
     } catch (err) {
       console.error('Failed to load idea:', err);
@@ -216,14 +211,11 @@ export function Ideas() {
   }, [handleCloseOverlay]);
 
   // Handle status change from IdeaWorkspaceOverlay (e.g., transitioning to planning)
-  const handleStatusChange = useCallback((idea: Idea, newStatus: string) => {
-    if (newStatus === 'exploring') {
-      // Close the idea overlay and open planning overlay
-      setShowOverlay(false);
-      setEditingIdea(null);
-      setPlanningIdea(idea);
-      setShowPlanningOverlay(true);
-    }
+  // The IdeaWorkspaceOverlay handles phase transitions internally.
+  // We intentionally do NOT update state here to avoid triggering a re-render cascade
+  // that could cause the overlay to reset. The idea will be refetched when the overlay closes.
+  const handleStatusChange = useCallback((_idea: Idea, _newStatus: string) => {
+    // No-op: IdeaWorkspaceOverlay handles the transition internally
   }, []);
 
   // Handle closing planning overlay

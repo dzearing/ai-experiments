@@ -1,12 +1,13 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Slide, Button, IconButton, SplitPane, Spinner, Dialog } from '@ui-kit/react';
+import { Slide, Button, IconButton, SplitPane, Spinner } from '@ui-kit/react';
 import { CloseIcon } from '@ui-kit/icons/CloseIcon';
 import { TrashIcon } from '@ui-kit/icons/TrashIcon';
 import { ArrowRightIcon } from '@ui-kit/icons/ArrowRightIcon';
 import { PlayIcon } from '@ui-kit/icons/PlayIcon';
 import { FileIcon } from '@ui-kit/icons/FileIcon';
 import { ListIcon } from '@ui-kit/icons/ListIcon';
+import { EditIcon } from '@ui-kit/icons/EditIcon';
 import { ChatPanel, ChatInput, ThinkingIndicator, MessageQueue, OpenQuestionsResolver, type ChatInputSubmitData, type ChatInputRef, type ChatPanelMessage, type QueuedMessage } from '@ui-kit/react-chat';
 import { MarkdownCoEditor, type ViewMode, type CoAuthor } from '@ui-kit/react-markdown';
 import { useAuth } from '../../contexts/AuthContext';
@@ -19,6 +20,9 @@ import { PlanView } from '../PlanView';
 import { YJS_WS_URL } from '../../config';
 import type { Idea, CreateIdeaInput, IdeaPlan } from '../../types/idea';
 import styles from './IdeaWorkspaceOverlay.module.css';
+
+// Debug: track component mount/unmount
+let overlayInstanceId = 0;
 
 // Generate a unique session ID for new ideas
 function generateSessionId(): string {
@@ -146,6 +150,9 @@ export interface ThingContext {
 /** Workspace phases */
 export type WorkspacePhase = 'ideation' | 'planning';
 
+/** Resource tabs for the workspace */
+export type ResourceTab = 'idea-doc' | 'impl-plan' | 'exec-plan';
+
 export interface IdeaWorkspaceOverlayProps {
   /** Idea to edit (null for creating a new idea) */
   idea: Idea | null;
@@ -165,8 +172,12 @@ export interface IdeaWorkspaceOverlayProps {
   onStatusChange?: (idea: Idea, newStatus: string) => void;
   /** Initial prompt to automatically send to the idea agent when creating a new idea */
   initialPrompt?: string;
+  /** Initial greeting from the agent (overrides the generated greeting) */
+  initialGreeting?: string;
   /** Initial phase when opening an existing idea */
   initialPhase?: WorkspacePhase;
+  /** Callback when user wants to start execution with a plan */
+  onStartExecution?: (plan: IdeaPlan) => void;
 }
 
 /**
@@ -186,8 +197,19 @@ export function IdeaWorkspaceOverlay({
   initialThingContext,
   onStatusChange,
   initialPrompt,
+  initialGreeting,
   initialPhase,
+  onStartExecution,
 }: IdeaWorkspaceOverlayProps) {
+  // Debug: track this instance
+  const instanceIdRef = useRef(++overlayInstanceId);
+  useEffect(() => {
+    console.log(`[IdeaWorkspaceOverlay #${instanceIdRef.current}] MOUNTED, idea=${idea?.id || 'new'}, open=${open}`);
+    return () => {
+      console.log(`[IdeaWorkspaceOverlay #${instanceIdRef.current}] UNMOUNTED`);
+    };
+  }, []); // Only run on mount/unmount
+
   const { user } = useAuth();
   const { createIdea, updateIdea, moveIdea } = useIdeas();
 
@@ -206,14 +228,22 @@ export function IdeaWorkspaceOverlay({
   // Track the current idea (may be created during ideation phase)
   const [currentIdea, setCurrentIdea] = useState<Idea | null>(idea);
 
+  // Resource tab state - which document/asset is being viewed
+  const [activeTab, setActiveTab] = useState<ResourceTab>('idea-doc');
+
+  // Plan state - tracks the implementation plan from the Plan Agent
+  const [plan, setPlan] = useState<Partial<IdeaPlan> | null>(null);
+
   // Session ID for new ideas - stable per component instance
   // Content is cleared on close instead of creating a new room
   const [sessionId] = useState(() => generateSessionId());
 
   // Document ID for Yjs room: idea-doc-{ideaId} or idea-doc-new-{sessionId}
+  // Use currentIdea?.id to support transitioning from new idea to saved idea
   const documentId = useMemo(() => {
-    return idea?.id ? `idea-doc-${idea.id}` : `idea-doc-new-${sessionId}`;
-  }, [idea?.id, sessionId]);
+    const id = currentIdea?.id || idea?.id;
+    return id ? `idea-doc-${id}` : `idea-doc-new-${sessionId}`;
+  }, [currentIdea?.id, idea?.id, sessionId]);
 
   // Document content state (markdown with title, summary, tags, description)
   const [content, setContent] = useState('');
@@ -222,10 +252,15 @@ export function IdeaWorkspaceOverlay({
   const [viewMode, setViewMode] = useState<ViewMode>('preview');
   const [isInitialized, setIsInitialized] = useState(false);
 
+  // Track document content to migrate when room changes (new idea -> saved idea)
+  // Using state (not ref) so we can properly react to changes
+  const [pendingContentMigration, setPendingContentMigration] = useState<string | null>(null);
+  // Track the previous documentId to detect room changes
+  const prevDocumentIdRef = useRef<string | null>(null);
+
   const [isBackdropVisible, setIsBackdropVisible] = useState(open);
   const [queuedMessages, setQueuedMessages] = useState<QueuedMessage[]>([]);
   const [inputContent, setInputContent] = useState('');
-  const [showConfirmClose, setShowConfirmClose] = useState(false);
   const isProcessingQueueRef = useRef(false);
   const chatInputRef = useRef<ChatInputRef>(null);
 
@@ -278,6 +313,47 @@ export function IdeaWorkspaceOverlay({
       }));
   }, [yjsCoAuthors]);
 
+  // Implementation Plan document ID for Yjs room: impl-plan-{ideaId}
+  const implPlanDocumentId = useMemo(() => {
+    return (currentIdea?.id || idea?.id) ? `impl-plan-${currentIdea?.id || idea?.id}` : null;
+  }, [currentIdea?.id, idea?.id]);
+
+  // Implementation Plan content state
+  const [implPlanContent, setImplPlanContent] = useState('');
+  const [implPlanViewMode, setImplPlanViewMode] = useState<ViewMode>('preview');
+
+  // Yjs collaboration for Implementation Plan (only in planning phase)
+  const {
+    extensions: implPlanYjsExtensions,
+    coAuthors: implPlanYjsCoAuthors,
+    setContent: _implPlanYjsSetContent,
+    isSynced: isImplPlanYjsSynced,
+  } = useYjsCollaboration({
+    documentId: implPlanDocumentId || 'disabled',
+    serverUrl: phase === 'planning' && implPlanDocumentId ? YJS_WS_URL : undefined,
+    localUser: {
+      name: user?.name || 'Anonymous',
+      color: userColor,
+    },
+    onChange: (newContent) => {
+      setImplPlanContent(newContent);
+    },
+  });
+
+  // Convert Yjs co-authors to MarkdownCoEditor format for Implementation Plan
+  const implPlanCoAuthors: CoAuthor[] = useMemo(() => {
+    return implPlanYjsCoAuthors
+      .filter(author => author.cursor)
+      .map(author => ({
+        id: String(author.clientId),
+        name: author.name,
+        color: author.color,
+        selectionStart: author.cursor!.anchor,
+        selectionEnd: author.cursor!.head,
+        isAI: author.name === 'Plan Agent',
+      }));
+  }, [implPlanYjsCoAuthors]);
+
   // Parse content to get structured fields
   const parsedContent = useMemo(() => parseMarkdownContent(content), [content]);
 
@@ -321,38 +397,80 @@ export function IdeaWorkspaceOverlay({
     console.error('[IdeaWorkspace] Agent error:', err);
   }, []);
 
-  // Idea agent hook - only enabled when overlay is open
-  const {
-    messages: agentMessages,
-    isConnected,
-    isLoading: isAgentThinking,
-    isEditingDocument,
-    tokenUsage,
-    openQuestions,
-    showQuestionsResolver,
-    setShowQuestionsResolver,
-    resolveQuestions,
-    sendMessage: sendAgentMessage,
-    addLocalMessage,
-    clearHistory,
-    updateIdeaContext,
-    cancelRequest,
-  } = useIdeaAgent({
+  // Handle plan updates from Plan Agent
+  const handlePlanUpdate = useCallback((newPlan: Partial<IdeaPlan>) => {
+    setPlan(newPlan);
+  }, []);
+
+  // Build plan context for the Plan Agent
+  const planIdeaContext: PlanIdeaContext = useMemo(() => ({
+    id: currentIdea?.id || idea?.id || 'new',
+    title: parsedContent.title.trim() || currentIdea?.title || idea?.title || 'New Idea',
+    summary: parsedContent.summary.trim() || currentIdea?.summary || idea?.summary || '',
+    description: parsedContent.description.trim() || currentIdea?.description || idea?.description || undefined,
+    tags: parsedContent.tags.length > 0 ? parsedContent.tags : (currentIdea?.tags || idea?.tags || []),
+    status: currentIdea?.status || idea?.status || 'new',
+  }), [currentIdea, idea, parsedContent]);
+
+  // Idea agent hook - only enabled when overlay is open AND in ideation phase
+  const ideaAgent = useIdeaAgent({
     ideaId: idea?.id || null,
     userId: user?.id || '',
     userName: user?.name || 'Anonymous',
     ideaContext,
     documentRoomName: documentId,
+    initialGreeting,
     onError: handleAgentError,
-    enabled: open,
+    enabled: open && phase === 'ideation',
   });
+
+  // Plan agent hook - only enabled when overlay is open AND in planning phase
+  const planAgent = usePlanAgent({
+    ideaId: currentIdea?.id || idea?.id || '',
+    userId: user?.id || '',
+    userName: user?.name || 'Anonymous',
+    ideaContext: planIdeaContext,
+    documentRoomName: implPlanDocumentId || undefined,
+    onError: handleAgentError,
+    onPlanUpdate: handlePlanUpdate,
+    enabled: open && phase === 'planning' && !!(currentIdea?.id || idea?.id),
+  });
+
+  // Select active agent based on phase
+  const activeAgent = phase === 'planning' ? planAgent : ideaAgent;
+  const agentMessages = activeAgent.messages;
+  const isConnected = activeAgent.isConnected;
+  const isAgentThinking = activeAgent.isLoading;
+  const tokenUsage = activeAgent.tokenUsage;
+  const sendAgentMessage = activeAgent.sendMessage;
+  const addLocalMessage = activeAgent.addLocalMessage;
+  const clearHistory = activeAgent.clearHistory;
+  const cancelRequest = activeAgent.cancelRequest;
+
+  // Agent-specific properties that depend on phase
+  const isEditingDocument = phase === 'planning'
+    ? planAgent.isEditingDocument
+    : ideaAgent.isEditingDocument;
+  const openQuestions = phase === 'planning'
+    ? planAgent.openQuestions
+    : ideaAgent.openQuestions;
+  const showQuestionsResolver = phase === 'planning'
+    ? planAgent.showQuestionsResolver
+    : ideaAgent.showQuestionsResolver;
+  const setShowQuestionsResolver = phase === 'planning'
+    ? planAgent.setShowQuestionsResolver
+    : ideaAgent.setShowQuestionsResolver;
+  const resolveQuestions = phase === 'planning'
+    ? planAgent.resolveQuestions
+    : ideaAgent.resolveQuestions;
+  const updateIdeaContext = ideaAgent.updateIdeaContext;
 
   // Update the agent when ideaContext changes (especially thingContext)
   useEffect(() => {
-    if (isConnected && ideaContext) {
+    if (phase === 'ideation' && ideaAgent.isConnected && ideaContext) {
       updateIdeaContext(ideaContext);
     }
-  }, [isConnected, ideaContext, updateIdeaContext]);
+  }, [phase, ideaAgent.isConnected, ideaContext, updateIdeaContext]);
 
   // Chat commands (/clear, /help)
   const { commands, handleCommand } = useChatCommands({
@@ -389,67 +507,41 @@ export function IdeaWorkspaceOverlay({
     }));
   }, [agentMessages, user?.name]);
 
-  // Check if we have at least one agent response (not currently streaming)
-  const hasAgentResponse = useMemo(() => {
-    return agentMessages.some(msg => msg.role === 'assistant' && !msg.isStreaming);
-  }, [agentMessages]);
+  // Get suggested responses from the active agent based on current phase
+  const agentSuggestedResponses = phase === 'planning'
+    ? planAgent.suggestedResponses
+    : ideaAgent.suggestedResponses;
 
-  // Compute dynamic suggestions based on context and phase
-  const footerSuggestions = useMemo(() => {
-    // Don't show suggestions while agent is thinking or if no response yet
-    if (!hasAgentResponse || isAgentThinking) return [];
+  // Use agent-provided suggestions or empty array if none
+  const footerSuggestions = agentSuggestedResponses || [];
 
-    const suggestions: { label: string; message: string }[] = [];
-
-    // Phase-specific suggestions
-    if (phase === 'planning') {
-      // Planning phase suggestions
-      suggestions.push({ label: 'Create an implementation plan', message: 'Can you help me create an implementation plan?' });
-      suggestions.push({ label: 'Draw a diagram', message: 'Can you help me visualize the architecture with a diagram?' });
-      suggestions.push({ label: 'Create a UI mock', message: 'Can you help me create a UI mockup?' });
-      return suggestions;
+  // Detect room changes and prepare for migration
+  useEffect(() => {
+    if (prevDocumentIdRef.current && prevDocumentIdRef.current !== documentId) {
+      // Room is changing - capture current content for migration
+      // This runs BEFORE the Yjs hook switches rooms
+      console.log('[IdeaWorkspace] Room changing, capturing content for migration');
+      setPendingContentMigration(content);
+      setIsInitialized(false);
     }
-
-    // Ideation phase suggestions
-    // If there are open questions, suggest resolving them
-    if (openQuestions && openQuestions.length > 0) {
-      suggestions.push({
-        label: `Answer ${openQuestions.length} question${openQuestions.length > 1 ? 's' : ''}`,
-        message: 'I\'d like to answer the open questions'
-      });
-    }
-
-    // Check if the idea has substantive content
-    const hasSubstantiveContent = parsedContent.title.trim() &&
-      parsedContent.title !== 'Untitled Idea' &&
-      parsedContent.summary.trim();
-
-    if (hasSubstantiveContent) {
-      // If no open questions and content looks complete, suggest proceeding
-      if (!openQuestions || openQuestions.length === 0) {
-        suggestions.push({ label: 'Looks good!', message: 'The idea looks good to me!' });
-        suggestions.push({ label: 'Add more detail', message: 'Can you add more details to the description?' });
-      } else {
-        // Has content but also has questions
-        suggestions.push({ label: 'Expand features', message: 'Can you expand on the key features?' });
-        suggestions.push({ label: 'Clarify scope', message: 'Can you help clarify the scope?' });
-      }
-    } else {
-      // Idea is still being formed
-      suggestions.push({ label: 'Help me brainstorm', message: 'Help me brainstorm more ideas' });
-      suggestions.push({ label: 'Suggest features', message: 'What features would you suggest?' });
-    }
-
-    // Always offer to refine
-    suggestions.push({ label: 'Any concerns?', message: 'Do you have any concerns about this idea?' });
-
-    // Limit to 3 suggestions
-    return suggestions.slice(0, 3);
-  }, [hasAgentResponse, isAgentThinking, openQuestions, parsedContent, phase]);
+    prevDocumentIdRef.current = documentId;
+  }, [documentId, content]);
 
   // Initialize Yjs document content when synced
   useEffect(() => {
     if (!isYjsSynced || isInitialized) return;
+
+    // Check if we have pending content from a room migration (new idea -> saved idea)
+    if (pendingContentMigration) {
+      console.log('[IdeaWorkspace] Migrating content to new Yjs room');
+      yjsSetContent(pendingContentMigration);
+      lastSavedContent.current = pendingContentMigration;
+      hasDocumentChanges.current = false;
+      setPendingContentMigration(null);
+      setIsInitialized(true);
+      setError(null);
+      return;
+    }
 
     // Build initial content from idea or empty template
     const initialContent = idea
@@ -469,21 +561,53 @@ export function IdeaWorkspaceOverlay({
 
     setIsInitialized(true);
     setError(null);
-  }, [isYjsSynced, isInitialized, idea, content, yjsSetContent]);
+  }, [isYjsSynced, isInitialized, idea, content, yjsSetContent, pendingContentMigration]);
 
   // Reset state when overlay closes
   useEffect(() => {
     if (!open) {
       setIsInitialized(false);
-      // For new ideas, clear the content when closing so next open starts fresh
-      if (isNewIdea) {
+      // Reset plan state
+      setPlan(null);
+      setActiveTab('idea-doc');
+      setPendingContentMigration(null);
+      // Reset phase to ideation when closing
+      setPhase('ideation');
+      // For truly new ideas (not transitioned to saved), clear content when closing
+      // so next open starts fresh. Don't clear if we have a currentIdea (saved during session)
+      if (isNewIdea && !currentIdea) {
         setContent('');
         setError(null);
         // Clear the Yjs document content
         yjsSetContent('');
       }
+      // Reset currentIdea for next session
+      setCurrentIdea(null);
+      // Reset the documentId tracker for next session
+      prevDocumentIdRef.current = null;
     }
-  }, [open, isNewIdea, yjsSetContent]);
+  }, [open, isNewIdea, currentIdea, yjsSetContent]);
+
+  // Auto-switch to Implementation Plan tab when entering planning phase
+  useEffect(() => {
+    if (phase === 'planning') {
+      setActiveTab('impl-plan');
+    }
+  }, [phase]);
+
+  // Signal to the Plan Agent that Yjs is ready when the impl plan syncs
+  // This allows the agent to start writing to the document without race conditions
+  useEffect(() => {
+    if (phase === 'planning' && isImplPlanYjsSynced && planAgent.isConnected) {
+      console.log('[IdeaWorkspace] Impl plan Yjs synced, sending yjs_ready');
+      planAgent.sendYjsReady();
+    }
+  }, [phase, isImplPlanYjsSynced, planAgent.isConnected, planAgent.sendYjsReady]);
+
+  // Note: Planning initialization is now handled on the SERVER side.
+  // When the Plan Agent connects and there's no history, the server automatically
+  // starts designing. This avoids fragile client-side initialization that would
+  // re-trigger on every component mount/unmount.
 
   // Sync backdrop visibility with open state
   useEffect(() => {
@@ -509,15 +633,20 @@ export function IdeaWorkspaceOverlay({
 
   // Track if initial prompt has been sent
   const initialPromptSentRef = useRef(false);
+  // Use ref for sendSilentMessage to avoid effect re-running on every render
+  const sendSilentMessageRef = useRef(ideaAgent.sendSilentMessage);
+  sendSilentMessageRef.current = ideaAgent.sendSilentMessage;
 
   // Send initial prompt to agent when overlay opens and agent is connected
+  // Use sendSilentMessage so the user's prompt doesn't appear in the chat
+  // (they already typed it in the facilitator chat)
   useEffect(() => {
-    if (open && isConnected && initialPrompt && !initialPromptSentRef.current) {
+    if (open && isConnected && initialPrompt && !initialPromptSentRef.current && phase === 'ideation') {
       // Mark as sent immediately to prevent double-sending
       initialPromptSentRef.current = true;
       // Small delay to ensure agent is ready
       const timerId = setTimeout(() => {
-        sendAgentMessage(initialPrompt);
+        sendSilentMessageRef.current(initialPrompt);
       }, 500);
       return () => clearTimeout(timerId);
     }
@@ -525,7 +654,7 @@ export function IdeaWorkspaceOverlay({
     if (!open) {
       initialPromptSentRef.current = false;
     }
-  }, [open, isConnected, initialPrompt, sendAgentMessage]);
+  }, [open, isConnected, initialPrompt, phase]);
 
   // Handle cancel operation
   const handleCancelOperation = useCallback(() => {
@@ -539,16 +668,13 @@ export function IdeaWorkspaceOverlay({
     });
   }, [cancelRequest, addLocalMessage]);
 
-  // Handle close with unsaved changes check
+  // Handle close - auto-saves valid content, so we can just close
   const handleCloseRequest = useCallback(() => {
-    if (hasDocumentChanges.current && isInitialized) {
-      setShowConfirmClose(true);
-    } else {
-      onClose();
-    }
-  }, [onClose, isInitialized]);
+    // Auto-save effect will handle saving valid content when overlay closes
+    onClose();
+  }, [onClose]);
 
-  // Handle escape key - cancel if busy, check unsaved changes if not
+  // Handle escape key - cancel if busy, otherwise close
   const handleEscape = useCallback(
     (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -564,7 +690,7 @@ export function IdeaWorkspaceOverlay({
           return;
         }
 
-        // Otherwise, check for unsaved changes before closing
+        // Otherwise close (auto-save will handle valid content)
         event.preventDefault();
         handleCloseRequest();
       }
@@ -603,91 +729,55 @@ export function IdeaWorkspaceOverlay({
     }
   }, [content, isInitialized]);
 
-  // Auto-save existing ideas when overlay closes
+  // Auto-save ideas when overlay closes
   useEffect(() => {
-    // Only auto-save when closing an existing idea with changes
-    if (!open && idea && hasDocumentChanges.current && isInitialized) {
+    // Only auto-save when closing with changes
+    if (!open && hasDocumentChanges.current && isInitialized) {
       const { title, summary, tags, description } = parseMarkdownContent(content);
 
       // Only save if we have valid content
       if (title.trim() && title !== 'Untitled Idea' && summary.trim()) {
-        // Fire and forget - don't wait for this
-        updateIdea(idea.id, {
-          title: title.trim(),
-          summary: summary.trim(),
-          tags,
-          description: description.trim() || undefined,
-        }).then((updated) => {
-          if (updated) {
-            onSuccess?.(updated);
-          }
-        }).catch((err) => {
-          console.error('[IdeaWorkspace] Auto-save failed:', err);
-        });
+        if (idea || currentIdea) {
+          // Update existing idea
+          const ideaToUpdate = currentIdea || idea;
+          updateIdea(ideaToUpdate!.id, {
+            title: title.trim(),
+            summary: summary.trim(),
+            tags,
+            description: description.trim() || undefined,
+          }).then((updated) => {
+            if (updated) {
+              onSuccess?.(updated);
+            }
+          }).catch((err) => {
+            console.error('[IdeaWorkspace] Auto-save failed:', err);
+          });
+        } else {
+          // Create new idea on close if it has valid content
+          const input: CreateIdeaInput = {
+            title: title.trim(),
+            summary: summary.trim(),
+            tags,
+            description: description.trim() || undefined,
+            workspaceId,
+            thingIds: initialThingIds,
+          };
+          createIdea(input).then((newIdea) => {
+            onSuccess?.(newIdea);
+          }).catch((err) => {
+            console.error('[IdeaWorkspace] Auto-create failed:', err);
+          });
+        }
       }
 
       // Reset tracking
       hasDocumentChanges.current = false;
     }
-  }, [open, idea, content, isInitialized, updateIdea, onSuccess]);
-
-  const handleSave = useCallback(async () => {
-    const { title, summary, tags, description } = parsedContent;
-
-    if (!title.trim() || title === 'Untitled Idea') {
-      setError('Title is required');
-      return;
-    }
-    if (!summary.trim()) {
-      setError('Summary is required');
-      return;
-    }
-
-    setIsSaving(true);
-    setError(null);
-
-    try {
-      if (isNewIdea) {
-        const input: CreateIdeaInput = {
-          title: title.trim(),
-          summary: summary.trim(),
-          tags,
-          description: description.trim() || undefined,
-          workspaceId,
-          thingIds: initialThingIds,
-        };
-        const newIdea = await createIdea(input);
-        // Mark as saved so auto-save doesn't trigger
-        lastSavedContent.current = content;
-        hasDocumentChanges.current = false;
-        onSuccess?.(newIdea);
-        onClose();
-      } else if (idea) {
-        const updated = await updateIdea(idea.id, {
-          title: title.trim(),
-          summary: summary.trim(),
-          tags,
-          description: description.trim() || undefined,
-        });
-        if (updated) {
-          // Mark as saved so auto-save doesn't trigger
-          lastSavedContent.current = content;
-          hasDocumentChanges.current = false;
-          onSuccess?.(updated);
-          onClose();
-        } else {
-          setError('Failed to update idea');
-        }
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save idea');
-    } finally {
-      setIsSaving(false);
-    }
-  }, [parsedContent, isNewIdea, idea, workspaceId, createIdea, updateIdea, onSuccess, onClose, content, initialThingIds]);
+  }, [open, idea, currentIdea, content, isInitialized, updateIdea, createIdea, onSuccess, workspaceId, initialThingIds]);
 
   // Handle transition to planning mode
   const handleStartPlanning = useCallback(async () => {
+    console.log(`[IdeaWorkspaceOverlay #${instanceIdRef.current}] handleStartPlanning START`);
     const { title, summary, tags, description } = parsedContent;
 
     if (!title.trim() || title === 'Untitled Idea') {
@@ -707,6 +797,7 @@ export function IdeaWorkspaceOverlay({
 
       if (isNewIdea || !currentIdea) {
         // Create new idea first
+        console.log(`[IdeaWorkspaceOverlay #${instanceIdRef.current}] Creating new idea...`);
         const input: CreateIdeaInput = {
           title: title.trim(),
           summary: summary.trim(),
@@ -716,6 +807,7 @@ export function IdeaWorkspaceOverlay({
           thingIds: initialThingIds,
         };
         ideaToTransition = await createIdea(input);
+        console.log(`[IdeaWorkspaceOverlay #${instanceIdRef.current}] Idea created: ${ideaToTransition.id}`);
         lastSavedContent.current = content;
         hasDocumentChanges.current = false;
       } else {
@@ -736,23 +828,54 @@ export function IdeaWorkspaceOverlay({
       }
 
       // Move idea to 'exploring' (planning) status
+      console.log(`[IdeaWorkspaceOverlay #${instanceIdRef.current}] Moving idea to exploring status...`);
       await moveIdea(ideaToTransition.id, 'exploring');
       const transitionedIdea = { ...ideaToTransition, status: 'exploring' as const };
 
-      // Update local state
+      // Update local state - this will change documentId which triggers the
+      // room change detection effect to capture content for migration
+      console.log(`[IdeaWorkspaceOverlay #${instanceIdRef.current}] Setting currentIdea...`);
       setCurrentIdea(transitionedIdea);
 
       // Notify parent for kanban update (but don't close)
+      console.log(`[IdeaWorkspaceOverlay #${instanceIdRef.current}] Calling onStatusChange...`);
       onStatusChange?.(transitionedIdea, 'exploring');
 
       // Transition to planning phase in the UI
+      console.log(`[IdeaWorkspaceOverlay #${instanceIdRef.current}] Setting phase to planning...`);
       setPhase('planning');
+      // Switch to Implementation Plan tab when entering planning phase
+      setActiveTab('impl-plan');
+      console.log(`[IdeaWorkspaceOverlay #${instanceIdRef.current}] handleStartPlanning DONE`);
     } catch (err) {
+      console.error(`[IdeaWorkspaceOverlay #${instanceIdRef.current}] handleStartPlanning ERROR:`, err);
       setError(err instanceof Error ? err.message : 'Failed to save idea');
     } finally {
       setIsSaving(false);
     }
   }, [parsedContent, isNewIdea, currentIdea, workspaceId, createIdea, updateIdea, moveIdea, onStatusChange, content, initialThingIds]);
+
+  // Check if plan is ready for execution
+  const isPlanReady = useMemo(() => {
+    return plan?.phases && plan.phases.length > 0 && plan.phases.some(p => p.tasks && p.tasks.length > 0);
+  }, [plan]);
+
+  // Handle starting execution with the plan
+  const handleStartExecution = useCallback(() => {
+    if (plan && plan.phases && plan.phases.length > 0) {
+      const fullPlan: IdeaPlan = {
+        phases: plan.phases,
+        workingDirectory: plan.workingDirectory || '.',
+        repositoryUrl: plan.repositoryUrl,
+        branch: plan.branch,
+        isClone: plan.isClone,
+        workspaceId: plan.workspaceId,
+        createdAt: plan.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      onStartExecution?.(fullPlan);
+    }
+  }, [plan, onStartExecution]);
 
   // Process queued messages when AI finishes thinking - combine all into one message
   useEffect(() => {
@@ -856,16 +979,6 @@ export function IdeaWorkspaceOverlay({
                   : 'Edit Idea'}
             </h1>
             <div className={styles.headerActions}>
-              {phase === 'ideation' && (
-                <Button
-                  variant="primary"
-                  onClick={handleStartPlanning}
-                  disabled={isSaving || !parsedContent.title.trim() || parsedContent.title === 'Untitled Idea' || !parsedContent.summary.trim()}
-                  icon={<ArrowRightIcon />}
-                >
-                  Next: Planning
-                </Button>
-              )}
               <IconButton
                 icon={<CloseIcon />}
                 variant="ghost"
@@ -945,23 +1058,113 @@ export function IdeaWorkspaceOverlay({
                 </div>
               }
               second={
-                <div className={styles.editorPane}>
-                  <div className={styles.editorContent}>
-                    {/* Key based on documentId ensures fresh editor for each idea */}
-                    {/* Use defaultValue (uncontrolled) when using Yjs to avoid conflicts with ySync */}
-                    <MarkdownCoEditor
-                      key={`editor-${documentId}`}
-                      defaultValue={content}
-                      onChange={handleEditorChange}
-                      defaultMode={viewMode}
-                      onModeChange={setViewMode}
-                      placeholder="Start writing your idea..."
-                      fullPage
-                      extensions={yjsExtensions}
-                      disableBuiltInHistory
-                      coAuthors={coAuthors}
-                      pauseScrollSync={isEditingDocument}
-                    />
+                <div className={styles.resourcesPane}>
+                  {/* VS Code-style tab bar */}
+                  <div className={styles.tabBar}>
+                    <button
+                      className={`${styles.tab} ${activeTab === 'idea-doc' ? styles.active : ''}`}
+                      onClick={() => setActiveTab('idea-doc')}
+                      role="tab"
+                      aria-selected={activeTab === 'idea-doc'}
+                    >
+                      <FileIcon size={16} />
+                      Idea
+                    </button>
+                    {phase === 'planning' && (
+                      <>
+                        <button
+                          className={`${styles.tab} ${activeTab === 'impl-plan' ? styles.active : ''}`}
+                          onClick={() => setActiveTab('impl-plan')}
+                          role="tab"
+                          aria-selected={activeTab === 'impl-plan'}
+                        >
+                          <EditIcon size={16} />
+                          Design
+                        </button>
+                        <button
+                          className={`${styles.tab} ${activeTab === 'exec-plan' ? styles.active : ''}`}
+                          onClick={() => setActiveTab('exec-plan')}
+                          role="tab"
+                          aria-selected={activeTab === 'exec-plan'}
+                        >
+                          <ListIcon size={16} />
+                          Tasks
+                          {plan?.phases && plan.phases.length > 0 && (
+                            <span className={styles.tabBadge}>
+                              {plan.phases.length}
+                            </span>
+                          )}
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Tab content */}
+                  <div className={styles.tabContent}>
+                    {activeTab === 'idea-doc' && (
+                      <div className={styles.tabPanel}>
+                        {/* Key based on documentId ensures fresh editor for each idea */}
+                        {/* Use defaultValue (uncontrolled) when using Yjs to avoid conflicts with ySync */}
+                        {/* Only render editor when Yjs is synced to avoid content/extension mismatch */}
+                        {isYjsSynced ? (
+                          <MarkdownCoEditor
+                            key={`editor-${documentId}`}
+                            defaultValue={content}
+                            onChange={handleEditorChange}
+                            defaultMode={viewMode}
+                            onModeChange={setViewMode}
+                            placeholder="Start writing your idea..."
+                            fullPage
+                            extensions={yjsExtensions}
+                            disableBuiltInHistory
+                            coAuthors={coAuthors}
+                            pauseScrollSync={isEditingDocument}
+                          />
+                        ) : (
+                          <div className={styles.editorLoading}>
+                            <Spinner size="lg" />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {activeTab === 'impl-plan' && (
+                      <div className={styles.tabPanel}>
+                        {/* Implementation Plan markdown document */}
+                        {/* Only render editor when Yjs is synced to avoid content/extension mismatch */}
+                        {isImplPlanYjsSynced ? (
+                          <MarkdownCoEditor
+                            key={`impl-plan-editor-${implPlanDocumentId}`}
+                            defaultValue={implPlanContent}
+                            onChange={setImplPlanContent}
+                            defaultMode={implPlanViewMode}
+                            onModeChange={setImplPlanViewMode}
+                            placeholder="Start writing your implementation plan..."
+                            fullPage
+                            extensions={implPlanYjsExtensions}
+                            disableBuiltInHistory
+                            coAuthors={implPlanCoAuthors}
+                            pauseScrollSync={isEditingDocument && phase === 'planning'}
+                          />
+                        ) : (
+                          <div className={styles.editorLoading}>
+                            <Spinner size="lg" />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {activeTab === 'exec-plan' && (
+                      <div className={styles.tabPanel}>
+                        <PlanView
+                          plan={plan && plan.phases && plan.phases.length > 0 ? {
+                            phases: plan.phases,
+                            workingDirectory: plan.workingDirectory || '.',
+                            createdAt: plan.createdAt || new Date().toISOString(),
+                            updatedAt: plan.updatedAt || new Date().toISOString(),
+                          } : null}
+                          showWorkingDirectory
+                        />
+                      </div>
+                    )}
                   </div>
 
                   {/* Error banner */}
@@ -978,9 +1181,8 @@ export function IdeaWorkspaceOverlay({
             />
           </div>
 
-          {/* Footer */}
+          {/* Footer - suggested responses on left, action button on right */}
           <footer className={styles.footer}>
-            {/* Always render container to maintain layout */}
             <div className={styles.footerSuggestions}>
               {footerSuggestions.map((suggestion, index) => (
                 <Button
@@ -994,49 +1196,31 @@ export function IdeaWorkspaceOverlay({
               ))}
             </div>
             <div className={styles.footerActions}>
-              <Button variant="ghost" onClick={handleCloseRequest} disabled={isSaving}>
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                onClick={handleSave}
-                disabled={isSaving || !parsedContent.title.trim() || parsedContent.title === 'Untitled Idea' || !parsedContent.summary.trim()}
-                icon={isSaving ? <Spinner size="sm" /> : undefined}
-              >
-                {isSaving ? 'Saving...' : isNewIdea ? 'Save Idea' : 'Save Changes'}
-              </Button>
+              {phase === 'ideation' && (
+                <Button
+                  variant="primary"
+                  onClick={handleStartPlanning}
+                  disabled={isSaving || !parsedContent.title.trim() || parsedContent.title === 'Untitled Idea' || !parsedContent.summary.trim()}
+                  icon={<ArrowRightIcon />}
+                >
+                  Next: Planning
+                </Button>
+              )}
+              {phase === 'planning' && (
+                <Button
+                  variant="primary"
+                  onClick={handleStartExecution}
+                  disabled={!isPlanReady || isAgentThinking}
+                  icon={<PlayIcon />}
+                >
+                  Execute
+                </Button>
+              )}
             </div>
           </footer>
         </div>
       </Slide>
 
-      {/* Confirm close dialog */}
-      <Dialog
-        open={showConfirmClose}
-        onClose={() => setShowConfirmClose(false)}
-        title="Discard changes?"
-        size="sm"
-        footer={
-          <div className={styles.dialogFooter}>
-            <Button variant="ghost" onClick={() => setShowConfirmClose(false)}>
-              Keep Editing
-            </Button>
-            <Button
-              variant="danger"
-              autoFocus
-              onClick={() => {
-                setShowConfirmClose(false);
-                hasDocumentChanges.current = false;
-                onClose();
-              }}
-            >
-              Discard
-            </Button>
-          </div>
-        }
-      >
-        <p>You have unsaved changes. Are you sure you want to close without saving?</p>
-      </Dialog>
     </div>
   );
 

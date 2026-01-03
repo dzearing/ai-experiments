@@ -85,6 +85,14 @@ export interface OpenQuestion {
 }
 
 /**
+ * Suggested response for the user to quickly reply
+ */
+export interface SuggestedResponse {
+  label: string;
+  message: string;
+}
+
+/**
  * Callbacks for streaming agent responses
  */
 export interface StreamCallbacks {
@@ -102,6 +110,8 @@ export interface StreamCallbacks {
   onTokenUsage?: (usage: TokenUsage) => void;
   /** Called when open questions are extracted from the response */
   onOpenQuestions?: (questions: OpenQuestion[]) => void;
+  /** Called when suggested responses are extracted from the response */
+  onSuggestedResponses?: (suggestions: SuggestedResponse[]) => void;
 }
 
 /**
@@ -216,14 +226,37 @@ function parseOpenQuestions(response: string): { questions: OpenQuestion[] | nul
 }
 
 /**
+ * Parse suggested responses from agent response
+ * Suggestions block appears at the end of the response
+ */
+function parseSuggestedResponses(response: string): { suggestions: SuggestedResponse[] | null; responseWithoutSuggestions: string } {
+  const suggestionsMatch = response.match(/<suggested_responses>\s*([\s\S]*?)\s*<\/suggested_responses>/);
+
+  if (!suggestionsMatch) {
+    return { suggestions: null, responseWithoutSuggestions: response };
+  }
+
+  try {
+    const suggestions = JSON.parse(suggestionsMatch[1]) as SuggestedResponse[];
+    // Remove the suggestions block from the response
+    const responseWithoutSuggestions = response.replace(/<suggested_responses>[\s\S]*?<\/suggested_responses>/, '').trim();
+    return { suggestions, responseWithoutSuggestions };
+  } catch {
+    console.error('[IdeaAgentService] Failed to parse suggested responses JSON');
+    return { suggestions: null, responseWithoutSuggestions: response };
+  }
+}
+
+/**
  * Check if a partial response contains the start of an edit block
  */
 function findEditBlockStart(text: string): number {
   const ideaUpdateStart = text.indexOf('<idea_update>');
   const docEditsStart = text.indexOf('<document_edits>');
   const openQuestionsStart = text.indexOf('<open_questions>');
+  const suggestedResponsesStart = text.indexOf('<suggested_responses>');
 
-  const starts = [ideaUpdateStart, docEditsStart, openQuestionsStart].filter(s => s >= 0);
+  const starts = [ideaUpdateStart, docEditsStart, openQuestionsStart, suggestedResponsesStart].filter(s => s >= 0);
   return starts.length > 0 ? Math.min(...starts) : -1;
 }
 
@@ -468,13 +501,18 @@ export class IdeaAgentService {
         }
       }
 
+      // Parse suggested responses FIRST (before any streaming of remaining content)
+      // This ensures the <suggested_responses> block never gets streamed to the client
+      const { suggestions, responseWithoutSuggestions: fullResponseClean } = parseSuggestedResponses(fullResponse);
+      let suggestionsToSend = suggestions;
+
       // Final parse to get chat response and handle document updates
-      let chatResponse = fullResponse;
+      let chatResponse = fullResponseClean;
 
       if (this.yjsClient && documentRoomName) {
         if (isNewIdea) {
           // For new ideas: parse <idea_update> and create full document
-          const { update, chatResponse: updateChatResponse } = parseIdeaUpdate(fullResponse);
+          const { update, chatResponse: updateChatResponse } = parseIdeaUpdate(fullResponseClean);
           if (update) {
             chatResponse = updateChatResponse;
 
@@ -498,13 +536,13 @@ export class IdeaAgentService {
             }
           } else {
             // No update block - stream any remaining content
-            if (fullResponse.length > streamedChatLength) {
-              callbacks.onTextChunk(fullResponse.slice(streamedChatLength), messageId);
+            if (fullResponseClean.length > streamedChatLength) {
+              callbacks.onTextChunk(fullResponseClean.slice(streamedChatLength), messageId);
             }
           }
         } else {
           // For existing ideas: parse <document_edits> and apply targeted edits
-          const { edits, chatResponse: editsChatResponse } = parseDocumentEdits(fullResponse);
+          const { edits, chatResponse: editsChatResponse } = parseDocumentEdits(fullResponseClean);
           if (edits && edits.length > 0) {
             chatResponse = editsChatResponse;
 
@@ -530,19 +568,25 @@ export class IdeaAgentService {
             }
           } else {
             // No edits - stream any remaining content
-            if (fullResponse.length > streamedChatLength) {
-              callbacks.onTextChunk(fullResponse.slice(streamedChatLength), messageId);
+            if (fullResponseClean.length > streamedChatLength) {
+              callbacks.onTextChunk(fullResponseClean.slice(streamedChatLength), messageId);
             }
           }
         }
       } else {
         // No Yjs client - just stream remaining content
-        if (fullResponse.length > streamedChatLength) {
-          callbacks.onTextChunk(fullResponse.slice(streamedChatLength), messageId);
+        if (fullResponseClean.length > streamedChatLength) {
+          callbacks.onTextChunk(fullResponseClean.slice(streamedChatLength), messageId);
         }
       }
 
-      // Save the assistant message (chat portion only)
+      // Send suggested responses (already parsed at start of final processing)
+      if (suggestionsToSend && suggestionsToSend.length > 0) {
+        console.log(`[IdeaAgentService] Found ${suggestionsToSend.length} suggested responses, sending to client`);
+        callbacks.onSuggestedResponses?.(suggestionsToSend);
+      }
+
+      // Save the assistant message (chat portion only, without suggestion blocks)
       const assistantMessage = await this.chatService.addMessage(
         ideaId,
         userId,
@@ -570,7 +614,7 @@ export class IdeaAgentService {
    */
   private findSafeStreamEnd(text: string): number {
     // Look for potential partial tags at the end
-    const potentialTagStarts = ['<idea_update', '<document_edits', '<open_questions', '<idea', '<doc', '<open'];
+    const potentialTagStarts = ['<idea_update', '<document_edits', '<open_questions', '<suggested_responses', '<idea', '<doc', '<open', '<suggested'];
     let safeEnd = text.length;
 
     for (const tagStart of potentialTagStarts) {
