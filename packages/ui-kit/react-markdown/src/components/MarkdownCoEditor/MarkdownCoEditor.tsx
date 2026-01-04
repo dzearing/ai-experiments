@@ -474,6 +474,7 @@ export const MarkdownCoEditor = forwardRef<MarkdownCoEditorRef, MarkdownCoEditor
                   showLineNumbers={showLineNumbers}
                   streaming={streaming}
                   streamingSpeed={streamingSpeed}
+                  enableDeepLinks={false}
                 />
               </div>
             </div>

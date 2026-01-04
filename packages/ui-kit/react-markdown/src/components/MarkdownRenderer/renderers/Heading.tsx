@@ -56,31 +56,15 @@ export function Heading({
     onHeadingClick?.(slug);
   };
 
-  const handleAnchorClick = (e: MouseEvent) => {
-    // Prevent default anchor navigation
-    e.preventDefault();
-    e.stopPropagation();
-    // Update URL hash without triggering navigation
-    if (typeof window !== 'undefined') {
-      window.history.pushState(null, '', `#${slug}`);
-    }
-    onHeadingClick?.(slug);
-  };
-
   return (
     <Tag
       id={slug}
       className={`${styles[`h${level}`]} ${isHighlighted ? styles.highlighted : ''}`}
       onClick={handleClick}
     >
-      <a
-        href={`#${slug}`}
-        className={styles.headingAnchor}
-        aria-hidden="true"
-        onClick={handleAnchorClick}
-      >
+      <span className={styles.headingAnchor} aria-hidden="true">
         #
-      </a>
+      </span>
       {children}
     </Tag>
   );

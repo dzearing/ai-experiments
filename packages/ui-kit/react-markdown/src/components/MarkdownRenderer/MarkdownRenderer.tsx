@@ -170,26 +170,32 @@ export function MarkdownRenderer({
 
   // Handle line click in code blocks
   const handleLineClick = useCallback((lineNumber: number) => {
-    const link: DeepLink = {
-      type: 'line',
-      hash: `L${lineNumber}`,
-      startLine: lineNumber,
-      endLine: lineNumber,
-    };
-    navigateToHash(link);
+    // Only update URL hash if deep links are enabled
+    if (enableDeepLinks) {
+      const link: DeepLink = {
+        type: 'line',
+        hash: `L${lineNumber}`,
+        startLine: lineNumber,
+        endLine: lineNumber,
+      };
+      navigateToHash(link);
+    }
     onDeepLinkClick?.(`#L${lineNumber}`);
-  }, [onDeepLinkClick]);
+  }, [enableDeepLinks, onDeepLinkClick]);
 
   // Handle heading click
   const handleHeadingClick = useCallback((slug: string) => {
-    const link: DeepLink = {
-      type: 'heading',
-      hash: slug,
-      slug,
-    };
-    navigateToHash(link);
+    // Only update URL hash if deep links are enabled
+    if (enableDeepLinks) {
+      const link: DeepLink = {
+        type: 'heading',
+        hash: slug,
+        slug,
+      };
+      navigateToHash(link);
+    }
     onDeepLinkClick?.(`#${slug}`);
-  }, [onDeepLinkClick]);
+  }, [enableDeepLinks, onDeepLinkClick]);
 
   // Handle internal link click
   const handleInternalLinkClick = useCallback((href: string) => {
