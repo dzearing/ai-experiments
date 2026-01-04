@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { IDEA_AGENT_WS_URL } from '../config';
 import type { OpenQuestion, OpenQuestionsResult } from '@ui-kit/react-chat';
 import { useAgentProgress, type AgentProgressEvent, type AgentProgressState } from './useAgentProgress';
+import type { ModelId } from './useModelPreference';
 
 /**
  * Idea context to send to the agent
@@ -94,6 +95,8 @@ export interface UseIdeaAgentOptions {
   onError?: (error: string) => void;
   /** Whether the agent is enabled (controls WebSocket connection) */
   enabled?: boolean;
+  /** Model ID to use for the agent */
+  modelId?: ModelId;
 }
 
 /**
@@ -151,6 +154,7 @@ export function useIdeaAgent({
   initialGreeting,
   onError,
   enabled = true,
+  modelId,
 }: UseIdeaAgentOptions): UseIdeaAgentReturn {
   const [messages, setMessages] = useState<IdeaAgentMessage[]>([]);
   const [isConnected, setIsConnected] = useState(false);
@@ -172,6 +176,7 @@ export function useIdeaAgent({
   const documentRoomNameRef = useRef<string | undefined>(documentRoomName);
   const initialGreetingRef = useRef<string | undefined>(initialGreeting);
   const enabledRef = useRef(enabled);
+  const modelIdRef = useRef<ModelId | undefined>(modelId);
 
   // Keep refs updated
   useEffect(() => {
@@ -181,6 +186,10 @@ export function useIdeaAgent({
   useEffect(() => {
     enabledRef.current = enabled;
   }, [enabled]);
+
+  useEffect(() => {
+    modelIdRef.current = modelId;
+  }, [modelId]);
 
   // Track previous values to detect actual changes
   const prevIdeaIdRef = useRef<string | null>(null);
@@ -280,6 +289,11 @@ export function useIdeaAgent({
     // Include document room name for Yjs coauthoring
     if (documentRoomNameRef.current) {
       wsUrl += `&documentRoomName=${encodeURIComponent(documentRoomNameRef.current)}`;
+    }
+
+    // Include model preference
+    if (modelIdRef.current) {
+      wsUrl += `&modelId=${encodeURIComponent(modelIdRef.current)}`;
     }
 
     const ws = new WebSocket(wsUrl);
@@ -496,6 +510,7 @@ export function useIdeaAgent({
         content: content.trim(),
         idea: ideaContextRef.current,
         documentRoomName: documentRoomNameRef.current,
+        modelId: modelIdRef.current,
       }));
     } else {
       console.warn('[IdeaAgent] Cannot send message: WebSocket not connected');
@@ -521,6 +536,7 @@ export function useIdeaAgent({
         content: content.trim(),
         idea: ideaContextRef.current,
         documentRoomName: documentRoomNameRef.current,
+        modelId: modelIdRef.current,
       }));
     } else {
       console.warn('[IdeaAgent] Cannot send message: WebSocket not connected');

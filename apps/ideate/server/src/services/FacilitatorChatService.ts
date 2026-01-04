@@ -4,6 +4,41 @@ import * as path from 'path';
 import { homedir } from 'os';
 
 /**
+ * Raw SDK event for diagnostics
+ */
+export interface RawSDKEvent {
+  timestamp: number;
+  type: string;
+  subtype?: string;
+  data: unknown;
+}
+
+/**
+ * Diagnostics for a message - persisted with the message
+ */
+export interface MessageDiagnostics {
+  iterations?: number;
+  durationMs?: number;
+  responseLength?: number;
+  error?: string;
+  // Enhanced diagnostics
+  systemPrompt?: string;
+  model?: string;
+  tokenUsage?: {
+    inputTokens: number;
+    outputTokens: number;
+  };
+  // Raw SDK events for full diagnostics
+  rawEvents?: RawSDKEvent[];
+  sessionInfo?: {
+    sessionId: string;
+    tools: string[];
+    mcpServers: { name: string; status: string }[];
+  };
+  totalCostUsd?: number;
+}
+
+/**
  * A message in the facilitator chat
  */
 export interface FacilitatorMessage {
@@ -18,6 +53,8 @@ export interface FacilitatorMessage {
     input: Record<string, unknown>;
     output?: string;
   }>;
+  /** Diagnostic information (for assistant messages) */
+  diagnostics?: MessageDiagnostics;
 }
 
 /**
@@ -93,13 +130,15 @@ export class FacilitatorChatService {
   /**
    * Add a message to the user's facilitator chat.
    * @param messageId - Optional custom ID (used for assistant messages to match diagnostics)
+   * @param diagnostics - Optional diagnostic information (for assistant messages)
    */
   async addMessage(
     userId: string,
     role: 'user' | 'assistant',
     content: string,
     toolCalls?: FacilitatorMessage['toolCalls'],
-    messageId?: string
+    messageId?: string,
+    diagnostics?: MessageDiagnostics
   ): Promise<FacilitatorMessage> {
     const message: FacilitatorMessage = {
       id: messageId || uuidv4(),
@@ -108,6 +147,7 @@ export class FacilitatorChatService {
       content,
       timestamp: Date.now(),
       toolCalls,
+      diagnostics,
     };
 
     // Append message to JSONL file

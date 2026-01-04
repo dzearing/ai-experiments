@@ -9,6 +9,7 @@ import { ChatPanel, ChatInput, ThinkingIndicator, MessageQueue, type ChatInputSu
 import { useAuth } from '../../contexts/AuthContext';
 import { usePlanAgent, type PlanIdeaContext } from '../../hooks/usePlanAgent';
 import { useChatCommands } from '../../hooks/useChatCommands';
+import { useModelPreference } from '../../hooks/useModelPreference';
 import { PlanView } from '../PlanView';
 import type { Idea, IdeaPlan } from '../../types/idea';
 import styles from './PlanningOverlay.module.css';
@@ -62,6 +63,7 @@ export function PlanningOverlay({
   onPlanUpdate,
 }: PlanningOverlayProps) {
   const { user } = useAuth();
+  const { modelId, setModelId, modelInfo } = useModelPreference();
 
   const [activeTab, setActiveTab] = useState<TabId>('plan');
   const [isBackdropVisible, setIsBackdropVisible] = useState(open);
@@ -104,9 +106,10 @@ export function PlanningOverlay({
     ideaContext,
     onError: handleAgentError,
     onPlanUpdate: onPlanUpdate,
+    modelId,
   });
 
-  // Chat commands (/clear, /help)
+  // Chat commands (/clear, /help, /model)
   const { commands, handleCommand } = useChatCommands({
     clearMessages: clearHistory,
     addMessage: (msg) => addLocalMessage({
@@ -119,6 +122,7 @@ export function PlanningOverlay({
 
 - **/clear** - Clear all chat history
 - **/help** - Show this help message
+- **/model** - View or change the AI model
 
 ## Tips
 
@@ -126,6 +130,8 @@ export function PlanningOverlay({
 - Ask the agent to break it down into phases and tasks
 - Review and refine the plan before starting execution
 - The agent can see your idea's title, summary, and description`,
+    currentModelInfo: modelInfo,
+    onModelChange: setModelId,
   });
 
   // Convert agent messages to ChatPanel format

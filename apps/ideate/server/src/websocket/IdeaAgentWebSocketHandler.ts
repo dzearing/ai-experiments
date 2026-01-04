@@ -17,6 +17,8 @@ interface ClientMessage {
   documentRoomName?: string;
   /** Initial greeting to use instead of generating one */
   initialGreeting?: string;
+  /** Model ID to use for this message */
+  modelId?: string;
 }
 
 /**
@@ -88,6 +90,8 @@ interface IdeaAgentClient {
   documentRoomName: string | null;
   /** Initial greeting provided by the client (overrides generated greeting) */
   initialGreeting: string | null;
+  /** Model ID to use for the agent */
+  modelId: string | null;
 }
 
 /**
@@ -117,7 +121,7 @@ export class IdeaAgentWebSocketHandler {
 
   /**
    * Handle a new WebSocket connection.
-   * URL format: /idea-agent-ws?ideaId=xxx&userId=xxx&userName=xxx&documentRoomName=xxx
+   * URL format: /idea-agent-ws?ideaId=xxx&userId=xxx&userName=xxx&documentRoomName=xxx&modelId=xxx
    */
   handleConnection(ws: WebSocket, req: IncomingMessage): void {
     const url = new URL(req.url || '/', `http://${req.headers.host}`);
@@ -125,6 +129,7 @@ export class IdeaAgentWebSocketHandler {
     const userId = url.searchParams.get('userId') || '';
     const userName = url.searchParams.get('userName') || 'Anonymous';
     const documentRoomName = url.searchParams.get('documentRoomName') || null;
+    const modelId = url.searchParams.get('modelId') || null;
 
     // Use 'new' as the default ideaId for new ideas
     const effectiveIdeaId = ideaId || 'new';
@@ -146,6 +151,7 @@ export class IdeaAgentWebSocketHandler {
       cancelled: false,
       documentRoomName,
       initialGreeting: null,
+      modelId,
     };
 
     this.clients.set(ws, client);
@@ -193,6 +199,9 @@ export class IdeaAgentWebSocketHandler {
           }
           if (clientMessage.documentRoomName) {
             client.documentRoomName = clientMessage.documentRoomName;
+          }
+          if (clientMessage.modelId) {
+            client.modelId = clientMessage.modelId;
           }
           await this.handleChatMessage(client, clientMessage.content || '');
           break;
@@ -325,7 +334,8 @@ export class IdeaAgentWebSocketHandler {
             }
           },
         },
-        client.documentRoomName || undefined
+        client.documentRoomName || undefined,
+        client.modelId || undefined
       );
     } catch (error) {
       console.error('[IdeaAgent] Error processing message:', error);

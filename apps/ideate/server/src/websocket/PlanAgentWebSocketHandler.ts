@@ -17,6 +17,8 @@ interface ClientMessage {
   idea?: PlanIdeaContext;
   /** Document room name for Implementation Plan Yjs collaboration */
   documentRoomName?: string;
+  /** Model ID to use for this message */
+  modelId?: string;
 }
 
 /**
@@ -70,6 +72,8 @@ interface PlanAgentClient {
   pendingAutoStart: (() => Promise<void>) | null;
   /** Pending open questions that haven't been resolved yet */
   pendingOpenQuestions: OpenQuestion[] | null;
+  /** Model ID to use for the agent */
+  modelId: string | null;
 }
 
 /**
@@ -89,13 +93,14 @@ export class PlanAgentWebSocketHandler {
 
   /**
    * Handle a new WebSocket connection.
-   * URL format: /plan-agent-ws?ideaId=xxx&userId=xxx&userName=xxx
+   * URL format: /plan-agent-ws?ideaId=xxx&userId=xxx&userName=xxx&modelId=xxx
    */
   handleConnection(ws: WebSocket, req: IncomingMessage): void {
     const url = new URL(req.url || '/', `http://${req.headers.host}`);
     const ideaId = url.searchParams.get('ideaId') || '';
     const userId = url.searchParams.get('userId') || '';
     const userName = url.searchParams.get('userName') || 'Anonymous';
+    const modelId = url.searchParams.get('modelId') || null;
 
     if (!ideaId || !userId) {
       ws.close(4000, 'Idea ID and User ID are required');
@@ -116,6 +121,7 @@ export class PlanAgentWebSocketHandler {
       yjsReady: false,
       pendingAutoStart: null,
       pendingOpenQuestions: null,
+      modelId,
     };
 
     this.clients.set(ws, client);
@@ -154,6 +160,9 @@ export class PlanAgentWebSocketHandler {
           }
           if (clientMessage.documentRoomName) {
             client.documentRoomName = clientMessage.documentRoomName;
+          }
+          if (clientMessage.modelId) {
+            client.modelId = clientMessage.modelId;
           }
           await this.handleChatMessage(client, clientMessage.content || '');
           break;
@@ -332,7 +341,8 @@ export class PlanAgentWebSocketHandler {
           },
         },
         client.documentRoomName || undefined,
-        isAutoStart  // Skip saving user message for auto-start
+        isAutoStart,  // Skip saving user message for auto-start
+        client.modelId || undefined
       );
     } catch (error) {
       console.error('[PlanAgent] Error processing message:', error);

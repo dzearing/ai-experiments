@@ -476,6 +476,7 @@ Example format:
    * Process a user message and stream the response via callbacks.
    * @param displayName - Optional display name to use instead of persona.name (from settings)
    * @param abortSignal - Optional AbortSignal to cancel the operation
+   * @param modelId - Optional model ID to use (defaults to claude-sonnet-4-5-20250929)
    */
   async processMessage(
     userId: string,
@@ -484,7 +485,8 @@ Example format:
     navigationContext: NavigationContext,
     callbacks: StreamCallbacks,
     displayName?: string,
-    abortSignal?: AbortSignal
+    abortSignal?: AbortSignal,
+    modelId?: string
   ): Promise<void> {
     // Save the user message
     await this.chatService.addMessage(userId, 'user', content);
@@ -526,7 +528,10 @@ Example format:
     let totalInputTokens = 0;
     let totalOutputTokens = 0;
     let totalCostUsd = 0;
-    let detectedModel = 'sonnet'; // Track the model used (will be updated from system init)
+    // Use provided model or default to sonnet
+    const effectiveModel = modelId || 'claude-sonnet-4-5-20250929';
+    let detectedModel = effectiveModel; // Track the model used (will be updated from system init)
+    console.log(`[FacilitatorService] Using model: ${effectiveModel}`);
 
     // Track raw SDK events for diagnostics
     const rawEvents: RawSDKEvent[] = [];
@@ -550,7 +555,7 @@ Example format:
         prompt: fullPrompt,
         options: {
           systemPrompt: systemPrompt,
-          model: 'sonnet',
+          model: effectiveModel,
           permissionMode: 'bypassPermissions', // Auto-accept for server-side use
           allowDangerouslySkipPermissions: true, // Required for bypassPermissions
           cwd: FacilitatorService.ISOLATED_CWD, // Prevent loading CLAUDE.md from monorepo
@@ -820,13 +825,30 @@ Example format:
 
       console.log(`[FacilitatorService] Final response (${fullResponse.length} chars): "${fullResponse.slice(0, 100)}..."`);
 
-      // Save the assistant message with the same ID we've been streaming to
+      // Build diagnostics to persist with the message
+      const durationMs = Date.now() - startTime;
+      const messageDiagnostics = {
+        iterations: toolCalls.length + 1,
+        durationMs,
+        responseLength: fullResponse.length,
+        systemPrompt,
+        model: detectedModel,
+        tokenUsage: totalInputTokens > 0 || totalOutputTokens > 0
+          ? { inputTokens: totalInputTokens, outputTokens: totalOutputTokens }
+          : undefined,
+        rawEvents: rawEvents.length > 0 ? rawEvents : undefined,
+        sessionInfo,
+        totalCostUsd: totalCostUsd > 0 ? totalCostUsd : undefined,
+      };
+
+      // Save the assistant message with diagnostics for persistence
       const assistantMessage = await this.chatService.addMessage(
         userId,
         'assistant',
         fullResponse || 'I apologize, but I was unable to generate a response.',
         toolCalls.length > 0 ? toolCalls : undefined,
-        messageId // Pass the ID so diagnostics can be matched
+        messageId,
+        messageDiagnostics // Pass diagnostics to persist with the message
       );
 
       // Call complete callback

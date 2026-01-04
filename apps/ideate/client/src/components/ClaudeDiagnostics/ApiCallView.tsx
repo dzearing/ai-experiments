@@ -85,7 +85,6 @@ export function ApiCallView({ request, response }: ApiCallViewProps) {
   const duration = diagnostics?.durationMs;
   const inputTokens = diagnostics?.tokenUsage?.inputTokens;
   const outputTokens = diagnostics?.tokenUsage?.outputTokens;
-  const cost = diagnostics?.totalCostUsd;
   const model = diagnostics?.model;
   const toolCalls = response?.toolCalls || [];
 
@@ -116,9 +115,6 @@ export function ApiCallView({ request, response }: ApiCallViewProps) {
           </Chip>
         )}
 
-        {cost !== undefined && cost > 0 && (
-          <Chip size="sm" variant="warning">${cost.toFixed(4)}</Chip>
-        )}
 
         {toolCalls.length > 0 && (
           <Chip size="sm" variant="success">{toolCalls.length} tool{toolCalls.length > 1 ? 's' : ''}</Chip>
@@ -294,12 +290,6 @@ export function ApiCallView({ request, response }: ApiCallViewProps) {
                 <div className={styles.statItem}>
                   <Text size="xs" color="soft">Output Tokens</Text>
                   <Text size="sm" weight="medium">{formatTokens(outputTokens)}</Text>
-                </div>
-              )}
-              {cost !== undefined && cost > 0 && (
-                <div className={styles.statItem}>
-                  <Text size="xs" color="soft">Cost</Text>
-                  <Text size="sm" weight="medium">${cost.toFixed(4)}</Text>
                 </div>
               )}
               {diagnostics.iterations !== undefined && (

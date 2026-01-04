@@ -272,6 +272,7 @@ Feel free to share any details, and I'll start building out the phases and tasks
    * Streams chat text in real-time, buffers plan blocks, then calls onPlanUpdate.
    * Handles Implementation Plan document edits via Yjs if documentRoomName provided.
    * @param isAutoStart - If true, skip saving the user message (used for server-initiated auto-start)
+   * @param modelId - Optional model ID to use (defaults to claude-sonnet-4-5-20250929)
    */
   async processMessage(
     ideaId: string,
@@ -280,7 +281,8 @@ Feel free to share any details, and I'll start building out the phases and tasks
     ideaContext: PlanIdeaContext,
     callbacks: PlanStreamCallbacks,
     documentRoomName?: string,
-    isAutoStart = false
+    isAutoStart = false,
+    modelId?: string
   ): Promise<void> {
     // Save the user message (unless this is an auto-start)
     if (!isAutoStart) {
@@ -331,12 +333,13 @@ Feel free to share any details, and I'll start building out the phases and tasks
       console.log(`[PlanAgentService] Processing message for idea ${ideaId}: "${content.slice(0, 50)}..."`);
 
       // Use the query function from @anthropic-ai/claude-agent-sdk
-      console.log(`[PlanAgentService] Starting query with model claude-sonnet-4-5-20250929...`);
+      const effectiveModel = modelId || 'claude-sonnet-4-5-20250929';
+      console.log(`[PlanAgentService] Starting query with model ${effectiveModel}...`);
       const response = query({
         prompt: fullPrompt,
         options: {
           systemPrompt,
-          model: 'claude-sonnet-4-5-20250929',
+          model: effectiveModel,
           tools: [],
           permissionMode: 'bypassPermissions',
           allowDangerouslySkipPermissions: true,

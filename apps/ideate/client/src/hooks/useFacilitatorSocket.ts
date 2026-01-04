@@ -100,6 +100,8 @@ export interface UseFacilitatorSocketOptions {
   userName: string;
   /** Called when an error occurs */
   onError?: (error: string) => void;
+  /** Model ID for the AI */
+  modelId?: string;
 }
 
 /**
@@ -129,10 +131,15 @@ export function useFacilitatorSocket({
   userId,
   userName,
   onError,
+  modelId,
 }: UseFacilitatorSocketOptions): UseFacilitatorSocketReturn {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentMessageIdRef = useRef<string | null>(null);
+  const modelIdRef = useRef<string | undefined>(modelId);
+
+  // Update ref when modelId changes
+  modelIdRef.current = modelId;
 
   // Agent progress tracking
   const progress = useAgentProgress();
@@ -234,7 +241,10 @@ export function useFacilitatorSocket({
 
     setConnectionState('connecting');
 
-    const wsUrl = `${FACILITATOR_WS_URL}?userId=${encodeURIComponent(userId)}&userName=${encodeURIComponent(userName)}`;
+    let wsUrl = `${FACILITATOR_WS_URL}?userId=${encodeURIComponent(userId)}&userName=${encodeURIComponent(userName)}`;
+    if (modelIdRef.current) {
+      wsUrl += `&modelId=${encodeURIComponent(modelIdRef.current)}`;
+    }
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
@@ -534,11 +544,14 @@ export function useFacilitatorSocket({
         ...navigationContextRef.current,
         ...(thingIds && thingIds.length > 0 ? { referencedThingIds: thingIds } : {}),
       };
-      wsRef.current.send(JSON.stringify({
+      const messagePayload = {
         type: 'message',
         content,
         context: contextWithThings,
-      }));
+        modelId: modelIdRef.current,
+      };
+      console.log('[Facilitator] Sending message with modelId:', modelIdRef.current);
+      wsRef.current.send(JSON.stringify(messagePayload));
     } else {
       console.warn('[Facilitator] Cannot send message: WebSocket not connected');
       setError('Not connected to facilitator service');

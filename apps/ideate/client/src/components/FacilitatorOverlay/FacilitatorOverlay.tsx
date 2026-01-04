@@ -11,6 +11,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useThings } from '../../contexts/ThingsContext';
 import { useFacilitatorSocket } from '../../hooks/useFacilitatorSocket';
 import { useChatCommands } from '../../hooks/useChatCommands';
+import { useModelPreference } from '../../hooks/useModelPreference';
 import { API_URL } from '../../config';
 import styles from './FacilitatorOverlay.module.css';
 
@@ -31,6 +32,7 @@ export function FacilitatorOverlay() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { things, getBreadcrumb } = useThings();
+  const { modelId, setModelId, modelInfo } = useModelPreference();
   const {
     isOpen,
     messages,
@@ -144,9 +146,10 @@ export function FacilitatorOverlay() {
     userId: user?.id || '',
     userName: user?.name || 'Anonymous',
     onError: (err) => console.error('[Facilitator] Socket error:', err),
+    modelId,
   });
 
-  // Chat commands (/clear, /help)
+  // Chat commands (/clear, /help, /model)
   const { commands, handleCommand } = useChatCommands({
     clearMessages,
     clearServerHistory: socketClearHistory,
@@ -160,6 +163,7 @@ export function FacilitatorOverlay() {
 
 - **/clear** - Clear all chat history
 - **/help** - Show this help message
+- **/model** - View or change the AI model
 
 ## Features
 
@@ -170,6 +174,8 @@ export function FacilitatorOverlay() {
 - Press **Escape** to close
 
 Type a message to get started!`,
+    currentModelInfo: modelInfo,
+    onModelChange: setModelId,
   });
 
   // Process queued content when AI finishes thinking
@@ -213,36 +219,18 @@ Type a message to get started!`,
     });
   }, [cancelOperation, addMessage]);
 
-  // Handle escape key - cancel operation if busy and input empty, otherwise close
-  const handleEscape = useCallback(
-    (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        // If AI is busy and input is empty, cancel the operation
-        if (isLoading && !inputContent.trim()) {
-          event.preventDefault();
-          handleCancelOperation();
-        } else {
-          close();
-        }
-      }
-    },
-    [close, isLoading, inputContent, handleCancelOperation]
-  );
-
-  // Add/remove escape key listener when open
+  // Prevent body scroll when open
   useEffect(() => {
     if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
     }
 
     return () => {
-      document.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = '';
     };
-  }, [isOpen, handleEscape]);
+  }, [isOpen]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -348,8 +336,6 @@ Type a message to get started!`,
               />
             </div>
             <div className={styles.shortcutHint}>
-              <span className={styles.shortcutKey}>Esc</span>
-              <span>to close</span>
               <IconButton
                 icon={<GearIcon />}
                 variant="ghost"
@@ -430,7 +416,7 @@ Type a message to get started!`,
           </div>
 
           {/* Thinking indicator */}
-          <ThinkingIndicator isActive={isLoading} showEscapeHint={isLoading && !inputContent.trim()} />
+          <ThinkingIndicator isActive={isLoading} />
 
           {/* Question resolver overlay */}
           {showQuestionsResolver && openQuestions && openQuestions.length > 0 && (

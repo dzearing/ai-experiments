@@ -339,7 +339,8 @@ export class IdeaAgentService {
     content: string,
     _ideaContext: IdeaContext,
     callbacks: StreamCallbacks,
-    documentRoomName?: string
+    documentRoomName?: string,
+    modelId?: string
   ): Promise<void> {
     // Save the user message
     await this.chatService.addMessage(ideaId, userId, 'user', content);
@@ -395,11 +396,13 @@ export class IdeaAgentService {
       console.log(`[IdeaAgentService] Processing message for idea ${ideaId} (new: ${isNewIdea}): "${content.slice(0, 50)}..."`);
 
       // Use the query function from @anthropic-ai/claude-agent-sdk
+      const effectiveModel = modelId || 'claude-sonnet-4-5-20250929';
+      console.log(`[IdeaAgentService] Using model: ${effectiveModel}`);
       const response = query({
         prompt: fullPrompt,
         options: {
           systemPrompt,
-          model: 'claude-sonnet-4-5-20250929',
+          model: effectiveModel,
           tools: [],
           permissionMode: 'bypassPermissions',
           allowDangerouslySkipPermissions: true,

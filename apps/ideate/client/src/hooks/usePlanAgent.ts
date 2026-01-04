@@ -3,6 +3,7 @@ import { PLAN_AGENT_WS_URL } from '../config';
 import type { IdeaPlan } from '../types/idea';
 import type { OpenQuestion, OpenQuestionsResult } from '@ui-kit/react-chat';
 import { useAgentProgress, type AgentProgressEvent } from './useAgentProgress';
+import type { ModelId } from './useModelPreference';
 
 /**
  * Idea context to send to the plan agent
@@ -97,6 +98,8 @@ export interface UsePlanAgentOptions {
   onError?: (error: string) => void;
   /** Whether the agent is enabled (controls WebSocket connection) */
   enabled?: boolean;
+  /** Model ID to use for the agent */
+  modelId?: ModelId;
 }
 
 /**
@@ -160,6 +163,7 @@ export function usePlanAgent({
   onPlanUpdate,
   onError,
   enabled = true,
+  modelId,
 }: UsePlanAgentOptions): UsePlanAgentReturn {
   const [messages, setMessages] = useState<PlanAgentMessage[]>([]);
   const [isConnected, setIsConnected] = useState(false);
@@ -181,6 +185,7 @@ export function usePlanAgent({
   const ideaContextRef = useRef<PlanIdeaContext | null>(ideaContext);
   const documentRoomNameRef = useRef<string | undefined>(documentRoomName);
   const enabledRef = useRef(enabled);
+  const modelIdRef = useRef<ModelId | undefined>(modelId);
 
   // Keep refs updated
   useEffect(() => {
@@ -194,6 +199,10 @@ export function usePlanAgent({
   useEffect(() => {
     enabledRef.current = enabled;
   }, [enabled]);
+
+  useEffect(() => {
+    modelIdRef.current = modelId;
+  }, [modelId]);
 
   // Disconnect and clear state when disabled
   useEffect(() => {
@@ -283,7 +292,12 @@ export function usePlanAgent({
         wsRef.current?.readyState === WebSocket.CONNECTING) return;
     if (!userId || !ideaId) return;
 
-    const wsUrl = `${PLAN_AGENT_WS_URL}?ideaId=${encodeURIComponent(ideaId)}&userId=${encodeURIComponent(userId)}&userName=${encodeURIComponent(userName)}`;
+    let wsUrl = `${PLAN_AGENT_WS_URL}?ideaId=${encodeURIComponent(ideaId)}&userId=${encodeURIComponent(userId)}&userName=${encodeURIComponent(userName)}`;
+
+    // Include model preference
+    if (modelIdRef.current) {
+      wsUrl += `&modelId=${encodeURIComponent(modelIdRef.current)}`;
+    }
 
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
@@ -526,6 +540,7 @@ export function usePlanAgent({
         content: content.trim(),
         idea: ideaContextRef.current,
         documentRoomName: documentRoomNameRef.current,
+        modelId: modelIdRef.current,
       }));
     } else {
       console.warn('[PlanAgent] Cannot send message: WebSocket not connected');

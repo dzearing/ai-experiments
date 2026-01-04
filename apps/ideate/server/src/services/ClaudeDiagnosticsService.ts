@@ -370,8 +370,10 @@ export class ClaudeDiagnosticsService {
 
   private async getFacilitatorMessages(userId: string, limit: number): Promise<SessionMessage[]> {
     const messages: SessionMessage[] = [];
-    const diagnostics = this.getFacilitatorDiagnostics();
-    const diagnosticsMap = new Map(diagnostics.map((d) => [d.messageId, d]));
+
+    // First try to get in-memory diagnostics as fallback for messages without persisted diagnostics
+    const inMemoryDiagnostics = this.getFacilitatorDiagnostics();
+    const diagnosticsMap = new Map(inMemoryDiagnostics.map((d) => [d.messageId, d]));
 
     try {
       const messagesPath = path.join(FACILITATOR_DIR, `${userId}.messages.jsonl`);
@@ -381,7 +383,10 @@ export class ClaudeDiagnosticsService {
       for (const line of lines.slice(-limit)) {
         try {
           const msg: FacilitatorMessage = JSON.parse(line);
-          const diag = diagnosticsMap.get(msg.id);
+
+          // Prefer persisted diagnostics from message, fall back to in-memory
+          const persistedDiag = msg.diagnostics;
+          const inMemDiag = diagnosticsMap.get(msg.id);
 
           messages.push({
             id: msg.id,
@@ -391,20 +396,32 @@ export class ClaudeDiagnosticsService {
             content: msg.content,
             timestamp: msg.timestamp,
             toolCalls: msg.toolCalls,
-            diagnostics: diag
+            // Use persisted diagnostics first, then fall back to in-memory
+            diagnostics: persistedDiag
               ? {
-                  iterations: diag.iterations,
-                  durationMs: diag.durationMs,
-                  responseLength: diag.responseLength,
-                  error: diag.error,
-                  // Enhanced diagnostics (P0)
-                  systemPrompt: diag.systemPrompt,
-                  model: diag.model,
-                  tokenUsage: diag.tokenUsage,
-                  // Full diagnostics with raw SDK events
-                  rawEvents: diag.rawEvents,
-                  sessionInfo: diag.sessionInfo,
-                  totalCostUsd: diag.totalCostUsd,
+                  iterations: persistedDiag.iterations,
+                  durationMs: persistedDiag.durationMs,
+                  responseLength: persistedDiag.responseLength,
+                  error: persistedDiag.error,
+                  systemPrompt: persistedDiag.systemPrompt,
+                  model: persistedDiag.model,
+                  tokenUsage: persistedDiag.tokenUsage,
+                  rawEvents: persistedDiag.rawEvents,
+                  sessionInfo: persistedDiag.sessionInfo,
+                  totalCostUsd: persistedDiag.totalCostUsd,
+                }
+              : inMemDiag
+              ? {
+                  iterations: inMemDiag.iterations,
+                  durationMs: inMemDiag.durationMs,
+                  responseLength: inMemDiag.responseLength,
+                  error: inMemDiag.error,
+                  systemPrompt: inMemDiag.systemPrompt,
+                  model: inMemDiag.model,
+                  tokenUsage: inMemDiag.tokenUsage,
+                  rawEvents: inMemDiag.rawEvents,
+                  sessionInfo: inMemDiag.sessionInfo,
+                  totalCostUsd: inMemDiag.totalCostUsd,
                 }
               : undefined,
           });

@@ -34,6 +34,8 @@ interface ClientMessage {
   context?: NavigationContext;
   /** Preset ID for persona_change (or '__custom__' for user persona) */
   presetId?: string;
+  /** Model ID to use for AI responses */
+  modelId?: string;
 }
 
 /**
@@ -83,6 +85,8 @@ interface FacilitatorClient {
   personaChangeVersion: number;
   /** AbortController for the current operation (if any) */
   currentAbortController: AbortController | null;
+  /** Model ID to use for AI responses */
+  modelId: string | null;
 }
 
 /**
@@ -115,12 +119,13 @@ export class FacilitatorWebSocketHandler {
 
   /**
    * Handle a new WebSocket connection.
-   * URL format: /facilitator-ws?userId=xxx&userName=xxx
+   * URL format: /facilitator-ws?userId=xxx&userName=xxx&modelId=xxx
    */
   handleConnection(ws: WebSocket, req: IncomingMessage): void {
     const url = new URL(req.url || '/', `http://${req.headers.host}`);
     const userId = url.searchParams.get('userId') || '';
     const userName = url.searchParams.get('userName') || 'Anonymous';
+    const modelId = url.searchParams.get('modelId') || null;
 
     if (!userId) {
       ws.close(4000, 'User ID is required');
@@ -137,6 +142,7 @@ export class FacilitatorWebSocketHandler {
       context: {},
       personaChangeVersion: 0,
       currentAbortController: null,
+      modelId,
     };
 
     this.clients.set(ws, client);
@@ -174,6 +180,11 @@ export class FacilitatorWebSocketHandler {
           if (clientMessage.context) {
             client.context = clientMessage.context;
           }
+          // Update modelId if provided with the message
+          if (clientMessage.modelId) {
+            client.modelId = clientMessage.modelId;
+          }
+          console.log(`[Facilitator] Message received - modelId from message: ${clientMessage.modelId}, client.modelId: ${client.modelId}`);
           await this.handleChatMessage(client, clientMessage.content || '');
           break;
         case 'clear_history':
@@ -284,7 +295,8 @@ export class FacilitatorWebSocketHandler {
           },
         },
         settings.name,  // Pass display name from settings
-        abortController.signal  // Pass abort signal
+        abortController.signal,  // Pass abort signal
+        client.modelId || undefined  // Pass modelId
       );
     } catch (error) {
       // Ignore abort errors

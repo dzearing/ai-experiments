@@ -16,6 +16,7 @@ import { useIdeaAgent, type IdeaContext } from '../../hooks/useIdeaAgent';
 import { usePlanAgent, type PlanIdeaContext } from '../../hooks/usePlanAgent';
 import { useYjsCollaboration } from '../../hooks/useYjsCollaboration';
 import { useChatCommands } from '../../hooks/useChatCommands';
+import { useModelPreference } from '../../hooks/useModelPreference';
 import { PlanView } from '../PlanView';
 import { YJS_WS_URL } from '../../config';
 import type { Idea, CreateIdeaInput, IdeaPlan } from '../../types/idea';
@@ -212,6 +213,7 @@ export function IdeaWorkspaceOverlay({
 
   const { user } = useAuth();
   const { createIdea, updateIdea, moveIdea } = useIdeas();
+  const { modelId, setModelId, modelInfo } = useModelPreference();
 
   const isNewIdea = !idea;
 
@@ -431,6 +433,7 @@ export function IdeaWorkspaceOverlay({
     initialGreeting,
     onError: handleAgentError,
     enabled: open && phase === 'ideation',
+    modelId,
   });
 
   // Plan agent hook - only enabled when overlay is open AND in planning phase
@@ -443,6 +446,7 @@ export function IdeaWorkspaceOverlay({
     onError: handleAgentError,
     onPlanUpdate: handlePlanUpdate,
     enabled: open && phase === 'planning' && !!(currentIdea?.id || idea?.id),
+    modelId,
   });
 
   // Select active agent based on phase
@@ -481,7 +485,7 @@ export function IdeaWorkspaceOverlay({
     }
   }, [phase, ideaAgent.isConnected, ideaContext, updateIdeaContext]);
 
-  // Chat commands (/clear, /help)
+  // Chat commands (/clear, /help, /model)
   const { commands, handleCommand } = useChatCommands({
     clearMessages: clearHistory,
     addMessage: (msg) => addLocalMessage({
@@ -494,12 +498,15 @@ export function IdeaWorkspaceOverlay({
 
 - **/clear** - Clear all chat history
 - **/help** - Show this help message
+- **/model** - View or change the AI model
 
 ## Tips
 
 - Describe your idea in the editor on the right
 - Ask the agent for feedback, suggestions, or to help refine your idea
 - The agent can see your idea's title, summary, and description`,
+    currentModelInfo: modelInfo,
+    onModelChange: setModelId,
   });
 
   // Convert agent messages to ChatPanel format
