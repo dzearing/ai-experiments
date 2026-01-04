@@ -260,7 +260,10 @@ export function IdeaWorkspaceOverlay({
 
   const [isBackdropVisible, setIsBackdropVisible] = useState(open);
   const [queuedMessages, setQueuedMessages] = useState<QueuedMessage[]>([]);
-  const [inputContent, setInputContent] = useState('');
+  // Use ref for content to avoid re-renders on every keystroke
+  const inputContentRef = useRef('');
+  // Track empty state separately (changes less frequently) for escape hint
+  const [isInputEmpty, setIsInputEmpty] = useState(true);
   const isProcessingQueueRef = useRef(false);
   const chatInputRef = useRef<ChatInputRef>(null);
 
@@ -690,14 +693,14 @@ export function IdeaWorkspaceOverlay({
     (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         // If AI is busy and input is empty, cancel the operation
-        if (isAgentThinking && !inputContent.trim()) {
+        if (isAgentThinking && !inputContentRef.current.trim()) {
           event.preventDefault();
           handleCancelOperation();
           return;
         }
 
         // If input has text, let the ChatInput handle Escape (clear input)
-        if (inputContent.trim()) {
+        if (inputContentRef.current.trim()) {
           return;
         }
 
@@ -706,7 +709,7 @@ export function IdeaWorkspaceOverlay({
         handleCloseRequest();
       }
     },
-    [isAgentThinking, inputContent, handleCancelOperation, handleCloseRequest]
+    [isAgentThinking, handleCancelOperation, handleCloseRequest]
   );
 
   // Add/remove escape key listener when open
@@ -916,17 +919,23 @@ export function IdeaWorkspaceOverlay({
         timestamp: Date.now(),
       };
       setQueuedMessages((prev) => [...prev, queuedMessage]);
-      setInputContent('');
+      chatInputRef.current?.clear();
+      inputContentRef.current = '';
+      setIsInputEmpty(true);
       return;
     }
 
     // Otherwise send immediately
     sendAgentMessage(content.trim());
-    setInputContent('');
+    chatInputRef.current?.clear();
+    inputContentRef.current = '';
+    setIsInputEmpty(true);
   }, [sendAgentMessage, isAgentThinking]);
 
-  const handleInputChange = useCallback((_isEmpty: boolean, content: string) => {
-    setInputContent(content);
+  const handleInputChange = useCallback((isEmpty: boolean, content: string) => {
+    inputContentRef.current = content;
+    // Only update state when empty status changes to minimize re-renders
+    setIsInputEmpty(prev => prev !== isEmpty ? isEmpty : prev);
   }, []);
 
   const removeQueuedMessage = useCallback((id: string) => {
@@ -1050,7 +1059,7 @@ export function IdeaWorkspaceOverlay({
                         ? planAgent.progress.currentEvent?.displayText
                         : ideaAgent.progress.currentEvent?.displayText
                     }
-                    showEscapeHint={isAgentThinking && !inputContent.trim()}
+                    showEscapeHint={isAgentThinking && isInputEmpty}
                   />
 
                   <MessageQueue

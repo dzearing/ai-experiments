@@ -13,6 +13,8 @@ export interface PlanAgentMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
+  /** Full raw response including XML blocks (for diagnostics) */
+  rawResponse?: string;
 }
 
 /**
@@ -93,7 +95,8 @@ export class PlanAgentChatService {
     ideaId: string,
     userId: string,
     role: 'user' | 'assistant',
-    content: string
+    content: string,
+    rawResponse?: string
   ): Promise<PlanAgentMessage> {
     const message: PlanAgentMessage = {
       id: uuidv4(),
@@ -102,6 +105,7 @@ export class PlanAgentChatService {
       role,
       content,
       timestamp: Date.now(),
+      ...(rawResponse && { rawResponse }),
     };
 
     // Append message to JSONL file

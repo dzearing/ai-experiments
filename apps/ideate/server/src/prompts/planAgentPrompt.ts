@@ -12,6 +12,23 @@ const PLAN_AGENT_PROMPT = fs.readFileSync(
 );
 
 /**
+ * Build a document view with character positions for precise editing.
+ * Format: [position] line content
+ */
+function buildDocumentWithPositions(content: string): string {
+  const lines = content.split('\n');
+  let charPos = 0;
+  const result: string[] = [];
+
+  for (const line of lines) {
+    result.push(`[${charPos}] ${line}`);
+    charPos += line.length + 1; // +1 for the newline character
+  }
+
+  return result.join('\n');
+}
+
+/**
  * Thing context for plan agent
  */
 export interface ThingContext {
@@ -38,8 +55,12 @@ export interface PlanIdeaContext {
  * Build the system prompt for the Plan Agent.
  *
  * @param ideaContext - The idea being planned
+ * @param documentContent - Current implementation plan document content (for edits)
  */
-export function buildPlanAgentSystemPrompt(ideaContext: PlanIdeaContext): string {
+export function buildPlanAgentSystemPrompt(
+  ideaContext: PlanIdeaContext,
+  documentContent?: string | null
+): string {
   let prompt = PLAN_AGENT_PROMPT;
 
   // Replace idea context placeholders
@@ -69,6 +90,29 @@ export function buildPlanAgentSystemPrompt(ideaContext: PlanIdeaContext): string
     }
   }
   prompt = prompt.replace('{{THING_CONTEXT}}', thingContextSection);
+
+  // Add current document content with positions for accurate edits
+  if (documentContent && documentContent.trim().length > 0) {
+    const docWithPositions = buildDocumentWithPositions(documentContent);
+    prompt = prompt.replace(
+      '{{CURRENT_DOCUMENT}}',
+      `## Current Implementation Plan Document (with character positions)
+
+The following is the current content of the Implementation Plan document. Each line is prefixed with its character position [pos].
+When making edits, use these positions and the exact text to reliably target your changes.
+
+Document length: ${documentContent.length} characters
+
+\`\`\`
+${docWithPositions}
+\`\`\``
+    );
+  } else {
+    prompt = prompt.replace(
+      '{{CURRENT_DOCUMENT}}',
+      '## Current Implementation Plan Document\n\n(No document content yet - use <impl_plan_update> to create the initial document)'
+    );
+  }
 
   return prompt;
 }

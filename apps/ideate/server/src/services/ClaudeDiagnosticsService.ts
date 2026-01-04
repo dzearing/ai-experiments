@@ -624,7 +624,8 @@ export class ClaudeDiagnosticsService {
             sessionId: ideaId,
             sessionType: 'planagent',
             role: msg.role,
-            content: msg.content,
+            // For assistant messages with rawResponse, show full response for diagnostics
+            content: msg.rawResponse || msg.content,
             timestamp: msg.timestamp,
           });
         } catch {

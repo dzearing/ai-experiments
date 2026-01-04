@@ -290,17 +290,21 @@ Feel free to share any details, and I'll start building out the phases and tasks
     // Get history for context
     const history = await this.chatService.getMessages(ideaId);
 
-    // Connect to Yjs room if document editing is enabled
+    // Connect to Yjs room and get current document content if document editing is enabled
+    let documentContent: string | null = null;
     if (this.yjsClient && documentRoomName) {
       try {
         await this.yjsClient.connect(documentRoomName);
+        // Get current document content for the prompt (enables accurate edits)
+        documentContent = this.yjsClient.getContent(documentRoomName);
+        console.log(`[PlanAgentService] Got document content, length: ${documentContent?.length || 0}`);
       } catch (error) {
         console.error('[PlanAgentService] Failed to connect to Yjs room:', error);
       }
     }
 
-    // Build the system prompt with idea context
-    const systemPrompt = buildPlanAgentSystemPrompt(ideaContext);
+    // Build the system prompt with idea context and current document
+    const systemPrompt = buildPlanAgentSystemPrompt(ideaContext, documentContent);
 
     // Build the full prompt with conversation history
     const conversationHistory = this.buildConversationHistory(history.slice(0, -1));
@@ -547,12 +551,13 @@ Feel free to share any details, and I'll start building out the phases and tasks
         callbacks.onSuggestedResponses?.(suggestionsToSend);
       }
 
-      // Save the assistant message (chat portion only)
+      // Save the assistant message (chat portion for display, full response for diagnostics)
       const assistantMessage = await this.chatService.addMessage(
         ideaId,
         userId,
         'assistant',
-        chatResponse || 'I apologize, but I was unable to generate a response.'
+        chatResponse || 'I apologize, but I was unable to generate a response.',
+        fullResponse // Include full raw response with XML blocks for diagnostics
       );
 
       // Call complete callback
