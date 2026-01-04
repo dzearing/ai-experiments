@@ -219,6 +219,23 @@ export class ImportAgentChatService {
 
     return sessions;
   }
+
+  /**
+   * Clear all import agent sessions (deletes all .meta.json and .messages.jsonl files)
+   */
+  async clearAllSessions(): Promise<void> {
+    try {
+      const files = await fs.readdir(IMPORT_AGENT_DIR);
+      for (const file of files) {
+        if (file.endsWith('.meta.json') || file.endsWith('.messages.jsonl')) {
+          await fs.unlink(path.join(IMPORT_AGENT_DIR, file));
+        }
+      }
+      console.log('[ImportAgentChatService] Cleared all sessions');
+    } catch {
+      // Directory might not exist yet
+    }
+  }
 }
 
 // Singleton instance

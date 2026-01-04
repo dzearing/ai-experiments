@@ -525,6 +525,7 @@ export function usePlanAgent({
         type: 'message',
         content: content.trim(),
         idea: ideaContextRef.current,
+        documentRoomName: documentRoomNameRef.current,
       }));
     } else {
       console.warn('[PlanAgent] Cannot send message: WebSocket not connected');

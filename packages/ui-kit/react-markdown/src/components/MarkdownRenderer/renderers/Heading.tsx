@@ -4,7 +4,7 @@
  * Renders markdown headings with slug-based anchors for deep linking.
  */
 
-import { useMemo, type ReactNode } from 'react';
+import { useMemo, type ReactNode, type MouseEvent } from 'react';
 import { slugify } from '../../../utils/deepLinkParser';
 import type { DeepLink } from '../../../types/deepLink';
 import styles from '../MarkdownRenderer.module.css';
@@ -50,7 +50,20 @@ export function Heading({
 
   const Tag = `h${level}` as const;
 
-  const handleClick = () => {
+  const handleClick = (e: MouseEvent) => {
+    // Prevent default anchor navigation which can interfere with overlays/dialogs
+    e.preventDefault();
+    onHeadingClick?.(slug);
+  };
+
+  const handleAnchorClick = (e: MouseEvent) => {
+    // Prevent default anchor navigation
+    e.preventDefault();
+    e.stopPropagation();
+    // Update URL hash without triggering navigation
+    if (typeof window !== 'undefined') {
+      window.history.pushState(null, '', `#${slug}`);
+    }
     onHeadingClick?.(slug);
   };
 
@@ -60,7 +73,12 @@ export function Heading({
       className={`${styles[`h${level}`]} ${isHighlighted ? styles.highlighted : ''}`}
       onClick={handleClick}
     >
-      <a href={`#${slug}`} className={styles.headingAnchor} aria-hidden="true">
+      <a
+        href={`#${slug}`}
+        className={styles.headingAnchor}
+        aria-hidden="true"
+        onClick={handleAnchorClick}
+      >
         #
       </a>
       {children}

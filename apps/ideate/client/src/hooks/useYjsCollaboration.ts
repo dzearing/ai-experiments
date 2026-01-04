@@ -378,19 +378,41 @@ export function useYjsCollaboration(
   const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
   const [coAuthors, setCoAuthors] = useState<CoAuthor[]>([]);
   const [isSynced, setIsSynced] = useState(false);
+  // Track which cache key the sync state is for
+  const syncCacheKeyRef = useRef<string | null>(null);
 
   // Extensions ref - prevents recreation on every render
   // We use a ref to store the actual extensions and a version counter to trigger re-renders
   const extensionsRef = useRef<Extension[]>([]);
   const [extensionsVersion, setExtensionsVersion] = useState(0);
+  // Track which cache key the extensions were created for
+  const extensionsCacheKeyRef = useRef<string | null>(null);
 
-  // Helper to update extensions once - prevents recreation on subsequent calls
+  // Generate current cache key for comparison
+  const currentCacheKey = `${documentId}:${serverUrl || 'offline'}`;
+
+  // Reset state when cache key changes (different document or serverUrl)
+  // This is necessary because yCollab binds to a specific Y.Text instance
+  // and sync state is specific to each WebSocket connection
+  if (extensionsCacheKeyRef.current !== null && extensionsCacheKeyRef.current !== currentCacheKey) {
+    console.log(`[useYjsCollaboration] Cache key changed from "${extensionsCacheKeyRef.current}" to "${currentCacheKey}", resetting extensions and sync state`);
+    extensionsRef.current = [];
+    extensionsCacheKeyRef.current = null;
+  }
+  // Reset sync state when cache key changes
+  if (syncCacheKeyRef.current !== null && syncCacheKeyRef.current !== currentCacheKey) {
+    syncCacheKeyRef.current = null;
+    // Don't call setIsSynced here - let the effect handle it
+  }
+
+  // Helper to update extensions - prevents recreation on subsequent calls for same cache key
   const setExtensionsOnce = useCallback((newExtensions: Extension[]) => {
     if (extensionsRef.current.length === 0 && newExtensions.length > 0) {
       extensionsRef.current = newExtensions;
+      extensionsCacheKeyRef.current = currentCacheKey;
       setExtensionsVersion(v => v + 1);
     }
-  }, []);
+  }, [currentCacheKey]);
 
   const { doc, text, undoManager } = cache;
 
@@ -404,6 +426,14 @@ export function useYjsCollaboration(
 
   // Set up providers and observers
   useEffect(() => {
+    // Reset sync state when cache key changes
+    // This ensures we don't show stale sync status from a previous document
+    if (syncCacheKeyRef.current !== currentCacheKey) {
+      setIsSynced(false);
+      setConnectionState('disconnected');
+      syncCacheKeyRef.current = currentCacheKey;
+    }
+
     // Start the MutationObserver for cursor label fixes
     startCursorObserver();
 
@@ -574,6 +604,7 @@ export function useYjsCollaboration(
 
     // Set up WebSocket provider if server URL provided
     if (serverUrl && !cache.wsProvider) {
+      console.log(`[useYjsCollaboration] Creating WebSocket provider for room "${documentId}" at ${serverUrl}`);
       const wsProvider = new WebsocketProvider(serverUrl, documentId, doc);
       cache.wsProvider = wsProvider;
 
@@ -689,6 +720,7 @@ export function useYjsCollaboration(
 
       // Handle sync state
       wsProvider.on('sync', (synced: boolean) => {
+        console.log(`[useYjsCollaboration] Sync event for room "${documentId}": synced=${synced}, content length=${text.length}`);
         setIsSynced(synced);
         if (synced) {
           wsSynced = true;
@@ -714,7 +746,9 @@ export function useYjsCollaboration(
 
     // Observe text changes
     const textObserver = () => {
-      onChangeRef.current?.(text.toString());
+      const content = text.toString();
+      console.log(`[useYjsCollaboration] Text changed in room "${documentId}", length: ${content.length}`);
+      onChangeRef.current?.(content);
     };
     text.observe(textObserver);
 
@@ -733,7 +767,7 @@ export function useYjsCollaboration(
   // Note: callbacks, localUser, and initialContent are accessed via refs so they don't
   // need to be in deps. User info changes are handled by the separate useEffect below.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [documentId, serverUrl, enableOfflinePersistence, doc, text]);
+  }, [documentId, serverUrl, enableOfflinePersistence, doc, text, currentCacheKey]);
 
   // Update local user awareness when user info changes
   const userName = localUser?.name;

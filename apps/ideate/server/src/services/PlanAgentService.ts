@@ -443,6 +443,12 @@ Feel free to share any details, and I'll start building out the phases and tasks
         }
       }
 
+      // Log full response for debugging document streaming issues
+      console.log(`[PlanAgentService] Full response length: ${fullResponse.length}`);
+      console.log(`[PlanAgentService] Has impl_plan_update tag: ${fullResponse.includes('<impl_plan_update>')}`);
+      console.log(`[PlanAgentService] Has plan_update tag: ${fullResponse.includes('<plan_update>')}`);
+      console.log(`[PlanAgentService] Response preview (last 500 chars): ${fullResponse.slice(-500)}`);
+
       // Parse suggested responses FIRST (before any streaming of remaining content)
       // This ensures the <suggested_responses> block never gets streamed to the client
       const { suggestions, responseWithoutSuggestions: fullResponseClean } = parseSuggestedResponses(fullResponse);
@@ -475,26 +481,32 @@ Feel free to share any details, and I'll start building out the phases and tasks
 
       // 2. Check for Implementation Plan document update (full replacement)
       // Process independently - can have both plan_update AND impl_plan_update
+      console.log(`[PlanAgentService] Checking for impl_plan_update. yjsClient: ${!!this.yjsClient}, documentRoomName: ${documentRoomName}`);
       if (this.yjsClient && documentRoomName) {
         const { content: implPlanContent, chatResponse: implPlanChatResponse } = parseImplPlanUpdate(chatResponse);
+        console.log(`[PlanAgentService] parseImplPlanUpdate result: found=${!!implPlanContent}, contentLength=${implPlanContent?.length ?? 0}`);
         if (implPlanContent) {
           chatResponse = implPlanChatResponse;
 
           try {
             callbacks.onProgressEvent?.(createStatusEvent('Writing design document...'));
             callbacks.onDocumentEditStart?.();
-            console.log(`[PlanAgentService] Creating/replacing Implementation Plan document in room ${documentRoomName}`);
+            console.log(`[PlanAgentService] Creating/replacing Implementation Plan document in room ${documentRoomName}, content length: ${implPlanContent.length}`);
 
             await this.yjsClient.streamReplaceContent(documentRoomName, implPlanContent);
             this.yjsClient.clearCursor(documentRoomName);
 
             callbacks.onDocumentEditEnd?.();
-            console.log(`[PlanAgentService] Implementation Plan document updated`);
+            console.log(`[PlanAgentService] Implementation Plan document updated successfully`);
           } catch (error) {
             console.error('[PlanAgentService] Error updating Implementation Plan document:', error);
             callbacks.onDocumentEditEnd?.();
           }
+        } else {
+          console.log(`[PlanAgentService] No impl_plan_update found in response. Response snippet: ${chatResponse.slice(0, 200)}`);
         }
+      } else {
+        console.log(`[PlanAgentService] Skipping impl_plan_update: yjsClient=${!!this.yjsClient}, documentRoomName=${documentRoomName}`);
       }
 
       // 3. Check for Implementation Plan document edits (targeted changes)

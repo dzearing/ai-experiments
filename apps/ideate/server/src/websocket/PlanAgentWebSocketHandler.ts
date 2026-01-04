@@ -152,6 +152,9 @@ export class PlanAgentWebSocketHandler {
           if (clientMessage.idea) {
             client.ideaContext = clientMessage.idea;
           }
+          if (clientMessage.documentRoomName) {
+            client.documentRoomName = clientMessage.documentRoomName;
+          }
           await this.handleChatMessage(client, clientMessage.content || '');
           break;
         case 'clear_history':
@@ -166,6 +169,9 @@ export class PlanAgentWebSocketHandler {
             // Update document room name if provided
             if (clientMessage.documentRoomName) {
               client.documentRoomName = clientMessage.documentRoomName;
+              console.log(`[PlanAgent] Client ${client.clientId} set documentRoomName: ${client.documentRoomName}`);
+            } else {
+              console.log(`[PlanAgent] Client ${client.clientId} idea_update has no documentRoomName`);
             }
 
             // If this is the first context we received, now send history and greeting
@@ -214,6 +220,7 @@ export class PlanAgentWebSocketHandler {
    * @param isAutoStart - If true, this is an auto-start message that shouldn't be saved to history
    */
   private async handleChatMessage(client: PlanAgentClient, content: string, isAutoStart = false): Promise<void> {
+    console.log(`[PlanAgent] handleChatMessage called for client ${client.clientId}. isAutoStart: ${isAutoStart}, documentRoomName: ${client.documentRoomName}, ideaId: ${client.ideaId}`);
     if (!content.trim()) return;
 
     if (!client.ideaContext) {

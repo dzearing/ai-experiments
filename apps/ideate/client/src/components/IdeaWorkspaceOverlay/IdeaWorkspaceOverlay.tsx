@@ -315,14 +315,19 @@ export function IdeaWorkspaceOverlay({
 
   // Implementation Plan document ID for Yjs room: impl-plan-{ideaId}
   const implPlanDocumentId = useMemo(() => {
-    return (currentIdea?.id || idea?.id) ? `impl-plan-${currentIdea?.id || idea?.id}` : null;
-  }, [currentIdea?.id, idea?.id]);
+    const id = (currentIdea?.id || idea?.id) ? `impl-plan-${currentIdea?.id || idea?.id}` : null;
+    console.log('[IdeaWorkspace] implPlanDocumentId computed:', id, { currentIdeaId: currentIdea?.id, ideaId: idea?.id, phase });
+    return id;
+  }, [currentIdea?.id, idea?.id, phase]);
 
   // Implementation Plan content state
   const [implPlanContent, setImplPlanContent] = useState('');
   const [implPlanViewMode, setImplPlanViewMode] = useState<ViewMode>('preview');
 
   // Yjs collaboration for Implementation Plan (only in planning phase)
+  const implPlanServerUrl = phase === 'planning' && implPlanDocumentId ? YJS_WS_URL : undefined;
+  console.log('[IdeaWorkspace] Yjs config:', { documentId: implPlanDocumentId || 'disabled', serverUrl: implPlanServerUrl, phase, isImplPlanYjsSynced: undefined });
+
   const {
     extensions: implPlanYjsExtensions,
     coAuthors: implPlanYjsCoAuthors,
@@ -330,12 +335,13 @@ export function IdeaWorkspaceOverlay({
     isSynced: isImplPlanYjsSynced,
   } = useYjsCollaboration({
     documentId: implPlanDocumentId || 'disabled',
-    serverUrl: phase === 'planning' && implPlanDocumentId ? YJS_WS_URL : undefined,
+    serverUrl: implPlanServerUrl,
     localUser: {
       name: user?.name || 'Anonymous',
       color: userColor,
     },
     onChange: (newContent) => {
+      console.log('[IdeaWorkspace] Impl Plan content changed, length:', newContent.length, 'preview:', newContent.slice(0, 100));
       setImplPlanContent(newContent);
     },
   });
@@ -595,14 +601,19 @@ export function IdeaWorkspaceOverlay({
     }
   }, [phase]);
 
+  // Log when isImplPlanYjsSynced changes
+  useEffect(() => {
+    console.log('[IdeaWorkspace] isImplPlanYjsSynced changed:', isImplPlanYjsSynced, { phase, planAgentConnected: planAgent.isConnected, implPlanDocumentId });
+  }, [isImplPlanYjsSynced, phase, planAgent.isConnected, implPlanDocumentId]);
+
   // Signal to the Plan Agent that Yjs is ready when the impl plan syncs
   // This allows the agent to start writing to the document without race conditions
   useEffect(() => {
     if (phase === 'planning' && isImplPlanYjsSynced && planAgent.isConnected) {
-      console.log('[IdeaWorkspace] Impl plan Yjs synced, sending yjs_ready');
+      console.log('[IdeaWorkspace] Impl plan Yjs synced, sending yjs_ready to server. Room:', implPlanDocumentId);
       planAgent.sendYjsReady();
     }
-  }, [phase, isImplPlanYjsSynced, planAgent.isConnected, planAgent.sendYjsReady]);
+  }, [phase, isImplPlanYjsSynced, planAgent.isConnected, planAgent.sendYjsReady, implPlanDocumentId]);
 
   // Note: Planning initialization is now handled on the SERVER side.
   // When the Plan Agent connects and there's no history, the server automatically

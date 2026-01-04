@@ -17,6 +17,7 @@ import { MCPToolsService, type ToolDefinition } from './MCPToolsService.js';
 import { ThingService } from './ThingService.js';
 import { buildFacilitatorPrompt, buildContextSection } from '../prompts/facilitatorPrompt.js';
 import { createFacilitatorMcpServer } from './FacilitatorMcpTools.js';
+import { getClaudeDiagnosticsService } from '../routes/diagnostics.js';
 
 /**
  * Open question type for user clarification
@@ -491,6 +492,10 @@ Example format:
     // Start timing for diagnostics
     const startTime = Date.now();
 
+    // Track in-flight request for diagnostics UI
+    const diagnosticsService = getClaudeDiagnosticsService();
+    const requestId = diagnosticsService.startRequest('facilitator', userId, content.slice(0, 100));
+
     // Get persona and history
     const persona = this.getPersona();
     const history = await this.chatService.getMessages(userId);
@@ -514,6 +519,7 @@ Example format:
     let fullResponse = '';
     let pendingBuffer = ''; // Buffer for potential open_questions blocks
     const toolCalls: FacilitatorMessage['toolCalls'] = [];
+    let hasStartedStreaming = false; // Track if we've started streaming
     let questionsSent = false; // Track if open questions have been sent
 
     // Token usage tracking for diagnostics
@@ -599,6 +605,12 @@ Example format:
           // Partial message - includes thinking blocks and text deltas during streaming
           const partialMsg = message as SDKPartialAssistantMessage;
           const event = partialMsg.event;
+
+          // Update in-flight status to streaming on first stream event
+          if (!hasStartedStreaming) {
+            hasStartedStreaming = true;
+            diagnosticsService.updateRequest(requestId, { status: 'streaming' });
+          }
 
           // Handle streaming content
           if (event.type === 'content_block_delta' && 'delta' in event) {
@@ -820,6 +832,9 @@ Example format:
       // Call complete callback
       callbacks.onComplete(assistantMessage);
 
+      // Mark in-flight request as completed
+      diagnosticsService.completeRequest(requestId);
+
       // Add diagnostic entry with enhanced data including raw SDK events
       this.addDiagnosticEntry({
         timestamp: new Date().toISOString(),
@@ -843,12 +858,16 @@ Example format:
     } catch (error) {
       // Re-throw abort errors without logging
       if (error instanceof Error && error.name === 'AbortError') {
+        diagnosticsService.completeRequest(requestId, 'Aborted');
         throw error;
       }
 
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('[FacilitatorService] Error processing message:', error);
       callbacks.onError(errorMessage);
+
+      // Mark in-flight request as failed
+      diagnosticsService.completeRequest(requestId, errorMessage);
 
       // Add diagnostic entry for error with enhanced data including raw SDK events
       this.addDiagnosticEntry({

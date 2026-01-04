@@ -73,11 +73,14 @@ export function SessionList({
   onClearSessions,
   inFlightRequests = [],
 }: SessionListProps) {
-  // Filter sessions by search query (matches name)
+  // Sort sessions by lastActivity (newest first), then filter by search query
   const filteredSessions = useMemo(() => {
-    if (!searchQuery) return sessions;
+    // Sort by lastActivity descending (newest first)
+    const sorted = [...sessions].sort((a, b) => b.lastActivity - a.lastActivity);
+
+    if (!searchQuery) return sorted;
     const query = searchQuery.toLowerCase();
-    return sessions.filter((s) => s.name.toLowerCase().includes(query));
+    return sorted.filter((s) => s.name.toLowerCase().includes(query));
   }, [sessions, searchQuery]);
 
   return (

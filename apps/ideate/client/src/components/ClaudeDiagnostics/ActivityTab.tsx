@@ -1,8 +1,17 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Text, Spinner, Chip, Code, Card } from '@ui-kit/react';
-import { MessageRow } from './MessageRow';
+import { ApiCallView } from './ApiCallView';
 import type { SessionMessage, RoleFilter, InFlightRequest } from './types';
 import styles from './ClaudeDiagnostics.module.css';
+
+/**
+ * Represents a grouped API call (request + optional response)
+ */
+interface ApiCall {
+  id: string;
+  request: SessionMessage;
+  response?: SessionMessage;
+}
 
 /**
  * Extract text from content that may be a string or an array of content blocks
@@ -72,44 +81,114 @@ function getStatusLabel(status: InFlightRequest['status']): string {
 }
 
 /**
- * Activity tab showing list of messages with filtering.
- * Messages are shown in chronological order (newest at bottom).
+ * Group messages into API calls (request/response pairs)
  */
-export function ActivityTab({ messages, roleFilter, searchQuery, inFlightRequests = [] }: ActivityTabProps) {
-  // Filter messages based on role and search query
-  const filteredMessages = useMemo(() => {
-    return messages.filter((msg) => {
-      // Filter by role
-      if (roleFilter !== 'all' && msg.role !== roleFilter) {
-        return false;
-      }
+function groupIntoApiCalls(messages: SessionMessage[]): ApiCall[] {
+  const apiCalls: ApiCall[] = [];
+  let i = 0;
 
-      // Filter by search query
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        const contentMatch = extractTextContent(msg.content).toLowerCase().includes(query);
-        const senderMatch = msg.senderName?.toLowerCase().includes(query);
-        if (!contentMatch && !senderMatch) {
-          return false;
-        }
-      }
+  while (i < messages.length) {
+    const msg = messages[i];
 
-      return true;
+    if (msg.role === 'user') {
+      // Look for the next assistant message as the response
+      const nextMsg = messages[i + 1];
+      if (nextMsg && nextMsg.role === 'assistant') {
+        apiCalls.push({
+          id: `${msg.id}-${nextMsg.id}`,
+          request: msg,
+          response: nextMsg,
+        });
+        i += 2;
+      } else {
+        // User message without response (might be pending)
+        apiCalls.push({
+          id: msg.id,
+          request: msg,
+        });
+        i += 1;
+      }
+    } else if (msg.role === 'assistant') {
+      // Orphan assistant message (shouldn't happen often)
+      // Create a synthetic request for display purposes
+      apiCalls.push({
+        id: msg.id,
+        request: {
+          ...msg,
+          id: `synthetic-${msg.id}`,
+          role: 'user',
+          content: '(No request captured)',
+        },
+        response: msg,
+      });
+      i += 1;
+    } else {
+      // System or other messages - skip
+      i += 1;
+    }
+  }
+
+  return apiCalls;
+}
+
+/**
+ * Activity tab showing API calls to the Claude Agent SDK.
+ * Groups user requests with their assistant responses.
+ * Shows in-flight requests at top, completed calls below.
+ */
+export function ActivityTab({ messages, roleFilter: _roleFilter, searchQuery, inFlightRequests = [] }: ActivityTabProps) {
+  // State for elapsed time updates
+  const [, setTick] = useState(0);
+
+  // Update elapsed time display every second when there are active requests
+  useEffect(() => {
+    const activeRequests = inFlightRequests.filter(
+      (req) => req.status === 'pending' || req.status === 'streaming'
+    );
+    if (activeRequests.length === 0) return;
+
+    const interval = setInterval(() => {
+      setTick((t) => t + 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [inFlightRequests]);
+
+  // Group messages into API calls
+  const apiCalls = useMemo(() => {
+    return groupIntoApiCalls(messages);
+  }, [messages]);
+
+  // Filter API calls based on search query
+  const filteredApiCalls = useMemo(() => {
+    if (!searchQuery) return apiCalls;
+
+    const query = searchQuery.toLowerCase();
+    return apiCalls.filter((call) => {
+      const requestMatch = extractTextContent(call.request.content).toLowerCase().includes(query);
+      const responseMatch = call.response
+        ? extractTextContent(call.response.content).toLowerCase().includes(query)
+        : false;
+      const toolMatch = call.response?.toolCalls?.some((tc) =>
+        tc.name.toLowerCase().includes(query) ||
+        JSON.stringify(tc.input).toLowerCase().includes(query)
+      );
+      return requestMatch || responseMatch || toolMatch;
     });
-  }, [messages, roleFilter, searchQuery]);
+  }, [apiCalls, searchQuery]);
 
   // Active in-flight requests (pending or streaming)
   const activeRequests = inFlightRequests.filter(
     (req) => req.status === 'pending' || req.status === 'streaming'
   );
 
-  if (filteredMessages.length === 0 && activeRequests.length === 0) {
+  if (filteredApiCalls.length === 0 && activeRequests.length === 0) {
     return (
       <div className={styles.emptyState}>
         <Text color="soft">
           {messages.length === 0
-            ? 'No messages in this session'
-            : 'No messages match your filter'}
+            ? 'No API calls in this session'
+            : 'No API calls match your search'}
         </Text>
       </div>
     );
@@ -157,9 +236,9 @@ export function ActivityTab({ messages, roleFilter, searchQuery, inFlightRequest
         </div>
       ))}
 
-      {/* Completed messages */}
-      {filteredMessages.map((message) => (
-        <MessageRow key={message.id} message={message} />
+      {/* Completed API calls */}
+      {filteredApiCalls.map((call) => (
+        <ApiCallView key={call.id} request={call.request} response={call.response} />
       ))}
     </div>
   );

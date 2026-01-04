@@ -733,7 +733,8 @@ export class ClaudeDiagnosticsService {
       await clearDir(PLAN_AGENT_DIR);
     }
 
-    // Import agent sessions are managed by ImportAgentChatService
-    // We don't clear them here as they may be in-memory only
+    if (!sessionType || sessionType === 'importagent') {
+      await getImportAgentChatService().clearAllSessions();
+    }
   }
 }

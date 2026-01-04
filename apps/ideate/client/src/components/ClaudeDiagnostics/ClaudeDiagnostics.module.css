@@ -73,6 +73,14 @@
 }
 
 .sessionRow.selected .sessionMeta {
+  /* Use primary-fg for all text in selected state to ensure contrast */
+  color: var(--primary-fg);
+}
+
+/* Override soft color tokens on RelativeTime and other elements inside selected row */
+.sessionRow.selected .sessionMeta time,
+.sessionRow.selected .sessionMeta [class*="_soft_"] {
+  color: var(--primary-fg);
   opacity: 0.85;
 }
 
@@ -543,4 +551,124 @@
   gap: var(--space-4);
   height: 100%;
   background: var(--base-bg);
+}
+
+/* ======================================
+   API Call View
+   ====================================== */
+
+.apiCallRow {
+  border-bottom: 1px solid var(--soft-border);
+}
+
+.apiCallRow:hover {
+  background: var(--base-bg-hover);
+}
+
+.apiCallHeader {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  min-height: 44px;
+}
+
+.apiCallDetail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--soft-bg);
+  border-top: 1px solid var(--soft-border);
+}
+
+.apiCallSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.sectionHeaderStatic {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.apiCallCard {
+  padding: var(--space-2);
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.apiCallCode {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: var(--text-xs);
+}
+
+.toolCallCard {
+  padding: var(--space-2);
+  border-left: 3px solid var(--info-bg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.toolCallCode {
+  font-size: var(--text-xs);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* SDK Events Container */
+.sdkEventsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.sdkEventRow {
+  padding: var(--space-2);
+  background: var(--base-bg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--soft-border);
+}
+
+.sdkEventHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.sdkEventTime {
+  font-family: var(--font-mono);
+  min-width: 100px;
+}
+
+.sdkEventData {
+  font-size: var(--text-xs);
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+/* API Call Stats */
+.apiCallStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  padding: var(--space-3);
+  background: var(--base-bg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--soft-border);
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 80px;
 }
