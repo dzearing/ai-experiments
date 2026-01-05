@@ -90,6 +90,8 @@ export interface UsePlanAgentOptions {
   userName: string;
   /** Initial idea context */
   ideaContext: PlanIdeaContext | null;
+  /** Initial plan to display (loaded from server) */
+  initialPlan?: IdeaPlan | null;
   /** Yjs document room name for Implementation Plan coauthoring */
   documentRoomName?: string;
   /** Called when a plan update is received */
@@ -159,6 +161,7 @@ export function usePlanAgent({
   userId,
   userName,
   ideaContext,
+  initialPlan,
   documentRoomName,
   onPlanUpdate,
   onError,
@@ -171,7 +174,7 @@ export function usePlanAgent({
   const [isEditingDocument, setIsEditingDocument] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tokenUsage, setTokenUsage] = useState<TokenUsage | null>(null);
-  const [plan, setPlan] = useState<Partial<IdeaPlan> | null>(null);
+  const [plan, setPlan] = useState<Partial<IdeaPlan> | null>(initialPlan || null);
   const [openQuestions, setOpenQuestions] = useState<OpenQuestion[] | null>(null);
   const [suggestedResponses, setSuggestedResponses] = useState<SuggestedResponse[] | null>(null);
   const [showQuestionsResolver, setShowQuestionsResolver] = useState(false);
@@ -195,6 +198,15 @@ export function usePlanAgent({
   useEffect(() => {
     documentRoomNameRef.current = documentRoomName;
   }, [documentRoomName]);
+
+  // Sync initialPlan to state when enabled or when initialPlan changes
+  // This handles the case where the component is re-enabled with a saved plan
+  useEffect(() => {
+    if (enabled && initialPlan && initialPlan.phases && initialPlan.phases.length > 0) {
+      console.log('[PlanAgent] Syncing initialPlan to state:', initialPlan.phases.length, 'phases');
+      setPlan(initialPlan);
+    }
+  }, [enabled, initialPlan]);
 
   useEffect(() => {
     enabledRef.current = enabled;
@@ -249,7 +261,8 @@ export function usePlanAgent({
       setError(null);
       setIsLoading(false);
       setIsEditingDocument(false);
-      setPlan(null);
+      // Use initialPlan for the new idea, or null if none
+      setPlan(initialPlan || null);
       setTokenUsage(null);
       setOpenQuestions(null);
       setSuggestedResponses(null);

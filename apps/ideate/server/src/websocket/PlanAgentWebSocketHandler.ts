@@ -5,7 +5,7 @@ import { PlanAgentService, type OpenQuestion, type SuggestedResponse } from '../
 import type { PlanAgentMessage } from '../services/PlanAgentChatService.js';
 import type { PlanIdeaContext } from '../prompts/planAgentPrompt.js';
 import type { YjsCollaborationHandler } from './YjsCollaborationHandler.js';
-import type { IdeaPlan } from '../services/IdeaService.js';
+import { IdeaService, type IdeaPlan } from '../services/IdeaService.js';
 import type { AgentProgressEvent } from '../shared/agentProgress.js';
 
 /**
@@ -84,11 +84,13 @@ export class PlanAgentWebSocketHandler {
   private clients: Map<WebSocket, PlanAgentClient> = new Map();
   private clientIdCounter = 0;
   private planAgentService: PlanAgentService;
+  private ideaService: IdeaService;
   /** Pending open questions per idea ID - survives reconnects */
   private pendingQuestionsByIdea: Map<string, OpenQuestion[]> = new Map();
 
   constructor(yjsHandler: YjsCollaborationHandler) {
     this.planAgentService = new PlanAgentService(yjsHandler);
+    this.ideaService = new IdeaService();
   }
 
   /**
@@ -263,8 +265,17 @@ export class PlanAgentWebSocketHandler {
               });
             }
           },
-          onPlanUpdate: (plan) => {
+          onPlanUpdate: async (plan) => {
             if (!client.cancelled) {
+              // Save plan to persistent storage
+              try {
+                await this.ideaService.updatePlan(client.ideaId, client.userId, plan);
+                console.log(`[PlanAgentWS] Saved plan for idea ${client.ideaId} with ${plan.phases?.length || 0} phases`);
+              } catch (err) {
+                console.error(`[PlanAgentWS] Failed to save plan for idea ${client.ideaId}:`, err);
+              }
+
+              // Send to client
               this.send(client.ws, {
                 type: 'plan_update',
                 plan,

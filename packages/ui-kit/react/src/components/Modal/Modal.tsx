@@ -27,6 +27,8 @@ export interface ModalProps {
   onClose: () => void;
   /** Modal size */
   size?: ModalSize;
+  /** Fixed height for the modal (e.g., "50vh", "400px") - prevents content-based sizing */
+  height?: string;
   /** Close on backdrop click */
   closeOnBackdrop?: boolean;
   /** Close on Escape key */
@@ -39,6 +41,7 @@ export function Modal({
   open,
   onClose,
   size = 'md',
+  height,
   closeOnBackdrop = true,
   closeOnEscape = true,
   children,
@@ -111,6 +114,7 @@ export function Modal({
         <div
           ref={modalRef}
           className={styles.modal}
+          style={height ? { height } : undefined}
           onClick={handleContentClick}
           role="dialog"
           aria-modal="true"

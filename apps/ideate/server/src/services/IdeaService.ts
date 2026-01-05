@@ -624,6 +624,72 @@ export class IdeaService {
     }
   }
 
+  /**
+   * Update the plan for an idea.
+   * Merges the provided plan updates with the existing plan.
+   */
+  async updatePlan(
+    id: string,
+    userId: string,
+    planUpdate: Partial<IdeaPlan>
+  ): Promise<Idea | null> {
+    try {
+      const metaContent = await fs.readFile(this.getMetadataPath(id), 'utf-8');
+      const metadata: IdeaMetadata = JSON.parse(metaContent);
+
+      // Only owner can update plan
+      if (metadata.ownerId !== userId) {
+        return null;
+      }
+
+      const now = new Date().toISOString();
+
+      // Merge plan update with existing plan
+      const existingPlan = metadata.plan || {
+        phases: [],
+        workingDirectory: '',
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      const updatedPlan: IdeaPlan = {
+        ...existingPlan,
+        phases: planUpdate.phases ?? existingPlan.phases,
+        workingDirectory: planUpdate.workingDirectory ?? existingPlan.workingDirectory,
+        repositoryUrl: planUpdate.repositoryUrl ?? existingPlan.repositoryUrl,
+        branch: planUpdate.branch ?? existingPlan.branch,
+        isClone: planUpdate.isClone ?? existingPlan.isClone,
+        workspaceId: planUpdate.workspaceId ?? existingPlan.workspaceId,
+        updatedAt: now,
+      };
+
+      const updatedMetadata: IdeaMetadata = {
+        ...metadata,
+        plan: updatedPlan,
+        updatedAt: now,
+      };
+
+      await fs.writeFile(
+        this.getMetadataPath(id),
+        JSON.stringify(updatedMetadata, null, 2),
+        'utf-8'
+      );
+
+      // Read description
+      let description: string | undefined;
+      try {
+        description = await fs.readFile(this.getDescriptionPath(id), 'utf-8');
+      } catch {
+        // No description file
+      }
+
+      return { ...updatedMetadata, description };
+    } catch (error) {
+      console.error('[IdeaService] Failed to update plan:', error);
+      return null;
+    }
+  }
+
   // =========================================================================
   // Rating
   // =========================================================================

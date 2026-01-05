@@ -2,8 +2,10 @@
  * Selection type for questions
  * - 'single': Only one option can be selected (radio buttons)
  * - 'multiple': Multiple options can be selected (checkboxes)
+ * - 'thing-picker': Select an existing thing or create a new one
+ * - 'file-path': Enter a file or folder path
  */
-export type SelectionType = 'single' | 'multiple';
+export type SelectionType = 'single' | 'multiple' | 'thing-picker' | 'file-path';
 
 /**
  * Individual option within a question
@@ -36,6 +38,24 @@ export interface OpenQuestion {
 }
 
 /**
+ * Thing data for thing-picker selection
+ */
+export interface ThingPickerData {
+  /** ID of the selected thing */
+  thingId: string;
+  /** Name of the selected thing */
+  name: string;
+  /** Type of the selected thing */
+  type: string;
+  /** Resolved key properties (localPath, remoteUrl, etc.) */
+  keyProperties?: {
+    localPath?: string;
+    remoteUrl?: string;
+    branch?: string;
+  };
+}
+
+/**
  * Answer to a single question
  */
 export interface QuestionAnswer {
@@ -45,6 +65,10 @@ export interface QuestionAnswer {
   selectedOptionIds: string[];
   /** Custom text if the "Other" option was selected */
   customText?: string;
+  /** Thing data if selectionType was 'thing-picker' */
+  thingData?: ThingPickerData;
+  /** File path if selectionType was 'file-path' */
+  filePath?: string;
 }
 
 /**

@@ -1302,6 +1302,9 @@ export class MCPToolsService {
       ? path.map(p => p.name).join(' > ')
       : '(root)';
 
+    // Resolve key properties for execution context
+    const keyProperties = await this.thingService.resolveKeyProperties(thingId, userId);
+
     return {
       success: true,
       data: {
@@ -1316,6 +1319,8 @@ export class MCPToolsService {
         icon: thing.icon,
         color: thing.color,
         properties: thing.properties,
+        // Resolved key properties for execution context (localPath, remoteUrl, etc.)
+        keyProperties,
         links: thing.links?.map(link => ({
           type: link.type,
           label: link.label,
@@ -1413,11 +1418,11 @@ export class MCPToolsService {
   ): Promise<ToolResult> {
     const things = await this.thingService.listThings(userId, workspaceId);
 
-    return {
-      success: true,
-      data: {
-        count: things.length,
-        things: things.map(thing => ({
+    // Resolve key properties for each thing
+    const thingsWithKeys = await Promise.all(
+      things.map(async (thing) => {
+        const keyProperties = await this.thingService.resolveKeyProperties(thing.id, userId);
+        return {
           id: thing.id,
           name: thing.name,
           type: thing.type,
@@ -1426,7 +1431,17 @@ export class MCPToolsService {
           parentIds: thing.parentIds,
           icon: thing.icon,
           color: thing.color,
-        })),
+          // Include resolved key properties so agents always know physical locations
+          keyProperties,
+        };
+      })
+    );
+
+    return {
+      success: true,
+      data: {
+        count: things.length,
+        things: thingsWithKeys,
       },
     };
   }
@@ -1438,20 +1453,31 @@ export class MCPToolsService {
   ): Promise<ToolResult> {
     const things = await this.thingService.searchThings(userId, query, workspaceId);
 
-    return {
-      success: true,
-      data: {
-        query,
-        count: things.length,
-        things: things.map(thing => ({
+    // Resolve key properties for each thing
+    const thingsWithKeys = await Promise.all(
+      things.map(async (thing) => {
+        const keyProperties = await this.thingService.resolveKeyProperties(thing.id, userId);
+        return {
           id: thing.id,
           name: thing.name,
           type: thing.type,
           description: thing.description,
           tags: thing.tags,
+          parentIds: thing.parentIds,
           icon: thing.icon,
           color: thing.color,
-        })),
+          // Include resolved key properties so agents always know physical locations
+          keyProperties,
+        };
+      })
+    );
+
+    return {
+      success: true,
+      data: {
+        query,
+        count: things.length,
+        things: thingsWithKeys,
       },
     };
   }

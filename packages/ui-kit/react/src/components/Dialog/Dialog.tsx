@@ -24,6 +24,8 @@ export interface DialogProps {
   title?: ReactNode;
   /** Dialog size */
   size?: ModalSize;
+  /** Fixed height for the dialog (e.g., "50vh", "400px") - prevents content-based sizing */
+  height?: string;
   /** Footer content (usually action buttons) */
   footer?: ReactNode;
   /** Close on backdrop click */
@@ -40,6 +42,7 @@ export function Dialog({
   onSubmit,
   title,
   size = 'md',
+  height,
   footer,
   closeOnBackdrop = true,
   closeOnEscape = true,
@@ -73,6 +76,7 @@ export function Dialog({
       open={open}
       onClose={onClose}
       size={size}
+      height={height}
       closeOnBackdrop={closeOnBackdrop}
       closeOnEscape={closeOnEscape}
     >

@@ -18,7 +18,9 @@
   box-shadow: var(--shadow-xl);
   padding: var(--space-6);
   max-height: calc(100vh - var(--space-8));
-  overflow: auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Sizes */

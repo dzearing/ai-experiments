@@ -178,6 +178,10 @@
       "types": "./dist/FolderIcon.d.ts",
       "import": "./dist/FolderIcon.js"
     },
+    "./FolderPlusIcon": {
+      "types": "./dist/FolderPlusIcon.d.ts",
+      "import": "./dist/FolderPlusIcon.js"
+    },
     "./ForwardIcon": {
       "types": "./dist/ForwardIcon.d.ts",
       "import": "./dist/ForwardIcon.js"

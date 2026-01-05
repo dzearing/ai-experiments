@@ -291,6 +291,116 @@
 }
 
 /* ==============================================
+   Thing Picker
+   ============================================== */
+
+.thingPickerContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  position: relative;
+}
+
+.thingPickerInputWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.thingPickerInput {
+  width: 100%;
+}
+
+.thingPickerDropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  max-height: 240px;
+  overflow-y: auto;
+  margin-top: var(--space-1);
+}
+
+.thingPickerItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--duration-fast) var(--ease-default);
+}
+
+.thingPickerItem:hover,
+.thingPickerItemSelected {
+  background: var(--soft-bg-hover);
+}
+
+.thingPickerItemIcon {
+  flex-shrink: 0;
+  color: var(--soft-fg-soft);
+}
+
+.thingPickerItemContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.thingPickerItemPath {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selectedThing {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  background: var(--strong-bg);
+  border: 1px solid var(--strong-border);
+  border-radius: var(--radius-md);
+}
+
+.selectedThingHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.thingPickerHint {
+  margin-top: var(--space-1);
+}
+
+/* ==============================================
+   File Path Input
+   ============================================== */
+
+.filePathContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.filePathInput {
+  width: 100%;
+  font-family: var(--font-mono);
+}
+
+.filePathHint {
+  margin-top: var(--space-1);
+}
+
+/* ==============================================
    Reduced Motion
    ============================================== */
 

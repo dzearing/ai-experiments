@@ -28,6 +28,12 @@ export default defineConfig({
     port: 5190, // Ideate-specific port
     strictPort: true,
     open: false,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3002',
+        changeOrigin: true,
+      },
+    },
   },
   css: {
     modules: {

@@ -5,7 +5,7 @@ import { ArrowRightIcon } from '@ui-kit/icons/ArrowRightIcon';
 import { CheckCircleIcon } from '@ui-kit/icons/CheckCircleIcon';
 import { CloseIcon } from '@ui-kit/icons/CloseIcon';
 import { QuestionOptions } from './QuestionOptions';
-import type { OpenQuestion, OpenQuestionsResult, QuestionAnswer } from './types';
+import type { OpenQuestion, OpenQuestionsResult, QuestionAnswer, ThingPickerData } from './types';
 import styles from './OpenQuestionsResolver.module.css';
 
 /**
@@ -62,11 +62,15 @@ export function OpenQuestionsResolver({
   const [selections, setSelections] = useState<Record<string, string[]>>({});
   const [customTexts, setCustomTexts] = useState<Record<string, string>>({});
   const [focusIndices, setFocusIndices] = useState<Record<string, number>>({});
+  const [thingDataMap, setThingDataMap] = useState<Record<string, ThingPickerData>>({});
+  const [filePathMap, setFilePathMap] = useState<Record<string, string>>({});
 
   const question = questions[currentIndex];
   const selectedIds = selections[question?.id] || [];
   const customText = customTexts[question?.id] || '';
   const focusIndex = focusIndices[question?.id] ?? 0;
+  const thingData = thingDataMap[question?.id];
+  const filePath = filePathMap[question?.id] || '';
 
   const handleSelect = (optionId: string) => {
     if (!question) return;
@@ -89,6 +93,16 @@ export function OpenQuestionsResolver({
     setCustomTexts((prev) => ({ ...prev, [question.id]: text }));
   };
 
+  const handleThingSelect = (thing: ThingPickerData) => {
+    if (!question) return;
+    setThingDataMap((prev) => ({ ...prev, [question.id]: thing }));
+  };
+
+  const handleFilePathChange = (path: string) => {
+    if (!question) return;
+    setFilePathMap((prev) => ({ ...prev, [question.id]: path }));
+  };
+
   const handlePrevious = () => {
     if (currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
@@ -106,6 +120,8 @@ export function OpenQuestionsResolver({
       questionId: q.id,
       selectedOptionIds: selections[q.id] || [],
       customText: customTexts[q.id],
+      thingData: thingDataMap[q.id],
+      filePath: filePathMap[q.id],
     }));
     onComplete({ answers, completed: true, dismissed: false });
   };
@@ -115,14 +131,26 @@ export function OpenQuestionsResolver({
       questionId: q.id,
       selectedOptionIds: selections[q.id] || [],
       customText: customTexts[q.id],
+      thingData: thingDataMap[q.id],
+      filePath: filePathMap[q.id],
     }));
     onComplete({ answers, completed: false, dismissed: true });
     onDismiss?.();
   };
 
-  // Can proceed to next/done if at least one option is selected
-  // and if custom is selected, custom text must not be empty
-  const canProceed = selectedIds.length > 0 && (!selectedIds.includes('custom') || customText.trim());
+  // Can proceed to next/done based on selection type:
+  // - thing-picker: must have thing data with a name (thingId or name as path)
+  // - file-path: must have a non-empty file path
+  // - single/multiple: at least one option selected, custom text if "custom" is selected
+  const canProceed = (() => {
+    if (question?.selectionType === 'thing-picker') {
+      return Boolean(thingData?.name?.trim());
+    }
+    if (question?.selectionType === 'file-path') {
+      return Boolean(filePath.trim());
+    }
+    return selectedIds.length > 0 && (!selectedIds.includes('custom') || customText.trim());
+  })();
 
   if (!question) {
     return null;
@@ -192,6 +220,10 @@ export function OpenQuestionsResolver({
                 onNext={currentIndex < questions.length - 1 ? handleNext : undefined}
                 autoFocusIndex={focusIndex}
                 onFocusIndexChange={(i) => setFocusIndices((prev) => ({ ...prev, [question.id]: i }))}
+                thingData={thingData}
+                onThingSelect={handleThingSelect}
+                filePath={filePath}
+                onFilePathChange={handleFilePathChange}
               />
             </div>
           </div>
@@ -264,6 +296,10 @@ export function OpenQuestionsResolver({
             onNext={currentIndex < questions.length - 1 ? handleNext : undefined}
             autoFocusIndex={focusIndex}
             onFocusIndexChange={(i) => setFocusIndices((prev) => ({ ...prev, [question.id]: i }))}
+            thingData={thingData}
+            onThingSelect={handleThingSelect}
+            filePath={filePath}
+            onFilePathChange={handleFilePathChange}
           />
         </div>
 

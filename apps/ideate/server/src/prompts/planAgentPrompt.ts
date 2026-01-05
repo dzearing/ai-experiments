@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
+import { THING_TOOLS_PROMPT } from '../shared/thingToolsMcp.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -113,6 +114,9 @@ ${docWithPositions}
       '## Current Implementation Plan Document\n\n(No document content yet - use <impl_plan_update> to create the initial document)'
     );
   }
+
+  // Add thing tools section at the end
+  prompt += '\n\n' + THING_TOOLS_PROMPT;
 
   return prompt;
 }

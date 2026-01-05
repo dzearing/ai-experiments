@@ -8,8 +8,161 @@ import { DocumentService } from './DocumentService.js';
 // Types
 // =========================================================================
 
+// =========================================================================
+// Type Schema Definitions
+// =========================================================================
+
+/** Property definition with resolution rules for type schemas */
+export interface PropertyDef {
+  /** Display label for UI */
+  label: string;
+  /** Property type for input rendering */
+  type: 'text' | 'url' | 'path' | 'thing-ref';
+  /** If thing-ref, what types can be referenced */
+  refTypes?: string[];
+  /** Is this required for the type? */
+  required?: boolean;
+  /** For path properties: inherit from parent thing and join with this property */
+  inheritPath?: {
+    /** Property name containing the parent thing ID */
+    fromProperty: string;
+    /** Property name to append to parent's localPath */
+    joinWith?: string;
+  };
+}
+
+/** Type schema with all metadata in one place */
+export interface ThingTypeSchema {
+  /** Display label for the type */
+  displayLabel: string;
+  /** Icon name for the type */
+  icon?: ThingIcon;
+  /** Key properties that define this type - shown prominently in UI */
+  keyProperties: Record<string, PropertyDef>;
+  /** Can this type provide execution context for code work? */
+  providesExecutionContext?: boolean;
+}
+
+/** Resolved key properties from a thing and its ancestors */
+export interface ResolvedKeyProperties {
+  /** Absolute local path on disk */
+  localPath?: string;
+  /** Git remote URL */
+  remoteUrl?: string;
+  /** Git branch */
+  branch?: string;
+  /** URL for web resources */
+  url?: string;
+  /** True if remote-only repo that needs cloning */
+  requiresClone?: boolean;
+  /** Parent thing ID that provides context */
+  contextThingId?: string;
+  /** Parent thing name */
+  contextThingName?: string;
+}
+
+/** Type schemas defining key properties and resolution rules for each thing type */
+export const THING_TYPE_SCHEMAS: Record<string, ThingTypeSchema> = {
+  folder: {
+    displayLabel: 'Local Folder',
+    icon: 'folder',
+    providesExecutionContext: true,
+    keyProperties: {
+      localPath: { label: 'Path', type: 'path', required: true },
+    },
+  },
+  'git-repo': {
+    displayLabel: 'Git Repository',
+    icon: 'code',
+    providesExecutionContext: true,
+    keyProperties: {
+      remoteUrl: { label: 'Remote URL', type: 'url' },
+      localPath: { label: 'Local Path', type: 'path' },
+      defaultBranch: { label: 'Default Branch', type: 'text' },
+    },
+  },
+  'git-package': {
+    displayLabel: 'Package',
+    icon: 'package',
+    providesExecutionContext: true,
+    keyProperties: {
+      repoThingId: {
+        label: 'Repository',
+        type: 'thing-ref',
+        refTypes: ['git-repo'],
+        required: true,
+      },
+      relativePath: { label: 'Path in Repo', type: 'text' },
+      localPath: {
+        label: 'Full Path',
+        type: 'path',
+        inheritPath: { fromProperty: 'repoThingId', joinWith: 'relativePath' },
+      },
+    },
+  },
+  feature: {
+    displayLabel: 'Feature',
+    icon: 'star',
+    providesExecutionContext: true,
+    keyProperties: {
+      packageThingId: {
+        label: 'Package',
+        type: 'thing-ref',
+        refTypes: ['git-package'],
+        required: true,
+      },
+      entryFile: { label: 'Entry File', type: 'text' },
+      localPath: {
+        label: 'Path',
+        type: 'path',
+        inheritPath: { fromProperty: 'packageThingId' },
+      },
+    },
+  },
+  'web-resource': {
+    displayLabel: 'Web Resource',
+    icon: 'globe',
+    keyProperties: {
+      url: { label: 'URL', type: 'url', required: true },
+    },
+  },
+  collection: {
+    displayLabel: 'Collection',
+    icon: 'folder',
+    keyProperties: {},
+  },
+  category: {
+    displayLabel: 'Category',
+    icon: 'folder',
+    keyProperties: {},
+  },
+  project: {
+    displayLabel: 'Project',
+    icon: 'code',
+    providesExecutionContext: true,
+    keyProperties: {
+      localPath: { label: 'Path', type: 'path' },
+      remoteUrl: { label: 'Repository URL', type: 'url' },
+    },
+  },
+  item: {
+    displayLabel: 'Item',
+    keyProperties: {},
+  },
+};
+
 /** Predefined thing types (for suggestions) */
-export const PREDEFINED_THING_TYPES = ['category', 'project', 'feature', 'item'] as const;
+export const PREDEFINED_THING_TYPES = [
+  'folder',
+  'git-repo',
+  'git-package',
+  'feature',
+  'web-resource',
+  'collection',
+  'category',
+  'project',
+  'item',
+] as const;
 
 /** Thing type classification - allows custom string values */
 export type ThingType = string;
@@ -1308,6 +1461,107 @@ export class ThingService {
     } catch {
       return false;
     }
+  }
+
+  // =========================================================================
+  // Key Property Resolution
+  // =========================================================================
+
+  /**
+   * Generic key property resolution driven by THING_TYPE_SCHEMAS.
+   * Handles inheritance chains automatically based on schema metadata.
+   * @param thingId - The thing to resolve properties for
+   * @param userId - The user requesting resolution
+   * @param visited - Set of already visited thing IDs (for cycle prevention)
+   */
+  async resolveKeyProperties(
+    thingId: string,
+    userId: string,
+    visited: Set<string> = new Set()
+  ): Promise<ResolvedKeyProperties> {
+    // Prevent cycles
+    if (visited.has(thingId)) {
+      return {};
+    }
+    visited.add(thingId);
+
+    const thing = await this.getThing(thingId, userId, true);
+    if (!thing) {
+      return {};
+    }
+
+    const schema = THING_TYPE_SCHEMAS[thing.type];
+    if (!schema) {
+      // Unknown type - just return raw properties that match common keys
+      const props = thing.properties || {};
+      return {
+        localPath: props.localPath,
+        remoteUrl: props.remoteUrl,
+        branch: props.branch || props.defaultBranch,
+        url: props.url,
+      };
+    }
+
+    const props = thing.properties || {};
+    const resolved: ResolvedKeyProperties = {};
+
+    // Process each key property defined in schema
+    for (const [propName, propDef] of Object.entries(schema.keyProperties)) {
+      // Direct value from thing's properties
+      if (props[propName] !== undefined) {
+        (resolved as Record<string, unknown>)[propName] = props[propName];
+      }
+
+      // Handle inherited/derived properties
+      if (propDef.inheritPath) {
+        const { fromProperty, joinWith } = propDef.inheritPath;
+        const parentThingId = props[fromProperty];
+
+        if (parentThingId) {
+          // Recursively resolve parent thing's properties
+          const parentResolved = await this.resolveKeyProperties(
+            parentThingId,
+            userId,
+            visited
+          );
+
+          if (parentResolved.localPath) {
+            // If joinWith specified, append that property to parent's path
+            const suffix = joinWith ? (props[joinWith] || '') : '';
+            (resolved as Record<string, unknown>)[propName] = suffix
+              ? path.join(parentResolved.localPath, suffix)
+              : parentResolved.localPath;
+          }
+
+          // Inherit other useful properties from parent
+          if (parentResolved.remoteUrl && !resolved.remoteUrl) {
+            resolved.remoteUrl = parentResolved.remoteUrl;
+          }
+          if (parentResolved.branch && !resolved.branch) {
+            resolved.branch = parentResolved.branch;
+          }
+
+          // Track context (the thing that provides physical location)
+          const parentThing = await this.getThingInternal(parentThingId);
+          if (parentThing) {
+            resolved.contextThingId = parentThingId;
+            resolved.contextThingName = parentThing.name;
+          }
+        }
+      }
+    }
+
+    // Handle default branch (might be stored as 'defaultBranch')
+    if (props.defaultBranch && !resolved.branch) {
+      resolved.branch = props.defaultBranch;
+    }
+
+    // Determine if this needs cloning (has remoteUrl but no localPath)
+    if (resolved.remoteUrl && !resolved.localPath) {
+      resolved.requiresClone = true;
+    }
+
+    return resolved;
   }
 
   // =========================================================================

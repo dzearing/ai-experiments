@@ -4,6 +4,7 @@ import { IdeaAgentYjsClient } from './IdeaAgentYjsClient.js';
 import type { YjsCollaborationHandler } from '../websocket/YjsCollaborationHandler.js';
 import { buildIdeaAgentSystemPrompt } from '../prompts/ideaAgentPrompt.js';
 import type { AgentProgressCallbacks, AgentProgressEvent } from '../shared/agentProgress.js';
+import { createThingToolsMcpServer } from '../shared/thingToolsMcp.js';
 
 /**
  * Cache entry for pre-generated greetings
@@ -337,7 +338,7 @@ export class IdeaAgentService {
     ideaId: string,
     userId: string,
     content: string,
-    _ideaContext: IdeaContext,
+    ideaContext: IdeaContext,
     callbacks: StreamCallbacks,
     documentRoomName?: string,
     modelId?: string
@@ -372,7 +373,7 @@ export class IdeaAgentService {
     console.log(`[IdeaAgentService] isNewIdea=${isNewIdea}, hasRealContent=${hasRealContent}, docLength=${documentContent?.length || 0}`);
 
     // Build the system prompt with idea context and document content
-    const systemPrompt = buildIdeaAgentSystemPrompt(isNewIdea, documentContent);
+    const systemPrompt = buildIdeaAgentSystemPrompt(isNewIdea, documentContent, ideaContext.thingContext);
 
     // Build the full prompt with conversation history
     const conversationHistory = this.buildConversationHistory(history.slice(0, -1));
@@ -398,15 +399,20 @@ export class IdeaAgentService {
       // Use the query function from @anthropic-ai/claude-agent-sdk
       const effectiveModel = modelId || 'claude-sonnet-4-5-20250929';
       console.log(`[IdeaAgentService] Using model: ${effectiveModel}`);
+
+      // Create MCP server for thing tools so the agent can look up and modify Things
+      const thingToolsServer = createThingToolsMcpServer(userId);
+
       const response = query({
         prompt: fullPrompt,
         options: {
           systemPrompt,
           model: effectiveModel,
-          tools: [],
+          tools: [], // No built-in tools, only MCP tools
+          mcpServers: { 'thing-tools': thingToolsServer },
           permissionMode: 'bypassPermissions',
           allowDangerouslySkipPermissions: true,
-          maxTurns: 1,
+          maxTurns: 5, // Allow tool iterations for looking up Things
         },
       });
 

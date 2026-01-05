@@ -104,6 +104,7 @@ export function PlanningOverlay({
     userId: user?.id || '',
     userName: user?.name || 'Anonymous',
     ideaContext,
+    initialPlan: idea.plan,
     onError: handleAgentError,
     onPlanUpdate: onPlanUpdate,
     modelId,

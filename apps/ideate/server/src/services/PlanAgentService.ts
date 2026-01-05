@@ -8,6 +8,8 @@ import type { DocumentEdit } from './IdeaAgentService.js';
 import { getClaudeDiagnosticsService } from '../routes/diagnostics.js';
 import type { AgentProgressCallbacks } from '../shared/agentProgress.js';
 import { createStatusEvent } from '../shared/agentProgressUtils.js';
+import { ThingService, THING_TYPE_SCHEMAS } from './ThingService.js';
+import { createThingToolsMcpServer } from '../shared/thingToolsMcp.js';
 
 /**
  * Token usage information
@@ -200,15 +202,165 @@ function findBlockStart(text: string): number {
  * Handles message processing and streaming responses for implementation planning.
  * Supports editing the Implementation Plan document via Yjs.
  */
+/**
+ * Resolved execution context for an idea
+ */
+export interface ResolvedExecutionContext {
+  /** Whether this is a code-related idea requiring execution context */
+  isCodeIdea: boolean;
+  /** Working directory on disk */
+  workingDirectory?: string;
+  /** Git repository URL */
+  repositoryUrl?: string;
+  /** Git branch */
+  branch?: string;
+  /** Whether to work on a clone */
+  isClone?: boolean;
+  /** Thing that provides the context */
+  contextThingId?: string;
+  contextThingName?: string;
+}
+
+/**
+ * Result of trying to resolve execution context
+ */
+export interface ExecutionContextResult {
+  /** Resolved context if found */
+  resolved?: ResolvedExecutionContext;
+  /** Questions to ask user if context couldn't be resolved */
+  questions?: OpenQuestion[];
+}
+
 export class PlanAgentService {
   private chatService: PlanAgentChatService;
   private yjsClient: PlanAgentYjsClient | null = null;
+  private thingService: ThingService;
 
   constructor(yjsHandler?: YjsCollaborationHandler) {
     this.chatService = new PlanAgentChatService();
+    this.thingService = new ThingService();
     if (yjsHandler) {
       this.yjsClient = new PlanAgentYjsClient(yjsHandler);
     }
+  }
+
+  /**
+   * Resolve execution context for an idea based on linked things.
+   * Returns either a resolved context or questions to ask the user.
+   *
+   * @param ideaTitle - The idea title (for inferring if code-related)
+   * @param ideaSummary - The idea summary (for inferring if code-related)
+   * @param linkedThingIds - Thing IDs linked to this idea
+   * @param userId - The user ID for access control
+   */
+  async resolveExecutionContext(
+    ideaTitle: string,
+    ideaSummary: string,
+    linkedThingIds: string[],
+    userId: string
+  ): Promise<ExecutionContextResult> {
+    // 1. Infer if this is a code-related idea
+    const isCodeIdea = this.inferIsCodeIdea(ideaTitle, ideaSummary, linkedThingIds);
+
+    if (!isCodeIdea) {
+      // Non-code idea - no execution context needed
+      return {
+        resolved: { isCodeIdea: false },
+      };
+    }
+
+    // 2. Try to resolve from linked things
+    for (const thingId of linkedThingIds) {
+      const thing = await this.thingService.getThing(thingId, userId, true);
+      if (!thing) continue;
+
+      // Check if this thing type provides execution context
+      const schema = THING_TYPE_SCHEMAS[thing.type];
+      if (!schema?.providesExecutionContext) continue;
+
+      // Resolve key properties
+      const keyProps = await this.thingService.resolveKeyProperties(thingId, userId);
+
+      if (keyProps.localPath || keyProps.remoteUrl) {
+        return {
+          resolved: {
+            isCodeIdea: true,
+            workingDirectory: keyProps.localPath,
+            repositoryUrl: keyProps.remoteUrl,
+            branch: keyProps.branch,
+            isClone: keyProps.requiresClone,
+            contextThingId: thingId,
+            contextThingName: thing.name,
+          },
+        };
+      }
+    }
+
+    // 3. No context found - ask user to select a thing or provide a path
+    return {
+      questions: [{
+        id: 'execution-scope',
+        question: 'Where should this code be implemented?',
+        context: 'Select an existing project/package or provide a folder path where the code will live.',
+        selectionType: 'single', // Will be 'thing-picker' once we implement that
+        options: [
+          {
+            id: 'new-folder',
+            label: 'New folder',
+            description: 'I\'ll provide a path to a new or existing folder',
+          },
+          {
+            id: 'existing-thing',
+            label: 'Existing project',
+            description: 'Select from my existing projects and packages',
+          },
+        ],
+        allowCustom: true,
+      }],
+    };
+  }
+
+  /**
+   * Infer whether an idea is code-related based on title, summary, and linked things.
+   */
+  private inferIsCodeIdea(
+    title: string,
+    summary: string,
+    linkedThingIds: string[]
+  ): boolean {
+    // Code-related keywords
+    const codeKeywords = [
+      'implement', 'build', 'create', 'develop', 'code', 'program',
+      'fix', 'bug', 'feature', 'api', 'backend', 'frontend', 'ui',
+      'component', 'service', 'function', 'class', 'module',
+      'refactor', 'optimize', 'test', 'deploy', 'integrate',
+      'database', 'endpoint', 'route', 'migration'
+    ];
+
+    // Non-code keywords (research, creative, planning)
+    const nonCodeKeywords = [
+      'research', 'investigate', 'explore', 'study', 'analyze',
+      'write', 'story', 'article', 'blog', 'document', 'specification',
+      'design', 'mockup', 'wireframe', 'prototype',
+      'plan', 'strategy', 'roadmap', 'proposal'
+    ];
+
+    const textToCheck = `${title} ${summary}`.toLowerCase();
+
+    // Count keyword matches
+    const codeMatches = codeKeywords.filter(kw => textToCheck.includes(kw)).length;
+    const nonCodeMatches = nonCodeKeywords.filter(kw => textToCheck.includes(kw)).length;
+
+    // If linked to things, check if any are execution-context types
+    if (linkedThingIds.length > 0) {
+      // Having linked things suggests it's more likely to be code-related
+      // (This is a simple heuristic - could be refined)
+      return codeMatches >= nonCodeMatches;
+    }
+
+    // Default: if more code keywords than non-code, it's code-related
+    // Or if explicitly has strong code indicators
+    return codeMatches > nonCodeMatches || codeMatches >= 2;
   }
 
   /**
@@ -335,15 +487,20 @@ Feel free to share any details, and I'll start building out the phases and tasks
       // Use the query function from @anthropic-ai/claude-agent-sdk
       const effectiveModel = modelId || 'claude-sonnet-4-5-20250929';
       console.log(`[PlanAgentService] Starting query with model ${effectiveModel}...`);
+
+      // Create MCP server for thing tools so the agent can look up and modify Things
+      const thingToolsServer = createThingToolsMcpServer(userId);
+
       const response = query({
         prompt: fullPrompt,
         options: {
           systemPrompt,
           model: effectiveModel,
-          tools: [],
+          tools: [], // No built-in tools, only MCP tools
+          mcpServers: { 'thing-tools': thingToolsServer },
           permissionMode: 'bypassPermissions',
           allowDangerouslySkipPermissions: true,
-          maxTurns: 1,
+          maxTurns: 5, // Allow tool iterations for looking up Things
         },
       });
 

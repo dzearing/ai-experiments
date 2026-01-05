@@ -222,7 +222,74 @@
   margin-left: var(--space-2);
 }
 
-/* Working directory info */
+/* Execution context banner */
+.executionContext {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
+  border-radius: var(--radius-md);
+  margin-top: var(--space-2);
+  flex-shrink: 0;
+}
+
+.executionContextRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+}
+
+.executionContextIcon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  color: var(--base-fg-softer);
+}
+
+.executionContextLabel {
+  font-weight: var(--weight-medium);
+  color: var(--base-fg-softer);
+  min-width: 100px;
+}
+
+.executionContextValue {
+  font-family: var(--font-mono);
+  color: var(--base-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.executionContextLink {
+  font-family: var(--font-mono);
+  color: var(--primary-fg);
+  text-decoration: none;
+}
+
+.executionContextLink:hover {
+  text-decoration: underline;
+}
+
+.executionContextWarning {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--warning-bg-soft);
+  border-radius: var(--radius-sm);
+  color: var(--warning-fg);
+  font-size: var(--text-xs);
+  margin-top: var(--space-1);
+}
+
+.executionContextWarning svg {
+  flex-shrink: 0;
+}
+
+/* Legacy: Working directory info (deprecated in favor of executionContext) */
 .workingDirectory {
   display: flex;
   align-items: center;

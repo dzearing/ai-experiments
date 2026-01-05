@@ -15,6 +15,7 @@
     outline-offset var(--duration-fast) var(--ease-default);
   white-space: nowrap;
   text-decoration: none; /* For anchor elements rendered as buttons */
+  user-select: none;
 }
 
 .button:focus-visible {

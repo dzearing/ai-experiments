@@ -2,6 +2,10 @@ import { useState, useCallback, useMemo } from 'react';
 import { Spinner } from '@ui-kit/react';
 import { ChevronRightIcon } from '@ui-kit/icons/ChevronRightIcon';
 import { CheckIcon } from '@ui-kit/icons/CheckIcon';
+import { FolderIcon } from '@ui-kit/icons/FolderIcon';
+import { LinkIcon } from '@ui-kit/icons/LinkIcon';
+import { CodeIcon } from '@ui-kit/icons/CodeIcon';
+import { WarningIcon } from '@ui-kit/icons/WarningIcon';
 import type { IdeaPlan, PlanPhase, PlanTask } from '../../types/idea';
 import styles from './PlanView.module.css';
 
@@ -114,8 +118,8 @@ export function PlanView({
     return (
       <div className={`${styles.planView} ${className || ''}`}>
         <div className={styles.emptyState}>
-          <h3>No Plan Yet</h3>
-          <p>Chat with the Plan Agent to create an implementation plan for this idea.</p>
+          <h3>No Tasks Yet</h3>
+          <p>Ask the Plan Agent to generate tasks for implementing this idea.</p>
         </div>
       </div>
     );
@@ -125,8 +129,8 @@ export function PlanView({
     return (
       <div className={`${styles.planView} ${className || ''}`}>
         <div className={styles.emptyState}>
-          <h3>Empty Plan</h3>
-          <p>The plan has no phases. Ask the Plan Agent to add implementation phases.</p>
+          <h3>No Tasks Yet</h3>
+          <p>Ask the Plan Agent to generate tasks for implementing this idea.</p>
         </div>
       </div>
     );
@@ -209,11 +213,48 @@ export function PlanView({
         );
       })}
 
-      {/* Working directory */}
-      {showWorkingDirectory && plan.workingDirectory && (
-        <div className={styles.workingDirectory}>
-          <span className={styles.workingDirectoryLabel}>Working Directory:</span>
-          <span className={styles.workingDirectoryPath}>{plan.workingDirectory}</span>
+      {/* Execution Context */}
+      {showWorkingDirectory && (plan.workingDirectory || plan.repositoryUrl) && (
+        <div className={styles.executionContext}>
+          {plan.workingDirectory && (
+            <div className={styles.executionContextRow}>
+              <span className={styles.executionContextIcon}><FolderIcon size={16} /></span>
+              <span className={styles.executionContextLabel}>Working Directory</span>
+              <span className={styles.executionContextValue} title={plan.workingDirectory}>
+                {plan.workingDirectory}
+              </span>
+            </div>
+          )}
+          {plan.repositoryUrl && (
+            <div className={styles.executionContextRow}>
+              <span className={styles.executionContextIcon}><LinkIcon size={16} /></span>
+              <span className={styles.executionContextLabel}>Repository</span>
+              <a
+                href={plan.repositoryUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.executionContextLink}
+                title={plan.repositoryUrl}
+              >
+                {plan.repositoryUrl}
+              </a>
+            </div>
+          )}
+          {plan.branch && (
+            <div className={styles.executionContextRow}>
+              <span className={styles.executionContextIcon}><CodeIcon size={16} /></span>
+              <span className={styles.executionContextLabel}>Branch</span>
+              <span className={styles.executionContextValue}>
+                {plan.branch}
+              </span>
+            </div>
+          )}
+          {plan.isClone && (
+            <div className={styles.executionContextWarning}>
+              <WarningIcon size={14} />
+              <span>Repository needs to be cloned before execution</span>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -8,10 +8,11 @@ import { PlayIcon } from '@ui-kit/icons/PlayIcon';
 import { FileIcon } from '@ui-kit/icons/FileIcon';
 import { ListIcon } from '@ui-kit/icons/ListIcon';
 import { EditIcon } from '@ui-kit/icons/EditIcon';
-import { ChatPanel, ChatInput, ThinkingIndicator, MessageQueue, OpenQuestionsResolver, type ChatInputSubmitData, type ChatInputRef, type ChatPanelMessage, type QueuedMessage } from '@ui-kit/react-chat';
+import { ChatPanel, ChatInput, ThinkingIndicator, MessageQueue, OpenQuestionsResolver, type ChatInputSubmitData, type ChatInputRef, type ChatPanelMessage, type QueuedMessage, type ThingReference as ChatThingReference } from '@ui-kit/react-chat';
 import { MarkdownCoEditor, type ViewMode, type CoAuthor } from '@ui-kit/react-markdown';
 import { useAuth } from '../../contexts/AuthContext';
 import { useIdeas } from '../../contexts/IdeasContext';
+import { useThings } from '../../contexts/ThingsContext';
 import { useIdeaAgent, type IdeaContext } from '../../hooks/useIdeaAgent';
 import { usePlanAgent, type PlanIdeaContext } from '../../hooks/usePlanAgent';
 import { useYjsCollaboration } from '../../hooks/useYjsCollaboration';
@@ -213,9 +214,21 @@ export function IdeaWorkspaceOverlay({
 
   const { user } = useAuth();
   const { createIdea, updateIdea, moveIdea } = useIdeas();
+  const { things, getThingReferences } = useThings();
   const { modelId, setModelId, modelInfo } = useModelPreference();
 
   const isNewIdea = !idea;
+
+  // Get linked things for display
+  const linkedThings = useMemo(() => {
+    // For new ideas, use initialThingIds; for existing ideas, use idea.thingIds
+    const thingIds = idea?.thingIds || initialThingIds || [];
+    if (thingIds.length === 0) return [];
+    return things.filter(t => thingIds.includes(t.id));
+  }, [idea?.thingIds, initialThingIds, things]);
+
+  // Get thing references for chat autocomplete (^ mentions)
+  const thingReferences = getThingReferences();
 
   // Workspace phase - determines if we're in ideation or planning mode
   // For new ideas, always start in ideation
@@ -230,11 +243,40 @@ export function IdeaWorkspaceOverlay({
   // Track the current idea (may be created during ideation phase)
   const [currentIdea, setCurrentIdea] = useState<Idea | null>(idea);
 
+  // Sync idea prop to currentIdea when overlay opens or idea changes
+  // This is critical for plan persistence - useState only runs on first render,
+  // so when overlay reopens with updated idea (containing plan), we need to sync it
+  useEffect(() => {
+    if (open && idea) {
+      console.log('[IdeaWorkspaceOverlay] Syncing idea prop to currentIdea:', idea.id, 'plan phases:', idea.plan?.phases?.length || 0);
+      setCurrentIdea(idea);
+    }
+  }, [open, idea]);
+
+  // Sync phase when overlay opens with an idea that has status "exploring"
+  // This ensures we go directly to planning phase when reopening an idea that was in planning
+  useEffect(() => {
+    if (open && idea?.status === 'exploring') {
+      console.log('[IdeaWorkspaceOverlay] Syncing phase to planning for exploring idea');
+      setPhase('planning');
+    }
+  }, [open, idea?.status]);
+
   // Resource tab state - which document/asset is being viewed
   const [activeTab, setActiveTab] = useState<ResourceTab>('idea-doc');
 
   // Plan state - tracks the implementation plan from the Plan Agent
   const [plan, setPlan] = useState<Partial<IdeaPlan> | null>(null);
+
+  // Sync initial plan from idea when overlay opens
+  // This ensures tasks are displayed when reopening an idea with an existing plan
+  useEffect(() => {
+    const initialPlan = currentIdea?.plan || idea?.plan;
+    if (open && phase === 'planning' && initialPlan?.phases && initialPlan.phases.length > 0) {
+      console.log('[IdeaWorkspaceOverlay] Syncing initial plan to local state:', initialPlan.phases.length, 'phases');
+      setPlan(initialPlan);
+    }
+  }, [open, phase, currentIdea?.plan, idea?.plan]);
 
   // Session ID for new ideas - stable per component instance
   // Content is cleared on close instead of creating a new room
@@ -442,6 +484,7 @@ export function IdeaWorkspaceOverlay({
     userId: user?.id || '',
     userName: user?.name || 'Anonymous',
     ideaContext: planIdeaContext,
+    initialPlan: currentIdea?.plan || idea?.plan,
     documentRoomName: implPlanDocumentId || undefined,
     onError: handleAgentError,
     onPlanUpdate: handlePlanUpdate,
@@ -510,18 +553,19 @@ export function IdeaWorkspaceOverlay({
   });
 
   // Convert agent messages to ChatPanel format
+  const agentName = phase === 'planning' ? 'Plan Agent' : 'Idea Agent';
   const chatMessages: ChatPanelMessage[] = useMemo(() => {
     return agentMessages.map(msg => ({
       id: msg.id,
       content: msg.content,
       timestamp: msg.timestamp,
-      senderName: msg.role === 'user' ? (user?.name || 'You') : 'Idea Agent',
+      senderName: msg.role === 'user' ? (user?.name || 'You') : agentName,
       senderColor: msg.role === 'user' ? undefined : '#8b5cf6',
       isOwn: msg.role === 'user',
       isStreaming: msg.isStreaming,
       renderMarkdown: true, // Render markdown for all messages (including user's question answers)
     }));
-  }, [agentMessages, user?.name]);
+  }, [agentMessages, user?.name, agentName]);
 
   // Get suggested responses from the active agent based on current phase
   const agentSuggestedResponses = phase === 'planning'
@@ -1006,13 +1050,25 @@ export function IdeaWorkspaceOverlay({
         >
           {/* Header */}
           <header className={styles.header}>
-            <h1 className={styles.headerTitle}>
-              {phase === 'planning'
-                ? 'Plan Your Idea'
-                : isNewIdea
-                  ? 'Create Your Idea'
-                  : 'Edit Idea'}
-            </h1>
+            <div className={styles.headerLeft}>
+              <h1 className={styles.headerTitle}>
+                {phase === 'planning'
+                  ? 'Plan Your Idea'
+                  : isNewIdea
+                    ? 'Create Your Idea'
+                    : 'Edit Idea'}
+              </h1>
+              {linkedThings.length > 0 && (
+                <div className={styles.linkedThings}>
+                  <span className={styles.linkedThingsLabel}>for</span>
+                  {linkedThings.map(thing => (
+                    <span key={thing.id} className={styles.thingBadge}>
+                      {thing.name}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
             <div className={styles.headerActions}>
               <IconButton
                 icon={<CloseIcon />}
@@ -1077,13 +1133,14 @@ export function IdeaWorkspaceOverlay({
                   <div className={styles.chatInputContainer}>
                     <ChatInput
                       ref={chatInputRef}
-                      placeholder={!isConnected ? "Connecting..." : isAgentThinking ? "Type to queue message..." : "Ask the agent... (type / for commands)"}
+                      placeholder={!isConnected ? "Connecting..." : isAgentThinking ? "Type to queue message..." : "Ask the agent... (type / for commands, ^ for things)"}
                       onSubmit={handleChatSubmit}
                       onChange={handleInputChange}
                       historyKey={`idea-agent-${idea?.id || 'new'}`}
                       fullWidth
                       commands={commands}
                       onCommand={handleCommand}
+                      things={thingReferences as ChatThingReference[]}
                     />
                   </div>
 

@@ -1,0 +1,61 @@
+/* ItemPicker - File/folder path input with browse capability */
+
+.itemPicker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  width: 100%;
+}
+
+.label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--base-fg-soft);
+}
+
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.leadingIcon {
+  position: absolute;
+  left: var(--space-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--base-fg-soft);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.input {
+  width: 100%;
+  padding-left: calc(var(--space-3) + 16px + var(--space-2));
+  font-family: var(--font-mono);
+}
+
+.input.hasTrailingButton {
+  padding-right: calc(var(--space-2) + 32px);
+}
+
+.browseButton {
+  position: absolute;
+  right: var(--space-1);
+}
+
+.error {
+  font-size: var(--text-xs);
+  color: var(--danger-fg);
+}
+
+.validating {
+  font-size: var(--text-xs);
+  color: var(--base-fg-softer);
+  font-style: italic;
+}
+
+.selectButton {
+  align-self: flex-start;
+}

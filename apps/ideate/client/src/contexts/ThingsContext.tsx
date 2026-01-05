@@ -539,18 +539,27 @@ export function ThingsProvider({ children }: ThingsProviderProps) {
     setExpandedIds(new Set());
   }, []);
 
-  // Get thing references for autocomplete
+  // Get thing references for autocomplete (with breadcrumb path)
   const getThingReferences = useCallback((): ThingReference[] => {
-    return things.map(t => ({
-      id: t.id,
-      name: t.name,
-      type: t.type,
-      parentIds: t.parentIds,
-      icon: t.icon,
-      color: t.color,
-      tags: t.tags,
-    }));
-  }, [things]);
+    return things.map(t => {
+      // Build path from breadcrumb
+      const breadcrumb = getBreadcrumb(t.id);
+      const path = breadcrumb.length > 1
+        ? breadcrumb.slice(0, -1).map(b => b.name).join(' > ')
+        : undefined;
+
+      return {
+        id: t.id,
+        name: t.name,
+        type: t.type,
+        parentIds: t.parentIds,
+        icon: t.icon,
+        color: t.color,
+        tags: t.tags,
+        path,
+      };
+    });
+  }, [things, getBreadcrumb]);
 
   // Listen for Thing created from Facilitator tool calls
   // This is a confirmed update - the server has created the Thing and returned its full data

@@ -1,10 +1,10 @@
-import { useEffect, useCallback, useState, useRef, useMemo } from 'react';
+import { useEffect, useCallback, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from '@ui-kit/router';
 import { Slide, Button, IconButton, Avatar } from '@ui-kit/react';
 import { CloseIcon } from '@ui-kit/icons/CloseIcon';
 import { GearIcon } from '@ui-kit/icons/GearIcon';
-import { ChatInput, ChatMessage, ThinkingIndicator, OpenQuestionsResolver, type ChatInputSubmitData, type ChatInputRef, type ThingReference } from '@ui-kit/react-chat';
+import { ChatInput, ChatMessage, ThinkingIndicator, OpenQuestionsResolver, type ChatInputSubmitData, type ChatInputRef, type ThingReference as ChatThingReference } from '@ui-kit/react-chat';
 import { AVATAR_IMAGES } from '../../constants/avatarImages';
 import { useFacilitator } from '../../contexts/FacilitatorContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -31,7 +31,7 @@ interface FacilitatorSettings {
 export function FacilitatorOverlay() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { things, getBreadcrumb } = useThings();
+  const { getThingReferences } = useThings();
   const { modelId, setModelId, modelInfo } = useModelPreference();
   const {
     isOpen,
@@ -51,24 +51,8 @@ export function FacilitatorOverlay() {
     resolveQuestions,
   } = useFacilitator();
 
-  // Convert things to ThingReference format for chat autocomplete
-  const thingReferences = useMemo((): ThingReference[] => {
-    return things.map((thing) => {
-      // Build path from breadcrumb
-      const breadcrumb = getBreadcrumb(thing.id);
-      const path = breadcrumb.length > 1
-        ? breadcrumb.slice(0, -1).map(t => t.name).join(' > ')
-        : undefined;
-
-      return {
-        id: thing.id,
-        name: thing.name,
-        type: thing.type as ThingReference['type'],
-        tags: thing.tags,
-        path,
-      };
-    });
-  }, [things, getBreadcrumb]);
+  // Get thing references for chat autocomplete (from shared context)
+  const thingReferences = getThingReferences();
 
   const [isBackdropVisible, setIsBackdropVisible] = useState(isOpen);
   const [queuedContent, setQueuedContent] = useState('');
@@ -218,6 +202,38 @@ Type a message to get started!`,
       timestamp: Date.now(),
     });
   }, [cancelOperation, addMessage]);
+
+  // Handle escape key for closing overlay or cancelling operation
+  const handleEscapeKey = useCallback(
+    (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        // If loading and no input, cancel operation
+        if (isLoading && !inputContent.trim()) {
+          event.preventDefault();
+          handleCancelOperation();
+          return;
+        }
+
+        // If there's input content, let the input handle Escape (clear input)
+        if (inputContent.trim()) {
+          return;
+        }
+
+        // Otherwise close the overlay
+        event.preventDefault();
+        close();
+      }
+    },
+    [isLoading, inputContent, handleCancelOperation, close]
+  );
+
+  // Add/remove escape key listener when open
+  useEffect(() => {
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscapeKey);
+      return () => document.removeEventListener('keydown', handleEscapeKey);
+    }
+  }, [isOpen, handleEscapeKey]);
 
   // Prevent body scroll when open
   useEffect(() => {
@@ -416,7 +432,7 @@ Type a message to get started!`,
           </div>
 
           {/* Thinking indicator */}
-          <ThinkingIndicator isActive={isLoading} />
+          <ThinkingIndicator isActive={isLoading} showEscapeHint={isLoading && !inputContent.trim()} />
 
           {/* Question resolver overlay */}
           {showQuestionsResolver && openQuestions && openQuestions.length > 0 && (
@@ -463,7 +479,7 @@ Type a message to get started!`,
               fullWidth
               commands={commands}
               onCommand={handleCommand}
-              things={thingReferences}
+              things={thingReferences as ChatThingReference[]}
               queuedMessages={queuedContent ? [queuedContent] : []}
               onEditQueue={handleEditQueue}
             />

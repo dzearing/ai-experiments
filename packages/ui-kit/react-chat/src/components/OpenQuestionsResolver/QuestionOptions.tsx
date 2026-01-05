@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { Checkbox, FocusZone, Radio, Text, Textarea } from '@ui-kit/react';
 import { MarkdownRenderer } from '@ui-kit/react-markdown';
-import type { OpenQuestion } from './types';
+import { ThingPickerOption } from './ThingPickerOption';
+import { FilePathOption } from './FilePathOption';
+import type { OpenQuestion, ThingPickerData } from './types';
 import styles from './OpenQuestionsResolver.module.css';
 
 export interface QuestionOptionsProps {
@@ -23,6 +25,14 @@ export interface QuestionOptionsProps {
   autoFocusIndex?: number;
   /** Called when focus index changes */
   onFocusIndexChange?: (index: number) => void;
+  /** Thing data when using thing-picker selection type */
+  thingData?: ThingPickerData;
+  /** Called when thing is selected (for thing-picker type) */
+  onThingSelect?: (thing: ThingPickerData) => void;
+  /** File path when using file-path selection type */
+  filePath?: string;
+  /** Called when file path changes (for file-path type) */
+  onFilePathChange?: (path: string) => void;
 }
 
 /**
@@ -38,6 +48,10 @@ export function QuestionOptions({
   onNext,
   autoFocusIndex = 0,
   onFocusIndexChange,
+  thingData,
+  onThingSelect,
+  filePath,
+  onFilePathChange,
 }: QuestionOptionsProps) {
   const isCustomSelected = selectedIds.includes('custom');
   const containerRef = useRef<HTMLDivElement>(null);
@@ -103,6 +117,31 @@ export function QuestionOptions({
     }
   };
 
+  // Handle thing-picker selection type
+  if (question.selectionType === 'thing-picker') {
+    return (
+      <div ref={containerRef} className={styles.optionsList}>
+        <ThingPickerOption
+          value={thingData}
+          onChange={(thing) => onThingSelect?.(thing)}
+        />
+      </div>
+    );
+  }
+
+  // Handle file-path selection type
+  if (question.selectionType === 'file-path') {
+    return (
+      <div ref={containerRef} className={styles.optionsList}>
+        <FilePathOption
+          value={filePath || ''}
+          onChange={(path) => onFilePathChange?.(path)}
+        />
+      </div>
+    );
+  }
+
+  // Default: single/multiple selection with radio/checkbox
   return (
     <FocusZone
       ref={containerRef}

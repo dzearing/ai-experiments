@@ -12,6 +12,7 @@ import { chatroomsRouter, setWorkspaceHandler as setChatroomsWorkspaceHandler } 
 import { personasRouter } from './routes/personas.js';
 import { ideasRouter, setIdeasWorkspaceHandler } from './routes/ideas.js';
 import { thingsRouter, setThingsWorkspaceHandler } from './routes/things.js';
+import { fsRouter } from './routes/fs.js';
 import { setWorkspaceHandler as setMCPToolsWorkspaceHandler } from './services/MCPToolsService.js';
 import { createDiagnosticsRouter } from './routes/diagnostics.js';
 import { CollaborationHandler } from './websocket/CollaborationHandler.js';
@@ -58,6 +59,7 @@ app.use('/api/chatrooms', chatroomsRouter);
 app.use('/api/personas', personasRouter);
 app.use('/api/ideas', ideasRouter);
 app.use('/api/things', thingsRouter);
+app.use('/api/fs', fsRouter);
 
 // Create HTTP server
 const server = createServer(app);

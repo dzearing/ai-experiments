@@ -1,9 +1,13 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useSearchParams } from '@ui-kit/router';
 import { Button, IconButton, Input, Chip, Spinner, Dropdown, Tabs, type DropdownOption, type TabItem } from '@ui-kit/react';
+import { ItemPickerDialog, DiskItemProvider } from '@ui-kit/react-pickers';
 import { TrashIcon } from '@ui-kit/icons/TrashIcon';
 import { AddIcon } from '@ui-kit/icons/AddIcon';
 import { ChevronRightIcon } from '@ui-kit/icons/ChevronRightIcon';
+import { FolderIcon } from '@ui-kit/icons/FolderIcon';
+import { LinkIcon } from '@ui-kit/icons/LinkIcon';
+import { CodeIcon } from '@ui-kit/icons/CodeIcon';
 import { useThings } from '../../contexts/ThingsContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDocuments } from '../../contexts/DocumentContext';
@@ -14,7 +18,8 @@ import { ThingLinks, type ThingLinksRef } from './ThingLinks';
 import { ThingProperties, type ThingPropertiesRef } from './ThingProperties';
 import { ThingDocuments } from './ThingDocuments';
 import { ThingIdeas } from './ThingIdeas';
-import type { Thing, ThingMetadata, ThingType, ThingLink, ThingIcon, ThingColor } from '../../types/thing';
+import type { Thing, ThingMetadata, ThingType, ThingLink, ThingIcon, ThingColor, PropertyDef } from '../../types/thing';
+import { THING_TYPE_SCHEMAS } from '../../types/thing';
 import styles from './ThingDetail.module.css';
 
 interface ThingDetailProps {
@@ -36,6 +41,132 @@ const PREDEFINED_TYPE_OPTIONS: DropdownOption<string>[] = [
   { value: 'thing', label: 'Thing' },
 ];
 
+/**
+ * Get icon component for a property type
+ */
+function getPropertyIcon(propDef: PropertyDef) {
+  switch (propDef.type) {
+    case 'path':
+      return <FolderIcon size={16} />;
+    case 'url':
+      return <LinkIcon size={16} />;
+    case 'thing-ref':
+      return <CodeIcon size={16} />;
+    default:
+      return null;
+  }
+}
+
+/**
+ * Path property picker component - shows a button that opens ItemPickerDialog
+ */
+function PathPropertyPicker({
+  value,
+  onChange,
+  provider,
+}: {
+  value: string | undefined;
+  onChange: (value: string) => void;
+  provider: DiskItemProvider;
+}) {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const handleSelect = useCallback((path: string) => {
+    onChange(path);
+    setIsDialogOpen(false);
+  }, [onChange]);
+
+  return (
+    <>
+      {value ? (
+        <Button
+          variant="ghost"
+          size="sm"
+          icon={<FolderIcon />}
+          onClick={() => setIsDialogOpen(true)}
+          className={styles.pathButton}
+        >
+          {value}
+        </Button>
+      ) : (
+        <Button
+          variant="ghost"
+          size="sm"
+          icon={<AddIcon />}
+          onClick={() => setIsDialogOpen(true)}
+        >
+          Select path
+        </Button>
+      )}
+      <ItemPickerDialog
+        open={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onSelect={handleSelect}
+        provider={provider}
+        filter={{ types: ['folder'] }}
+        title="Select Folder"
+        initialPath={value || ''}
+      />
+    </>
+  );
+}
+
+/**
+ * Key property row component - renders label and input as grid children
+ * Parent uses CSS grid, so this returns a fragment with two children
+ */
+function KeyPropertyRow({
+  propName,
+  propDef,
+  value,
+  onSave,
+  diskProvider,
+}: {
+  propName: string;
+  propDef: PropertyDef;
+  value: string | undefined;
+  onSave: (propName: string, value: string) => void;
+  diskProvider: DiskItemProvider;
+}) {
+  const icon = getPropertyIcon(propDef);
+
+  const handleChange = useCallback((newValue: string) => {
+    onSave(propName, newValue);
+  }, [propName, onSave]);
+
+  return (
+    <>
+      <div className={styles.keyPropertyLabelGroup}>
+        {icon && <span className={styles.keyPropertyIcon}>{icon}</span>}
+        <span className={styles.keyPropertyLabel}>{propDef.label}</span>
+      </div>
+      <div className={styles.keyPropertyPicker}>
+        {propDef.type === 'path' ? (
+          <PathPropertyPicker
+            value={value}
+            onChange={handleChange}
+            provider={diskProvider}
+          />
+        ) : propDef.type === 'url' ? (
+          <Input
+            value={value || ''}
+            onChange={(e) => handleChange(e.target.value)}
+            placeholder="https://..."
+            size="sm"
+          />
+        ) : (
+          <Input
+            value={value || ''}
+            onChange={(e) => handleChange(e.target.value)}
+            placeholder="Enter value..."
+            size="sm"
+          />
+        )}
+      </div>
+    </>
+  );
+}
+
 export function ThingDetail({
   thingId,
   onEdit: _onEdit,
@@ -49,6 +180,9 @@ export function ThingDetail({
   const { documents, fetchDocuments } = useDocuments();
   const [searchParams, setSearchParams] = useSearchParams();
   const [thing, setThing] = useState<Thing | null>(null);
+
+  // Create disk provider for file/folder browsing
+  const diskProvider = useMemo(() => new DiskItemProvider({ baseUrl: '/api/fs' }), []);
 
   // Get tab from URL params
   const currentTab = searchParams.get('tab') || 'ideas';
@@ -74,6 +208,11 @@ export function ThingDetail({
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editingTitle, setEditingTitle] = useState('');
   const titleInputRef = useRef<HTMLInputElement>(null);
+
+  // Inline description editing
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [editingDescription, setEditingDescription] = useState('');
+  const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
 
   // Refs for child components
   const linksRef = useRef<ThingLinksRef>(null);
@@ -202,6 +341,38 @@ export function ThingDetail({
     }
   }, [saveTitle]);
 
+  // Description inline editing handlers
+  const startEditingDescription = useCallback(() => {
+    if (!thing) return;
+    setEditingDescription(thing.description || '');
+    setIsEditingDescription(true);
+    setTimeout(() => {
+      descriptionInputRef.current?.focus();
+    }, 0);
+  }, [thing]);
+
+  const saveDescription = useCallback(async () => {
+    if (!thing) {
+      setIsEditingDescription(false);
+      return;
+    }
+    const trimmedDesc = editingDescription.trim();
+    if (trimmedDesc !== (thing.description || '')) {
+      const updated = await updateThing(thingId, { description: trimmedDesc || undefined });
+      if (updated) {
+        setThing(updated);
+      }
+    }
+    setIsEditingDescription(false);
+  }, [thing, editingDescription, thingId, updateThing]);
+
+  const handleDescriptionKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      setIsEditingDescription(false);
+    }
+    // Allow Enter for newlines in description (use blur to save)
+  }, []);
+
   // Type change handler
   const handleTypeChange = useCallback(async (value: string | string[]) => {
     if (!thing) return;
@@ -297,6 +468,18 @@ export function ThingDetail({
     }
   }, [user, thingId, getThing]);
 
+  // Handler for saving a single key property
+  const handleKeyPropertySave = useCallback((propName: string, value: string) => {
+    const currentProps = thing?.properties || {};
+    const newProps = { ...currentProps };
+    if (value) {
+      newProps[propName] = value;
+    } else {
+      delete newProps[propName];
+    }
+    handlePropertiesChange(newProps);
+  }, [thing?.properties, handlePropertiesChange]);
+
   if (isLoading) {
     return (
       <div className={styles.loading}>
@@ -313,33 +496,42 @@ export function ThingDetail({
     );
   }
 
+  // Only show breadcrumb if there are parent items (more than 1 item means we have parents)
+  const showBreadcrumb = breadcrumb.length > 1;
+
   return (
     <div className={styles.detail}>
-      {/* Breadcrumb */}
-      <nav className={styles.breadcrumb} aria-label="Breadcrumb">
-        {breadcrumb.map((item, index) => (
-          <span key={item.id} className={styles.breadcrumbItem}>
-            {index > 0 && <ChevronRightIcon className={styles.breadcrumbSeparator} />}
-            <button
-              className={styles.breadcrumbLink}
-              onClick={() => onNavigate(item.id)}
-              aria-current={index === breadcrumb.length - 1 ? 'page' : undefined}
-            >
-              {item.name}
-            </button>
-          </span>
-        ))}
-      </nav>
+      {/* Breadcrumb - only show when there are parent items */}
+      {showBreadcrumb && (
+        <nav className={styles.breadcrumb} aria-label="Breadcrumb">
+          {breadcrumb.slice(0, -1).map((item, index) => (
+            <span key={item.id} className={styles.breadcrumbItem}>
+              {index > 0 && <ChevronRightIcon className={styles.breadcrumbSeparator} />}
+              <button
+                className={styles.breadcrumbLink}
+                onClick={() => onNavigate(item.id)}
+              >
+                {item.name}
+              </button>
+            </span>
+          ))}
+        </nav>
+      )}
 
-      {/* Header */}
+      {/* Header - Grid: Icon | Content | Actions */}
       <header className={styles.header}>
-        <ThingStylePicker
-          icon={thing.icon}
-          color={thing.color}
-          onIconChange={handleIconChange}
-          onColorChange={handleColorChange}
-        />
-        <div className={styles.headerMain}>
+        {/* Icon cell - spans all rows */}
+        <div className={styles.iconCell}>
+          <ThingStylePicker
+            icon={thing.icon}
+            color={thing.color}
+            onIconChange={handleIconChange}
+            onColorChange={handleColorChange}
+          />
+        </div>
+
+        {/* Title row */}
+        <div className={styles.titleRow}>
           {isEditingTitle ? (
             <Input
               ref={titleInputRef}
@@ -375,66 +567,127 @@ export function ThingDetail({
             className={styles.typeDropdown}
           />
         </div>
+
+        {/* Actions cell */}
         <div className={styles.headerActions}>
-          <Button
-            variant="ghost"
+          <IconButton
             icon={<TrashIcon />}
             onClick={() => onDelete(thing.id)}
             aria-label="Delete"
+            variant="ghost"
           />
+        </div>
+
+        {/* Description row */}
+        <div className={styles.descriptionRow}>
+          {isEditingDescription ? (
+            <textarea
+              ref={descriptionInputRef}
+              value={editingDescription}
+              onChange={(e) => setEditingDescription(e.target.value)}
+              onKeyDown={handleDescriptionKeyDown}
+              onBlur={saveDescription}
+              placeholder="Add a description..."
+              className={styles.descriptionInput}
+              rows={3}
+              autoFocus
+            />
+          ) : thing.description ? (
+            <p
+              className={styles.descriptionBlock}
+              onClick={startEditingDescription}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && startEditingDescription()}
+              title="Click to edit"
+            >
+              {thing.description}
+            </p>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={<AddIcon />}
+              onClick={startEditingDescription}
+              className={styles.addDescriptionButton}
+            >
+              Add description
+            </Button>
+          )}
+        </div>
+
+        {/* Tags row */}
+        <div className={styles.tagsRow}>
+          <div className={styles.tagsBlock}>
+            {thing.tags.map((tag) => (
+              <Chip
+                key={tag}
+                size="sm"
+                onRemove={() => handleRemoveTag(tag)}
+              >
+                #{tag}
+              </Chip>
+            ))}
+            {isAddingTag ? (
+              <Input
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+                onKeyDown={handleTagKeyDown}
+                onBlur={() => {
+                  if (!newTag.trim()) {
+                    setIsAddingTag(false);
+                  }
+                }}
+                placeholder="New tag..."
+                size="sm"
+                autoFocus
+                className={styles.tagInput}
+              />
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={<AddIcon />}
+                onClick={() => setIsAddingTag(true)}
+              >
+                Add tag
+              </Button>
+            )}
+          </div>
         </div>
       </header>
 
-      {/* Description (no label) */}
-      {thing.description && (
-        <p className={styles.descriptionBlock}>{thing.description}</p>
-      )}
+      {/* Key Properties (schema-driven, editable) */}
+      {(() => {
+        const schema = THING_TYPE_SCHEMAS[thing.type];
+        if (!schema || Object.keys(schema.keyProperties).length === 0) {
+          return null;
+        }
 
-      {/* Tags (inline, no label) */}
-      <div className={styles.tagsBlock}>
-        {thing.tags.map((tag) => (
-          <Chip
-            key={tag}
-            size="sm"
-            onRemove={() => handleRemoveTag(tag)}
-          >
-            #{tag}
-          </Chip>
-        ))}
-        {isAddingTag ? (
-          <Input
-            value={newTag}
-            onChange={(e) => setNewTag(e.target.value)}
-            onKeyDown={handleTagKeyDown}
-            onBlur={() => {
-              if (!newTag.trim()) {
-                setIsAddingTag(false);
-              }
-            }}
-            placeholder="New tag..."
-            size="sm"
-            autoFocus
-            className={styles.tagInput}
-          />
-        ) : thing.tags.length > 0 ? (
-          <IconButton
-            icon={<AddIcon />}
-            onClick={() => setIsAddingTag(true)}
-            aria-label="Add tag"
-            size="sm"
-            variant="ghost"
-          />
-        ) : (
-          <Button
-            variant="ghost"
-            size="sm"
-            icon={<AddIcon />}
-            onClick={() => setIsAddingTag(true)}
-          >
-            Add tag
-          </Button>
-        )}
-      </div>
+        // Filter out inherited/derived properties (they have inheritPath)
+        const displayableProps = Object.entries(schema.keyProperties).filter(
+          ([, propDef]) => !propDef.inheritPath
+        );
+
+        if (displayableProps.length === 0) {
+          return null;
+        }
+
+        return (
+          <div className={styles.keyPropertiesBlock}>
+            {displayableProps.map(([propName, propDef]) => (
+              <KeyPropertyRow
+                key={propName}
+                propName={propName}
+                propDef={propDef}
+                value={thing.properties?.[propName]}
+                onSave={handleKeyPropertySave}
+                diskProvider={diskProvider}
+              />
+            ))}
+          </div>
+        );
+      })()}
 
       {/* Tabbed content */}
       <Tabs

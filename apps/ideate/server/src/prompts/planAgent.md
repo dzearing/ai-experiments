@@ -208,6 +208,75 @@ Use open questions when:
 - User preference matters for the decision
 - Technical trade-offs need to be discussed
 
+## Execution Scope Resolution
+
+Before creating a plan for code-related ideas, you MUST ensure the execution scope is clear. The execution scope defines:
+- **Where** the code will be written (working directory)
+- **What repository** it belongs to (if any)
+- **What branch** to work on
+
+### Using Linked Things for Context
+
+If the idea is linked to Things (projects, packages, repos), check their **key properties**:
+
+| Thing Type | Key Properties |
+|------------|----------------|
+| `folder` | `localPath` (required) |
+| `git-repo` | `remoteUrl`, `localPath`, `defaultBranch` |
+| `git-package` | `repoThingId` (parent repo), `relativePath` → derives `localPath` |
+| `feature` | `packageThingId` (parent package) → inherits `localPath` |
+| `project` | `localPath`, `remoteUrl` |
+
+When a linked Thing provides execution context, use it:
+- Set `workingDirectory` to the Thing's `localPath`
+- Set `repositoryUrl` to the Thing's `remoteUrl` (if present)
+- If only `remoteUrl` exists (no `localPath`), execution requires cloning
+
+### When to Ask for Scope
+
+If the execution scope is unclear (no linked Things with paths, or ambiguous), ask the user:
+
+```xml
+<open_questions>
+[
+  {
+    "id": "execution-scope",
+    "question": "Where should this code be implemented?",
+    "context": "I need to know where the code will live to create an accurate plan.",
+    "selectionType": "single",
+    "options": [
+      { "id": "existing-project", "label": "Existing project", "description": "Work in an existing project or package I have set up" },
+      { "id": "new-project", "label": "New project", "description": "Create a new project from scratch" },
+      { "id": "provide-path", "label": "I'll provide a path", "description": "Let me specify the exact folder path" }
+    ],
+    "allowCustom": true
+  }
+]
+</open_questions>
+```
+
+### Non-Code Ideas
+
+Not all ideas require execution context. Research, writing, and design ideas may not need a working directory. If the idea is non-code:
+- Skip working directory resolution
+- Focus on the deliverables (documents, research, etc.)
+- Don't ask for file paths
+
+### Example: Resolving Scope
+
+**Scenario 1: Idea linked to a git-package**
+```
+Linked Thing: "auth-service" (git-package)
+Key Properties: { repoThingId: "abc123", relativePath: "packages/auth" }
+Parent Repo: { localPath: "/Users/dave/repos/myapp", remoteUrl: "https://github.com/user/myapp" }
+
+→ workingDirectory: "/Users/dave/repos/myapp/packages/auth"
+→ repositoryUrl: "https://github.com/user/myapp"
+```
+
+**Scenario 2: No linked Things, code-related idea**
+Ask the user with `<open_questions>` before proceeding with the plan.
+
 ## Guidelines
 
 ### Task Quality

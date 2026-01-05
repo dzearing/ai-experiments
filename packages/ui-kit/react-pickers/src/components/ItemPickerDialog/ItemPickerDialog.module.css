@@ -1,0 +1,154 @@
+/* ItemPickerDialog - File/folder picker dialog */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  flex: 1;
+  min-height: 0; /* Allow shrinking within fixed dialog height */
+  overflow: hidden;
+}
+
+/* Navigation toolbar */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--base-border);
+}
+
+.pathInputWrapper {
+  flex: 1;
+}
+
+.pathInput {
+  width: 100%;
+  font-family: var(--font-mono);
+}
+
+/* Breadcrumbs */
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--base-fg-soft);
+  padding: var(--space-1) 0;
+}
+
+.breadcrumbItem {
+  display: flex;
+  align-items: center;
+}
+
+.breadcrumbLink {
+  padding: var(--space-1) var(--space-1);
+  border: none;
+  background: transparent;
+  color: var(--base-fg-soft);
+  font-size: inherit;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all var(--duration-fast) var(--ease-default);
+}
+
+.breadcrumbLink:hover {
+  color: var(--base-fg);
+  background: var(--base-bg-hover);
+}
+
+.breadcrumbLink:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.breadcrumbSeparator {
+  color: var(--base-fg-softer);
+  margin: 0 var(--space-1);
+}
+
+/* Tree container - TreeView handles its own scrolling */
+.treeContainer {
+  flex: 1;
+  min-height: 0; /* Critical: allows flex child to shrink below content size */
+  border: 1px solid var(--base-border);
+  border-radius: var(--radius-md);
+  background: var(--base-bg);
+  overflow: hidden; /* Contain TreeView scrolling within this area */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Loading state */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  flex: 1;
+  color: var(--base-fg-soft);
+  font-size: var(--text-sm);
+}
+
+/* Empty state */
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  color: var(--base-fg-soft);
+  font-size: var(--text-sm);
+}
+
+/* Error message */
+.error {
+  padding: var(--space-2) var(--space-3);
+  background: var(--danger-bg);
+  color: var(--danger-fg);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+}
+
+/* Footer */
+.footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.footerSpacer {
+  flex: 1;
+}
+
+/* Inline input for new folder in tree node */
+.inlineInput {
+  width: 200px;
+  max-width: 100%;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--primary-border);
+  border-radius: var(--radius-sm);
+  background: var(--base-bg);
+  color: var(--base-fg);
+  font-size: var(--text-sm);
+  font-family: inherit;
+}
+
+.inlineInput:focus {
+  outline: none;
+  border-color: var(--focus-ring);
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring);
+}
+
+.inlineInput::placeholder {
+  color: var(--base-fg-softer);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .breadcrumbLink {
+    transition: none;
+  }
+}

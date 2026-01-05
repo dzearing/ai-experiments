@@ -1,6 +1,12 @@
 /* Reset Modal's default padding for structured Dialog layout */
 .dialog {
   margin: calc(-1 * var(--space-6));
+  display: flex;
+  flex-direction: column;
+  /* 100% + padding*2 to compensate for negative margin offset */
+  height: calc(100% + 2 * var(--space-6));
+  min-height: 0; /* Critical: prevents flex from growing based on content */
+  max-height: calc(100vh - var(--space-8));
 }
 
 .header {
@@ -9,6 +15,7 @@
   justify-content: space-between;
   padding: var(--space-4) var(--space-6);
   border-bottom: 1px solid var(--strong-border);
+  flex-shrink: 0;
 }
 
 .title {
@@ -44,6 +51,11 @@
 
 .content {
   padding: var(--space-6);
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .footer {
@@ -53,6 +65,7 @@
   gap: var(--space-2);
   padding: var(--space-4) var(--space-6);
   border-top: 1px solid var(--strong-border);
+  flex-shrink: 0;
 }
 
 /* ==============================================

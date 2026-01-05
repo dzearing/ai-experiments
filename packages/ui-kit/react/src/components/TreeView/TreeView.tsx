@@ -78,6 +78,8 @@ export interface TreeViewProps {
   onSelect?: (id: string | null, node: TreeNode | null) => void;
   /** Callback when node is clicked */
   onNodeClick?: (node: TreeNode) => void;
+  /** Callback when empty space (background) is clicked */
+  onBackgroundClick?: () => void;
   /** Controlled expanded node IDs */
   expandedIds?: string[];
   /** Default expanded node IDs */
@@ -166,6 +168,20 @@ function findNode(nodes: TreeNode[], id: string): TreeNode | null {
   return null;
 }
 
+// Helper to get ancestor IDs for a node (path from root to parent)
+function getAncestorIds(nodes: TreeNode[], targetId: string, path: string[] = []): string[] | null {
+  for (const node of nodes) {
+    if (node.id === targetId) {
+      return path; // Found it - return path to parent (not including target)
+    }
+    if (node.children && node.children.length > 0) {
+      const result = getAncestorIds(node.children, targetId, [...path, node.id]);
+      if (result) return result;
+    }
+  }
+  return null; // Not found in this branch
+}
+
 export function TreeView({
   data,
   height,
@@ -175,6 +191,7 @@ export function TreeView({
   defaultSelectedId = null,
   onSelect,
   onNodeClick,
+  onBackgroundClick,
   expandedIds: controlledExpandedIds,
   defaultExpandedIds,
   onExpandedChange,
@@ -561,6 +578,28 @@ export function TreeView({
     }
   }, [selectedId, focusedNodeId]);
 
+  // Auto-expand ancestors when selectedId changes to show nested items
+  const prevSelectedIdRef = useRef<string | null | undefined>(undefined);
+  useEffect(() => {
+    // Only run when selectedId actually changes (not on initial mount with undefined)
+    if (prevSelectedIdRef.current === selectedId) return;
+    prevSelectedIdRef.current = selectedId;
+
+    if (!selectedId) return;
+
+    // Find ancestors of the selected node
+    const ancestors = getAncestorIds(data, selectedId);
+    if (!ancestors || ancestors.length === 0) return;
+
+    // Check if any ancestors need to be expanded
+    const needsExpansion = ancestors.some((id) => !expandedIds.includes(id));
+    if (!needsExpansion) return;
+
+    // Expand all ancestors
+    const newExpandedIds = [...new Set([...expandedIds, ...ancestors])];
+    setExpandedIds(newExpandedIds);
+  }, [selectedId, data, expandedIds, setExpandedIds]);
+
   const handleNodeClick = (node: FlatNode) => {
     setFocusedNodeId(node.id);
     handleSelect(node);
@@ -573,12 +612,26 @@ export function TreeView({
     toggleExpand(node);
   };
 
+  const handleContainerClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Check if click was on empty space (not on a node)
+    const target = e.target as HTMLElement;
+    // If the click was on the container, content, or virtualList (not a node), trigger background click
+    if (
+      target === containerRef.current ||
+      target.classList.contains(styles.content) ||
+      target.classList.contains(styles.virtualList)
+    ) {
+      onBackgroundClick?.();
+    }
+  };
+
   return (
     <div
       ref={containerRef}
       className={`${styles.container} ${className || ''}`}
       style={height !== undefined ? { height } : undefined}
       onScroll={handleScroll}
+      onClick={handleContainerClick}
       onFocus={() => {
         setIsTreeFocused(true);
         if (!focusedNodeId && flatNodes.length > 0) {
