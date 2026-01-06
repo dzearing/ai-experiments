@@ -974,7 +974,9 @@ thingsRouter.post('/agent/execute', async (req: Request, res: Response) => {
 thingsRouter.post('/open-path', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { path: filePath } = req.body;
+    // Accept both 'path' and 'filePath' for backwards compatibility
+    const filePath = req.body.path || req.body.filePath;
+    const { editor = 'vscode' } = req.body; // 'vscode', 'finder', or 'default'
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
@@ -986,13 +988,20 @@ thingsRouter.post('/open-path', async (req: Request, res: Response) => {
       return;
     }
 
+    // Expand tilde to home directory
+    let expandedPath = filePath;
+    if (filePath === '~' || filePath.startsWith('~/')) {
+      const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+      expandedPath = filePath === '~' ? homeDir : filePath.replace(/^~/, homeDir);
+    }
+
     // Security: Only allow absolute paths and basic validation
-    if (!filePath.startsWith('/') && !filePath.match(/^[A-Za-z]:\\/)) {
+    if (!expandedPath.startsWith('/') && !expandedPath.match(/^[A-Za-z]:\\/)) {
       res.status(400).json({ error: 'Invalid path format' });
       return;
     }
 
-    // Use the appropriate command based on platform
+    // Use the appropriate command based on platform and editor preference
     const { exec } = await import('child_process');
     const { promisify } = await import('util');
     const execAsync = promisify(exec);
@@ -1000,15 +1009,23 @@ thingsRouter.post('/open-path', async (req: Request, res: Response) => {
     const platform = process.platform;
     let command: string;
 
-    if (platform === 'darwin') {
-      // macOS
-      command = `open "${filePath}"`;
-    } else if (platform === 'win32') {
-      // Windows
-      command = `start "" "${filePath}"`;
+    if (editor === 'vscode') {
+      // Open in VS Code (works on all platforms if code is in PATH)
+      command = `code "${expandedPath}"`;
+    } else if (editor === 'finder' || editor === 'default') {
+      if (platform === 'darwin') {
+        // macOS
+        command = `open "${expandedPath}"`;
+      } else if (platform === 'win32') {
+        // Windows
+        command = `start "" "${expandedPath}"`;
+      } else {
+        // Linux and others
+        command = `xdg-open "${expandedPath}"`;
+      }
     } else {
-      // Linux and others
-      command = `xdg-open "${filePath}"`;
+      // Default to VS Code
+      command = `code "${expandedPath}"`;
     }
 
     await execAsync(command);

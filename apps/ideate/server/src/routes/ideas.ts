@@ -3,6 +3,7 @@ import { query, type SDKAssistantMessage } from '@anthropic-ai/claude-code';
 import { IdeaService, type IdeaStatus } from '../services/IdeaService.js';
 import { WorkspaceService } from '../services/WorkspaceService.js';
 import { ChatRoomService } from '../services/ChatRoomService.js';
+import { getGitRevisionService } from '../services/GitRevisionService.js';
 import type { WorkspaceWebSocketHandler } from '../websocket/WorkspaceWebSocketHandler.js';
 
 const ideaService = new IdeaService();
@@ -496,6 +497,91 @@ ideasRouter.patch('/:id/execution', async (req: Request, res: Response) => {
   }
 });
 
+// Start execution of an idea (transition to executing status)
+ideasRouter.post('/:id/execute', async (req: Request, res: Response) => {
+  try {
+    const userId = req.headers['x-user-id'] as string;
+    const { id } = req.params;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User ID required' });
+      return;
+    }
+
+    // Get the idea to check if it has a plan
+    const idea = await ideaService.getIdea(id, userId, false);
+    if (!idea) {
+      res.status(404).json({ error: 'Idea not found' });
+      return;
+    }
+
+    // Validate idea has a plan
+    if (!idea.plan || !idea.plan.phases || idea.plan.phases.length === 0) {
+      res.status(400).json({ error: 'Idea must have a plan with phases before executing' });
+      return;
+    }
+
+    // Move to executing status if not already
+    if (idea.status !== 'executing') {
+      const result = await ideaService.updateStatus(id, userId, 'executing');
+      if (!result) {
+        res.status(500).json({ error: 'Failed to update status' });
+        return;
+      }
+    }
+
+    // Initialize execution state
+    const firstPhaseId = idea.plan.phases[0].id;
+    const execIdea = await ideaService.updateExecutionStateInternal(id, {
+      startedAt: new Date().toISOString(),
+      currentPhaseId: firstPhaseId,
+      progressPercent: 0,
+      waitingForFeedback: false,
+    });
+
+    if (!execIdea) {
+      res.status(500).json({ error: 'Failed to initialize execution state' });
+      return;
+    }
+
+    // Create chat room if workspace is set and not already created
+    if (execIdea.workspaceId && !execIdea.execution?.chatRoomId) {
+      const chatRoom = await chatRoomService.createChatRoom(
+        userId,
+        `Idea: ${execIdea.title}`,
+        execIdea.workspaceId
+      );
+
+      await ideaService.setChatRoomId(id, chatRoom.id);
+      execIdea.execution = {
+        ...execIdea.execution!,
+        chatRoomId: chatRoom.id,
+      };
+
+      if (workspaceWsHandler) {
+        workspaceWsHandler.notifyResourceCreated(execIdea.workspaceId, chatRoom.id, 'chatroom', chatRoom);
+      }
+    }
+
+    // Notify workspace subscribers
+    if (execIdea.workspaceId && workspaceWsHandler) {
+      workspaceWsHandler.notifyResourceUpdated(execIdea.workspaceId, execIdea.id, 'idea', {
+        ...execIdea,
+        _updateType: 'execution_started',
+      });
+    }
+
+    res.json({
+      success: true,
+      idea: execIdea,
+      firstPhaseId,
+    });
+  } catch (error) {
+    console.error('[Ideas] Start execution error:', error);
+    res.status(500).json({ error: 'Failed to start execution' });
+  }
+});
+
 // =========================================================================
 // Rating
 // =========================================================================
@@ -637,5 +723,119 @@ ideasRouter.get('/:id/attachments/:attachmentId/download', async (req: Request, 
   } catch (error) {
     console.error('[Ideas] Download attachment error:', error);
     res.status(500).json({ error: 'Failed to download attachment' });
+  }
+});
+
+// =========================================================================
+// Git Revisions (Activity Tab)
+// =========================================================================
+
+// List revisions for an idea's working directory
+ideasRouter.get('/:id/revisions', async (req: Request, res: Response) => {
+  try {
+    const userId = req.headers['x-user-id'] as string;
+    const { id } = req.params;
+    const limit = parseInt(req.query.limit as string) || 50;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User ID required' });
+      return;
+    }
+
+    const idea = await ideaService.getIdea(id, userId);
+    if (!idea) {
+      res.status(404).json({ error: 'Idea not found' });
+      return;
+    }
+
+    const workingDirectory = idea.plan?.workingDirectory;
+    if (!workingDirectory) {
+      res.json({ revisions: [], message: 'No working directory set' });
+      return;
+    }
+
+    const gitService = getGitRevisionService();
+    const isGitRepo = await gitService.isGitRepository(workingDirectory);
+
+    if (!isGitRepo) {
+      res.json({ revisions: [], message: 'Working directory is not a git repository' });
+      return;
+    }
+
+    const revisions = await gitService.listRevisions(workingDirectory, { limit });
+    res.json({ revisions });
+  } catch (error) {
+    console.error('[Ideas] List revisions error:', error);
+    res.status(500).json({ error: 'Failed to list revisions' });
+  }
+});
+
+// Get files changed in a specific commit
+ideasRouter.get('/:id/revisions/:commitHash/files', async (req: Request, res: Response) => {
+  try {
+    const userId = req.headers['x-user-id'] as string;
+    const { id, commitHash } = req.params;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User ID required' });
+      return;
+    }
+
+    const idea = await ideaService.getIdea(id, userId);
+    if (!idea) {
+      res.status(404).json({ error: 'Idea not found' });
+      return;
+    }
+
+    const workingDirectory = idea.plan?.workingDirectory;
+    if (!workingDirectory) {
+      res.status(400).json({ error: 'No working directory set' });
+      return;
+    }
+
+    const gitService = getGitRevisionService();
+    const files = await gitService.getCommitFiles(workingDirectory, commitHash);
+    res.json({ files });
+  } catch (error) {
+    console.error('[Ideas] Get commit files error:', error);
+    res.status(500).json({ error: 'Failed to get commit files' });
+  }
+});
+
+// Get diff for a specific file in a commit
+ideasRouter.get('/:id/revisions/:commitHash/diff', async (req: Request, res: Response) => {
+  try {
+    const userId = req.headers['x-user-id'] as string;
+    const { id, commitHash } = req.params;
+    const filePath = req.query.file as string;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User ID required' });
+      return;
+    }
+
+    if (!filePath) {
+      res.status(400).json({ error: 'File path required (use ?file=path/to/file)' });
+      return;
+    }
+
+    const idea = await ideaService.getIdea(id, userId);
+    if (!idea) {
+      res.status(404).json({ error: 'Idea not found' });
+      return;
+    }
+
+    const workingDirectory = idea.plan?.workingDirectory;
+    if (!workingDirectory) {
+      res.status(400).json({ error: 'No working directory set' });
+      return;
+    }
+
+    const gitService = getGitRevisionService();
+    const diff = await gitService.getFileDiff(workingDirectory, commitHash, filePath);
+    res.json({ diff });
+  } catch (error) {
+    console.error('[Ideas] Get file diff error:', error);
+    res.status(500).json({ error: 'Failed to get file diff' });
   }
 });

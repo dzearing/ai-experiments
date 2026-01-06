@@ -6,6 +6,17 @@ import { useAgentProgress, type AgentProgressEvent } from './useAgentProgress';
 import type { ModelId } from './useModelPreference';
 
 /**
+ * Parent thing that provides execution context (e.g., a folder or git repo with localPath)
+ */
+export interface ParentThingContext {
+  id: string;
+  name: string;
+  type: string;
+  /** Local file system path if this thing provides execution context */
+  localPath?: string;
+}
+
+/**
  * Idea context to send to the plan agent
  */
 export interface PlanIdeaContext {
@@ -22,6 +33,8 @@ export interface PlanIdeaContext {
     type: string;
     description?: string;
   };
+  /** Parent things that provide execution context (folders, repos) with their localPath */
+  parentThings?: ParentThingContext[];
 }
 
 /**

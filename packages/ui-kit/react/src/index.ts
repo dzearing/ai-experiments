@@ -155,6 +155,9 @@ export type {
   RelativeTimeColor,
 } from './components/RelativeTime';
 
+export { FileDiff } from './components/FileDiff';
+export type { FileDiffProps, FileChangeType, DiffLine } from './components/FileDiff';
+
 // Typography
 export { Text } from './components/Text';
 export type { TextProps, TextSize, TextWeight, TextColor } from './components/Text';

@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Slide, Button, IconButton, SplitPane, Spinner } from '@ui-kit/react';
+import { Slide, Button, IconButton, SplitPane, Spinner, Checkbox } from '@ui-kit/react';
 import { CloseIcon } from '@ui-kit/icons/CloseIcon';
 import { TrashIcon } from '@ui-kit/icons/TrashIcon';
 import { ArrowRightIcon } from '@ui-kit/icons/ArrowRightIcon';
@@ -10,18 +10,24 @@ import { ListIcon } from '@ui-kit/icons/ListIcon';
 import { EditIcon } from '@ui-kit/icons/EditIcon';
 import { ChatPanel, ChatInput, ThinkingIndicator, MessageQueue, OpenQuestionsResolver, type ChatInputSubmitData, type ChatInputRef, type ChatPanelMessage, type QueuedMessage, type ThingReference as ChatThingReference } from '@ui-kit/react-chat';
 import { MarkdownCoEditor, type ViewMode, type CoAuthor } from '@ui-kit/react-markdown';
+import { ItemPickerDialog, DiskItemProvider } from '@ui-kit/react-pickers';
 import { useAuth } from '../../contexts/AuthContext';
 import { useIdeas } from '../../contexts/IdeasContext';
 import { useThings } from '../../contexts/ThingsContext';
 import { useIdeaAgent, type IdeaContext } from '../../hooks/useIdeaAgent';
-import { usePlanAgent, type PlanIdeaContext } from '../../hooks/usePlanAgent';
+import { usePlanAgent, type PlanIdeaContext, type ParentThingContext } from '../../hooks/usePlanAgent';
+import { useExecutionAgent, type ExecutionIdeaContext } from '../../hooks/useExecutionAgent';
 import { useYjsCollaboration } from '../../hooks/useYjsCollaboration';
 import { useChatCommands } from '../../hooks/useChatCommands';
 import { useModelPreference } from '../../hooks/useModelPreference';
+import { useActivityRevisions } from '../../hooks/useActivityRevisions';
 import { PlanView } from '../PlanView';
+import { ActivityView } from '../ActivityView';
+import { ClockIcon } from '@ui-kit/icons/ClockIcon';
 import { YJS_WS_URL } from '../../config';
 import type { Idea, CreateIdeaInput, IdeaPlan } from '../../types/idea';
-import styles from './IdeaWorkspaceOverlay.module.css';
+import { THING_TYPE_SCHEMAS } from '../../types/thing';
+import styles from './IdeaDialog.module.css';
 
 // Debug: track component mount/unmount
 let overlayInstanceId = 0;
@@ -29,6 +35,22 @@ let overlayInstanceId = 0;
 // Generate a unique session ID for new ideas
 function generateSessionId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+/**
+ * Strip structured event XML blocks from message content.
+ * These are parsed separately for task/phase updates and shouldn't appear in chat.
+ */
+function stripStructuredEvents(text: string): string {
+  return text
+    .replace(/<task_complete>\s*[\s\S]*?\s*<\/task_complete>/g, '')
+    .replace(/<phase_complete>\s*[\s\S]*?\s*<\/phase_complete>/g, '')
+    .replace(/<execution_blocked>\s*[\s\S]*?\s*<\/execution_blocked>/g, '')
+    .replace(/<new_idea>\s*[\s\S]*?\s*<\/new_idea>/g, '')
+    .replace(/<task_update>\s*[\s\S]*?\s*<\/task_update>/g, '')
+    .replace(/```xml\s*```/g, '') // Clean up empty xml code blocks
+    .replace(/\n{3,}/g, '\n\n') // Collapse multiple newlines
+    .trim();
 }
 
 /**
@@ -150,12 +172,12 @@ export interface ThingContext {
 }
 
 /** Workspace phases */
-export type WorkspacePhase = 'ideation' | 'planning';
+export type WorkspacePhase = 'ideation' | 'planning' | 'executing';
 
 /** Resource tabs for the workspace */
-export type ResourceTab = 'idea-doc' | 'impl-plan' | 'exec-plan';
+export type ResourceTab = 'idea-doc' | 'impl-plan' | 'exec-plan' | 'activity';
 
-export interface IdeaWorkspaceOverlayProps {
+export interface IdeaDialogProps {
   /** Idea to edit (null for creating a new idea) */
   idea: Idea | null;
   /** Whether the overlay is open */
@@ -183,13 +205,13 @@ export interface IdeaWorkspaceOverlayProps {
 }
 
 /**
- * IdeaWorkspaceOverlay component
+ * IdeaDialog component
  *
  * A large overlay for creating and editing ideas with:
  * - Left pane: Document editor (title, summary, description, tags)
  * - Right pane: Chat with the Idea Agent for brainstorming
  */
-export function IdeaWorkspaceOverlay({
+export function IdeaDialog({
   idea,
   open,
   onClose,
@@ -202,13 +224,13 @@ export function IdeaWorkspaceOverlay({
   initialGreeting,
   initialPhase,
   onStartExecution,
-}: IdeaWorkspaceOverlayProps) {
+}: IdeaDialogProps) {
   // Debug: track this instance
   const instanceIdRef = useRef(++overlayInstanceId);
   useEffect(() => {
-    console.log(`[IdeaWorkspaceOverlay #${instanceIdRef.current}] MOUNTED, idea=${idea?.id || 'new'}, open=${open}`);
+    console.log(`[IdeaDialog #${instanceIdRef.current}] MOUNTED, idea=${idea?.id || 'new'}, open=${open}`);
     return () => {
-      console.log(`[IdeaWorkspaceOverlay #${instanceIdRef.current}] UNMOUNTED`);
+      console.log(`[IdeaDialog #${instanceIdRef.current}] UNMOUNTED`);
     };
   }, []); // Only run on mount/unmount
 
@@ -227,17 +249,35 @@ export function IdeaWorkspaceOverlay({
     return things.filter(t => thingIds.includes(t.id));
   }, [idea?.thingIds, initialThingIds, things]);
 
+  // Get parent things with execution context (folders, repos with localPath)
+  // This helps the plan agent suggest appropriate working directories
+  const parentThingsWithContext: ParentThingContext[] = useMemo(() => {
+    return linkedThings
+      .filter(thing => {
+        const schema = THING_TYPE_SCHEMAS[thing.type];
+        return schema?.providesExecutionContext && thing.properties?.localPath;
+      })
+      .map(thing => ({
+        id: thing.id,
+        name: thing.name,
+        type: thing.type,
+        localPath: thing.properties?.localPath,
+      }));
+  }, [linkedThings]);
+
   // Get thing references for chat autocomplete (^ mentions)
   const thingReferences = getThingReferences();
 
-  // Workspace phase - determines if we're in ideation or planning mode
+  // Workspace phase - determines if we're in ideation, planning, or executing mode
   // For new ideas, always start in ideation
   // For existing ideas, check the idea status or use initialPhase
   const [phase, setPhase] = useState<WorkspacePhase>(() => {
     if (!idea) return 'ideation';
     if (initialPhase) return initialPhase;
-    // If idea is already in exploring/planning status, start in planning phase
-    return idea.status === 'exploring' ? 'planning' : 'ideation';
+    // Map idea status to workspace phase
+    if (idea.status === 'executing') return 'executing';
+    if (idea.status === 'exploring') return 'planning';
+    return 'ideation';
   });
 
   // Track the current idea (may be created during ideation phase)
@@ -253,10 +293,13 @@ export function IdeaWorkspaceOverlay({
     }
   }, [open, idea]);
 
-  // Sync phase when overlay opens with an idea that has status "exploring"
-  // This ensures we go directly to planning phase when reopening an idea that was in planning
+  // Sync phase when overlay opens based on idea status
+  // This ensures we go directly to the right phase when reopening an idea
   useEffect(() => {
-    if (open && idea?.status === 'exploring') {
+    if (open && idea?.status === 'executing') {
+      console.log('[IdeaWorkspaceOverlay] Syncing phase to executing for executing idea');
+      setPhase('executing');
+    } else if (open && idea?.status === 'exploring') {
       console.log('[IdeaWorkspaceOverlay] Syncing phase to planning for exploring idea');
       setPhase('planning');
     }
@@ -270,13 +313,18 @@ export function IdeaWorkspaceOverlay({
 
   // Sync initial plan from idea when overlay opens
   // This ensures tasks are displayed when reopening an idea with an existing plan
+  // Check both the phase state AND the idea status to handle the case where
+  // phase state hasn't been updated yet from the status sync effect
   useEffect(() => {
     const initialPlan = currentIdea?.plan || idea?.plan;
-    if (open && phase === 'planning' && initialPlan?.phases && initialPlan.phases.length > 0) {
+    const ideaStatus = currentIdea?.status || idea?.status;
+    const shouldLoadPlan = phase === 'planning' || phase === 'executing' ||
+      ideaStatus === 'exploring' || ideaStatus === 'executing';
+    if (open && shouldLoadPlan && initialPlan?.phases && initialPlan.phases.length > 0) {
       console.log('[IdeaWorkspaceOverlay] Syncing initial plan to local state:', initialPlan.phases.length, 'phases');
       setPlan(initialPlan);
     }
-  }, [open, phase, currentIdea?.plan, idea?.plan]);
+  }, [open, phase, currentIdea?.plan, idea?.plan, currentIdea?.status, idea?.status]);
 
   // Session ID for new ideas - stable per component instance
   // Content is cleared on close instead of creating a new room
@@ -373,7 +421,6 @@ export function IdeaWorkspaceOverlay({
 
   // Yjs collaboration for Implementation Plan (only in planning phase)
   const implPlanServerUrl = phase === 'planning' && implPlanDocumentId ? YJS_WS_URL : undefined;
-  console.log('[IdeaWorkspace] Yjs config:', { documentId: implPlanDocumentId || 'disabled', serverUrl: implPlanServerUrl, phase, isImplPlanYjsSynced: undefined });
 
   const {
     extensions: implPlanYjsExtensions,
@@ -450,9 +497,9 @@ export function IdeaWorkspaceOverlay({
     console.error('[IdeaWorkspace] Agent error:', err);
   }, []);
 
-  // Handle plan updates from Plan Agent
+  // Handle plan updates from Plan Agent - merge with existing plan to preserve fields
   const handlePlanUpdate = useCallback((newPlan: Partial<IdeaPlan>) => {
-    setPlan(newPlan);
+    setPlan(prev => prev ? { ...prev, ...newPlan } : newPlan);
   }, []);
 
   // Build plan context for the Plan Agent
@@ -463,7 +510,9 @@ export function IdeaWorkspaceOverlay({
     description: parsedContent.description.trim() || currentIdea?.description || idea?.description || undefined,
     tags: parsedContent.tags.length > 0 ? parsedContent.tags : (currentIdea?.tags || idea?.tags || []),
     status: currentIdea?.status || idea?.status || 'new',
-  }), [currentIdea, idea, parsedContent]);
+    // Include parent things with execution context (folders, repos) for working directory suggestions
+    parentThings: parentThingsWithContext.length > 0 ? parentThingsWithContext : undefined,
+  }), [currentIdea, idea, parsedContent, parentThingsWithContext]);
 
   // Idea agent hook - only enabled when overlay is open AND in ideation phase
   const ideaAgent = useIdeaAgent({
@@ -492,8 +541,154 @@ export function IdeaWorkspaceOverlay({
     modelId,
   });
 
+  // Build execution context
+  const executionIdeaContext: ExecutionIdeaContext = useMemo(() => ({
+    id: currentIdea?.id || idea?.id || '',
+    title: currentIdea?.title || idea?.title || 'Untitled',
+    summary: currentIdea?.summary || idea?.summary || '',
+    description: currentIdea?.description || idea?.description,
+  }), [currentIdea, idea]);
+
+  // Handle task completion - update plan state to mark task as completed
+  const handleTaskComplete = useCallback((event: { taskId: string; phaseId: string; summary?: string }) => {
+    setPlan(prev => {
+      if (!prev?.phases) return prev;
+      return {
+        ...prev,
+        phases: prev.phases.map(phase => {
+          if (phase.id !== event.phaseId) return phase;
+          return {
+            ...phase,
+            tasks: phase.tasks.map(task => {
+              if (task.id !== event.taskId) return task;
+              return { ...task, completed: true, inProgress: false };
+            }),
+          };
+        }),
+      };
+    });
+  }, []);
+
+  // Handle task update - update task status in plan
+  const handleTaskUpdate = useCallback((event: { action: string; taskId: string; phaseId: string; status?: string }) => {
+    setPlan(prev => {
+      if (!prev?.phases) return prev;
+      return {
+        ...prev,
+        phases: prev.phases.map(phase => {
+          if (phase.id !== event.phaseId) return phase;
+          return {
+            ...phase,
+            tasks: phase.tasks.map(task => {
+              if (task.id !== event.taskId) return task;
+              // Update based on status
+              if (event.status === 'completed') {
+                return { ...task, completed: true, inProgress: false };
+              } else if (event.status === 'in_progress') {
+                return { ...task, inProgress: true };
+              } else if (event.status === 'pending') {
+                return { ...task, inProgress: false, completed: false };
+              }
+              return task;
+            }),
+          };
+        }),
+      };
+    });
+  }, []);
+
+  // State for pause between phases option (execution mode)
+  const [pauseBetweenPhases, setPauseBetweenPhases] = useState(false);
+
+  // Track pauseBetweenPhases in a ref for use in callbacks
+  const pauseBetweenPhasesRef = useRef(pauseBetweenPhases);
+  useEffect(() => {
+    pauseBetweenPhasesRef.current = pauseBetweenPhases;
+  }, [pauseBetweenPhases]);
+
+  // Track completed phase for auto-continue logic
+  const [completedPhaseId, setCompletedPhaseId] = useState<string | null>(null);
+
+  // Handle phase completion - update plan state
+  const handlePhaseComplete = useCallback((event: { phaseId: string; summary?: string }) => {
+    setPlan(prev => {
+      if (!prev?.phases) return prev;
+      return {
+        ...prev,
+        phases: prev.phases.map(phase => {
+          if (phase.id !== event.phaseId) return phase;
+          // Mark all tasks in the phase as completed
+          return {
+            ...phase,
+            tasks: phase.tasks.map(task => ({ ...task, completed: true, inProgress: false })),
+          };
+        }),
+      };
+    });
+    // Track the completed phase for auto-continue
+    setCompletedPhaseId(event.phaseId);
+  }, []);
+
+  // Execution agent hook - only enabled when overlay is open AND in executing phase
+  const executeAgent = useExecutionAgent({
+    ideaId: currentIdea?.id || idea?.id || '',
+    userId: user?.id || '',
+    userName: user?.name || 'Anonymous',
+    ideaContext: executionIdeaContext,
+    plan: plan as IdeaPlan | null,
+    onError: handleAgentError,
+    onTaskComplete: handleTaskComplete,
+    onTaskUpdate: handleTaskUpdate,
+    onPhaseComplete: handlePhaseComplete,
+    enabled: open && phase === 'executing' && !!(currentIdea?.id || idea?.id),
+  });
+
+  // Auto-continue to next phase when a phase completes and pauseBetweenPhases is false
+  useEffect(() => {
+    const phases = plan?.phases;
+    if (!completedPhaseId || !phases || pauseBetweenPhasesRef.current) return;
+
+    // Find the index of the completed phase
+    const completedIndex = phases.findIndex(p => p.id === completedPhaseId);
+    const nextPhase = completedIndex >= 0 && completedIndex < phases.length - 1
+      ? phases[completedIndex + 1]
+      : null;
+
+    if (nextPhase) {
+      // Small delay before starting next phase
+      const timerId = setTimeout(() => {
+        const fullPlan: IdeaPlan = {
+          phases,
+          workingDirectory: plan?.workingDirectory || '',
+          repositoryUrl: plan?.repositoryUrl,
+          branch: plan?.branch,
+          isClone: plan?.isClone,
+          workspaceId: plan?.workspaceId,
+          createdAt: plan?.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        executeAgent.startExecution(executionIdeaContext, fullPlan, nextPhase.id);
+        // Clear the completed phase ID to avoid re-triggering
+        setCompletedPhaseId(null);
+      }, 500);
+      return () => clearTimeout(timerId);
+    } else {
+      // No next phase, clear the completed phase ID
+      setCompletedPhaseId(null);
+    }
+  }, [completedPhaseId, plan, executeAgent, executionIdeaContext]);
+
+  // Activity revisions hook - for Activity tab
+  const activityRevisions = useActivityRevisions({
+    ideaId: currentIdea?.id || idea?.id || '',
+    enabled: open && activeTab === 'activity' && !!(currentIdea?.id || idea?.id),
+    refreshInterval: phase === 'executing' ? 5000 : 0, // Auto-refresh during execution
+  });
+
   // Select active agent based on phase
-  const activeAgent = phase === 'planning' ? planAgent : ideaAgent;
+  const activeAgent = phase === 'executing'
+    ? { ...executeAgent, isLoading: executeAgent.isExecuting, openQuestions: null, suggestedResponses: null, showQuestionsResolver: false, setShowQuestionsResolver: () => {}, resolveQuestions: () => {}, clearHistory: executeAgent.clearMessages, cancelRequest: executeAgent.cancelExecution }
+    : phase === 'planning' ? planAgent : ideaAgent;
   const agentMessages = activeAgent.messages;
   const isConnected = activeAgent.isConnected;
   const isAgentThinking = activeAgent.isLoading;
@@ -504,22 +699,36 @@ export function IdeaWorkspaceOverlay({
   const cancelRequest = activeAgent.cancelRequest;
 
   // Agent-specific properties that depend on phase
-  const isEditingDocument = phase === 'planning'
-    ? planAgent.isEditingDocument
-    : ideaAgent.isEditingDocument;
-  const openQuestions = phase === 'planning'
-    ? planAgent.openQuestions
-    : ideaAgent.openQuestions;
-  const showQuestionsResolver = phase === 'planning'
-    ? planAgent.showQuestionsResolver
-    : ideaAgent.showQuestionsResolver;
-  const setShowQuestionsResolver = phase === 'planning'
-    ? planAgent.setShowQuestionsResolver
-    : ideaAgent.setShowQuestionsResolver;
-  const resolveQuestions = phase === 'planning'
-    ? planAgent.resolveQuestions
-    : ideaAgent.resolveQuestions;
+  const isEditingDocument = phase === 'executing'
+    ? false
+    : phase === 'planning'
+      ? planAgent.isEditingDocument
+      : ideaAgent.isEditingDocument;
+  const openQuestions = phase === 'executing'
+    ? null
+    : phase === 'planning'
+      ? planAgent.openQuestions
+      : ideaAgent.openQuestions;
+  const showQuestionsResolver = phase === 'executing'
+    ? false
+    : phase === 'planning'
+      ? planAgent.showQuestionsResolver
+      : ideaAgent.showQuestionsResolver;
+  const setShowQuestionsResolver = phase === 'executing'
+    ? (() => {})
+    : phase === 'planning'
+      ? planAgent.setShowQuestionsResolver
+      : ideaAgent.setShowQuestionsResolver;
+  const resolveQuestions = phase === 'executing'
+    ? (() => {})
+    : phase === 'planning'
+      ? planAgent.resolveQuestions
+      : ideaAgent.resolveQuestions;
   const updateIdeaContext = ideaAgent.updateIdeaContext;
+
+  // Execution-specific state
+  const isExecutionBlocked = phase === 'executing' && executeAgent.isBlocked;
+  const executionBlockedEvent = phase === 'executing' ? executeAgent.blockedEvent : null;
 
   // Update the agent when ideaContext changes (especially thingContext)
   useEffect(() => {
@@ -553,18 +762,35 @@ export function IdeaWorkspaceOverlay({
   });
 
   // Convert agent messages to ChatPanel format
-  const agentName = phase === 'planning' ? 'Plan Agent' : 'Idea Agent';
+  const agentName = phase === 'executing' ? 'Execute Agent' : phase === 'planning' ? 'Plan Agent' : 'Idea Agent';
   const chatMessages: ChatPanelMessage[] = useMemo(() => {
-    return agentMessages.map(msg => ({
-      id: msg.id,
-      content: msg.content,
-      timestamp: msg.timestamp,
-      senderName: msg.role === 'user' ? (user?.name || 'You') : agentName,
-      senderColor: msg.role === 'user' ? undefined : '#8b5cf6',
-      isOwn: msg.role === 'user',
-      isStreaming: msg.isStreaming,
-      renderMarkdown: true, // Render markdown for all messages (including user's question answers)
-    }));
+    return agentMessages
+      .map((msg): ChatPanelMessage | null => {
+        // Strip XML structured events from assistant messages (they're handled separately)
+        const cleanContent = msg.role === 'assistant'
+          ? stripStructuredEvents(msg.content)
+          : msg.content;
+
+        // Get toolCalls from execution messages (if present)
+        // ExecutionToolCall and ChatMessageToolCall have the same shape
+        const toolCalls = 'toolCalls' in msg ? msg.toolCalls : undefined;
+
+        // Skip empty messages after stripping (unless they have tool calls)
+        if (!cleanContent && !toolCalls?.length && msg.role === 'assistant') return null;
+
+        return {
+          id: msg.id,
+          content: cleanContent,
+          timestamp: msg.timestamp,
+          senderName: msg.role === 'user' ? (user?.name || 'You') : agentName,
+          senderColor: msg.role === 'user' ? undefined : '#8b5cf6',
+          isOwn: msg.role === 'user',
+          isStreaming: msg.isStreaming,
+          renderMarkdown: true, // Render markdown for all messages (including user's question answers)
+          toolCalls, // Pass tool calls through for proper rendering
+        };
+      })
+      .filter((msg): msg is ChatPanelMessage => msg !== null);
   }, [agentMessages, user?.name, agentName]);
 
   // Get suggested responses from the active agent based on current phase
@@ -648,10 +874,12 @@ export function IdeaWorkspaceOverlay({
     }
   }, [open, isNewIdea, currentIdea, yjsSetContent]);
 
-  // Auto-switch to Implementation Plan tab when entering planning phase
+  // Auto-switch to appropriate tab when entering planning or executing phase
   useEffect(() => {
     if (phase === 'planning') {
       setActiveTab('impl-plan');
+    } else if (phase === 'executing') {
+      setActiveTab('exec-plan');
     }
   }, [phase]);
 
@@ -925,22 +1153,41 @@ export function IdeaWorkspaceOverlay({
     return plan?.phases && plan.phases.length > 0 && plan.phases.some(p => p.tasks && p.tasks.length > 0);
   }, [plan]);
 
+  // State for showing directory picker prompt
+  const [showDirectoryPrompt, setShowDirectoryPrompt] = useState(false);
+
   // Handle starting execution with the plan
   const handleStartExecution = useCallback(() => {
-    if (plan && plan.phases && plan.phases.length > 0) {
-      const fullPlan: IdeaPlan = {
-        phases: plan.phases,
-        workingDirectory: plan.workingDirectory || '.',
-        repositoryUrl: plan.repositoryUrl,
-        branch: plan.branch,
-        isClone: plan.isClone,
-        workspaceId: plan.workspaceId,
-        createdAt: plan.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      onStartExecution?.(fullPlan);
+    if (!plan || !plan.phases || plan.phases.length === 0) {
+      setError('No plan available. Please create a plan first.');
+      return;
     }
-  }, [plan, onStartExecution]);
+
+    // Require working directory before execution
+    if (!plan.workingDirectory) {
+      // Show directory prompt instead of just an error
+      setShowDirectoryPrompt(true);
+      return;
+    }
+
+    const fullPlan: IdeaPlan = {
+      phases: plan.phases,
+      workingDirectory: plan.workingDirectory,
+      repositoryUrl: plan.repositoryUrl,
+      branch: plan.branch,
+      isClone: plan.isClone,
+      workspaceId: plan.workspaceId,
+      createdAt: plan.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    // Notify parent (for kanban update) and transition to executing phase
+    onStartExecution?.(fullPlan);
+    setPhase('executing');
+    setActiveTab('exec-plan');
+    // Start execution with the first phase
+    const firstPhaseId = fullPlan.phases[0].id;
+    executeAgent.startExecution(executionIdeaContext, fullPlan, firstPhaseId);
+  }, [plan, onStartExecution, executeAgent, executionIdeaContext]);
 
   // Process queued messages when AI finishes thinking - combine all into one message
   useEffect(() => {
@@ -1012,19 +1259,51 @@ export function IdeaWorkspaceOverlay({
     }
   }, [openQuestions, setShowQuestionsResolver]);
 
+  // Handle opening working directory in VSCode
+  const handleOpenWorkingDirectory = useCallback(async (path: string) => {
+    if (!user) return;
+    try {
+      // Use the existing open-path endpoint to open the directory in VS Code
+      const response = await fetch('/api/things/open-path', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user.id,
+        },
+        body: JSON.stringify({ filePath: path, editor: 'vscode' }),
+      });
+      if (!response.ok) {
+        console.error('[IdeaDialog] Failed to open working directory:', await response.text());
+      }
+    } catch (err) {
+      console.error('[IdeaDialog] Error opening working directory:', err);
+    }
+  }, [user]);
+
+  // Disk provider for folder picker
+  const diskProvider = useMemo(() => new DiskItemProvider({ baseUrl: '/api/fs' }), []);
+
+  // Handle folder selection from picker dialog
+  const handleWorkingDirectorySelect = useCallback((path: string) => {
+    setPlan(prev => prev ? { ...prev, workingDirectory: path } : { phases: [], workingDirectory: path, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+    setShowDirectoryPrompt(false);
+  }, []);
+
   // NOTE: Questions resolver is now only shown when user clicks the "[resolve N questions](#resolve)" link
   // This gives the user control over when to answer questions rather than interrupting their flow
 
   // Empty state for chat panel
   const chatEmptyState = (
     <div className={styles.chatEmptyState}>
-      <h3>Chat with the {phase === 'planning' ? 'Plan Agent' : 'Idea Agent'}</h3>
+      <h3>Chat with the {agentName}</h3>
       <p>
-        {phase === 'planning'
-          ? 'Ask for implementation plans, architecture diagrams, or UI mockups.'
-          : isNewIdea
-            ? 'Start typing in the editor, then ask the agent to help you develop your idea.'
-            : 'Ask questions, brainstorm, or get suggestions to improve your idea.'}
+        {phase === 'executing'
+          ? 'The Execute Agent is implementing your plan. Ask questions or provide guidance.'
+          : phase === 'planning'
+            ? 'Ask for implementation plans, architecture diagrams, or UI mockups.'
+            : isNewIdea
+              ? 'Start typing in the editor, then ask the agent to help you develop your idea.'
+              : 'Ask questions, brainstorm, or get suggestions to improve your idea.'}
       </p>
     </div>
   );
@@ -1052,11 +1331,13 @@ export function IdeaWorkspaceOverlay({
           <header className={styles.header}>
             <div className={styles.headerLeft}>
               <h1 className={styles.headerTitle}>
-                {phase === 'planning'
-                  ? 'Plan Your Idea'
-                  : isNewIdea
-                    ? 'Create Your Idea'
-                    : 'Edit Idea'}
+                {phase === 'executing'
+                  ? 'Execute Your Plan'
+                  : phase === 'planning'
+                    ? 'Plan Your Idea'
+                    : isNewIdea
+                      ? 'Create Your Idea'
+                      : 'Edit Idea'}
               </h1>
               {linkedThings.length > 0 && (
                 <div className={styles.linkedThings}>
@@ -1089,7 +1370,7 @@ export function IdeaWorkspaceOverlay({
               first={
                 <div className={styles.chatPane}>
                   <div className={styles.chatHeader}>
-                    <span className={styles.chatTitle}>{phase === 'planning' ? 'Plan Agent' : 'Idea Agent'}</span>
+                    <span className={styles.chatTitle}>{phase === 'executing' ? 'Execute Agent' : phase === 'planning' ? 'Plan Agent' : 'Idea Agent'}</span>
                     <span className={`${styles.connectionStatus} ${isConnected ? styles.connected : ''}`}>
                       {isEditingDocument ? 'Editing document...' : isConnected ? 'Connected' : 'Disconnected'}
                     </span>
@@ -1170,7 +1451,7 @@ export function IdeaWorkspaceOverlay({
                       <FileIcon size={16} />
                       Idea
                     </button>
-                    {phase === 'planning' && (
+                    {(phase === 'planning' || phase === 'executing') && (
                       <>
                         <button
                           className={`${styles.tab} ${activeTab === 'impl-plan' ? styles.active : ''}`}
@@ -1196,6 +1477,17 @@ export function IdeaWorkspaceOverlay({
                           )}
                         </button>
                       </>
+                    )}
+                    {phase === 'executing' && (
+                      <button
+                        className={`${styles.tab} ${activeTab === 'activity' ? styles.active : ''}`}
+                        onClick={() => setActiveTab('activity')}
+                        role="tab"
+                        aria-selected={activeTab === 'activity'}
+                      >
+                        <ClockIcon size={16} />
+                        Activity
+                      </button>
                     )}
                   </div>
 
@@ -1257,11 +1549,22 @@ export function IdeaWorkspaceOverlay({
                         <PlanView
                           plan={plan && plan.phases && plan.phases.length > 0 ? {
                             phases: plan.phases,
-                            workingDirectory: plan.workingDirectory || '.',
+                            workingDirectory: plan.workingDirectory || '',
                             createdAt: plan.createdAt || new Date().toISOString(),
                             updatedAt: plan.updatedAt || new Date().toISOString(),
                           } : null}
                           showWorkingDirectory
+                          onOpenWorkingDirectory={handleOpenWorkingDirectory}
+                        />
+                      </div>
+                    )}
+                    {activeTab === 'activity' && (
+                      <div className={styles.tabPanel}>
+                        <ActivityView
+                          revisions={activityRevisions.revisions}
+                          isLoading={activityRevisions.isLoading}
+                          error={activityRevisions.error}
+                          fetchDiff={activityRevisions.fetchDiff}
                         />
                       </div>
                     )}
@@ -1316,17 +1619,58 @@ export function IdeaWorkspaceOverlay({
                   Execute
                 </Button>
               )}
+              {phase === 'executing' && (
+                <>
+                  <Checkbox
+                    checked={pauseBetweenPhases}
+                    onChange={(e) => setPauseBetweenPhases(e.target.checked)}
+                    label="Pause between phases"
+                  />
+                  {executeAgent.isExecuting && (
+                    <Button
+                      variant="ghost"
+                      onClick={executeAgent.pauseExecution}
+                    >
+                      Pause
+                    </Button>
+                  )}
+                  {executeAgent.isPaused && (
+                    <Button
+                      variant="primary"
+                      onClick={executeAgent.resumeExecution}
+                      icon={<PlayIcon />}
+                    >
+                      Resume
+                    </Button>
+                  )}
+                  {isExecutionBlocked && executionBlockedEvent && (
+                    <div className={styles.blockedIndicator}>
+                      <span className={styles.blockedText}>Waiting for input</span>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </footer>
         </div>
       </Slide>
 
+      {/* Folder picker dialog for working directory selection */}
+      <ItemPickerDialog
+        open={showDirectoryPrompt}
+        onClose={() => setShowDirectoryPrompt(false)}
+        onSelect={handleWorkingDirectorySelect}
+        provider={diskProvider}
+        filter={{ types: ['folder'] }}
+        title="Select Working Directory"
+        selectLabel="Select"
+      />
     </div>
   );
 
   return createPortal(overlay, document.body);
 }
 
-IdeaWorkspaceOverlay.displayName = 'IdeaWorkspaceOverlay';
+IdeaDialog.displayName = 'IdeaDialog';
 
-export default IdeaWorkspaceOverlay;
+export default IdeaDialog;

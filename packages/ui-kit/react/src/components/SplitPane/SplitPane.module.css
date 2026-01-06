@@ -17,6 +17,7 @@
 
 /* Panes */
 .pane {
+  position: relative; /* Establish containing block for absolute children */
   display: flex;
   flex-direction: column;
   min-height: 0;

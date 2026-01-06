@@ -10,9 +10,7 @@ import { useFacilitator } from '../contexts/FacilitatorContext';
 import { useSession } from '../contexts/SessionContext';
 import { useWorkspaceSocket, type ResourceType } from '../hooks/useWorkspaceSocket';
 import { KanbanBoard } from '../components/KanbanBoard';
-import { IdeaWorkspaceOverlay } from '../components/IdeaWorkspaceOverlay';
-import { PlanningOverlay } from '../components/PlanningOverlay';
-import { ExecutionOverlay } from '../components/ExecutionOverlay';
+import { IdeaDialog } from '../components/IdeaDialog';
 import type { Idea, IdeaMetadata, IdeaSource, IdeaPlan } from '../types/idea';
 import styles from './Ideas.module.css';
 
@@ -40,15 +38,6 @@ export function Ideas() {
   const [showOverlay, setShowOverlay] = useState(false);
   const [editingIdea, setEditingIdea] = useState<Idea | null>(null);
   const [isLoadingIdea, setIsLoadingIdea] = useState(false);
-
-  // Planning overlay state
-  const [showPlanningOverlay, setShowPlanningOverlay] = useState(false);
-  const [planningIdea, setPlanningIdea] = useState<Idea | null>(null);
-
-  // Execution overlay state
-  const [showExecutionOverlay, setShowExecutionOverlay] = useState(false);
-  const [executionIdea, setExecutionIdea] = useState<Idea | null>(null);
-  const [executionPlan, setExecutionPlan] = useState<IdeaPlan | null>(null);
 
   // WebSocket for real-time updates
   const handleResourceCreated = useCallback((
@@ -174,7 +163,7 @@ export function Ideas() {
   }, [setSelectedIdeaId]);
 
   // Open a card (double click or Enter key)
-  // Always uses IdeaWorkspaceOverlay which auto-detects the phase from idea status
+  // Always uses IdeaDialog which auto-detects the phase from idea status
   const handleCardOpen = useCallback(async (ideaId: string) => {
     setSelectedIdeaId(ideaId);
     setIsLoadingIdea(true);
@@ -183,7 +172,7 @@ export function Ideas() {
       // Fetch full idea with description
       const fullIdea = await getIdea(ideaId);
       if (fullIdea) {
-        // Open in IdeaWorkspaceOverlay - it auto-detects phase based on idea.status
+        // Open in IdeaDialog - it auto-detects phase based on idea.status
         // (ideation for 'new'/'draft', planning for 'exploring')
         setEditingIdea(fullIdea);
         setShowOverlay(true);
@@ -210,49 +199,23 @@ export function Ideas() {
     handleCloseOverlay();
   }, [handleCloseOverlay]);
 
-  // Handle status change from IdeaWorkspaceOverlay (e.g., transitioning to planning)
-  // The IdeaWorkspaceOverlay handles phase transitions internally.
+  // Handle status change from IdeaDialog (e.g., transitioning to planning)
+  // The IdeaDialog handles phase transitions internally.
   // We intentionally do NOT update state here to avoid triggering a re-render cascade
   // that could cause the overlay to reset. The idea will be refetched when the overlay closes.
   const handleStatusChange = useCallback((_idea: Idea, _newStatus: string) => {
-    // No-op: IdeaWorkspaceOverlay handles the transition internally
+    // No-op: IdeaDialog handles the transition internally
   }, []);
 
-  // Handle closing planning overlay
-  const handleClosePlanningOverlay = useCallback(() => {
-    setShowPlanningOverlay(false);
-    setPlanningIdea(null);
-    setSelectedIdeaId(null);
-  }, [setSelectedIdeaId]);
+  // Handle starting execution from IdeaDialog - just call the server API
+  // IdeaDialog handles the phase transition internally
+  const handleStartExecution = useCallback(async (plan: IdeaPlan) => {
+    // The IdeaDialog handles starting execution - this callback allows kanban to update
+    console.log('[Ideas] Execution started for plan:', plan);
+  }, []);
 
-  // Handle starting execution from PlanningOverlay
-  const handleStartExecution = useCallback((plan: IdeaPlan) => {
-    if (!planningIdea) return;
-
-    // Close planning overlay and open execution overlay
-    setShowPlanningOverlay(false);
-    setExecutionIdea(planningIdea);
-    setExecutionPlan(plan);
-    setPlanningIdea(null);
-    setShowExecutionOverlay(true);
-  }, [planningIdea]);
-
-  // Handle closing execution overlay
-  const handleCloseExecutionOverlay = useCallback(() => {
-    setShowExecutionOverlay(false);
-    setExecutionIdea(null);
-    setExecutionPlan(null);
-    setSelectedIdeaId(null);
-  }, [setSelectedIdeaId]);
-
-  // Handle execution complete
-  const handleExecutionComplete = useCallback(() => {
-    // TODO: Update idea status to 'completed' or move to next phase
-    console.log('[Ideas] Execution complete for idea:', executionIdea?.id);
-  }, [executionIdea]);
-
-  // Whether delete is disabled (when overlays are open)
-  const deleteDisabled = showOverlay || showPlanningOverlay || showExecutionOverlay;
+  // Whether delete is disabled (when overlay is open)
+  const deleteDisabled = showOverlay;
 
   if (!user) return null;
 
@@ -309,36 +272,16 @@ export function Ideas() {
         </div>
       )}
 
-      {/* Idea Workspace Overlay */}
-      <IdeaWorkspaceOverlay
+      {/* Idea Dialog */}
+      <IdeaDialog
         idea={editingIdea}
         open={showOverlay}
         onClose={handleCloseOverlay}
         workspaceId={workspaceId}
         onSuccess={handleIdeaSuccess}
         onStatusChange={handleStatusChange}
+        onStartExecution={handleStartExecution}
       />
-
-      {/* Planning Overlay */}
-      {planningIdea && (
-        <PlanningOverlay
-          idea={planningIdea}
-          open={showPlanningOverlay}
-          onClose={handleClosePlanningOverlay}
-          onStartExecution={handleStartExecution}
-        />
-      )}
-
-      {/* Execution Overlay */}
-      {executionIdea && executionPlan && (
-        <ExecutionOverlay
-          idea={executionIdea}
-          plan={executionPlan}
-          open={showExecutionOverlay}
-          onClose={handleCloseExecutionOverlay}
-          onExecutionComplete={handleExecutionComplete}
-        />
-      )}
 
       {/* Loading indicator for idea fetch */}
       {isLoadingIdea && (

@@ -22,6 +22,8 @@ export interface PlanViewProps {
   onPhaseToggle?: (phaseId: string, expanded: boolean) => void;
   /** Callback when a task checkbox is clicked (for manual completion) */
   onTaskClick?: (taskId: string, phaseId: string) => void;
+  /** Callback when working directory is clicked to open in VSCode */
+  onOpenWorkingDirectory?: (path: string) => void;
   /** Whether tasks are interactive (clickable) */
   interactiveTasks?: boolean;
   /** Additional CSS class */
@@ -73,6 +75,7 @@ export function PlanView({
   showWorkingDirectory = true,
   onPhaseToggle,
   onTaskClick,
+  onOpenWorkingDirectory,
   interactiveTasks = false,
   className,
 }: PlanViewProps) {
@@ -136,8 +139,31 @@ export function PlanView({
     );
   }
 
+  const handleWorkingDirectoryClick = useCallback(() => {
+    if (plan?.workingDirectory && onOpenWorkingDirectory) {
+      onOpenWorkingDirectory(plan.workingDirectory);
+    }
+  }, [plan?.workingDirectory, onOpenWorkingDirectory]);
+
   return (
     <div className={`${styles.planView} ${className || ''}`}>
+      {/* Working Directory - at top for visibility */}
+      {showWorkingDirectory && (
+        <button
+          type="button"
+          className={styles.workingDirectoryButton}
+          onClick={handleWorkingDirectoryClick}
+          title={plan.workingDirectory ? `Open ${plan.workingDirectory} in VS Code` : 'Working directory not set'}
+          disabled={!onOpenWorkingDirectory || !plan.workingDirectory}
+        >
+          <FolderIcon size={16} />
+          <span className={styles.workingDirectoryLabel}>Working Directory</span>
+          <span className={styles.workingDirectoryPath}>
+            {plan.workingDirectory || <em style={{ opacity: 0.5 }}>Not set - ask Plan Agent to set the working directory</em>}
+          </span>
+        </button>
+      )}
+
       {/* Overall progress */}
       <div className={styles.progressBar}>
         <div
@@ -213,18 +239,9 @@ export function PlanView({
         );
       })}
 
-      {/* Execution Context */}
-      {showWorkingDirectory && (plan.workingDirectory || plan.repositoryUrl) && (
+      {/* Repository info (if present) */}
+      {showWorkingDirectory && (plan.repositoryUrl || plan.isClone) && (
         <div className={styles.executionContext}>
-          {plan.workingDirectory && (
-            <div className={styles.executionContextRow}>
-              <span className={styles.executionContextIcon}><FolderIcon size={16} /></span>
-              <span className={styles.executionContextLabel}>Working Directory</span>
-              <span className={styles.executionContextValue} title={plan.workingDirectory}>
-                {plan.workingDirectory}
-              </span>
-            </div>
-          )}
           {plan.repositoryUrl && (
             <div className={styles.executionContextRow}>
               <span className={styles.executionContextIcon}><LinkIcon size={16} /></span>

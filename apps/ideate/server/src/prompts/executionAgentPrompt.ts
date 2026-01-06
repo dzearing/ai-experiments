@@ -47,9 +47,15 @@ function buildPlanOverview(plan: IdeaPlan): string {
 
 /**
  * Build the current phase tasks section
+ * Includes phase ID at the top for reference in progress reporting
  */
 function buildPhaseTasks(phase: PlanPhase): string {
   const lines: string[] = [];
+
+  // Include phase ID at the top for easy reference
+  lines.push(`**Phase ID:** \`${phase.id}\``);
+  lines.push('');
+  lines.push('**Tasks:**');
 
   for (const task of phase.tasks) {
     const status = task.completed

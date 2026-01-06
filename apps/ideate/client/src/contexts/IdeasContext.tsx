@@ -17,6 +17,13 @@ import type {
   UpdateIdeaInput,
 } from '../types/idea';
 
+interface StartExecutionResult {
+  success: boolean;
+  idea?: Idea;
+  firstPhaseId?: string;
+  error?: string;
+}
+
 interface IdeasContextValue {
   // State
   ideas: IdeaMetadata[];
@@ -41,6 +48,7 @@ interface IdeasContextValue {
   moveIdea: (id: string, newStatus: IdeaStatus) => Promise<Idea | null>;
   updateRating: (id: string, rating: 1 | 2 | 3 | 4) => Promise<Idea | null>;
   updateExecution: (id: string, updates: { progressPercent?: number; waitingForFeedback?: boolean }) => Promise<Idea | null>;
+  startExecution: (id: string) => Promise<StartExecutionResult>;
 
   // Filter actions
   setFilter: (filter: IdeaFilter) => void;
@@ -78,9 +86,18 @@ export function IdeasProvider({ children }: IdeasProviderProps) {
     }
 
     // Sort each lane by rating (highest first), then by date
+    // For executing lane: waitingForFeedback cards bubble to top
     for (const status of Object.keys(grouped) as IdeaStatus[]) {
       grouped[status].sort((a, b) => {
+        // For executing lane, prioritize waiting-for-feedback cards
+        if (status === 'executing') {
+          const aWaiting = a.execution?.waitingForFeedback ? 1 : 0;
+          const bWaiting = b.execution?.waitingForFeedback ? 1 : 0;
+          if (bWaiting !== aWaiting) return bWaiting - aWaiting;
+        }
+        // Then sort by rating
         if (b.rating !== a.rating) return b.rating - a.rating;
+        // Then by date
         return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
       });
     }
@@ -444,6 +461,50 @@ export function IdeasProvider({ children }: IdeasProviderProps) {
     [user]
   );
 
+  // Start execution - transitions idea to executing status and initializes execution state
+  const startExecution = useCallback(
+    async (id: string): Promise<StartExecutionResult> => {
+      if (!user) {
+        return { success: false, error: 'User not authenticated' };
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/api/ideas/${id}/execute`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': user.id,
+          },
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          return { success: false, error: data.error || 'Failed to start execution' };
+        }
+
+        // Update local state with the updated idea
+        if (data.idea) {
+          setIdeas((prev) =>
+            prev.map((i) => (i.id === id ? data.idea : i))
+          );
+        }
+
+        return {
+          success: true,
+          idea: data.idea,
+          firstPhaseId: data.firstPhaseId,
+        };
+      } catch (err) {
+        return {
+          success: false,
+          error: err instanceof Error ? err.message : 'Failed to start execution',
+        };
+      }
+    },
+    [user]
+  );
+
   const value: IdeasContextValue = {
     ideas,
     isLoading,
@@ -463,6 +524,7 @@ export function IdeasProvider({ children }: IdeasProviderProps) {
     moveIdea,
     updateRating,
     updateExecution,
+    startExecution,
     setFilter,
     setSelectedIdeaId,
     setIdeas,

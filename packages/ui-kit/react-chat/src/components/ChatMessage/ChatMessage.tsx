@@ -470,8 +470,9 @@ export function ChatMessage({
               <div key={partIndex} className={styles.toolCalls}>
                 {calls.map((toolCall, toolIndex) => {
                   const isComplete = !!toolCall.output;
-                  // Ensure output is a string
-                  const outputText = typeof toolCall.output === 'string' ? toolCall.output : '';
+                  // Ensure output is a string, treat '__complete__' as empty (no box to show)
+                  const rawOutput = typeof toolCall.output === 'string' ? toolCall.output : '';
+                  const outputText = rawOutput === '__complete__' ? '' : rawOutput;
                   return (
                     <div key={toolIndex} className={styles.toolCallWrapper}>
                       <div

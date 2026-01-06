@@ -95,12 +95,14 @@ export function ChatPanel({
   onMessageMenuSelect,
   onLinkClick,
 }: ChatPanelProps) {
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    if (autoScroll) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (autoScroll && messagesContainerRef.current) {
+      // Scroll the messages container directly to avoid scrolling wrong ancestor
+      const container = messagesContainerRef.current;
+      container.scrollTop = container.scrollHeight;
     }
   }, [messages, autoScroll]);
 
@@ -111,7 +113,7 @@ export function ChatPanel({
       {messages.length === 0 && emptyState ? (
         <div className={styles.emptyState}>{emptyState}</div>
       ) : (
-        <div className={styles.messages}>
+        <div ref={messagesContainerRef} className={styles.messages}>
           {messages.map((message, index) => {
             const prevMessage = index > 0 ? messages[index - 1] : null;
             const isConsecutive =
@@ -137,7 +139,6 @@ export function ChatPanel({
               />
             );
           })}
-          <div ref={messagesEndRef} />
         </div>
       )}
 

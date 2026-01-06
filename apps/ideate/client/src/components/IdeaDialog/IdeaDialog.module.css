@@ -92,11 +92,10 @@
 
 /* Chat pane (left side) - full height */
 .chatPane {
-  position: relative;
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  width: 100%;
   background: var(--base-bg);
 }
 
@@ -154,7 +153,8 @@
 .chatPanel {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
+  /* ChatPanel handles its own scrolling internally */
+  overflow: hidden;
 }
 
 .chatInputContainer {
@@ -294,6 +294,9 @@
   padding: var(--space-4) var(--space-6);
   border-top: 1px solid var(--soft-border);
   flex-shrink: 0;
+  /* Keep consistent height when content changes between phases */
+  min-height: 60px;
+  box-sizing: border-box;
 }
 
 .footerSuggestions {
@@ -315,3 +318,38 @@
   justify-content: flex-end;
   gap: var(--space-2);
 }
+
+/* Blocked indicator during execution */
+.blockedIndicator {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--warning-bg);
+  color: var(--warning-fg);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.blockedText {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.blockedText::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--warning-fg);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+

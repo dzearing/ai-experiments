@@ -4,7 +4,7 @@ import { AddIcon } from '@ui-kit/icons/AddIcon';
 import { LightbulbIcon } from '@ui-kit/icons/LightbulbIcon';
 import { KanbanBoard } from '../KanbanBoard';
 import { DelayedSpinner } from '../DelayedSpinner';
-import { IdeaWorkspaceOverlay, type ThingContext, type WorkspacePhase } from '../IdeaWorkspaceOverlay';
+import { IdeaDialog, type ThingContext, type WorkspacePhase } from '../IdeaDialog';
 import { useThingIdeas } from '../../hooks/useThingIdeas';
 import { useIdeas } from '../../contexts/IdeasContext';
 import type { Idea } from '../../types/idea';
@@ -133,11 +133,11 @@ export function ThingIdeas({ thingId, thingName, thingType, thingDescription, wo
   // Handle idea status change (e.g., moving to planning)
   // IMPORTANT: Do NOT call refetch() here as it sets isLoading=true which causes
   // the early return at line 142-144, unmounting the overlay and losing state.
-  // The IdeaWorkspaceOverlay handles the phase transition internally.
+  // The IdeaDialog handles the phase transition internally.
   // The kanban board will be updated when the overlay closes.
   const handleStatusChange = useCallback(() => {
     console.log(`[ThingIdeas #${instanceId.current}] handleStatusChange called, overlayOpen=${overlayOpen}`);
-    // No-op: IdeaWorkspaceOverlay handles the transition internally
+    // No-op: IdeaDialog handles the transition internally
     // Kanban will be updated via WebSocket or when overlay closes
   }, [overlayOpen]);
 
@@ -184,9 +184,9 @@ export function ThingIdeas({ thingId, thingName, thingType, thingDescription, wo
         />
       )}
 
-      {/* Idea Workspace Overlay - only render when open to ensure fresh context */}
+      {/* Idea Dialog - only render when open to ensure fresh context */}
       {overlayOpen && (
-        <IdeaWorkspaceOverlay
+        <IdeaDialog
           idea={selectedIdea}
           open={overlayOpen}
           onClose={handleOverlayClose}

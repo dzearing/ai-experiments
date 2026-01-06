@@ -1,0 +1,281 @@
+.activityView {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  min-height: 0;
+  background: var(--base-bg);
+}
+
+/* Empty state */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: var(--space-8);
+  text-align: center;
+}
+
+.emptyState h3 {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-medium);
+  color: var(--base-fg);
+  margin: 0 0 var(--space-2) 0;
+}
+
+.emptyState p {
+  color: var(--base-fg-softer);
+  font-size: var(--text-sm);
+  margin: 0;
+}
+
+/* Three-column layout */
+.revisionsColumn {
+  width: 240px;
+  min-width: 200px;
+  border-right: 1px solid var(--soft-border);
+  display: flex;
+  flex-direction: column;
+  background: var(--soft-bg);
+}
+
+.filesColumn {
+  width: 280px;
+  min-width: 200px;
+  border-right: 1px solid var(--soft-border);
+  display: flex;
+  flex-direction: column;
+  background: var(--base-bg);
+}
+
+.diffColumn {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--base-bg);
+}
+
+/* Column headers */
+.columnHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--soft-border);
+  flex-shrink: 0;
+}
+
+.columnTitle {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--base-fg);
+}
+
+.columnCount {
+  font-size: var(--text-xs);
+  color: var(--base-fg-softer);
+  background: var(--soft-bg);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+/* Scrollable content */
+.columnContent {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* Revision list */
+.revisionList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.revisionItem {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--soft-border);
+  cursor: pointer;
+  transition: background var(--duration-fast);
+}
+
+.revisionItem:hover {
+  background: var(--soft-bg-hover);
+}
+
+.revisionItem.selected {
+  background: var(--primary-bg-soft);
+  border-left: 3px solid var(--primary-bg);
+  padding-left: calc(var(--space-4) - 3px);
+}
+
+.revisionHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+
+.revisionId {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--primary-fg);
+  background: var(--primary-bg-soft);
+  padding: 1px 4px;
+  border-radius: var(--radius-sm);
+}
+
+.revisionTime {
+  font-size: var(--text-xs);
+  color: var(--base-fg-softer);
+}
+
+.revisionMessage {
+  font-size: var(--text-sm);
+  color: var(--base-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: var(--space-1);
+}
+
+.revisionStats {
+  display: flex;
+  gap: var(--space-3);
+  font-size: var(--text-xs);
+}
+
+.statAdditions {
+  color: var(--success-fg);
+}
+
+.statDeletions {
+  color: var(--danger-fg);
+}
+
+.statFiles {
+  color: var(--base-fg-softer);
+}
+
+/* File list */
+.fileList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.fileItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 1px solid var(--soft-border);
+  cursor: pointer;
+  transition: background var(--duration-fast);
+}
+
+.fileItem:hover {
+  background: var(--soft-bg-hover);
+}
+
+.fileItem.selected {
+  background: var(--primary-bg-soft);
+  border-left: 3px solid var(--primary-bg);
+  padding-left: calc(var(--space-4) - 3px);
+}
+
+.fileIcon {
+  flex-shrink: 0;
+  color: var(--base-fg-softer);
+}
+
+.fileIcon.added {
+  color: var(--success-fg);
+}
+
+.fileIcon.modified {
+  color: var(--warning-fg);
+}
+
+.fileIcon.deleted {
+  color: var(--danger-fg);
+}
+
+.fileIcon.renamed {
+  color: var(--info-fg);
+}
+
+.fileInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.fileName {
+  font-size: var(--text-sm);
+  color: var(--base-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.filePath {
+  font-size: var(--text-xs);
+  color: var(--base-fg-softer);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fileStats {
+  display: flex;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  flex-shrink: 0;
+}
+
+/* Diff content container */
+.diffContent {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--space-4);
+}
+
+/* FileDiff component wrapper */
+.fileDiff {
+  height: 100%;
+}
+
+/* Placeholder states */
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: var(--space-6);
+  text-align: center;
+  color: var(--base-fg-softer);
+}
+
+.placeholderIcon {
+  margin-bottom: var(--space-3);
+  opacity: 0.5;
+}
+
+.placeholderText {
+  font-size: var(--text-sm);
+}
+
+/* Loading state */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}

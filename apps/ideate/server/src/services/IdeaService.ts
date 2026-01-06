@@ -108,6 +108,102 @@ export interface UpdateIdeaInput {
 }
 
 // =========================================================================
+// Validation Utilities
+// =========================================================================
+
+/**
+ * Expand tilde (~) in paths to the actual home directory.
+ * Returns the expanded path, or the original if no expansion needed.
+ */
+export function expandTildePath(path: string): string {
+  if (!path) return path;
+
+  // Expand ~ or ~/ at the start of the path
+  if (path === '~' || path.startsWith('~/')) {
+    const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+    if (homeDir) {
+      return path === '~' ? homeDir : path.replace(/^~/, homeDir);
+    }
+  }
+
+  return path;
+}
+
+/**
+ * Validate that a working directory is a proper absolute path.
+ * Returns an error message if invalid, or null if valid.
+ * Also expands tilde paths before validation.
+ */
+export function validateWorkingDirectory(workDir: string | undefined): string | null {
+  if (!workDir || workDir.trim() === '') {
+    return 'Working directory cannot be empty. Please set an absolute path.';
+  }
+  if (workDir === '.' || workDir === './') {
+    return 'Working directory cannot be ".". Please set an absolute path (e.g., /Users/username/projects/myapp).';
+  }
+  if (workDir === '/' || workDir === '\\') {
+    return 'Working directory cannot be the root directory. Please set a specific project path.';
+  }
+
+  // Expand tilde before checking if it's absolute
+  const expandedPath = expandTildePath(workDir);
+
+  // Check for absolute path (Unix or Windows)
+  if (!expandedPath.startsWith('/') && !/^[A-Za-z]:\\/.test(expandedPath)) {
+    return `Working directory "${workDir}" is not an absolute path. Please use an absolute path starting with / or C:\\.`;
+  }
+  return null; // Valid
+}
+
+// =========================================================================
+// Migration Utilities
+// =========================================================================
+
+/**
+ * Migrate plan data from legacy schema to current schema.
+ * Handles cases where phases have 'name' instead of 'id'/'title'.
+ */
+function migratePlanData(plan: IdeaPlan | undefined): IdeaPlan | undefined {
+  if (!plan?.phases) return plan;
+
+  const migratedPhases = plan.phases.map((phase, index) => {
+    // Cast to any to handle legacy schema that might have 'name' instead of 'id'/'title'
+    const legacyPhase = phase as { name?: string; id?: string; title?: string; tasks: PlanTask[] };
+
+    // Generate id if missing (use name or index-based id)
+    const id = legacyPhase.id || legacyPhase.name?.toLowerCase().replace(/\s+/g, '-') || `phase-${index + 1}`;
+
+    // Use title, falling back to name, then to a default
+    const title = legacyPhase.title || legacyPhase.name || `Phase ${index + 1}`;
+
+    // Ensure tasks have required fields
+    const tasks = (legacyPhase.tasks || []).map((task, taskIndex) => {
+      const legacyTask = task as { id?: string; title?: string; name?: string; completed?: boolean; status?: string };
+      return {
+        id: legacyTask.id || `task-${index + 1}-${taskIndex + 1}`,
+        title: legacyTask.title || legacyTask.name || `Task ${taskIndex + 1}`,
+        completed: legacyTask.completed ?? (legacyTask.status === 'completed'),
+        inProgress: task.inProgress,
+        reference: task.reference,
+      };
+    });
+
+    return {
+      id,
+      title,
+      description: phase.description,
+      tasks,
+      expanded: phase.expanded,
+    };
+  });
+
+  return {
+    ...plan,
+    phases: migratedPhases,
+  };
+}
+
+// =========================================================================
 // Constants
 // =========================================================================
 
@@ -171,6 +267,11 @@ export class IdeaService {
         const metaPath = path.join(IDEAS_DIR, file);
         const content = await fs.readFile(metaPath, 'utf-8');
         const metadata: IdeaMetadata = JSON.parse(content);
+
+        // Migrate plan data to current schema if needed
+        if (metadata.plan) {
+          metadata.plan = migratePlanData(metadata.plan);
+        }
 
         // Filter by workspaceId if provided
         if (workspaceId !== undefined) {
@@ -326,6 +427,11 @@ export class IdeaService {
         return null;
       }
 
+      // Migrate plan data to current schema if needed
+      if (metadata.plan) {
+        metadata.plan = migratePlanData(metadata.plan);
+      }
+
       // Try to read description
       let description: string | undefined;
       try {
@@ -347,7 +453,14 @@ export class IdeaService {
   async getIdeaInternal(id: string): Promise<IdeaMetadata | null> {
     try {
       const metaContent = await fs.readFile(this.getMetadataPath(id), 'utf-8');
-      return JSON.parse(metaContent);
+      const metadata: IdeaMetadata = JSON.parse(metaContent);
+
+      // Migrate plan data to current schema if needed
+      if (metadata.plan) {
+        metadata.plan = migratePlanData(metadata.plan);
+      }
+
+      return metadata;
     } catch {
       return null;
     }
@@ -361,6 +474,11 @@ export class IdeaService {
     try {
       const metaContent = await fs.readFile(this.getMetadataPath(id), 'utf-8');
       const metadata: IdeaMetadata = JSON.parse(metaContent);
+
+      // Migrate plan data to current schema if needed
+      if (metadata.plan) {
+        metadata.plan = migratePlanData(metadata.plan);
+      }
 
       // Try to read description
       let description: string | undefined;
@@ -600,6 +718,10 @@ export class IdeaService {
           progressPercent: updates.progressPercent ?? metadata.execution.progressPercent,
           waitingForFeedback: updates.waitingForFeedback ?? metadata.execution.waitingForFeedback,
           chatRoomId: updates.chatRoomId ?? metadata.execution.chatRoomId,
+          startedAt: updates.startedAt ?? metadata.execution.startedAt,
+          currentPhaseId: updates.currentPhaseId ?? metadata.execution.currentPhaseId,
+          currentTaskId: updates.currentTaskId ?? metadata.execution.currentTaskId,
+          mode: updates.mode ?? metadata.execution.mode,
         },
         updatedAt: now,
       };
@@ -620,6 +742,86 @@ export class IdeaService {
 
       return { ...updatedMetadata, description };
     } catch (error) {
+      return null;
+    }
+  }
+
+  /**
+   * Update execution state internally (no auth check).
+   * For server-side use by execution agent.
+   */
+  async updateExecutionStateInternal(
+    id: string,
+    updates: Partial<IdeaExecutionState>
+  ): Promise<IdeaMetadata | null> {
+    try {
+      const metaContent = await fs.readFile(this.getMetadataPath(id), 'utf-8');
+      const metadata: IdeaMetadata = JSON.parse(metaContent);
+
+      // Must be in executing status
+      if (metadata.status !== 'executing') {
+        // If not in executing status and we're starting execution, initialize state
+        if (updates.startedAt) {
+          metadata.status = 'executing';
+          metadata.execution = {
+            progressPercent: 0,
+            waitingForFeedback: false,
+          };
+        } else {
+          return null;
+        }
+      }
+
+      // Ensure execution object exists
+      if (!metadata.execution) {
+        metadata.execution = {
+          progressPercent: 0,
+          waitingForFeedback: false,
+        };
+      }
+
+      const now = new Date().toISOString();
+
+      const updatedExecution: IdeaExecutionState = {
+        ...metadata.execution,
+        ...(updates.progressPercent !== undefined && { progressPercent: updates.progressPercent }),
+        ...(updates.waitingForFeedback !== undefined && { waitingForFeedback: updates.waitingForFeedback }),
+        ...(updates.chatRoomId !== undefined && { chatRoomId: updates.chatRoomId }),
+        ...(updates.startedAt !== undefined && { startedAt: updates.startedAt }),
+        ...(updates.currentPhaseId !== undefined && { currentPhaseId: updates.currentPhaseId }),
+        ...(updates.currentTaskId !== undefined && { currentTaskId: updates.currentTaskId }),
+        ...(updates.mode !== undefined && { mode: updates.mode }),
+      };
+
+      const updatedMetadata: IdeaMetadata = {
+        ...metadata,
+        execution: updatedExecution,
+        updatedAt: now,
+        statusChangedAt: metadata.status !== 'executing' ? now : metadata.statusChangedAt,
+      };
+
+      await fs.writeFile(
+        this.getMetadataPath(id),
+        JSON.stringify(updatedMetadata, null, 2),
+        'utf-8'
+      );
+
+      return updatedMetadata;
+    } catch (error) {
+      console.error('[IdeaService] Failed to update execution state internally:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get execution state for an idea.
+   */
+  async getExecutionState(id: string): Promise<IdeaExecutionState | null> {
+    try {
+      const metaContent = await fs.readFile(this.getMetadataPath(id), 'utf-8');
+      const metadata: IdeaMetadata = JSON.parse(metaContent);
+      return metadata.execution || null;
+    } catch {
       return null;
     }
   }
@@ -652,10 +854,21 @@ export class IdeaService {
         updatedAt: now,
       };
 
+      // Validate working directory if it's being set
+      const newWorkingDirectory = planUpdate.workingDirectory ?? existingPlan.workingDirectory;
+      // Note: Empty string is allowed during planning phase, validation happens before execution
+      // But we still reject clearly invalid relative paths
+      if (newWorkingDirectory && newWorkingDirectory !== '') {
+        const validationError = validateWorkingDirectory(newWorkingDirectory);
+        if (validationError) {
+          throw new Error(validationError);
+        }
+      }
+
       const updatedPlan: IdeaPlan = {
         ...existingPlan,
         phases: planUpdate.phases ?? existingPlan.phases,
-        workingDirectory: planUpdate.workingDirectory ?? existingPlan.workingDirectory,
+        workingDirectory: newWorkingDirectory,
         repositoryUrl: planUpdate.repositoryUrl ?? existingPlan.repositoryUrl,
         branch: planUpdate.branch ?? existingPlan.branch,
         isClone: planUpdate.isClone ?? existingPlan.isClone,
@@ -687,6 +900,94 @@ export class IdeaService {
     } catch (error) {
       console.error('[IdeaService] Failed to update plan:', error);
       return null;
+    }
+  }
+
+  /**
+   * Mark a task as completed in the plan.
+   * This persists the completion status so it survives dialog close/reopen.
+   */
+  async markTaskCompleted(id: string, taskId: string, completed: boolean = true): Promise<boolean> {
+    try {
+      const metaContent = await fs.readFile(this.getMetadataPath(id), 'utf-8');
+      const metadata: IdeaMetadata = JSON.parse(metaContent);
+
+      if (!metadata.plan?.phases) {
+        console.warn(`[IdeaService] No plan found for idea ${id}`);
+        return false;
+      }
+
+      // Find and update the task
+      let taskFound = false;
+      for (const phase of metadata.plan.phases) {
+        for (const task of phase.tasks) {
+          if (task.id === taskId) {
+            task.completed = completed;
+            task.inProgress = false;
+            taskFound = true;
+            console.log(`[IdeaService] Marked task ${taskId} as ${completed ? 'completed' : 'incomplete'}`);
+            break;
+          }
+        }
+        if (taskFound) break;
+      }
+
+      if (!taskFound) {
+        console.warn(`[IdeaService] Task ${taskId} not found in plan for idea ${id}`);
+        return false;
+      }
+
+      // Save updated metadata
+      metadata.plan.updatedAt = new Date().toISOString();
+      metadata.updatedAt = new Date().toISOString();
+      await fs.writeFile(this.getMetadataPath(id), JSON.stringify(metadata, null, 2), 'utf-8');
+      return true;
+    } catch (error) {
+      console.error('[IdeaService] Failed to mark task completed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Mark a task as in progress in the plan.
+   */
+  async markTaskInProgress(id: string, taskId: string, inProgress: boolean = true): Promise<boolean> {
+    try {
+      const metaContent = await fs.readFile(this.getMetadataPath(id), 'utf-8');
+      const metadata: IdeaMetadata = JSON.parse(metaContent);
+
+      if (!metadata.plan?.phases) {
+        return false;
+      }
+
+      // Find and update the task
+      let taskFound = false;
+      for (const phase of metadata.plan.phases) {
+        for (const task of phase.tasks) {
+          if (task.id === taskId) {
+            task.inProgress = inProgress;
+            if (inProgress) {
+              task.completed = false; // Can't be both in progress and completed
+            }
+            taskFound = true;
+            break;
+          }
+        }
+        if (taskFound) break;
+      }
+
+      if (!taskFound) {
+        return false;
+      }
+
+      // Save updated metadata
+      metadata.plan.updatedAt = new Date().toISOString();
+      metadata.updatedAt = new Date().toISOString();
+      await fs.writeFile(this.getMetadataPath(id), JSON.stringify(metadata, null, 2), 'utf-8');
+      return true;
+    } catch (error) {
+      console.error('[IdeaService] Failed to mark task in progress:', error);
+      return false;
     }
   }
 

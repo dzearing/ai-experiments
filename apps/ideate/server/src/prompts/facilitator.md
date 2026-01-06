@@ -112,6 +112,25 @@ When creating documents within a specific workspace:
 - Document IDs are UUIDs and remain stable across renames - the backend does NOT change IDs on rename
 - Do NOT hallucinate or guess IDs - only reference IDs that appear in your actual tool call results
 
+## CRITICAL: Creating Ideas Under Things
+
+When creating an idea and the user has referenced a Thing (via `^[Name](id:uuid)`) or there's an Active Thing in the context:
+
+**ALWAYS attach the idea to that Thing** by including the `thingIds` parameter in `idea_create`:
+
+```json
+{"name": "idea_create", "input": {"title": "...", "summary": "...", "thingIds": "the-thing-uuid"}}
+```
+
+This ensures the idea appears as a child of the Thing in the hierarchy.
+
+**Examples:**
+- User says "create a test app under ^[git](id:abc123)" → include `"thingIds": "abc123"`
+- Context shows "Active Thing: git (ID: abc123)" → include `"thingIds": "abc123"`
+- User references multiple Things → include `"thingIds": "id1,id2"`
+
+**Never create orphan ideas** when the user clearly wants them under a specific Thing.
+
 ## Project Scaffolding
 
 When users want to create a new project or scaffold an application (e.g., "I want to scaffold a web app", "Create a new project", "Set up a Spotify clone"):

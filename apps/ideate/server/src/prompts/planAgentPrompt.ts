@@ -40,6 +40,17 @@ export interface ThingContext {
 }
 
 /**
+ * Parent thing that provides execution context (e.g., a folder or git repo with localPath)
+ */
+export interface ParentThingContext {
+  id: string;
+  name: string;
+  type: string;
+  /** Local file system path if this thing provides execution context */
+  localPath?: string;
+}
+
+/**
  * Idea context provided to the plan agent
  */
 export interface PlanIdeaContext {
@@ -50,6 +61,8 @@ export interface PlanIdeaContext {
   tags: string[];
   status: string;
   thingContext?: ThingContext;
+  /** Parent things that provide execution context (folders, repos) with their localPath */
+  parentThings?: ParentThingContext[];
 }
 
 /**
@@ -88,6 +101,20 @@ export function buildPlanAgentSystemPrompt(
     thingContextSection = `## Thing Context\nThis idea is linked to **${name}** (${type})`;
     if (description) {
       thingContextSection += `\n\n${description}`;
+    }
+  }
+
+  // Add parent things with execution context (folders, repos with localPath)
+  // This helps the agent suggest appropriate working directories
+  if (ideaContext.parentThings && ideaContext.parentThings.length > 0) {
+    const parentsWithPath = ideaContext.parentThings.filter(p => p.localPath);
+    if (parentsWithPath.length > 0) {
+      thingContextSection += '\n\n## Parent Folder Context\n';
+      thingContextSection += 'This idea is associated with the following folders/repositories that can be used as a base for the working directory:\n\n';
+      for (const parent of parentsWithPath) {
+        thingContextSection += `- **${parent.name}** (${parent.type}): \`${parent.localPath}\`\n`;
+      }
+      thingContextSection += '\nWhen creating the implementation plan, consider using one of these paths as the base for the working directory (e.g., for a new project named "my-app" under a folder at ~/git, suggest ~/git/my-app).';
     }
   }
   prompt = prompt.replace('{{THING_CONTEXT}}', thingContextSection);

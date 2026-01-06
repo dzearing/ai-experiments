@@ -5,6 +5,7 @@ import type { FacilitatorMessage, FacilitatorChatMetadata } from './FacilitatorC
 import type { ChatMessage, ChatRoomMetadata } from './ChatRoomService.js';
 import type { IdeaAgentMessage, IdeaAgentChatMetadata } from './IdeaAgentChatService.js';
 import type { PlanAgentMessage, PlanAgentChatMetadata } from './PlanAgentChatService.js';
+import type { ExecutionAgentMessage, ExecutionAgentChatMetadata } from './ExecutionAgentChatService.js';
 import type { FacilitatorService } from './FacilitatorService.js';
 import { getImportAgentChatService } from './ImportAgentChatService.js';
 
@@ -13,11 +14,12 @@ const FACILITATOR_DIR = path.join(homedir(), 'Ideate', 'facilitator');
 const CHATROOMS_DIR = path.join(homedir(), 'Ideate', 'chatrooms');
 const IDEA_AGENT_DIR = path.join(homedir(), 'Ideate', 'idea-agent');
 const PLAN_AGENT_DIR = path.join(homedir(), 'Ideate', 'plan-agent');
+const EXECUTE_AGENT_DIR = path.join(homedir(), 'Ideate', 'execute-agent');
 
 /**
  * Unified session type across all chat systems
  */
-export type SessionType = 'facilitator' | 'chatroom' | 'ideaagent' | 'planagent' | 'importagent';
+export type SessionType = 'facilitator' | 'chatroom' | 'ideaagent' | 'planagent' | 'executeagent' | 'importagent';
 
 /**
  * In-flight request status
@@ -298,6 +300,10 @@ export class ClaudeDiagnosticsService {
     const planAgentSessions = await this.getPlanAgentSessions();
     sessions.push(...planAgentSessions);
 
+    // Get execute agent sessions
+    const executeAgentSessions = await this.getExecuteAgentSessions();
+    sessions.push(...executeAgentSessions);
+
     // Get import agent sessions
     const importAgentSessions = await this.getImportAgentSessions();
     sessions.push(...importAgentSessions);
@@ -325,6 +331,8 @@ export class ClaudeDiagnosticsService {
         return this.getIdeaAgentMessages(sessionId, limit);
       case 'planagent':
         return this.getPlanAgentMessages(sessionId, limit);
+      case 'executeagent':
+        return this.getExecuteAgentMessages(sessionId, limit);
       case 'importagent':
         return this.getImportAgentMessages(sessionId, limit);
       default:
@@ -656,6 +664,74 @@ export class ClaudeDiagnosticsService {
     return messages;
   }
 
+  // ========== Private: Execute Agent ===========
+
+  private async getExecuteAgentSessions(): Promise<ClaudeSession[]> {
+    const sessions: ClaudeSession[] = [];
+
+    try {
+      const files = await fs.readdir(EXECUTE_AGENT_DIR);
+      const metaFiles = files.filter((f) => f.endsWith('.meta.json'));
+
+      for (const file of metaFiles) {
+        try {
+          const metaPath = path.join(EXECUTE_AGENT_DIR, file);
+          const content = await fs.readFile(metaPath, 'utf-8');
+          const metadata: ExecutionAgentChatMetadata = JSON.parse(content);
+
+          sessions.push({
+            id: metadata.ideaId,
+            type: 'executeagent',
+            name: `Execute: ${metadata.ideaId}`,
+            messageCount: metadata.messageCount,
+            lastActivity: new Date(metadata.lastUpdated).getTime(),
+            metadata: {
+              ideaId: metadata.ideaId,
+            },
+          });
+        } catch {
+          // Skip invalid files
+        }
+      }
+    } catch {
+      // Directory might not exist yet
+    }
+
+    return sessions;
+  }
+
+  private async getExecuteAgentMessages(ideaId: string, limit: number): Promise<SessionMessage[]> {
+    const messages: SessionMessage[] = [];
+
+    try {
+      const messagesPath = path.join(EXECUTE_AGENT_DIR, `${ideaId}.messages.jsonl`);
+      const content = await fs.readFile(messagesPath, 'utf-8');
+      const lines = content.trim().split('\n').filter((line) => line.length > 0);
+
+      for (const line of lines.slice(-limit)) {
+        try {
+          const msg: ExecutionAgentMessage = JSON.parse(line);
+
+          messages.push({
+            id: msg.id,
+            sessionId: ideaId,
+            sessionType: 'executeagent',
+            role: msg.role,
+            // For assistant messages with rawResponse, show full response for diagnostics
+            content: msg.rawResponse || msg.content,
+            timestamp: msg.timestamp,
+          });
+        } catch {
+          // Skip invalid lines
+        }
+      }
+    } catch {
+      // File might not exist
+    }
+
+    return messages;
+  }
+
   // ========== Private: Import Agent ===========
 
   private async getImportAgentSessions(): Promise<ClaudeSession[]> {
@@ -749,6 +825,10 @@ export class ClaudeDiagnosticsService {
 
     if (!sessionType || sessionType === 'planagent') {
       await clearDir(PLAN_AGENT_DIR);
+    }
+
+    if (!sessionType || sessionType === 'executeagent') {
+      await clearDir(EXECUTE_AGENT_DIR);
     }
 
     if (!sessionType || sessionType === 'importagent') {

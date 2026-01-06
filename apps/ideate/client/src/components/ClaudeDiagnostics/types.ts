@@ -5,7 +5,7 @@
 /**
  * Session type enum
  */
-export type SessionType = 'facilitator' | 'chatroom' | 'ideaagent' | 'planagent' | 'importagent';
+export type SessionType = 'facilitator' | 'chatroom' | 'ideaagent' | 'planagent' | 'executeagent' | 'importagent';
 
 /**
  * In-flight request status

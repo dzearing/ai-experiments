@@ -4,7 +4,6 @@ import { Button, IconButton, Input, Chip, Spinner, Dropdown, Tabs, type Dropdown
 import { ItemPickerDialog, DiskItemProvider } from '@ui-kit/react-pickers';
 import { TrashIcon } from '@ui-kit/icons/TrashIcon';
 import { AddIcon } from '@ui-kit/icons/AddIcon';
-import { ChevronRightIcon } from '@ui-kit/icons/ChevronRightIcon';
 import { FolderIcon } from '@ui-kit/icons/FolderIcon';
 import { LinkIcon } from '@ui-kit/icons/LinkIcon';
 import { CodeIcon } from '@ui-kit/icons/CodeIcon';
@@ -175,7 +174,7 @@ export function ThingDetail({
   onNavigate,
 }: ThingDetailProps) {
   const { user } = useAuth();
-  const { getThing, getChildren, getBreadcrumb, updateThing } = useThings();
+  const { getThing, getChildren, updateThing } = useThings();
   const { ideas } = useThingIdeas(thingId);
   const { documents, fetchDocuments } = useDocuments();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -199,7 +198,6 @@ export function ThingDetail({
     });
   }, [setSearchParams]);
   const [children, setChildren] = useState<ThingMetadata[]>([]);
-  const [breadcrumb, setBreadcrumb] = useState<ThingMetadata[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [newTag, setNewTag] = useState('');
   const [isAddingTag, setIsAddingTag] = useState(false);
@@ -232,7 +230,6 @@ export function ThingDetail({
         if (mounted && loaded) {
           setThing(loaded);
           setChildren(getChildren(thingId));
-          setBreadcrumb(getBreadcrumb(thingId));
         }
       } finally {
         if (mounted) {
@@ -246,7 +243,7 @@ export function ThingDetail({
     return () => {
       mounted = false;
     };
-  }, [thingId, getThing, getChildren, getBreadcrumb]);
+  }, [thingId, getThing, getChildren]);
 
   // Fetch documents for tab count
   useEffect(() => {
@@ -496,28 +493,8 @@ export function ThingDetail({
     );
   }
 
-  // Only show breadcrumb if there are parent items (more than 1 item means we have parents)
-  const showBreadcrumb = breadcrumb.length > 1;
-
   return (
     <div className={styles.detail}>
-      {/* Breadcrumb - only show when there are parent items */}
-      {showBreadcrumb && (
-        <nav className={styles.breadcrumb} aria-label="Breadcrumb">
-          {breadcrumb.slice(0, -1).map((item, index) => (
-            <span key={item.id} className={styles.breadcrumbItem}>
-              {index > 0 && <ChevronRightIcon className={styles.breadcrumbSeparator} />}
-              <button
-                className={styles.breadcrumbLink}
-                onClick={() => onNavigate(item.id)}
-              >
-                {item.name}
-              </button>
-            </span>
-          ))}
-        </nav>
-      )}
-
       {/* Header - Grid: Icon | Content | Actions */}
       <header className={styles.header}>
         {/* Icon cell - spans all rows */}

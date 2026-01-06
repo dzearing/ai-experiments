@@ -1,0 +1,214 @@
+.fileDiff {
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  background: var(--base-bg);
+  border: 1px solid var(--soft-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing);
+  background: var(--soft-bg);
+  border-bottom: 1px solid var(--soft-border);
+}
+
+.fileIcon {
+  flex-shrink: 0;
+  color: var(--soft-fg-soft);
+}
+
+.fileIcon.added {
+  color: var(--success-fg);
+}
+
+.fileIcon.modified {
+  color: var(--warning-fg);
+}
+
+.fileIcon.deleted {
+  color: var(--danger-fg);
+}
+
+.fileIcon.renamed {
+  color: var(--info-fg);
+}
+
+.filePath {
+  flex: 1;
+  font-size: var(--font-size-sm);
+  color: var(--base-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stats {
+  display: flex;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-xs);
+  flex-shrink: 0;
+}
+
+.additions {
+  color: var(--success-fg);
+}
+
+.deletions {
+  color: var(--danger-fg);
+}
+
+/* Content */
+.content {
+  overflow: auto;
+  max-height: var(--diff-max-height, 600px);
+}
+
+.diffTable {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+/* Line numbers column */
+.lineNumbers {
+  width: 80px;
+  text-align: right;
+  padding: 0 var(--spacing-xs);
+  color: var(--soft-fg-softer);
+  user-select: none;
+  font-variant-numeric: tabular-nums;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.lineOld,
+.lineNew {
+  display: inline-block;
+  width: 35px;
+  text-align: right;
+}
+
+.lineOld {
+  padding-right: var(--spacing-xs);
+}
+
+.lineNew {
+  padding-left: var(--spacing-xs);
+}
+
+/* Code content column */
+.codeCell {
+  padding: 0 var(--spacing);
+  white-space: pre;
+  overflow-x: auto;
+}
+
+/* Line types */
+.row {
+  height: 20px;
+}
+
+.row.context {
+  background: var(--base-bg);
+}
+
+.row.addition {
+  background: var(--success-bg-soft);
+}
+
+.row.addition .codeCell {
+  color: var(--success-fg);
+}
+
+.row.deletion {
+  background: var(--danger-bg-soft);
+}
+
+.row.deletion .codeCell {
+  color: var(--danger-fg);
+}
+
+.row.hunk {
+  background: var(--info-bg-soft);
+}
+
+.row.hunk .codeCell {
+  color: var(--info-fg);
+  font-weight: var(--font-weight-medium);
+}
+
+.row.hunk .lineNumbers {
+  color: var(--info-fg);
+}
+
+/* Expand/collapse buttons */
+.expandRow {
+  background: var(--soft-bg);
+  cursor: pointer;
+  transition: background var(--duration-fast);
+}
+
+.expandRow:hover {
+  background: var(--soft-bg-hover);
+}
+
+.expandButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing);
+  width: 100%;
+  border: none;
+  background: none;
+  color: var(--base-fg-softer);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+}
+
+.expandButton:hover {
+  color: var(--base-fg);
+}
+
+/* Line prefix (+/-/space) */
+.prefix {
+  display: inline-block;
+  width: 16px;
+  text-align: center;
+  user-select: none;
+}
+
+/* Empty state */
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg);
+  color: var(--soft-fg-softer);
+  font-style: italic;
+}
+
+/* Compact variant */
+.compact .header {
+  padding: var(--spacing-xs) var(--spacing-sm);
+}
+
+.compact .row {
+  height: 18px;
+}
+
+.compact .lineNumbers {
+  width: 60px;
+}
+
+.compact .codeCell {
+  padding: 0 var(--spacing-sm);
+}
