@@ -5,6 +5,7 @@ import { CloseIcon } from '@ui-kit/icons/CloseIcon';
 import { TrashIcon } from '@ui-kit/icons/TrashIcon';
 import { ArrowRightIcon } from '@ui-kit/icons/ArrowRightIcon';
 import { PlayIcon } from '@ui-kit/icons/PlayIcon';
+import { PauseIcon } from '@ui-kit/icons/PauseIcon';
 import { FileIcon } from '@ui-kit/icons/FileIcon';
 import { ListIcon } from '@ui-kit/icons/ListIcon';
 import { EditIcon } from '@ui-kit/icons/EditIcon';
@@ -608,6 +609,8 @@ export function IdeaDialog({
 
   // Track completed phase for auto-continue logic
   const [completedPhaseId, setCompletedPhaseId] = useState<string | null>(null);
+  // Guard against duplicate auto-continue triggers
+  const autoContinueInProgressRef = useRef(false);
 
   // Handle phase completion - update plan state
   const handlePhaseComplete = useCallback((event: { phaseId: string; summary?: string }) => {
@@ -648,6 +651,9 @@ export function IdeaDialog({
     const phases = plan?.phases;
     if (!completedPhaseId || !phases || pauseBetweenPhasesRef.current) return;
 
+    // Prevent duplicate execution if already in progress
+    if (autoContinueInProgressRef.current) return;
+
     // Find the index of the completed phase
     const completedIndex = phases.findIndex(p => p.id === completedPhaseId);
     const nextPhase = completedIndex >= 0 && completedIndex < phases.length - 1
@@ -655,6 +661,9 @@ export function IdeaDialog({
       : null;
 
     if (nextPhase) {
+      // Mark as in progress to prevent duplicate triggers
+      autoContinueInProgressRef.current = true;
+
       // Small delay before starting next phase
       const timerId = setTimeout(() => {
         const fullPlan: IdeaPlan = {
@@ -668,10 +677,14 @@ export function IdeaDialog({
           updatedAt: new Date().toISOString(),
         };
         executeAgent.startExecution(executionIdeaContext, fullPlan, nextPhase.id);
-        // Clear the completed phase ID to avoid re-triggering
+        // Clear the completed phase ID and reset guard
         setCompletedPhaseId(null);
+        autoContinueInProgressRef.current = false;
       }, 500);
-      return () => clearTimeout(timerId);
+      return () => {
+        clearTimeout(timerId);
+        autoContinueInProgressRef.current = false;
+      };
     } else {
       // No next phase, clear the completed phase ID
       setCompletedPhaseId(null);
@@ -1022,6 +1035,65 @@ export function IdeaDialog({
     }
   }, [content, isInitialized]);
 
+  // Debounced auto-save during ideation phase
+  // This ensures ideas are persisted as soon as meaningful content exists
+  const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    // Only auto-save during ideation phase when document changes
+    if (!isInitialized || phase !== 'ideation' || !hasDocumentChanges.current) return;
+
+    const { title, summary, tags, description } = parsedContent;
+
+    // Don't save if content is minimal/placeholder
+    if (!title.trim() || title === 'Untitled Idea' || !summary.trim()) return;
+
+    // Clear any pending save
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+
+    // Debounce save by 2 seconds
+    autoSaveTimeoutRef.current = setTimeout(async () => {
+      try {
+        if (currentIdea?.id) {
+          // Update existing idea
+          const updated = await updateIdea(currentIdea.id, {
+            title: title.trim(),
+            summary: summary.trim(),
+            tags,
+            description: description.trim() || undefined,
+          });
+          if (updated) {
+            lastSavedContent.current = content;
+            hasDocumentChanges.current = false;
+          }
+        } else if (!idea) {
+          // Create new idea with valid content
+          const newIdea = await createIdea({
+            title: title.trim(),
+            summary: summary.trim(),
+            tags,
+            description: description.trim() || undefined,
+            workspaceId,
+            thingIds: initialThingIds,
+          });
+          setCurrentIdea(newIdea);
+          onSuccess?.(newIdea);
+          lastSavedContent.current = content;
+          hasDocumentChanges.current = false;
+        }
+      } catch (err) {
+        console.error('[IdeaWorkspace] Auto-save during ideation failed:', err);
+      }
+    }, 2000);
+
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, [isInitialized, phase, parsedContent, currentIdea, idea, content, updateIdea, createIdea, workspaceId, initialThingIds, onSuccess]);
+
   // Auto-save ideas when overlay closes
   useEffect(() => {
     // Only auto-save when closing with changes
@@ -1351,6 +1423,25 @@ export function IdeaDialog({
               )}
             </div>
             <div className={styles.headerActions}>
+              {/* Play/Pause button during execution */}
+              {phase === 'executing' && executeAgent.isExecuting && (
+                <IconButton
+                  icon={<PauseIcon />}
+                  variant="ghost"
+                  size="md"
+                  onClick={executeAgent.pauseExecution}
+                  aria-label="Pause execution"
+                />
+              )}
+              {phase === 'executing' && executeAgent.isPaused && (
+                <IconButton
+                  icon={<PlayIcon />}
+                  variant="primary"
+                  size="md"
+                  onClick={executeAgent.resumeExecution}
+                  aria-label="Resume execution"
+                />
+              )}
               <IconButton
                 icon={<CloseIcon />}
                 variant="ghost"

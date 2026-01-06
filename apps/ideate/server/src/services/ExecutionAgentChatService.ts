@@ -10,6 +10,14 @@ export interface StoredToolCall {
   name: string;
   input?: Record<string, unknown>;
   output?: string;
+  /** When the tool started executing (epoch ms) */
+  startTime?: number;
+  /** When the tool completed (epoch ms) */
+  endTime?: number;
+  /** Duration in milliseconds (endTime - startTime) */
+  duration?: number;
+  /** Whether the tool execution is complete */
+  completed?: boolean;
 }
 
 /**

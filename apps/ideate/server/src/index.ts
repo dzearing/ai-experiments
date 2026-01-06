@@ -202,7 +202,7 @@ planAgentWss.on('connection', (ws, req) => {
 
 // Create WebSocket server for execution agent (JSON-based protocol)
 const executionAgentWss = new WebSocketServer({ noServer: true });
-const executionAgentHandler = new ExecutionAgentWebSocketHandler(ideaService);
+const executionAgentHandler = new ExecutionAgentWebSocketHandler(ideaService, workspaceHandler);
 
 executionAgentWss.on('connection', (ws, req) => {
   executionAgentHandler.handleConnection(ws, req);

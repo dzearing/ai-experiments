@@ -87,8 +87,14 @@ export interface ExecutionToolCall {
   name: string;
   input?: Record<string, unknown>;
   output?: string;
-  /** When the tool call started (for timing display) */
+  /** When the tool call started (epoch ms) */
   startTime?: number;
+  /** When the tool call completed (epoch ms) */
+  endTime?: number;
+  /** Duration in milliseconds */
+  duration?: number;
+  /** Whether the tool execution is complete */
+  completed?: boolean;
 }
 
 /**
@@ -722,14 +728,16 @@ export function useExecutionAgent({
 
   // Start execution
   const startExecution = useCallback((ideaContext: ExecutionIdeaContext, plan: IdeaPlan, phaseId: string) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      setIsExecuting(true);
-      setIsPaused(false);
-      setIsBlocked(false);
-      setBlockedEvent(null);
-      setTokenUsage(null);
-      setError(null);
+    // Set optimistic UI state immediately (before server responds)
+    setIsExecuting(true);
+    setIsPaused(false);
+    setIsBlocked(false);
+    setBlockedEvent(null);
+    setTokenUsage(null);
+    setError(null);
+    setSessionState({ status: 'running', phaseId, startedAt: Date.now() });
 
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({
         type: 'start_execution',
         idea: ideaContext,
@@ -740,7 +748,6 @@ export function useExecutionAgent({
       // WebSocket not connected yet - queue the execution to be sent when connected
       console.log('[ExecutionAgent] Queueing execution (WebSocket not yet open)');
       pendingExecutionRef.current = { ideaContext, plan, phaseId };
-      setError(null); // Clear any previous error
     }
   }, []);
 

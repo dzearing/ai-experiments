@@ -13,6 +13,7 @@ import {
 import type { ExecutionIdeaContext } from '../prompts/executionAgentPrompt.js';
 import type { IdeaPlan } from '../services/IdeaService.js';
 import type { IdeaService } from '../services/IdeaService.js';
+import type { WorkspaceWebSocketHandler } from './WorkspaceWebSocketHandler.js';
 
 /**
  * Client message types for the execution agent WebSocket protocol
@@ -117,9 +118,24 @@ export class ExecutionAgentWebSocketHandler {
   private executionAgentService: ExecutionAgentService;
   private ideaService: IdeaService;
 
-  constructor(ideaService: IdeaService) {
+  constructor(ideaService: IdeaService, workspaceWsHandler?: WorkspaceWebSocketHandler) {
     this.ideaService = ideaService;
     this.executionAgentService = new ExecutionAgentService(ideaService);
+
+    // Set up callback to broadcast execution state changes to workspace clients
+    if (workspaceWsHandler) {
+      this.executionAgentService.setExecutionStateChangeCallback((ideaId, idea) => {
+        const ideaData = idea as { workspaceId?: string };
+        if (ideaData.workspaceId) {
+          workspaceWsHandler.notifyResourceUpdated(
+            ideaData.workspaceId,
+            ideaId,
+            'idea',
+            idea
+          );
+        }
+      });
+    }
   }
 
   /**

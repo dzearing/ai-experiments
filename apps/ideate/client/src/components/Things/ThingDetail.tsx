@@ -186,6 +186,13 @@ export function ThingDetail({
   // Get tab from URL params
   const currentTab = searchParams.get('tab') || 'ideas';
 
+  // Track pending idea open request when ThingIdeas isn't mounted
+  const [pendingIdeaOpen, setPendingIdeaOpen] = useState<{
+    ideaId?: string;
+    initialPrompt?: string;
+    initialGreeting?: string;
+  } | null>(null);
+
   // Handle tab change - update URL without triggering router re-render
   const handleTabChange = useCallback((tab: string) => {
     setSearchParams(params => {
@@ -249,6 +256,40 @@ export function ThingDetail({
   useEffect(() => {
     fetchDocuments({ thingId });
   }, [thingId, fetchDocuments]);
+
+  // Listen for facilitator:openIdea events and switch to Ideas tab if needed
+  useEffect(() => {
+    const handleFacilitatorOpenIdea = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        ideaId?: string;
+        thingId?: string;
+        initialPrompt?: string;
+        initialGreeting?: string;
+      }>;
+      const { thingId: eventThingId, ideaId, initialPrompt, initialGreeting } = customEvent.detail;
+
+      // Only handle if this event is for our Thing
+      if (eventThingId && eventThingId !== thingId) {
+        return;
+      }
+
+      // If not on ideas tab, store the pending open request and switch tabs
+      // ThingIdeas will pick this up when it mounts
+      if (currentTab !== 'ideas') {
+        setPendingIdeaOpen({ ideaId, initialPrompt, initialGreeting });
+        handleTabChange('ideas');
+      }
+      // If already on ideas tab, ThingIdeas will handle the event directly
+    };
+
+    window.addEventListener('facilitator:openIdea', handleFacilitatorOpenIdea);
+    return () => window.removeEventListener('facilitator:openIdea', handleFacilitatorOpenIdea);
+  }, [thingId, currentTab, handleTabChange]);
+
+  // Clear pending idea open request (called by ThingIdeas after it processes it)
+  const clearPendingIdeaOpen = useCallback(() => {
+    setPendingIdeaOpen(null);
+  }, []);
 
   // Calculate counts for tab labels
   const ideasCount = ideas.length;
@@ -679,6 +720,8 @@ export function ThingDetail({
                 thingType={thing.type}
                 thingDescription={thing.description}
                 workspaceId={thing.workspaceId}
+                pendingIdeaOpen={pendingIdeaOpen}
+                onPendingIdeaOpenHandled={clearPendingIdeaOpen}
               />
             ),
           },

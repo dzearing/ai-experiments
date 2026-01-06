@@ -6,14 +6,23 @@ import styles from './ChatMessage.module.css';
 
 /**
  * Timer component that shows elapsed time for tool calls
+ * @param startTime - When the tool started (epoch ms)
+ * @param isComplete - Whether the tool has completed
+ * @param duration - Pre-computed duration in ms (used for rehydrated tools)
  */
-function ToolTimer({ startTime, isComplete }: { startTime?: number; isComplete: boolean }) {
+function ToolTimer({ startTime, isComplete, duration }: { startTime?: number; isComplete: boolean; duration?: number }) {
   const [elapsed, setElapsed] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const finalElapsedRef = useRef<number | null>(null);
 
   useEffect(() => {
-    // If no start time, don't show timer
+    // If duration is provided (rehydrated from storage), use it directly
+    if (duration !== undefined && isComplete) {
+      setElapsed(duration);
+      return;
+    }
+
+    // If no start time and no duration, don't show timer
     if (!startTime) return;
 
     // If complete and we already captured final time, keep showing it
@@ -51,10 +60,10 @@ function ToolTimer({ startTime, isComplete }: { startTime?: number; isComplete: 
         intervalRef.current = null;
       }
     };
-  }, [startTime, isComplete]);
+  }, [startTime, isComplete, duration]);
 
-  // Don't render if no start time
-  if (!startTime) return null;
+  // Don't render if no start time and no duration
+  if (!startTime && duration === undefined) return null;
 
   // Format as X.Xs (e.g., "0.3s", "1.2s", "15.7s")
   const seconds = (elapsed / 1000).toFixed(1);
@@ -73,8 +82,14 @@ export interface ChatMessageToolCall {
   name: string;
   input?: Record<string, unknown>;
   output?: string;
-  /** When the tool call started (for timing display) */
+  /** When the tool call started (epoch ms) */
   startTime?: number;
+  /** When the tool call completed (epoch ms) */
+  endTime?: number;
+  /** Duration in milliseconds */
+  duration?: number;
+  /** Whether the tool execution is complete */
+  completed?: boolean;
 }
 
 /**
@@ -469,7 +484,8 @@ export function ChatMessage({
             return (
               <div key={partIndex} className={styles.toolCalls}>
                 {calls.map((toolCall, toolIndex) => {
-                  const isComplete = !!toolCall.output;
+                  // Use `completed` field if available, otherwise fall back to checking output
+                  const isComplete = toolCall.completed ?? !!toolCall.output;
                   // Ensure output is a string, treat '__complete__' as empty (no box to show)
                   const rawOutput = typeof toolCall.output === 'string' ? toolCall.output : '';
                   const outputText = rawOutput === '__complete__' ? '' : rawOutput;
@@ -484,7 +500,11 @@ export function ChatMessage({
                         <span className={styles.toolDescription}>
                           {formatToolDescription(toolCall.name, toolCall.input)}
                         </span>
-                        <ToolTimer startTime={toolCall.startTime} isComplete={isComplete} />
+                        <ToolTimer
+                          startTime={toolCall.startTime}
+                          isComplete={isComplete}
+                          duration={toolCall.duration}
+                        />
                       </div>
                       {isComplete && outputText && (
                         <div className={styles.toolResult}>

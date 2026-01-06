@@ -19,9 +19,17 @@ interface ThingIdeasProps {
   thingType: string;
   thingDescription?: string;
   workspaceId?: string;
+  /** Pending idea open request from parent (when tab was switched) */
+  pendingIdeaOpen?: {
+    ideaId?: string;
+    initialPrompt?: string;
+    initialGreeting?: string;
+  } | null;
+  /** Callback to clear the pending open after handling */
+  onPendingIdeaOpenHandled?: () => void;
 }
 
-export function ThingIdeas({ thingId, thingName, thingType, thingDescription, workspaceId }: ThingIdeasProps) {
+export function ThingIdeas({ thingId, thingName, thingType, thingDescription, workspaceId, pendingIdeaOpen, onPendingIdeaOpenHandled }: ThingIdeasProps) {
   // Debug: track this instance
   const instanceId = useRef(++thingIdeasInstanceId);
   useEffect(() => {
@@ -74,6 +82,24 @@ export function ThingIdeas({ thingId, thingName, thingType, thingDescription, wo
     setInitialPhase('ideation'); // New ideas always start in ideation
     setOverlayOpen(true);
   }, []);
+
+  // Handle pending idea open from parent (when tab was switched)
+  useEffect(() => {
+    if (pendingIdeaOpen) {
+      const { ideaId, initialPrompt: prompt, initialGreeting: greeting } = pendingIdeaOpen;
+
+      if (ideaId) {
+        // Open existing idea
+        handleOpenIdea(ideaId);
+      } else {
+        // Create new idea with optional prompt and greeting
+        handleNewIdea(prompt, greeting);
+      }
+
+      // Clear the pending request
+      onPendingIdeaOpenHandled?.();
+    }
+  }, [pendingIdeaOpen, handleOpenIdea, handleNewIdea, onPendingIdeaOpenHandled]);
 
   // Handle overlay close
   const handleOverlayClose = useCallback(() => {

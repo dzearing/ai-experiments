@@ -60,10 +60,20 @@ export class ExecutionAgentService {
   private chatService: ExecutionAgentChatService;
   private activeSessions: Map<string, ExecutionSession> = new Map();
   private clientCallbacks: Map<string, ExecutionStreamCallbacks> = new Map();
+  /** Callback for broadcasting execution state changes to workspace clients */
+  private onExecutionStateChange?: (ideaId: string, idea: unknown) => void;
 
   constructor(ideaService: IdeaService) {
     this.ideaService = ideaService;
     this.chatService = new ExecutionAgentChatService();
+  }
+
+  /**
+   * Set a callback to be called when execution state changes.
+   * This allows the WebSocket handler to broadcast updates to workspace clients.
+   */
+  setExecutionStateChangeCallback(callback: (ideaId: string, idea: unknown) => void): void {
+    this.onExecutionStateChange = callback;
   }
 
   /** Get an active execution session for an idea. */
@@ -146,11 +156,16 @@ export class ExecutionAgentService {
 
     // Note: We don't add a "Starting execution" message - the agent's response will be the first message
 
-    await this.ideaService.updateExecutionStateInternal(ideaId, {
+    const updatedIdea = await this.ideaService.updateExecutionStateInternal(ideaId, {
       startedAt: new Date().toISOString(),
       currentPhaseId: phaseId,
       waitingForFeedback: false,
     });
+
+    // Broadcast execution state change to workspace clients
+    if (updatedIdea && this.onExecutionStateChange) {
+      this.onExecutionStateChange(ideaId, updatedIdea);
+    }
 
     // Start execution in background (don't await)
     this.runExecution(ideaId, ideaContext, plan, phaseId, userId, session, this.buildExecutionPrompt(plan, phaseId));
@@ -282,7 +297,10 @@ Begin executing these tasks in order. Report progress after each task completion
     session.blockInfo = undefined;
     session.accumulatedResponse = '';
 
-    await this.ideaService.updateExecutionStateInternal(ideaId, { waitingForFeedback: false });
+    const updatedIdea = await this.ideaService.updateExecutionStateInternal(ideaId, { waitingForFeedback: false });
+    if (updatedIdea && this.onExecutionStateChange) {
+      this.onExecutionStateChange(ideaId, updatedIdea);
+    }
     this.runExecution(ideaId, ideaContext, plan, phaseId, userId, session, feedback);
   }
 
@@ -372,11 +390,14 @@ Begin executing these tasks in order. Report progress after each task completion
         await this.processStreamMessage(ideaId, session, message, messageId, userId);
       }
 
-      await this.processStructuredEvents(ideaId, session.accumulatedResponse, userId);
-      await this.chatService.addMessage(ideaId, userId, 'assistant', session.accumulatedResponse, {
-        rawResponse: session.accumulatedResponse,
-        toolCalls: session.completedToolCalls.length > 0 ? session.completedToolCalls : undefined,
-      });
+      // Save any remaining accumulated content (text or tools not yet saved)
+      if (session.accumulatedResponse.trim() || session.completedToolCalls.length > 0) {
+        await this.processStructuredEvents(ideaId, session.accumulatedResponse, userId);
+        await this.chatService.addMessage(ideaId, userId, 'assistant', session.accumulatedResponse, {
+          rawResponse: session.accumulatedResponse,
+          toolCalls: session.completedToolCalls.length > 0 ? session.completedToolCalls : undefined,
+        });
+      }
 
       if (session.status !== 'blocked') {
         session.status = 'completed';
@@ -414,7 +435,7 @@ Begin executing these tasks in order. Report progress after each task completion
 
             // Complete any pending tools before processing text
             // (text after tools means the SDK completed them)
-            this.completePendingTools(session, ideaId, messageId);
+            await this.completePendingTools(session, ideaId, messageId, userId);
 
             // Add paragraph break if this looks like a new thought after tool results
             // This handles cases where text runs together like "...file:Now I'll create..."
@@ -451,11 +472,17 @@ Begin executing these tasks in order. Report progress after each task completion
             // Remove the first pending tool (assuming order matches)
             const pendingTool = session.pendingTools.shift();
             const toolName = pendingTool?.name ?? 'unknown';
-            // Store completed tool call for persistence (truncate large outputs)
+            const endTime = Date.now();
+            const startTime = pendingTool?.startTime ?? endTime;
+            // Store completed tool call for persistence with timing metadata
             session.completedToolCalls.push({
               name: toolName,
               input: pendingTool?.input,
               output: resultContent.length > 500 ? resultContent.slice(0, 500) + '...' : resultContent,
+              startTime,
+              endTime,
+              duration: endTime - startTime,
+              completed: true,
             });
             this.dispatchOrQueue(ideaId, { type: 'tool_end', data: { name: toolName, result: '' }, messageId, timestamp: Date.now() });
           } else {
@@ -466,7 +493,7 @@ Begin executing these tasks in order. Report progress after each task completion
         console.log(`[ExecutionAgentService] string content (${msgContent.length} chars): ${msgContent.slice(0, 100)}...`);
 
         // Complete any pending tools before processing text
-        this.completePendingTools(session, ideaId, messageId);
+        await this.completePendingTools(session, ideaId, messageId, userId);
 
         // Add paragraph break if this looks like a new thought
         let textToAppend = msgContent;
@@ -510,16 +537,32 @@ Begin executing these tasks in order. Report progress after each task completion
   /**
    * Complete all pending tools - called when text arrives after tool calls,
    * indicating the SDK has finished executing the tools.
+   * Also saves the current message segment (text + tools) before new text arrives.
    */
-  private completePendingTools(session: ExecutionSession, ideaId: string, messageId: string): void {
+  private async completePendingTools(
+    session: ExecutionSession,
+    ideaId: string,
+    messageId: string,
+    userId: string
+  ): Promise<void> {
+    if (session.pendingTools.length === 0) return;
+
+    // Complete all pending tools and track them
     while (session.pendingTools.length > 0) {
       const tool = session.pendingTools.shift()!;
-      const duration = Date.now() - tool.startTime;
+      const endTime = Date.now();
+      const duration = endTime - tool.startTime;
       console.log(`[ExecutionAgentService] Completing tool ${tool.name} (${duration}ms)`);
-      // Store completed tool call for persistence (no result available in this path)
+      // Store completed tool call for persistence with timing metadata
+      // The __complete__ output marker indicates the tool finished without explicit output
       session.completedToolCalls.push({
         name: tool.name,
         input: tool.input,
+        output: '__complete__', // Mark as complete for proper rehydration
+        startTime: tool.startTime,
+        endTime,
+        duration,
+        completed: true,
       });
       this.dispatchOrQueue(ideaId, {
         type: 'tool_end',
@@ -527,6 +570,18 @@ Begin executing these tasks in order. Report progress after each task completion
         messageId,
         timestamp: Date.now(),
       });
+    }
+
+    // Save the current text + completed tools as a message segment
+    // This preserves the interleaved structure when rehydrated
+    if (session.accumulatedResponse.trim() || session.completedToolCalls.length > 0) {
+      await this.chatService.addMessage(ideaId, userId, 'assistant', session.accumulatedResponse, {
+        rawResponse: session.accumulatedResponse,
+        toolCalls: session.completedToolCalls.length > 0 ? [...session.completedToolCalls] : undefined,
+      });
+      // Reset for next segment
+      session.accumulatedResponse = '';
+      session.completedToolCalls = [];
     }
   }
 
@@ -544,7 +599,10 @@ Begin executing these tasks in order. Report progress after each task completion
       session?.processedTaskIds.add(taskComplete.taskId);
 
       this.dispatchOrQueue(ideaId, { type: 'task_complete', data: taskComplete, timestamp: Date.now() });
-      await this.ideaService.updateExecutionStateInternal(ideaId, { currentTaskId: undefined });
+      const updatedIdea = await this.ideaService.updateExecutionStateInternal(ideaId, { currentTaskId: undefined });
+      if (updatedIdea && this.onExecutionStateChange) {
+        this.onExecutionStateChange(ideaId, updatedIdea);
+      }
       await this.chatService.markTaskCompleted(ideaId, taskComplete.taskId);
       // Persist task completion to the plan metadata so it survives dialog close/reopen
       await this.ideaService.markTaskCompleted(ideaId, taskComplete.taskId);
@@ -562,7 +620,10 @@ Begin executing these tasks in order. Report progress after each task completion
         session.blockInfo = executionBlocked;
       }
       this.dispatchOrQueue(ideaId, { type: 'blocked', data: executionBlocked, timestamp: Date.now() });
-      await this.ideaService.updateExecutionStateInternal(ideaId, { waitingForFeedback: true });
+      const blockedIdea = await this.ideaService.updateExecutionStateInternal(ideaId, { waitingForFeedback: true });
+      if (blockedIdea && this.onExecutionStateChange) {
+        this.onExecutionStateChange(ideaId, blockedIdea);
+      }
     }
 
     const newIdea = parseNewIdea(text);

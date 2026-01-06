@@ -119,7 +119,15 @@ export interface ExecutionSession {
   /** Task IDs that have already been processed (to avoid duplicates) */
   processedTaskIds: Set<string>;
   /** Completed tool calls to persist with the message */
-  completedToolCalls: Array<{ name: string; input?: Record<string, unknown>; output?: string }>;
+  completedToolCalls: Array<{
+    name: string;
+    input?: Record<string, unknown>;
+    output?: string;
+    startTime?: number;
+    endTime?: number;
+    duration?: number;
+    completed?: boolean;
+  }>;
 }
 
 /**
