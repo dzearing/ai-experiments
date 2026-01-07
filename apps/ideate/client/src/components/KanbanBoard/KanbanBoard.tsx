@@ -109,7 +109,7 @@ export function KanbanBoard({
             onCardSelect={onCardSelect}
             onCardOpen={onCardOpen}
             selectedIdeaId={selectedIdeaId}
-            showAddButton={showAddButton && variant === 'full'}
+            showAddButton={showAddButton}
             onAddIdea={onAddIdea}
             workspaceId={workspaceId}
           />

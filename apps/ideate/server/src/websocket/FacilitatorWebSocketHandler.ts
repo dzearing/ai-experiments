@@ -1,7 +1,7 @@
 import type { RawData } from 'ws';
 import { WebSocket } from 'ws';
 import type { IncomingMessage } from 'http';
-import { FacilitatorService, type OpenQuestion } from '../services/FacilitatorService.js';
+import { FacilitatorService, type OpenQuestion, type StreamCallbacks } from '../services/FacilitatorService.js';
 import type { FacilitatorMessage } from '../services/FacilitatorChatService.js';
 import { getFacilitatorSettings } from '../routes/personas.js';
 import type { AgentProgressEvent } from '../shared/agentProgress.js';
@@ -83,8 +83,6 @@ interface FacilitatorClient {
   context: NavigationContext;
   /** Version counter for persona changes - used to cancel stale greeting generations */
   personaChangeVersion: number;
-  /** AbortController for the current operation (if any) */
-  currentAbortController: AbortController | null;
   /** Model ID to use for AI responses */
   modelId: string | null;
 }
@@ -141,12 +139,15 @@ export class FacilitatorWebSocketHandler {
       clientId,
       context: {},
       personaChangeVersion: 0,
-      currentAbortController: null,
       modelId,
     };
 
     this.clients.set(ws, client);
     console.log(`[Facilitator] Client ${clientId} (${userName}) connected`);
+
+    // Register this client with the facilitator service for message delivery
+    // This enables background execution - messages are delivered to client or queued
+    this.facilitatorService.registerClient(userId, this.createCallbacks(client));
 
     // Set up WebSocket handlers
     ws.on('message', (data: RawData) => {
@@ -213,7 +214,65 @@ export class FacilitatorWebSocketHandler {
   }
 
   /**
+   * Create callbacks for a client to receive streamed messages.
+   */
+  private createCallbacks(client: FacilitatorClient): StreamCallbacks {
+    return {
+      onTextChunk: (text: string, messageId: string) => {
+        this.send(client.ws, {
+          type: 'text_chunk',
+          text,
+          messageId,
+        });
+      },
+      onToolUse: ({ name, input, messageId }: { name: string; input: Record<string, unknown>; messageId: string }) => {
+        this.send(client.ws, {
+          type: 'tool_use',
+          toolName: name,
+          toolInput: input,
+          messageId,
+          startTime: Date.now(),
+        });
+      },
+      onToolResult: ({ name, output, messageId }: { name: string; output: string; messageId: string }) => {
+        this.send(client.ws, {
+          type: 'tool_result',
+          toolName: name,
+          toolOutput: output,
+          messageId,
+        });
+      },
+      onOpenQuestions: (questions: OpenQuestion[]) => {
+        this.send(client.ws, {
+          type: 'open_questions',
+          questions,
+        });
+      },
+      onComplete: (message: FacilitatorMessage) => {
+        this.send(client.ws, {
+          type: 'message_complete',
+          messageId: message.id,
+          message,
+        });
+      },
+      onError: (error: string) => {
+        this.send(client.ws, {
+          type: 'error',
+          error,
+        });
+      },
+      onProgressEvent: (event: AgentProgressEvent) => {
+        this.send(client.ws, {
+          type: 'agent_progress',
+          event,
+        });
+      },
+    };
+  }
+
+  /**
    * Handle a chat message from a client.
+   * Messages are processed by the FacilitatorService which manages background execution.
    */
   private async handleChatMessage(client: FacilitatorClient, content: string): Promise<void> {
     if (!content.trim()) return;
@@ -224,78 +283,15 @@ export class FacilitatorWebSocketHandler {
     // Get the display name from settings
     const settings = getFacilitatorSettings();
 
-    // Create an AbortController for this operation
-    const abortController = new AbortController();
-    client.currentAbortController = abortController;
-
     try {
+      // Process message - callbacks are registered at connection time
+      // Service handles abort signals internally via session management
       await this.facilitatorService.processMessage(
         client.userId,
         client.userName,
         content.trim(),
         client.context,
-        {
-          onTextChunk: (text, messageId) => {
-            // Don't send if aborted
-            if (abortController.signal.aborted) return;
-            this.send(client.ws, {
-              type: 'text_chunk',
-              text,
-              messageId,
-            });
-          },
-          onToolUse: ({ name, input, messageId }) => {
-            if (abortController.signal.aborted) return;
-            this.send(client.ws, {
-              type: 'tool_use',
-              toolName: name,
-              toolInput: input,
-              messageId,
-              startTime: Date.now(),
-            });
-          },
-          onToolResult: ({ name, output, messageId }) => {
-            if (abortController.signal.aborted) return;
-            this.send(client.ws, {
-              type: 'tool_result',
-              toolName: name,
-              toolOutput: output,
-              messageId,
-            });
-          },
-          onOpenQuestions: (questions) => {
-            if (abortController.signal.aborted) return;
-            this.send(client.ws, {
-              type: 'open_questions',
-              questions,
-            });
-          },
-          onComplete: (message) => {
-            // Don't send completion if aborted
-            if (abortController.signal.aborted) return;
-            this.send(client.ws, {
-              type: 'message_complete',
-              messageId: message.id,
-              message,
-            });
-          },
-          onError: (error) => {
-            if (abortController.signal.aborted) return;
-            this.send(client.ws, {
-              type: 'error',
-              error,
-            });
-          },
-          onProgressEvent: (event) => {
-            if (abortController.signal.aborted) return;
-            this.send(client.ws, {
-              type: 'agent_progress',
-              event,
-            });
-          },
-        },
         settings.name,  // Pass display name from settings
-        abortController.signal,  // Pass abort signal
         client.modelId || undefined  // Pass modelId
       );
     } catch (error) {
@@ -306,22 +302,16 @@ export class FacilitatorWebSocketHandler {
       }
       console.error('[Facilitator] Error processing message:', error);
       this.send(client.ws, { type: 'error', error: 'Failed to process message' });
-    } finally {
-      client.currentAbortController = null;
     }
   }
 
   /**
-   * Handle a cancel request from a client.
+   * Handle a cancel request from a client (Escape key pressed).
+   * This explicitly aborts the current operation.
    */
   private handleCancel(client: FacilitatorClient): void {
-    if (client.currentAbortController) {
-      console.log(`[Facilitator] Cancelling operation for client ${client.clientId}`);
-      client.currentAbortController.abort();
-      client.currentAbortController = null;
-    } else {
-      console.log(`[Facilitator] No operation to cancel for client ${client.clientId}`);
-    }
+    console.log(`[Facilitator] Cancel requested for client ${client.clientId}`);
+    this.facilitatorService.abortSession(client.userId);
   }
 
   /**
@@ -431,10 +421,14 @@ export class FacilitatorWebSocketHandler {
 
   /**
    * Handle client disconnect.
+   * Unregisters callback but does NOT abort - session continues running in background.
+   * Messages will be queued for replay when client reconnects.
    */
   private handleDisconnect(client: FacilitatorClient): void {
+    // Unregister callbacks - session continues running, messages are queued
+    this.facilitatorService.unregisterClient(client.userId);
     this.clients.delete(client.ws);
-    console.log(`[Facilitator] Client ${client.clientId} (${client.userName}) disconnected`);
+    console.log(`[Facilitator] Client ${client.clientId} (${client.userName}) disconnected - session continues in background`);
   }
 
   /**

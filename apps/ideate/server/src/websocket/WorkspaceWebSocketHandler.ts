@@ -515,4 +515,60 @@ export class WorkspaceWebSocketHandler {
     });
     console.log(`[WorkspaceWS] Notified subscribers of workspace deleted: ${workspaceId}`);
   }
+
+  /**
+   * Notify ALL connected clients about a resource update by ideaId.
+   * This broadcasts to:
+   * - All clients subscribed to the specified workspace (if workspaceId provided)
+   * - All clients belonging to the specified user (for global/personal ideas)
+   *
+   * This is used for agent status updates which should reach clients
+   * regardless of workspace subscription.
+   */
+  notifyIdeaUpdate(
+    ideaId: string,
+    ownerId: string,
+    workspaceId: string | undefined,
+    data: unknown
+  ): void {
+    const notifiedClients = new Set<string>();
+
+    // If workspace-scoped, broadcast to workspace subscribers
+    if (workspaceId) {
+      const subscribers = this.workspaceSubscribers.get(workspaceId);
+      if (subscribers) {
+        subscribers.forEach((clientId) => {
+          const client = this.clients.get(clientId);
+          if (client && !notifiedClients.has(clientId)) {
+            this.sendToClient(client.ws, {
+              type: 'resource_updated',
+              workspaceId,
+              resourceId: ideaId,
+              resourceType: 'idea',
+              data,
+            });
+            notifiedClients.add(clientId);
+          }
+        });
+      }
+    }
+
+    // Also broadcast to all clients belonging to the owner
+    // This ensures global ideas (no workspaceId) get updates
+    // and owner sees updates even if viewing a different workspace
+    this.clients.forEach((client, clientId) => {
+      if (client.userId === ownerId && !notifiedClients.has(clientId)) {
+        this.sendToClient(client.ws, {
+          type: 'resource_updated',
+          workspaceId: workspaceId || undefined,
+          resourceId: ideaId,
+          resourceType: 'idea',
+          data,
+        });
+        notifiedClients.add(clientId);
+      }
+    });
+
+    console.log(`[WorkspaceWS] Notified ${notifiedClients.size} clients of idea ${ideaId} update (workspace=${workspaceId || 'global'}, owner=${ownerId})`);
+  }
 }

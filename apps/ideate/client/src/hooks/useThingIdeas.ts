@@ -17,6 +17,12 @@ interface UseThingIdeasReturn {
   createIdea: (input: Omit<CreateIdeaInput, 'thingIds'>) => Promise<Idea | null>;
   moveIdea: (ideaId: string, newStatus: IdeaStatus) => Promise<Idea | null>;
   deleteIdea: (ideaId: string) => Promise<boolean>;
+  /** Update an idea in place (for real-time updates like agentStatus) */
+  updateIdea: (ideaId: string, updates: Partial<IdeaMetadata>) => void;
+  /** Add an idea to the list (for real-time created events) */
+  addIdea: (idea: IdeaMetadata) => void;
+  /** Remove an idea from the list (for real-time deleted events) */
+  removeIdea: (ideaId: string) => void;
 }
 
 /**
@@ -188,6 +194,27 @@ export function useThingIdeas(thingId: string, workspaceId?: string): UseThingId
     }
   }, [user?.id, ideas]);
 
+  // Update an idea in place (for real-time updates like agentStatus)
+  const updateIdea = useCallback((ideaId: string, updates: Partial<IdeaMetadata>) => {
+    setIdeas(prev => prev.map(idea =>
+      idea.id === ideaId ? { ...idea, ...updates } : idea
+    ));
+  }, []);
+
+  // Add an idea to the list (for real-time created events)
+  const addIdea = useCallback((idea: IdeaMetadata) => {
+    setIdeas(prev => {
+      // Avoid duplicates
+      if (prev.some(i => i.id === idea.id)) return prev;
+      return [idea, ...prev];
+    });
+  }, []);
+
+  // Remove an idea from the list (for real-time deleted events)
+  const removeIdea = useCallback((ideaId: string) => {
+    setIdeas(prev => prev.filter(idea => idea.id !== ideaId));
+  }, []);
+
   return {
     ideas,
     ideasByStatus,
@@ -197,5 +224,8 @@ export function useThingIdeas(thingId: string, workspaceId?: string): UseThingId
     createIdea,
     moveIdea,
     deleteIdea,
+    updateIdea,
+    addIdea,
+    removeIdea,
   };
 }

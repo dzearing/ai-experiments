@@ -203,6 +203,8 @@ export interface IdeaDialogProps {
   initialPhase?: WorkspacePhase;
   /** Callback when user wants to start execution with a plan */
   onStartExecution?: (plan: IdeaPlan) => void;
+  /** Callback when idea is created immediately (for background processing tracking) - doesn't close dialog */
+  onIdeaCreated?: (idea: Idea) => void;
 }
 
 /**
@@ -225,6 +227,7 @@ export function IdeaDialog({
   initialGreeting,
   initialPhase,
   onStartExecution,
+  onIdeaCreated,
 }: IdeaDialogProps) {
   // Debug: track this instance
   const instanceIdRef = useRef(++overlayInstanceId);
@@ -420,8 +423,9 @@ export function IdeaDialog({
   const [implPlanContent, setImplPlanContent] = useState('');
   const [implPlanViewMode, setImplPlanViewMode] = useState<ViewMode>('preview');
 
-  // Yjs collaboration for Implementation Plan (only in planning phase)
-  const implPlanServerUrl = phase === 'planning' && implPlanDocumentId ? YJS_WS_URL : undefined;
+  // Yjs collaboration for Implementation Plan (in planning or executing phase)
+  // During executing phase, user may want to view/reference the design document
+  const implPlanServerUrl = (phase === 'planning' || phase === 'executing') && implPlanDocumentId ? YJS_WS_URL : undefined;
 
   const {
     extensions: implPlanYjsExtensions,
@@ -516,8 +520,9 @@ export function IdeaDialog({
   }), [currentIdea, idea, parsedContent, parentThingsWithContext]);
 
   // Idea agent hook - only enabled when overlay is open AND in ideation phase
+  // Use currentIdea?.id first as it gets set when we create idea immediately on first message
   const ideaAgent = useIdeaAgent({
-    ideaId: idea?.id || null,
+    ideaId: currentIdea?.id || idea?.id || null,
     userId: user?.id || '',
     userName: user?.name || 'Anonymous',
     ideaContext,
@@ -526,6 +531,7 @@ export function IdeaDialog({
     onError: handleAgentError,
     enabled: open && phase === 'ideation',
     modelId,
+    workspaceId,
   });
 
   // Plan agent hook - only enabled when overlay is open AND in planning phase
@@ -540,6 +546,7 @@ export function IdeaDialog({
     onPlanUpdate: handlePlanUpdate,
     enabled: open && phase === 'planning' && !!(currentIdea?.id || idea?.id),
     modelId,
+    workspaceId,
   });
 
   // Build execution context
@@ -815,12 +822,29 @@ export function IdeaDialog({
   const footerSuggestions = agentSuggestedResponses || [];
 
   // Detect room changes and prepare for migration
+  // Only migrate content when saving a NEW idea (transitioning from new-idea room to saved-idea room)
+  // Do NOT migrate when clicking on a different existing idea
   useEffect(() => {
-    if (prevDocumentIdRef.current && prevDocumentIdRef.current !== documentId) {
-      // Room is changing - capture current content for migration
-      // This runs BEFORE the Yjs hook switches rooms
-      console.log('[IdeaWorkspace] Room changing, capturing content for migration');
-      setPendingContentMigration(content);
+    const prevId = prevDocumentIdRef.current;
+    if (prevId && prevId !== documentId) {
+      // Only migrate if:
+      // 1. Previous room was a "new idea" room
+      // 2. New room is a "saved idea" room (not another new idea room)
+      // 3. We have non-trivial content to migrate
+      const wasNewIdeaRoom = prevId.includes('idea-doc-new-');
+      const isNowSavedIdeaRoom = !documentId.includes('idea-doc-new-');
+      const { title } = parseMarkdownContent(content);
+      const hasNonTrivialContent = title.trim() && title !== 'Untitled Idea';
+
+      if (wasNewIdeaRoom && isNowSavedIdeaRoom && hasNonTrivialContent) {
+        // This is a new idea being saved - migrate content
+        console.log('[IdeaWorkspace] Room changing, capturing content for migration');
+        setPendingContentMigration(content);
+      } else {
+        // This is switching to a different idea - don't migrate, just reset
+        console.log('[IdeaWorkspace] Room changing to different idea, not migrating content');
+        setPendingContentMigration(null);
+      }
       setIsInitialized(false);
     }
     prevDocumentIdRef.current = documentId;
@@ -943,6 +967,11 @@ export function IdeaDialog({
   const sendSilentMessageRef = useRef(ideaAgent.sendSilentMessage);
   sendSilentMessageRef.current = ideaAgent.sendSilentMessage;
 
+  // Note: We don't create ideas immediately on open with initialPrompt anymore.
+  // The agent will update the document with a proper title, and the debounced
+  // auto-save logic (lines 1075-1129) will create/persist the idea once there's
+  // meaningful content. This avoids the infinite loop bug and ensures better titles.
+
   // Send initial prompt to agent when overlay opens and agent is connected
   // Use sendSilentMessage so the user's prompt doesn't appear in the chat
   // (they already typed it in the facilitator chat)
@@ -1027,6 +1056,43 @@ export function IdeaDialog({
   // Track if document has been modified (for auto-save)
   const hasDocumentChanges = useRef(false);
   const lastSavedContent = useRef<string>('');
+  // Track if idea has been created for this session (prevent duplicate creation)
+  const ideaCreatedForSessionRef = useRef(false);
+  // Store the first message to send after idea creation (when agent reconnects)
+  const pendingFirstMessageRef = useRef<string | null>(null);
+  // Track if we're waiting for reconnection after idea creation
+  // States: 'idle' -> 'waiting-for-disconnect' -> 'waiting-for-reconnect' -> 'idle'
+  const reconnectStateRef = useRef<'idle' | 'waiting-for-disconnect' | 'waiting-for-reconnect'>('idle');
+
+  // Reset refs when dialog closes
+  useEffect(() => {
+    if (!open) {
+      ideaCreatedForSessionRef.current = false;
+      pendingFirstMessageRef.current = null;
+      reconnectStateRef.current = 'idle';
+    }
+  }, [open]);
+
+  // Send pending first message once agent reconnects after idea creation
+  // State machine: 'idle' -> 'waiting-for-disconnect' -> 'waiting-for-reconnect' -> 'idle'
+  useEffect(() => {
+    const state = reconnectStateRef.current;
+
+    // Waiting for disconnect: when we see disconnected, move to waiting-for-reconnect
+    if (state === 'waiting-for-disconnect' && !isConnected) {
+      console.log('[IdeaDialog] Agent disconnected, now waiting for reconnect...');
+      reconnectStateRef.current = 'waiting-for-reconnect';
+    }
+
+    // Waiting for reconnect: when we see connected, send the pending message
+    if (state === 'waiting-for-reconnect' && isConnected && pendingFirstMessageRef.current && currentIdea) {
+      const message = pendingFirstMessageRef.current;
+      pendingFirstMessageRef.current = null;
+      reconnectStateRef.current = 'idle';
+      console.log('[IdeaDialog] Sending pending first message after reconnect');
+      sendAgentMessage(message);
+    }
+  }, [isConnected, currentIdea, sendAgentMessage]);
 
   // Track changes to document content
   useEffect(() => {
@@ -1035,12 +1101,81 @@ export function IdeaDialog({
     }
   }, [content, isInitialized]);
 
-  // Debounced auto-save during ideation phase
-  // This ensures ideas are persisted as soon as meaningful content exists
+  // Track previous isEditingDocument state to detect when agent finishes editing
+  const prevIsEditingDocumentRef = useRef(false);
+
+  // Update idea when agent finishes generating document with valid title
+  // If idea was created immediately on first message, this updates the placeholder title/summary
+  useEffect(() => {
+    const wasEditing = prevIsEditingDocumentRef.current;
+    prevIsEditingDocumentRef.current = isEditingDocument;
+
+    // Only trigger when isEditingDocument transitions from true to false
+    if (!wasEditing || isEditingDocument) return;
+
+    // Only in ideation phase
+    if (phase !== 'ideation') return;
+
+    const { title, summary, tags, description } = parsedContent;
+
+    // Only update if we have a valid title (not placeholder)
+    if (!title.trim() || title === 'Untitled Idea' || !summary.trim()) return;
+
+    // If we already have a currentIdea, update it with the generated content
+    if (currentIdea) {
+      console.log(`[IdeaDialog] Agent finished editing, updating idea "${currentIdea.id}" with title: "${title}"`);
+      updateIdea(currentIdea.id, {
+        title: title.trim(),
+        summary: summary.trim(),
+        tags,
+        description: description.trim() || undefined,
+      }).then((updated) => {
+        if (updated) {
+          console.log(`[IdeaDialog] Idea updated: ${updated.id}`);
+          setCurrentIdea(updated);
+          lastSavedContent.current = content;
+          hasDocumentChanges.current = false;
+        }
+      }).catch((err) => {
+        console.error('[IdeaDialog] Failed to update idea:', err);
+      });
+      return;
+    }
+
+    // If no currentIdea and not yet created, create it now (fallback)
+    if (idea || ideaCreatedForSessionRef.current) return;
+
+    // Mark as creating to prevent duplicate creation
+    ideaCreatedForSessionRef.current = true;
+
+    console.log(`[IdeaDialog] Agent finished editing, creating idea with title: "${title}"`);
+
+    createIdea({
+      title: title.trim(),
+      summary: summary.trim(),
+      tags,
+      description: description.trim() || undefined,
+      workspaceId,
+      thingIds: initialThingIds,
+    }).then((newIdea) => {
+      console.log(`[IdeaDialog] Idea created: ${newIdea.id}`);
+      setCurrentIdea(newIdea);
+      onSuccess?.(newIdea);
+      lastSavedContent.current = content;
+      hasDocumentChanges.current = false;
+    }).catch((err) => {
+      console.error('[IdeaDialog] Failed to create idea:', err);
+      // Reset flag so it can retry
+      ideaCreatedForSessionRef.current = false;
+    });
+  }, [isEditingDocument, phase, currentIdea, idea, parsedContent, content, workspaceId, initialThingIds, createIdea, updateIdea, onSuccess]);
+
+  // Debounced auto-save for UPDATES (not creation) during ideation phase
   const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    // Only auto-save during ideation phase when document changes
-    if (!isInitialized || phase !== 'ideation' || !hasDocumentChanges.current) return;
+    // Only auto-save updates during ideation phase when document changes
+    // Skip if no currentIdea (creation is handled by the effect above)
+    if (!isInitialized || phase !== 'ideation' || !hasDocumentChanges.current || !currentIdea?.id) return;
 
     const { title, summary, tags, description } = parsedContent;
 
@@ -1052,38 +1187,21 @@ export function IdeaDialog({
       clearTimeout(autoSaveTimeoutRef.current);
     }
 
-    // Debounce save by 2 seconds
+    // Debounce save by 2 seconds for updates
     autoSaveTimeoutRef.current = setTimeout(async () => {
       try {
-        if (currentIdea?.id) {
-          // Update existing idea
-          const updated = await updateIdea(currentIdea.id, {
-            title: title.trim(),
-            summary: summary.trim(),
-            tags,
-            description: description.trim() || undefined,
-          });
-          if (updated) {
-            lastSavedContent.current = content;
-            hasDocumentChanges.current = false;
-          }
-        } else if (!idea) {
-          // Create new idea with valid content
-          const newIdea = await createIdea({
-            title: title.trim(),
-            summary: summary.trim(),
-            tags,
-            description: description.trim() || undefined,
-            workspaceId,
-            thingIds: initialThingIds,
-          });
-          setCurrentIdea(newIdea);
-          onSuccess?.(newIdea);
+        const updated = await updateIdea(currentIdea.id, {
+          title: title.trim(),
+          summary: summary.trim(),
+          tags,
+          description: description.trim() || undefined,
+        });
+        if (updated) {
           lastSavedContent.current = content;
           hasDocumentChanges.current = false;
         }
       } catch (err) {
-        console.error('[IdeaWorkspace] Auto-save during ideation failed:', err);
+        console.error('[IdeaWorkspace] Auto-save update failed:', err);
       }
     }, 2000);
 
@@ -1092,53 +1210,37 @@ export function IdeaDialog({
         clearTimeout(autoSaveTimeoutRef.current);
       }
     };
-  }, [isInitialized, phase, parsedContent, currentIdea, idea, content, updateIdea, createIdea, workspaceId, initialThingIds, onSuccess]);
+  }, [isInitialized, phase, parsedContent, currentIdea, content, updateIdea]);
 
-  // Auto-save ideas when overlay closes
+  // Auto-save idea updates when overlay closes
+  // Note: Idea CREATION is handled by the effect that watches isEditingDocument.
+  // This effect only handles UPDATES to existing ideas.
   useEffect(() => {
-    // Only auto-save when closing with changes
-    if (!open && hasDocumentChanges.current && isInitialized) {
+    // Only auto-save when closing with changes to an existing idea
+    if (!open && hasDocumentChanges.current && isInitialized && (idea || currentIdea)) {
       const { title, summary, tags, description } = parseMarkdownContent(content);
 
       // Only save if we have valid content
       if (title.trim() && title !== 'Untitled Idea' && summary.trim()) {
-        if (idea || currentIdea) {
-          // Update existing idea
-          const ideaToUpdate = currentIdea || idea;
-          updateIdea(ideaToUpdate!.id, {
-            title: title.trim(),
-            summary: summary.trim(),
-            tags,
-            description: description.trim() || undefined,
-          }).then((updated) => {
-            if (updated) {
-              onSuccess?.(updated);
-            }
-          }).catch((err) => {
-            console.error('[IdeaWorkspace] Auto-save failed:', err);
-          });
-        } else {
-          // Create new idea on close if it has valid content
-          const input: CreateIdeaInput = {
-            title: title.trim(),
-            summary: summary.trim(),
-            tags,
-            description: description.trim() || undefined,
-            workspaceId,
-            thingIds: initialThingIds,
-          };
-          createIdea(input).then((newIdea) => {
-            onSuccess?.(newIdea);
-          }).catch((err) => {
-            console.error('[IdeaWorkspace] Auto-create failed:', err);
-          });
-        }
+        const ideaToUpdate = currentIdea || idea;
+        updateIdea(ideaToUpdate!.id, {
+          title: title.trim(),
+          summary: summary.trim(),
+          tags,
+          description: description.trim() || undefined,
+        }).then((updated) => {
+          if (updated) {
+            onSuccess?.(updated);
+          }
+        }).catch((err) => {
+          console.error('[IdeaWorkspace] Auto-save failed:', err);
+        });
       }
 
       // Reset tracking
       hasDocumentChanges.current = false;
     }
-  }, [open, idea, currentIdea, content, isInitialized, updateIdea, createIdea, onSuccess, workspaceId, initialThingIds]);
+  }, [open, idea, currentIdea, content, isInitialized, updateIdea, onSuccess]);
 
   // Handle transition to planning mode
   const handleStartPlanning = useCallback(async () => {
@@ -1277,9 +1379,47 @@ export function IdeaDialog({
     }
   }, [isAgentThinking, queuedMessages, sendAgentMessage]);
 
-  const handleChatSubmit = useCallback((data: ChatInputSubmitData) => {
+  const handleChatSubmit = useCallback(async (data: ChatInputSubmitData) => {
     const { content } = data;
     if (!content.trim()) return;
+
+    // For new ideas, create immediately on first message so it appears in kanban
+    if (isNewIdea && !currentIdea && !ideaCreatedForSessionRef.current) {
+      ideaCreatedForSessionRef.current = true;
+      console.log('[IdeaDialog] Creating idea immediately on first message');
+
+      // Store the message to send after agent reconnects with new ideaId
+      // The agent will disconnect/reconnect when currentIdea changes, so we can't send immediately
+      pendingFirstMessageRef.current = content.trim();
+      reconnectStateRef.current = 'waiting-for-disconnect';
+
+      try {
+        const newIdea = await createIdea({
+          title: 'Untitled Idea',
+          summary: 'Processing...',
+          tags: [],
+          workspaceId,
+          thingIds: initialThingIds,
+        });
+        console.log(`[IdeaDialog] Idea created immediately: ${newIdea.id}`);
+        setCurrentIdea(newIdea);
+        // Notify parent so it can track this idea (for close/reopen scenarios)
+        // Note: Don't call onSuccess - that would close the dialog.
+        onIdeaCreated?.(newIdea);
+      } catch (err) {
+        console.error('[IdeaDialog] Failed to create idea immediately:', err);
+        ideaCreatedForSessionRef.current = false;
+        pendingFirstMessageRef.current = null;
+        reconnectStateRef.current = 'idle';
+        // Continue anyway - the message will still be sent below
+      }
+
+      // Clear input and return - the effect will send the message once connected
+      chatInputRef.current?.clear();
+      inputContentRef.current = '';
+      setIsInputEmpty(true);
+      return;
+    }
 
     // If AI is busy, queue the message
     if (isAgentThinking) {
@@ -1300,7 +1440,7 @@ export function IdeaDialog({
     chatInputRef.current?.clear();
     inputContentRef.current = '';
     setIsInputEmpty(true);
-  }, [sendAgentMessage, isAgentThinking]);
+  }, [sendAgentMessage, isAgentThinking, isNewIdea, currentIdea, createIdea, workspaceId, initialThingIds, onIdeaCreated]);
 
   const handleInputChange = useCallback((isEmpty: boolean, content: string) => {
     inputContentRef.current = content;

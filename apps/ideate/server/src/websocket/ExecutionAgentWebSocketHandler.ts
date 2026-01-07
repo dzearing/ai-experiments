@@ -122,15 +122,17 @@ export class ExecutionAgentWebSocketHandler {
     this.ideaService = ideaService;
     this.executionAgentService = new ExecutionAgentService(ideaService);
 
-    // Set up callback to broadcast execution state changes to workspace clients
+    // Set up callback to broadcast execution state changes to clients
     if (workspaceWsHandler) {
       this.executionAgentService.setExecutionStateChangeCallback((ideaId, idea) => {
-        const ideaData = idea as { workspaceId?: string };
-        if (ideaData.workspaceId) {
-          workspaceWsHandler.notifyResourceUpdated(
-            ideaData.workspaceId,
+        const ideaData = idea as { workspaceId?: string; ownerId?: string };
+        // Broadcast to workspace subscribers AND to the owner's clients
+        // This ensures global ideas (no workspaceId) also receive updates
+        if (ideaData.ownerId) {
+          workspaceWsHandler.notifyIdeaUpdate(
             ideaId,
-            'idea',
+            ideaData.ownerId,
+            ideaData.workspaceId,
             idea
           );
         }

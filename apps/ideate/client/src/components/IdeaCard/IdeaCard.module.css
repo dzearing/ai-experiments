@@ -1,7 +1,16 @@
 .ideaCard {
   cursor: grab;
+  position: relative;
   transition: transform var(--duration-fast) var(--ease-default),
     border-color var(--duration-fast) var(--ease-default);
+}
+
+/* Status chip - positioned in top right corner */
+.statusChip {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  z-index: 1;
 }
 
 .ideaCard:active {
@@ -24,26 +33,18 @@
   gap: var(--space-2);
 }
 
-/* Header */
-.header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-2);
-}
-
 .title {
   font-size: var(--text-base);
   font-weight: var(--weight-medium);
   margin: 0;
   color: var(--base-fg);
   line-height: var(--leading-snug);
-  flex: 1;
 }
 
 .aiBadge {
   display: inline-flex;
   align-items: center;
+  align-self: flex-start;
   gap: var(--space-1);
   padding: 2px 6px;
   background: var(--info-bg);
@@ -129,19 +130,6 @@
   display: flex;
   align-items: center;
   gap: var(--space-1);
-}
-
-.waitState {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  font-size: var(--text-sm);
-  color: var(--warning-fg);
-}
-
-.waitState svg {
-  width: 12px;
-  height: 12px;
 }
 
 /* Footer */

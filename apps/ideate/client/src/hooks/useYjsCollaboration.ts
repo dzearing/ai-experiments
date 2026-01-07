@@ -501,11 +501,18 @@ export function useYjsCollaboration(
       // Sync connection state
       if (wsProvider.wsconnected) {
         setConnectionState('connected');
-        setIsSynced(true);
       } else if (wsProvider.wsconnecting) {
         setConnectionState('connecting');
       } else {
         setConnectionState('disconnected');
+      }
+
+      // CRITICAL: Check the synced property directly, not just wsconnected
+      // The sync event may have already fired before we attached handlers
+      // (e.g., during React StrictMode unmount/remount cycle)
+      if (wsProvider.synced) {
+        console.log(`[useYjsCollaboration] Provider already synced for room "${documentId}", setting isSynced=true`);
+        setIsSynced(true);
       }
 
       // Sync co-authors
@@ -719,7 +726,7 @@ export function useYjsCollaboration(
       });
 
       // Handle sync state
-      wsProvider.on('sync', (synced: boolean) => {
+      const handleSync = (synced: boolean) => {
         console.log(`[useYjsCollaboration] Sync event for room "${documentId}": synced=${synced}, content length=${text.length}`);
         setIsSynced(synced);
         if (synced) {
@@ -732,7 +739,37 @@ export function useYjsCollaboration(
           // Also update co-authors after document sync
           updateCoAuthors(true);
         }
-      });
+      };
+      wsProvider.on('sync', handleSync);
+
+      // Store sync handler reference for cleanup
+      // This is critical to prevent stale handlers from setting isSynced=false
+      // when documentId changes and old provider disconnects
+      const cleanupSyncHandler = () => {
+        wsProvider.off('sync', handleSync);
+      };
+
+      // Observe text changes
+      const textObserver = () => {
+        const content = text.toString();
+        console.log(`[useYjsCollaboration] Text changed in room "${documentId}", length: ${content.length}`);
+        onChangeRef.current?.(content);
+      };
+      text.observe(textObserver);
+
+      // Cleanup for new provider branch
+      return () => {
+        text.unobserve(textObserver);
+        cleanupSyncHandler();
+
+        // Clear any pending co-author update timeout
+        if (coAuthorUpdateTimeout) {
+          clearTimeout(coAuthorUpdateTimeout);
+        }
+
+        // Stop the cursor label observer
+        stopCursorObserver();
+      };
     } else {
       // No server - create extensions without awareness
       // NOTE: yCollab() returns an ARRAY - must spread to avoid nested arrays

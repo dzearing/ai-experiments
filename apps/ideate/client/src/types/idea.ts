@@ -77,6 +77,9 @@ export interface IdeaAttachment {
   createdAt: string;
 }
 
+/** Agent status for real-time busy indicators */
+export type AgentStatus = 'idle' | 'running' | 'error';
+
 /** Idea metadata for list views */
 export interface IdeaMetadata {
   id: string;
@@ -98,6 +101,8 @@ export interface IdeaMetadata {
   plan?: IdeaPlan;
   /** Execution state (available when status is 'executing') */
   execution?: IdeaExecutionState;
+  /** Agent status - real-time indicator for background agent activity */
+  agentStatus?: AgentStatus;
 }
 
 /** Full idea object with extended description */

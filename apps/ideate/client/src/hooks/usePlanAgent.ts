@@ -115,6 +115,8 @@ export interface UsePlanAgentOptions {
   enabled?: boolean;
   /** Model ID to use for the agent */
   modelId?: ModelId;
+  /** Workspace ID for broadcasting agent status */
+  workspaceId?: string;
 }
 
 /**
@@ -180,6 +182,7 @@ export function usePlanAgent({
   onError,
   enabled = true,
   modelId,
+  workspaceId,
 }: UsePlanAgentOptions): UsePlanAgentReturn {
   const [messages, setMessages] = useState<PlanAgentMessage[]>([]);
   const [isConnected, setIsConnected] = useState(false);
@@ -202,6 +205,7 @@ export function usePlanAgent({
   const documentRoomNameRef = useRef<string | undefined>(documentRoomName);
   const enabledRef = useRef(enabled);
   const modelIdRef = useRef<ModelId | undefined>(modelId);
+  const workspaceIdRef = useRef<string | undefined>(workspaceId);
 
   // Keep refs updated
   useEffect(() => {
@@ -228,6 +232,10 @@ export function usePlanAgent({
   useEffect(() => {
     modelIdRef.current = modelId;
   }, [modelId]);
+
+  useEffect(() => {
+    workspaceIdRef.current = workspaceId;
+  }, [workspaceId]);
 
   // Disconnect and clear state when disabled
   useEffect(() => {
@@ -323,6 +331,11 @@ export function usePlanAgent({
     // Include model preference
     if (modelIdRef.current) {
       wsUrl += `&modelId=${encodeURIComponent(modelIdRef.current)}`;
+    }
+
+    // Include workspace ID for broadcasting agent status
+    if (workspaceIdRef.current) {
+      wsUrl += `&workspaceId=${encodeURIComponent(workspaceIdRef.current)}`;
     }
 
     const ws = new WebSocket(wsUrl);

@@ -61,8 +61,10 @@ export function Ideas() {
     data: unknown
   ) => {
     if (resourceType === 'idea') {
-      const idea = data as IdeaMetadata;
-      setIdeas(prev => prev.map(i => i.id === idea.id ? idea : i));
+      const update = data as Partial<IdeaMetadata> & { id: string };
+      // Merge the update with existing idea data to preserve fields
+      // This is important for partial updates like agentStatus changes
+      setIdeas(prev => prev.map(i => i.id === update.id ? { ...i, ...update } : i));
     }
   }, [setIdeas]);
 
@@ -214,6 +216,13 @@ export function Ideas() {
     console.log('[Ideas] Execution started for plan:', plan);
   }, []);
 
+  // Handle idea created immediately (for background processing)
+  // This updates editingIdea so that if user closes and reopens, we reconnect to the same idea
+  const handleIdeaCreated = useCallback((idea: Idea) => {
+    console.log('[Ideas] Idea created immediately:', idea.id);
+    setEditingIdea(idea);
+  }, []);
+
   // Whether delete is disabled (when overlay is open)
   const deleteDisabled = showOverlay;
 
@@ -281,6 +290,7 @@ export function Ideas() {
         onSuccess={handleIdeaSuccess}
         onStatusChange={handleStatusChange}
         onStartExecution={handleStartExecution}
+        onIdeaCreated={handleIdeaCreated}
       />
 
       {/* Loading indicator for idea fetch */}

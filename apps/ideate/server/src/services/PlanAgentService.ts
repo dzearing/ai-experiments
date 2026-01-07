@@ -6,7 +6,7 @@ import type { YjsCollaborationHandler } from '../websocket/YjsCollaborationHandl
 import type { IdeaPlan, PlanPhase } from './IdeaService.js';
 import type { DocumentEdit } from './IdeaAgentService.js';
 import { getClaudeDiagnosticsService } from '../routes/diagnostics.js';
-import type { AgentProgressCallbacks } from '../shared/agentProgress.js';
+import type { AgentProgressCallbacks, AgentProgressEvent } from '../shared/agentProgress.js';
 import { createStatusEvent } from '../shared/agentProgressUtils.js';
 import { ThingService, THING_TYPE_SCHEMAS } from './ThingService.js';
 import { createThingToolsMcpServer } from '../shared/thingToolsMcp.js';
@@ -17,6 +17,32 @@ import { createThingToolsMcpServer } from '../shared/thingToolsMcp.js';
 export interface TokenUsage {
   inputTokens: number;
   outputTokens: number;
+}
+
+/**
+ * Queued message for replay when client reconnects
+ */
+export interface PlanAgentQueuedMessage {
+  type: 'text_chunk' | 'plan_update' | 'message_complete' | 'error' | 'token_usage' | 'document_edit_start' | 'document_edit_end' | 'open_questions' | 'suggested_responses' | 'agent_progress';
+  data: unknown;
+  timestamp: number;
+  messageId?: string;
+}
+
+/**
+ * Session state for an idea's plan agent chat
+ */
+export interface PlanAgentSession {
+  ideaId: string;
+  userId: string;
+  status: 'idle' | 'running' | 'error';
+  startedAt?: number;
+  queuedMessages: PlanAgentQueuedMessage[];
+  clientConnected: boolean;
+  /** Current abort controller for the running operation */
+  currentAbortController?: AbortController;
+  /** Workspace ID for broadcasting state changes */
+  workspaceId?: string;
 }
 
 /**
@@ -236,11 +262,152 @@ export class PlanAgentService {
   private yjsClient: PlanAgentYjsClient | null = null;
   private thingService: ThingService;
 
+  // Session management for background execution
+  private activeSessions = new Map<string, PlanAgentSession>();
+  private clientCallbacks = new Map<string, PlanStreamCallbacks>();
+  private static MAX_QUEUED_MESSAGES = 500;
+  /** Callback for broadcasting session state changes to clients */
+  private onSessionStateChange?: (ideaId: string, status: 'idle' | 'running' | 'error', userId: string, workspaceId?: string) => void;
+
   constructor(yjsHandler?: YjsCollaborationHandler) {
     this.chatService = new PlanAgentChatService();
     this.thingService = new ThingService();
     if (yjsHandler) {
       this.yjsClient = new PlanAgentYjsClient(yjsHandler);
+    }
+  }
+
+  /**
+   * Set a callback to be called when session state changes.
+   * This allows the WebSocket handler to broadcast updates to clients.
+   */
+  setSessionStateChangeCallback(callback: (ideaId: string, status: 'idle' | 'running' | 'error', userId: string, workspaceId?: string) => void): void {
+    this.onSessionStateChange = callback;
+  }
+
+  /**
+   * Register a client's callbacks for receiving messages.
+   * Replays any queued messages from background execution.
+   */
+  registerClient(ideaId: string, callbacks: PlanStreamCallbacks, workspaceId?: string): void {
+    this.clientCallbacks.set(ideaId, callbacks);
+    let session = this.activeSessions.get(ideaId);
+    if (session) {
+      session.clientConnected = true;
+      // Update workspaceId if provided (needed for broadcasts)
+      if (workspaceId) {
+        session.workspaceId = workspaceId;
+      }
+      // Replay any queued messages
+      console.log(`[PlanAgentService] Client connected to idea ${ideaId}, replaying ${session.queuedMessages.length} queued messages`);
+      for (const msg of session.queuedMessages) {
+        this.dispatchMessage(msg, callbacks);
+      }
+      session.queuedMessages = [];
+    } else if (workspaceId) {
+      // Create a session to store workspaceId even if no active session yet
+      session = {
+        ideaId,
+        userId: '', // Will be updated when processMessage is called
+        status: 'idle',
+        queuedMessages: [],
+        clientConnected: true,
+        workspaceId,
+      };
+      this.activeSessions.set(ideaId, session);
+    }
+  }
+
+  /**
+   * Unregister a client's callbacks (when they disconnect).
+   * The session continues running - messages are queued for later replay.
+   */
+  unregisterClient(ideaId: string): void {
+    this.clientCallbacks.delete(ideaId);
+    const session = this.activeSessions.get(ideaId);
+    if (session) {
+      session.clientConnected = false;
+      console.log(`[PlanAgentService] Client disconnected from idea ${ideaId}, session continues in background`);
+    }
+  }
+
+  /**
+   * Get the current session for an idea (if any).
+   */
+  getSession(ideaId: string): PlanAgentSession | undefined {
+    return this.activeSessions.get(ideaId);
+  }
+
+  /**
+   * Abort the current session for an idea.
+   * Called when user presses Escape to explicitly cancel.
+   */
+  abortSession(ideaId: string): void {
+    const session = this.activeSessions.get(ideaId);
+    if (session?.currentAbortController) {
+      console.log(`[PlanAgentService] Aborting session for idea ${ideaId}`);
+      session.currentAbortController.abort();
+      session.status = 'idle';
+      session.currentAbortController = undefined;
+    }
+  }
+
+  /**
+   * Dispatch a message to the client or queue it for later.
+   */
+  private dispatchOrQueue(ideaId: string, message: PlanAgentQueuedMessage): void {
+    const callbacks = this.clientCallbacks.get(ideaId);
+    if (callbacks) {
+      this.dispatchMessage(message, callbacks);
+    } else {
+      const session = this.activeSessions.get(ideaId);
+      if (session) {
+        session.queuedMessages.push(message);
+        // Limit queue size to prevent memory issues
+        if (session.queuedMessages.length > PlanAgentService.MAX_QUEUED_MESSAGES * 2) {
+          session.queuedMessages = session.queuedMessages.slice(-PlanAgentService.MAX_QUEUED_MESSAGES);
+        }
+      }
+    }
+  }
+
+  /**
+   * Dispatch a queued message to the client callbacks.
+   */
+  private dispatchMessage(message: PlanAgentQueuedMessage, callbacks: PlanStreamCallbacks): void {
+    switch (message.type) {
+      case 'text_chunk': {
+        const { text, messageId } = message.data as { text: string; messageId: string };
+        callbacks.onTextChunk(text, messageId);
+        break;
+      }
+      case 'plan_update':
+        callbacks.onPlanUpdate(message.data as Partial<IdeaPlan>);
+        break;
+      case 'message_complete':
+        callbacks.onComplete(message.data as PlanAgentMessage);
+        break;
+      case 'error':
+        callbacks.onError(message.data as string);
+        break;
+      case 'token_usage':
+        callbacks.onTokenUsage?.(message.data as TokenUsage);
+        break;
+      case 'document_edit_start':
+        callbacks.onDocumentEditStart?.();
+        break;
+      case 'document_edit_end':
+        callbacks.onDocumentEditEnd?.();
+        break;
+      case 'open_questions':
+        callbacks.onOpenQuestions?.(message.data as OpenQuestion[]);
+        break;
+      case 'suggested_responses':
+        callbacks.onSuggestedResponses?.(message.data as SuggestedResponse[]);
+        break;
+      case 'agent_progress':
+        callbacks.onProgressEvent?.(message.data as AgentProgressEvent);
+        break;
     }
   }
 
@@ -423,6 +590,7 @@ Feel free to share any details, and I'll start building out the phases and tasks
    * Process a user message and stream the response via callbacks.
    * Streams chat text in real-time, buffers plan blocks, then calls onPlanUpdate.
    * Handles Implementation Plan document edits via Yjs if documentRoomName provided.
+   * Uses session management for background execution support.
    * @param isAutoStart - If true, skip saving the user message (used for server-initiated auto-start)
    * @param modelId - Optional model ID to use (defaults to claude-sonnet-4-5-20250929)
    */
@@ -431,11 +599,77 @@ Feel free to share any details, and I'll start building out the phases and tasks
     userId: string,
     content: string,
     ideaContext: PlanIdeaContext,
-    callbacks: PlanStreamCallbacks,
     documentRoomName?: string,
     isAutoStart = false,
     modelId?: string
   ): Promise<void> {
+    // Create or get session
+    let session = this.activeSessions.get(ideaId);
+    if (!session) {
+      session = {
+        ideaId,
+        userId,
+        status: 'idle',
+        queuedMessages: [],
+        clientConnected: this.clientCallbacks.has(ideaId),
+      };
+      this.activeSessions.set(ideaId, session);
+    }
+
+    // Create abort controller for this operation
+    const abortController = new AbortController();
+    session.currentAbortController = abortController;
+    session.status = 'running';
+    session.startedAt = Date.now();
+
+    // Broadcast state change
+    this.onSessionStateChange?.(ideaId, 'running', session.userId, session.workspaceId);
+
+    // Create local callbacks wrapper that uses dispatchOrQueue
+    // This allows messages to be queued if client disconnects during execution
+    const callbacks: PlanStreamCallbacks = {
+      onTextChunk: (text: string, msgId: string) => {
+        if (abortController.signal.aborted) return;
+        this.dispatchOrQueue(ideaId, { type: 'text_chunk', data: { text, messageId: msgId }, timestamp: Date.now(), messageId: msgId });
+      },
+      onPlanUpdate: (plan: Partial<IdeaPlan>) => {
+        if (abortController.signal.aborted) return;
+        this.dispatchOrQueue(ideaId, { type: 'plan_update', data: plan, timestamp: Date.now() });
+      },
+      onComplete: (message: PlanAgentMessage) => {
+        if (abortController.signal.aborted) return;
+        this.dispatchOrQueue(ideaId, { type: 'message_complete', data: message, timestamp: Date.now(), messageId: message.id });
+      },
+      onError: (error: string) => {
+        if (abortController.signal.aborted) return;
+        this.dispatchOrQueue(ideaId, { type: 'error', data: error, timestamp: Date.now() });
+      },
+      onTokenUsage: (usage: TokenUsage) => {
+        if (abortController.signal.aborted) return;
+        this.dispatchOrQueue(ideaId, { type: 'token_usage', data: usage, timestamp: Date.now() });
+      },
+      onDocumentEditStart: () => {
+        if (abortController.signal.aborted) return;
+        this.dispatchOrQueue(ideaId, { type: 'document_edit_start', data: null, timestamp: Date.now() });
+      },
+      onDocumentEditEnd: () => {
+        if (abortController.signal.aborted) return;
+        this.dispatchOrQueue(ideaId, { type: 'document_edit_end', data: null, timestamp: Date.now() });
+      },
+      onOpenQuestions: (questions: OpenQuestion[]) => {
+        if (abortController.signal.aborted) return;
+        this.dispatchOrQueue(ideaId, { type: 'open_questions', data: questions, timestamp: Date.now() });
+      },
+      onSuggestedResponses: (suggestions: SuggestedResponse[]) => {
+        if (abortController.signal.aborted) return;
+        this.dispatchOrQueue(ideaId, { type: 'suggested_responses', data: suggestions, timestamp: Date.now() });
+      },
+      onProgressEvent: (event: AgentProgressEvent) => {
+        if (abortController.signal.aborted) return;
+        this.dispatchOrQueue(ideaId, { type: 'agent_progress', data: event, timestamp: Date.now() });
+      },
+    };
+
     // Save the user message (unless this is an auto-start)
     if (!isAutoStart) {
       await this.chatService.addMessage(ideaId, userId, 'user', content);
@@ -730,7 +964,21 @@ Feel free to share any details, and I'll start building out the phases and tasks
       diagnosticsService.completeRequest(requestId);
 
       console.log(`[PlanAgentService] Completed response for idea ${ideaId} (${chatResponse.length} chars streamed)`);
+
+      // Update session status
+      session.status = 'idle';
+      session.currentAbortController = undefined;
+
+      // Broadcast state change
+      this.onSessionStateChange?.(ideaId, 'idle', session.userId, session.workspaceId);
     } catch (error) {
+      // Update session status on error
+      session.status = 'error';
+      session.currentAbortController = undefined;
+
+      // Broadcast state change
+      this.onSessionStateChange?.(ideaId, 'error', session.userId, session.workspaceId);
+
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('[PlanAgentService] Error processing message:', error);
 

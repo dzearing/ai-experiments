@@ -234,7 +234,7 @@ function formatToolDescription(name: string, input?: Record<string, unknown>): R
     case 'thing_search':
       return <>Searching for {input?.query ? bold(String(input.query)) : 'Things'}</>;
     case 'thing_create':
-      return <>Creating Thing {input?.name ? bold(String(input.name)) : ''}</>;
+      return <>Tracking new Thing: {input?.name ? bold(String(input.name)) : ''}</>;
     case 'thing_update':
       return <>Updating Thing {input?.name ? bold(String(input.name)) : ''}</>;
     case 'thing_delete':
@@ -242,10 +242,67 @@ function formatToolDescription(name: string, input?: Record<string, unknown>): R
     case 'thing_read_linked_files':
       return <>Reading linked files</>;
 
+    // Idea tools
+    case 'idea_create':
+      return <>Creating Idea: {input?.title ? bold(String(input.title)) : ''}</>;
+    case 'idea_list':
+      return <>Listing Ideas{input?.status ? <> ({String(input.status)})</> : ''}</>;
+    case 'idea_get':
+      return <>Getting Idea details</>;
+
+    // Navigation/UI action tools
+    case 'open_idea_workspace': {
+      // Try to extract idea name from initialGreeting (e.g., "I'm crafting an Idea for **Hello World App**!")
+      // Look for text between ** ** markers
+      if (input?.initialGreeting) {
+        const greetingStr = String(input.initialGreeting);
+        const boldMatch = greetingStr.match(/\*\*([^*]+)\*\*/);
+        if (boldMatch && boldMatch[1]) {
+          return <>Opening Idea: {bold(boldMatch[1])}</>;
+        }
+      }
+      // If existing idea by ID, just say "Opening Idea"
+      if (input?.ideaId) {
+        return <>Opening Idea</>;
+      }
+      // Fallback for new ideas without context
+      return <>Opening Idea workspace</>;
+    }
+    case 'navigate_to_thing':
+      return <>Navigating to Thing</>;
+    case 'close_facilitator':
+      return <>Closing assistant</>;
+
+    // File tools
+    case 'file_read':
+      return <>Reading {input?.path ? bold(getFileName(String(input.path))) : 'file'}</>;
+    case 'file_list':
+      return <>Listing {input?.path ? bold(getFileName(String(input.path))) : 'directory'}</>;
+
     default:
       // For unknown tools, format nicely: replace underscores with spaces, capitalize
       return <>{normalizedName.replace(/_/g, ' ')}</>;
   }
+}
+
+/**
+ * Determines whether a tool's output should be hidden from display.
+ * Some tools (like navigation actions) return internal JSON that isn't useful to show.
+ */
+function shouldHideToolOutput(name: string): boolean {
+  const normalizedName = normalizeMcpToolName(name);
+  const hiddenOutputTools = [
+    // Navigation/UI action tools - their outputs are internal JSON actions
+    'open_idea_workspace',
+    'navigate_to_thing',
+    'close_facilitator',
+    // Creation tools - output is verbose JSON, description is sufficient
+    'thing_create',
+    'idea_create',
+    'workspace_create',
+    'document_create',
+  ];
+  return hiddenOutputTools.includes(normalizedName);
 }
 
 /**
@@ -506,7 +563,7 @@ export function ChatMessage({
                           duration={toolCall.duration}
                         />
                       </div>
-                      {isComplete && outputText && (
+                      {isComplete && outputText && !shouldHideToolOutput(toolCall.name) && (
                         <div className={styles.toolResult}>
                           <pre className={styles.toolResultContent}>
                             {outputText.length > 200

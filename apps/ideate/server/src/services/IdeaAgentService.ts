@@ -15,6 +15,32 @@ interface GreetingCache {
 }
 
 /**
+ * Queued message for replay when client reconnects
+ */
+export interface IdeaAgentQueuedMessage {
+  type: 'text_chunk' | 'message_complete' | 'error' | 'document_edit_start' | 'document_edit_end' | 'token_usage' | 'open_questions' | 'suggested_responses' | 'agent_progress';
+  data: unknown;
+  timestamp: number;
+  messageId?: string;
+}
+
+/**
+ * Session state for an idea's agent chat
+ */
+export interface IdeaAgentSession {
+  ideaId: string;
+  userId: string;
+  status: 'idle' | 'running' | 'error';
+  startedAt?: number;
+  queuedMessages: IdeaAgentQueuedMessage[];
+  clientConnected: boolean;
+  /** Current abort controller for the running operation */
+  currentAbortController?: AbortController;
+  /** Workspace ID for broadcasting state changes */
+  workspaceId?: string;
+}
+
+/**
  * Thing context for contextual greetings
  */
 export interface ThingContext {
@@ -276,6 +302,7 @@ function createStatusEvent(displayText: string): AgentProgressEvent {
 /**
  * Service for orchestrating idea agent chat with Claude.
  * Handles message processing and streaming responses for idea development.
+ * Supports background execution - agents continue running when client disconnects.
  */
 export class IdeaAgentService {
   private chatService: IdeaAgentChatService;
@@ -284,10 +311,197 @@ export class IdeaAgentService {
   // Greeting cache for new ideas
   private newIdeaGreetingCache: GreetingCache | null = null;
 
+  // Session management for background execution
+  private activeSessions = new Map<string, IdeaAgentSession>();
+  private clientCallbacks = new Map<string, StreamCallbacks>();
+  private static MAX_QUEUED_MESSAGES = 500;
+  /** Mapping from old chatId to new chatId for session transfers */
+  private sessionTransfers = new Map<string, string>();
+  /** Callback for broadcasting session state changes to clients */
+  private onSessionStateChange?: (ideaId: string, status: 'idle' | 'running' | 'error', userId: string, workspaceId?: string) => void;
+
   constructor(yjsHandler?: YjsCollaborationHandler) {
     this.chatService = new IdeaAgentChatService();
     if (yjsHandler) {
       this.yjsClient = new IdeaAgentYjsClient(yjsHandler);
+    }
+  }
+
+  /**
+   * Set a callback to be called when session state changes.
+   * This allows the WebSocket handler to broadcast updates to clients.
+   */
+  setSessionStateChangeCallback(callback: (ideaId: string, status: 'idle' | 'running' | 'error', userId: string, workspaceId?: string) => void): void {
+    this.onSessionStateChange = callback;
+  }
+
+  /**
+   * Register a client's callbacks for receiving messages.
+   * Replays any queued messages from background execution.
+   * If transferFromChatId is provided, transfers the session from the old chatId to the new one.
+   */
+  registerClient(ideaId: string, callbacks: StreamCallbacks, workspaceId?: string, transferFromChatId?: string): void {
+    this.clientCallbacks.set(ideaId, callbacks);
+
+    // Check if we need to transfer a session from a previous chatId (e.g., temp room name → real ideaId)
+    if (transferFromChatId) {
+      const oldSession = this.activeSessions.get(transferFromChatId);
+      if (oldSession) {
+        console.log(`[IdeaAgentService] Transferring session from ${transferFromChatId} to ${ideaId}, status=${oldSession.status}`);
+
+        // Transfer the session to the new ideaId
+        oldSession.ideaId = ideaId;
+        if (workspaceId) {
+          oldSession.workspaceId = workspaceId;
+        }
+        oldSession.clientConnected = true;
+
+        // Move the session to the new key
+        this.activeSessions.delete(transferFromChatId);
+        this.activeSessions.set(ideaId, oldSession);
+
+        // Store transfer mapping so in-flight dispatches can follow
+        this.sessionTransfers.set(transferFromChatId, ideaId);
+
+        // Also move callbacks from old key if any
+        this.clientCallbacks.delete(transferFromChatId);
+
+        // If session was running, broadcast the status with the correct ideaId now
+        if (oldSession.status === 'running') {
+          console.log(`[IdeaAgentService] Session still running, broadcasting status for ${ideaId}`);
+          this.onSessionStateChange?.(ideaId, 'running', oldSession.userId, oldSession.workspaceId);
+        }
+
+        // Replay any queued messages
+        console.log(`[IdeaAgentService] Replaying ${oldSession.queuedMessages.length} queued messages for ${ideaId}`);
+        for (const msg of oldSession.queuedMessages) {
+          this.dispatchMessage(msg, callbacks);
+        }
+        oldSession.queuedMessages = [];
+        return;
+      } else {
+        console.log(`[IdeaAgentService] No session found at ${transferFromChatId} to transfer`);
+      }
+    }
+
+    let session = this.activeSessions.get(ideaId);
+    if (session) {
+      session.clientConnected = true;
+      // Update workspaceId if provided (needed for broadcasts)
+      if (workspaceId) {
+        session.workspaceId = workspaceId;
+      }
+      // Replay any queued messages
+      console.log(`[IdeaAgentService] Client connected to idea ${ideaId}, replaying ${session.queuedMessages.length} queued messages`);
+      for (const msg of session.queuedMessages) {
+        this.dispatchMessage(msg, callbacks);
+      }
+      session.queuedMessages = [];
+    } else if (workspaceId) {
+      // Create a session to store workspaceId even if no active session yet
+      session = {
+        ideaId,
+        userId: '', // Will be updated when processMessage is called
+        status: 'idle',
+        queuedMessages: [],
+        clientConnected: true,
+        workspaceId,
+      };
+      this.activeSessions.set(ideaId, session);
+    }
+  }
+
+  /**
+   * Unregister a client's callbacks (when they disconnect).
+   * The session continues running - messages are queued for later replay.
+   */
+  unregisterClient(ideaId: string): void {
+    this.clientCallbacks.delete(ideaId);
+    const session = this.activeSessions.get(ideaId);
+    if (session) {
+      session.clientConnected = false;
+      console.log(`[IdeaAgentService] Client disconnected from idea ${ideaId}, session continues in background`);
+    }
+  }
+
+  /**
+   * Get the current session for an idea (if any).
+   */
+  getSession(ideaId: string): IdeaAgentSession | undefined {
+    return this.activeSessions.get(ideaId);
+  }
+
+  /**
+   * Abort the current session for an idea.
+   * Called when user presses Escape to explicitly cancel.
+   */
+  abortSession(ideaId: string): void {
+    const session = this.activeSessions.get(ideaId);
+    if (session?.currentAbortController) {
+      console.log(`[IdeaAgentService] Aborting session for idea ${ideaId}`);
+      session.currentAbortController.abort();
+      session.status = 'idle';
+      session.currentAbortController = undefined;
+    }
+  }
+
+  /**
+   * Dispatch a message to the client or queue it for later.
+   * Follows session transfers to find the correct target.
+   */
+  private dispatchOrQueue(ideaId: string, message: IdeaAgentQueuedMessage): void {
+    // Follow any session transfer to find the current ideaId
+    const effectiveId = this.sessionTransfers.get(ideaId) || ideaId;
+
+    const callbacks = this.clientCallbacks.get(effectiveId);
+    if (callbacks) {
+      this.dispatchMessage(message, callbacks);
+    } else {
+      const session = this.activeSessions.get(effectiveId);
+      if (session) {
+        session.queuedMessages.push(message);
+        // Limit queue size to prevent memory issues
+        if (session.queuedMessages.length > IdeaAgentService.MAX_QUEUED_MESSAGES * 2) {
+          session.queuedMessages = session.queuedMessages.slice(-IdeaAgentService.MAX_QUEUED_MESSAGES);
+        }
+      }
+    }
+  }
+
+  /**
+   * Dispatch a queued message to the client callbacks.
+   */
+  private dispatchMessage(message: IdeaAgentQueuedMessage, callbacks: StreamCallbacks): void {
+    switch (message.type) {
+      case 'text_chunk': {
+        const { text, messageId } = message.data as { text: string; messageId: string };
+        callbacks.onTextChunk(text, messageId);
+        break;
+      }
+      case 'message_complete':
+        callbacks.onComplete(message.data as IdeaAgentMessage);
+        break;
+      case 'error':
+        callbacks.onError(message.data as string);
+        break;
+      case 'document_edit_start':
+        callbacks.onDocumentEditStart?.();
+        break;
+      case 'document_edit_end':
+        callbacks.onDocumentEditEnd?.();
+        break;
+      case 'token_usage':
+        callbacks.onTokenUsage?.(message.data as TokenUsage);
+        break;
+      case 'open_questions':
+        callbacks.onOpenQuestions?.(message.data as OpenQuestion[]);
+        break;
+      case 'suggested_responses':
+        callbacks.onSuggestedResponses?.(message.data as SuggestedResponse[]);
+        break;
+      case 'agent_progress':
+        callbacks.onProgressEvent?.(message.data as AgentProgressEvent);
+        break;
     }
   }
 
@@ -333,16 +547,80 @@ export class IdeaAgentService {
   /**
    * Process a user message and stream the response via callbacks.
    * Streams chat text in real-time, buffers edit blocks, then applies edits.
+   * Uses session management for background execution support.
    */
   async processMessage(
     ideaId: string,
     userId: string,
     content: string,
     ideaContext: IdeaContext,
-    callbacks: StreamCallbacks,
     documentRoomName?: string,
     modelId?: string
   ): Promise<void> {
+    // Create or get session
+    let session = this.activeSessions.get(ideaId);
+    if (!session) {
+      session = {
+        ideaId,
+        userId,
+        status: 'idle',
+        queuedMessages: [],
+        clientConnected: this.clientCallbacks.has(ideaId),
+      };
+      this.activeSessions.set(ideaId, session);
+    }
+
+    // Create abort controller for this operation
+    const abortController = new AbortController();
+    session.currentAbortController = abortController;
+    session.status = 'running';
+    session.startedAt = Date.now();
+
+    // Broadcast state change (use session.ideaId which is updated on transfer)
+    console.log(`[IdeaAgentService] Broadcasting state change: idea=${session.ideaId}, status=running, userId=${session.userId}, workspaceId=${session.workspaceId}`);
+    this.onSessionStateChange?.(session.ideaId, 'running', session.userId, session.workspaceId);
+
+    // Create local callbacks wrapper that uses dispatchOrQueue
+    // This allows messages to be queued if client disconnects during execution
+    const callbacks: StreamCallbacks = {
+      onTextChunk: (text: string, msgId: string) => {
+        if (abortController.signal.aborted) return;
+        this.dispatchOrQueue(ideaId, { type: 'text_chunk', data: { text, messageId: msgId }, timestamp: Date.now(), messageId: msgId });
+      },
+      onComplete: (message: IdeaAgentMessage) => {
+        if (abortController.signal.aborted) return;
+        this.dispatchOrQueue(ideaId, { type: 'message_complete', data: message, timestamp: Date.now(), messageId: message.id });
+      },
+      onError: (error: string) => {
+        if (abortController.signal.aborted) return;
+        this.dispatchOrQueue(ideaId, { type: 'error', data: error, timestamp: Date.now() });
+      },
+      onDocumentEditStart: () => {
+        if (abortController.signal.aborted) return;
+        this.dispatchOrQueue(ideaId, { type: 'document_edit_start', data: null, timestamp: Date.now() });
+      },
+      onDocumentEditEnd: () => {
+        if (abortController.signal.aborted) return;
+        this.dispatchOrQueue(ideaId, { type: 'document_edit_end', data: null, timestamp: Date.now() });
+      },
+      onTokenUsage: (usage: TokenUsage) => {
+        if (abortController.signal.aborted) return;
+        this.dispatchOrQueue(ideaId, { type: 'token_usage', data: usage, timestamp: Date.now() });
+      },
+      onOpenQuestions: (questions: OpenQuestion[]) => {
+        if (abortController.signal.aborted) return;
+        this.dispatchOrQueue(ideaId, { type: 'open_questions', data: questions, timestamp: Date.now() });
+      },
+      onSuggestedResponses: (suggestions: SuggestedResponse[]) => {
+        if (abortController.signal.aborted) return;
+        this.dispatchOrQueue(ideaId, { type: 'suggested_responses', data: suggestions, timestamp: Date.now() });
+      },
+      onProgressEvent: (event: AgentProgressEvent) => {
+        if (abortController.signal.aborted) return;
+        this.dispatchOrQueue(ideaId, { type: 'agent_progress', data: event, timestamp: Date.now() });
+      },
+    };
+
     // Save the user message
     await this.chatService.addMessage(ideaId, userId, 'user', content);
 
@@ -635,7 +913,23 @@ export class IdeaAgentService {
       });
 
       console.log(`[IdeaAgentService] Completed response for idea ${ideaId} (${chatResponse.length} chars streamed)`);
+
+      // Update session status
+      session.status = 'idle';
+      session.currentAbortController = undefined;
+
+      // Broadcast state change (use session.ideaId which is updated on transfer)
+      console.log(`[IdeaAgentService] Broadcasting state change: idea=${session.ideaId}, status=idle, userId=${session.userId}, workspaceId=${session.workspaceId}`);
+      this.onSessionStateChange?.(session.ideaId, 'idle', session.userId, session.workspaceId);
     } catch (error) {
+      // Update session status on error
+      session.status = 'error';
+      session.currentAbortController = undefined;
+
+      // Broadcast state change (use session.ideaId which is updated on transfer)
+      console.log(`[IdeaAgentService] Broadcasting state change: idea=${session.ideaId}, status=error, userId=${session.userId}, workspaceId=${session.workspaceId}`);
+      this.onSessionStateChange?.(session.ideaId, 'error', session.userId, session.workspaceId);
+
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('[IdeaAgentService] Error processing message:', error);
       callbacks.onError(errorMessage);

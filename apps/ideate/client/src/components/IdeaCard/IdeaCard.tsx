@@ -2,7 +2,6 @@ import { useCallback, useState, useEffect, type DragEvent, type KeyboardEvent } 
 import { Card, Chip, Progress, RelativeTime, Spinner } from '@ui-kit/react';
 import { StarIcon } from '@ui-kit/icons/StarIcon';
 import { ChatIcon } from '@ui-kit/icons/ChatIcon';
-import { ClockIcon } from '@ui-kit/icons/ClockIcon';
 import type { IdeaMetadata } from '../../types/idea';
 import styles from './IdeaCard.module.css';
 
@@ -51,6 +50,7 @@ export function IdeaCard({
     execution,
     plan,
     updatedAt,
+    agentStatus,
   } = idea;
 
   // Duration timer for executing ideas
@@ -79,7 +79,11 @@ export function IdeaCard({
   const hiddenTagCount = displayTags.length - MAX_VISIBLE_TAGS;
 
   const isExecuting = status === 'executing';
-  const isActivelyWorking = isExecuting && execution?.currentTaskId;
+
+  // Agent is running if:
+  // - agentStatus === 'running' (from IdeaAgent/PlanAgent broadcasts)
+  // - OR execution has a currentTaskId (ExecutionAgent is actively working)
+  const isAgentRunning = agentStatus === 'running' || (isExecuting && !!execution?.currentTaskId);
 
   // Get phase info for display
   const currentPhase = plan?.phases.find(p => p.id === execution?.currentPhaseId);
@@ -101,6 +105,9 @@ export function IdeaCard({
     }
   }, [onOpen]);
 
+  // Chip shows Running when agent is active
+  const isRunning = isAgentRunning;
+
   return (
     <Card
       className={`${styles.ideaCard} ${isSelected ? `${styles.selected} surface primary` : ''}`}
@@ -114,17 +121,24 @@ export function IdeaCard({
       draggable
       onDragStart={handleDragStart}
     >
+      {/* Status chip in top right corner */}
+      <div className={styles.statusChip}>
+        <Chip variant={isRunning ? 'success' : 'outline'} size="sm">
+          {isRunning ? 'Running' : 'Idle'}
+        </Chip>
+      </div>
+
       <div className={styles.cardInner}>
-        {/* Header with title and AI badge */}
-        <div className={styles.header}>
-          <h3 className={styles.title}>{title}</h3>
-          {source === 'ai' && (
-            <span className={styles.aiBadge} title="AI Generated">
-              <StarIcon />
-              <span>AI</span>
-            </span>
-          )}
-        </div>
+        {/* Title */}
+        <h3 className={styles.title}>{title}</h3>
+
+        {/* AI badge - below title, left aligned */}
+        {source === 'ai' && (
+          <span className={styles.aiBadge} title="AI Generated">
+            <StarIcon />
+            <span>AI</span>
+          </span>
+        )}
 
         {/* Summary */}
         {summary && (
@@ -161,7 +175,7 @@ export function IdeaCard({
               <div className={styles.progressBar}>
                 <Progress value={execution.progressPercent} size="sm" />
               </div>
-              {isActivelyWorking && <Spinner size="sm" />}
+              {isRunning && <Spinner size="sm" />}
             </div>
             <div className={styles.executionInfo}>
               {duration && <span className={styles.duration}>{duration}</span>}
@@ -169,12 +183,6 @@ export function IdeaCard({
                 <span className={styles.phaseInfo}>Phase {currentPhaseIndex}/{totalPhases}</span>
               )}
             </div>
-            {execution.waitingForFeedback && (
-              <div className={styles.waitState}>
-                <ClockIcon />
-                <span>Waiting for feedback</span>
-              </div>
-            )}
           </div>
         )}
 

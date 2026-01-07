@@ -178,7 +178,7 @@ facilitatorWss.on('connection', (ws, req) => {
 
 // Create WebSocket server for idea agent chat (JSON-based protocol)
 const ideaAgentWss = new WebSocketServer({ noServer: true });
-const ideaAgentHandler = new IdeaAgentWebSocketHandler(yjsHandler);
+const ideaAgentHandler = new IdeaAgentWebSocketHandler(yjsHandler, workspaceHandler);
 
 ideaAgentWss.on('connection', (ws, req) => {
   ideaAgentHandler.handleConnection(ws, req);
@@ -194,7 +194,7 @@ importWss.on('connection', (ws, req) => {
 
 // Create WebSocket server for plan agent chat (JSON-based protocol)
 const planAgentWss = new WebSocketServer({ noServer: true });
-const planAgentHandler = new PlanAgentWebSocketHandler(yjsHandler);
+const planAgentHandler = new PlanAgentWebSocketHandler(yjsHandler, workspaceHandler);
 
 planAgentWss.on('connection', (ws, req) => {
   planAgentHandler.handleConnection(ws, req);

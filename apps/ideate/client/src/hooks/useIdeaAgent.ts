@@ -97,6 +97,8 @@ export interface UseIdeaAgentOptions {
   enabled?: boolean;
   /** Model ID to use for the agent */
   modelId?: ModelId;
+  /** Workspace ID for broadcasting agent status */
+  workspaceId?: string;
 }
 
 /**
@@ -155,6 +157,7 @@ export function useIdeaAgent({
   onError,
   enabled = true,
   modelId,
+  workspaceId,
 }: UseIdeaAgentOptions): UseIdeaAgentReturn {
   const [messages, setMessages] = useState<IdeaAgentMessage[]>([]);
   const [isConnected, setIsConnected] = useState(false);
@@ -177,6 +180,7 @@ export function useIdeaAgent({
   const initialGreetingRef = useRef<string | undefined>(initialGreeting);
   const enabledRef = useRef(enabled);
   const modelIdRef = useRef<ModelId | undefined>(modelId);
+  const workspaceIdRef = useRef<string | undefined>(workspaceId);
 
   // Keep refs updated
   useEffect(() => {
@@ -191,9 +195,15 @@ export function useIdeaAgent({
     modelIdRef.current = modelId;
   }, [modelId]);
 
+  useEffect(() => {
+    workspaceIdRef.current = workspaceId;
+  }, [workspaceId]);
+
   // Track previous values to detect actual changes
   const prevIdeaIdRef = useRef<string | null>(null);
   const prevDocumentRoomNameRef = useRef<string | undefined>(undefined);
+  // Store previous document room name for session transfer when reconnecting
+  const transferFromRoomRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     documentRoomNameRef.current = documentRoomName;
@@ -239,6 +249,14 @@ export function useIdeaAgent({
     // Only reset if we had a previous value and it changed
     if (ideaIdChanged || roomNameChanged) {
       console.log('[IdeaAgent] Session changed, resetting state');
+
+      // Store the previous document room name for session transfer
+      // This allows the server to find the old session and transfer it
+      if (prevDocumentRoomNameRef.current) {
+        transferFromRoomRef.current = prevDocumentRoomNameRef.current;
+        console.log('[IdeaAgent] Will transfer session from:', prevDocumentRoomNameRef.current);
+      }
+
       setMessages([]);
       setError(null);
       setIsLoading(false);
@@ -291,9 +309,22 @@ export function useIdeaAgent({
       wsUrl += `&documentRoomName=${encodeURIComponent(documentRoomNameRef.current)}`;
     }
 
+    // Include previous document room name for session transfer
+    // This allows the server to transfer an existing session from the temp room
+    if (transferFromRoomRef.current) {
+      wsUrl += `&transferFromRoom=${encodeURIComponent(transferFromRoomRef.current)}`;
+      // Clear after including in URL - we only need to transfer once
+      transferFromRoomRef.current = undefined;
+    }
+
     // Include model preference
     if (modelIdRef.current) {
       wsUrl += `&modelId=${encodeURIComponent(modelIdRef.current)}`;
+    }
+
+    // Include workspace ID for broadcasting agent status
+    if (workspaceIdRef.current) {
+      wsUrl += `&workspaceId=${encodeURIComponent(workspaceIdRef.current)}`;
     }
 
     const ws = new WebSocket(wsUrl);

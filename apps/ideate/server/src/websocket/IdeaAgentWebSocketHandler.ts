@@ -1,9 +1,17 @@
 import type { RawData } from 'ws';
 import { WebSocket } from 'ws';
 import type { IncomingMessage } from 'http';
-import { IdeaAgentService, type IdeaContext } from '../services/IdeaAgentService.js';
+import {
+  IdeaAgentService,
+  type IdeaContext,
+  type StreamCallbacks,
+  type TokenUsage,
+  type OpenQuestion,
+  type SuggestedResponse,
+} from '../services/IdeaAgentService.js';
 import type { IdeaAgentMessage } from '../services/IdeaAgentChatService.js';
 import type { YjsCollaborationHandler } from './YjsCollaborationHandler.js';
+import type { WorkspaceWebSocketHandler } from './WorkspaceWebSocketHandler.js';
 import type { AgentProgressEvent } from '../shared/agentProgress.js';
 
 /**
@@ -19,30 +27,6 @@ interface ClientMessage {
   initialGreeting?: string;
   /** Model ID to use for this message */
   modelId?: string;
-}
-
-/**
- * Open question for the user to resolve
- */
-interface OpenQuestion {
-  id: string;
-  question: string;
-  context?: string;
-  selectionType: 'single' | 'multiple';
-  options: Array<{
-    id: string;
-    label: string;
-    description?: string;
-  }>;
-  allowCustom: boolean;
-}
-
-/**
- * Suggested response for the user to quickly reply
- */
-interface SuggestedResponse {
-  label: string;
-  message: string;
 }
 
 /**
@@ -84,14 +68,16 @@ interface IdeaAgentClient {
   clientId: number;
   /** Current idea context */
   ideaContext: IdeaContext | null;
-  /** Cancel flag for ongoing operations */
-  cancelled: boolean;
   /** Document room name for Yjs collaboration */
   documentRoomName: string | null;
   /** Initial greeting provided by the client (overrides generated greeting) */
   initialGreeting: string | null;
   /** Model ID to use for the agent */
   modelId: string | null;
+  /** Workspace ID for broadcasting state changes */
+  workspaceId: string | null;
+  /** Previous document room name for session transfer (when reconnecting after idea creation) */
+  transferFromRoom: string | null;
 }
 
 /**
@@ -115,13 +101,30 @@ export class IdeaAgentWebSocketHandler {
   private clientIdCounter = 0;
   private ideaAgentService: IdeaAgentService;
 
-  constructor(yjsHandler?: YjsCollaborationHandler) {
+  constructor(yjsHandler?: YjsCollaborationHandler, workspaceWsHandler?: WorkspaceWebSocketHandler) {
     this.ideaAgentService = new IdeaAgentService(yjsHandler);
+
+    // Set up callback to broadcast session state changes to clients
+    if (workspaceWsHandler) {
+      this.ideaAgentService.setSessionStateChangeCallback((ideaId, status, userId, workspaceId) => {
+        console.log(`[IdeaAgentWS] Received state change callback: idea=${ideaId}, status=${status}, userId=${userId}, workspaceId=${workspaceId}`);
+        // Broadcast to workspace subscribers AND to the owner's clients
+        // This ensures global ideas (no workspaceId) also receive updates
+        workspaceWsHandler.notifyIdeaUpdate(
+          ideaId,
+          userId,
+          workspaceId,
+          { id: ideaId, agentStatus: status }
+        );
+      });
+    } else {
+      console.log(`[IdeaAgentWS] No workspaceWsHandler provided, skipping callback setup`);
+    }
   }
 
   /**
    * Handle a new WebSocket connection.
-   * URL format: /idea-agent-ws?ideaId=xxx&userId=xxx&userName=xxx&documentRoomName=xxx&modelId=xxx
+   * URL format: /idea-agent-ws?ideaId=xxx&userId=xxx&userName=xxx&documentRoomName=xxx&modelId=xxx&workspaceId=xxx&transferFromRoom=xxx
    */
   handleConnection(ws: WebSocket, req: IncomingMessage): void {
     const url = new URL(req.url || '/', `http://${req.headers.host}`);
@@ -130,6 +133,8 @@ export class IdeaAgentWebSocketHandler {
     const userName = url.searchParams.get('userName') || 'Anonymous';
     const documentRoomName = url.searchParams.get('documentRoomName') || null;
     const modelId = url.searchParams.get('modelId') || null;
+    const workspaceId = url.searchParams.get('workspaceId') || null;
+    const transferFromRoom = url.searchParams.get('transferFromRoom') || null;
 
     // Use 'new' as the default ideaId for new ideas
     const effectiveIdeaId = ideaId || 'new';
@@ -148,14 +153,21 @@ export class IdeaAgentWebSocketHandler {
       userName,
       clientId,
       ideaContext: null,
-      cancelled: false,
       documentRoomName,
       initialGreeting: null,
       modelId,
+      workspaceId,
+      transferFromRoom,
     };
 
     this.clients.set(ws, client);
-    console.log(`[IdeaAgent] Client ${clientId} (${userName}) connected for idea ${effectiveIdeaId}`);
+    console.log(`[IdeaAgent] Client ${clientId} (${userName}) connected for idea ${effectiveIdeaId}${transferFromRoom ? ` (transferring from ${transferFromRoom})` : ''}`);
+
+    // Register this client with the service for message delivery
+    // This enables background execution - messages are delivered to client or queued
+    // If transferFromRoom is provided, the service will transfer the session from the old chatId
+    const chatId = getChatId(client);
+    this.ideaAgentService.registerClient(chatId, this.createCallbacks(client), workspaceId || undefined, transferFromRoom || undefined);
 
     // Set up WebSocket handlers
     ws.on('message', (data: RawData) => {
@@ -229,10 +241,12 @@ export class IdeaAgentWebSocketHandler {
             client.documentRoomName = clientMessage.documentRoomName;
           }
           break;
-        case 'cancel':
-          client.cancelled = true;
+        case 'cancel': {
+          const chatId = getChatId(client);
+          this.ideaAgentService.abortSession(chatId);
           console.log(`[IdeaAgent] Client ${client.clientId} cancelled current operation`);
           break;
+        }
         default:
           console.warn(`[IdeaAgent] Unknown message type: ${(clientMessage as ClientMessage).type}`);
       }
@@ -243,7 +257,73 @@ export class IdeaAgentWebSocketHandler {
   }
 
   /**
+   * Create callbacks for a client to receive streamed messages.
+   */
+  private createCallbacks(client: IdeaAgentClient): StreamCallbacks {
+    return {
+      onTextChunk: (text: string, messageId: string) => {
+        this.send(client.ws, {
+          type: 'text_chunk',
+          text,
+          messageId,
+        });
+      },
+      onComplete: (message: IdeaAgentMessage) => {
+        this.send(client.ws, {
+          type: 'message_complete',
+          messageId: message.id,
+          message,
+        });
+      },
+      onError: (error: string) => {
+        this.send(client.ws, {
+          type: 'error',
+          error,
+        });
+      },
+      onDocumentEditStart: () => {
+        this.send(client.ws, { type: 'document_edit_start' });
+      },
+      onDocumentEditEnd: () => {
+        this.send(client.ws, { type: 'document_edit_end' });
+      },
+      onTokenUsage: (usage: TokenUsage) => {
+        this.send(client.ws, {
+          type: 'token_usage',
+          usage: {
+            inputTokens: usage.inputTokens,
+            outputTokens: usage.outputTokens,
+          },
+        });
+      },
+      onOpenQuestions: (questions: OpenQuestion[]) => {
+        if (questions.length > 0) {
+          this.send(client.ws, {
+            type: 'open_questions',
+            questions,
+          });
+        }
+      },
+      onSuggestedResponses: (suggestions: SuggestedResponse[]) => {
+        if (suggestions.length > 0) {
+          this.send(client.ws, {
+            type: 'suggested_responses',
+            suggestions,
+          });
+        }
+      },
+      onProgressEvent: (event: AgentProgressEvent) => {
+        this.send(client.ws, {
+          type: 'agent_progress',
+          event,
+        });
+      },
+    };
+  }
+
+  /**
    * Handle a chat message from a client.
+   * Messages are processed by the IdeaAgentService which manages background execution.
    */
   private async handleChatMessage(client: IdeaAgentClient, content: string): Promise<void> {
     if (!content.trim()) return;
@@ -253,87 +333,15 @@ export class IdeaAgentWebSocketHandler {
       return;
     }
 
-    // Reset cancel flag
-    client.cancelled = false;
-
     try {
       const chatId = getChatId(client);
+      // Process message - callbacks are registered at connection time
+      // Service handles abort signals internally via session management
       await this.ideaAgentService.processMessage(
         chatId,
         client.userId,
         content.trim(),
         client.ideaContext,
-        {
-          onTextChunk: (text, messageId) => {
-            if (!client.cancelled) {
-              this.send(client.ws, {
-                type: 'text_chunk',
-                text,
-                messageId,
-              });
-            }
-          },
-          onComplete: (message) => {
-            if (!client.cancelled) {
-              this.send(client.ws, {
-                type: 'message_complete',
-                messageId: message.id,
-                message,
-              });
-            }
-          },
-          onError: (error) => {
-            this.send(client.ws, {
-              type: 'error',
-              error,
-            });
-          },
-          onDocumentEditStart: () => {
-            if (!client.cancelled) {
-              this.send(client.ws, { type: 'document_edit_start' });
-            }
-          },
-          onDocumentEditEnd: () => {
-            if (!client.cancelled) {
-              this.send(client.ws, { type: 'document_edit_end' });
-            }
-          },
-          onTokenUsage: (usage) => {
-            if (!client.cancelled) {
-              this.send(client.ws, {
-                type: 'token_usage',
-                usage: {
-                  inputTokens: usage.inputTokens,
-                  outputTokens: usage.outputTokens,
-                },
-              });
-            }
-          },
-          onOpenQuestions: (questions) => {
-            if (!client.cancelled && questions.length > 0) {
-              this.send(client.ws, {
-                type: 'open_questions',
-                questions,
-              });
-            }
-          },
-          onSuggestedResponses: (suggestions) => {
-            if (!client.cancelled && suggestions.length > 0) {
-              this.send(client.ws, {
-                type: 'suggested_responses',
-                suggestions,
-              });
-            }
-          },
-          onProgressEvent: (event) => {
-            if (!client.cancelled) {
-              this.send(client.ws, {
-                type: 'agent_progress',
-                event,
-              });
-            }
-          },
-        },
         client.documentRoomName || undefined,
         client.modelId || undefined
       );
@@ -440,10 +448,15 @@ export class IdeaAgentWebSocketHandler {
 
   /**
    * Handle client disconnect.
+   * Unregisters callback but does NOT abort - session continues running in background.
+   * Messages will be queued for replay when client reconnects.
    */
   private handleDisconnect(client: IdeaAgentClient): void {
+    // Unregister callbacks - session continues running, messages are queued
+    const chatId = getChatId(client);
+    this.ideaAgentService.unregisterClient(chatId);
     this.clients.delete(client.ws);
-    console.log(`[IdeaAgent] Client ${client.clientId} (${client.userName}) disconnected`);
+    console.log(`[IdeaAgent] Client ${client.clientId} (${client.userName}) disconnected - session continues in background`);
   }
 
   /**

@@ -402,6 +402,11 @@ Begin executing these tasks in order. Report progress after each task completion
       if (session.status !== 'blocked') {
         session.status = 'completed';
         this.dispatchOrQueue(ideaId, { type: 'complete', data: null, timestamp: Date.now() });
+        // Mark as waiting for feedback so the Kanban card shows the appropriate indicator
+        const completedIdea = await this.ideaService.updateExecutionStateInternal(ideaId, { waitingForFeedback: true });
+        if (completedIdea && this.onExecutionStateChange) {
+          this.onExecutionStateChange(ideaId, completedIdea);
+        }
       }
 
       console.log(`[ExecutionAgentService] Completed execution of phase ${phaseId}`);

@@ -1,10 +1,17 @@
 import type { RawData } from 'ws';
 import { WebSocket } from 'ws';
 import type { IncomingMessage } from 'http';
-import { PlanAgentService, type OpenQuestion, type SuggestedResponse } from '../services/PlanAgentService.js';
+import {
+  PlanAgentService,
+  type OpenQuestion,
+  type SuggestedResponse,
+  type PlanStreamCallbacks,
+  type TokenUsage,
+} from '../services/PlanAgentService.js';
 import type { PlanAgentMessage } from '../services/PlanAgentChatService.js';
 import type { PlanIdeaContext } from '../prompts/planAgentPrompt.js';
 import type { YjsCollaborationHandler } from './YjsCollaborationHandler.js';
+import type { WorkspaceWebSocketHandler } from './WorkspaceWebSocketHandler.js';
 import { IdeaService, type IdeaPlan } from '../services/IdeaService.js';
 import type { AgentProgressEvent } from '../shared/agentProgress.js';
 
@@ -64,8 +71,6 @@ interface PlanAgentClient {
   ideaContext: PlanIdeaContext | null;
   /** Document room name for Implementation Plan Yjs collaboration */
   documentRoomName: string | null;
-  /** Cancel flag for ongoing operations */
-  cancelled: boolean;
   /** Whether the client's Yjs connection is ready */
   yjsReady: boolean;
   /** Pending auto-start function to execute when Yjs is ready */
@@ -74,6 +79,8 @@ interface PlanAgentClient {
   pendingOpenQuestions: OpenQuestion[] | null;
   /** Model ID to use for the agent */
   modelId: string | null;
+  /** Workspace ID for broadcasting state changes */
+  workspaceId: string | null;
 }
 
 /**
@@ -88,14 +95,28 @@ export class PlanAgentWebSocketHandler {
   /** Pending open questions per idea ID - survives reconnects */
   private pendingQuestionsByIdea: Map<string, OpenQuestion[]> = new Map();
 
-  constructor(yjsHandler: YjsCollaborationHandler) {
+  constructor(yjsHandler: YjsCollaborationHandler, workspaceWsHandler?: WorkspaceWebSocketHandler) {
     this.planAgentService = new PlanAgentService(yjsHandler);
     this.ideaService = new IdeaService();
+
+    // Set up callback to broadcast session state changes to clients
+    if (workspaceWsHandler) {
+      this.planAgentService.setSessionStateChangeCallback((ideaId, status, userId, workspaceId) => {
+        // Broadcast to workspace subscribers AND to the owner's clients
+        // This ensures global ideas (no workspaceId) also receive updates
+        workspaceWsHandler.notifyIdeaUpdate(
+          ideaId,
+          userId,
+          workspaceId,
+          { id: ideaId, agentStatus: status }
+        );
+      });
+    }
   }
 
   /**
    * Handle a new WebSocket connection.
-   * URL format: /plan-agent-ws?ideaId=xxx&userId=xxx&userName=xxx&modelId=xxx
+   * URL format: /plan-agent-ws?ideaId=xxx&userId=xxx&userName=xxx&modelId=xxx&workspaceId=xxx
    */
   handleConnection(ws: WebSocket, req: IncomingMessage): void {
     const url = new URL(req.url || '/', `http://${req.headers.host}`);
@@ -103,6 +124,7 @@ export class PlanAgentWebSocketHandler {
     const userId = url.searchParams.get('userId') || '';
     const userName = url.searchParams.get('userName') || 'Anonymous';
     const modelId = url.searchParams.get('modelId') || null;
+    const workspaceId = url.searchParams.get('workspaceId') || null;
 
     if (!ideaId || !userId) {
       ws.close(4000, 'Idea ID and User ID are required');
@@ -119,15 +141,19 @@ export class PlanAgentWebSocketHandler {
       clientId,
       ideaContext: null,
       documentRoomName: null,
-      cancelled: false,
       yjsReady: false,
       pendingAutoStart: null,
       pendingOpenQuestions: null,
       modelId,
+      workspaceId,
     };
 
     this.clients.set(ws, client);
     console.log(`[PlanAgent] Client ${clientId} (${userName}) connected for idea ${ideaId}`);
+
+    // Register this client with the service for message delivery
+    // This enables background execution - messages are delivered to client or queued
+    this.planAgentService.registerClient(ideaId, this.createCallbacks(client), workspaceId || undefined);
 
     // Set up WebSocket handlers
     ws.on('message', (data: RawData) => {
@@ -192,7 +218,7 @@ export class PlanAgentWebSocketHandler {
           }
           break;
         case 'cancel':
-          client.cancelled = true;
+          this.planAgentService.abortSession(client.ideaId);
           console.log(`[PlanAgent] Client ${client.clientId} cancelled current operation`);
           break;
         case 'yjs_ready':
@@ -208,11 +234,11 @@ export class PlanAgentWebSocketHandler {
             const autoStart = client.pendingAutoStart;
             client.pendingAutoStart = null;
             setTimeout(async () => {
-              if (client.ws.readyState === client.ws.OPEN && !client.cancelled) {
+              if (client.ws.readyState === client.ws.OPEN) {
                 console.log(`[PlanAgent] Executing pending auto-start for client ${client.clientId}`);
                 await autoStart();
               } else {
-                console.log(`[PlanAgent] Skipping auto-start: ws closed or cancelled`);
+                console.log(`[PlanAgent] Skipping auto-start: ws closed`);
               }
             }, 300);
           }
@@ -227,7 +253,90 @@ export class PlanAgentWebSocketHandler {
   }
 
   /**
+   * Create callbacks for a client to receive streamed messages.
+   */
+  private createCallbacks(client: PlanAgentClient): PlanStreamCallbacks {
+    return {
+      onTextChunk: (text: string, messageId: string) => {
+        this.send(client.ws, {
+          type: 'text_chunk',
+          text,
+          messageId,
+        });
+      },
+      onPlanUpdate: async (plan: Partial<IdeaPlan>) => {
+        // Save plan to persistent storage
+        try {
+          await this.ideaService.updatePlan(client.ideaId, client.userId, plan);
+          console.log(`[PlanAgentWS] Saved plan for idea ${client.ideaId} with ${plan.phases?.length || 0} phases`);
+        } catch (err) {
+          console.error(`[PlanAgentWS] Failed to save plan for idea ${client.ideaId}:`, err);
+        }
+
+        // Send to client
+        this.send(client.ws, {
+          type: 'plan_update',
+          plan,
+        });
+      },
+      onComplete: (message: PlanAgentMessage) => {
+        this.send(client.ws, {
+          type: 'message_complete',
+          messageId: message.id,
+          message,
+        });
+      },
+      onError: (error: string) => {
+        this.send(client.ws, {
+          type: 'error',
+          error,
+        });
+      },
+      onTokenUsage: (usage: TokenUsage) => {
+        this.send(client.ws, {
+          type: 'token_usage',
+          usage: {
+            inputTokens: usage.inputTokens,
+            outputTokens: usage.outputTokens,
+          },
+        });
+      },
+      onDocumentEditStart: () => {
+        this.send(client.ws, { type: 'document_edit_start' });
+      },
+      onDocumentEditEnd: () => {
+        this.send(client.ws, { type: 'document_edit_end' });
+      },
+      onOpenQuestions: (questions: OpenQuestion[]) => {
+        // Store questions so they survive reconnects
+        this.pendingQuestionsByIdea.set(client.ideaId, questions);
+        client.pendingOpenQuestions = questions;
+        console.log(`[PlanAgent] Stored ${questions.length} open questions for idea ${client.ideaId}`);
+        this.send(client.ws, {
+          type: 'open_questions',
+          questions,
+        });
+      },
+      onSuggestedResponses: (suggestions: SuggestedResponse[]) => {
+        if (suggestions.length > 0) {
+          this.send(client.ws, {
+            type: 'suggested_responses',
+            suggestions,
+          });
+        }
+      },
+      onProgressEvent: (event: AgentProgressEvent) => {
+        this.send(client.ws, {
+          type: 'agent_progress',
+          event,
+        });
+      },
+    };
+  }
+
+  /**
    * Handle a chat message from a client.
+   * Messages are processed by the PlanAgentService which manages background execution.
    * @param isAutoStart - If true, this is an auto-start message that shouldn't be saved to history
    */
   private async handleChatMessage(client: PlanAgentClient, content: string, isAutoStart = false): Promise<void> {
@@ -239,9 +348,6 @@ export class PlanAgentWebSocketHandler {
       return;
     }
 
-    // Reset cancel flag
-    client.cancelled = false;
-
     // Clear pending questions when user sends a message (they've responded)
     if (client.pendingOpenQuestions || this.pendingQuestionsByIdea.has(client.ideaId)) {
       console.log(`[PlanAgent] Clearing pending questions for idea ${client.ideaId} (user responded)`);
@@ -250,107 +356,13 @@ export class PlanAgentWebSocketHandler {
     }
 
     try {
+      // Process message - callbacks are registered at connection time
+      // Service handles abort signals internally via session management
       await this.planAgentService.processMessage(
         client.ideaId,
         client.userId,
         content.trim(),
         client.ideaContext,
-        {
-          onTextChunk: (text, messageId) => {
-            if (!client.cancelled) {
-              this.send(client.ws, {
-                type: 'text_chunk',
-                text,
-                messageId,
-              });
-            }
-          },
-          onPlanUpdate: async (plan) => {
-            if (!client.cancelled) {
-              // Save plan to persistent storage
-              try {
-                await this.ideaService.updatePlan(client.ideaId, client.userId, plan);
-                console.log(`[PlanAgentWS] Saved plan for idea ${client.ideaId} with ${plan.phases?.length || 0} phases`);
-              } catch (err) {
-                console.error(`[PlanAgentWS] Failed to save plan for idea ${client.ideaId}:`, err);
-              }
-
-              // Send to client
-              this.send(client.ws, {
-                type: 'plan_update',
-                plan,
-              });
-            }
-          },
-          onComplete: (message) => {
-            if (!client.cancelled) {
-              this.send(client.ws, {
-                type: 'message_complete',
-                messageId: message.id,
-                message,
-              });
-            }
-          },
-          onError: (error) => {
-            this.send(client.ws, {
-              type: 'error',
-              error,
-            });
-          },
-          onTokenUsage: (usage) => {
-            if (!client.cancelled) {
-              this.send(client.ws, {
-                type: 'token_usage',
-                usage: {
-                  inputTokens: usage.inputTokens,
-                  outputTokens: usage.outputTokens,
-                },
-              });
-            }
-          },
-          onDocumentEditStart: () => {
-            if (!client.cancelled) {
-              this.send(client.ws, {
-                type: 'document_edit_start',
-              });
-            }
-          },
-          onDocumentEditEnd: () => {
-            if (!client.cancelled) {
-              this.send(client.ws, {
-                type: 'document_edit_end',
-              });
-            }
-          },
-          onOpenQuestions: (questions) => {
-            if (!client.cancelled) {
-              // Store questions so they survive reconnects
-              this.pendingQuestionsByIdea.set(client.ideaId, questions);
-              client.pendingOpenQuestions = questions;
-              console.log(`[PlanAgent] Stored ${questions.length} open questions for idea ${client.ideaId}`);
-              this.send(client.ws, {
-                type: 'open_questions',
-                questions,
-              });
-            }
-          },
-          onSuggestedResponses: (suggestions) => {
-            if (!client.cancelled && suggestions.length > 0) {
-              this.send(client.ws, {
-                type: 'suggested_responses',
-                suggestions,
-              });
-            }
-          },
-          onProgressEvent: (event) => {
-            if (!client.cancelled) {
-              this.send(client.ws, {
-                type: 'agent_progress',
-                event,
-              });
-            }
-          },
-        },
         client.documentRoomName || undefined,
         isAutoStart,  // Skip saving user message for auto-start
         client.modelId || undefined
@@ -413,8 +425,8 @@ export class PlanAgentWebSocketHandler {
 
         // Define the auto-start function
         const executeAutoStart = async () => {
-          if (client.ws.readyState !== client.ws.OPEN || client.cancelled) {
-            console.log(`[PlanAgent] Skipping auto-start: ws closed or cancelled`);
+          if (client.ws.readyState !== client.ws.OPEN) {
+            console.log(`[PlanAgent] Skipping auto-start: ws closed`);
             return;
           }
 
@@ -446,10 +458,14 @@ export class PlanAgentWebSocketHandler {
 
   /**
    * Handle client disconnect.
+   * Unregisters callback but does NOT abort - session continues running in background.
+   * Messages will be queued for replay when client reconnects.
    */
   private handleDisconnect(client: PlanAgentClient): void {
+    // Unregister callbacks - session continues running, messages are queued
+    this.planAgentService.unregisterClient(client.ideaId);
     this.clients.delete(client.ws);
-    console.log(`[PlanAgent] Client ${client.clientId} (${client.userName}) disconnected`);
+    console.log(`[PlanAgent] Client ${client.clientId} (${client.userName}) disconnected - session continues in background`);
   }
 
   /**

@@ -7,7 +7,9 @@ import { DelayedSpinner } from '../DelayedSpinner';
 import { IdeaDialog, type ThingContext, type WorkspacePhase } from '../IdeaDialog';
 import { useThingIdeas } from '../../hooks/useThingIdeas';
 import { useIdeas } from '../../contexts/IdeasContext';
-import type { Idea } from '../../types/idea';
+import { useSession } from '../../contexts/SessionContext';
+import { useWorkspaceSocket, type ResourceType } from '../../hooks/useWorkspaceSocket';
+import type { Idea, IdeaMetadata } from '../../types/idea';
 import styles from './ThingIdeas.module.css';
 
 // Debug: track component mount/unmount
@@ -39,8 +41,54 @@ export function ThingIdeas({ thingId, thingName, thingType, thingDescription, wo
     };
   }, []); // Only run on mount/unmount
 
-  const { ideasByStatus, isLoading, error, moveIdea, deleteIdea, refetch } = useThingIdeas(thingId, workspaceId);
+  const { session } = useSession();
+  const { ideasByStatus, isLoading, error, moveIdea, deleteIdea, refetch, updateIdea, addIdea, removeIdea } = useThingIdeas(thingId, workspaceId);
   const { getIdea } = useIdeas();
+
+  // WebSocket handlers for real-time updates (e.g., agentStatus changes)
+  const handleResourceCreated = useCallback((
+    _resourceId: string,
+    resourceType: ResourceType,
+    data: unknown
+  ) => {
+    if (resourceType === 'idea') {
+      const idea = data as IdeaMetadata;
+      // Only add if this idea belongs to this Thing
+      if (idea.thingIds?.includes(thingId)) {
+        addIdea(idea);
+      }
+    }
+  }, [addIdea, thingId]);
+
+  const handleResourceUpdated = useCallback((
+    _resourceId: string,
+    resourceType: ResourceType,
+    data: unknown
+  ) => {
+    if (resourceType === 'idea') {
+      const update = data as Partial<IdeaMetadata> & { id: string };
+      // Merge the update (handles agentStatus, summary, title changes, etc.)
+      updateIdea(update.id, update);
+    }
+  }, [updateIdea]);
+
+  const handleResourceDeleted = useCallback((
+    resourceId: string,
+    resourceType: ResourceType
+  ) => {
+    if (resourceType === 'idea') {
+      removeIdea(resourceId);
+    }
+  }, [removeIdea]);
+
+  // Connect to workspace WebSocket for real-time updates
+  useWorkspaceSocket({
+    workspaceId,
+    sessionColor: session?.color,
+    onResourceCreated: handleResourceCreated,
+    onResourceUpdated: handleResourceUpdated,
+    onResourceDeleted: handleResourceDeleted,
+  });
 
   // Build Thing context for contextual greetings
   const thingContext: ThingContext = useMemo(() => ({
@@ -167,6 +215,16 @@ export function ThingIdeas({ thingId, thingName, thingType, thingDescription, wo
     // Kanban will be updated via WebSocket or when overlay closes
   }, [overlayOpen]);
 
+  // Handle idea created immediately (for background processing tracking)
+  // IMPORTANT: Do NOT call refetch() here - it sets isLoading=true which causes
+  // the early return and unmounts the dialog. Use addIdea() instead.
+  const handleIdeaCreated = useCallback((idea: Idea) => {
+    console.log(`[ThingIdeas #${instanceId.current}] Idea created immediately:`, idea.id);
+    setSelectedIdea(idea);
+    // Add to kanban immediately without triggering loading state
+    addIdea(idea);
+  }, [addIdea]);
+
   // Total ideas count
   const totalIdeas = Object.values(ideasByStatus).reduce((sum, ideas) => sum + ideas.length, 0);
 
@@ -219,6 +277,7 @@ export function ThingIdeas({ thingId, thingName, thingType, thingDescription, wo
           workspaceId={workspaceId}
           onSuccess={handleIdeaSuccess}
           onStatusChange={handleStatusChange}
+          onIdeaCreated={handleIdeaCreated}
           initialThingIds={isCreating ? [thingId] : undefined}
           initialThingContext={isCreating ? thingContext : undefined}
           initialPrompt={isCreating ? initialPrompt : undefined}

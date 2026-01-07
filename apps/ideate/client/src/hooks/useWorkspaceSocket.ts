@@ -103,7 +103,8 @@ export function useWorkspaceSocket({
     const currentWorkspaceId = workspaceIdRef.current;
     const currentSessionColor = sessionColorRef.current;
 
-    if (!currentWorkspaceId || !currentUser) return;
+    // Only require user - workspaceId is optional (for user-scoped broadcasts)
+    if (!currentUser) return;
 
     // Prevent duplicate connection attempts
     if (isConnectingRef.current) {
@@ -133,15 +134,17 @@ export function useWorkspaceSocket({
     wsRef.current = ws;
 
     ws.onopen = () => {
-      console.log('[WorkspaceWS] Connected to workspace:', currentWorkspaceId);
+      console.log('[WorkspaceWS] Connected', currentWorkspaceId ? `to workspace: ${currentWorkspaceId}` : '(user-scoped only)');
       isConnectingRef.current = false;
       setIsConnected(true);
 
-      // Subscribe to workspace
-      ws.send(JSON.stringify({
-        type: 'subscribe',
-        workspaceId: currentWorkspaceId,
-      }));
+      // Subscribe to workspace if specified
+      if (currentWorkspaceId) {
+        ws.send(JSON.stringify({
+          type: 'subscribe',
+          workspaceId: currentWorkspaceId,
+        }));
+      }
     };
 
     ws.onmessage = (event) => {
@@ -166,7 +169,8 @@ export function useWorkspaceSocket({
       wsRef.current = null;
 
       // Only attempt to reconnect if this wasn't an intentional cleanup
-      if (!isCleaningUpRef.current && workspaceIdRef.current && userRef.current) {
+      // Note: workspaceId is optional - we reconnect for user-scoped broadcasts
+      if (!isCleaningUpRef.current && userRef.current) {
         reconnectTimeoutRef.current = window.setTimeout(() => {
           console.log('[WorkspaceWS] Attempting to reconnect...');
           connect();
@@ -277,9 +281,10 @@ export function useWorkspaceSocket({
   }, []);
 
   // Connect when workspaceId or userId changes (using primitives, not object references)
+  // Note: workspaceId is optional - we connect for user-scoped broadcasts even without it
   const userId = user?.id;
   useEffect(() => {
-    if (workspaceId && userId) {
+    if (userId) {
       connect();
     }
 

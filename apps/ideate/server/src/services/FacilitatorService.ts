@@ -6,7 +6,7 @@ import {
   type SDKPartialAssistantMessage,
   type SDKMessage,
 } from '@anthropic-ai/claude-agent-sdk';
-import type { AgentProgressCallbacks } from '../shared/agentProgress.js';
+import type { AgentProgressCallbacks, AgentProgressEvent } from '../shared/agentProgress.js';
 import { createHash } from 'crypto';
 import { tmpdir } from 'os';
 import { readFile } from 'fs/promises';
@@ -29,6 +29,29 @@ export interface OpenQuestion {
   selectionType: 'single' | 'multiple';
   options: Array<{ id: string; label: string; description?: string }>;
   allowCustom: boolean;
+}
+
+/**
+ * Queued message for replay when client reconnects
+ */
+export interface FacilitatorQueuedMessage {
+  type: 'text_chunk' | 'tool_use' | 'tool_result' | 'message_complete' | 'error' | 'open_questions' | 'agent_progress';
+  data: unknown;
+  timestamp: number;
+  messageId?: string;
+}
+
+/**
+ * Session state for a user's facilitator chat
+ */
+export interface FacilitatorSession {
+  userId: string;
+  status: 'idle' | 'running' | 'error';
+  startedAt?: number;
+  queuedMessages: FacilitatorQueuedMessage[];
+  clientConnected: boolean;
+  /** Current abort controller for the running operation */
+  currentAbortController?: AbortController;
 }
 
 /**
@@ -172,11 +195,128 @@ export class FacilitatorService {
   // Isolated working directory to prevent loading CLAUDE.md from monorepo
   private static ISOLATED_CWD = tmpdir();
 
+  // Session management for background execution
+  private activeSessions = new Map<string, FacilitatorSession>();
+  private clientCallbacks = new Map<string, StreamCallbacks>();
+  private static MAX_QUEUED_MESSAGES = 500;
+
   constructor() {
     this.personaService = new PersonaService();
     this.chatService = new FacilitatorChatService();
     this.toolsService = new MCPToolsService();
     this.thingService = new ThingService();
+  }
+
+  /**
+   * Register a client to receive streaming callbacks.
+   * Replays any queued messages from background execution.
+   */
+  registerClient(userId: string, callbacks: StreamCallbacks): void {
+    this.clientCallbacks.set(userId, callbacks);
+    const session = this.activeSessions.get(userId);
+    if (session) {
+      session.clientConnected = true;
+      // Replay queued messages
+      for (const msg of session.queuedMessages) {
+        this.dispatchMessage(msg, callbacks);
+      }
+      session.queuedMessages = [];
+    }
+  }
+
+  /**
+   * Unregister a client (e.g., on disconnect).
+   * The session continues running - messages are queued for later replay.
+   */
+  unregisterClient(userId: string): void {
+    this.clientCallbacks.delete(userId);
+    const session = this.activeSessions.get(userId);
+    if (session) {
+      session.clientConnected = false;
+    }
+  }
+
+  /**
+   * Get the current session for a user, if any.
+   */
+  getSession(userId: string): FacilitatorSession | undefined {
+    return this.activeSessions.get(userId);
+  }
+
+  /**
+   * Abort the current operation for a user.
+   * Called when user presses Escape to explicitly cancel.
+   */
+  abortSession(userId: string): void {
+    const session = this.activeSessions.get(userId);
+    if (session?.currentAbortController) {
+      console.log(`[FacilitatorService] Aborting session for user ${userId}`);
+      session.currentAbortController.abort();
+      session.currentAbortController = undefined;
+      session.status = 'idle';
+    }
+  }
+
+  /**
+   * Dispatch a message to client if connected, or queue for later replay.
+   */
+  private dispatchOrQueue(userId: string, message: FacilitatorQueuedMessage): void {
+    const callbacks = this.clientCallbacks.get(userId);
+    if (callbacks) {
+      this.dispatchMessage(message, callbacks);
+    } else {
+      const session = this.activeSessions.get(userId);
+      if (session) {
+        session.queuedMessages.push(message);
+        // Prevent unbounded memory growth
+        if (session.queuedMessages.length > FacilitatorService.MAX_QUEUED_MESSAGES * 2) {
+          session.queuedMessages = session.queuedMessages.slice(-FacilitatorService.MAX_QUEUED_MESSAGES);
+        }
+      }
+    }
+  }
+
+  /**
+   * Dispatch a queued message to the client callbacks.
+   */
+  private dispatchMessage(message: FacilitatorQueuedMessage, callbacks: StreamCallbacks): void {
+    switch (message.type) {
+      case 'text_chunk': {
+        const data = message.data as { text: string; messageId: string };
+        callbacks.onTextChunk(data.text, data.messageId);
+        break;
+      }
+      case 'tool_use': {
+        const data = message.data as { name: string; input: Record<string, unknown>; messageId: string };
+        callbacks.onToolUse({ name: data.name, input: data.input, messageId: data.messageId });
+        break;
+      }
+      case 'tool_result': {
+        const data = message.data as { name: string; output: string; messageId: string };
+        callbacks.onToolResult({ name: data.name, output: data.output, messageId: data.messageId });
+        break;
+      }
+      case 'message_complete': {
+        const data = message.data as FacilitatorMessage;
+        callbacks.onComplete(data);
+        break;
+      }
+      case 'error': {
+        const data = message.data as string;
+        callbacks.onError(data);
+        break;
+      }
+      case 'open_questions': {
+        const data = message.data as OpenQuestion[];
+        callbacks.onOpenQuestions?.(data);
+        break;
+      }
+      case 'agent_progress': {
+        const data = message.data as AgentProgressEvent;
+        callbacks.onProgressEvent?.(data);
+        break;
+      }
+    }
   }
 
   /**
@@ -473,9 +613,10 @@ Example format:
   }
 
   /**
-   * Process a user message and stream the response via callbacks.
+   * Process a user message and stream the response via registered callbacks.
+   * Uses dispatchOrQueue to support background execution - if client disconnects,
+   * messages are queued and replayed when client reconnects.
    * @param displayName - Optional display name to use instead of persona.name (from settings)
-   * @param abortSignal - Optional AbortSignal to cancel the operation
    * @param modelId - Optional model ID to use (defaults to claude-sonnet-4-5-20250929)
    */
   async processMessage(
@@ -483,13 +624,83 @@ Example format:
     userName: string,
     content: string,
     navigationContext: NavigationContext,
-    callbacks: StreamCallbacks,
     displayName?: string,
-    abortSignal?: AbortSignal,
     modelId?: string
   ): Promise<void> {
+    // Create or get session
+    let session = this.activeSessions.get(userId);
+    if (!session) {
+      session = {
+        userId,
+        status: 'idle',
+        queuedMessages: [],
+        clientConnected: this.clientCallbacks.has(userId),
+      };
+      this.activeSessions.set(userId, session);
+    }
+
+    // Create abort controller for this operation
+    const abortController = new AbortController();
+    session.currentAbortController = abortController;
+    session.status = 'running';
+    session.startedAt = Date.now();
+
     // Save the user message
     await this.chatService.addMessage(userId, 'user', content);
+
+    // Create local callbacks wrapper that dispatches via dispatchOrQueue
+    // This allows messages to be queued if client disconnects during execution
+    const callbacks: StreamCallbacks = {
+      onTextChunk: (text: string, msgId: string) => {
+        if (abortController.signal.aborted) return;
+        this.dispatchOrQueue(userId, { type: 'text_chunk', data: { text, messageId: msgId }, timestamp: Date.now(), messageId: msgId });
+      },
+      onToolUse: ({ name, input, messageId: msgId }) => {
+        if (abortController.signal.aborted) return;
+        this.dispatchOrQueue(userId, { type: 'tool_use', data: { name, input, messageId: msgId }, timestamp: Date.now(), messageId: msgId });
+      },
+      onToolResult: ({ name, output, messageId: msgId }) => {
+        if (abortController.signal.aborted) return;
+        this.dispatchOrQueue(userId, { type: 'tool_result', data: { name, output, messageId: msgId }, timestamp: Date.now(), messageId: msgId });
+      },
+      onComplete: (message: FacilitatorMessage) => {
+        if (abortController.signal.aborted) return;
+        this.dispatchOrQueue(userId, { type: 'message_complete', data: message, timestamp: Date.now(), messageId: message.id });
+      },
+      onError: (error: string) => {
+        if (abortController.signal.aborted) return;
+        this.dispatchOrQueue(userId, { type: 'error', data: error, timestamp: Date.now() });
+      },
+      onOpenQuestions: (questions: OpenQuestion[]) => {
+        if (abortController.signal.aborted) return;
+        this.dispatchOrQueue(userId, { type: 'open_questions', data: questions, timestamp: Date.now() });
+      },
+      onThinking: (text: string, msgId: string) => {
+        // Thinking is not queued - it's real-time only
+        const cbs = this.clientCallbacks.get(userId);
+        if (cbs?.onThinking && !abortController.signal.aborted) {
+          cbs.onThinking(text, msgId);
+        }
+      },
+      onRawEvent: (event: SDKMessage) => {
+        // Raw events are not queued - they're for diagnostics only
+        const cbs = this.clientCallbacks.get(userId);
+        if (cbs?.onRawEvent && !abortController.signal.aborted) {
+          cbs.onRawEvent(event);
+        }
+      },
+      onSystemInit: (info) => {
+        // System init is not queued - it's real-time only
+        const cbs = this.clientCallbacks.get(userId);
+        if (cbs?.onSystemInit && !abortController.signal.aborted) {
+          cbs.onSystemInit(info);
+        }
+      },
+      onProgressEvent: (event: AgentProgressEvent) => {
+        if (abortController.signal.aborted) return;
+        this.dispatchOrQueue(userId, { type: 'agent_progress', data: event, timestamp: Date.now() });
+      },
+    };
 
     // Start timing for diagnostics
     const startTime = Date.now();
@@ -542,7 +753,7 @@ Example format:
 
     try {
       // Check if aborted before starting
-      if (abortSignal?.aborted) {
+      if (abortController.signal.aborted) {
         console.log(`[FacilitatorService] Operation aborted before start`);
         const abortError = new Error('Operation aborted');
         abortError.name = 'AbortError';
@@ -571,7 +782,7 @@ Example format:
       // With native MCP tools, the SDK handles tool calls/results automatically
       for await (const message of response) {
         // Check if aborted during streaming
-        if (abortSignal?.aborted) {
+        if (abortController.signal.aborted) {
           console.log(`[FacilitatorService] Operation aborted during streaming`);
           const abortError = new Error('Operation aborted');
           abortError.name = 'AbortError';
@@ -877,10 +1088,16 @@ Example format:
         sessionInfo,
         totalCostUsd: totalCostUsd > 0 ? totalCostUsd : undefined,
       });
+
+      // Update session status to idle (operation complete)
+      session.status = 'idle';
+      session.currentAbortController = undefined;
     } catch (error) {
       // Re-throw abort errors without logging
       if (error instanceof Error && error.name === 'AbortError') {
         diagnosticsService.completeRequest(requestId, 'Aborted');
+        session.status = 'idle';
+        session.currentAbortController = undefined;
         throw error;
       }
 
@@ -912,6 +1129,10 @@ Example format:
         sessionInfo,
         totalCostUsd: totalCostUsd > 0 ? totalCostUsd : undefined,
       });
+
+      // Update session status to error
+      session.status = 'error';
+      session.currentAbortController = undefined;
     }
   }
 
