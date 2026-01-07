@@ -27,7 +27,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@ui-kit/core": "workspace:*"
+    "@ui-kit/core": "workspace:*",
+    "@ui-kit/icons": "workspace:*"
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0",

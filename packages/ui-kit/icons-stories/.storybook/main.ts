@@ -21,11 +21,11 @@ const config: StorybookConfig = {
       to: '/themes',
     },
     {
-      from: path.resolve(__dirname, '../dist/font'),
+      from: path.resolve(__dirname, '../../icons/dist/font'),
       to: '/font',
     },
     {
-      from: path.resolve(__dirname, '../dist/sprite'),
+      from: path.resolve(__dirname, '../../icons/dist/sprite'),
       to: '/sprite',
     },
   ],
@@ -36,6 +36,7 @@ const config: StorybookConfig = {
       ...config.resolve.alias,
       '@ui-kit/core/bootstrap.js': path.resolve(__dirname, '../../core/src/runtime/bootstrap.ts'),
       '@ui-kit/core': path.resolve(__dirname, '../../core/src'),
+      '@ui-kit/icons': path.resolve(__dirname, '../../icons/dist'),
       '@ui-kit/react': path.resolve(__dirname, '../../react/src'),
     };
     return config;

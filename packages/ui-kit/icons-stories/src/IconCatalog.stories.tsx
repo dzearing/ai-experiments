@@ -14,7 +14,7 @@ import {
 import styles from './IconCatalog.module.css';
 
 // Import metadata for search keywords and icon list
-import iconsMetadata from '../../dist/metadata/icons.json';
+import iconsMetadata from '@ui-kit/icons/metadata/icons.json';
 
 interface IconData {
   name: string;
@@ -47,7 +47,7 @@ function IconCatalog({ size = 24, showNames = true, columns = 8 }: IconCatalogPr
       for (const iconMeta of iconsMetadata.icons) {
         try {
           // Dynamic import for each icon
-          const module = await import(`../components/${iconMeta.componentName}.tsx`);
+          const module = await import(`@ui-kit/icons/${iconMeta.componentName}.js`);
           const Component = module[iconMeta.componentName];
 
           icons.push({

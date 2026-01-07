@@ -15,7 +15,7 @@ import {
 import styles from './FontSubsetGenerator.module.css';
 
 // Import metadata for icon list
-import iconsMetadata from '../../dist/metadata/icons.json';
+import iconsMetadata from '@ui-kit/icons/metadata/icons.json';
 
 interface IconData {
   name: string;
@@ -48,7 +48,7 @@ function FontSubsetGenerator() {
       for (const iconMeta of iconsMetadata.icons) {
         try {
           // Dynamic import for each icon
-          const module = await import(`../components/${iconMeta.componentName}.tsx`);
+          const module = await import(`@ui-kit/icons/${iconMeta.componentName}.js`);
           const Component = module[iconMeta.componentName];
 
           icons.push({
