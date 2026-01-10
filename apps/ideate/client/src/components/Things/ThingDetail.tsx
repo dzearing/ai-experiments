@@ -270,6 +270,15 @@ export function ThingDetail({
 
       // Only handle if this event is for our Thing
       if (eventThingId && eventThingId !== thingId) {
+        // Store the event for later if we switch to this thing
+        // Use sessionStorage to persist across navigation
+        sessionStorage.setItem('pendingOpenIdea', JSON.stringify({
+          thingId: eventThingId,
+          ideaId,
+          initialPrompt,
+          initialGreeting,
+          timestamp: Date.now(),
+        }));
         return;
       }
 
@@ -284,6 +293,53 @@ export function ThingDetail({
 
     window.addEventListener('facilitator:openIdea', handleFacilitatorOpenIdea);
     return () => window.removeEventListener('facilitator:openIdea', handleFacilitatorOpenIdea);
+  }, [thingId, currentTab, handleTabChange]);
+
+  // Check for pending openIdea events when thingId changes
+  useEffect(() => {
+    const stored = sessionStorage.getItem('pendingOpenIdea');
+    if (!stored) return;
+
+    try {
+      const pending = JSON.parse(stored) as {
+        thingId: string;
+        ideaId?: string;
+        initialPrompt?: string;
+        initialGreeting?: string;
+        timestamp: number;
+      };
+
+      // Only process if it's for this thing and less than 10 seconds old
+      if (pending.thingId === thingId && Date.now() - pending.timestamp < 10000) {
+        console.log('[ThingDetail] Processing pending openIdea from sessionStorage');
+        sessionStorage.removeItem('pendingOpenIdea');
+
+        // If not on ideas tab, store and switch
+        if (currentTab !== 'ideas') {
+          setPendingIdeaOpen({
+            ideaId: pending.ideaId,
+            initialPrompt: pending.initialPrompt,
+            initialGreeting: pending.initialGreeting,
+          });
+          handleTabChange('ideas');
+        } else {
+          // Dispatch event for ThingIdeas to handle
+          window.dispatchEvent(new CustomEvent('facilitator:openIdea', {
+            detail: {
+              thingId: pending.thingId,
+              ideaId: pending.ideaId,
+              initialPrompt: pending.initialPrompt,
+              initialGreeting: pending.initialGreeting,
+            }
+          }));
+        }
+      } else if (Date.now() - pending.timestamp >= 10000) {
+        // Clear stale entries
+        sessionStorage.removeItem('pendingOpenIdea');
+      }
+    } catch {
+      sessionStorage.removeItem('pendingOpenIdea');
+    }
   }, [thingId, currentTab, handleTabChange]);
 
   // Clear pending idea open request (called by ThingIdeas after it processes it)

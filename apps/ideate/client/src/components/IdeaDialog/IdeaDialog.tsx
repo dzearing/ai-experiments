@@ -12,6 +12,8 @@ import { EditIcon } from '@ui-kit/icons/EditIcon';
 import { ChatPanel, ChatInput, ThinkingIndicator, MessageQueue, OpenQuestionsResolver, type ChatInputSubmitData, type ChatInputRef, type ChatPanelMessage, type QueuedMessage, type ThingReference as ChatThingReference } from '@ui-kit/react-chat';
 import { MarkdownCoEditor, type ViewMode, type CoAuthor } from '@ui-kit/react-markdown';
 import { ItemPickerDialog, DiskItemProvider } from '@ui-kit/react-pickers';
+import { useResource } from '@claude-flow/data-bus/react';
+import { dataBus, ideaPath, ideaAgentStatusPath } from '../../dataBus';
 import { useAuth } from '../../contexts/AuthContext';
 import { useIdeas } from '../../contexts/IdeasContext';
 import { useThings } from '../../contexts/ThingsContext';
@@ -26,9 +28,13 @@ import { PlanView } from '../PlanView';
 import { ActivityView } from '../ActivityView';
 import { ClockIcon } from '@ui-kit/icons/ClockIcon';
 import { YJS_WS_URL } from '../../config';
+import { createLogger } from '../../utils/clientLogger';
 import type { Idea, CreateIdeaInput, IdeaPlan } from '../../types/idea';
 import { THING_TYPE_SCHEMAS } from '../../types/thing';
 import styles from './IdeaDialog.module.css';
+
+// Create logger for this component
+const log = createLogger('IdeaDialog');
 
 // Debug: track component mount/unmount
 let overlayInstanceId = 0;
@@ -195,6 +201,8 @@ export interface IdeaDialogProps {
   initialThingContext?: ThingContext;
   /** Callback when idea status changes (e.g., moves to planning) - for kanban updates */
   onStatusChange?: (idea: Idea, newStatus: string) => void;
+  /** Initial title for the new idea (shown immediately in the card while agent processes) */
+  initialTitle?: string;
   /** Initial prompt to automatically send to the idea agent when creating a new idea */
   initialPrompt?: string;
   /** Initial greeting from the agent (overrides the generated greeting) */
@@ -223,6 +231,7 @@ export function IdeaDialog({
   initialThingIds,
   initialThingContext,
   onStatusChange,
+  initialTitle,
   initialPrompt,
   initialGreeting,
   initialPhase,
@@ -232,15 +241,15 @@ export function IdeaDialog({
   // Debug: track this instance
   const instanceIdRef = useRef(++overlayInstanceId);
   useEffect(() => {
-    console.log(`[IdeaDialog #${instanceIdRef.current}] MOUNTED, idea=${idea?.id || 'new'}, open=${open}`);
+    log.log(`#${instanceIdRef.current} MOUNTED, idea=${idea?.id || 'new'}, open=${open}`);
     return () => {
-      console.log(`[IdeaDialog #${instanceIdRef.current}] UNMOUNTED`);
+      log.log(`#${instanceIdRef.current} UNMOUNTED`);
     };
   }, []); // Only run on mount/unmount
 
   const { user } = useAuth();
   const { createIdea, updateIdea, moveIdea } = useIdeas();
-  const { things, getThingReferences } = useThings();
+  const { things, getThingReferences, getAncestors } = useThings();
   const { modelId, setModelId, modelInfo } = useModelPreference();
 
   const isNewIdea = !idea;
@@ -254,20 +263,45 @@ export function IdeaDialog({
   }, [idea?.thingIds, initialThingIds, things]);
 
   // Get parent things with execution context (folders, repos with localPath)
-  // This helps the plan agent suggest appropriate working directories
+  // This traverses the thing hierarchy to find ancestors that can provide working directories
   const parentThingsWithContext: ParentThingContext[] = useMemo(() => {
-    return linkedThings
-      .filter(thing => {
-        const schema = THING_TYPE_SCHEMAS[thing.type];
-        return schema?.providesExecutionContext && thing.properties?.localPath;
-      })
-      .map(thing => ({
-        id: thing.id,
-        name: thing.name,
-        type: thing.type,
-        localPath: thing.properties?.localPath,
-      }));
-  }, [linkedThings]);
+    const contexts: ParentThingContext[] = [];
+    const seenIds = new Set<string>();
+
+    // Check each linked thing and its ancestors for execution context
+    for (const thing of linkedThings) {
+      // First check the thing itself
+      const schema = THING_TYPE_SCHEMAS[thing.type];
+      if (schema?.providesExecutionContext && thing.properties?.localPath && !seenIds.has(thing.id)) {
+        seenIds.add(thing.id);
+        contexts.push({
+          id: thing.id,
+          name: thing.name,
+          type: thing.type,
+          localPath: thing.properties?.localPath,
+        });
+      }
+
+      // Then traverse ancestors to find folders/repos with localPath
+      const ancestors = getAncestors(thing.id);
+      for (const ancestor of ancestors) {
+        if (seenIds.has(ancestor.id)) continue;
+
+        const ancestorSchema = THING_TYPE_SCHEMAS[ancestor.type];
+        if (ancestorSchema?.providesExecutionContext && ancestor.properties?.localPath) {
+          seenIds.add(ancestor.id);
+          contexts.push({
+            id: ancestor.id,
+            name: ancestor.name,
+            type: ancestor.type,
+            localPath: ancestor.properties?.localPath,
+          });
+        }
+      }
+    }
+
+    return contexts;
+  }, [linkedThings, getAncestors]);
 
   // Get thing references for chat autocomplete (^ mentions)
   const thingReferences = getThingReferences();
@@ -287,12 +321,28 @@ export function IdeaDialog({
   // Track the current idea (may be created during ideation phase)
   const [currentIdea, setCurrentIdea] = useState<Idea | null>(idea);
 
+  // Subscribe to real-time agent status updates via data bus
+  const ideaId = currentIdea?.id || idea?.id;
+  const { data: realtimeAgentStatus } = useResource(
+    dataBus,
+    ideaId ? ideaAgentStatusPath(ideaId) : null
+  );
+
+  // Subscribe to real-time idea metadata updates via data bus
+  const { data: realtimeIdeaMetadata } = useResource(
+    dataBus,
+    ideaId ? ideaPath(ideaId) : null
+  );
+
+  // Agent is running if real-time status says so (from background processing)
+  const isAgentRunning = realtimeAgentStatus?.status === 'running';
+
   // Sync idea prop to currentIdea when overlay opens or idea changes
   // This is critical for plan persistence - useState only runs on first render,
   // so when overlay reopens with updated idea (containing plan), we need to sync it
   useEffect(() => {
     if (open && idea) {
-      console.log('[IdeaWorkspaceOverlay] Syncing idea prop to currentIdea:', idea.id, 'plan phases:', idea.plan?.phases?.length || 0);
+      log.log('Syncing idea prop to currentIdea', { ideaId: idea.id, planPhases: idea.plan?.phases?.length || 0 });
       setCurrentIdea(idea);
     }
   }, [open, idea]);
@@ -301,13 +351,37 @@ export function IdeaDialog({
   // This ensures we go directly to the right phase when reopening an idea
   useEffect(() => {
     if (open && idea?.status === 'executing') {
-      console.log('[IdeaWorkspaceOverlay] Syncing phase to executing for executing idea');
+      log.log(' Syncing phase to executing for executing idea');
       setPhase('executing');
     } else if (open && idea?.status === 'exploring') {
-      console.log('[IdeaWorkspaceOverlay] Syncing phase to planning for exploring idea');
+      log.log(' Syncing phase to planning for exploring idea');
       setPhase('planning');
     }
   }, [open, idea?.status]);
+
+  // Sync real-time metadata updates from background processing to currentIdea
+  // This handles the case where the agent updates the idea while the dialog is open
+  // but the user is not actively editing the document
+  useEffect(() => {
+    if (!realtimeIdeaMetadata || !currentIdea) return;
+
+    // Check if metadata has changed compared to currentIdea
+    const hasMetadataChange =
+      realtimeIdeaMetadata.title !== currentIdea.title ||
+      realtimeIdeaMetadata.summary !== currentIdea.summary ||
+      JSON.stringify(realtimeIdeaMetadata.tags) !== JSON.stringify(currentIdea.tags);
+
+    if (hasMetadataChange) {
+      log.log(' Syncing real-time metadata update:', realtimeIdeaMetadata.title);
+      setCurrentIdea(prev => prev ? {
+        ...prev,
+        title: realtimeIdeaMetadata.title,
+        summary: realtimeIdeaMetadata.summary,
+        tags: realtimeIdeaMetadata.tags,
+        description: realtimeIdeaMetadata.description,
+      } : prev);
+    }
+  }, [realtimeIdeaMetadata, currentIdea]);
 
   // Resource tab state - which document/asset is being viewed
   const [activeTab, setActiveTab] = useState<ResourceTab>('idea-doc');
@@ -325,7 +399,7 @@ export function IdeaDialog({
     const shouldLoadPlan = phase === 'planning' || phase === 'executing' ||
       ideaStatus === 'exploring' || ideaStatus === 'executing';
     if (open && shouldLoadPlan && initialPlan?.phases && initialPlan.phases.length > 0) {
-      console.log('[IdeaWorkspaceOverlay] Syncing initial plan to local state:', initialPlan.phases.length, 'phases');
+      log.log('Syncing initial plan to local state', { phases: initialPlan.phases.length });
       setPlan(initialPlan);
     }
   }, [open, phase, currentIdea?.plan, idea?.plan, currentIdea?.status, idea?.status]);
@@ -396,6 +470,8 @@ export function IdeaDialog({
     onChange: (newContent) => {
       setContent(newContent);
     },
+    // Disable IndexedDB persistence when connected to server to prevent stale data conflicts
+    enableOfflinePersistence: false,
   });
 
   // Convert Yjs co-authors to MarkdownCoEditor format
@@ -415,7 +491,7 @@ export function IdeaDialog({
   // Implementation Plan document ID for Yjs room: impl-plan-{ideaId}
   const implPlanDocumentId = useMemo(() => {
     const id = (currentIdea?.id || idea?.id) ? `impl-plan-${currentIdea?.id || idea?.id}` : null;
-    console.log('[IdeaWorkspace] implPlanDocumentId computed:', id, { currentIdeaId: currentIdea?.id, ideaId: idea?.id, phase });
+    log.log('implPlanDocumentId computed', { id, currentIdeaId: currentIdea?.id, ideaId: idea?.id, phase });
     return id;
   }, [currentIdea?.id, idea?.id, phase]);
 
@@ -440,9 +516,11 @@ export function IdeaDialog({
       color: userColor,
     },
     onChange: (newContent) => {
-      console.log('[IdeaWorkspace] Impl Plan content changed, length:', newContent.length, 'preview:', newContent.slice(0, 100));
+      log.log('Impl Plan content changed', { length: newContent.length, preview: newContent.slice(0, 100) });
       setImplPlanContent(newContent);
     },
+    // Disable IndexedDB persistence when connected to server to prevent stale data conflicts
+    enableOfflinePersistence: false,
   });
 
   // Convert Yjs co-authors to MarkdownCoEditor format for Implementation Plan
@@ -499,7 +577,7 @@ export function IdeaDialog({
 
   // Stable error handler to prevent unnecessary reconnects
   const handleAgentError = useCallback((err: string) => {
-    console.error('[IdeaWorkspace] Agent error:', err);
+    log.error(' Agent error:', err);
   }, []);
 
   // Handle plan updates from Plan Agent - merge with existing plan to preserve fields
@@ -836,27 +914,48 @@ export function IdeaDialog({
       const { title } = parseMarkdownContent(content);
       const hasNonTrivialContent = title.trim() && title !== 'Untitled Idea';
 
+      log.log(' Room change detected:', {
+        from: prevId,
+        to: documentId,
+        wasNewIdeaRoom,
+        isNowSavedIdeaRoom,
+        hasNonTrivialContent,
+        contentTitle: title,
+        contentLength: content.length,
+        currentIdeaId: currentIdea?.id,
+      });
+
       if (wasNewIdeaRoom && isNowSavedIdeaRoom && hasNonTrivialContent) {
         // This is a new idea being saved - migrate content
-        console.log('[IdeaWorkspace] Room changing, capturing content for migration');
+        log.log(' Capturing content for migration, length:', content.length);
         setPendingContentMigration(content);
       } else {
         // This is switching to a different idea - don't migrate, just reset
-        console.log('[IdeaWorkspace] Room changing to different idea, not migrating content');
+        log.log(' NOT migrating content (missing non-trivial content at room change time)');
         setPendingContentMigration(null);
       }
       setIsInitialized(false);
     }
     prevDocumentIdRef.current = documentId;
-  }, [documentId, content]);
+  }, [documentId, content, currentIdea?.id]);
 
   // Initialize Yjs document content when synced
   useEffect(() => {
+    log.log(' Yjs init effect:', {
+      isYjsSynced,
+      isInitialized,
+      pendingContentMigration: pendingContentMigration ? pendingContentMigration.length : null,
+      ideaId: idea?.id,
+      currentIdeaId: currentIdea?.id,
+      contentLength: content.length,
+      documentId,
+    });
+
     if (!isYjsSynced || isInitialized) return;
 
     // Check if we have pending content from a room migration (new idea -> saved idea)
     if (pendingContentMigration) {
-      console.log('[IdeaWorkspace] Migrating content to new Yjs room');
+      log.log(' Migrating content to new Yjs room, length:', pendingContentMigration.length);
       yjsSetContent(pendingContentMigration);
       lastSavedContent.current = pendingContentMigration;
       hasDocumentChanges.current = false;
@@ -866,15 +965,51 @@ export function IdeaDialog({
       return;
     }
 
-    // Build initial content from idea or empty template
-    const initialContent = idea
-      ? buildMarkdownContent(idea.title, idea.summary, idea.tags, idea.description)
+    // Use idea prop, or currentIdea for ideas created during this session
+    const effectiveIdea = idea || currentIdea;
+
+    // Check if Yjs already synced meaningful content from the server
+    // This happens when reopening an existing idea that has document content
+    // written by the agent during background processing
+    const hasYjsSyncedContent = content.length > 0;
+    const parsedYjsContent = hasYjsSyncedContent ? parseMarkdownContent(content) : null;
+    const hasNonPlaceholderContent = parsedYjsContent &&
+      parsedYjsContent.title.trim() &&
+      parsedYjsContent.title !== 'Untitled Idea' &&
+      parsedYjsContent.title !== 'New Idea';
+
+    log.log(' Checking Yjs content:', {
+      hasYjsSyncedContent,
+      hasNonPlaceholderContent,
+      parsedTitle: parsedYjsContent?.title,
+      fromIdea: !!idea,
+      fromCurrentIdea: !!currentIdea,
+    });
+
+    // If Yjs already has meaningful content (from agent writing), preserve it
+    // Only set content from metadata if Yjs is empty or has placeholder content
+    if (hasNonPlaceholderContent) {
+      log.log(' Preserving existing Yjs content (already has non-placeholder content)');
+      lastSavedContent.current = content;
+      hasDocumentChanges.current = false;
+      setIsInitialized(true);
+      setError(null);
+      return;
+    }
+
+    // Build initial content from idea metadata or empty template
+    const initialContent = effectiveIdea
+      ? buildMarkdownContent(effectiveIdea.title, effectiveIdea.summary, effectiveIdea.tags, effectiveIdea.description)
       : buildMarkdownContent('', '', [], '');
 
-    // For existing ideas: always initialize from saved data
-    // (Yjs room name changes when idea gets saved, so we need to restore from idea data)
-    // For new ideas: only set if document is empty
-    if (idea || content.length === 0) {
+    log.log(' Building initial content from metadata:', {
+      effectiveIdeaTitle: effectiveIdea?.title,
+      initialContentLength: initialContent.length,
+    });
+
+    // Set content from metadata (Yjs was empty or had placeholder)
+    if (effectiveIdea || content.length === 0) {
+      log.log('Setting Yjs content to initial', { length: initialContent.length });
       yjsSetContent(initialContent);
     }
 
@@ -884,7 +1019,7 @@ export function IdeaDialog({
 
     setIsInitialized(true);
     setError(null);
-  }, [isYjsSynced, isInitialized, idea, content, yjsSetContent, pendingContentMigration]);
+  }, [isYjsSynced, isInitialized, idea, currentIdea, content, yjsSetContent, pendingContentMigration, documentId]);
 
   // Reset state when overlay closes
   useEffect(() => {
@@ -922,14 +1057,14 @@ export function IdeaDialog({
 
   // Log when isImplPlanYjsSynced changes
   useEffect(() => {
-    console.log('[IdeaWorkspace] isImplPlanYjsSynced changed:', isImplPlanYjsSynced, { phase, planAgentConnected: planAgent.isConnected, implPlanDocumentId });
+    log.log('isImplPlanYjsSynced changed', { isImplPlanYjsSynced, phase, planAgentConnected: planAgent.isConnected, implPlanDocumentId });
   }, [isImplPlanYjsSynced, phase, planAgent.isConnected, implPlanDocumentId]);
 
   // Signal to the Plan Agent that Yjs is ready when the impl plan syncs
   // This allows the agent to start writing to the document without race conditions
   useEffect(() => {
     if (phase === 'planning' && isImplPlanYjsSynced && planAgent.isConnected) {
-      console.log('[IdeaWorkspace] Impl plan Yjs synced, sending yjs_ready to server. Room:', implPlanDocumentId);
+      log.log(' Impl plan Yjs synced, sending yjs_ready to server. Room:', implPlanDocumentId);
       planAgent.sendYjsReady();
     }
   }, [phase, isImplPlanYjsSynced, planAgent.isConnected, planAgent.sendYjsReady, implPlanDocumentId]);
@@ -967,29 +1102,69 @@ export function IdeaDialog({
   const sendSilentMessageRef = useRef(ideaAgent.sendSilentMessage);
   sendSilentMessageRef.current = ideaAgent.sendSilentMessage;
 
-  // Note: We don't create ideas immediately on open with initialPrompt anymore.
-  // The agent will update the document with a proper title, and the debounced
-  // auto-save logic (lines 1075-1129) will create/persist the idea once there's
-  // meaningful content. This avoids the infinite loop bug and ensures better titles.
-
-  // Send initial prompt to agent when overlay opens and agent is connected
-  // Use sendSilentMessage so the user's prompt doesn't appear in the chat
-  // (they already typed it in the facilitator chat)
+  // Create idea immediately when initialPrompt is provided, then send the prompt.
+  // This ensures the idea is persisted even if the user closes the dialog before
+  // the agent finishes writing. Similar to how handleChatSubmit creates ideas
+  // immediately on first user message.
   useEffect(() => {
-    if (open && isConnected && initialPrompt && !initialPromptSentRef.current && phase === 'ideation') {
+    const handleInitialPrompt = async () => {
+      if (!open || !isConnected || !initialPrompt || initialPromptSentRef.current || phase !== 'ideation') {
+        return;
+      }
+
       // Mark as sent immediately to prevent double-sending
       initialPromptSentRef.current = true;
-      // Small delay to ensure agent is ready
-      const timerId = setTimeout(() => {
-        sendSilentMessageRef.current(initialPrompt);
-      }, 500);
-      return () => clearTimeout(timerId);
-    }
+
+      // If we already have an idea or have already started creation, just send the prompt
+      if (idea || currentIdea || ideaCreatedForSessionRef.current) {
+        setTimeout(() => {
+          sendSilentMessageRef.current(initialPrompt);
+        }, 500);
+        return;
+      }
+
+      // Create the idea immediately so it appears in the kanban
+      ideaCreatedForSessionRef.current = true;
+      log.log(' Creating idea immediately with initialPrompt, initialTitle:', initialTitle);
+
+      try {
+        const newIdea = await createIdea({
+          title: initialTitle || 'Untitled Idea',
+          summary: 'Processing...',
+          tags: [],
+          workspaceId,
+          thingIds: initialThingIds,
+          documentRoomName: documentId,
+        });
+
+        log.log(` Idea created with initialPrompt: ${newIdea.id}`);
+        setCurrentIdea(newIdea);
+
+        // Notify parent so it can add to kanban immediately
+        onIdeaCreated?.(newIdea);
+
+        // Small delay to ensure agent is ready after reconnection with new ideaId
+        setTimeout(() => {
+          sendSilentMessageRef.current(initialPrompt);
+        }, 500);
+      } catch (err) {
+        log.error(' Failed to create idea with initialPrompt:', err);
+        ideaCreatedForSessionRef.current = false;
+
+        // Still try to send the prompt even if idea creation failed
+        setTimeout(() => {
+          sendSilentMessageRef.current(initialPrompt);
+        }, 500);
+      }
+    };
+
+    handleInitialPrompt();
+
     // Reset the flag when overlay closes
     if (!open) {
       initialPromptSentRef.current = false;
     }
-  }, [open, isConnected, initialPrompt, phase]);
+  }, [open, isConnected, initialPrompt, initialTitle, phase, idea, currentIdea, createIdea, workspaceId, initialThingIds, documentId, onIdeaCreated]);
 
   // Handle cancel operation
   const handleCancelOperation = useCallback(() => {
@@ -1080,7 +1255,7 @@ export function IdeaDialog({
 
     // Waiting for disconnect: when we see disconnected, move to waiting-for-reconnect
     if (state === 'waiting-for-disconnect' && !isConnected) {
-      console.log('[IdeaDialog] Agent disconnected, now waiting for reconnect...');
+      log.log(' Agent disconnected, now waiting for reconnect...');
       reconnectStateRef.current = 'waiting-for-reconnect';
     }
 
@@ -1089,7 +1264,7 @@ export function IdeaDialog({
       const message = pendingFirstMessageRef.current;
       pendingFirstMessageRef.current = null;
       reconnectStateRef.current = 'idle';
-      console.log('[IdeaDialog] Sending pending first message after reconnect');
+      log.log(' Sending pending first message after reconnect');
       sendAgentMessage(message);
     }
   }, [isConnected, currentIdea, sendAgentMessage]);
@@ -1123,7 +1298,7 @@ export function IdeaDialog({
 
     // If we already have a currentIdea, update it with the generated content
     if (currentIdea) {
-      console.log(`[IdeaDialog] Agent finished editing, updating idea "${currentIdea.id}" with title: "${title}"`);
+      log.log(` Agent finished editing, updating idea "${currentIdea.id}" with title: "${title}"`);
       updateIdea(currentIdea.id, {
         title: title.trim(),
         summary: summary.trim(),
@@ -1131,13 +1306,13 @@ export function IdeaDialog({
         description: description.trim() || undefined,
       }).then((updated) => {
         if (updated) {
-          console.log(`[IdeaDialog] Idea updated: ${updated.id}`);
+          log.log(` Idea updated: ${updated.id}`);
           setCurrentIdea(updated);
           lastSavedContent.current = content;
           hasDocumentChanges.current = false;
         }
       }).catch((err) => {
-        console.error('[IdeaDialog] Failed to update idea:', err);
+        log.error(' Failed to update idea:', err);
       });
       return;
     }
@@ -1148,7 +1323,7 @@ export function IdeaDialog({
     // Mark as creating to prevent duplicate creation
     ideaCreatedForSessionRef.current = true;
 
-    console.log(`[IdeaDialog] Agent finished editing, creating idea with title: "${title}"`);
+    log.log(` Agent finished editing, creating idea with title: "${title}"`);
 
     createIdea({
       title: title.trim(),
@@ -1157,18 +1332,26 @@ export function IdeaDialog({
       description: description.trim() || undefined,
       workspaceId,
       thingIds: initialThingIds,
+      // Pass documentRoomName so server can link agent session to real ideaId
+      documentRoomName: documentId,
     }).then((newIdea) => {
-      console.log(`[IdeaDialog] Idea created: ${newIdea.id}`);
+      log.log(` Idea created: ${newIdea.id}, documentRoomName: ${documentId}`);
       setCurrentIdea(newIdea);
-      onSuccess?.(newIdea);
+      // Notify parent so it can add to kanban immediately (without refetch)
+      // Use onIdeaCreated if available, otherwise fall back to onSuccess
+      if (onIdeaCreated) {
+        onIdeaCreated(newIdea);
+      } else {
+        onSuccess?.(newIdea);
+      }
       lastSavedContent.current = content;
       hasDocumentChanges.current = false;
     }).catch((err) => {
-      console.error('[IdeaDialog] Failed to create idea:', err);
+      log.error(' Failed to create idea:', err);
       // Reset flag so it can retry
       ideaCreatedForSessionRef.current = false;
     });
-  }, [isEditingDocument, phase, currentIdea, idea, parsedContent, content, workspaceId, initialThingIds, createIdea, updateIdea, onSuccess]);
+  }, [isEditingDocument, phase, currentIdea, idea, parsedContent, content, workspaceId, initialThingIds, createIdea, updateIdea, onSuccess, onIdeaCreated, documentId]);
 
   // Debounced auto-save for UPDATES (not creation) during ideation phase
   const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1201,7 +1384,7 @@ export function IdeaDialog({
           hasDocumentChanges.current = false;
         }
       } catch (err) {
-        console.error('[IdeaWorkspace] Auto-save update failed:', err);
+        log.error(' Auto-save update failed:', err);
       }
     }, 2000);
 
@@ -1233,7 +1416,7 @@ export function IdeaDialog({
             onSuccess?.(updated);
           }
         }).catch((err) => {
-          console.error('[IdeaWorkspace] Auto-save failed:', err);
+          log.error(' Auto-save failed:', err);
         });
       }
 
@@ -1244,7 +1427,7 @@ export function IdeaDialog({
 
   // Handle transition to planning mode
   const handleStartPlanning = useCallback(async () => {
-    console.log(`[IdeaWorkspaceOverlay #${instanceIdRef.current}] handleStartPlanning START`);
+    log.log(`#${instanceIdRef.current} handleStartPlanning START`);
     const { title, summary, tags, description } = parsedContent;
 
     if (!title.trim() || title === 'Untitled Idea') {
@@ -1264,7 +1447,7 @@ export function IdeaDialog({
 
       if (isNewIdea || !currentIdea) {
         // Create new idea first
-        console.log(`[IdeaWorkspaceOverlay #${instanceIdRef.current}] Creating new idea...`);
+        log.log(`#${instanceIdRef.current} Creating new idea...`);
         const input: CreateIdeaInput = {
           title: title.trim(),
           summary: summary.trim(),
@@ -1272,9 +1455,11 @@ export function IdeaDialog({
           description: description.trim() || undefined,
           workspaceId,
           thingIds: initialThingIds,
+          // Pass documentRoomName so server can link agent session to real ideaId
+          documentRoomName: documentId,
         };
         ideaToTransition = await createIdea(input);
-        console.log(`[IdeaWorkspaceOverlay #${instanceIdRef.current}] Idea created: ${ideaToTransition.id}`);
+        log.log(`#${instanceIdRef.current} Idea created: ${ideaToTransition.id}, documentRoomName: ${documentId}`);
         lastSavedContent.current = content;
         hasDocumentChanges.current = false;
       } else {
@@ -1295,32 +1480,32 @@ export function IdeaDialog({
       }
 
       // Move idea to 'exploring' (planning) status
-      console.log(`[IdeaWorkspaceOverlay #${instanceIdRef.current}] Moving idea to exploring status...`);
+      log.log(`#${instanceIdRef.current} Moving idea to exploring status...`);
       await moveIdea(ideaToTransition.id, 'exploring');
       const transitionedIdea = { ...ideaToTransition, status: 'exploring' as const };
 
       // Update local state - this will change documentId which triggers the
       // room change detection effect to capture content for migration
-      console.log(`[IdeaWorkspaceOverlay #${instanceIdRef.current}] Setting currentIdea...`);
+      log.log(`#${instanceIdRef.current} Setting currentIdea...`);
       setCurrentIdea(transitionedIdea);
 
       // Notify parent for kanban update (but don't close)
-      console.log(`[IdeaWorkspaceOverlay #${instanceIdRef.current}] Calling onStatusChange...`);
+      log.log(`#${instanceIdRef.current} Calling onStatusChange...`);
       onStatusChange?.(transitionedIdea, 'exploring');
 
       // Transition to planning phase in the UI
-      console.log(`[IdeaWorkspaceOverlay #${instanceIdRef.current}] Setting phase to planning...`);
+      log.log(`#${instanceIdRef.current} Setting phase to planning...`);
       setPhase('planning');
       // Switch to Implementation Plan tab when entering planning phase
       setActiveTab('impl-plan');
-      console.log(`[IdeaWorkspaceOverlay #${instanceIdRef.current}] handleStartPlanning DONE`);
+      log.log(`#${instanceIdRef.current} handleStartPlanning DONE`);
     } catch (err) {
-      console.error(`[IdeaWorkspaceOverlay #${instanceIdRef.current}] handleStartPlanning ERROR:`, err);
+      log.error(`#${instanceIdRef.current} handleStartPlanning ERROR:`, err);
       setError(err instanceof Error ? err.message : 'Failed to save idea');
     } finally {
       setIsSaving(false);
     }
-  }, [parsedContent, isNewIdea, currentIdea, workspaceId, createIdea, updateIdea, moveIdea, onStatusChange, content, initialThingIds]);
+  }, [parsedContent, isNewIdea, currentIdea, workspaceId, createIdea, updateIdea, moveIdea, onStatusChange, content, initialThingIds, documentId]);
 
   // Check if plan is ready for execution
   const isPlanReady = useMemo(() => {
@@ -1332,6 +1517,7 @@ export function IdeaDialog({
 
   // Handle starting execution with the plan
   const handleStartExecution = useCallback(() => {
+    log.log('handleStartExecution called', { hasPlan: !!plan, phases: plan?.phases?.length });
     if (!plan || !plan.phases || plan.phases.length === 0) {
       setError('No plan available. Please create a plan first.');
       return;
@@ -1355,11 +1541,13 @@ export function IdeaDialog({
       updatedAt: new Date().toISOString(),
     };
     // Notify parent (for kanban update) and transition to executing phase
+    log.log(' Calling onStartExecution, then setPhase(executing)');
     onStartExecution?.(fullPlan);
     setPhase('executing');
     setActiveTab('exec-plan');
     // Start execution with the first phase
     const firstPhaseId = fullPlan.phases[0].id;
+    log.log('Calling executeAgent.startExecution', { firstPhaseId, contextId: executionIdeaContext.id });
     executeAgent.startExecution(executionIdeaContext, fullPlan, firstPhaseId);
   }, [plan, onStartExecution, executeAgent, executionIdeaContext]);
 
@@ -1386,7 +1574,7 @@ export function IdeaDialog({
     // For new ideas, create immediately on first message so it appears in kanban
     if (isNewIdea && !currentIdea && !ideaCreatedForSessionRef.current) {
       ideaCreatedForSessionRef.current = true;
-      console.log('[IdeaDialog] Creating idea immediately on first message');
+      log.log(' Creating idea immediately on first message, initialTitle:', initialTitle);
 
       // Store the message to send after agent reconnects with new ideaId
       // The agent will disconnect/reconnect when currentIdea changes, so we can't send immediately
@@ -1395,19 +1583,21 @@ export function IdeaDialog({
 
       try {
         const newIdea = await createIdea({
-          title: 'Untitled Idea',
+          title: initialTitle || 'Untitled Idea',
           summary: 'Processing...',
           tags: [],
           workspaceId,
           thingIds: initialThingIds,
+          // Pass documentRoomName so server can link agent session to real ideaId
+          documentRoomName: documentId,
         });
-        console.log(`[IdeaDialog] Idea created immediately: ${newIdea.id}`);
+        log.log(` Idea created immediately: ${newIdea.id}, documentRoomName: ${documentId}`);
         setCurrentIdea(newIdea);
         // Notify parent so it can track this idea (for close/reopen scenarios)
         // Note: Don't call onSuccess - that would close the dialog.
         onIdeaCreated?.(newIdea);
       } catch (err) {
-        console.error('[IdeaDialog] Failed to create idea immediately:', err);
+        log.error(' Failed to create idea immediately:', err);
         ideaCreatedForSessionRef.current = false;
         pendingFirstMessageRef.current = null;
         reconnectStateRef.current = 'idle';
@@ -1440,7 +1630,7 @@ export function IdeaDialog({
     chatInputRef.current?.clear();
     inputContentRef.current = '';
     setIsInputEmpty(true);
-  }, [sendAgentMessage, isAgentThinking, isNewIdea, currentIdea, createIdea, workspaceId, initialThingIds, onIdeaCreated]);
+  }, [sendAgentMessage, isAgentThinking, isNewIdea, currentIdea, createIdea, workspaceId, initialThingIds, initialTitle, onIdeaCreated, documentId]);
 
   const handleInputChange = useCallback((isEmpty: boolean, content: string) => {
     inputContentRef.current = content;
@@ -1458,7 +1648,8 @@ export function IdeaDialog({
 
   // Handle link clicks in chat messages
   const handleLinkClick = useCallback((href: string) => {
-    console.log('[IdeaWorkspaceOverlay] Link clicked:', href, {
+    log.log('Link clicked', {
+      href,
       openQuestions: openQuestions?.length ?? 0,
       hasQuestions: !!openQuestions && openQuestions.length > 0,
     });
@@ -1466,7 +1657,7 @@ export function IdeaDialog({
       if (openQuestions && openQuestions.length > 0) {
         setShowQuestionsResolver(true);
       } else {
-        console.warn('[IdeaWorkspaceOverlay] Cannot resolve questions - openQuestions is empty or null. Questions are not persisted across sessions.');
+        log.warn(' Cannot resolve questions - openQuestions is empty or null. Questions are not persisted across sessions.');
       }
     }
   }, [openQuestions, setShowQuestionsResolver]);
@@ -1485,10 +1676,10 @@ export function IdeaDialog({
         body: JSON.stringify({ filePath: path, editor: 'vscode' }),
       });
       if (!response.ok) {
-        console.error('[IdeaDialog] Failed to open working directory:', await response.text());
+        log.error(' Failed to open working directory:', await response.text());
       }
     } catch (err) {
-      console.error('[IdeaDialog] Error opening working directory:', err);
+      log.error(' Error opening working directory:', err);
     }
   }, [user]);
 
@@ -1602,8 +1793,8 @@ export function IdeaDialog({
                 <div className={styles.chatPane}>
                   <div className={styles.chatHeader}>
                     <span className={styles.chatTitle}>{phase === 'executing' ? 'Execute Agent' : phase === 'planning' ? 'Plan Agent' : 'Idea Agent'}</span>
-                    <span className={`${styles.connectionStatus} ${isConnected ? styles.connected : ''}`}>
-                      {isEditingDocument ? 'Editing document...' : isConnected ? 'Connected' : 'Disconnected'}
+                    <span className={`${styles.connectionStatus} ${isConnected || isAgentRunning ? styles.connected : ''}`}>
+                      {isEditingDocument ? 'Editing document...' : isAgentRunning ? 'Running...' : isConnected ? 'Connected' : 'Disconnected'}
                     </span>
                     {tokenUsage && (
                       <span className={styles.tokenUsage}>

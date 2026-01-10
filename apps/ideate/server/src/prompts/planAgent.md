@@ -123,7 +123,7 @@ To create or update the Task List, use `<plan_update>`:
       ]
     }
   ],
-  "workingDirectory": "/path/to/project",
+  "workingDirectory": "",
   "repositoryUrl": "https://github.com/user/repo",
   "branch": "feature/new-feature"
 }
@@ -147,8 +147,11 @@ The `reference` field links a task to a section in the Design.
    - Use `reference` to link to Design sections
 
 3. **Working Directory**: Where the work will happen
-   - For existing projects: the project root or package directory
-   - For new projects: suggest a location
+   - Use the `localPath` from the Parent Folder Context if provided
+   - For new projects under a known parent: combine parent path + project name (e.g., `~/git/my-new-project`)
+   - **CRITICAL**: If no Parent Folder Context is provided, leave `workingDirectory` as an empty string `""`
+   - NEVER use placeholder paths like `/project`, `/path/to/project`, or similar
+   - The user will be prompted to provide a path before execution starts
 
 4. **Prerequisites**: What's needed before execution begins
 

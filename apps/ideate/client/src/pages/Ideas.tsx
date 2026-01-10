@@ -11,8 +11,11 @@ import { useSession } from '../contexts/SessionContext';
 import { useWorkspaceSocket, type ResourceType } from '../hooks/useWorkspaceSocket';
 import { KanbanBoard } from '../components/KanbanBoard';
 import { IdeaDialog } from '../components/IdeaDialog';
+import { createLogger } from '../utils/clientLogger';
 import type { Idea, IdeaMetadata, IdeaSource, IdeaPlan } from '../types/idea';
 import styles from './Ideas.module.css';
+
+const log = createLogger('Ideas');
 
 export function Ideas() {
   const { workspaceId } = useParams<{ workspaceId?: string }>();
@@ -46,10 +49,14 @@ export function Ideas() {
     data: unknown
   ) => {
     if (resourceType === 'idea') {
+      const idea = data as IdeaMetadata;
+      log.log('Idea created via WebSocket', { id: idea.id, title: idea.title, agentStatus: idea.agentStatus });
       setIdeas(prev => {
-        const idea = data as IdeaMetadata;
         // Avoid duplicates
-        if (prev.some(i => i.id === idea.id)) return prev;
+        if (prev.some(i => i.id === idea.id)) {
+          log.log('Idea already exists, skipping', { id: idea.id });
+          return prev;
+        }
         return [idea, ...prev];
       });
     }
@@ -62,6 +69,7 @@ export function Ideas() {
   ) => {
     if (resourceType === 'idea') {
       const update = data as Partial<IdeaMetadata> & { id: string };
+      log.log('Idea updated via WebSocket', { id: update.id, agentStatus: update.agentStatus, keys: Object.keys(update) });
       // Merge the update with existing idea data to preserve fields
       // This is important for partial updates like agentStatus changes
       setIdeas(prev => prev.map(i => i.id === update.id ? { ...i, ...update } : i));
@@ -219,7 +227,7 @@ export function Ideas() {
   // Handle idea created immediately (for background processing)
   // This updates editingIdea so that if user closes and reopens, we reconnect to the same idea
   const handleIdeaCreated = useCallback((idea: Idea) => {
-    console.log('[Ideas] Idea created immediately:', idea.id);
+    log.log('Idea created immediately', { id: idea.id, title: idea.title });
     setEditingIdea(idea);
   }, []);
 
@@ -281,17 +289,19 @@ export function Ideas() {
         </div>
       )}
 
-      {/* Idea Dialog */}
-      <IdeaDialog
-        idea={editingIdea}
-        open={showOverlay}
-        onClose={handleCloseOverlay}
-        workspaceId={workspaceId}
-        onSuccess={handleIdeaSuccess}
-        onStatusChange={handleStatusChange}
-        onStartExecution={handleStartExecution}
-        onIdeaCreated={handleIdeaCreated}
-      />
+      {/* Idea Dialog - only render when open to ensure fresh context for new ideas */}
+      {showOverlay && (
+        <IdeaDialog
+          idea={editingIdea}
+          open={showOverlay}
+          onClose={handleCloseOverlay}
+          workspaceId={workspaceId}
+          onSuccess={handleIdeaSuccess}
+          onStatusChange={handleStatusChange}
+          onStartExecution={handleStartExecution}
+          onIdeaCreated={handleIdeaCreated}
+        />
+      )}
 
       {/* Loading indicator for idea fetch */}
       {isLoadingIdea && (

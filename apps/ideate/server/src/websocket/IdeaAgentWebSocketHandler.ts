@@ -12,7 +12,9 @@ import {
 import type { IdeaAgentMessage } from '../services/IdeaAgentChatService.js';
 import type { YjsCollaborationHandler } from './YjsCollaborationHandler.js';
 import type { WorkspaceWebSocketHandler } from './WorkspaceWebSocketHandler.js';
+import type { ResourceEventBus } from '../services/resourceEventBus/ResourceEventBus.js';
 import type { AgentProgressEvent } from '../shared/agentProgress.js';
+import type { IdeaService } from '../services/IdeaService.js';
 
 /**
  * Client message types for the idea agent WebSocket protocol
@@ -78,6 +80,8 @@ interface IdeaAgentClient {
   workspaceId: string | null;
   /** Previous document room name for session transfer (when reconnecting after idea creation) */
   transferFromRoom: string | null;
+  /** Whether a session was transferred from another room (skip sending history/greeting) */
+  sessionTransferred: boolean;
 }
 
 /**
@@ -100,21 +104,62 @@ export class IdeaAgentWebSocketHandler {
   private clients: Map<WebSocket, IdeaAgentClient> = new Map();
   private clientIdCounter = 0;
   private ideaAgentService: IdeaAgentService;
+  private ideaService?: IdeaService;
 
-  constructor(yjsHandler?: YjsCollaborationHandler, workspaceWsHandler?: WorkspaceWebSocketHandler) {
-    this.ideaAgentService = new IdeaAgentService(yjsHandler);
+  constructor(yjsHandler?: YjsCollaborationHandler, workspaceWsHandler?: WorkspaceWebSocketHandler, resourceEventBus?: ResourceEventBus, ideaService?: IdeaService) {
+    this.ideaAgentService = new IdeaAgentService(yjsHandler, resourceEventBus);
+    this.ideaService = ideaService;
 
-    // Set up callback to broadcast session state changes to clients
+    // Set up callbacks to broadcast updates to clients
     if (workspaceWsHandler) {
-      this.ideaAgentService.setSessionStateChangeCallback((ideaId, status, userId, workspaceId) => {
-        console.log(`[IdeaAgentWS] Received state change callback: idea=${ideaId}, status=${status}, userId=${userId}, workspaceId=${workspaceId}`);
+      // Broadcast agent status changes (running/idle/error)
+      this.ideaAgentService.setSessionStateChangeCallback((ideaId, status, userId, workspaceId, agentStartedAt, agentFinishedAt) => {
+        console.log(`[IdeaAgentWS] Received state change callback: idea=${ideaId}, status=${status}, userId=${userId}, workspaceId=${workspaceId}, startedAt=${agentStartedAt}, finishedAt=${agentFinishedAt}`);
         // Broadcast to workspace subscribers AND to the owner's clients
         // This ensures global ideas (no workspaceId) also receive updates
         workspaceWsHandler.notifyIdeaUpdate(
           ideaId,
           userId,
           workspaceId,
-          { id: ideaId, agentStatus: status }
+          {
+            id: ideaId,
+            agentStatus: status,
+            agentStartedAt,
+            agentFinishedAt,
+          }
+        );
+      });
+
+      // Broadcast metadata updates (title, summary, tags, description)
+      this.ideaAgentService.setMetadataUpdateCallback(async (ideaId, metadata, userId, workspaceId) => {
+        console.log(`[IdeaAgentWS] Received metadata update callback: idea=${ideaId}, title="${metadata.title}", userId=${userId}`);
+
+        // PERSIST metadata to file storage so API returns updated data
+        if (this.ideaService && ideaId !== 'new') {
+          try {
+            await this.ideaService.updateIdea(ideaId, userId, {
+              title: metadata.title,
+              summary: metadata.summary,
+              tags: metadata.tags,
+            });
+            console.log(`[IdeaAgentWS] Persisted metadata for idea ${ideaId}`);
+          } catch (error) {
+            console.error(`[IdeaAgentWS] Failed to persist metadata for idea ${ideaId}:`, error);
+          }
+        }
+
+        // Broadcast to workspace subscribers AND to the owner's clients
+        workspaceWsHandler.notifyIdeaUpdate(
+          ideaId,
+          userId,
+          workspaceId,
+          {
+            id: ideaId,
+            title: metadata.title,
+            summary: metadata.summary,
+            tags: metadata.tags,
+            description: metadata.description,
+          }
         );
       });
     } else {
@@ -158,6 +203,7 @@ export class IdeaAgentWebSocketHandler {
       modelId,
       workspaceId,
       transferFromRoom,
+      sessionTransferred: false,
     };
 
     this.clients.set(ws, client);
@@ -167,7 +213,8 @@ export class IdeaAgentWebSocketHandler {
     // This enables background execution - messages are delivered to client or queued
     // If transferFromRoom is provided, the service will transfer the session from the old chatId
     const chatId = getChatId(client);
-    this.ideaAgentService.registerClient(chatId, this.createCallbacks(client), workspaceId || undefined, transferFromRoom || undefined);
+    const sessionTransferred = this.ideaAgentService.registerClient(chatId, this.createCallbacks(client), workspaceId || undefined, transferFromRoom || undefined);
+    client.sessionTransferred = sessionTransferred;
 
     // Set up WebSocket handlers
     ws.on('message', (data: RawData) => {
@@ -233,7 +280,8 @@ export class IdeaAgentWebSocketHandler {
 
             // If this is the first context we received, now send history and greeting
             // (we deferred this from connection time to get thingContext)
-            if (isFirstContext) {
+            // Skip if session was transferred - client already has messages and we don't want to overwrite them
+            if (isFirstContext && !client.sessionTransferred) {
               await this.sendHistoryAndGreeting(client);
             }
           }

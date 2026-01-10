@@ -10,6 +10,9 @@ import * as decoding from 'lib0/decoding';
 import { promises as fs } from 'fs';
 import { join, dirname } from 'path';
 
+import type { DocumentMetadata } from '../services/documentMetadataExtractor/types.js';
+import { extractMetadataFromMarkdown } from '../services/documentMetadataExtractor/extractMetadataFromMarkdown.js';
+
 // Message types for the Yjs WebSocket protocol
 const MESSAGE_SYNC = 0;
 const MESSAGE_AWARENESS = 1;
@@ -31,7 +34,9 @@ export type DiagnosticEventType =
   | 'room_destroy'
   | 'sync'
   | 'awareness'
-  | 'persist';
+  | 'persist'
+  | 'agent_active'
+  | 'agent_inactive';
 
 /**
  * A diagnostic event for monitoring server state
@@ -159,6 +164,8 @@ export class YjsCollaborationHandler extends EventEmitter {
   private sessionColors: Map<string, string> = new Map();
   /** Counter for assigning colors to new sessions */
   private colorCounter = 0;
+  /** Tracks active agent sessions per room (prevents room destruction while agent is working) */
+  private agentSessions: Map<string, { userId: string; startedAt: number }> = new Map();
   private options: Required<Omit<YjsCollaborationHandlerOptions, 'getInitialContent'>> & {
     getInitialContent?: (documentId: string) => Promise<string | null>;
   };
@@ -482,8 +489,13 @@ export class YjsCollaborationHandler extends EventEmitter {
       setTimeout(() => {
         // Only destroy if this EXACT room object is still in the map and is still empty
         // Using === ensures we don't destroy a recreated room with the same name
-        if (this.rooms.get(room.name) === room && room.clients.size === 0) {
+        // Also check for active agent sessions - don't destroy while agent is working
+        const hasActiveAgent = this.agentSessions.has(room.name);
+
+        if (this.rooms.get(room.name) === room && room.clients.size === 0 && !hasActiveAgent) {
           this.destroyRoom(room);
+        } else if (hasActiveAgent) {
+          console.log(`[Yjs] Room "${room.name}" kept alive due to active agent session`);
         }
       }, 20000); // Keep room alive for 20 seconds
     }
@@ -1116,5 +1128,118 @@ export class YjsCollaborationHandler extends EventEmitter {
     // Then remove from awareness
     room.awareness.states.delete(clientId);
     room.awareness.meta.delete(clientId);
+  }
+
+  // ==========================================
+  // Agent Session Tracking API
+  // ==========================================
+
+  /**
+   * Mark an agent as actively working on a room.
+   * This prevents the room from being destroyed while the agent is processing,
+   * even if all user clients disconnect (e.g., dialog closed).
+   */
+  markAgentActive(roomName: string, userId: string): void {
+    this.agentSessions.set(roomName, {
+      userId,
+      startedAt: Date.now(),
+    });
+
+    console.log(`[Yjs] Agent marked active in room "${roomName}" (user: ${userId})`);
+    this.recordEvent('agent_active', roomName, undefined, { userId });
+  }
+
+  /**
+   * Mark an agent as no longer working on a room.
+   * After calling this, the room may be destroyed if no clients are connected.
+   */
+  markAgentInactive(roomName: string): void {
+    const session = this.agentSessions.get(roomName);
+
+    if (session) {
+      const duration = Date.now() - session.startedAt;
+
+      this.agentSessions.delete(roomName);
+      console.log(`[Yjs] Agent marked inactive in room "${roomName}" (duration: ${duration}ms)`);
+      this.recordEvent('agent_inactive', roomName, undefined, {
+        userId: session.userId,
+        durationMs: duration,
+      });
+
+      // Check if room should be cleaned up now that agent is done
+      const room = this.rooms.get(roomName);
+
+      if (room && room.clients.size === 0) {
+        // Room has no clients and agent just finished - clean up after delay
+        setTimeout(() => {
+          if (this.rooms.get(roomName) === room &&
+              room.clients.size === 0 &&
+              !this.agentSessions.has(roomName)) {
+            this.destroyRoom(room);
+          }
+        }, 20000);
+      }
+    }
+  }
+
+  /**
+   * Check if a room has an active agent session.
+   */
+  hasActiveAgent(roomName: string): boolean {
+    return this.agentSessions.has(roomName);
+  }
+
+  /**
+   * Get agent session info for a room.
+   */
+  getAgentSession(roomName: string): { userId: string; startedAt: number } | null {
+    return this.agentSessions.get(roomName) ?? null;
+  }
+
+  /**
+   * Flush any pending document changes and extract metadata from the document.
+   * This ensures all edits are persisted and returns structured metadata
+   * parsed from the markdown content.
+   */
+  async flushAndExtractMetadata(roomName: string): Promise<DocumentMetadata | null> {
+    const room = this.rooms.get(roomName);
+
+    if (!room) {
+      console.log(`[Yjs] flushAndExtractMetadata: room "${roomName}" not found`);
+
+      return null;
+    }
+
+    // Wait for room to be fully initialized
+    await room.ready;
+
+    // Force persist if persistence is enabled
+    if (room.persistPath) {
+      // Clear any pending debounced persist
+      if (room.persistTimeout) {
+        clearTimeout(room.persistTimeout);
+        room.persistTimeout = undefined;
+      }
+
+      // Persist immediately
+      await this.persistDoc(room);
+    }
+
+    // Extract content from Y.Doc
+    const yText = room.doc.getText('content');
+    const content = yText.toString();
+
+    if (!content.trim()) {
+      console.log(`[Yjs] flushAndExtractMetadata: room "${roomName}" has empty content`);
+
+      return null;
+    }
+
+    // Extract and return metadata
+    const metadata = extractMetadataFromMarkdown(content);
+
+    console.log(`[Yjs] flushAndExtractMetadata: extracted metadata from room "${roomName}" - title: "${metadata.title}"`);
+
+    return metadata;
   }
 }

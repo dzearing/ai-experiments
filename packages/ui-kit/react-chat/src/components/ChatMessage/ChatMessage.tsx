@@ -1,6 +1,7 @@
-import { type ReactNode, type MouseEvent, useState, useEffect, useRef } from 'react';
+import { type ReactNode, type MouseEvent, useState, useEffect, useRef, useCallback } from 'react';
 import { Avatar, Menu, BusyIndicator, Spinner, type MenuItem } from '@ui-kit/react';
 import { CheckIcon } from '@ui-kit/icons/CheckIcon';
+import { ChevronDownIcon } from '@ui-kit/icons/ChevronDownIcon';
 import { MarkdownRenderer } from '@ui-kit/react-markdown';
 import styles from './ChatMessage.module.css';
 
@@ -401,6 +402,21 @@ export function ChatMessage({
   className = '',
   onLinkClick,
 }: ChatMessageProps) {
+  // Track which tool outputs are expanded (collapsed by default)
+  const [expandedTools, setExpandedTools] = useState<Set<string>>(new Set());
+
+  const toggleToolExpanded = useCallback((toolKey: string) => {
+    setExpandedTools(prev => {
+      const next = new Set(prev);
+      if (next.has(toolKey)) {
+        next.delete(toolKey);
+      } else {
+        next.add(toolKey);
+      }
+      return next;
+    });
+  }, []);
+
   const handleMenuSelect = (value: string) => {
     onMenuSelect?.(value, id);
   };
@@ -546,10 +562,17 @@ export function ChatMessage({
                   // Ensure output is a string, treat '__complete__' as empty (no box to show)
                   const rawOutput = typeof toolCall.output === 'string' ? toolCall.output : '';
                   const outputText = rawOutput === '__complete__' ? '' : rawOutput;
+                  const hasOutput = isComplete && outputText && !shouldHideToolOutput(toolCall.name);
+                  const toolKey = `${partIndex}-${toolIndex}`;
+                  const isExpanded = expandedTools.has(toolKey);
+
                   return (
                     <div key={toolIndex} className={styles.toolCallWrapper}>
-                      <div
-                        className={`${styles.toolCall} ${isComplete ? styles.toolComplete : styles.toolRunning}`}
+                      <button
+                        type="button"
+                        className={`${styles.toolCall} ${isComplete ? styles.toolComplete : styles.toolRunning} ${hasOutput ? styles.toolExpandable : ''}`}
+                        onClick={hasOutput ? () => toggleToolExpanded(toolKey) : undefined}
+                        disabled={!hasOutput}
                       >
                         <span className={styles.toolIcon}>
                           {isComplete ? <CheckIcon /> : <Spinner size="sm" />}
@@ -562,13 +585,16 @@ export function ChatMessage({
                           isComplete={isComplete}
                           duration={toolCall.duration}
                         />
-                      </div>
-                      {isComplete && outputText && !shouldHideToolOutput(toolCall.name) && (
+                        {hasOutput && (
+                          <span className={`${styles.toolChevron} ${isExpanded ? styles.toolChevronExpanded : ''}`}>
+                            <ChevronDownIcon />
+                          </span>
+                        )}
+                      </button>
+                      {hasOutput && isExpanded && (
                         <div className={styles.toolResult}>
                           <pre className={styles.toolResultContent}>
-                            {outputText.length > 200
-                              ? `${outputText.slice(0, 200)}...`
-                              : outputText}
+                            {outputText}
                           </pre>
                         </div>
                       )}

@@ -2,9 +2,24 @@ import { query, type SDKAssistantMessage } from '@anthropic-ai/claude-agent-sdk'
 import { IdeaAgentChatService, type IdeaAgentMessage } from './IdeaAgentChatService.js';
 import { IdeaAgentYjsClient } from './IdeaAgentYjsClient.js';
 import type { YjsCollaborationHandler } from '../websocket/YjsCollaborationHandler.js';
+import type { ResourceEventBus } from './resourceEventBus/ResourceEventBus.js';
 import { buildIdeaAgentSystemPrompt } from '../prompts/ideaAgentPrompt.js';
 import type { AgentProgressCallbacks, AgentProgressEvent } from '../shared/agentProgress.js';
+import { createToolStartEvent, createToolCompleteEvent } from '../shared/sdkStreamProcessor.js';
+import { createStatusEvent } from '../shared/agentProgressUtils.js';
 import { createThingToolsMcpServer } from '../shared/thingToolsMcp.js';
+// Re-export shared types for backwards compatibility
+export type { OpenQuestion, SuggestedResponse, TokenUsage } from '../shared/agentResponseTypes.js';
+import type { OpenQuestion, SuggestedResponse, TokenUsage } from '../shared/agentResponseTypes.js';
+import {
+  parseOpenQuestions,
+  parseSuggestedResponses,
+  findBlockStart,
+  findSafeStreamEnd,
+  IDEA_AGENT_BLOCK_TAGS,
+  IDEA_AGENT_SAFE_STREAM_TAGS,
+} from '../shared/agentResponseParsers.js';
+import { buildConversationHistory, generateMessageId, MAX_QUEUED_MESSAGES } from '../shared/agentSessionUtils.js';
 
 /**
  * Cache entry for pre-generated greetings
@@ -87,38 +102,6 @@ export type DocumentEdit =
   | { action: 'replace'; start: number; startText: string; endText: string; text: string }
   | { action: 'insert'; start: number; afterText: string; text: string }
   | { action: 'delete'; start: number; startText: string; endText: string };
-
-/**
- * Token usage information
- */
-export interface TokenUsage {
-  inputTokens: number;
-  outputTokens: number;
-}
-
-/**
- * Open question for the user to resolve
- */
-export interface OpenQuestion {
-  id: string;
-  question: string;
-  context?: string;
-  selectionType: 'single' | 'multiple';
-  options: Array<{
-    id: string;
-    label: string;
-    description?: string;
-  }>;
-  allowCustom: boolean;
-}
-
-/**
- * Suggested response for the user to quickly reply
- */
-export interface SuggestedResponse {
-  label: string;
-  message: string;
-}
 
 /**
  * Callbacks for streaming agent responses
@@ -227,76 +210,10 @@ function parseDocumentEdits(response: string): { edits: DocumentEdit[] | null; c
 }
 
 /**
- * Parse open questions from agent response
- * Questions block can appear before the chat response
- */
-function parseOpenQuestions(response: string): { questions: OpenQuestion[] | null; responseWithoutQuestions: string } {
-  const questionsMatch = response.match(/<open_questions>\s*([\s\S]*?)\s*<\/open_questions>/);
-
-  if (!questionsMatch) {
-    return { questions: null, responseWithoutQuestions: response };
-  }
-
-  try {
-    const rawQuestions = JSON.parse(questionsMatch[1]) as OpenQuestion[];
-    // Default allowCustom to true so users can always provide custom answers
-    const questions = rawQuestions.map(q => ({
-      ...q,
-      allowCustom: q.allowCustom !== false, // Default to true unless explicitly false
-    }));
-    // Remove the questions block from the response
-    const responseWithoutQuestions = response.replace(/<open_questions>[\s\S]*?<\/open_questions>/, '').trim();
-    return { questions, responseWithoutQuestions };
-  } catch {
-    console.error('[IdeaAgentService] Failed to parse open questions JSON');
-    return { questions: null, responseWithoutQuestions: response };
-  }
-}
-
-/**
- * Parse suggested responses from agent response
- * Suggestions block appears at the end of the response
- */
-function parseSuggestedResponses(response: string): { suggestions: SuggestedResponse[] | null; responseWithoutSuggestions: string } {
-  const suggestionsMatch = response.match(/<suggested_responses>\s*([\s\S]*?)\s*<\/suggested_responses>/);
-
-  if (!suggestionsMatch) {
-    return { suggestions: null, responseWithoutSuggestions: response };
-  }
-
-  try {
-    const suggestions = JSON.parse(suggestionsMatch[1]) as SuggestedResponse[];
-    // Remove the suggestions block from the response
-    const responseWithoutSuggestions = response.replace(/<suggested_responses>[\s\S]*?<\/suggested_responses>/, '').trim();
-    return { suggestions, responseWithoutSuggestions };
-  } catch {
-    console.error('[IdeaAgentService] Failed to parse suggested responses JSON');
-    return { suggestions: null, responseWithoutSuggestions: response };
-  }
-}
-
-/**
  * Check if a partial response contains the start of an edit block
  */
 function findEditBlockStart(text: string): number {
-  const ideaUpdateStart = text.indexOf('<idea_update>');
-  const docEditsStart = text.indexOf('<document_edits>');
-  const openQuestionsStart = text.indexOf('<open_questions>');
-  const suggestedResponsesStart = text.indexOf('<suggested_responses>');
-
-  const starts = [ideaUpdateStart, docEditsStart, openQuestionsStart, suggestedResponsesStart].filter(s => s >= 0);
-  return starts.length > 0 ? Math.min(...starts) : -1;
-}
-
-/**
- * Create a status progress event for the Idea Agent
- */
-function createStatusEvent(displayText: string): AgentProgressEvent {
-  return {
-    type: 'status',
-    timestamp: Date.now(),
-    displayText,
-  };
+  return findBlockStart(text, IDEA_AGENT_BLOCK_TAGS);
 }
 
 /**
@@ -307,6 +224,8 @@ function createStatusEvent(displayText: string): AgentProgressEvent {
 export class IdeaAgentService {
   private chatService: IdeaAgentChatService;
   private yjsClient: IdeaAgentYjsClient | null = null;
+  private yjsHandler: YjsCollaborationHandler | null = null;
+  private resourceEventBus: ResourceEventBus | null = null;
 
   // Greeting cache for new ideas
   private newIdeaGreetingCache: GreetingCache | null = null;
@@ -314,33 +233,66 @@ export class IdeaAgentService {
   // Session management for background execution
   private activeSessions = new Map<string, IdeaAgentSession>();
   private clientCallbacks = new Map<string, StreamCallbacks>();
-  private static MAX_QUEUED_MESSAGES = 500;
   /** Mapping from old chatId to new chatId for session transfers */
   private sessionTransfers = new Map<string, string>();
+  /** Pending links to apply when a session is created (documentRoomName -> {realIdeaId, workspaceId}) */
+  private pendingLinks = new Map<string, { realIdeaId: string; workspaceId?: string }>();
   /** Callback for broadcasting session state changes to clients */
-  private onSessionStateChange?: (ideaId: string, status: 'idle' | 'running' | 'error', userId: string, workspaceId?: string) => void;
+  private onSessionStateChange?: (
+    ideaId: string,
+    status: 'idle' | 'running' | 'error',
+    userId: string,
+    workspaceId?: string,
+    agentStartedAt?: string,
+    agentFinishedAt?: string
+  ) => void;
+  /** Callback for broadcasting metadata updates to clients */
+  private onMetadataUpdate?: (ideaId: string, metadata: { title: string; summary: string; tags: string[]; description: string }, userId: string, workspaceId?: string) => void;
 
-  constructor(yjsHandler?: YjsCollaborationHandler) {
+  constructor(yjsHandler?: YjsCollaborationHandler, resourceEventBus?: ResourceEventBus) {
     this.chatService = new IdeaAgentChatService();
     if (yjsHandler) {
+      this.yjsHandler = yjsHandler;
       this.yjsClient = new IdeaAgentYjsClient(yjsHandler);
+    }
+    if (resourceEventBus) {
+      this.resourceEventBus = resourceEventBus;
     }
   }
 
   /**
    * Set a callback to be called when session state changes.
    * This allows the WebSocket handler to broadcast updates to clients.
+   * @param callback - Callback with timestamps:
+   *   - agentStartedAt: ISO string when status is 'running' (for duration display)
+   *   - agentFinishedAt: ISO string when status is 'idle' or 'error' (for relative time display)
    */
-  setSessionStateChangeCallback(callback: (ideaId: string, status: 'idle' | 'running' | 'error', userId: string, workspaceId?: string) => void): void {
+  setSessionStateChangeCallback(callback: (
+    ideaId: string,
+    status: 'idle' | 'running' | 'error',
+    userId: string,
+    workspaceId?: string,
+    agentStartedAt?: string,
+    agentFinishedAt?: string
+  ) => void): void {
     this.onSessionStateChange = callback;
+  }
+
+  /**
+   * Set a callback to be called when idea metadata is updated.
+   * This allows the WebSocket handler to broadcast metadata updates to clients.
+   */
+  setMetadataUpdateCallback(callback: (ideaId: string, metadata: { title: string; summary: string; tags: string[]; description: string }, userId: string, workspaceId?: string) => void): void {
+    this.onMetadataUpdate = callback;
   }
 
   /**
    * Register a client's callbacks for receiving messages.
    * Replays any queued messages from background execution.
    * If transferFromChatId is provided, transfers the session from the old chatId to the new one.
+   * @returns true if a session was transferred (caller should skip sending history/greeting)
    */
-  registerClient(ideaId: string, callbacks: StreamCallbacks, workspaceId?: string, transferFromChatId?: string): void {
+  registerClient(ideaId: string, callbacks: StreamCallbacks, workspaceId?: string, transferFromChatId?: string): boolean {
     this.clientCallbacks.set(ideaId, callbacks);
 
     // Check if we need to transfer a session from a previous chatId (e.g., temp room name → real ideaId)
@@ -369,7 +321,9 @@ export class IdeaAgentService {
         // If session was running, broadcast the status with the correct ideaId now
         if (oldSession.status === 'running') {
           console.log(`[IdeaAgentService] Session still running, broadcasting status for ${ideaId}`);
-          this.onSessionStateChange?.(ideaId, 'running', oldSession.userId, oldSession.workspaceId);
+          const agentStartedAt = oldSession.startedAt ? new Date(oldSession.startedAt).toISOString() : undefined;
+
+          this.onSessionStateChange?.(ideaId, 'running', oldSession.userId, oldSession.workspaceId, agentStartedAt);
         }
 
         // Replay any queued messages
@@ -378,7 +332,8 @@ export class IdeaAgentService {
           this.dispatchMessage(msg, callbacks);
         }
         oldSession.queuedMessages = [];
-        return;
+        // Return true to indicate session was transferred - caller should skip sending history/greeting
+        return true;
       } else {
         console.log(`[IdeaAgentService] No session found at ${transferFromChatId} to transfer`);
       }
@@ -409,6 +364,9 @@ export class IdeaAgentService {
       };
       this.activeSessions.set(ideaId, session);
     }
+
+    // No session was transferred
+    return false;
   }
 
   /**
@@ -461,8 +419,8 @@ export class IdeaAgentService {
       if (session) {
         session.queuedMessages.push(message);
         // Limit queue size to prevent memory issues
-        if (session.queuedMessages.length > IdeaAgentService.MAX_QUEUED_MESSAGES * 2) {
-          session.queuedMessages = session.queuedMessages.slice(-IdeaAgentService.MAX_QUEUED_MESSAGES);
+        if (session.queuedMessages.length > MAX_QUEUED_MESSAGES * 2) {
+          session.queuedMessages = session.queuedMessages.slice(-MAX_QUEUED_MESSAGES);
         }
       }
     }
@@ -559,6 +517,7 @@ export class IdeaAgentService {
   ): Promise<void> {
     // Create or get session
     let session = this.activeSessions.get(ideaId);
+
     if (!session) {
       session = {
         ideaId,
@@ -568,6 +527,30 @@ export class IdeaAgentService {
         clientConnected: this.clientCallbacks.has(ideaId),
       };
       this.activeSessions.set(ideaId, session);
+
+      // Check for pending link (idea was created via REST API before message was sent)
+      const pendingLink = this.pendingLinks.get(ideaId);
+      if (pendingLink) {
+        console.log(`[IdeaAgentService] Applying pending link: ${ideaId} -> ${pendingLink.realIdeaId}`);
+        this.pendingLinks.delete(ideaId);
+
+        // Update the session with the real ideaId
+        session.ideaId = pendingLink.realIdeaId;
+        if (pendingLink.workspaceId) {
+          session.workspaceId = pendingLink.workspaceId;
+        }
+
+        // Move the session to the new key
+        this.activeSessions.delete(ideaId);
+        this.activeSessions.set(pendingLink.realIdeaId, session);
+
+        // Also move callbacks if registered under old id
+        const callbacks = this.clientCallbacks.get(ideaId);
+        if (callbacks) {
+          this.clientCallbacks.delete(ideaId);
+          this.clientCallbacks.set(pendingLink.realIdeaId, callbacks);
+        }
+      }
     }
 
     // Create abort controller for this operation
@@ -576,9 +559,16 @@ export class IdeaAgentService {
     session.status = 'running';
     session.startedAt = Date.now();
 
+    // Mark agent active in Yjs room to prevent room destruction while processing
+    if (this.yjsHandler && documentRoomName) {
+      this.yjsHandler.markAgentActive(documentRoomName, userId);
+    }
+
     // Broadcast state change (use session.ideaId which is updated on transfer)
-    console.log(`[IdeaAgentService] Broadcasting state change: idea=${session.ideaId}, status=running, userId=${session.userId}, workspaceId=${session.workspaceId}`);
-    this.onSessionStateChange?.(session.ideaId, 'running', session.userId, session.workspaceId);
+    const agentStartedAt = new Date(session.startedAt).toISOString();
+
+    console.log(`[IdeaAgentService] Broadcasting state change: idea=${session.ideaId}, status=running, userId=${session.userId}, workspaceId=${session.workspaceId}, startedAt=${agentStartedAt}`);
+    this.onSessionStateChange?.(session.ideaId, 'running', session.userId, session.workspaceId, agentStartedAt);
 
     // Create local callbacks wrapper that uses dispatchOrQueue
     // This allows messages to be queued if client disconnects during execution
@@ -641,10 +631,13 @@ export class IdeaAgentService {
     // Determine if this is a new idea based on DOCUMENT CONTENT, not just ideaContext.id
     // The document is "new" if it has no content or only has placeholder content
     const placeholderContent = '# Untitled Idea\n\n## Summary\n_Add a brief summary of your idea..._\n\nTags: _none_\n\n---\n\n_Describe your idea in detail..._';
+    const hasPlaceholderSummary =
+      documentContent?.includes('_Add a brief summary of your idea..._') ||
+      documentContent?.includes('Processing...');
     const hasRealContent = documentContent &&
                            documentContent.trim().length > 0 &&
                            documentContent.trim() !== placeholderContent.trim() &&
-                           !documentContent.includes('_Add a brief summary of your idea..._');
+                           !hasPlaceholderSummary;
 
     const isNewIdea = !hasRealContent;
 
@@ -654,13 +647,13 @@ export class IdeaAgentService {
     const systemPrompt = buildIdeaAgentSystemPrompt(isNewIdea, documentContent, ideaContext.thingContext);
 
     // Build the full prompt with conversation history
-    const conversationHistory = this.buildConversationHistory(history.slice(0, -1));
+    const conversationHistory = buildConversationHistory(history.slice(0, -1));
     const fullPrompt = conversationHistory
       ? `${conversationHistory}\n\nUser: ${content}`
       : content;
 
     // Generate message ID for the assistant response
-    const messageId = `msg-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    const messageId = generateMessageId();
 
     // Streaming state
     let fullResponse = '';
@@ -668,8 +661,12 @@ export class IdeaAgentService {
     let foundEditBlock = false; // Have we hit an edit block?
     let questionsSent = false; // Have we sent open questions?
     let questionCount = 0; // Number of questions (for fixing link text)
+    let questionsToSave: OpenQuestion[] | undefined; // Questions to persist with the message
     let totalInputTokens = 0;
     let totalOutputTokens = 0;
+
+    // Track tool calls for matching results
+    const pendingToolCalls: Array<{ id: string; name: string; input: Record<string, unknown>; output?: string }> = [];
 
     try {
       console.log(`[IdeaAgentService] Processing message for idea ${ideaId} (new: ${isNewIdea}): "${content.slice(0, 50)}..."`);
@@ -714,12 +711,22 @@ export class IdeaAgentService {
             }
           }
 
-          // Extract text from message
+          // Extract text from message and handle tool_use blocks
           let newText = '';
           if (Array.isArray(msgContent)) {
             for (const block of msgContent) {
               if (block.type === 'text') {
                 newText += block.text;
+              } else if (block.type === 'tool_use') {
+                // Tool use - emit progress event
+                const toolUseBlock = block as { type: 'tool_use'; id?: string; name: string; input: Record<string, unknown> };
+                console.log(`[IdeaAgentService] Tool use: ${toolUseBlock.name}`);
+                pendingToolCalls.push({
+                  id: toolUseBlock.id || '',
+                  name: toolUseBlock.name,
+                  input: toolUseBlock.input || {},
+                });
+                callbacks.onProgressEvent?.(createToolStartEvent(toolUseBlock.name, toolUseBlock.input || {}));
               }
             }
           } else if (typeof msgContent === 'string') {
@@ -738,6 +745,7 @@ export class IdeaAgentService {
                 callbacks.onOpenQuestions?.(questions);
                 questionsSent = true;
                 questionCount = questions.length;
+                questionsToSave = questions; // Save for persisting with the message
                 // Update fullResponse to exclude the questions block
                 fullResponse = responseWithoutQuestions;
               }
@@ -767,11 +775,43 @@ export class IdeaAgentService {
                 // No edit block yet - stream new content
                 // But be careful: don't stream partial tags like "<idea" or "<doc"
                 // Stream up to the last safe point (before any potential tag start)
-                const safeEnd = this.findSafeStreamEnd(fullResponse);
+                const safeEnd = findSafeStreamEnd(fullResponse, IDEA_AGENT_SAFE_STREAM_TAGS);
                 if (safeEnd > streamedChatLength) {
                   const newChunk = fullResponse.slice(streamedChatLength, safeEnd);
                   callbacks.onTextChunk(newChunk, messageId);
                   streamedChatLength = safeEnd;
+                }
+              }
+            }
+          }
+        } else if (message.type === 'user') {
+          // User message contains tool results
+          const userMsg = message as { type: 'user'; message: { content: unknown[] } };
+          if (Array.isArray(userMsg.message?.content)) {
+            for (const block of userMsg.message.content) {
+              if ((block as { type?: string }).type === 'tool_result') {
+                const toolResult = block as { type: 'tool_result'; tool_use_id?: string; content?: unknown };
+
+                // Find matching pending tool call (by ID or first without output)
+                const pendingTool = pendingToolCalls.find(
+                  tc => !tc.output && (tc.id === toolResult.tool_use_id || !toolResult.tool_use_id)
+                );
+
+                if (pendingTool) {
+                  // Extract output content from tool result
+                  let outputContent = 'completed';
+                  if (typeof toolResult.content === 'string') {
+                    outputContent = toolResult.content;
+                  } else if (Array.isArray(toolResult.content)) {
+                    const textBlock = toolResult.content.find((c: unknown) => (c as { type?: string }).type === 'text');
+                    if (textBlock && typeof (textBlock as { text?: string }).text === 'string') {
+                      outputContent = (textBlock as { text: string }).text;
+                    }
+                  }
+
+                  pendingTool.output = outputContent;
+                  console.log(`[IdeaAgentService] Tool result: ${pendingTool.name}`);
+                  callbacks.onProgressEvent?.(createToolCompleteEvent(pendingTool.name, outputContent));
                 }
               }
             }
@@ -835,6 +875,10 @@ export class IdeaAgentService {
                 success: true,
               });
               console.log(`[IdeaAgentService] New document created`);
+
+              // Extract and publish metadata after document creation
+              // Use session.ideaId which has the linked real ideaId if applicable
+              await this.extractAndPublishMetadata(documentRoomName, session.ideaId, userId, session.workspaceId);
             } catch (error) {
               console.error('[IdeaAgentService] Error creating document:', error);
             }
@@ -875,6 +919,10 @@ export class IdeaAgentService {
                 success: failedEdits.length === 0,
               });
               console.log(`[IdeaAgentService] Edits applied: ${successCount}/${edits.length} successful`);
+
+              // Extract and publish metadata after document edits
+              // Use session.ideaId which has the linked real ideaId if applicable
+              await this.extractAndPublishMetadata(documentRoomName, session.ideaId, userId, session.workspaceId);
             } catch (error) {
               console.error('[IdeaAgentService] Error applying edits:', error);
             }
@@ -899,11 +947,13 @@ export class IdeaAgentService {
       }
 
       // Save the assistant message (chat portion only, without suggestion blocks)
+      // Include openQuestions so they can be rehydrated when dialog reopens
       const assistantMessage = await this.chatService.addMessage(
         ideaId,
         userId,
         'assistant',
-        chatResponse || 'I apologize, but I was unable to generate a response.'
+        chatResponse || 'I apologize, but I was unable to generate a response.',
+        questionsToSave
       );
 
       // Call complete callback
@@ -918,45 +968,36 @@ export class IdeaAgentService {
       session.status = 'idle';
       session.currentAbortController = undefined;
 
+      // Mark agent inactive in Yjs room (allows room to be cleaned up if no clients)
+      if (this.yjsHandler && documentRoomName) {
+        this.yjsHandler.markAgentInactive(documentRoomName);
+      }
+
       // Broadcast state change (use session.ideaId which is updated on transfer)
-      console.log(`[IdeaAgentService] Broadcasting state change: idea=${session.ideaId}, status=idle, userId=${session.userId}, workspaceId=${session.workspaceId}`);
-      this.onSessionStateChange?.(session.ideaId, 'idle', session.userId, session.workspaceId);
+      const agentFinishedAt = new Date().toISOString();
+
+      console.log(`[IdeaAgentService] Broadcasting state change: idea=${session.ideaId}, status=idle, userId=${session.userId}, workspaceId=${session.workspaceId}, finishedAt=${agentFinishedAt}`);
+      this.onSessionStateChange?.(session.ideaId, 'idle', session.userId, session.workspaceId, undefined, agentFinishedAt);
     } catch (error) {
       // Update session status on error
       session.status = 'error';
       session.currentAbortController = undefined;
 
+      // Mark agent inactive in Yjs room (allows room to be cleaned up if no clients)
+      if (this.yjsHandler && documentRoomName) {
+        this.yjsHandler.markAgentInactive(documentRoomName);
+      }
+
       // Broadcast state change (use session.ideaId which is updated on transfer)
-      console.log(`[IdeaAgentService] Broadcasting state change: idea=${session.ideaId}, status=error, userId=${session.userId}, workspaceId=${session.workspaceId}`);
-      this.onSessionStateChange?.(session.ideaId, 'error', session.userId, session.workspaceId);
+      const agentFinishedAt = new Date().toISOString();
+
+      console.log(`[IdeaAgentService] Broadcasting state change: idea=${session.ideaId}, status=error, userId=${session.userId}, workspaceId=${session.workspaceId}, finishedAt=${agentFinishedAt}`);
+      this.onSessionStateChange?.(session.ideaId, 'error', session.userId, session.workspaceId, undefined, agentFinishedAt);
 
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('[IdeaAgentService] Error processing message:', error);
       callbacks.onError(errorMessage);
     }
-  }
-
-  /**
-   * Find a safe point to stream up to, avoiding partial XML tags.
-   * Returns the index up to which it's safe to stream.
-   */
-  private findSafeStreamEnd(text: string): number {
-    // Look for potential partial tags at the end
-    const potentialTagStarts = ['<idea_update', '<document_edits', '<open_questions', '<suggested_responses', '<idea', '<doc', '<open', '<suggested'];
-    let safeEnd = text.length;
-
-    for (const tagStart of potentialTagStarts) {
-      // Check if we might be in the middle of typing this tag
-      for (let i = 1; i <= tagStart.length; i++) {
-        const partial = tagStart.slice(0, i);
-        if (text.endsWith(partial)) {
-          safeEnd = Math.min(safeEnd, text.length - partial.length);
-          break;
-        }
-      }
-    }
-
-    return safeEnd;
   }
 
   /**
@@ -1180,17 +1221,119 @@ Share your idea for ${context.activity} **${name}** - whether it's ${context.exa
   }
 
   /**
-   * Build conversation history string from messages.
+   * Extract metadata from document and broadcast to clients.
+   * This allows clients to receive real-time updates when
+   * the agent modifies document content (title, summary, tags).
    */
-  private buildConversationHistory(messages: IdeaAgentMessage[]): string {
-    // Take last 20 messages to keep context manageable
-    const recentMessages = messages.slice(-20);
+  private async extractAndPublishMetadata(
+    documentRoomName: string,
+    ideaId: string,
+    userId: string,
+    workspaceId?: string,
+  ): Promise<void> {
+    if (!this.yjsHandler) {
+      return;
+    }
 
-    return recentMessages
-      .map((msg) => {
-        const role = msg.role === 'user' ? 'User' : 'Assistant';
-        return `${role}: ${msg.content}`;
-      })
-      .join('\n\n');
+    try {
+      const metadata = await this.yjsHandler.flushAndExtractMetadata(documentRoomName);
+
+      if (metadata) {
+        // Broadcast metadata via callback (for notifyIdeaUpdate broadcast)
+        this.onMetadataUpdate?.(
+          ideaId,
+          {
+            title: metadata.title,
+            summary: metadata.summary,
+            tags: metadata.tags,
+            description: metadata.description,
+          },
+          userId,
+          workspaceId,
+        );
+
+        // Also publish to ResourceEventBus for delta protocol subscribers
+        if (this.resourceEventBus) {
+          this.resourceEventBus.setState(
+            'idea',
+            ideaId,
+            {
+              id: ideaId,
+              title: metadata.title,
+              summary: metadata.summary,
+              tags: metadata.tags,
+              description: metadata.description,
+            },
+            userId,
+            workspaceId,
+          );
+        }
+
+        console.log(`[IdeaAgentService] Broadcast metadata for idea ${ideaId}: "${metadata.title}"`);
+      }
+    } catch (error) {
+      console.error(`[IdeaAgentService] Error extracting/publishing metadata for idea ${ideaId}:`, error);
+    }
+  }
+
+  /**
+   * Link an agent session from a document room name to a real ideaId.
+   * This is called when an idea is created via REST API while the agent is running.
+   * It updates the session's ideaId and re-broadcasts the status to ensure
+   * IdeaCards receive the correct status updates.
+   *
+   * If no session exists yet (message hasn't been sent), stores a pending link
+   * that will be applied when the session is created.
+   */
+  linkSessionToIdea(documentRoomName: string, realIdeaId: string, workspaceId?: string): boolean {
+    const session = this.activeSessions.get(documentRoomName);
+
+    if (!session) {
+      // No session yet - store as pending link to apply when session is created
+      console.log(`[IdeaAgentService] No session at ${documentRoomName}, storing pending link to ${realIdeaId}`);
+      this.pendingLinks.set(documentRoomName, { realIdeaId, workspaceId });
+      // Also store the transfer mapping so it's ready when the session does get created
+      this.sessionTransfers.set(documentRoomName, realIdeaId);
+
+      return true; // Return true since we stored the pending link
+    }
+
+    console.log(`[IdeaAgentService] Linking session from ${documentRoomName} to ${realIdeaId}, status=${session.status}`);
+
+    // Update session ideaId
+    const oldIdeaId = session.ideaId;
+    session.ideaId = realIdeaId;
+
+    if (workspaceId) {
+      session.workspaceId = workspaceId;
+    }
+
+    // Move the session to the new key
+    this.activeSessions.delete(documentRoomName);
+    this.activeSessions.set(realIdeaId, session);
+
+    // Store transfer mapping so in-flight dispatches can follow
+    this.sessionTransfers.set(documentRoomName, realIdeaId);
+
+    // Also move callbacks if any
+    const callbacks = this.clientCallbacks.get(documentRoomName);
+
+    if (callbacks) {
+      this.clientCallbacks.delete(documentRoomName);
+      this.clientCallbacks.set(realIdeaId, callbacks);
+    }
+
+    // Re-broadcast the current status with the correct ideaId, including appropriate timestamp
+    const agentStartedAt = session.status === 'running' && session.startedAt
+      ? new Date(session.startedAt).toISOString()
+      : undefined;
+    const agentFinishedAt = session.status !== 'running'
+      ? new Date().toISOString()
+      : undefined;
+
+    console.log(`[IdeaAgentService] Re-broadcasting status=${session.status} for ${realIdeaId} (was ${oldIdeaId})`);
+    this.onSessionStateChange?.(realIdeaId, session.status, session.userId, session.workspaceId, agentStartedAt, agentFinishedAt);
+
+    return true;
   }
 }

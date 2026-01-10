@@ -3,6 +3,10 @@ import { FACILITATOR_WS_URL } from '../config';
 import { useFacilitator, type FacilitatorMessage, type NavigationContext, type MessagePart, type ToolCall } from '../contexts/FacilitatorContext';
 import type { OpenQuestion } from '@ui-kit/react-chat';
 import { useAgentProgress, type AgentProgressEvent } from './useAgentProgress';
+import { createLogger } from '../utils/clientLogger';
+
+// Create logger for this hook
+const log = createLogger('Facilitator');
 
 /**
  * Server-side message format (from FacilitatorChatService)
@@ -164,6 +168,9 @@ export function useFacilitatorSocket({
   // Track navigation context changes to send updates to server
   const navigationContextRef = useRef<NavigationContext>(navigationContext);
 
+  // Track recently navigated thing to handle timing issues with open_idea_workspace
+  const recentlyNavigatedThingRef = useRef<{ thingId: string; timestamp: number } | null>(null);
+
   // Handle navigation actions from tool results
   const handleNavigationAction = useCallback((actionData: { __action: string; [key: string]: unknown }) => {
     switch (actionData.__action) {
@@ -172,15 +179,18 @@ export function useFacilitatorSocket({
           const currentPath = window.location.pathname;
           const thingId = actionData.thingId as string;
 
+          // Track this navigation for timing coordination with open_idea_workspace
+          recentlyNavigatedThingRef.current = { thingId, timestamp: Date.now() };
+
           // If we're already on the Things page and the Thing is already selected, skip
           if (currentPath.includes('/things') && currentPath.includes(thingId)) {
-            console.log('[Facilitator] Already on Things page with this Thing selected, skipping navigate');
+            log.log(' Already on Things page with this Thing selected, skipping navigate');
             return;
           }
 
           // If we're on the Things page (but different Thing), dispatch event to select it
           if (currentPath.includes('/things')) {
-            console.log('[Facilitator] On Things page, dispatching event to select Thing');
+            log.log(' On Things page, dispatching event to select Thing');
             window.dispatchEvent(new CustomEvent('facilitator:navigateToThing', {
               detail: { thingId }
             }));
@@ -197,7 +207,7 @@ export function useFacilitatorSocket({
             ? `/workspace/${workspaceId}/things/${thingId}`
             : `/things/${thingId}`;
 
-          console.log('[Facilitator] Navigating to Things page:', targetUrl);
+          log.log(' Navigating to Things page:', targetUrl);
 
           // Use History API to navigate without full page reload
           // The facilitator:navigateToThing event will be picked up by Things page when it mounts
@@ -213,21 +223,42 @@ export function useFacilitatorSocket({
         }
         break;
 
-      case 'open_idea_workspace':
-        // Dispatch event for Ideas page / ThingDetail to handle
-        window.dispatchEvent(new CustomEvent('facilitator:openIdea', {
-          detail: {
-            ideaId: actionData.ideaId,
-            thingId: actionData.thingId,
-            initialPrompt: actionData.initialPrompt,
-            initialGreeting: actionData.initialGreeting,
-            focusInput: actionData.focusInput ?? true,
+      case 'open_idea_workspace': {
+        const thingId = actionData.thingId as string | undefined;
+        const recentNav = recentlyNavigatedThingRef.current;
+
+        // Check if we just navigated to this thing (within last 2 seconds)
+        // If so, delay the event to allow the ThingDetail component to mount
+        const needsDelay = thingId && recentNav &&
+          recentNav.thingId === thingId &&
+          Date.now() - recentNav.timestamp < 2000;
+
+        const dispatchOpenIdea = () => {
+          log.log(' Dispatching facilitator:openIdea event', { thingId, ideaId: actionData.ideaId, initialTitle: actionData.initialTitle });
+          window.dispatchEvent(new CustomEvent('facilitator:openIdea', {
+            detail: {
+              ideaId: actionData.ideaId,
+              thingId: actionData.thingId,
+              initialTitle: actionData.initialTitle,
+              initialPrompt: actionData.initialPrompt,
+              initialGreeting: actionData.initialGreeting,
+              focusInput: actionData.focusInput ?? true,
+            }
+          }));
+          if (actionData.closeFacilitator !== false) {
+            close();
           }
-        }));
-        if (actionData.closeFacilitator !== false) {
-          close();
+        };
+
+        if (needsDelay) {
+          // Delay to allow navigation and component mounting to complete
+          log.log(' Delaying open_idea_workspace to allow navigation to complete');
+          setTimeout(dispatchOpenIdea, 300);
+        } else {
+          dispatchOpenIdea();
         }
         break;
+      }
 
       case 'close_facilitator':
         close();
@@ -251,7 +282,7 @@ export function useFacilitatorSocket({
     ws.onopen = () => {
       setConnectionState('connected');
       setError(null);
-      console.log('[Facilitator] WebSocket connected');
+      log.log(' WebSocket connected');
     };
 
     ws.onclose = () => {
@@ -259,7 +290,7 @@ export function useFacilitatorSocket({
       // Reset loading state on disconnect - prevents stuck indicators
       setIsLoading(false);
       progress.clearProgress();
-      console.log('[Facilitator] WebSocket disconnected');
+      log.log(' WebSocket disconnected');
 
       // Attempt to reconnect after 3 seconds if overlay is still open
       if (isOpen) {
@@ -270,7 +301,7 @@ export function useFacilitatorSocket({
     };
 
     ws.onerror = (event) => {
-      console.error('[Facilitator] WebSocket error:', event);
+      log.error(' WebSocket error:', event);
       setConnectionState('error');
       setError('Failed to connect to facilitator service');
       onError?.('Failed to connect to facilitator service');
@@ -399,9 +430,9 @@ export function useFacilitatorSocket({
 
                   // When thing_create succeeds, dispatch event with the created Thing data
                   // This ensures the Thing appears in the UI immediately (confirmed update from server)
-                  console.log('[Facilitator] Tool result parsed:', data.toolName, 'has thing:', !!outputData.thing, outputData);
+                  log.log('Tool result parsed', { toolName: data.toolName, hasThing: !!outputData.thing, outputData });
                   if (data.toolName.includes('thing_create') && outputData.thing) {
-                    console.log('[Facilitator] Dispatching facilitator:thingCreated event with:', outputData.thing);
+                    log.log(' Dispatching facilitator:thingCreated event with:', outputData.thing);
                     window.dispatchEvent(new CustomEvent('facilitator:thingCreated', {
                       detail: { thing: outputData.thing }
                     }));
@@ -438,7 +469,7 @@ export function useFacilitatorSocket({
           case 'persona_changed':
             // Persona has been changed - clear all messages to prepare for new greeting
             setMessages([]);
-            console.log('[Facilitator] Persona changed to:', data.personaName);
+            log.log(' Persona changed to:', data.personaName);
             break;
 
           case 'greeting':
@@ -451,14 +482,14 @@ export function useFacilitatorSocket({
                 timestamp: Date.now(),
                 isStreaming: false,
               });
-              console.log('[Facilitator] Greeting received from:', data.personaName);
+              log.log(' Greeting received from:', data.personaName);
             }
             break;
 
           case 'loading':
             // Loading state update (e.g., generating greeting)
             setIsLoading(data.isLoading ?? false);
-            console.log('[Facilitator] Loading state:', data.isLoading);
+            log.log(' Loading state:', data.isLoading);
             break;
 
           case 'open_questions':
@@ -466,7 +497,7 @@ export function useFacilitatorSocket({
             if (data.questions && data.questions.length > 0) {
               setOpenQuestions(data.questions);
               setShowQuestionsResolver(true);
-              console.log('[Facilitator] Received open questions:', data.questions.length);
+              log.log(' Received open questions:', data.questions.length);
             }
             break;
 
@@ -478,7 +509,7 @@ export function useFacilitatorSocket({
             break;
         }
       } catch (error) {
-        console.error('[Facilitator] Failed to parse message:', error);
+        log.error(' Failed to parse message:', error);
       }
     };
   }, [userId, userName, isOpen, setConnectionState, setError, setMessages, addMessage, updateMessage, setIsLoading, onError, setOpenQuestions, setShowQuestionsResolver]);
@@ -506,14 +537,14 @@ export function useFacilitatorSocket({
         type: 'context_update',
         context: navigationContext,
       }));
-      console.log('[Facilitator] Sent context update:', navigationContext);
+      log.log(' Sent context update:', navigationContext);
     }
   }, [navigationContext]);
 
   // Process pending persona changes when connected
   useEffect(() => {
     if (pendingPersonaChange && wsRef.current?.readyState === WebSocket.OPEN) {
-      console.log('[Facilitator] Processing pending persona change:', pendingPersonaChange);
+      log.log(' Processing pending persona change:', pendingPersonaChange);
       wsRef.current.send(JSON.stringify({
         type: 'persona_change',
         presetId: pendingPersonaChange,
@@ -550,10 +581,10 @@ export function useFacilitatorSocket({
         context: contextWithThings,
         modelId: modelIdRef.current,
       };
-      console.log('[Facilitator] Sending message with modelId:', modelIdRef.current);
+      log.log(' Sending message with modelId:', modelIdRef.current);
       wsRef.current.send(JSON.stringify(messagePayload));
     } else {
-      console.warn('[Facilitator] Cannot send message: WebSocket not connected');
+      log.warn(' Cannot send message: WebSocket not connected');
       setError('Not connected to facilitator service');
     }
   }, [setIsLoading, setError]);
@@ -564,9 +595,9 @@ export function useFacilitatorSocket({
       wsRef.current.send(JSON.stringify({
         type: 'clear_history',
       }));
-      console.log('[Facilitator] Sent clear_history request');
+      log.log(' Sent clear_history request');
     } else {
-      console.warn('[Facilitator] Cannot clear history: WebSocket not connected');
+      log.warn(' Cannot clear history: WebSocket not connected');
     }
   }, []);
 
@@ -576,7 +607,7 @@ export function useFacilitatorSocket({
       wsRef.current.send(JSON.stringify({
         type: 'cancel',
       }));
-      console.log('[Facilitator] Sent cancel request');
+      log.log(' Sent cancel request');
 
       // Mark the current message as complete (if streaming)
       if (currentMessageIdRef.current) {
@@ -588,7 +619,7 @@ export function useFacilitatorSocket({
 
       setIsLoading(false);
     } else {
-      console.warn('[Facilitator] Cannot cancel: WebSocket not connected');
+      log.warn(' Cannot cancel: WebSocket not connected');
     }
   }, [updateMessage, setIsLoading]);
 
@@ -607,9 +638,9 @@ export function useFacilitatorSocket({
         type: 'persona_change',
         presetId,
       }));
-      console.log('[Facilitator] Sent persona_change request:', presetId);
+      log.log(' Sent persona_change request:', presetId);
     } else {
-      console.warn('[Facilitator] Cannot change persona: WebSocket not connected');
+      log.warn(' Cannot change persona: WebSocket not connected');
     }
   }, [updateMessage]);
 

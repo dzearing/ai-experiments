@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { useAuth } from './AuthContext';
 import { API_URL, WORKSPACE_WS_URL } from '../config';
+import { initializeWorkspaceProvider } from '../dataBus';
 
 export interface WorkspaceMetadata {
   id: string;
@@ -357,6 +358,17 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
         wsRef.current = null;
       }
     };
+  }, [user]);
+
+  // Initialize the data bus WorkspaceDataProvider for real-time updates
+  // Pass empty workspaceId initially - we rely on owner-based broadcasts
+  // The userId must match the actual user ID for owner broadcasts to work
+  useEffect(() => {
+    if (!user) return;
+
+    const cleanup = initializeWorkspaceProvider('', user.id);
+
+    return cleanup;
   }, [user]);
 
   const value: WorkspaceContextValue = {

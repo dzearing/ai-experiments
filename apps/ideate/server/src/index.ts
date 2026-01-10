@@ -10,7 +10,7 @@ import { documentsRouter, setWorkspaceHandler as setDocumentsWorkspaceHandler } 
 import { workspacesRouter, setWorkspaceHandler as setWorkspacesWsHandler } from './routes/workspaces.js';
 import { chatroomsRouter, setWorkspaceHandler as setChatroomsWorkspaceHandler } from './routes/chatrooms.js';
 import { personasRouter } from './routes/personas.js';
-import { ideasRouter, setIdeasWorkspaceHandler } from './routes/ideas.js';
+import { ideasRouter, setIdeasWorkspaceHandler, setIdeasAgentHandler } from './routes/ideas.js';
 import { thingsRouter, setThingsWorkspaceHandler } from './routes/things.js';
 import { fsRouter } from './routes/fs.js';
 import { setWorkspaceHandler as setMCPToolsWorkspaceHandler } from './services/MCPToolsService.js';
@@ -29,6 +29,7 @@ import { ImportWebSocketHandler } from './websocket/ImportWebSocketHandler.js';
 import { DiscoveryService } from './services/DiscoveryService.js';
 import { DocumentService } from './services/DocumentService.js';
 import { IdeaService } from './services/IdeaService.js';
+import { ResourceEventBus } from './services/resourceEventBus/ResourceEventBus.js';
 
 // Load environment variables
 config();
@@ -160,9 +161,18 @@ chatWss.on('connection', (ws, req) => {
   chatHandler.handleConnection(ws, req);
 });
 
+// Create ResourceEventBus for real-time resource updates
+const resourceEventBus = new ResourceEventBus();
+
 // Create WebSocket server for workspace updates (JSON-based protocol)
 const workspaceWss = new WebSocketServer({ noServer: true });
 const workspaceHandler = new WorkspaceWebSocketHandler();
+
+// Wire up ResourceEventBus to WorkspaceWebSocketHandler
+// This allows metadata updates to be broadcast to subscribed clients
+resourceEventBus.addGlobalListener((event) => {
+  workspaceHandler.handleResourceEvent(event);
+});
 
 workspaceWss.on('connection', (ws, req) => {
   workspaceHandler.handleConnection(ws, req);
@@ -178,7 +188,7 @@ facilitatorWss.on('connection', (ws, req) => {
 
 // Create WebSocket server for idea agent chat (JSON-based protocol)
 const ideaAgentWss = new WebSocketServer({ noServer: true });
-const ideaAgentHandler = new IdeaAgentWebSocketHandler(yjsHandler, workspaceHandler);
+const ideaAgentHandler = new IdeaAgentWebSocketHandler(yjsHandler, workspaceHandler, resourceEventBus, ideaService);
 
 ideaAgentWss.on('connection', (ws, req) => {
   ideaAgentHandler.handleConnection(ws, req);
@@ -217,6 +227,7 @@ setChatroomsWorkspaceHandler(workspaceHandler);
 setMCPToolsWorkspaceHandler(workspaceHandler);
 setWorkspacesWsHandler(workspaceHandler);
 setIdeasWorkspaceHandler(workspaceHandler);
+setIdeasAgentHandler(ideaAgentHandler);
 setThingsWorkspaceHandler(workspaceHandler);
 
 // Mount diagnostics router (no auth required)
@@ -227,6 +238,33 @@ app.post('/api/session', (req, res) => {
   const { sessionId } = req.body || {};
   const session = yjsHandler.getOrCreateSession(sessionId);
   res.json(session);
+});
+
+// Client logging endpoint - merges client logs into server console for unified debugging
+app.post('/api/log', (req, res) => {
+  const { logs } = req.body || {};
+
+  if (Array.isArray(logs)) {
+    for (const entry of logs) {
+      const { level, tag, message, data, timestamp } = entry;
+      const time = timestamp ? new Date(timestamp).toISOString().slice(11, 23) : '';
+      const dataStr = data ? ` ${JSON.stringify(data)}` : '';
+      const logLine = `[Client ${time}] [${tag}] ${message}${dataStr}`;
+
+      switch (level) {
+        case 'error':
+          console.error(logLine);
+          break;
+        case 'warn':
+          console.warn(logLine);
+          break;
+        default:
+          console.log(logLine);
+      }
+    }
+  }
+
+  res.status(204).send();
 });
 
 // Manual WebSocket upgrade handling to route to correct handler

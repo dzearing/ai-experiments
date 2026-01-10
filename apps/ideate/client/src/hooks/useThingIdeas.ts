@@ -77,8 +77,35 @@ export function useThingIdeas(thingId: string, workspaceId?: string): UseThingId
         throw new Error('Failed to fetch ideas');
       }
 
-      const data = await response.json();
-      setIdeas(data);
+      const data = await response.json() as IdeaMetadata[];
+
+      // Merge fetched data with existing ephemeral state (e.g., agentStatus, timestamps)
+      // The server doesn't persist these fields, so we preserve them from current state
+      setIdeas(prevIdeas => {
+        // Build map of agent state from current state
+        const agentStates = new Map<string, {
+          agentStatus?: IdeaMetadata['agentStatus'];
+          agentStartedAt?: string;
+          agentFinishedAt?: string;
+        }>();
+
+        prevIdeas.forEach(idea => {
+          if (idea.agentStatus || idea.agentStartedAt || idea.agentFinishedAt) {
+            agentStates.set(idea.id, {
+              agentStatus: idea.agentStatus,
+              agentStartedAt: idea.agentStartedAt,
+              agentFinishedAt: idea.agentFinishedAt,
+            });
+          }
+        });
+
+        // Merge agent state into fetched data
+        return data.map(idea => {
+          const agentState = agentStates.get(idea.id);
+
+          return agentState ? { ...idea, ...agentState } : idea;
+        });
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch ideas');
     } finally {

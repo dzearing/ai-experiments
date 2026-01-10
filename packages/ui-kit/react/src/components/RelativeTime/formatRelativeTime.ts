@@ -248,3 +248,65 @@ export function formatFullDate(timestamp: Date | number | string): string {
     minute: '2-digit',
   });
 }
+
+/**
+ * Format elapsed duration from a start timestamp to now.
+ *
+ * @param timestamp - Start time (Date, Unix timestamp in ms, or ISO string)
+ * @param options - Formatting options
+ * @returns Human-readable duration string (e.g., "5s", "2m 30s", "1h 15m")
+ *
+ * @example
+ * formatDuration(Date.now() - 30000) // "30s"
+ * formatDuration(Date.now() - 150000) // "2m 30s"
+ * formatDuration(Date.now() - 7500000) // "2h 5m"
+ */
+export function formatDuration(
+  timestamp: Date | number | string,
+  options: FormatOptions = {}
+): string {
+  const { format = 'short', now = Date.now() } = options;
+
+  const date = normalizeDate(timestamp);
+  const nowMs = typeof now === 'number' ? now : now.getTime();
+  const diff = Math.max(0, nowMs - date.getTime());
+
+  const totalSeconds = Math.floor(diff / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (format === 'narrow') {
+    if (hours > 0) {
+      return `${hours}h${minutes}m`;
+    }
+    if (minutes > 0) {
+      return `${minutes}m${seconds}s`;
+    }
+    return `${seconds}s`;
+  }
+
+  if (format === 'short') {
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    if (minutes > 0) {
+      return `${minutes}m ${seconds}s`;
+    }
+    return `${seconds}s`;
+  }
+
+  // Long format
+  if (hours > 0) {
+    const hourLabel = hours === 1 ? 'hour' : 'hours';
+    const minLabel = minutes === 1 ? 'minute' : 'minutes';
+    return `${hours} ${hourLabel} ${minutes} ${minLabel}`;
+  }
+  if (minutes > 0) {
+    const minLabel = minutes === 1 ? 'minute' : 'minutes';
+    const secLabel = seconds === 1 ? 'second' : 'seconds';
+    return `${minutes} ${minLabel} ${seconds} ${secLabel}`;
+  }
+  const secLabel = seconds === 1 ? 'second' : 'seconds';
+  return `${seconds} ${secLabel}`;
+}

@@ -4,15 +4,33 @@ import * as path from 'path';
 import { homedir } from 'os';
 
 /**
+ * Open question from the agent for user resolution
+ */
+export interface OpenQuestion {
+  id: string;
+  question: string;
+  context?: string;
+  selectionType: 'single' | 'multiple';
+  options: Array<{
+    id: string;
+    label: string;
+    description?: string;
+  }>;
+  allowCustom?: boolean;
+}
+
+/**
  * A message in the idea agent chat
  */
 export interface IdeaAgentMessage {
   id: string;
   ideaId: string;
   userId: string;
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: number;
+  /** Open questions associated with this message (for rehydration on dialog reopen) */
+  openQuestions?: OpenQuestion[];
 }
 
 /**
@@ -92,8 +110,9 @@ export class IdeaAgentChatService {
   async addMessage(
     ideaId: string,
     userId: string,
-    role: 'user' | 'assistant',
-    content: string
+    role: 'user' | 'assistant' | 'system',
+    content: string,
+    openQuestions?: OpenQuestion[]
   ): Promise<IdeaAgentMessage> {
     const message: IdeaAgentMessage = {
       id: uuidv4(),
@@ -102,6 +121,7 @@ export class IdeaAgentChatService {
       role,
       content,
       timestamp: Date.now(),
+      ...(openQuestions && openQuestions.length > 0 && { openQuestions }),
     };
 
     // Append message to JSONL file

@@ -103,6 +103,12 @@ export interface IdeaMetadata {
   execution?: IdeaExecutionState;
   /** Agent status - real-time indicator for background agent activity */
   agentStatus?: AgentStatus;
+  /** ISO timestamp when agent started running (for duration display) */
+  agentStartedAt?: string;
+  /** ISO timestamp when agent finished/became idle (for relative time display) */
+  agentFinishedAt?: string;
+  /** Error message when agentStatus is 'error' */
+  agentErrorMessage?: string;
 }
 
 /** Full idea object with extended description */
@@ -127,6 +133,8 @@ export interface CreateIdeaInput {
   workspaceId?: string;
   thingIds?: string[];
   description?: string;
+  /** Document room name for linking agent session to real ideaId */
+  documentRoomName?: string;
 }
 
 /** Input for updating an idea */

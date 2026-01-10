@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { Button, Text } from '@ui-kit/react';
 import { AddIcon } from '@ui-kit/icons/AddIcon';
 import { LightbulbIcon } from '@ui-kit/icons/LightbulbIcon';
+import { useResource } from '@claude-flow/data-bus/react';
 import { KanbanBoard } from '../KanbanBoard';
 import { DelayedSpinner } from '../DelayedSpinner';
 import { IdeaDialog, type ThingContext, type WorkspacePhase } from '../IdeaDialog';
@@ -9,8 +10,13 @@ import { useThingIdeas } from '../../hooks/useThingIdeas';
 import { useIdeas } from '../../contexts/IdeasContext';
 import { useSession } from '../../contexts/SessionContext';
 import { useWorkspaceSocket, type ResourceType } from '../../hooks/useWorkspaceSocket';
+import { dataBus, thingIdeasPath } from '../../dataBus';
+import { createLogger } from '../../utils/clientLogger';
 import type { Idea, IdeaMetadata } from '../../types/idea';
 import styles from './ThingIdeas.module.css';
+
+// Create logger for this component
+const log = createLogger('ThingIdeas');
 
 // Debug: track component mount/unmount
 let thingIdeasInstanceId = 0;
@@ -24,6 +30,7 @@ interface ThingIdeasProps {
   /** Pending idea open request from parent (when tab was switched) */
   pendingIdeaOpen?: {
     ideaId?: string;
+    initialTitle?: string;
     initialPrompt?: string;
     initialGreeting?: string;
   } | null;
@@ -35,9 +42,9 @@ export function ThingIdeas({ thingId, thingName, thingType, thingDescription, wo
   // Debug: track this instance
   const instanceId = useRef(++thingIdeasInstanceId);
   useEffect(() => {
-    console.log(`[ThingIdeas #${instanceId.current}] MOUNTED for thingId=${thingId}`);
+    log.log(`#${instanceId.current} MOUNTED for thingId=${thingId}`);
     return () => {
-      console.log(`[ThingIdeas #${instanceId.current}] UNMOUNTED`);
+      log.log(`#${instanceId.current} UNMOUNTED`);
     };
   }, []); // Only run on mount/unmount
 
@@ -90,6 +97,24 @@ export function ThingIdeas({ thingId, thingName, thingType, thingDescription, wo
     onResourceDeleted: handleResourceDeleted,
   });
 
+  // Subscribe to real-time idea updates via data bus
+  // This complements the WebSocket handlers and provides typed, declarative access
+  const { data: realtimeIdeas } = useResource(
+    dataBus,
+    workspaceId ? thingIdeasPath(thingId) : null
+  );
+
+  // Sync real-time idea updates from data bus to local state
+  // This handles background agent processing updates (title, summary, status)
+  useEffect(() => {
+    if (!realtimeIdeas || realtimeIdeas.length === 0) return;
+
+    // Merge real-time updates with local state
+    realtimeIdeas.forEach(ideaMetadata => {
+      updateIdea(ideaMetadata.id, ideaMetadata);
+    });
+  }, [realtimeIdeas, updateIdea]);
+
   // Build Thing context for contextual greetings
   const thingContext: ThingContext = useMemo(() => ({
     id: thingId,
@@ -102,6 +127,7 @@ export function ThingIdeas({ thingId, thingName, thingType, thingDescription, wo
   const [overlayOpen, setOverlayOpen] = useState(false);
   const [selectedIdea, setSelectedIdea] = useState<Idea | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [initialTitle, setInitialTitle] = useState<string | undefined>();
   const [initialPrompt, setInitialPrompt] = useState<string | undefined>();
   const [initialGreeting, setInitialGreeting] = useState<string | undefined>();
   const [initialPhase, setInitialPhase] = useState<WorkspacePhase | undefined>();
@@ -122,9 +148,10 @@ export function ThingIdeas({ thingId, thingName, thingType, thingDescription, wo
   }, [getIdea]);
 
   // Handle creating a new idea
-  const handleNewIdea = useCallback((prompt?: string, greeting?: string) => {
+  const handleNewIdea = useCallback((title?: string, prompt?: string, greeting?: string) => {
     setSelectedIdea(null);
     setIsCreating(true);
+    setInitialTitle(title);
     setInitialPrompt(prompt);
     setInitialGreeting(greeting);
     setInitialPhase('ideation'); // New ideas always start in ideation
@@ -134,14 +161,14 @@ export function ThingIdeas({ thingId, thingName, thingType, thingDescription, wo
   // Handle pending idea open from parent (when tab was switched)
   useEffect(() => {
     if (pendingIdeaOpen) {
-      const { ideaId, initialPrompt: prompt, initialGreeting: greeting } = pendingIdeaOpen;
+      const { ideaId, initialTitle: title, initialPrompt: prompt, initialGreeting: greeting } = pendingIdeaOpen;
 
       if (ideaId) {
         // Open existing idea
         handleOpenIdea(ideaId);
       } else {
-        // Create new idea with optional prompt and greeting
-        handleNewIdea(prompt, greeting);
+        // Create new idea with optional title, prompt and greeting
+        handleNewIdea(title, prompt, greeting);
       }
 
       // Clear the pending request
@@ -154,6 +181,7 @@ export function ThingIdeas({ thingId, thingName, thingType, thingDescription, wo
     setOverlayOpen(false);
     setSelectedIdea(null);
     setIsCreating(false);
+    setInitialTitle(undefined);
     setInitialPrompt(undefined);
     setInitialGreeting(undefined);
     setInitialPhase(undefined);
@@ -167,11 +195,12 @@ export function ThingIdeas({ thingId, thingName, thingType, thingDescription, wo
       const customEvent = event as CustomEvent<{
         ideaId?: string;
         thingId?: string;
+        initialTitle?: string;
         initialPrompt?: string;
         initialGreeting?: string;
         focusInput?: boolean;
       }>;
-      const { ideaId, thingId: eventThingId, initialPrompt: eventPrompt, initialGreeting: eventGreeting } = customEvent.detail;
+      const { ideaId, thingId: eventThingId, initialTitle: eventTitle, initialPrompt: eventPrompt, initialGreeting: eventGreeting } = customEvent.detail;
 
       // Only handle if this event is for our Thing
       if (eventThingId && eventThingId !== thingId) {
@@ -184,13 +213,14 @@ export function ThingIdeas({ thingId, thingName, thingType, thingDescription, wo
         if (idea) {
           setSelectedIdea(idea);
           setIsCreating(false);
+          setInitialTitle(undefined);
           setInitialPrompt(undefined);
           setInitialGreeting(undefined);
           setOverlayOpen(true);
         }
       } else {
-        // Create new idea with optional prompt and greeting
-        handleNewIdea(eventPrompt, eventGreeting);
+        // Create new idea with optional title, prompt and greeting
+        handleNewIdea(eventTitle, eventPrompt, eventGreeting);
       }
     };
 
@@ -210,7 +240,7 @@ export function ThingIdeas({ thingId, thingName, thingType, thingDescription, wo
   // The IdeaDialog handles the phase transition internally.
   // The kanban board will be updated when the overlay closes.
   const handleStatusChange = useCallback(() => {
-    console.log(`[ThingIdeas #${instanceId.current}] handleStatusChange called, overlayOpen=${overlayOpen}`);
+    log.log(`#${instanceId.current} handleStatusChange called, overlayOpen=${overlayOpen}`);
     // No-op: IdeaDialog handles the transition internally
     // Kanban will be updated via WebSocket or when overlay closes
   }, [overlayOpen]);
@@ -219,7 +249,7 @@ export function ThingIdeas({ thingId, thingName, thingType, thingDescription, wo
   // IMPORTANT: Do NOT call refetch() here - it sets isLoading=true which causes
   // the early return and unmounts the dialog. Use addIdea() instead.
   const handleIdeaCreated = useCallback((idea: Idea) => {
-    console.log(`[ThingIdeas #${instanceId.current}] Idea created immediately:`, idea.id);
+    log.log(`#${instanceId.current} Idea created immediately:`, idea.id);
     setSelectedIdea(idea);
     // Add to kanban immediately without triggering loading state
     addIdea(idea);
@@ -280,6 +310,7 @@ export function ThingIdeas({ thingId, thingName, thingType, thingDescription, wo
           onIdeaCreated={handleIdeaCreated}
           initialThingIds={isCreating ? [thingId] : undefined}
           initialThingContext={isCreating ? thingContext : undefined}
+          initialTitle={isCreating ? initialTitle : undefined}
           initialPrompt={isCreating ? initialPrompt : undefined}
           initialGreeting={isCreating ? initialGreeting : undefined}
           initialPhase={initialPhase}

@@ -8,16 +8,21 @@ import type { DocumentEdit } from './IdeaAgentService.js';
 import { getClaudeDiagnosticsService } from '../routes/diagnostics.js';
 import type { AgentProgressCallbacks, AgentProgressEvent } from '../shared/agentProgress.js';
 import { createStatusEvent } from '../shared/agentProgressUtils.js';
+import { createToolStartEvent, createToolCompleteEvent } from '../shared/sdkStreamProcessor.js';
 import { ThingService, THING_TYPE_SCHEMAS } from './ThingService.js';
 import { createThingToolsMcpServer } from '../shared/thingToolsMcp.js';
-
-/**
- * Token usage information
- */
-export interface TokenUsage {
-  inputTokens: number;
-  outputTokens: number;
-}
+// Re-export shared types for backwards compatibility
+export type { OpenQuestion, SuggestedResponse, TokenUsage } from '../shared/agentResponseTypes.js';
+import type { OpenQuestion, SuggestedResponse, TokenUsage } from '../shared/agentResponseTypes.js';
+import {
+  parseOpenQuestions,
+  parseSuggestedResponses,
+  findBlockStart,
+  findSafeStreamEnd,
+  PLAN_AGENT_BLOCK_TAGS,
+  PLAN_AGENT_SAFE_STREAM_TAGS,
+} from '../shared/agentResponseParsers.js';
+import { buildConversationHistory, generateMessageId, MAX_QUEUED_MESSAGES } from '../shared/agentSessionUtils.js';
 
 /**
  * Queued message for replay when client reconnects
@@ -43,30 +48,6 @@ export interface PlanAgentSession {
   currentAbortController?: AbortController;
   /** Workspace ID for broadcasting state changes */
   workspaceId?: string;
-}
-
-/**
- * Open question for the user to resolve
- */
-export interface OpenQuestion {
-  id: string;
-  question: string;
-  context?: string;
-  selectionType: 'single' | 'multiple';
-  options: Array<{
-    id: string;
-    label: string;
-    description?: string;
-  }>;
-  allowCustom: boolean;
-}
-
-/**
- * Suggested response for quick user replies
- */
-export interface SuggestedResponse {
-  label: string;
-  message: string;
 }
 
 /**
@@ -164,63 +145,10 @@ function parseImplPlanEdits(response: string): { edits: DocumentEdit[] | null; c
 }
 
 /**
- * Parse open questions from agent response
- */
-function parseOpenQuestions(response: string): { questions: OpenQuestion[] | null; responseWithoutQuestions: string } {
-  const questionsMatch = response.match(/<open_questions>\s*([\s\S]*?)\s*<\/open_questions>/);
-
-  if (!questionsMatch) {
-    return { questions: null, responseWithoutQuestions: response };
-  }
-
-  try {
-    const rawQuestions = JSON.parse(questionsMatch[1]) as OpenQuestion[];
-    // Default allowCustom to true so users can always provide custom answers
-    const questions = rawQuestions.map(q => ({
-      ...q,
-      allowCustom: q.allowCustom !== false,
-    }));
-    // Remove the questions block from the response
-    const responseWithoutQuestions = response.replace(/<open_questions>[\s\S]*?<\/open_questions>/, '').trim();
-    return { questions, responseWithoutQuestions };
-  } catch {
-    console.error('[PlanAgentService] Failed to parse open questions JSON');
-    return { questions: null, responseWithoutQuestions: response };
-  }
-}
-
-/**
- * Parse suggested responses from agent response
- */
-function parseSuggestedResponses(response: string): { suggestions: SuggestedResponse[] | null; responseWithoutSuggestions: string } {
-  const suggestionsMatch = response.match(/<suggested_responses>\s*([\s\S]*?)\s*<\/suggested_responses>/);
-
-  if (!suggestionsMatch) {
-    return { suggestions: null, responseWithoutSuggestions: response };
-  }
-
-  try {
-    const suggestions = JSON.parse(suggestionsMatch[1]) as SuggestedResponse[];
-    const responseWithoutSuggestions = response.replace(/<suggested_responses>[\s\S]*?<\/suggested_responses>/, '').trim();
-    return { suggestions, responseWithoutSuggestions };
-  } catch {
-    console.error('[PlanAgentService] Failed to parse suggested responses JSON');
-    return { suggestions: null, responseWithoutSuggestions: response };
-  }
-}
-
-/**
  * Check if a partial response contains the start of any special block
  */
-function findBlockStart(text: string): number {
-  const planStart = text.indexOf('<plan_update>');
-  const implPlanStart = text.indexOf('<impl_plan_update>');
-  const implEditsStart = text.indexOf('<impl_plan_edits>');
-  const openQuestionsStart = text.indexOf('<open_questions>');
-  const suggestionsStart = text.indexOf('<suggested_responses>');
-
-  const starts = [planStart, implPlanStart, implEditsStart, openQuestionsStart, suggestionsStart].filter(s => s >= 0);
-  return starts.length > 0 ? Math.min(...starts) : -1;
+function findPlanBlockStart(text: string): number {
+  return findBlockStart(text, PLAN_AGENT_BLOCK_TAGS);
 }
 
 /**
@@ -265,7 +193,6 @@ export class PlanAgentService {
   // Session management for background execution
   private activeSessions = new Map<string, PlanAgentSession>();
   private clientCallbacks = new Map<string, PlanStreamCallbacks>();
-  private static MAX_QUEUED_MESSAGES = 500;
   /** Callback for broadcasting session state changes to clients */
   private onSessionStateChange?: (ideaId: string, status: 'idle' | 'running' | 'error', userId: string, workspaceId?: string) => void;
 
@@ -364,8 +291,8 @@ export class PlanAgentService {
       if (session) {
         session.queuedMessages.push(message);
         // Limit queue size to prevent memory issues
-        if (session.queuedMessages.length > PlanAgentService.MAX_QUEUED_MESSAGES * 2) {
-          session.queuedMessages = session.queuedMessages.slice(-PlanAgentService.MAX_QUEUED_MESSAGES);
+        if (session.queuedMessages.length > MAX_QUEUED_MESSAGES * 2) {
+          session.queuedMessages = session.queuedMessages.slice(-MAX_QUEUED_MESSAGES);
         }
       }
     }
@@ -695,13 +622,13 @@ Feel free to share any details, and I'll start building out the phases and tasks
     const systemPrompt = buildPlanAgentSystemPrompt(ideaContext, documentContent);
 
     // Build the full prompt with conversation history
-    const conversationHistory = this.buildConversationHistory(history.slice(0, -1));
+    const conversationHistory = buildConversationHistory(history.slice(0, -1));
     const fullPrompt = conversationHistory
       ? `${conversationHistory}\n\nUser: ${content}`
       : content;
 
     // Generate message ID for the assistant response
-    const messageId = `msg-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    const messageId = generateMessageId();
 
     // Streaming state
     let fullResponse = '';
@@ -710,6 +637,9 @@ Feel free to share any details, and I'll start building out the phases and tasks
     let questionsSent = false;
     let totalInputTokens = 0;
     let totalOutputTokens = 0;
+
+    // Track tool calls for matching results
+    const pendingToolCalls: Array<{ id: string; name: string; input: Record<string, unknown>; output?: string }> = [];
 
     // Track this request for diagnostics
     const diagnosticsService = getClaudeDiagnosticsService();
@@ -767,12 +697,22 @@ Feel free to share any details, and I'll start building out the phases and tasks
             }
           }
 
-          // Extract text from message
+          // Extract text from message and handle tool_use blocks
           let newText = '';
           if (Array.isArray(msgContent)) {
             for (const block of msgContent) {
               if (block.type === 'text') {
                 newText += block.text;
+              } else if (block.type === 'tool_use') {
+                // Tool use - emit progress event
+                const toolUseBlock = block as { type: 'tool_use'; id?: string; name: string; input: Record<string, unknown> };
+                console.log(`[PlanAgentService] Tool use: ${toolUseBlock.name}`);
+                pendingToolCalls.push({
+                  id: toolUseBlock.id || '',
+                  name: toolUseBlock.name,
+                  input: toolUseBlock.input || {},
+                });
+                callbacks.onProgressEvent?.(createToolStartEvent(toolUseBlock.name, toolUseBlock.input || {}));
               }
             }
           } else if (typeof msgContent === 'string') {
@@ -797,7 +737,7 @@ Feel free to share any details, and I'll start building out the phases and tasks
 
             // Stream chat text until we hit any special block
             if (!foundBlockStart) {
-              const blockStartPos = findBlockStart(fullResponse);
+              const blockStartPos = findPlanBlockStart(fullResponse);
 
               if (blockStartPos >= 0) {
                 // Found start of special block - stream up to it, then stop streaming
@@ -810,11 +750,43 @@ Feel free to share any details, and I'll start building out the phases and tasks
               } else {
                 // No special block yet - stream new content
                 // But be careful: don't stream partial tags
-                const safeEnd = this.findSafeStreamEnd(fullResponse);
+                const safeEnd = findSafeStreamEnd(fullResponse, PLAN_AGENT_SAFE_STREAM_TAGS);
                 if (safeEnd > streamedChatLength) {
                   const newChunk = fullResponse.slice(streamedChatLength, safeEnd);
                   callbacks.onTextChunk(newChunk, messageId);
                   streamedChatLength = safeEnd;
+                }
+              }
+            }
+          }
+        } else if (message.type === 'user') {
+          // User message contains tool results
+          const userMsg = message as { type: 'user'; message: { content: unknown[] } };
+          if (Array.isArray(userMsg.message?.content)) {
+            for (const block of userMsg.message.content) {
+              if ((block as { type?: string }).type === 'tool_result') {
+                const toolResult = block as { type: 'tool_result'; tool_use_id?: string; content?: unknown };
+
+                // Find matching pending tool call (by ID or first without output)
+                const pendingTool = pendingToolCalls.find(
+                  tc => !tc.output && (tc.id === toolResult.tool_use_id || !toolResult.tool_use_id)
+                );
+
+                if (pendingTool) {
+                  // Extract output content from tool result
+                  let outputContent = 'completed';
+                  if (typeof toolResult.content === 'string') {
+                    outputContent = toolResult.content;
+                  } else if (Array.isArray(toolResult.content)) {
+                    const textBlock = toolResult.content.find((c: unknown) => (c as { type?: string }).type === 'text');
+                    if (textBlock && typeof (textBlock as { text?: string }).text === 'string') {
+                      outputContent = (textBlock as { text: string }).text;
+                    }
+                  }
+
+                  pendingTool.output = outputContent;
+                  console.log(`[PlanAgentService] Tool result: ${pendingTool.name}`);
+                  callbacks.onProgressEvent?.(createToolCompleteEvent(pendingTool.name, outputContent));
                 }
               }
             }
@@ -989,48 +961,4 @@ Feel free to share any details, and I'll start building out the phases and tasks
     }
   }
 
-  /**
-   * Find a safe point to stream up to, avoiding partial XML tags.
-   */
-  private findSafeStreamEnd(text: string): number {
-    const potentialTagStarts = [
-      '<plan_update',
-      '<impl_plan_update',
-      '<impl_plan_edits',
-      '<open_questions',
-      '<suggested_responses',
-      '<plan',
-      '<impl',
-      '<open',
-      '<suggested'
-    ];
-    let safeEnd = text.length;
-
-    for (const tagStart of potentialTagStarts) {
-      for (let i = 1; i <= tagStart.length; i++) {
-        const partial = tagStart.slice(0, i);
-        if (text.endsWith(partial)) {
-          safeEnd = Math.min(safeEnd, text.length - partial.length);
-          break;
-        }
-      }
-    }
-
-    return safeEnd;
-  }
-
-  /**
-   * Build conversation history string from messages.
-   */
-  private buildConversationHistory(messages: PlanAgentMessage[]): string {
-    // Take last 20 messages to keep context manageable
-    const recentMessages = messages.slice(-20);
-
-    return recentMessages
-      .map((msg) => {
-        const role = msg.role === 'user' ? 'User' : 'Assistant';
-        return `${role}: ${msg.content}`;
-      })
-      .join('\n\n');
-  }
 }

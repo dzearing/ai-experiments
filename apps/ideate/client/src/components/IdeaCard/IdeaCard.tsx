@@ -1,27 +1,15 @@
-import { useCallback, useState, useEffect, type DragEvent, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+import type { DragEvent, KeyboardEvent } from 'react';
 import { Card, Chip, Progress, RelativeTime, Spinner } from '@ui-kit/react';
 import { StarIcon } from '@ui-kit/icons/StarIcon';
 import { ChatIcon } from '@ui-kit/icons/ChatIcon';
+import { useResource } from '@claude-flow/data-bus/react';
+import { dataBus, ideaPath } from '../../dataBus';
+import { createLogger } from '../../utils/clientLogger';
 import type { IdeaMetadata } from '../../types/idea';
 import styles from './IdeaCard.module.css';
 
-/**
- * Format duration from start time to now
- */
-function formatDuration(startTime: string): string {
-  const start = new Date(startTime).getTime();
-  const seconds = Math.floor((Date.now() - start) / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-
-  if (hours > 0) {
-    return `${hours}h ${minutes % 60}m`;
-  }
-  if (minutes > 0) {
-    return `${minutes}m ${seconds % 60}s`;
-  }
-  return `${seconds}s`;
-}
+const log = createLogger('IdeaCard');
 
 interface IdeaCardProps {
   idea: IdeaMetadata;
@@ -42,36 +30,64 @@ export function IdeaCard({
 }: IdeaCardProps) {
   const {
     id,
-    title,
-    summary,
-    tags,
+    title: propTitle,
+    summary: propSummary,
+    tags: propTags,
     source,
     status,
     execution,
     plan,
     updatedAt,
-    agentStatus,
+    agentStatus: propAgentStatus,
   } = idea;
 
-  // Duration timer for executing ideas
-  const [duration, setDuration] = useState<string>('');
+  // Subscribe to real-time metadata updates via data bus
+  // This includes agentStatus since resource_updated messages merge into this path
+  const { data: realtimeMetadata } = useResource(dataBus, ideaPath(id));
+
+  // Extract agent fields from real-time metadata (server sends them as string properties)
+  const realtimeAgentStatus = (realtimeMetadata as { agentStatus?: string } | undefined)?.agentStatus as 'idle' | 'running' | 'error' | undefined;
+  const realtimeAgentStartedAt = (realtimeMetadata as { agentStartedAt?: string } | undefined)?.agentStartedAt;
+  const realtimeAgentFinishedAt = (realtimeMetadata as { agentFinishedAt?: string } | undefined)?.agentFinishedAt;
+
+  // Use real-time values if available, otherwise fall back to props
+  const agentStatus = realtimeAgentStatus ?? propAgentStatus;
+  const agentStartedAt = realtimeAgentStartedAt ?? idea.agentStartedAt;
+  const agentFinishedAt = realtimeAgentFinishedAt ?? idea.agentFinishedAt;
+
+  // Track previous status to log changes
+  const prevAgentStatusRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
-    if (status !== 'executing' || !execution?.startedAt) {
-      setDuration('');
-      return;
+    if (prevAgentStatusRef.current !== agentStatus) {
+      log.log(`Status changed for idea ${id}`, {
+        from: prevAgentStatusRef.current,
+        to: agentStatus,
+        realtimeStatus: realtimeAgentStatus,
+        propStatus: propAgentStatus,
+        hasRealtimeMetadata: !!realtimeMetadata,
+      });
+      prevAgentStatusRef.current = agentStatus;
     }
+  }, [id, agentStatus, realtimeAgentStatus, propAgentStatus, realtimeMetadata]);
 
-    // Update immediately
-    setDuration(formatDuration(execution.startedAt));
+  // Use real-time metadata if available, otherwise fall back to props
+  const rawTitle = realtimeMetadata?.title ?? propTitle;
+  const rawSummary = realtimeMetadata?.summary ?? propSummary;
+  const tags = realtimeMetadata?.tags ?? propTags;
 
-    // Update every second
-    const interval = setInterval(() => {
-      setDuration(formatDuration(execution.startedAt!));
-    }, 1000);
+  // Filter out placeholder title - show "New Idea" instead
+  const isPlaceholderTitle = !rawTitle ||
+    rawTitle === 'Untitled Idea' ||
+    rawTitle.trim() === '';
+  const title = isPlaceholderTitle ? 'New Idea' : rawTitle;
 
-    return () => clearInterval(interval);
-  }, [status, execution?.startedAt]);
+  // Filter out placeholder summaries - don't display these
+  const isPlaceholderSummary = !rawSummary ||
+    rawSummary === 'Processing...' ||
+    rawSummary === '_Add a brief summary of your idea..._' ||
+    rawSummary.trim() === '';
+  const summary = isPlaceholderSummary ? null : rawSummary;
 
   // Filter out priority tags - only show category tags
   const displayTags = tags.filter(t => !t.startsWith('priority:'));
@@ -84,6 +100,7 @@ export function IdeaCard({
   // - agentStatus === 'running' (from IdeaAgent/PlanAgent broadcasts)
   // - OR execution has a currentTaskId (ExecutionAgent is actively working)
   const isAgentRunning = agentStatus === 'running' || (isExecuting && !!execution?.currentTaskId);
+  const isAgentError = agentStatus === 'error';
 
   // Get phase info for display
   const currentPhase = plan?.phases.find(p => p.id === execution?.currentPhaseId);
@@ -105,8 +122,19 @@ export function IdeaCard({
     }
   }, [onOpen]);
 
-  // Chip shows Running when agent is active
-  const isRunning = isAgentRunning;
+  // Determine status chip display
+  const getStatusChip = () => {
+    if (isAgentError) {
+      return { variant: 'error' as const, label: 'Error' };
+    }
+    if (isAgentRunning) {
+      return { variant: 'success' as const, label: 'Running' };
+    }
+
+    return { variant: 'outline' as const, label: 'Idle' };
+  };
+
+  const statusChip = getStatusChip();
 
   return (
     <Card
@@ -121,16 +149,14 @@ export function IdeaCard({
       draggable
       onDragStart={handleDragStart}
     >
-      {/* Status chip in top right corner */}
-      <div className={styles.statusChip}>
-        <Chip variant={isRunning ? 'success' : 'outline'} size="sm">
-          {isRunning ? 'Running' : 'Idle'}
-        </Chip>
-      </div>
-
       <div className={styles.cardInner}>
-        {/* Title */}
-        <h3 className={styles.title}>{title}</h3>
+        {/* Header row with title and status chip */}
+        <div className={styles.cardHeader}>
+          <h3 className={styles.title}>{title}</h3>
+          <Chip variant={statusChip.variant} size="sm">
+            {statusChip.label}
+          </Chip>
+        </div>
 
         {/* AI badge - below title, left aligned */}
         {source === 'ai' && (
@@ -159,14 +185,33 @@ export function IdeaCard({
           </div>
         )}
 
-        {/* Last modified time */}
-        <RelativeTime
-          timestamp={updatedAt}
-          size="xs"
-          color="soft"
-          format="short"
-          className={styles.updatedAt}
-        />
+        {/* Time display - duration when running, relative time when idle */}
+        {agentStatus === 'running' && agentStartedAt ? (
+          <RelativeTime
+            timestamp={agentStartedAt}
+            mode="duration"
+            size="xs"
+            color="soft"
+            format="short"
+            className={styles.updatedAt}
+          />
+        ) : agentFinishedAt ? (
+          <RelativeTime
+            timestamp={agentFinishedAt}
+            size="xs"
+            color="soft"
+            format="short"
+            className={styles.updatedAt}
+          />
+        ) : (
+          <RelativeTime
+            timestamp={updatedAt}
+            size="xs"
+            color="soft"
+            format="short"
+            className={styles.updatedAt}
+          />
+        )}
 
         {/* Progress (for executing ideas) */}
         {isExecuting && execution && (
@@ -175,10 +220,19 @@ export function IdeaCard({
               <div className={styles.progressBar}>
                 <Progress value={execution.progressPercent} size="sm" />
               </div>
-              {isRunning && <Spinner size="sm" />}
+              {isAgentRunning && <Spinner size="sm" />}
             </div>
             <div className={styles.executionInfo}>
-              {duration && <span className={styles.duration}>{duration}</span>}
+              {/* Only show live duration counter when agent is actively running */}
+              {isAgentRunning && execution.startedAt && (
+                <RelativeTime
+                  timestamp={execution.startedAt}
+                  mode="duration"
+                  size="xs"
+                  color="soft"
+                  format="short"
+                />
+              )}
               {currentPhaseIndex > 0 && (
                 <span className={styles.phaseInfo}>Phase {currentPhaseIndex}/{totalPhases}</span>
               )}

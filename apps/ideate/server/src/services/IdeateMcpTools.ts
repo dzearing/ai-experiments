@@ -236,6 +236,97 @@ export function createIdeateMcpServer(
         }
       ),
 
+      // === Get Execution State ===
+      tool(
+        'get_execution_state',
+        'Get the current execution state including all phases and tasks with their completion status. Use this to check progress when resuming execution or when the user asks about current status.',
+        {
+          ideaId: z.string().describe('The ID of the idea to get execution state for'),
+        },
+        async (args) => {
+          try {
+            const idea = await ideaService.getIdea(args.ideaId, userId, true);
+
+            if (!idea) {
+              return {
+                content: [{
+                  type: 'text' as const,
+                  text: JSON.stringify({
+                    error: `Idea not found: ${args.ideaId}`,
+                  }, null, 2),
+                }],
+              };
+            }
+
+            if (!idea.plan) {
+              return {
+                content: [{
+                  type: 'text' as const,
+                  text: JSON.stringify({
+                    error: 'No execution plan found for this idea',
+                    ideaId: args.ideaId,
+                    title: idea.title,
+                  }, null, 2),
+                }],
+              };
+            }
+
+            // Build detailed execution state
+            const phases = idea.plan.phases.map((phase, index) => {
+              const completedTasks = phase.tasks.filter(t => t.completed);
+              const inProgressTasks = phase.tasks.filter(t => t.inProgress && !t.completed);
+
+              return {
+                phaseNumber: index + 1,
+                phaseId: phase.id,
+                title: phase.title,
+                description: phase.description,
+                status: completedTasks.length === phase.tasks.length
+                  ? 'complete'
+                  : inProgressTasks.length > 0
+                    ? 'in_progress'
+                    : completedTasks.length > 0
+                      ? 'partial'
+                      : 'pending',
+                progress: `${completedTasks.length}/${phase.tasks.length} tasks`,
+                tasks: phase.tasks.map(task => ({
+                  taskId: task.id,
+                  title: task.title,
+                  status: task.completed ? 'completed' : task.inProgress ? 'in_progress' : 'pending',
+                })),
+              };
+            });
+
+            const totalTasks = idea.plan.phases.reduce((sum, p) => sum + p.tasks.length, 0);
+            const completedTasks = idea.plan.phases.reduce((sum, p) => sum + p.tasks.filter(t => t.completed).length, 0);
+
+            return {
+              content: [{
+                type: 'text' as const,
+                text: JSON.stringify({
+                  ideaId: idea.id,
+                  title: idea.title,
+                  workingDirectory: idea.plan.workingDirectory,
+                  repositoryUrl: idea.plan.repositoryUrl,
+                  branch: idea.plan.branch,
+                  overallProgress: `${completedTasks}/${totalTasks} tasks completed`,
+                  phases,
+                }, null, 2),
+              }],
+            };
+          } catch (err) {
+            return {
+              content: [{
+                type: 'text' as const,
+                text: JSON.stringify({
+                  error: err instanceof Error ? err.message : 'Failed to get execution state',
+                }, null, 2),
+              }],
+            };
+          }
+        }
+      ),
+
       // === Add Tags to Idea ===
       tool(
         'add_idea_tags',

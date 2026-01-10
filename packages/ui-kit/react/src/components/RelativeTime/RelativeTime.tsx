@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo, type HTMLAttributes } from '
 import { Tooltip } from '../Tooltip';
 import {
   formatRelativeTime,
+  formatDuration,
   formatFullDate,
   getUpdateInterval,
   type RelativeTimeFormat,
@@ -16,10 +17,14 @@ import styles from './RelativeTime.module.css';
  * - Smart update intervals based on timestamp age
  * - Tooltip with full date on hover
  * - Semantic `<time>` element with datetime attribute
+ * - Duration mode for showing elapsed time counters
  *
  * @example
- * // Basic usage
+ * // Basic usage - relative time ("5 min ago")
  * <RelativeTime timestamp={message.createdAt} />
+ *
+ * // Duration mode - elapsed counter ("2m 30s")
+ * <RelativeTime timestamp={startTime} mode="duration" />
  *
  * // With format options
  * <RelativeTime timestamp={date} format="long" />
@@ -32,6 +37,7 @@ export type { RelativeTimeFormat } from './formatRelativeTime';
 
 export type RelativeTimeSize = 'xs' | 'sm' | 'base' | 'lg';
 export type RelativeTimeColor = 'default' | 'soft' | 'inherit';
+export type RelativeTimeMode = 'relative' | 'duration';
 
 export interface RelativeTimeProps
   extends Omit<HTMLAttributes<HTMLTimeElement>, 'children'> {
@@ -40,6 +46,9 @@ export interface RelativeTimeProps
 
   /** HTML element to render */
   as?: 'time' | 'span';
+
+  /** Display mode: 'relative' shows "5 min ago", 'duration' shows "2m 30s" */
+  mode?: RelativeTimeMode;
 
   /** Format style: 'narrow' ("5m"), 'short' ("5 min ago"), 'long' ("5 minutes ago") */
   format?: RelativeTimeFormat;
@@ -60,10 +69,15 @@ export interface RelativeTimeProps
   color?: RelativeTimeColor;
 }
 
-// Singleton timer for efficient updates across all instances
+// Singleton timer for efficient updates across all instances (10 second tick for relative mode)
 let tickCallbacks = new Set<() => void>();
 let tickIntervalId: number | null = null;
 const TICK_INTERVAL = 10000; // Base tick every 10 seconds
+
+// Fast tick for duration mode (1 second tick)
+let fastTickCallbacks = new Set<() => void>();
+let fastTickIntervalId: number | null = null;
+const FAST_TICK_INTERVAL = 1000; // Fast tick every 1 second
 
 function startTicking() {
   if (tickIntervalId !== null) return;
@@ -78,6 +92,21 @@ function stopTicking() {
 
   window.clearInterval(tickIntervalId);
   tickIntervalId = null;
+}
+
+function startFastTicking() {
+  if (fastTickIntervalId !== null) return;
+
+  fastTickIntervalId = window.setInterval(() => {
+    fastTickCallbacks.forEach((callback) => callback());
+  }, FAST_TICK_INTERVAL);
+}
+
+function stopFastTicking() {
+  if (fastTickIntervalId === null) return;
+
+  window.clearInterval(fastTickIntervalId);
+  fastTickIntervalId = null;
 }
 
 function subscribeTick(callback: () => void): () => void {
@@ -96,9 +125,26 @@ function subscribeTick(callback: () => void): () => void {
   };
 }
 
+function subscribeFastTick(callback: () => void): () => void {
+  fastTickCallbacks.add(callback);
+
+  if (fastTickCallbacks.size === 1) {
+    startFastTicking();
+  }
+
+  return () => {
+    fastTickCallbacks.delete(callback);
+
+    if (fastTickCallbacks.size === 0) {
+      stopFastTicking();
+    }
+  };
+}
+
 export function RelativeTime({
   timestamp,
   as: Component = 'time',
+  mode = 'relative',
   format = 'short',
   static: isStatic = false,
   showTooltip = true,
@@ -108,26 +154,33 @@ export function RelativeTime({
   className,
   ...props
 }: RelativeTimeProps) {
+  const isDurationMode = mode === 'duration';
+
   // Normalize timestamp to Date - memoize to prevent infinite re-renders
   const date = useMemo(() => {
     if (timestamp instanceof Date) return timestamp;
+
     return typeof timestamp === 'number'
       ? new Date(timestamp)
       : new Date(timestamp);
   }, [timestamp instanceof Date ? timestamp.getTime() : timestamp]);
 
-  // State for the formatted string
-  const [formattedTime, setFormattedTime] = useState(() =>
-    formatRelativeTime(date, { format })
+  // Get the appropriate formatter based on mode
+  const formatTime = useCallback(
+    () => isDurationMode ? formatDuration(date, { format }) : formatRelativeTime(date, { format }),
+    [date, format, isDurationMode]
   );
 
-  // Track when we should update based on timestamp age
+  // State for the formatted string
+  const [formattedTime, setFormattedTime] = useState(formatTime);
+
+  // Track when we should update based on timestamp age (only for relative mode)
   const [nextUpdateAt, setNextUpdateAt] = useState(() =>
     Date.now() + getUpdateInterval(date)
   );
 
-  // Update function
-  const update = useCallback(() => {
+  // Update function for relative mode
+  const updateRelative = useCallback(() => {
     const now = Date.now();
 
     // Only update if enough time has passed
@@ -137,18 +190,30 @@ export function RelativeTime({
     }
   }, [date, format, nextUpdateAt]);
 
+  // Update function for duration mode (always update on each tick)
+  const updateDuration = useCallback(() => {
+    setFormattedTime(formatDuration(date, { format }));
+  }, [date, format]);
+
   // Subscribe to ticks for auto-update
   useEffect(() => {
     if (isStatic) return;
 
-    return subscribeTick(update);
-  }, [isStatic, update]);
+    // Duration mode uses fast tick (1 second), relative mode uses normal tick
+    if (isDurationMode) {
+      return subscribeFastTick(updateDuration);
+    }
 
-  // Update when timestamp or format changes
+    return subscribeTick(updateRelative);
+  }, [isStatic, isDurationMode, updateRelative, updateDuration]);
+
+  // Update when timestamp, format, or mode changes
   useEffect(() => {
-    setFormattedTime(formatRelativeTime(date, { format }));
-    setNextUpdateAt(Date.now() + getUpdateInterval(date));
-  }, [date, format]);
+    setFormattedTime(formatTime());
+    if (!isDurationMode) {
+      setNextUpdateAt(Date.now() + getUpdateInterval(date));
+    }
+  }, [date, format, isDurationMode, formatTime]);
 
   // Build class names
   const classNames = [

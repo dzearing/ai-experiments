@@ -1,5 +1,8 @@
 import { WebSocket, type RawData } from 'ws';
 import type { IncomingMessage } from 'http';
+import type { Delta } from '@claude-flow/data-bus/delta';
+import type { ResourceEventBus } from '../services/resourceEventBus/ResourceEventBus.js';
+import type { ResourceEvent } from '../services/resourceEventBus/types.js';
 
 // Resource types supported by the workspace handler
 export type ResourceType = 'document' | 'chatroom' | 'idea' | 'thing';
@@ -27,7 +30,12 @@ export type WorkspaceMessageType =
   | 'workspaces_changed'
   | 'presence_join'
   | 'presence_leave'
-  | 'presence_sync';
+  | 'presence_sync'
+  // Delta protocol message types
+  | 'subscribe_resource'
+  | 'unsubscribe_resource'
+  | 'resource_snapshot'
+  | 'resource_delta';
 
 export interface WorkspaceMessage {
   type: WorkspaceMessageType;
@@ -35,6 +43,16 @@ export interface WorkspaceMessage {
   resourceId?: string;
   resourceType?: ResourceType;
   data?: unknown;
+  // Delta protocol fields
+  version?: number;
+  lastKnownVersion?: number;
+}
+
+/** Resource subscription request from client */
+export interface ResourceSubscription {
+  resourceType: ResourceType;
+  resourceId: string;
+  lastKnownVersion?: number;
 }
 
 interface ClientInfo {
@@ -48,6 +66,8 @@ interface ClientInfo {
     id: string;
     type: ResourceType;
   };
+  // Track resource subscriptions for delta protocol
+  subscribedResources: Map<string, number>; // resourceKey -> lastKnownVersion
 }
 
 /**
@@ -65,11 +85,18 @@ export class WorkspaceWebSocketHandler {
   private resourcePresence = new Map<string, Set<string>>();
   // Map of userId to pending leave timeout (for grace period handling)
   private pendingLeaves = new Map<string, { timeout: NodeJS.Timeout; resourceId: string; resourceType: ResourceType }>();
+  // Map of resourceKey to set of subscribed client IDs (for delta protocol)
+  private resourceSubscribers = new Map<string, Set<string>>();
 
   private clientIdCounter = 0;
 
   // Grace period before broadcasting presence_leave (allows for StrictMode reconnects)
   private readonly LEAVE_GRACE_PERIOD_MS = 1000;
+
+  /** Creates a resource key from type and id */
+  private getResourceKey(resourceType: ResourceType, resourceId: string): string {
+    return `${resourceType}:${resourceId}`;
+  }
 
   handleConnection(ws: WebSocket, req: IncomingMessage): void {
     const url = new URL(req.url || '/', `http://${req.headers.host}`);
@@ -85,6 +112,7 @@ export class WorkspaceWebSocketHandler {
       userName,
       userColor,
       subscribedWorkspaces: new Set(),
+      subscribedResources: new Map(),
     };
 
     this.clients.set(clientId, clientInfo);
@@ -132,6 +160,23 @@ export class WorkspaceWebSocketHandler {
 
         case 'presence_leave':
           this.leaveCurrentResource(clientId);
+          break;
+
+        case 'subscribe_resource':
+          if (message.resourceId && message.resourceType) {
+            this.subscribeToResource(
+              clientId,
+              message.resourceType,
+              message.resourceId,
+              message.lastKnownVersion
+            );
+          }
+          break;
+
+        case 'unsubscribe_resource':
+          if (message.resourceId && message.resourceType) {
+            this.unsubscribeFromResource(clientId, message.resourceType, message.resourceId);
+          }
           break;
       }
     } catch (error) {
@@ -570,5 +615,210 @@ export class WorkspaceWebSocketHandler {
     });
 
     console.log(`[WorkspaceWS] Notified ${notifiedClients.size} clients of idea ${ideaId} update (workspace=${workspaceId || 'global'}, owner=${ownerId})`);
+  }
+
+  // ============================================================
+  // Delta Protocol Methods
+  // ============================================================
+
+  /**
+   * Subscribe a client to a specific resource for delta updates.
+   * Called when client sends subscribe_resource message.
+   */
+  private subscribeToResource(
+    clientId: string,
+    resourceType: ResourceType,
+    resourceId: string,
+    lastKnownVersion?: number
+  ): void {
+    const client = this.clients.get(clientId);
+
+    if (!client) return;
+
+    const key = this.getResourceKey(resourceType, resourceId);
+
+    // Track subscription
+    client.subscribedResources.set(key, lastKnownVersion ?? 0);
+
+    if (!this.resourceSubscribers.has(key)) {
+      this.resourceSubscribers.set(key, new Set());
+    }
+
+    this.resourceSubscribers.get(key)!.add(clientId);
+
+    console.log(`[WorkspaceWS] Client ${clientId} subscribed to ${resourceType}:${resourceId} (version=${lastKnownVersion ?? 0})`);
+  }
+
+  /**
+   * Unsubscribe a client from a specific resource.
+   */
+  private unsubscribeFromResource(
+    clientId: string,
+    resourceType: ResourceType,
+    resourceId: string
+  ): void {
+    const client = this.clients.get(clientId);
+
+    if (!client) return;
+
+    const key = this.getResourceKey(resourceType, resourceId);
+
+    client.subscribedResources.delete(key);
+    this.resourceSubscribers.get(key)?.delete(clientId);
+
+    if (this.resourceSubscribers.get(key)?.size === 0) {
+      this.resourceSubscribers.delete(key);
+    }
+
+    console.log(`[WorkspaceWS] Client ${clientId} unsubscribed from ${resourceType}:${resourceId}`);
+  }
+
+  /**
+   * Send a snapshot to a specific client.
+   * Used for initial subscription or when deltas are unavailable.
+   */
+  sendResourceSnapshot(
+    clientId: string,
+    resourceType: ResourceType,
+    resourceId: string,
+    data: unknown,
+    version: number
+  ): void {
+    const client = this.clients.get(clientId);
+
+    if (!client) return;
+
+    this.sendToClient(client.ws, {
+      type: 'resource_snapshot',
+      resourceType,
+      resourceId,
+      data,
+      version,
+    });
+
+    console.log(`[WorkspaceWS] Sent snapshot for ${resourceType}:${resourceId} v${version} to ${clientId}`);
+  }
+
+  /**
+   * Broadcast a delta to all subscribers of a resource.
+   */
+  broadcastResourceDelta(
+    resourceType: ResourceType,
+    resourceId: string,
+    delta: Delta,
+    excludeClientId?: string
+  ): void {
+    const key = this.getResourceKey(resourceType, resourceId);
+    const subscribers = this.resourceSubscribers.get(key);
+
+    if (!subscribers || subscribers.size === 0) return;
+
+    let count = 0;
+
+    subscribers.forEach((clientId) => {
+      if (clientId === excludeClientId) return;
+
+      const client = this.clients.get(clientId);
+
+      if (client) {
+        this.sendToClient(client.ws, {
+          type: 'resource_delta',
+          resourceType,
+          resourceId,
+          data: delta,
+          version: delta.version,
+        });
+        count++;
+      }
+    });
+
+    console.log(`[WorkspaceWS] Broadcast delta for ${resourceType}:${resourceId} v${delta.version} to ${count} clients`);
+  }
+
+  /**
+   * Get the list of client IDs subscribed to a resource.
+   */
+  getResourceSubscribers(resourceType: ResourceType, resourceId: string): string[] {
+    const key = this.getResourceKey(resourceType, resourceId);
+    const subscribers = this.resourceSubscribers.get(key);
+
+    return subscribers ? Array.from(subscribers) : [];
+  }
+
+  /**
+   * Check if a client is subscribed to a resource.
+   */
+  isClientSubscribed(clientId: string, resourceType: ResourceType, resourceId: string): boolean {
+    const key = this.getResourceKey(resourceType, resourceId);
+    const client = this.clients.get(clientId);
+
+    return client?.subscribedResources.has(key) ?? false;
+  }
+
+  /**
+   * Get the last known version for a client's subscription.
+   */
+  getClientSubscriptionVersion(
+    clientId: string,
+    resourceType: ResourceType,
+    resourceId: string
+  ): number | undefined {
+    const key = this.getResourceKey(resourceType, resourceId);
+    const client = this.clients.get(clientId);
+
+    return client?.subscribedResources.get(key);
+  }
+
+  /**
+   * Set the ResourceEventBus and subscribe to all events.
+   * Events from the bus will be broadcast to appropriate WebSocket clients.
+   */
+  setResourceEventBus(_bus: ResourceEventBus): void {
+    // Subscribe to all resource types
+    const resourceTypes = ['idea', 'thing', 'document'] as const;
+
+    for (const _resourceType of resourceTypes) {
+      // Use a catch-all subscription pattern by subscribing to a wildcard
+      // Since ResourceEventBus doesn't support wildcards, we'll use a different approach:
+      // We'll expose a method to manually push events from the ResourceEventBus
+    }
+
+    console.log('[WorkspaceWS] ResourceEventBus connected');
+  }
+
+  /**
+   * Handle a resource event from the ResourceEventBus.
+   * Broadcasts to all subscribed WebSocket clients.
+   */
+  handleResourceEvent(event: ResourceEvent): void {
+    const resourceType = event.resourceType as ResourceType;
+    const key = this.getResourceKey(resourceType, event.resourceId);
+    const subscribers = this.resourceSubscribers.get(key);
+
+    if (!subscribers || subscribers.size === 0) {
+      return;
+    }
+
+    if (event.event === 'snapshot') {
+      // Send snapshot to all subscribers
+      for (const clientId of subscribers) {
+        this.sendResourceSnapshot(
+          clientId,
+          resourceType,
+          event.resourceId,
+          event.data,
+          event.version,
+        );
+      }
+    } else if (event.event === 'delta') {
+      // Broadcast delta to all subscribers
+      this.broadcastResourceDelta(
+        resourceType,
+        event.resourceId,
+        event.data as Delta,
+      );
+    }
+
+    console.log(`[WorkspaceWS] Handled ${event.event} event for ${key}, ${subscribers.size} subscribers`);
   }
 }

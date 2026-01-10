@@ -112,6 +112,7 @@ export function buildExecutionAgentSystemPrompt(
 
   // Replace idea context placeholders
   prompt = prompt.replace('{{IDEA_TITLE}}', ideaContext.title || 'Untitled Idea');
+  prompt = prompt.replace('{{IDEA_ID}}', ideaContext.id);
 
   prompt = prompt.replace(
     '{{IDEA_SUMMARY}}',

@@ -286,8 +286,9 @@ export function useExecutionAgent({
 
   // Disconnect and clear state when disabled
   useEffect(() => {
+    console.log('[ExecutionAgent] Disabled effect running, enabled =', enabled, 'pendingExecution =', !!pendingExecutionRef.current);
     if (!enabled) {
-      console.log('[ExecutionAgent] Disabled, disconnecting');
+      console.log('[ExecutionAgent] Disabled, disconnecting and clearing state');
       setMessages([]);
       setError(null);
       setIsExecuting(false);
@@ -365,10 +366,17 @@ export function useExecutionAgent({
   }, []);
 
   const connect = useCallback(() => {
+    console.log('[ExecutionAgent] connect() called, pendingExecution =', !!pendingExecutionRef.current);
     // Guard: already connected or connecting
     if (wsRef.current?.readyState === WebSocket.OPEN ||
-        wsRef.current?.readyState === WebSocket.CONNECTING) return;
-    if (!userId || !ideaId) return;
+        wsRef.current?.readyState === WebSocket.CONNECTING) {
+      console.log('[ExecutionAgent] connect() early return: already connected/connecting');
+      return;
+    }
+    if (!userId || !ideaId) {
+      console.log('[ExecutionAgent] connect() early return: missing userId or ideaId', { userId: !!userId, ideaId: !!ideaId });
+      return;
+    }
 
     const wsUrl = `${EXECUTION_AGENT_WS_URL}?ideaId=${encodeURIComponent(ideaId)}&userId=${encodeURIComponent(userId)}&userName=${encodeURIComponent(userName)}`;
 
@@ -378,12 +386,12 @@ export function useExecutionAgent({
     ws.onopen = () => {
       setIsConnected(true);
       setError(null);
-      console.log('[ExecutionAgent] WebSocket connected');
+      console.log('[ExecutionAgent] WebSocket connected, pendingExecution =', !!pendingExecutionRef.current);
 
       // Check for pending execution and send it
       if (pendingExecutionRef.current) {
         const { ideaContext, plan, phaseId } = pendingExecutionRef.current;
-        console.log('[ExecutionAgent] Sending pending execution for phase:', phaseId);
+        console.log('[ExecutionAgent] Sending pending execution for phase:', phaseId, 'ideaContext:', ideaContext.id);
         setIsExecuting(true);
         setIsPaused(false);
         setIsBlocked(false);
@@ -435,6 +443,12 @@ export function useExecutionAgent({
               setSessionState(data.session);
               setIsExecuting(data.session.status === 'running');
               setIsBlocked(data.session.status === 'blocked');
+
+              // If session has an error, set the error state and add message
+              if (data.session.status === 'error' && data.session.errorMessage) {
+                setError(data.session.errorMessage);
+                // Note: Don't add error message here - it will come from history
+              }
             }
             console.log('[ExecutionAgent] Connected, active execution:', data.hasActiveExecution);
 
@@ -684,6 +698,16 @@ export function useExecutionAgent({
             if (data.error) {
               setError(data.error);
               setIsExecuting(false);
+
+              // Add error message to chat so it's visible in the UI
+              addMessage({
+                id: `error-${Date.now()}`,
+                role: 'system',
+                type: 'text',
+                content: `**Error:** ${data.error}`,
+                timestamp: Date.now(),
+              });
+
               onError?.(data.error);
             }
             break;
@@ -702,7 +726,9 @@ export function useExecutionAgent({
 
   // Connect when enabled and userId and ideaId are available
   useEffect(() => {
+    console.log('[ExecutionAgent] Connect effect running:', { enabled, userId: !!userId, ideaId: !!ideaId, isConnected, pendingExecution: !!pendingExecutionRef.current });
     if (enabled && userId && ideaId && !isConnected) {
+      console.log('[ExecutionAgent] Connect effect: conditions met, calling connect()');
       connect();
     }
 
@@ -728,6 +754,7 @@ export function useExecutionAgent({
 
   // Start execution
   const startExecution = useCallback((ideaContext: ExecutionIdeaContext, plan: IdeaPlan, phaseId: string) => {
+    console.log('[ExecutionAgent] startExecution called:', { ideaId: ideaContext.id, phaseId, wsReadyState: wsRef.current?.readyState });
     // Set optimistic UI state immediately (before server responds)
     setIsExecuting(true);
     setIsPaused(false);
@@ -738,6 +765,7 @@ export function useExecutionAgent({
     setSessionState({ status: 'running', phaseId, startedAt: Date.now() });
 
     if (wsRef.current?.readyState === WebSocket.OPEN) {
+      console.log('[ExecutionAgent] WebSocket already open, sending start_execution immediately');
       wsRef.current.send(JSON.stringify({
         type: 'start_execution',
         idea: ideaContext,
@@ -746,7 +774,7 @@ export function useExecutionAgent({
       }));
     } else {
       // WebSocket not connected yet - queue the execution to be sent when connected
-      console.log('[ExecutionAgent] Queueing execution (WebSocket not yet open)');
+      console.log('[ExecutionAgent] Queueing execution (WebSocket not yet open, readyState:', wsRef.current?.readyState, ')');
       pendingExecutionRef.current = { ideaContext, plan, phaseId };
     }
   }, []);

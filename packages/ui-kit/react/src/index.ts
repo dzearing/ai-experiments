@@ -147,12 +147,13 @@ export type { AvatarGroupProps } from './components/AvatarGroup';
 export { Chip } from './components/Chip';
 export type { ChipProps, ChipVariant, ChipSize } from './components/Chip';
 
-export { RelativeTime, formatRelativeTime, formatFullDate, getUpdateInterval } from './components/RelativeTime';
+export { RelativeTime, formatRelativeTime, formatDuration, formatFullDate, getUpdateInterval } from './components/RelativeTime';
 export type {
   RelativeTimeProps,
   RelativeTimeFormat,
   RelativeTimeSize,
   RelativeTimeColor,
+  RelativeTimeMode,
 } from './components/RelativeTime';
 
 export { FileDiff } from './components/FileDiff';

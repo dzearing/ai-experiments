@@ -318,7 +318,7 @@ Begin executing these tasks in order. Report progress after each task completion
   ): Promise<void> {
     const phase = plan.phases.find(p => p.id === phaseId);
     if (!phase) {
-      this.handleError(session, ideaId, `Phase ${phaseId} not found in plan`);
+      await this.handleError(session, ideaId, `Phase ${phaseId} not found in plan`);
       return;
     }
 
@@ -376,7 +376,7 @@ Begin executing these tasks in order. Report progress after each task completion
           permissionMode: 'bypassPermissions',
           allowDangerouslySkipPermissions: true,
           cwd: workDir,
-          maxTurns: 50,
+          maxTurns: 300,
           includePartialMessages: true,
           mcpServers: { ideate: ideateMcpServer },
           // Pass through environment to ensure node is findable (needed for nvm setups)
@@ -411,7 +411,7 @@ Begin executing these tasks in order. Report progress after each task completion
 
       console.log(`[ExecutionAgentService] Completed execution of phase ${phaseId}`);
     } catch (error) {
-      this.handleError(session, ideaId, error instanceof Error ? error.message : 'Unknown error');
+      await this.handleError(session, ideaId, error instanceof Error ? error.message : 'Unknown error');
     }
   }
 
@@ -519,6 +519,48 @@ Begin executing these tasks in order. Report progress after each task completion
       } else {
         console.log(`[ExecutionAgentService] unexpected content type:`, typeof msgContent);
       }
+    } else if (message.type === 'user') {
+      // User message contains tool results (SDK pattern)
+      const userMsg = message as { type: 'user'; message: { content: unknown[] } };
+      if (Array.isArray(userMsg.message?.content)) {
+        for (const block of userMsg.message.content) {
+          if ((block as { type?: string }).type === 'tool_result') {
+            const toolResult = block as { type: 'tool_result'; tool_use_id?: string; content?: unknown };
+
+            // Extract content
+            let resultContent = 'completed';
+            if (typeof toolResult.content === 'string') {
+              resultContent = toolResult.content;
+            } else if (Array.isArray(toolResult.content)) {
+              const textBlock = toolResult.content.find((c: unknown) => (c as { type?: string }).type === 'text');
+              if (textBlock && typeof (textBlock as { text?: string }).text === 'string') {
+                resultContent = (textBlock as { text: string }).text;
+              }
+            }
+
+            console.log(`[ExecutionAgentService] user tool_result (${resultContent.length} chars)`);
+
+            // Remove the first pending tool (assuming order matches)
+            const pendingTool = session.pendingTools.shift();
+            const toolName = pendingTool?.name ?? 'unknown';
+            const endTime = Date.now();
+            const startTime = pendingTool?.startTime ?? endTime;
+
+            // Store completed tool call for persistence with timing metadata
+            session.completedToolCalls.push({
+              name: toolName,
+              input: pendingTool?.input,
+              output: resultContent.length > 500 ? resultContent.slice(0, 500) + '...' : resultContent,
+              startTime,
+              endTime,
+              duration: endTime - startTime,
+              completed: true,
+            });
+
+            this.dispatchOrQueue(ideaId, { type: 'tool_end', data: { name: toolName, result: '' }, messageId, timestamp: Date.now() });
+          }
+        }
+      }
     } else if (message.type === 'result') {
       if (message.subtype === 'success' && message.result && !session.accumulatedResponse) {
         session.accumulatedResponse = message.result;
@@ -528,7 +570,7 @@ Begin executing these tasks in order. Report progress after each task completion
         this.updateTokenUsage(session, ideaId, resultUsage);
       }
       if (message.subtype === 'error_during_execution') {
-        this.handleError(session, ideaId, 'An error occurred during execution');
+        await this.handleError(session, ideaId, 'An error occurred during execution');
       }
     }
   }
@@ -646,11 +688,30 @@ Begin executing these tasks in order. Report progress after each task completion
     }
   }
 
-  private handleError(session: ExecutionSession, ideaId: string, errorMessage: string): void {
+  private async handleError(session: ExecutionSession, ideaId: string, errorMessage: string): Promise<void> {
     console.error('[ExecutionAgentService] Error:', errorMessage);
     session.status = 'error';
     session.errorMessage = errorMessage;
     this.dispatchOrQueue(ideaId, { type: 'error', data: errorMessage, timestamp: Date.now() });
+
+    // Persist error message to chat history so it shows when reopening dialog
+    try {
+      await this.chatService.addMessage(ideaId, session.userId, 'system', `**Error:** ${errorMessage}`);
+    } catch (err) {
+      console.error('[ExecutionAgentService] Failed to persist error to chat history:', err);
+    }
+
+    // Broadcast error state change to workspace clients
+    if (this.onExecutionStateChange) {
+      try {
+        const idea = await this.ideaService.getIdeaByIdNoAuth(ideaId);
+        if (idea) {
+          this.onExecutionStateChange(ideaId, idea);
+        }
+      } catch (err) {
+        console.error('[ExecutionAgentService] Failed to get idea for error broadcast:', err);
+      }
+    }
   }
 
   private dispatchOrQueue(ideaId: string, message: QueuedMessage): void {

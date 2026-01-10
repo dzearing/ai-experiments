@@ -176,6 +176,44 @@ export function createFacilitatorMcpServer(toolsService: MCPToolsService, userId
         }
       ),
 
+      tool(
+        'thing_add_link',
+        'Add a link to a Thing. Links can be URLs, file paths, or references to other Things.',
+        {
+          thingId: z.string().describe('The ID of the Thing to add a link to'),
+          type: z.enum(['url', 'path', 'thing-ref']).describe('Type of link: url (web URL), path (local file/folder), or thing-ref (reference to another Thing)'),
+          label: z.string().describe('Display label for the link'),
+          target: z.string().describe('The link target: URL for url type, file path for path type, or Thing ID for thing-ref type'),
+        },
+        async (args) => {
+          const result = await toolsService.executeTool('thing_add_link', args, userId);
+          return {
+            content: [{
+              type: 'text' as const,
+              text: JSON.stringify(result.data || { error: result.error }, null, 2),
+            }],
+          };
+        }
+      ),
+
+      tool(
+        'thing_remove_link',
+        'Remove a link from a Thing.',
+        {
+          thingId: z.string().describe('The ID of the Thing to remove a link from'),
+          linkId: z.string().describe('The ID of the link to remove'),
+        },
+        async (args) => {
+          const result = await toolsService.executeTool('thing_remove_link', args, userId);
+          return {
+            content: [{
+              type: 'text' as const,
+              text: JSON.stringify(result.data || { error: result.error }, null, 2),
+            }],
+          };
+        }
+      ),
+
       // === Document Tools ===
       tool(
         'document_list',
@@ -576,6 +614,7 @@ export function createFacilitatorMcpServer(toolsService: MCPToolsService, userId
         {
           ideaId: z.string().optional().describe('The Idea ID to open (omit for new idea mode)'),
           thingId: z.string().optional().describe('Thing ID to attach the idea to (required for new idea mode)'),
+          initialTitle: z.string().optional().describe('Initial title for the new idea (shown immediately in the card while agent processes)'),
           initialPrompt: z.string().optional().describe('Initial prompt to seed the idea agent when creating a new idea'),
           initialGreeting: z.string().optional().describe('Initial greeting from the agent (e.g., "I\'m crafting an Idea doc for your Spotify clone! Give me a sec...")'),
           closeFacilitator: z.boolean().optional().describe('Whether to close the Facilitator after opening (default: true)'),
@@ -589,6 +628,7 @@ export function createFacilitatorMcpServer(toolsService: MCPToolsService, userId
                 __action: 'open_idea_workspace',
                 ideaId: args.ideaId,
                 thingId: args.thingId,
+                initialTitle: args.initialTitle,
                 initialPrompt: args.initialPrompt,
                 initialGreeting: args.initialGreeting,
                 closeFacilitator: args.closeFacilitator ?? true,

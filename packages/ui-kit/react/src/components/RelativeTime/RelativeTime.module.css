@@ -6,6 +6,7 @@
 
 .relativeTime {
   font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 

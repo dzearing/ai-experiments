@@ -184,7 +184,8 @@ export function DocumentEditor() {
     initialContent: document?.content || '',
     localUser,
     onChange: handleYjsContentChange,
-    enableOfflinePersistence: true,
+    // Disable IndexedDB persistence when connected to server to prevent stale data conflicts
+    enableOfflinePersistence: false,
   });
 
   // Map Yjs co-authors to editor format

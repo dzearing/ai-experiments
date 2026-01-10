@@ -129,11 +129,23 @@ export class ExecutionAgentWebSocketHandler {
         // Broadcast to workspace subscribers AND to the owner's clients
         // This ensures global ideas (no workspaceId) also receive updates
         if (ideaData.ownerId) {
+          // Determine agentStatus based on session state
+          const session = this.executionAgentService.getSession(ideaId);
+          const agentStatus = session?.status === 'running' ? 'running'
+            : session?.status === 'blocked' ? 'running'  // blocked is still "running" from card perspective
+            : session?.status === 'error' ? 'error'
+            : 'idle';
+
           workspaceWsHandler.notifyIdeaUpdate(
             ideaId,
             ideaData.ownerId,
             ideaData.workspaceId,
-            idea
+            {
+              ...(idea as object),
+              agentStatus,
+              agentStartedAt: session?.startedAt ? new Date(session.startedAt).toISOString() : undefined,
+              agentErrorMessage: session?.errorMessage,
+            }
           );
         }
       });
@@ -291,13 +303,16 @@ export class ExecutionAgentWebSocketHandler {
           break;
 
         case 'start_execution':
+          console.log(`[ExecutionAgent] Received start_execution: ideaId=${client.ideaId}, phaseId=${clientMessage.phaseId}, hasIdea=${!!clientMessage.idea}, hasPlan=${!!clientMessage.plan}`);
           if (clientMessage.idea && clientMessage.plan && clientMessage.phaseId) {
             client.ideaContext = clientMessage.idea;
             client.plan = clientMessage.plan;
             client.currentPhaseId = clientMessage.phaseId;
             client.isPaused = false;
+            console.log(`[ExecutionAgent] Calling handleStartExecution for idea: ${clientMessage.idea.title}`);
             await this.handleStartExecution(client);
           } else {
+            console.log(`[ExecutionAgent] start_execution missing required fields: idea=${!!clientMessage.idea}, plan=${!!clientMessage.plan}, phaseId=${!!clientMessage.phaseId}`);
             this.send(client.ws, { type: 'error', error: 'Idea, plan, and phaseId are required' });
           }
           break;
@@ -376,12 +391,15 @@ export class ExecutionAgentWebSocketHandler {
    * Handle starting execution of a phase.
    */
   private async handleStartExecution(client: ExecutionAgentClient): Promise<void> {
+    console.log(`[ExecutionAgent] handleStartExecution called: ideaId=${client.ideaId}, phaseId=${client.currentPhaseId}`);
     if (!client.ideaContext || !client.plan || !client.currentPhaseId) {
+      console.log(`[ExecutionAgent] handleStartExecution missing context: ideaContext=${!!client.ideaContext}, plan=${!!client.plan}, phaseId=${!!client.currentPhaseId}`);
       this.send(client.ws, { type: 'error', error: 'Missing execution context' });
       return;
     }
 
     try {
+      console.log(`[ExecutionAgent] Calling executionAgentService.startExecution for idea: ${client.ideaContext.title}`);
       // Start execution in background - service handles everything
       await this.executionAgentService.startExecution(
         client.ideaId,
@@ -390,6 +408,7 @@ export class ExecutionAgentWebSocketHandler {
         client.currentPhaseId,
         client.userId
       );
+      console.log(`[ExecutionAgent] executionAgentService.startExecution completed (async started)`);
     } catch (error) {
       console.error('[ExecutionAgent] Error starting execution:', error);
       this.send(client.ws, { type: 'error', error: 'Failed to start execution' });

@@ -3,6 +3,10 @@ import { IDEA_AGENT_WS_URL } from '../config';
 import type { OpenQuestion, OpenQuestionsResult } from '@ui-kit/react-chat';
 import { useAgentProgress, type AgentProgressEvent, type AgentProgressState } from './useAgentProgress';
 import type { ModelId } from './useModelPreference';
+import { createLogger } from '../utils/clientLogger';
+
+// Create logger for this hook
+const log = createLogger('IdeaAgent');
 
 /**
  * Idea context to send to the agent
@@ -24,14 +28,35 @@ export interface IdeaContext {
 }
 
 /**
+ * Tool call information for idea agent messages
+ */
+export interface IdeaAgentToolCall {
+  name: string;
+  input?: Record<string, unknown>;
+  output?: string;
+  /** When the tool call started (epoch ms) */
+  startTime?: number;
+  /** When the tool call completed (epoch ms) */
+  endTime?: number;
+  /** Duration in milliseconds */
+  duration?: number;
+  /** Whether the tool execution is complete */
+  completed?: boolean;
+}
+
+/**
  * Message in the idea agent chat
  */
 export interface IdeaAgentMessage {
   id: string;
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: number;
   isStreaming?: boolean;
+  /** Open questions associated with this message (for rehydration on dialog reopen) */
+  openQuestions?: OpenQuestion[];
+  /** Tool calls made during this message */
+  toolCalls?: IdeaAgentToolCall[];
 }
 
 /**
@@ -204,6 +229,8 @@ export function useIdeaAgent({
   const prevDocumentRoomNameRef = useRef<string | undefined>(undefined);
   // Store previous document room name for session transfer when reconnecting
   const transferFromRoomRef = useRef<string | undefined>(undefined);
+  // Track if this is a session continuation (prevents history overwrite)
+  const sessionContinuationRef = useRef<boolean>(false);
 
   useEffect(() => {
     documentRoomNameRef.current = documentRoomName;
@@ -212,7 +239,7 @@ export function useIdeaAgent({
   // Disconnect and clear state when disabled
   useEffect(() => {
     if (!enabled) {
-      console.log('[IdeaAgent] Disabled, disconnecting');
+      log.log(' Disabled, disconnecting');
       setMessages([]);
       setError(null);
       setIsLoading(false);
@@ -248,16 +275,37 @@ export function useIdeaAgent({
 
     // Only reset if we had a previous value and it changed
     if (ideaIdChanged || roomNameChanged) {
-      console.log('[IdeaAgent] Session changed, resetting state');
+      // Detect if this is a session continuation (new idea room -> saved idea room)
+      // In this case, we should NOT clear messages - it's the same conversation
+      const wasNewIdeaRoom = prevDocumentRoomNameRef.current?.includes('idea-doc-new-');
+      const isNowSavedIdeaRoom = documentRoomName && !documentRoomName.includes('idea-doc-new-');
+      const isSessionContinuation = wasNewIdeaRoom && isNowSavedIdeaRoom;
+
+      log.log(' Session changed:', {
+        ideaIdChanged,
+        roomNameChanged,
+        prevRoom: prevDocumentRoomNameRef.current,
+        newRoom: documentRoomName,
+        isSessionContinuation,
+      });
 
       // Store the previous document room name for session transfer
       // This allows the server to find the old session and transfer it
       if (prevDocumentRoomNameRef.current) {
         transferFromRoomRef.current = prevDocumentRoomNameRef.current;
-        console.log('[IdeaAgent] Will transfer session from:', prevDocumentRoomNameRef.current);
+        log.log(' Will transfer session from:', prevDocumentRoomNameRef.current);
       }
 
-      setMessages([]);
+      // Only clear messages if switching to a DIFFERENT idea (not continuing same session)
+      if (!isSessionContinuation) {
+        log.log(' Clearing messages (switching to different idea)');
+        setMessages([]);
+        sessionContinuationRef.current = false;
+      } else {
+        log.log(' Preserving messages (continuing same session)');
+        sessionContinuationRef.current = true;
+      }
+
       setError(null);
       setIsLoading(false);
       setIsEditingDocument(false);
@@ -281,15 +329,48 @@ export function useIdeaAgent({
     setMessages((prev) => [...prev, message]);
   }, []);
 
-  // Update a message (for streaming)
-  const updateMessage = useCallback((id: string, updates: Partial<IdeaAgentMessage> | ((prev: string) => string)) => {
+  // Type for functional updates in message fields
+  type FunctionalUpdate<T> = T | ((prev: T) => T);
+
+  // Update a message (for streaming and tool calls)
+  // Supports functional updates for content and toolCalls
+  const updateMessage = useCallback((
+    id: string,
+    updates: {
+      content?: FunctionalUpdate<string>;
+      toolCalls?: FunctionalUpdate<IdeaAgentToolCall[] | undefined>;
+      isStreaming?: boolean;
+    } | ((prev: string) => string)
+  ) => {
     setMessages((prev) =>
       prev.map((msg) => {
         if (msg.id !== id) return msg;
+
+        // Handle legacy string function update (for content append)
         if (typeof updates === 'function') {
           return { ...msg, content: updates(msg.content) };
         }
-        return { ...msg, ...updates };
+
+        // Handle object updates with potential functional values
+        const newMsg = { ...msg };
+
+        if (updates.content !== undefined) {
+          newMsg.content = typeof updates.content === 'function'
+            ? updates.content(msg.content)
+            : updates.content;
+        }
+
+        if (updates.toolCalls !== undefined) {
+          newMsg.toolCalls = typeof updates.toolCalls === 'function'
+            ? updates.toolCalls(msg.toolCalls)
+            : updates.toolCalls;
+        }
+
+        if (updates.isStreaming !== undefined) {
+          newMsg.isStreaming = updates.isStreaming;
+        }
+
+        return newMsg;
       })
     );
   }, []);
@@ -333,7 +414,7 @@ export function useIdeaAgent({
     ws.onopen = () => {
       setIsConnected(true);
       setError(null);
-      console.log('[IdeaAgent] WebSocket connected');
+      log.log(' WebSocket connected');
 
       // Send initial idea context if available
       if (ideaContextRef.current) {
@@ -352,7 +433,7 @@ export function useIdeaAgent({
       setIsLoading(false);
       setIsEditingDocument(false);
       progress.clearProgress();
-      console.log('[IdeaAgent] WebSocket disconnected');
+      log.log(' WebSocket disconnected');
 
       // Only attempt to reconnect if still enabled
       if (enabledRef.current) {
@@ -365,7 +446,7 @@ export function useIdeaAgent({
     };
 
     ws.onerror = (event) => {
-      console.error('[IdeaAgent] WebSocket error:', event);
+      log.error(' WebSocket error:', event);
       setIsConnected(false);
       setError('Failed to connect to idea agent service');
       onError?.('Failed to connect to idea agent service');
@@ -378,8 +459,29 @@ export function useIdeaAgent({
         switch (data.type) {
           case 'history':
             // Load message history
+            // Skip if this is a session continuation and server sends empty history
+            // (the server may not have the chat history for the new chatId yet)
             if (data.messages) {
-              setMessages(data.messages);
+              const isEmpty = data.messages.length === 0;
+
+              if (sessionContinuationRef.current && isEmpty) {
+                log.log(' Skipping empty history (session continuation, preserving local messages)');
+                // Reset the flag after handling
+                sessionContinuationRef.current = false;
+              } else {
+                setMessages(data.messages);
+                sessionContinuationRef.current = false;
+
+                // Restore open questions from the last message that has them
+                // This allows clicking "resolve N questions" link after dialog reopen
+                const messageWithQuestions = [...data.messages].reverse().find(
+                  (msg) => msg.openQuestions && msg.openQuestions.length > 0
+                );
+                if (messageWithQuestions?.openQuestions) {
+                  log.log(' Restoring open questions from history:', messageWithQuestions.openQuestions.length);
+                  setOpenQuestions(messageWithQuestions.openQuestions);
+                }
+              }
             }
             break;
 
@@ -397,8 +499,33 @@ export function useIdeaAgent({
                   isStreaming: true,
                 });
               } else {
-                // Append to existing message
-                updateMessage(data.messageId, (prev) => prev + data.text);
+                // Check if current message has tool calls - if so, text arriving after
+                // tools should be in a new message to render below the tools
+                const textContent = data.text; // Capture for closure
+                setMessages((prev) => {
+                  const currentMsg = prev.find((m) => m.id === data.messageId);
+                  if (currentMsg?.toolCalls && currentMsg.toolCalls.length > 0) {
+                    // Text arriving after tools - create a new message
+                    const newMessageId = `${data.messageId}-cont-${Date.now()}`;
+                    currentMessageIdRef.current = newMessageId;
+                    return [
+                      ...prev.map((m) =>
+                        m.id === data.messageId ? { ...m, isStreaming: false } : m
+                      ),
+                      {
+                        id: newMessageId,
+                        role: 'assistant' as const,
+                        content: textContent,
+                        timestamp: Date.now(),
+                        isStreaming: true,
+                      },
+                    ];
+                  }
+                  // No tools yet - append to existing message
+                  return prev.map((m) =>
+                    m.id === data.messageId ? { ...m, content: m.content + textContent } : m
+                  );
+                });
               }
             }
             break;
@@ -447,13 +574,13 @@ export function useIdeaAgent({
           case 'document_edit_start':
             // Agent started editing the document
             setIsEditingDocument(true);
-            console.log('[IdeaAgent] Document editing started');
+            log.log(' Document editing started');
             break;
 
           case 'document_edit_end':
             // Agent finished editing the document
             setIsEditingDocument(false);
-            console.log('[IdeaAgent] Document editing finished');
+            log.log(' Document editing finished');
             break;
 
           case 'token_usage':
@@ -481,11 +608,69 @@ export function useIdeaAgent({
             // Handle agent progress event
             if (data.event) {
               progress.handleProgressEvent(data.event);
+
+              // Also persist tool calls to the message for proper interleaving
+              if (data.event.type === 'tool_start' && data.event.toolName) {
+                const newToolCall: IdeaAgentToolCall = {
+                  name: data.event.toolName,
+                  input: {},
+                  startTime: data.event.timestamp || Date.now(),
+                };
+
+                // Get or create current message
+                const targetMessageId = currentMessageIdRef.current;
+
+                if (!targetMessageId) {
+                  // No current message - create one for the tool
+                  const newMessageId = `msg-${Date.now()}`;
+                  currentMessageIdRef.current = newMessageId;
+                  addMessage({
+                    id: newMessageId,
+                    role: 'assistant',
+                    content: '',
+                    timestamp: Date.now(),
+                    isStreaming: true,
+                    toolCalls: [newToolCall],
+                  });
+                } else {
+                  // Add to existing message's toolCalls
+                  updateMessage(targetMessageId, {
+                    toolCalls: (prev) => [...(prev || []), newToolCall],
+                  });
+                }
+              } else if (data.event.type === 'tool_complete' && data.event.toolName) {
+                // Update the tool call with completion status
+                const targetMessageId = currentMessageIdRef.current;
+                if (targetMessageId) {
+                  const duration = data.event.timestamp ? Date.now() - (data.event.timestamp - 1000) : undefined;
+                  updateMessage(targetMessageId, {
+                    toolCalls: (prev) => {
+                      if (!prev) return prev;
+                      // Find the matching tool and mark it complete
+                      let updated = false;
+                      return prev.map((tc) => {
+                        if (updated) return tc;
+                        if (tc.name === data.event!.toolName && !tc.completed) {
+                          updated = true;
+                          return {
+                            ...tc,
+                            completed: true,
+                            endTime: Date.now(),
+                            duration: tc.startTime ? Date.now() - tc.startTime : duration,
+                            output: '__complete__', // Marker for completion without verbose output
+                          };
+                        }
+                        return tc;
+                      });
+                    },
+                  });
+                }
+              }
             }
             break;
         }
       } catch (err) {
-        console.error('[IdeaAgent] Failed to parse message:', err);
+        log.error(' Failed to parse message:', err);
       }
     };
   }, [ideaId, userId, userName, addMessage, updateMessage, onError]);
@@ -544,7 +729,7 @@ export function useIdeaAgent({
         modelId: modelIdRef.current,
       }));
     } else {
-      console.warn('[IdeaAgent] Cannot send message: WebSocket not connected');
+      log.warn(' Cannot send message: WebSocket not connected');
       setError('Not connected to idea agent service');
     }
   }, [addMessage]);
@@ -570,7 +755,7 @@ export function useIdeaAgent({
         modelId: modelIdRef.current,
       }));
     } else {
-      console.warn('[IdeaAgent] Cannot send message: WebSocket not connected');
+      log.warn(' Cannot send message: WebSocket not connected');
       setError('Not connected to idea agent service');
     }
   }, []);

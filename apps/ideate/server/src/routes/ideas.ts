@@ -5,6 +5,7 @@ import { WorkspaceService } from '../services/WorkspaceService.js';
 import { ChatRoomService } from '../services/ChatRoomService.js';
 import { getGitRevisionService } from '../services/GitRevisionService.js';
 import type { WorkspaceWebSocketHandler } from '../websocket/WorkspaceWebSocketHandler.js';
+import type { IdeaAgentWebSocketHandler } from '../websocket/IdeaAgentWebSocketHandler.js';
 
 const ideaService = new IdeaService();
 const workspaceService = new WorkspaceService();
@@ -12,9 +13,15 @@ const chatRoomService = new ChatRoomService();
 
 // Store the workspace handler reference for notifications
 let workspaceWsHandler: WorkspaceWebSocketHandler | null = null;
+// Store the idea agent handler reference for session linking
+let ideaAgentWsHandler: IdeaAgentWebSocketHandler | null = null;
 
 export function setIdeasWorkspaceHandler(handler: WorkspaceWebSocketHandler): void {
   workspaceWsHandler = handler;
+}
+
+export function setIdeasAgentHandler(handler: IdeaAgentWebSocketHandler): void {
+  ideaAgentWsHandler = handler;
 }
 
 export const ideasRouter = Router();
@@ -165,7 +172,7 @@ ideasRouter.get('/:id', async (req: Request, res: Response) => {
 ideasRouter.post('/', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { title, summary, tags, rating, source, workspaceId, thingIds, description } = req.body;
+    const { title, summary, tags, rating, source, workspaceId, thingIds, description, documentRoomName } = req.body;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
@@ -187,6 +194,13 @@ ideasRouter.post('/', async (req: Request, res: Response) => {
       thingIds,
       description,
     });
+
+    // If documentRoomName is provided, link the agent session to the real ideaId
+    // This ensures the IdeaCard receives status updates for the correct ideaId
+    if (documentRoomName && ideaAgentWsHandler) {
+      const linked = ideaAgentWsHandler.getService().linkSessionToIdea(documentRoomName, idea.id, workspaceId);
+      console.log(`[Ideas] Linked agent session ${documentRoomName} to idea ${idea.id}: ${linked}`);
+    }
 
     // Notify workspace subscribers of new idea
     if (workspaceId && workspaceWsHandler) {
