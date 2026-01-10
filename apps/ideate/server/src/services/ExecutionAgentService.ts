@@ -200,7 +200,11 @@ export class ExecutionAgentService {
       // No running session or session is completed/idle - start a new conversation
       // Create a session to handle this message
       console.log(`[ExecutionAgentService] Starting new conversation for user message (session was: ${session?.status || 'none'})`);
-      const phaseId = session?.phaseId || plan.phases[0]?.id || 'default';
+      // Find the first incomplete phase, or use the last phase if all are complete
+      const firstIncompletePhase = plan.phases.find(p => !p.tasks.every(t => t.completed));
+      const phaseId = session?.phaseId || firstIncompletePhase?.id || plan.phases[plan.phases.length - 1]?.id || 'default';
+      console.log(`[ExecutionAgentService] Determined phaseId for new conversation: ${phaseId} (firstIncomplete: ${firstIncompletePhase?.title || 'none'})`);
+
       const newSession: ExecutionSession = {
         ideaId,
         phaseId,

@@ -699,8 +699,16 @@ export function IdeaDialog({
 
   // Handle phase completion - update plan state
   const handlePhaseComplete = useCallback((event: { phaseId: string; summary?: string }) => {
+    log.log('handlePhaseComplete called', { phaseId: event.phaseId, summary: event.summary });
     setPlan(prev => {
       if (!prev?.phases) return prev;
+      const phaseIndex = prev.phases.findIndex(p => p.id === event.phaseId);
+      log.log('handlePhaseComplete - updating plan', {
+        phaseId: event.phaseId,
+        phaseIndex,
+        totalPhases: prev.phases.length,
+        phaseTitle: prev.phases[phaseIndex]?.title,
+      });
       return {
         ...prev,
         phases: prev.phases.map(phase => {
@@ -734,10 +742,22 @@ export function IdeaDialog({
   // Auto-continue to next phase when a phase completes and pauseBetweenPhases is false
   useEffect(() => {
     const phases = plan?.phases;
-    if (!completedPhaseId || !phases || pauseBetweenPhasesRef.current) return;
+    if (!completedPhaseId || !phases || pauseBetweenPhasesRef.current) {
+      if (completedPhaseId) {
+        log.log('Auto-continue skipped', {
+          completedPhaseId,
+          hasPhases: !!phases,
+          pauseBetweenPhases: pauseBetweenPhasesRef.current,
+        });
+      }
+      return;
+    }
 
     // Prevent duplicate execution if already in progress
-    if (autoContinueInProgressRef.current) return;
+    if (autoContinueInProgressRef.current) {
+      log.log('Auto-continue already in progress, skipping');
+      return;
+    }
 
     // Find the index of the completed phase
     const completedIndex = phases.findIndex(p => p.id === completedPhaseId);
@@ -745,12 +765,25 @@ export function IdeaDialog({
       ? phases[completedIndex + 1]
       : null;
 
+    log.log('Auto-continue evaluating', {
+      completedPhaseId,
+      completedIndex,
+      completedPhaseTitle: phases[completedIndex]?.title,
+      nextPhaseId: nextPhase?.id,
+      nextPhaseTitle: nextPhase?.title,
+      totalPhases: phases.length,
+    });
+
     if (nextPhase) {
       // Mark as in progress to prevent duplicate triggers
       autoContinueInProgressRef.current = true;
 
       // Small delay before starting next phase
       const timerId = setTimeout(() => {
+        log.log('Auto-continue starting next phase', {
+          nextPhaseId: nextPhase.id,
+          nextPhaseTitle: nextPhase.title,
+        });
         const fullPlan: IdeaPlan = {
           phases,
           workingDirectory: plan?.workingDirectory || '',
@@ -772,6 +805,10 @@ export function IdeaDialog({
       };
     } else {
       // No next phase, clear the completed phase ID
+      log.log('Auto-continue: No next phase, execution complete', {
+        completedIndex,
+        totalPhases: phases.length,
+      });
       setCompletedPhaseId(null);
     }
   }, [completedPhaseId, plan, executeAgent, executionIdeaContext]);
