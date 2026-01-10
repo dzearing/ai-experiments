@@ -4,11 +4,11 @@ import { useNavigate } from '@ui-kit/router';
 import { Slide, Button, IconButton, Avatar } from '@ui-kit/react';
 import { CloseIcon } from '@ui-kit/icons/CloseIcon';
 import { GearIcon } from '@ui-kit/icons/GearIcon';
-import { ChatInput, ChatMessage, ThinkingIndicator, OpenQuestionsResolver, type ChatInputSubmitData, type ChatInputRef, type ThingReference as ChatThingReference } from '@ui-kit/react-chat';
+import { ChatInput, ChatMessage, ThinkingIndicator, OpenQuestionsResolver, type ChatInputSubmitData, type ChatInputRef, type TopicReference as ChatTopicReference } from '@ui-kit/react-chat';
 import { AVATAR_IMAGES } from '../../constants/avatarImages';
 import { useFacilitator } from '../../contexts/FacilitatorContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { useThings } from '../../contexts/ThingsContext';
+import { useTopics } from '../../contexts/TopicsContext';
 import { useFacilitatorSocket } from '../../hooks/useFacilitatorSocket';
 import { useChatCommands } from '../../hooks/useChatCommands';
 import { useModelPreference } from '../../hooks/useModelPreference';
@@ -31,7 +31,7 @@ interface FacilitatorSettings {
 export function FacilitatorOverlay() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { getThingReferences } = useThings();
+  const { getTopicReferences } = useTopics();
   const { modelId, setModelId, modelInfo } = useModelPreference();
   const {
     isOpen,
@@ -51,8 +51,8 @@ export function FacilitatorOverlay() {
     resolveQuestions,
   } = useFacilitator();
 
-  // Get thing references for chat autocomplete (from shared context)
-  const thingReferences = getThingReferences();
+  // Get topic references for chat autocomplete (from shared context)
+  const topicReferences = getTopicReferences();
 
   const [isBackdropVisible, setIsBackdropVisible] = useState(isOpen);
   const [queuedContent, setQueuedContent] = useState('');
@@ -259,11 +259,11 @@ Type a message to get started!`,
   // Handle sending a message
   const handleSendMessage = useCallback(
     (data: ChatInputSubmitData) => {
-      const { content, thingReferences } = data;
+      const { content, topicReferences } = data;
       if (!content.trim()) return;
 
-      // Extract Thing IDs from references
-      const thingIds = thingReferences?.map(ref => ref.id) || [];
+      // Extract Topic IDs from references
+      const topicIds = topicReferences?.map(ref => ref.id) || [];
 
       // If AI is busy, append to queued content
       if (isLoading) {
@@ -275,9 +275,9 @@ Type a message to get started!`,
       // Add user message to context
       contextSendMessage(content);
 
-      // Send to server via WebSocket with Thing IDs
+      // Send to server via WebSocket with Topic IDs
       if (isConnected) {
-        socketSendMessage(content, thingIds);
+        socketSendMessage(content, topicIds);
       }
 
       setInputContent('');
@@ -471,7 +471,7 @@ Type a message to get started!`,
           <div className={styles.inputContainer}>
             <ChatInput
               ref={chatInputRef}
-              placeholder={isLoading ? "Type to queue message..." : "Ask the facilitator... (type / for commands, ^ for things)"}
+              placeholder={isLoading ? "Type to queue message..." : "Ask the facilitator... (type / for commands, ^ for topics)"}
               onSubmit={handleSendMessage}
               onChange={handleInputChange}
               disabled={connectionState === 'connecting'}
@@ -479,7 +479,7 @@ Type a message to get started!`,
               fullWidth
               commands={commands}
               onCommand={handleCommand}
-              things={thingReferences as ChatThingReference[]}
+              topics={topicReferences as ChatTopicReference[]}
               queuedMessages={queuedContent ? [queuedContent] : []}
               onEditQueue={handleEditQueue}
             />

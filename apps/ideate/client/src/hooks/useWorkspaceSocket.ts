@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 import { WORKSPACE_WS_URL } from '../config';
 import { useAuth } from '../contexts/AuthContext';
 
-export type ResourceType = 'document' | 'chatroom' | 'idea' | 'thing';
+export type ResourceType = 'document' | 'chatroom' | 'idea' | 'topic';
 
 export interface ResourcePresence {
   resourceId: string;

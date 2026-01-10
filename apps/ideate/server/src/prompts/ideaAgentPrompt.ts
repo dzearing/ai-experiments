@@ -1,8 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
-import type { ThingContext } from '../services/IdeaAgentService.js';
-import { THING_TOOLS_PROMPT } from '../shared/thingToolsMcp.js';
+import type { TopicContext } from '../services/IdeaAgentService.js';
+import { TOPIC_TOOLS_PROMPT } from '../shared/topicToolsMcp.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -36,12 +36,12 @@ function buildDocumentWithPositions(content: string): string {
 }
 
 /**
- * Build thing context section for the prompt
+ * Build topic context section for the prompt
  */
-function buildThingContextSection(thingContext?: ThingContext): string {
-  if (!thingContext) return '';
+function buildTopicContextSection(topicContext?: TopicContext): string {
+  if (!topicContext) return '';
 
-  const { name, type, description } = thingContext;
+  const { name, type, description } = topicContext;
   let section = `## Parent Context\nThis idea is being created for **${name}** (${type}).`;
   if (description) {
     section += `\n\n${description}`;
@@ -55,26 +55,32 @@ function buildThingContextSection(thingContext?: ThingContext): string {
  *
  * @param isNewIdea - Whether this is a new idea (create mode) or existing (edit mode)
  * @param documentContent - Current document content (only used for existing ideas)
- * @param thingContext - Optional Thing context when creating an idea linked to a Thing
+ * @param topicContext - Optional Topic context when creating an idea linked to a Topic
+ * @param factsSection - Optional remembered facts about the user
  */
 export function buildIdeaAgentSystemPrompt(
   isNewIdea: boolean,
   documentContent: string | null,
-  thingContext?: ThingContext
+  topicContext?: TopicContext,
+  factsSection?: string
 ): string {
-  const thingContextSection = buildThingContextSection(thingContext);
+  const topicContextSection = buildTopicContextSection(topicContext);
 
   if (isNewIdea) {
     let prompt = NEW_IDEA_PROMPT;
-    // Add thing context after "## Current State" section
-    if (thingContextSection) {
+    // Add topic context after "## Current State" section
+    if (topicContextSection) {
       prompt = prompt.replace(
         '## Current State\nThis is a NEW idea.',
-        `## Current State\nThis is a NEW idea.\n\n${thingContextSection}`
+        `## Current State\nThis is a NEW idea.\n\n${topicContextSection}`
       );
     }
-    // Add thing tools section at the end
-    prompt += '\n\n' + THING_TOOLS_PROMPT;
+    // Add facts section if available
+    if (factsSection) {
+      prompt += '\n\n' + factsSection;
+    }
+    // Add topic tools section at the end
+    prompt += '\n\n' + TOPIC_TOOLS_PROMPT;
     return prompt;
   }
 
@@ -87,16 +93,21 @@ export function buildIdeaAgentSystemPrompt(
     .replace('{{DOCUMENT_WITH_POSITIONS}}', docWithPositions)
     .replace('{{DOCUMENT_LENGTH}}', String(documentContent?.length || 0));
 
-  // Add thing context if available
-  if (thingContextSection) {
+  // Add topic context if available
+  if (topicContextSection) {
     prompt = prompt.replace(
       '## Current State',
-      `${thingContextSection}\n\n## Current State`
+      `${topicContextSection}\n\n## Current State`
     );
   }
 
-  // Add thing tools section at the end
-  prompt += '\n\n' + THING_TOOLS_PROMPT;
+  // Add facts section if available
+  if (factsSection) {
+    prompt += '\n\n' + factsSection;
+  }
+
+  // Add topic tools section at the end
+  prompt += '\n\n' + TOPIC_TOOLS_PROMPT;
 
   return prompt;
 }

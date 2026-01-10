@@ -14,7 +14,7 @@ import Link from '@tiptap/extension-link';
 import Underline from '@tiptap/extension-underline';
 import { Markdown } from 'tiptap-markdown';
 import { ImageChipExtension } from './ImageChipExtension';
-import { ThingChipExtension } from './ThingChipExtension';
+import { TopicChipExtension } from './TopicChipExtension';
 import { CodeExtension } from './CodeExtension';
 
 export interface UseChatEditorOptions {
@@ -173,7 +173,7 @@ export function useChatEditor(options: UseChatEditorOptions = {}) {
         transformCopiedText: true,
       }),
       ImageChipExtension,
-      ThingChipExtension,
+      TopicChipExtension,
       KeyboardExtension,
     ],
     editable: !disabled,

@@ -25,7 +25,7 @@ export const AgentStatusSchema = z.object({
 export type AgentStatus = z.infer<typeof AgentStatusSchema>;
 
 /**
- * Schema for a list of idea metadata (for thing ideas list).
+ * Schema for a list of idea metadata (for topic ideas list).
  */
 export const IdeaMetadataListSchema = z.array(IdeaMetadataSchema);
 
@@ -52,11 +52,11 @@ export function ideaAgentStatusPath(ideaId: string): DataBusPath<typeof AgentSta
 }
 
 /**
- * Create a data bus path for a thing's linked ideas.
+ * Create a data bus path for a topic's linked ideas.
  */
-export function thingIdeasPath(thingId: string): DataBusPath<typeof IdeaMetadataListSchema> {
+export function topicIdeasPath(topicId: string): DataBusPath<typeof IdeaMetadataListSchema> {
   return createDataPath({
-    path: ['things', thingId, 'ideas'],
+    path: ['topics', topicId, 'ideas'],
     type: IdeaMetadataListSchema,
   });
 }

@@ -9,8 +9,9 @@ import { getClaudeDiagnosticsService } from '../routes/diagnostics.js';
 import type { AgentProgressCallbacks, AgentProgressEvent } from '../shared/agentProgress.js';
 import { createStatusEvent } from '../shared/agentProgressUtils.js';
 import { createToolStartEvent, createToolCompleteEvent } from '../shared/sdkStreamProcessor.js';
-import { ThingService, THING_TYPE_SCHEMAS } from './ThingService.js';
-import { createThingToolsMcpServer } from '../shared/thingToolsMcp.js';
+import { TopicService, TOPIC_TYPE_SCHEMAS } from './TopicService.js';
+import { createTopicToolsMcpServer } from '../shared/topicToolsMcp.js';
+import { factsService } from './FactsService.js';
 // Re-export shared types for backwards compatibility
 export type { OpenQuestion, SuggestedResponse, TokenUsage } from '../shared/agentResponseTypes.js';
 import type { OpenQuestion, SuggestedResponse, TokenUsage } from '../shared/agentResponseTypes.js';
@@ -99,7 +100,7 @@ function parsePlanUpdate(response: string): { plan: ParsedPlanUpdate | null; cha
 
   try {
     const plan = JSON.parse(planMatch[1]) as ParsedPlanUpdate;
-    // Chat response is everything BEFORE the plan block
+    // Chat response is everytopic BEFORE the plan block
     const chatResponse = response.slice(0, response.indexOf('<plan_update>')).trim() || "I've created the plan for you.";
     return { plan, chatResponse };
   } catch {
@@ -170,9 +171,9 @@ export interface ResolvedExecutionContext {
   branch?: string;
   /** Whether to work on a clone */
   isClone?: boolean;
-  /** Thing that provides the context */
-  contextThingId?: string;
-  contextThingName?: string;
+  /** Topic that provides the context */
+  contextTopicId?: string;
+  contextTopicName?: string;
 }
 
 /**
@@ -188,7 +189,7 @@ export interface ExecutionContextResult {
 export class PlanAgentService {
   private chatService: PlanAgentChatService;
   private yjsClient: PlanAgentYjsClient | null = null;
-  private thingService: ThingService;
+  private topicService: TopicService;
 
   // Session management for background execution
   private activeSessions = new Map<string, PlanAgentSession>();
@@ -198,7 +199,7 @@ export class PlanAgentService {
 
   constructor(yjsHandler?: YjsCollaborationHandler) {
     this.chatService = new PlanAgentChatService();
-    this.thingService = new ThingService();
+    this.topicService = new TopicService();
     if (yjsHandler) {
       this.yjsClient = new PlanAgentYjsClient(yjsHandler);
     }
@@ -339,22 +340,22 @@ export class PlanAgentService {
   }
 
   /**
-   * Resolve execution context for an idea based on linked things.
+   * Resolve execution context for an idea based on linked topics.
    * Returns either a resolved context or questions to ask the user.
    *
    * @param ideaTitle - The idea title (for inferring if code-related)
    * @param ideaSummary - The idea summary (for inferring if code-related)
-   * @param linkedThingIds - Thing IDs linked to this idea
+   * @param linkedTopicIds - Topic IDs linked to this idea
    * @param userId - The user ID for access control
    */
   async resolveExecutionContext(
     ideaTitle: string,
     ideaSummary: string,
-    linkedThingIds: string[],
+    linkedTopicIds: string[],
     userId: string
   ): Promise<ExecutionContextResult> {
     // 1. Infer if this is a code-related idea
-    const isCodeIdea = this.inferIsCodeIdea(ideaTitle, ideaSummary, linkedThingIds);
+    const isCodeIdea = this.inferIsCodeIdea(ideaTitle, ideaSummary, linkedTopicIds);
 
     if (!isCodeIdea) {
       // Non-code idea - no execution context needed
@@ -363,17 +364,17 @@ export class PlanAgentService {
       };
     }
 
-    // 2. Try to resolve from linked things
-    for (const thingId of linkedThingIds) {
-      const thing = await this.thingService.getThing(thingId, userId, true);
-      if (!thing) continue;
+    // 2. Try to resolve from linked topics
+    for (const topicId of linkedTopicIds) {
+      const topic = await this.topicService.getTopic(topicId, userId, true);
+      if (!topic) continue;
 
-      // Check if this thing type provides execution context
-      const schema = THING_TYPE_SCHEMAS[thing.type];
+      // Check if this topic type provides execution context
+      const schema = TOPIC_TYPE_SCHEMAS[topic.type];
       if (!schema?.providesExecutionContext) continue;
 
       // Resolve key properties
-      const keyProps = await this.thingService.resolveKeyProperties(thingId, userId);
+      const keyProps = await this.topicService.resolveKeyProperties(topicId, userId);
 
       if (keyProps.localPath || keyProps.remoteUrl) {
         return {
@@ -383,20 +384,20 @@ export class PlanAgentService {
             repositoryUrl: keyProps.remoteUrl,
             branch: keyProps.branch,
             isClone: keyProps.requiresClone,
-            contextThingId: thingId,
-            contextThingName: thing.name,
+            contextTopicId: topicId,
+            contextTopicName: topic.name,
           },
         };
       }
     }
 
-    // 3. No context found - ask user to select a thing or provide a path
+    // 3. No context found - ask user to select a topic or provide a path
     return {
       questions: [{
         id: 'execution-scope',
         question: 'Where should this code be implemented?',
         context: 'Select an existing project/package or provide a folder path where the code will live.',
-        selectionType: 'single', // Will be 'thing-picker' once we implement that
+        selectionType: 'single', // Will be 'topic-picker' once we implement that
         options: [
           {
             id: 'new-folder',
@@ -404,7 +405,7 @@ export class PlanAgentService {
             description: 'I\'ll provide a path to a new or existing folder',
           },
           {
-            id: 'existing-thing',
+            id: 'existing-topic',
             label: 'Existing project',
             description: 'Select from my existing projects and packages',
           },
@@ -415,12 +416,12 @@ export class PlanAgentService {
   }
 
   /**
-   * Infer whether an idea is code-related based on title, summary, and linked things.
+   * Infer whether an idea is code-related based on title, summary, and linked topics.
    */
   private inferIsCodeIdea(
     title: string,
     summary: string,
-    linkedThingIds: string[]
+    linkedTopicIds: string[]
   ): boolean {
     // Code-related keywords
     const codeKeywords = [
@@ -445,9 +446,9 @@ export class PlanAgentService {
     const codeMatches = codeKeywords.filter(kw => textToCheck.includes(kw)).length;
     const nonCodeMatches = nonCodeKeywords.filter(kw => textToCheck.includes(kw)).length;
 
-    // If linked to things, check if any are execution-context types
-    if (linkedThingIds.length > 0) {
-      // Having linked things suggests it's more likely to be code-related
+    // If linked to topics, check if any are execution-context types
+    if (linkedTopicIds.length > 0) {
+      // Having linked topics suggests it's more likely to be code-related
       // (This is a simple heuristic - could be refined)
       return codeMatches >= nonCodeMatches;
     }
@@ -482,7 +483,7 @@ export class PlanAgentService {
    * Generate an initial greeting for the plan agent.
    */
   async generateGreeting(ideaContext: PlanIdeaContext): Promise<string> {
-    const { title, summary, thingContext } = ideaContext;
+    const { title, summary, topicContext } = ideaContext;
 
     // Build a contextual greeting based on what we know
     let greeting = `Let's create an implementation plan for **"${title}"**.`;
@@ -491,11 +492,11 @@ export class PlanAgentService {
       greeting += `\n\n> ${summary}`;
     }
 
-    if (thingContext) {
-      greeting += `\n\nThis idea is connected to **${thingContext.name}** (${thingContext.type}).`;
+    if (topicContext) {
+      greeting += `\n\nThis idea is connected to **${topicContext.name}** (${topicContext.type}).`;
     }
 
-    greeting += `\n\nTo create a good plan, I need to understand a few things:
+    greeting += `\n\nTo create a good plan, I need to understand a few topics:
 
 1. **Technology stack** - What languages, frameworks, or tools will we use?
 2. **Environment** - Is this for an existing project, or are we starting fresh?
@@ -618,8 +619,11 @@ Feel free to share any details, and I'll start building out the phases and tasks
       }
     }
 
+    // Load remembered facts for this user
+    const factsSection = await factsService.formatFactsForPrompt(userId) || undefined;
+
     // Build the system prompt with idea context and current document
-    const systemPrompt = buildPlanAgentSystemPrompt(ideaContext, documentContent);
+    const systemPrompt = buildPlanAgentSystemPrompt(ideaContext, documentContent, factsSection);
 
     // Build the full prompt with conversation history
     const conversationHistory = buildConversationHistory(history.slice(0, -1));
@@ -652,8 +656,8 @@ Feel free to share any details, and I'll start building out the phases and tasks
       const effectiveModel = modelId || 'claude-sonnet-4-5-20250929';
       console.log(`[PlanAgentService] Starting query with model ${effectiveModel}...`);
 
-      // Create MCP server for thing tools so the agent can look up and modify Things
-      const thingToolsServer = createThingToolsMcpServer(userId);
+      // Create MCP server for topic tools so the agent can look up and modify Topics
+      const topicToolsServer = createTopicToolsMcpServer(userId);
 
       const response = query({
         prompt: fullPrompt,
@@ -661,10 +665,10 @@ Feel free to share any details, and I'll start building out the phases and tasks
           systemPrompt,
           model: effectiveModel,
           tools: [], // No built-in tools, only MCP tools
-          mcpServers: { 'thing-tools': thingToolsServer },
+          mcpServers: { 'topic-tools': topicToolsServer },
           permissionMode: 'bypassPermissions',
           allowDangerouslySkipPermissions: true,
-          maxTurns: 5, // Allow tool iterations for looking up Things
+          maxTurns: 5, // Allow tool iterations for looking up Topics
         },
       });
 

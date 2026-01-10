@@ -13,8 +13,8 @@ export interface DocumentMetadata {
   title: string;
   ownerId: string;
   workspaceId?: string;
-  /** Associated Thing ID (if document belongs to a Thing) */
-  thingId?: string;
+  /** Associated Topic ID (if document belongs to a Topic) */
+  topicId?: string;
   collaboratorIds: string[];
   isPublic: boolean;
   shareCode?: string;
@@ -28,12 +28,12 @@ export interface Document extends DocumentMetadata {
 
 interface FetchDocumentsOptions {
   workspaceId?: string;
-  thingId?: string;
+  topicId?: string;
 }
 
 interface CreateDocumentOptions {
   workspaceId?: string;
-  thingId?: string;
+  topicId?: string;
 }
 
 interface DocumentContextValue {
@@ -72,8 +72,8 @@ export function DocumentProvider({ children }: DocumentProviderProps) {
       if (options?.workspaceId) {
         params.set('workspaceId', options.workspaceId);
       }
-      if (options?.thingId) {
-        params.set('thingId', options.thingId);
+      if (options?.topicId) {
+        params.set('topicId', options.topicId);
       }
 
       const queryString = params.toString();
@@ -115,7 +115,7 @@ export function DocumentProvider({ children }: DocumentProviderProps) {
         body: JSON.stringify({
           title,
           workspaceId: options?.workspaceId,
-          thingId: options?.thingId,
+          topicId: options?.topicId,
         }),
       });
 

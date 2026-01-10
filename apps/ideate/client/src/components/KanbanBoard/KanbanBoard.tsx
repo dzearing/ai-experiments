@@ -26,7 +26,7 @@ interface KanbanBoardProps {
   workspaceId?: string;
   /** Whether delete is disabled (e.g., when overlays are open) */
   deleteDisabled?: boolean;
-  /** Variant: 'full' for Ideas page, 'compact' for ThingIdeas */
+  /** Variant: 'full' for Ideas page, 'compact' for TopicIdeas */
   variant?: 'full' | 'compact';
 }
 

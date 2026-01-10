@@ -44,6 +44,33 @@
   box-shadow: 0 0 0 1px var(--primary-bg);
 }
 
+/* Phase status styles */
+.phase.pending {
+  /* Default styling - no special treatment */
+}
+
+.phase.inProgress {
+  /* Currently executing phase - uses isActive styling when also active */
+}
+
+.phase.completed {
+  border-color: var(--feedback-success-border);
+}
+
+.phase.completed .phaseHeader {
+  background: var(--feedback-success-bg);
+}
+
+.phase.completed .phaseHeader:hover {
+  background: var(--feedback-success-bg);
+  filter: brightness(0.95);
+}
+
+.phase.completed .phaseNumber {
+  background: var(--success-bg);
+  color: var(--success-fg);
+}
+
 /* Phase header */
 .phaseHeader {
   display: flex;
@@ -147,8 +174,8 @@
 }
 
 .statusBadge.completed {
-  background: var(--success-bg-soft);
-  color: var(--success-fg-on-soft);
+  background: var(--feedback-success-bg);
+  color: var(--feedback-success-fg);
 }
 
 /* Task list */

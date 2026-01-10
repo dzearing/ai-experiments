@@ -28,7 +28,7 @@ interface UseIdeaDeleteReturn {
 
 /**
  * Hook for handling idea deletion with confirmation dialog support.
- * Shared between Ideas page and ThingIdeas component.
+ * Shared between Ideas page and TopicIdeas component.
  */
 export function useIdeaDelete(options: UseIdeaDeleteOptions): UseIdeaDeleteReturn {
   const { deleteIdea, onDeleted } = options;

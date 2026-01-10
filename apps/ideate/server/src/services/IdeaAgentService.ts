@@ -7,7 +7,8 @@ import { buildIdeaAgentSystemPrompt } from '../prompts/ideaAgentPrompt.js';
 import type { AgentProgressCallbacks, AgentProgressEvent } from '../shared/agentProgress.js';
 import { createToolStartEvent, createToolCompleteEvent } from '../shared/sdkStreamProcessor.js';
 import { createStatusEvent } from '../shared/agentProgressUtils.js';
-import { createThingToolsMcpServer } from '../shared/thingToolsMcp.js';
+import { createTopicToolsMcpServer } from '../shared/topicToolsMcp.js';
+import { factsService } from './FactsService.js';
 // Re-export shared types for backwards compatibility
 export type { OpenQuestion, SuggestedResponse, TokenUsage } from '../shared/agentResponseTypes.js';
 import type { OpenQuestion, SuggestedResponse, TokenUsage } from '../shared/agentResponseTypes.js';
@@ -56,9 +57,9 @@ export interface IdeaAgentSession {
 }
 
 /**
- * Thing context for contextual greetings
+ * Topic context for contextual greetings
  */
-export interface ThingContext {
+export interface TopicContext {
   id: string;
   name: string;
   type: string;
@@ -75,8 +76,8 @@ export interface IdeaContext {
   description?: string;
   tags: string[];
   status: string;
-  /** Optional Thing context when creating an idea linked to a Thing */
-  thingContext?: ThingContext;
+  /** Optional Topic context when creating an idea linked to a Topic */
+  topicContext?: TopicContext;
 }
 
 /**
@@ -178,7 +179,7 @@ function parseIdeaUpdate(response: string): { update: IdeaUpdate | null; chatRes
 
   try {
     const update = JSON.parse(updateMatch[1]) as IdeaUpdate;
-    // Chat response is everything BEFORE the update block (new format)
+    // Chat response is everytopic BEFORE the update block (new format)
     const chatResponse = response.slice(0, response.indexOf('<idea_update>')).trim() || "I've created the document for you.";
     return { update, chatResponse };
   } catch {
@@ -200,7 +201,7 @@ function parseDocumentEdits(response: string): { edits: DocumentEdit[] | null; c
 
   try {
     const edits = JSON.parse(editsMatch[1]) as DocumentEdit[];
-    // Chat response is everything BEFORE the edits block (new format)
+    // Chat response is everytopic BEFORE the edits block (new format)
     const chatResponse = response.slice(0, response.indexOf('<document_edits>')).trim() || "I've made the changes to your document.";
     return { edits, chatResponse };
   } catch {
@@ -643,8 +644,11 @@ export class IdeaAgentService {
 
     console.log(`[IdeaAgentService] isNewIdea=${isNewIdea}, hasRealContent=${hasRealContent}, docLength=${documentContent?.length || 0}`);
 
+    // Load remembered facts for this user
+    const factsSection = await factsService.formatFactsForPrompt(userId) || undefined;
+
     // Build the system prompt with idea context and document content
-    const systemPrompt = buildIdeaAgentSystemPrompt(isNewIdea, documentContent, ideaContext.thingContext);
+    const systemPrompt = buildIdeaAgentSystemPrompt(isNewIdea, documentContent, ideaContext.topicContext, factsSection);
 
     // Build the full prompt with conversation history
     const conversationHistory = buildConversationHistory(history.slice(0, -1));
@@ -675,8 +679,8 @@ export class IdeaAgentService {
       const effectiveModel = modelId || 'claude-sonnet-4-5-20250929';
       console.log(`[IdeaAgentService] Using model: ${effectiveModel}`);
 
-      // Create MCP server for thing tools so the agent can look up and modify Things
-      const thingToolsServer = createThingToolsMcpServer(userId);
+      // Create MCP server for topic tools so the agent can look up and modify Topics
+      const topicToolsServer = createTopicToolsMcpServer(userId);
 
       const response = query({
         prompt: fullPrompt,
@@ -684,10 +688,10 @@ export class IdeaAgentService {
           systemPrompt,
           model: effectiveModel,
           tools: [], // No built-in tools, only MCP tools
-          mcpServers: { 'thing-tools': thingToolsServer },
+          mcpServers: { 'topic-tools': topicToolsServer },
           permissionMode: 'bypassPermissions',
           allowDangerouslySkipPermissions: true,
-          maxTurns: 5, // Allow tool iterations for looking up Things
+          maxTurns: 5, // Allow tool iterations for looking up Topics
         },
       });
 
@@ -1004,7 +1008,7 @@ export class IdeaAgentService {
    * Generate an initial greeting/prompt for a new idea chat.
    * For new ideas (no real content yet), uses cached general greetings.
    * For existing ideas with content, generates a context-specific greeting.
-   * For ideas linked to a Thing, generates contextual greetings based on Thing type.
+   * For ideas linked to a Topic, generates contextual greetings based on Topic type.
    */
   generateGreeting(ideaContext: IdeaContext | null): string {
     // For new ideas or ideas without meaningful content
@@ -1013,9 +1017,9 @@ export class IdeaAgentService {
         !ideaContext.title.trim() ||
         ideaContext.title === 'Untitled Idea') {
 
-      // If this is a new idea linked to a Thing, generate a Thing-specific greeting
-      if (ideaContext?.thingContext) {
-        return this.generateThingContextGreeting(ideaContext.thingContext);
+      // If this is a new idea linked to a Topic, generate a Topic-specific greeting
+      if (ideaContext?.topicContext) {
+        return this.generateTopicContextGreeting(ideaContext.topicContext);
       }
       return this.getNewIdeaGreeting();
     }
@@ -1030,13 +1034,13 @@ export class IdeaAgentService {
   }
 
   /**
-   * Generate a contextual greeting when creating an idea for a specific Thing.
-   * The greeting is tailored based on the Thing's type and description.
+   * Generate a contextual greeting when creating an idea for a specific Topic.
+   * The greeting is tailored based on the Topic's type and description.
    */
-  private generateThingContextGreeting(thingContext: ThingContext): string {
-    const { name, type, description } = thingContext;
+  private generateTopicContextGreeting(topicContext: TopicContext): string {
+    const { name, type, description } = topicContext;
 
-    // Determine contextual prompts based on Thing type
+    // Determine contextual prompts based on Topic type
     const typeContexts: Record<string, { activity: string; examples: string }> = {
       // Development-related types
       'project': {
@@ -1119,7 +1123,7 @@ export class IdeaAgentService {
       examples: 'a new concept, enhancement, or related idea'
     };
 
-    // Build the greeting with Thing context
+    // Build the greeting with Topic context
     const descriptionHint = description
       ? `\n\n*${description}*`
       : '';

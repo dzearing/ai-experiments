@@ -48,7 +48,7 @@ Your role is to:
 - Help break down complex tasks into manageable steps
 
 Be friendly, concise, and helpful. When making suggestions, explain your reasoning.
-If you're unsure about something, ask clarifying questions.`;
+If you're unsure about sometopic, ask clarifying questions.`;
 
 /**
  * Service for loading and managing personas.

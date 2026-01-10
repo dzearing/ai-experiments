@@ -2,7 +2,7 @@ import type { RawData } from 'ws';
 import { WebSocket } from 'ws';
 import type { IncomingMessage } from 'http';
 import { ImportAgentService, type ImportRequest, type ImportStep, type ImportSubTask } from '../services/ImportAgentService.js';
-import type { ThingMetadata } from '../services/ThingService.js';
+import type { TopicMetadata } from '../services/TopicService.js';
 
 /**
  * Client message types for the import WebSocket protocol
@@ -23,7 +23,7 @@ interface ServerMessage {
   update?: { status?: ImportStep['status']; detail?: string };
   detail?: string;
   error?: string;
-  createdThings?: ThingMetadata[];
+  createdTopics?: TopicMetadata[];
   // Sub-task fields
   totalTasks?: number;
   taskNames?: string[];
@@ -128,7 +128,7 @@ export class ImportWebSocketHandler {
 
     console.log(`[Import] Client ${client.clientId} starting import:`, {
       sourceType: request.sourceType,
-      targetThingId: request.targetThingId,
+      targetTopicId: request.targetTopicId,
     });
 
     try {
@@ -165,10 +165,10 @@ export class ImportWebSocketHandler {
               error,
             });
           },
-          onComplete: (createdThings) => {
+          onComplete: (createdTopics) => {
             this.send(client.ws, {
               type: 'complete',
-              createdThings,
+              createdTopics,
             });
             client.importService = null;
           },

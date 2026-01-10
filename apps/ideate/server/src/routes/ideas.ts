@@ -83,11 +83,11 @@ ideasRouter.get('/by-lane', async (req: Request, res: Response) => {
   }
 });
 
-// Get ideas by thing ID
-ideasRouter.get('/by-thing/:thingId', async (req: Request, res: Response) => {
+// Get ideas by topic ID
+ideasRouter.get('/by-topic/:topicId', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { thingId } = req.params;
+    const { topicId } = req.params;
     const workspaceId = req.query.workspaceId as string | undefined;
 
     if (!userId) {
@@ -102,19 +102,19 @@ ideasRouter.get('/by-thing/:thingId', async (req: Request, res: Response) => {
       isWorkspaceMember = workspace !== null;
     }
 
-    const ideas = await ideaService.getIdeasByThingId(thingId, userId, workspaceId, isWorkspaceMember);
+    const ideas = await ideaService.getIdeasByTopicId(topicId, userId, workspaceId, isWorkspaceMember);
     res.json(ideas);
   } catch (error) {
-    console.error('[Ideas] Get ideas by thing error:', error);
-    res.status(500).json({ error: 'Failed to get ideas by thing' });
+    console.error('[Ideas] Get ideas by topic error:', error);
+    res.status(500).json({ error: 'Failed to get ideas by topic' });
   }
 });
 
-// Get idea counts by thing ID
-ideasRouter.get('/counts-by-thing/:thingId', async (req: Request, res: Response) => {
+// Get idea counts by topic ID
+ideasRouter.get('/counts-by-topic/:topicId', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { thingId } = req.params;
+    const { topicId } = req.params;
     const workspaceId = req.query.workspaceId as string | undefined;
 
     if (!userId) {
@@ -129,11 +129,11 @@ ideasRouter.get('/counts-by-thing/:thingId', async (req: Request, res: Response)
       isWorkspaceMember = workspace !== null;
     }
 
-    const counts = await ideaService.getIdeaCountsByThingId(thingId, userId, workspaceId, isWorkspaceMember);
+    const counts = await ideaService.getIdeaCountsByTopicId(topicId, userId, workspaceId, isWorkspaceMember);
     res.json(counts);
   } catch (error) {
-    console.error('[Ideas] Get idea counts by thing error:', error);
-    res.status(500).json({ error: 'Failed to get idea counts by thing' });
+    console.error('[Ideas] Get idea counts by topic error:', error);
+    res.status(500).json({ error: 'Failed to get idea counts by topic' });
   }
 });
 
@@ -172,7 +172,7 @@ ideasRouter.get('/:id', async (req: Request, res: Response) => {
 ideasRouter.post('/', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { title, summary, tags, rating, source, workspaceId, thingIds, description, documentRoomName } = req.body;
+    const { title, summary, tags, rating, source, workspaceId, topicIds, description, documentRoomName } = req.body;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
@@ -191,7 +191,7 @@ ideasRouter.post('/', async (req: Request, res: Response) => {
       rating,
       source,
       workspaceId,
-      thingIds,
+      topicIds,
       description,
     });
 
@@ -332,7 +332,7 @@ ideasRouter.patch('/:id', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
     const { id } = req.params;
-    const { title, summary, tags, description, workspaceId, thingIds } = req.body;
+    const { title, summary, tags, description, workspaceId, topicIds } = req.body;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
@@ -345,7 +345,7 @@ ideasRouter.patch('/:id', async (req: Request, res: Response) => {
       tags,
       description,
       workspaceId,
-      thingIds,
+      topicIds,
     });
 
     if (!idea) {

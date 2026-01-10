@@ -1,12 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from '@ui-kit/router';
-import { Card, Button, IconButton, Input, Avatar, Dialog } from '@ui-kit/react';
+import { Card, Button, IconButton, Input, Avatar, Dialog, Textarea } from '@ui-kit/react';
 import { ArrowLeftIcon } from '@ui-kit/icons/ArrowLeftIcon';
 import { UserIcon } from '@ui-kit/icons/UserIcon';
 import { EditIcon } from '@ui-kit/icons/EditIcon';
 import { CheckIcon } from '@ui-kit/icons/CheckIcon';
+import { DeleteIcon } from '@ui-kit/icons/DeleteIcon';
+import { LightbulbIcon } from '@ui-kit/icons/LightbulbIcon';
 import { API_URL } from '../config';
 import { useFacilitator } from '../contexts/FacilitatorContext';
+import { useAuth } from '../contexts/AuthContext';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { AVATAR_OPTIONS, AVATAR_IMAGES } from '../constants/avatarImages';
 import styles from './FacilitatorSettings.module.css';
 
@@ -31,9 +35,19 @@ interface CurrentPersona {
   hasUserOverride: boolean;
 }
 
+interface Fact {
+  id: string;
+  subject: string;
+  detail: string;
+  createdAt: number;
+  updatedAt?: number;
+  source: 'user' | 'inferred';
+}
+
 export function FacilitatorSettings() {
   const navigate = useNavigate();
   const { requestPersonaChange } = useFacilitator();
+  const { user } = useAuth();
   const [presets, setPresets] = useState<PresetInfo[]>([]);
   const [settings, setSettings] = useState<FacilitatorSettingsData>({ name: 'Facilitator', avatar: 'robot', selectedPreset: null });
   const [currentPersona, setCurrentPersona] = useState<CurrentPersona | null>(null);
@@ -43,6 +57,16 @@ export function FacilitatorSettings() {
   const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; targetPresetId: string | null }>({
     open: false,
     targetPresetId: null,
+  });
+
+  // Facts/Memory state
+  const [facts, setFacts] = useState<Fact[]>([]);
+  const [editingFact, setEditingFact] = useState<Fact | null>(null);
+  const [editSubject, setEditSubject] = useState('');
+  const [editDetail, setEditDetail] = useState('');
+  const [deleteFactDialog, setDeleteFactDialog] = useState<{ open: boolean; fact: Fact | null }>({
+    open: false,
+    fact: null,
   });
 
   // Fetch presets and current persona on mount
@@ -100,6 +124,105 @@ export function FacilitatorSettings() {
 
     fetchData();
   }, []);
+
+  // Fetch facts on mount
+  useEffect(() => {
+    const fetchFacts = async () => {
+      if (!user?.id) return;
+
+      try {
+        const response = await fetch(`${API_URL}/api/facts`, {
+          headers: {
+            'x-user-id': user.id,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setFacts(data);
+        }
+      } catch (error) {
+        console.error('[FacilitatorSettings] Failed to fetch facts:', error);
+      }
+    };
+
+    fetchFacts();
+  }, [user?.id]);
+
+  // Handle editing a fact
+  const handleEditFact = (fact: Fact) => {
+    setEditingFact(fact);
+    setEditSubject(fact.subject);
+    setEditDetail(fact.detail);
+  };
+
+  // Save edited fact
+  const handleSaveEditFact = async () => {
+    if (!editingFact || !user?.id) return;
+
+    setIsSaving(true);
+    try {
+      const response = await fetch(`${API_URL}/api/facts/${editingFact.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user.id,
+        },
+        body: JSON.stringify({ subject: editSubject, detail: editDetail }),
+      });
+
+      if (response.ok) {
+        const updated = await response.json();
+        setFacts((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
+        setEditingFact(null);
+      }
+    } catch (error) {
+      console.error('[FacilitatorSettings] Failed to update fact:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Cancel editing
+  const handleCancelEditFact = () => {
+    setEditingFact(null);
+    setEditSubject('');
+    setEditDetail('');
+  };
+
+  // Open delete confirmation dialog
+  const handleDeleteFactClick = (fact: Fact) => {
+    setDeleteFactDialog({ open: true, fact });
+  };
+
+  // Confirm delete fact
+  const handleConfirmDeleteFact = async () => {
+    if (!deleteFactDialog.fact || !user?.id) return;
+
+    setIsSaving(true);
+    try {
+      const response = await fetch(`${API_URL}/api/facts/${deleteFactDialog.fact.id}`, {
+        method: 'DELETE',
+        headers: {
+          'x-user-id': user.id,
+        },
+      });
+
+      if (response.ok) {
+        setFacts((prev) => prev.filter((f) => f.id !== deleteFactDialog.fact!.id));
+      }
+    } catch (error) {
+      console.error('[FacilitatorSettings] Failed to delete fact:', error);
+    } finally {
+      setIsSaving(false);
+      setDeleteFactDialog({ open: false, fact: null });
+    }
+  };
+
+  // Cancel delete
+  const handleCancelDeleteFact = () => {
+    setDeleteFactDialog({ open: false, fact: null });
+  };
 
   // Update settings on server
   const updateSettings = async (newSettings: Partial<FacilitatorSettingsData>) => {
@@ -373,6 +496,53 @@ export function FacilitatorSettings() {
           </div>
         </section>
 
+        {/* Memory Section */}
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>
+            <LightbulbIcon />
+            Memory
+          </h2>
+
+          <p className={styles.sectionDescription}>
+            Facts the facilitator remembers about you from conversations.
+          </p>
+
+          <Card className={styles.sectionContent}>
+            {facts.length === 0 ? (
+              <p className={styles.emptyState}>
+                No remembered facts yet. The facilitator will remember important information you share during conversations.
+              </p>
+            ) : (
+              <div className={styles.factsList}>
+                {facts.map((fact) => (
+                  <div key={fact.id} className={styles.factItem}>
+                    <div className={styles.factContent}>
+                      <strong className={styles.factSubject}>{fact.subject}</strong>
+                      <p className={styles.factDetail}>{fact.detail}</p>
+                    </div>
+                    <div className={styles.factActions}>
+                      <IconButton
+                        icon={<EditIcon />}
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditFact(fact)}
+                        aria-label="Edit fact"
+                      />
+                      <IconButton
+                        icon={<DeleteIcon />}
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteFactClick(fact)}
+                        aria-label="Delete fact"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        </section>
+
         {/* Confirmation Dialog */}
         <Dialog
           open={confirmDialog.open}
@@ -394,6 +564,60 @@ export function FacilitatorSettings() {
             Switching to a preset will remove your custom persona. This action cannot be undone.
           </p>
         </Dialog>
+
+        {/* Edit Fact Dialog */}
+        <Dialog
+          open={!!editingFact}
+          onClose={handleCancelEditFact}
+          title="Edit Fact"
+          size="md"
+          footer={
+            <div className={styles.dialogFooter}>
+              <Button variant="ghost" onClick={handleCancelEditFact}>
+                Cancel
+              </Button>
+              <Button variant="primary" onClick={handleSaveEditFact} disabled={isSaving || !editSubject.trim() || !editDetail.trim()}>
+                Save
+              </Button>
+            </div>
+          }
+        >
+          <div className={styles.editFactForm}>
+            <div className={styles.editFactField}>
+              <label htmlFor="edit-fact-subject">Subject</label>
+              <Input
+                id="edit-fact-subject"
+                value={editSubject}
+                onChange={(e) => setEditSubject(e.target.value)}
+                placeholder="Short subject (3-6 words)"
+              />
+            </div>
+            <div className={styles.editFactField}>
+              <label htmlFor="edit-fact-detail">Detail</label>
+              <Textarea
+                id="edit-fact-detail"
+                value={editDetail}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditDetail(e.target.value)}
+                placeholder="The fact to remember"
+                rows={3}
+              />
+            </div>
+          </div>
+        </Dialog>
+
+        {/* Delete Fact Confirmation Dialog */}
+        <ConfirmDialog
+          open={deleteFactDialog.open}
+          onCancel={handleCancelDeleteFact}
+          onConfirm={handleConfirmDeleteFact}
+          title="Delete Fact?"
+          message={deleteFactDialog.fact
+            ? `Are you sure you want to delete "${deleteFactDialog.fact.subject}"? The facilitator will no longer remember this.`
+            : 'Are you sure you want to delete this fact?'
+          }
+          confirmText="Delete"
+          variant="danger"
+        />
       </div>
     </div>
   );

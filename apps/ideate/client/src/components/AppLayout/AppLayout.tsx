@@ -27,7 +27,7 @@ export function AppLayout() {
 
   // Active state for nav buttons
   const isDashboardActive = useIsActive('/dashboard');
-  const isThingsActive = useIsActive('/things');
+  const isTopicsActive = useIsActive('/topics');
   const isIdeasActive = useIsActive('/ideas');
   const isWorkspacesActive = useIsActive('/workspaces');
 
@@ -46,11 +46,11 @@ export function AppLayout() {
           </button>
           <nav className={styles.nav}>
             <Button
-              href="/things"
-              variant={isThingsActive ? 'primary' : 'ghost'}
+              href="/topics"
+              variant={isTopicsActive ? 'primary' : 'ghost'}
               icon={<TreeIcon />}
             >
-              Things
+              Topics
             </Button>
             <Button
               href="/ideas"

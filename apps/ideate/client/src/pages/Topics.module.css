@@ -1,0 +1,42 @@
+/* Topics Page - Main layout */
+
+.topicsPage {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  background: var(--base-bg);
+  overflow: hidden;
+}
+
+/* Right Panel - Detail */
+.detailPanel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Loading state */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+/* Empty detail state */
+.emptyDetail {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  color: var(--base-fg-soft);
+}
+
+.emptyDetail p {
+  margin: 0;
+  font-size: var(--text-base);
+}

@@ -74,7 +74,7 @@ export interface IdeaMetadata {
   status: IdeaStatus;
   ownerId: string;
   workspaceId?: string;           // undefined = global (user's personal ideas)
-  thingIds: string[];             // References to Things (many-to-many)
+  topicIds: string[];             // References to Topics (many-to-many)
   createdAt: string;
   updatedAt: string;
   statusChangedAt: string;
@@ -94,7 +94,7 @@ export interface CreateIdeaInput {
   rating?: 1 | 2 | 3 | 4;
   source?: IdeaSource;
   workspaceId?: string;
-  thingIds?: string[];
+  topicIds?: string[];
   description?: string;
 }
 
@@ -104,7 +104,7 @@ export interface UpdateIdeaInput {
   tags?: string[];
   description?: string;
   workspaceId?: string;
-  thingIds?: string[];
+  topicIds?: string[];
 }
 
 // =========================================================================
@@ -335,28 +335,28 @@ export class IdeaService {
   }
 
   /**
-   * Get ideas linked to a specific thing.
+   * Get ideas linked to a specific topic.
    */
-  async getIdeasByThingId(
-    thingId: string,
+  async getIdeasByTopicId(
+    topicId: string,
     userId: string,
     workspaceId?: string,
     isWorkspaceMember: boolean = false
   ): Promise<IdeaMetadata[]> {
     const allIdeas = await this.listIdeas(userId, workspaceId, undefined, isWorkspaceMember);
-    return allIdeas.filter(idea => idea.thingIds?.includes(thingId));
+    return allIdeas.filter(idea => idea.topicIds?.includes(topicId));
   }
 
   /**
-   * Get idea counts grouped by status for a thing.
+   * Get idea counts grouped by status for a topic.
    */
-  async getIdeaCountsByThingId(
-    thingId: string,
+  async getIdeaCountsByTopicId(
+    topicId: string,
     userId: string,
     workspaceId?: string,
     isWorkspaceMember: boolean = false
   ): Promise<{ new: number; exploring: number; executing: number; archived: number }> {
-    const ideas = await this.getIdeasByThingId(thingId, userId, workspaceId, isWorkspaceMember);
+    const ideas = await this.getIdeasByTopicId(topicId, userId, workspaceId, isWorkspaceMember);
 
     const counts = {
       new: 0,
@@ -389,7 +389,7 @@ export class IdeaService {
       status: 'new',
       ownerId: userId,
       workspaceId: input.workspaceId,
-      thingIds: input.thingIds || [],
+      topicIds: input.topicIds || [],
       createdAt: now,
       updatedAt: now,
       statusChangedAt: now,
@@ -519,7 +519,7 @@ export class IdeaService {
         summary: updates.summary ?? metadata.summary,
         tags: updates.tags ?? metadata.tags,
         workspaceId: 'workspaceId' in updates ? updates.workspaceId : metadata.workspaceId,
-        thingIds: updates.thingIds ?? metadata.thingIds ?? [],
+        topicIds: updates.topicIds ?? metadata.topicIds ?? [],
         updatedAt: now,
       };
 

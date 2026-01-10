@@ -121,7 +121,7 @@ export function AgentProgress({
     ? [currentEvent, ...recentEvents.slice(0, maxRecent - 1)]
     : recentEvents.slice(0, maxRecent);
 
-  // Don't render if nothing to show
+  // Don't render if notopic to show
   if (eventsToShow.length === 0 && !isProcessing) {
     return null;
   }

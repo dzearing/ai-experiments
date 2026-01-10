@@ -182,7 +182,7 @@ export function PlanView({
         return (
           <div
             key={phase.id}
-            className={`${styles.phase} ${isExpanded ? styles.expanded : ''} ${isActive ? styles.isActive : ''}`}
+            className={`${styles.phase} ${isExpanded ? styles.expanded : ''} ${isActive ? styles.isActive : ''} ${styles[status]}`}
           >
             {/* Phase header */}
             <div

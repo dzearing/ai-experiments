@@ -6,13 +6,13 @@ import { useAgentProgress, type AgentProgressEvent } from './useAgentProgress';
 import type { ModelId } from './useModelPreference';
 
 /**
- * Parent thing that provides execution context (e.g., a folder or git repo with localPath)
+ * Parent topic that provides execution context (e.g., a folder or git repo with localPath)
  */
-export interface ParentThingContext {
+export interface ParentTopicContext {
   id: string;
   name: string;
   type: string;
-  /** Local file system path if this thing provides execution context */
+  /** Local file system path if this topic provides execution context */
   localPath?: string;
 }
 
@@ -26,15 +26,15 @@ export interface PlanIdeaContext {
   description?: string;
   tags: string[];
   status: string;
-  /** Optional Thing context when creating a plan linked to a Thing */
-  thingContext?: {
+  /** Optional Topic context when creating a plan linked to a Topic */
+  topicContext?: {
     id: string;
     name: string;
     type: string;
     description?: string;
   };
-  /** Parent things that provide execution context (folders, repos) with their localPath */
-  parentThings?: ParentThingContext[];
+  /** Parent topics that provide execution context (folders, repos) with their localPath */
+  parentTopics?: ParentTopicContext[];
 }
 
 /**

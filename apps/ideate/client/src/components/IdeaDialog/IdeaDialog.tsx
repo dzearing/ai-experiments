@@ -9,16 +9,16 @@ import { PauseIcon } from '@ui-kit/icons/PauseIcon';
 import { FileIcon } from '@ui-kit/icons/FileIcon';
 import { ListIcon } from '@ui-kit/icons/ListIcon';
 import { EditIcon } from '@ui-kit/icons/EditIcon';
-import { ChatPanel, ChatInput, ThinkingIndicator, MessageQueue, OpenQuestionsResolver, type ChatInputSubmitData, type ChatInputRef, type ChatPanelMessage, type QueuedMessage, type ThingReference as ChatThingReference } from '@ui-kit/react-chat';
+import { ChatPanel, ChatInput, ThinkingIndicator, MessageQueue, OpenQuestionsResolver, type ChatInputSubmitData, type ChatInputRef, type ChatPanelMessage, type QueuedMessage, type TopicReference as ChatTopicReference, type ChatMessagePart } from '@ui-kit/react-chat';
 import { MarkdownCoEditor, type ViewMode, type CoAuthor } from '@ui-kit/react-markdown';
 import { ItemPickerDialog, DiskItemProvider } from '@ui-kit/react-pickers';
 import { useResource } from '@claude-flow/data-bus/react';
 import { dataBus, ideaPath, ideaAgentStatusPath } from '../../dataBus';
 import { useAuth } from '../../contexts/AuthContext';
 import { useIdeas } from '../../contexts/IdeasContext';
-import { useThings } from '../../contexts/ThingsContext';
+import { useTopics } from '../../contexts/TopicsContext';
 import { useIdeaAgent, type IdeaContext } from '../../hooks/useIdeaAgent';
-import { usePlanAgent, type PlanIdeaContext, type ParentThingContext } from '../../hooks/usePlanAgent';
+import { usePlanAgent, type PlanIdeaContext, type ParentTopicContext } from '../../hooks/usePlanAgent';
 import { useExecutionAgent, type ExecutionIdeaContext } from '../../hooks/useExecutionAgent';
 import { useYjsCollaboration } from '../../hooks/useYjsCollaboration';
 import { useChatCommands } from '../../hooks/useChatCommands';
@@ -30,7 +30,7 @@ import { ClockIcon } from '@ui-kit/icons/ClockIcon';
 import { YJS_WS_URL } from '../../config';
 import { createLogger } from '../../utils/clientLogger';
 import type { Idea, CreateIdeaInput, IdeaPlan } from '../../types/idea';
-import { THING_TYPE_SCHEMAS } from '../../types/thing';
+import { TOPIC_TYPE_SCHEMAS } from '../../types/topic';
 import styles from './IdeaDialog.module.css';
 
 // Create logger for this component
@@ -170,8 +170,8 @@ function parseMarkdownContent(content: string): {
   return { title, summary, tags, description };
 }
 
-/** Thing context for contextual greetings */
-export interface ThingContext {
+/** Topic context for contextual greetings */
+export interface TopicContext {
   id: string;
   name: string;
   type: string;
@@ -195,10 +195,10 @@ export interface IdeaDialogProps {
   workspaceId?: string;
   /** Callback when idea is created or updated */
   onSuccess?: (idea: Idea) => void;
-  /** Thing IDs to pre-link when creating a new idea */
-  initialThingIds?: string[];
-  /** Thing context for contextual greetings when creating ideas for a Thing */
-  initialThingContext?: ThingContext;
+  /** Topic IDs to pre-link when creating a new idea */
+  initialTopicIds?: string[];
+  /** Topic context for contextual greetings when creating ideas for a Topic */
+  initialTopicContext?: TopicContext;
   /** Callback when idea status changes (e.g., moves to planning) - for kanban updates */
   onStatusChange?: (idea: Idea, newStatus: string) => void;
   /** Initial title for the new idea (shown immediately in the card while agent processes) */
@@ -228,8 +228,8 @@ export function IdeaDialog({
   onClose,
   workspaceId,
   onSuccess,
-  initialThingIds,
-  initialThingContext,
+  initialTopicIds,
+  initialTopicContext,
   onStatusChange,
   initialTitle,
   initialPrompt,
@@ -249,45 +249,45 @@ export function IdeaDialog({
 
   const { user } = useAuth();
   const { createIdea, updateIdea, moveIdea } = useIdeas();
-  const { things, getThingReferences, getAncestors } = useThings();
+  const { topics, getTopicReferences, getAncestors } = useTopics();
   const { modelId, setModelId, modelInfo } = useModelPreference();
 
   const isNewIdea = !idea;
 
-  // Get linked things for display
-  const linkedThings = useMemo(() => {
-    // For new ideas, use initialThingIds; for existing ideas, use idea.thingIds
-    const thingIds = idea?.thingIds || initialThingIds || [];
-    if (thingIds.length === 0) return [];
-    return things.filter(t => thingIds.includes(t.id));
-  }, [idea?.thingIds, initialThingIds, things]);
+  // Get linked topics for display
+  const linkedTopics = useMemo(() => {
+    // For new ideas, use initialTopicIds; for existing ideas, use idea.topicIds
+    const topicIds = idea?.topicIds || initialTopicIds || [];
+    if (topicIds.length === 0) return [];
+    return topics.filter(t => topicIds.includes(t.id));
+  }, [idea?.topicIds, initialTopicIds, topics]);
 
-  // Get parent things with execution context (folders, repos with localPath)
-  // This traverses the thing hierarchy to find ancestors that can provide working directories
-  const parentThingsWithContext: ParentThingContext[] = useMemo(() => {
-    const contexts: ParentThingContext[] = [];
+  // Get parent topics with execution context (folders, repos with localPath)
+  // This traverses the topic hierarchy to find ancestors that can provide working directories
+  const parentTopicsWithContext: ParentTopicContext[] = useMemo(() => {
+    const contexts: ParentTopicContext[] = [];
     const seenIds = new Set<string>();
 
-    // Check each linked thing and its ancestors for execution context
-    for (const thing of linkedThings) {
-      // First check the thing itself
-      const schema = THING_TYPE_SCHEMAS[thing.type];
-      if (schema?.providesExecutionContext && thing.properties?.localPath && !seenIds.has(thing.id)) {
-        seenIds.add(thing.id);
+    // Check each linked topic and its ancestors for execution context
+    for (const topic of linkedTopics) {
+      // First check the topic itself
+      const schema = TOPIC_TYPE_SCHEMAS[topic.type];
+      if (schema?.providesExecutionContext && topic.properties?.localPath && !seenIds.has(topic.id)) {
+        seenIds.add(topic.id);
         contexts.push({
-          id: thing.id,
-          name: thing.name,
-          type: thing.type,
-          localPath: thing.properties?.localPath,
+          id: topic.id,
+          name: topic.name,
+          type: topic.type,
+          localPath: topic.properties?.localPath,
         });
       }
 
       // Then traverse ancestors to find folders/repos with localPath
-      const ancestors = getAncestors(thing.id);
+      const ancestors = getAncestors(topic.id);
       for (const ancestor of ancestors) {
         if (seenIds.has(ancestor.id)) continue;
 
-        const ancestorSchema = THING_TYPE_SCHEMAS[ancestor.type];
+        const ancestorSchema = TOPIC_TYPE_SCHEMAS[ancestor.type];
         if (ancestorSchema?.providesExecutionContext && ancestor.properties?.localPath) {
           seenIds.add(ancestor.id);
           contexts.push({
@@ -301,10 +301,10 @@ export function IdeaDialog({
     }
 
     return contexts;
-  }, [linkedThings, getAncestors]);
+  }, [linkedTopics, getAncestors]);
 
-  // Get thing references for chat autocomplete (^ mentions)
-  const thingReferences = getThingReferences();
+  // Get topic references for chat autocomplete (^ mentions)
+  const topicReferences = getTopicReferences();
 
   // Workspace phase - determines if we're in ideation, planning, or executing mode
   // For new ideas, always start in ideation
@@ -560,7 +560,7 @@ export function IdeaDialog({
         description: hasRealDocContent ? (parsedContent.description.trim() || idea.description || undefined) : (idea.description || undefined),
         tags: hasRealDocContent && parsedContent.tags.length > 0 ? parsedContent.tags : idea.tags,
         status: idea.status,
-        thingContext: initialThingContext,
+        topicContext: initialTopicContext,
       };
     }
     // For new ideas, use parsedContent
@@ -571,9 +571,9 @@ export function IdeaDialog({
       description: parsedContent.description.trim() || undefined,
       tags: parsedContent.tags,
       status: 'new',
-      thingContext: initialThingContext,
+      topicContext: initialTopicContext,
     };
-  }, [idea, parsedContent, initialThingContext, isInitialized]);
+  }, [idea, parsedContent, initialTopicContext, isInitialized]);
 
   // Stable error handler to prevent unnecessary reconnects
   const handleAgentError = useCallback((err: string) => {
@@ -593,9 +593,9 @@ export function IdeaDialog({
     description: parsedContent.description.trim() || currentIdea?.description || idea?.description || undefined,
     tags: parsedContent.tags.length > 0 ? parsedContent.tags : (currentIdea?.tags || idea?.tags || []),
     status: currentIdea?.status || idea?.status || 'new',
-    // Include parent things with execution context (folders, repos) for working directory suggestions
-    parentThings: parentThingsWithContext.length > 0 ? parentThingsWithContext : undefined,
-  }), [currentIdea, idea, parsedContent, parentThingsWithContext]);
+    // Include parent topics with execution context (folders, repos) for working directory suggestions
+    parentTopics: parentTopicsWithContext.length > 0 ? parentTopicsWithContext : undefined,
+  }), [currentIdea, idea, parsedContent, parentTopicsWithContext]);
 
   // Idea agent hook - only enabled when overlay is open AND in ideation phase
   // Use currentIdea?.id first as it gets set when we create idea immediately on first message
@@ -828,7 +828,7 @@ export function IdeaDialog({
   const isExecutionBlocked = phase === 'executing' && executeAgent.isBlocked;
   const executionBlockedEvent = phase === 'executing' ? executeAgent.blockedEvent : null;
 
-  // Update the agent when ideaContext changes (especially thingContext)
+  // Update the agent when ideaContext changes (especially topicContext)
   useEffect(() => {
     if (phase === 'ideation' && ideaAgent.isConnected && ideaContext) {
       updateIdeaContext(ideaContext);
@@ -869,12 +869,54 @@ export function IdeaDialog({
           ? stripStructuredEvents(msg.content)
           : msg.content;
 
-        // Get toolCalls from execution messages (if present)
-        // ExecutionToolCall and ChatMessageToolCall have the same shape
-        const toolCalls = 'toolCalls' in msg ? msg.toolCalls : undefined;
+        // Convert server segments to client parts for proper interleaving
+        // Server segments: { type: 'text' | 'tool', text?: string, tool?: StoredToolCall }
+        // Client parts: { type: 'text', text: string } | { type: 'tool_calls', calls: ChatMessageToolCall[] }
+        let parts: ChatMessagePart[] | undefined;
 
-        // Skip empty messages after stripping (unless they have tool calls)
-        if (!cleanContent && !toolCalls?.length && msg.role === 'assistant') return null;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const msgWithSegments = msg as { segments?: Array<{ type: string; text?: string; tool?: any }> };
+
+        if (msgWithSegments.segments && msgWithSegments.segments.length > 0) {
+          // Convert segments to parts, merging consecutive tool segments
+          parts = [];
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          let currentToolCalls: any[] = [];
+
+          for (const segment of msgWithSegments.segments) {
+            if (segment.type === 'text' && segment.text) {
+              // If we have accumulated tool calls, push them first
+              if (currentToolCalls.length > 0) {
+                parts.push({ type: 'tool_calls', calls: currentToolCalls });
+                currentToolCalls = [];
+              }
+              // Strip XML from text segments too
+              const cleanText = msg.role === 'assistant' ? stripStructuredEvents(segment.text) : segment.text;
+              if (cleanText) {
+                parts.push({ type: 'text', text: cleanText });
+              }
+            } else if (segment.type === 'tool' && segment.tool) {
+              // Accumulate tool calls
+              currentToolCalls.push(segment.tool);
+            }
+          }
+
+          // Push any remaining tool calls
+          if (currentToolCalls.length > 0) {
+            parts.push({ type: 'tool_calls', calls: currentToolCalls });
+          }
+
+          // If parts is empty after processing, set to undefined
+          if (parts.length === 0) {
+            parts = undefined;
+          }
+        }
+
+        // Fall back to toolCalls if no segments (backward compatibility)
+        const toolCalls = !parts && 'toolCalls' in msg ? msg.toolCalls : undefined;
+
+        // Skip empty messages after stripping (unless they have parts or tool calls)
+        if (!cleanContent && !parts?.length && !toolCalls?.length && msg.role === 'assistant') return null;
 
         return {
           id: msg.id,
@@ -885,7 +927,8 @@ export function IdeaDialog({
           isOwn: msg.role === 'user',
           isStreaming: msg.isStreaming,
           renderMarkdown: true, // Render markdown for all messages (including user's question answers)
-          toolCalls, // Pass tool calls through for proper rendering
+          parts, // Use parts for proper interleaving (takes precedence)
+          toolCalls, // Fall back to tool calls for backward compatibility
         };
       })
       .filter((msg): msg is ChatPanelMessage => msg !== null);
@@ -1133,7 +1176,7 @@ export function IdeaDialog({
           summary: 'Processing...',
           tags: [],
           workspaceId,
-          thingIds: initialThingIds,
+          topicIds: initialTopicIds,
           documentRoomName: documentId,
         });
 
@@ -1164,7 +1207,7 @@ export function IdeaDialog({
     if (!open) {
       initialPromptSentRef.current = false;
     }
-  }, [open, isConnected, initialPrompt, initialTitle, phase, idea, currentIdea, createIdea, workspaceId, initialThingIds, documentId, onIdeaCreated]);
+  }, [open, isConnected, initialPrompt, initialTitle, phase, idea, currentIdea, createIdea, workspaceId, initialTopicIds, documentId, onIdeaCreated]);
 
   // Handle cancel operation
   const handleCancelOperation = useCallback(() => {
@@ -1331,7 +1374,7 @@ export function IdeaDialog({
       tags,
       description: description.trim() || undefined,
       workspaceId,
-      thingIds: initialThingIds,
+      topicIds: initialTopicIds,
       // Pass documentRoomName so server can link agent session to real ideaId
       documentRoomName: documentId,
     }).then((newIdea) => {
@@ -1351,7 +1394,7 @@ export function IdeaDialog({
       // Reset flag so it can retry
       ideaCreatedForSessionRef.current = false;
     });
-  }, [isEditingDocument, phase, currentIdea, idea, parsedContent, content, workspaceId, initialThingIds, createIdea, updateIdea, onSuccess, onIdeaCreated, documentId]);
+  }, [isEditingDocument, phase, currentIdea, idea, parsedContent, content, workspaceId, initialTopicIds, createIdea, updateIdea, onSuccess, onIdeaCreated, documentId]);
 
   // Debounced auto-save for UPDATES (not creation) during ideation phase
   const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1454,7 +1497,7 @@ export function IdeaDialog({
           tags,
           description: description.trim() || undefined,
           workspaceId,
-          thingIds: initialThingIds,
+          topicIds: initialTopicIds,
           // Pass documentRoomName so server can link agent session to real ideaId
           documentRoomName: documentId,
         };
@@ -1505,7 +1548,7 @@ export function IdeaDialog({
     } finally {
       setIsSaving(false);
     }
-  }, [parsedContent, isNewIdea, currentIdea, workspaceId, createIdea, updateIdea, moveIdea, onStatusChange, content, initialThingIds, documentId]);
+  }, [parsedContent, isNewIdea, currentIdea, workspaceId, createIdea, updateIdea, moveIdea, onStatusChange, content, initialTopicIds, documentId]);
 
   // Check if plan is ready for execution
   const isPlanReady = useMemo(() => {
@@ -1587,7 +1630,7 @@ export function IdeaDialog({
           summary: 'Processing...',
           tags: [],
           workspaceId,
-          thingIds: initialThingIds,
+          topicIds: initialTopicIds,
           // Pass documentRoomName so server can link agent session to real ideaId
           documentRoomName: documentId,
         });
@@ -1630,7 +1673,7 @@ export function IdeaDialog({
     chatInputRef.current?.clear();
     inputContentRef.current = '';
     setIsInputEmpty(true);
-  }, [sendAgentMessage, isAgentThinking, isNewIdea, currentIdea, createIdea, workspaceId, initialThingIds, initialTitle, onIdeaCreated, documentId]);
+  }, [sendAgentMessage, isAgentThinking, isNewIdea, currentIdea, createIdea, workspaceId, initialTopicIds, initialTitle, onIdeaCreated, documentId]);
 
   const handleInputChange = useCallback((isEmpty: boolean, content: string) => {
     inputContentRef.current = content;
@@ -1667,7 +1710,7 @@ export function IdeaDialog({
     if (!user) return;
     try {
       // Use the existing open-path endpoint to open the directory in VS Code
-      const response = await fetch('/api/things/open-path', {
+      const response = await fetch('/api/topics/open-path', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1742,12 +1785,12 @@ export function IdeaDialog({
                       ? 'Create Your Idea'
                       : 'Edit Idea'}
               </h1>
-              {linkedThings.length > 0 && (
-                <div className={styles.linkedThings}>
-                  <span className={styles.linkedThingsLabel}>for</span>
-                  {linkedThings.map(thing => (
-                    <span key={thing.id} className={styles.thingBadge}>
-                      {thing.name}
+              {linkedTopics.length > 0 && (
+                <div className={styles.linkedTopics}>
+                  <span className={styles.linkedTopicsLabel}>for</span>
+                  {linkedTopics.map(topic => (
+                    <span key={topic.id} className={styles.topicBadge}>
+                      {topic.name}
                     </span>
                   ))}
                 </div>
@@ -1821,9 +1864,11 @@ export function IdeaDialog({
                   <ThinkingIndicator
                     isActive={isAgentThinking}
                     statusText={
-                      phase === 'planning'
-                        ? planAgent.progress.currentEvent?.displayText
-                        : ideaAgent.progress.currentEvent?.displayText
+                      phase === 'executing'
+                        ? executeAgent.progress.currentEvent?.displayText
+                        : phase === 'planning'
+                          ? planAgent.progress.currentEvent?.displayText
+                          : ideaAgent.progress.currentEvent?.displayText
                     }
                     showEscapeHint={isAgentThinking && isInputEmpty}
                   />
@@ -1836,14 +1881,14 @@ export function IdeaDialog({
                   <div className={styles.chatInputContainer}>
                     <ChatInput
                       ref={chatInputRef}
-                      placeholder={!isConnected ? "Connecting..." : isAgentThinking ? "Type to queue message..." : "Ask the agent... (type / for commands, ^ for things)"}
+                      placeholder={!isConnected ? "Connecting..." : isAgentThinking ? "Type to queue message..." : "Ask the agent... (type / for commands, ^ for topics)"}
                       onSubmit={handleChatSubmit}
                       onChange={handleInputChange}
                       historyKey={`idea-agent-${idea?.id || 'new'}`}
                       fullWidth
                       commands={commands}
                       onCommand={handleCommand}
-                      things={thingReferences as ChatThingReference[]}
+                      topics={topicReferences as ChatTopicReference[]}
                     />
                   </div>
 

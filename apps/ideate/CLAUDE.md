@@ -41,3 +41,40 @@ Use the component or hook name as the tag:
 ## Server-Side Logging
 
 Server logs should include contextual information like `ideaId`, `userId`, `sessionId` to enable correlation with client logs.
+
+## Confirmation Dialogs
+
+**Always use the `ConfirmDialog` component for confirmation actions (delete, destructive operations, etc.).**
+
+```typescript
+import { ConfirmDialog } from '../components/ConfirmDialog';
+
+<ConfirmDialog
+  open={showConfirm}
+  title="Delete Item?"
+  message="Are you sure you want to delete this item? This action cannot be undone."
+  confirmText="Delete"
+  cancelText="Cancel"
+  variant="danger"  // or "primary" for non-destructive actions
+  onConfirm={handleConfirm}
+  onCancel={handleCancel}
+/>
+```
+
+### When to Use
+
+- Delete confirmations
+- Destructive/irreversible actions
+- Actions that discard user data
+- Switching away from unsaved changes
+
+### Props
+
+- `open`: Whether the dialog is visible
+- `title`: Dialog title
+- `message`: Confirmation message (string only)
+- `confirmText`: Text for confirm button (default: "Confirm")
+- `cancelText`: Text for cancel button (default: "Cancel")
+- `variant`: "danger" for destructive actions, "primary" for normal actions
+- `onConfirm`: Called when user confirms
+- `onCancel`: Called when user cancels or closes

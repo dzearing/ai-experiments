@@ -27,10 +27,10 @@ import { UnderlineIcon } from '@ui-kit/icons/UnderlineIcon';
 import { useMessageHistory } from './useMessageHistory';
 import { useChatEditor } from './useChatEditor';
 import { getImageChipsInOrder } from './ImageChipExtension';
-import { getThingChipsInOrder } from './ThingChipExtension';
+import { getTopicChipsInOrder } from './TopicChipExtension';
 import { LinkDialog } from './LinkDialog';
 import { SlashCommandPopover, filterCommands } from './SlashCommandPopover';
-import { ThingReferencePopover, filterThings, type ThingReference } from './ThingReferencePopover';
+import { TopicReferencePopover, filterTopics, type TopicReference } from './TopicReferencePopover';
 import type { SlashCommand, SlashCommandResult } from './SlashCommand.types';
 import styles from './ChatInput.module.css';
 
@@ -51,11 +51,11 @@ export interface ChatInputImage {
   uploadedUrl?: string;
 }
 
-/** Thing reference extracted from chat input */
-export interface ChatInputThingReference {
-  /** Thing ID */
+/** Topic reference extracted from chat input */
+export interface ChatInputTopicReference {
+  /** Topic ID */
   id: string;
-  /** Thing display name */
+  /** Topic display name */
   name: string;
 }
 
@@ -64,8 +64,8 @@ export interface ChatInputSubmitData {
   content: string;
   /** Array of images referenced in the message (in content order) */
   images: ChatInputImage[];
-  /** Array of Thing references from ^thing chips (in content order) */
-  thingReferences: ChatInputThingReference[];
+  /** Array of Topic references from ^topic chips (in content order) */
+  topicReferences: ChatInputTopicReference[];
 }
 
 /**
@@ -142,17 +142,17 @@ export interface ChatInputProps {
    */
   onChange?: (isEmpty: boolean, content: string) => void;
 
-  /** Available things for ^ reference autocomplete */
-  things?: ThingReference[];
+  /** Available topics for ^ reference autocomplete */
+  topics?: TopicReference[];
 
-  /** Recently used things (shown when ^ is typed without query) */
-  recentThings?: ThingReference[];
+  /** Recently used topics (shown when ^ is typed without query) */
+  recentTopics?: TopicReference[];
 
   /**
-   * Called when a thing reference is selected.
-   * The thing will be inserted as [[thing:id]] in the content.
+   * Called when a topic reference is selected.
+   * The topic will be inserted as [[topic:id]] in the content.
    */
-  onThingSelect?: (thing: ThingReference) => void;
+  onTopicSelect?: (topic: TopicReference) => void;
 
   /**
    * Queued messages waiting to be sent.
@@ -191,9 +191,9 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
       commands = [],
       onCommand,
       onChange,
-      things = [],
-      recentThings = [],
-      onThingSelect,
+      topics = [],
+      recentTopics = [],
+      onTopicSelect,
       queuedMessages = [],
       onEditQueue,
     },
@@ -216,11 +216,11 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
     const [commandQuery, setCommandQuery] = useState('');
     const [commandSelectedIndex, setCommandSelectedIndex] = useState(0);
 
-    // Thing reference state (^ autocomplete)
-    const [isThingPopoverOpen, setIsThingPopoverOpen] = useState(false);
-    const [thingQuery, setThingQuery] = useState('');
-    const [thingSelectedIndex, setThingSelectedIndex] = useState(0);
-    const [thingCaretPosition, setThingCaretPosition] = useState<number | null>(null);
+    // Topic reference state (^ autocomplete)
+    const [isTopicPopoverOpen, setIsTopicPopoverOpen] = useState(false);
+    const [topicQuery, setTopicQuery] = useState('');
+    const [topicSelectedIndex, setTopicSelectedIndex] = useState(0);
+    const [topicCaretPosition, setTopicCaretPosition] = useState<number | null>(null);
 
     // Refs
     const containerRef = useRef<HTMLDivElement>(null);
@@ -233,8 +233,8 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
     // Ref to hold current executeCommand to avoid dependency issues
     const executeCommandRef = useRef<((cmd: SlashCommand) => void) | null>(null);
 
-    // Ref to hold current executeThingSelect to avoid dependency issues
-    const executeThingSelectRef = useRef<((thing: ThingReference) => void) | null>(null);
+    // Ref to hold current executeTopicSelect to avoid dependency issues
+    const executeTopicSelectRef = useRef<((topic: TopicReference) => void) | null>(null);
 
     // Handle Tab key at TipTap level (for autocomplete selection)
     const handleTabKey = useCallback(
@@ -248,18 +248,18 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
           }
         }
 
-        // If thing popover is open, select the highlighted thing
-        if (isThingPopoverOpen && things.length > 0) {
-          const displayThings = thingQuery ? filterThings(things, thingQuery) : (recentThings.length > 0 ? recentThings : things.slice(0, 10));
-          if (displayThings.length > 0 && displayThings[thingSelectedIndex]) {
-            executeThingSelectRef.current?.(displayThings[thingSelectedIndex]);
+        // If topic popover is open, select the highlighted topic
+        if (isTopicPopoverOpen && topics.length > 0) {
+          const displayTopics = topicQuery ? filterTopics(topics, topicQuery) : (recentTopics.length > 0 ? recentTopics : topics.slice(0, 10));
+          if (displayTopics.length > 0 && displayTopics[topicSelectedIndex]) {
+            executeTopicSelectRef.current?.(displayTopics[topicSelectedIndex]);
             return true; // Prevent default
           }
         }
 
         return false; // Let default Tab behavior happen
       },
-      [isCommandPopoverOpen, commands, commandQuery, commandSelectedIndex, isThingPopoverOpen, things, recentThings, thingQuery, thingSelectedIndex]
+      [isCommandPopoverOpen, commands, commandQuery, commandSelectedIndex, isTopicPopoverOpen, topics, recentTopics, topicQuery, topicSelectedIndex]
     );
 
     // Handle Enter key at TipTap level (before newline insertion)
@@ -277,11 +277,11 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
           }
         }
 
-        // If thing popover is open, select the highlighted thing
-        if (isThingPopoverOpen && things.length > 0) {
-          const displayThings = thingQuery ? filterThings(things, thingQuery) : (recentThings.length > 0 ? recentThings : things.slice(0, 10));
-          if (displayThings.length > 0 && displayThings[thingSelectedIndex]) {
-            executeThingSelectRef.current?.(displayThings[thingSelectedIndex]);
+        // If topic popover is open, select the highlighted topic
+        if (isTopicPopoverOpen && topics.length > 0) {
+          const displayTopics = topicQuery ? filterTopics(topics, topicQuery) : (recentTopics.length > 0 ? recentTopics : topics.slice(0, 10));
+          if (displayTopics.length > 0 && displayTopics[topicSelectedIndex]) {
+            executeTopicSelectRef.current?.(displayTopics[topicSelectedIndex]);
             return true; // Prevent default
           }
         }
@@ -307,7 +307,7 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
           return false;
         }
       },
-      [isMultilineMode, isCommandPopoverOpen, commands, commandQuery, commandSelectedIndex, isThingPopoverOpen, things, recentThings, thingQuery, thingSelectedIndex]
+      [isMultilineMode, isCommandPopoverOpen, commands, commandQuery, commandSelectedIndex, isTopicPopoverOpen, topics, recentTopics, topicQuery, topicSelectedIndex]
     );
 
     // Ref to hold current handleSubmit to avoid dependency issues
@@ -354,9 +354,9 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
           setCommandQuery('');
         }
 
-        // Thing reference detection (^)
-        if (things.length > 0 && content) {
-          // Find the last ^ character and check if we're in a thing reference
+        // Topic reference detection (^)
+        if (topics.length > 0 && content) {
+          // Find the last ^ character and check if we're in a topic reference
           const lastCaretPos = content.lastIndexOf('^');
           if (lastCaretPos !== -1) {
             // Check if ^ is at the start or after a space (not part of a word)
@@ -370,36 +370,36 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
 
               // Only show if cursor is still in the query (no space after yet in the query part)
               if (spaceIndex === -1 || afterCaret.length === spaceIndex) {
-                setThingQuery(query);
-                setThingCaretPosition(lastCaretPos);
+                setTopicQuery(query);
+                setTopicCaretPosition(lastCaretPos);
 
-                // Check if there are matching things
-                const matchingThings = query ? filterThings(things, query) : (recentThings.length > 0 ? recentThings : things.slice(0, 10));
-                if (matchingThings.length > 0) {
-                  setIsThingPopoverOpen(true);
-                  setThingSelectedIndex(0);
+                // Check if there are matching topics
+                const matchingTopics = query ? filterTopics(topics, query) : (recentTopics.length > 0 ? recentTopics : topics.slice(0, 10));
+                if (matchingTopics.length > 0) {
+                  setIsTopicPopoverOpen(true);
+                  setTopicSelectedIndex(0);
                 } else {
-                  setIsThingPopoverOpen(false);
+                  setIsTopicPopoverOpen(false);
                 }
               } else {
-                setIsThingPopoverOpen(false);
-                setThingQuery('');
-                setThingCaretPosition(null);
+                setIsTopicPopoverOpen(false);
+                setTopicQuery('');
+                setTopicCaretPosition(null);
               }
             } else {
-              setIsThingPopoverOpen(false);
-              setThingQuery('');
-              setThingCaretPosition(null);
+              setIsTopicPopoverOpen(false);
+              setTopicQuery('');
+              setTopicCaretPosition(null);
             }
           } else {
-            setIsThingPopoverOpen(false);
-            setThingQuery('');
-            setThingCaretPosition(null);
+            setIsTopicPopoverOpen(false);
+            setTopicQuery('');
+            setTopicCaretPosition(null);
           }
         } else {
-          setIsThingPopoverOpen(false);
-          setThingQuery('');
-          setThingCaretPosition(null);
+          setIsTopicPopoverOpen(false);
+          setTopicQuery('');
+          setTopicCaretPosition(null);
         }
 
         // Call external onChange handler
@@ -473,53 +473,53 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
     // Keep executeCommandRef current
     executeCommandRef.current = executeCommand;
 
-    // Execute a thing selection - replace ^query with a colored chip
-    const executeThingSelect = useCallback(
-      (thing: ThingReference) => {
+    // Execute a topic selection - replace ^query with a colored chip
+    const executeTopicSelect = useCallback(
+      (topic: TopicReference) => {
         if (!editor) return;
 
         // Get current content
         const content = editor.getText();
 
         // Find the ^ trigger position we're responding to
-        if (thingCaretPosition !== null) {
+        if (topicCaretPosition !== null) {
           // Calculate the end of the current query
-          const afterCaret = content.slice(thingCaretPosition + 1);
+          const afterCaret = content.slice(topicCaretPosition + 1);
           const spaceIndex = afterCaret.search(/\s/);
           const queryLength = spaceIndex === -1 ? afterCaret.length : spaceIndex;
 
           // TipTap positions start at 1 (position 0 is document start), so add 1
-          const from = thingCaretPosition + 1;
-          const to = thingCaretPosition + 1 + 1 + queryLength;
+          const from = topicCaretPosition + 1;
+          const to = topicCaretPosition + 1 + 1 + queryLength;
 
-          // Delete the ^query text and insert the thing chip
+          // Delete the ^query text and insert the topic chip
           editor.chain()
             .focus()
             .deleteRange({ from, to })
             .run();
 
-          // Insert the thing chip using our custom command
-          editor.commands.insertThingChip({
-            id: thing.id,
-            name: thing.name,
-            type: thing.type,
+          // Insert the topic chip using our custom command
+          editor.commands.insertTopicChip({
+            id: topic.id,
+            name: topic.name,
+            type: topic.type,
           });
         }
 
         // Call external handler
-        onThingSelect?.(thing);
+        onTopicSelect?.(topic);
 
         // Close popover
-        setIsThingPopoverOpen(false);
-        setThingQuery('');
-        setThingSelectedIndex(0);
-        setThingCaretPosition(null);
+        setIsTopicPopoverOpen(false);
+        setTopicQuery('');
+        setTopicSelectedIndex(0);
+        setTopicCaretPosition(null);
       },
-      [editor, thingCaretPosition, onThingSelect]
+      [editor, topicCaretPosition, onTopicSelect]
     );
 
-    // Keep executeThingSelectRef current
-    executeThingSelectRef.current = executeThingSelect;
+    // Keep executeTopicSelectRef current
+    executeTopicSelectRef.current = executeTopicSelect;
 
     // Handle command selection from popover
     const handleCommandSelect = useCallback(
@@ -617,14 +617,14 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
         addToHistory(content);
       }
 
-      // Get Thing references from the editor
-      const thingRefs = editor ? getThingChipsInOrder(editor) : [];
+      // Get Topic references from the editor
+      const topicRefs = editor ? getTopicChipsInOrder(editor) : [];
 
-      // Call onSubmit with images and thing references
+      // Call onSubmit with images and topic references
       onSubmit?.({
         content,
         images: [...imagesInContentOrder],
-        thingReferences: thingRefs,
+        topicReferences: topicRefs,
       });
 
       // Reset state
@@ -720,40 +720,40 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
           }
         }
 
-        // Thing popover keyboard navigation
-        if (isThingPopoverOpen && things.length > 0) {
-          const displayThings = thingQuery ? filterThings(things, thingQuery) : (recentThings.length > 0 ? recentThings : things.slice(0, 10));
+        // Topic popover keyboard navigation
+        if (isTopicPopoverOpen && topics.length > 0) {
+          const displayTopics = topicQuery ? filterTopics(topics, topicQuery) : (recentTopics.length > 0 ? recentTopics : topics.slice(0, 10));
 
           if (key === 'ArrowUp') {
             e.preventDefault();
-            setThingSelectedIndex((prev) =>
-              prev <= 0 ? displayThings.length - 1 : prev - 1
+            setTopicSelectedIndex((prev) =>
+              prev <= 0 ? displayTopics.length - 1 : prev - 1
             );
             return;
           }
 
           if (key === 'ArrowDown') {
             e.preventDefault();
-            setThingSelectedIndex((prev) =>
-              prev >= displayThings.length - 1 ? 0 : prev + 1
+            setTopicSelectedIndex((prev) =>
+              prev >= displayTopics.length - 1 ? 0 : prev + 1
             );
             return;
           }
 
           if (key === 'Tab') {
             e.preventDefault();
-            if (displayThings[thingSelectedIndex]) {
-              executeThingSelectRef.current?.(displayThings[thingSelectedIndex]);
+            if (displayTopics[topicSelectedIndex]) {
+              executeTopicSelectRef.current?.(displayTopics[topicSelectedIndex]);
             }
             return;
           }
 
           if (key === 'Escape') {
             e.preventDefault();
-            setIsThingPopoverOpen(false);
-            setThingQuery('');
-            setThingSelectedIndex(0);
-            setThingCaretPosition(null);
+            setIsTopicPopoverOpen(false);
+            setTopicQuery('');
+            setTopicSelectedIndex(0);
+            setTopicCaretPosition(null);
             return;
           }
         }
@@ -863,7 +863,7 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
           openLinkDialog();
         }
       },
-      [isMultilineMode, editor, historyKey, navigateHistory, openLinkDialog, escapePressed, isCommandPopoverOpen, commands, commandQuery, commandSelectedIndex, isThingPopoverOpen, things, recentThings, thingQuery, thingSelectedIndex, queuedMessages, onEditQueue]
+      [isMultilineMode, editor, historyKey, navigateHistory, openLinkDialog, escapePressed, isCommandPopoverOpen, commands, commandQuery, commandSelectedIndex, isTopicPopoverOpen, topics, recentTopics, topicQuery, topicSelectedIndex, queuedMessages, onEditQueue]
     );
 
     // Convert file to base64 data URL for persistence
@@ -1129,21 +1129,21 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
           />
         )}
 
-        {/* Thing reference popover (^ autocomplete) */}
-        {things.length > 0 && (
-          <ThingReferencePopover
-            isOpen={isThingPopoverOpen}
-            query={thingQuery}
-            things={things}
-            recentThings={recentThings}
-            selectedIndex={thingSelectedIndex}
-            onSelectionChange={setThingSelectedIndex}
-            onSelect={executeThingSelect}
+        {/* Topic reference popover (^ autocomplete) */}
+        {topics.length > 0 && (
+          <TopicReferencePopover
+            isOpen={isTopicPopoverOpen}
+            query={topicQuery}
+            topics={topics}
+            recentTopics={recentTopics}
+            selectedIndex={topicSelectedIndex}
+            onSelectionChange={setTopicSelectedIndex}
+            onSelect={executeTopicSelect}
             onClose={() => {
-              setIsThingPopoverOpen(false);
-              setThingQuery('');
-              setThingSelectedIndex(0);
-              setThingCaretPosition(null);
+              setIsTopicPopoverOpen(false);
+              setTopicQuery('');
+              setTopicSelectedIndex(0);
+              setTopicCaretPosition(null);
             }}
           />
         )}

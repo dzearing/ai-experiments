@@ -3,7 +3,7 @@ export { createWorkspaceDataProvider, type WorkspaceDataProviderOptions } from '
 export {
   ideaPath,
   ideaAgentStatusPath,
-  thingIdeasPath,
+  topicIdeasPath,
   type IdeaMetadata,
   type AgentStatus,
   type IdeaMetadataList,

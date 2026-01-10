@@ -1,5 +1,5 @@
 import { type ReactNode, useEffect, useRef } from 'react';
-import { ChatMessage, type ChatMessageProps, type ChatMessageToolCall } from '../ChatMessage';
+import { ChatMessage, type ChatMessageProps, type ChatMessageToolCall, type ChatMessagePart } from '../ChatMessage';
 import styles from './ChatPanel.module.css';
 
 /**
@@ -9,7 +9,7 @@ import styles from './ChatPanel.module.css';
 export interface ChatPanelMessage {
   /** Unique message ID */
   id: string;
-  /** Message content */
+  /** Message content - DEPRECATED: use parts instead for interleaved text/tools */
   content: string;
   /** Timestamp */
   timestamp: string | number | Date;
@@ -21,8 +21,10 @@ export interface ChatPanelMessage {
   isOwn?: boolean;
   /** Whether the message is currently being streamed */
   isStreaming?: boolean;
-  /** Tool calls made during this message */
+  /** @deprecated Use parts instead for proper interleaving */
   toolCalls?: ChatMessageToolCall[];
+  /** Message parts array - supports interleaved text and tool calls */
+  parts?: ChatMessagePart[];
   /** Custom avatar element */
   avatar?: ReactNode;
   /** Whether to render content as markdown */
@@ -124,6 +126,7 @@ export function ChatPanel({
                 key={message.id}
                 id={message.id}
                 content={message.content}
+                parts={message.parts}
                 timestamp={message.timestamp}
                 senderName={message.senderName}
                 senderColor={message.senderColor}

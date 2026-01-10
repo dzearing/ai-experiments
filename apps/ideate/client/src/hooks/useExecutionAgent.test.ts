@@ -844,13 +844,13 @@ describe('useExecutionAgent', () => {
       act(() => {
         ws?.simulateMessage({
           type: 'error',
-          error: 'Something went wrong',
+          error: 'Sometopic went wrong',
         });
       });
 
-      expect(result.current.error).toBe('Something went wrong');
+      expect(result.current.error).toBe('Sometopic went wrong');
       expect(result.current.isExecuting).toBe(false);
-      expect(onError).toHaveBeenCalledWith('Something went wrong');
+      expect(onError).toHaveBeenCalledWith('Sometopic went wrong');
     });
 
     it('handles token_usage message', () => {

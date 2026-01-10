@@ -180,7 +180,7 @@ export function QuestionOptions({
         );
       })}
 
-      {question.allowCustom && (
+      {question.allowCustom !== false && (
         <div
           className={`${styles.optionCard} ${isCustomSelected ? `${styles.optionCardSelected} surface primary` : ''}`}
           onClick={() => onSelect('custom')}

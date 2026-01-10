@@ -1,2 +1,2 @@
-export { IdeaDialog, type IdeaDialogProps, type ThingContext, type WorkspacePhase } from './IdeaDialog';
+export { IdeaDialog, type IdeaDialogProps, type TopicContext, type WorkspacePhase } from './IdeaDialog';
 export { default } from './IdeaDialog';

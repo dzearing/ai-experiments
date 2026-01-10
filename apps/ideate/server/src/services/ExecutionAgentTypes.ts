@@ -77,6 +77,7 @@ export interface QueuedMessage {
 
 import type { ExecutionIdeaContext } from '../prompts/executionAgentPrompt.js';
 import type { IdeaPlan } from './IdeaService.js';
+import type { MessageSegment } from './ExecutionAgentChatService.js';
 
 /**
  * Pending tool call awaiting completion
@@ -118,7 +119,7 @@ export interface ExecutionSession {
   pendingTools: PendingToolCall[];
   /** Task IDs that have already been processed (to avoid duplicates) */
   processedTaskIds: Set<string>;
-  /** Completed tool calls to persist with the message */
+  /** @deprecated Use messageSegments instead */
   completedToolCalls: Array<{
     name: string;
     input?: Record<string, unknown>;
@@ -128,6 +129,8 @@ export interface ExecutionSession {
     duration?: number;
     completed?: boolean;
   }>;
+  /** Ordered segments (text and tools) for the current message, preserving interleaving */
+  messageSegments: MessageSegment[];
 }
 
 /**

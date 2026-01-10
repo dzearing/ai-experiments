@@ -5,7 +5,7 @@ import type { ResourceEventBus } from '../services/resourceEventBus/ResourceEven
 import type { ResourceEvent } from '../services/resourceEventBus/types.js';
 
 // Resource types supported by the workspace handler
-export type ResourceType = 'document' | 'chatroom' | 'idea' | 'thing';
+export type ResourceType = 'document' | 'chatroom' | 'idea' | 'topic';
 
 // Presence info for a user viewing a resource
 export interface ResourcePresence {
@@ -775,7 +775,7 @@ export class WorkspaceWebSocketHandler {
    */
   setResourceEventBus(_bus: ResourceEventBus): void {
     // Subscribe to all resource types
-    const resourceTypes = ['idea', 'thing', 'document'] as const;
+    const resourceTypes = ['idea', 'topic', 'document'] as const;
 
     for (const _resourceType of resourceTypes) {
       // Use a catch-all subscription pattern by subscribing to a wildcard

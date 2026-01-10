@@ -14,7 +14,8 @@ import { existsSync } from 'fs';
 import { PersonaService, type Persona } from './PersonaService.js';
 import { FacilitatorChatService, type FacilitatorMessage } from './FacilitatorChatService.js';
 import { MCPToolsService, type ToolDefinition } from './MCPToolsService.js';
-import { ThingService } from './ThingService.js';
+import { TopicService } from './TopicService.js';
+import { factsService } from './FactsService.js';
 import { buildFacilitatorPrompt, buildContextSection } from '../prompts/facilitatorPrompt.js';
 import { createFacilitatorMcpServer } from './FacilitatorMcpTools.js';
 import { getClaudeDiagnosticsService } from '../routes/diagnostics.js';
@@ -73,12 +74,12 @@ export interface NavigationContext {
   chatRoomId?: string;
   chatRoomName?: string;
   currentPage?: string;
-  /** Active Thing ID (if viewing/selected a Thing) */
-  activeThingId?: string;
-  /** Active Thing name */
-  activeThingName?: string;
-  /** Referenced Thing IDs from ^thing-name references in message */
-  referencedThingIds?: string[];
+  /** Active Topic ID (if viewing/selected a Topic) */
+  activeTopicId?: string;
+  /** Active Topic name */
+  activeTopicName?: string;
+  /** Referenced Topic IDs from ^topic-name references in message */
+  referencedTopicIds?: string[];
 }
 
 /**
@@ -181,7 +182,7 @@ export class FacilitatorService {
   private personaService: PersonaService;
   private chatService: FacilitatorChatService;
   private toolsService: MCPToolsService;
-  private thingService: ThingService;
+  private topicService: TopicService;
   private persona: Persona | null = null;
 
   // Diagnostic tracking (keep last 50 entries)
@@ -204,7 +205,7 @@ export class FacilitatorService {
     this.personaService = new PersonaService();
     this.chatService = new FacilitatorChatService();
     this.toolsService = new MCPToolsService();
-    this.thingService = new ThingService();
+    this.topicService = new TopicService();
   }
 
   /**
@@ -713,7 +714,7 @@ Example format:
     const persona = this.getPersona();
     const history = await this.chatService.getMessages(userId);
 
-    // Build the system prompt with navigation context (includes Thing context for referenced Things)
+    // Build the system prompt with navigation context (includes Topic context for referenced Topics)
     const systemPrompt = await this.buildSystemPrompt(persona, userName, navigationContext, userId, displayName);
 
     // Create the MCP server with native tools for proper streaming
@@ -1170,16 +1171,16 @@ Example format:
     if (navigationContext.chatRoomName && navigationContext.chatRoomId) {
       contextParts.push(`Current chat room: "${navigationContext.chatRoomName}" (ID: ${navigationContext.chatRoomId})`);
     }
-    if (navigationContext.activeThingName && navigationContext.activeThingId) {
-      contextParts.push(`Active Thing: "${navigationContext.activeThingName}" (ID: ${navigationContext.activeThingId})`);
+    if (navigationContext.activeTopicName && navigationContext.activeTopicId) {
+      contextParts.push(`Active Topic: "${navigationContext.activeTopicName}" (ID: ${navigationContext.activeTopicId})`);
     }
 
-    // Build Thing context for referenced Things
-    let thingContext = '';
-    if (navigationContext.referencedThingIds && navigationContext.referencedThingIds.length > 0) {
-      thingContext = await this.buildThingContext(navigationContext.referencedThingIds, userId);
-      if (thingContext) {
-        contextParts.push(`\n--- Referenced Things Context ---\n${thingContext}`);
+    // Build Topic context for referenced Topics
+    let topicContext = '';
+    if (navigationContext.referencedTopicIds && navigationContext.referencedTopicIds.length > 0) {
+      topicContext = await this.buildTopicContext(navigationContext.referencedTopicIds, userId);
+      if (topicContext) {
+        contextParts.push(`\n--- Referenced Topics Context ---\n${topicContext}`);
       }
     }
 
@@ -1189,34 +1190,38 @@ Example format:
       personaPrompt = `Your name is "${displayName}". Always refer to yourself as "${displayName}". ${personaPrompt}`;
     }
 
+    // Load remembered facts for this user
+    const factsSection = await factsService.formatFactsForPrompt(userId) || '';
+
     return buildFacilitatorPrompt({
       personaPrompt,
       userName,
       contextSection: buildContextSection(contextParts),
+      factsSection,
       toolsDescription,
     });
   }
 
   /**
-   * Build context string for referenced Things.
-   * Includes Thing metadata, properties, documents, and linked file contents.
+   * Build context string for referenced Topics.
+   * Includes Topic metadata, properties, documents, and linked file contents.
    */
-  private async buildThingContext(thingIds: string[], userId: string): Promise<string> {
+  private async buildTopicContext(topicIds: string[], userId: string): Promise<string> {
     const contextParts: string[] = [];
 
-    for (const thingId of thingIds) {
+    for (const topicId of topicIds) {
       try {
-        const thing = await this.thingService.getThing(thingId, userId);
-        if (!thing) continue;
+        const topic = await this.topicService.getTopic(topicId, userId);
+        if (!topic) continue;
 
         // Build path hierarchy
         const pathNames: string[] = [];
-        if (thing.parentIds.length > 0) {
-          let currentParentId: string | undefined = thing.parentIds[0];
+        if (topic.parentIds.length > 0) {
+          let currentParentId: string | undefined = topic.parentIds[0];
           const visited = new Set<string>();
           while (currentParentId && !visited.has(currentParentId)) {
             visited.add(currentParentId);
-            const parent = await this.thingService.getThing(currentParentId, userId);
+            const parent = await this.topicService.getTopic(currentParentId, userId);
             if (parent) {
               pathNames.unshift(parent.name);
               currentParentId = parent.parentIds[0];
@@ -1228,44 +1233,44 @@ Example format:
         const pathString = pathNames.length > 0 ? pathNames.join(' > ') : '(root)';
 
         const parts: string[] = [];
-        parts.push(`## Thing: ${thing.name}`);
-        parts.push(`- ID: ${thing.id}`);
+        parts.push(`## Topic: ${topic.name}`);
+        parts.push(`- ID: ${topic.id}`);
         parts.push(`- Path: ${pathString}`);
-        parts.push(`- Type: ${thing.type}`);
-        if (thing.description) {
-          parts.push(`- Description: ${thing.description}`);
+        parts.push(`- Type: ${topic.type}`);
+        if (topic.description) {
+          parts.push(`- Description: ${topic.description}`);
         }
-        if (thing.tags.length > 0) {
-          parts.push(`- Tags: ${thing.tags.join(', ')}`);
+        if (topic.tags.length > 0) {
+          parts.push(`- Tags: ${topic.tags.join(', ')}`);
         }
 
         // Include properties
-        if (thing.properties && Object.keys(thing.properties).length > 0) {
+        if (topic.properties && Object.keys(topic.properties).length > 0) {
           parts.push(`\n### Properties:`);
-          for (const [key, value] of Object.entries(thing.properties)) {
+          for (const [key, value] of Object.entries(topic.properties)) {
             parts.push(`- ${key}: ${value}`);
           }
         }
 
         // Include links summary
-        if (thing.links && thing.links.length > 0) {
+        if (topic.links && topic.links.length > 0) {
           parts.push(`\n### Links:`);
-          for (const link of thing.links) {
+          for (const link of topic.links) {
             parts.push(`- [${link.type}] ${link.label}: ${link.target}${link.description ? ` - ${link.description}` : ''}`);
           }
         }
 
         // Include inline documents
-        if (thing.documents && thing.documents.length > 0) {
+        if (topic.documents && topic.documents.length > 0) {
           parts.push(`\n### Documents:`);
-          for (const doc of thing.documents) {
+          for (const doc of topic.documents) {
             parts.push(`#### ${doc.title}`);
             parts.push(doc.content || '(empty)');
           }
         }
 
         // Read linked local files
-        const fileLinks = (thing.links || []).filter(link => link.type === 'file');
+        const fileLinks = (topic.links || []).filter(link => link.type === 'file');
         if (fileLinks.length > 0) {
           parts.push(`\n### Linked File Contents:`);
           for (const link of fileLinks) {
@@ -1292,7 +1297,7 @@ Example format:
 
         contextParts.push(parts.join('\n'));
       } catch (err) {
-        console.error(`[FacilitatorService] Error building context for Thing ${thingId}:`, err);
+        console.error(`[FacilitatorService] Error building context for Topic ${topicId}:`, err);
       }
     }
 

@@ -18,8 +18,8 @@ export interface IdeaContext {
   description?: string;
   tags: string[];
   status: string;
-  /** Optional Thing context when creating an idea linked to a Thing */
-  thingContext?: {
+  /** Optional Topic context when creating an idea linked to a Topic */
+  topicContext?: {
     id: string;
     name: string;
     type: string;

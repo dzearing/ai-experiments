@@ -91,8 +91,8 @@ export interface IdeaMetadata {
   status: IdeaStatus;
   ownerId: string;
   workspaceId?: string;
-  /** References to Things (many-to-many) */
-  thingIds: string[];
+  /** References to Topics (many-to-many) */
+  topicIds: string[];
   createdAt: string;
   updatedAt: string;
   statusChangedAt: string;
@@ -131,7 +131,7 @@ export interface CreateIdeaInput {
   tags?: string[];
   rating?: 1 | 2 | 3 | 4;
   workspaceId?: string;
-  thingIds?: string[];
+  topicIds?: string[];
   description?: string;
   /** Document room name for linking agent session to real ideaId */
   documentRoomName?: string;
@@ -144,5 +144,5 @@ export interface UpdateIdeaInput {
   tags?: string[];
   description?: string;
   workspaceId?: string;
-  thingIds?: string[];
+  topicIds?: string[];
 }

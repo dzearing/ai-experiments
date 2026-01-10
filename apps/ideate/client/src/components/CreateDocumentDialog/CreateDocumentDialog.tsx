@@ -11,8 +11,8 @@ export interface CreateDocumentDialogProps {
   onClose: () => void;
   /** Optional workspace ID to associate the document with */
   workspaceId?: string;
-  /** Optional thing ID to associate the document with */
-  thingId?: string;
+  /** Optional topic ID to associate the document with */
+  topicId?: string;
   /** Whether to navigate to the document after creation (default: true) */
   navigateOnCreate?: boolean;
   /** Called after document is successfully created */
@@ -23,7 +23,7 @@ export function CreateDocumentDialog({
   open,
   onClose,
   workspaceId,
-  thingId,
+  topicId,
   navigateOnCreate = true,
   onCreated,
 }: CreateDocumentDialogProps) {
@@ -42,7 +42,7 @@ export function CreateDocumentDialog({
 
     setIsCreating(true);
     try {
-      const doc = await createDocument(title.trim(), { workspaceId, thingId });
+      const doc = await createDocument(title.trim(), { workspaceId, topicId });
       handleClose();
       onCreated?.(doc.id);
       if (navigateOnCreate) {
@@ -51,7 +51,7 @@ export function CreateDocumentDialog({
     } finally {
       setIsCreating(false);
     }
-  }, [title, workspaceId, thingId, createDocument, handleClose, onCreated, navigateOnCreate, navigate]);
+  }, [title, workspaceId, topicId, createDocument, handleClose, onCreated, navigateOnCreate, navigate]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {

@@ -400,7 +400,7 @@ export class ExecutionAgentWebSocketHandler {
 
     try {
       console.log(`[ExecutionAgent] Calling executionAgentService.startExecution for idea: ${client.ideaContext.title}`);
-      // Start execution in background - service handles everything
+      // Start execution in background - service handles everytopic
       await this.executionAgentService.startExecution(
         client.ideaId,
         client.ideaContext,

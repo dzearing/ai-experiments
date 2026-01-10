@@ -94,11 +94,13 @@ function buildRepositoryInfo(plan: IdeaPlan): string {
  * @param ideaContext - The idea being executed
  * @param plan - The implementation plan
  * @param currentPhaseId - The phase currently being executed
+ * @param factsSection - Optional remembered facts about the user
  */
 export function buildExecutionAgentSystemPrompt(
   ideaContext: ExecutionIdeaContext,
   plan: IdeaPlan,
-  currentPhaseId: string
+  currentPhaseId: string,
+  factsSection?: string
 ): string {
   let prompt = EXECUTION_AGENT_PROMPT;
 
@@ -136,6 +138,11 @@ export function buildExecutionAgentSystemPrompt(
   // Replace working directory and repository info
   prompt = prompt.replace('{{WORKING_DIRECTORY}}', plan.workingDirectory);
   prompt = prompt.replace('{{REPOSITORY_INFO}}', buildRepositoryInfo(plan));
+
+  // Add facts section if available
+  if (factsSection) {
+    prompt += '\n\n' + factsSection;
+  }
 
   return prompt;
 }

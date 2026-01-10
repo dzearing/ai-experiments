@@ -2,7 +2,7 @@
  * Types for the resource event bus system.
  */
 
-export type ResourceType = 'idea' | 'thing' | 'document';
+export type ResourceType = 'idea' | 'topic' | 'document';
 
 export type EventType = 'snapshot' | 'delta' | 'deleted';
 
@@ -10,7 +10,7 @@ export type EventType = 'snapshot' | 'delta' | 'deleted';
  * A resource event that can be published to subscribers.
  */
 export interface ResourceEvent {
-  /** Type of resource (idea, thing, document). */
+  /** Type of resource (idea, topic, document). */
   resourceType: ResourceType;
 
   /** Unique identifier of the resource. */

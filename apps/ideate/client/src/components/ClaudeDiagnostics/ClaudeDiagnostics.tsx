@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { SplitPane, Spinner } from '@ui-kit/react';
+import { ConfirmDialog } from '../ConfirmDialog';
 import { SessionList } from './SessionList';
 import { SessionDetail } from './SessionDetail';
 import { useClaudeDiagnosticsSocket } from '../../hooks/useClaudeDiagnosticsSocket';
@@ -20,6 +21,7 @@ export function ClaudeDiagnostics() {
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [inFlightRequests, setInFlightRequests] = useState<InFlightRequest[]>([]);
+  const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
 
   // Handle session list updates
   const handleSessionList = useCallback((newSessions: ClaudeSession[]) => {
@@ -97,12 +99,21 @@ export function ClaudeDiagnostics() {
 
   // Handle clearing all sessions
   const handleClearSessions = useCallback(() => {
-    if (window.confirm('Are you sure you want to clear all session logs? This cannot be undone.')) {
-      clearSessions();
-      setSelectedSession(null);
-      setMessages([]);
-    }
+    setClearConfirmOpen(true);
+  }, []);
+
+  // Confirm clearing all sessions
+  const handleConfirmClear = useCallback(() => {
+    clearSessions();
+    setSelectedSession(null);
+    setMessages([]);
+    setClearConfirmOpen(false);
   }, [clearSessions]);
+
+  // Cancel clearing sessions
+  const handleCancelClear = useCallback(() => {
+    setClearConfirmOpen(false);
+  }, []);
 
   // Show loading state while connecting
   if (!isConnected && sessions.length === 0) {
@@ -163,6 +174,17 @@ export function ClaudeDiagnostics() {
         defaultSize="300px"
         minSize={250}
         className={styles.splitPane}
+      />
+
+      {/* Clear sessions confirmation dialog */}
+      <ConfirmDialog
+        open={clearConfirmOpen}
+        title="Clear Session Logs?"
+        message="Are you sure you want to clear all session logs? This action cannot be undone."
+        confirmText="Clear All"
+        variant="danger"
+        onConfirm={handleConfirmClear}
+        onCancel={handleCancelClear}
       />
     </div>
   );

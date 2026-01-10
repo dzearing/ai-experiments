@@ -3,7 +3,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { DocumentProvider } from './contexts/DocumentContext';
 import { ChatProvider } from './contexts/ChatContext';
 import { IdeasProvider } from './contexts/IdeasContext';
-import { ThingsProvider } from './contexts/ThingsContext';
+import { TopicsProvider } from './contexts/TopicsContext';
 import { NetworkProvider } from './contexts/NetworkContext';
 import { SessionProvider } from './contexts/SessionContext';
 import { WorkspaceProvider } from './contexts/WorkspaceContext';
@@ -24,7 +24,7 @@ import { PersonaEditor } from './pages/PersonaEditor';
 import { Workspaces } from './pages/Workspaces';
 import { WorkspaceDetail } from './pages/WorkspaceDetail';
 import { Ideas } from './pages/Ideas';
-import { Things } from './pages/Things';
+import { Topics } from './pages/Topics';
 
 // Layouts
 import { AppLayout } from './components/AppLayout/AppLayout';
@@ -37,7 +37,7 @@ export function App() {
           <FacilitatorProvider>
             <DocumentProvider>
               <ChatProvider>
-                <ThingsProvider>
+                <TopicsProvider>
                   <IdeasProvider>
                     <WorkspaceProvider>
                     <NetworkProvider>
@@ -56,10 +56,10 @@ export function App() {
                           <Route path="/workspace/:workspaceId" component={WorkspaceDetail} />
                           <Route path="/workspace/:workspaceId/ideas" component={Ideas} />
                           <Route path="/ideas" component={Ideas} />
-                          <Route path="/workspace/:workspaceId/things" component={Things} />
-                          <Route path="/workspace/:workspaceId/things/:thingId" component={Things} />
-                          <Route path="/things" component={Things} />
-                          <Route path="/things/:thingId" component={Things} />
+                          <Route path="/workspace/:workspaceId/topics" component={Topics} />
+                          <Route path="/workspace/:workspaceId/topics/:topicId" component={Topics} />
+                          <Route path="/topics" component={Topics} />
+                          <Route path="/topics/:topicId" component={Topics} />
                           <Route path="/doc/:documentId" component={DocumentEditor} />
                           <Route path="/chat/:chatRoomId" component={ChatRoom} />
                           <Route path="/settings" component={Settings} />
@@ -72,7 +72,7 @@ export function App() {
                     </NetworkProvider>
                     </WorkspaceProvider>
                   </IdeasProvider>
-                </ThingsProvider>
+                </TopicsProvider>
               </ChatProvider>
             </DocumentProvider>
           </FacilitatorProvider>

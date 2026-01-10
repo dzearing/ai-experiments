@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { EXECUTION_AGENT_WS_URL } from '../config';
 import type { IdeaPlan } from '../types/idea';
+import { useAgentProgress, type AgentProgressState } from './useAgentProgress';
 
 /**
  * Idea context to send to the execution agent
@@ -205,6 +206,8 @@ export interface UseExecutionAgentReturn {
   error: string | null;
   /** Current token usage (updated during streaming) */
   tokenUsage: TokenUsage | null;
+  /** Agent progress state for ThinkingIndicator */
+  progress: AgentProgressState;
   /** Start executing a phase */
   startExecution: (ideaContext: ExecutionIdeaContext, plan: IdeaPlan, phaseId: string) => void;
   /** Send a message during execution (for chat) */
@@ -253,6 +256,9 @@ export function useExecutionAgent({
   const [sessionState, setSessionState] = useState<ExecutionSessionState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tokenUsage, setTokenUsage] = useState<TokenUsage | null>(null);
+
+  // Agent progress tracking for ThinkingIndicator
+  const progress = useAgentProgress();
 
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -614,6 +620,14 @@ export function useExecutionAgent({
           case 'tool_use_start':
             // Add tool call to current message (like facilitator does)
             if (data.toolName) {
+              // Update progress indicator
+              progress.handleProgressEvent({
+                type: 'tool_start',
+                toolName: data.toolName,
+                displayText: `Using ${data.toolName}...`,
+                timestamp: Date.now(),
+              });
+
               const newToolCall: ExecutionToolCall = {
                 name: data.toolName,
                 input: data.toolInput as Record<string, unknown> || {},
@@ -652,6 +666,14 @@ export function useExecutionAgent({
             // Update the tool call with its output
             // Note: Server may send name='unknown' when tool_result doesn't include name
             {
+              // Update progress indicator
+              progress.handleProgressEvent({
+                type: 'tool_complete',
+                toolName: data.toolName || 'unknown',
+                displayText: `Completed ${data.toolName || 'tool'}`,
+                timestamp: Date.now(),
+              });
+
               const targetMessageId = data.messageId || currentMessageIdRef.current;
               if (targetMessageId) {
                 updateMessage(targetMessageId, {
@@ -686,6 +708,9 @@ export function useExecutionAgent({
               updateMessage(currentMessageIdRef.current, { isStreaming: false });
               currentMessageIdRef.current = null;
             }
+
+            // Clear progress indicator
+            progress.clearProgress();
 
             setIsExecuting(false);
             setIsBlocked(false);
@@ -722,7 +747,7 @@ export function useExecutionAgent({
         console.error('[ExecutionAgent] Failed to parse message:', err);
       }
     };
-  }, [ideaId, userId, userName, addMessage, updateMessage, onTaskComplete, onPhaseComplete, onExecutionBlocked, onNewIdea, onTaskUpdate, onExecutionComplete, onError]);
+  }, [ideaId, userId, userName, addMessage, updateMessage, onTaskComplete, onPhaseComplete, onExecutionBlocked, onNewIdea, onTaskUpdate, onExecutionComplete, onError, progress]);
 
   // Connect when enabled and userId and ideaId are available
   useEffect(() => {
@@ -874,6 +899,7 @@ export function useExecutionAgent({
     sessionState,
     error,
     tokenUsage,
+    progress,
     startExecution,
     sendMessage,
     sendFeedback,

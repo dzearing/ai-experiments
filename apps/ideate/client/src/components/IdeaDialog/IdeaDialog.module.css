@@ -59,19 +59,19 @@
   gap: var(--space-3);
 }
 
-/* Linked things display */
-.linkedThings {
+/* Linked topics display */
+.linkedTopics {
   display: flex;
   align-items: center;
   gap: var(--space-2);
 }
 
-.linkedThingsLabel {
+.linkedTopicsLabel {
   font-size: var(--text-sm);
   color: var(--soft-fg-soft);
 }
 
-.thingBadge {
+.topicBadge {
   display: inline-flex;
   align-items: center;
   padding: var(--space-1) var(--space-2);

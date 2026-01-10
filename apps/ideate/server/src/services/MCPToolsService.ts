@@ -1,7 +1,8 @@
 import { WorkspaceService } from './WorkspaceService.js';
 import { DocumentService, type Document } from './DocumentService.js';
-import { ThingService, type ThingIcon, type ThingColor } from './ThingService.js';
+import { TopicService, type TopicIcon, type TopicColor } from './TopicService.js';
 import { IdeaService, type IdeaStatus } from './IdeaService.js';
+import { factsService } from './FactsService.js';
 import type { WorkspaceWebSocketHandler } from '../websocket/WorkspaceWebSocketHandler.js';
 import { readFile } from 'fs/promises';
 import { existsSync } from 'fs';
@@ -51,13 +52,13 @@ export function setWorkspaceHandler(handler: WorkspaceWebSocketHandler): void {
 export class MCPToolsService {
   private workspaceService: WorkspaceService;
   private documentService: DocumentService;
-  private thingService: ThingService;
+  private topicService: TopicService;
   private ideaService: IdeaService;
 
   constructor() {
     this.workspaceService = new WorkspaceService();
     this.documentService = new DocumentService();
-    this.thingService = new ThingService();
+    this.topicService = new TopicService();
     this.ideaService = new IdeaService();
   }
 
@@ -283,61 +284,61 @@ export class MCPToolsService {
         },
       },
 
-      // Thing tools
+      // Topic tools
       {
-        name: 'thing_get',
-        description: 'Get full details about a Thing including its properties, links, and documents. Use this to learn about a project, feature, or any entity the user has defined.',
+        name: 'topic_get',
+        description: 'Get full details about a Topic including its properties, links, and documents. Use this to learn about a project, feature, or any entity the user has defined.',
         input_schema: {
           type: 'object',
           properties: {
-            thingId: {
+            topicId: {
               type: 'string',
-              description: 'The ID of the Thing to retrieve',
+              description: 'The ID of the Topic to retrieve',
             },
             name: {
               type: 'string',
-              description: 'The display name of the Thing (for UI display purposes)',
+              description: 'The display name of the Topic (for UI display purposes)',
             },
           },
-          required: ['thingId'],
+          required: ['topicId'],
         },
       },
       {
-        name: 'thing_read_linked_files',
-        description: 'Read the contents of local files linked to a Thing. Returns the file contents for all file-type links.',
+        name: 'topic_read_linked_files',
+        description: 'Read the contents of local files linked to a Topic. Returns the file contents for all file-type links.',
         input_schema: {
           type: 'object',
           properties: {
-            thingId: {
+            topicId: {
               type: 'string',
-              description: 'The ID of the Thing whose linked files to read',
+              description: 'The ID of the Topic whose linked files to read',
             },
           },
-          required: ['thingId'],
+          required: ['topicId'],
         },
       },
       {
-        name: 'thing_list',
-        description: 'List all Things accessible to the user. Optionally filter by workspace.',
+        name: 'topic_list',
+        description: 'List all Topics accessible to the user. Optionally filter by workspace.',
         input_schema: {
           type: 'object',
           properties: {
             workspaceId: {
               type: 'string',
-              description: 'Optional workspace ID to filter Things',
+              description: 'Optional workspace ID to filter Topics',
             },
           },
         },
       },
       {
-        name: 'thing_search',
-        description: 'Search for Things by name, tags, or description.',
+        name: 'topic_search',
+        description: 'Search for Topics by name, tags, or description.',
         input_schema: {
           type: 'object',
           properties: {
             query: {
               type: 'string',
-              description: 'Search query to find in Thing names, descriptions, and tags',
+              description: 'Search query to find in Topic names, descriptions, and tags',
             },
             workspaceId: {
               type: 'string',
@@ -348,32 +349,32 @@ export class MCPToolsService {
         },
       },
 
-      // Thing CRUD tools
+      // Topic CRUD tools
       {
-        name: 'thing_create',
-        description: 'Create a new Thing (project, feature, category, item, etc). Returns the created Thing.',
+        name: 'topic_create',
+        description: 'Create a new Topic (project, feature, category, item, etc). Returns the created Topic.',
         input_schema: {
           type: 'object',
           properties: {
             name: {
               type: 'string',
-              description: 'Name of the Thing',
+              description: 'Name of the Topic',
             },
             type: {
               type: 'string',
-              description: 'Type of the Thing (e.g., category, project, feature, item, package, component)',
+              description: 'Type of the Topic (e.g., category, project, feature, item, package, component)',
             },
             description: {
               type: 'string',
-              description: 'Optional description of the Thing',
+              description: 'Optional description of the Topic',
             },
             parentId: {
               type: 'string',
-              description: 'ID of the parent Thing. If not provided, creates at root level.',
+              description: 'ID of the parent Topic. If not provided, creates at root level.',
             },
             workspaceId: {
               type: 'string',
-              description: 'Optional workspace ID to create the Thing in',
+              description: 'Optional workspace ID to create the Topic in',
             },
             tags: {
               type: 'string',
@@ -392,26 +393,26 @@ export class MCPToolsService {
         },
       },
       {
-        name: 'thing_update',
-        description: 'Update an existing Thing. Only update fields that need to change.',
+        name: 'topic_update',
+        description: 'Update an existing Topic. Only update fields that need to change.',
         input_schema: {
           type: 'object',
           properties: {
-            thingId: {
+            topicId: {
               type: 'string',
-              description: 'The ID of the Thing to update',
+              description: 'The ID of the Topic to update',
             },
             name: {
               type: 'string',
-              description: 'New name for the Thing',
+              description: 'New name for the Topic',
             },
             type: {
               type: 'string',
-              description: 'New type for the Thing',
+              description: 'New type for the Topic',
             },
             description: {
               type: 'string',
-              description: 'New description for the Thing',
+              description: 'New description for the Topic',
             },
             tags: {
               type: 'string',
@@ -426,50 +427,50 @@ export class MCPToolsService {
               description: 'New color identifier',
             },
           },
-          required: ['thingId'],
+          required: ['topicId'],
         },
       },
       {
-        name: 'thing_delete',
-        description: 'Delete a Thing. This will also delete all child Things.',
+        name: 'topic_delete',
+        description: 'Delete a Topic. This will also delete all child Topics.',
         input_schema: {
           type: 'object',
           properties: {
-            thingId: {
+            topicId: {
               type: 'string',
-              description: 'The ID of the Thing to delete',
+              description: 'The ID of the Topic to delete',
             },
           },
-          required: ['thingId'],
+          required: ['topicId'],
         },
       },
       {
-        name: 'thing_move',
-        description: 'Move a Thing to a different parent. Use to reorganize the Thing hierarchy.',
+        name: 'topic_move',
+        description: 'Move a Topic to a different parent. Use to reorganize the Topic hierarchy.',
         input_schema: {
           type: 'object',
           properties: {
-            thingId: {
+            topicId: {
               type: 'string',
-              description: 'The ID of the Thing to move',
+              description: 'The ID of the Topic to move',
             },
             newParentId: {
               type: 'string',
-              description: 'The ID of the new parent Thing. Use "root" to move to root level.',
+              description: 'The ID of the new parent Topic. Use "root" to move to root level.',
             },
           },
-          required: ['thingId', 'newParentId'],
+          required: ['topicId', 'newParentId'],
         },
       },
       {
-        name: 'thing_add_link',
-        description: 'Add a link to a Thing. Links can be files, URLs, GitHub repos, or packages.',
+        name: 'topic_add_link',
+        description: 'Add a link to a Topic. Links can be files, URLs, GitHub repos, or packages.',
         input_schema: {
           type: 'object',
           properties: {
-            thingId: {
+            topicId: {
               type: 'string',
-              description: 'The ID of the Thing to add the link to',
+              description: 'The ID of the Topic to add the link to',
             },
             type: {
               type: 'string',
@@ -489,32 +490,32 @@ export class MCPToolsService {
               description: 'Optional description of what the link points to',
             },
           },
-          required: ['thingId', 'type', 'label', 'target'],
+          required: ['topicId', 'type', 'label', 'target'],
         },
       },
       {
-        name: 'thing_remove_link',
-        description: 'Remove a link from a Thing by its ID.',
+        name: 'topic_remove_link',
+        description: 'Remove a link from a Topic by its ID.',
         input_schema: {
           type: 'object',
           properties: {
-            thingId: {
+            topicId: {
               type: 'string',
-              description: 'The ID of the Thing containing the link',
+              description: 'The ID of the Topic containing the link',
             },
             linkId: {
               type: 'string',
               description: 'The ID of the link to remove',
             },
           },
-          required: ['thingId', 'linkId'],
+          required: ['topicId', 'linkId'],
         },
       },
 
       // Idea tools
       {
         name: 'idea_create',
-        description: 'Create a new idea, optionally attached to Things. Use for project scaffolding, capturing new concepts, or follow-up work.',
+        description: 'Create a new idea, optionally attached to Topics. Use for project scaffolding, capturing new concepts, or follow-up work.',
         input_schema: {
           type: 'object',
           properties: {
@@ -530,9 +531,9 @@ export class MCPToolsService {
               type: 'string',
               description: 'Detailed description of the idea (markdown)',
             },
-            thingIds: {
+            topicIds: {
               type: 'string',
-              description: 'Comma-separated list of Thing IDs to attach this idea to',
+              description: 'Comma-separated list of Topic IDs to attach this idea to',
             },
             tags: {
               type: 'string',
@@ -548,13 +549,13 @@ export class MCPToolsService {
       },
       {
         name: 'idea_list',
-        description: 'List ideas, optionally filtered by Thing ID, status, or workspace.',
+        description: 'List ideas, optionally filtered by Topic ID, status, or workspace.',
         input_schema: {
           type: 'object',
           properties: {
-            thingId: {
+            topicId: {
               type: 'string',
-              description: 'Filter ideas by Thing ID',
+              description: 'Filter ideas by Topic ID',
             },
             status: {
               type: 'string',
@@ -580,6 +581,48 @@ export class MCPToolsService {
             },
           },
           required: ['ideaId'],
+        },
+      },
+
+      // Memory/Facts tools
+      {
+        name: 'remember_fact',
+        description: 'Remember an important fact about the user for future conversations. Use this proactively when the user shares preferences, locations, workflow details, technical setup, or other persistent information that would be useful to know in future conversations.',
+        input_schema: {
+          type: 'object',
+          properties: {
+            subject: {
+              type: 'string',
+              description: 'Short subject/title for the fact (3-6 words), e.g., "Work Projects Location", "Preferred Editor"',
+            },
+            detail: {
+              type: 'string',
+              description: 'The full fact to remember, including relevant context',
+            },
+          },
+          required: ['subject', 'detail'],
+        },
+      },
+      {
+        name: 'recall_facts',
+        description: 'List all remembered facts about the user. Use this to check what you already know about the user.',
+        input_schema: {
+          type: 'object',
+          properties: {},
+        },
+      },
+      {
+        name: 'forget_fact',
+        description: 'Forget a specific fact about the user. Use when the user asks to remove remembered information or when information is outdated.',
+        input_schema: {
+          type: 'object',
+          properties: {
+            factId: {
+              type: 'string',
+              description: 'The ID of the fact to forget (from recall_facts)',
+            },
+          },
+          required: ['factId'],
         },
       },
     ];
@@ -679,34 +722,34 @@ export class MCPToolsService {
             userId
           );
 
-        // Thing tools
-        case 'thing_get':
-          return await this.thingGet(
-            input.thingId as string,
+        // Topic tools
+        case 'topic_get':
+          return await this.topicGet(
+            input.topicId as string,
             userId
           );
 
-        case 'thing_read_linked_files':
-          return await this.thingReadLinkedFiles(
-            input.thingId as string,
+        case 'topic_read_linked_files':
+          return await this.topicReadLinkedFiles(
+            input.topicId as string,
             userId
           );
 
-        case 'thing_list':
-          return await this.thingList(
+        case 'topic_list':
+          return await this.topicList(
             userId,
             input.workspaceId as string | undefined
           );
 
-        case 'thing_search':
-          return await this.thingSearch(
+        case 'topic_search':
+          return await this.topicSearch(
             userId,
             input.query as string,
             input.workspaceId as string | undefined
           );
 
-        case 'thing_create':
-          return await this.thingCreate(
+        case 'topic_create':
+          return await this.topicCreate(
             userId,
             input.name as string,
             input.type as string | undefined,
@@ -718,9 +761,9 @@ export class MCPToolsService {
             input.color as string | undefined
           );
 
-        case 'thing_update':
-          return await this.thingUpdate(
-            input.thingId as string,
+        case 'topic_update':
+          return await this.topicUpdate(
+            input.topicId as string,
             userId,
             input.name as string | undefined,
             input.type as string | undefined,
@@ -730,22 +773,22 @@ export class MCPToolsService {
             input.color as string | undefined
           );
 
-        case 'thing_delete':
-          return await this.thingDelete(
-            input.thingId as string,
+        case 'topic_delete':
+          return await this.topicDelete(
+            input.topicId as string,
             userId
           );
 
-        case 'thing_move':
-          return await this.thingMove(
-            input.thingId as string,
+        case 'topic_move':
+          return await this.topicMove(
+            input.topicId as string,
             userId,
             input.newParentId as string
           );
 
-        case 'thing_add_link':
-          return await this.thingAddLink(
-            input.thingId as string,
+        case 'topic_add_link':
+          return await this.topicAddLink(
+            input.topicId as string,
             userId,
             input.type as 'file' | 'url' | 'github' | 'package',
             input.label as string,
@@ -753,9 +796,9 @@ export class MCPToolsService {
             input.description as string | undefined
           );
 
-        case 'thing_remove_link':
-          return await this.thingRemoveLink(
-            input.thingId as string,
+        case 'topic_remove_link':
+          return await this.topicRemoveLink(
+            input.topicId as string,
             userId,
             input.linkId as string
           );
@@ -767,7 +810,7 @@ export class MCPToolsService {
             input.title as string,
             input.summary as string,
             input.description as string | undefined,
-            input.thingIds as string | undefined,
+            input.topicIds as string | undefined,
             input.tags as string | undefined,
             input.workspaceId as string | undefined
           );
@@ -775,7 +818,7 @@ export class MCPToolsService {
         case 'idea_list':
           return await this.ideaList(
             userId,
-            input.thingId as string | undefined,
+            input.topicId as string | undefined,
             input.status as IdeaStatus | undefined,
             input.workspaceId as string | undefined
           );
@@ -784,6 +827,23 @@ export class MCPToolsService {
           return await this.ideaGet(
             input.ideaId as string,
             userId
+          );
+
+        // Memory/Facts tools
+        case 'remember_fact':
+          return await this.rememberFact(
+            userId,
+            input.subject as string,
+            input.detail as string
+          );
+
+        case 'recall_facts':
+          return await this.recallFacts(userId);
+
+        case 'forget_fact':
+          return await this.forgetFact(
+            userId,
+            input.factId as string
           );
 
         default:
@@ -1262,32 +1322,32 @@ export class MCPToolsService {
   }
 
   // =========================================================================
-  // Thing Tools
+  // Topic Tools
   // =========================================================================
 
-  private async thingGet(
-    thingId: string,
+  private async topicGet(
+    topicId: string,
     userId: string
   ): Promise<ToolResult> {
-    const thing = await this.thingService.getThing(thingId, userId);
+    const topic = await this.topicService.getTopic(topicId, userId);
 
-    if (!thing) {
+    if (!topic) {
       return {
         success: false,
-        error: 'Thing not found or access denied',
+        error: 'Topic not found or access denied',
       };
     }
 
     // Build path hierarchy by traversing parents
     const path: { id: string; name: string }[] = [];
-    if (thing.parentIds.length > 0) {
+    if (topic.parentIds.length > 0) {
       // Build path from first parent (primary path)
-      let currentParentId: string | undefined = thing.parentIds[0];
+      let currentParentId: string | undefined = topic.parentIds[0];
       const visited = new Set<string>();
 
       while (currentParentId && !visited.has(currentParentId)) {
         visited.add(currentParentId);
-        const parent = await this.thingService.getThing(currentParentId, userId);
+        const parent = await this.topicService.getTopic(currentParentId, userId);
         if (parent) {
           path.unshift({ id: parent.id, name: parent.name });
           currentParentId = parent.parentIds[0];
@@ -1303,65 +1363,65 @@ export class MCPToolsService {
       : '(root)';
 
     // Resolve key properties for execution context
-    const keyProperties = await this.thingService.resolveKeyProperties(thingId, userId);
+    const keyProperties = await this.topicService.resolveKeyProperties(topicId, userId);
 
     return {
       success: true,
       data: {
-        id: thing.id,
-        name: thing.name,
-        type: thing.type,
-        description: thing.description,
-        tags: thing.tags,
+        id: topic.id,
+        name: topic.name,
+        type: topic.type,
+        description: topic.description,
+        tags: topic.tags,
         path: pathString,
         pathHierarchy: path,
-        parentIds: thing.parentIds,
-        icon: thing.icon,
-        color: thing.color,
-        properties: thing.properties,
+        parentIds: topic.parentIds,
+        icon: topic.icon,
+        color: topic.color,
+        properties: topic.properties,
         // Resolved key properties for execution context (localPath, remoteUrl, etc.)
         keyProperties,
-        links: thing.links?.map(link => ({
+        links: topic.links?.map(link => ({
           type: link.type,
           label: link.label,
           target: link.target,
           description: link.description,
         })),
-        documents: thing.documents?.map(doc => ({
+        documents: topic.documents?.map(doc => ({
           title: doc.title,
           content: doc.content,
         })),
-        ideaCounts: thing.ideaCounts,
-        createdAt: thing.createdAt,
-        updatedAt: thing.updatedAt,
+        ideaCounts: topic.ideaCounts,
+        createdAt: topic.createdAt,
+        updatedAt: topic.updatedAt,
       },
     };
   }
 
-  private async thingReadLinkedFiles(
-    thingId: string,
+  private async topicReadLinkedFiles(
+    topicId: string,
     userId: string
   ): Promise<ToolResult> {
-    const thing = await this.thingService.getThing(thingId, userId);
+    const topic = await this.topicService.getTopic(topicId, userId);
 
-    if (!thing) {
+    if (!topic) {
       return {
         success: false,
-        error: 'Thing not found or access denied',
+        error: 'Topic not found or access denied',
       };
     }
 
     // Get all file-type links
-    const fileLinks = (thing.links || []).filter(link => link.type === 'file');
+    const fileLinks = (topic.links || []).filter(link => link.type === 'file');
 
     if (fileLinks.length === 0) {
       return {
         success: true,
         data: {
-          thingId: thing.id,
-          thingName: thing.name,
+          topicId: topic.id,
+          topicName: topic.name,
           files: [],
-          message: 'No file links found for this Thing',
+          message: 'No file links found for this Topic',
         },
       };
     }
@@ -1405,32 +1465,32 @@ export class MCPToolsService {
     return {
       success: true,
       data: {
-        thingId: thing.id,
-        thingName: thing.name,
+        topicId: topic.id,
+        topicName: topic.name,
         files,
       },
     };
   }
 
-  private async thingList(
+  private async topicList(
     userId: string,
     workspaceId?: string
   ): Promise<ToolResult> {
-    const things = await this.thingService.listThings(userId, workspaceId);
+    const topics = await this.topicService.listTopics(userId, workspaceId);
 
-    // Resolve key properties for each thing
-    const thingsWithKeys = await Promise.all(
-      things.map(async (thing) => {
-        const keyProperties = await this.thingService.resolveKeyProperties(thing.id, userId);
+    // Resolve key properties for each topic
+    const topicsWithKeys = await Promise.all(
+      topics.map(async (topic) => {
+        const keyProperties = await this.topicService.resolveKeyProperties(topic.id, userId);
         return {
-          id: thing.id,
-          name: thing.name,
-          type: thing.type,
-          description: thing.description,
-          tags: thing.tags,
-          parentIds: thing.parentIds,
-          icon: thing.icon,
-          color: thing.color,
+          id: topic.id,
+          name: topic.name,
+          type: topic.type,
+          description: topic.description,
+          tags: topic.tags,
+          parentIds: topic.parentIds,
+          icon: topic.icon,
+          color: topic.color,
           // Include resolved key properties so agents always know physical locations
           keyProperties,
         };
@@ -1440,32 +1500,32 @@ export class MCPToolsService {
     return {
       success: true,
       data: {
-        count: things.length,
-        things: thingsWithKeys,
+        count: topics.length,
+        topics: topicsWithKeys,
       },
     };
   }
 
-  private async thingSearch(
+  private async topicSearch(
     userId: string,
     query: string,
     workspaceId?: string
   ): Promise<ToolResult> {
-    const things = await this.thingService.searchThings(userId, query, workspaceId);
+    const topics = await this.topicService.searchTopics(userId, query, workspaceId);
 
-    // Resolve key properties for each thing
-    const thingsWithKeys = await Promise.all(
-      things.map(async (thing) => {
-        const keyProperties = await this.thingService.resolveKeyProperties(thing.id, userId);
+    // Resolve key properties for each topic
+    const topicsWithKeys = await Promise.all(
+      topics.map(async (topic) => {
+        const keyProperties = await this.topicService.resolveKeyProperties(topic.id, userId);
         return {
-          id: thing.id,
-          name: thing.name,
-          type: thing.type,
-          description: thing.description,
-          tags: thing.tags,
-          parentIds: thing.parentIds,
-          icon: thing.icon,
-          color: thing.color,
+          id: topic.id,
+          name: topic.name,
+          type: topic.type,
+          description: topic.description,
+          tags: topic.tags,
+          parentIds: topic.parentIds,
+          icon: topic.icon,
+          color: topic.color,
           // Include resolved key properties so agents always know physical locations
           keyProperties,
         };
@@ -1476,13 +1536,13 @@ export class MCPToolsService {
       success: true,
       data: {
         query,
-        count: things.length,
-        things: thingsWithKeys,
+        count: topics.length,
+        topics: topicsWithKeys,
       },
     };
   }
 
-  private async thingCreate(
+  private async topicCreate(
     userId: string,
     name: string,
     type?: string,
@@ -1500,42 +1560,42 @@ export class MCPToolsService {
       parentIds: parentId ? [parentId] : [],
       workspaceId,
       tags: tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : [],
-      icon: icon as ThingIcon | undefined,
-      color: color as ThingColor | undefined,
+      icon: icon as TopicIcon | undefined,
+      color: color as TopicColor | undefined,
     };
 
-    const thing = await this.thingService.createThing(userId, input);
+    const topic = await this.topicService.createTopic(userId, input);
 
     // Notify workspace if applicable (for other connected clients)
     if (workspaceId && workspaceWsHandler) {
-      workspaceWsHandler.notifyResourceCreated(workspaceId, thing.id, 'thing', thing);
+      workspaceWsHandler.notifyResourceCreated(workspaceId, topic.id, 'topic', topic);
     }
 
-    // Return full ThingMetadata so the client can immediately add it to state
-    // This ensures the Thing appears in the UI before the success checkmark shows
+    // Return full TopicMetadata so the client can immediately add it to state
+    // This ensures the Topic appears in the UI before the success checkmark shows
     return {
       success: true,
       data: {
-        thing: {
-          id: thing.id,
-          name: thing.name,
-          type: thing.type,
-          description: thing.description,
-          parentIds: thing.parentIds,
-          workspaceId: thing.workspaceId,
-          tags: thing.tags,
-          icon: thing.icon,
-          color: thing.color,
-          createdAt: thing.createdAt,
-          updatedAt: thing.updatedAt,
+        topic: {
+          id: topic.id,
+          name: topic.name,
+          type: topic.type,
+          description: topic.description,
+          parentIds: topic.parentIds,
+          workspaceId: topic.workspaceId,
+          tags: topic.tags,
+          icon: topic.icon,
+          color: topic.color,
+          createdAt: topic.createdAt,
+          updatedAt: topic.updatedAt,
         },
-        message: `Thing "${name}" created successfully`,
+        message: `Topic "${name}" created successfully`,
       },
     };
   }
 
-  private async thingUpdate(
-    thingId: string,
+  private async topicUpdate(
+    topicId: string,
     userId: string,
     name?: string,
     type?: string,
@@ -1552,104 +1612,104 @@ export class MCPToolsService {
     if (icon !== undefined) updates.icon = icon;
     if (color !== undefined) updates.color = color;
 
-    const thing = await this.thingService.updateThing(thingId, userId, updates);
+    const topic = await this.topicService.updateTopic(topicId, userId, updates);
 
-    if (!thing) {
+    if (!topic) {
       return {
         success: false,
-        error: 'Thing not found or access denied',
+        error: 'Topic not found or access denied',
       };
     }
 
     // Notify workspace if applicable
-    if (thing.workspaceId && workspaceWsHandler) {
-      workspaceWsHandler.notifyResourceUpdated(thing.workspaceId, thing.id, 'thing', thing);
+    if (topic.workspaceId && workspaceWsHandler) {
+      workspaceWsHandler.notifyResourceUpdated(topic.workspaceId, topic.id, 'topic', topic);
     }
 
     return {
       success: true,
       data: {
-        id: thing.id,
-        name: thing.name,
-        type: thing.type,
-        message: 'Thing updated successfully',
+        id: topic.id,
+        name: topic.name,
+        type: topic.type,
+        message: 'Topic updated successfully',
       },
     };
   }
 
-  private async thingDelete(
-    thingId: string,
+  private async topicDelete(
+    topicId: string,
     userId: string
   ): Promise<ToolResult> {
-    // Get the thing first to know its workspace
-    const existingThing = await this.thingService.getThing(thingId, userId);
-    const workspaceId = existingThing?.workspaceId;
+    // Get the topic first to know its workspace
+    const existingTopic = await this.topicService.getTopic(topicId, userId);
+    const workspaceId = existingTopic?.workspaceId;
 
-    const success = await this.thingService.deleteThing(thingId, userId);
+    const success = await this.topicService.deleteTopic(topicId, userId);
 
     if (!success) {
       return {
         success: false,
-        error: 'Thing not found or you do not have permission to delete it',
+        error: 'Topic not found or you do not have permission to delete it',
       };
     }
 
     // Notify workspace if applicable
     if (workspaceId && workspaceWsHandler) {
-      workspaceWsHandler.notifyResourceDeleted(workspaceId, thingId, 'thing');
+      workspaceWsHandler.notifyResourceDeleted(workspaceId, topicId, 'topic');
     }
 
     return {
       success: true,
       data: {
-        message: 'Thing deleted successfully',
+        message: 'Topic deleted successfully',
       },
     };
   }
 
-  private async thingMove(
-    thingId: string,
+  private async topicMove(
+    topicId: string,
     userId: string,
     newParentId: string
   ): Promise<ToolResult> {
     // Handle "root" as a special case for moving to root level
     const parentIds = newParentId === 'root' ? [] : [newParentId];
 
-    const thing = await this.thingService.updateThing(thingId, userId, { parentIds });
+    const topic = await this.topicService.updateTopic(topicId, userId, { parentIds });
 
-    if (!thing) {
+    if (!topic) {
       return {
         success: false,
-        error: 'Thing not found or access denied',
+        error: 'Topic not found or access denied',
       };
     }
 
     // Notify workspace if applicable
-    if (thing.workspaceId && workspaceWsHandler) {
-      workspaceWsHandler.notifyResourceUpdated(thing.workspaceId, thing.id, 'thing', thing);
+    if (topic.workspaceId && workspaceWsHandler) {
+      workspaceWsHandler.notifyResourceUpdated(topic.workspaceId, topic.id, 'topic', topic);
     }
 
     const destination = newParentId === 'root' ? 'root level' : `parent ${newParentId}`;
     return {
       success: true,
       data: {
-        id: thing.id,
-        name: thing.name,
-        parentIds: thing.parentIds,
-        message: `Thing "${thing.name}" moved to ${destination}`,
+        id: topic.id,
+        name: topic.name,
+        parentIds: topic.parentIds,
+        message: `Topic "${topic.name}" moved to ${destination}`,
       },
     };
   }
 
-  private async thingAddLink(
-    thingId: string,
+  private async topicAddLink(
+    topicId: string,
     userId: string,
     type: 'file' | 'url' | 'github' | 'package',
     label: string,
     target: string,
     description?: string
   ): Promise<ToolResult> {
-    const link = await this.thingService.addLink(thingId, userId, {
+    const link = await this.topicService.addLink(topicId, userId, {
       type,
       label,
       target,
@@ -1659,7 +1719,7 @@ export class MCPToolsService {
     if (!link) {
       return {
         success: false,
-        error: 'Thing not found or access denied',
+        error: 'Topic not found or access denied',
       };
     }
 
@@ -1670,22 +1730,22 @@ export class MCPToolsService {
         type: link.type,
         label: link.label,
         target: link.target,
-        message: `Link "${label}" added to Thing`,
+        message: `Link "${label}" added to Topic`,
       },
     };
   }
 
-  private async thingRemoveLink(
-    thingId: string,
+  private async topicRemoveLink(
+    topicId: string,
     userId: string,
     linkId: string
   ): Promise<ToolResult> {
-    const success = await this.thingService.removeLink(thingId, userId, linkId);
+    const success = await this.topicService.removeLink(topicId, userId, linkId);
 
     if (!success) {
       return {
         success: false,
-        error: 'Thing or link not found, or access denied',
+        error: 'Topic or link not found, or access denied',
       };
     }
 
@@ -1706,7 +1766,7 @@ export class MCPToolsService {
     title: string,
     summary: string,
     description?: string,
-    thingIds?: string,
+    topicIds?: string,
     tags?: string,
     workspaceId?: string
   ): Promise<ToolResult> {
@@ -1714,7 +1774,7 @@ export class MCPToolsService {
       title,
       summary,
       description,
-      thingIds: thingIds ? thingIds.split(',').map(t => t.trim()).filter(Boolean) : [],
+      topicIds: topicIds ? topicIds.split(',').map(t => t.trim()).filter(Boolean) : [],
       tags: tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : [],
       workspaceId,
       source: 'ai' as const,
@@ -1733,7 +1793,7 @@ export class MCPToolsService {
         id: idea.id,
         title: idea.title,
         summary: idea.summary,
-        thingIds: idea.thingIds,
+        topicIds: idea.topicIds,
         message: `Idea "${title}" created successfully`,
       },
     };
@@ -1741,15 +1801,15 @@ export class MCPToolsService {
 
   private async ideaList(
     userId: string,
-    thingId?: string,
+    topicId?: string,
     status?: IdeaStatus,
     workspaceId?: string
   ): Promise<ToolResult> {
     let ideas = await this.ideaService.listIdeas(userId, workspaceId, status);
 
-    // Filter by thingId if provided
-    if (thingId) {
-      ideas = ideas.filter(idea => idea.thingIds.includes(thingId));
+    // Filter by topicId if provided
+    if (topicId) {
+      ideas = ideas.filter(idea => idea.topicIds.includes(topicId));
     }
 
     return {
@@ -1761,7 +1821,7 @@ export class MCPToolsService {
           title: idea.title,
           summary: idea.summary,
           status: idea.status,
-          thingIds: idea.thingIds,
+          topicIds: idea.topicIds,
           tags: idea.tags,
           rating: idea.rating,
           updatedAt: idea.updatedAt,
@@ -1791,7 +1851,7 @@ export class MCPToolsService {
         summary: idea.summary,
         description: idea.description,
         status: idea.status,
-        thingIds: idea.thingIds,
+        topicIds: idea.topicIds,
         tags: idea.tags,
         rating: idea.rating,
         source: idea.source,
@@ -1799,6 +1859,70 @@ export class MCPToolsService {
         execution: idea.execution,
         createdAt: idea.createdAt,
         updatedAt: idea.updatedAt,
+      },
+    };
+  }
+
+  // =========================================================================
+  // Memory/Facts Tools
+  // =========================================================================
+
+  private async rememberFact(
+    userId: string,
+    subject: string,
+    detail: string
+  ): Promise<ToolResult> {
+    const fact = await factsService.addFact(userId, subject, detail, 'inferred');
+
+    return {
+      success: true,
+      data: {
+        fact: {
+          id: fact.id,
+          subject: fact.subject,
+          detail: fact.detail,
+          createdAt: fact.createdAt,
+        },
+        message: `Remembered: "${subject}"`,
+      },
+    };
+  }
+
+  private async recallFacts(userId: string): Promise<ToolResult> {
+    const facts = await factsService.getFacts(userId);
+
+    return {
+      success: true,
+      data: {
+        count: facts.length,
+        facts: facts.map(f => ({
+          id: f.id,
+          subject: f.subject,
+          detail: f.detail,
+          createdAt: f.createdAt,
+          updatedAt: f.updatedAt,
+        })),
+      },
+    };
+  }
+
+  private async forgetFact(
+    userId: string,
+    factId: string
+  ): Promise<ToolResult> {
+    const deleted = await factsService.deleteFact(userId, factId);
+
+    if (!deleted) {
+      return {
+        success: false,
+        error: 'Fact not found',
+      };
+    }
+
+    return {
+      success: true,
+      data: {
+        message: 'Fact forgotten successfully',
       },
     };
   }

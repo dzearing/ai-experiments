@@ -9,8 +9,8 @@ export interface DocumentMetadata {
   title: string;
   ownerId: string;
   workspaceId?: string;
-  /** Associated Thing ID (if document belongs to a Thing) */
-  thingId?: string;
+  /** Associated Topic ID (if document belongs to a Topic) */
+  topicId?: string;
   collaboratorIds: string[];
   isPublic: boolean;
   shareCode?: string;
@@ -63,17 +63,17 @@ export class DocumentService {
 
   /**
    * List all documents for a user (owned or collaborated).
-   * Optionally filter by workspaceId or thingId.
+   * Optionally filter by workspaceId or topicId.
    * If isWorkspaceMember is true, include all documents in the workspace.
    *
-   * When thingId is provided, only returns documents for that Thing.
-   * When thingId is not provided, excludes Thing documents (they only appear in Thing detail).
+   * When topicId is provided, only returns documents for that Topic.
+   * When topicId is not provided, excludes Topic documents (they only appear in Topic detail).
    */
   async listDocuments(
     userId: string,
     workspaceId?: string,
     isWorkspaceMember: boolean = false,
-    thingId?: string
+    topicId?: string
   ): Promise<DocumentMetadata[]> {
     try {
       const files = await fs.readdir(DOCUMENTS_DIR);
@@ -86,13 +86,13 @@ export class DocumentService {
         const content = await fs.readFile(metaPath, 'utf-8');
         const metadata: DocumentMetadata = JSON.parse(content);
 
-        // Filter by thingId
-        if (thingId !== undefined) {
-          // Only include documents for this specific Thing
-          if (metadata.thingId !== thingId) continue;
+        // Filter by topicId
+        if (topicId !== undefined) {
+          // Only include documents for this specific Topic
+          if (metadata.topicId !== topicId) continue;
         } else {
-          // Exclude Thing documents from main document list
-          if (metadata.thingId) continue;
+          // Exclude Topic documents from main document list
+          if (metadata.topicId) continue;
         }
 
         // Filter by workspaceId if provided
@@ -125,13 +125,13 @@ export class DocumentService {
 
   /**
    * Create a new document.
-   * @param thingId - Optional Thing ID to associate this document with
+   * @param topicId - Optional Topic ID to associate this document with
    */
   async createDocument(
     userId: string,
     title: string,
     workspaceId?: string,
-    thingId?: string
+    topicId?: string
   ): Promise<Document> {
     const id = uuidv4();
     const now = new Date().toISOString();
@@ -141,7 +141,7 @@ export class DocumentService {
       title,
       ownerId: userId,
       workspaceId,
-      thingId,
+      topicId,
       collaboratorIds: [],
       isPublic: false,
       createdAt: now,
@@ -552,10 +552,10 @@ export class DocumentService {
   }
 
   /**
-   * Delete all documents associated with a Thing.
-   * Used for cascade delete when a Thing is deleted.
+   * Delete all documents associated with a Topic.
+   * Used for cascade delete when a Topic is deleted.
    */
-  async deleteDocumentsByThingId(thingId: string): Promise<number> {
+  async deleteDocumentsByTopicId(topicId: string): Promise<number> {
     try {
       const files = await fs.readdir(DOCUMENTS_DIR);
       const metaFiles = files.filter((f) => f.endsWith('.meta.json'));
@@ -567,7 +567,7 @@ export class DocumentService {
         const content = await fs.readFile(metaPath, 'utf-8');
         const metadata: DocumentMetadata = JSON.parse(content);
 
-        if (metadata.thingId === thingId) {
+        if (metadata.topicId === topicId) {
           // Delete all files for this document
           try {
             await fs.unlink(this.getMetadataPath(metadata.id));
@@ -580,13 +580,13 @@ export class DocumentService {
           } catch { /* ignore */ }
 
           deletedCount++;
-          console.log(`[DocumentService] Deleted document ${metadata.id} for Thing ${thingId}`);
+          console.log(`[DocumentService] Deleted document ${metadata.id} for Topic ${topicId}`);
         }
       }
 
       return deletedCount;
     } catch (error) {
-      console.error(`[DocumentService] Failed to delete documents for Thing ${thingId}:`, error);
+      console.error(`[DocumentService] Failed to delete documents for Topic ${topicId}:`, error);
       return 0;
     }
   }

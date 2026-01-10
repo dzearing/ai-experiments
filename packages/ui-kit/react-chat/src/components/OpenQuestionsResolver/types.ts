@@ -33,8 +33,8 @@ export interface OpenQuestion {
   selectionType: SelectionType;
   /** Available options to choose from */
   options: QuestionOption[];
-  /** Whether to show a custom "Other" option with text input */
-  allowCustom: boolean;
+  /** Whether to show a custom "Other" option with text input (defaults to true) */
+  allowCustom?: boolean;
 }
 
 /**

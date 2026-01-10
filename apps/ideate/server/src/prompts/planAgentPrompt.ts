@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
-import { THING_TOOLS_PROMPT } from '../shared/thingToolsMcp.js';
+import { TOPIC_TOOLS_PROMPT } from '../shared/topicToolsMcp.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,9 +30,9 @@ function buildDocumentWithPositions(content: string): string {
 }
 
 /**
- * Thing context for plan agent
+ * Topic context for plan agent
  */
-export interface ThingContext {
+export interface TopicContext {
   id: string;
   name: string;
   type: string;
@@ -40,13 +40,13 @@ export interface ThingContext {
 }
 
 /**
- * Parent thing that provides execution context (e.g., a folder or git repo with localPath)
+ * Parent topic that provides execution context (e.g., a folder or git repo with localPath)
  */
-export interface ParentThingContext {
+export interface ParentTopicContext {
   id: string;
   name: string;
   type: string;
-  /** Local file system path if this thing provides execution context */
+  /** Local file system path if this topic provides execution context */
   localPath?: string;
 }
 
@@ -60,9 +60,9 @@ export interface PlanIdeaContext {
   description?: string;
   tags: string[];
   status: string;
-  thingContext?: ThingContext;
-  /** Parent things that provide execution context (folders, repos) with their localPath */
-  parentThings?: ParentThingContext[];
+  topicContext?: TopicContext;
+  /** Parent topics that provide execution context (folders, repos) with their localPath */
+  parentTopics?: ParentTopicContext[];
 }
 
 /**
@@ -70,10 +70,12 @@ export interface PlanIdeaContext {
  *
  * @param ideaContext - The idea being planned
  * @param documentContent - Current implementation plan document content (for edits)
+ * @param factsSection - Optional remembered facts about the user
  */
 export function buildPlanAgentSystemPrompt(
   ideaContext: PlanIdeaContext,
-  documentContent?: string | null
+  documentContent?: string | null,
+  factsSection?: string
 ): string {
   let prompt = PLAN_AGENT_PROMPT;
 
@@ -94,30 +96,30 @@ export function buildPlanAgentSystemPrompt(
       : ''
   );
 
-  // Build Thing context section if available
-  let thingContextSection = '';
-  if (ideaContext.thingContext) {
-    const { name, type, description } = ideaContext.thingContext;
-    thingContextSection = `## Thing Context\nThis idea is linked to **${name}** (${type})`;
+  // Build Topic context section if available
+  let topicContextSection = '';
+  if (ideaContext.topicContext) {
+    const { name, type, description } = ideaContext.topicContext;
+    topicContextSection = `## Topic Context\nThis idea is linked to **${name}** (${type})`;
     if (description) {
-      thingContextSection += `\n\n${description}`;
+      topicContextSection += `\n\n${description}`;
     }
   }
 
-  // Add parent things with execution context (folders, repos with localPath)
+  // Add parent topics with execution context (folders, repos with localPath)
   // This helps the agent suggest appropriate working directories
-  if (ideaContext.parentThings && ideaContext.parentThings.length > 0) {
-    const parentsWithPath = ideaContext.parentThings.filter(p => p.localPath);
+  if (ideaContext.parentTopics && ideaContext.parentTopics.length > 0) {
+    const parentsWithPath = ideaContext.parentTopics.filter(p => p.localPath);
     if (parentsWithPath.length > 0) {
-      thingContextSection += '\n\n## Parent Folder Context\n';
-      thingContextSection += 'This idea is associated with the following folders/repositories that can be used as a base for the working directory:\n\n';
+      topicContextSection += '\n\n## Parent Folder Context\n';
+      topicContextSection += 'This idea is associated with the following folders/repositories that can be used as a base for the working directory:\n\n';
       for (const parent of parentsWithPath) {
-        thingContextSection += `- **${parent.name}** (${parent.type}): \`${parent.localPath}\`\n`;
+        topicContextSection += `- **${parent.name}** (${parent.type}): \`${parent.localPath}\`\n`;
       }
-      thingContextSection += '\nWhen creating the implementation plan, consider using one of these paths as the base for the working directory (e.g., for a new project named "my-app" under a folder at ~/git, suggest ~/git/my-app).';
+      topicContextSection += '\nWhen creating the implementation plan, consider using one of these paths as the base for the working directory (e.g., for a new project named "my-app" under a folder at ~/git, suggest ~/git/my-app).';
     }
   }
-  prompt = prompt.replace('{{THING_CONTEXT}}', thingContextSection);
+  prompt = prompt.replace('{{TOPIC_CONTEXT}}', topicContextSection);
 
   // Add current document content with positions for accurate edits
   if (documentContent && documentContent.trim().length > 0) {
@@ -142,8 +144,13 @@ ${docWithPositions}
     );
   }
 
-  // Add thing tools section at the end
-  prompt += '\n\n' + THING_TOOLS_PROMPT;
+  // Add facts section if available
+  if (factsSection) {
+    prompt += '\n\n' + factsSection;
+  }
+
+  // Add topic tools section at the end
+  prompt += '\n\n' + TOPIC_TOOLS_PROMPT;
 
   return prompt;
 }

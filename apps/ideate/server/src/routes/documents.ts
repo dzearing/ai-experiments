@@ -15,12 +15,12 @@ export function setWorkspaceHandler(handler: WorkspaceWebSocketHandler): void {
 
 export const documentsRouter = Router();
 
-// List documents (optionally filter by workspaceId or thingId query param)
+// List documents (optionally filter by workspaceId or topicId query param)
 documentsRouter.get('/', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
     const workspaceId = req.query.workspaceId as string | undefined;
-    const thingId = req.query.thingId as string | undefined;
+    const topicId = req.query.topicId as string | undefined;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
@@ -34,7 +34,7 @@ documentsRouter.get('/', async (req: Request, res: Response) => {
       isWorkspaceMember = workspace !== null;
     }
 
-    const documents = await documentService.listDocuments(userId, workspaceId, isWorkspaceMember, thingId);
+    const documents = await documentService.listDocuments(userId, workspaceId, isWorkspaceMember, topicId);
     res.json(documents);
   } catch (error) {
     console.error('List documents error:', error);
@@ -46,7 +46,7 @@ documentsRouter.get('/', async (req: Request, res: Response) => {
 documentsRouter.post('/', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { title, workspaceId, thingId } = req.body;
+    const { title, workspaceId, topicId } = req.body;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
@@ -58,7 +58,7 @@ documentsRouter.post('/', async (req: Request, res: Response) => {
       return;
     }
 
-    const document = await documentService.createDocument(userId, title, workspaceId, thingId);
+    const document = await documentService.createDocument(userId, title, workspaceId, topicId);
 
     // Notify workspace subscribers of new document
     if (workspaceId && workspaceWsHandler) {

@@ -173,8 +173,11 @@ function formatToolDescription(name: string, input?: Record<string, unknown>): R
     case 'Edit':
       return <>Editing {input?.file_path ? bold(getFileName(String(input.file_path))) : 'file'}</>;
     case 'Bash':
-      const cmd = input?.command ? String(input.command).split(' ')[0] : '';
-      return <>Running {cmd ? bold(cmd) : 'command'}</>;
+      // Show command with first argument (e.g., "pnpm install" instead of just "pnpm")
+      const fullCmd = input?.command ? String(input.command).trim() : '';
+      const cmdParts = fullCmd.split(/\s+/);
+      const cmdDisplay = cmdParts.length > 1 ? `${cmdParts[0]} ${cmdParts[1]}` : cmdParts[0];
+      return <>Running {cmdDisplay ? bold(cmdDisplay) : 'command'}</>;
     case 'Glob':
       return <>Finding files {input?.pattern ? <>matching {bold(String(input.pattern))}</> : ''}</>;
     case 'Grep':
@@ -251,6 +254,14 @@ function formatToolDescription(name: string, input?: Record<string, unknown>): R
     case 'idea_get':
       return <>Getting Idea details</>;
 
+    // Memory/Facts tools
+    case 'remember_fact':
+      return <>Remembering: {input?.subject ? bold(String(input.subject)) : 'fact'}</>;
+    case 'recall_facts':
+      return <>Recalling remembered facts</>;
+    case 'forget_fact':
+      return <>Forgetting fact</>;
+
     // Navigation/UI action tools
     case 'open_idea_workspace': {
       // Try to extract idea name from initialGreeting (e.g., "I'm crafting an Idea for **Hello World App**!")
@@ -302,6 +313,9 @@ function shouldHideToolOutput(name: string): boolean {
     'idea_create',
     'workspace_create',
     'document_create',
+    // Memory/Facts tools - output is internal confirmation
+    'remember_fact',
+    'forget_fact',
   ];
   return hiddenOutputTools.includes(normalizedName);
 }

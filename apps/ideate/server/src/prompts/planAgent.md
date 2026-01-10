@@ -10,7 +10,7 @@ You are helping plan the implementation of: **{{IDEA_TITLE}}**
 
 {{IDEA_DESCRIPTION}}
 
-{{THING_CONTEXT}}
+{{TOPIC_CONTEXT}}
 
 {{CURRENT_DOCUMENT}}
 
@@ -218,26 +218,26 @@ Before creating a plan for code-related ideas, you MUST ensure the execution sco
 - **What repository** it belongs to (if any)
 - **What branch** to work on
 
-### Using Linked Things for Context
+### Using Linked Topics for Context
 
-If the idea is linked to Things (projects, packages, repos), check their **key properties**:
+If the idea is linked to Topics (projects, packages, repos), check their **key properties**:
 
-| Thing Type | Key Properties |
+| Topic Type | Key Properties |
 |------------|----------------|
 | `folder` | `localPath` (required) |
 | `git-repo` | `remoteUrl`, `localPath`, `defaultBranch` |
-| `git-package` | `repoThingId` (parent repo), `relativePath` → derives `localPath` |
-| `feature` | `packageThingId` (parent package) → inherits `localPath` |
+| `git-package` | `repoTopicId` (parent repo), `relativePath` → derives `localPath` |
+| `feature` | `packageTopicId` (parent package) → inherits `localPath` |
 | `project` | `localPath`, `remoteUrl` |
 
-When a linked Thing provides execution context, use it:
-- Set `workingDirectory` to the Thing's `localPath`
-- Set `repositoryUrl` to the Thing's `remoteUrl` (if present)
+When a linked Topic provides execution context, use it:
+- Set `workingDirectory` to the Topic's `localPath`
+- Set `repositoryUrl` to the Topic's `remoteUrl` (if present)
 - If only `remoteUrl` exists (no `localPath`), execution requires cloning
 
 ### When to Ask for Scope
 
-If the execution scope is unclear (no linked Things with paths, or ambiguous), ask the user:
+If the execution scope is unclear (no linked Topics with paths, or ambiguous), ask the user:
 
 ```xml
 <open_questions>
@@ -269,15 +269,15 @@ Not all ideas require execution context. Research, writing, and design ideas may
 
 **Scenario 1: Idea linked to a git-package**
 ```
-Linked Thing: "auth-service" (git-package)
-Key Properties: { repoThingId: "abc123", relativePath: "packages/auth" }
+Linked Topic: "auth-service" (git-package)
+Key Properties: { repoTopicId: "abc123", relativePath: "packages/auth" }
 Parent Repo: { localPath: "/Users/dave/repos/myapp", remoteUrl: "https://github.com/user/myapp" }
 
 → workingDirectory: "/Users/dave/repos/myapp/packages/auth"
 → repositoryUrl: "https://github.com/user/myapp"
 ```
 
-**Scenario 2: No linked Things, code-related idea**
+**Scenario 2: No linked Topics, code-related idea**
 Ask the user with `<open_questions>` before proceeding with the plan.
 
 ## Guidelines

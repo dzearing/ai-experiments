@@ -113,7 +113,7 @@ export interface UseFacilitatorSocketOptions {
  */
 export interface UseFacilitatorSocketReturn {
   /** Send a message to the facilitator */
-  sendMessage: (content: string, thingIds?: string[]) => void;
+  sendMessage: (content: string, topicIds?: string[]) => void;
   /** Clear chat history on the server */
   clearHistory: () => void;
   /** Cancel the current AI operation */
@@ -168,77 +168,77 @@ export function useFacilitatorSocket({
   // Track navigation context changes to send updates to server
   const navigationContextRef = useRef<NavigationContext>(navigationContext);
 
-  // Track recently navigated thing to handle timing issues with open_idea_workspace
-  const recentlyNavigatedThingRef = useRef<{ thingId: string; timestamp: number } | null>(null);
+  // Track recently navigated topic to handle timing issues with open_idea_workspace
+  const recentlyNavigatedTopicRef = useRef<{ topicId: string; timestamp: number } | null>(null);
 
   // Handle navigation actions from tool results
   const handleNavigationAction = useCallback((actionData: { __action: string; [key: string]: unknown }) => {
     switch (actionData.__action) {
       case 'navigate':
-        if (actionData.target === 'thing' && actionData.thingId) {
+        if (actionData.target === 'topic' && actionData.topicId) {
           const currentPath = window.location.pathname;
-          const thingId = actionData.thingId as string;
+          const topicId = actionData.topicId as string;
 
           // Track this navigation for timing coordination with open_idea_workspace
-          recentlyNavigatedThingRef.current = { thingId, timestamp: Date.now() };
+          recentlyNavigatedTopicRef.current = { topicId, timestamp: Date.now() };
 
-          // If we're already on the Things page and the Thing is already selected, skip
-          if (currentPath.includes('/things') && currentPath.includes(thingId)) {
-            log.log(' Already on Things page with this Thing selected, skipping navigate');
+          // If we're already on the Topics page and the Topic is already selected, skip
+          if (currentPath.includes('/topics') && currentPath.includes(topicId)) {
+            log.log(' Already on Topics page with this Topic selected, skipping navigate');
             return;
           }
 
-          // If we're on the Things page (but different Thing), dispatch event to select it
-          if (currentPath.includes('/things')) {
-            log.log(' On Things page, dispatching event to select Thing');
-            window.dispatchEvent(new CustomEvent('facilitator:navigateToThing', {
-              detail: { thingId }
+          // If we're on the Topics page (but different Topic), dispatch event to select it
+          if (currentPath.includes('/topics')) {
+            log.log(' On Topics page, dispatching event to select Topic');
+            window.dispatchEvent(new CustomEvent('facilitator:navigateToTopic', {
+              detail: { topicId }
             }));
             return;
           }
 
-          // Not on Things page - need to navigate there
+          // Not on Topics page - need to navigate there
           // Extract workspace ID from current path if present (e.g., /workspace/123/ideas)
           const workspaceMatch = currentPath.match(/\/workspace\/([^/]+)/);
           const workspaceId = workspaceMatch ? workspaceMatch[1] : null;
 
           // Build the target URL
           const targetUrl = workspaceId
-            ? `/workspace/${workspaceId}/things/${thingId}`
-            : `/things/${thingId}`;
+            ? `/workspace/${workspaceId}/topics/${topicId}`
+            : `/topics/${topicId}`;
 
-          log.log(' Navigating to Things page:', targetUrl);
+          log.log(' Navigating to Topics page:', targetUrl);
 
           // Use History API to navigate without full page reload
-          // The facilitator:navigateToThing event will be picked up by Things page when it mounts
+          // The facilitator:navigateToTopic event will be picked up by Topics page when it mounts
           window.history.pushState(null, '', targetUrl);
           // Dispatch popstate to trigger router update
           window.dispatchEvent(new PopStateEvent('popstate'));
-          // Also dispatch the event for when Things page mounts
+          // Also dispatch the event for when Topics page mounts
           setTimeout(() => {
-            window.dispatchEvent(new CustomEvent('facilitator:navigateToThing', {
-              detail: { thingId }
+            window.dispatchEvent(new CustomEvent('facilitator:navigateToTopic', {
+              detail: { topicId }
             }));
           }, 100);
         }
         break;
 
       case 'open_idea_workspace': {
-        const thingId = actionData.thingId as string | undefined;
-        const recentNav = recentlyNavigatedThingRef.current;
+        const topicId = actionData.topicId as string | undefined;
+        const recentNav = recentlyNavigatedTopicRef.current;
 
-        // Check if we just navigated to this thing (within last 2 seconds)
-        // If so, delay the event to allow the ThingDetail component to mount
-        const needsDelay = thingId && recentNav &&
-          recentNav.thingId === thingId &&
+        // Check if we just navigated to this topic (within last 2 seconds)
+        // If so, delay the event to allow the TopicDetail component to mount
+        const needsDelay = topicId && recentNav &&
+          recentNav.topicId === topicId &&
           Date.now() - recentNav.timestamp < 2000;
 
         const dispatchOpenIdea = () => {
-          log.log(' Dispatching facilitator:openIdea event', { thingId, ideaId: actionData.ideaId, initialTitle: actionData.initialTitle });
+          log.log(' Dispatching facilitator:openIdea event', { topicId, ideaId: actionData.ideaId, initialTitle: actionData.initialTitle });
           window.dispatchEvent(new CustomEvent('facilitator:openIdea', {
             detail: {
               ideaId: actionData.ideaId,
-              thingId: actionData.thingId,
+              topicId: actionData.topicId,
               initialTitle: actionData.initialTitle,
               initialPrompt: actionData.initialPrompt,
               initialGreeting: actionData.initialGreeting,
@@ -428,13 +428,13 @@ export function useFacilitatorSocket({
                     handleNavigationAction(outputData);
                   }
 
-                  // When thing_create succeeds, dispatch event with the created Thing data
-                  // This ensures the Thing appears in the UI immediately (confirmed update from server)
-                  log.log('Tool result parsed', { toolName: data.toolName, hasThing: !!outputData.thing, outputData });
-                  if (data.toolName.includes('thing_create') && outputData.thing) {
-                    log.log(' Dispatching facilitator:thingCreated event with:', outputData.thing);
-                    window.dispatchEvent(new CustomEvent('facilitator:thingCreated', {
-                      detail: { thing: outputData.thing }
+                  // When topic_create succeeds, dispatch event with the created Topic data
+                  // This ensures the Topic appears in the UI immediately (confirmed update from server)
+                  log.log('Tool result parsed', { toolName: data.toolName, hasTopic: !!outputData.topic, outputData });
+                  if (data.toolName.includes('topic_create') && outputData.topic) {
+                    log.log(' Dispatching facilitator:topicCreated event with:', outputData.topic);
+                    window.dispatchEvent(new CustomEvent('facilitator:topicCreated', {
+                      detail: { topic: outputData.topic }
                     }));
                   }
                 } catch {
@@ -567,18 +567,18 @@ export function useFacilitatorSocket({
   }, []);
 
   // Send message to server
-  const sendMessage = useCallback((content: string, thingIds?: string[]) => {
+  const sendMessage = useCallback((content: string, topicIds?: string[]) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       setIsLoading(true);
-      // Include Thing IDs in context as referencedThingIds
-      const contextWithThings = {
+      // Include Topic IDs in context as referencedTopicIds
+      const contextWithTopics = {
         ...navigationContextRef.current,
-        ...(thingIds && thingIds.length > 0 ? { referencedThingIds: thingIds } : {}),
+        ...(topicIds && topicIds.length > 0 ? { referencedTopicIds: topicIds } : {}),
       };
       const messagePayload = {
         type: 'message',
         content,
-        context: contextWithThings,
+        context: contextWithTopics,
         modelId: modelIdRef.current,
       };
       log.log(' Sending message with modelId:', modelIdRef.current);

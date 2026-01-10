@@ -1,64 +1,64 @@
 /**
- * Test for thingToolsMcp
+ * Test for topicToolsMcp
  *
- * Verifies that the MCP server for thing tools works correctly.
+ * Verifies that the MCP server for topic tools works correctly.
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';
 import { MCPToolsService } from '../services/MCPToolsService.js';
 
-describe('Thing Tools MCP', () => {
+describe('Topic Tools MCP', () => {
   const toolsService = new MCPToolsService();
   const testUserId = 'test-user-mcp';
-  let createdThingId: string;
+  let createdTopicId: string;
 
   beforeAll(async () => {
-    // Create a test thing
+    // Create a test topic
     const result = await toolsService.executeTool(
-      'thing_create',
-      { name: 'test-mcp-thing', type: 'project', description: 'Test thing for MCP tests' },
+      'topic_create',
+      { name: 'test-mcp-topic', type: 'project', description: 'Test topic for MCP tests' },
       testUserId
     );
     if (result.success && result.data) {
-      const data = result.data as { thing?: { id: string } };
-      createdThingId = data.thing?.id || '';
+      const data = result.data as { topic?: { id: string } };
+      createdTopicId = data.topic?.id || '';
     }
   });
 
-  it('should search things by name', async () => {
+  it('should search topics by name', async () => {
     const result = await toolsService.executeTool(
-      'thing_search',
-      { query: 'test-mcp-thing' },
+      'topic_search',
+      { query: 'test-mcp-topic' },
       testUserId
     );
 
     expect(result.success).toBe(true);
     expect(result.data).toBeDefined();
-    const data = result.data as { things: Array<{ name: string }> };
-    expect(data.things.some(t => t.name === 'test-mcp-thing')).toBe(true);
+    const data = result.data as { topics: Array<{ name: string }> };
+    expect(data.topics.some(t => t.name === 'test-mcp-topic')).toBe(true);
   });
 
-  it('should get thing by id', async () => {
-    if (!createdThingId) {
-      console.log('Skipping - no thing created');
+  it('should get topic by id', async () => {
+    if (!createdTopicId) {
+      console.log('Skipping - no topic created');
       return;
     }
 
     const result = await toolsService.executeTool(
-      'thing_get',
-      { thingId: createdThingId },
+      'topic_get',
+      { topicId: createdTopicId },
       testUserId
     );
 
     expect(result.success).toBe(true);
     expect(result.data).toBeDefined();
     const data = result.data as { name: string };
-    expect(data.name).toBe('test-mcp-thing');
+    expect(data.name).toBe('test-mcp-topic');
   });
 
-  it('should list all things', async () => {
+  it('should list all topics', async () => {
     const result = await toolsService.executeTool(
-      'thing_list',
+      'topic_list',
       {},
       testUserId
     );
@@ -67,15 +67,15 @@ describe('Thing Tools MCP', () => {
     expect(result.data).toBeDefined();
   });
 
-  it('should update a thing', async () => {
-    if (!createdThingId) {
-      console.log('Skipping - no thing created');
+  it('should update a topic', async () => {
+    if (!createdTopicId) {
+      console.log('Skipping - no topic created');
       return;
     }
 
     const result = await toolsService.executeTool(
-      'thing_update',
-      { thingId: createdThingId, description: 'Updated description' },
+      'topic_update',
+      { topicId: createdTopicId, description: 'Updated description' },
       testUserId
     );
 

@@ -17,6 +17,7 @@ import { buildExecutionAgentSystemPrompt, type ExecutionIdeaContext } from '../p
 import { createIdeateMcpServer } from './IdeateMcpTools.js';
 import { type IdeaService, type IdeaPlan, validateWorkingDirectory, expandTildePath } from './IdeaService.js';
 import { ExecutionAgentChatService, type ExecutionAgentMessage } from './ExecutionAgentChatService.js';
+import { factsService } from './FactsService.js';
 import {
   type TokenUsage,
   type TaskCompleteEvent,
@@ -151,6 +152,7 @@ export class ExecutionAgentService {
       pendingTools: [],
       processedTaskIds: new Set(),
       completedToolCalls: [],
+      messageSegments: [],
     };
     this.activeSessions.set(ideaId, session);
 
@@ -214,6 +216,7 @@ export class ExecutionAgentService {
         pendingTools: [],
         processedTaskIds: new Set(),
         completedToolCalls: [],
+        messageSegments: [],
       };
       this.activeSessions.set(ideaId, newSession);
 
@@ -322,7 +325,10 @@ Begin executing these tasks in order. Report progress after each task completion
       return;
     }
 
-    const systemPrompt = buildExecutionAgentSystemPrompt(ideaContext, plan, phaseId);
+    // Load remembered facts for this user
+    const factsSection = await factsService.formatFactsForPrompt(userId) || undefined;
+
+    const systemPrompt = buildExecutionAgentSystemPrompt(ideaContext, plan, phaseId, factsSection);
     const ideateMcpServer = createIdeateMcpServer(this.ideaService, userId, plan.workspaceId);
     const messageId = `msg-exec-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
     session.currentMessageId = messageId;
@@ -391,11 +397,12 @@ Begin executing these tasks in order. Report progress after each task completion
       }
 
       // Save any remaining accumulated content (text or tools not yet saved)
-      if (session.accumulatedResponse.trim() || session.completedToolCalls.length > 0) {
+      if (session.accumulatedResponse.trim() || session.messageSegments.length > 0) {
         await this.processStructuredEvents(ideaId, session.accumulatedResponse, userId);
         await this.chatService.addMessage(ideaId, userId, 'assistant', session.accumulatedResponse, {
           rawResponse: session.accumulatedResponse,
           toolCalls: session.completedToolCalls.length > 0 ? session.completedToolCalls : undefined,
+          segments: session.messageSegments.length > 0 ? session.messageSegments : undefined,
         });
       }
 
@@ -459,6 +466,8 @@ Begin executing these tasks in order. Report progress after each task completion
             }
 
             session.accumulatedResponse += textToAppend;
+            // Add text to segments for ordered persistence
+            this.addTextToSegments(session, textToAppend);
             this.dispatchOrQueue(ideaId, { type: 'text_chunk', data: textToAppend, messageId, timestamp: Date.now() });
             await this.processStructuredEvents(ideaId, session.accumulatedResponse, userId);
           } else if (block.type === 'tool_use') {
@@ -474,12 +483,17 @@ Begin executing these tasks in order. Report progress after each task completion
               ? resultBlock.content
               : JSON.stringify(resultBlock.content);
             console.log(`[ExecutionAgentService] tool_result block (${resultContent.length} chars)`);
+
             // Remove the first pending tool (assuming order matches)
             const pendingTool = session.pendingTools.shift();
             const toolName = pendingTool?.name ?? 'unknown';
             const endTime = Date.now();
             const startTime = pendingTool?.startTime ?? endTime;
-            // Store completed tool call for persistence with timing metadata
+
+            // Add to segments for ordered persistence
+            this.addToolToSegments(session, toolName, pendingTool?.input, resultContent, startTime, endTime);
+
+            // Also add to completedToolCalls for backward compatibility
             session.completedToolCalls.push({
               name: toolName,
               input: pendingTool?.input,
@@ -489,6 +503,7 @@ Begin executing these tasks in order. Report progress after each task completion
               duration: endTime - startTime,
               completed: true,
             });
+
             this.dispatchOrQueue(ideaId, { type: 'tool_end', data: { name: toolName, result: '' }, messageId, timestamp: Date.now() });
           } else {
             console.log(`[ExecutionAgentService] unknown block type: ${(block as { type: string }).type}`);
@@ -514,6 +529,8 @@ Begin executing these tasks in order. Report progress after each task completion
         }
 
         session.accumulatedResponse += textToAppend;
+        // Add text to segments for ordered persistence
+        this.addTextToSegments(session, textToAppend);
         this.dispatchOrQueue(ideaId, { type: 'text_chunk', data: textToAppend, messageId, timestamp: Date.now() });
         await this.processStructuredEvents(ideaId, session.accumulatedResponse, userId);
       } else {
@@ -546,7 +563,10 @@ Begin executing these tasks in order. Report progress after each task completion
             const endTime = Date.now();
             const startTime = pendingTool?.startTime ?? endTime;
 
-            // Store completed tool call for persistence with timing metadata
+            // Add to segments for ordered persistence
+            this.addToolToSegments(session, toolName, pendingTool?.input, resultContent, startTime, endTime);
+
+            // Also add to completedToolCalls for backward compatibility
             session.completedToolCalls.push({
               name: toolName,
               input: pendingTool?.input,
@@ -582,6 +602,47 @@ Begin executing these tasks in order. Report progress after each task completion
   }
 
   /**
+   * Add text to the current message segment.
+   * Merges consecutive text into a single segment.
+   */
+  private addTextToSegments(session: ExecutionSession, text: string): void {
+    const lastSegment = session.messageSegments[session.messageSegments.length - 1];
+
+    if (lastSegment?.type === 'text') {
+      // Merge with existing text segment
+      lastSegment.text = (lastSegment.text || '') + text;
+    } else {
+      // Create new text segment
+      session.messageSegments.push({ type: 'text', text });
+    }
+  }
+
+  /**
+   * Add a completed tool call as a segment.
+   */
+  private addToolToSegments(
+    session: ExecutionSession,
+    toolName: string,
+    input: Record<string, unknown> | undefined,
+    output: string,
+    startTime: number,
+    endTime: number
+  ): void {
+    session.messageSegments.push({
+      type: 'tool',
+      tool: {
+        name: toolName,
+        input,
+        output: output.length > 500 ? output.slice(0, 500) + '...' : output,
+        startTime,
+        endTime,
+        duration: endTime - startTime,
+        completed: true,
+      },
+    });
+  }
+
+  /**
    * Complete all pending tools - called when text arrives after tool calls,
    * indicating the SDK has finished executing the tools.
    * Also saves the current message segment (text + tools) before new text arrives.
@@ -594,23 +655,27 @@ Begin executing these tasks in order. Report progress after each task completion
   ): Promise<void> {
     if (session.pendingTools.length === 0) return;
 
-    // Complete all pending tools and track them
+    // Complete all pending tools and add them as segments
     while (session.pendingTools.length > 0) {
       const tool = session.pendingTools.shift()!;
       const endTime = Date.now();
       const duration = endTime - tool.startTime;
       console.log(`[ExecutionAgentService] Completing tool ${tool.name} (${duration}ms)`);
-      // Store completed tool call for persistence with timing metadata
-      // The __complete__ output marker indicates the tool finished without explicit output
+
+      // Add to segments for ordered persistence
+      this.addToolToSegments(session, tool.name, tool.input, '__complete__', tool.startTime, endTime);
+
+      // Also add to completedToolCalls for backward compatibility
       session.completedToolCalls.push({
         name: tool.name,
         input: tool.input,
-        output: '__complete__', // Mark as complete for proper rehydration
+        output: '__complete__',
         startTime: tool.startTime,
         endTime,
         duration,
         completed: true,
       });
+
       this.dispatchOrQueue(ideaId, {
         type: 'tool_end',
         data: { name: tool.name, result: '' },
@@ -619,16 +684,19 @@ Begin executing these tasks in order. Report progress after each task completion
       });
     }
 
-    // Save the current text + completed tools as a message segment
+    // Save the current message with ordered segments
     // This preserves the interleaved structure when rehydrated
-    if (session.accumulatedResponse.trim() || session.completedToolCalls.length > 0) {
+    if (session.accumulatedResponse.trim() || session.messageSegments.length > 0) {
       await this.chatService.addMessage(ideaId, userId, 'assistant', session.accumulatedResponse, {
         rawResponse: session.accumulatedResponse,
         toolCalls: session.completedToolCalls.length > 0 ? [...session.completedToolCalls] : undefined,
+        segments: session.messageSegments.length > 0 ? [...session.messageSegments] : undefined,
       });
+
       // Reset for next segment
       session.accumulatedResponse = '';
       session.completedToolCalls = [];
+      session.messageSegments = [];
     }
   }
 

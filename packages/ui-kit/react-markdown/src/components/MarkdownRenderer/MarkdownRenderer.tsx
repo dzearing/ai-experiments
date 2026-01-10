@@ -38,7 +38,7 @@ import styles from './MarkdownRenderer.module.css';
  * - ^[DisplayName](id:uuid) - new format with embedded ID
  * - ^ThingName or ^{Thing Name With Spaces} - legacy format
  */
-function preprocessThingReferences(content: string): string {
+function preprocessTopicReferences(content: string): string {
   // First, handle new format: ^[DisplayName](id:uuid)
   let processed = content.replace(
     /\^\[([^\]]+)\]\(id:([^)]+)\)/g,
@@ -144,7 +144,7 @@ export function MarkdownRenderer({
 
   // Preprocess content to convert ^ThingName syntax to HTML spans
   const displayContent = useMemo(
-    () => preprocessThingReferences(rawDisplayContent),
+    () => preprocessTopicReferences(rawDisplayContent),
     [rawDisplayContent]
   );
 

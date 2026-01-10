@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import type { ThingMetadata } from '../types/thing';
+import type { TopicMetadata } from '../types/topic';
 
 /**
  * Import request to send to the server
@@ -10,7 +10,7 @@ export interface ImportRequest {
   gitUrl?: string;
   localPath?: string;
   instructions: string;
-  targetThingId: string;
+  targetTopicId: string;
   workspaceId?: string;
 }
 
@@ -45,7 +45,7 @@ interface ServerMessage {
   update?: { status?: ImportStep['status']; detail?: string };
   detail?: string;
   error?: string;
-  createdThings?: ThingMetadata[];
+  createdTopics?: TopicMetadata[];
   // Sub-task fields
   totalTasks?: number;
   taskNames?: string[];
@@ -70,8 +70,8 @@ export interface UseImportAgentReturn {
   error: string | null;
   /** Whether the import completed successfully */
   isComplete: boolean;
-  /** Things created during the import */
-  createdThings: ThingMetadata[];
+  /** Topics created during the import */
+  createdTopics: TopicMetadata[];
   /** Reset the state for a new import */
   reset: () => void;
   /** Sub-tasks for decomposed imports */
@@ -91,7 +91,7 @@ export function useImportAgent(): UseImportAgentReturn {
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isComplete, setIsComplete] = useState(false);
-  const [createdThings, setCreatedThings] = useState<ThingMetadata[]>([]);
+  const [createdTopics, setCreatedTopics] = useState<TopicMetadata[]>([]);
   const [subTasks, setSubTasks] = useState<ImportSubTask[]>([]);
   const [isDecomposed, setIsDecomposed] = useState(false);
 
@@ -101,7 +101,7 @@ export function useImportAgent(): UseImportAgentReturn {
     setIsRunning(false);
     setError(null);
     setIsComplete(false);
-    setCreatedThings([]);
+    setCreatedTopics([]);
     setSubTasks([]);
     setIsDecomposed(false);
   }, []);
@@ -155,8 +155,8 @@ export function useImportAgent(): UseImportAgentReturn {
         case 'complete':
           setIsRunning(false);
           setIsComplete(true);
-          if (message.createdThings) {
-            setCreatedThings(message.createdThings);
+          if (message.createdTopics) {
+            setCreatedTopics(message.createdTopics);
           }
           break;
 
@@ -265,7 +265,7 @@ export function useImportAgent(): UseImportAgentReturn {
     isRunning,
     error,
     isComplete,
-    createdThings,
+    createdTopics,
     reset,
     subTasks,
     isDecomposed,

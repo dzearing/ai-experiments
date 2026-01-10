@@ -30,13 +30,13 @@ export interface ImportAgentSessionMetadata {
   userId: string;
   sourceType: 'git' | 'local';
   sourcePath: string;
-  targetThingId: string;
+  targetTopicId: string;
   messageCount: number;
   createdAt: string;
   lastUpdated: string;
   status: 'running' | 'completed' | 'error';
   error?: string;
-  thingsCreated?: number;
+  topicsCreated?: number;
 }
 
 // Base directory for import agent storage
@@ -74,7 +74,7 @@ export class ImportAgentChatService {
     userId: string,
     sourceType: 'git' | 'local',
     sourcePath: string,
-    targetThingId: string
+    targetTopicId: string
   ): Promise<string> {
     const sessionId = uuidv4();
     const now = new Date().toISOString();
@@ -84,7 +84,7 @@ export class ImportAgentChatService {
       userId,
       sourceType,
       sourcePath,
-      targetThingId,
+      targetTopicId,
       messageCount: 0,
       createdAt: now,
       lastUpdated: now,
@@ -157,14 +157,14 @@ export class ImportAgentChatService {
   async updateSessionStatus(
     sessionId: string,
     status: 'completed' | 'error',
-    details?: { thingsCreated?: number; error?: string }
+    details?: { topicsCreated?: number; error?: string }
   ): Promise<void> {
     const metadata = await this.getMetadata(sessionId);
     if (metadata) {
       metadata.status = status;
       metadata.lastUpdated = new Date().toISOString();
-      if (details?.thingsCreated !== undefined) {
-        metadata.thingsCreated = details.thingsCreated;
+      if (details?.topicsCreated !== undefined) {
+        metadata.topicsCreated = details.topicsCreated;
       }
       if (details?.error) {
         metadata.error = details.error;

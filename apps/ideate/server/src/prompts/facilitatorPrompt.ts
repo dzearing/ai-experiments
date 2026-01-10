@@ -36,11 +36,13 @@ export function buildFacilitatorPrompt(params: {
   personaPrompt: string;
   userName: string;
   contextSection: string;
+  factsSection: string;
   toolsDescription: string;
 }): string {
   return FACILITATOR_PROMPT_TEMPLATE
     .replace('{{PERSONA_PROMPT}}', params.personaPrompt)
     .replace('{{USER_NAME}}', params.userName)
     .replace('{{CONTEXT_SECTION}}', params.contextSection)
+    .replace('{{FACTS_SECTION}}', params.factsSection)
     .replace('{{TOOLS_DESCRIPTION}}', params.toolsDescription);
 }

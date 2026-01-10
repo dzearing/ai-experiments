@@ -21,6 +21,18 @@ export interface StoredToolCall {
 }
 
 /**
+ * A segment of a message - either text or a tool call.
+ * Segments are stored in order to preserve interleaving during rehydration.
+ */
+export interface MessageSegment {
+  type: 'text' | 'tool';
+  /** Text content (for type='text') */
+  text?: string;
+  /** Tool call data (for type='tool') */
+  tool?: StoredToolCall;
+}
+
+/**
  * A message in the execution agent chat
  */
 export interface ExecutionAgentMessage {
@@ -38,8 +50,13 @@ export interface ExecutionAgentMessage {
   rawResponse?: string;
   /** Associated event data */
   eventData?: Record<string, unknown>;
-  /** Tool calls made during this message */
+  /** @deprecated Use segments instead for proper interleaving */
   toolCalls?: StoredToolCall[];
+  /**
+   * Ordered segments that preserve text/tool interleaving.
+   * When present, this takes precedence over content+toolCalls for rendering.
+   */
+  segments?: MessageSegment[];
 }
 
 /**
@@ -138,7 +155,10 @@ export class ExecutionAgentChatService {
       toolName?: string;
       rawResponse?: string;
       eventData?: Record<string, unknown>;
+      /** @deprecated Use segments instead */
       toolCalls?: StoredToolCall[];
+      /** Ordered segments preserving text/tool interleaving */
+      segments?: MessageSegment[];
     }
   ): Promise<ExecutionAgentMessage> {
     const message: ExecutionAgentMessage = {
@@ -153,6 +173,7 @@ export class ExecutionAgentChatService {
       ...(options?.rawResponse && { rawResponse: options.rawResponse }),
       ...(options?.eventData && { eventData: options.eventData }),
       ...(options?.toolCalls && options.toolCalls.length > 0 && { toolCalls: options.toolCalls }),
+      ...(options?.segments && options.segments.length > 0 && { segments: options.segments }),
     };
 
     // Append message to JSONL file

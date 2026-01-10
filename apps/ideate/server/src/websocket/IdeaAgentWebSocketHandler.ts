@@ -231,7 +231,7 @@ export class IdeaAgentWebSocketHandler {
     });
 
     // Note: We defer sendHistoryAndGreeting until we receive the first idea_update
-    // This allows us to include thingContext in the greeting generation.
+    // This allows us to include topicContext in the greeting generation.
     // The client sends idea_update immediately after connecting.
   }
 
@@ -279,7 +279,7 @@ export class IdeaAgentWebSocketHandler {
             }
 
             // If this is the first context we received, now send history and greeting
-            // (we deferred this from connection time to get thingContext)
+            // (we deferred this from connection time to get topicContext)
             // Skip if session was transferred - client already has messages and we don't want to overwrite them
             if (isFirstContext && !client.sessionTransferred) {
               await this.sendHistoryAndGreeting(client);

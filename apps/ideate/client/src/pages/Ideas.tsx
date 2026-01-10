@@ -121,7 +121,7 @@ export function Ideas() {
     const handleOpenIdea = async (event: Event) => {
       const customEvent = event as CustomEvent<{
         ideaId: string;
-        thingId?: string;
+        topicId?: string;
         focusInput?: boolean;
       }>;
       const { ideaId } = customEvent.detail;

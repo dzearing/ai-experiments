@@ -41,7 +41,7 @@ export function createIdeateMcpServer(
               description: args.description,
               workspaceId,
               source: 'ai',
-              thingIds: [],
+              topicIds: [],
             });
 
             return {

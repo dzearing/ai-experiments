@@ -1,5 +1,6 @@
 .facilitatorSettings {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: var(--space-6);
 }
@@ -213,5 +214,78 @@
   margin: var(--space-1) 0 0;
   font-style: italic;
   line-height: 1.4;
+}
+
+/* Memory/Facts Section */
+.emptyState {
+  color: var(--base-fg-soft);
+  font-size: var(--text-sm);
+  margin: 0;
+  padding: var(--space-4);
+  text-align: center;
+}
+
+.factsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.factItem {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--base-border);
+}
+
+.factItem:last-child {
+  border-bottom: none;
+}
+
+.factContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.factSubject {
+  display: block;
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  color: var(--base-fg);
+  margin-bottom: var(--space-1);
+}
+
+.factDetail {
+  font-size: var(--text-sm);
+  color: var(--base-fg-soft);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.factActions {
+  display: flex;
+  gap: var(--space-1);
+  flex-shrink: 0;
+  margin-left: var(--space-3);
+}
+
+/* Edit Fact Form */
+.editFactForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.editFactField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.editFactField label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--base-fg);
 }
 
