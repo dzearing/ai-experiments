@@ -1,7 +1,9 @@
 .container {
+  position: relative; /* For positioning jump-to-bottom button */
   display: flex;
   flex-direction: column;
   flex: 1;
+  height: 100%; /* Ensure it fills parent */
   overflow: hidden;
 }
 
@@ -117,4 +119,79 @@
   30% {
     transform: translateY(-4px);
   }
+}
+
+/* Jump to bottom button */
+.jumpToBottom {
+  position: absolute;
+  bottom: var(--space-4);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background-color: var(--color-buttonPrimary-background, #2563eb);
+  color: var(--color-buttonPrimary-text, #fff);
+  border: none;
+  border-radius: var(--radius-full, 9999px);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  z-index: 10;
+}
+
+.jumpToBottom:hover {
+  transform: translateX(-50%) scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.jumpToBottom:active {
+  transform: translateX(-50%) scale(0.98);
+}
+
+.jumpToBottomArrow {
+  font-size: 1em;
+  line-height: 1;
+}
+
+.jumpToBottomText {
+  white-space: nowrap;
+}
+
+/* Lock state indicator (debug) */
+.lockIndicator {
+  position: absolute;
+  bottom: var(--space-2);
+  right: var(--space-2);
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  z-index: 5;
+  pointer-events: none;
+  font-weight: 600;
+}
+
+.lockIndicator[data-state="locked"] {
+  background: rgba(34, 197, 94, 0.2);
+  color: rgb(34, 197, 94);
+}
+
+.lockIndicator[data-state="unlocked"] {
+  background: rgba(239, 68, 68, 0.2);
+  color: rgb(239, 68, 68);
+}
+
+/* Virtualized messages container - NO flex layout, explicit height for virtualization */
+.virtualizedMessages {
+  flex: 1;
+  min-height: 0;
+  height: 0; /* Force height from flex, not content */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  overflow-anchor: none; /* Disable browser scroll anchoring - prevents scroll adjustment when tool cards expand */
+  position: relative;
+  padding: var(--space-4);
 }

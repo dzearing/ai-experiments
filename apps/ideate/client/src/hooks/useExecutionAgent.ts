@@ -96,6 +96,8 @@ export interface ExecutionToolCall {
   duration?: number;
   /** Whether the tool execution is complete */
   completed?: boolean;
+  /** Whether the tool execution was cancelled */
+  cancelled?: boolean;
 }
 
 /**
@@ -869,9 +871,19 @@ export function useExecutionAgent({
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ type: 'cancel' }));
 
-      // Mark any streaming message as complete
+      // Mark any streaming message as complete and mark pending tool calls as cancelled
       if (currentMessageIdRef.current) {
-        updateMessage(currentMessageIdRef.current, { isStreaming: false });
+        updateMessage(currentMessageIdRef.current, {
+          isStreaming: false,
+          toolCalls: (prev) => prev?.map((tc) => {
+            // Mark incomplete tool calls as cancelled
+            if (!tc.completed && !tc.output) {
+              return { ...tc, cancelled: true };
+            }
+
+            return tc;
+          }),
+        });
         currentMessageIdRef.current = null;
       }
 

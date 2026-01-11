@@ -182,12 +182,16 @@
   border-radius: var(--radius-sm);
   border: 1px solid var(--soft-border);
   font-size: var(--text-xs);
+  /* Prevent browser from using this as scroll anchor */
+  overflow-anchor: none;
 }
 
 .toolCallWrapper {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
+  /* Prevent browser from using this as scroll anchor */
+  overflow-anchor: none;
 }
 
 .toolCall {
@@ -277,6 +281,18 @@
   color: var(--base-fg-soft);
 }
 
+.toolCancelled .toolIcon {
+  color: var(--base-fg-soft);
+}
+
+.toolCancelled .toolDescription {
+  color: var(--base-fg-softer);
+}
+
+.toolCancelled .toolDescription strong {
+  color: var(--base-fg-soft);
+}
+
 /* Tool timer */
 .toolTimerRunning {
   margin-left: var(--space-2);
@@ -299,6 +315,8 @@
   background: var(--base-bg);
   border-radius: var(--radius-xs);
   border: 1px solid var(--soft-border);
+  /* Prevent browser from using this as scroll anchor */
+  overflow-anchor: none;
 }
 
 .toolResultContent {

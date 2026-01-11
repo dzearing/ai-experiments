@@ -305,10 +305,10 @@ export async function processSDKStream(
             // Thinking block
             const thinkingBlock = block as { type: 'thinking'; thinking: string };
             callbacks.onThinking?.(thinkingBlock.thinking, messageId);
-          } else if (block.type === 'tool_use') {
-            // Tool use - emit event
-            const toolUseBlock = block as { type: 'tool_use'; id?: string; name: string; input: Record<string, unknown> };
-            console.log(`[${serviceName}] Tool use: ${toolUseBlock.name}`);
+          } else if (block.type === 'tool_use' || block.type === 'server_tool_use') {
+            // Tool use - emit event (including server-side tools like WebSearch)
+            const toolUseBlock = block as { type: 'tool_use' | 'server_tool_use'; id?: string; name: string; input: Record<string, unknown> };
+            console.log(`[${serviceName}] Tool use (${block.type}): ${toolUseBlock.name}`);
 
             const toolCall: ToolCall = {
               id: toolUseBlock.id,

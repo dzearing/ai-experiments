@@ -1,10 +1,10 @@
-import { useEffect, useCallback, useState, useRef } from 'react';
+import { useEffect, useCallback, useState, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from '@ui-kit/router';
 import { Slide, Button, IconButton, Avatar } from '@ui-kit/react';
 import { CloseIcon } from '@ui-kit/icons/CloseIcon';
 import { GearIcon } from '@ui-kit/icons/GearIcon';
-import { ChatInput, ChatMessage, ThinkingIndicator, OpenQuestionsResolver, type ChatInputSubmitData, type ChatInputRef, type TopicReference as ChatTopicReference } from '@ui-kit/react-chat';
+import { ChatInput, VirtualizedChatPanel, ThinkingIndicator, OpenQuestionsResolver, type ChatInputSubmitData, type ChatInputRef, type TopicReference as ChatTopicReference, type VirtualizedChatPanelMessage } from '@ui-kit/react-chat';
 import { AVATAR_IMAGES } from '../../constants/avatarImages';
 import { useFacilitator } from '../../contexts/FacilitatorContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -62,7 +62,6 @@ export function FacilitatorOverlay() {
     avatar: 'robot',
   });
   const panelRef = useRef<HTMLDivElement>(null);
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const chatInputRef = useRef<ChatInputRef>(null);
   const isProcessingQueueRef = useRef(false);
 
@@ -248,14 +247,6 @@ Type a message to get started!`,
     };
   }, [isOpen]);
 
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    const container = messagesContainerRef.current;
-    if (container) {
-      container.scrollTop = container.scrollHeight;
-    }
-  }, [messages]);
-
   // Handle sending a message
   const handleSendMessage = useCallback(
     (data: ChatInputSubmitData) => {
@@ -306,6 +297,60 @@ Type a message to get started!`,
     close();
     navigate('/settings/facilitator');
   }, [close, navigate]);
+
+  // Convert messages to VirtualizedChatPanel format
+  const chatMessages: VirtualizedChatPanelMessage[] = useMemo(() => {
+    return messages.map((message) => {
+      const isUser = message.role === 'user';
+      const isSystem = message.role === 'system';
+
+      // Extract text content from parts for the content field
+      const textContent = message.parts
+        ?.filter((part): part is { type: 'text'; text: string } => part.type === 'text')
+        .map((part) => part.text)
+        .join('\n') || '';
+
+      return {
+        id: message.id,
+        content: textContent,
+        parts: message.parts,
+        timestamp: message.timestamp,
+        senderName: isUser ? (user?.name || 'You') : (isSystem ? 'System' : facilitatorSettings.name),
+        senderColor: isUser ? undefined : (isSystem ? '#888888' : '#6366f1'),
+        isOwn: isUser,
+        isStreaming: message.isStreaming,
+        renderMarkdown: true,
+      };
+    });
+  }, [messages, user?.name, facilitatorSettings.name]);
+
+  // Render avatar for bot messages
+  const renderAvatar = useCallback((message: VirtualizedChatPanelMessage) => {
+    if (message.isOwn || message.senderName === 'System') return undefined;
+
+    const botAvatarSrc = AVATAR_IMAGES[facilitatorSettings.avatar] || AVATAR_IMAGES.robot;
+
+    return (
+      <Avatar
+        type="bot"
+        src={botAvatarSrc}
+        alt={facilitatorSettings.name}
+        size="md"
+      />
+    );
+  }, [facilitatorSettings.avatar, facilitatorSettings.name]);
+
+  // Empty state for chat
+  const emptyState = useMemo(() => (
+    <div className={styles.emptyState}>
+      <h3 className={styles.emptyStateTitle}>
+        How can I help you today?
+      </h3>
+      <p className={styles.emptyStateSubtitle}>
+        Ask me anything about your workspaces, documents, or tasks.
+      </p>
+    </div>
+  ), []);
 
   // Get status indicator class
   const getStatusClass = () => {
@@ -384,52 +429,12 @@ Type a message to get started!`,
           )}
 
           {/* Messages */}
-          <div ref={messagesContainerRef} className={styles.messagesContainer}>
-            {messages.length === 0 ? (
-              <div className={styles.emptyState}>
-                <h3 className={styles.emptyStateTitle}>
-                  How can I help you today?
-                </h3>
-                <p className={styles.emptyStateSubtitle}>
-                  Ask me anything about your workspaces, documents, or tasks.
-                </p>
-              </div>
-            ) : (
-              messages.map((message, index) => {
-                const prevMessage = index > 0 ? messages[index - 1] : null;
-                const isConsecutive = prevMessage?.role === message.role;
-                const isUser = message.role === 'user';
-                const isSystem = message.role === 'system';
-
-                // Get bot avatar image
-                const botAvatarSrc = AVATAR_IMAGES[facilitatorSettings.avatar] || AVATAR_IMAGES.robot;
-
-                return (
-                  <ChatMessage
-                    key={message.id}
-                    id={message.id}
-                    parts={message.parts}
-                    timestamp={message.timestamp}
-                    senderName={isUser ? (user?.name || 'You') : facilitatorSettings.name}
-                    senderColor={isUser ? undefined : '#6366f1'}
-                    isOwn={isUser}
-                    isSystem={isSystem}
-                    isConsecutive={isConsecutive && !isSystem}
-                    renderMarkdown={true}
-                    isStreaming={message.isStreaming}
-                    avatar={!isUser && !isSystem ? (
-                      <Avatar
-                        type="bot"
-                        src={botAvatarSrc}
-                        alt={facilitatorSettings.name}
-                        size="md"
-                      />
-                    ) : undefined}
-                  />
-                );
-              })
-            )}
-          </div>
+          <VirtualizedChatPanel
+            messages={chatMessages}
+            emptyState={emptyState}
+            renderAvatar={renderAvatar}
+            className={styles.messagesContainer}
+          />
 
           {/* Thinking indicator */}
           <ThinkingIndicator isActive={isLoading} showEscapeHint={isLoading && !inputContent.trim()} />

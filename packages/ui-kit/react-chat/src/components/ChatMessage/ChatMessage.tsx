@@ -1,7 +1,8 @@
-import { type ReactNode, type MouseEvent, useState, useEffect, useRef, useCallback } from 'react';
+import { type ReactNode, type MouseEvent, useState, useEffect, useRef, useCallback, memo } from 'react';
 import { Avatar, Menu, BusyIndicator, Spinner, type MenuItem } from '@ui-kit/react';
 import { CheckIcon } from '@ui-kit/icons/CheckIcon';
 import { ChevronDownIcon } from '@ui-kit/icons/ChevronDownIcon';
+import { XCircleIcon } from '@ui-kit/icons/XCircleIcon';
 import { MarkdownRenderer } from '@ui-kit/react-markdown';
 import styles from './ChatMessage.module.css';
 
@@ -91,6 +92,8 @@ export interface ChatMessageToolCall {
   duration?: number;
   /** Whether the tool execution is complete */
   completed?: boolean;
+  /** Whether the tool execution was cancelled */
+  cancelled?: boolean;
 }
 
 /**
@@ -183,8 +186,10 @@ function formatToolDescription(name: string, input?: Record<string, unknown>): R
     case 'Grep':
       return <>Searching for {input?.pattern ? bold(String(input.pattern)) : 'pattern'}</>;
     case 'WebFetch':
+    case 'web_fetch':
       return <>Fetching {input?.url ? bold(new URL(String(input.url)).hostname) : 'URL'}</>;
     case 'WebSearch':
+    case 'web_search':
       return <>Searching web for {input?.query ? bold(String(input.query)) : 'query'}</>;
     case 'Task':
       return <>Running sub-task</>;
@@ -246,9 +251,41 @@ function formatToolDescription(name: string, input?: Record<string, unknown>): R
     case 'thing_read_linked_files':
       return <>Reading linked files</>;
 
+    // Topic tools (handle both snake_case and space-separated variants)
+    case 'topic_list':
+    case 'topic list':
+      return <>Listing topics</>;
+    case 'topic_get':
+    case 'topic get':
+      return <>Getting topic details</>;
+    case 'topic_search':
+    case 'topic search':
+      return <>Searching for {input?.query ? bold(String(input.query)) : 'topics'}</>;
+    case 'topic_create':
+    case 'topic create':
+      return <>Creating topic {input?.name ? bold(String(input.name)) : ''}</>;
+    case 'topic_update':
+    case 'topic update':
+      return <>Updating topic {input?.name ? bold(String(input.name)) : ''}</>;
+    case 'topic_delete':
+    case 'topic delete':
+      return <>Deleting topic</>;
+    case 'topic_move':
+    case 'topic move':
+      return <>Moving topic</>;
+    case 'topic_add_link':
+    case 'topic add link':
+      return <>Adding link to topic</>;
+    case 'topic_remove_link':
+    case 'topic remove link':
+      return <>Removing link from topic</>;
+    case 'topic_read_linked_files':
+    case 'topic read linked files':
+      return <>Reading linked files</>;
+
     // Idea tools
     case 'idea_create':
-      return <>Creating Idea: {input?.title ? bold(String(input.title)) : ''}</>;
+      return <>Creating Idea {input?.title ? bold(String(input.title)) : ''}</>;
     case 'idea_list':
       return <>Listing Ideas{input?.status ? <> ({String(input.status)})</> : ''}</>;
     case 'idea_get':
@@ -388,6 +425,97 @@ function formatTime(timestamp: string | number | Date): string {
 }
 
 /**
+ * Custom comparison for React.memo to prevent unnecessary re-renders.
+ * Only re-renders when message content or display state actually changes.
+ */
+function arePropsEqual(prevProps: ChatMessageProps, nextProps: ChatMessageProps): boolean {
+  // Fast path: same reference means definitely equal
+  if (prevProps === nextProps) return true;
+
+  // Check primitive props that affect rendering
+  if (
+    prevProps.id !== nextProps.id ||
+    prevProps.content !== nextProps.content ||
+    prevProps.senderName !== nextProps.senderName ||
+    prevProps.senderColor !== nextProps.senderColor ||
+    prevProps.isOwn !== nextProps.isOwn ||
+    prevProps.isSystem !== nextProps.isSystem ||
+    prevProps.isConsecutive !== nextProps.isConsecutive ||
+    prevProps.isStreaming !== nextProps.isStreaming ||
+    prevProps.renderMarkdown !== nextProps.renderMarkdown ||
+    prevProps.className !== nextProps.className
+  ) {
+    return false;
+  }
+
+  // Check parts array (shallow comparison of reference, then content)
+  if (prevProps.parts !== nextProps.parts) {
+    // If one is undefined and other isn't, not equal
+    if (!prevProps.parts || !nextProps.parts) return false;
+    // If lengths differ, not equal
+    if (prevProps.parts.length !== nextProps.parts.length) return false;
+    // Check each part
+    for (let i = 0; i < prevProps.parts.length; i++) {
+      const prev = prevProps.parts[i];
+      const next = nextProps.parts[i];
+      if (prev.type !== next.type) return false;
+      if (prev.type === 'text' && next.type === 'text') {
+        if (prev.text !== next.text) return false;
+      } else if (prev.type === 'tool_calls' && next.type === 'tool_calls') {
+        // For tool calls, check if any tool completion status changed
+        if (prev.calls.length !== next.calls.length) return false;
+        for (let j = 0; j < prev.calls.length; j++) {
+          const prevCall = prev.calls[j];
+          const nextCall = next.calls[j];
+          if (
+            prevCall.name !== nextCall.name ||
+            prevCall.output !== nextCall.output ||
+            prevCall.completed !== nextCall.completed
+          ) {
+            return false;
+          }
+        }
+      }
+    }
+  }
+
+  // Check deprecated toolCalls array
+  if (prevProps.toolCalls !== nextProps.toolCalls) {
+    if (!prevProps.toolCalls || !nextProps.toolCalls) return false;
+    if (prevProps.toolCalls.length !== nextProps.toolCalls.length) return false;
+    for (let i = 0; i < prevProps.toolCalls.length; i++) {
+      const prev = prevProps.toolCalls[i];
+      const next = nextProps.toolCalls[i];
+      if (
+        prev.name !== next.name ||
+        prev.output !== next.output ||
+        prev.completed !== next.completed
+      ) {
+        return false;
+      }
+    }
+  }
+
+  // Menu items - reference equality is fine (they rarely change)
+  if (prevProps.menuItems !== nextProps.menuItems) return false;
+
+  // Callbacks - reference equality (callers should memoize)
+  if (prevProps.onMenuSelect !== nextProps.onMenuSelect) return false;
+  if (prevProps.onLinkClick !== nextProps.onLinkClick) return false;
+
+  // Avatar - reference equality
+  if (prevProps.avatar !== nextProps.avatar) return false;
+
+  // Timestamp - can change format but unlikely to affect display
+  // We do a simple string comparison after converting
+  const prevTime = String(prevProps.timestamp);
+  const nextTime = String(nextProps.timestamp);
+  if (prevTime !== nextTime) return false;
+
+  return true;
+}
+
+/**
  * ChatMessage component
  *
  * Displays a single message in a chat interface with support for:
@@ -396,8 +524,10 @@ function formatTime(timestamp: string | number | Date): string {
  * - Markdown rendering
  * - Message actions via menu
  * - AI features (streaming indicator, tool calls)
+ *
+ * Memoized to prevent re-renders when parent state changes but message data hasn't.
  */
-export function ChatMessage({
+export const ChatMessage = memo(function ChatMessage({
   id,
   content,
   parts,
@@ -418,8 +548,25 @@ export function ChatMessage({
 }: ChatMessageProps) {
   // Track which tool outputs are expanded (collapsed by default)
   const [expandedTools, setExpandedTools] = useState<Set<string>>(new Set());
+  const messageRef = useRef<HTMLDivElement>(null);
 
   const toggleToolExpanded = useCallback((toolKey: string) => {
+    // Find the scroll container by walking up the DOM tree
+    // Look for the virtualizedMessages container or any scrollable parent
+    let scrollContainer: HTMLElement | null = null;
+    let element = messageRef.current?.parentElement;
+    while (element) {
+      const style = window.getComputedStyle(element);
+      if (style.overflowY === 'auto' || style.overflowY === 'scroll') {
+        scrollContainer = element;
+        break;
+      }
+      element = element.parentElement;
+    }
+
+    // Capture scroll position before state change
+    const savedScrollTop = scrollContainer?.scrollTop ?? 0;
+
     setExpandedTools(prev => {
       const next = new Set(prev);
       if (next.has(toolKey)) {
@@ -429,6 +576,25 @@ export function ChatMessage({
       }
       return next;
     });
+
+    // Restore scroll position after DOM updates
+    // Use multiple restoration attempts to fight against virtualizer re-measurements
+    if (scrollContainer) {
+      const restore = () => {
+        if (scrollContainer) {
+          scrollContainer.scrollTop = savedScrollTop;
+        }
+      };
+
+      // Immediate restoration
+      requestAnimationFrame(restore);
+      // Second attempt after React commits
+      requestAnimationFrame(() => requestAnimationFrame(restore));
+      // Third attempt after virtualizer measures (typical ~16-32ms)
+      setTimeout(restore, 50);
+      // Final attempt to catch any late adjustments
+      setTimeout(restore, 100);
+    }
   }, []);
 
   const handleMenuSelect = (value: string) => {
@@ -493,7 +659,7 @@ export function ChatMessage({
   const hasMenu = menuItems && menuItems.length > 0;
 
   return (
-    <div className={messageClasses} data-message-id={id}>
+    <div ref={messageRef} className={messageClasses} data-message-id={id}>
       {/* Column 1: Avatar + Name */}
       <div className={avatarColumnClasses}>
         {!isConsecutive && (
@@ -571,6 +737,8 @@ export function ChatMessage({
             return (
               <div key={partIndex} className={styles.toolCalls}>
                 {calls.map((toolCall, toolIndex) => {
+                  // Check for cancelled state first
+                  const isCancelled = toolCall.cancelled ?? false;
                   // Use `completed` field if available, otherwise fall back to checking output
                   const isComplete = toolCall.completed ?? !!toolCall.output;
                   // Ensure output is a string, treat '__complete__' as empty (no box to show)
@@ -580,23 +748,44 @@ export function ChatMessage({
                   const toolKey = `${partIndex}-${toolIndex}`;
                   const isExpanded = expandedTools.has(toolKey);
 
+                  // Determine the status class
+                  let statusClass = styles.toolRunning;
+
+                  if (isCancelled) {
+                    statusClass = styles.toolCancelled;
+                  } else if (isComplete) {
+                    statusClass = styles.toolComplete;
+                  }
+
+                  // Determine which icon to show
+                  const renderIcon = () => {
+                    if (isCancelled) {
+                      return <XCircleIcon />;
+                    }
+                    if (isComplete) {
+                      return <CheckIcon />;
+                    }
+
+                    return <Spinner size="sm" />;
+                  };
+
                   return (
                     <div key={toolIndex} className={styles.toolCallWrapper}>
                       <button
                         type="button"
-                        className={`${styles.toolCall} ${isComplete ? styles.toolComplete : styles.toolRunning} ${hasOutput ? styles.toolExpandable : ''}`}
+                        className={`${styles.toolCall} ${statusClass} ${hasOutput ? styles.toolExpandable : ''}`}
                         onClick={hasOutput ? () => toggleToolExpanded(toolKey) : undefined}
                         disabled={!hasOutput}
                       >
                         <span className={styles.toolIcon}>
-                          {isComplete ? <CheckIcon /> : <Spinner size="sm" />}
+                          {renderIcon()}
                         </span>
                         <span className={styles.toolDescription}>
                           {formatToolDescription(toolCall.name, toolCall.input)}
                         </span>
                         <ToolTimer
                           startTime={toolCall.startTime}
-                          isComplete={isComplete}
+                          isComplete={isComplete || isCancelled}
                           duration={toolCall.duration}
                         />
                         {hasOutput && (
@@ -633,8 +822,6 @@ export function ChatMessage({
       </div>
     </div>
   );
-}
-
-ChatMessage.displayName = 'ChatMessage';
+}, arePropsEqual);
 
 export default ChatMessage;

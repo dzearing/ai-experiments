@@ -1,5 +1,6 @@
 import {
   forwardRef,
+  memo,
   useState,
   useRef,
   useCallback,
@@ -13,7 +14,7 @@ import {
   type ChangeEvent,
 } from 'react';
 import { EditorContent } from '@tiptap/react';
-import { Button, IconButton, Spinner, Tooltip, ImagePreview } from '@ui-kit/react';
+import { IconButton, Spinner, Tooltip, ImagePreview } from '@ui-kit/react';
 import { SendIcon } from '@ui-kit/icons/SendIcon';
 import { BoldIcon } from '@ui-kit/icons/BoldIcon';
 import { ItalicIcon } from '@ui-kit/icons/ItalicIcon';
@@ -169,7 +170,14 @@ export interface ChatInputProps {
   onEditQueue?: (concatenatedContent: string) => void;
 }
 
-export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
+/**
+ * ChatInput component - memoized to prevent re-renders when props haven't changed.
+ *
+ * Performance note: If you're experiencing lag while typing with a large chat history,
+ * ensure callback props (onSubmit, onChange, etc.) are memoized with useCallback,
+ * and avoid passing new object/array references on every render.
+ */
+export const ChatInput = memo(forwardRef<ChatInputRef, ChatInputProps>(
   (
     {
       size = 'md',
@@ -1316,26 +1324,25 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
               }
               position="top"
             >
-              <button
-                type="button"
-                className={`${styles.multilineToggle} ${isMultilineMode ? styles.active : ''}`}
+              <IconButton
+                icon={
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M2 4h12v1H2V4zm0 3h8v1H2V7zm0 3h10v1H2v-1zm0 3h6v1H2v-1z" />
+                  </svg>
+                }
+                variant={isMultilineMode ? 'primary' : 'ghost'}
                 onClick={() => setIsMultilineMode(!isMultilineMode)}
                 aria-label={isMultilineMode ? 'Switch to single line mode' : 'Switch to multiline mode'}
                 disabled={disabled}
-              >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M2 4h12v1H2V4zm0 3h8v1H2V7zm0 3h10v1H2v-1zm0 3h6v1H2v-1z" />
-                </svg>
-              </button>
+              />
             </Tooltip>
 
-            <Button
+            <IconButton
+              icon={loading ? <Spinner size="sm" /> : sendButtonContent || <SendIcon />}
               variant="primary"
-              size={size}
               onClick={handleSubmit}
               disabled={!canSubmit}
               aria-label="Send message"
-              icon={loading ? <Spinner size="sm" /> : sendButtonContent || <SendIcon />}
             />
           </div>
         </div>
@@ -1361,6 +1368,6 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
       </div>
     );
   }
-);
+));
 
 ChatInput.displayName = 'ChatInput';

@@ -42,6 +42,8 @@ export interface IdeaAgentToolCall {
   duration?: number;
   /** Whether the tool execution is complete */
   completed?: boolean;
+  /** Whether the tool execution was cancelled */
+  cancelled?: boolean;
 }
 
 /**
@@ -531,9 +533,17 @@ export function useIdeaAgent({
             break;
 
           case 'message_complete':
-            // Message is complete
+            // Message is complete - mark both the original message AND any continuation message as not streaming
             if (data.messageId) {
+              // Mark the original message as not streaming
               updateMessage(data.messageId, { isStreaming: false });
+
+              // Also mark any continuation message as not streaming
+              // (continuation messages have IDs like "${originalId}-cont-${timestamp}")
+              if (currentMessageIdRef.current && currentMessageIdRef.current !== data.messageId) {
+                updateMessage(currentMessageIdRef.current, { isStreaming: false });
+              }
+
               currentMessageIdRef.current = null;
               setIsLoading(false);
               progress.clearProgress();
@@ -789,9 +799,19 @@ export function useIdeaAgent({
         type: 'cancel',
       }));
 
-      // Mark any streaming message as complete
+      // Mark any streaming message as complete and mark pending tool calls as cancelled
       if (currentMessageIdRef.current) {
-        updateMessage(currentMessageIdRef.current, { isStreaming: false });
+        updateMessage(currentMessageIdRef.current, {
+          isStreaming: false,
+          toolCalls: (prev) => prev?.map((tc) => {
+            // Mark incomplete tool calls as cancelled
+            if (!tc.completed && !tc.output) {
+              return { ...tc, cancelled: true };
+            }
+
+            return tc;
+          }),
+        });
         currentMessageIdRef.current = null;
       }
 

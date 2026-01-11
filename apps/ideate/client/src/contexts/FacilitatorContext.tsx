@@ -17,6 +17,8 @@ export interface ToolCall {
   output?: string;
   /** When the tool call started (for timing display) */
   startTime?: number;
+  /** Whether the tool execution was cancelled */
+  cancelled?: boolean;
 }
 
 /**

@@ -9,7 +9,7 @@ import { PauseIcon } from '@ui-kit/icons/PauseIcon';
 import { FileIcon } from '@ui-kit/icons/FileIcon';
 import { ListIcon } from '@ui-kit/icons/ListIcon';
 import { EditIcon } from '@ui-kit/icons/EditIcon';
-import { ChatPanel, ChatInput, ThinkingIndicator, MessageQueue, OpenQuestionsResolver, type ChatInputSubmitData, type ChatInputRef, type ChatPanelMessage, type QueuedMessage, type TopicReference as ChatTopicReference, type ChatMessagePart } from '@ui-kit/react-chat';
+import { VirtualizedChatPanel, ChatInput, ThinkingIndicator, MessageQueue, OpenQuestionsResolver, type ChatInputSubmitData, type ChatInputRef, type VirtualizedChatPanelMessage, type QueuedMessage, type TopicReference as ChatTopicReference, type ChatMessagePart } from '@ui-kit/react-chat';
 import { MarkdownCoEditor, type ViewMode, type CoAuthor } from '@ui-kit/react-markdown';
 import { ItemPickerDialog, DiskItemProvider } from '@ui-kit/react-pickers';
 import { useResource } from '@claude-flow/data-bus/react';
@@ -898,9 +898,9 @@ export function IdeaDialog({
 
   // Convert agent messages to ChatPanel format
   const agentName = phase === 'executing' ? 'Execute Agent' : phase === 'planning' ? 'Plan Agent' : 'Idea Agent';
-  const chatMessages: ChatPanelMessage[] = useMemo(() => {
+  const chatMessages: VirtualizedChatPanelMessage[] = useMemo(() => {
     return agentMessages
-      .map((msg): ChatPanelMessage | null => {
+      .map((msg): VirtualizedChatPanelMessage | null => {
         // Strip XML structured events from assistant messages (they're handled separately)
         const cleanContent = msg.role === 'assistant'
           ? stripStructuredEvents(msg.content)
@@ -968,7 +968,7 @@ export function IdeaDialog({
           toolCalls, // Fall back to tool calls for backward compatibility
         };
       })
-      .filter((msg): msg is ChatPanelMessage => msg !== null);
+      .filter((msg): msg is VirtualizedChatPanelMessage => msg !== null);
   }, [agentMessages, user?.name, agentName]);
 
   // Get suggested responses from the active agent based on current phase
@@ -1891,7 +1891,7 @@ export function IdeaDialog({
                     />
                   </div>
 
-                  <ChatPanel
+                  <VirtualizedChatPanel
                     messages={chatMessages}
                     emptyState={chatEmptyState}
                     className={styles.chatPanel}

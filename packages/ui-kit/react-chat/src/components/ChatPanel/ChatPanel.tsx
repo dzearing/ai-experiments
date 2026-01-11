@@ -1,5 +1,6 @@
-import { type ReactNode, useEffect, useRef } from 'react';
+import { type ReactNode, useRef, memo, useCallback } from 'react';
 import { ChatMessage, type ChatMessageProps, type ChatMessageToolCall, type ChatMessagePart } from '../ChatMessage';
+import { useScrollLock } from '../../hooks/useScrollLock';
 import styles from './ChatPanel.module.css';
 
 /**
@@ -50,8 +51,16 @@ export interface ChatPanelProps {
   /** Typing users for group chat indicators */
   typingUsers?: string[];
 
-  /** Whether to auto-scroll to bottom on new messages */
+  /**
+   * Whether to auto-scroll to bottom on new messages.
+   * When true (default), uses smart scroll-lock behavior:
+   * - Locked: Auto-scrolls to new messages
+   * - Unlocked: User scrolled up, stays at position until they scroll back to bottom
+   */
   autoScroll?: boolean;
+
+  /** Called when scroll lock state changes */
+  onScrollLockChange?: (locked: boolean) => void;
 
   /** Additional CSS class */
   className?: string;
@@ -83,14 +92,17 @@ export interface ChatPanelProps {
  * - ChatRoom (group chat)
  * - FacilitatorOverlay (AI facilitator)
  * - IdeaWorkspaceOverlay (idea agent)
+ *
+ * Memoized to prevent re-renders when parent state changes but messages haven't.
  */
-export function ChatPanel({
+export const ChatPanel = memo(function ChatPanel({
   messages,
   emptyState,
   isLoading = false,
   loadingText = 'Thinking...',
   typingUsers = [],
   autoScroll = true,
+  onScrollLockChange,
   className = '',
   renderAvatar,
   messageMenuItems,
@@ -99,16 +111,22 @@ export function ChatPanel({
 }: ChatPanelProps) {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    if (autoScroll && messagesContainerRef.current) {
-      // Scroll the messages container directly to avoid scrolling wrong ancestor
-      const container = messagesContainerRef.current;
-      container.scrollTop = container.scrollHeight;
-    }
-  }, [messages, autoScroll]);
+  // Smart scroll lock behavior
+  const { lockState, scrollToBottom, hasNewContent, setLockState, clearNewContent } = useScrollLock(
+    messagesContainerRef,
+    { initialState: autoScroll ? 'locked' : 'unlocked' }
+  );
+
+  // Notify parent of scroll lock changes
+  const handleJumpToBottom = useCallback(() => {
+    setLockState('locked');
+    scrollToBottom();
+    clearNewContent();
+    onScrollLockChange?.(true);
+  }, [setLockState, scrollToBottom, clearNewContent, onScrollLockChange]);
 
   const containerClasses = [styles.container, className].filter(Boolean).join(' ');
+  const showJumpToBottom = autoScroll && lockState === 'unlocked' && hasNewContent;
 
   return (
     <div className={containerClasses}>
@@ -134,7 +152,7 @@ export function ChatPanel({
                 isConsecutive={isConsecutive}
                 isStreaming={message.isStreaming}
                 toolCalls={message.toolCalls}
-                renderMarkdown={message.renderMarkdown ?? !message.isOwn}
+                renderMarkdown={message.renderMarkdown ?? true}
                 avatar={renderAvatar ? renderAvatar(message) : message.avatar}
                 menuItems={messageMenuItems}
                 onMenuSelect={onMessageMenuSelect}
@@ -143,6 +161,19 @@ export function ChatPanel({
             );
           })}
         </div>
+      )}
+
+      {/* Jump to bottom button - shows when user scrolled up and new messages arrived */}
+      {showJumpToBottom && (
+        <button
+          type="button"
+          className={styles.jumpToBottom}
+          onClick={handleJumpToBottom}
+          aria-label="Jump to latest messages"
+        >
+          <span className={styles.jumpToBottomArrow}>↓</span>
+          <span className={styles.jumpToBottomText}>New messages</span>
+        </button>
       )}
 
       {/* Loading indicator */}
@@ -172,8 +203,6 @@ export function ChatPanel({
       )}
     </div>
   );
-}
-
-ChatPanel.displayName = 'ChatPanel';
+});
 
 export default ChatPanel;

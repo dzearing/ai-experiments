@@ -609,10 +609,27 @@ export function useFacilitatorSocket({
       }));
       log.log(' Sent cancel request');
 
-      // Mark the current message as complete (if streaming)
+      // Mark the current message as complete and mark pending tool calls as cancelled
       if (currentMessageIdRef.current) {
         updateMessage(currentMessageIdRef.current, {
           isStreaming: false,
+          parts: (prev) => prev.map((part) => {
+            if (part.type === 'tool_calls') {
+              return {
+                ...part,
+                calls: part.calls.map((tc) => {
+                  // Mark incomplete tool calls as cancelled
+                  if (!tc.output) {
+                    return { ...tc, cancelled: true };
+                  }
+
+                  return tc;
+                }),
+              };
+            }
+
+            return part;
+          }),
         });
         currentMessageIdRef.current = null;
       }

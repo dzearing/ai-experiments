@@ -580,6 +580,9 @@ importers:
 
   packages/ui-kit/react-chat:
     dependencies:
+      '@tanstack/react-virtual':
+        specifier: ^3.11.2
+        version: 3.13.12(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@tiptap/core':
         specifier: ^2.10.0
         version: 2.27.1(@tiptap/pm@2.27.1)

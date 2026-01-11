@@ -46,7 +46,7 @@ const sampleQuestions: OpenQuestion[] = [
 ];
 
 const meta = {
-  title: 'Chat/OpenQuestionsResolver',
+  title: 'React Chat/OpenQuestionsResolver',
   component: OpenQuestionsResolver,
   tags: ['autodocs'],
   parameters: {

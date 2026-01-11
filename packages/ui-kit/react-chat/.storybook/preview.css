@@ -27,6 +27,7 @@ html, body, #storybook-root {
 /* Fullscreen stories - no padding, fill viewport exactly */
 .storyWrapper.fullscreen {
   padding: 0;
+  height: 100%;
   min-height: 100vh;
   border-radius: 0;
   overflow: auto;
@@ -38,5 +39,6 @@ html, body, #storybook-root {
 }
 
 #storybook-root > .storyWrapper.fullscreen {
+  height: 100%;
   min-height: 100vh;
 }

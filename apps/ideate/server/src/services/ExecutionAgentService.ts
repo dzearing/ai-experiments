@@ -388,6 +388,7 @@ Begin executing these tasks in order. Report progress after each task completion
           cwd: workDir,
           maxTurns: 300,
           includePartialMessages: true,
+          allowedTools: ['WebSearch'],
           mcpServers: { ideate: ideateMcpServer },
           // Pass through environment to ensure node is findable (needed for nvm setups)
           env: process.env as Record<string, string>,
@@ -474,8 +475,8 @@ Begin executing these tasks in order. Report progress after each task completion
             this.addTextToSegments(session, textToAppend);
             this.dispatchOrQueue(ideaId, { type: 'text_chunk', data: textToAppend, messageId, timestamp: Date.now() });
             await this.processStructuredEvents(ideaId, session.accumulatedResponse, userId);
-          } else if (block.type === 'tool_use') {
-            console.log(`[ExecutionAgentService] tool_use block: ${block.name}`);
+          } else if (block.type === 'tool_use' || block.type === 'server_tool_use') {
+            console.log(`[ExecutionAgentService] ${block.type} block: ${block.name}`);
             // Track this tool as pending with its input for persistence
             const toolInput = block.input as Record<string, unknown> | undefined;
             session.pendingTools.push({ name: block.name, startTime: Date.now(), input: toolInput });

@@ -664,7 +664,7 @@ Feel free to share any details, and I'll start building out the phases and tasks
         options: {
           systemPrompt,
           model: effectiveModel,
-          tools: [], // No built-in tools, only MCP tools
+          tools: ['WebSearch'],
           mcpServers: { 'topic-tools': topicToolsServer },
           permissionMode: 'bypassPermissions',
           allowDangerouslySkipPermissions: true,
@@ -707,10 +707,10 @@ Feel free to share any details, and I'll start building out the phases and tasks
             for (const block of msgContent) {
               if (block.type === 'text') {
                 newText += block.text;
-              } else if (block.type === 'tool_use') {
-                // Tool use - emit progress event
-                const toolUseBlock = block as { type: 'tool_use'; id?: string; name: string; input: Record<string, unknown> };
-                console.log(`[PlanAgentService] Tool use: ${toolUseBlock.name}`);
+              } else if (block.type === 'tool_use' || block.type === 'server_tool_use') {
+                // Tool use - emit progress event (including server-side tools like WebSearch)
+                const toolUseBlock = block as { type: 'tool_use' | 'server_tool_use'; id?: string; name: string; input: Record<string, unknown> };
+                console.log(`[PlanAgentService] Tool use (${block.type}): ${toolUseBlock.name}`);
                 pendingToolCalls.push({
                   id: toolUseBlock.id || '',
                   name: toolUseBlock.name,

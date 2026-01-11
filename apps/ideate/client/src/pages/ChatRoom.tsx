@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from '@ui-kit/router';
 import { Avatar, AvatarGroup, Button, IconButton, Spinner, Modal } from '@ui-kit/react';
-import { ChatInput, ChatMessage, type ChatInputSubmitData } from '@ui-kit/react-chat';
+import { ChatInput, VirtualizedChatPanel, type ChatInputSubmitData, type VirtualizedChatPanelMessage } from '@ui-kit/react-chat';
 import { ArrowLeftIcon } from '@ui-kit/icons/ArrowLeftIcon';
 import { EditIcon } from '@ui-kit/icons/EditIcon';
 import { TrashIcon } from '@ui-kit/icons/TrashIcon';
@@ -11,44 +11,6 @@ import { useChat, type ChatRoomMetadata, type ChatMessage as ChatMessageData } f
 import { useChatSocket } from '../hooks/useChatSocket';
 import { useWorkspaceSocket, type ResourcePresence } from '../hooks/useWorkspaceSocket';
 import styles from './ChatRoom.module.css';
-
-function formatDate(dateString: string): string {
-  const date = new Date(dateString);
-  const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-
-  if (date.toDateString() === today.toDateString()) {
-    return 'Today';
-  } else if (date.toDateString() === yesterday.toDateString()) {
-    return 'Yesterday';
-  } else {
-    return date.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
-  }
-}
-
-interface MessageGroup {
-  date: string;
-  messages: ChatMessageData[];
-}
-
-function groupMessagesByDate(messages: ChatMessageData[]): MessageGroup[] {
-  const groups: MessageGroup[] = [];
-  let currentGroup: MessageGroup | null = null;
-
-  for (const message of messages) {
-    const dateKey = new Date(message.createdAt).toDateString();
-
-    if (!currentGroup || currentGroup.date !== dateKey) {
-      currentGroup = { date: dateKey, messages: [] };
-      groups.push(currentGroup);
-    }
-
-    currentGroup.messages.push(message);
-  }
-
-  return groups;
-}
 
 export function ChatRoom() {
   const { chatRoomId } = useParams<{ chatRoomId: string }>();
@@ -64,7 +26,6 @@ export function ChatRoom() {
   const [escapeCount, setEscapeCount] = useState(0);
   const escapeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Track active users in this chat room
   const [activeUsers, setActiveUsers] = useState<ResourcePresence[]>([]);
@@ -155,11 +116,6 @@ export function ChatRoom() {
     onStopTyping: handleStopTyping,
   });
 
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
   // Handle chat input submit
   const handleChatSubmit = useCallback((data: ChatInputSubmitData) => {
     if (!data.content.trim()) return;
@@ -169,14 +125,17 @@ export function ChatRoom() {
   }, [sendMessage, sendStopTyping]);
 
   // Handle menu actions
-  const handleMessageMenuSelect = useCallback((value: string, message: ChatMessageData) => {
+  const handleMessageMenuSelect = useCallback((value: string, messageId: string) => {
+    const message = messages.find(m => m.id === messageId);
+    if (!message) return;
+
     if (value === 'edit') {
       setEditingMessage(message);
       setEscapeCount(0);
     } else if (value === 'delete') {
-      deleteMessage(message.id);
+      deleteMessage(messageId);
     }
-  }, [deleteMessage]);
+  }, [deleteMessage, messages]);
 
   // Handle edit overlay submit
   const handleEditSubmit = useCallback((data: ChatInputSubmitData) => {
@@ -221,23 +180,35 @@ export function ChatRoom() {
     };
   }, []);
 
-  // Menu items for message actions
+  // Menu items for message actions (only shown for own messages)
   const messageMenuItems = useMemo(() => [
     { value: 'edit', label: 'Edit', icon: <EditIcon /> },
     { value: 'delete', label: 'Delete', icon: <TrashIcon />, danger: true },
   ], []);
 
-  // Group messages by date
-  const messageGroups = useMemo(() => groupMessagesByDate(messages), [messages]);
+  // Convert messages to VirtualizedChatPanel format
+  const chatMessages: VirtualizedChatPanelMessage[] = useMemo(() => {
+    return messages.map((message) => {
+      const isOwnMessage = message.senderId === user?.id;
 
-  // Typing indicator text
-  const typingText = useMemo(() => {
-    const names = Array.from(typingUsers.values());
-    if (names.length === 0) return null;
-    if (names.length === 1) return `${names[0]} is typing...`;
-    if (names.length === 2) return `${names[0]} and ${names[1]} are typing...`;
-    return `${names.slice(0, 2).join(', ')} and ${names.length - 2} others are typing...`;
-  }, [typingUsers]);
+      return {
+        id: message.id,
+        content: message.content,
+        timestamp: message.createdAt,
+        senderName: message.senderName,
+        senderColor: message.senderColor,
+        isOwn: isOwnMessage,
+        renderMarkdown: true,
+      };
+    });
+  }, [messages, user?.id]);
+
+  // Empty state for chat
+  const emptyState = useMemo(() => (
+    <div className={styles.emptyState}>
+      <p>No messages yet. Start the conversation!</p>
+    </div>
+  ), []);
 
   // Connection status
   const connectionStatus = useMemo(() => {
@@ -304,55 +275,14 @@ export function ChatRoom() {
       </header>
 
       {/* Messages */}
-      <div className={styles.messagesContainer}>
-        {messageGroups.length === 0 ? (
-          <div className={styles.emptyState}>
-            <p>No messages yet. Start the conversation!</p>
-          </div>
-        ) : (
-          messageGroups.map((group) => (
-            <div key={group.date} className={styles.dateGroup}>
-              <div className={styles.dateDivider}>
-                <span className={styles.dateLabel}>{formatDate(group.messages[0].createdAt)}</span>
-              </div>
-              {group.messages.map((message, index) => {
-                // Check if previous message is from same sender (to hide avatar/name)
-                const prevMessage = index > 0 ? group.messages[index - 1] : null;
-                const isConsecutive = prevMessage !== null && prevMessage.senderId === message.senderId;
-                const isOwnMessage = message.senderId === user.id;
-
-                return (
-                  <ChatMessage
-                    key={message.id}
-                    id={message.id}
-                    content={message.content}
-                    timestamp={message.createdAt}
-                    senderName={message.senderName}
-                    senderColor={message.senderColor}
-                    isOwn={isOwnMessage}
-                    isConsecutive={isConsecutive}
-                    menuItems={isOwnMessage ? messageMenuItems : undefined}
-                    onMenuSelect={(value) => handleMessageMenuSelect(value, message)}
-                  />
-                );
-              })}
-            </div>
-          ))
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Typing indicator */}
-      {typingText && (
-        <div className={styles.typingIndicator}>
-          <span className={styles.typingDots}>
-            <span />
-            <span />
-            <span />
-          </span>
-          <span className={styles.typingText}>{typingText}</span>
-        </div>
-      )}
+      <VirtualizedChatPanel
+        messages={chatMessages}
+        emptyState={emptyState}
+        messageMenuItems={messageMenuItems}
+        onMessageMenuSelect={handleMessageMenuSelect}
+        typingUsers={Array.from(typingUsers.values())}
+        className={styles.messagesContainer}
+      />
 
       {/* Input */}
       <div className={styles.inputContainer}>

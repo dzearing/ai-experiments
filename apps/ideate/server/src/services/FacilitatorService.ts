@@ -773,7 +773,7 @@ Example format:
           cwd: FacilitatorService.ISOLATED_CWD, // Prevent loading CLAUDE.md from monorepo
           includePartialMessages: true, // Enable streaming events for thinking, etc.
           maxThinkingTokens: 8000, // Enable extended thinking
-          tools: [], // Disable built-in tools - only MCP tools are available
+          tools: ['WebSearch'],
           mcpServers: { facilitator: mcpServer }, // Native MCP tools for proper streaming
           maxTurns: 20, // Allow up to 20 tool iterations
         },
@@ -905,10 +905,10 @@ Example format:
                 // Thinking block in final response
                 const thinkingBlock = block as { type: 'thinking'; thinking: string };
                 callbacks.onThinking?.(thinkingBlock.thinking, messageId);
-              } else if (block.type === 'tool_use') {
-                // MCP or SDK native tool use
-                const sdkToolCall = block as { type: 'tool_use'; name: string; input: Record<string, unknown> };
-                console.log(`[FacilitatorService] Tool use: ${sdkToolCall.name}`, sdkToolCall.input);
+              } else if (block.type === 'tool_use' || block.type === 'server_tool_use') {
+                // MCP, SDK native tool use, or server-side tools (WebSearch, WebFetch)
+                const sdkToolCall = block as { type: 'tool_use' | 'server_tool_use'; name: string; input: Record<string, unknown> };
+                console.log(`[FacilitatorService] Tool use (${block.type}): ${sdkToolCall.name}`, sdkToolCall.input);
                 callbacks.onToolUse({
                   name: sdkToolCall.name,
                   input: sdkToolCall.input || {},

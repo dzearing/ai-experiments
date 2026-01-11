@@ -351,39 +351,6 @@
   flex-shrink: 0;
 }
 
-/* Multiline toggle button */
-.multilineToggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-sm);
-  color: var(--base-fg-soft);
-  cursor: pointer;
-  transition:
-    background-color var(--duration-fast) var(--ease-default),
-    color var(--duration-fast) var(--ease-default);
-}
-
-.multilineToggle:hover:not(:disabled) {
-  background: var(--soft-bg);
-  color: var(--base-fg);
-}
-
-.multilineToggle.active {
-  background: var(--primary-bg);
-  color: var(--primary-fg);
-}
-
-.multilineToggle:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 /* Drop overlay */
 .dropOverlay {
   position: absolute;
@@ -408,10 +375,6 @@
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .container {
-    transition: none;
-  }
-
-  .multilineToggle {
     transition: none;
   }
 

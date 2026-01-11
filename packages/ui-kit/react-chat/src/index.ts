@@ -19,8 +19,8 @@ export type {
 } from './components/ChatMessage';
 
 // ChatPanel component and related types
-export { ChatPanel } from './components/ChatPanel';
-export type { ChatPanelProps, ChatPanelMessage } from './components/ChatPanel';
+export { ChatPanel, VirtualizedChatPanel } from './components/ChatPanel';
+export type { ChatPanelProps, ChatPanelMessage, VirtualizedChatPanelProps, VirtualizedChatPanelMessage } from './components/ChatPanel';
 
 // ThinkingIndicator component and related types
 export { ThinkingIndicator } from './components/ThinkingIndicator';
@@ -42,6 +42,7 @@ export type { TopicReference } from './components/ChatInput/TopicReferencePopove
 
 // Hooks
 export { useMessageHistory } from './components/ChatInput/useMessageHistory';
+export { useScrollLock, type ScrollLockState, type UseScrollLockOptions, type UseScrollLockResult } from './hooks';
 
 // OpenQuestionsResolver component and related types
 export { OpenQuestionsResolver } from './components/OpenQuestionsResolver';
