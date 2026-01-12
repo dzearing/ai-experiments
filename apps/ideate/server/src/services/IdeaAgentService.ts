@@ -405,14 +405,25 @@ export class IdeaAgentService {
   /**
    * Abort the current session for an idea.
    * Called when user presses Escape to explicitly cancel.
+   * Follows session transfers to find the correct session.
    */
   abortSession(ideaId: string): void {
-    const session = this.activeSessions.get(ideaId);
+    // Follow any session transfer to find the current key
+    const effectiveId = this.sessionTransfers.get(ideaId) || ideaId;
+
+    // Try to find session at either key
+    const session = this.activeSessions.get(effectiveId) || this.activeSessions.get(ideaId);
     if (session?.currentAbortController) {
-      console.log(`[IdeaAgentService] Aborting session for idea ${ideaId}`);
+      console.log(`[IdeaAgentService] Aborting session for idea ${effectiveId} (requested: ${ideaId})`);
       session.currentAbortController.abort();
       session.status = 'idle';
       session.currentAbortController = undefined;
+
+      // Broadcast the status change so UI updates immediately
+      const agentFinishedAt = new Date().toISOString();
+      this.onSessionStateChange?.(session.ideaId, 'idle', session.userId, session.workspaceId, undefined, agentFinishedAt);
+    } else {
+      console.log(`[IdeaAgentService] No active session to abort for idea ${ideaId} (effective: ${effectiveId})`);
     }
   }
 
@@ -717,6 +728,12 @@ export class IdeaAgentService {
 
       // Stream response in real-time
       for await (const message of response) {
+        // Check abort signal at start of each iteration
+        if (abortController.signal.aborted) {
+          console.log(`[IdeaAgentService] Abort detected, breaking out of stream loop`);
+          break;
+        }
+
         if (message.type === 'assistant') {
           const assistantMsg = message as SDKAssistantMessage;
           const msgContent = assistantMsg.message.content;
@@ -867,6 +884,17 @@ export class IdeaAgentService {
             return;
           }
         }
+      }
+
+      // If aborted, skip all post-processing and clean up
+      if (abortController.signal.aborted) {
+        console.log(`[IdeaAgentService] Request was aborted, skipping post-processing`);
+        // Mark agent inactive in Yjs room
+        if (this.yjsHandler && documentRoomName) {
+          this.yjsHandler.markAgentInactive(documentRoomName);
+        }
+        // Status was already broadcast in abortSession(), just return
+        return;
       }
 
       // Parse suggested responses FIRST (before any streaming of remaining content)

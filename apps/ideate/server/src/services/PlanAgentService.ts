@@ -277,6 +277,9 @@ export class PlanAgentService {
       session.currentAbortController.abort();
       session.status = 'idle';
       session.currentAbortController = undefined;
+
+      // Broadcast state change so UI updates immediately
+      this.onSessionStateChange?.(ideaId, 'idle', session.userId, session.workspaceId);
     }
   }
 

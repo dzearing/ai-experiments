@@ -106,12 +106,14 @@ export interface ExecutionSession {
   ideaId: string;
   phaseId: string;
   userId: string;
-  status: 'running' | 'paused' | 'blocked' | 'completed' | 'error';
+  status: 'running' | 'paused' | 'blocked' | 'completed' | 'error' | 'idle';
   startedAt: number;
   /** Messages to replay when client reconnects */
   queuedMessages: QueuedMessage[];
   /** Whether a client is currently connected */
   clientConnected: boolean;
+  /** Abort controller for cancelling execution */
+  abortController?: AbortController;
   /** Current message being streamed */
   currentMessageId?: string;
   /** Accumulated response text */

@@ -88,6 +88,47 @@ export class ExecutionAgentService {
     return session !== undefined && session.status === 'running';
   }
 
+  /**
+   * Abort the current execution session for an idea.
+   * Called when user presses Escape to explicitly cancel.
+   */
+  abortSession(ideaId: string): void {
+    const session = this.activeSessions.get(ideaId);
+    if (session && session.status === 'running') {
+      console.log(`[ExecutionAgentService] Aborting session for idea ${ideaId}`);
+      session.abortController?.abort();
+      session.status = 'idle';
+      session.stopReason = 'paused_by_user';
+      session.abortController = undefined;
+
+      // Notify clients of the status change
+      this.dispatchOrQueue(ideaId, {
+        type: 'session_state',
+        data: { status: 'idle', stopReason: 'paused_by_user' },
+        timestamp: Date.now(),
+      });
+
+      // Broadcast state change
+      this.broadcastStateChange(ideaId);
+    } else {
+      console.log(`[ExecutionAgentService] No running session to abort for idea ${ideaId} (status: ${session?.status || 'none'})`);
+    }
+  }
+
+  /**
+   * Broadcast execution state change to workspace clients.
+   */
+  private async broadcastStateChange(ideaId: string): Promise<void> {
+    try {
+      const idea = await this.ideaService.getIdeaByIdNoAuth(ideaId);
+      if (idea && this.onExecutionStateChange) {
+        this.onExecutionStateChange(ideaId, idea);
+      }
+    } catch (error) {
+      console.error(`[ExecutionAgentService] Error broadcasting state change for ${ideaId}:`, error);
+    }
+  }
+
   /** Register callbacks for a client connection. Replays any queued messages. */
   registerClient(ideaId: string, callbacks: ExecutionStreamCallbacks): void {
     this.clientCallbacks.set(ideaId, callbacks);
@@ -138,6 +179,9 @@ export class ExecutionAgentService {
     userId: string,
     pauseBetweenPhases: boolean = false
   ): Promise<ExecutionSession> {
+    // Create abort controller for cancellation
+    const abortController = new AbortController();
+
     const session: ExecutionSession = {
       ideaId,
       phaseId,
@@ -157,6 +201,7 @@ export class ExecutionAgentService {
       messageSegments: [],
       pauseBetweenPhases,
       stopReason: 'running',
+      abortController,
     };
     this.activeSessions.set(ideaId, session);
 
@@ -211,6 +256,9 @@ export class ExecutionAgentService {
       const phaseId = session?.phaseId || firstIncompletePhase?.id || plan.phases[plan.phases.length - 1]?.id || 'default';
       console.log(`[ExecutionAgentService] Determined phaseId for new conversation: ${phaseId} (firstIncomplete: ${firstIncompletePhase?.title || 'none'})`);
 
+      // Create abort controller for cancellation
+      const abortController = new AbortController();
+
       const newSession: ExecutionSession = {
         ideaId,
         phaseId,
@@ -228,6 +276,7 @@ export class ExecutionAgentService {
         completedToolCalls: [],
         messageSegments: [],
         pauseBetweenPhases: false, // Default to false for ad-hoc messages
+        abortController,
       };
       this.activeSessions.set(ideaId, newSession);
 
@@ -405,7 +454,19 @@ Begin executing these tasks in order. Report progress after each task completion
       });
 
       for await (const message of response) {
+        // Check abort signal at start of each iteration
+        if (session.abortController?.signal.aborted) {
+          console.log(`[ExecutionAgentService] Abort detected, breaking out of stream loop`);
+          break;
+        }
         await this.processStreamMessage(ideaId, session, message, messageId, userId);
+      }
+
+      // If aborted, skip all post-processing and clean up
+      if (session.abortController?.signal.aborted) {
+        console.log(`[ExecutionAgentService] Request was aborted, skipping post-processing`);
+        // Status was already broadcast in abortSession(), just return
+        return;
       }
 
       // Save any remaining accumulated content (text or tools not yet saved)

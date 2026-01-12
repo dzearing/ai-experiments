@@ -380,8 +380,9 @@ export class ExecutionAgentWebSocketHandler {
           break;
 
         case 'cancel':
-          client.muted = true;
-          console.log(`[ExecutionAgent] Client ${client.clientId} muted (execution continues in background)`);
+          // Actually abort the session, not just mute
+          this.executionAgentService.abortSession(client.ideaId);
+          console.log(`[ExecutionAgent] Client ${client.clientId} cancelled execution for idea ${client.ideaId}`);
           break;
 
         default:
