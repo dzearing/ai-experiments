@@ -30,6 +30,8 @@ interface ClientMessage {
   content?: string;
   /** Limit for history retrieval */
   limit?: number;
+  /** Whether to pause between phases (default: false = auto-continue) */
+  pauseBetweenPhases?: boolean;
 }
 
 /**
@@ -105,6 +107,8 @@ interface ExecutionAgentClient {
   isPaused: boolean;
   /** Whether client wants to stop receiving updates */
   muted: boolean;
+  /** Whether to pause between phases (default: false = auto-continue) */
+  pauseBetweenPhases: boolean;
 }
 
 /**
@@ -179,6 +183,7 @@ export class ExecutionAgentWebSocketHandler {
       currentPhaseId: null,
       isPaused: false,
       muted: false,
+      pauseBetweenPhases: false,
     };
 
     this.clients.set(ws, client);
@@ -303,12 +308,13 @@ export class ExecutionAgentWebSocketHandler {
           break;
 
         case 'start_execution':
-          console.log(`[ExecutionAgent] Received start_execution: ideaId=${client.ideaId}, phaseId=${clientMessage.phaseId}, hasIdea=${!!clientMessage.idea}, hasPlan=${!!clientMessage.plan}`);
+          console.log(`[ExecutionAgent] Received start_execution: ideaId=${client.ideaId}, phaseId=${clientMessage.phaseId}, hasIdea=${!!clientMessage.idea}, hasPlan=${!!clientMessage.plan}, pauseBetweenPhases=${clientMessage.pauseBetweenPhases}`);
           if (clientMessage.idea && clientMessage.plan && clientMessage.phaseId) {
             client.ideaContext = clientMessage.idea;
             client.plan = clientMessage.plan;
             client.currentPhaseId = clientMessage.phaseId;
             client.isPaused = false;
+            client.pauseBetweenPhases = clientMessage.pauseBetweenPhases ?? false;
             console.log(`[ExecutionAgent] Calling handleStartExecution for idea: ${clientMessage.idea.title}`);
             await this.handleStartExecution(client);
           } else {
@@ -399,14 +405,15 @@ export class ExecutionAgentWebSocketHandler {
     }
 
     try {
-      console.log(`[ExecutionAgent] Calling executionAgentService.startExecution for idea: ${client.ideaContext.title}`);
-      // Start execution in background - service handles everytopic
+      console.log(`[ExecutionAgent] Calling executionAgentService.startExecution for idea: ${client.ideaContext.title}, pauseBetweenPhases=${client.pauseBetweenPhases}`);
+      // Start execution in background - service handles everything
       await this.executionAgentService.startExecution(
         client.ideaId,
         client.ideaContext,
         client.plan,
         client.currentPhaseId,
-        client.userId
+        client.userId,
+        client.pauseBetweenPhases
       );
       console.log(`[ExecutionAgent] executionAgentService.startExecution completed (async started)`);
     } catch (error) {

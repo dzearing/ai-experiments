@@ -739,7 +739,10 @@ export function IdeaDialog({
     enabled: open && phase === 'executing' && !!(currentIdea?.id || idea?.id),
   });
 
-  // Auto-continue to next phase when a phase completes and pauseBetweenPhases is false
+  // NOTE: Auto-continue is now handled server-side in ExecutionAgentService.
+  // This client-side effect is kept as a fallback for edge cases where
+  // the server doesn't auto-continue (e.g., reconnection scenarios).
+  // It checks if execution is already running to avoid duplicates.
   useEffect(() => {
     const phases = plan?.phases;
     if (!completedPhaseId || !phases || pauseBetweenPhasesRef.current) {
@@ -750,6 +753,13 @@ export function IdeaDialog({
           pauseBetweenPhases: pauseBetweenPhasesRef.current,
         });
       }
+      return;
+    }
+
+    // Server handles auto-continue now - skip if execution is already running
+    if (executeAgent.isExecuting) {
+      log.log('Auto-continue skipped: server is already executing');
+      setCompletedPhaseId(null);
       return;
     }
 
@@ -765,7 +775,7 @@ export function IdeaDialog({
       ? phases[completedIndex + 1]
       : null;
 
-    log.log('Auto-continue evaluating', {
+    log.log('Auto-continue evaluating (client-side fallback)', {
       completedPhaseId,
       completedIndex,
       completedPhaseTitle: phases[completedIndex]?.title,
@@ -780,7 +790,14 @@ export function IdeaDialog({
 
       // Small delay before starting next phase
       const timerId = setTimeout(() => {
-        log.log('Auto-continue starting next phase', {
+        // Double-check execution isn't already running
+        if (executeAgent.isExecuting) {
+          log.log('Auto-continue cancelled: server started execution');
+          setCompletedPhaseId(null);
+          autoContinueInProgressRef.current = false;
+          return;
+        }
+        log.log('Auto-continue starting next phase (client-side fallback)', {
           nextPhaseId: nextPhase.id,
           nextPhaseTitle: nextPhase.title,
         });
@@ -794,7 +811,7 @@ export function IdeaDialog({
           createdAt: plan?.createdAt || new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
-        executeAgent.startExecution(executionIdeaContext, fullPlan, nextPhase.id);
+        executeAgent.startExecution(executionIdeaContext, fullPlan, nextPhase.id, pauseBetweenPhasesRef.current);
         // Clear the completed phase ID and reset guard
         setCompletedPhaseId(null);
         autoContinueInProgressRef.current = false;
@@ -1629,9 +1646,9 @@ export function IdeaDialog({
     setActiveTab('exec-plan');
     // Start execution with the first phase
     const firstPhaseId = fullPlan.phases[0].id;
-    log.log('Calling executeAgent.startExecution', { firstPhaseId, contextId: executionIdeaContext.id });
-    executeAgent.startExecution(executionIdeaContext, fullPlan, firstPhaseId);
-  }, [plan, onStartExecution, executeAgent, executionIdeaContext]);
+    log.log('Calling executeAgent.startExecution', { firstPhaseId, contextId: executionIdeaContext.id, pauseBetweenPhases });
+    executeAgent.startExecution(executionIdeaContext, fullPlan, firstPhaseId, pauseBetweenPhases);
+  }, [plan, onStartExecution, executeAgent, executionIdeaContext, pauseBetweenPhases]);
 
   // Process queued messages when AI finishes thinking - combine all into one message
   useEffect(() => {

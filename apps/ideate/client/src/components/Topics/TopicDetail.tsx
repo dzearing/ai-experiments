@@ -59,7 +59,7 @@ function getPropertyIcon(propDef: PropertyDef) {
 }
 
 /**
- * Path property picker component - shows a button that opens ItemPickerDialog
+ * Path property picker component - shows a link (opens VSCode) with edit button
  */
 function PathPropertyPicker({
   value,
@@ -77,18 +77,31 @@ function PathPropertyPicker({
     setIsDialogOpen(false);
   }, [onChange]);
 
+  // Create VSCode URL for opening the path
+  const vscodeUrl = value ? `vscode://file${value}` : undefined;
+
   return (
     <>
       {value ? (
-        <Button
-          variant="ghost"
-          size="sm"
-          icon={<FolderIcon />}
-          onClick={() => setIsDialogOpen(true)}
-          className={styles.pathButton}
-        >
-          {value}
-        </Button>
+        <div className={styles.pathValueRow}>
+          <Link
+            href={vscodeUrl}
+            noUnderline
+            className={styles.pathLink}
+            title={`Open in VSCode: ${value}`}
+          >
+            <FolderIcon size={16} />
+            <span>{value}</span>
+          </Link>
+          <IconButton
+            icon={<EditIcon />}
+            onClick={() => setIsDialogOpen(true)}
+            aria-label="Change path"
+            variant="ghost"
+            size="sm"
+            className={styles.pathEditButton}
+          />
+        </div>
       ) : (
         <Button
           variant="ghost"

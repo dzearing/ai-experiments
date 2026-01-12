@@ -1058,7 +1058,7 @@ export class IdeaAgentService {
    * The greeting is tailored based on the Topic's type and description.
    */
   private generateTopicContextGreeting(topicContext: TopicContext): string {
-    const { name, type, description } = topicContext;
+    const { name, type } = topicContext;
 
     // Determine contextual prompts based on Topic type
     const typeContexts: Record<string, { activity: string; examples: string }> = {

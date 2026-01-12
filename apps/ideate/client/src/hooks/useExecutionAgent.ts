@@ -211,7 +211,7 @@ export interface UseExecutionAgentReturn {
   /** Agent progress state for ThinkingIndicator */
   progress: AgentProgressState;
   /** Start executing a phase */
-  startExecution: (ideaContext: ExecutionIdeaContext, plan: IdeaPlan, phaseId: string) => void;
+  startExecution: (ideaContext: ExecutionIdeaContext, plan: IdeaPlan, phaseId: string, pauseBetweenPhases?: boolean) => void;
   /** Send a message during execution (for chat) */
   sendMessage: (content: string) => void;
   /** Send feedback during execution (alias for sendMessage) */
@@ -273,6 +273,7 @@ export function useExecutionAgent({
     ideaContext: ExecutionIdeaContext;
     plan: IdeaPlan;
     phaseId: string;
+    pauseBetweenPhases: boolean;
   } | null>(null);
 
   // Keep refs updated
@@ -398,8 +399,8 @@ export function useExecutionAgent({
 
       // Check for pending execution and send it
       if (pendingExecutionRef.current) {
-        const { ideaContext, plan, phaseId } = pendingExecutionRef.current;
-        console.log('[ExecutionAgent] Sending pending execution for phase:', phaseId, 'ideaContext:', ideaContext.id);
+        const { ideaContext, plan, phaseId, pauseBetweenPhases } = pendingExecutionRef.current;
+        console.log('[ExecutionAgent] Sending pending execution for phase:', phaseId, 'ideaContext:', ideaContext.id, 'pauseBetweenPhases:', pauseBetweenPhases);
         setIsExecuting(true);
         setIsPaused(false);
         setIsBlocked(false);
@@ -411,6 +412,7 @@ export function useExecutionAgent({
           idea: ideaContext,
           plan,
           phaseId,
+          pauseBetweenPhases,
         }));
 
         // Clear pending execution
@@ -780,8 +782,8 @@ export function useExecutionAgent({
   }, []);
 
   // Start execution
-  const startExecution = useCallback((ideaContext: ExecutionIdeaContext, plan: IdeaPlan, phaseId: string) => {
-    console.log('[ExecutionAgent] startExecution called:', { ideaId: ideaContext.id, phaseId, wsReadyState: wsRef.current?.readyState });
+  const startExecution = useCallback((ideaContext: ExecutionIdeaContext, plan: IdeaPlan, phaseId: string, pauseBetweenPhases: boolean = false) => {
+    console.log('[ExecutionAgent] startExecution called:', { ideaId: ideaContext.id, phaseId, pauseBetweenPhases, wsReadyState: wsRef.current?.readyState });
     // Set optimistic UI state immediately (before server responds)
     setIsExecuting(true);
     setIsPaused(false);
@@ -798,11 +800,12 @@ export function useExecutionAgent({
         idea: ideaContext,
         plan,
         phaseId,
+        pauseBetweenPhases,
       }));
     } else {
       // WebSocket not connected yet - queue the execution to be sent when connected
       console.log('[ExecutionAgent] Queueing execution (WebSocket not yet open, readyState:', wsRef.current?.readyState, ')');
-      pendingExecutionRef.current = { ideaContext, plan, phaseId };
+      pendingExecutionRef.current = { ideaContext, plan, phaseId, pauseBetweenPhases };
     }
   }, []);
 

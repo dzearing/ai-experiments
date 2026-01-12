@@ -128,13 +128,15 @@ export class ExecutionAgentService {
   /**
    * Start execution of a phase as a background process.
    * Creates a session and begins execution that continues even if client disconnects.
+   * @param pauseBetweenPhases - If true, pause after each phase completes. If false, auto-continue.
    */
   async startExecution(
     ideaId: string,
     ideaContext: ExecutionIdeaContext,
     plan: IdeaPlan,
     phaseId: string,
-    userId: string
+    userId: string,
+    pauseBetweenPhases: boolean = false
   ): Promise<ExecutionSession> {
     const session: ExecutionSession = {
       ideaId,
@@ -153,6 +155,8 @@ export class ExecutionAgentService {
       processedTaskIds: new Set(),
       completedToolCalls: [],
       messageSegments: [],
+      pauseBetweenPhases,
+      stopReason: 'running',
     };
     this.activeSessions.set(ideaId, session);
 
@@ -162,6 +166,8 @@ export class ExecutionAgentService {
       startedAt: new Date().toISOString(),
       currentPhaseId: phaseId,
       waitingForFeedback: false,
+      stopReason: 'running',
+      pauseBetweenPhases,
     });
 
     // Broadcast execution state change to workspace clients
@@ -221,6 +227,7 @@ export class ExecutionAgentService {
         processedTaskIds: new Set(),
         completedToolCalls: [],
         messageSegments: [],
+        pauseBetweenPhases: false, // Default to false for ad-hoc messages
       };
       this.activeSessions.set(ideaId, newSession);
 
@@ -732,7 +739,7 @@ Begin executing these tasks in order. Report progress after each task completion
     if (phaseComplete) {
       this.dispatchOrQueue(ideaId, { type: 'phase_complete', data: phaseComplete, timestamp: Date.now() });
 
-      // Update progress percent when a phase completes
+      // Update progress percent when a phase completes and handle auto-continue
       try {
         const idea = await this.ideaService.getIdeaByIdNoAuth(ideaId);
         if (idea?.plan?.phases) {
@@ -748,13 +755,75 @@ Begin executing these tasks in order. Report progress after each task completion
               ? phases[completedPhaseIndex + 1].id
               : undefined;
 
-            const updatedIdea = await this.ideaService.updateExecutionStateInternal(ideaId, {
-              progressPercent,
-              currentPhaseId: nextPhaseId ?? idea.execution?.currentPhaseId,
-            });
-
-            if (updatedIdea && this.onExecutionStateChange) {
-              this.onExecutionStateChange(ideaId, updatedIdea);
+            if (nextPhaseId) {
+              // There's a next phase
+              if (session?.pauseBetweenPhases) {
+                // Pause between phases - update state and notify
+                console.log(`[ExecutionAgentService] Phase ${phaseComplete.phaseId} complete, pausing before phase ${nextPhaseId}`);
+                if (session) {
+                  session.status = 'paused';
+                  session.stopReason = 'phase_complete';
+                }
+                const updatedIdea = await this.ideaService.updateExecutionStateInternal(ideaId, {
+                  progressPercent,
+                  currentPhaseId: nextPhaseId,
+                  stopReason: 'phase_complete',
+                  nextPhaseId,
+                });
+                if (updatedIdea && this.onExecutionStateChange) {
+                  this.onExecutionStateChange(ideaId, updatedIdea);
+                }
+                // Notify client of session state change
+                this.dispatchOrQueue(ideaId, {
+                  type: 'session_state',
+                  data: { status: 'paused', stopReason: 'phase_complete', nextPhaseId, phaseId: nextPhaseId },
+                  timestamp: Date.now(),
+                });
+              } else {
+                // Auto-continue to next phase
+                console.log(`[ExecutionAgentService] Phase ${phaseComplete.phaseId} complete, auto-continuing to phase ${nextPhaseId}`);
+                const updatedIdea = await this.ideaService.updateExecutionStateInternal(ideaId, {
+                  progressPercent,
+                  currentPhaseId: nextPhaseId,
+                  stopReason: 'running',
+                });
+                if (updatedIdea && this.onExecutionStateChange) {
+                  this.onExecutionStateChange(ideaId, updatedIdea);
+                }
+                // Schedule auto-continue (small delay for clean state transition)
+                if (session?.ideaContext && session.plan) {
+                  setTimeout(() => {
+                    this.startExecution(
+                      ideaId,
+                      session.ideaContext!,
+                      session.plan!,
+                      nextPhaseId,
+                      session.userId,
+                      session.pauseBetweenPhases
+                    );
+                  }, 500);
+                }
+              }
+            } else {
+              // No next phase - all phases complete
+              console.log(`[ExecutionAgentService] All phases complete for idea ${ideaId}`);
+              if (session) {
+                session.status = 'completed';
+                session.stopReason = 'all_complete';
+              }
+              const updatedIdea = await this.ideaService.updateExecutionStateInternal(ideaId, {
+                progressPercent: 100,
+                stopReason: 'all_complete',
+              });
+              if (updatedIdea && this.onExecutionStateChange) {
+                this.onExecutionStateChange(ideaId, updatedIdea);
+              }
+              // Notify client of completion
+              this.dispatchOrQueue(ideaId, {
+                type: 'session_state',
+                data: { status: 'completed', stopReason: 'all_complete' },
+                timestamp: Date.now(),
+              });
             }
           }
         }
@@ -768,9 +837,13 @@ Begin executing these tasks in order. Report progress after each task completion
       if (session) {
         session.status = 'blocked';
         session.blockInfo = executionBlocked;
+        session.stopReason = 'needs_input';
       }
       this.dispatchOrQueue(ideaId, { type: 'blocked', data: executionBlocked, timestamp: Date.now() });
-      const blockedIdea = await this.ideaService.updateExecutionStateInternal(ideaId, { waitingForFeedback: true });
+      const blockedIdea = await this.ideaService.updateExecutionStateInternal(ideaId, {
+        waitingForFeedback: true,
+        stopReason: 'needs_input',
+      });
       if (blockedIdea && this.onExecutionStateChange) {
         this.onExecutionStateChange(ideaId, blockedIdea);
       }
@@ -795,7 +868,15 @@ Begin executing these tasks in order. Report progress after each task completion
     console.error('[ExecutionAgentService] Error:', errorMessage);
     session.status = 'error';
     session.errorMessage = errorMessage;
+    session.stopReason = 'error';
     this.dispatchOrQueue(ideaId, { type: 'error', data: errorMessage, timestamp: Date.now() });
+
+    // Persist error state
+    try {
+      await this.ideaService.updateExecutionStateInternal(ideaId, { stopReason: 'error' });
+    } catch (err) {
+      console.error('[ExecutionAgentService] Failed to persist error state:', err);
+    }
 
     // Persist error message to chat history so it shows when reopening dialog
     try {

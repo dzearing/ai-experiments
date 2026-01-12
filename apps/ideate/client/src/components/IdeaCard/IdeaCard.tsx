@@ -97,17 +97,65 @@ export function IdeaCard({
   const isExecuting = status === 'executing';
 
   // Agent is running if:
-  // - agentStatus === 'running' (from IdeaAgent/PlanAgent broadcasts)
-  // - OR execution has a currentTaskId (ExecutionAgent is actively working)
-  const isAgentRunning = agentStatus === 'running' || (isExecuting && !!execution?.currentTaskId);
+  // - agentStatus === 'running' (authoritative real-time source from broadcasts)
+  // - OR if agentStatus is undefined (no broadcast received yet) AND execution has a currentTaskId
+  // Note: agentStatus takes priority - when it's 'idle', the agent is idle even if currentTaskId is set
+  const isAgentRunning = agentStatus === 'running' || (agentStatus === undefined && isExecuting && !!execution?.currentTaskId);
   const isAgentError = agentStatus === 'error';
 
   // Get phase info for display
   const currentPhase = plan?.phases.find(p => p.id === execution?.currentPhaseId);
+  const nextPhase = execution?.nextPhaseId ? plan?.phases.find(p => p.id === execution.nextPhaseId) : null;
   const totalPhases = plan?.phases.length || 0;
   const currentPhaseIndex = currentPhase
     ? (plan?.phases.findIndex(p => p.id === currentPhase.id) ?? 0) + 1
     : 0;
+  const nextPhaseIndex = nextPhase
+    ? (plan?.phases.findIndex(p => p.id === nextPhase.id) ?? 0) + 1
+    : 0;
+
+  // Determine if all phases are complete
+  const isAllPhasesComplete = execution?.stopReason === 'all_complete' ||
+    (!isAgentRunning && totalPhases > 0 && currentPhaseIndex === totalPhases);
+
+  // Get phase display text - must be unambiguous about state
+  const getPhaseDisplayText = () => {
+    if (!isExecuting || !execution) return null;
+
+    const stopReason = execution.stopReason;
+
+    // Running state - be explicit
+    if (isAgentRunning) {
+      return currentPhaseIndex > 0
+        ? `Executing phase ${currentPhaseIndex} of ${totalPhases}`
+        : 'Starting execution...';
+    }
+
+    // Idle states
+    switch (stopReason) {
+      case 'phase_complete':
+        return nextPhaseIndex > 0 ? `Ready for phase ${nextPhaseIndex}` : 'Ready';
+      case 'all_complete':
+        return `${totalPhases}/${totalPhases} phases complete`;
+      case 'error':
+        return 'Error';
+      case 'needs_input':
+        return 'Needs input';
+      case 'paused_by_user':
+        return 'Paused by user';
+      default:
+        // Idle with no explicit stop reason - check if all done
+        if (isAllPhasesComplete) {
+          return `${totalPhases}/${totalPhases} phases complete`;
+        }
+        // Paused mid-execution
+        return currentPhaseIndex > 0
+          ? `Paused at phase ${currentPhaseIndex} of ${totalPhases}`
+          : null;
+    }
+  };
+
+  const phaseDisplayText = getPhaseDisplayText();
 
   // Calculate progress: use stored value, or calculate from phase data as fallback
   // This handles legacy ideas where progressPercent was never updated
@@ -234,12 +282,15 @@ export function IdeaCard({
         {/* Progress (for executing ideas) */}
         {isExecuting && execution && (
           <div className={styles.progressSection}>
-            <div className={styles.progressHeader}>
-              <div className={styles.progressBar}>
-                <Progress value={calculatedProgress} size="sm" />
+            {/* Hide progress bar when all phases complete */}
+            {!isAllPhasesComplete && (
+              <div className={styles.progressHeader}>
+                <div className={styles.progressBar}>
+                  <Progress value={calculatedProgress} size="sm" />
+                </div>
+                {isAgentRunning && <Spinner size="sm" />}
               </div>
-              {isAgentRunning && <Spinner size="sm" />}
-            </div>
+            )}
             <div className={styles.executionInfo}>
               {/* Only show live duration counter when agent is actively running */}
               {isAgentRunning && execution.startedAt && (
@@ -251,8 +302,8 @@ export function IdeaCard({
                   format="short"
                 />
               )}
-              {currentPhaseIndex > 0 && (
-                <span className={styles.phaseInfo}>Phase {currentPhaseIndex}/{totalPhases}</span>
+              {phaseDisplayText && (
+                <span className={styles.phaseInfo}>{phaseDisplayText}</span>
               )}
             </div>
           </div>

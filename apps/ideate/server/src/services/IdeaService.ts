@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { homedir } from 'os';
+import type { ExecutionStopReason } from './ExecutionAgentTypes.js';
 
 // =========================================================================
 // Types
@@ -62,6 +63,9 @@ export interface IdeaExecutionState {
   currentPhaseId?: string;       // Currently executing phase
   currentTaskId?: string;        // Currently executing task
   mode?: ExecutionMode;          // Execution mode
+  stopReason?: ExecutionStopReason;  // Why execution stopped
+  nextPhaseId?: string;          // Phase ready to execute next
+  pauseBetweenPhases?: boolean;  // Whether to pause between phases
 }
 
 export interface IdeaMetadata {

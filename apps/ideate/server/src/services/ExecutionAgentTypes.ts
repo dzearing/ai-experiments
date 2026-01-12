@@ -6,6 +6,17 @@
  */
 
 /**
+ * Reason why execution stopped
+ */
+export type ExecutionStopReason =
+  | 'running'           // Currently executing
+  | 'phase_complete'    // Completed a phase, ready for next (when pauseBetweenPhases=true)
+  | 'all_complete'      // All phases done
+  | 'error'             // Execution error
+  | 'needs_input'       // Blocked, needs user input
+  | 'paused_by_user';   // User explicitly paused
+
+/**
  * Token usage information
  */
 export interface TokenUsage {
@@ -131,6 +142,10 @@ export interface ExecutionSession {
   }>;
   /** Ordered segments (text and tools) for the current message, preserving interleaving */
   messageSegments: MessageSegment[];
+  /** Whether to pause between phases (server-side setting) */
+  pauseBetweenPhases: boolean;
+  /** Reason why execution stopped */
+  stopReason?: ExecutionStopReason;
 }
 
 /**
@@ -144,6 +159,10 @@ export interface SessionStateEvent {
   phaseId?: string;
   startedAt?: number;
   errorMessage?: string;
+  /** Reason why execution stopped */
+  stopReason?: ExecutionStopReason;
+  /** Next phase ready to execute (when stopReason is 'phase_complete') */
+  nextPhaseId?: string;
 }
 
 /**

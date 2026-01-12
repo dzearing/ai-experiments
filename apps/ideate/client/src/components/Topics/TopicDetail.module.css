@@ -254,19 +254,6 @@
   width: 100%;
 }
 
-/* Path button - shows path with folder icon, truncates long paths */
-.pathButton {
-  max-width: 100%;
-  justify-content: flex-start;
-  overflow: hidden;
-}
-
-.pathButton > span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 /* URL value display row */
 .urlValueRow {
   display: flex;
@@ -297,6 +284,46 @@
 }
 
 .urlValueRow:hover .urlEditButton {
+  opacity: 1;
+}
+
+/* Path value display row */
+.pathValueRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.pathLink {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 100%;
+  overflow: hidden;
+  font-size: var(--text-sm);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  transition: background-color var(--duration-fast) var(--ease-default);
+}
+
+.pathLink > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pathLink:hover {
+  background-color: var(--color-body-backgroundHover);
+}
+
+.pathEditButton {
+  flex-shrink: 0;
+  opacity: 0.5;
+  transition: opacity var(--duration-fast) var(--ease-default);
+}
+
+.pathValueRow:hover .pathEditButton {
   opacity: 1;
 }
 
