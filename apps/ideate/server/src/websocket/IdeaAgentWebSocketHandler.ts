@@ -460,7 +460,7 @@ export class IdeaAgentWebSocketHandler {
       // Check if the first message (greeting) is stale and should be regenerated
       if (messages.length > 0 && messages[0].role === 'assistant') {
         const firstMessage = messages[0];
-        if (this.isGreetingStale(firstMessage.content, client.ideaContext)) {
+        if (this.isGreetingStale(firstMessage.content ?? '', client.ideaContext)) {
           console.log(`[IdeaAgent] Greeting is stale for client ${client.clientId}, regenerating`);
           // Clear history to regenerate with correct context
           await this.ideaAgentService.clearHistory(chatId);

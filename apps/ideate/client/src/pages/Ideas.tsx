@@ -7,6 +7,7 @@ import { SearchIcon } from '@ui-kit/icons/SearchIcon';
 import { useAuth } from '../contexts/AuthContext';
 import { useIdeas } from '../contexts/IdeasContext';
 import { useFacilitator } from '../contexts/FacilitatorContext';
+import { useWorkspaces } from '../contexts/WorkspaceContext';
 import { useSession } from '../contexts/SessionContext';
 import { useWorkspaceSocket, type ResourceType } from '../hooks/useWorkspaceSocket';
 import { KanbanBoard } from '../components/KanbanBoard';
@@ -37,6 +38,12 @@ export function Ideas() {
     deleteIdea,
   } = useIdeas();
   const { setNavigationContext } = useFacilitator();
+  const { workspaces } = useWorkspaces();
+
+  // Get the current workspace name for navigation context
+  const currentWorkspace = workspaceId && workspaceId !== 'all'
+    ? workspaces.find(w => w.id === workspaceId)
+    : null;
 
   const [showOverlay, setShowOverlay] = useState(false);
   const [editingIdea, setEditingIdea] = useState<Idea | null>(null);
@@ -101,20 +108,28 @@ export function Ideas() {
   }, [isAuthLoading, isAuthenticated, navigate]);
 
   // Fetch ideas on mount
+  // Pass undefined when "all" to fetch from all workspaces
   useEffect(() => {
     if (user) {
-      fetchIdeasByLane(workspaceId);
+      const effectiveWorkspaceId = workspaceId === 'all' ? undefined : workspaceId;
+
+      fetchIdeasByLane(effectiveWorkspaceId);
     }
   }, [workspaceId, user, fetchIdeasByLane]);
 
   // Update navigation context for Facilitator
   useEffect(() => {
+    // Don't pass workspaceId when in "all" mode - it's not a real workspace
+    const effectiveWorkspaceId = workspaceId === 'all' ? undefined : workspaceId;
+
     setNavigationContext({
-      currentPage: 'Ideas Kanban',
-      workspaceId,
+      currentPage: workspaceId === 'all' ? 'Ideas Kanban (All Workspaces)' : 'Ideas Kanban',
+      workspaceId: effectiveWorkspaceId,
+      workspaceName: currentWorkspace?.name,
     });
+
     return () => setNavigationContext({});
-  }, [workspaceId, setNavigationContext]);
+  }, [workspaceId, currentWorkspace?.name, setNavigationContext]);
 
   // Listen for facilitator:openIdea events (from Facilitator navigation actions)
   useEffect(() => {
@@ -150,9 +165,13 @@ export function Ideas() {
   // Listen for facilitator:ideasChanged events (refetch when ideas are created/updated via Facilitator)
   useEffect(() => {
     const handleIdeasChanged = () => {
-      fetchIdeasByLane(workspaceId);
+      const effectiveWorkspaceId = workspaceId === 'all' ? undefined : workspaceId;
+
+      fetchIdeasByLane(effectiveWorkspaceId);
     };
+
     window.addEventListener('facilitator:ideasChanged', handleIdeasChanged);
+
     return () => window.removeEventListener('facilitator:ideasChanged', handleIdeasChanged);
   }, [fetchIdeasByLane, workspaceId]);
 
@@ -290,12 +309,13 @@ export function Ideas() {
       )}
 
       {/* Idea Dialog - only render when open to ensure fresh context for new ideas */}
+      {/* When in "all" mode, default new ideas to personal workspace */}
       {showOverlay && (
         <IdeaDialog
           idea={editingIdea}
           open={showOverlay}
           onClose={handleCloseOverlay}
-          workspaceId={workspaceId}
+          workspaceId={workspaceId === 'all' ? `personal-${user?.id}` : workspaceId}
           onSuccess={handleIdeaSuccess}
           onStatusChange={handleStatusChange}
           onStartExecution={handleStartExecution}

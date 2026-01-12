@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useSearchParams } from '@ui-kit/router';
-import { Button, IconButton, Input, Chip, Spinner, Dropdown, Tabs, type DropdownOption, type TabItem } from '@ui-kit/react';
+import { Button, IconButton, Input, Chip, Spinner, Dropdown, Tabs, Link, type DropdownOption, type TabItem } from '@ui-kit/react';
 import { ItemPickerDialog, DiskItemProvider } from '@ui-kit/react-pickers';
 import { TrashIcon } from '@ui-kit/icons/TrashIcon';
 import { AddIcon } from '@ui-kit/icons/AddIcon';
+import { EditIcon } from '@ui-kit/icons/EditIcon';
 import { FolderIcon } from '@ui-kit/icons/FolderIcon';
 import { LinkIcon } from '@ui-kit/icons/LinkIcon';
 import { CodeIcon } from '@ui-kit/icons/CodeIcon';
@@ -32,8 +33,9 @@ interface TopicDetailProps {
 // Predefined type options for the dropdown
 const PREDEFINED_TYPE_OPTIONS: DropdownOption<string>[] = [
   { value: 'folder', label: 'Folder' },
+  { value: 'git-repo', label: 'Repo' },
+  { value: 'git-package', label: 'Package' },
   { value: 'app', label: 'App' },
-  { value: 'package', label: 'Package' },
   { value: 'project', label: 'Project' },
   { value: 'subject', label: 'Subject' },
   { value: 'assignment', label: 'Assignment' },
@@ -111,6 +113,97 @@ function PathPropertyPicker({
 }
 
 /**
+ * URL property display with edit functionality
+ */
+function UrlPropertyDisplay({
+  value,
+  onChange,
+}: {
+  value: string | undefined;
+  onChange: (value: string) => void;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(value || '');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleStartEdit = useCallback(() => {
+    setEditValue(value || '');
+    setIsEditing(true);
+    setTimeout(() => inputRef.current?.focus(), 0);
+  }, [value]);
+
+  const handleSave = useCallback(() => {
+    const trimmed = editValue.trim();
+    if (trimmed !== value) {
+      onChange(trimmed);
+    }
+    setIsEditing(false);
+  }, [editValue, value, onChange]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSave();
+    } else if (e.key === 'Escape') {
+      setIsEditing(false);
+      setEditValue(value || '');
+    }
+  }, [handleSave, value]);
+
+  if (isEditing) {
+    return (
+      <Input
+        ref={inputRef}
+        value={editValue}
+        onChange={(e) => setEditValue(e.target.value)}
+        onBlur={handleSave}
+        onKeyDown={handleKeyDown}
+        placeholder="https://..."
+        size="sm"
+        autoFocus
+        fullWidth
+      />
+    );
+  }
+
+  if (value) {
+    return (
+      <div className={styles.urlValueRow}>
+        <Link
+          href={value}
+          target="_blank"
+          rel="noopener noreferrer"
+          noUnderline
+          className={styles.urlLink}
+          title={value}
+        >
+          {value}
+        </Link>
+        <IconButton
+          icon={<EditIcon />}
+          onClick={handleStartEdit}
+          aria-label="Edit URL"
+          variant="ghost"
+          size="sm"
+          className={styles.urlEditButton}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      icon={<AddIcon />}
+      onClick={handleStartEdit}
+    >
+      Add URL
+    </Button>
+  );
+}
+
+/**
  * Key property row component - renders label and input as grid children
  * Parent uses CSS grid, so this returns a fragment with two children
  */
@@ -147,11 +240,9 @@ function KeyPropertyRow({
             provider={diskProvider}
           />
         ) : propDef.type === 'url' ? (
-          <Input
-            value={value || ''}
-            onChange={(e) => handleChange(e.target.value)}
-            placeholder="https://..."
-            size="sm"
+          <UrlPropertyDisplay
+            value={value}
+            onChange={handleChange}
           />
         ) : (
           <Input

@@ -62,7 +62,7 @@ export function JoinWorkspace() {
       setStatus('success');
       // Redirect to the workspace
       setTimeout(() => {
-        navigate(`/workspace/${workspace.id}`);
+        navigate(`/${workspace.id}/topics`);
       }, 1000);
     } else {
       setError('Failed to join workspace. Please try again.');

@@ -198,14 +198,17 @@ export function useFacilitatorSocket({
           }
 
           // Not on Topics page - need to navigate there
-          // Extract workspace ID from current path if present (e.g., /workspace/123/ideas)
-          const workspaceMatch = currentPath.match(/\/workspace\/([^/]+)/);
-          const workspaceId = workspaceMatch ? workspaceMatch[1] : null;
+          // Get workspace ID from navigation context first, then try to extract from URL
+          // URL pattern is /{workspaceId}/topics or /{workspaceId}/ideas etc.
+          const contextWorkspaceId = navigationContextRef.current.workspaceId;
+          const urlMatch = currentPath.match(/^\/([^/]+)\/(topics|ideas|documents)/);
+          const urlWorkspaceId = urlMatch ? urlMatch[1] : null;
+          const workspaceId = contextWorkspaceId || urlWorkspaceId;
 
-          // Build the target URL
+          // Build the target URL - workspace ID is required in the new URL structure
           const targetUrl = workspaceId
-            ? `/workspace/${workspaceId}/topics/${topicId}`
-            : `/topics/${topicId}`;
+            ? `/${workspaceId}/topics/${topicId}`
+            : `/all/topics`; // Fallback to all workspaces view
 
           log.log(' Navigating to Topics page:', targetUrl);
 

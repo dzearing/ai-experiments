@@ -198,7 +198,7 @@ export function Workspaces() {
                 <WorkspaceCard
                   key={workspace.id}
                   workspace={workspace}
-                  onClick={() => navigate(`/workspace/${workspace.id}`)}
+                  onClick={() => navigate(`/${workspace.id}/topics`)}
                   onEdit={() => openEditModal(workspace)}
                   onDelete={() => openDeleteModal(workspace)}
                   showActions={workspace.ownerId === user.id}

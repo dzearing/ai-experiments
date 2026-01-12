@@ -62,9 +62,8 @@ export const TOPIC_TYPE_SCHEMAS: Record<string, TopicTypeSchema> = {
     icon: 'code',
     providesExecutionContext: true,
     keyProperties: {
-      remoteUrl: { label: 'Remote URL', type: 'url' },
       localPath: { label: 'Local Path', type: 'path' },
-      defaultBranch: { label: 'Default Branch', type: 'text' },
+      remoteUrl: { label: 'Remote URL', type: 'url' },
     },
   },
   'git-package': {
@@ -84,6 +83,12 @@ export const TOPIC_TYPE_SCHEMAS: Record<string, TopicTypeSchema> = {
         label: 'Full Path',
         type: 'path',
         inheritPath: { fromProperty: 'repoTopicId', joinWith: 'relativePath' },
+      },
+      // remoteUrl inherited from repo
+      remoteUrl: {
+        label: 'Remote URL',
+        type: 'url',
+        inheritPath: { fromProperty: 'repoTopicId' },
       },
     },
   },

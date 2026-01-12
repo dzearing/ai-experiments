@@ -826,7 +826,9 @@ export function IdeaDialog({
     : phase === 'planning' ? planAgent : ideaAgent;
   const agentMessages = activeAgent.messages;
   const isConnected = activeAgent.isConnected;
-  const isAgentThinking = activeAgent.isLoading;
+  // Also check executeAgent.isExecuting directly to handle the timing gap
+  // between clicking Execute and React updating the phase state
+  const isAgentThinking = activeAgent.isLoading || executeAgent.isExecuting;
   const tokenUsage = activeAgent.tokenUsage;
   const sendAgentMessage = activeAgent.sendMessage;
   const addLocalMessage = activeAgent.addLocalMessage;

@@ -401,7 +401,7 @@ export class ClaudeDiagnosticsService {
             sessionId: userId,
             sessionType: 'facilitator',
             role: msg.role,
-            content: msg.content,
+            content: msg.content ?? '',
             timestamp: msg.timestamp,
             toolCalls: msg.toolCalls,
             // Use persisted diagnostics first, then fall back to in-memory
@@ -582,7 +582,7 @@ export class ClaudeDiagnosticsService {
             sessionId: ideaId,
             sessionType: 'ideaagent',
             role: msg.role,
-            content: msg.content,
+            content: msg.content ?? '',
             timestamp: msg.timestamp,
           });
         } catch {

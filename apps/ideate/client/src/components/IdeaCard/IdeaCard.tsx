@@ -109,6 +109,23 @@ export function IdeaCard({
     ? (plan?.phases.findIndex(p => p.id === currentPhase.id) ?? 0) + 1
     : 0;
 
+  // Calculate progress: use stored value, or calculate from phase data as fallback
+  // This handles legacy ideas where progressPercent was never updated
+  const calculatedProgress = (() => {
+    // If we have a stored progress value, use it
+    if (execution?.progressPercent && execution.progressPercent > 0) {
+      return execution.progressPercent;
+    }
+
+    // Fallback: calculate from phase data
+    // If idle and on a phase, assume that phase is complete
+    if (totalPhases > 0 && currentPhaseIndex > 0) {
+      return Math.round((currentPhaseIndex / totalPhases) * 100);
+    }
+
+    return 0;
+  })();
+
   const handleDragStart = useCallback((e: DragEvent<HTMLDivElement>) => {
     e.dataTransfer.setData('text/plain', id);
     e.dataTransfer.setData('application/x-idea-status', status);
@@ -186,7 +203,8 @@ export function IdeaCard({
         )}
 
         {/* Time display - duration when running, relative time when idle */}
-        {agentStatus === 'running' && agentStartedAt ? (
+        {/* Skip duration here for executing ideas - the progress section shows it */}
+        {agentStatus === 'running' && agentStartedAt && !isExecuting ? (
           <RelativeTime
             timestamp={agentStartedAt}
             mode="duration"
@@ -195,7 +213,7 @@ export function IdeaCard({
             format="short"
             className={styles.updatedAt}
           />
-        ) : agentFinishedAt ? (
+        ) : agentFinishedAt && !isExecuting ? (
           <RelativeTime
             timestamp={agentFinishedAt}
             size="xs"
@@ -218,7 +236,7 @@ export function IdeaCard({
           <div className={styles.progressSection}>
             <div className={styles.progressHeader}>
               <div className={styles.progressBar}>
-                <Progress value={execution.progressPercent} size="sm" />
+                <Progress value={calculatedProgress} size="sm" />
               </div>
               {isAgentRunning && <Spinner size="sm" />}
             </div>

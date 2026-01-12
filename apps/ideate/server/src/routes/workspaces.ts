@@ -1,6 +1,7 @@
 import { Router, type Request, type Response } from 'express';
 import { WorkspaceService } from '../services/WorkspaceService.js';
 import type { WorkspaceWebSocketHandler } from '../websocket/WorkspaceWebSocketHandler.js';
+import type { WorkspaceApiError, WorkspaceRole } from '../types/workspace.js';
 
 export const workspacesRouter = Router();
 const workspaceService = new WorkspaceService();
@@ -12,6 +13,28 @@ export function setWorkspaceHandler(handler: WorkspaceWebSocketHandler): void {
   workspaceWsHandler = handler;
 }
 
+/**
+ * Map error codes to HTTP status codes.
+ */
+function getStatusForError(error: WorkspaceApiError): number {
+  switch (error.code) {
+    case 'WORKSPACE_NOT_FOUND':
+      return 404;
+    case 'WORKSPACE_ACCESS_DENIED':
+    case 'PERSONAL_WORKSPACE_IMMUTABLE':
+    case 'INVALID_ROLE_CHANGE':
+    case 'CANNOT_REMOVE_OWNER':
+      return 403;
+    case 'WORKSPACE_LIMIT_REACHED':
+    case 'MEMBER_LIMIT_REACHED':
+    case 'INVALID_WORKSPACE_TYPE':
+    case 'COPY_TARGET_CONFLICT':
+      return 400;
+    default:
+      return 500;
+  }
+}
+
 // Get workspace preview by share token (no auth required)
 workspacesRouter.get('/join/:token', async (req: Request, res: Response) => {
   try {
@@ -21,6 +44,7 @@ workspacesRouter.get('/join/:token', async (req: Request, res: Response) => {
 
     if (!preview) {
       res.status(404).json({ error: 'Invalid or expired share link' });
+
       return;
     }
 
@@ -39,20 +63,42 @@ workspacesRouter.post('/join/:token', async (req: Request, res: Response) => {
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
+
       return;
     }
 
-    const workspace = await workspaceService.joinWorkspaceByToken(token, userId);
+    const result = await workspaceService.joinWorkspaceByToken(token, userId);
 
-    if (!workspace) {
-      res.status(404).json({ error: 'Invalid or expired share link' });
+    if (!result.success) {
+      res.status(getStatusForError(result.error!)).json({ error: result.error!.message, code: result.error!.code });
+
       return;
     }
 
-    res.json(workspace);
+    res.json(result.data);
   } catch (error) {
     console.error('Join workspace error:', error);
     res.status(500).json({ error: 'Failed to join workspace' });
+  }
+});
+
+// Get personal workspace (auto-creates if missing)
+workspacesRouter.get('/personal', async (req: Request, res: Response) => {
+  try {
+    const userId = req.headers['x-user-id'] as string;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User ID required' });
+
+      return;
+    }
+
+    const workspace = await workspaceService.getOrCreatePersonalWorkspace(userId);
+
+    res.json(workspace);
+  } catch (error) {
+    console.error('Get personal workspace error:', error);
+    res.status(500).json({ error: 'Failed to get personal workspace' });
   }
 });
 
@@ -63,10 +109,12 @@ workspacesRouter.get('/', async (req: Request, res: Response) => {
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
+
       return;
     }
 
     const workspaces = await workspaceService.listWorkspaces(userId);
+
     res.json(workspaces);
   } catch (error) {
     console.error('List workspaces error:', error);
@@ -82,26 +130,30 @@ workspacesRouter.post('/', async (req: Request, res: Response) => {
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
+
       return;
     }
 
     if (!name) {
       res.status(400).json({ error: 'Name is required' });
+
       return;
     }
 
-    const workspace = await workspaceService.createWorkspace(
-      userId,
-      name,
-      description || ''
-    );
+    const result = await workspaceService.createWorkspace(userId, name, description || '');
+
+    if (!result.success) {
+      res.status(getStatusForError(result.error!)).json({ error: result.error!.message, code: result.error!.code });
+
+      return;
+    }
 
     // Notify the user via WebSocket that a workspace was created
     if (workspaceWsHandler) {
-      workspaceWsHandler.notifyWorkspaceCreated(userId, workspace.id, workspace);
+      workspaceWsHandler.notifyWorkspaceCreated(userId, result.data!.id, result.data!);
     }
 
-    res.status(201).json(workspace);
+    res.status(201).json(result.data);
   } catch (error) {
     console.error('Create workspace error:', error);
     res.status(500).json({ error: 'Failed to create workspace' });
@@ -116,6 +168,7 @@ workspacesRouter.get('/:id', async (req: Request, res: Response) => {
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
+
       return;
     }
 
@@ -123,6 +176,7 @@ workspacesRouter.get('/:id', async (req: Request, res: Response) => {
 
     if (!workspace) {
       res.status(404).json({ error: 'Workspace not found' });
+
       return;
     }
 
@@ -142,24 +196,26 @@ workspacesRouter.patch('/:id', async (req: Request, res: Response) => {
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
+
       return;
     }
 
-    const workspace = await workspaceService.updateWorkspace(id, userId, updates);
+    const result = await workspaceService.updateWorkspace(id, userId, updates);
 
-    if (!workspace) {
-      res.status(404).json({ error: 'Workspace not found' });
+    if (!result.success) {
+      res.status(getStatusForError(result.error!)).json({ error: result.error!.message, code: result.error!.code });
+
       return;
     }
 
     // Notify subscribers via WebSocket that the workspace was updated
     if (workspaceWsHandler) {
-      workspaceWsHandler.notifyWorkspaceUpdated(id, workspace);
+      workspaceWsHandler.notifyWorkspaceUpdated(id, result.data!);
       // Also notify the owner in case they're on the workspaces list page
-      workspaceWsHandler.notifyUserWorkspacesChanged(userId, workspace);
+      workspaceWsHandler.notifyUserWorkspacesChanged(userId, result.data!);
     }
 
-    res.json(workspace);
+    res.json(result.data);
   } catch (error) {
     console.error('Update workspace error:', error);
     res.status(500).json({ error: 'Failed to update workspace' });
@@ -174,13 +230,15 @@ workspacesRouter.delete('/:id', async (req: Request, res: Response) => {
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
+
       return;
     }
 
-    const success = await workspaceService.deleteWorkspace(id, userId);
+    const result = await workspaceService.deleteWorkspace(id, userId);
 
-    if (!success) {
-      res.status(404).json({ error: 'Workspace not found' });
+    if (!result.success) {
+      res.status(getStatusForError(result.error!)).json({ error: result.error!.message, code: result.error!.code });
+
       return;
     }
 
@@ -198,6 +256,120 @@ workspacesRouter.delete('/:id', async (req: Request, res: Response) => {
   }
 });
 
+// Add member to workspace
+workspacesRouter.post('/:id/members', async (req: Request, res: Response) => {
+  try {
+    const userId = req.headers['x-user-id'] as string;
+    const { id } = req.params;
+    const { memberId, role } = req.body;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User ID required' });
+
+      return;
+    }
+
+    if (!memberId) {
+      res.status(400).json({ error: 'Member ID is required' });
+
+      return;
+    }
+
+    const result = await workspaceService.addMember(id, userId, memberId, role as WorkspaceRole);
+
+    if (!result.success) {
+      res.status(getStatusForError(result.error!)).json({ error: result.error!.message, code: result.error!.code });
+
+      return;
+    }
+
+    // Notify via WebSocket
+    if (workspaceWsHandler) {
+      workspaceWsHandler.notifyWorkspaceUpdated(id, result.data!);
+      // Notify the new member that they now have access
+      workspaceWsHandler.notifyUserWorkspacesChanged(memberId, result.data!);
+    }
+
+    res.json(result.data);
+  } catch (error) {
+    console.error('Add member error:', error);
+    res.status(500).json({ error: 'Failed to add member' });
+  }
+});
+
+// Remove member from workspace
+workspacesRouter.delete('/:id/members/:memberId', async (req: Request, res: Response) => {
+  try {
+    const userId = req.headers['x-user-id'] as string;
+    const { id, memberId } = req.params;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User ID required' });
+
+      return;
+    }
+
+    const result = await workspaceService.removeMember(id, userId, memberId);
+
+    if (!result.success) {
+      res.status(getStatusForError(result.error!)).json({ error: result.error!.message, code: result.error!.code });
+
+      return;
+    }
+
+    // Notify via WebSocket
+    if (workspaceWsHandler) {
+      workspaceWsHandler.notifyWorkspaceUpdated(id, result.data!);
+      // Notify the removed member that they lost access
+      workspaceWsHandler.notifyUserWorkspacesChanged(memberId);
+    }
+
+    res.json(result.data);
+  } catch (error) {
+    console.error('Remove member error:', error);
+    res.status(500).json({ error: 'Failed to remove member' });
+  }
+});
+
+// Update member role
+workspacesRouter.patch('/:id/members/:memberId', async (req: Request, res: Response) => {
+  try {
+    const userId = req.headers['x-user-id'] as string;
+    const { id, memberId } = req.params;
+    const { role } = req.body;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User ID required' });
+
+      return;
+    }
+
+    if (!role) {
+      res.status(400).json({ error: 'Role is required' });
+
+      return;
+    }
+
+    const result = await workspaceService.updateMemberRole(id, userId, memberId, role as WorkspaceRole);
+
+    if (!result.success) {
+      res.status(getStatusForError(result.error!)).json({ error: result.error!.message, code: result.error!.code });
+
+      return;
+    }
+
+    // Notify via WebSocket
+    if (workspaceWsHandler) {
+      workspaceWsHandler.notifyWorkspaceUpdated(id, result.data!);
+    }
+
+    res.json(result.data);
+  } catch (error) {
+    console.error('Update member role error:', error);
+    res.status(500).json({ error: 'Failed to update member role' });
+  }
+});
+
 // Get share token for workspace (owner only)
 workspacesRouter.get('/:id/share', async (req: Request, res: Response) => {
   try {
@@ -206,6 +378,7 @@ workspacesRouter.get('/:id/share', async (req: Request, res: Response) => {
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
+
       return;
     }
 
@@ -214,6 +387,7 @@ workspacesRouter.get('/:id/share', async (req: Request, res: Response) => {
     if (token === null) {
       // Could be no permission or no token exists yet
       res.json({ token: null });
+
       return;
     }
 
@@ -233,21 +407,19 @@ workspacesRouter.post('/:id/share', async (req: Request, res: Response) => {
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
+
       return;
     }
 
-    const token = await workspaceService.generateShareToken(
-      id,
-      userId,
-      regenerate === true
-    );
+    const result = await workspaceService.generateShareToken(id, userId, regenerate === true);
 
-    if (!token) {
-      res.status(403).json({ error: 'Not authorized to generate share token' });
+    if (!result.success) {
+      res.status(getStatusForError(result.error!)).json({ error: result.error!.message, code: result.error!.code });
+
       return;
     }
 
-    res.json({ token });
+    res.json({ token: result.data });
   } catch (error) {
     console.error('Generate share token error:', error);
     res.status(500).json({ error: 'Failed to generate share token' });

@@ -8,7 +8,54 @@
 import { tool, createSdkMcpServer } from '@anthropic-ai/claude-agent-sdk';
 import { z } from 'zod';
 import { existsSync, statSync, readdirSync, readFileSync } from 'fs';
+import { homedir } from 'os';
+import { join } from 'path';
 import { MCPToolsService } from './MCPToolsService.js';
+
+/**
+ * Expand ~ to home directory in paths.
+ */
+function expandPath(inputPath: string): string {
+  if (inputPath.startsWith('~/')) {
+    return join(homedir(), inputPath.slice(2));
+  }
+  if (inputPath === '~') {
+    return homedir();
+  }
+  return inputPath;
+}
+
+/**
+ * Check if a path is a git repository by looking for .git directory.
+ */
+function isGitRepo(dirPath: string): boolean {
+  try {
+    const gitPath = join(dirPath, '.git');
+    return existsSync(gitPath);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Try to get the remote URL from a git repository.
+ */
+function getGitRemoteUrl(dirPath: string): string | undefined {
+  try {
+    const configPath = join(dirPath, '.git', 'config');
+    if (!existsSync(configPath)) return undefined;
+
+    const configContent = readFileSync(configPath, 'utf-8');
+    // Look for [remote "origin"] section and url = line
+    const remoteMatch = configContent.match(/\[remote "origin"\][^\[]*url\s*=\s*(.+)/m);
+    if (remoteMatch) {
+      return remoteMatch[1].trim();
+    }
+    return undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 /**
  * Create the facilitator MCP server with custom tools.
@@ -76,23 +123,77 @@ export function createFacilitatorMcpServer(toolsService: MCPToolsService, userId
 
       tool(
         'topic_create',
-        'Create a new Topic. Automatically navigates user to the created Topic.',
+        'Create a new Topic. Automatically navigates user to the created Topic. For projects/folders, provide localPath to set the path. Git repos are auto-detected.',
         {
           name: z.string().describe('Name of the Topic'),
-          type: z.string().optional().describe('Type of the Topic (category, project, feature, or item)'),
+          type: z.string().optional().describe('Type of the Topic (folder, git-repo, project, feature, category, collection, or item)'),
           description: z.string().optional().describe('Description of the Topic'),
           parentId: z.string().optional().describe('ID of the parent Topic (for hierarchy)'),
-          workspaceId: z.string().optional().describe('Workspace ID to associate the Topic with (defaults to current workspace)'),
+          workspaceId: z.string().optional().describe('Workspace ID to associate the Topic with (defaults to personal workspace)'),
           tags: z.string().optional().describe('Comma-separated list of tags'),
           icon: z.string().optional().describe('Icon name for the Topic'),
           color: z.string().optional().describe('Color name for the Topic'),
+          localPath: z.string().optional().describe('Local file system path for project/folder/git-repo Topics (supports ~ for home directory)'),
+          repositoryUrl: z.string().optional().describe('Git repository URL (auto-detected if localPath is a git repo)'),
         },
         async (args) => {
-          // Auto-inject workspaceId from context if not explicitly provided
+          // Default to personal workspace when not in a workspace context
+          const effectiveWorkspaceId = args.workspaceId || workspaceId || `personal-${userId}`;
+
+          // Process path if provided
+          let expandedPath: string | undefined;
+          let detectedRepoUrl: string | undefined;
+          let effectiveType = args.type;
+
+          if (args.localPath) {
+            expandedPath = expandPath(args.localPath);
+
+            // Verify the path exists
+            if (!existsSync(expandedPath)) {
+              return {
+                content: [{
+                  type: 'text' as const,
+                  text: JSON.stringify({ error: `Path does not exist: ${expandedPath}` }, null, 2),
+                }],
+              };
+            }
+
+            // Auto-detect git repo if not explicitly typed
+            if (isGitRepo(expandedPath)) {
+              detectedRepoUrl = args.repositoryUrl || getGitRemoteUrl(expandedPath);
+              // Default to git-repo type if path is a git repo and type not specified
+              if (!effectiveType) {
+                effectiveType = 'git-repo';
+              }
+            } else if (!effectiveType) {
+              // Default to folder type if path exists but not a git repo
+              const stat = statSync(expandedPath);
+              effectiveType = stat.isDirectory() ? 'folder' : 'project';
+            }
+          }
+
+          // Build properties for path-based topics
+          const properties: Record<string, string> = {};
+          if (expandedPath) {
+            properties.localPath = expandedPath;
+          }
+          if (detectedRepoUrl || args.repositoryUrl) {
+            properties.remoteUrl = detectedRepoUrl || args.repositoryUrl!;
+          }
+
+          // Build tool args
           const toolArgs = {
-            ...args,
-            workspaceId: args.workspaceId || workspaceId,
+            name: args.name,
+            type: effectiveType,
+            description: args.description,
+            parentId: args.parentId,
+            workspaceId: effectiveWorkspaceId,
+            tags: args.tags,
+            icon: args.icon,
+            color: args.color,
+            properties: Object.keys(properties).length > 0 ? properties : undefined,
           };
+
           const result = await toolsService.executeTool('topic_create', toolArgs, userId);
 
           // If creation succeeded, include navigate action to take user to the Topic
@@ -178,15 +279,26 @@ export function createFacilitatorMcpServer(toolsService: MCPToolsService, userId
 
       tool(
         'topic_add_link',
-        'Add a link to a Topic. Links can be URLs, file paths, or references to other Topics.',
+        'Add a link to a Topic. For local file/folder paths, use type "file" with the absolute path as target. The system will open these paths using the OS default application or VS Code.',
         {
           topicId: z.string().describe('The ID of the Topic to add a link to'),
-          type: z.enum(['url', 'path', 'topic-ref']).describe('Type of link: url (web URL), path (local file/folder), or topic-ref (reference to another Topic)'),
+          type: z.enum(['file', 'url', 'github', 'package']).describe('Type of link: file (local file/folder path), url (web URL), github (GitHub repo URL), or package (npm package)'),
           label: z.string().describe('Display label for the link'),
-          target: z.string().describe('The link target: URL for url type, file path for path type, or Topic ID for topic-ref type'),
+          target: z.string().describe('The link target: absolute file path for file type, URL for url/github type, or package name for package type'),
+          description: z.string().optional().describe('Optional description of what the link points to'),
         },
         async (args) => {
-          const result = await toolsService.executeTool('topic_add_link', args, userId);
+          // Expand ~ in file paths
+          let target = args.target;
+          if (args.type === 'file' && target.startsWith('~/')) {
+            target = expandPath(target);
+          }
+
+          const result = await toolsService.executeTool('topic_add_link', {
+            ...args,
+            target,
+          }, userId);
+
           return {
             content: [{
               type: 'text' as const,
@@ -255,13 +367,13 @@ export function createFacilitatorMcpServer(toolsService: MCPToolsService, userId
         {
           title: z.string().describe('Title of the document'),
           content: z.string().optional().describe('Initial content of the document (markdown)'),
-          workspaceId: z.string().optional().describe('Workspace ID to create the document in (defaults to current workspace)'),
+          workspaceId: z.string().optional().describe('Workspace ID to create the document in (defaults to personal workspace)'),
         },
         async (args) => {
-          // Auto-inject workspaceId from context if not explicitly provided
+          // Default to personal workspace when not in a workspace context
           const toolArgs = {
             ...args,
-            workspaceId: args.workspaceId || workspaceId,
+            workspaceId: args.workspaceId || workspaceId || `personal-${userId}`,
           };
           const result = await toolsService.executeTool('document_create', toolArgs, userId);
           return {
@@ -533,13 +645,13 @@ export function createFacilitatorMcpServer(toolsService: MCPToolsService, userId
           description: z.string().optional().describe('Detailed description of the idea (markdown)'),
           topicIds: z.string().optional().describe('Comma-separated list of Topic IDs to attach this idea to'),
           tags: z.string().optional().describe('Comma-separated list of tags'),
-          workspaceId: z.string().optional().describe('Workspace ID to create the idea in (defaults to current workspace)'),
+          workspaceId: z.string().optional().describe('Workspace ID to create the idea in (defaults to personal workspace)'),
         },
         async (args) => {
-          // Auto-inject workspaceId from context if not explicitly provided
+          // Default to personal workspace when not in a workspace context
           const toolArgs = {
             ...args,
-            workspaceId: args.workspaceId || workspaceId,
+            workspaceId: args.workspaceId || workspaceId || `personal-${userId}`,
           };
           const result = await toolsService.executeTool('idea_create', toolArgs, userId);
           return {

@@ -2,6 +2,16 @@ import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { homedir } from 'os';
+import {
+  type ContentBlock,
+  type ToolCall,
+  type TextBlock,
+  type ToolCallsBlock,
+  migrateToPartsFormat,
+} from './BaseChatTypes.js';
+
+// Re-export shared types for consumers
+export type { ContentBlock, ToolCall, TextBlock, ToolCallsBlock };
 
 /**
  * Open question from the agent for user resolution
@@ -27,8 +37,13 @@ export interface IdeaAgentMessage {
   ideaId: string;
   userId: string;
   role: 'user' | 'assistant' | 'system';
-  content: string;
+  /** Content blocks in order - maintains text/tool interleaving */
+  parts?: ContentBlock[];
+  /** @deprecated Use parts instead - kept for backward compatibility */
+  content?: string;
   timestamp: number;
+  /** @deprecated Use parts instead - kept for backward compatibility */
+  toolCalls?: ToolCall[];
   /** Open questions associated with this message (for rehydration on dialog reopen) */
   openQuestions?: OpenQuestion[];
 }
@@ -106,23 +121,41 @@ export class IdeaAgentChatService {
 
   /**
    * Add a message to the idea's agent chat.
+   * @param openQuestions - Optional open questions for rehydration
+   * @param toolCalls - Optional tool calls (legacy format, use parts instead)
+   * @param parts - Optional content blocks in order (new format, replaces content/toolCalls)
    */
   async addMessage(
     ideaId: string,
     userId: string,
     role: 'user' | 'assistant' | 'system',
     content: string,
-    openQuestions?: OpenQuestion[]
+    openQuestions?: OpenQuestion[],
+    toolCalls?: ToolCall[],
+    parts?: ContentBlock[]
   ): Promise<IdeaAgentMessage> {
     const message: IdeaAgentMessage = {
       id: uuidv4(),
       ideaId,
       userId,
       role,
-      content,
       timestamp: Date.now(),
       ...(openQuestions && openQuestions.length > 0 && { openQuestions }),
     };
+
+    // Use parts if provided (new format), otherwise fall back to content/toolCalls (legacy)
+    if (parts && parts.length > 0) {
+      message.parts = parts;
+    } else {
+      // Legacy format - store both content and parts for backward compatibility
+      message.content = content;
+      message.toolCalls = toolCalls;
+      // Also create parts array from legacy format using shared helper
+      const legacyParts = migrateToPartsFormat(content, toolCalls);
+      if (legacyParts.length > 0) {
+        message.parts = legacyParts;
+      }
+    }
 
     // Append message to JSONL file
     const line = JSON.stringify(message) + '\n';

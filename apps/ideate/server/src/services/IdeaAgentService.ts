@@ -9,6 +9,7 @@ import { createToolStartEvent, createToolCompleteEvent } from '../shared/sdkStre
 import { createStatusEvent } from '../shared/agentProgressUtils.js';
 import { createTopicToolsMcpServer } from '../shared/topicToolsMcp.js';
 import { factsService } from './FactsService.js';
+import { ChatPartsBuilder, type ToolCall } from './BaseChatTypes.js';
 // Re-export shared types for backwards compatibility
 export type { OpenQuestion, SuggestedResponse, TokenUsage } from '../shared/agentResponseTypes.js';
 import type { OpenQuestion, SuggestedResponse, TokenUsage } from '../shared/agentResponseTypes.js';
@@ -651,7 +652,12 @@ export class IdeaAgentService {
     const systemPrompt = buildIdeaAgentSystemPrompt(isNewIdea, documentContent, ideaContext.topicContext, factsSection);
 
     // Build the full prompt with conversation history
-    const conversationHistory = buildConversationHistory(history.slice(0, -1));
+    // Map to ensure content is always a string (for backward compatibility with parts format)
+    const historyForPrompt = history.slice(0, -1).map(m => ({
+      role: m.role,
+      content: m.content ?? '',
+    }));
+    const conversationHistory = buildConversationHistory(historyForPrompt);
     const fullPrompt = conversationHistory
       ? `${conversationHistory}\n\nUser: ${content}`
       : content;
@@ -671,6 +677,9 @@ export class IdeaAgentService {
 
     // Track tool calls for matching results
     const pendingToolCalls: Array<{ id: string; name: string; input: Record<string, unknown>; output?: string }> = [];
+
+    // Track content blocks in order for persistence (maintains text/tool interleaving)
+    const partsBuilder = new ChatPartsBuilder();
 
     try {
       console.log(`[IdeaAgentService] Processing message for idea ${ideaId} (new: ${isNewIdea}): "${content.slice(0, 50)}..."`);
@@ -725,11 +734,15 @@ export class IdeaAgentService {
                 // Tool use - emit progress event (including server-side tools like WebSearch)
                 const toolUseBlock = block as { type: 'tool_use' | 'server_tool_use'; id?: string; name: string; input: Record<string, unknown> };
                 console.log(`[IdeaAgentService] Tool use (${block.type}): ${toolUseBlock.name}`);
-                pendingToolCalls.push({
-                  id: toolUseBlock.id || '',
+                const newToolCall: ToolCall = {
                   name: toolUseBlock.name,
                   input: toolUseBlock.input || {},
+                };
+                pendingToolCalls.push({
+                  id: toolUseBlock.id || '',
+                  ...newToolCall,
                 });
+                partsBuilder.addToolCall(newToolCall);
                 callbacks.onProgressEvent?.(createToolStartEvent(toolUseBlock.name, toolUseBlock.input || {}));
               }
             }
@@ -739,6 +752,7 @@ export class IdeaAgentService {
 
           if (newText) {
             fullResponse += newText;
+            partsBuilder.appendText(newText);
 
             // Check for open questions block and send immediately when found
             // This should happen FIRST, before any text chunks
@@ -814,6 +828,8 @@ export class IdeaAgentService {
                   }
 
                   pendingTool.output = outputContent;
+                  // Also update the tool call output in parts array
+                  partsBuilder.updateToolOutput(pendingTool.name, outputContent);
                   console.log(`[IdeaAgentService] Tool result: ${pendingTool.name}`);
                   callbacks.onProgressEvent?.(createToolCompleteEvent(pendingTool.name, outputContent));
                 }
@@ -952,12 +968,16 @@ export class IdeaAgentService {
 
       // Save the assistant message (chat portion only, without suggestion blocks)
       // Include openQuestions so they can be rehydrated when dialog reopens
+      // Include parts for ordered content blocks to preserve text/tool interleaving
+      const allToolCalls = partsBuilder.getAllToolCalls();
       const assistantMessage = await this.chatService.addMessage(
         ideaId,
         userId,
         'assistant',
         chatResponse || 'I apologize, but I was unable to generate a response.',
-        questionsToSave
+        questionsToSave,
+        allToolCalls.length > 0 ? allToolCalls : undefined,
+        partsBuilder.hasParts() ? partsBuilder.getParts() : undefined
       );
 
       // Call complete callback
@@ -1123,14 +1143,7 @@ export class IdeaAgentService {
       examples: 'a new concept, enhancement, or related idea'
     };
 
-    // Build the greeting with Topic context
-    const descriptionHint = description
-      ? `\n\n*${description}*`
-      : '';
-
-    return `So what's on your mind regarding **${name}**?${descriptionHint}
-
-Share your idea for ${context.activity} **${name}** - whether it's ${context.examples}. I'll help you develop it into a complete idea.`;
+    return `Share your idea for ${context.activity} **${name}** - whether it's ${context.examples}. I'll help you develop it into a complete idea.`;
   }
 
   /**

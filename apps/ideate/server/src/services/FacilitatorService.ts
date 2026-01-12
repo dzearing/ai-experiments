@@ -13,6 +13,7 @@ import { readFile } from 'fs/promises';
 import { existsSync } from 'fs';
 import { PersonaService, type Persona } from './PersonaService.js';
 import { FacilitatorChatService, type FacilitatorMessage } from './FacilitatorChatService.js';
+import { ChatPartsBuilder, type ToolCall } from './BaseChatTypes.js';
 import { MCPToolsService, type ToolDefinition } from './MCPToolsService.js';
 import { TopicService } from './TopicService.js';
 import { factsService } from './FactsService.js';
@@ -732,7 +733,8 @@ Example format:
 
     let fullResponse = '';
     let pendingBuffer = ''; // Buffer for potential open_questions blocks
-    const toolCalls: FacilitatorMessage['toolCalls'] = [];
+    const toolCalls: ToolCall[] = []; // Legacy: for diagnostics only
+    const partsBuilder = new ChatPartsBuilder(); // Tracks content blocks in order for persistence
     let hasStartedStreaming = false; // Track if we've started streaming
     let questionsSent = false; // Track if open questions have been sent
 
@@ -854,6 +856,7 @@ Example format:
                 // Send the cleaned response
                 if (responseWithoutQuestions) {
                   fullResponse += responseWithoutQuestions;
+                  partsBuilder.appendText(responseWithoutQuestions);
                   callbacks.onTextChunk(responseWithoutQuestions, messageId);
                 }
                 pendingBuffer = '';
@@ -863,6 +866,7 @@ Example format:
               } else {
                 // No open_questions block - safe to send
                 fullResponse += pendingBuffer;
+                partsBuilder.appendText(pendingBuffer);
                 callbacks.onTextChunk(pendingBuffer, messageId);
                 pendingBuffer = '';
               }
@@ -899,6 +903,7 @@ Example format:
                 // Only add if not already streamed (check if fullResponse doesn't end with this text)
                 if (text && !fullResponse.endsWith(text)) {
                   fullResponse += text;
+                  partsBuilder.appendText(text);
                   callbacks.onTextChunk(text, messageId);
                 }
               } else if (block.type === 'thinking') {
@@ -914,10 +919,12 @@ Example format:
                   input: sdkToolCall.input || {},
                   messageId,
                 });
-                toolCalls.push({
+                const newToolCall: ToolCall = {
                   name: sdkToolCall.name,
                   input: sdkToolCall.input || {},
-                });
+                };
+                toolCalls.push(newToolCall);
+                partsBuilder.addToolCall(newToolCall);
               }
             }
           } else if (typeof msgContent === 'string') {
@@ -933,6 +940,7 @@ Example format:
             }
             if (text && !fullResponse.endsWith(text)) {
               fullResponse += text;
+              partsBuilder.appendText(text);
               callbacks.onTextChunk(text, messageId);
             }
           }
@@ -958,6 +966,8 @@ Example format:
                     }
                   }
                   lastPendingTool.output = outputContent;
+                  // Also update the tool call output in parts array
+                  partsBuilder.updateToolOutput(lastPendingTool.name, outputContent);
                   console.log(`[FacilitatorService] Tool result: ${lastPendingTool.name}, output type: ${typeof toolResult.content}, isArray: ${Array.isArray(toolResult.content)}`);
                   callbacks.onToolResult({
                     name: lastPendingTool.name,
@@ -998,6 +1008,7 @@ Example format:
               }
               fullResponse = text;
               if (text) {
+                partsBuilder.appendText(text);
                 callbacks.onTextChunk(text, messageId);
               }
             }
@@ -1009,6 +1020,7 @@ Example format:
             console.log(`[FacilitatorService] Max turns reached`);
             const warningMsg = '\n\n*I\'ve reached my action limit for this request. Let me know if you need me to continue.*';
             fullResponse += warningMsg;
+            partsBuilder.appendText(warningMsg);
             callbacks.onTextChunk(warningMsg, messageId);
           }
         }
@@ -1025,11 +1037,13 @@ Example format:
           }
           if (responseWithoutQuestions) {
             fullResponse += responseWithoutQuestions;
+            partsBuilder.appendText(responseWithoutQuestions);
             callbacks.onTextChunk(responseWithoutQuestions, messageId);
           }
         } else {
           // No complete open_questions block - just send the remaining text
           fullResponse += pendingBuffer;
+          partsBuilder.appendText(pendingBuffer);
           callbacks.onTextChunk(pendingBuffer, messageId);
         }
         pendingBuffer = '';
@@ -1053,14 +1067,15 @@ Example format:
         totalCostUsd: totalCostUsd > 0 ? totalCostUsd : undefined,
       };
 
-      // Save the assistant message with diagnostics for persistence
+      // Save the assistant message with parts for ordered content blocks
       const assistantMessage = await this.chatService.addMessage(
         userId,
         'assistant',
         fullResponse || 'I apologize, but I was unable to generate a response.',
         toolCalls.length > 0 ? toolCalls : undefined,
         messageId,
-        messageDiagnostics // Pass diagnostics to persist with the message
+        messageDiagnostics, // Pass diagnostics to persist with the message
+        partsBuilder.hasParts() ? partsBuilder.getParts() : undefined // Pass parts for ordered content blocks
       );
 
       // Call complete callback

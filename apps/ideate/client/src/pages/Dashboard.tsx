@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from '@ui-kit/router';
+import { useNavigate, useParams } from '@ui-kit/router';
 import { Button, Card, Input, Modal, Spinner } from '@ui-kit/react';
 import { AddIcon } from '@ui-kit/icons/AddIcon';
 import { FileIcon } from '@ui-kit/icons/FileIcon';
@@ -8,17 +8,26 @@ import { useAuth } from '../contexts/AuthContext';
 import { useDocuments, type DocumentMetadata } from '../contexts/DocumentContext';
 import { useNetwork, type NetworkDocument } from '../contexts/NetworkContext';
 import { useFacilitator } from '../contexts/FacilitatorContext';
+import { useWorkspaces } from '../contexts/WorkspaceContext';
 import { DocumentCard } from '../components/DocumentCard';
 import { getTimeAgo } from '../utils/timeAgo';
 import styles from './Dashboard.module.css';
 
 export function Dashboard() {
   const navigate = useNavigate();
+  const { workspaceId } = useParams<{ workspaceId?: string }>();
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { documents, isLoading, fetchDocuments, createDocument, updateDocument, deleteDocument } = useDocuments();
   const { networkDocuments, isDiscovering, startDiscovery, stopDiscovery } =
     useNetwork();
   const { setNavigationContext } = useFacilitator();
+  const { workspaces } = useWorkspaces();
+
+  // Get the current workspace name for navigation context
+  const currentWorkspace = workspaceId && workspaceId !== 'all'
+    ? workspaces.find(w => w.id === workspaceId)
+    : null;
+
   const [showNewDocModal, setShowNewDocModal] = useState(false);
   const [newDocTitle, setNewDocTitle] = useState('');
   const [isCreating, setIsCreating] = useState(false);
@@ -40,10 +49,13 @@ export function Dashboard() {
     }
   }, [isAuthLoading, isAuthenticated, navigate]);
 
-  // Fetch documents on mount
+  // Fetch documents on mount or when workspaceId changes
+  // Pass undefined when "all" to fetch from all workspaces
   useEffect(() => {
-    fetchDocuments();
-  }, [fetchDocuments]);
+    const effectiveWorkspaceId = workspaceId === 'all' ? undefined : workspaceId;
+
+    fetchDocuments({ workspaceId: effectiveWorkspaceId });
+  }, [fetchDocuments, workspaceId]);
 
   // Start network discovery on mount
   useEffect(() => {
@@ -53,20 +65,28 @@ export function Dashboard() {
 
   // Update facilitator navigation context
   useEffect(() => {
+    // Don't pass workspaceId when in "all" mode - it's not a real workspace
+    const effectiveWorkspaceId = workspaceId === 'all' ? undefined : workspaceId;
+
     setNavigationContext({
-      currentPage: 'Dashboard (Global Documents)',
+      currentPage: workspaceId === 'all' ? 'Documents (All Workspaces)' : 'Documents',
+      workspaceId: effectiveWorkspaceId,
+      workspaceName: currentWorkspace?.name,
     });
 
     return () => {
       setNavigationContext({});
     };
-  }, [setNavigationContext]);
+  }, [workspaceId, currentWorkspace?.name, setNavigationContext]);
 
   const handleCreateDocument = async () => {
     if (!newDocTitle.trim()) return;
     setIsCreating(true);
     try {
-      const doc = await createDocument(newDocTitle.trim());
+      // When in "all" mode, default new documents to personal workspace
+      const effectiveWorkspaceId = workspaceId === 'all' ? `personal-${user?.id}` : workspaceId;
+      const doc = await createDocument(newDocTitle.trim(), { workspaceId: effectiveWorkspaceId });
+
       setShowNewDocModal(false);
       setNewDocTitle('');
       navigate(`/doc/${doc.id}`);

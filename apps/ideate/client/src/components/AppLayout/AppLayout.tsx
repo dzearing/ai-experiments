@@ -1,4 +1,5 @@
-import { Outlet, useNavigate, useLocation, useNavigationType, useIsActive } from '@ui-kit/router';
+import { useMemo } from 'react';
+import { Outlet, useNavigate, useLocation, useNavigationType } from '@ui-kit/router';
 import { Avatar, Button, IconButton, Menu, PageTransition, useHistoryIndex, useTheme } from '@ui-kit/react';
 import { GearIcon } from '@ui-kit/icons/GearIcon';
 import { LogoutIcon } from '@ui-kit/icons/LogoutIcon';
@@ -6,12 +7,31 @@ import { SunIcon } from '@ui-kit/icons/SunIcon';
 import { MoonIcon } from '@ui-kit/icons/MoonIcon';
 import { SunMoonIcon } from '@ui-kit/icons/SunMoonIcon';
 import { FileIcon } from '@ui-kit/icons/FileIcon';
-import { FolderIcon } from '@ui-kit/icons/FolderIcon';
 import { BoardIcon } from '@ui-kit/icons/BoardIcon';
 import { TreeIcon } from '@ui-kit/icons/TreeIcon';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSession } from '../../contexts/SessionContext';
+import { WorkspaceSwitcher } from '../WorkspaceSwitcher';
 import styles from './AppLayout.module.css';
+
+type Pivot = 'topics' | 'ideas' | 'documents';
+
+/**
+ * Extracts the current workspace ID and pivot from the pathname.
+ * Returns null values if not on a workspace-scoped route.
+ */
+function parseWorkspacePath(pathname: string): { workspaceId: string | null; pivot: Pivot | null } {
+  const match = pathname.match(/^\/([^/]+)\/(topics|ideas|documents)/);
+
+  if (match) {
+    return {
+      workspaceId: match[1],
+      pivot: match[2] as Pivot,
+    };
+  }
+
+  return { workspaceId: null, pivot: null };
+}
 
 export function AppLayout() {
   const { user, signOut } = useAuth();
@@ -25,53 +45,65 @@ export function AppLayout() {
     navigationType,
   });
 
-  // Active state for nav buttons
-  const isDashboardActive = useIsActive('/dashboard');
-  const isTopicsActive = useIsActive('/topics');
-  const isIdeasActive = useIsActive('/ideas');
-  const isWorkspacesActive = useIsActive('/workspaces');
+  // Parse current workspace and pivot from URL
+  const { workspaceId, pivot } = useMemo(
+    () => parseWorkspacePath(location.pathname),
+    [location.pathname]
+  );
+
+  // Determine the effective workspace ID for nav links
+  // Falls back to personal workspace if not on a workspace route
+  const effectiveWorkspaceId = workspaceId || (user ? `personal-${user.id}` : null);
+
+  // Active state for nav buttons based on current pivot
+  const isTopicsActive = pivot === 'topics';
+  const isIdeasActive = pivot === 'ideas';
+  const isDocumentsActive = pivot === 'documents';
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
   };
 
+  // Navigate to default workspace/pivot (for logo click)
+  const handleLogoClick = () => {
+    if (effectiveWorkspaceId) {
+      navigate(`/${effectiveWorkspaceId}/topics`);
+    } else {
+      navigate('/');
+    }
+  };
+
   return (
     <div className={styles.layout}>
       <header className={styles.header}>
         <div className={styles.headerLeft}>
-          <button className={styles.logo} onClick={() => navigate('/dashboard')}>
+          <button className={styles.logo} onClick={handleLogoClick}>
             <span className={styles.logoIcon}>I</span>
             <span className={styles.logoText}>Ideate</span>
           </button>
+          <WorkspaceSwitcher />
           <nav className={styles.nav}>
             <Button
-              href="/topics"
+              href={effectiveWorkspaceId ? `/${effectiveWorkspaceId}/topics` : '/'}
               variant={isTopicsActive ? 'primary' : 'ghost'}
               icon={<TreeIcon />}
             >
               Topics
             </Button>
             <Button
-              href="/ideas"
+              href={effectiveWorkspaceId ? `/${effectiveWorkspaceId}/ideas` : '/'}
               variant={isIdeasActive ? 'primary' : 'ghost'}
               icon={<BoardIcon />}
             >
               Ideas
             </Button>
             <Button
-              href="/dashboard"
-              variant={isDashboardActive ? 'primary' : 'ghost'}
+              href={effectiveWorkspaceId ? `/${effectiveWorkspaceId}/documents` : '/'}
+              variant={isDocumentsActive ? 'primary' : 'ghost'}
               icon={<FileIcon />}
             >
               Documents
-            </Button>
-            <Button
-              href="/workspaces"
-              variant={isWorkspacesActive ? 'primary' : 'ghost'}
-              icon={<FolderIcon />}
-            >
-              Workspaces
             </Button>
           </nav>
         </div>
@@ -94,17 +126,22 @@ export function AppLayout() {
             />
           </Menu>
 
+          {/* Settings */}
+          <IconButton
+            icon={<GearIcon />}
+            variant="ghost"
+            aria-label="Settings"
+            onClick={() => navigate('/settings')}
+          />
+
           {/* User Menu */}
           {user && (
             <Menu
               items={[
-                { value: 'settings', label: 'Settings', icon: <GearIcon /> },
                 { value: 'signout', label: 'Sign Out', icon: <LogoutIcon /> },
               ]}
               onSelect={(value) => {
-                if (value === 'settings') {
-                  navigate('/settings');
-                } else if (value === 'signout') {
+                if (value === 'signout') {
                   handleSignOut();
                 }
               }}

@@ -11,12 +11,22 @@ import { useAuth } from './AuthContext';
 import { API_URL, WORKSPACE_WS_URL } from '../config';
 import { initializeWorkspaceProvider } from '../dataBus';
 
+export type WorkspaceType = 'personal' | 'team';
+export type WorkspaceRole = 'owner' | 'admin' | 'member' | 'viewer';
+
+export interface WorkspaceMember {
+  userId: string;
+  role: WorkspaceRole;
+  joinedAt: string;
+}
+
 export interface WorkspaceMetadata {
   id: string;
   name: string;
   description: string;
+  type: WorkspaceType;
   ownerId: string;
-  memberIds: string[];
+  members: WorkspaceMember[];
   createdAt: string;
   updatedAt: string;
 }
@@ -28,14 +38,18 @@ export interface Workspace extends WorkspaceMetadata {
 export interface WorkspacePreview {
   id: string;
   name: string;
+  type: WorkspaceType;
   ownerName?: string;
 }
 
 interface WorkspaceContextValue {
   workspaces: WorkspaceMetadata[];
+  currentWorkspace: WorkspaceMetadata | null;
   isLoading: boolean;
   error: string | null;
+  setCurrentWorkspace: (workspace: WorkspaceMetadata | null) => void;
   fetchWorkspaces: () => Promise<void>;
+  getPersonalWorkspace: () => Promise<Workspace>;
   createWorkspace: (name: string, description?: string) => Promise<Workspace>;
   getWorkspace: (id: string) => Promise<Workspace | null>;
   updateWorkspace: (
@@ -48,6 +62,19 @@ interface WorkspaceContextValue {
   joinWorkspace: (token: string) => Promise<Workspace | null>;
 }
 
+// localStorage keys for workspace state persistence
+const STORAGE_KEYS = {
+  currentWorkspaceId: 'ideate:currentWorkspaceId',
+  workspaceAccess: 'ideate:workspaceAccess',
+} as const;
+
+/**
+ * Check if a workspace ID is a personal workspace ID.
+ */
+export function isPersonalWorkspaceId(workspaceId: string): boolean {
+  return workspaceId.startsWith('personal-');
+}
+
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
 
 interface WorkspaceProviderProps {
@@ -57,8 +84,32 @@ interface WorkspaceProviderProps {
 export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
   const { user } = useAuth();
   const [workspaces, setWorkspaces] = useState<WorkspaceMetadata[]>([]);
+  const [currentWorkspace, setCurrentWorkspaceState] = useState<WorkspaceMetadata | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const initializedRef = useRef(false);
+
+  /**
+   * Set the current workspace and persist to localStorage.
+   * Pass null to clear the workspace filter (show all workspaces).
+   */
+  const setCurrentWorkspace = useCallback((workspace: WorkspaceMetadata | null) => {
+    setCurrentWorkspaceState(workspace);
+
+    if (workspace === null) {
+      localStorage.removeItem(STORAGE_KEYS.currentWorkspaceId);
+
+      return;
+    }
+
+    localStorage.setItem(STORAGE_KEYS.currentWorkspaceId, workspace.id);
+
+    // Update last access timestamp for sorting
+    const accessData = JSON.parse(localStorage.getItem(STORAGE_KEYS.workspaceAccess) || '{}');
+
+    accessData[workspace.id] = Date.now();
+    localStorage.setItem(STORAGE_KEYS.workspaceAccess, JSON.stringify(accessData));
+  }, []);
 
   const fetchWorkspaces = useCallback(async () => {
     if (!user) return;
@@ -84,6 +135,24 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
     } finally {
       setIsLoading(false);
     }
+  }, [user]);
+
+  const getPersonalWorkspace = useCallback(async (): Promise<Workspace> => {
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    const response = await fetch(`${API_URL}/api/workspaces/personal`, {
+      headers: {
+        'x-user-id': user.id,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to get personal workspace');
+    }
+
+    return await response.json();
   }, [user]);
 
   const createWorkspace = useCallback(
@@ -371,11 +440,105 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
     return cleanup;
   }, [user]);
 
+  // Fetch workspaces when user becomes available
+  // Also ensure personal workspace exists by calling getPersonalWorkspace
+  useEffect(() => {
+    if (!user) return;
+
+    const initWorkspaces = async () => {
+      // Ensure personal workspace exists (auto-created by server if needed)
+      await getPersonalWorkspace();
+      // Then fetch all workspaces
+      await fetchWorkspaces();
+    };
+
+    initWorkspaces();
+  }, [user, fetchWorkspaces, getPersonalWorkspace]);
+
+  // Initialize current workspace from localStorage or default to personal
+  useEffect(() => {
+    if (!user || workspaces.length === 0 || initializedRef.current) return;
+
+    const savedWorkspaceId = localStorage.getItem(STORAGE_KEYS.currentWorkspaceId);
+
+    if (savedWorkspaceId) {
+      // Try to find the saved workspace in the list
+      const savedWorkspace = workspaces.find((w) => w.id === savedWorkspaceId);
+
+      if (savedWorkspace) {
+        setCurrentWorkspaceState(savedWorkspace);
+        initializedRef.current = true;
+
+        return;
+      }
+    }
+
+    // Default to personal workspace (first in list since it's sorted that way)
+    const personalWorkspace = workspaces.find((w) => w.type === 'personal');
+
+    if (personalWorkspace) {
+      setCurrentWorkspace(personalWorkspace);
+    } else if (workspaces.length > 0) {
+      // Fallback to first workspace if no personal found
+      setCurrentWorkspace(workspaces[0]);
+    }
+
+    initializedRef.current = true;
+  }, [user, workspaces, setCurrentWorkspace]);
+
+  // Keep current workspace in sync with workspaces list
+  // (e.g., if workspace is deleted or updated)
+  useEffect(() => {
+    if (!currentWorkspace || workspaces.length === 0) return;
+
+    const updatedWorkspace = workspaces.find((w) => w.id === currentWorkspace.id);
+
+    if (updatedWorkspace) {
+      // Update if workspace data changed
+      if (JSON.stringify(updatedWorkspace) !== JSON.stringify(currentWorkspace)) {
+        setCurrentWorkspaceState(updatedWorkspace);
+      }
+    } else {
+      // Current workspace was deleted, switch to personal
+      const personalWorkspace = workspaces.find((w) => w.type === 'personal');
+
+      if (personalWorkspace) {
+        setCurrentWorkspace(personalWorkspace);
+      } else if (workspaces.length > 0) {
+        setCurrentWorkspace(workspaces[0]);
+      }
+    }
+  }, [workspaces, currentWorkspace, setCurrentWorkspace]);
+
+  // Cross-tab synchronization via storage event
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === STORAGE_KEYS.currentWorkspaceId && event.newValue) {
+        const newWorkspaceId = event.newValue;
+        const newWorkspace = workspaces.find((w) => w.id === newWorkspaceId);
+
+        if (newWorkspace && newWorkspace.id !== currentWorkspace?.id) {
+          // Another tab changed workspace - update state but don't re-persist
+          setCurrentWorkspaceState(newWorkspace);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [workspaces, currentWorkspace]);
+
   const value: WorkspaceContextValue = {
     workspaces,
+    currentWorkspace,
     isLoading,
     error,
+    setCurrentWorkspace,
     fetchWorkspaces,
+    getPersonalWorkspace,
     createWorkspace,
     getWorkspace,
     updateWorkspace,

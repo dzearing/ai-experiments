@@ -12,17 +12,20 @@ import styles from './Landing.module.css';
 
 export function Landing() {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const { mode, setMode } = useTheme();
 
-  // Redirect to dashboard if already authenticated
+  // Redirect to personal workspace topics if already authenticated
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard');
-    }
-  }, [isAuthenticated, navigate]);
+    if (!isLoading && isAuthenticated && user) {
+      const personalWorkspaceId = `personal-${user.id}`;
 
-  if (isAuthenticated) {
+      navigate(`/${personalWorkspaceId}/topics`);
+    }
+  }, [isLoading, isAuthenticated, user, navigate]);
+
+  // Don't render anything while checking auth or if authenticated (will redirect)
+  if (isLoading || isAuthenticated) {
     return null;
   }
 

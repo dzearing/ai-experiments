@@ -51,17 +51,21 @@ export function App() {
 
                         {/* Protected routes with app layout */}
                         <Route component={AppLayout}>
-                          <Route path="/dashboard" component={Dashboard} />
+                          {/* Workspace-scoped content routes: /:workspaceId/:pivot/:itemId? */}
+                          <Route path="/:workspaceId/topics" component={Topics} />
+                          <Route path="/:workspaceId/topics/:topicId" component={Topics} />
+                          <Route path="/:workspaceId/ideas" component={Ideas} />
+                          <Route path="/:workspaceId/documents" component={Dashboard} />
+
+                          {/* Workspace management */}
                           <Route path="/workspaces" component={Workspaces} />
-                          <Route path="/workspace/:workspaceId" component={WorkspaceDetail} />
-                          <Route path="/workspace/:workspaceId/ideas" component={Ideas} />
-                          <Route path="/ideas" component={Ideas} />
-                          <Route path="/workspace/:workspaceId/topics" component={Topics} />
-                          <Route path="/workspace/:workspaceId/topics/:topicId" component={Topics} />
-                          <Route path="/topics" component={Topics} />
-                          <Route path="/topics/:topicId" component={Topics} />
+                          <Route path="/workspaces/:workspaceId" component={WorkspaceDetail} />
+
+                          {/* Document editor (standalone) */}
                           <Route path="/doc/:documentId" component={DocumentEditor} />
                           <Route path="/chat/:chatRoomId" component={ChatRoom} />
+
+                          {/* Settings */}
                           <Route path="/settings" component={Settings} />
                           <Route path="/settings/facilitator" component={FacilitatorSettings} />
                           <Route path="/facilitator-persona" component={PersonaEditor} />

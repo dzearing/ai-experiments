@@ -362,7 +362,7 @@ export class MCPToolsService {
             },
             type: {
               type: 'string',
-              description: 'Type of the Topic (e.g., category, project, feature, item, package, component)',
+              description: 'Type of the Topic (e.g., folder, git-repo, project, feature, category, item)',
             },
             description: {
               type: 'string',
@@ -379,6 +379,10 @@ export class MCPToolsService {
             tags: {
               type: 'string',
               description: 'Comma-separated list of tags',
+            },
+            properties: {
+              type: 'object',
+              description: 'Key-value properties for the Topic (e.g., localPath for folders, remoteUrl for git repos)',
             },
             icon: {
               type: 'string',
@@ -758,7 +762,8 @@ export class MCPToolsService {
             input.workspaceId as string | undefined,
             input.tags as string | undefined,
             input.icon as string | undefined,
-            input.color as string | undefined
+            input.color as string | undefined,
+            input.properties as Record<string, string> | undefined
           );
 
         case 'topic_update':
@@ -878,7 +883,7 @@ export class MCPToolsService {
           name: ws.name,
           description: ws.description,
           isOwner: ws.ownerId === userId,
-          memberCount: ws.memberIds.length + 1, // +1 for owner
+          memberCount: ws.members.length,
           updatedAt: ws.updatedAt,
         })),
       },
@@ -905,7 +910,7 @@ export class MCPToolsService {
         name: workspace.name,
         description: workspace.description,
         isOwner: workspace.ownerId === userId,
-        memberCount: workspace.memberIds.length + 1,
+        memberCount: workspace.members.length,
         createdAt: workspace.createdAt,
         updatedAt: workspace.updatedAt,
       },
@@ -917,11 +922,20 @@ export class MCPToolsService {
     name: string,
     description?: string
   ): Promise<ToolResult> {
-    const workspace = await this.workspaceService.createWorkspace(
+    const result = await this.workspaceService.createWorkspace(
       userId,
       name,
       description
     );
+
+    if (!result.success || !result.data) {
+      return {
+        success: false,
+        error: result.error?.message || 'Failed to create workspace',
+      };
+    }
+
+    const workspace = result.data;
 
     // Notify user about the new workspace
     workspaceWsHandler?.notifyWorkspaceCreated(userId, workspace.id, {
@@ -948,21 +962,24 @@ export class MCPToolsService {
     description?: string
   ): Promise<ToolResult> {
     const updates: { name?: string; description?: string } = {};
+
     if (name) updates.name = name;
     if (description !== undefined) updates.description = description;
 
-    const workspace = await this.workspaceService.updateWorkspace(
+    const result = await this.workspaceService.updateWorkspace(
       workspaceId,
       userId,
       updates
     );
 
-    if (!workspace) {
+    if (!result.success || !result.data) {
       return {
         success: false,
-        error: 'Workspace not found or you do not have permission to update it',
+        error: result.error?.message || 'Workspace not found or you do not have permission to update it',
       };
     }
+
+    const workspace = result.data;
 
     // Notify subscribers about the workspace update
     workspaceWsHandler?.notifyWorkspaceUpdated(workspaceId, {
@@ -989,12 +1006,12 @@ export class MCPToolsService {
     workspaceId: string,
     userId: string
   ): Promise<ToolResult> {
-    const success = await this.workspaceService.deleteWorkspace(workspaceId, userId);
+    const result = await this.workspaceService.deleteWorkspace(workspaceId, userId);
 
-    if (!success) {
+    if (!result.success) {
       return {
         success: false,
-        error: 'Workspace not found or you do not have permission to delete it',
+        error: result.error?.message || 'Workspace not found or you do not have permission to delete it',
       };
     }
 
@@ -1551,7 +1568,8 @@ export class MCPToolsService {
     workspaceId?: string,
     tags?: string,
     icon?: string,
-    color?: string
+    color?: string,
+    properties?: Record<string, string>
   ): Promise<ToolResult> {
     const input = {
       name,
@@ -1562,6 +1580,7 @@ export class MCPToolsService {
       tags: tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : [],
       icon: icon as TopicIcon | undefined,
       color: color as TopicColor | undefined,
+      properties,
     };
 
     const topic = await this.topicService.createTopic(userId, input);
@@ -1586,6 +1605,7 @@ export class MCPToolsService {
           tags: topic.tags,
           icon: topic.icon,
           color: topic.color,
+          properties: topic.properties,
           createdAt: topic.createdAt,
           updatedAt: topic.updatedAt,
         },

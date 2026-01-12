@@ -36,10 +36,8 @@
 
 .panel {
   position: relative;
-  width: 100%;
-  min-width: 50vw;
-  max-width: 900px;
-  max-height: 80vh;
+  width: min(900px, calc(100vw - 32px));
+  height: min(600px, calc(80vh - 32px));
   display: flex;
   flex-direction: column;
   background: var(--soft-bg);
@@ -102,7 +100,6 @@
 .messagesContainer {
   flex: 1;
   min-height: 0; /* Allow flex shrinking - needed for child scroll container */
-  max-height: 50vh;
   /* NOTE: Do NOT add overflow-y: auto here - the VirtualizedChatPanel has its own
      internal scroll container. Adding overflow here creates nested scrollers and
      breaks scroll event detection for scroll-lock behavior. */

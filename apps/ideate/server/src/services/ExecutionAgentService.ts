@@ -731,6 +731,36 @@ Begin executing these tasks in order. Report progress after each task completion
     const phaseComplete = parsePhaseComplete(text);
     if (phaseComplete) {
       this.dispatchOrQueue(ideaId, { type: 'phase_complete', data: phaseComplete, timestamp: Date.now() });
+
+      // Update progress percent when a phase completes
+      try {
+        const idea = await this.ideaService.getIdeaByIdNoAuth(ideaId);
+        if (idea?.plan?.phases) {
+          const phases = idea.plan.phases;
+          const completedPhaseIndex = phases.findIndex(p => p.id === phaseComplete.phaseId);
+
+          if (completedPhaseIndex !== -1) {
+            // Calculate progress: (completedPhases / totalPhases) * 100
+            const progressPercent = Math.round(((completedPhaseIndex + 1) / phases.length) * 100);
+
+            // Find next phase if there is one
+            const nextPhaseId = completedPhaseIndex < phases.length - 1
+              ? phases[completedPhaseIndex + 1].id
+              : undefined;
+
+            const updatedIdea = await this.ideaService.updateExecutionStateInternal(ideaId, {
+              progressPercent,
+              currentPhaseId: nextPhaseId ?? idea.execution?.currentPhaseId,
+            });
+
+            if (updatedIdea && this.onExecutionStateChange) {
+              this.onExecutionStateChange(ideaId, updatedIdea);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('[ExecutionAgentService] Failed to update progress on phase complete:', err);
+      }
     }
 
     const executionBlocked = parseExecutionBlocked(text);

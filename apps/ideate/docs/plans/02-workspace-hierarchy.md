@@ -23,6 +23,93 @@ Users should have a personal workspace that:
 4. **Content portability** - Copy schemas/templates from personal to team workspaces
 5. **Cleaner navigation** - Remove workspace as a "tab", make it a context switcher
 
+## Design Principles
+
+### Clean Break, No Hacks
+- **No backward compatibility shims** - Old schema is replaced, not extended
+- **No deprecated field preservation** - Remove `memberIds` entirely after migration
+- **No fallback logic** - Code assumes new schema; migration is prerequisite to deployment
+- **No dual-path code** - Single code path for workspace handling
+
+### Modular Architecture
+- **Single responsibility** - Each service/component does one thing well
+- **Shared utilities** - Permission checking, validation, error handling in reusable modules
+- **Consistent patterns** - All content types (Topics, Ideas, Documents, Schemas) use same copy interface
+
+### DRY Code
+- **Reusable components:**
+  - `CopyToWorkspaceModal` - Generic, works for any content type
+  - `WorkspacePermissionGuard` - Wraps UI elements that need permission checks
+  - `useWorkspaceContext` - Single hook for all workspace state access
+  - `workspaceAuthMiddleware` - Single middleware for all permission checks
+
+- **Shared types:**
+  ```typescript
+  // Shared across client and server
+  type WorkspaceType = 'personal' | 'team';
+  type WorkspaceRole = 'owner' | 'admin' | 'member' | 'viewer';
+  type ContentType = 'topic' | 'idea' | 'document' | 'schema';
+
+  interface CopyRequest {
+    contentType: ContentType;
+    contentId: string;
+    targetWorkspaceId: string;
+    targetTopicId?: string;  // Required for ideas
+    conflictResolution?: 'replace' | 'rename';
+  }
+  ```
+
+- **Centralized constants:**
+  ```typescript
+  const WORKSPACE_LIMITS = {
+    maxOwned: 20,
+    maxMemberOf: 50,
+    maxMembersPerWorkspace: 100,
+  } as const;
+
+  const ROLE_PERMISSIONS: Record<WorkspaceRole, Permission[]> = {
+    owner: ['view', 'create', 'edit', 'delete', 'manage_members', 'delete_workspace'],
+    admin: ['view', 'create', 'edit', 'delete', 'manage_members'],
+    member: ['view', 'create', 'edit', 'delete_own'],
+    viewer: ['view'],
+  };
+  ```
+
+### Code Organization
+```
+server/src/
+├── types/
+│   └── workspace.ts          # All workspace types (shared via package)
+├── services/
+│   ├── WorkspaceService.ts   # Workspace CRUD, personal workspace creation
+│   ├── PermissionService.ts  # Role/permission checking (reused by all routes)
+│   └── ContentCopyService.ts # Generic copy logic for all content types
+├── middleware/
+│   └── workspaceAuth.ts      # Permission middleware (single implementation)
+└── routes/
+    └── workspaces.ts         # Thin route handlers, delegate to services
+
+client/src/
+├── contexts/
+│   └── WorkspaceContext.tsx  # All workspace state, single source of truth
+├── hooks/
+│   ├── useWorkspace.ts       # Convenience hook wrapping context
+│   └── usePermission.ts      # Check permissions, returns boolean + reason
+├── components/
+│   ├── WorkspaceSwitcher/    # Header dropdown
+│   ├── CopyToWorkspaceModal/ # Generic copy modal
+│   └── PermissionGuard/      # Conditionally render based on permissions
+└── utils/
+    └── workspaceStorage.ts   # localStorage helpers (single module)
+```
+
+### Implementation Rules
+1. **No inline permission checks** - Always use `PermissionService` or `usePermission`
+2. **No hardcoded limits** - Always reference `WORKSPACE_LIMITS`
+3. **No duplicate validation** - Validate once at API boundary, trust internal calls
+4. **No copy-paste between content type handlers** - Extract shared logic to `ContentCopyService`
+5. **Types shared between client/server** - Single source of truth in shared package
+
 ## Design
 
 ### Workspace Types
@@ -44,20 +131,29 @@ Users should have a personal workspace that:
 ### Data Model Changes
 
 ```typescript
+type WorkspaceType = 'personal' | 'team';
+type WorkspaceRole = 'owner' | 'admin' | 'member' | 'viewer';
+
+interface WorkspaceMember {
+  userId: string;
+  role: WorkspaceRole;
+  joinedAt: string;
+}
+
 interface WorkspaceMetadata {
   id: string;
   name: string;
   description: string;
   ownerId: string;
-  memberIds: string[];
+  members: WorkspaceMember[];  // CHANGED: was memberIds: string[]
   shareToken?: string;
   createdAt: string;
   updatedAt: string;
-
-  // NEW
-  type: 'personal' | 'team';  // Distinguish workspace types
+  type: WorkspaceType;  // NEW: Distinguish workspace types
 }
 ```
+
+**Migration note:** The `memberIds: string[]` field is replaced by `members: WorkspaceMember[]`. During migration, existing member IDs are converted to `WorkspaceMember` objects with `role: 'member'` (except the owner who gets `role: 'owner'`).
 
 **Constraints enforced by API:**
 - `type: 'personal'` workspaces:
@@ -66,6 +162,39 @@ interface WorkspaceMetadata {
   - Cannot generate share token
   - Cannot delete
 - Only one personal workspace per user
+
+### Team Workspace Roles & Permissions
+
+Team workspaces support role-based access control using the `WorkspaceRole` type defined above.
+
+| Permission | Owner | Admin | Member | Viewer |
+|------------|-------|-------|--------|--------|
+| View content | ✓ | ✓ | ✓ | ✓ |
+| Create/edit content | ✓ | ✓ | ✓ | ✗ |
+| Delete own content | ✓ | ✓ | ✓ | ✗ |
+| Delete others' content | ✓ | ✓ | ✗ | ✗ |
+| Manage members | ✓ | ✓ | ✗ | ✗ |
+| Change member roles | ✓ | ✓* | ✗ | ✗ |
+| Delete workspace | ✓ | ✗ | ✗ | ✗ |
+| Transfer ownership | ✓ | ✗ | ✗ | ✗ |
+
+*Admins cannot promote others to Owner or demote the Owner.
+
+**Default role**: Users joining via share link become `member`.
+
+### Workspace Limits & Scalability
+
+| Limit | Value | Rationale |
+|-------|-------|-----------|
+| Team workspaces per user (owned) | 20 | Prevent abuse, encourage consolidation |
+| Team workspaces per user (member of) | 50 | Allow broad collaboration |
+| Members per team workspace | 100 | Performance, manageable teams |
+
+**Switcher behavior with many workspaces:**
+- Show first 10 workspaces (Personal + 9 recent team workspaces)
+- "Show all (N)" link at bottom opens full list modal
+- Full list modal includes search/filter
+- Sort by: recent access (default), alphabetical, creation date
 
 ### Navigation Redesign
 
@@ -162,16 +291,102 @@ Proposed:
 
 **Note**: The workspace context is stored in state (e.g., localStorage or React context), not in the URL path. This keeps URLs clean and matches how users think ("I'm looking at my Topics" vs "I'm looking at Topics in workspace X").
 
+### State Management Details
+
+**What's stored where:**
+
+| Data | Storage | Reason |
+|------|---------|--------|
+| Current workspace ID | localStorage (`ideate:currentWorkspaceId`) | Persist across sessions |
+| Workspace list | React state (WorkspaceContext) | Changes frequently, needs reactivity |
+| Workspace metadata cache | React state + memory cache | Performance, avoid re-fetching |
+| Last accessed timestamps | localStorage (`ideate:workspaceAccess`) | For "recent" sorting in switcher |
+
+**Cross-tab synchronization:**
+- Listen to `storage` events for `ideate:currentWorkspaceId` changes
+- When another tab switches workspace, show toast: "Workspace changed in another tab. [Refresh]"
+- Don't auto-switch to avoid jarring UX; let user decide
+
+**Recovery scenarios:**
+
+| Scenario | Behavior |
+|----------|----------|
+| localStorage cleared | Default to personal workspace |
+| Stored workspace ID invalid/deleted | Show "Workspace not found" toast, redirect to personal |
+| Personal workspace missing | Re-create it automatically (API handles this) |
+| User removed from team workspace | Show "Access removed" toast, redirect to personal |
+
+### Responsive Layout
+
+**Desktop (≥1024px):**
+```
+[Logo] [Workspace ▼] [Topics] [Ideas] [Documents]     [⚙] [Avatar]
+```
+
+**Tablet (768px - 1023px):**
+```
+[Logo] [Workspace ▼] [Topics] [Ideas] [Docs]     [⚙] [Avatar]
+```
+- Truncate "Documents" to "Docs"
+- Workspace name truncated with ellipsis if > 15 chars
+
+**Mobile (<768px):**
+```
+[Logo]                              [☰]
+```
+- Hamburger menu contains:
+  - Workspace switcher (expanded, not dropdown)
+  - Navigation links (Topics, Ideas, Documents)
+  - Settings link
+  - Sign out
+- Workspace name shown as section header in menu
+
+### Loading & Transition States
+
+**Workspace switching:**
+1. User clicks new workspace in switcher
+2. Immediately update switcher UI (optimistic)
+3. Show subtle loading indicator on content area (not full-page spinner)
+4. Fetch workspace data in background
+5. On success: Update content, persist to localStorage
+6. On failure: Revert switcher selection, show error toast
+
+**Personal workspace creation (first sign-in):**
+1. Sign-in completes
+2. API checks for personal workspace
+3. If missing, create synchronously (blocking)
+4. Redirect to personal workspace
+5. If creation fails after 3 retries: Show error page with "Retry" button
+
+**Content copy operation:**
+1. User clicks "Copy to workspace"
+2. Modal opens with workspace list
+3. User selects target, clicks "Copy"
+4. Button shows spinner, disable interactions
+5. On success: Close modal, show success toast with link to target workspace
+6. On failure: Keep modal open, show inline error, allow retry
+
 ### Content Copying Flow
 
-When user wants to copy a schema from personal to team workspace:
+Content copying allows users to duplicate Topics, Ideas, Documents, and Schemas between workspaces.
+
+**Supported content types:**
+
+| Content Type | Can Copy | Notes |
+|--------------|----------|-------|
+| Topic | ✓ | Copies topic metadata only; ideas not included |
+| Idea | ✓ | Copies to specified topic in target workspace |
+| Document | ✓ | Full content copied |
+| Schema | ✓ | Template definition copied |
+
+**User flow (example: copying a schema):**
 
 1. User is in **Personal** workspace, viewing schemas
 2. User clicks "Copy to workspace" on a schema
-3. Modal shows list of team workspaces
+3. Modal shows list of team workspaces (where user has create permission)
 4. User selects target workspace
 5. Schema is duplicated into target workspace
-6. Success toast: "Schema copied to Team Alpha"
+6. Success toast: "Schema copied to Team Alpha" with [View] link
 
 ```
 +-----------------------------------------+
@@ -185,26 +400,88 @@ When user wants to copy a schema from personal to team workspace:
 +-----------------------------------------+
 ```
 
-**Behavior:**
-- Creates independent copy (no sync/reference)
-- If schema with same `targetType` exists in destination, show warning
-- Option to overwrite or rename
+**Conflict handling:**
+- If schema with same `targetType` exists in destination:
+  ```
+  +-----------------------------------------+
+  | A "Package" schema already exists in    |
+  | Team Alpha.                             |
+  +-----------------------------------------+
+  | o Replace existing schema               |
+  | o Create copy as "Package (2)"          |
+  | o Cancel                                |
+  +-----------------------------------------+
+  ```
+
+**Reference handling:**
+- Internal links (e.g., `[[Topic Name]]`) are copied as-is
+- If referenced content doesn't exist in target workspace, links become plain text
+- No automatic resolution or broken link warnings (keep simple for v1)
+
+**Batch copying (future):**
+- Not in initial scope
+- If needed later: multi-select + "Copy selected to..." action
+
+### Error Handling
+
+**API Error Responses:**
+
+```typescript
+interface ApiError {
+  code: string;
+  message: string;
+  details?: Record<string, unknown>;
+}
+
+// Error codes for workspace operations
+type WorkspaceErrorCode =
+  | 'WORKSPACE_NOT_FOUND'
+  | 'WORKSPACE_ACCESS_DENIED'
+  | 'WORKSPACE_LIMIT_REACHED'
+  | 'PERSONAL_WORKSPACE_IMMUTABLE'
+  | 'MEMBER_LIMIT_REACHED'
+  | 'INVALID_ROLE_CHANGE'
+  | 'CANNOT_REMOVE_OWNER'
+  | 'COPY_TARGET_CONFLICT';
+```
+
+**Client-side error handling:**
+
+| Error | User-facing message | Recovery action |
+|-------|---------------------|-----------------|
+| `WORKSPACE_NOT_FOUND` | "This workspace no longer exists" | Redirect to personal |
+| `WORKSPACE_ACCESS_DENIED` | "You don't have access to this workspace" | Redirect to personal |
+| `WORKSPACE_LIMIT_REACHED` | "You've reached the maximum number of workspaces (20)" | Show upgrade prompt or suggest deleting |
+| `PERSONAL_WORKSPACE_IMMUTABLE` | (Should never reach user; API prevents) | Log error, no-op |
+| `MEMBER_LIMIT_REACHED` | "This workspace has reached its member limit (100)" | Contact workspace admin |
+| Network error | "Connection lost. Retrying..." | Auto-retry 3x with exponential backoff |
+| Unknown error | "Something went wrong. Please try again." | Log to server, show retry button |
+
+**Graceful degradation:**
+- If workspace list fails to load: Show cached list (if available) with "outdated" indicator
+- If workspace switch fails: Stay on current workspace, show error toast
+- If personal workspace creation fails repeatedly: Show blocking error page (cannot proceed without personal workspace)
 
 ## Implementation Phases
 
 ### Phase 1: Data Model & API
 
 **Files to modify:**
-- `server/src/types/workspace.ts` - Add `type` field
-- `server/src/services/WorkspaceService.ts` - Personal workspace logic
+- `server/src/types/workspace.ts` - Add `type` field, roles, member structure
+- `server/src/services/WorkspaceService.ts` - Personal workspace logic, permissions
 - `server/src/routes/workspaces.ts` - Enforce personal workspace constraints
+- `server/src/middleware/workspaceAuth.ts` - New file for permission checks
 
 **Tasks:**
 1. Add `type: 'personal' | 'team'` to `WorkspaceMetadata`
-2. Create personal workspace on first API call if doesn't exist
-3. Enforce constraints (no sharing, no delete, no rename for personal)
-4. Add `GET /api/workspaces/personal` endpoint for convenience
-5. Migrate existing workspaces to `type: 'team'`
+2. Replace `memberIds: string[]` with `members: WorkspaceMember[]` (includes role)
+3. Add `WorkspaceRole` type and permission checking utilities
+4. Create personal workspace on first API call if doesn't exist
+5. Enforce constraints (no sharing, no delete, no rename for personal)
+6. Add `GET /api/workspaces/personal` endpoint for convenience
+7. Add permission middleware for role-based access control
+8. Implement workspace limits (20 owned, 50 member, 100 members per workspace)
+9. Migrate existing workspaces to `type: 'team'` with owner as `owner` role
 
 ### Phase 2: Navigation Redesign
 
@@ -238,16 +515,29 @@ When user wants to copy a schema from personal to team workspace:
 ### Phase 4: Content Copying
 
 **Files to modify:**
-- `client/src/components/CopyToWorkspaceModal/` - New component
-- `server/src/services/TopicService.ts` - Copy operation
+- `client/src/components/CopyToWorkspaceModal/` - New component (reusable for all content types)
+- `server/src/services/TopicService.ts` - Topic copy operation
+- `server/src/services/IdeaService.ts` - Idea copy operation
+- `server/src/services/DocumentService.ts` - Document copy operation
+- `server/src/services/SchemaService.ts` - Schema copy operation
 - `server/src/routes/topics.ts` - Copy endpoint
+- `server/src/routes/ideas.ts` - Copy endpoint
+- `server/src/routes/documents.ts` - Copy endpoint
+- `server/src/routes/schemas.ts` - Copy endpoint
 
 **Tasks:**
-1. Create `CopyToWorkspaceModal` component
-2. Add "Copy to workspace" action to schema list items
-3. Implement `POST /api/topics/{id}/copy` endpoint
-4. Handle duplicate `targetType` scenarios
-5. Add success/error toasts
+1. Create `CopyToWorkspaceModal` component (generic, works for any content type)
+2. Add "Copy to workspace" action to Topics list
+3. Add "Copy to workspace" action to Ideas list (requires selecting target topic)
+4. Add "Copy to workspace" action to Documents list
+5. Add "Copy to workspace" action to Schemas list
+6. Implement `POST /api/topics/{id}/copy` endpoint
+7. Implement `POST /api/ideas/{id}/copy` endpoint (with `targetTopicId` param)
+8. Implement `POST /api/documents/{id}/copy` endpoint
+9. Implement `POST /api/schemas/{id}/copy` endpoint
+10. Handle naming conflicts (show conflict resolution dialog)
+11. Check user has create permission in target workspace
+12. Add success/error toasts with "View in workspace" link
 
 ## Migration Strategy
 
@@ -276,7 +566,13 @@ async function migrateWorkspaces() {
   for (const ws of workspaces) {
     if (!ws.type) {
       // Existing workspace without type = team
-      await updateWorkspace(ws.id, { type: 'team' });
+      // Convert memberIds to members with 'member' role, owner gets 'owner' role
+      const members = ws.memberIds.map(userId => ({
+        userId,
+        role: userId === ws.ownerId ? 'owner' : 'member',
+        joinedAt: ws.createdAt, // Use workspace creation as join date
+      }));
+      await updateWorkspace(ws.id, { type: 'team', members });
     }
   }
 
@@ -291,12 +587,105 @@ async function migrateWorkspaces() {
         name: 'Personal',
         type: 'personal',
         ownerId: user.id,
-        memberIds: [],
+        members: [],
       });
     }
   }
 }
 ```
+
+### Rollback Strategy
+
+**Pre-migration backup:**
+- Before running migration, export all workspace data to backup file
+- Store backup with timestamp: `workspaces-backup-{timestamp}.json`
+
+**Rollback triggers:**
+- Migration script fails mid-execution
+- Critical bug discovered post-deployment
+- User reports data loss
+
+**Rollback procedure:**
+
+1. **Immediate (within 24 hours):**
+   ```bash
+   # Stop the application
+   # Restore workspace data from backup
+   node scripts/restore-workspaces.js --backup workspaces-backup-{timestamp}.json
+   # Deploy previous version
+   # Restart application
+   ```
+
+2. **Partial rollback (keep new features, fix data):**
+   - If only some workspaces are affected, restore those specifically
+   - Personal workspaces can be deleted and re-created (no user data loss)
+
+**Data preservation guarantees:**
+- No workspace content (Topics, Ideas, Documents) is modified during migration
+- Only workspace metadata changes
+- Existing `memberIds` data preserved in `members[].userId`
+
+## Testing Strategy
+
+### Unit Tests
+
+**Server-side (`server/src/__tests__/`):**
+
+| Test Suite | Coverage |
+|------------|----------|
+| `WorkspaceService.test.ts` | Personal workspace creation, type constraints, permission checks |
+| `workspaceAuth.test.ts` | Role-based permission middleware |
+| `workspaceLimits.test.ts` | Workspace and member limits enforcement |
+| `contentCopy.test.ts` | Copy operations for all content types |
+
+**Key test cases:**
+- Personal workspace auto-creation on first API call
+- Cannot delete/rename/share personal workspace
+- Role permissions (owner vs admin vs member vs viewer)
+- Workspace limit enforcement (20 owned, 50 member)
+- Copy with conflict resolution
+- Migration script idempotency
+
+### Integration Tests
+
+**API tests (`server/src/__tests__/integration/`):**
+
+| Endpoint | Test Cases |
+|----------|------------|
+| `GET /api/workspaces` | Returns personal + team workspaces, sorted correctly |
+| `GET /api/workspaces/personal` | Returns personal workspace, creates if missing |
+| `POST /api/workspaces` | Creates team workspace, enforces limits |
+| `DELETE /api/workspaces/:id` | Fails for personal, succeeds for team (owner only) |
+| `POST /api/topics/:id/copy` | Copies to target workspace, handles conflicts |
+
+### E2E Tests
+
+**Playwright tests (`client/e2e/`):**
+
+| Test File | Scenarios |
+|-----------|-----------|
+| `workspace-switcher.spec.ts` | Switch workspaces, verify content changes |
+| `workspace-create.spec.ts` | Create team workspace, verify in switcher |
+| `workspace-permissions.spec.ts` | Verify role-based UI restrictions |
+| `content-copy.spec.ts` | Copy topic/idea/document between workspaces |
+| `responsive-nav.spec.ts` | Mobile hamburger menu, workspace switching |
+
+**Critical user journeys to test:**
+1. New user sign-in → lands in personal workspace
+2. Create team workspace → appears in switcher → switch to it
+3. Copy schema from personal to team → verify in target
+4. Remove member from team workspace → they lose access
+5. Delete team workspace → content gone, redirected to personal
+
+### Migration Testing
+
+**Pre-production checklist:**
+- [ ] Run migration on copy of production data
+- [ ] Verify all workspaces have `type` field
+- [ ] Verify all users have personal workspace
+- [ ] Verify `members` array correctly populated from `memberIds`
+- [ ] Verify no data loss in workspace content
+- [ ] Test rollback procedure on staging
 
 ## Open Questions
 
@@ -327,14 +716,44 @@ async function migrateWorkspaces() {
 
 ## Success Criteria
 
+### Core Functionality
 - [ ] Personal workspace auto-created on first sign-in
 - [ ] Personal workspace cannot be shared, renamed, or deleted
 - [ ] Workspace switcher in header allows quick switching
 - [ ] Gear dropdown provides access to settings and workspace management
 - [ ] "Workspaces" removed from main nav buttons
-- [ ] Schemas can be copied from personal to team workspaces
 - [ ] Existing users see their workspaces migrated to "team" type
 - [ ] New users land in personal workspace by default
+
+### Permissions & Limits
+- [ ] Role-based permissions enforced (owner, admin, member, viewer)
+- [ ] Workspace limits enforced (20 owned, 50 member, 100 members)
+- [ ] Users can only see workspaces they have access to
+- [ ] Permission errors show helpful messages
+
+### Content Copying
+- [ ] Topics can be copied between workspaces
+- [ ] Ideas can be copied between workspaces (with target topic selection)
+- [ ] Documents can be copied between workspaces
+- [ ] Schemas can be copied between workspaces
+- [ ] Naming conflicts show resolution dialog
+
+### State & Error Handling
+- [ ] Workspace selection persists across sessions (localStorage)
+- [ ] Cross-tab workspace changes show notification
+- [ ] Invalid workspace redirects to personal with toast
+- [ ] Network errors show retry option
+- [ ] Personal workspace creation failures show blocking error with retry
+
+### Responsive Design
+- [ ] Desktop layout shows full workspace switcher
+- [ ] Mobile layout uses hamburger menu with workspace selection
+- [ ] Workspace names truncate appropriately at all breakpoints
+
+### Migration & Rollback
+- [ ] Migration script is idempotent (can run multiple times safely)
+- [ ] Backup created before migration
+- [ ] Rollback procedure documented and tested
 
 ## Relationship to Other Plans
 

@@ -76,9 +76,8 @@ export const TOPIC_TYPE_SCHEMAS: Record<string, TopicTypeSchema> = {
     icon: 'code',
     providesExecutionContext: true,
     keyProperties: {
-      remoteUrl: { label: 'Remote URL', type: 'url' },
       localPath: { label: 'Local Path', type: 'path' },
-      defaultBranch: { label: 'Default Branch', type: 'text' },
+      remoteUrl: { label: 'Remote URL', type: 'url' },
     },
   },
   'git-package': {
@@ -97,6 +96,11 @@ export const TOPIC_TYPE_SCHEMAS: Record<string, TopicTypeSchema> = {
         label: 'Full Path',
         type: 'path',
         inheritPath: { fromProperty: 'repoTopicId', joinWith: 'relativePath' },
+      },
+      remoteUrl: {
+        label: 'Remote URL',
+        type: 'url',
+        inheritPath: { fromProperty: 'repoTopicId' },
       },
     },
   },
@@ -381,10 +385,9 @@ export class TopicService {
         // For workspace topics, owner or workspace member can see
         if (metadata.workspaceId && !isOwner && !hasWorkspaceAccess) continue;
 
-        // Filter by workspaceId if provided
+        // Filter by workspaceId if provided - only show topics that belong to that workspace
         if (workspaceId !== undefined && metadata.workspaceId !== workspaceId) {
-          // Include global topics (no workspaceId) + workspace topics
-          if (metadata.workspaceId && metadata.workspaceId !== workspaceId) continue;
+          continue;
         }
 
         topics.push(metadata);

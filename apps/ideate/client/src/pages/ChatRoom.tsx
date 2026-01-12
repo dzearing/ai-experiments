@@ -253,7 +253,7 @@ export function ChatRoom() {
           <IconButton
             icon={<ArrowLeftIcon />}
             variant="ghost"
-            onClick={() => navigate(`/workspace/${chatRoom.workspaceId}`)}
+            onClick={() => navigate(`/${chatRoom.workspaceId}/topics`)}
             aria-label="Back to workspace"
           />
           <span className={styles.connectionDot} data-status={connectionStatus} />

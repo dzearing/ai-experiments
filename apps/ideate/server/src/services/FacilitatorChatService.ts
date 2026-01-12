@@ -2,6 +2,16 @@ import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { homedir } from 'os';
+import {
+  type ContentBlock,
+  type ToolCall,
+  type TextBlock,
+  type ToolCallsBlock,
+  migrateToPartsFormat,
+} from './BaseChatTypes.js';
+
+// Re-export shared types for consumers
+export type { ContentBlock, ToolCall, TextBlock, ToolCallsBlock };
 
 /**
  * Raw SDK event for diagnostics
@@ -45,14 +55,13 @@ export interface FacilitatorMessage {
   id: string;
   userId: string;
   role: 'user' | 'assistant';
-  content: string;
+  /** Content blocks in order - maintains text/tool interleaving */
+  parts?: ContentBlock[];
+  /** @deprecated Use parts instead - kept for backward compatibility */
+  content?: string;
   timestamp: number;
-  /** Tool calls made during this response */
-  toolCalls?: Array<{
-    name: string;
-    input: Record<string, unknown>;
-    output?: string;
-  }>;
+  /** @deprecated Use parts instead - kept for backward compatibility */
+  toolCalls?: ToolCall[];
   /** Diagnostic information (for assistant messages) */
   diagnostics?: MessageDiagnostics;
 }
@@ -131,6 +140,7 @@ export class FacilitatorChatService {
    * Add a message to the user's facilitator chat.
    * @param messageId - Optional custom ID (used for assistant messages to match diagnostics)
    * @param diagnostics - Optional diagnostic information (for assistant messages)
+   * @param parts - Optional content blocks in order (new format, replaces content/toolCalls)
    */
   async addMessage(
     userId: string,
@@ -138,17 +148,30 @@ export class FacilitatorChatService {
     content: string,
     toolCalls?: FacilitatorMessage['toolCalls'],
     messageId?: string,
-    diagnostics?: MessageDiagnostics
+    diagnostics?: MessageDiagnostics,
+    parts?: ContentBlock[]
   ): Promise<FacilitatorMessage> {
     const message: FacilitatorMessage = {
       id: messageId || uuidv4(),
       userId,
       role,
-      content,
       timestamp: Date.now(),
-      toolCalls,
       diagnostics,
     };
+
+    // Use parts if provided (new format), otherwise fall back to content/toolCalls (legacy)
+    if (parts && parts.length > 0) {
+      message.parts = parts;
+    } else {
+      // Legacy format - store both content and parts for backward compatibility
+      message.content = content;
+      message.toolCalls = toolCalls;
+      // Also create parts array from legacy format using shared helper
+      const legacyParts = migrateToPartsFormat(content, toolCalls);
+      if (legacyParts.length > 0) {
+        message.parts = legacyParts;
+      }
+    }
 
     // Append message to JSONL file
     const line = JSON.stringify(message) + '\n';

@@ -32,6 +32,8 @@
   background: var(--soft-bg);
   border-bottom: 1px solid var(--soft-border);
   flex-shrink: 0;
+  height: 52px;
+  box-sizing: border-box;
 }
 
 .laneTitle {
@@ -100,6 +102,7 @@
 
 .compact .laneHeader {
   padding: var(--space-2) var(--space-3);
+  height: 44px;
 }
 
 .compact .laneTitle {
