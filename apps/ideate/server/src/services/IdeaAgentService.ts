@@ -374,13 +374,24 @@ export class IdeaAgentService {
   /**
    * Unregister a client's callbacks (when they disconnect).
    * The session continues running - messages are queued for later replay.
+   * Follows session transfers to find the correct key when a session was linked to a real ideaId.
    */
   unregisterClient(ideaId: string): void {
+    // Follow any session transfer to find the current key
+    // This handles the case where linkSessionToIdea() moved the session/callbacks to a new key
+    const effectiveId = this.sessionTransfers.get(ideaId) || ideaId;
+
+    // Delete callbacks at both keys to be safe (handles race conditions)
     this.clientCallbacks.delete(ideaId);
-    const session = this.activeSessions.get(ideaId);
+    if (effectiveId !== ideaId) {
+      this.clientCallbacks.delete(effectiveId);
+    }
+
+    // Find session at either key
+    const session = this.activeSessions.get(effectiveId) || this.activeSessions.get(ideaId);
     if (session) {
       session.clientConnected = false;
-      console.log(`[IdeaAgentService] Client disconnected from idea ${ideaId}, session continues in background`);
+      console.log(`[IdeaAgentService] Client disconnected from idea ${effectiveId}, session continues in background`);
     }
   }
 

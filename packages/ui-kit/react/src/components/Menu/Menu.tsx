@@ -12,6 +12,7 @@ import {
   type MouseEvent as ReactMouseEvent,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { CheckIcon } from '@ui-kit/icons/CheckIcon';
 import { SurfaceAnimation, getAnimationDirection } from '../Animation';
 import styles from './Menu.module.css';
 
@@ -55,8 +56,12 @@ export interface MenuItem {
   label: string;
   /** Item is disabled */
   disabled?: boolean;
+  /** Whether this item is selected (shows checkmark on left) */
+  selected?: boolean;
   /** Icon to display before label */
   icon?: ReactNode;
+  /** Icon to display after label (e.g., checkmark for selected state) */
+  iconAfter?: ReactNode;
   /** Keyboard shortcut display text */
   shortcut?: string;
   /** Whether this is a danger/destructive action */
@@ -754,9 +759,11 @@ export function Menu({
     };
   }, []);
 
-  // Check if any items have icons (for alignment)
+  // Check if any items have icons or selection (for alignment)
   const hasAnyIcons = flatItems.some((item) => item.icon);
+  const hasAnySelected = flatItems.some((item) => item.selected !== undefined);
   const submenuHasAnyIcons = submenuItems.some((item) => item.icon);
+  const submenuHasAnySelected = submenuItems.some((item) => item.selected !== undefined);
 
   // Compute animation direction from position
   const animationDirection = useMemo(() => {
@@ -779,13 +786,26 @@ export function Menu({
     onMouseEnter: (index: number) => void,
     onItemSelect: (item: MenuItem, event?: ReactMouseEvent) => void,
     showSubmenuIndicator = false,
-    reserveIconSpace = false
+    reserveIconSpace = false,
+    reserveSelectionSpace = false
   ) => {
     const hasSubmenu = item.items && item.items.length > 0;
     const submenuIndicator = hasSubmenu ? (
       <span className={styles.submenuIndicator} aria-hidden="true">
         {effectiveDir === 'rtl' ? '◀' : '▶'}
       </span>
+    ) : null;
+
+    // Selection indicator on the left
+    const showSelection = reserveSelectionSpace;
+    const selectionIndicator = showSelection ? (
+      item.selected ? (
+        <span className={styles.selectionIcon} aria-hidden="true">
+          <CheckIcon />
+        </span>
+      ) : (
+        <span className={styles.selectionPlaceholder} aria-hidden="true" />
+      )
     ) : null;
 
     return (
@@ -804,18 +824,23 @@ export function Menu({
         onMouseEnter={() => onMouseEnter(index)}
         disabled={item.disabled}
         role="menuitem"
+        aria-checked={item.selected}
         aria-haspopup={hasSubmenu ? 'menu' : undefined}
         aria-expanded={
           hasSubmenu && submenu?.parentIndex === index ? 'true' : undefined
         }
         tabIndex={isFocused ? 0 : -1}
       >
+        {selectionIndicator}
         {item.icon ? (
           <span className={styles.icon}>{item.icon}</span>
         ) : reserveIconSpace ? (
           <span className={styles.iconPlaceholder} aria-hidden="true" />
         ) : null}
         <span className={styles.label}>{item.label}</span>
+        {item.iconAfter && (
+          <span className={styles.iconAfter}>{item.iconAfter}</span>
+        )}
         {item.shortcut && (
           <span className={styles.shortcut}>{item.shortcut}</span>
         )}
@@ -862,7 +887,8 @@ export function Menu({
                 handleItemMouseEnter,
                 handleSelect,
                 true,
-                hasAnyIcons
+                hasAnyIcons,
+                hasAnySelected
               );
             })}
           </div>
@@ -878,7 +904,8 @@ export function Menu({
             handleItemMouseEnter,
             handleSelect,
             true,
-            hasAnyIcons
+            hasAnyIcons,
+            hasAnySelected
           )
         );
       }
@@ -952,7 +979,8 @@ export function Menu({
                     }
                   },
                   false,
-                  submenuHasAnyIcons
+                  submenuHasAnyIcons,
+                  submenuHasAnySelected
                 )
               )}
             </div>

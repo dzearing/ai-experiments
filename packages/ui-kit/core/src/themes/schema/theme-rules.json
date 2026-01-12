@@ -304,10 +304,10 @@
     "link": {
       "description": "Hyperlink colors",
       "tokens": {
-        "default": { "derivation": "theme:primary" },
-        "hover": { "derivation": { "light": "darken(theme:primary, 10)", "dark": "lighten(theme:primary, 10)" } },
-        "pressed": { "derivation": { "light": "darken(theme:primary, 15)", "dark": "lighten(theme:primary, 15)" } },
-        "visited": { "derivation": "mix(theme:primary, #8b5cf6, 0.5)" }
+        "default": { "derivation": { "light": "theme:primary", "dark": "lighten(theme:primary, 20)" } },
+        "hover": { "derivation": { "light": "darken(theme:primary, 10)", "dark": "lighten(theme:primary, 28)" } },
+        "pressed": { "derivation": { "light": "darken(theme:primary, 15)", "dark": "lighten(theme:primary, 35)" } },
+        "visited": { "derivation": { "light": "mix(theme:primary, #8b5cf6, 0.5)", "dark": "lighten(mix(theme:primary, #8b5cf6, 0.5), 15)" } }
       }
     },
     "scrollbar": {

@@ -16,7 +16,6 @@ import { fsRouter } from './routes/fs.js';
 import { factsRouter } from './routes/facts.js';
 import { setWorkspaceHandler as setMCPToolsWorkspaceHandler } from './services/MCPToolsService.js';
 import { createDiagnosticsRouter } from './routes/diagnostics.js';
-import { CollaborationHandler } from './websocket/CollaborationHandler.js';
 import { YjsCollaborationHandler } from './websocket/YjsCollaborationHandler.js';
 import { DiagnosticsHandler } from './websocket/DiagnosticsHandler.js';
 import { ClaudeDiagnosticsHandler } from './websocket/ClaudeDiagnosticsHandler.js';
@@ -66,14 +65,6 @@ app.use('/api/facts', factsRouter);
 
 // Create HTTP server
 const server = createServer(app);
-
-// Create WebSocket server for legacy collaboration (JSON-based protocol)
-const wss = new WebSocketServer({ noServer: true });
-const collaborationHandler = new CollaborationHandler();
-
-wss.on('connection', (ws, req) => {
-  collaborationHandler.handleConnection(ws, req);
-});
 
 // Document service for reading markdown files
 const documentService = new DocumentService();
@@ -273,12 +264,7 @@ app.post('/api/log', (req, res) => {
 server.on('upgrade', (request, socket, head) => {
   const pathname = new URL(request.url || '/', `http://${request.headers.host}`).pathname;
 
-  if (pathname === '/ws') {
-    // Legacy collaboration WebSocket
-    wss.handleUpgrade(request, socket, head, (ws) => {
-      wss.emit('connection', ws, request);
-    });
-  } else if (pathname.startsWith('/yjs')) {
+  if (pathname.startsWith('/yjs')) {
     // Yjs collaboration WebSocket (supports /yjs or /yjs/room-name)
     yjsWss.handleUpgrade(request, socket, head, (ws) => {
       yjsWss.emit('connection', ws, request);
@@ -339,7 +325,6 @@ const discoveryService = new DiscoveryService();
 // Start server
 server.listen(PORT, async () => {
   console.log(`Ideate server running on http://localhost:${PORT}`);
-  console.log(`WebSocket (legacy) available at ws://localhost:${PORT}/ws`);
   console.log(`WebSocket (Yjs) available at ws://localhost:${PORT}/yjs`);
   console.log(`WebSocket (Chat) available at ws://localhost:${PORT}/chat-ws`);
   console.log(`WebSocket (Workspace) available at ws://localhost:${PORT}/workspace-ws`);

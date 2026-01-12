@@ -102,7 +102,13 @@ export function ChatProvider({ children }: ChatProviderProps) {
       }
 
       const chatRoom = await response.json();
-      setChatRooms((prev) => [chatRoom, ...prev]);
+      setChatRooms((prev) => {
+        // Avoid duplicates if WebSocket already added this room
+        if (prev.some(c => c.id === chatRoom.id)) return prev;
+
+        return [chatRoom, ...prev];
+      });
+
       return chatRoom;
     },
     [user]

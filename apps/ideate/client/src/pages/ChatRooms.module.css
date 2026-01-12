@@ -1,0 +1,126 @@
+.page {
+  min-height: 100%;
+  padding: var(--space-6);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Loading */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-6);
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
+  margin: 0;
+  color: var(--base-fg);
+}
+
+.title svg {
+  width: 24px;
+  height: 24px;
+  color: var(--base-fg-soft);
+}
+
+/* Grid */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--space-4);
+}
+
+/* Empty State */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-12) var(--space-4);
+  text-align: center;
+  background-color: var(--softer-bg);
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--base-border);
+}
+
+.emptyStateIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  background-color: var(--base-bg);
+  color: var(--base-fg-soft);
+  border-radius: var(--radius-full);
+  margin-bottom: var(--space-4);
+}
+
+.emptyStateIcon svg {
+  width: 32px;
+  height: 32px;
+}
+
+.emptyStateTitle {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-medium);
+  margin: 0 0 var(--space-2);
+  color: var(--base-fg);
+}
+
+.emptyStateDescription {
+  font-size: var(--text-base);
+  color: var(--base-fg-soft);
+  margin: 0 0 var(--space-4);
+}
+
+.emptyStateAction {
+  margin-top: var(--space-2);
+}
+
+/* Modal */
+.modalContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.modalContent h2 {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.deleteWarning {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--base-fg-soft);
+  line-height: var(--leading-relaxed);
+}
+
+.deleteWarning strong {
+  color: var(--base-fg);
+}

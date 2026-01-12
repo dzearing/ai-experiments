@@ -9,29 +9,12 @@ import { SunMoonIcon } from '@ui-kit/icons/SunMoonIcon';
 import { FileIcon } from '@ui-kit/icons/FileIcon';
 import { BoardIcon } from '@ui-kit/icons/BoardIcon';
 import { TreeIcon } from '@ui-kit/icons/TreeIcon';
+import { ChatIcon } from '@ui-kit/icons/ChatIcon';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSession } from '../../contexts/SessionContext';
 import { WorkspaceSwitcher } from '../WorkspaceSwitcher';
+import { parseWorkspacePath } from '../../utils/workspacePath';
 import styles from './AppLayout.module.css';
-
-type Pivot = 'topics' | 'ideas' | 'documents';
-
-/**
- * Extracts the current workspace ID and pivot from the pathname.
- * Returns null values if not on a workspace-scoped route.
- */
-function parseWorkspacePath(pathname: string): { workspaceId: string | null; pivot: Pivot | null } {
-  const match = pathname.match(/^\/([^/]+)\/(topics|ideas|documents)/);
-
-  if (match) {
-    return {
-      workspaceId: match[1],
-      pivot: match[2] as Pivot,
-    };
-  }
-
-  return { workspaceId: null, pivot: null };
-}
 
 export function AppLayout() {
   const { user, signOut } = useAuth();
@@ -59,6 +42,7 @@ export function AppLayout() {
   const isTopicsActive = pivot === 'topics';
   const isIdeasActive = pivot === 'ideas';
   const isDocumentsActive = pivot === 'documents';
+  const isChatActive = pivot === 'chat';
 
   const handleSignOut = async () => {
     await signOut();
@@ -104,6 +88,13 @@ export function AppLayout() {
               icon={<FileIcon />}
             >
               Documents
+            </Button>
+            <Button
+              href={effectiveWorkspaceId ? `/${effectiveWorkspaceId}/chat` : '/'}
+              variant={isChatActive ? 'primary' : 'ghost'}
+              icon={<ChatIcon />}
+            >
+              Chat
             </Button>
           </nav>
         </div>

@@ -8,42 +8,11 @@ import { ChevronDownIcon } from '@ui-kit/icons/ChevronDownIcon';
 import { GridViewIcon } from '@ui-kit/icons/GridViewIcon';
 import { useWorkspaces } from '../../contexts/WorkspaceContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { getCurrentPivot, getCurrentWorkspaceId } from '../../utils/workspacePath';
 import styles from './WorkspaceSwitcher.module.css';
-
-// Checkmark character for selected item (Menu doesn't support iconAfter)
-const SELECTED_INDICATOR = '✓';
 
 // Special value for "All workspaces" filter
 const ALL_WORKSPACES_VALUE = 'all';
-
-type Pivot = 'topics' | 'ideas' | 'documents';
-
-/**
- * Extracts the current pivot (topics, ideas, documents) from the pathname.
- * Returns 'topics' as default if not found.
- */
-function getCurrentPivot(pathname: string): Pivot {
-  // Match /:workspaceId/:pivot patterns
-  const match = pathname.match(/^\/[^/]+\/(topics|ideas|documents)/);
-
-  if (match) {
-    return match[1] as Pivot;
-  }
-
-  // Default to topics
-  return 'topics';
-}
-
-/**
- * Extracts the current workspace ID from the pathname.
- * Returns null if not on a workspace-scoped route.
- */
-function getCurrentWorkspaceIdFromPath(pathname: string): string | null {
-  // Match /:workspaceId/:pivot patterns
-  const match = pathname.match(/^\/([^/]+)\/(topics|ideas|documents)/);
-
-  return match ? match[1] : null;
-}
 
 const MANAGE_WORKSPACES_VALUE = '__manage__';
 
@@ -54,19 +23,19 @@ export function WorkspaceSwitcher() {
   const { workspaces, currentWorkspace, setCurrentWorkspace } = useWorkspaces();
 
   // Get current workspace ID from URL (for highlighting)
-  const currentWorkspaceIdFromPath = getCurrentWorkspaceIdFromPath(location.pathname);
+  const currentWorkspaceIdFromUrl = getCurrentWorkspaceId(location.pathname);
 
   const menuItems = useMemo(() => {
     const items: MenuItemType[] = [];
 
     // Add "All workspaces" option at the top
-    const isAllSelected = currentWorkspaceIdFromPath === ALL_WORKSPACES_VALUE;
+    const isAllSelected = currentWorkspaceIdFromUrl === ALL_WORKSPACES_VALUE;
 
     items.push({
       value: ALL_WORKSPACES_VALUE,
       label: 'All workspaces',
       icon: <GridViewIcon />,
-      shortcut: isAllSelected ? SELECTED_INDICATOR : undefined,
+      selected: isAllSelected,
     });
 
     items.push({ type: 'divider' });
@@ -82,14 +51,14 @@ export function WorkspaceSwitcher() {
     // Add workspace items
     for (const workspace of sortedWorkspaces) {
       // Check if selected based on URL path (more reliable than context)
-      const isSelected = currentWorkspaceIdFromPath === workspace.id;
+      const isSelected = currentWorkspaceIdFromUrl === workspace.id;
       const icon = workspace.type === 'personal' ? <HomeIcon /> : <UsersIcon />;
 
       items.push({
         value: workspace.id,
         label: workspace.name,
         icon,
-        shortcut: isSelected ? SELECTED_INDICATOR : undefined,
+        selected: isSelected,
       });
     }
 
@@ -103,7 +72,7 @@ export function WorkspaceSwitcher() {
     });
 
     return items;
-  }, [workspaces, currentWorkspaceIdFromPath]);
+  }, [workspaces, currentWorkspaceIdFromUrl]);
 
   const handleSelect = useCallback((value: string) => {
     if (value === MANAGE_WORKSPACES_VALUE) {
@@ -131,11 +100,11 @@ export function WorkspaceSwitcher() {
   }, [workspaces, setCurrentWorkspace, navigate, location.pathname]);
 
   // Check if "All workspaces" is selected
-  const isAllWorkspaces = currentWorkspaceIdFromPath === ALL_WORKSPACES_VALUE;
+  const isAllWorkspaces = currentWorkspaceIdFromUrl === ALL_WORKSPACES_VALUE;
 
   // Determine the display based on URL path
-  const displayWorkspace = currentWorkspaceIdFromPath && !isAllWorkspaces
-    ? workspaces.find(w => w.id === currentWorkspaceIdFromPath)
+  const displayWorkspace = currentWorkspaceIdFromUrl && !isAllWorkspaces
+    ? workspaces.find(w => w.id === currentWorkspaceIdFromUrl)
     : currentWorkspace;
 
   // Get the display icon and name for the trigger button

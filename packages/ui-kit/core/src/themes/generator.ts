@@ -303,43 +303,63 @@ function deriveColorGroupTokenValue(
     // Semantic foreground colors (guaranteed accessible on this group's bg)
     case 'fg-primary': {
       // Primary link/accent color accessible on this background
+      // For dark mode, we use a higher contrast target (5.5:1) and minimum lightening
+      // because blues can appear perceptually dim even at 4.5:1
       const primary = colors.primary;
       if (bg) {
-        return ensureContrast(primary, bg, 4.5);
+        const targetRatio = isDark ? 5.5 : 4.5;
+        const adjusted = ensureContrast(primary, bg, targetRatio);
+        // In dark mode, ensure minimum 15% lightening for better visibility
+        if (isDark) {
+          const minLightened = lighten(primary, 15);
+          const adjustedRgb = hexToRgb(adjusted);
+          const minRgb = hexToRgb(minLightened);
+          if (adjustedRgb && minRgb) {
+            // Use whichever is lighter (higher luminance)
+            const adjustedHsl = rgbToHsl(adjustedRgb.r, adjustedRgb.g, adjustedRgb.b);
+            const minHsl = rgbToHsl(minRgb.r, minRgb.g, minRgb.b);
+            return adjustedHsl.l >= minHsl.l ? adjusted : minLightened;
+          }
+        }
+        return adjusted;
       }
-      return isDark ? lighten(primary, 10) : darken(primary, 10);
+      return isDark ? lighten(primary, 20) : darken(primary, 10);
     }
 
     case 'fg-danger': {
       const danger = colors.danger;
       if (bg) {
-        return ensureContrast(danger, bg, 4.5);
+        // Use higher contrast target in dark mode for better visibility
+        return ensureContrast(danger, bg, isDark ? 5.5 : 4.5);
       }
-      return isDark ? lighten(danger, 20) : darken(danger, 10);
+      return isDark ? lighten(danger, 25) : darken(danger, 10);
     }
 
     case 'fg-success': {
       const success = colors.success;
       if (bg) {
-        return ensureContrast(success, bg, 4.5);
+        // Use higher contrast target in dark mode for better visibility
+        return ensureContrast(success, bg, isDark ? 5.5 : 4.5);
       }
-      return isDark ? lighten(success, 20) : darken(success, 10);
+      return isDark ? lighten(success, 25) : darken(success, 10);
     }
 
     case 'fg-warning': {
       const warning = colors.warning;
       if (bg) {
-        return ensureContrast(warning, bg, 4.5);
+        // Warning already has good luminance, lower target is fine
+        return ensureContrast(warning, bg, isDark ? 5.0 : 4.5);
       }
-      return isDark ? lighten(warning, 10) : darken(warning, 15);
+      return isDark ? lighten(warning, 15) : darken(warning, 15);
     }
 
     case 'fg-info': {
       const info = colors.info;
       if (bg) {
-        return ensureContrast(info, bg, 4.5);
+        // Info uses primary color, apply same treatment as fg-primary
+        return ensureContrast(info, bg, isDark ? 5.5 : 4.5);
       }
-      return isDark ? lighten(info, 20) : darken(info, 10);
+      return isDark ? lighten(info, 25) : darken(info, 10);
     }
 
     // Border tokens

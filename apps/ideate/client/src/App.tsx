@@ -25,6 +25,7 @@ import { Workspaces } from './pages/Workspaces';
 import { WorkspaceDetail } from './pages/WorkspaceDetail';
 import { Ideas } from './pages/Ideas';
 import { Topics } from './pages/Topics';
+import { ChatRooms } from './pages/ChatRooms';
 
 // Layouts
 import { AppLayout } from './components/AppLayout/AppLayout';
@@ -56,6 +57,8 @@ export function App() {
                           <Route path="/:workspaceId/topics/:topicId" component={Topics} />
                           <Route path="/:workspaceId/ideas" component={Ideas} />
                           <Route path="/:workspaceId/documents" component={Dashboard} />
+                          <Route path="/:workspaceId/chat" component={ChatRooms} />
+                          <Route path="/:workspaceId/chat/:chatRoomId" component={ChatRoom} />
 
                           {/* Workspace management */}
                           <Route path="/workspaces" component={Workspaces} />
@@ -63,7 +66,6 @@ export function App() {
 
                           {/* Document editor (standalone) */}
                           <Route path="/doc/:documentId" component={DocumentEditor} />
-                          <Route path="/chat/:chatRoomId" component={ChatRoom} />
 
                           {/* Settings */}
                           <Route path="/settings" component={Settings} />

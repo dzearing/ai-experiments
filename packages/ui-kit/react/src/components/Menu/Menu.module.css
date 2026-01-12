@@ -45,9 +45,11 @@
 }
 
 .item:hover:not(:disabled) .icon,
+.item:hover:not(:disabled) .iconAfter,
 .item:hover:not(:disabled) .shortcut,
 .item:hover:not(:disabled) .submenuIndicator,
 .item.focused:not(:disabled) .icon,
+.item.focused:not(:disabled) .iconAfter,
 .item.focused:not(:disabled) .shortcut,
 .item.focused:not(:disabled) .submenuIndicator {
   color: inherit;
@@ -84,6 +86,23 @@
   color: var(--danger-fg);
 }
 
+/* Selection indicator (checkmark on left) */
+.selectionIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: inherit;
+}
+
+.selectionPlaceholder {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
 .icon {
   display: flex;
   align-items: center;
@@ -99,6 +118,18 @@
   width: 16px;
   height: 16px;
   flex-shrink: 0;
+}
+
+.iconAfter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin-inline-start: auto;
+  color: inherit;
+  opacity: 0.75;
 }
 
 .label {
