@@ -29,7 +29,7 @@ interface NavigationContext {
  * Client message types for the facilitator WebSocket protocol
  */
 interface ClientMessage {
-  type: 'message' | 'clear_history' | 'context_update' | 'persona_change' | 'cancel';
+  type: 'message' | 'clear_history' | 'context_update' | 'persona_change' | 'persona_reload' | 'cancel';
   content?: string;
   context?: NavigationContext;
   /** Preset ID for persona_change (or '__custom__' for user persona) */
@@ -201,6 +201,10 @@ export class FacilitatorWebSocketHandler {
         case 'persona_change':
           await this.handlePersonaChange(client, clientMessage.presetId || '');
           break;
+        case 'persona_reload':
+          // Reload persona from disk without clearing history
+          this.handlePersonaReload();
+          break;
         case 'cancel':
           this.handleCancel(client);
           break;
@@ -309,6 +313,16 @@ export class FacilitatorWebSocketHandler {
    * Handle a cancel request from a client (Escape key pressed).
    * This explicitly aborts the current operation.
    */
+  /**
+   * Reload the persona from disk without clearing history.
+   * Used when the user edits their custom prompt and wants it to take effect
+   * for future messages without losing the current conversation.
+   */
+  private handlePersonaReload(): void {
+    console.log('[Facilitator] Reloading persona from disk');
+    this.facilitatorService.reloadPersona();
+  }
+
   private handleCancel(client: FacilitatorClient): void {
     console.log(`[Facilitator] Cancel requested for client ${client.clientId}`);
     this.facilitatorService.abortSession(client.userId);

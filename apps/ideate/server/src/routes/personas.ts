@@ -274,11 +274,11 @@ personasRouter.put('/content', (req: Request, res: Response) => {
       return;
     }
 
-    const fs = require('fs');
     const userPath = personaService.getUserPersonaPath();
 
     // Ensure directory exists
-    const dir = require('path').dirname(userPath);
+    const dir = path.dirname(userPath);
+
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }

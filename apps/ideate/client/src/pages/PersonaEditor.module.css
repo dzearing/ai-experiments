@@ -63,7 +63,17 @@
 
 .unsavedIndicator {
   font-size: var(--text-sm);
-  color: var(--warning-fg);
+  color: var(--base-fg-soft);
+}
+
+.savedIndicator {
+  font-size: var(--text-sm);
+  color: var(--success-fg);
+}
+
+.errorIndicator {
+  font-size: var(--text-sm);
+  color: var(--danger-fg);
 }
 
 /* Editor Container */

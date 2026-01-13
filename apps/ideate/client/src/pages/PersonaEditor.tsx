@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from '@ui-kit/router';
 import { IconButton, Button } from '@ui-kit/react';
 import { ArrowLeftIcon } from '@ui-kit/icons/ArrowLeftIcon';
-import { SaveIcon } from '@ui-kit/icons/SaveIcon';
 import { MarkdownCoEditor, type MarkdownCoEditorRef } from '@ui-kit/react-markdown';
 import { API_URL } from '../config';
 import { useFacilitator } from '../contexts/FacilitatorContext';
@@ -10,15 +9,15 @@ import styles from './PersonaEditor.module.css';
 
 export function PersonaEditor() {
   const navigate = useNavigate();
-  const { addMessage } = useFacilitator();
+  const { addMessage, reloadPersona } = useFacilitator();
   const editorRef = useRef<MarkdownCoEditorRef>(null);
   const [content, setContent] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved' | 'error'>('saved');
   const [error, setError] = useState<string | null>(null);
   const originalContentRef = useRef('');
   const saveTimeoutRef = useRef<number | null>(null);
+  const contentRef = useRef('');
 
   // Fetch initial content
   useEffect(() => {
@@ -28,6 +27,7 @@ export function PersonaEditor() {
         if (response.ok) {
           const data = await response.json();
           setContent(data.content);
+          contentRef.current = data.content;
           originalContentRef.current = data.content;
         } else {
           setError('Failed to load persona content');
@@ -43,25 +43,10 @@ export function PersonaEditor() {
     fetchContent();
   }, []);
 
-  // Track changes
-  const handleChange = useCallback((newContent: string) => {
-    setContent(newContent);
-    setHasChanges(newContent !== originalContentRef.current);
+  // Save content to server and notify facilitator to reload
+  const saveContent = useCallback(async (contentToSave: string) => {
+    setSaveStatus('saving');
 
-    // Debounce auto-save
-    if (saveTimeoutRef.current) {
-      window.clearTimeout(saveTimeoutRef.current);
-    }
-    saveTimeoutRef.current = window.setTimeout(() => {
-      if (newContent !== originalContentRef.current) {
-        saveContent(newContent);
-      }
-    }, 2000);
-  }, []);
-
-  // Save content to server
-  const saveContent = async (contentToSave: string) => {
-    setIsSaving(true);
     try {
       const response = await fetch(`${API_URL}/api/personas/content`, {
         method: 'PUT',
@@ -71,24 +56,42 @@ export function PersonaEditor() {
 
       if (response.ok) {
         originalContentRef.current = contentToSave;
-        setHasChanges(false);
+        setSaveStatus('saved');
+
+        // Notify facilitator to reload the custom persona without clearing history
+        reloadPersona();
       } else {
         console.error('[PersonaEditor] Failed to save content');
+        setSaveStatus('error');
       }
     } catch (err) {
       console.error('[PersonaEditor] Failed to save content:', err);
-    } finally {
-      setIsSaving(false);
+      setSaveStatus('error');
     }
-  };
+  }, [reloadPersona]);
 
-  // Handle manual save
-  const handleSave = useCallback(() => {
+  // Track changes and auto-save
+  const handleChange = useCallback((newContent: string) => {
+    setContent(newContent);
+    contentRef.current = newContent;
+
+    const hasUnsavedChanges = newContent !== originalContentRef.current;
+
+    if (hasUnsavedChanges) {
+      setSaveStatus('unsaved');
+    }
+
+    // Debounce auto-save (500ms for more responsive feel)
     if (saveTimeoutRef.current) {
       window.clearTimeout(saveTimeoutRef.current);
     }
-    saveContent(content);
-  }, [content]);
+
+    if (hasUnsavedChanges) {
+      saveTimeoutRef.current = window.setTimeout(() => {
+        saveContent(newContent);
+      }, 500);
+    }
+  }, [saveContent]);
 
   // Handle back navigation with recalibration
   const handleBack = useCallback(async () => {
@@ -97,9 +100,9 @@ export function PersonaEditor() {
       window.clearTimeout(saveTimeoutRef.current);
     }
 
-    // Save if there are changes
-    if (hasChanges) {
-      await saveContent(content);
+    // Save if there are unsaved changes
+    if (contentRef.current !== originalContentRef.current) {
+      await saveContent(contentRef.current);
     }
 
     // Trigger reload on server
@@ -122,13 +125,40 @@ export function PersonaEditor() {
     }
 
     navigate(-1);
-  }, [hasChanges, content, navigate, addMessage]);
+  }, [navigate, addMessage, saveContent]);
 
-  // Cleanup on unmount
+  // Warn before leaving with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (contentRef.current !== originalContentRef.current) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, []);
+
+  // Cleanup and save on unmount
   useEffect(() => {
     return () => {
       if (saveTimeoutRef.current) {
         window.clearTimeout(saveTimeoutRef.current);
+      }
+
+      // Save any pending changes on unmount
+      if (contentRef.current !== originalContentRef.current) {
+        // Use sendBeacon for reliable save on unmount
+        const payload = JSON.stringify({ content: contentRef.current });
+
+        navigator.sendBeacon(
+          `${API_URL}/api/personas/content`,
+          new Blob([payload], { type: 'application/json' })
+        );
       }
     };
   }, []);
@@ -167,18 +197,10 @@ export function PersonaEditor() {
           <h1>Edit Facilitator Persona</h1>
         </div>
         <div className={styles.headerRight}>
-          {isSaving && <span className={styles.savingIndicator}>Saving...</span>}
-          {hasChanges && !isSaving && (
-            <span className={styles.unsavedIndicator}>Unsaved changes</span>
-          )}
-          <Button
-            variant="primary"
-            onClick={handleSave}
-            disabled={!hasChanges || isSaving}
-          >
-            <SaveIcon />
-            Save
-          </Button>
+          {saveStatus === 'saving' && <span className={styles.savingIndicator}>Saving...</span>}
+          {saveStatus === 'saved' && <span className={styles.savedIndicator}>Saved</span>}
+          {saveStatus === 'unsaved' && <span className={styles.unsavedIndicator}>Editing...</span>}
+          {saveStatus === 'error' && <span className={styles.errorIndicator}>Save failed</span>}
         </div>
       </header>
 

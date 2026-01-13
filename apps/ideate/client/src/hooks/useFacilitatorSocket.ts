@@ -161,6 +161,8 @@ export function useFacilitatorSocket({
     navigationContext,
     pendingPersonaChange,
     clearPendingPersonaChange,
+    pendingPersonaReload,
+    clearPendingPersonaReload,
     setOpenQuestions,
     setShowQuestionsResolver,
   } = useFacilitator();
@@ -555,6 +557,17 @@ export function useFacilitatorSocket({
       clearPendingPersonaChange();
     }
   }, [pendingPersonaChange, clearPendingPersonaChange, connectionState]);
+
+  // Process pending persona reload when connected
+  useEffect(() => {
+    if (pendingPersonaReload && wsRef.current?.readyState === WebSocket.OPEN) {
+      log.log(' Processing pending persona reload');
+      wsRef.current.send(JSON.stringify({
+        type: 'persona_reload',
+      }));
+      clearPendingPersonaReload();
+    }
+  }, [pendingPersonaReload, clearPendingPersonaReload, connectionState]);
 
   // Cleanup on unmount
   useEffect(() => {

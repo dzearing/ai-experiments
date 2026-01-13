@@ -140,6 +140,12 @@ interface FacilitatorContextValue {
   requestPersonaChange: (presetId: string) => void;
   /** Clear pending persona change (called after WebSocket processes it) */
   clearPendingPersonaChange: () => void;
+  /** Request persona reload without clearing history */
+  pendingPersonaReload: boolean;
+  /** Reload persona from disk without clearing history */
+  reloadPersona: () => void;
+  /** Clear pending persona reload (called after WebSocket processes it) */
+  clearPendingPersonaReload: () => void;
   /** Open facilitator and queue a message to send (useful for automated actions like Import) */
   openWithMessage: (content: string) => void;
   /** Clear pending message (called after WebSocket processes it) */
@@ -170,6 +176,7 @@ export function FacilitatorProvider({ children }: FacilitatorProviderProps) {
   const [error, setError] = useState<string | null>(null);
   const [navigationContext, setNavigationContext] = useState<NavigationContext>({});
   const [pendingPersonaChange, setPendingPersonaChange] = useState<string | null>(null);
+  const [pendingPersonaReload, setPendingPersonaReload] = useState(false);
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
   const [openQuestions, setOpenQuestions] = useState<OpenQuestion[] | null>(null);
   const [showQuestionsResolver, setShowQuestionsResolver] = useState(false);
@@ -246,6 +253,16 @@ export function FacilitatorProvider({ children }: FacilitatorProviderProps) {
   // Clear pending persona change
   const clearPendingPersonaChange = useCallback(() => {
     setPendingPersonaChange(null);
+  }, []);
+
+  // Request persona reload without clearing history
+  const reloadPersona = useCallback(() => {
+    setPendingPersonaReload(true);
+  }, []);
+
+  // Clear pending persona reload
+  const clearPendingPersonaReload = useCallback(() => {
+    setPendingPersonaReload(false);
   }, []);
 
   // Open facilitator and queue a message to send (useful for automated actions like Import)
@@ -327,6 +344,9 @@ export function FacilitatorProvider({ children }: FacilitatorProviderProps) {
     setNavigationContext,
     requestPersonaChange,
     clearPendingPersonaChange,
+    pendingPersonaReload,
+    reloadPersona,
+    clearPendingPersonaReload,
     openWithMessage,
     clearPendingMessage,
     openQuestions,
