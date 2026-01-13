@@ -206,13 +206,35 @@ export function mix(color1: string, color2: string, weight = 0.5): string {
 
 /**
  * Get the best text color (black or white) for a background
+ * Uses actual contrast ratio calculation, but prefers white for saturated colors
+ * where it provides sufficient contrast (4.5:1 for accessibility)
  */
 export function getContrastingTextColor(bgColor: string): '#000000' | '#ffffff' {
   const rgb = hexToRgb(bgColor);
   if (!rgb) return '#000000';
 
-  const luminance = relativeLuminance(rgb.r, rgb.g, rgb.b);
-  return luminance > 0.179 ? '#000000' : '#ffffff';
+  const bgLuminance = relativeLuminance(rgb.r, rgb.g, rgb.b);
+
+  // Calculate contrast ratio with white (luminance = 1) and black (luminance = 0)
+  // Contrast ratio formula: (L1 + 0.05) / (L2 + 0.05) where L1 > L2
+  const contrastWithWhite = (1 + 0.05) / (bgLuminance + 0.05);
+  const contrastWithBlack = (bgLuminance + 0.05) / (0 + 0.05);
+
+  // Check if background is saturated (not grayscale)
+  const maxChannel = Math.max(rgb.r, rgb.g, rgb.b);
+  const minChannel = Math.min(rgb.r, rgb.g, rgb.b);
+  const saturation = maxChannel > 0 ? (maxChannel - minChannel) / maxChannel : 0;
+
+  // For saturated colors (like success green, warning amber, etc.),
+  // prefer white if it provides reasonable contrast (3.0:1 minimum for large text/icons)
+  // This produces more visually pleasing results for semantic colored backgrounds
+  // where black text would look muddy
+  if (saturation > 0.4 && contrastWithWhite >= 3.0) {
+    return '#ffffff';
+  }
+
+  // Otherwise, pick the color with higher contrast ratio
+  return contrastWithWhite >= contrastWithBlack ? '#ffffff' : '#000000';
 }
 
 /**

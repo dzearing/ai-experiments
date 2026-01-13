@@ -1007,14 +1007,14 @@ function generateSurfaceClasses(mode: 'light' | 'dark'): string[] {
   }
 
   // Generate feedback surface modifiers (nested)
-  // These override base-* tokens to feedback colors
-  lines.push('  /* Feedback surfaces */');
+  // These use the soft tinted feedback tokens (--feedback-*), NOT the solid button tokens (--warning-bg etc.)
+  lines.push('  /* Feedback surfaces - soft tinted backgrounds for alerts/cards */');
   const feedbackSurfacesList: FeedbackSurface[] = ['success', 'warning', 'danger', 'info'];
   for (const feedback of feedbackSurfacesList) {
     lines.push(`  &.${feedback} {`);
-    lines.push(`    --base-bg: var(--${feedback}-bg);`);
-    lines.push(`    --base-fg: var(--${feedback}-fg);`);
-    lines.push(`    --base-border: var(--${feedback}-border);`);
+    lines.push(`    --base-bg: var(--feedback-${feedback}-bg);`);
+    lines.push(`    --base-fg: var(--feedback-${feedback}-fg);`);
+    lines.push(`    --base-border: var(--feedback-${feedback}-border);`);
     lines.push(`    background: var(--base-bg);`);
     lines.push(`    color: var(--base-fg);`);
     lines.push('  }');

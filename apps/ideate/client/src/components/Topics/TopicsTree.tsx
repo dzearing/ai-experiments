@@ -28,6 +28,8 @@ interface TopicsTreeProps {
   onInlineEditReady?: (startEdit: () => void) => void;
   /** Called when a topic is renamed */
   onRename?: (id: string, newName: string) => void;
+  /** Workspace ID to assign to newly created topics */
+  workspaceId?: string;
 }
 
 type ViewType = 'tree' | 'list';
@@ -167,7 +169,7 @@ function generateTempId(): string {
   return `temp-${Date.now()}-${++tempIdCounter}`;
 }
 
-export function TopicsTree({ onSelect, onCreateNew: _onCreateNew, selectedId, onInlineEditReady, onRename }: TopicsTreeProps) {
+export function TopicsTree({ onSelect, onCreateNew: _onCreateNew, selectedId, onInlineEditReady, onRename, workspaceId }: TopicsTreeProps) {
   const { topics, expandedIds, setExpandedIds, isLoading, filter, setFilter, createTopic, updateTopic, deleteTopic } = useTopics();
   const [viewType, setViewType] = useState<ViewType>('tree');
   const [searchValue, setSearchValue] = useState('');
@@ -281,6 +283,7 @@ export function TopicsTree({ onSelect, onCreateNew: _onCreateNew, selectedId, on
           type: 'folder',
           parentIds: parentId ? [parentId] : [],
           insertAfterId: insertAfterId || undefined,
+          workspaceId,
         }).then(created => {
           if (created) {
             setLastCreatedId(created.id);
@@ -326,7 +329,7 @@ export function TopicsTree({ onSelect, onCreateNew: _onCreateNew, selectedId, on
       }
       refocusTree();
     }
-  }, [pendingTopic, createTopic, topics, onSelect, lastCreatedId, insertAfterId, indentLevel, setExpandedIds, expandedIds, refocusTree]);
+  }, [pendingTopic, createTopic, topics, onSelect, lastCreatedId, insertAfterId, indentLevel, setExpandedIds, expandedIds, refocusTree, workspaceId]);
 
   // Handle pending input change
   const handlePendingChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {

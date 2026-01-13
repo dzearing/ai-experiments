@@ -265,6 +265,7 @@ export function Topics() {
             onCreateNew={handleCreateNew}
             selectedId={selectedTopicId}
             onInlineEditReady={handleInlineEditReady}
+            workspaceId={workspaceId === 'all' ? `personal-${user?.id}` : workspaceId}
           />
         }
         second={
