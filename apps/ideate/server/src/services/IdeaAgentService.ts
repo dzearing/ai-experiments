@@ -1344,6 +1344,12 @@ export class IdeaAgentService {
   linkSessionToIdea(documentRoomName: string, realIdeaId: string, workspaceId?: string): boolean {
     const session = this.activeSessions.get(documentRoomName);
 
+    // Always migrate chat history files, regardless of whether there's an active session
+    // This ensures history is preserved when the dialog is reopened
+    this.chatService.migrateChatHistory(documentRoomName, realIdeaId).catch((error) => {
+      console.error(`[IdeaAgentService] Failed to migrate chat history from ${documentRoomName} to ${realIdeaId}:`, error);
+    });
+
     if (!session) {
       // No session yet - store as pending link to apply when session is created
       console.log(`[IdeaAgentService] No session at ${documentRoomName}, storing pending link to ${realIdeaId}`);

@@ -235,4 +235,46 @@ export class IdeaAgentChatService {
       // File may not exist
     }
   }
+
+  /**
+   * Migrate chat history from one ID to another.
+   * Used when linking a temp session (documentRoomName) to a real idea ID.
+   * Renames the messages and metadata files.
+   */
+  async migrateChatHistory(fromId: string, toId: string): Promise<boolean> {
+    const fromMessagesPath = this.getMessagesPath(fromId);
+    const fromMetaPath = this.getMetadataPath(fromId);
+    const toMessagesPath = this.getMessagesPath(toId);
+    const toMetaPath = this.getMetadataPath(toId);
+
+    let migrated = false;
+
+    // Migrate messages file
+    try {
+      await fs.access(fromMessagesPath);
+      await fs.rename(fromMessagesPath, toMessagesPath);
+      console.log(`[IdeaAgentChatService] Migrated messages from ${fromId} to ${toId}`);
+      migrated = true;
+    } catch {
+      // Source file doesn't exist, nothing to migrate
+    }
+
+    // Migrate metadata file
+    try {
+      await fs.access(fromMetaPath);
+      const metaContent = await fs.readFile(fromMetaPath, 'utf-8');
+      const metadata: IdeaAgentChatMetadata = JSON.parse(metaContent);
+
+      // Update the ideaId in metadata
+      metadata.ideaId = toId;
+      await fs.writeFile(toMetaPath, JSON.stringify(metadata, null, 2), 'utf-8');
+      await fs.unlink(fromMetaPath);
+      console.log(`[IdeaAgentChatService] Migrated metadata from ${fromId} to ${toId}`);
+      migrated = true;
+    } catch {
+      // Source file doesn't exist, nothing to migrate
+    }
+
+    return migrated;
+  }
 }
