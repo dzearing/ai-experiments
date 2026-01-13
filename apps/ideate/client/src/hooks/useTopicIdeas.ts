@@ -1,12 +1,15 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API_URL } from '../config';
+import { createLogger } from '../utils/clientLogger';
 import type {
   IdeaMetadata,
   IdeaStatus,
   CreateIdeaInput,
   Idea,
 } from '../types/idea';
+
+const log = createLogger('useTopicIdeas');
 
 interface UseTopicIdeasReturn {
   ideas: IdeaMetadata[];
@@ -80,6 +83,12 @@ export function useTopicIdeas(topicId: string, workspaceId?: string): UseTopicId
 
       const data = await response.json() as IdeaMetadata[];
 
+      log.log('fetchIdeas: received data from server', {
+        topicId,
+        count: data.length,
+        ideas: data.map(i => ({ id: i.id, title: i.title, topicIds: i.topicIds })),
+      });
+
       // Merge fetched data with existing ephemeral state (e.g., agentStatus, timestamps)
       // The server doesn't persist these fields, so we preserve them from current state
       setIdeas(prevIdeas => {
@@ -101,11 +110,19 @@ export function useTopicIdeas(topicId: string, workspaceId?: string): UseTopicId
         });
 
         // Merge agent state into fetched data
-        return data.map(idea => {
+        const mergedData = data.map(idea => {
           const agentState = agentStates.get(idea.id);
 
           return agentState ? { ...idea, ...agentState } : idea;
         });
+
+        log.log('fetchIdeas: setting state with merged data', {
+          topicId,
+          prevCount: prevIdeas.length,
+          newCount: mergedData.length,
+        });
+
+        return mergedData;
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch ideas');
@@ -236,13 +253,31 @@ export function useTopicIdeas(topicId: string, workspaceId?: string): UseTopicId
 
   // Add an idea to the list (for real-time created events)
   const addIdea = useCallback((idea: IdeaMetadata) => {
+    log.log('addIdea called', {
+      ideaId: idea.id,
+      ideaTitle: idea.title,
+      ideaStatus: idea.status,
+      topicIds: idea.topicIds,
+      topicId,
+    });
+
     setIdeas(prev => {
       // Avoid duplicates
-      if (prev.some(i => i.id === idea.id)) return prev;
+      if (prev.some(i => i.id === idea.id)) {
+        log.log('addIdea: duplicate detected, skipping', { ideaId: idea.id });
+
+        return prev;
+      }
+
+      log.log('addIdea: adding idea to state', {
+        ideaId: idea.id,
+        prevCount: prev.length,
+        newCount: prev.length + 1,
+      });
 
       return [idea, ...prev];
     });
-  }, []);
+  }, [topicId]);
 
   // Remove an idea from the list (for real-time deleted events)
   const removeIdea = useCallback((ideaId: string) => {

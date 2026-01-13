@@ -48,7 +48,9 @@ function generateSessionId(): string {
  * Strip structured event XML blocks from message content.
  * These are parsed separately for task/phase updates and shouldn't appear in chat.
  */
-function stripStructuredEvents(text: string): string {
+function stripStructuredEvents(text: string | undefined): string {
+  if (!text) return '';
+
   return text
     .replace(/<task_complete>\s*[\s\S]*?\s*<\/task_complete>/g, '')
     .replace(/<phase_complete>\s*[\s\S]*?\s*<\/phase_complete>/g, '')
@@ -1283,42 +1285,51 @@ export function IdeaDialog({
     onClose();
   }, [onClose]);
 
-  // Handle escape key - cancel if busy, otherwise close
+  // Handle Ctrl/Cmd+C to cancel operation when agent is thinking
+  const handleCancelKeyboard = useCallback(
+    (event: KeyboardEvent) => {
+      if (event.key === 'c' && (event.metaKey || event.ctrlKey)) {
+        // Only intercept if agent is thinking - otherwise let normal copy work
+        if (isAgentThinking) {
+          event.preventDefault();
+          handleCancelOperation();
+        }
+      }
+    },
+    [isAgentThinking, handleCancelOperation]
+  );
+
+  // Handle escape key - clear input first, then close if empty
   const handleEscape = useCallback(
     (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        // If AI is busy and input is empty, cancel the operation
-        if (isAgentThinking && !inputContentRef.current.trim()) {
-          event.preventDefault();
-          handleCancelOperation();
-          return;
-        }
-
         // If input has text, let the ChatInput handle Escape (clear input)
         if (inputContentRef.current.trim()) {
           return;
         }
 
-        // Otherwise close (auto-save will handle valid content)
+        // If input is empty, close the dialog (auto-save will handle valid content)
         event.preventDefault();
         handleCloseRequest();
       }
     },
-    [isAgentThinking, handleCancelOperation, handleCloseRequest]
+    [handleCloseRequest]
   );
 
-  // Add/remove escape key listener when open
+  // Add/remove keyboard listeners when open
   useEffect(() => {
     if (open) {
+      document.addEventListener('keydown', handleCancelKeyboard);
       document.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden';
     }
 
     return () => {
+      document.removeEventListener('keydown', handleCancelKeyboard);
       document.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = '';
     };
-  }, [open, handleEscape]);
+  }, [open, handleCancelKeyboard, handleEscape]);
 
   // Update agent context when form changes
   useEffect(() => {
@@ -1673,7 +1684,11 @@ export function IdeaDialog({
     // For new ideas, create immediately on first message so it appears in kanban
     if (isNewIdea && !currentIdea && !ideaCreatedForSessionRef.current) {
       ideaCreatedForSessionRef.current = true;
-      log.log(' Creating idea immediately on first message, initialTitle:', initialTitle);
+      log.log(' Creating idea immediately on first message', {
+        initialTitle,
+        initialTopicIds,
+        workspaceId,
+      });
 
       // Store the message to send after agent reconnects with new ideaId
       // The agent will disconnect/reconnect when currentIdea changes, so we can't send immediately

@@ -149,6 +149,7 @@ export function TopicIdeas({ topicId, topicName, topicType, topicDescription, wo
 
   // Handle creating a new idea
   const handleNewIdea = useCallback((title?: string, prompt?: string, greeting?: string) => {
+    log.log(`#${instanceId.current} handleNewIdea called`, { topicId, title, prompt });
     setSelectedIdea(null);
     setIsCreating(true);
     setInitialTitle(title);
@@ -156,7 +157,7 @@ export function TopicIdeas({ topicId, topicName, topicType, topicDescription, wo
     setInitialGreeting(greeting);
     setInitialPhase('ideation'); // New ideas always start in ideation
     setOverlayOpen(true);
-  }, []);
+  }, [topicId]);
 
   // Handle pending idea open from parent (when tab was switched)
   useEffect(() => {
@@ -249,11 +250,17 @@ export function TopicIdeas({ topicId, topicName, topicType, topicDescription, wo
   // IMPORTANT: Do NOT call refetch() here - it sets isLoading=true which causes
   // the early return and unmounts the dialog. Use addIdea() instead.
   const handleIdeaCreated = useCallback((idea: Idea) => {
-    log.log(`#${instanceId.current} Idea created immediately:`, idea.id);
+    log.log(`#${instanceId.current} handleIdeaCreated called`, {
+      ideaId: idea.id,
+      ideaTitle: idea.title,
+      ideaStatus: idea.status,
+      topicIds: idea.topicIds,
+      expectedTopicId: topicId,
+    });
     setSelectedIdea(idea);
     // Add to kanban immediately without triggering loading state
     addIdea(idea);
-  }, [addIdea]);
+  }, [addIdea, topicId]);
 
   // Total ideas count
   const totalIdeas = Object.values(ideasByStatus).reduce((sum, ideas) => sum + ideas.length, 0);

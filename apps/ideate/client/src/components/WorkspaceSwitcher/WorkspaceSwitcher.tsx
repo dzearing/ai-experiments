@@ -1,6 +1,6 @@
 import { useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from '@ui-kit/router';
-import { Button, Menu, type MenuItemType } from '@ui-kit/react';
+import { Button, Menu, type MenuItemType, type MenuItem } from '@ui-kit/react';
 import { HomeIcon } from '@ui-kit/icons/HomeIcon';
 import { UsersIcon } from '@ui-kit/icons/UsersIcon';
 import { GearIcon } from '@ui-kit/icons/GearIcon';
@@ -36,7 +36,7 @@ export function WorkspaceSwitcher() {
       label: 'All workspaces',
       icon: <GridViewIcon />,
       selected: isAllSelected,
-    });
+    } as MenuItem);
 
     items.push({ type: 'divider' });
 
@@ -59,7 +59,7 @@ export function WorkspaceSwitcher() {
         label: workspace.name,
         icon,
         selected: isSelected,
-      });
+      } as MenuItem);
     }
 
     // Add separator and manage option

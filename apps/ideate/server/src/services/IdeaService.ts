@@ -269,8 +269,16 @@ export class IdeaService {
 
       for (const file of metaFiles) {
         const metaPath = path.join(IDEAS_DIR, file);
-        const content = await fs.readFile(metaPath, 'utf-8');
-        const metadata: IdeaMetadata = JSON.parse(content);
+
+        let metadata: IdeaMetadata;
+
+        try {
+          const content = await fs.readFile(metaPath, 'utf-8');
+          metadata = JSON.parse(content);
+        } catch (parseError) {
+          console.error(`[IdeaService] Failed to parse ${file}:`, parseError);
+          continue; // Skip corrupted files instead of failing entirely
+        }
 
         // Migrate plan data to current schema if needed
         if (metadata.plan) {
@@ -348,6 +356,7 @@ export class IdeaService {
     isWorkspaceMember: boolean = false
   ): Promise<IdeaMetadata[]> {
     const allIdeas = await this.listIdeas(userId, workspaceId, undefined, isWorkspaceMember);
+
     return allIdeas.filter(idea => idea.topicIds?.includes(topicId));
   }
 

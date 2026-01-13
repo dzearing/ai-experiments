@@ -229,7 +229,16 @@ export function IdeasProvider({ children }: IdeasProviderProps) {
       }
 
       const idea = await response.json();
-      setIdeas((prev) => [idea, ...prev]);
+
+      // Add to state with duplicate check (WebSocket may have already added it)
+      setIdeas((prev) => {
+        if (prev.some(i => i.id === idea.id)) {
+          return prev;
+        }
+
+        return [idea, ...prev];
+      });
+
       return idea;
     },
     [user]
@@ -257,7 +266,16 @@ export function IdeasProvider({ children }: IdeasProviderProps) {
       }
 
       const idea = await response.json();
-      setIdeas((prev) => [idea, ...prev]);
+
+      // Add to state with duplicate check (WebSocket may have already added it)
+      setIdeas((prev) => {
+        if (prev.some(i => i.id === idea.id)) {
+          return prev;
+        }
+
+        return [idea, ...prev];
+      });
+
       return idea;
     },
     [user]

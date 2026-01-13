@@ -154,7 +154,8 @@ export function FacilitatorOverlay() {
 - Create, edit, and search documents
 - Get summaries of your content
 - Press **Ctrl+.** (or **Cmd+.** on Mac) to toggle this overlay
-- Press **Escape** to close
+- Press **Escape** to close (clears input first if not empty)
+- Press **Ctrl+C** (or **Cmd+C** on Mac) to stop the AI while it's thinking
 
 Type a message to get started!`,
     currentModelInfo: modelInfo,
@@ -202,37 +203,49 @@ Type a message to get started!`,
     });
   }, [cancelOperation, addMessage]);
 
-  // Handle escape key for closing overlay or cancelling operation
+  // Handle Ctrl/Cmd+C to cancel operation when loading
+  const handleCancelKeyboard = useCallback(
+    (event: KeyboardEvent) => {
+      if (event.key === 'c' && (event.metaKey || event.ctrlKey)) {
+        // Only intercept if loading - otherwise let normal copy work
+        if (isLoading) {
+          event.preventDefault();
+          handleCancelOperation();
+        }
+      }
+    },
+    [isLoading, handleCancelOperation]
+  );
+
+  // Handle escape key - clear input first, then close if empty
   const handleEscapeKey = useCallback(
     (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        // If loading and no input, cancel operation
-        if (isLoading && !inputContent.trim()) {
-          event.preventDefault();
-          handleCancelOperation();
-          return;
-        }
-
         // If there's input content, let the input handle Escape (clear input)
         if (inputContent.trim()) {
           return;
         }
 
-        // Otherwise close the overlay
+        // If input is empty, close the overlay
         event.preventDefault();
         close();
       }
     },
-    [isLoading, inputContent, handleCancelOperation, close]
+    [inputContent, close]
   );
 
-  // Add/remove escape key listener when open
+  // Add/remove keyboard listeners when open
   useEffect(() => {
     if (isOpen) {
+      document.addEventListener('keydown', handleCancelKeyboard);
       document.addEventListener('keydown', handleEscapeKey);
-      return () => document.removeEventListener('keydown', handleEscapeKey);
+
+      return () => {
+        document.removeEventListener('keydown', handleCancelKeyboard);
+        document.removeEventListener('keydown', handleEscapeKey);
+      };
     }
-  }, [isOpen, handleEscapeKey]);
+  }, [isOpen, handleCancelKeyboard, handleEscapeKey]);
 
   // Prevent body scroll when open
   useEffect(() => {

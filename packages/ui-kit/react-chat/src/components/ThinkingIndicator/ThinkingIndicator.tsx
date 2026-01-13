@@ -47,7 +47,7 @@ export function ThinkingIndicator({
   progressVerbs = DEFAULT_PROGRESS_VERBS,
   statusText,
   showEscapeHint = true,
-  escapeHintText = 'esc to interrupt',
+  escapeHintText = '⌘C to interrupt',
   className,
 }: ThinkingIndicatorProps) {
   const [currentVerb, setCurrentVerb] = useState(progressVerbs[0]);
