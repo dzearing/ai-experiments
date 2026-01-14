@@ -20,11 +20,14 @@
  */
 
 import { useState, useRef, useImperativeHandle, forwardRef, useCallback, useEffect } from 'react';
-import { Avatar, Segmented, type SegmentOption } from '@ui-kit/react';
+import { Avatar, Segmented, Sizer, type SegmentOption } from '@ui-kit/react';
 import { MarkdownEditor, type MarkdownEditorRef, type CoAuthor } from '../MarkdownEditor';
 import { MarkdownRenderer } from '../MarkdownRenderer';
 import type { Extension } from '@codemirror/state';
 import styles from './MarkdownCoEditor.module.css';
+
+/** Default width percentage for the editor pane in split mode */
+const DEFAULT_SPLIT_WIDTH = 50;
 
 export type { CoAuthor } from '../MarkdownEditor';
 
@@ -168,6 +171,10 @@ export const MarkdownCoEditor = forwardRef<MarkdownCoEditorRef, MarkdownCoEditor
     // Internal markdown state for uncontrolled mode
     const [internalMarkdown, setInternalMarkdown] = useState(defaultValue);
     const [internalMode, setInternalMode] = useState<ViewMode>(defaultMode);
+
+    // Split pane width tracking (as percentage of total width)
+    const [splitWidthPercent, setSplitWidthPercent] = useState(DEFAULT_SPLIT_WIDTH);
+    const contentRef = useRef<HTMLDivElement>(null);
 
     const editorRef = useRef<MarkdownEditorRef>(null);
     const previewRef = useRef<HTMLDivElement>(null);
@@ -371,6 +378,29 @@ export const MarkdownCoEditor = forwardRef<MarkdownCoEditorRef, MarkdownCoEditor
       ? VIEW_MODE_OPTIONS.filter(opt => opt.value !== 'edit')
       : VIEW_MODE_OPTIONS;
 
+    // Handle split pane resize
+    const handleSplitResize = useCallback((delta: number) => {
+      if (!contentRef.current) return;
+
+      const containerWidth = contentRef.current.offsetWidth;
+      if (containerWidth <= 0) return;
+
+      // Convert delta pixels to percentage
+      const deltaPercent = (delta / containerWidth) * 100;
+
+      setSplitWidthPercent((prev) => {
+        // Clamp between 20% and 80%
+        const next = prev + deltaPercent;
+
+        return Math.max(20, Math.min(80, next));
+      });
+    }, []);
+
+    // Reset split width to default on double-click
+    const handleSplitDoubleClick = useCallback(() => {
+      setSplitWidthPercent(DEFAULT_SPLIT_WIDTH);
+    }, []);
+
     // Build class names
     const containerClasses = [
       styles.coEditor,
@@ -428,7 +458,7 @@ export const MarkdownCoEditor = forwardRef<MarkdownCoEditorRef, MarkdownCoEditor
         )}
 
         {/* Content area - SINGLE editor instance across all modes to maintain Yjs sync */}
-        <div className={`${styles.content} ${styles[currentMode]}`}>
+        <div ref={contentRef} className={`${styles.content} ${styles[currentMode]}`}>
           {/*
             Editor pane - Always rendered when extensions are provided (for Yjs collaboration)
             or when editor should be shown. Hidden visually in preview mode.
@@ -438,7 +468,13 @@ export const MarkdownCoEditor = forwardRef<MarkdownCoEditorRef, MarkdownCoEditor
             <div
               ref={editorPaneRef}
               className={styles.editorPane}
-              style={!showEditor ? { position: 'absolute', left: '-9999px', opacity: 0 } : undefined}
+              style={
+                !showEditor
+                  ? { position: 'absolute', left: '-9999px', opacity: 0 }
+                  : currentMode === 'split'
+                    ? { flex: `0 0 ${splitWidthPercent}%` }
+                    : undefined
+              }
               aria-hidden={!showEditor}
             >
               {/* When using Yjs (disableBuiltInHistory), use uncontrolled mode to avoid
@@ -465,9 +501,21 @@ export const MarkdownCoEditor = forwardRef<MarkdownCoEditorRef, MarkdownCoEditor
             </div>
           )}
 
+          {/* Resizable divider in split mode */}
+          {currentMode === 'split' && (
+            <Sizer
+              orientation="horizontal"
+              onResize={handleSplitResize}
+              onDoubleClick={handleSplitDoubleClick}
+            />
+          )}
+
           {/* Preview pane - shown in preview and split modes */}
           {showPreview && (
-            <div className={styles.previewPane}>
+            <div
+              className={styles.previewPane}
+              style={currentMode === 'split' ? { flex: 1 } : undefined}
+            >
               <div ref={previewRef} className={styles.previewContent}>
                 <MarkdownRenderer
                   content={currentMarkdown}

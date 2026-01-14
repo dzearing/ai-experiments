@@ -113,19 +113,13 @@
   flex: 1;
 }
 
-/* Split mode - side by side layout */
+/* Split mode - side by side layout with resizable Sizer */
 .content.split {
   flex-direction: row;
 }
 
-.content.split .editorPane {
-  flex: 1;
-  border-right: 1px solid var(--soft-border, #e0e0e0);
-}
-
-.content.split .previewPane {
-  flex: 1;
-}
+/* In split mode, editor pane width is controlled by inline flex-basis style */
+/* Preview pane gets remaining space via flex: 1 */
 
 /* ==============================================
    Editor Pane
@@ -160,20 +154,12 @@
   overflow-y: auto;
 }
 
-/* In split mode, the Sizer handles visual separation */
-
 /* ==============================================
    Responsive Adjustments
    ============================================== */
 
 @media (max-width: 768px) {
-  /* Stack panes vertically on small screens in split mode */
-  .content.split {
-    flex-direction: column;
-  }
-
-  .content.split .previewPane {
-    border-left: none;
-    border-top: 1px solid var(--soft-border, #e0e0e0);
-  }
+  /* On small screens, switch to edit-only or preview-only mode via mode switcher.
+     Split mode with Sizer still functions but panes remain side-by-side.
+     Consider switching mode on narrow viewports for better UX. */
 }
