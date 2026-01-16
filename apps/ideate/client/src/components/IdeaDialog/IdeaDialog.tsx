@@ -178,6 +178,8 @@ export interface TopicContext {
   name: string;
   type: string;
   description?: string;
+  /** Local file system path if this is a local folder/repo/package */
+  localPath?: string;
 }
 
 /** Workspace phases */

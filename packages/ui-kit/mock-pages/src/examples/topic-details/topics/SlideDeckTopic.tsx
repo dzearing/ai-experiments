@@ -9,6 +9,7 @@ import {
   Chip,
   Heading,
   IconButton,
+  Stack,
   Tabs,
   Text,
 } from '@ui-kit/react';
@@ -613,10 +614,10 @@ export function SlideDeckTopicDetail({ topic }: { topic: SlideDeckTopic }) {
                       <div key={collaborator.id} className={styles.collaboratorItem}>
                         <div className={styles.collaboratorInfo}>
                           <Avatar fallback={collaborator.name} src={collaborator.avatar} size="sm" />
-                          <div>
+                          <Stack direction="vertical" gap="none">
                             <Text size="sm" weight="medium">{collaborator.name}</Text>
                             <Text size="xs" color="soft">{collaborator.role}</Text>
-                          </div>
+                          </Stack>
                         </div>
                         {collaborator.online && <div className={styles.onlineIndicator} />}
                       </div>

@@ -26,6 +26,8 @@ interface TopicIdeasProps {
   topicName: string;
   topicType: string;
   topicDescription?: string;
+  /** Local file path if the topic is a folder/repo/package */
+  topicLocalPath?: string;
   workspaceId?: string;
   /** Pending idea open request from parent (when tab was switched) */
   pendingIdeaOpen?: {
@@ -38,7 +40,7 @@ interface TopicIdeasProps {
   onPendingIdeaOpenHandled?: () => void;
 }
 
-export function TopicIdeas({ topicId, topicName, topicType, topicDescription, workspaceId, pendingIdeaOpen, onPendingIdeaOpenHandled }: TopicIdeasProps) {
+export function TopicIdeas({ topicId, topicName, topicType, topicDescription, topicLocalPath, workspaceId, pendingIdeaOpen, onPendingIdeaOpenHandled }: TopicIdeasProps) {
   // Debug: track this instance
   const instanceId = useRef(++topicIdeasInstanceId);
   useEffect(() => {
@@ -121,7 +123,8 @@ export function TopicIdeas({ topicId, topicName, topicType, topicDescription, wo
     name: topicName,
     type: topicType,
     description: topicDescription,
-  }), [topicId, topicName, topicType, topicDescription]);
+    localPath: topicLocalPath,
+  }), [topicId, topicName, topicType, topicDescription, topicLocalPath]);
 
   // Overlay state
   const [overlayOpen, setOverlayOpen] = useState(false);

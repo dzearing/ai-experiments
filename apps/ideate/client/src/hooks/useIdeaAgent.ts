@@ -24,6 +24,8 @@ export interface IdeaContext {
     name: string;
     type: string;
     description?: string;
+    /** Local file system path if this is a local folder/repo/package */
+    localPath?: string;
   };
 }
 
@@ -471,7 +473,22 @@ export function useIdeaAgent({
                 // Reset the flag after handling
                 sessionContinuationRef.current = false;
               } else {
-                setMessages(data.messages);
+                // Merge with any locally added messages not in server history
+                // This prevents race condition where user sends a message right before history arrives
+                setMessages((prev) => {
+                  const serverMessageIds = new Set(data.messages!.map((m) => m.id));
+                  // Keep local user messages that aren't in the server history (e.g., just-sent messages)
+                  const localOnlyUserMessages = prev.filter(
+                    (m) => m.role === 'user' && !serverMessageIds.has(m.id)
+                  );
+
+                  if (localOnlyUserMessages.length > 0) {
+                    log.log(' Preserving local user messages not in server history:', localOnlyUserMessages.length);
+                  }
+
+                  // Return server history + any local messages not yet confirmed
+                  return [...data.messages!, ...localOnlyUserMessages];
+                });
                 sessionContinuationRef.current = false;
 
                 // Restore open questions from the last message that has them
@@ -533,16 +550,14 @@ export function useIdeaAgent({
             break;
 
           case 'message_complete':
-            // Message is complete - mark both the original message AND any continuation message as not streaming
+            // Message is complete - mark all streaming messages as complete
             if (data.messageId) {
-              // Mark the original message as not streaming
-              updateMessage(data.messageId, { isStreaming: false });
-
-              // Also mark any continuation message as not streaming
-              // (continuation messages have IDs like "${originalId}-cont-${timestamp}")
-              if (currentMessageIdRef.current && currentMessageIdRef.current !== data.messageId) {
-                updateMessage(currentMessageIdRef.current, { isStreaming: false });
-              }
+              // Mark ALL streaming messages as not streaming
+              // This handles race conditions where client creates a local message ID
+              // that differs from the server's message ID
+              setMessages((prev) =>
+                prev.map((m) => (m.isStreaming ? { ...m, isStreaming: false } : m))
+              );
 
               currentMessageIdRef.current = null;
               setIsLoading(false);
@@ -621,9 +636,24 @@ export function useIdeaAgent({
 
               // Also persist tool calls to the message for proper interleaving
               if (data.event.type === 'tool_start' && data.event.toolName) {
+                // Build input from available event fields so tool message shows details
+                const toolInput: Record<string, unknown> = {};
+
+                if (data.event.searchQuery) {
+                  toolInput.query = data.event.searchQuery;
+                }
+
+                if (data.event.filePath) {
+                  toolInput.path = data.event.filePath;
+                }
+
+                if (data.event.command) {
+                  toolInput.command = data.event.command;
+                }
+
                 const newToolCall: IdeaAgentToolCall = {
                   name: data.event.toolName,
-                  input: {},
+                  input: toolInput,
                   startTime: data.event.timestamp || Date.now(),
                 };
 

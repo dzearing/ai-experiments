@@ -65,6 +65,8 @@ export interface TopicContext {
   name: string;
   type: string;
   description?: string;
+  /** Local file system path if this is a local folder/repo/package */
+  localPath?: string;
 }
 
 /**
@@ -1008,9 +1010,10 @@ export class IdeaAgentService {
       // Save the assistant message (chat portion only, without suggestion blocks)
       // Include openQuestions so they can be rehydrated when dialog reopens
       // Include parts for ordered content blocks to preserve text/tool interleaving
+      // Use session.ideaId since it may have been updated by linkSessionToIdea during processing
       const allToolCalls = partsBuilder.getAllToolCalls();
       const assistantMessage = await this.chatService.addMessage(
-        ideaId,
+        session.ideaId,
         userId,
         'assistant',
         chatResponse || 'I apologize, but I was unable to generate a response.',

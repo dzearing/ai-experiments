@@ -879,6 +879,7 @@ export function TopicDetail({
                 topicName={topic.name}
                 topicType={topic.type}
                 topicDescription={topic.description}
+                topicLocalPath={topic.properties?.localPath as string | undefined}
                 workspaceId={topic.workspaceId}
                 pendingIdeaOpen={pendingIdeaOpen}
                 onPendingIdeaOpenHandled={clearPendingIdeaOpen}

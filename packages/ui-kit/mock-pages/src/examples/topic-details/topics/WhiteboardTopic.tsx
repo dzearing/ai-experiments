@@ -9,6 +9,7 @@ import {
   Chip,
   Heading,
   IconButton,
+  Stack,
   Tabs,
   Text,
 } from '@ui-kit/react';
@@ -581,12 +582,12 @@ export function WhiteboardTopicDetail({ topic }: { topic: WhiteboardTopic }) {
                               />
                             )}
                           </div>
-                          <div>
+                          <Stack direction="vertical" gap="none">
                             <Text size="sm" weight="medium">{collaborator.name}</Text>
                             <Text size="xs" color="soft">
                               {collaborator.online ? 'Active now' : `Last active ${collaborator.lastActive?.toLocaleDateString()}`}
                             </Text>
-                          </div>
+                          </Stack>
                         </div>
                         {collaborator.online && <div className={styles.onlineIndicator} />}
                       </div>
@@ -663,10 +664,10 @@ export function WhiteboardTopicDetail({ topic }: { topic: WhiteboardTopic }) {
                     className={styles.sectionHeader}
                     style={{ backgroundColor: section.color }}
                   >
-                    <div>
+                    <Stack direction="vertical" gap="none">
                       <Text weight="semibold" color="inherit">{section.title}</Text>
                       {section.description && <Text size="sm" color="inherit">{section.description}</Text>}
-                    </div>
+                    </Stack>
                     <div className={styles.sectionStats}>
                       <Chip size="sm" variant="default">{sectionNotes.length} notes</Chip>
                       <Chip size="sm" variant="default">{sectionVotes} votes</Chip>
@@ -674,14 +675,16 @@ export function WhiteboardTopicDetail({ topic }: { topic: WhiteboardTopic }) {
                   </div>
                   <div className={styles.sectionNotes}>
                     {sectionNotes.slice(0, 3).map(note => (
-                      <div
+                      <Stack
                         key={note.id}
+                        direction="vertical"
+                        gap="xs"
                         className={styles.miniNoteCard}
                         style={{ backgroundColor: getStickyColor(note.color) }}
                       >
                         <Text size="sm" color="inherit">{note.content}</Text>
                         <Text size="xs" color="inherit">{note.votes} votes</Text>
-                      </div>
+                      </Stack>
                     ))}
                     {sectionNotes.length > 3 && (
                       <Text size="sm" color="soft">+{sectionNotes.length - 3} more</Text>

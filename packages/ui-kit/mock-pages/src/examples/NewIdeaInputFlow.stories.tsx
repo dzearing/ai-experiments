@@ -13,13 +13,15 @@ import {
   Checkbox,
   Tooltip,
 } from '@ui-kit/react';
-import { ChatPanel, ChatInput, type ChatPanelMessage } from '@ui-kit/react-chat';
+import { ChatPanel, ChatInput, ThinkingIndicator, type ChatPanelMessage } from '@ui-kit/react-chat';
 import { MarkdownCoEditor, type ViewMode } from '@ui-kit/react-markdown';
 import { ArrowRightIcon } from '@ui-kit/icons/ArrowRightIcon';
 import { CheckCircleIcon } from '@ui-kit/icons/CheckCircleIcon';
 import { ChevronDownIcon } from '@ui-kit/icons/ChevronDownIcon';
 import { ChevronRightIcon } from '@ui-kit/icons/ChevronRightIcon';
 import { CloseIcon } from '@ui-kit/icons/CloseIcon';
+import { FolderIcon } from '@ui-kit/icons/FolderIcon';
+import { AddIcon } from '@ui-kit/icons/AddIcon';
 import { InfoCircleIcon } from '@ui-kit/icons/InfoCircleIcon';
 import { LightbulbIcon } from '@ui-kit/icons/LightbulbIcon';
 import { PlayIcon } from '@ui-kit/icons/PlayIcon';
@@ -536,16 +538,16 @@ function ChatPanelWrapper({
 
       <ChatPanel
         messages={messages}
-        isLoading={isThinking}
-        loadingText="Plan Agent is thinking..."
         className={styles.chatMessages}
       />
 
       <div className={styles.chatInputArea}>
+        <ThinkingIndicator isActive={isThinking} showEscapeHint={false} />
         <ChatInput
           placeholder="Ask questions or refine the plan..."
           size="md"
           fullWidth
+          disabled={isThinking}
         />
       </div>
     </div>
@@ -560,10 +562,12 @@ interface InputStateProps {
   topic?: string;
   topicName?: string;
   placeholder?: string;
+  onOpenFolderPicker?: () => void;
 }
 
-function InputState({ topic = '', topicName = 'Authentication', placeholder = "What would you like to build or improve?" }: InputStateProps) {
+function InputState({ topic = '', topicName = 'Authentication', placeholder = "What would you like to build or improve?", onOpenFolderPicker }: InputStateProps) {
   const [value, setValue] = useState(topic);
+  const [folders, setFolders] = useState<string[]>(['~/Documents/Projects/my-project']);
 
   return (
     <div className={styles.overlay}>
@@ -586,10 +590,31 @@ function InputState({ topic = '', topicName = 'Authentication', placeholder = "W
           />
         </div>
         <div className={styles.inputFooter}>
-          <Button variant="default">Cancel</Button>
-          <Button variant="primary" icon={<StarIcon />} disabled={!value.trim()}>
-            Analyze Idea
-          </Button>
+          <div className={styles.folderChips}>
+            {folders.map((folder, index) => (
+              <Button
+                key={index}
+                variant="outline"
+                icon={<FolderIcon />}
+                iconAfter={<ChevronDownIcon />}
+                onClick={onOpenFolderPicker}
+              >
+                ~/git/.../{folder.split('/').pop()}/
+              </Button>
+            ))}
+            <IconButton
+              variant="ghost"
+              icon={<AddIcon />}
+              aria-label="Add folder"
+              onClick={onOpenFolderPicker}
+            />
+          </div>
+          <div className={styles.footerActions}>
+            <Button variant="default">Cancel</Button>
+            <Button variant="primary" icon={<StarIcon />} disabled={!value.trim()}>
+              Analyze Idea
+            </Button>
+          </div>
         </div>
       </div>
     </div>
@@ -616,7 +641,19 @@ function ProcessingState({ topicName = 'Authentication', steps }: ProcessingStat
           <AnalysisStepIndicator steps={steps} />
         </div>
         <div className={styles.inputFooter}>
-          <Button variant="default">Cancel</Button>
+          <div className={styles.folderChips}>
+            <Button
+              variant="outline"
+              icon={<FolderIcon />}
+              iconAfter={<ChevronDownIcon />}
+              disabled
+            >
+              ~/git/.../my-project/
+            </Button>
+          </div>
+          <div className={styles.footerActions}>
+            <Button variant="default">Cancel</Button>
+          </div>
         </div>
       </div>
     </div>
@@ -649,11 +686,23 @@ function SimpleResultState({ analysis }: SimpleResultStateProps) {
           {analysis.quickPlan && <QuickPlanCard plan={analysis.quickPlan} />}
         </div>
         <div className={styles.resultFooter}>
-          <Button variant="default">Edit Plan</Button>
-          <Button variant="default">Save as Draft</Button>
-          <Button variant="primary" icon={<PlayIcon />}>
-            Execute Now
-          </Button>
+          <div className={styles.folderChips}>
+            <Button
+              variant="outline"
+              icon={<FolderIcon />}
+              iconAfter={<ChevronDownIcon />}
+              disabled
+            >
+              ~/git/.../my-project/
+            </Button>
+          </div>
+          <div className={styles.footerActions}>
+            <Button variant="default">Edit Plan</Button>
+            <Button variant="default">Save as Draft</Button>
+            <Button variant="primary" icon={<PlayIcon />}>
+              Execute Now
+            </Button>
+          </div>
         </div>
       </div>
     </div>
@@ -698,10 +747,22 @@ function ComplexResultState({ analysis }: ComplexResultStateProps) {
           )}
         </div>
         <div className={styles.resultFooter}>
-          <Button variant="default">Cancel</Button>
-          <Button variant="primary" icon={<ArrowRightIcon />}>
-            Start Planning
-          </Button>
+          <div className={styles.folderChips}>
+            <Button
+              variant="outline"
+              icon={<FolderIcon />}
+              iconAfter={<ChevronDownIcon />}
+              disabled
+            >
+              ~/git/.../my-project/
+            </Button>
+          </div>
+          <div className={styles.footerActions}>
+            <Button variant="default">Cancel</Button>
+            <Button variant="primary" icon={<ArrowRightIcon />}>
+              Start Planning
+            </Button>
+          </div>
         </div>
       </div>
     </div>
@@ -766,13 +827,25 @@ function MediumResultState({ analysis }: MediumResultStateProps) {
           {analysis.concerns && <ConcernsList concerns={analysis.concerns} defaultExpanded={false} />}
         </div>
         <div className={styles.resultFooter}>
-          <Button variant="default">Cancel</Button>
-          <Button variant="default" icon={<ArrowRightIcon />}>
-            Plan First
-          </Button>
-          <Button variant="primary" icon={<PlayIcon />}>
-            Execute with Assumptions
-          </Button>
+          <div className={styles.folderChips}>
+            <Button
+              variant="outline"
+              icon={<FolderIcon />}
+              iconAfter={<ChevronDownIcon />}
+              disabled
+            >
+              ~/git/.../my-project/
+            </Button>
+          </div>
+          <div className={styles.footerActions}>
+            <Button variant="default">Cancel</Button>
+            <Button variant="default" icon={<ArrowRightIcon />}>
+              Plan First
+            </Button>
+            <Button variant="primary" icon={<PlayIcon />}>
+              Execute with Assumptions
+            </Button>
+          </div>
         </div>
       </div>
     </div>
@@ -847,12 +920,21 @@ function PlanningState({ messages, phases, markdown, isThinking = false }: Plann
           />
         </div>
         <div className={styles.planningFooter}>
-          <div className={styles.footerLeft}>
-            <Button variant="ghost" size="sm" shape="pill">Add diagram</Button>
-            <Button variant="ghost" size="sm" shape="pill">Add research</Button>
-            <Button variant="ghost" size="sm" shape="pill">Break into phases</Button>
+          <div className={styles.folderChips}>
+            <Button
+              variant="outline"
+              icon={<FolderIcon />}
+              iconAfter={<ChevronDownIcon />}
+            >
+              ~/git/.../my-project/
+            </Button>
+            <IconButton
+              variant="ghost"
+              icon={<AddIcon />}
+              aria-label="Add folder"
+            />
           </div>
-          <div className={styles.footerRight}>
+          <div className={styles.footerActions}>
             <Button variant="default">Save Draft</Button>
             <Button variant="primary" icon={<PlayIcon />}>Execute Plan</Button>
           </div>
@@ -1254,7 +1336,7 @@ function InteractiveFlowDemo() {
   ];
 
   const isVisible = animationPhase === 'idle' || animationPhase === 'fading-in';
-  const maxWidth = displayState === 'complex-result' ? 640 : 560;
+  const maxWidth = displayState === 'complex-result' ? 720 : 640;
 
   const renderHeaderContent = () => {
     if (displayState === 'input') {
@@ -1299,24 +1381,68 @@ function InteractiveFlowDemo() {
     if (displayState === 'input') {
       return (
         <>
-          <Button variant="default">Cancel</Button>
-          <Button variant="primary" icon={<StarIcon />} disabled={!inputValue.trim()} onClick={handleAnalyze}>
-            Analyze Idea
-          </Button>
+          <div className={styles.folderChips}>
+            <Button
+              variant="outline"
+              icon={<FolderIcon />}
+              iconAfter={<ChevronDownIcon />}
+            >
+              ~/git/.../my-project/
+            </Button>
+            <IconButton
+              variant="ghost"
+              icon={<AddIcon />}
+              aria-label="Add folder"
+            />
+          </div>
+          <div className={styles.footerActions}>
+            <Button variant="default">Cancel</Button>
+            <Button variant="primary" icon={<StarIcon />} disabled={!inputValue.trim()} onClick={handleAnalyze}>
+              Analyze Idea
+            </Button>
+          </div>
         </>
       );
     }
 
     if (displayState === 'processing') {
-      return <Button variant="default" onClick={handleReset}>Cancel</Button>;
+      return (
+        <>
+          <div className={styles.folderChips}>
+            <Button
+              variant="outline"
+              icon={<FolderIcon />}
+              iconAfter={<ChevronDownIcon />}
+              disabled
+            >
+              ~/git/.../my-project/
+            </Button>
+          </div>
+          <div className={styles.footerActions}>
+            <Button variant="default" onClick={handleReset}>Cancel</Button>
+          </div>
+        </>
+      );
     }
 
     return (
       <>
-        <Button variant="default" onClick={handleReset}>Cancel</Button>
-        <Button variant="primary" icon={<ArrowRightIcon />} onClick={handleStartPlanning}>
-          Start Planning
-        </Button>
+        <div className={styles.folderChips}>
+          <Button
+            variant="outline"
+            icon={<FolderIcon />}
+            iconAfter={<ChevronDownIcon />}
+            disabled
+          >
+            ~/git/.../my-project/
+          </Button>
+        </div>
+        <div className={styles.footerActions}>
+          <Button variant="default" onClick={handleReset}>Cancel</Button>
+          <Button variant="primary" icon={<ArrowRightIcon />} onClick={handleStartPlanning}>
+            Start Planning
+          </Button>
+        </div>
       </>
     );
   };
@@ -1426,11 +1552,21 @@ function InteractiveFlowDemo() {
             />
           </div>
           <div className={styles.planningFooter}>
-            <div className={styles.footerLeft}>
-              <Button variant="ghost" size="sm" shape="pill">Add diagram</Button>
-              <Button variant="ghost" size="sm" shape="pill">Add research</Button>
+            <div className={styles.folderChips}>
+              <Button
+                variant="outline"
+                icon={<FolderIcon />}
+                iconAfter={<ChevronDownIcon />}
+              >
+                ~/git/.../my-project/
+              </Button>
+              <IconButton
+                variant="ghost"
+                icon={<AddIcon />}
+                aria-label="Add folder"
+              />
             </div>
-            <div className={styles.footerRight}>
+            <div className={styles.footerActions}>
               <Button variant="default">Save Draft</Button>
               <Button variant="primary" icon={<PlayIcon />}>Execute Plan</Button>
             </div>
@@ -1444,4 +1580,118 @@ function InteractiveFlowDemo() {
 export const Interactive_FullFlow: Story = {
   name: 'Interactive - Full Flow Demo',
   render: () => <InteractiveFlowDemo />,
+};
+
+/**
+ * Input with Folder Picker - Shows the folder picker dialog when clicking on the folder button
+ */
+function InputWithFolderPickerDemo() {
+  const [showFolderPicker, setShowFolderPicker] = useState(false);
+  const [value, setValue] = useState('');
+  const [folders, setFolders] = useState<string[]>(['~/Documents/Projects/my-project']);
+
+  return (
+    <>
+      <div className={styles.overlay}>
+        <div className={styles.inputDialog}>
+          <div className={styles.inputHeader}>
+            <LightbulbIcon className={styles.inputIcon} />
+            <Heading level={2} size={4}>New Idea</Heading>
+            <Chip size="sm" variant="default">Authentication</Chip>
+            <div className={styles.headerSpacer} />
+            <IconButton variant="ghost" icon={<CloseIcon />} aria-label="Close" />
+          </div>
+          <div className={styles.inputBody}>
+            <Input
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              placeholder="What would you like to build or improve?"
+              aria-label="Describe your idea"
+              autoFocus
+              fullWidth
+            />
+          </div>
+          <div className={styles.inputFooter}>
+            <div className={styles.folderChips}>
+              {folders.map((folder, index) => (
+                <Button
+                  key={index}
+                  variant="outline"
+                  icon={<FolderIcon />}
+                  iconAfter={<ChevronDownIcon />}
+                  onClick={() => setShowFolderPicker(true)}
+                >
+                  ~/git/.../{folder.split('/').pop()}/
+                </Button>
+              ))}
+              <IconButton
+                variant="ghost"
+                icon={<AddIcon />}
+                aria-label="Add folder"
+                onClick={() => setShowFolderPicker(true)}
+              />
+            </div>
+            <div className={styles.footerActions}>
+              <Button variant="default">Cancel</Button>
+              <Button variant="primary" icon={<StarIcon />} disabled={!value.trim()}>
+                Analyze Idea
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {showFolderPicker && (
+        <div className={styles.folderPickerOverlay}>
+          <FolderPickerDialog onClose={() => setShowFolderPicker(false)} />
+        </div>
+      )}
+    </>
+  );
+}
+
+/**
+ * Simple folder picker dialog component for the demo
+ */
+function FolderPickerDialog({ onClose }: { onClose: () => void }) {
+  return (
+    <div className={styles.folderPickerDialog}>
+      <div className={styles.folderPickerHeader}>
+        <Heading level={3} size={5}>Select Working Folder</Heading>
+        <IconButton variant="ghost" icon={<CloseIcon />} aria-label="Close" onClick={onClose} />
+      </div>
+      <div className={styles.folderPickerBody}>
+        <div className={styles.folderList}>
+          <div className={styles.folderListItem}>
+            <FolderIcon />
+            <Text>Documents</Text>
+          </div>
+          <div className={styles.folderListItem}>
+            <FolderIcon />
+            <Text>Projects</Text>
+          </div>
+          <div className={`${styles.folderListItem} ${styles.folderListItemSelected}`}>
+            <FolderIcon />
+            <Text>my-project</Text>
+          </div>
+          <div className={styles.folderListItem}>
+            <FolderIcon />
+            <Text>src</Text>
+          </div>
+          <div className={styles.folderListItem}>
+            <FolderIcon />
+            <Text>components</Text>
+          </div>
+        </div>
+      </div>
+      <div className={styles.folderPickerFooter}>
+        <Button variant="default" onClick={onClose}>Cancel</Button>
+        <Button variant="primary" onClick={onClose}>Select Folder</Button>
+      </div>
+    </div>
+  );
+}
+
+export const Step1c_InputWithFolderPicker: Story = {
+  name: '1c. Input - With Folder Picker',
+  render: () => <InputWithFolderPickerDemo />,
 };

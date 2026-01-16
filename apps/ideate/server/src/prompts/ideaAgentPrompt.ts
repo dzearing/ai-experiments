@@ -41,12 +41,23 @@ function buildDocumentWithPositions(content: string): string {
 function buildTopicContextSection(topicContext?: TopicContext): string {
   if (!topicContext) return '';
 
-  const { name, type, description } = topicContext;
+  const { name, type, description, localPath } = topicContext;
   let section = `## Parent Context\nThis idea is being created for **${name}** (${type}).`;
+
+  if (localPath) {
+    section += `\n\nLocal path: \`${localPath}\``;
+    section += '\n\n**IMPORTANT**: This is a LOCAL folder/repository/package on the user\'s machine. ';
+    section += 'Do NOT use WebSearch to find information about this topic. ';
+    section += 'Instead, use the topic-tools to search and explore the local codebase at the path above. ';
+    section += 'The user wants ideas relevant to their actual local project, not general web information.';
+  }
+
   if (description) {
     section += `\n\n${description}`;
   }
+
   section += '\n\nConsider how this idea fits within and supports the parent context when generating content.';
+
   return section;
 }
 

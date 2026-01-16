@@ -301,6 +301,24 @@ import { ArrowRightIcon } from '@ui-kit/icons/ArrowRightIcon';
 <p className={styles.secondary}>Secondary info</p>
 ```
 
+**⚠️ Important: Text renders as inline `<span>`**
+
+The `<Text>` component renders as a `<span>` (inline element). Multiple `<Text>` components placed next to each other will flow horizontally, not stack vertically.
+
+```tsx
+// ❌ WRONG - Text components flow inline, not stacked
+<div>
+  <Text>Name</Text>
+  <Text>Status</Text>  {/* Renders: "NameStatus" on same line! */}
+</div>
+
+// ✅ CORRECT - Use Stack for vertical arrangement
+<Stack direction="vertical" gap="xs">
+  <Text>Name</Text>
+  <Text>Status</Text>  {/* Renders on separate lines */}
+</Stack>
+```
+
 ### Input with Icons
 
 ```tsx
@@ -584,6 +602,50 @@ Use tokens directly for **atomic styling** within a surface:
 </div>
 ```
 
+### User/Contact List Item
+
+**This is a critical pattern.** The `<Text>` component renders inline (as a `<span>`). When you need to stack text vertically (name + status, title + subtitle, etc.), you MUST use `<Stack direction="vertical">`.
+
+```tsx
+// ✅ CORRECT - Use Stack for vertically stacked text
+<div className={styles.listItem}>
+  <Avatar fallback={user.name} size="sm" />
+  <Stack direction="vertical" gap="none">
+    <Text size="sm" weight="medium">{user.name}</Text>
+    <Text size="xs" color="soft">{user.status}</Text>
+  </Stack>
+  {user.online && <div className={styles.onlineIndicator} />}
+</div>
+
+// ❌ WRONG - Plain div won't stack inline Text components
+<div className={styles.listItem}>
+  <Avatar fallback={user.name} size="sm" />
+  <div>  {/* Text elements flow inline! */}
+    <Text size="sm" weight="medium">{user.name}</Text>
+    <Text size="xs" color="soft">{user.status}</Text>
+  </div>
+</div>
+```
+
+**CSS for list item:**
+```css
+.listItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2);
+}
+
+.onlineIndicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success-fg);
+}
+```
+
+**Key rule:** Whenever you have multiple `<Text>` components that should stack vertically, wrap them in `<Stack direction="vertical">`.
+
 ### Selectable Cards
 
 **Use `strong` surface for default state and `primary` surface for selected state.**
@@ -856,6 +918,7 @@ Add this to the top of your story file:
 | **`--soft-bg` with `--base-fg`** | **Use `--soft-fg` (same group!)** |
 | **`--softer-bg` with `--base-border`** | **Use `--softer-border` (same group!)** |
 | **`<Text>` inside primary-bg div** | **Use plain text or `color="inherit"`** |
+| **Multiple `<Text>` in plain `<div>`** | **Wrap in `<Stack direction="vertical">`** |
 | `<div className={styles.button}>` | `<Button variant="default">` |
 | `variant="secondary"` on Chip | `variant="default"` or `variant="info"` |
 | Inline SVG icons | Import from `@ui-kit/icons` |

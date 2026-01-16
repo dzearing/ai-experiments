@@ -4418,10 +4418,10 @@
 .canvasPreviewContent {
   position: relative;
   min-height: 300px;
-  background: #fafafa;
+  background: var(--softer-bg);
   background-image:
-    linear-gradient(to right, #e5e7eb 1px, transparent 1px),
-    linear-gradient(to bottom, #e5e7eb 1px, transparent 1px);
+    linear-gradient(to right, var(--softer-border) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--softer-border) 1px, transparent 1px);
   background-size: 20px 20px;
 }
 
@@ -4455,7 +4455,7 @@
   height: 8px;
   border-radius: 50%;
   transform: translate(-50%, -50%);
-  box-shadow: 0 0 0 2px white;
+  box-shadow: 0 0 0 2px var(--softer-bg);
 }
 
 .liveCursors {
@@ -4535,7 +4535,7 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  border: 2px solid white;
+  border: 2px solid var(--soft-bg);
 }
 
 /* All Notes View */
