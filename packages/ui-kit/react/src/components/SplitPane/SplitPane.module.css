@@ -4,6 +4,7 @@
   width: 100%;
   min-height: 0;
   overflow: hidden;
+  align-items: stretch;
 }
 
 /* Orientation */

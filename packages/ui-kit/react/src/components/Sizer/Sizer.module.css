@@ -11,13 +11,13 @@
 /* Horizontal sizer (for side-by-side panels) */
 .horizontal {
   cursor: col-resize;
-  height: 100%;
+  align-self: stretch;
 }
 
 /* Vertical sizer (for stacked panels) */
 .vertical {
   cursor: row-resize;
-  width: 100%;
+  align-self: stretch;
 }
 
 /* Center line split into two segments with gap for grip */

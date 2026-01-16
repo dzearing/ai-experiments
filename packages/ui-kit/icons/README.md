@@ -4,7 +4,7 @@ A scalable icon library with React components, SVG sprites, WOFF2 fonts, and PNG
 
 ## Features
 
-- **89 icons** organized into 5 categories
+- **110 icons** organized into 5 categories
 - **Multiple consumption formats**: React components, SVG sprite, icon font (WOFF2), PNGs
 - **Tree-shakable imports**: Only the icons you use are included in your bundle
 - **Searchable Storybook catalog**: Find icons by name or keyword
@@ -83,20 +83,20 @@ For legacy environments or email templates:
 
 ## Available Icons
 
-### Actions (33 icons)
-add, add-circle, copy, cut, delete, download, edit, export, fast-forward, filter, maximize, minimize, next-track, paste, pause, play, pop-in, pop-out, previous-track, redo, refresh, remove, restore, rewind, save, search, share, stop, sync, undo, upload, zoom-in, zoom-out
+### Actions (36 icons)
+add, add-circle, copy, cut, delete, download, edit, export, fast-forward, filter, logout, maximize, minimize, next-track, paste, pause, play, pop-in, pop-out, previous-track, redo, refresh, remove, restore, rewind, save, search, send, share, stop, sync, undo, upload, zoom-in, zoom-out
 
-### Navigation (15 icons)
-arrow-down, arrow-left, arrow-right, arrow-up, back, chevron-down, chevron-left, chevron-right, chevron-up, close, collapse, expand, forward, home, menu
+### Navigation (20 icons)
+arrow-down, arrow-left, arrow-right, arrow-up, back, chevron-down, chevron-left, chevron-right, chevrons-left, chevrons-right, chevron-up, close, collapse, expand, forward, grid-view, home, list-view, menu, more-horizontal
 
-### Status (9 icons)
-check, check-circle, error, error-circle, info, info-circle, warning, warning-triangle, x-circle
+### Status (10 icons)
+check, check-circle, error, error-circle, help, info, info-circle, warning, warning-triangle, x-circle
 
-### Editor (18 icons)
-bold, code, code-block, heading-1, heading-2, heading-3, image, indent, italic, link, list-bullet, list-ordered, list-task, outdent, quote, strikethrough, table, underline
+### Editor (22 icons)
+align-center, align-left, align-right, bold, code, code-block, heading-1, heading-2, heading-3, image, indent, italic, link, list, list-bullet, list-ordered, list-task, outdent, quote, strikethrough, table, underline
 
-### Misc (14 icons)
-bell, calendar, chat, clock, comment, file, folder, gear, heart, hourglass, settings, star, user, users
+### Misc (22 icons)
+bell, board, calendar, chat, clock, comment, file, folder, folder-plus, gear, globe, gripper, heart, hourglass, lightbulb, moon, package, star, sun, sun-moon, thumbs-down, thumbs-up, trash, tree, user, users
 
 ## Storybook
 

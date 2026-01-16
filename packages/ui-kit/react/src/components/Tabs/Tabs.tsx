@@ -35,6 +35,7 @@ import styles from './Tabs.module.css';
  */
 
 export type TabsVariant = 'default' | 'pills' | 'underline';
+export type TabsSize = 'sm' | 'md' | 'lg';
 
 export interface TabItem {
   /** Tab identifier */
@@ -60,6 +61,8 @@ export interface TabsProps {
   onChange?: (value: string) => void;
   /** Tabs variant */
   variant?: TabsVariant;
+  /** Tab size (default: 'sm') */
+  size?: TabsSize;
   /** Whether to animate the indicator (default: true) */
   animated?: boolean;
   /** Full width tabs that stretch to fill container */
@@ -79,6 +82,7 @@ export function Tabs({
   value: controlledValue,
   onChange,
   variant = 'default',
+  size = 'sm',
   animated = true,
   fullWidth = false,
   className,
@@ -182,6 +186,7 @@ export function Tabs({
   const tabListClassNames = [
     styles.tabList,
     styles[variant],
+    styles[`size-${size}`],
     fullWidth && styles.fullWidth,
     animated && styles.animated,
   ]

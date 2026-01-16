@@ -71,6 +71,25 @@
 }
 
 /* ==============================================
+   Size variants
+   ============================================== */
+
+.size-sm .tab {
+  font-size: var(--text-sm);
+  padding: var(--space-2) var(--space-3);
+}
+
+.size-md .tab {
+  font-size: var(--text-base);
+  padding: var(--space-2) var(--space-4);
+}
+
+.size-lg .tab {
+  font-size: var(--text-lg);
+  padding: var(--space-3) var(--space-5);
+}
+
+/* ==============================================
    Default variant - selection underline only (no divider)
    ============================================== */
 

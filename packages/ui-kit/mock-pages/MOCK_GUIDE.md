@@ -402,6 +402,123 @@ In short: **Pick a color group for your background, use ONLY that group's tokens
 
 ---
 
+## Surface Classes vs Tokens
+
+**This is a critical distinction for building accessible, themeable UIs.**
+
+### When to Use What
+
+| Use Case | Solution |
+|----------|----------|
+| **Composite areas** (cards, panels, dialogs, sections) | Surface classes |
+| **Atomic elements** (buttons, text, individual borders) | Tokens directly |
+
+### Why Surface Classes?
+
+Surface classes solve a critical problem: **ensuring all nested components remain readable when placed on different backgrounds.**
+
+Every `.surface` element:
+1. **Resets ALL tokens** to appropriate values for that surface
+2. **Prevents compounding** - nested surfaces don't inherit broken colors
+3. **Works with theming** - components inside surfaces automatically adapt
+
+### Available Surface Classes
+
+Import from `@ui-kit/core/surfaces.css` or use inline:
+
+**Tonal Surfaces:**
+```html
+<div class="surface base">Page default</div>
+<div class="surface raised">Cards, panels, dialogs</div>
+<div class="surface sunken">Input wells, sidebars, recessed areas</div>
+<div class="surface section">Command areas, region separation</div>
+<div class="surface inverted">Tooltips (opposite color scheme)</div>
+<div class="surface primary">Teaching bubbles, branded sections</div>
+```
+
+**Feedback Surfaces:**
+```html
+<div class="surface success">Success toasts, confirmations</div>
+<div class="surface warning">Warning messages</div>
+<div class="surface danger">Error toasts, alerts</div>
+<div class="surface info">Info notifications</div>
+```
+
+### ✅ CORRECT - Use Surface Classes for Composite Areas
+
+```tsx
+// Card that needs a different background
+<div className="surface raised">
+  <Heading>Card Title</Heading>
+  <Text>All nested components automatically get correct colors</Text>
+  <Button>Action</Button>  {/* Works correctly */}
+</div>
+
+// Success notification
+<div className="surface success">
+  <CheckCircleIcon />  {/* Icon color is correct */}
+  <Text>Operation completed</Text>  {/* Text color is correct */}
+</div>
+
+// Nested surfaces reset properly
+<div className="surface sunken">
+  <p>Recessed area</p>
+  <div className="surface raised">
+    <p>Card inside - tokens reset, no compounding issues</p>
+  </div>
+</div>
+```
+
+### ❌ WRONG - Using Tokens for Composite Areas
+
+```css
+/* Don't manually set all the tokens for a card - use surface class instead */
+.myCard {
+  background: var(--soft-bg);
+  color: var(--soft-fg);
+  /* Now you have to manually handle EVERY nested element's colors */
+  /* And nested components may not respect these overrides */
+}
+```
+
+### When Tokens ARE Appropriate
+
+Use tokens directly for **atomic styling** within a surface:
+
+```css
+/* Text hierarchy within the current surface */
+.heading {
+  color: var(--base-fg-strong);
+}
+
+.secondary {
+  color: var(--base-fg-soft);
+}
+
+/* A single element's hover state */
+.link:hover {
+  color: var(--base-fg-primary);
+}
+
+/* Border on a specific element */
+.divider {
+  border-top: 1px solid var(--base-border);
+}
+```
+
+### Summary
+
+| Area Type | Example | Solution |
+|-----------|---------|----------|
+| **Card/Panel** | Chat bubble, notification, modal | `<div class="surface raised">` |
+| **Feedback area** | Success message, error alert | `<div class="surface success">` |
+| **Recessed area** | Input container, sidebar | `<div class="surface sunken">` |
+| **Text color** | Secondary label | `color: var(--base-fg-soft)` |
+| **Single border** | Divider line | `border: 1px solid var(--base-border)` |
+| **Button** | Use component | `<Button variant="primary">` |
+
+---
+
 ## Common Patterns
 
 ### Card with Content Hierarchy
@@ -547,8 +664,8 @@ See `/docs/guides/ICONS_CHEATSHEET.md` for the complete list. Common icons:
 
 - **Actions**: `AddIcon`, `EditIcon`, `DeleteIcon`, `SaveIcon`, `CopyIcon`
 - **Navigation**: `ChevronRightIcon`, `ArrowLeftIcon`, `BackIcon`, `MenuIcon`
-- **Status**: `CheckCircleIcon`, `ErrorCircleIcon`, `WarningIcon`, `InfoIcon`
-- **UI**: `CloseIcon`, `SearchIcon`, `SettingsIcon`, `UserIcon`, `UsersIcon`
+- **Status**: `CheckCircleIcon`, `ErrorCircleIcon`, `WarningIcon`, `WarningTriangleIcon`, `InfoIcon`
+- **UI**: `CloseIcon`, `SearchIcon`, `GearIcon`, `UserIcon`, `UsersIcon`
 - **Communication**: `SendIcon`, `ChatIcon`, `BellIcon`, `CommentIcon`
 
 ---
