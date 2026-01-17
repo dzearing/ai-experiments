@@ -78,7 +78,7 @@ personasRouter.get('/presets', (_req: Request, res: Response) => {
  */
 personasRouter.get('/presets/:name', (req: Request, res: Response) => {
   try {
-    const { name } = req.params;
+    const name = req.params.name as string;
     const preset: Persona | null = personaService.getPreset(name);
 
     if (!preset) {

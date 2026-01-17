@@ -31,7 +31,7 @@ factsRouter.get('/', async (req: Request, res: Response) => {
 factsRouter.put('/:id', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { subject, detail } = req.body;
 
     if (!userId) {
@@ -71,7 +71,7 @@ factsRouter.put('/:id', async (req: Request, res: Response) => {
 factsRouter.delete('/:id', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });

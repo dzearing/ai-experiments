@@ -207,7 +207,8 @@ export function createDiagnosticsRouter(
    */
   router.get('/claude/sessions/:type/:sessionId/messages', async (req: Request, res: Response) => {
     try {
-      const { type, sessionId } = req.params;
+      const type = req.params.type as string;
+      const sessionId = req.params.sessionId as string;
       const { limit } = req.query;
 
       // Validate session type

@@ -76,7 +76,7 @@ documentsRouter.post('/', async (req: Request, res: Response) => {
 documentsRouter.get('/:id', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
@@ -101,7 +101,7 @@ documentsRouter.get('/:id', async (req: Request, res: Response) => {
 documentsRouter.patch('/:id', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
     const updates = req.body;
 
     if (!userId) {
@@ -132,7 +132,7 @@ documentsRouter.patch('/:id', async (req: Request, res: Response) => {
 documentsRouter.delete('/:id', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
@@ -166,7 +166,7 @@ documentsRouter.delete('/:id', async (req: Request, res: Response) => {
 documentsRouter.post('/:id/share', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
@@ -191,7 +191,7 @@ documentsRouter.post('/:id/share', async (req: Request, res: Response) => {
 documentsRouter.get('/:id/collaborators', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });

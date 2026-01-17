@@ -91,7 +91,7 @@ async function isWorkspaceMemberForChatRoom(chatRoomId: string, userId: string):
 chatroomsRouter.get('/:id', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
@@ -118,7 +118,7 @@ chatroomsRouter.get('/:id', async (req: Request, res: Response) => {
 chatroomsRouter.patch('/:id', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
     const updates = req.body;
 
     if (!userId) {
@@ -149,7 +149,7 @@ chatroomsRouter.patch('/:id', async (req: Request, res: Response) => {
 chatroomsRouter.delete('/:id', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
@@ -183,7 +183,7 @@ chatroomsRouter.delete('/:id', async (req: Request, res: Response) => {
 chatroomsRouter.get('/:id/messages', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
     const limit = parseInt(req.query.limit as string) || 50;
     const before = req.query.before as string | undefined;
 
@@ -214,7 +214,7 @@ chatroomsRouter.post('/:id/messages', async (req: Request, res: Response) => {
     const userId = req.headers['x-user-id'] as string;
     const userName = req.headers['x-user-name'] as string || 'Anonymous';
     const userColor = req.headers['x-user-color'] as string || '#888888';
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { content } = req.body;
 
     if (!userId) {

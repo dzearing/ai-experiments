@@ -92,7 +92,7 @@ ideasRouter.get('/by-lane', async (req: Request, res: Response) => {
 ideasRouter.get('/by-topic/:topicId', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { topicId } = req.params;
+    const topicId = req.params.topicId as string;
     const workspaceId = req.query.workspaceId as string | undefined;
 
     if (!userId) {
@@ -119,7 +119,7 @@ ideasRouter.get('/by-topic/:topicId', async (req: Request, res: Response) => {
 ideasRouter.get('/counts-by-topic/:topicId', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { topicId } = req.params;
+    const topicId = req.params.topicId as string;
     const workspaceId = req.query.workspaceId as string | undefined;
 
     if (!userId) {
@@ -146,7 +146,7 @@ ideasRouter.get('/counts-by-topic/:topicId', async (req: Request, res: Response)
 ideasRouter.get('/:id', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
@@ -336,7 +336,7 @@ JSON:`;
 ideasRouter.patch('/:id', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { title, summary, tags, description, workspaceId, topicIds } = req.body;
 
     if (!userId) {
@@ -374,7 +374,7 @@ ideasRouter.patch('/:id', async (req: Request, res: Response) => {
 ideasRouter.delete('/:id', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
@@ -412,7 +412,7 @@ ideasRouter.delete('/:id', async (req: Request, res: Response) => {
 ideasRouter.patch('/:id/status', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { status } = req.body;
 
     if (!userId) {
@@ -483,7 +483,7 @@ ideasRouter.patch('/:id/status', async (req: Request, res: Response) => {
 ideasRouter.patch('/:id/execution', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { progressPercent, waitingForFeedback } = req.body;
 
     if (!userId) {
@@ -520,7 +520,7 @@ ideasRouter.patch('/:id/execution', async (req: Request, res: Response) => {
 ideasRouter.post('/:id/execute', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
@@ -609,7 +609,7 @@ ideasRouter.post('/:id/execute', async (req: Request, res: Response) => {
 ideasRouter.patch('/:id/rating', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { rating } = req.body;
 
     if (!userId) {
@@ -652,7 +652,7 @@ ideasRouter.patch('/:id/rating', async (req: Request, res: Response) => {
 ideasRouter.post('/:id/attachments', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { filename, mimeType, url } = req.body;
 
     if (!userId) {
@@ -696,7 +696,8 @@ ideasRouter.post('/:id/attachments', async (req: Request, res: Response) => {
 ideasRouter.delete('/:id/attachments/:attachmentId', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id, attachmentId } = req.params;
+    const id = req.params.id as string;
+    const attachmentId = req.params.attachmentId as string;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
@@ -729,7 +730,8 @@ ideasRouter.delete('/:id/attachments/:attachmentId', async (req: Request, res: R
 // Download attachment
 ideasRouter.get('/:id/attachments/:attachmentId/download', async (req: Request, res: Response) => {
   try {
-    const { id, attachmentId } = req.params;
+    const id = req.params.id as string;
+    const attachmentId = req.params.attachmentId as string;
 
     const filePath = await ideaService.getAttachmentPath(id, attachmentId);
 
@@ -753,7 +755,7 @@ ideasRouter.get('/:id/attachments/:attachmentId/download', async (req: Request, 
 ideasRouter.get('/:id/revisions', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
     const limit = parseInt(req.query.limit as string) || 50;
 
     if (!userId) {
@@ -793,7 +795,8 @@ ideasRouter.get('/:id/revisions', async (req: Request, res: Response) => {
 ideasRouter.get('/:id/revisions/:commitHash/files', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id, commitHash } = req.params;
+    const id = req.params.id as string;
+    const commitHash = req.params.commitHash as string;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
@@ -825,7 +828,8 @@ ideasRouter.get('/:id/revisions/:commitHash/files', async (req: Request, res: Re
 ideasRouter.get('/:id/revisions/:commitHash/diff', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id, commitHash } = req.params;
+    const id = req.params.id as string;
+    const commitHash = req.params.commitHash as string;
     const filePath = req.query.file as string;
 
     if (!userId) {

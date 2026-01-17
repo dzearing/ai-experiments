@@ -38,7 +38,7 @@ function getStatusForError(error: WorkspaceApiError): number {
 // Get workspace preview by share token (no auth required)
 workspacesRouter.get('/join/:token', async (req: Request, res: Response) => {
   try {
-    const { token } = req.params;
+    const token = req.params.token as string;
 
     const preview = await workspaceService.getWorkspaceByShareToken(token);
 
@@ -59,7 +59,7 @@ workspacesRouter.get('/join/:token', async (req: Request, res: Response) => {
 workspacesRouter.post('/join/:token', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { token } = req.params;
+    const token = req.params.token as string;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
@@ -164,7 +164,7 @@ workspacesRouter.post('/', async (req: Request, res: Response) => {
 workspacesRouter.get('/:id', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
@@ -191,7 +191,7 @@ workspacesRouter.get('/:id', async (req: Request, res: Response) => {
 workspacesRouter.patch('/:id', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
     const updates = req.body;
 
     if (!userId) {
@@ -226,7 +226,7 @@ workspacesRouter.patch('/:id', async (req: Request, res: Response) => {
 workspacesRouter.delete('/:id', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
@@ -260,7 +260,7 @@ workspacesRouter.delete('/:id', async (req: Request, res: Response) => {
 workspacesRouter.post('/:id/members', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { memberId, role } = req.body;
 
     if (!userId) {
@@ -301,7 +301,8 @@ workspacesRouter.post('/:id/members', async (req: Request, res: Response) => {
 workspacesRouter.delete('/:id/members/:memberId', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id, memberId } = req.params;
+    const id = req.params.id as string;
+    const memberId = req.params.memberId as string;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
@@ -335,7 +336,8 @@ workspacesRouter.delete('/:id/members/:memberId', async (req: Request, res: Resp
 workspacesRouter.patch('/:id/members/:memberId', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id, memberId } = req.params;
+    const id = req.params.id as string;
+    const memberId = req.params.memberId as string;
     const { role } = req.body;
 
     if (!userId) {
@@ -374,7 +376,7 @@ workspacesRouter.patch('/:id/members/:memberId', async (req: Request, res: Respo
 workspacesRouter.get('/:id/share', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
@@ -402,7 +404,7 @@ workspacesRouter.get('/:id/share', async (req: Request, res: Response) => {
 workspacesRouter.post('/:id/share', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { regenerate } = req.body;
 
     if (!userId) {

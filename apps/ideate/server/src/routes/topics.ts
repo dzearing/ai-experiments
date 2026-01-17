@@ -154,7 +154,7 @@ topicsRouter.get('/search', async (req: Request, res: Response) => {
 topicsRouter.get('/:id', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
@@ -244,7 +244,7 @@ topicsRouter.post('/', async (req: Request, res: Response) => {
 topicsRouter.patch('/:id', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
@@ -284,7 +284,7 @@ topicsRouter.patch('/:id', async (req: Request, res: Response) => {
 topicsRouter.delete('/:id', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
@@ -322,7 +322,7 @@ topicsRouter.delete('/:id', async (req: Request, res: Response) => {
 topicsRouter.post('/:id/attachments', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { filename, mimeType, url } = req.body;
 
     if (!userId) {
@@ -366,7 +366,8 @@ topicsRouter.post('/:id/attachments', async (req: Request, res: Response) => {
 topicsRouter.delete('/:id/attachments/:attachmentId', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id, attachmentId } = req.params;
+    const id = req.params.id as string;
+    const attachmentId = req.params.attachmentId as string;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
@@ -399,7 +400,8 @@ topicsRouter.delete('/:id/attachments/:attachmentId', async (req: Request, res: 
 // Download attachment
 topicsRouter.get('/:id/attachments/:attachmentId/download', async (req: Request, res: Response) => {
   try {
-    const { id, attachmentId } = req.params;
+    const id = req.params.id as string;
+    const attachmentId = req.params.attachmentId as string;
 
     const filePath = await topicService.getAttachmentPath(id, attachmentId);
 
@@ -423,7 +425,7 @@ topicsRouter.get('/:id/attachments/:attachmentId/download', async (req: Request,
 topicsRouter.post('/:id/links', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { type, label, target, description } = req.body;
 
     if (!userId) {
@@ -465,7 +467,8 @@ topicsRouter.post('/:id/links', async (req: Request, res: Response) => {
 topicsRouter.patch('/:id/links/:linkId', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id, linkId } = req.params;
+    const id = req.params.id as string;
+    const linkId = req.params.linkId as string;
     const { type, label, target, description } = req.body;
 
     if (!userId) {
@@ -502,7 +505,8 @@ topicsRouter.patch('/:id/links/:linkId', async (req: Request, res: Response) => 
 topicsRouter.delete('/:id/links/:linkId', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id, linkId } = req.params;
+    const id = req.params.id as string;
+    const linkId = req.params.linkId as string;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
@@ -537,7 +541,7 @@ topicsRouter.delete('/:id/links/:linkId', async (req: Request, res: Response) =>
 topicsRouter.put('/:id/properties', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { properties } = req.body;
 
     if (!userId) {
@@ -573,7 +577,7 @@ topicsRouter.put('/:id/properties', async (req: Request, res: Response) => {
 topicsRouter.get('/:id/documents', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
@@ -592,7 +596,7 @@ topicsRouter.get('/:id/documents', async (req: Request, res: Response) => {
 topicsRouter.post('/:id/documents', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { title, content } = req.body;
 
     if (!userId) {
@@ -632,7 +636,8 @@ topicsRouter.post('/:id/documents', async (req: Request, res: Response) => {
 topicsRouter.patch('/:id/documents/:docId', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id, docId } = req.params;
+    const id = req.params.id as string;
+    const docId = req.params.docId as string;
     const { title, content } = req.body;
 
     if (!userId) {
@@ -667,7 +672,8 @@ topicsRouter.patch('/:id/documents/:docId', async (req: Request, res: Response) 
 topicsRouter.delete('/:id/documents/:docId', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
-    const { id, docId } = req.params;
+    const id = req.params.id as string;
+    const docId = req.params.docId as string;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
