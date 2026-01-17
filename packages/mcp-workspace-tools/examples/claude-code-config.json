@@ -1,0 +1,21 @@
+{
+  "_comment": "Example MCP configuration for Claude Code",
+  "_instructions": [
+    "To use this MCP server with Claude Code:",
+    "1. Build the package: npm run build",
+    "2. Add this configuration to your Claude Code settings",
+    "3. The path should point to the built index.js file",
+    "4. Set WORKSPACE_PATH to your workspace root"
+  ],
+  "mcpServers": {
+    "workspace-tools": {
+      "command": "node",
+      "args": [
+        "/Users/dzearing/workspace/projects/project-mgmt-ux/repos/project-mgmt-ux-1/packages/mcp-workspace-tools/dist/index.js"
+      ],
+      "env": {
+        "WORKSPACE_PATH": "/Users/dzearing/workspace"
+      }
+    }
+  }
+}

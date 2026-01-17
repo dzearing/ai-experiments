@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import type { Persona, Project, WorkItem, JamSession, DailyReport } from '../types';
+import { useWorkspace } from './WorkspaceContext';
 
 interface AppContextType {
   personas: Persona[];
@@ -43,40 +44,167 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [workItems, setWorkItems] = useState<WorkItem[]>([]);
   const [jamSessions, setJamSessions] = useState<JamSession[]>([]);
   const [dailyReports, setDailyReports] = useState<DailyReport[]>([]);
+  const { workspace } = useWorkspace();
 
-  // Load data from localStorage on mount
+  // Load agents from file system when workspace changes
+  useEffect(() => {
+    const workspacePath = workspace.config?.path;
+    if (!workspacePath) {
+      console.log('No workspace path available yet');
+      return;
+    }
+    
+    const loadAgents = async () => {
+      try {
+        console.log('Loading agents from workspace:', workspacePath);
+        const response = await fetch(`http://localhost:3000/api/agents?workspacePath=${encodeURIComponent(workspacePath)}`);
+        if (response.ok) {
+          const data = await response.json();
+          setPersonas(data.agents || []);
+          console.log('Loaded agents from file system:', data.agents?.length || 0);
+        } else {
+          console.error('Failed to load agents:', response.status);
+        }
+      } catch (error) {
+        console.error('Error loading agents:', error);
+      }
+    };
+    
+    loadAgents();
+  }, [workspace.config?.path]);
+
+  // Load other data from localStorage on mount
   useEffect(() => {
     const savedData = localStorage.getItem(STORAGE_KEY);
     if (savedData) {
       const data = JSON.parse(savedData);
-      setPersonas(data.personas || []);
+      // Don't load personas from localStorage anymore - they come from file system
       setProjects(data.projects || []);
-      setWorkItems(data.workItems || []);
+      // IMPORTANT: Don't load work items from localStorage - they should come from workspace data only
+      // This was causing stale items with wrong paths to persist
+      // setWorkItems(data.workItems || []);
       setJamSessions(data.jamSessions || []);
       setDailyReports(data.dailyReports || []);
     }
   }, []);
 
-  // Save data to localStorage whenever it changes
+  // Save data to localStorage whenever it changes (except personas and work items which are file-based)
   useEffect(() => {
-    const data = { personas, projects, workItems, jamSessions, dailyReports };
+    // Don't save personas or work items to localStorage - they're in file system
+    const data = { projects, jamSessions, dailyReports };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }, [personas, projects, workItems, jamSessions, dailyReports]);
+  }, [projects, jamSessions, dailyReports]);
 
-  const createPersona = (persona: Omit<Persona, 'id'>) => {
+  const createPersona = async (persona: Omit<Persona, 'id'>) => {
+    const workspacePath = workspace.config?.path;
+    if (!workspacePath) {
+      console.error('No workspace selected');
+      return;
+    }
+    
     const newPersona: Persona = {
       ...persona,
       id: uuidv4(),
     };
-    setPersonas([...personas, newPersona]);
+    
+    try {
+      const response = await fetch('http://localhost:3000/api/agents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          workspacePath,
+          agent: newPersona 
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        // Refresh the agents list from the server to get proper sorting
+        const refreshResponse = await fetch(`http://localhost:3000/api/agents?workspacePath=${encodeURIComponent(workspacePath)}`);
+        if (refreshResponse.ok) {
+          const refreshData = await refreshResponse.json();
+          setPersonas(refreshData.agents || []);
+        } else {
+          // Fallback: prepend the new agent to show it at the top
+          setPersonas([data.agent, ...personas]);
+        }
+        console.log('Agent saved to file system:', data.agent.name);
+      } else {
+        console.error('Failed to save agent:', response.status);
+      }
+    } catch (error) {
+      console.error('Error saving agent:', error);
+    }
   };
 
-  const updatePersona = (id: string, updates: Partial<Persona>) => {
-    setPersonas(personas.map((p) => (p.id === id ? { ...p, ...updates } : p)));
+  const updatePersona = async (id: string, updates: Partial<Persona>) => {
+    const workspacePath = workspace.config?.path;
+    if (!workspacePath) {
+      console.error('No workspace selected');
+      return;
+    }
+    
+    const persona = personas.find(p => p.id === id);
+    if (!persona) {
+      console.error('Agent not found:', id);
+      return;
+    }
+    
+    const updatedPersona = { ...persona, ...updates };
+    
+    try {
+      const response = await fetch(`http://localhost:3000/api/agents/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          workspacePath,
+          agent: updatedPersona 
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        // Refresh the agents list from the server to get proper sorting
+        const refreshResponse = await fetch(`http://localhost:3000/api/agents?workspacePath=${encodeURIComponent(workspacePath)}`);
+        if (refreshResponse.ok) {
+          const refreshData = await refreshResponse.json();
+          setPersonas(refreshData.agents || []);
+        } else {
+          // Fallback: update in place
+          setPersonas(personas.map((p) => (p.id === id ? data.agent : p)));
+        }
+        console.log('Agent updated in file system:', data.agent.name);
+      } else {
+        console.error('Failed to update agent:', response.status);
+      }
+    } catch (error) {
+      console.error('Error updating agent:', error);
+    }
   };
 
-  const deletePersona = (id: string) => {
-    setPersonas(personas.filter((p) => p.id !== id));
+  const deletePersona = async (id: string) => {
+    const workspacePath = workspace.config?.path;
+    if (!workspacePath) {
+      console.error('No workspace selected');
+      return;
+    }
+    
+    try {
+      const response = await fetch(`http://localhost:3000/api/agents/${id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workspacePath })
+      });
+      
+      if (response.ok) {
+        setPersonas(personas.filter((p) => p.id !== id));
+        console.log('Agent deleted from file system:', id);
+      } else {
+        console.error('Failed to delete agent:', response.status);
+      }
+    } catch (error) {
+      console.error('Error deleting agent:', error);
+    }
   };
 
   const createProject = (
@@ -226,15 +354,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const syncWorkspaceProjects = (workspaceProjects: any[]) => {
-    console.log('Syncing workspace projects:', workspaceProjects);
-    console.log(
-      'Projects with plans:',
-      workspaceProjects.filter((wp) => wp.plans).map((wp) => wp.name)
-    );
-    console.log(
-      'Projects loading:',
-      workspaceProjects.filter((wp) => wp.isLoading).map((wp) => wp.name)
-    );
 
     // First, sync work items from plans
     const allWorkItems: WorkItem[] = [];
@@ -255,7 +374,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       projectWorkItemMap[projectId] = [];
 
       // Process all plan types
-      ['ideas', 'planned', 'active', 'completed'].forEach((planType) => {
+      ['ideas', 'planned', 'active', 'completed', 'discarded'].forEach((planType) => {
         if (wp.plans[planType]) {
           wp.plans[planType].forEach((plan: any) => {
             if (plan.workItem) {
@@ -264,12 +383,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 plan.workItem.metadata?.workItemId ||
                 `${projectId}-${plan.name.replace(/\.md$/, '')}`;
 
-              // Check if work item already exists by ID or markdown path
-              const existingWorkItem = workItems.find(
-                (w) => w.id === workItemId || (w.markdownPath && w.markdownPath === plan.path)
-              );
+              // NEVER add duplicates - check if work item already exists by ID
+              const existingInCurrentBatch = allWorkItems.find(w => w.id === workItemId);
 
-              if (!existingWorkItem) {
+              if (!existingInCurrentBatch) {
                 console.log('Creating work item from plan:', {
                   planName: plan.name,
                   workItemTitle: plan.workItem.title,
@@ -342,27 +459,46 @@ export function AppProvider({ children }: { children: ReactNode }) {
       });
     });
 
-    // Add new work items (avoiding duplicates)
+    // Update or add work items
     if (allWorkItems.length > 0) {
       setWorkItems((prevWorkItems) => {
-        // Create a map of existing work items by their markdown path
-        const existingPaths = new Set(
-          prevWorkItems.map((item) => item.markdownPath).filter(Boolean)
-        );
+        // Create a map to track work items by ID (primary key)
+        const workItemsById = new Map<string, WorkItem>();
 
-        // Filter out work items that already exist
-        const newUniqueWorkItems = allWorkItems.filter(
-          (item) => !item.markdownPath || !existingPaths.has(item.markdownPath)
-        );
+        // First, add all new items from workspace
+        allWorkItems.forEach((newItem) => {
+          // Only keep one instance per ID - the latest one
+          workItemsById.set(newItem.id, newItem);
+        });
+
+        // Now check existing items and update or preserve them
+        prevWorkItems.forEach((existingItem) => {
+          const workspaceItem = workItemsById.get(existingItem.id);
+
+          if (workspaceItem) {
+            // Update with workspace data but preserve certain local fields
+            workItemsById.set(existingItem.id, {
+              ...workspaceItem,
+              createdAt: existingItem.createdAt || workspaceItem.createdAt,
+              updatedAt: new Date(),
+            });
+          } else if (!existingItem.markdownPath) {
+            // Local-only item (not saved to disk yet) - preserve it
+            workItemsById.set(existingItem.id, existingItem);
+          }
+          // If it has a markdownPath but wasn't in workspace, it's been deleted
+        });
+
+        const finalWorkItems = Array.from(workItemsById.values());
 
         console.log('Syncing work items:', {
           existingCount: prevWorkItems.length,
-          newCount: allWorkItems.length,
-          uniqueNewCount: newUniqueWorkItems.length,
-          duplicatesSkipped: allWorkItems.length - newUniqueWorkItems.length,
+          workspaceCount: allWorkItems.length,
+          finalCount: finalWorkItems.length,
+          uniqueIds: new Set(finalWorkItems.map(w => w.id)).size,
         });
 
-        return [...prevWorkItems, ...newUniqueWorkItems];
+        return finalWorkItems;
       });
     }
 

@@ -110,8 +110,9 @@ export function NewPersona() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <h1 className="text-2xl font-semibold text-gray-900">Spawn new agent</h1>
+    <div className="h-full overflow-auto p-8">
+      <div className="max-w-2xl mx-auto">
+        <h1 className="text-2xl font-semibold text-gray-900">Spawn new agent</h1>
       <p className="mt-2 text-sm text-gray-700">
         Create a new Claude agent persona with specific expertise and personality.
       </p>
@@ -208,6 +209,7 @@ export function NewPersona() {
           </button>
         </div>
       </form>
+      </div>
     </div>
   );
 }

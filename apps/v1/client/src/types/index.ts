@@ -3,12 +3,16 @@ export interface Persona {
   type: PersonaType;
   jobTitle: string;
   name: string;
-  personality?: string;
+  personality?: string; // Deprecated - kept for backwards compatibility
   expertise: string[];
   status: 'available' | 'busy' | 'offline';
   currentTaskId?: string;
   avatarSeed?: string;
   avatarGender?: 'male' | 'female';
+  systemPrompt?: string; // Deprecated - kept for backwards compatibility
+  agentPrompt?: string; // Full markdown specification of the agent
+  roleSummary?: string; // Short summary of the agent's role and responsibilities
+  loadingMessages?: string[]; // Custom loading messages for when the agent is preparing
 }
 
 export type PersonaType =
@@ -64,6 +68,17 @@ export interface WorkItem {
   currentWorkflowStep?: number;
   jamSessionIds: string[];
   markdownPath?: string;
+  tasks?: Array<{
+    id: string;
+    title: string;
+    description: string;
+    goals: string[];
+    workDescription: string;
+    validationCriteria: string[];
+    taskNumber?: string;
+    completed?: boolean;
+    status?: 'pending' | 'in-progress' | 'completed';
+  }>;
   metadata?: {
     tasks?: Array<{
       id: string;
@@ -81,6 +96,7 @@ export interface WorkItem {
     acceptanceCriteria?: string[];
     workItemId?: string;
     generalMarkdown?: string;
+    taskMarkdownContents?: Record<string, string>;
   };
 }
 

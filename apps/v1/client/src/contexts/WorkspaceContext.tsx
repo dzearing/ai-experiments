@@ -21,8 +21,22 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   });
   const [projects, setProjects] = useState<WorkspaceProject[]>([]);
 
-  // Load workspace config from user profile on mount
+  // Load workspace config from localStorage first, then try user profile
   useEffect(() => {
+    // Check localStorage first for saved workspace config
+    const savedConfig = localStorage.getItem('workspaceConfig');
+    if (savedConfig) {
+      try {
+        const config = JSON.parse(savedConfig) as WorkspaceConfig;
+        setWorkspace((prev) => ({ ...prev, config }));
+        loadWorkspaceData(config.path);
+        return; // Don't try to load from server if we have local config
+      } catch (error) {
+        console.error('Error parsing saved workspace config:', error);
+      }
+    }
+    
+    // If no localStorage config, try loading from user profile
     loadUserProfile();
   }, []);
 
@@ -44,13 +58,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('Error loading user profile:', error);
-      // Fall back to localStorage if server is not available
-      const savedConfig = localStorage.getItem('workspaceConfig');
-      if (savedConfig) {
-        const config = JSON.parse(savedConfig) as WorkspaceConfig;
-        setWorkspace((prev) => ({ ...prev, config }));
-        loadWorkspaceData(config.path);
-      }
     }
   };
 
@@ -118,7 +125,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
             );
 
             // Update the specific project with full details
-            console.log('Updating project with details:', project.name, details);
             setProjects((prev) =>
               prev.map((p) =>
                 p.path === project.path ? { ...p, ...details, isLoading: false } : p
@@ -138,7 +144,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       // If it's a connection error, try to create the workspace structure
       if (error instanceof TypeError && error.message.includes('fetch')) {
         // Server might not be running, use mock data
-        console.log('Server not available, using mock data');
         const mockProjects: WorkspaceProject[] = [
           {
             name: 'project-mgmt-ux',
@@ -233,9 +238,14 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const reloadWorkspace = async () => {
     if (workspace.config) {
-      // Invalidate cache before reloading
+      // Invalidate ALL workspace-related caches to ensure fresh data
       invalidateCache(`workspace-light:${workspace.config.path}`);
+      invalidateCache(`workspace:${workspace.config.path}`);
       invalidateCache(/^project-details:/);
+      invalidateCache(/^work-items:/);
+      invalidateCache(/^work-item:/);
+
+      // Force reload from server
       await loadWorkspaceData(workspace.config.path);
     }
   };

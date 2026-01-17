@@ -231,13 +231,13 @@ See `/docs/guides/migration/migration-v1-to-v2.md` for details.
 
 ## Development Validation Practices
 
-- **UI Change Validation**: 
-  - Any time you make UI changes, validate you actually fixed the issue by running the playwright mcp server and screenshotting your work and validating the results are true. 
+- **UI Change Validation**:
+  - Any time you make UI changes, validate you actually fixed the issue by running the playwright mcp server and screenshotting your work and validating the results are true.
   - If the results are not accurate, fix the issues before reporting them as fixed.
 
 ## Design Token Usage
 
-The project uses a surface-based design token system. 
+The project uses a surface-based design token system.
 
 **Quick References:**
 - `/docs/guides/TOKEN_CHEATSHEET.md` - Quick reference for common tokens
@@ -303,3 +303,110 @@ The project uses a surface-based design token system.
   padding: var(--spacing-buttonY) var(--spacing-buttonX);
 }
 ```
+
+## Client-Side Debug Logging
+
+The application includes a comprehensive client-side logging system for debugging complex issues. This system sends structured logs to the server for persistent storage and analysis.
+
+### How to Use Client Logging
+
+1. **Import the logger**:
+```typescript
+import { clientLogger } from '../utils/clientLogger';
+```
+
+2. **Log at different levels**:
+```typescript
+clientLogger.debug('ComponentName', 'Debug message', { data });
+clientLogger.info('ComponentName', 'Info message', { data });
+clientLogger.warn('ComponentName', 'Warning message', { data });
+clientLogger.error('ComponentName', 'Error message', { data });
+```
+
+3. **Log function entry/exit**:
+```typescript
+clientLogger.functionEntry('ComponentName', 'functionName', { args });
+clientLogger.functionExit('ComponentName', 'functionName', returnValue);
+```
+
+4. **Log state changes**:
+```typescript
+clientLogger.stateChange('ComponentName', 'stateName', oldValue, newValue);
+```
+
+### Where to Find Logs
+
+Client logs are stored in the project repository at:
+```
+{repo root}/temp/logs/client/{sessionId}.log
+```
+
+Each session gets a unique ID stored in sessionStorage. The logs are in readable text format with JSON data snippets.
+
+### To View Logs
+
+1. Find the session ID in browser DevTools:
+   - Open DevTools Console
+   - Run: `sessionStorage.getItem('logSessionId')`
+
+2. Read the log file:
+```bash
+cat temp/logs/client/{sessionId}.log
+```
+
+Or tail the log for real-time viewing:
+```bash
+tail -f temp/logs/client/{sessionId}.log
+```
+
+Or use the API endpoint:
+```
+GET http://localhost:3000/api/client-logs/{sessionId}
+```
+
+### Enable/Disable Logging
+
+To disable logging (e.g., in production):
+```javascript
+localStorage.setItem('clientLogging', 'false');
+```
+
+To re-enable:
+```javascript
+localStorage.setItem('clientLogging', 'true');
+```
+
+### Current Logging Implementation
+
+The NewWorkItemMultiStep component has comprehensive logging for:
+- Work item initialization and loading
+- Task markdown parsing and storage
+- Goals and criteria extraction from markdown
+- State changes when switching between tasks
+
+This helps debug issues where goals/criteria counts don't match the markdown content.
+
+## Workflow Memories
+
+- Process Feedback Workflow:
+  - When instructed to "process feedback":
+    - Look in `temp/feedback/reports` folder for JSON files
+    - Each file contains:
+      - Feedback details
+      - Screenshot link
+      - Client/server logs from the session
+    - Actions:
+      1. Read the feedback
+      2. Attempt to:
+         - Repair issue
+         - Fix bug
+         - Add requested feature
+    - If successfully addressed:
+      - Move JSON and screenshot to `temp/feedback/processed` folder
+      - Create markdown in `temp/feedback/changes` folder
+        - Filename in camelCase documenting the change
+        - Report includes:
+          - Requested change details
+          - Summary of new behavior
+          - How the change was implemented
+    - Document any ambiguous issues encountered

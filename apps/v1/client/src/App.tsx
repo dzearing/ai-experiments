@@ -19,7 +19,8 @@ import { WorkItems } from './pages/WorkItems';
 import { JamSessions } from './pages/JamSessions';
 import { NewAgentMultiStep } from './pages/NewAgentMultiStep';
 import { NewProjectMultiStep } from './pages/NewProjectMultiStep';
-import { NewWorkItemMultiStep } from './pages/NewWorkItemMultiStep';
+import { NewWorkItemIdea } from './pages/NewWorkItemIdea';
+import { WorkItemPlan } from './pages/WorkItemPlan';
 import { Projects } from './pages/Projects';
 import { ProjectDetail } from './pages/ProjectDetail';
 import { DebugClaude } from './pages/DebugClaude';
@@ -58,16 +59,18 @@ function AppContent() {
               <Route path="projects" element={<Projects />} />
               <Route path="projects/new" element={<NewProjectMultiStep />} />
               <Route path="projects/:projectId" element={<ProjectDetail />} />
-              <Route path="projects/:projectId/workitems/new" element={<NewWorkItemMultiStep />} />
+              <Route path="projects/:projectId/workitems/new" element={<NewWorkItemIdea />} />
               <Route path="work-items" element={<WorkItems />} />
-              <Route path="work-items/new" element={<NewWorkItemMultiStep />} />
-              <Route path="work-items/:workItemId/edit" element={<NewWorkItemMultiStep />} />
+              <Route path="work-items/new" element={<NewWorkItemIdea />} />
+              <Route path="work-items/:workItemId/plan" element={<WorkItemPlan />} />
+              <Route path="work-items/:workItemId/edit" element={<WorkItemPlan />} />
               <Route path="work-items/:workItemId/jam" element={<WorkItemJamSession />} />
               <Route path="agents" element={<ThemedPersonas />} />
               <Route path="agents/new" element={<NewAgentMultiStep />} />
               <Route path="agents/new/:step" element={<NewAgentMultiStep />} />
               <Route path="agents/edit/:personaId" element={<NewAgentMultiStep />} />
               <Route path="agents/edit/:personaId/:step" element={<NewAgentMultiStep />} />
+              <Route path="agents/chat/:personaId" element={<ClaudeCode />} />
               <Route path="jam-sessions" element={<JamSessions />} />
               <Route path="jam-sessions/:id" element={<JamSessionDetail />} />
               <Route path="daily-report" element={<div>Daily Report Page (TODO)</div>} />
@@ -85,12 +88,12 @@ function AppContent() {
 
 function App() {
   return (
-    <AppProvider>
-      <ThemeProvider>
-        <ToastProvider>
-          <AuthProvider>
-            <GitHubProvider>
-              <WorkspaceProvider>
+    <WorkspaceProvider>
+      <AppProvider>
+        <ThemeProvider>
+          <ToastProvider>
+            <AuthProvider>
+              <GitHubProvider>
                 <LayoutProvider>
                   <SubscriptionProvider>
                     <BrowserRouter>
@@ -98,12 +101,12 @@ function App() {
                     </BrowserRouter>
                   </SubscriptionProvider>
                 </LayoutProvider>
-              </WorkspaceProvider>
-            </GitHubProvider>
-          </AuthProvider>
-        </ToastProvider>
-      </ThemeProvider>
-    </AppProvider>
+              </GitHubProvider>
+            </AuthProvider>
+          </ToastProvider>
+        </ThemeProvider>
+      </AppProvider>
+    </WorkspaceProvider>
   );
 }
 

@@ -123,10 +123,10 @@ export const TodoList = memo(function TodoList({ todos, onDismiss }: TodoListPro
 
   return (
     <div
-      className={`bg-gray-50 dark:bg-gray-800/50 ${styles.contentBorder} border ${styles.borderRadius}`}
+      className={`bg-gray-50 dark:bg-gray-800/50 ${styles.contentBorder} border ${styles.borderRadius} flex flex-col max-h-full overflow-hidden`}
     >
       <div
-        className={`px-4 py-3 border-b ${styles.contentBorder} sticky top-0 ${styles.contentBg} rounded-t-xl`}
+        className={`px-4 py-3 border-b ${styles.contentBorder} ${styles.contentBg} rounded-t-xl flex-shrink-0`}
       >
         <div className="flex items-center justify-between">
           <h3 className={`font-semibold ${styles.textColor} text-sm`}>Task list</h3>
@@ -155,7 +155,7 @@ export const TodoList = memo(function TodoList({ todos, onDismiss }: TodoListPro
         </div>
       </div>
 
-      <div className="py-2">
+      <div className="py-2 overflow-y-auto flex-1">
         {/* Show completed items first - they bubble to the top */}
         {todosByStatus.completed?.map((todo) => renderTodoItem(todo))}
 

@@ -291,7 +291,7 @@ export function NewProjectMultiStep() {
 
       {/* Step 1: Choose Project Type */}
       {currentStep === 1 && (
-        <AnimatedTransition transitionKey="step-1" className="space-y-4">
+        <AnimatedTransition transitionKey="step-1" className="space-y-4" centered={false}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <button
               onClick={() => handleTypeSelection('new')}
@@ -356,7 +356,7 @@ export function NewProjectMultiStep() {
 
       {/* Step 2: GitHub Import */}
       {currentStep === 2 && formData.type === 'github' && (
-        <AnimatedTransition transitionKey="step-2-github">
+        <AnimatedTransition transitionKey="step-2-github" centered={false}>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div
               className={`${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius} ${styles.cardShadow} p-6`}
@@ -444,7 +444,7 @@ export function NewProjectMultiStep() {
 
       {/* Step 2: New Project Form */}
       {currentStep === 2 && formData.type === 'new' && (
-        <AnimatedTransition transitionKey="step-2-new">
+        <AnimatedTransition transitionKey="step-2-new" centered={false}>
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Basic Information */}
             <div

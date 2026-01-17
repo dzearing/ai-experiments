@@ -164,19 +164,13 @@ export function JamSessions() {
 
   return (
     <div>
-      <div className="flex justify-between items-start mb-6">
-        <div>
-          <h1 className={`text-2xl font-bold ${styles.headingColor}`}>Jam sessions</h1>
-          <p className={`mt-1 ${styles.mutedText}`}>
-            Collaborative sessions for brainstorming, problem-solving, and planning.
-          </p>
-        </div>
-        {jamSessions.length > 0 && (
+      {jamSessions.length > 0 && (
+        <div className="flex justify-end mb-6">
           <Button onClick={() => setShowNewSessionForm(!showNewSessionForm)} variant="primary">
             Start new session
           </Button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* New Session Form */}
       {showNewSessionForm && (

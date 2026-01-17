@@ -118,6 +118,243 @@ class ClaudeService {
     }
   }
 
+  async generateAgentSpecification(workDescription, model) {
+    // Force using Opus model for best quality agent generation
+    const modelName = this.getModel('opus');
+    console.log('Using model for agent generation:', modelName);
+    
+    // Check if Claude is available first
+    if (!this.isClaudeAvailable) {
+      throw new Error(
+        'Claude CLI is not installed or not in PATH.\n' +
+        'Please install Claude Code CLI and authenticate:\n' +
+        '1. Install: npm install -g claude-code\n' +
+        '2. Login: claude login\n' +
+        'Or enable mock mode in settings for testing.'
+      );
+    }
+
+    const prompt = `You are an expert in designing AI agent specifications. A user needs an agent for the following work:
+
+"${workDescription}"
+
+IMPORTANT: Return ONLY a valid JSON object. Do not include any text before or after the JSON.
+Use only ASCII characters. Do not use any special characters or unicode.
+For the agentPrompt field, use \\n for newlines and escape quotes properly.
+
+Create an agent specification and return it as JSON:
+
+{
+  "name": "Choose a professional name (first and last name)",
+  "type": "Choose ONE from: usability-expert, developer, tester, data-scientist, devops, project-manager, designer, motion-designer",
+  "jobTitle": "Professional job title relevant to the work",
+  "expertise": ["List 5-7 specific skills as an array of strings"],
+  "agentPrompt": "A markdown string with the full specification. Use \\n for line breaks. Include sections for: Agent Overview, Core Capabilities, Input Requirements, Output Deliverables, Working Process, and Integration Points.",
+  "loadingMessages": [
+    "Create exactly 15 unique loading messages in third person, referencing the agent by their first name",
+    "Each message should be short (under 50 characters), personality-driven, and role-specific",
+    "Messages should describe different activities the agent is doing to prepare",
+    "Include variety: some technical, some personality-driven, some role-specific",
+    "Example for a developer named Sarah: 'Sarah is setting up her development environment...', 'Sarah is reviewing the codebase...', 'Sarah is loading debugging tools...'",
+    "Example for a designer named Alex: 'Alex is organizing his design workspace...', 'Alex is gathering inspiration...', 'Alex is preparing color palettes...'"
+  ]
+}
+
+Example structure for agentPrompt field:
+"# Name - Title\\n\\n## Agent Overview\\n- Name: ...\\n- Job Title: ...\\n\\n## Core Capabilities\\n- Skill 1\\n- Skill 2\\n\\n## Input Requirements\\n- Requirement 1\\n- Requirement 2\\n\\n## Output Deliverables\\n- Output 1\\n- Output 2\\n\\n## Working Process\\n1. Step 1\\n2. Step 2\\n\\n## Integration Points\\n- Integration 1\\n- Integration 2"
+
+Example loadingMessages for a developer agent named Sarah (provide 15):
+["Sarah is setting up her development environment...", "Sarah is loading code analysis tools...", "Sarah is checking the latest documentation...", "Sarah is preparing her debugging toolkit...", "Sarah is syncing with the codebase...", "Sarah is analyzing project structure...", "Sarah is reviewing recent commits...", "Sarah is configuring her IDE...", "Sarah is loading test frameworks...", "Sarah is checking dependency versions...", "Sarah is optimizing her workspace...", "Sarah is gathering project requirements...", "Sarah is loading code templates...", "Sarah is preparing review guidelines...", "Sarah is organizing her notes..."]
+
+Remember: Return ONLY the JSON object, nothing else.`;
+
+    try {
+      console.log('Generating agent specification with Claude SDK using Opus model...');
+      const claudeResponse = await claude()
+        .withModel(modelName)
+        .query(prompt)
+        .asText();
+      
+      console.log('Raw Claude response length:', claudeResponse.length);
+      console.log('First 200 chars:', claudeResponse.substring(0, 200));
+      
+      // Clean the response first
+      let cleanedResponse = claudeResponse.trim();
+      
+      // Remove any potential BOM or zero-width characters
+      cleanedResponse = cleanedResponse.replace(/^\uFEFF/, '');
+      cleanedResponse = cleanedResponse.replace(/[\u200B-\u200D\uFEFF]/g, '');
+      
+      // Try to extract JSON from the response
+      try {
+        // First, try to parse the entire response as JSON
+        try {
+          const parsed = JSON.parse(cleanedResponse);
+          console.log('Successfully parsed entire response as JSON');
+          return parsed;
+        } catch (e) {
+          // Response might have text around the JSON
+        }
+        
+        // Try to find JSON in a code block
+        const codeBlockMatch = cleanedResponse.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+        if (codeBlockMatch) {
+          const parsed = JSON.parse(codeBlockMatch[1]);
+          console.log('Successfully parsed JSON from code block');
+          return parsed;
+        }
+        
+        // Try to find a raw JSON object
+        const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          // Additional cleaning for the extracted JSON
+          let jsonStr = jsonMatch[0];
+          
+          // Remove any non-ASCII characters that shouldn't be in JSON
+          jsonStr = jsonStr.replace(/[^\x00-\x7F]/g, (char) => {
+            // Keep newlines and tabs
+            if (char === '\n' || char === '\t') return char;
+            // Replace other non-ASCII with space
+            return ' ';
+          });
+          
+          const parsed = JSON.parse(jsonStr);
+          console.log('Successfully parsed extracted JSON object');
+          return parsed;
+        }
+        
+        // If JSON parsing fails completely, try to extract key information manually
+        const nameMatch = claudeResponse.match(/"name":\s*"([^"]+)"/);
+        const typeMatch = claudeResponse.match(/"type":\s*"([^"]+)"/);
+        const jobTitleMatch = claudeResponse.match(/"jobTitle":\s*"([^"]+)"/);
+        
+        if (nameMatch && typeMatch && jobTitleMatch) {
+          console.log('Falling back to manual extraction');
+          
+          // Extract expertise array
+          const expertiseMatch = claudeResponse.match(/"expertise":\s*\[([^\]]+)\]/);
+          let expertise = ['Software Development', 'Problem Solving', 'Technical Analysis'];
+          if (expertiseMatch) {
+            try {
+              expertise = JSON.parse('[' + expertiseMatch[1] + ']');
+            } catch (e) {
+              // Use default expertise if parsing fails
+            }
+          }
+          
+          // Extract or generate agent prompt
+          const agentPromptMatch = claudeResponse.match(/"agentPrompt":\s*"([^"]+(?:\\.[^"]+)*)"/);
+          const agentPrompt = agentPromptMatch ? 
+            agentPromptMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"') :
+            `# ${nameMatch[1]} - ${jobTitleMatch[1]}\n\n## Agent Overview\n- **Name**: ${nameMatch[1]}\n- **Job Title**: ${jobTitleMatch[1]}\n- **Agent Type**: ${typeMatch[1]}\n\n## Core Capabilities\n${expertise.map(e => `- ${e}`).join('\n')}`;
+          
+          const firstName = nameMatch[1].split(' ')[0];
+          return {
+            name: nameMatch[1],
+            type: typeMatch[1],
+            jobTitle: jobTitleMatch[1],
+            expertise,
+            loadingMessages: [
+              `${firstName} is preparing the workspace...`,
+              `${firstName} is getting ready to assist...`,
+              `${firstName} is loading tools and resources...`,
+              `${firstName} is setting up for the conversation...`,
+              `${firstName} is organizing thoughts...`,
+              `${firstName} is reviewing project details...`,
+              `${firstName} is analyzing requirements...`,
+              `${firstName} is checking best practices...`,
+              `${firstName} is preparing recommendations...`,
+              `${firstName} is loading reference materials...`,
+              `${firstName} is calibrating approach...`,
+              `${firstName} is gathering insights...`,
+              `${firstName} is preparing analysis tools...`,
+              `${firstName} is organizing priorities...`,
+              `${firstName} is finalizing preparations...`
+            ],
+            agentPrompt
+          };
+        }
+        
+        throw new Error('Could not extract agent information from Claude response');
+        
+      } catch (jsonError) {
+        console.error('JSON parsing error:', jsonError);
+        console.log('Failed to parse response, returning fallback');
+        
+        // Return a sensible fallback based on the work description
+        const fallbackType = workDescription.toLowerCase().includes('boat') ? 'developer' : 'developer';
+        const fallbackName = 'Alex Morgan';
+        const fallbackJobTitle = workDescription.toLowerCase().includes('boat') ? 
+          'Marine Systems Engineer' : 'Software Developer';
+        
+        return {
+          name: fallbackName,
+          type: fallbackType,
+          jobTitle: fallbackJobTitle,
+          expertise: ['Technical Analysis', 'Problem Solving', 'Project Management', 'Quality Assurance'],
+          loadingMessages: [
+            'Alex is setting up the workspace...',
+            'Alex is loading development tools...',
+            'Alex is reviewing project requirements...',
+            'Alex is preparing technical resources...',
+            'Alex is getting ready to assist...',
+            'Alex is analyzing the problem space...',
+            'Alex is checking documentation...',
+            'Alex is organizing the approach...',
+            'Alex is loading best practices...',
+            'Alex is preparing recommendations...',
+            'Alex is gathering relevant examples...',
+            'Alex is setting up analysis tools...',
+            'Alex is reviewing similar cases...',
+            'Alex is calibrating expertise...',
+            'Alex is finalizing preparations...'
+          ],
+          agentPrompt: `# ${fallbackName} - ${fallbackJobTitle}
+
+## Agent Overview
+- **Name**: ${fallbackName}
+- **Job Title**: ${fallbackJobTitle}
+- **Primary Role**: Technical specialist for ${workDescription}
+- **Agent Type**: ${fallbackType}
+
+## Core Capabilities
+- Technical Analysis and Design
+- Problem Solving and Innovation
+- Project Management
+- Quality Assurance
+- Documentation
+
+## Input Requirements
+- Clear project requirements and specifications
+- Access to relevant tools and resources
+- Communication channels with stakeholders
+
+## Output Deliverables
+- Technical solutions and implementations
+- Documentation and reports
+- Quality assessments
+- Progress updates
+
+## Working Process
+1. Analyze requirements
+2. Design solution
+3. Implement and test
+4. Document and deliver
+5. Iterate based on feedback
+
+## Integration Points
+- Version control systems
+- Project management tools
+- Communication platforms
+- Testing frameworks`
+        };
+      }
+    } catch (error) {
+      console.error('Error generating agent specification:', error);
+      throw error;
+    }
+  }
+
   async processIdea(idea, model) {
     const modelName = this.getModel(model);
 
@@ -175,11 +412,19 @@ Respond with JSON in this exact format:
       const response = await claude().withModel(modelName).query(prompt).asText();
 
       console.log('Claude SDK response received');
+      console.log('Raw response preview:', response.substring(0, 500));
 
       // Extract JSON from response
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
+        const parsed = JSON.parse(jsonMatch[0]);
+        console.log('Parsed response structure:', {
+          hasGeneralMarkdown: !!parsed.generalMarkdown,
+          tasksCount: parsed.tasks?.length || 0,
+          firstTaskGoals: parsed.tasks?.[0]?.goals?.length || 0,
+          firstTaskCriteria: parsed.tasks?.[0]?.validationCriteria?.length || 0
+        });
+        return parsed;
       }
       throw new Error('Could not parse response as JSON');
     } catch (error) {
@@ -1104,14 +1349,16 @@ Respond with exactly this JSON structure:
 
       // If user is responding to a suggestion
       if (isRespondingToSuggestion) {
+        // Only accept explicit confirmation to apply changes
         const userAgreed =
-          userMessage.toLowerCase().includes('yes') ||
-          userMessage.toLowerCase().includes('apply') ||
-          userMessage.toLowerCase().includes('ok') ||
-          userMessage.toLowerCase().includes('sure') ||
-          userMessage.toLowerCase().includes('please');
+          userMessage.toLowerCase() === 'apply change' ||
+          userMessage.toLowerCase() === 'make these changes' ||
+          userMessage.toLowerCase() === 'apply these changes' ||
+          userMessage.toLowerCase() === 'yes, apply this change' ||
+          userMessage.toLowerCase().includes('apply the change') ||
+          userMessage.toLowerCase().includes('make the change');
 
-        console.log('User agreed?', userAgreed);
+        console.log('User explicitly agreed to apply changes?', userAgreed);
 
         if (userAgreed) {
           // Return an action response indicating changes should be applied
@@ -1151,8 +1398,12 @@ Respond with exactly this JSON structure:
       };
     }
 
-    const prompt = `You are ${persona.name}, a ${persona.type} with expertise in ${persona.expertise.join(', ')}.
-Your personality: ${persona.personality}
+    // Use agentPrompt if available, otherwise fall back to basic persona description
+    const agentDescription = persona.agentPrompt || 
+      `You are ${persona.name}, a ${persona.type} with expertise in ${persona.expertise.join(', ')}.
+Your personality: ${persona.personality}`;
+
+    const prompt = `${agentDescription}
 
 You are reviewing a work item document and providing suggestions to improve it.
 
@@ -1176,9 +1427,16 @@ User: ${userMessage}
 
 IMPORTANT: Check if the user is responding to your previous suggestion:
 - Look at the most recent message from you (${persona.name})
-- If it was marked [suggestion] and the user is now agreeing (yes, apply, ok, sure, please, etc.)
-- Then you MUST return type: "action" with action: "apply-changes"
+- If it was marked [suggestion] and the user EXPLICITLY says one of these exact phrases:
+  - "Make these changes"
+  - "Apply change"
+  - "Apply these changes"
+  - "Yes, apply this change"
+  - "Apply the change"
+  - "Make the change"
+- Then and ONLY then return type: "action" with action: "apply-changes"
 - Include the FULL suggestion content in suggestionToApply field
+- DO NOT apply changes for generic responses like "ok", "yes", "sure", etc.
 
 Example flow:
 ${persona.name} [suggestion]: "In Task 2, we should add API endpoint specifications..."
@@ -1195,11 +1453,19 @@ Provide a helpful response following these rules:
    - Use **bold** for emphasis
    - Use \`inline code\` for code snippets or technical terms
    - Use *italics* for subtle emphasis
-4. CRITICAL: If the user agrees to apply your MOST RECENT suggestion (says yes, apply, ok, sure, please, etc.):
+4. CRITICAL: If the user EXPLICITLY agrees to apply your MOST RECENT suggestion with one of these exact phrases:
+   - "Make these changes"
+   - "Apply change"
+   - "Apply these changes"
+   - "Yes, apply this change"
+   - "Apply the change"
+   - "Make the change"
+   Then:
    - Return type: "action"
    - Set action: "apply-changes"
    - Include the FULL content of your previous suggestion in suggestionToApply field
    - Your response should acknowledge you're applying the changes
+   For any other response (including "ok", "yes", "sure"), just continue the conversation normally
 5. For regular conversation, set type to "message"
 
 CRITICAL JSON FORMATTING RULES:

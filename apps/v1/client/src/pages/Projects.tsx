@@ -64,20 +64,14 @@ export function Projects() {
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className={`text-2xl font-bold ${styles.headingColor}`}>Projects</h1>
-          <p className={`mt-1 ${styles.mutedText}`}>
-            Manage and track all your projects in one place.
-          </p>
-        </div>
-        {projects.length > 0 && (
+    <div className="h-full overflow-auto p-8">
+      {projects.length > 0 && (
+        <div className="flex justify-end mb-6">
           <Button as={Link} to="/projects/new" variant="primary">
             Add project
           </Button>
-        )}
-      </div>
+        </div>
+      )}
 
       {isLoadingWorkspace ? (
         <div

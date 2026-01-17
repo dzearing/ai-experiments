@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useCallback } from 'react';
 import { ChatBubble } from '../chat/ChatBubble';
 import { ToolExecution } from '../chat/ToolExecution';
 import { SuggestedResponses } from '../chat/SuggestedResponses';
@@ -54,6 +54,9 @@ export const ClaudeMessage = memo(function ClaudeMessage({
     }
   }
 
+  // Parse dynamic prompt options from the message
+  let dynamicPromptOptions: string[] | undefined;
+  
   // Clean up message content to remove artifacts from malformed API responses
   if (typeof messageContent === 'string') {
     // Remove "undefined" at the start of messages
@@ -64,7 +67,43 @@ export const ClaudeMessage = memo(function ClaudeMessage({
 
     // Clean up any remaining leading/trailing whitespace
     messageContent = messageContent.trim();
+    
+    // Check for dynamic prompt options pattern for assistant messages
+    if (message.role === 'assistant') {
+      const promptPattern = /\*\*\[PROMPT_OPTIONS\]\*\*\s*\n((?:[-•]\s*.+\n?)+)/;
+      const match = messageContent.match(promptPattern);
+      
+      if (match) {
+        // Extract the options
+        const optionsText = match[1];
+        dynamicPromptOptions = optionsText
+          .split('\n')
+          .map(line => line.replace(/^[-•]\s*/, '').trim())
+          .filter(line => line.length > 0)
+          .slice(0, 4); // Maximum 4 options
+        
+        // Remove the prompt options section from the displayed message
+        messageContent = messageContent.replace(promptPattern, '').trim();
+      }
+    }
   }
+
+  // Handle doc link clicks
+  const handleDocLinkClick = useCallback((e: MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'A' && target.dataset.docRef) {
+      e.preventDefault();
+      const docRef = target.dataset.docRef;
+
+      // Emit a custom event that can be caught by the parent components
+      const event = new CustomEvent('doc-link-clicked', {
+        detail: { docRef },
+        bubbles: true,
+        composed: true
+      });
+      target.dispatchEvent(event);
+    }
+  }, []);
 
   const formatContent = useMemo(
     () => (content: string) => {
@@ -73,10 +112,11 @@ export const ClaudeMessage = memo(function ClaudeMessage({
         <div
           className="prose prose-sm max-w-none dark:prose-invert markdown-content"
           dangerouslySetInnerHTML={{ __html: html }}
+          onClick={handleDocLinkClick as any}
         />
       );
     },
-    []
+    [handleDocLinkClick]
   );
 
   // Show thinking indicator for streaming messages
@@ -252,9 +292,9 @@ export const ClaudeMessage = memo(function ClaudeMessage({
         )}
 
         {/* Suggested responses for the latest assistant message */}
-        {isLatestAssistantMessage && message.suggestedResponses && onSuggestedResponse && (
+        {isLatestAssistantMessage && onSuggestedResponse && (dynamicPromptOptions || message.suggestedResponses) && (
           <SuggestedResponses
-            responses={message.suggestedResponses}
+            responses={dynamicPromptOptions || message.suggestedResponses || []}
             onSelect={onSuggestedResponse}
             disabled={message.isStreaming}
           />

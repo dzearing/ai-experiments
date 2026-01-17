@@ -1,0 +1,62 @@
+[
+  {
+    "_comment": "Agent that starts in the workspace root",
+    "name": "workspace-agent",
+    "description": "Agent for managing the entire workspace",
+    "initialization": {
+      "cwd": {
+        "type": "reference",
+        "value": "workspace"
+      }
+    }
+  },
+  {
+    "_comment": "Agent that starts in a specific project",
+    "name": "project-mgmt-ux-agent",
+    "description": "Agent for Claude Flow development",
+    "initialization": {
+      "cwd": {
+        "type": "reference",
+        "value": "project-mgmt-ux"
+      }
+    }
+  },
+  {
+    "_comment": "Agent that starts in the first available repo",
+    "name": "project-repo-agent",
+    "description": "Agent for working on project code",
+    "initialization": {
+      "cwd": {
+        "type": "reference",
+        "value": "project-mgmt-ux/repo"
+      }
+    }
+  },
+  {
+    "_comment": "Agent that starts in a specific package",
+    "name": "v1-client-agent",
+    "description": "Agent for Claude Flow V1 client development",
+    "initialization": {
+      "cwd": {
+        "type": "reference",
+        "value": "project-mgmt-ux/v1-client"
+      }
+    }
+  },
+  {
+    "_comment": "Agent that starts in a specific path",
+    "name": "path-agent",
+    "description": "Agent with absolute path CWD",
+    "initialization": {
+      "cwd": {
+        "type": "path",
+        "value": "/Users/username/workspace/projects/project-mgmt-ux"
+      }
+    }
+  },
+  {
+    "_comment": "Agent with no CWD configuration (uses current directory)",
+    "name": "default-agent",
+    "description": "Agent that starts in its own directory"
+  }
+]

@@ -1,30 +1,100 @@
-import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import { useLayout } from '../contexts/LayoutContext';
 import { useWorkspace } from '../contexts/WorkspaceContext';
 import { useTheme } from '../contexts/ThemeContextV2';
+import { useRealtimeSubscription } from '../contexts/SubscriptionContext';
 import { Button } from '../components/ui/Button';
 import { IconButton } from '../components/ui/IconButton';
 import { WorkItemDeleteDialog } from '../components/WorkItemDeleteDialog';
+import { clientLogger } from '../utils/clientLogger';
 import type { WorkItem } from '../types';
 
 export function WorkItems() {
   const { workItems, projects, personas, deleteWorkItem } = useApp();
-  const { isLoadingWorkspace } = useWorkspace();
+  const { isLoadingWorkspace, reloadWorkspace } = useWorkspace();
   const { setHeaderContent } = useLayout();
   const { currentStyles } = useTheme();
+  const { subscribe } = useRealtimeSubscription();
   const navigate = useNavigate();
+  const location = useLocation();
   const styles = currentStyles;
-  const [filter, setFilter] = useState<'all' | WorkItem['status']>('all');
-  const [sortBy, setSortBy] = useState<'priority' | 'dueDate' | 'created'>('priority');
+  const [filter, setFilter] = useState<'active' | 'discarded'>('active');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [workItemToDelete, setWorkItemToDelete] = useState<WorkItem | null>(null);
+  const hasReloadedRef = useRef(false);
 
   // Clear header content on mount
   useEffect(() => {
     setHeaderContent(null);
   }, [setHeaderContent]);
+
+  // Force reload when coming back from edit
+  useEffect(() => {
+    // Check if we're coming back from an edit page
+    const isReturningFromEdit = location.state?.fromEdit === true;
+
+    if (isReturningFromEdit && !hasReloadedRef.current) {
+      clientLogger.info('WorkItems', 'Returning from edit, forcing workspace reload');
+      hasReloadedRef.current = true;
+
+      // Clear the navigation state
+      window.history.replaceState({}, document.title);
+
+      // Force reload the workspace with a small delay to ensure file writes are complete
+      setTimeout(async () => {
+        const { invalidateCache } = await import('../utils/cache');
+        invalidateCache(/^workspace-light:/);
+        invalidateCache(/^project-details:/);
+        invalidateCache(/^workspace:/);
+        invalidateCache(/^work-items:/);
+        await reloadWorkspace();
+        clientLogger.info('WorkItems', 'Workspace reload completed after edit');
+      }, 500); // 500ms delay to ensure file system operations are complete
+    }
+  }, [location, reloadWorkspace]);
+
+  // Subscribe to workspace updates to refresh when work items change
+  useEffect(() => {
+    const unsubscribe = subscribe('workspace-update', '', (data) => {
+      clientLogger.info('WorkItems', 'Received workspace update notification', {
+        action: data.action,
+        data
+      });
+
+      // Reload workspace data when we get a notification about work item changes
+      if (data.action === 'work-item-discarded' || data.action === 'work-item-deleted' || data.action === 'work-item-updated') {
+        clientLogger.info('WorkItems', 'Triggering workspace reload due to work item change', {
+          action: data.action,
+          workItemId: data.workItemId,
+          markdownPath: data.markdownPath
+        });
+
+        // Add a small delay to ensure file system operations are complete on the server
+        setTimeout(async () => {
+          // First invalidate client-side cache to ensure fresh data
+          const { invalidateCache } = await import('../utils/cache');
+          invalidateCache(/^workspace-light:/);
+          invalidateCache(/^project-details:/);
+          invalidateCache(/^workspace:/);
+          invalidateCache(/^work-items:/);
+          invalidateCache(/^work-item:/);
+          clientLogger.debug('WorkItems', 'Cache invalidated for workspace data');
+
+          // Then reload workspace
+          await reloadWorkspace();
+          clientLogger.info('WorkItems', 'Workspace reload completed after SSE update');
+        }, 300); // 300ms delay for SSE updates
+      } else {
+        clientLogger.debug('WorkItems', 'Ignoring workspace update - not a work item change', {
+          action: data.action
+        });
+      }
+    });
+
+    return unsubscribe;
+  }, [subscribe, reloadWorkspace]);
 
   const getStatusColor = (status: WorkItem['status']) => {
     switch (status) {
@@ -56,81 +126,55 @@ export function WorkItems() {
     }
   };
 
-  const filteredItems = workItems.filter((item) => filter === 'all' || item.status === filter);
-
-  const sortedItems = [...filteredItems].sort((a, b) => {
-    switch (sortBy) {
-      case 'priority':
-        const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-        return priorityOrder[a.priority] - priorityOrder[b.priority];
-      case 'dueDate':
-        return 0; // dueDate not implemented yet
-      case 'created':
-        return b.createdAt.getTime() - a.createdAt.getTime();
-      default:
-        return 0;
+  const filteredItems = workItems.filter((item) => {
+    if (filter === 'active') {
+      // Show all non-discarded items
+      return !item.markdownPath?.includes('/discarded/');
+    } else {
+      // Show only discarded items
+      return item.markdownPath?.includes('/discarded/');
     }
   });
 
-  return (
-    <div>
-      <div className="flex justify-between items-start mb-6">
-        <div>
-          <h1 className={`text-2xl font-bold ${styles.headingColor}`}>Work items</h1>
-          <p className={`mt-1 ${styles.mutedText}`}>
-            Track and manage all your tasks across projects.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          {workItems.length > 0 && (
-            <Button as={Link} to="/work-items/new" variant="primary">
-              Create work item
-            </Button>
-          )}
-        </div>
-      </div>
+  // Sort by last modified date (most recent first)
+  const sortedItems = [...filteredItems].sort((a, b) => {
+    return b.updatedAt.getTime() - a.updatedAt.getTime();
+  });
 
-      {/* Filters and Sorting */}
+  return (
+    <div className="h-full overflow-auto p-8">
+      {/* Command Bar */}
       <div
         className={`
         ${styles.cardBg} ${styles.cardBorder} border ${styles.borderRadius}
         ${styles.cardShadow} p-4 mb-6
       `}
       >
-        <div className="flex flex-wrap gap-4 items-center">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button as={Link} to="/work-items/new" variant="primary">
+              Create work item
+            </Button>
+          </div>
+
           <div className="flex items-center gap-2">
             <span className={`text-sm font-medium ${styles.textColor}`}>Status:</span>
             <div className="flex gap-1">
-              {(['all', 'planned', 'active', 'in-review', 'blocked', 'completed'] as const).map(
-                (status) => (
-                  <Button
-                    key={status}
-                    onClick={() => setFilter(status)}
-                    variant={filter === status ? 'primary' : 'secondary'}
-                    size="sm"
-                  >
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
-                  </Button>
-                )
-              )}
+              <Button
+                onClick={() => setFilter('active')}
+                variant={filter === 'active' ? 'primary' : 'secondary'}
+                size="sm"
+              >
+                Active
+              </Button>
+              <Button
+                onClick={() => setFilter('discarded')}
+                variant={filter === 'discarded' ? 'primary' : 'secondary'}
+                size="sm"
+              >
+                Discarded
+              </Button>
             </div>
-          </div>
-
-          <div className="flex items-center gap-2 ml-auto">
-            <span className={`text-sm font-medium ${styles.textColor}`}>Sort by:</span>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              className={`
-                px-3 py-1 text-sm ${styles.buttonRadius}
-                ${styles.contentBg} ${styles.contentBorder} border ${styles.textColor}
-                focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500
-              `}
-            >
-              <option value="priority">Priority</option>
-              <option value="dueDate">Due Date</option>
-              <option value="created">Created</option>
-            </select>
           </div>
         </div>
       </div>
@@ -187,11 +231,11 @@ export function WorkItems() {
           </svg>
           <h3 className={`mt-4 text-lg font-medium ${styles.headingColor}`}>No work items found</h3>
           <p className={`mt-2 ${styles.mutedText}`}>
-            {filter === 'all'
+            {filter === 'active'
               ? 'Get started by creating your first work item.'
               : `No ${filter} work items.`}
           </p>
-          {filter === 'all' && (
+          {filter === 'active' && (
             <div className="mt-6">
               <Button as={Link} to="/work-items/new" variant="primary">
                 Create work item
@@ -207,6 +251,16 @@ export function WorkItems() {
               item.assignedPersonaIds.length > 0
                 ? personas.find((p) => p.id === item.assignedPersonaIds[0])
                 : undefined;
+
+            // DETAILED LOGGING FOR DEBUGGING
+            clientLogger.info('WorkItems', `Rendering work item ${item.id}`, {
+              title: item.title,
+              markdownPath: item.markdownPath,
+              projectId: item.projectId,
+              foundProject: !!project,
+              projectName: project?.name,
+              updatedAt: item.updatedAt
+            });
 
             console.log(`WorkItem ${item.id}:`, {
               title: item.title,
@@ -226,7 +280,13 @@ export function WorkItems() {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     {project && (
-                      <div className={`text-sm ${styles.mutedText} mb-1`}>{project.name}</div>
+                      <div className={`text-sm ${styles.mutedText} mb-1 flex items-center gap-3`}>
+                        <span>{project.name}</span>
+                        <span>•</span>
+                        <span>Created: {item.createdAt.toLocaleDateString()}</span>
+                        <span>•</span>
+                        <span>Modified: {item.updatedAt.toLocaleDateString()}</span>
+                      </div>
                     )}
                     <div className="flex items-center gap-3 mb-2">
                       <span className="text-lg">{getPriorityIcon(item.priority)}</span>
@@ -243,56 +303,7 @@ export function WorkItems() {
                       </span>
                     </div>
 
-                    {/* Show sub-tasks if they exist */}
-                    {item.metadata?.tasks && item.metadata.tasks.length > 0 ? (
-                      <div className="mb-3">
-                        <p className={`${styles.textColor} mb-2`}>
-                          Contains {item.metadata.tasks.length} sub-tasks:
-                        </p>
-                        <div className="space-y-1">
-                          {item.metadata.tasks.map((task, index) => (
-                            <div
-                              key={task.id || `task-${index}`}
-                              className={`flex items-center gap-2 ${styles.mutedText} text-sm`}
-                            >
-                              {/* Task status indicator */}
-                              {task.status === 'in-progress' ? (
-                                // Pulsating green circle for in-progress
-                                <div className="relative w-4 h-4 flex items-center justify-center">
-                                  <div className="absolute inset-0 bg-green-500 rounded-full animate-ping opacity-75"></div>
-                                  <div className="relative w-2 h-2 bg-green-500 rounded-full"></div>
-                                </div>
-                              ) : task.completed ? (
-                                // Green checkmark for completed
-                                <svg
-                                  className="w-4 h-4 text-green-600 dark:text-green-400"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="currentColor"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={3}
-                                    d="M5 13l4 4L19 7"
-                                  />
-                                </svg>
-                              ) : (
-                                // Simple bullet for pending
-                                <div className="w-4 h-4 flex items-center justify-center">
-                                  <div className="w-1.5 h-1.5 bg-current rounded-full opacity-60"></div>
-                                </div>
-                              )}
-                              <span className={task.completed ? 'line-through opacity-60' : ''}>
-                                {task.taskNumber || index + 1}. {task.title}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <p className={`${styles.textColor} mb-3`}>{item.description}</p>
-                    )}
+                    <p className={`${styles.textColor} mb-3`}>{item.description}</p>
 
                     {/* Checklist progress - not implemented yet */}
 
@@ -328,7 +339,13 @@ export function WorkItems() {
                     <IconButton
                       aria-label="Edit work item"
                       variant="secondary"
-                      onClick={() => navigate(`/work-items/${item.id}/edit`)}
+                      onClick={() => {
+                        clientLogger.userClick('WorkItems', 'Edit button', {
+                          workItemId: item.id,
+                          workItemTitle: item.title
+                        });
+                        navigate(`/work-items/${item.id}/edit`);
+                      }}
                     >
                       <svg
                         className="h-5 w-5"
@@ -392,6 +409,8 @@ export function WorkItems() {
                       aria-label="Delete work item"
                       variant="secondary"
                       onClick={() => {
+                        console.log('Setting work item to delete:', item);
+                        console.log('Work item markdownPath:', item.markdownPath);
                         setWorkItemToDelete(item);
                         setDeleteDialogOpen(true);
                       }}
@@ -427,6 +446,9 @@ export function WorkItems() {
         workItem={workItemToDelete}
         onConfirm={async (permanentDelete) => {
           if (!workItemToDelete) return;
+          
+          console.log('Deleting work item:', workItemToDelete);
+          console.log('Work item has markdownPath:', workItemToDelete.markdownPath);
 
           // Handle markdown file deletion/move if it exists
           if (workItemToDelete.markdownPath) {
@@ -447,9 +469,11 @@ export function WorkItems() {
                 const { invalidateCache } = await import('../utils/cache');
                 invalidateCache(/^workspace-light:/);
                 invalidateCache(/^project-details:/);
+                invalidateCache(/^workspace:/);
+                invalidateCache(/^work-items:/);
 
-                // Reload the page to refresh the work items list
-                window.location.reload();
+                // The workspace will reload automatically via SSE notification
+                console.log('Work item delete/move successful, waiting for SSE update');
               }
             } catch (error) {
               console.error('Error handling markdown file:', error);
