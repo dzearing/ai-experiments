@@ -356,10 +356,13 @@ export function TopicsProvider({ children }: TopicsProviderProps) {
 
       const topic = await response.json();
 
-      // Insert at correct position
+      // Insert at correct position (with duplicate check - WebSocket may have already added it)
       if (input.insertAfterId) {
         // Insert after a specific item
         setTopics((prev) => {
+          // Check for duplicate (WebSocket may have added it first)
+          if (prev.some(t => t.id === topic.id)) return prev;
+
           const insertIndex = prev.findIndex(t => t.id === input.insertAfterId);
 
           if (insertIndex !== -1) {
@@ -376,7 +379,12 @@ export function TopicsProvider({ children }: TopicsProviderProps) {
         });
       } else {
         // No specific position - PREPEND at beginning (matches UI where input shows at top)
-        setTopics((prev) => [topic, ...prev]);
+        setTopics((prev) => {
+          // Check for duplicate (WebSocket may have added it first)
+          if (prev.some(t => t.id === topic.id)) return prev;
+
+          return [topic, ...prev];
+        });
       }
 
       return topic;

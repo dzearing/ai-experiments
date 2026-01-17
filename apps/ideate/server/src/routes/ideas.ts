@@ -58,10 +58,15 @@ ideasRouter.get('/', async (req: Request, res: Response) => {
 });
 
 // Get ideas grouped by lane (for kanban view)
+// Supports optional filtering by workspaceId and/or topicIds
 ideasRouter.get('/by-lane', async (req: Request, res: Response) => {
   try {
     const userId = req.headers['x-user-id'] as string;
     const workspaceId = req.query.workspaceId as string | undefined;
+    const topicIdsParam = req.query.topicIds as string | undefined;
+
+    // Parse comma-separated topicIds if provided
+    const topicIds = topicIdsParam ? topicIdsParam.split(',').filter(Boolean) : undefined;
 
     if (!userId) {
       res.status(401).json({ error: 'User ID required' });
@@ -75,7 +80,7 @@ ideasRouter.get('/by-lane', async (req: Request, res: Response) => {
       isWorkspaceMember = workspace !== null;
     }
 
-    const ideasByLane = await ideaService.getIdeasByLane(userId, workspaceId, isWorkspaceMember);
+    const ideasByLane = await ideaService.getIdeasByLane(userId, workspaceId, isWorkspaceMember, topicIds);
     res.json(ideasByLane);
   } catch (error) {
     console.error('[Ideas] Get ideas by lane error:', error);

@@ -16,6 +16,7 @@
 
 .codeBlock {
   position: relative;
+  margin: var(--space-4, 16px) 0;
   background: var(--softer-bg, #f6f8fa);
   border: 1px solid var(--softer-border, #e1e4e8);
   border-radius: var(--radius-md, 6px);
@@ -23,6 +24,16 @@
   font-family: var(--font-mono, ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace);
   font-size: var(--text-sm, 0.875rem);
   line-height: 1.5;
+}
+
+/* Remove top margin when first child */
+.codeBlock:first-child {
+  margin-top: 0;
+}
+
+/* Remove bottom margin when last child */
+.codeBlock:last-child {
+  margin-bottom: 0;
 }
 
 /* Header with language badge and collapse button */

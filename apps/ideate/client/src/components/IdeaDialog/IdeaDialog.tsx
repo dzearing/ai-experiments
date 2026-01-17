@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Slide, Button, IconButton, SplitPane, Spinner, Checkbox } from '@ui-kit/react';
 import { CloseIcon } from '@ui-kit/icons/CloseIcon';
+import { MaximizeIcon } from '@ui-kit/icons/MaximizeIcon';
 import { TrashIcon } from '@ui-kit/icons/TrashIcon';
 import { ArrowRightIcon } from '@ui-kit/icons/ArrowRightIcon';
 import { PlayIcon } from '@ui-kit/icons/PlayIcon';
@@ -9,7 +10,7 @@ import { PauseIcon } from '@ui-kit/icons/PauseIcon';
 import { FileIcon } from '@ui-kit/icons/FileIcon';
 import { ListIcon } from '@ui-kit/icons/ListIcon';
 import { EditIcon } from '@ui-kit/icons/EditIcon';
-import { VirtualizedChatPanel, ChatInput, ThinkingIndicator, MessageQueue, OpenQuestionsResolver, type ChatInputSubmitData, type ChatInputRef, type VirtualizedChatPanelMessage, type QueuedMessage, type TopicReference as ChatTopicReference, type ChatMessagePart } from '@ui-kit/react-chat';
+import { VirtualizedChatPanel, ChatLayout, OpenQuestionsResolver, type ChatInputSubmitData, type ChatInputRef, type VirtualizedChatPanelMessage, type QueuedMessage, type TopicReference as ChatTopicReference, type ChatMessagePart } from '@ui-kit/react-chat';
 import { MarkdownCoEditor, type ViewMode, type CoAuthor } from '@ui-kit/react-markdown';
 import { ItemPickerDialog, DiskItemProvider } from '@ui-kit/react-pickers';
 import { useResource } from '@claude-flow/data-bus/react';
@@ -217,6 +218,8 @@ export interface IdeaDialogProps {
   onStartExecution?: (plan: IdeaPlan) => void;
   /** Callback when idea is created immediately (for background processing tracking) - doesn't close dialog */
   onIdeaCreated?: (idea: Idea) => void;
+  /** Callback when user clicks maximize - navigates to full page view */
+  onMaximize?: (ideaId: string) => void;
 }
 
 /**
@@ -241,6 +244,7 @@ export function IdeaDialog({
   initialPhase,
   onStartExecution,
   onIdeaCreated,
+  onMaximize,
 }: IdeaDialogProps) {
   // Debug: track this instance
   const instanceIdRef = useRef(++overlayInstanceId);
@@ -1889,6 +1893,15 @@ export function IdeaDialog({
                   aria-label="Resume execution"
                 />
               )}
+              {onMaximize && ideaId && (
+                <IconButton
+                  icon={<MaximizeIcon />}
+                  variant="ghost"
+                  size="md"
+                  onClick={() => onMaximize(ideaId)}
+                  aria-label="Open full page"
+                />
+              )}
               <IconButton
                 icon={<CloseIcon />}
                 variant="ghost"
@@ -1907,63 +1920,58 @@ export function IdeaDialog({
               minSize={300}
               first={
                 <div className={styles.chatPane}>
-                  <div className={styles.chatHeader}>
-                    <span className={styles.chatTitle}>{phase === 'executing' ? 'Execute Agent' : phase === 'planning' ? 'Plan Agent' : 'Idea Agent'}</span>
-                    <span className={`${styles.connectionStatus} ${isConnected || isAgentRunning ? styles.connected : ''}`}>
-                      {isEditingDocument ? 'Editing document...' : isAgentRunning ? 'Running...' : isConnected ? 'Connected' : 'Disconnected'}
-                    </span>
-                    {tokenUsage && (
-                      <span className={styles.tokenUsage}>
-                        {tokenUsage.inputTokens + tokenUsage.outputTokens} tokens
-                      </span>
-                    )}
-                    <IconButton
-                      icon={<TrashIcon />}
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleClearChat}
-                      aria-label="Clear chat"
-                      disabled={!isConnected}
-                    />
-                  </div>
-
-                  <VirtualizedChatPanel
-                    messages={chatMessages}
-                    emptyState={chatEmptyState}
-                    className={styles.chatPanel}
-                    onLinkClick={handleLinkClick}
-                  />
-
-                  <ThinkingIndicator
-                    isActive={isAgentThinking}
-                    statusText={
-                      phase === 'executing'
+                  <ChatLayout
+                    header={
+                      <div className={styles.chatHeader}>
+                        <span className={styles.chatTitle}>{phase === 'executing' ? 'Execute Agent' : phase === 'planning' ? 'Plan Agent' : 'Idea Agent'}</span>
+                        <span className={`${styles.connectionStatus} ${isConnected || isAgentRunning ? styles.connected : ''}`}>
+                          {isEditingDocument ? 'Editing document...' : isAgentRunning ? 'Running...' : isConnected ? 'Connected' : 'Disconnected'}
+                        </span>
+                        {tokenUsage && (
+                          <span className={styles.tokenUsage}>
+                            {tokenUsage.inputTokens + tokenUsage.outputTokens} tokens
+                          </span>
+                        )}
+                        <IconButton
+                          icon={<TrashIcon />}
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleClearChat}
+                          aria-label="Clear chat"
+                          disabled={!isConnected}
+                        />
+                      </div>
+                    }
+                    isThinking={isAgentThinking}
+                    thinkingIndicatorProps={{
+                      statusText: phase === 'executing'
                         ? executeAgent.progress.currentEvent?.displayText
                         : phase === 'planning'
                           ? planAgent.progress.currentEvent?.displayText
-                          : ideaAgent.progress.currentEvent?.displayText
-                    }
-                    showEscapeHint={isAgentThinking && isInputEmpty}
-                  />
-
-                  <MessageQueue
-                    messages={queuedMessages}
-                    onRemove={removeQueuedMessage}
-                  />
-
-                  <div className={styles.chatInputContainer}>
-                    <ChatInput
-                      ref={chatInputRef}
-                      placeholder={!isConnected ? "Connecting..." : isAgentThinking ? "Type to queue message..." : "Ask the agent... (type / for commands, ^ for topics)"}
-                      onSubmit={handleChatSubmit}
-                      onChange={handleInputChange}
-                      historyKey={`idea-agent-${idea?.id || 'new'}`}
-                      fullWidth
-                      commands={commands}
-                      onCommand={handleCommand}
-                      topics={topicReferences as ChatTopicReference[]}
+                          : ideaAgent.progress.currentEvent?.displayText,
+                      showEscapeHint: isAgentThinking && isInputEmpty,
+                    }}
+                    queuedMessages={queuedMessages}
+                    onRemoveQueuedMessage={removeQueuedMessage}
+                    chatInputRef={chatInputRef}
+                    chatInputProps={{
+                      placeholder: !isConnected ? "Connecting..." : isAgentThinking ? "Type to queue message..." : "Ask the agent... (type / for commands, ^ for topics)",
+                      onSubmit: handleChatSubmit,
+                      onChange: handleInputChange,
+                      historyKey: `idea-agent-${idea?.id || 'new'}`,
+                      fullWidth: true,
+                      commands,
+                      onCommand: handleCommand,
+                      topics: topicReferences as ChatTopicReference[],
+                    }}
+                  >
+                    <VirtualizedChatPanel
+                      messages={chatMessages}
+                      emptyState={chatEmptyState}
+                      className={styles.chatPanel}
+                      onLinkClick={handleLinkClick}
                     />
-                  </div>
+                  </ChatLayout>
 
                   {/* Open Questions Resolver Overlay */}
                   {showQuestionsResolver && openQuestions && openQuestions.length > 0 && (

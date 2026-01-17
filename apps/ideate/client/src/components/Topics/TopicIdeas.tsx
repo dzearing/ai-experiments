@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { useNavigate, useSearchParams } from '@ui-kit/router';
 import { Button, Text } from '@ui-kit/react';
 import { AddIcon } from '@ui-kit/icons/AddIcon';
 import { LightbulbIcon } from '@ui-kit/icons/LightbulbIcon';
@@ -6,7 +7,7 @@ import { useResource } from '@claude-flow/data-bus/react';
 import { KanbanBoard } from '../KanbanBoard';
 import { DelayedSpinner } from '../DelayedSpinner';
 import { IdeaDialog, type TopicContext, type WorkspacePhase } from '../IdeaDialog';
-import { useTopicIdeas } from '../../hooks/useTopicIdeas';
+import { useIdeasQuery } from '../../hooks/useIdeasQuery';
 import { useIdeas } from '../../contexts/IdeasContext';
 import { useSession } from '../../contexts/SessionContext';
 import { useWorkspaceSocket, type ResourceType } from '../../hooks/useWorkspaceSocket';
@@ -14,6 +15,21 @@ import { dataBus, topicIdeasPath } from '../../dataBus';
 import { createLogger } from '../../utils/clientLogger';
 import type { Idea, IdeaMetadata } from '../../types/idea';
 import styles from './TopicIdeas.module.css';
+
+/**
+ * Update URL query param without triggering navigation
+ */
+function updateIdeaQueryParam(ideaId: string | null): void {
+  const url = new URL(window.location.href);
+
+  if (ideaId) {
+    url.searchParams.set('idea', ideaId);
+  } else {
+    url.searchParams.delete('idea');
+  }
+
+  window.history.replaceState({}, '', url.toString());
+}
 
 // Create logger for this component
 const log = createLogger('TopicIdeas');
@@ -43,15 +59,40 @@ interface TopicIdeasProps {
 export function TopicIdeas({ topicId, topicName, topicType, topicDescription, topicLocalPath, workspaceId, pendingIdeaOpen, onPendingIdeaOpenHandled }: TopicIdeasProps) {
   // Debug: track this instance
   const instanceId = useRef(++topicIdeasInstanceId);
+
+  // Track if we've handled the initial query param
+  const initialIdeaHandled = useRef(false);
+
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
   useEffect(() => {
     log.log(`#${instanceId.current} MOUNTED for topicId=${topicId}`);
+
     return () => {
       log.log(`#${instanceId.current} UNMOUNTED`);
     };
   }, []); // Only run on mount/unmount
 
   const { session } = useSession();
-  const { ideasByStatus, isLoading, error, moveIdea, deleteIdea, refetch, updateIdea, addIdea, removeIdea } = useTopicIdeas(topicId, workspaceId);
+
+  // Use unified ideas query hook with topic filter
+  // Note: We don't filter by workspaceId here - topic membership is the relevant filter.
+  // workspaceId is still used for WebSocket connection and creating new ideas.
+  const {
+    ideasByStatus,
+    isLoading,
+    error,
+    refetch,
+    addIdea,
+    updateIdea,
+    removeIdea,
+    moveIdea,
+    deleteIdea,
+  } = useIdeasQuery({
+    topicIds: [topicId],
+  });
+
   const { getIdea } = useIdeas();
 
   // WebSocket handlers for real-time updates (e.g., agentStatus changes)
@@ -62,6 +103,7 @@ export function TopicIdeas({ topicId, topicName, topicType, topicDescription, to
   ) => {
     if (resourceType === 'idea') {
       const idea = data as IdeaMetadata;
+
       // Only add if this idea belongs to this Topic
       if (idea.topicIds?.includes(topicId)) {
         addIdea(idea);
@@ -76,6 +118,7 @@ export function TopicIdeas({ topicId, topicName, topicType, topicDescription, to
   ) => {
     if (resourceType === 'idea') {
       const update = data as Partial<IdeaMetadata> & { id: string };
+
       // Merge the update (handles agentStatus, summary, title changes, etc.)
       updateIdea(update.id, update);
     }
@@ -141,12 +184,15 @@ export function TopicIdeas({ topicId, topicName, topicType, topicDescription, to
   // Handle opening an idea
   const handleOpenIdea = useCallback(async (ideaId: string) => {
     const idea = await getIdea(ideaId);
+
     if (idea) {
       setSelectedIdea(idea);
       setIsCreating(false);
       // Set initial phase based on idea status
       setInitialPhase(idea.status === 'exploring' ? 'planning' : 'ideation');
       setOverlayOpen(true);
+      // Update URL without navigation
+      updateIdeaQueryParam(ideaId);
     }
   }, [getIdea]);
 
@@ -189,6 +235,8 @@ export function TopicIdeas({ topicId, topicName, topicType, topicDescription, to
     setInitialPrompt(undefined);
     setInitialGreeting(undefined);
     setInitialPhase(undefined);
+    // Remove idea from URL without navigation
+    updateIdeaQueryParam(null);
     // Refetch to update kanban with any status changes made while overlay was open
     refetch();
   }, [refetch]);
@@ -214,6 +262,7 @@ export function TopicIdeas({ topicId, topicName, topicType, topicDescription, to
       if (ideaId) {
         // Open existing idea
         const idea = await getIdea(ideaId);
+
         if (idea) {
           setSelectedIdea(idea);
           setIsCreating(false);
@@ -229,6 +278,7 @@ export function TopicIdeas({ topicId, topicName, topicType, topicDescription, to
     };
 
     window.addEventListener('facilitator:openIdea', handleFacilitatorOpenIdea);
+
     return () => window.removeEventListener('facilitator:openIdea', handleFacilitatorOpenIdea);
   }, [topicId, getIdea, handleNewIdea]);
 
@@ -263,7 +313,28 @@ export function TopicIdeas({ topicId, topicName, topicType, topicDescription, to
     setSelectedIdea(idea);
     // Add to kanban immediately without triggering loading state
     addIdea(idea);
+    // Update URL with the new idea ID
+    updateIdeaQueryParam(idea.id);
   }, [addIdea, topicId]);
+
+  // Handle maximize - navigate to full page view (adds to history stack)
+  const handleMaximize = useCallback((ideaId: string) => {
+    if (workspaceId) {
+      navigate(`/${workspaceId}/ideas/${ideaId}`);
+    }
+  }, [navigate, workspaceId]);
+
+  // Open idea from URL query param on initial mount
+  useEffect(() => {
+    if (initialIdeaHandled.current || isLoading) return;
+
+    const ideaIdFromUrl = searchParams.get('idea');
+
+    if (ideaIdFromUrl) {
+      initialIdeaHandled.current = true;
+      handleOpenIdea(ideaIdFromUrl);
+    }
+  }, [searchParams, isLoading, handleOpenIdea]);
 
   // Total ideas count
   const totalIdeas = Object.values(ideasByStatus).reduce((sum, ideas) => sum + ideas.length, 0);
@@ -324,6 +395,7 @@ export function TopicIdeas({ topicId, topicName, topicType, topicDescription, to
           initialPrompt={isCreating ? initialPrompt : undefined}
           initialGreeting={isCreating ? initialGreeting : undefined}
           initialPhase={initialPhase}
+          onMaximize={handleMaximize}
         />
       )}
     </div>

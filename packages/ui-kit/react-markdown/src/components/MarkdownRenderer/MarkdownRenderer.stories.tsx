@@ -448,6 +448,48 @@ export const EmptyContent: Story = {
   },
 };
 
+export const CodeBlockSpacing: Story = {
+  args: {
+    content: `
+## Using useContext:
+
+\`\`\`tsx
+function Button() {
+  const theme = useContext(ThemeContext);
+  return <button className={theme}>Click me</button>;
+}
+\`\`\`
+
+**When to avoid Context:**
+
+1. **Frequently changing data** - Context changes trigger re-renders in all consumers
+2. **Local state** - If data is only needed by nearby components, props are simpler
+3. **Complex state logic** - Consider useReducer or state management libraries
+
+A good rule: if you're only passing props through 2-3 levels, props are fine. Context shines when data needs to skip many levels.
+
+## Another Code Example
+
+Here's another block:
+
+\`\`\`typescript
+const greeting = "Hello, World!";
+console.log(greeting);
+\`\`\`
+
+And some text that follows it to verify spacing is consistent.
+    `,
+    showLineNumbers: true,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Demonstrates proper spacing after code blocks when followed by headings, text, and lists.',
+      },
+    },
+  },
+};
+
 export const ImageChips: Story = {
   args: {
     content: `

@@ -182,6 +182,7 @@
   border-radius: var(--radius-sm);
   border: 1px solid var(--soft-border);
   font-size: var(--text-xs);
+  max-width: 400px;
   /* Prevent browser from using this as scroll anchor */
   overflow-anchor: none;
 }
@@ -198,13 +199,14 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  padding: 2px 0;
+  padding: var(--space-1) var(--space-3);
+  margin: 0 calc(-1 * var(--space-3));
   /* Reset button styles */
   background: none;
   border: none;
   font: inherit;
   text-align: left;
-  width: 100%;
+  width: calc(100% + var(--space-6));
 }
 
 .toolCall:disabled {
@@ -213,17 +215,17 @@
 
 .toolExpandable {
   cursor: pointer;
-  border-radius: var(--radius-xs);
+  transition: background var(--duration-fast) var(--ease-default);
 }
 
 .toolExpandable:hover {
-  background: var(--base-bg);
+  background: var(--strong-bg);
 }
 
 .toolChevron {
   flex-shrink: 0;
-  width: 12px;
-  height: 12px;
+  width: 16px;
+  height: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -233,8 +235,8 @@
 }
 
 .toolChevron svg {
-  width: 10px;
-  height: 10px;
+  width: 14px;
+  height: 14px;
 }
 
 .toolChevronExpanded {

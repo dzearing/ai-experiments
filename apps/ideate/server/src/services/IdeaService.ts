@@ -213,6 +213,7 @@ function migratePlanData(plan: IdeaPlan | undefined): IdeaPlan | undefined {
 
 const IDEAS_DIR = path.join(homedir(), 'Ideate', 'ideas');
 const ATTACHMENTS_DIR = path.join(IDEAS_DIR, 'attachments');
+const TOPICS_DIR = path.join(homedir(), 'Ideate', 'topics');
 
 // =========================================================================
 // Service
@@ -286,8 +287,9 @@ export class IdeaService {
         }
 
         // Filter by workspaceId if provided
+        // Include ideas that match the workspace OR have no workspace (user's global ideas)
         if (workspaceId !== undefined) {
-          if (metadata.workspaceId !== workspaceId) continue;
+          if (metadata.workspaceId && metadata.workspaceId !== workspaceId) continue;
         }
 
         // Filter by status if provided
@@ -323,13 +325,22 @@ export class IdeaService {
 
   /**
    * Get ideas grouped by status for kanban view.
+   * Supports optional filtering by topicIds.
    */
   async getIdeasByLane(
     userId: string,
     workspaceId?: string,
-    isWorkspaceMember: boolean = false
+    isWorkspaceMember: boolean = false,
+    topicIds?: string[]
   ): Promise<Record<IdeaStatus, IdeaMetadata[]>> {
-    const allIdeas = await this.listIdeas(userId, workspaceId, undefined, isWorkspaceMember);
+    let allIdeas = await this.listIdeas(userId, workspaceId, undefined, isWorkspaceMember);
+
+    // Filter by topicIds if provided
+    if (topicIds && topicIds.length > 0) {
+      allIdeas = allIdeas.filter(idea =>
+        idea.topicIds?.some(tid => topicIds.includes(tid))
+      );
+    }
 
     const grouped: Record<IdeaStatus, IdeaMetadata[]> = {
       new: [],
@@ -386,11 +397,34 @@ export class IdeaService {
   }
 
   /**
+   * Get a topic's workspaceId by reading its metadata directly.
+   * Used to inherit workspaceId when creating ideas linked to topics.
+   */
+  private async getTopicWorkspaceId(topicId: string): Promise<string | undefined> {
+    try {
+      const metaPath = path.join(TOPICS_DIR, `${topicId}.meta.json`);
+      const content = await fs.readFile(metaPath, 'utf-8');
+      const metadata = JSON.parse(content);
+
+      return metadata.workspaceId;
+    } catch {
+      return undefined;
+    }
+  }
+
+  /**
    * Create a new idea.
    */
   async createIdea(userId: string, input: CreateIdeaInput): Promise<Idea> {
     const id = uuidv4();
     const now = new Date().toISOString();
+
+    // If no workspaceId provided but topicIds are, inherit from first topic
+    let workspaceId = input.workspaceId;
+
+    if (!workspaceId && input.topicIds && input.topicIds.length > 0) {
+      workspaceId = await this.getTopicWorkspaceId(input.topicIds[0]);
+    }
 
     const metadata: IdeaMetadata = {
       id,
@@ -401,7 +435,7 @@ export class IdeaService {
       source: input.source || 'user',
       status: 'new',
       ownerId: userId,
-      workspaceId: input.workspaceId,
+      workspaceId,
       topicIds: input.topicIds || [],
       createdAt: now,
       updatedAt: now,

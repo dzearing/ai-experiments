@@ -11,7 +11,7 @@ import { CodeIcon } from '@ui-kit/icons/CodeIcon';
 import { useTopics } from '../../contexts/TopicsContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDocuments } from '../../contexts/DocumentContext';
-import { useTopicIdeas } from '../../hooks/useTopicIdeas';
+import { useIdeasQuery } from '../../hooks/useIdeasQuery';
 import { API_URL } from '../../config';
 import { TopicStylePicker } from './TopicStylePicker';
 import { TopicLinks, type TopicLinksRef } from './TopicLinks';
@@ -279,7 +279,7 @@ export function TopicDetail({
 }: TopicDetailProps) {
   const { user } = useAuth();
   const { getTopic, getChildren, updateTopic } = useTopics();
-  const { ideas } = useTopicIdeas(topicId);
+  const { totalCount: ideasCount } = useIdeasQuery({ topicIds: [topicId] });
   const { documents, fetchDocuments } = useDocuments();
   const [searchParams, setSearchParams] = useSearchParams();
   const [topic, setTopic] = useState<Topic | null>(null);
@@ -452,7 +452,6 @@ export function TopicDetail({
   }, []);
 
   // Calculate counts for tab labels
-  const ideasCount = ideas.length;
   const documentsCount = documents.length;
 
   const handleAddTag = useCallback(async () => {

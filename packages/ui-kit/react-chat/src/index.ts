@@ -1,3 +1,7 @@
+// ChatLayout component - standard layout for chat interfaces
+export { ChatLayout } from './components/ChatLayout';
+export type { ChatLayoutProps } from './components/ChatLayout';
+
 // ChatInput component and related types
 export { ChatInput } from './components/ChatInput';
 export type {

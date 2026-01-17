@@ -21,7 +21,7 @@ export interface MessageQueueProps {
   /** Array of queued messages */
   messages: QueuedMessage[];
   /** Called when a message is removed from queue */
-  onRemove: (id: string) => void;
+  onRemove?: (id: string) => void;
   /** Optional label (defaults to "Queued") */
   label?: string;
   /** Additional CSS class */
@@ -51,13 +51,15 @@ export function MessageQueue({
       {messages.map((msg) => (
         <div key={msg.id} className={styles.item}>
           <span className={styles.content}>{msg.content}</span>
-          <IconButton
-            icon={<CloseIcon />}
-            variant="ghost"
-            size="sm"
-            onClick={() => onRemove(msg.id)}
-            aria-label="Remove from queue"
-          />
+          {onRemove && (
+            <IconButton
+              icon={<CloseIcon />}
+              variant="ghost"
+              size="sm"
+              onClick={() => onRemove(msg.id)}
+              aria-label="Remove from queue"
+            />
+          )}
         </div>
       ))}
     </div>
