@@ -20,7 +20,8 @@
    but overrides background with semi-transparent glass */
 .toolbarUser {
   background: color-mix(in srgb, var(--primary-bg) 80%, transparent);
-  border: 1px solid color-mix(in srgb, var(--primary-border) 50%, transparent);
+  /* Use fg color for border since primary-border is transparent */
+  border: 1px solid color-mix(in srgb, var(--primary-fg) 25%, transparent);
 }
 
 /* Assistant/other message toolbar - glass effect over neutral background */
