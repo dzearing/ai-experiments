@@ -12,7 +12,7 @@ export { IconButton } from './components/IconButton';
 export type { IconButtonProps, IconButtonVariant, IconButtonSize, IconButtonShape } from './components/IconButton';
 
 export { CopyButton } from './components/CopyButton';
-export type { CopyButtonProps, CopyButtonVariant, CopyButtonSize } from './components/CopyButton';
+export type { CopyButtonProps, CopyButtonVariant, CopyButtonSize, CopyButtonShape } from './components/CopyButton';
 
 // Inputs
 export { Input } from './components/Input';

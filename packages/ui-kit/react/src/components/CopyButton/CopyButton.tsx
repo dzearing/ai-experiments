@@ -1,6 +1,6 @@
 import { useState, useCallback, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { Button, type ButtonVariant, type ButtonSize } from '../Button';
-import { IconButton } from '../IconButton';
+import { IconButton, type IconButtonShape } from '../IconButton';
 import { Tooltip } from '../Tooltip';
 import { CopyIcon } from '@ui-kit/icons/CopyIcon';
 import { CheckIcon } from '@ui-kit/icons/CheckIcon';
@@ -25,6 +25,7 @@ import styles from './CopyButton.module.css';
 
 export type CopyButtonVariant = ButtonVariant;
 export type CopyButtonSize = ButtonSize;
+export type CopyButtonShape = IconButtonShape;
 
 export interface CopyButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children' | 'onClick' | 'onError'> {
   /** Static content to copy */
@@ -35,6 +36,8 @@ export interface CopyButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonEle
   variant?: CopyButtonVariant;
   /** Button size */
   size?: CopyButtonSize;
+  /** Button shape for icon-only mode: 'square' (default) or 'round' (circular) */
+  shape?: CopyButtonShape;
   /** Label text (if provided, renders as Button with icon; if omitted, renders as IconButton) */
   children?: ReactNode;
   /** Accessible label for icon-only mode (defaults to "Copy to clipboard") */
@@ -52,6 +55,7 @@ export function CopyButton({
   getContent,
   variant = 'ghost',
   size = 'md',
+  shape = 'square',
   children,
   'aria-label': ariaLabel = 'Copy to clipboard',
   onCopy,
@@ -110,6 +114,7 @@ export function CopyButton({
           icon={icon}
           variant={variant}
           size={size}
+          shape={shape}
           aria-label={ariaLabel}
           onClick={handleCopy}
           disabled={disabled}

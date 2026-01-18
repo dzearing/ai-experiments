@@ -3,4 +3,5 @@ export type {
   CopyButtonProps,
   CopyButtonVariant,
   CopyButtonSize,
+  CopyButtonShape,
 } from './CopyButton';
