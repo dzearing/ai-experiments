@@ -15,19 +15,12 @@
   backdrop-filter: blur(8px);
 }
 
-/* User message toolbar - glass effect over primary background
-   Uses surface primary class for token reset (foreground colors)
-   but overrides background with semi-transparent glass */
-.toolbarUser {
-  background: color-mix(in srgb, var(--primary-bg) 80%, transparent);
-  /* Use fg color for border since primary-border is transparent */
-  border: 1px solid color-mix(in srgb, var(--primary-fg) 25%, transparent);
-}
-
-/* Assistant/other message toolbar - glass effect over neutral background */
+/* Toolbar glass effect - uses strong tokens within surface context
+   Surface class on parent handles token remapping for each context */
+.toolbarUser,
 .toolbarOther {
-  background: color-mix(in srgb, var(--soft-bg) 80%, transparent);
-  border: 1px solid color-mix(in srgb, var(--soft-border) 50%, transparent);
+  background: color-mix(in srgb, var(--strong-bg) 80%, transparent);
+  border: 1px solid color-mix(in srgb, var(--strong-border) 50%, transparent);
 }
 
 /* Timestamp styling - color inherited from surface context */
