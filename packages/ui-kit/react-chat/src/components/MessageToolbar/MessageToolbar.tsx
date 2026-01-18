@@ -76,15 +76,15 @@ export function MessageToolbar({
       <CopyButton
         getContent={getContent}
         variant="ghost"
-        size="sm"
+        size="md"
         shape="round"
         aria-label="Copy message"
       />
       {showEdit && onEdit && (
         <IconButton
-          icon={<EditIcon size={16} />}
+          icon={<EditIcon size={20} />}
           variant="ghost"
-          size="sm"
+          size="md"
           shape="round"
           aria-label="Edit message"
           onClick={onEdit}
