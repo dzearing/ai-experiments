@@ -61,15 +61,14 @@ export function MessageToolbar({
   const toolbarClass = [
     styles.toolbar,
     isOwn ? styles.toolbarUser : styles.toolbarOther,
+    // Surface class provides token reset for nested components
+    isOwn ? 'surface primary' : '',
     className,
   ]
     .filter(Boolean)
     .join(' ');
 
-  const timeClass = [
-    styles.time,
-    isOwn ? styles.timeUser : styles.timeOther,
-  ].join(' ');
+  const timeClass = styles.time;
 
   return (
     <div className={toolbarClass}>
@@ -83,7 +82,7 @@ export function MessageToolbar({
       />
       {showEdit && onEdit && (
         <IconButton
-          icon={<EditIcon />}
+          icon={<EditIcon size={16} />}
           variant="ghost"
           size="sm"
           shape="round"

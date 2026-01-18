@@ -1,0 +1,34 @@
+/* MessageToolbar - Hover toolbar for chat messages */
+
+.toolbar {
+  position: absolute;
+  right: var(--space-2);
+  top: var(--space-2);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  padding-left: var(--space-2);
+  border-radius: var(--radius-full);
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-default);
+  backdrop-filter: blur(8px);
+}
+
+/* User message toolbar - uses surface primary class for token reset */
+.toolbarUser {
+  /* Background comes from surface primary class */
+}
+
+/* Assistant/other message toolbar - over neutral background */
+.toolbarOther {
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
+}
+
+/* Timestamp styling - color inherited from surface context */
+.time {
+  font-size: var(--text-xs);
+  padding-right: var(--space-1);
+  color: var(--base-fg-soft);
+}

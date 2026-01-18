@@ -67,6 +67,9 @@ export function CopyButton({
 }: CopyButtonProps) {
   const [copied, setCopied] = useState(false);
 
+  // Map button size to icon size
+  const iconSize = size === 'sm' ? 16 : size === 'lg' ? 24 : 20;
+
   const handleCopy = useCallback(async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
 
@@ -96,11 +99,11 @@ export function CopyButton({
 
   const icon = copied ? (
     <span className={styles.iconWrapper}>
-      <CheckIcon className={styles.checkIcon} />
+      <CheckIcon size={iconSize} className={styles.checkIcon} />
     </span>
   ) : (
     <span className={styles.iconWrapper}>
-      <CopyIcon />
+      <CopyIcon size={iconSize} />
     </span>
   );
 
