@@ -1,9 +1,11 @@
-import { type ReactNode, type MouseEvent, useState, useEffect, useRef, useCallback, memo } from 'react';
-import { Avatar, Menu, BusyIndicator, Spinner, type MenuItem } from '@ui-kit/react';
+import { type ReactNode, useState, useEffect, useRef, useCallback, memo } from 'react';
+import { Avatar, BusyIndicator, Spinner } from '@ui-kit/react';
 import { CheckIcon } from '@ui-kit/icons/CheckIcon';
 import { ChevronDownIcon } from '@ui-kit/icons/ChevronDownIcon';
 import { XCircleIcon } from '@ui-kit/icons/XCircleIcon';
 import { MarkdownRenderer } from '@ui-kit/react-markdown';
+import { useChatContext } from '../../context';
+import { MessageToolbar } from '../MessageToolbar';
 import styles from './ChatMessage.module.css';
 
 /**
@@ -358,6 +360,16 @@ function shouldHideToolOutput(name: string): boolean {
 }
 
 /**
+ * Extract plain text content from message parts for clipboard copy
+ */
+function extractTextContent(parts: ChatMessagePart[]): string {
+  return parts
+    .filter((p): p is ChatMessageTextPart => p.type === 'text')
+    .map(p => p.text)
+    .join('\n');
+}
+
+/**
  * Props for the ChatMessage component
  */
 export interface ChatMessageProps {
@@ -397,11 +409,11 @@ export interface ChatMessageProps {
   /** Tool calls made during this message (for AI assistants) - DEPRECATED: use parts instead */
   toolCalls?: ChatMessageToolCall[];
 
-  /** Menu items for message actions (edit, delete, etc.) */
-  menuItems?: MenuItem[];
+  /** Enable edit button in toolbar (default: false) */
+  enableEdit?: boolean;
 
-  /** Called when a menu item is selected */
-  onMenuSelect?: (value: string, messageId: string) => void;
+  /** Callback when edit is clicked on toolbar */
+  onEdit?: (messageId: string) => void;
 
   /** Custom avatar element (overrides default Avatar) */
   avatar?: ReactNode;
@@ -411,17 +423,6 @@ export interface ChatMessageProps {
 
   /** Callback when a link is clicked in the message content */
   onLinkClick?: (href: string) => void;
-}
-
-/**
- * Format timestamp as HH:MM
- */
-function formatTime(timestamp: string | number | Date): string {
-  const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
-  return date.toLocaleTimeString(undefined, {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
 }
 
 /**
@@ -496,11 +497,11 @@ function arePropsEqual(prevProps: ChatMessageProps, nextProps: ChatMessageProps)
     }
   }
 
-  // Menu items - reference equality is fine (they rarely change)
-  if (prevProps.menuItems !== nextProps.menuItems) return false;
+  // Edit props
+  if (prevProps.enableEdit !== nextProps.enableEdit) return false;
 
   // Callbacks - reference equality (callers should memoize)
-  if (prevProps.onMenuSelect !== nextProps.onMenuSelect) return false;
+  if (prevProps.onEdit !== nextProps.onEdit) return false;
   if (prevProps.onLinkClick !== nextProps.onLinkClick) return false;
 
   // Avatar - reference equality
@@ -540,12 +541,26 @@ export const ChatMessage = memo(function ChatMessage({
   renderMarkdown = true,
   isStreaming = false,
   toolCalls,
-  menuItems,
-  onMenuSelect,
+  enableEdit = false,
+  onEdit,
   avatar,
   className = '',
   onLinkClick,
 }: ChatMessageProps) {
+  // Try to read chat context (may not exist if ChatMessage used standalone)
+  // chatMode will be used in Phase 2 for mode-aware rendering
+  let chatMode: '1on1' | 'group' = '1on1';
+
+  try {
+    const context = useChatContext();
+
+    chatMode = context.mode;
+  } catch {
+    // ChatMessage used outside ChatProvider - default to 1on1 mode
+  }
+
+  // chatMode is now used for mode-conditional rendering
+
   // Track which tool outputs are expanded (collapsed by default)
   const [expandedTools, setExpandedTools] = useState<Set<string>>(new Set());
   const messageRef = useRef<HTMLDivElement>(null);
@@ -597,22 +612,21 @@ export const ChatMessage = memo(function ChatMessage({
     }
   }, []);
 
-  const handleMenuSelect = (value: string) => {
-    onMenuSelect?.(value, id);
-  };
-
-  const handleTimestampClick = (e: MouseEvent) => {
-    // Prevent click from bubbling if there's no menu
-    if (!menuItems || menuItems.length === 0) {
-      e.preventDefault();
-    }
-  };
-
   // Convert legacy content/toolCalls to parts format if parts not provided
   const messageParts: ChatMessagePart[] = parts ?? [
     ...(content ? [{ type: 'text' as const, text: content }] : []),
     ...(toolCalls && toolCalls.length > 0 ? [{ type: 'tool_calls' as const, calls: toolCalls }] : []),
   ];
+
+  // Callback to get message content for clipboard copy
+  const getContent = useCallback(() => {
+    return extractTextContent(messageParts);
+  }, [messageParts]);
+
+  // Callback when edit button is clicked
+  const handleEdit = useCallback(() => {
+    onEdit?.(id);
+  }, [onEdit, id]);
 
   // Get first text content for system messages
   const firstTextPart = messageParts.find((p): p is ChatMessageTextPart => p.type === 'text');
@@ -641,185 +655,201 @@ export const ChatMessage = memo(function ChatMessage({
 
   const messageClasses = [
     styles.message,
+    // 1-on-1 mode classes
+    chatMode === '1on1' && styles.oneOnOneMessage,
+    chatMode === '1on1' && isOwn && styles.oneOnOneUserMessage,
+    chatMode === '1on1' && !isOwn && styles.oneOnOneAssistantMessage,
+    // Group mode classes
+    chatMode === 'group' && styles.groupMessage,
+    chatMode === 'group' && isOwn && styles.groupMessageUser,
+    chatMode === 'group' && !isOwn && styles.groupMessageOther,
+    // Shared classes
     isConsecutive && styles.consecutive,
-    isOwn && styles.highlighted,
+    isOwn && chatMode !== '1on1' && styles.highlighted, // Only apply highlighted in group mode
     className,
   ]
     .filter(Boolean)
     .join(' ');
 
-  const avatarColumnClasses = [
-    styles.avatarColumn,
-    isConsecutive && styles.hidden,
-  ]
-    .filter(Boolean)
-    .join(' ');
+  // Helper to render message content (reused in both modes)
+  const renderMessageContent = () => (
+    <>
+      {messageParts.map((part, partIndex) => {
+        // Skip invalid parts (defensive against malformed data)
+        if (!part || typeof part !== 'object') {
+          console.warn('[ChatMessage] Invalid part at index', partIndex, ':', part);
+          return null;
+        }
 
-  const formattedTime = formatTime(timestamp);
-  const hasMenu = menuItems && menuItems.length > 0;
+        if (part.type === 'text') {
+          // Ensure text is a string (defensive against malformed data)
+          const textContent = typeof part.text === 'string' ? part.text : String(part.text ?? '');
+          return (
+            <div key={partIndex} className={styles.textPart}>
+              {renderMarkdown ? (
+                <MarkdownRenderer
+                  content={textContent}
+                  enableDeepLinks={false}
+                  showLineNumbers={false}
+                  imageAuthor={senderName}
+                  imageTimestamp={typeof timestamp === 'string' ? timestamp : new Date(timestamp).toISOString()}
+                  className={styles.markdownContent}
+                  onDeepLinkClick={onLinkClick}
+                />
+              ) : (
+                <p className={styles.plainText}>{textContent}</p>
+              )}
+            </div>
+          );
+        }
 
-  return (
-    <div ref={messageRef} className={messageClasses} data-message-id={id}>
-      {/* Column 1: Avatar + Name */}
-      <div className={avatarColumnClasses}>
-        {!isConsecutive && (
-          <>
-            {avatar || (
-              <Avatar
-                size="xs"
-                fallback={senderName}
-                color={senderColor}
-              />
-            )}
-            <span
-              className={styles.senderName}
-              style={senderColor ? { color: senderColor } : undefined}
-            >
-              {senderName}
-            </span>
-          </>
-        )}
-      </div>
+        if (part.type === 'tool_calls') {
+          // Ensure calls is an array (defensive against malformed data)
+          const calls = Array.isArray(part.calls) ? part.calls : [];
+          return (
+            <div key={partIndex} className={styles.toolCalls}>
+              {calls.map((toolCall, toolIndex) => {
+                // Check for cancelled state first
+                const isCancelled = toolCall.cancelled ?? false;
+                // Use `completed` field if available, otherwise fall back to checking output
+                const isComplete = toolCall.completed ?? !!toolCall.output;
+                // Ensure output is a string, treat '__complete__' as empty (no box to show)
+                const rawOutput = typeof toolCall.output === 'string' ? toolCall.output : '';
+                const outputText = rawOutput === '__complete__' ? '' : rawOutput;
+                const hasOutput = isComplete && outputText && !shouldHideToolOutput(toolCall.name);
+                const toolKey = `${partIndex}-${toolIndex}`;
+                const isExpanded = expandedTools.has(toolKey);
 
-      {/* Column 2: Timestamp (with optional menu for own messages) */}
-      {hasMenu ? (
-        <Menu
-          items={menuItems}
-          onSelect={handleMenuSelect}
-          position="bottom-start"
-        >
-          <button
-            type="button"
-            className={styles.timestampButton}
-            onClick={handleTimestampClick}
-          >
-            {formattedTime}
-          </button>
-        </Menu>
-      ) : (
-        <span className={styles.timestamp}>{formattedTime}</span>
-      )}
+                // Determine the status class
+                let statusClass = styles.toolRunning;
 
-      {/* Column 3: Content - render parts in order */}
-      <div className={styles.content}>
-        {messageParts.map((part, partIndex) => {
-          // Skip invalid parts (defensive against malformed data)
-          if (!part || typeof part !== 'object') {
-            console.warn('[ChatMessage] Invalid part at index', partIndex, ':', part);
-            return null;
-          }
+                if (isCancelled) {
+                  statusClass = styles.toolCancelled;
+                } else if (isComplete) {
+                  statusClass = styles.toolComplete;
+                }
 
-          if (part.type === 'text') {
-            // Ensure text is a string (defensive against malformed data)
-            const textContent = typeof part.text === 'string' ? part.text : String(part.text ?? '');
-            return (
-              <div key={partIndex} className={styles.textPart}>
-                {renderMarkdown ? (
-                  <MarkdownRenderer
-                    content={textContent}
-                    enableDeepLinks={false}
-                    showLineNumbers={false}
-                    imageAuthor={senderName}
-                    imageTimestamp={typeof timestamp === 'string' ? timestamp : new Date(timestamp).toISOString()}
-                    className={styles.markdownContent}
-                    onDeepLinkClick={onLinkClick}
-                  />
-                ) : (
-                  <p className={styles.plainText}>{textContent}</p>
-                )}
-              </div>
-            );
-          }
-
-          if (part.type === 'tool_calls') {
-            // Ensure calls is an array (defensive against malformed data)
-            const calls = Array.isArray(part.calls) ? part.calls : [];
-            return (
-              <div key={partIndex} className={styles.toolCalls}>
-                {calls.map((toolCall, toolIndex) => {
-                  // Check for cancelled state first
-                  const isCancelled = toolCall.cancelled ?? false;
-                  // Use `completed` field if available, otherwise fall back to checking output
-                  const isComplete = toolCall.completed ?? !!toolCall.output;
-                  // Ensure output is a string, treat '__complete__' as empty (no box to show)
-                  const rawOutput = typeof toolCall.output === 'string' ? toolCall.output : '';
-                  const outputText = rawOutput === '__complete__' ? '' : rawOutput;
-                  const hasOutput = isComplete && outputText && !shouldHideToolOutput(toolCall.name);
-                  const toolKey = `${partIndex}-${toolIndex}`;
-                  const isExpanded = expandedTools.has(toolKey);
-
-                  // Determine the status class
-                  let statusClass = styles.toolRunning;
-
+                // Determine which icon to show
+                const renderIcon = () => {
                   if (isCancelled) {
-                    statusClass = styles.toolCancelled;
-                  } else if (isComplete) {
-                    statusClass = styles.toolComplete;
+                    return <XCircleIcon />;
+                  }
+                  if (isComplete) {
+                    return <CheckIcon />;
                   }
 
-                  // Determine which icon to show
-                  const renderIcon = () => {
-                    if (isCancelled) {
-                      return <XCircleIcon />;
-                    }
-                    if (isComplete) {
-                      return <CheckIcon />;
-                    }
+                  return <Spinner size="sm" />;
+                };
 
-                    return <Spinner size="sm" />;
-                  };
-
-                  return (
-                    <div key={toolIndex} className={styles.toolCallWrapper}>
-                      <button
-                        type="button"
-                        className={`${styles.toolCall} ${statusClass} ${hasOutput ? styles.toolExpandable : ''}`}
-                        onClick={hasOutput ? () => toggleToolExpanded(toolKey) : undefined}
-                        disabled={!hasOutput}
-                      >
-                        <span className={styles.toolIcon}>
-                          {renderIcon()}
+                return (
+                  <div key={toolIndex} className={styles.toolCallWrapper}>
+                    <button
+                      type="button"
+                      className={`${styles.toolCall} ${statusClass} ${hasOutput ? styles.toolExpandable : ''}`}
+                      onClick={hasOutput ? () => toggleToolExpanded(toolKey) : undefined}
+                      disabled={!hasOutput}
+                    >
+                      <span className={styles.toolIcon}>
+                        {renderIcon()}
+                      </span>
+                      <span className={styles.toolDescription}>
+                        {formatToolDescription(toolCall.name, toolCall.input)}
+                      </span>
+                      <ToolTimer
+                        startTime={toolCall.startTime}
+                        isComplete={isComplete || isCancelled}
+                        duration={toolCall.duration}
+                      />
+                      {hasOutput && (
+                        <span className={`${styles.toolChevron} ${isExpanded ? styles.toolChevronExpanded : ''}`}>
+                          <ChevronDownIcon />
                         </span>
-                        <span className={styles.toolDescription}>
-                          {formatToolDescription(toolCall.name, toolCall.input)}
-                        </span>
-                        <ToolTimer
-                          startTime={toolCall.startTime}
-                          isComplete={isComplete || isCancelled}
-                          duration={toolCall.duration}
-                        />
-                        {hasOutput && (
-                          <span className={`${styles.toolChevron} ${isExpanded ? styles.toolChevronExpanded : ''}`}>
-                            <ChevronDownIcon />
-                          </span>
-                        )}
-                      </button>
-                      {hasOutput && isExpanded && (
-                        <div className={styles.toolResult}>
-                          <pre className={styles.toolResultContent}>
-                            {outputText}
-                          </pre>
-                        </div>
                       )}
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          }
+                    </button>
+                    {hasOutput && isExpanded && (
+                      <div className={styles.toolResult}>
+                        <pre className={styles.toolResultContent}>
+                          {outputText}
+                        </pre>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        }
 
-          return null;
-        })}
+        return null;
+      })}
 
-        {/* Streaming indicator */}
-        {isStreaming && (
-          <BusyIndicator
-            size="md"
-            label="Generating response"
-            className={styles.streamingIndicator}
+      {/* Streaming indicator */}
+      {isStreaming && (
+        <BusyIndicator
+          size="md"
+          label="Generating response"
+          className={styles.streamingIndicator}
+        />
+      )}
+    </>
+  );
+
+  return (
+    <div
+      ref={messageRef}
+      className={messageClasses}
+      data-message-id={id}
+      data-consecutive={chatMode === 'group' ? (isConsecutive ? 'true' : 'false') : undefined}
+    >
+      {/* GROUP MODE: Avatar + MessageBody (name above content) */}
+      {chatMode === 'group' && (
+        <>
+          {/* Hover toolbar with timestamp and actions */}
+          <MessageToolbar
+            timestamp={timestamp}
+            getContent={getContent}
+            isOwn={isOwn}
+            showEdit={enableEdit}
+            onEdit={handleEdit}
+            className={styles.messageToolbar}
           />
-        )}
-      </div>
+
+          {/* Avatar - always in DOM for layout, visibility controlled by CSS */}
+          <div className={styles.groupSenderIndicator} style={senderColor ? { background: senderColor } : undefined}>
+            {avatar || (
+              <Avatar size="xs" fallback={senderName} color={senderColor} />
+            )}
+          </div>
+
+          {/* Message body with sender name and content */}
+          <div className={styles.groupMessageBody}>
+            <div className={`${styles.groupSenderName} ${isOwn ? styles.groupSenderNameUser : styles.groupSenderNameOther}`}>
+              {senderName}
+            </div>
+            <div className={styles.groupContent}>
+              {renderMessageContent()}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* 1-ON-1 MODE: Just content (no avatar/timestamp columns) */}
+      {chatMode === '1on1' && (
+        <>
+          {/* Hover toolbar with timestamp and actions */}
+          <MessageToolbar
+            timestamp={timestamp}
+            getContent={getContent}
+            isOwn={isOwn}
+            showEdit={enableEdit}
+            onEdit={handleEdit}
+            className={styles.messageToolbar}
+          />
+          <div className={styles.content}>
+            {renderMessageContent()}
+          </div>
+        </>
+      )}
     </div>
   );
 }, arePropsEqual);
