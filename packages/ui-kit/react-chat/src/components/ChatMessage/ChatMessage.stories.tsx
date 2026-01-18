@@ -27,11 +27,11 @@ Displays a single message in a chat interface with support for avatars, markdown
 | **Consecutive grouping** | Hides redundant avatars for messages from same sender |
 | **Streaming** | Animated indicator for AI responses being generated |
 | **Tool calls** | Display AI tool/function calls with status |
-| **Menu actions** | Optional dropdown menu for edit, delete, etc. |
+| **Hover toolbar** | Shows timestamp, copy, and optional edit on hover |
 
 ## Accessibility
 
-- Timestamps are accessible via keyboard when menu is present
+- Toolbar buttons are keyboard accessible via focus-within
 - Streaming indicator has \`aria-label\` for screen readers
 - Message IDs available via \`data-message-id\` attribute
 
@@ -53,7 +53,7 @@ import { ChatMessage } from '@ui-kit/react-chat';
     },
   },
   args: {
-    onMenuSelect: (value, messageId) => console.log('Menu selected:', value, messageId),
+    onEdit: (messageId) => console.log('Edit clicked:', messageId),
   },
   argTypes: {
     id: {
@@ -199,25 +199,39 @@ export const WithToolCalls: Story = {
   },
 };
 
-export const WithMenu: Story = {
+export const WithEditEnabled: Story = {
   args: {
     id: 'msg-6',
-    content: 'Click the timestamp to see the action menu.',
+    content: 'This message has edit enabled. Hover to see the toolbar with copy and edit buttons.',
     timestamp: now,
     senderName: 'You',
     senderColor: '#10b981',
     isOwn: true,
-    menuItems: [
-      { label: 'Edit', value: 'edit' },
-      { label: 'Copy', value: 'copy' },
-      { type: 'separator' },
-      { label: 'Delete', value: 'delete' },
-    ],
+    enableEdit: true,
+    onEdit: (messageId) => console.log('Edit clicked:', messageId),
   },
   parameters: {
     docs: {
       description: {
-        story: 'Messages can have an action menu accessible by clicking the timestamp.',
+        story: 'User messages can have an edit button in the toolbar when `enableEdit={true}`.',
+      },
+    },
+  },
+};
+
+export const AssistantWithToolbar: Story = {
+  args: {
+    id: 'msg-7',
+    content: 'This is an assistant message. Hover to see the toolbar with timestamp and copy button. The toolbar has different styling for assistant messages.',
+    timestamp: now,
+    senderName: 'Assistant',
+    senderColor: '#6366f1',
+    isOwn: false,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Assistant messages show a toolbar with different styling (neutral background instead of primary).',
       },
     },
   },
@@ -225,7 +239,7 @@ export const WithMenu: Story = {
 
 export const PlainText: Story = {
   args: {
-    id: 'msg-7',
+    id: 'msg-8',
     content: 'This message is rendered as plain text, not markdown.\n\nLine breaks are preserved.',
     timestamp: now,
     senderName: 'User',
