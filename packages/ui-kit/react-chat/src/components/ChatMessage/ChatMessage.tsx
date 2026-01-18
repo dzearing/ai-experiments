@@ -663,6 +663,8 @@ export const ChatMessage = memo(function ChatMessage({
     chatMode === 'group' && styles.groupMessage,
     chatMode === 'group' && isOwn && styles.groupMessageUser,
     chatMode === 'group' && !isOwn && styles.groupMessageOther,
+    // Surface class for user messages - enables token remapping for nested components
+    isOwn && 'surface primary',
     // Shared classes
     isConsecutive && styles.consecutive,
     isOwn && chatMode !== '1on1' && styles.highlighted, // Only apply highlighted in group mode

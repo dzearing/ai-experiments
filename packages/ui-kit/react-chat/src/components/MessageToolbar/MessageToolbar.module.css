@@ -1,4 +1,5 @@
-/* MessageToolbar - Hover toolbar for chat messages */
+/* MessageToolbar - Hover toolbar for chat messages
+   Uses strong tokens - parent surface class handles context remapping */
 
 .toolbar {
   position: absolute;
@@ -13,20 +14,14 @@
   opacity: 0;
   transition: opacity var(--duration-fast) var(--ease-default);
   backdrop-filter: blur(8px);
-}
-
-/* Toolbar glass effect - uses strong tokens within surface context
-   Surface class on parent handles token remapping for each context */
-.toolbarUser,
-.toolbarOther {
   background: color-mix(in srgb, var(--strong-bg) 80%, transparent);
   border: 1px solid color-mix(in srgb, var(--strong-border) 50%, transparent);
 }
 
-/* Timestamp styling - color inherited from surface context */
+/* Timestamp styling - uses strong tokens, remapped by parent surface */
 .time {
   font-size: var(--text-xs);
   padding-right: var(--space-1);
-  color: var(--base-fg-soft);
+  color: var(--strong-fg-soft);
   user-select: none;
 }

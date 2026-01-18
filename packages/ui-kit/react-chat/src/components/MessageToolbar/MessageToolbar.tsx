@@ -60,9 +60,6 @@ export function MessageToolbar({
 
   const toolbarClass = [
     styles.toolbar,
-    isOwn ? styles.toolbarUser : styles.toolbarOther,
-    // Surface class provides token reset for nested components
-    isOwn ? 'surface primary' : '',
     className,
   ]
     .filter(Boolean)
