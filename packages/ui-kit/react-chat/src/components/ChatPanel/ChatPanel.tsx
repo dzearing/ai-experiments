@@ -1,5 +1,5 @@
 import { type ReactNode, useRef, memo, useCallback } from 'react';
-import { ChatMessage, type ChatMessageToolCall, type ChatMessagePart } from '../ChatMessage';
+import { ChatMessage, type ChatMessageToolCall, type ChatMessagePart, type ChatMessageProps } from '../ChatMessage';
 import { useScrollLock } from '../../hooks/useScrollLock';
 import styles from './ChatPanel.module.css';
 
@@ -70,6 +70,9 @@ export interface ChatPanelProps {
 
   /** Called when a link is clicked in a message */
   onLinkClick?: (href: string) => void;
+
+  /** Custom renderer for tool results in messages */
+  renderToolResult?: ChatMessageProps['renderToolResult'];
 }
 
 /**
@@ -100,6 +103,7 @@ export const ChatPanel = memo(function ChatPanel({
   className = '',
   renderAvatar,
   onLinkClick,
+  renderToolResult,
 }: ChatPanelProps) {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
@@ -147,6 +151,7 @@ export const ChatPanel = memo(function ChatPanel({
                 renderMarkdown={message.renderMarkdown ?? true}
                 avatar={renderAvatar ? renderAvatar(message) : message.avatar}
                 onLinkClick={onLinkClick}
+                renderToolResult={renderToolResult}
               />
             );
           })}

@@ -423,6 +423,15 @@ export interface ChatMessageProps {
 
   /** Callback when a link is clicked in the message content */
   onLinkClick?: (href: string) => void;
+
+  /** Custom renderer for tool results. If not provided, uses default pre block. */
+  renderToolResult?: (props: {
+    toolName: string;
+    input: Record<string, unknown>;
+    output: string;
+    isExpanded: boolean;
+    onToggleExpand: () => void;
+  }) => ReactNode;
 }
 
 /**
@@ -503,6 +512,7 @@ function arePropsEqual(prevProps: ChatMessageProps, nextProps: ChatMessageProps)
   // Callbacks - reference equality (callers should memoize)
   if (prevProps.onEdit !== nextProps.onEdit) return false;
   if (prevProps.onLinkClick !== nextProps.onLinkClick) return false;
+  if (prevProps.renderToolResult !== nextProps.renderToolResult) return false;
 
   // Avatar - reference equality
   if (prevProps.avatar !== nextProps.avatar) return false;
@@ -546,6 +556,7 @@ export const ChatMessage = memo(function ChatMessage({
   avatar,
   className = '',
   onLinkClick,
+  renderToolResult,
 }: ChatMessageProps) {
   // Try to read chat context (may not exist if ChatMessage used standalone)
   // chatMode will be used in Phase 2 for mode-aware rendering
@@ -788,9 +799,19 @@ export const ChatMessage = memo(function ChatMessage({
                     </button>
                     {hasOutput && isExpanded && (
                       <div className={styles.toolResult}>
-                        <pre className={styles.toolResultContent}>
-                          {outputText}
-                        </pre>
+                        {renderToolResult ? (
+                          renderToolResult({
+                            toolName: toolCall.name,
+                            input: toolCall.input ?? {},
+                            output: outputText,
+                            isExpanded,
+                            onToggleExpand: () => toggleToolExpanded(toolKey),
+                          })
+                        ) : (
+                          <pre className={styles.toolResultContent}>
+                            {outputText}
+                          </pre>
+                        )}
                       </div>
                     )}
                   </div>
