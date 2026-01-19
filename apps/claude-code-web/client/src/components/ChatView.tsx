@@ -1,13 +1,28 @@
 import { useState, useEffect } from 'react';
 import { Button, Input } from '@ui-kit/react';
 
-import { useAgentStream } from '../hooks/useAgentStream';
+import type { ChatPanelMessage, ChatMessagePart } from '@ui-kit/react-chat';
+import { useConversation } from '../hooks/useConversation';
 import styles from './ChatView.module.css';
 
 interface HealthStatus {
   status: string;
   timestamp: string;
   version: string;
+}
+
+/**
+ * Extracts text content from message parts.
+ */
+function getMessageText(parts?: ChatMessagePart[]): string {
+  if (!parts) {
+    return '';
+  }
+
+  return parts
+    .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
+    .map(p => p.text)
+    .join('\n');
 }
 
 export function ChatView() {
@@ -19,11 +34,12 @@ export function ChatView() {
   const {
     messages,
     isStreaming,
-    isConnected,
+    isThinking,
+    sessionId,
     error: streamError,
-    startStream,
-    clearMessages
-  } = useAgentStream();
+    sendMessage,
+    clearConversation,
+  } = useConversation();
 
   const checkHealth = async () => {
     setHealthLoading(true);
@@ -54,9 +70,30 @@ export function ChatView() {
     e.preventDefault();
 
     if (inputValue.trim() && !isStreaming) {
-      startStream(inputValue.trim());
+      sendMessage(inputValue.trim());
       setInputValue('');
     }
+  };
+
+  const renderMessage = (msg: ChatPanelMessage, index: number) => {
+    const text = getMessageText(msg.parts);
+    const messageType = msg.isOwn ? 'user' : 'assistant';
+
+    return (
+      <div
+        key={msg.id || index}
+        className={`${styles.message} ${styles[messageType] || ''}`}
+      >
+        <span className={styles.messageType}>{messageType}</span>
+        {msg.isStreaming && (
+          <span className={styles.messageSubtype}>(streaming)</span>
+        )}
+        {text && <p className={styles.messageText}>{text}</p>}
+        {msg.senderName && (
+          <p className={styles.messageMeta}>From: {msg.senderName}</p>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -66,9 +103,9 @@ export function ChatView() {
           <h2>Server Status</h2>
           <div className={styles.connectionIndicator}>
             <span
-              className={`${styles.connectionDot} ${isConnected ? styles.connected : ''}`}
+              className={`${styles.connectionDot} ${sessionId ? styles.connected : ''}`}
             />
-            {isConnected ? 'Connected' : 'Disconnected'}
+            {sessionId ? 'Session Active' : 'No Session'}
           </div>
         </div>
         {healthLoading && <p className={styles.loading}>Checking connection...</p>}
@@ -87,6 +124,16 @@ export function ChatView() {
             </p>
           </div>
         )}
+        {sessionId && (
+          <p className={styles.sessionInfo}>
+            <strong>Session:</strong> {sessionId.slice(0, 8)}...
+          </p>
+        )}
+        {isThinking && (
+          <p className={styles.thinkingIndicator}>
+            Claude is thinking...
+          </p>
+        )}
         <Button onClick={checkHealth} disabled={healthLoading}>
           Refresh Status
         </Button>
@@ -99,21 +146,7 @@ export function ChatView() {
               Send a message to test the SSE connection
             </p>
           ) : (
-            messages.map((msg, index) => (
-              <div
-                key={index}
-                className={`${styles.message} ${styles[msg.type] || ''}`}
-              >
-                <span className={styles.messageType}>{msg.type}</span>
-                {msg.subtype && (
-                  <span className={styles.messageSubtype}>({msg.subtype})</span>
-                )}
-                {msg.text && <p className={styles.messageText}>{msg.text}</p>}
-                {msg.connectionId && (
-                  <p className={styles.messageMeta}>ID: {msg.connectionId}</p>
-                )}
-              </div>
-            ))
+            messages.map(renderMessage)
           )}
           {isStreaming && (
             <div className={styles.streamingIndicator}>
@@ -139,7 +172,7 @@ export function ChatView() {
           </Button>
           <Button
             type="button"
-            onClick={clearMessages}
+            onClick={clearConversation}
             disabled={messages.length === 0}
           >
             Clear
