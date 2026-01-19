@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-19)
 
 **Core value:** Everything you can do in Claude Code CLI, you can do in this web app
-**Current focus:** Phase 2 - Core Streaming (IN PROGRESS)
+**Current focus:** Phase 3 - Essential Tools (IN PROGRESS)
 
 ## Current Position
 
-Phase: 2 of 10 (Core Streaming)
-Plan: 2 of 4 in current phase
+Phase: 3 of 10 (Essential Tools)
+Plan: 1 of 4 in current phase
 Status: In progress
-Last activity: 2026-01-19 - Completed 02-02-PLAN.md
+Last activity: 2026-01-19 - Completed 03-01-PLAN.md
 
-Progress: [████░░░░░░] 14% (5/35 plans)
+Progress: [██████░░░░] 17% (6/35 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
-- Average duration: 4.2 min
-- Total execution time: 20.7 min
+- Total plans completed: 6
+- Average duration: 4.0 min
+- Total execution time: 23.7 min
 
 **By Phase:**
 
@@ -29,9 +29,10 @@ Progress: [████░░░░░░] 14% (5/35 plans)
 |-------|-------|-------|----------|
 | 1-Infrastructure | 3/3 | 14.5 min | 4.8 min |
 | 2-Core Streaming | 2/4 | 6.2 min | 3.1 min |
+| 3-Essential Tools | 1/4 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-02 (8m), 01-03 (3.5m), 02-01 (2.2m), 02-02 (4m)
+- Last 5 plans: 01-03 (3.5m), 02-01 (2.2m), 02-02 (4m), 03-01 (3m)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -60,6 +61,9 @@ Recent decisions affecting current work:
 - Thinking blocks tracked separately from text content
 - StreamingState ref used for rapid delta accumulation without re-renders
 - useConversation wraps useAgentStream for clean conversation API
+- Path validation uses path.resolve() to prevent traversal attacks
+- Directory listings sorted: directories first, then files alphabetically
+- detectLanguage defaults to 'plaintext' for unknown extensions
 
 ### Pending Todos
 
@@ -71,6 +75,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-19T21:15:04Z
-Stopped at: Completed 02-02-PLAN.md
+Last session: 2026-01-19T22:44:44Z
+Stopped at: Completed 03-01-PLAN.md
 Resume file: None
