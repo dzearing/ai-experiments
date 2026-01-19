@@ -2,63 +2,23 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: var(--spacing);
-  gap: var(--spacing);
+  background: var(--color-body-background);
 }
 
-.statusPanel {
-  background: var(--color-panel-background);
-  border-radius: var(--radius-card);
-  padding: var(--spacing);
-  box-shadow: var(--shadow-card);
-}
-
-.statusHeader {
+.header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--spacing-small10);
+  padding: var(--spacing) var(--spacing-large10);
+  border-bottom: 1px solid var(--color-body-border);
+  background: var(--color-panel-background);
+  flex-shrink: 0;
 }
 
-.statusHeader h2 {
+.title {
   margin: 0;
   font-size: var(--font-size-h3);
-  color: var(--color-body-text);
-}
-
-.connectionIndicator {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-small10);
-  font-size: var(--font-size-small);
-  color: var(--color-body-textSoft10);
-}
-
-.connectionDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--color-danger-background);
-}
-
-.connectionDot.connected {
-  background: var(--color-success-background);
-}
-
-.loading {
-  color: var(--color-body-textSoft10);
-}
-
-.error {
-  color: var(--color-danger-text);
-}
-
-.status {
-  margin-bottom: var(--spacing);
-}
-
-.status p {
-  margin: var(--spacing-small10) 0;
+  font-weight: var(--font-weight-semibold);
   color: var(--color-body-text);
 }
 
@@ -66,87 +26,32 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: var(--color-panel-background);
-  border-radius: var(--radius-card);
+  overflow: hidden;
+  position: relative;
+}
+
+.chatPanel {
+  flex: 1;
   overflow: hidden;
 }
 
-.messageList {
-  flex: 1;
-  overflow-y: auto;
-  padding: var(--spacing);
-}
-
-.placeholder {
-  color: var(--color-body-textSoft20);
-  text-align: center;
-  padding: var(--spacing-large10);
-}
-
-.message {
-  margin-bottom: var(--spacing-small10);
-  padding: var(--spacing-small10);
-  background: var(--color-body-backgroundSoft05);
-  border-radius: var(--radius-button);
-}
-
-.message.connection {
-  border-left: 3px solid var(--color-info-background);
-}
-
-.message.assistant {
-  border-left: 3px solid var(--color-primary-background);
-}
-
-.message.result {
-  border-left: 3px solid var(--color-success-background);
-}
-
-.message.error {
-  border-left: 3px solid var(--color-danger-background);
-}
-
-.messageType {
-  font-weight: var(--font-weight-medium);
-  color: var(--color-body-text);
-}
-
-.messageSubtype {
-  margin-left: var(--spacing-small10);
-  color: var(--color-body-textSoft10);
-  font-size: var(--font-size-small);
-}
-
-.messageText {
-  margin: var(--spacing-small10) 0 0 0;
-  color: var(--color-body-text);
-}
-
-.messageMeta {
-  margin: var(--spacing-small10) 0 0 0;
-  font-size: var(--font-size-small);
-  color: var(--color-body-textSoft20);
-  font-family: var(--font-family-mono);
-}
-
-.streamingIndicator {
-  padding: var(--spacing-small10);
-  color: var(--color-info-text);
-  font-style: italic;
-}
-
-.streamError {
-  padding: var(--spacing-small10);
-  color: var(--color-danger-text);
-}
-
-.inputForm {
-  display: flex;
-  gap: var(--spacing-small10);
-  padding: var(--spacing);
+.thinkingArea {
+  padding: var(--spacing-small10) var(--spacing);
+  background: var(--color-panel-background);
   border-top: 1px solid var(--color-body-border);
 }
 
-.inputForm input {
-  flex: 1;
+.error {
+  padding: var(--spacing-small10) var(--spacing);
+  background: var(--color-danger-backgroundSoft);
+  color: var(--color-danger-text);
+  font-size: var(--font-size-small);
+  border-top: 1px solid var(--color-danger-border);
+}
+
+.inputArea {
+  padding: var(--spacing);
+  background: var(--color-panel-background);
+  border-top: 1px solid var(--color-body-border);
+  flex-shrink: 0;
 }
