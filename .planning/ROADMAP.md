@@ -13,7 +13,7 @@ This roadmap delivers a full-parity web clone of Claude Code in 10 phases. We st
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Infrastructure Foundation** - Server/client scaffolding with Agent SDK integration
-- [ ] **Phase 2: Core Streaming** - Message streaming and basic conversation flow
+- [x] **Phase 2: Core Streaming** - Message streaming and basic conversation flow
 - [ ] **Phase 3: Essential Tools** - File and search tools with UI visualization
 - [ ] **Phase 4: Permissions & Modes** - Permission dialogs and execution modes
 - [ ] **Phase 5: Configuration System** - CLAUDE.md, settings, and rules loading
@@ -55,9 +55,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Server SDK streaming endpoint with SDKMessage forwarding
-- [ ] 02-02-PLAN.md — Client message transformation and conversation hooks
-- [ ] 02-03-PLAN.md — Chat UI with streaming, thinking, and context display
+- [x] 02-01-PLAN.md — Server SDK streaming endpoint with SDKMessage forwarding
+- [x] 02-02-PLAN.md — Client message transformation and conversation hooks
+- [x] 02-03-PLAN.md — Chat UI with streaming, thinking, and context display
 
 ### Phase 3: Essential Tools
 **Goal**: Core file and search tools work with visual feedback
@@ -69,13 +69,13 @@ Plans:
   3. Grep tool searches content and shows matches
   4. Tool execution shows progress indicator while running
   5. Tool results collapse/expand and file paths are clickable
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 03-01: Tool execution pipeline and progress indicators
-- [ ] 03-02: Read tool with syntax highlighting
-- [ ] 03-03: Glob and Grep tools with results display
-- [ ] 03-04: File tree browser and diff viewer components
+- [ ] 03-01-PLAN.md — Server file API and client tool transformers
+- [ ] 03-02-PLAN.md — Read tool visualization with syntax highlighting
+- [ ] 03-03-PLAN.md — Glob and Grep result display components
+- [ ] 03-04-PLAN.md — File browser and viewer components
 
 ### Phase 4: Permissions & Modes
 **Goal**: Users can approve/deny tool usage and switch execution modes
@@ -214,8 +214,8 @@ Note: Phases 5 and 8 (Configuration, Commands) can run in parallel with Phases 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Infrastructure Foundation | 3/3 | Complete | 2026-01-19 |
-| 2. Core Streaming | 0/3 | Planned | - |
-| 3. Essential Tools | 0/4 | Not started | - |
+| 2. Core Streaming | 3/3 | Complete | 2026-01-19 |
+| 3. Essential Tools | 0/4 | Planned | - |
 | 4. Permissions & Modes | 0/3 | Not started | - |
 | 5. Configuration System | 0/2 | Not started | - |
 | 6. Extended Tools | 0/4 | Not started | - |
@@ -226,4 +226,4 @@ Note: Phases 5 and 8 (Configuration, Commands) can run in parallel with Phases 3
 
 ---
 *Roadmap created: 2026-01-19*
-*Last updated: 2026-01-19 - Phase 2 planned*
+*Last updated: 2026-01-19 - Phase 3 planned*
