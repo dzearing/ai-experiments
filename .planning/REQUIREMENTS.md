@@ -253,7 +253,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UI-09 | Phase 8 | Pending |
 | UI-10 | Phase 8 | Pending |
 | UI-11 | Phase 6 | Pending |
-| UI-12 | Phase 3 | Pending |
+| UI-12 | Phase 6 | Pending |
 | UI-13 | Phase 3 | Pending |
 | UI-14 | Phase 10 | Pending |
 | UI-15 | Phase 10 | Pending |
@@ -274,4 +274,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-19*
-*Last updated: 2026-01-19 - Phase 1 requirements complete*
+*Last updated: 2026-01-19 - UI-12 moved from Phase 3 to Phase 6 (diff viewer belongs with Edit tools)*

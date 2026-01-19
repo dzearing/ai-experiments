@@ -62,7 +62,7 @@ Plans:
 ### Phase 3: Essential Tools
 **Goal**: Core file and search tools work with visual feedback
 **Depends on**: Phase 2
-**Requirements**: TOOL-01, TOOL-06, TOOL-07, TOOL-11, TOOL-12, UI-05, UI-06, UI-12, UI-13
+**Requirements**: TOOL-01, TOOL-06, TOOL-07, TOOL-11, TOOL-12, UI-05, UI-06, UI-13
 **Success Criteria** (what must be TRUE):
   1. Read tool displays file contents with syntax highlighting
   2. Glob tool finds files and displays results
@@ -113,7 +113,7 @@ Plans:
 ### Phase 6: Extended Tools
 **Goal**: All remaining tools work (Bash, Write, Edit, Web, Notebook)
 **Depends on**: Phase 4
-**Requirements**: TOOL-02, TOOL-03, TOOL-04, TOOL-05, TOOL-08, TOOL-09, TOOL-10, UI-11
+**Requirements**: TOOL-02, TOOL-03, TOOL-04, TOOL-05, TOOL-08, TOOL-09, TOOL-10, UI-11, UI-12
 **Success Criteria** (what must be TRUE):
   1. Write tool creates files with confirmation dialog
   2. Edit tool shows diff preview before applying changes
@@ -121,6 +121,7 @@ Plans:
   4. Bash background execution works with BashOutput retrieval
   5. WebSearch and WebFetch tools display results
   6. TodoWrite shows task list panel
+  7. File diff viewer shows before/after for Edit tool
 **Plans**: TBD
 
 Plans:
@@ -226,4 +227,4 @@ Note: Phases 5 and 8 (Configuration, Commands) can run in parallel with Phases 3
 
 ---
 *Roadmap created: 2026-01-19*
-*Last updated: 2026-01-19 - Phase 3 planned*
+*Last updated: 2026-01-19 - UI-12 (diff viewer) moved from Phase 3 to Phase 6*
