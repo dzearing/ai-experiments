@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 
 import { router as healthRouter } from './routes/health.js';
 import { router as agentRouter } from './routes/agent.js';
+import { router as filesRouter } from './routes/files.js';
 import { checkClaudeAvailable } from './services/agentService.js';
 
 dotenv.config();
@@ -17,6 +18,7 @@ app.use(express.json());
 // Routes
 app.use('/api/health', healthRouter);
 app.use('/api/agent', agentRouter);
+app.use('/api/files', filesRouter);
 
 // Error handling middleware (Express 5 supports async errors natively)
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
