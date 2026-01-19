@@ -10,27 +10,27 @@ See: .planning/PROJECT.md (updated 2026-01-19)
 ## Current Position
 
 Phase: 1 of 10 (Infrastructure Foundation)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-01-19 - Completed 01-01-PLAN.md
+Last activity: 2026-01-19 - Completed 01-02-PLAN.md
 
-Progress: [█░░░░░░░░░] 3% (1/35 plans)
+Progress: [██░░░░░░░░] 6% (2/35 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
-- Average duration: 3 min
-- Total execution time: 3 min
+- Total plans completed: 2
+- Average duration: 5.5 min
+- Total execution time: 11 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 1-Infrastructure | 1/3 | 3 min | 3 min |
+| 1-Infrastructure | 2/3 | 11 min | 5.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (3m)
+- Last 5 plans: 01-01 (3m), 01-02 (8m)
 - Trend: Starting
 
 *Updated after each plan completion*
@@ -49,6 +49,8 @@ Recent decisions affecting current work:
 - Mirror CC server architecture for parity updates
 - Port 3002 for new server (avoid V1 conflict on 3001)
 - ESM-only TypeScript with NodeNext resolution
+- Port 5174 for client dev server (avoid V1 conflict on 5173)
+- Conditional StrictMode disabled in dev to prevent double API calls
 
 ### Pending Todos
 
@@ -60,6 +62,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-19T20:30:08Z
-Stopped at: Completed 01-01-PLAN.md
+Last session: 2026-01-19T20:35:00Z
+Stopped at: Completed 01-02-PLAN.md
 Resume file: None
