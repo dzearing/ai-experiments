@@ -1,0 +1,39 @@
+/**
+ * FileBrowser component styles
+ */
+
+.fileBrowser {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--color-panel-background);
+  border-radius: var(--radius-medium);
+  position: relative;
+}
+
+.loading,
+.error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing);
+  color: var(--color-body-textSoft10);
+  font-size: var(--font-size-small);
+}
+
+.error {
+  color: var(--color-status-error);
+}
+
+.loadingOverlay {
+  position: absolute;
+  bottom: var(--spacing-small10);
+  right: var(--spacing-small10);
+  padding: var(--spacing-small20) var(--spacing-small10);
+  background-color: var(--color-panel-background);
+  border-radius: var(--radius-small);
+  font-size: var(--font-size-small);
+  color: var(--color-body-textSoft10);
+  box-shadow: var(--shadow-card);
+}
