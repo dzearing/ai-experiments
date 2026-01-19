@@ -35,10 +35,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. React client loads and displays initial UI
   4. Client can establish SSE/WebSocket connection to server
   5. UI kit components render correctly in new app
-**Plans**: TBD
+**Plans**: 3 plans created
 
 Plans:
-- [ ] 01-01: Server scaffolding with Express and Agent SDK
+- [x] 01-01: Server scaffolding with Express and Agent SDK
 - [ ] 01-02: React client with Vite and ui-kit integration
 - [ ] 01-03: Connection layer (SSE/WebSocket)
 
@@ -213,7 +213,7 @@ Note: Phases 5 and 8 (Configuration, Commands) can run in parallel with Phases 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Infrastructure Foundation | 0/3 | Not started | - |
+| 1. Infrastructure Foundation | 1/3 | In progress | - |
 | 2. Core Streaming | 0/3 | Not started | - |
 | 3. Essential Tools | 0/4 | Not started | - |
 | 4. Permissions & Modes | 0/3 | Not started | - |
