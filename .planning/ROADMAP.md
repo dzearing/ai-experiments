@@ -12,7 +12,7 @@ This roadmap delivers a full-parity web clone of Claude Code in 10 phases. We st
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Infrastructure Foundation** - Server/client scaffolding with Agent SDK integration
+- [x] **Phase 1: Infrastructure Foundation** - Server/client scaffolding with Agent SDK integration
 - [ ] **Phase 2: Core Streaming** - Message streaming and basic conversation flow
 - [ ] **Phase 3: Essential Tools** - File and search tools with UI visualization
 - [ ] **Phase 4: Permissions & Modes** - Permission dialogs and execution modes
@@ -39,8 +39,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 Plans:
 - [x] 01-01: Server scaffolding with Express and Agent SDK
-- [ ] 01-02: React client with Vite and ui-kit integration
-- [ ] 01-03: Connection layer (SSE/WebSocket)
+- [x] 01-02: React client with Vite and ui-kit integration
+- [x] 01-03: Connection layer (SSE/WebSocket)
 
 ### Phase 2: Core Streaming
 **Goal**: Users can have streaming conversations with Claude
@@ -213,7 +213,7 @@ Note: Phases 5 and 8 (Configuration, Commands) can run in parallel with Phases 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Infrastructure Foundation | 1/3 | In progress | - |
+| 1. Infrastructure Foundation | 3/3 | ✓ Complete | 2026-01-19 |
 | 2. Core Streaming | 0/3 | Not started | - |
 | 3. Essential Tools | 0/4 | Not started | - |
 | 4. Permissions & Modes | 0/3 | Not started | - |
@@ -226,4 +226,4 @@ Note: Phases 5 and 8 (Configuration, Commands) can run in parallel with Phases 3
 
 ---
 *Roadmap created: 2026-01-19*
-*Last updated: 2026-01-19*
+*Last updated: 2026-01-19 - Phase 1 complete*
