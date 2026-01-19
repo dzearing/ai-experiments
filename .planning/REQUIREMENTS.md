@@ -172,23 +172,106 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CORE-* | TBD | Pending |
-| TOOL-* | TBD | Pending |
-| CONF-* | TBD | Pending |
-| HOOK-* | TBD | Pending |
-| CMD-* | TBD | Pending |
-| MODE-* | TBD | Pending |
-| AGENT-* | TBD | Pending |
-| MCP-* | TBD | Pending |
-| PERM-* | TBD | Pending |
-| UI-* | TBD | Pending |
-| INFRA-* | TBD | Pending |
+| CORE-01 | Phase 2 | Pending |
+| CORE-02 | Phase 2 | Pending |
+| CORE-03 | Phase 2 | Pending |
+| CORE-04 | Phase 2 | Pending |
+| CORE-05 | Phase 2 | Pending |
+| CORE-06 | Phase 10 | Pending |
+| CORE-07 | Phase 10 | Pending |
+| CORE-08 | Phase 10 | Pending |
+| CORE-09 | Phase 2 | Pending |
+| TOOL-01 | Phase 3 | Pending |
+| TOOL-02 | Phase 6 | Pending |
+| TOOL-03 | Phase 6 | Pending |
+| TOOL-04 | Phase 6 | Pending |
+| TOOL-05 | Phase 6 | Pending |
+| TOOL-06 | Phase 3 | Pending |
+| TOOL-07 | Phase 3 | Pending |
+| TOOL-08 | Phase 6 | Pending |
+| TOOL-09 | Phase 6 | Pending |
+| TOOL-10 | Phase 6 | Pending |
+| TOOL-11 | Phase 3 | Pending |
+| TOOL-12 | Phase 3 | Pending |
+| CONF-01 | Phase 5 | Pending |
+| CONF-02 | Phase 5 | Pending |
+| CONF-03 | Phase 5 | Pending |
+| CONF-04 | Phase 5 | Pending |
+| CONF-05 | Phase 5 | Pending |
+| HOOK-01 | Phase 7 | Pending |
+| HOOK-02 | Phase 7 | Pending |
+| HOOK-03 | Phase 7 | Pending |
+| HOOK-04 | Phase 7 | Pending |
+| HOOK-05 | Phase 7 | Pending |
+| HOOK-06 | Phase 7 | Pending |
+| HOOK-07 | Phase 7 | Pending |
+| HOOK-08 | Phase 7 | Pending |
+| HOOK-09 | Phase 7 | Pending |
+| HOOK-10 | Phase 7 | Pending |
+| CMD-01 | Phase 8 | Pending |
+| CMD-02 | Phase 8 | Pending |
+| CMD-03 | Phase 8 | Pending |
+| CMD-04 | Phase 8 | Pending |
+| CMD-05 | Phase 8 | Pending |
+| CMD-06 | Phase 8 | Pending |
+| CMD-07 | Phase 8 | Pending |
+| MODE-01 | Phase 4 | Pending |
+| MODE-02 | Phase 4 | Pending |
+| MODE-03 | Phase 4 | Pending |
+| MODE-04 | Phase 4 | Pending |
+| MODE-05 | Phase 4 | Pending |
+| MODE-06 | Phase 4 | Pending |
+| AGENT-01 | Phase 9 | Pending |
+| AGENT-02 | Phase 9 | Pending |
+| AGENT-03 | Phase 9 | Pending |
+| AGENT-04 | Phase 9 | Pending |
+| AGENT-05 | Phase 9 | Pending |
+| AGENT-06 | Phase 9 | Pending |
+| AGENT-07 | Phase 9 | Pending |
+| MCP-01 | Phase 10 | Pending |
+| MCP-02 | Phase 10 | Pending |
+| MCP-03 | Phase 10 | Pending |
+| MCP-04 | Phase 10 | Pending |
+| MCP-05 | Phase 10 | Pending |
+| MCP-06 | Phase 10 | Pending |
+| MCP-07 | Phase 10 | Pending |
+| MCP-08 | Phase 10 | Pending |
+| PERM-01 | Phase 4 | Pending |
+| PERM-02 | Phase 4 | Pending |
+| PERM-03 | Phase 4 | Pending |
+| PERM-04 | Phase 4 | Pending |
+| PERM-05 | Phase 4 | Pending |
+| PERM-06 | Phase 4 | Pending |
+| UI-01 | Phase 2 | Pending |
+| UI-02 | Phase 2 | Pending |
+| UI-03 | Phase 2 | Pending |
+| UI-04 | Phase 2 | Pending |
+| UI-05 | Phase 3 | Pending |
+| UI-06 | Phase 3 | Pending |
+| UI-07 | Phase 8 | Pending |
+| UI-08 | Phase 8 | Pending |
+| UI-09 | Phase 8 | Pending |
+| UI-10 | Phase 8 | Pending |
+| UI-11 | Phase 6 | Pending |
+| UI-12 | Phase 3 | Pending |
+| UI-13 | Phase 3 | Pending |
+| UI-14 | Phase 10 | Pending |
+| UI-15 | Phase 10 | Pending |
+| INFRA-01 | Phase 1 | Pending |
+| INFRA-02 | Phase 1 | Pending |
+| INFRA-03 | Phase 1 | Pending |
+| INFRA-04 | Phase 1 | Pending |
+| INFRA-05 | Phase 10 | Pending |
+| INFRA-06 | Phase 10 | Pending |
+| INFRA-07 | Phase 10 | Pending |
+| INFRA-08 | Phase 1 | Pending |
+| INFRA-09 | Phase 1 | Pending |
 
 **Coverage:**
 - v1 requirements: 79 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 79
+- Mapped to phases: 79
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-01-19*
-*Last updated: 2026-01-19 after initial definition*
+*Last updated: 2026-01-19 after roadmap creation*
