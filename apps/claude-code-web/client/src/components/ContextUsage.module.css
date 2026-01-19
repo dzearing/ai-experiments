@@ -1,0 +1,37 @@
+.container {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small10);
+}
+
+.text {
+  font-size: var(--font-size-small);
+  color: var(--color-body-textSoft10);
+  white-space: nowrap;
+}
+
+.progressBar {
+  width: 80px;
+  height: 6px;
+  background: var(--color-body-backgroundSoft10);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width var(--duration-normal) ease-out, background-color var(--duration-normal) ease-out;
+}
+
+.fill.low {
+  background: var(--color-success-background);
+}
+
+.fill.medium {
+  background: var(--color-warning-background);
+}
+
+.fill.high {
+  background: var(--color-danger-background);
+}
