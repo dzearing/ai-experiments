@@ -5,32 +5,33 @@
 See: .planning/PROJECT.md (updated 2026-01-19)
 
 **Core value:** Everything you can do in Claude Code CLI, you can do in this web app
-**Current focus:** Phase 1 - Infrastructure Foundation (COMPLETE)
+**Current focus:** Phase 2 - Core Streaming (IN PROGRESS)
 
 ## Current Position
 
-Phase: 1 of 10 (Infrastructure Foundation)
-Plan: 3 of 3 in current phase
-Status: Phase complete
-Last activity: 2026-01-19 - Completed 01-03-PLAN.md
+Phase: 2 of 10 (Core Streaming)
+Plan: 1 of 4 in current phase
+Status: In progress
+Last activity: 2026-01-19 - Completed 02-01-PLAN.md
 
-Progress: [███░░░░░░░] 9% (3/35 plans)
+Progress: [████░░░░░░] 11% (4/35 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
-- Average duration: 4.8 min
-- Total execution time: 14.5 min
+- Total plans completed: 4
+- Average duration: 4.2 min
+- Total execution time: 16.7 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1-Infrastructure | 3/3 | 14.5 min | 4.8 min |
+| 2-Core Streaming | 1/4 | 2.2 min | 2.2 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (3m), 01-02 (8m), 01-03 (3.5m)
+- Last 5 plans: 01-01 (3m), 01-02 (8m), 01-03 (3.5m), 02-01 (2.2m)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -53,6 +54,9 @@ Recent decisions affecting current work:
 - Conditional StrictMode disabled in dev to prevent double API calls
 - SSE over WebSocket for Phase 1 simplicity (unidirectional streaming sufficient)
 - 30-second heartbeat for SSE connection keep-alive
+- Async generator pattern for SDK message streaming
+- bypassPermissions mode for Phase 2 simplicity (permission UI deferred)
+- Mock mode auto-detection when SDK unavailable
 
 ### Pending Todos
 
@@ -64,6 +68,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-19T20:36:50Z
-Stopped at: Completed 01-03-PLAN.md (Phase 1 complete)
+Last session: 2026-01-19T21:13:33Z
+Stopped at: Completed 02-01-PLAN.md
 Resume file: None
