@@ -178,9 +178,9 @@
   margin-top: var(--space-3);
   margin-bottom: var(--space-3);
   padding: 0 var(--space-3);
-  background: var(--soft-bg);
+  background: var(--strong-bg);
   border-radius: var(--radius-sm);
-  border: 1px solid var(--soft-border);
+  border: 1px solid var(--strong-border);
   font-size: var(--text-xs);
   max-width: 400px;
   /* Prevent browser from using this as scroll anchor */
@@ -317,7 +317,7 @@
   padding: var(--space-1) var(--space-2);
   background: var(--base-bg);
   border-radius: var(--radius-xs);
-  border: 1px solid var(--soft-border);
+  border: 1px solid var(--strong-border);
   /* Prevent browser from using this as scroll anchor */
   overflow-anchor: none;
 }
@@ -391,12 +391,14 @@
   border-radius: var(--radius-lg);
   padding: var(--space-3) var(--space-4);
   margin-bottom: var(--space-2);
+  /* Toolbar text alignment - matches content padding */
+  --toolbar-padding-left: var(--space-4);
 }
 
-/* User message styling - primary background tint */
+/* User message styling - uses surface primary class for token remapping */
 .oneOnOneUserMessage {
-  background: var(--primary-bg);
-  color: var(--primary-fg);
+  background: var(--base-bg);
+  color: var(--base-fg);
 }
 
 /* Assistant message styling - transparent background */
@@ -421,13 +423,13 @@
   background: var(--primary-bg);
 }
 
-/* Override text colors in user messages */
+/* User message text uses base tokens - surface primary remaps them */
 .oneOnOneUserMessage .markdownContent {
-  color: var(--primary-fg);
+  color: var(--base-fg);
 }
 
 .oneOnOneUserMessage .plainText {
-  color: var(--primary-fg);
+  color: var(--base-fg);
 }
 
 /* ============================================
@@ -443,12 +445,14 @@
   padding: var(--space-2);
   border-radius: var(--radius-lg);
   margin-bottom: var(--space-2);
+  /* Toolbar text alignment - message padding + avatar + gap */
+  --toolbar-padding-left: calc(var(--space-2) + 24px + var(--space-2));
 }
 
-/* User's own messages - primary background */
+/* User's own messages - uses surface primary class for token remapping */
 .groupMessageUser {
-  background: var(--primary-bg);
-  color: var(--primary-fg);
+  background: var(--base-bg);
+  color: var(--base-fg);
 }
 
 /* Other participants' messages - transparent background */
@@ -487,7 +491,7 @@
 
 /* Sender name color variants */
 .groupSenderNameUser {
-  color: var(--primary-fg-soft);
+  color: var(--base-fg-soft);
 }
 
 .groupSenderNameOther {
@@ -530,13 +534,13 @@
   background: var(--primary-bg);
 }
 
-/* Override text colors in user messages for group mode */
+/* Group mode user message text uses base tokens - surface primary remaps them */
 .groupMessageUser .markdownContent {
-  color: var(--primary-fg);
+  color: var(--base-fg);
 }
 
 .groupMessageUser .plainText {
-  color: var(--primary-fg);
+  color: var(--base-fg);
 }
 
 /* ============================================
@@ -544,20 +548,69 @@
    Shows on message hover with timestamp and actions
    ============================================ */
 
-/* Message toolbar positioning (component provides its own surface styling) */
+/* Message toolbar positioning - flush above message, left-aligned */
 .messageToolbar {
-  position: absolute;
-  right: var(--space-2);
-  top: var(--space-2);
+  left: 0;
+  bottom: calc(100% - 1px);
   opacity: 0;
-  transition: opacity var(--duration-fast) var(--ease-default);
   z-index: 1;
 }
 
-/* Show toolbar on hover or focus-within for both modes */
+/* Show toolbar and border on hover, focus, or focus-within */
 .oneOnOneMessage:hover .messageToolbar,
+.oneOnOneMessage:focus .messageToolbar,
 .oneOnOneMessage:focus-within .messageToolbar,
 .groupMessage:hover .messageToolbar,
+.groupMessage:focus .messageToolbar,
 .groupMessage:focus-within .messageToolbar {
   opacity: 1;
+}
+
+/* Border around message on hover - base tokens (surface classes handle remapping) */
+.oneOnOneUserMessage::after,
+.groupMessageUser::after,
+.oneOnOneAssistantMessage::after,
+.groupMessageOther::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--base-border);
+  border-radius: 0 var(--radius-lg) var(--radius-lg) var(--radius-lg);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Show border and hover background on hover, focus, or focus-within */
+.oneOnOneMessage:hover::after,
+.oneOnOneMessage:focus::after,
+.oneOnOneMessage:focus-within::after,
+.groupMessage:hover::after,
+.groupMessage:focus::after,
+.groupMessage:focus-within::after {
+  opacity: 1;
+}
+
+/* Hover/focus state for all messages - base tokens (surface classes handle remapping) */
+.oneOnOneUserMessage:hover,
+.oneOnOneUserMessage:focus,
+.oneOnOneUserMessage:focus-within,
+.groupMessageUser:hover,
+.groupMessageUser:focus,
+.groupMessageUser:focus-within,
+.oneOnOneAssistantMessage:hover,
+.oneOnOneAssistantMessage:focus,
+.oneOnOneAssistantMessage:focus-within,
+.groupMessageOther:hover,
+.groupMessageOther:focus,
+.groupMessageOther:focus-within {
+  background: var(--base-bg);
+  border-radius: 0 var(--radius-lg) var(--radius-lg) var(--radius-lg);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Focus ring for keyboard navigation */
+.oneOnOneMessage:focus-visible,
+.groupMessage:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
 }

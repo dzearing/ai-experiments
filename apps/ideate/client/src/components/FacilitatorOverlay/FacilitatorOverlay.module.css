@@ -97,13 +97,6 @@
   50% { opacity: 0.5; }
 }
 
-.messagesContainer {
-  flex: 1;
-  min-height: 0; /* Allow flex shrinking - needed for child scroll container */
-  /* NOTE: Do NOT add overflow-y: auto here - the VirtualizedChatPanel has its own
-     internal scroll container. Adding overflow here creates nested scrollers and
-     breaks scroll event detection for scroll-lock behavior. */
-}
 
 .emptyState {
   display: flex;
@@ -130,20 +123,7 @@
   margin: 0;
 }
 
-.inputContainer {
-  padding: var(--space-3) var(--space-4);
-  border-top: 1px solid var(--soft-border);
-  background: var(--softer-bg);
-}
 
-.loadingIndicator {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-4);
-  color: var(--soft-fg-soft);
-  font-size: var(--text-sm);
-}
 
 .errorBanner {
   display: flex;
@@ -176,57 +156,6 @@
   font-size: var(--text-xs);
 }
 
-/* Queued messages */
-.queueContainer {
-  border-top: 1px solid var(--soft-border);
-  background: var(--softer-bg);
-}
-
-.queueHeader {
-  display: flex;
-  align-items: center;
-  padding: var(--space-1) var(--space-4);
-  border-bottom: 1px solid var(--soft-border);
-}
-
-.queueLabel {
-  font-size: var(--text-xs);
-  font-weight: var(--weight-medium);
-  color: var(--soft-fg-soft);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.queueList {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-2) var(--space-4);
-  max-height: 120px;
-  overflow-y: auto;
-}
-
-.queuedMessage {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-2);
-  padding: var(--space-2);
-  background: var(--soft-bg);
-  border: 1px solid var(--soft-border);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-sm);
-}
-
-.queuedContent {
-  flex: 1;
-  overflow: hidden;
-  color: var(--soft-fg);
-  white-space: pre-wrap;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-}
 
 /* Questions resolver overlay - covers the panel content */
 .questionsResolverOverlay {

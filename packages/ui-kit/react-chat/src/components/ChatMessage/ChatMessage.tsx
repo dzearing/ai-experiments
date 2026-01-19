@@ -563,7 +563,25 @@ export const ChatMessage = memo(function ChatMessage({
 
   // Track which tool outputs are expanded (collapsed by default)
   const [expandedTools, setExpandedTools] = useState<Set<string>>(new Set());
+  // Track hover/focus state for dynamic surface class
+  const [isActive, setIsActive] = useState(false);
   const messageRef = useRef<HTMLDivElement>(null);
+
+  // Handle focus leaving the element
+  const handleBlur = useCallback((e: React.FocusEvent) => {
+    // Check if focus is moving outside this element
+    if (!messageRef.current?.contains(e.relatedTarget as Node)) {
+      setIsActive(false);
+    }
+  }, []);
+
+  // Handle mouse leave - only deactivate if no focus within
+  const handleMouseLeave = useCallback(() => {
+    // Check if focus is still within this element
+    if (!messageRef.current?.contains(document.activeElement)) {
+      setIsActive(false);
+    }
+  }, []);
 
   const toggleToolExpanded = useCallback((toolKey: string) => {
     // Find the scroll container by walking up the DOM tree
@@ -663,8 +681,8 @@ export const ChatMessage = memo(function ChatMessage({
     chatMode === 'group' && styles.groupMessage,
     chatMode === 'group' && isOwn && styles.groupMessageUser,
     chatMode === 'group' && !isOwn && styles.groupMessageOther,
-    // Surface class for user messages - enables token remapping for nested components
-    isOwn && 'surface primary',
+    // Surface classes - user always primary, assistant strong on hover/focus
+    isOwn ? 'surface primary' : (isActive && 'surface strong'),
     // Shared classes
     isConsecutive && styles.consecutive,
     isOwn && chatMode !== '1on1' && styles.highlighted, // Only apply highlighted in group mode
@@ -802,6 +820,11 @@ export const ChatMessage = memo(function ChatMessage({
       className={messageClasses}
       data-message-id={id}
       data-consecutive={chatMode === 'group' ? (isConsecutive ? 'true' : 'false') : undefined}
+      tabIndex={0}
+      onMouseEnter={() => setIsActive(true)}
+      onMouseLeave={handleMouseLeave}
+      onFocus={() => setIsActive(true)}
+      onBlur={handleBlur}
     >
       {/* GROUP MODE: Avatar + MessageBody (name above content) */}
       {chatMode === 'group' && (

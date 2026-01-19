@@ -43,7 +43,8 @@ export interface MessageToolbarProps {
  * MessageToolbar - Hover toolbar for chat messages
  *
  * Displays timestamp, copy button, and optional edit button.
- * Styled differently for user (primary) vs assistant (neutral) messages.
+ * Includes an L-shaped connector line that indicates which message
+ * the toolbar belongs to.
  *
  * Parent container should set position: relative and handle hover visibility.
  */
@@ -58,35 +59,37 @@ export function MessageToolbar({
   const date = normalizeTimestamp(timestamp);
   const timeString = formatTime(date);
 
-  const toolbarClass = [
-    styles.toolbar,
+  const wrapperClass = [
+    styles.wrapper,
+    isOwn ? styles.wrapperOwn : styles.wrapperOther,
     className,
   ]
     .filter(Boolean)
     .join(' ');
 
-  const timeClass = styles.time;
-
   return (
-    <div className={toolbarClass}>
-      <span className={timeClass}>{timeString}</span>
-      <CopyButton
-        getContent={getContent}
-        variant="ghost"
-        size="sm"
-        shape="round"
-        aria-label="Copy message"
-      />
-      {showEdit && onEdit && (
-        <IconButton
-          icon={<EditIcon size={16} />}
+    <div className={wrapperClass}>
+      {/* L-shaped connector line */}
+      <div className={styles.connector} />
+      {/* Toolbar with actions */}
+      <div className={styles.toolbar}>
+        <span className={styles.time}>{timeString}</span>
+        <CopyButton
+          getContent={getContent}
           variant="ghost"
           size="sm"
-          shape="round"
-          aria-label="Edit message"
-          onClick={onEdit}
+          aria-label="Copy message"
         />
-      )}
+        {showEdit && onEdit && (
+          <IconButton
+            icon={<EditIcon size={16} />}
+            variant="ghost"
+            size="sm"
+            aria-label="Edit message"
+            onClick={onEdit}
+          />
+        )}
+      </div>
     </div>
   );
 }

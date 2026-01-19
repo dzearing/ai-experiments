@@ -1,27 +1,43 @@
-/* MessageToolbar - Hover toolbar for chat messages
-   Uses strong tokens - parent surface class handles context remapping */
+/* MessageToolbar - Hover toolbar that connects to message border */
 
-.toolbar {
+/* Wrapper positions the toolbar */
+.wrapper {
   position: absolute;
-  right: var(--space-2);
-  top: var(--space-2);
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 2px;
-  padding-left: var(--space-2);
-  border-radius: var(--radius-full);
-  opacity: 0;
-  transition: opacity var(--duration-fast) var(--ease-default);
-  backdrop-filter: blur(8px);
-  background: color-mix(in srgb, var(--strong-bg) 80%, transparent);
-  border: 1px solid color-mix(in srgb, var(--strong-border) 50%, transparent);
+  pointer-events: none;
 }
 
-/* Timestamp styling - uses strong tokens, remapped by parent surface */
+/* Both use base tokens - surface classes on parent handle remapping */
+.wrapperOwn,
+.wrapperOther {
+  --toolbar-bg: var(--base-bg);
+  --toolbar-border: var(--base-border);
+  --toolbar-fg: var(--base-fg);
+}
+
+/* Connector element - not used in new design */
+.connector {
+  display: none;
+}
+
+/* Toolbar box */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  padding-left: var(--toolbar-padding-left, var(--space-4));
+  white-space: nowrap;
+  background: var(--toolbar-bg);
+  border: 1px solid var(--toolbar-border);
+  border-bottom: none;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  pointer-events: auto;
+}
+
+/* Timestamp styling */
 .time {
   font-size: var(--text-xs);
   padding-right: var(--space-1);
-  color: var(--strong-fg-soft);
+  color: var(--toolbar-fg);
   user-select: none;
 }

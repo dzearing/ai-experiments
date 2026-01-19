@@ -1,6 +1,6 @@
 import { type ReactNode, useRef, memo, useCallback, useEffect } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { ChatMessage, type ChatMessageProps, type ChatMessageToolCall, type ChatMessagePart } from '../ChatMessage';
+import { ChatMessage, type ChatMessageToolCall, type ChatMessagePart } from '../ChatMessage';
 import { useScrollLock } from '../../hooks/useScrollLock';
 import styles from './ChatPanel.module.css';
 
@@ -67,12 +67,6 @@ export interface VirtualizedChatPanelProps {
 
   /** Render function for custom avatar per message */
   renderAvatar?: (message: VirtualizedChatPanelMessage) => ReactNode;
-
-  /** Menu items for message actions */
-  messageMenuItems?: ChatMessageProps['menuItems'];
-
-  /** Called when a menu item is selected */
-  onMessageMenuSelect?: (value: string, messageId: string) => void;
 
   /** Called when a link is clicked in a message */
   onLinkClick?: (href: string) => void;
@@ -142,8 +136,6 @@ export const VirtualizedChatPanel = memo(function VirtualizedChatPanel({
   onScrollLockChange,
   className = '',
   renderAvatar,
-  messageMenuItems,
-  onMessageMenuSelect,
   onLinkClick,
   overscan = 10,
   estimatedMessageHeight = 80,
@@ -410,8 +402,6 @@ export const VirtualizedChatPanel = memo(function VirtualizedChatPanel({
                     toolCalls={message.toolCalls}
                     renderMarkdown={message.renderMarkdown ?? true}
                     avatar={renderAvatar ? renderAvatar(message) : message.avatar}
-                    menuItems={messageMenuItems}
-                    onMenuSelect={onMessageMenuSelect}
                     onLinkClick={onLinkClick}
                   />
                 </div>

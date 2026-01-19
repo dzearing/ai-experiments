@@ -34,6 +34,10 @@ export type { ThinkingIndicatorProps } from './components/ThinkingIndicator';
 export { MessageQueue } from './components/MessageQueue';
 export type { MessageQueueProps, QueuedMessage } from './components/MessageQueue';
 
+// MessageToolbar component and related types
+export { MessageToolbar } from './components/MessageToolbar';
+export type { MessageToolbarProps } from './components/MessageToolbar';
+
 // Slash command types
 export type {
   SlashCommand,
@@ -59,3 +63,7 @@ export type {
   QuestionAnswer,
   OpenQuestionsResult,
 } from './components/OpenQuestionsResolver';
+
+// Chat context for mode-aware rendering
+export { ChatProvider, useChatContext } from './context';
+export type { ChatMode, ChatParticipant, ChatContextValue, ChatProviderProps } from './context';
