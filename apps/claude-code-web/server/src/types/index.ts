@@ -10,3 +10,91 @@ export interface HealthResponse {
   version: string;
   claudeAvailable?: boolean;
 }
+
+// SDK Content Block Types
+export interface TextBlock {
+  type: 'text';
+  text: string;
+}
+
+export interface ThinkingBlock {
+  type: 'thinking';
+  thinking: string;
+}
+
+export interface ToolUseBlock {
+  type: 'tool_use';
+  id: string;
+  name: string;
+  input: Record<string, unknown>;
+}
+
+export type ContentBlock = TextBlock | ThinkingBlock | ToolUseBlock;
+
+// Usage Statistics
+export interface UsageStats {
+  input_tokens: number;
+  output_tokens: number;
+}
+
+// SDK Message Types
+export interface SDKSystemMessage {
+  type: 'system';
+  subtype: 'init';
+  session_id: string;
+  cwd?: string;
+  tools?: string[];
+}
+
+export interface SDKAssistantMessage {
+  type: 'assistant';
+  uuid: string;
+  session_id: string;
+  message: {
+    content: ContentBlock[];
+    model?: string;
+    stop_reason?: string;
+  };
+}
+
+export interface SDKPartialAssistantMessage {
+  type: 'partial_assistant';
+  uuid: string;
+  session_id: string;
+  event: RawMessageStreamEvent;
+}
+
+// Raw message stream event types for partial messages
+export interface RawMessageStreamEvent {
+  type: string;
+  index?: number;
+  delta?: {
+    type: string;
+    text?: string;
+  };
+  content_block?: ContentBlock;
+}
+
+export interface SDKResultMessage {
+  type: 'result';
+  uuid: string;
+  session_id: string;
+  is_error: boolean;
+  duration_ms: number;
+  usage: UsageStats;
+  model_usage?: UsageStats;
+}
+
+export interface SDKErrorMessage {
+  type: 'error';
+  error: string;
+  session_id?: string;
+}
+
+// Union of all SDK message types
+export type SDKMessage =
+  | SDKSystemMessage
+  | SDKAssistantMessage
+  | SDKPartialAssistantMessage
+  | SDKResultMessage
+  | SDKErrorMessage;
