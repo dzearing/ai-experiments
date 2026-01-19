@@ -1,0 +1,30 @@
+/**
+ * ToolExecutionIndicator styles
+ */
+
+.executionIndicator {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small10, 8px);
+  padding: var(--spacing-small10, 8px) var(--spacing, 16px);
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--color-body-textSoft20, rgba(0, 0, 0, 0.1));
+  border-top-color: var(--color-primary-background, #2563eb);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.toolName {
+  font-size: var(--font-size, 14px);
+  color: var(--color-body-textSoft10, rgba(0, 0, 0, 0.7));
+}
