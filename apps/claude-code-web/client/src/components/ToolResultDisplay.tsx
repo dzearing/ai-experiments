@@ -10,6 +10,8 @@ import type { ReactNode } from 'react';
 
 import { ToolExecutionIndicator } from './ToolExecutionIndicator';
 import { FileContentResult } from './FileContentResult';
+import { FileListResult } from './FileListResult';
+import { SearchResultsDisplay } from './SearchResultsDisplay';
 import styles from './ToolResultDisplay.module.css';
 
 export interface ToolResultDisplayProps {
@@ -85,12 +87,33 @@ export function ToolResultDisplay({
       );
     }
 
-    case 'Glob':
-    case 'Grep':
-      // Placeholder - will be implemented in future plans
+    case 'Glob': {
+      const pattern = typeof input.pattern === 'string' ? input.pattern : '*';
+
       return (
-        <DefaultToolResult output={output} isExpanded={isExpanded} />
+        <FileListResult
+          pattern={pattern}
+          output={output}
+          isExpanded={isExpanded}
+          onToggleExpand={onToggleExpand}
+          onFileClick={onFileClick}
+        />
       );
+    }
+
+    case 'Grep': {
+      const pattern = typeof input.pattern === 'string' ? input.pattern : '';
+
+      return (
+        <SearchResultsDisplay
+          pattern={pattern}
+          output={output}
+          isExpanded={isExpanded}
+          onToggleExpand={onToggleExpand}
+          onFileClick={onFileClick}
+        />
+      );
+    }
 
     default:
       return (

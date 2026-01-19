@@ -1,0 +1,84 @@
+.searchResults {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-small10);
+}
+
+.searchHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small10);
+  padding: var(--spacing-small10);
+  background: transparent;
+  border: none;
+  font: inherit;
+  color: var(--color-body-text);
+  cursor: pointer;
+  text-align: left;
+  border-radius: var(--radius-button);
+}
+
+.searchHeader:hover {
+  background: var(--color-body-backgroundStrong10);
+}
+
+.headerPattern {
+  font-family: var(--font-family-code);
+  font-size: var(--font-size-small);
+  color: var(--color-body-textSoft10);
+}
+
+.headerCount {
+  font-size: var(--font-size-small);
+  color: var(--color-body-textSoft20);
+}
+
+.headerChevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  color: var(--color-body-textSoft20);
+  transition: transform var(--duration-fast);
+}
+
+.headerChevronExpanded {
+  transform: rotate(180deg);
+}
+
+.matchList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-small10);
+  max-height: 400px;
+  overflow-y: auto;
+  padding-left: var(--spacing);
+}
+
+.matchItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.matchPath {
+  font-family: var(--font-family-code);
+  font-size: var(--font-size-small);
+}
+
+.matchContent {
+  font-family: var(--font-family-code);
+  font-size: var(--font-size-small);
+  color: var(--color-body-textSoft10);
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding-left: var(--spacing);
+  border-left: 2px solid var(--color-body-border);
+}
+
+.truncationIndicator {
+  padding: var(--spacing-small10) var(--spacing);
+  font-size: var(--font-size-small);
+  color: var(--color-body-textSoft20);
+  font-style: italic;
+}
