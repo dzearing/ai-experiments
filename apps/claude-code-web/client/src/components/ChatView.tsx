@@ -5,6 +5,7 @@ import { ChatPanel, ChatInput, ThinkingIndicator } from '@ui-kit/react-chat';
 
 import { useConversation } from '../hooks/useConversation';
 import { ContextUsage } from './ContextUsage';
+import { ToolResultDisplay } from './ToolResultDisplay';
 import { WelcomeMessage } from './WelcomeMessage';
 import styles from './ChatView.module.css';
 
@@ -29,6 +30,28 @@ export function ChatView() {
     }
   }, [sendMessage]);
 
+  const renderToolResult = useCallback((props: {
+    toolName: string;
+    input: Record<string, unknown>;
+    output: string;
+    isExpanded: boolean;
+    onToggleExpand: () => void;
+  }) => {
+    return (
+      <ToolResultDisplay
+        toolName={props.toolName}
+        input={props.input}
+        output={props.output}
+        isExpanded={props.isExpanded}
+        onToggleExpand={props.onToggleExpand}
+        onFileClick={(path) => {
+          // TODO: Phase 4 will wire this to FileViewer
+          console.log('File clicked:', path);
+        }}
+      />
+    );
+  }, []);
+
   return (
     <div className={styles.chatView}>
       <header className={styles.header}>
@@ -44,6 +67,7 @@ export function ChatView() {
           autoScroll={true}
           emptyState={<WelcomeMessage />}
           className={styles.chatPanel}
+          renderToolResult={renderToolResult}
         />
 
         {isThinking && (
