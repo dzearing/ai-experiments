@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Infrastructure Foundation** - Server/client scaffolding with Agent SDK integration
 - [x] **Phase 2: Core Streaming** - Message streaming and basic conversation flow
-- [ ] **Phase 3: Essential Tools** - File and search tools with UI visualization
+- [x] **Phase 3: Essential Tools** - File and search tools with UI visualization
 - [ ] **Phase 4: Permissions & Modes** - Permission dialogs and execution modes
 - [ ] **Phase 5: Configuration System** - CLAUDE.md, settings, and rules loading
 - [ ] **Phase 6: Extended Tools** - Bash, web tools, notebooks, and tool polish
@@ -72,10 +72,10 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Server file API and client tool transformers
-- [ ] 03-02-PLAN.md — Read tool visualization with syntax highlighting
-- [ ] 03-03-PLAN.md — Glob and Grep result display components
-- [ ] 03-04-PLAN.md — File browser and viewer components
+- [x] 03-01-PLAN.md — Server file API and client tool transformers
+- [x] 03-02-PLAN.md — Read tool visualization with syntax highlighting
+- [x] 03-03-PLAN.md — Glob and Grep result display components
+- [x] 03-04-PLAN.md — File browser and viewer components
 
 ### Phase 4: Permissions & Modes
 **Goal**: Users can approve/deny tool usage and switch execution modes
@@ -216,7 +216,7 @@ Note: Phases 5 and 8 (Configuration, Commands) can run in parallel with Phases 3
 |-------|----------------|--------|-----------|
 | 1. Infrastructure Foundation | 3/3 | Complete | 2026-01-19 |
 | 2. Core Streaming | 3/3 | Complete | 2026-01-19 |
-| 3. Essential Tools | 0/4 | Planned | - |
+| 3. Essential Tools | 4/4 | Complete | 2026-01-19 |
 | 4. Permissions & Modes | 0/3 | Not started | - |
 | 5. Configuration System | 0/2 | Not started | - |
 | 6. Extended Tools | 0/4 | Not started | - |
@@ -227,4 +227,4 @@ Note: Phases 5 and 8 (Configuration, Commands) can run in parallel with Phases 3
 
 ---
 *Roadmap created: 2026-01-19*
-*Last updated: 2026-01-19 - UI-12 (diff viewer) moved from Phase 3 to Phase 6*
+*Last updated: 2026-01-19 - Phase 3 Essential Tools complete*
