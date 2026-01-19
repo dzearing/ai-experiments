@@ -1,0 +1,47 @@
+.chatView {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: var(--spacing);
+  gap: var(--spacing);
+}
+
+.statusPanel {
+  background: var(--color-panel-background);
+  border-radius: var(--radius-card);
+  padding: var(--spacing);
+  box-shadow: var(--shadow-card);
+}
+
+.statusPanel h2 {
+  margin: 0 0 var(--spacing-small10) 0;
+  font-size: var(--font-size-h3);
+  color: var(--color-body-text);
+}
+
+.loading {
+  color: var(--color-body-textSoft10);
+}
+
+.error {
+  color: var(--color-danger-text);
+}
+
+.status {
+  margin-bottom: var(--spacing);
+}
+
+.status p {
+  margin: var(--spacing-small10) 0;
+  color: var(--color-body-text);
+}
+
+.chatPlaceholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-panel-background);
+  border-radius: var(--radius-card);
+  color: var(--color-body-textSoft20);
+}
