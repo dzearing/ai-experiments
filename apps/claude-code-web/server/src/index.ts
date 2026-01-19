@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 
 import { router as healthRouter } from './routes/health.js';
+import { router as agentRouter } from './routes/agent.js';
 import { checkClaudeAvailable } from './services/agentService.js';
 
 dotenv.config();
@@ -15,6 +16,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api/health', healthRouter);
+app.use('/api/agent', agentRouter);
 
 // Error handling middleware (Express 5 supports async errors natively)
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
