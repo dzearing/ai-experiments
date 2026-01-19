@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-01-19)
 ## Current Position
 
 Phase: 2 of 10 (Core Streaming)
-Plan: 1 of 4 in current phase
+Plan: 2 of 4 in current phase
 Status: In progress
-Last activity: 2026-01-19 - Completed 02-01-PLAN.md
+Last activity: 2026-01-19 - Completed 02-02-PLAN.md
 
-Progress: [████░░░░░░] 11% (4/35 plans)
+Progress: [████░░░░░░] 14% (5/35 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
+- Total plans completed: 5
 - Average duration: 4.2 min
-- Total execution time: 16.7 min
+- Total execution time: 20.7 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1-Infrastructure | 3/3 | 14.5 min | 4.8 min |
-| 2-Core Streaming | 1/4 | 2.2 min | 2.2 min |
+| 2-Core Streaming | 2/4 | 6.2 min | 3.1 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (3m), 01-02 (8m), 01-03 (3.5m), 02-01 (2.2m)
+- Last 5 plans: 01-02 (8m), 01-03 (3.5m), 02-01 (2.2m), 02-02 (4m)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -57,6 +57,9 @@ Recent decisions affecting current work:
 - Async generator pattern for SDK message streaming
 - bypassPermissions mode for Phase 2 simplicity (permission UI deferred)
 - Mock mode auto-detection when SDK unavailable
+- Thinking blocks tracked separately from text content
+- StreamingState ref used for rapid delta accumulation without re-renders
+- useConversation wraps useAgentStream for clean conversation API
 
 ### Pending Todos
 
@@ -68,6 +71,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-19T21:13:33Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-01-19T21:15:04Z
+Stopped at: Completed 02-02-PLAN.md
 Resume file: None
