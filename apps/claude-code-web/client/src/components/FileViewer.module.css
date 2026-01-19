@@ -1,0 +1,88 @@
+/**
+ * FileViewer component styles
+ */
+
+.fileViewer {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 90%;
+  max-width: 1000px;
+  max-height: 80vh;
+  background-color: var(--color-panel-background);
+  border-radius: var(--radius-large);
+  box-shadow: var(--shadow-modal);
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing);
+  padding: var(--spacing-small10) var(--spacing);
+  background-color: var(--color-inset-background);
+  border-bottom: 1px solid var(--color-panel-border);
+}
+
+.headerInfo {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-small10);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.filename {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-body-text);
+  white-space: nowrap;
+}
+
+.filepath {
+  color: var(--color-body-textSoft20);
+  font-size: var(--font-size-small);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.meta {
+  color: var(--color-body-textSoft20);
+  font-size: var(--font-size-small);
+  white-space: nowrap;
+}
+
+.content {
+  flex: 1;
+  overflow: auto;
+  padding: var(--spacing);
+}
+
+.loadingState,
+.errorState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-large20);
+  color: var(--color-body-textSoft10);
+}
+
+.errorState {
+  color: var(--color-status-error);
+}
