@@ -35,7 +35,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. React client loads and displays initial UI
   4. Client can establish SSE/WebSocket connection to server
   5. UI kit components render correctly in new app
-**Plans**: 3 plans created
+**Plans**: 3 plans
 
 Plans:
 - [x] 01-01: Server scaffolding with Express and Agent SDK
@@ -52,12 +52,12 @@ Plans:
   3. Multi-turn conversation maintains context across messages
   4. Markdown renders with syntax highlighting and copy buttons
   5. Context usage indicator shows token consumption
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 02-01: Server streaming endpoint with SDKMessage forwarding
-- [ ] 02-02: Chat UI with message list and input
-- [ ] 02-03: Streaming renderer with markdown and thinking blocks
+- [ ] 02-01-PLAN.md — Server SDK streaming endpoint with SDKMessage forwarding
+- [ ] 02-02-PLAN.md — Client message transformation and conversation hooks
+- [ ] 02-03-PLAN.md — Chat UI with streaming, thinking, and context display
 
 ### Phase 3: Essential Tools
 **Goal**: Core file and search tools work with visual feedback
@@ -213,8 +213,8 @@ Note: Phases 5 and 8 (Configuration, Commands) can run in parallel with Phases 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Infrastructure Foundation | 3/3 | ✓ Complete | 2026-01-19 |
-| 2. Core Streaming | 0/3 | Not started | - |
+| 1. Infrastructure Foundation | 3/3 | Complete | 2026-01-19 |
+| 2. Core Streaming | 0/3 | Planned | - |
 | 3. Essential Tools | 0/4 | Not started | - |
 | 4. Permissions & Modes | 0/3 | Not started | - |
 | 5. Configuration System | 0/2 | Not started | - |
@@ -226,4 +226,4 @@ Note: Phases 5 and 8 (Configuration, Commands) can run in parallel with Phases 3
 
 ---
 *Roadmap created: 2026-01-19*
-*Last updated: 2026-01-19 - Phase 1 complete*
+*Last updated: 2026-01-19 - Phase 2 planned*
