@@ -16,22 +16,22 @@ import styles from './ModeSelector.module.css';
 const MODE_INFO: Record<PermissionMode, { label: string; icon: React.ReactNode; description: string }> = {
   default: {
     label: 'Default',
-    icon: <CheckCircleIcon size="sm" />,
+    icon: <CheckCircleIcon size={16} />,
     description: 'Prompts for tool approval',
   },
   plan: {
     label: 'Plan',
-    icon: <ListTaskIcon size="sm" />,
+    icon: <ListTaskIcon size={16} />,
     description: 'Read-only mode, no execution',
   },
   acceptEdits: {
     label: 'Edits',
-    icon: <EditIcon size="sm" />,
+    icon: <EditIcon size={16} />,
     description: 'Auto-approves file modifications',
   },
   bypassPermissions: {
     label: 'Auto',
-    icon: <PlayIcon size="sm" />,
+    icon: <PlayIcon size={16} />,
     description: 'Auto-approves all tools (use with caution)',
   },
 };
