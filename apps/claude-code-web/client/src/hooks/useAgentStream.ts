@@ -72,7 +72,7 @@ export function useAgentStream(): UseAgentStreamReturn {
     // Build URL with optional session ID for multi-turn and permission mode
     const urlSessionId = existingSessionId || sessionId || '';
     const urlMode = mode || permissionMode;
-    const url = `/api/agent/stream?prompt=${encodeURIComponent(prompt)}&sessionId=${encodeURIComponent(urlSessionId)}&mode=${encodeURIComponent(urlMode)}`;
+    const url = `/api/agent/stream?prompt=${encodeURIComponent(prompt)}&sessionId=${encodeURIComponent(urlSessionId)}&permissionMode=${encodeURIComponent(urlMode)}`;
     const eventSource = new EventSource(url);
 
     eventSourceRef.current = eventSource;

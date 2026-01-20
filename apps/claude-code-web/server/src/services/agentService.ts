@@ -89,15 +89,21 @@ function sendSSEEvent(sessionId: string, event: PermissionRequestEvent | Questio
 }
 
 /**
- * Create a canUseTool callback that sends permission requests via SSE.
+ * Tools that modify files - auto-approved in acceptEdits mode.
  */
-function createCanUseToolCallback(currentSessionId: string) {
+const FILE_EDIT_TOOLS = ['Write', 'Edit', 'NotebookEdit'];
+
+/**
+ * Create a canUseTool callback that sends permission requests via SSE.
+ * Handles acceptEdits mode by auto-approving file modification tools.
+ */
+function createCanUseToolCallback(currentSessionId: string, mode: PermissionMode = 'default') {
   return async (
     toolName: string,
     input: Record<string, unknown>,
     context: { signal?: AbortSignal }
   ): Promise<PermissionResult> => {
-    // Special handling for AskUserQuestion - send as question_request
+    // Special handling for AskUserQuestion - always send as question_request
     if (toolName === 'AskUserQuestion') {
       const { requestId, promise } = createPermissionRequest(toolName, input, context.signal);
       const questions = (input as { questions?: QuestionItem[] }).questions || [];
@@ -110,10 +116,16 @@ function createCanUseToolCallback(currentSessionId: string) {
       };
 
       sendSSEEvent(currentSessionId, event);
+
       return promise;
     }
 
-    // Regular permission request
+    // In acceptEdits mode, auto-approve file modification tools
+    if (mode === 'acceptEdits' && FILE_EDIT_TOOLS.includes(toolName)) {
+      return { behavior: 'allow' };
+    }
+
+    // Regular permission request - wait for user response
     const { requestId, promise } = createPermissionRequest(toolName, input, context.signal);
 
     const event: PermissionRequestEvent = {
@@ -125,6 +137,7 @@ function createCanUseToolCallback(currentSessionId: string) {
     };
 
     sendSSEEvent(currentSessionId, event);
+
     return promise;
   };
 }
@@ -148,20 +161,24 @@ export async function* streamAgentQuery(
         includePartialMessages: true,
       };
 
-      // Only use bypassPermissions mode or provide canUseTool callback
+      // Handle permission modes:
+      // - bypassPermissions: auto-approve everything (SDK built-in)
+      // - plan: restrict to read-only (SDK built-in)
+      // - default/acceptEdits: use canUseTool callback for interactive approval
       if (permissionMode === 'bypassPermissions') {
+        // Let SDK auto-approve all tools
         queryOptions.permissionMode = 'bypassPermissions';
+      } else if (permissionMode === 'plan') {
+        // SDK enforces read-only mode
+        queryOptions.permissionMode = 'plan';
+      } else if (sessionId) {
+        // For default and acceptEdits modes, use canUseTool callback
+        // acceptEdits mode auto-approves file edits in the callback
+        queryOptions.canUseTool = createCanUseToolCallback(sessionId, permissionMode);
       } else {
-        // For non-bypass modes, use canUseTool callback
-        queryOptions.permissionMode = permissionMode;
-
-        if (sessionId) {
-          queryOptions.canUseTool = createCanUseToolCallback(sessionId);
-        } else {
-          // Without a sessionId, we cannot send SSE events, so fall back to bypass
-          console.warn('[AgentService] No sessionId provided, falling back to bypassPermissions');
-          queryOptions.permissionMode = 'bypassPermissions';
-        }
+        // Without a sessionId, we cannot send SSE events, so fall back to bypass
+        console.warn('[AgentService] No sessionId provided, falling back to bypassPermissions');
+        queryOptions.permissionMode = 'bypassPermissions';
       }
 
       const queryIterator = query({
