@@ -76,6 +76,9 @@ Recent decisions affecting current work:
 - Segmented control for mode selection (compact mutually-exclusive options)
 - Dialog-based confirmation for bypassPermissions (no browser dialogs)
 - Session-scoped mode storage (mode relevant only for session lifetime)
+- formatToolInput helper formats tool-specific display (Bash, Write, Edit, Read, Glob, Grep)
+- Permission event types: permission_request, question_request, mode_changed
+- Denied permissions tracked in useAgentStream and displayed inline in ChatView
 
 ### Pending Todos
 
