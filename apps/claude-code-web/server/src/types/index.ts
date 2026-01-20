@@ -98,3 +98,72 @@ export type SDKMessage =
   | SDKPartialAssistantMessage
   | SDKResultMessage
   | SDKErrorMessage;
+
+// Permission Mode Types
+export type PermissionMode = 'default' | 'plan' | 'acceptEdits' | 'bypassPermissions';
+
+// Permission Request/Response Types
+export interface PermissionRequest {
+  requestId: string;
+  toolName: string;
+  input: Record<string, unknown>;
+  timestamp: number;
+}
+
+export interface PermissionResponse {
+  requestId: string;
+  behavior: 'allow' | 'deny';
+  message?: string;
+  updatedInput?: Record<string, unknown>;
+}
+
+// Question Request/Response Types (for AskUserQuestion tool)
+export interface QuestionOption {
+  label: string;
+  description?: string;
+}
+
+export interface QuestionItem {
+  question: string;
+  options: QuestionOption[];
+  multiSelect?: boolean;
+}
+
+export interface QuestionRequest {
+  requestId: string;
+  questions: QuestionItem[];
+  timestamp: number;
+}
+
+export interface QuestionResponse {
+  requestId: string;
+  answers: Record<string, string>;
+}
+
+// SSE Event Types for Permission Flow
+export interface PermissionRequestEvent {
+  type: 'permission_request';
+  requestId: string;
+  toolName: string;
+  input: Record<string, unknown>;
+  timestamp: number;
+}
+
+export interface QuestionRequestEvent {
+  type: 'question_request';
+  requestId: string;
+  questions: QuestionItem[];
+  timestamp: number;
+}
+
+export interface ModeChangedEvent {
+  type: 'mode_changed';
+  mode: PermissionMode;
+  timestamp: number;
+}
+
+// Union of permission-related SSE events
+export type PermissionSSEEvent =
+  | PermissionRequestEvent
+  | QuestionRequestEvent
+  | ModeChangedEvent;
