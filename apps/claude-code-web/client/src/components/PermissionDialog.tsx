@@ -1,7 +1,10 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo, type ReactNode } from 'react';
 
-import { Dialog, Button, Text, Code } from '@ui-kit/react';
+import { Dialog, Button, Text, Code, FileDiff } from '@ui-kit/react';
+import { CodeBlock } from '@ui-kit/react-markdown';
 
+import { generateInlineDiff } from '../utils/diffGenerator';
+import { detectLanguage } from '../utils/languageDetection';
 import styles from './PermissionDialog.module.css';
 
 export interface PermissionDialogProps {
@@ -118,6 +121,78 @@ function formatToolInput(toolName: string, input: Record<string, unknown>): stri
 }
 
 /**
+ * Renders rich preview content for Edit and Write tools.
+ * Returns null for other tools (they use formatToolInput text).
+ */
+function renderToolPreview(
+  toolName: string,
+  input: Record<string, unknown>
+): ReactNode | null {
+  switch (toolName) {
+    case 'Edit': {
+      const filePath = input.file_path as string | undefined;
+      const oldString = input.old_string as string | undefined;
+      const newString = input.new_string as string | undefined;
+
+      if (filePath && oldString !== undefined && newString !== undefined) {
+        const diffString = generateInlineDiff(oldString, newString);
+
+        return (
+          <div className={styles.richPreview}>
+            <div className={styles.previewLabel}>
+              <Text weight="medium">File: {filePath}</Text>
+            </div>
+            <FileDiff
+              path={filePath}
+              changeType="modified"
+              diff={diffString}
+              showHeader={false}
+              compact={true}
+              maxHeight="250px"
+            />
+          </div>
+        );
+      }
+
+      return null;
+    }
+
+    case 'Write': {
+      const filePath = input.file_path as string | undefined;
+      const content = input.content as string | undefined;
+
+      if (filePath && content !== undefined) {
+        const language = detectLanguage(filePath);
+        const previewContent = content.length > 2000
+          ? content.substring(0, 2000) + '\n... (truncated)'
+          : content;
+
+        return (
+          <div className={styles.richPreview}>
+            <div className={styles.previewLabel}>
+              <Text weight="medium">File: {filePath}</Text>
+            </div>
+            <div className={styles.codePreview}>
+              <CodeBlock
+                code={previewContent}
+                language={language}
+                showLineNumbers={true}
+                maxHeight={250}
+              />
+            </div>
+          </div>
+        );
+      }
+
+      return null;
+    }
+
+    default:
+      return null;
+  }
+}
+
+/**
  * PermissionDialog displays when the SDK requests tool approval.
  * Allows users to approve, deny, or approve-always for a tool.
  */
@@ -130,6 +205,11 @@ export function PermissionDialog({
   onApproveAlways,
 }: PermissionDialogProps) {
   const formattedInput = formatToolInput(toolName, input);
+
+  const richPreview = useMemo(
+    () => renderToolPreview(toolName, input),
+    [toolName, input]
+  );
 
   const handleClose = useCallback(() => {
     onDeny();
@@ -161,9 +241,13 @@ export function PermissionDialog({
         <Text color="soft">
           Claude wants to use the {toolName} tool with the following input:
         </Text>
-        <div className={styles.inputPreview}>
-          <Code>{formattedInput}</Code>
-        </div>
+        {richPreview ? (
+          richPreview
+        ) : (
+          <div className={styles.inputPreview}>
+            <Code>{formattedInput}</Code>
+          </div>
+        )}
       </div>
     </Dialog>
   );
