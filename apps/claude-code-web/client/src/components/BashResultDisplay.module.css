@@ -1,0 +1,167 @@
+/**
+ * BashResultDisplay styles
+ *
+ * Terminal-style display for Bash tool output with streaming support.
+ */
+
+.bashResult {
+  width: 100%;
+  border-radius: var(--radius-small, 4px);
+  overflow: hidden;
+  background: var(--color-inset-background, #1e1e1e);
+}
+
+.bashHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small10, 8px);
+  width: 100%;
+  padding: var(--spacing-small10, 8px) var(--spacing, 16px);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color var(--duration-normal, 200ms);
+}
+
+.bashHeader:hover {
+  background: var(--color-body-backgroundHard10, rgba(255, 255, 255, 0.05));
+}
+
+.bashHeader:focus-visible {
+  outline: 2px solid var(--color-primary-background, #2563eb);
+  outline-offset: -2px;
+}
+
+.terminalIcon {
+  flex-shrink: 0;
+  color: var(--color-body-textSoft10, rgba(255, 255, 255, 0.7));
+}
+
+.description {
+  font-size: var(--font-size-small, 13px);
+  color: var(--color-body-textSoft20, rgba(255, 255, 255, 0.5));
+  font-style: italic;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commandText {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono, monospace);
+  font-size: var(--font-size-small, 13px);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-body-text, #e0e0e0);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commandPrompt {
+  color: var(--color-success, #22c55e);
+  margin-right: var(--spacing-small10, 4px);
+  user-select: none;
+}
+
+.metaInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small10, 8px);
+  flex-shrink: 0;
+}
+
+.lineCount {
+  font-size: var(--font-size-small, 13px);
+  color: var(--color-body-textSoft20, rgba(255, 255, 255, 0.5));
+}
+
+.statusIndicator {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small10, 4px);
+  font-size: var(--font-size-small, 13px);
+}
+
+.executingIndicator {
+  color: var(--color-warning, #f59e0b);
+}
+
+.backgroundIndicator {
+  color: var(--color-info, #3b82f6);
+}
+
+.spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.backgroundDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: currentColor;
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+.chevron {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-body-textSoft10, rgba(255, 255, 255, 0.7));
+  transition: transform var(--duration-normal, 200ms);
+  transform: rotate(-90deg);
+}
+
+.chevronExpanded {
+  transform: rotate(0deg);
+}
+
+.outputContainer {
+  --bash-output-max-height: 400px;
+
+  max-height: var(--bash-output-max-height);
+  overflow: auto;
+  border-top: 1px solid var(--color-body-border, rgba(255, 255, 255, 0.1));
+}
+
+.output {
+  margin: 0;
+  padding: var(--spacing-small10, 8px) var(--spacing, 16px);
+  font-family: var(--font-mono, monospace);
+  font-size: var(--font-size-small, 13px);
+  line-height: var(--line-height-normal, 1.5);
+  color: var(--color-body-text, #e0e0e0);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.emptyOutput {
+  color: var(--color-body-textSoft20, rgba(255, 255, 255, 0.5));
+  font-style: italic;
+}
