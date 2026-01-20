@@ -67,12 +67,12 @@ Requirements for full Claude Code parity. Each maps to roadmap phases.
 
 ### Modes
 
-- [ ] **MODE-01**: Default mode shows permission prompts for tools
-- [ ] **MODE-02**: Plan mode restricts to read-only operations
-- [ ] **MODE-03**: Accept edits mode auto-approves file modifications
-- [ ] **MODE-04**: Bypass permissions mode auto-approves all (with warning)
-- [ ] **MODE-05**: Mode indicator shows current execution mode
-- [ ] **MODE-06**: Mode can be changed mid-session
+- [x] **MODE-01**: Default mode shows permission prompts for tools
+- [x] **MODE-02**: Plan mode restricts to read-only operations
+- [x] **MODE-03**: Accept edits mode auto-approves file modifications
+- [x] **MODE-04**: Bypass permissions mode auto-approves all (with warning)
+- [x] **MODE-05**: Mode indicator shows current execution mode
+- [x] **MODE-06**: Mode can be changed mid-session
 
 ### Subagents
 
@@ -97,12 +97,12 @@ Requirements for full Claude Code parity. Each maps to roadmap phases.
 
 ### Permissions
 
-- [ ] **PERM-01**: canUseTool callback surfaces approval to UI
-- [ ] **PERM-02**: Permission dialog shows tool name and input
-- [ ] **PERM-03**: User can approve, deny, or approve-always
-- [ ] **PERM-04**: AskUserQuestion renders as multi-select dialog
-- [ ] **PERM-05**: Permission rules support wildcard patterns
-- [ ] **PERM-06**: Denied permissions shown in result summary
+- [x] **PERM-01**: canUseTool callback surfaces approval to UI
+- [x] **PERM-02**: Permission dialog shows tool name and input
+- [x] **PERM-03**: User can approve, deny, or approve-always
+- [x] **PERM-04**: AskUserQuestion renders as multi-select dialog
+- [ ] **PERM-05**: Permission rules support wildcard patterns (deferred to Phase 5)
+- [x] **PERM-06**: Denied permissions shown in result summary
 
 ### UI/UX
 
@@ -215,12 +215,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CMD-05 | Phase 8 | Pending |
 | CMD-06 | Phase 8 | Pending |
 | CMD-07 | Phase 8 | Pending |
-| MODE-01 | Phase 4 | Pending |
-| MODE-02 | Phase 4 | Pending |
-| MODE-03 | Phase 4 | Pending |
-| MODE-04 | Phase 4 | Pending |
-| MODE-05 | Phase 4 | Pending |
-| MODE-06 | Phase 4 | Pending |
+| MODE-01 | Phase 4 | Complete |
+| MODE-02 | Phase 4 | Complete |
+| MODE-03 | Phase 4 | Complete |
+| MODE-04 | Phase 4 | Complete |
+| MODE-05 | Phase 4 | Complete |
+| MODE-06 | Phase 4 | Complete |
 | AGENT-01 | Phase 9 | Pending |
 | AGENT-02 | Phase 9 | Pending |
 | AGENT-03 | Phase 9 | Pending |
@@ -236,12 +236,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MCP-06 | Phase 10 | Pending |
 | MCP-07 | Phase 10 | Pending |
 | MCP-08 | Phase 10 | Pending |
-| PERM-01 | Phase 4 | Pending |
-| PERM-02 | Phase 4 | Pending |
-| PERM-03 | Phase 4 | Pending |
-| PERM-04 | Phase 4 | Pending |
-| PERM-05 | Phase 4 | Pending |
-| PERM-06 | Phase 4 | Pending |
+| PERM-01 | Phase 4 | Complete |
+| PERM-02 | Phase 4 | Complete |
+| PERM-03 | Phase 4 | Complete |
+| PERM-04 | Phase 4 | Complete |
+| PERM-05 | Phase 5 | Pending |
+| PERM-06 | Phase 4 | Complete |
 | UI-01 | Phase 2 | Pending |
 | UI-02 | Phase 2 | Pending |
 | UI-03 | Phase 2 | Pending |
@@ -274,4 +274,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-19*
-*Last updated: 2026-01-19 - Phase 3 requirements marked Complete*
+*Last updated: 2026-01-20 - Phase 4 requirements marked Complete (PERM-05 deferred to Phase 5)*

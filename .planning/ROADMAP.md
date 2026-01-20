@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Infrastructure Foundation** - Server/client scaffolding with Agent SDK integration
 - [x] **Phase 2: Core Streaming** - Message streaming and basic conversation flow
 - [x] **Phase 3: Essential Tools** - File and search tools with UI visualization
-- [ ] **Phase 4: Permissions & Modes** - Permission dialogs and execution modes
+- [x] **Phase 4: Permissions & Modes** - Permission dialogs and execution modes
 - [ ] **Phase 5: Configuration System** - CLAUDE.md, settings, and rules loading
 - [ ] **Phase 6: Extended Tools** - Bash, web tools, notebooks, and tool polish
 - [ ] **Phase 7: Hooks System** - Pre/post tool hooks and lifecycle hooks
@@ -90,9 +90,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Server permission infrastructure with canUseTool callback
-- [ ] 04-02-PLAN.md — Permission and AskUserQuestion dialog components
-- [ ] 04-03-PLAN.md — Mode selector and mid-session mode switching
+- [x] 04-01-PLAN.md — Server permission infrastructure with canUseTool callback
+- [x] 04-02-PLAN.md — Permission and AskUserQuestion dialog components
+- [x] 04-03-PLAN.md — Mode selector and mid-session mode switching
 
 ### Phase 5: Configuration System
 **Goal**: Configuration files load from proper hierarchy
@@ -217,7 +217,7 @@ Note: Phases 5 and 8 (Configuration, Commands) can run in parallel with Phases 3
 | 1. Infrastructure Foundation | 3/3 | Complete | 2026-01-19 |
 | 2. Core Streaming | 3/3 | Complete | 2026-01-19 |
 | 3. Essential Tools | 4/4 | Complete | 2026-01-19 |
-| 4. Permissions & Modes | 0/3 | Planned | - |
+| 4. Permissions & Modes | 3/3 | Complete | 2026-01-20 |
 | 5. Configuration System | 0/2 | Not started | - |
 | 6. Extended Tools | 0/4 | Not started | - |
 | 7. Hooks System | 0/3 | Not started | - |
@@ -227,4 +227,4 @@ Note: Phases 5 and 8 (Configuration, Commands) can run in parallel with Phases 3
 
 ---
 *Roadmap created: 2026-01-19*
-*Last updated: 2026-01-19 - Phase 4 plans created*
+*Last updated: 2026-01-20 - Phase 4 complete*
