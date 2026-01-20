@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-19)
 
 **Core value:** Everything you can do in Claude Code CLI, you can do in this web app
-**Current focus:** Phase 5 - Configuration System (In Progress)
+**Current focus:** Phase 5 - Configuration System (Complete)
 
 ## Current Position
 
 Phase: 5 of 10 (Configuration System)
-Plan: 1 of 2 in current phase
-Status: In progress
-Last activity: 2026-01-20 - Completed 05-01-PLAN.md
+Plan: 2 of 2 in current phase (Complete)
+Status: Phase complete
+Last activity: 2026-01-20 - Completed 05-02-PLAN.md
 
-Progress: [█████████████░] 37% (13/35 plans)
+Progress: [██████████████░] 40% (14/35 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 13
+- Total plans completed: 14
 - Average duration: 3.6 min
-- Total execution time: 46.3 min
+- Total execution time: 50.3 min
 
 **By Phase:**
 
@@ -31,10 +31,10 @@ Progress: [█████████████░] 37% (13/35 plans)
 | 2-Core Streaming | 2/4 | 6.2 min | 3.1 min |
 | 3-Essential Tools | 4/4 | 11.6 min | 2.9 min |
 | 4-Permissions & Modes | 3/3 | 10.0 min | 3.3 min |
-| 5-Configuration System | 1/2 | 4.0 min | 4.0 min |
+| 5-Configuration System | 2/2 | 8.0 min | 4.0 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-04 (3.2m), 04-01 (3m), 04-02 (3m), 04-03 (4m), 05-01 (4m)
+- Last 5 plans: 04-01 (3m), 04-02 (3m), 04-03 (4m), 05-01 (4m), 05-02 (4m)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -84,6 +84,10 @@ Recent decisions affecting current work:
 - CLAUDE.md files concatenated with double newlines between sources
 - Environment merge order: defaults < settings.env < sessionEnv < PWD
 - Project root detected via .git, package.json, CLAUDE.md, or .claude directory
+- Unconditional rules (no paths field) always apply and included in system prompt
+- Path-specific rules filter by minimatch glob pattern
+- systemPrompt uses claude_code preset with append for custom content
+- Config debug endpoint returns summary without exposing full content
 
 ### Pending Todos
 
@@ -96,5 +100,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: Completed 05-01-PLAN.md
+Stopped at: Completed 05-02-PLAN.md
 Resume file: None
