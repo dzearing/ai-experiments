@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Core Streaming** - Message streaming and basic conversation flow
 - [x] **Phase 3: Essential Tools** - File and search tools with UI visualization
 - [x] **Phase 4: Permissions & Modes** - Permission dialogs and execution modes
-- [ ] **Phase 5: Configuration System** - CLAUDE.md, settings, and rules loading
+- [x] **Phase 5: Configuration System** - CLAUDE.md, settings, and rules loading
 - [ ] **Phase 6: Extended Tools** - Bash, web tools, notebooks, and tool polish
 - [ ] **Phase 7: Hooks System** - Pre/post tool hooks and lifecycle hooks
 - [ ] **Phase 8: Commands & Skills** - Slash commands and skills system
@@ -107,8 +107,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — ConfigService with CLAUDE.md and settings.json hierarchy loading
-- [ ] 05-02-PLAN.md — Modular rules loading and agent service integration
+- [x] 05-01-PLAN.md — ConfigService with CLAUDE.md and settings.json hierarchy loading
+- [x] 05-02-PLAN.md — Modular rules loading and agent service integration
 
 ### Phase 6: Extended Tools
 **Goal**: All remaining tools work (Bash, Write, Edit, Web, Notebook)
@@ -218,7 +218,7 @@ Note: Phases 5 and 8 (Configuration, Commands) can run in parallel with Phases 3
 | 2. Core Streaming | 3/3 | Complete | 2026-01-19 |
 | 3. Essential Tools | 4/4 | Complete | 2026-01-19 |
 | 4. Permissions & Modes | 3/3 | Complete | 2026-01-20 |
-| 5. Configuration System | 0/2 | Not started | - |
+| 5. Configuration System | 2/2 | Complete | 2026-01-20 |
 | 6. Extended Tools | 0/4 | Not started | - |
 | 7. Hooks System | 0/3 | Not started | - |
 | 8. Commands & Skills | 0/4 | Not started | - |
@@ -227,4 +227,4 @@ Note: Phases 5 and 8 (Configuration, Commands) can run in parallel with Phases 3
 
 ---
 *Roadmap created: 2026-01-19*
-*Last updated: 2026-01-20 - Phase 5 planned*
+*Last updated: 2026-01-20 - Phase 5 complete*

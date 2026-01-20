@@ -36,11 +36,11 @@ Requirements for full Claude Code parity. Each maps to roadmap phases.
 
 ### Configuration
 
-- [ ] **CONF-01**: CLAUDE.md files load from project hierarchy
-- [ ] **CONF-02**: Settings load from .claude/settings.json hierarchy
-- [ ] **CONF-03**: Modular rules load from .claude/rules/*.md
-- [ ] **CONF-04**: Working directory configurable per session
-- [ ] **CONF-05**: Environment variables passthrough to tools
+- [x] **CONF-01**: CLAUDE.md files load from project hierarchy
+- [x] **CONF-02**: Settings load from .claude/settings.json hierarchy
+- [x] **CONF-03**: Modular rules load from .claude/rules/*.md
+- [x] **CONF-04**: Working directory configurable per session
+- [x] **CONF-05**: Environment variables passthrough to tools
 
 ### Hooks
 
@@ -193,11 +193,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TOOL-10 | Phase 6 | Pending |
 | TOOL-11 | Phase 3 | Complete |
 | TOOL-12 | Phase 3 | Complete |
-| CONF-01 | Phase 5 | Pending |
-| CONF-02 | Phase 5 | Pending |
-| CONF-03 | Phase 5 | Pending |
-| CONF-04 | Phase 5 | Pending |
-| CONF-05 | Phase 5 | Pending |
+| CONF-01 | Phase 5 | Complete |
+| CONF-02 | Phase 5 | Complete |
+| CONF-03 | Phase 5 | Complete |
+| CONF-04 | Phase 5 | Complete |
+| CONF-05 | Phase 5 | Complete |
 | HOOK-01 | Phase 7 | Pending |
 | HOOK-02 | Phase 7 | Pending |
 | HOOK-03 | Phase 7 | Pending |
@@ -274,4 +274,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-19*
-*Last updated: 2026-01-20 - Phase 4 requirements marked Complete (PERM-05 deferred to Phase 5)*
+*Last updated: 2026-01-20 - Phase 5 requirements marked Complete*
