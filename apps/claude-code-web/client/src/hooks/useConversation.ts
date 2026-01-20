@@ -68,7 +68,7 @@ export function useConversation(): UseConversationReturn {
     // Create user message
     const userMsg: ChatPanelMessage = {
       id: `user-${Date.now()}`,
-      content: '', // Use parts instead
+      content: prompt,
       parts: [{ type: 'text', text: prompt }],
       timestamp: new Date(),
       senderName: 'You',
