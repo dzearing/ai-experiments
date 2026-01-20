@@ -52,6 +52,9 @@ importers:
       '@ui-kit/react-markdown':
         specifier: workspace:*
         version: link:../../../packages/ui-kit/react-markdown
+      diff:
+        specifier: ^8.0.2
+        version: 8.0.2
       react:
         specifier: ^19.1.0
         version: 19.1.1
@@ -59,6 +62,9 @@ importers:
         specifier: ^19.1.0
         version: 19.1.1(react@19.1.1)
     devDependencies:
+      '@types/diff':
+        specifier: ^7.0.2
+        version: 7.0.2
       '@types/react':
         specifier: ^19.1.8
         version: 19.1.10
