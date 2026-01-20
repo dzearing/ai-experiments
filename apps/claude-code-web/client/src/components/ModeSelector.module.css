@@ -1,0 +1,15 @@
+.container {
+  display: flex;
+  align-items: center;
+}
+
+.dialogActions {
+  display: flex;
+  gap: var(--spacing-small10);
+  justify-content: flex-end;
+}
+
+.warningText {
+  margin-top: var(--spacing-small10);
+  color: var(--color-warning-text);
+}

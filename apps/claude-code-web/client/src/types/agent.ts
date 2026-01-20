@@ -232,4 +232,5 @@ export interface UseAgentStreamReturn {
   respondToPermission: (requestId: string, behavior: 'allow' | 'deny', message?: string) => Promise<void>;
   respondToQuestion: (requestId: string, answers: Record<string, string>) => Promise<void>;
   clearDeniedPermissions: () => void;
+  changePermissionMode: (mode: PermissionMode) => Promise<void>;
 }
