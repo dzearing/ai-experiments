@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-19)
 ## Current Position
 
 Phase: 4 of 10 (Permissions & Modes)
-Plan: 1 of 3 in current phase
-Status: In progress
-Last activity: 2026-01-20 - Completed 04-01-PLAN.md
+Plan: 3 of 3 in current phase
+Status: Phase complete
+Last activity: 2026-01-20 - Completed 04-03-PLAN.md
 
-Progress: [███████████░] 29% (10/35 plans)
+Progress: [████████████░] 34% (12/35 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
+- Total plans completed: 12
 - Average duration: 3.5 min
-- Total execution time: 35.3 min
+- Total execution time: 42.3 min
 
 **By Phase:**
 
@@ -30,10 +30,10 @@ Progress: [███████████░] 29% (10/35 plans)
 | 1-Infrastructure | 3/3 | 14.5 min | 4.8 min |
 | 2-Core Streaming | 2/4 | 6.2 min | 3.1 min |
 | 3-Essential Tools | 4/4 | 11.6 min | 2.9 min |
-| 4-Permissions & Modes | 1/3 | 3.0 min | 3.0 min |
+| 4-Permissions & Modes | 3/3 | 10.0 min | 3.3 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-01 (3m), 03-02 (2.7m), 03-03 (2.7m), 03-04 (3.2m), 04-01 (3m)
+- Last 5 plans: 03-03 (2.7m), 03-04 (3.2m), 04-01 (3m), 04-02 (3m), 04-03 (4m)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -73,6 +73,9 @@ Recent decisions affecting current work:
 - 55s permission timeout auto-denies before SDK 60s timeout
 - canUseTool callback pattern for permission handling
 - AskUserQuestion sends question_request event (not permission_request)
+- Segmented control for mode selection (compact mutually-exclusive options)
+- Dialog-based confirmation for bypassPermissions (no browser dialogs)
+- Session-scoped mode storage (mode relevant only for session lifetime)
 
 ### Pending Todos
 
@@ -84,6 +87,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-20T00:29:01Z
-Stopped at: Completed 04-01-PLAN.md
+Last session: 2026-01-20
+Stopped at: Completed 04-03-PLAN.md (Phase 4 complete)
 Resume file: None
