@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-01-19)
 
 ## Current Position
 
-Phase: 7 of 10 (Hooks System)
-Plan: 0 of 3 in current phase
-Status: Ready to plan
-Last activity: 2026-01-20 - Phase 6 verified and complete
+Phase: 6 of 10 (Extended Tools - Gap Closure)
+Plan: 05 complete (gap closure for tool completion)
+Status: Gap closure in progress
+Last activity: 2026-01-20 - Completed 06-05-PLAN.md (tool result completion)
 
-Progress: [████████████████░░░] 57% (20/35 plans)
+Progress: [████████████████░░░] 60% (21/35 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 20
-- Average duration: 3.4 min
-- Total execution time: 68.3 min
+- Total plans completed: 21
+- Average duration: 3.5 min
+- Total execution time: 76.3 min
 
 **By Phase:**
 
@@ -32,10 +32,10 @@ Progress: [████████████████░░░] 57% (20/35
 | 3-Essential Tools | 4/4 | 11.6 min | 2.9 min |
 | 4-Permissions & Modes | 3/3 | 10.0 min | 3.3 min |
 | 5-Configuration System | 2/2 | 8.0 min | 4.0 min |
-| 6-Extended Tools | 5/5 | 15.0 min | 3.0 min |
+| 6-Extended Tools | 6/6 | 23.0 min | 3.8 min |
 
 **Recent Trend:**
-- Last 5 plans: 06-01 (3m), 06-02 (3m), 06-03 (3m), 06-04 (3m), 06-06 (3m)
+- Last 5 plans: 06-02 (3m), 06-03 (3m), 06-04 (3m), 06-05 (8m), 06-06 (3m)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -99,6 +99,7 @@ Recent decisions affecting current work:
 - FileDiff showHeader=false to avoid duplicate path display in permission dialog
 - CSS-based status indicators for TodoWrite (empty circle for pending, filled for in_progress)
 - ChatPanelMessage: Set both content and parts fields for user messages (backward compatibility)
+- ID-based matching for tool_result to tool_use via extractToolUseIds + extractToolResults
 
 ### Pending Todos
 
@@ -111,5 +112,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: Completed 06-06-PLAN.md (gap closure for user message display)
+Stopped at: Completed 06-05-PLAN.md (gap closure for tool completion)
 Resume file: None
