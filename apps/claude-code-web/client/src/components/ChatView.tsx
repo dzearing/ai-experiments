@@ -5,6 +5,7 @@ import { ChatPanel, ChatInput, ThinkingIndicator } from '@ui-kit/react-chat';
 
 import { useConversation } from '../hooks/useConversation';
 import { ContextUsage } from './ContextUsage';
+import { ModeSelector } from './ModeSelector';
 import { ToolResultDisplay } from './ToolResultDisplay';
 import { WelcomeMessage } from './WelcomeMessage';
 import styles from './ChatView.module.css';
@@ -21,7 +22,11 @@ export function ChatView() {
     thinkingContent,
     contextUsage,
     error,
+    permissionRequest,
+    questionRequest,
+    permissionMode,
     sendMessage,
+    changePermissionMode,
   } = useConversation();
 
   const handleSubmit = useCallback((data: ChatInputSubmitData) => {
@@ -56,7 +61,14 @@ export function ChatView() {
     <div className={styles.chatView}>
       <header className={styles.header}>
         <h1 className={styles.title}>Claude Code Web</h1>
-        <ContextUsage usage={contextUsage} />
+        <div className={styles.headerControls}>
+          <ModeSelector
+            mode={permissionMode}
+            onChange={changePermissionMode}
+            disabled={!!permissionRequest || !!questionRequest}
+          />
+          <ContextUsage usage={contextUsage} />
+        </div>
       </header>
 
       <main className={styles.chatArea}>

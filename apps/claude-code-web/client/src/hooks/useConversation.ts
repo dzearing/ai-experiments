@@ -2,7 +2,12 @@ import { useState, useCallback, useMemo } from 'react';
 
 import type { ChatPanelMessage } from '@ui-kit/react-chat';
 
-import type { UsageStats } from '../types/agent';
+import type {
+  UsageStats,
+  PermissionMode,
+  PermissionRequestEvent,
+  QuestionRequestEvent,
+} from '../types/agent';
 import { useAgentStream } from './useAgentStream';
 
 /**
@@ -23,12 +28,20 @@ export interface UseConversationReturn {
   contextUsage: UsageStats | null;
   /** Error message if something went wrong */
   error: string | null;
+  /** Current permission request awaiting user response */
+  permissionRequest: PermissionRequestEvent | null;
+  /** Current question request awaiting user response */
+  questionRequest: QuestionRequestEvent | null;
+  /** Current permission mode */
+  permissionMode: PermissionMode;
   /** Send a new message to the assistant */
   sendMessage: (prompt: string) => void;
   /** Clear the conversation and start fresh */
   clearConversation: () => void;
   /** Interrupt the current streaming response */
   interrupt: () => void;
+  /** Change the permission mode */
+  changePermissionMode: (mode: PermissionMode) => Promise<void>;
 }
 
 /**
@@ -104,8 +117,12 @@ export function useConversation(): UseConversationReturn {
     sessionId: stream.sessionId,
     contextUsage: stream.contextUsage,
     error: stream.error,
+    permissionRequest: stream.permissionRequest,
+    questionRequest: stream.questionRequest,
+    permissionMode: stream.permissionMode,
     sendMessage,
     clearConversation,
     interrupt,
+    changePermissionMode: stream.changePermissionMode,
   };
 }
