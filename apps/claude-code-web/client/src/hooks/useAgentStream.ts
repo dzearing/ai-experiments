@@ -5,6 +5,7 @@ import type { ChatPanelMessage } from '@ui-kit/react-chat';
 import type {
   SDKMessage,
   SDKPartialAssistantMessage,
+  SDKStreamEventMessage,
   UsageStats,
   UseAgentStreamReturn,
   PermissionRequestEvent,
@@ -118,9 +119,53 @@ export function useAgentStream(): UseAgentStreamReturn {
         }
         break;
 
+      case 'stream_event': {
+        // Real SDK streaming event - accumulate streaming content
+        const streamEvent = message as SDKStreamEventMessage;
+
+        // Convert to partial format for accumulator
+        const partialFromStream: SDKPartialAssistantMessage = {
+          type: 'assistant',
+          subtype: 'partial',
+          uuid: streamEvent.uuid,
+          event: streamEvent.event,
+        };
+
+        streamingStateRef.current = accumulatePartialMessage(
+          streamingStateRef.current,
+          partialFromStream
+        );
+
+        // Update thinking state
+        if (isThinkingDelta(partialFromStream)) {
+          setIsThinking(true);
+          setThinkingContent(streamingStateRef.current.currentThinking);
+        } else {
+          setIsThinking(false);
+        }
+
+        // Update or add streaming message
+        const streamingMsgFromEvent = createStreamingMessage(streamingStateRef.current);
+
+        setMessages(prev => {
+          const existingIndex = prev.findIndex(m => m.id === streamingMsgFromEvent.id);
+
+          if (existingIndex >= 0) {
+            const updated = [...prev];
+
+            updated[existingIndex] = streamingMsgFromEvent;
+
+            return updated;
+          }
+
+          return [...prev, streamingMsgFromEvent];
+        });
+        break;
+      }
+
       case 'assistant':
         if ('subtype' in message && message.subtype === 'partial') {
-          // Partial message - accumulate streaming content
+          // Partial message (mock mode) - accumulate streaming content
           const partial = message as SDKPartialAssistantMessage;
 
           streamingStateRef.current = accumulatePartialMessage(

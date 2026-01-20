@@ -143,6 +143,15 @@ function createCanUseToolCallback(currentSessionId: string, mode: PermissionMode
 }
 
 /**
+ * Check if a string is a valid UUID v4 format.
+ */
+function isValidUUID(str: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  return uuidRegex.test(str);
+}
+
+/**
  * Stream Agent SDK messages to the caller.
  * Uses real SDK when available, falls back to mock mode otherwise.
  */
@@ -154,9 +163,13 @@ export async function* streamAgentQuery(
   // If SDK is available, use real implementation
   if (query) {
     try {
+      // Only use resume if sessionId is a valid UUID (from a previous SDK session)
+      // Otherwise let the SDK create a fresh session
+      const resumeId = sessionId && isValidUUID(sessionId) ? sessionId : undefined;
+
       // Build query options based on permission mode
       const queryOptions: Record<string, unknown> = {
-        resume: sessionId || undefined,
+        resume: resumeId,
         cwd: cwd || process.cwd(),
         includePartialMessages: true,
       };

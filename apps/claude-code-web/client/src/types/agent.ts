@@ -158,12 +158,22 @@ export interface SDKAssistantMessage {
 }
 
 /**
- * Partial assistant message during streaming.
+ * Partial assistant message during streaming (mock mode).
  */
 export interface SDKPartialAssistantMessage {
   type: 'assistant';
   subtype: 'partial';
   uuid: string;
+  event: RawMessageStreamEvent;
+}
+
+/**
+ * Stream event message from real SDK during streaming.
+ */
+export interface SDKStreamEventMessage {
+  type: 'stream_event';
+  uuid: string;
+  session_id: string;
   event: RawMessageStreamEvent;
 }
 
@@ -200,6 +210,7 @@ export type SDKMessage =
   | SDKSystemMessage
   | SDKAssistantMessage
   | SDKPartialAssistantMessage
+  | SDKStreamEventMessage
   | SDKResultMessage
   | SDKErrorMessage
   | PermissionRequestEvent
