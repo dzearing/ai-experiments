@@ -13,6 +13,7 @@ import type {
   SDKPartialAssistantMessage,
   ContentBlock,
   RawMessageStreamEvent,
+  ToolResultBlock,
 } from '../types/agent';
 
 // =============================================================================
@@ -74,6 +75,11 @@ export function transformContentBlockToPart(block: ContentBlock): ChatMessagePar
           startTime: Date.now(),
         }],
       };
+
+    case 'tool_result':
+      // Tool results are processed separately to mark tool calls as complete
+      // Return null here as they don't create new message parts
+      return null;
 
     default:
       return null;
@@ -284,4 +290,40 @@ export function isThinkingDelta(partial: SDKPartialAssistantMessage): boolean {
     partial.event.type === 'content_block_delta' &&
     partial.event.delta?.type === 'thinking_delta'
   );
+}
+
+/**
+ * Extracts tool result blocks from content array.
+ * Used to match results back to their tool_use calls.
+ *
+ * @param blocks - Array of content blocks
+ * @returns Array of tool result data with tool_use_id and content
+ */
+export function extractToolResults(blocks: ContentBlock[]): Array<{
+  tool_use_id: string;
+  content: string;
+  is_error?: boolean;
+}> {
+  return blocks
+    .filter((block): block is ToolResultBlock => block.type === 'tool_result')
+    .map(block => ({
+      tool_use_id: block.tool_use_id,
+      content: block.content,
+      is_error: block.is_error,
+    }));
+}
+
+/**
+ * Extracts tool_use IDs from content blocks in order.
+ * Used to match tool results to their corresponding tool calls.
+ *
+ * @param blocks - Array of content blocks
+ * @returns Array of tool_use IDs in order of appearance
+ */
+export function extractToolUseIds(blocks: ContentBlock[]): string[] {
+  return blocks
+    .filter((block): block is { type: 'tool_use'; id: string; name: string; input: Record<string, unknown> } =>
+      block.type === 'tool_use'
+    )
+    .map(block => block.id);
 }

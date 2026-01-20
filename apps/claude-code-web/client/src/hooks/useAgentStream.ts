@@ -21,6 +21,8 @@ import {
   accumulatePartialMessage,
   createStreamingMessage,
   isThinkingDelta,
+  extractToolResults,
+  extractToolUseIds,
 } from '../utils/messageTransformer';
 
 /**
@@ -214,6 +216,33 @@ export function useAgentStream(): UseAgentStreamReturn {
           }
 
           processedMessageIdsRef.current.add(chatMessage.id);
+
+          // Extract tool results and tool_use IDs from the message content
+          const toolResults = extractToolResults(message.message.content);
+          const toolUseIds = extractToolUseIds(message.message.content);
+
+          // Mark tool calls as completed based on tool_result blocks
+          if (toolResults.length > 0 && chatMessage.parts) {
+            for (const part of chatMessage.parts) {
+              if (part.type === 'tool_calls') {
+                for (let i = 0; i < part.calls.length; i++) {
+                  const call = part.calls[i];
+
+                  // Get the tool_use_id for this call by matching position
+                  const toolUseId = toolUseIds[i];
+
+                  // Find matching result by tool_use_id
+                  const result = toolResults.find(r => r.tool_use_id === toolUseId);
+
+                  if (result) {
+                    call.completed = true;
+                    call.output = result.content;
+                    call.endTime = Date.now();
+                  }
+                }
+              }
+            }
+          }
 
           // Get the tracked streaming message ID before clearing state
           const trackedStreamingId = activeStreamingIdRef.current;
