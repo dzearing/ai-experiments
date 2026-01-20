@@ -157,6 +157,9 @@ export function accumulatePartialMessage(
 ): StreamingState {
   const event: RawMessageStreamEvent = partial.event;
 
+  // Always ensure we have a consistent message ID from the first event
+  const messageId = state.currentMessageId || partial.uuid;
+
   switch (event.type) {
     case 'message_start':
       // Reset state for new message
@@ -172,7 +175,7 @@ export function accumulatePartialMessage(
         if (event.delta.type === 'text_delta') {
           return {
             ...state,
-            currentMessageId: partial.uuid,
+            currentMessageId: messageId,
             currentText: state.currentText + event.delta.text,
           };
         }
@@ -180,22 +183,22 @@ export function accumulatePartialMessage(
         if (event.delta.type === 'thinking_delta') {
           return {
             ...state,
-            currentMessageId: partial.uuid,
+            currentMessageId: messageId,
             currentThinking: state.currentThinking + event.delta.thinking,
           };
         }
       }
 
-      return state;
+      return { ...state, currentMessageId: messageId };
 
     case 'content_block_start':
     case 'content_block_stop':
     case 'message_stop':
-      // These events don't modify text content
-      return state;
+      // These events don't modify text content but should preserve the message ID
+      return { ...state, currentMessageId: messageId };
 
     default:
-      return state;
+      return { ...state, currentMessageId: messageId };
   }
 }
 

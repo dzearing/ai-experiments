@@ -56,8 +56,9 @@ router.get('/stream', async (req: Request, res: Response) => {
     ? modeParam as PermissionMode
     : 'default';
 
-  // Generate or use provided sessionId for connection tracking
-  const effectiveSessionId = sessionId || connectionId;
+  // Connection tracking ID - use provided sessionId if valid, otherwise use connectionId
+  // This is for SSE event routing, not SDK resume
+  const connectionTrackingId = sessionId || connectionId;
 
   // Set SSE headers
   res.writeHead(200, {
@@ -71,7 +72,7 @@ router.get('/stream', async (req: Request, res: Response) => {
   res.write(`data: ${JSON.stringify({
     type: 'connection',
     connectionId,
-    sessionId: effectiveSessionId,
+    sessionId: connectionTrackingId,
     permissionMode,
     timestamp: new Date().toISOString(),
   })}\n\n`);
@@ -88,31 +89,38 @@ router.get('/stream', async (req: Request, res: Response) => {
 
   // Track connection for both local cleanup and permission events
   activeConnections.set(connectionId, { res, heartbeat });
-  registerConnection(effectiveSessionId, res);
+  registerConnection(connectionTrackingId, res);
 
   // Stream SDK messages
+  // Pass original sessionId for SDK resume (may be empty for new conversations)
+  // Use connectionTrackingId for permission event routing
   try {
-    for await (const message of streamAgentQuery({ prompt, sessionId: effectiveSessionId, permissionMode })) {
+    for await (const message of streamAgentQuery({
+      prompt,
+      sessionId: sessionId || undefined,  // Only pass if client provided one
+      connectionId: connectionTrackingId,  // For permission event routing
+      permissionMode,
+    })) {
       try {
         res.write(`data: ${JSON.stringify(message)}\n\n`);
 
         // End stream on result message
         if (message.type === 'result') {
-          cleanup(connectionId, effectiveSessionId);
+          cleanup(connectionId, connectionTrackingId);
           res.end();
 
           return;
         }
       } catch {
         // Connection closed during streaming
-        cleanup(connectionId, effectiveSessionId);
+        cleanup(connectionId, connectionTrackingId);
 
         return;
       }
     }
 
     // Stream ended without result message (shouldn't happen normally)
-    cleanup(connectionId, effectiveSessionId);
+    cleanup(connectionId, connectionTrackingId);
     res.end();
   } catch (error) {
     // Error during streaming
@@ -125,13 +133,13 @@ router.get('/stream', async (req: Request, res: Response) => {
       // Connection already closed
     }
 
-    cleanup(connectionId, effectiveSessionId);
+    cleanup(connectionId, connectionTrackingId);
     res.end();
   }
 
   // Cleanup on connection close
   req.on('close', () => {
-    cleanup(connectionId, effectiveSessionId);
+    cleanup(connectionId, connectionTrackingId);
     console.log(`SSE connection closed: ${connectionId}`);
   });
 });

@@ -43,7 +43,8 @@ export function checkClaudeAvailable(): boolean {
 
 export interface StreamAgentOptions {
   prompt: string;
-  sessionId?: string;
+  sessionId?: string;  // SDK session ID for resume (from previous conversation)
+  connectionId?: string;  // Connection tracking ID for permission SSE events
   cwd?: string;
   permissionMode?: PermissionMode;
 }
@@ -158,7 +159,7 @@ function isValidUUID(str: string): boolean {
 export async function* streamAgentQuery(
   options: StreamAgentOptions
 ): AsyncGenerator<SDKMessage> {
-  const { prompt, sessionId, cwd, permissionMode = 'default' } = options;
+  const { prompt, sessionId, connectionId, cwd, permissionMode = 'default' } = options;
 
   // If SDK is available, use real implementation
   if (query) {
@@ -166,6 +167,9 @@ export async function* streamAgentQuery(
       // Only use resume if sessionId is a valid UUID (from a previous SDK session)
       // Otherwise let the SDK create a fresh session
       const resumeId = sessionId && isValidUUID(sessionId) ? sessionId : undefined;
+
+      // Use connectionId for permission events (SSE routing), sessionId for SDK resume
+      const permissionEventId = connectionId || sessionId;
 
       // Build query options based on permission mode
       const queryOptions: Record<string, unknown> = {
@@ -184,13 +188,13 @@ export async function* streamAgentQuery(
       } else if (permissionMode === 'plan') {
         // SDK enforces read-only mode
         queryOptions.permissionMode = 'plan';
-      } else if (sessionId) {
+      } else if (permissionEventId) {
         // For default and acceptEdits modes, use canUseTool callback
         // acceptEdits mode auto-approves file edits in the callback
-        queryOptions.canUseTool = createCanUseToolCallback(sessionId, permissionMode);
+        queryOptions.canUseTool = createCanUseToolCallback(permissionEventId, permissionMode);
       } else {
-        // Without a sessionId, we cannot send SSE events, so fall back to bypass
-        console.warn('[AgentService] No sessionId provided, falling back to bypassPermissions');
+        // Without a connection ID, we cannot send SSE events, so fall back to bypass
+        console.warn('[AgentService] No connectionId provided, falling back to bypassPermissions');
         queryOptions.permissionMode = 'bypassPermissions';
       }
 

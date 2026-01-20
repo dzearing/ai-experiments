@@ -44,6 +44,7 @@ export function useAgentStream(): UseAgentStreamReturn {
   const eventSourceRef = useRef<EventSource | null>(null);
   const streamingStateRef = useRef<StreamingState>(createInitialStreamingState());
   const processedMessageIdsRef = useRef<Set<string>>(new Set());
+  const activeStreamingIdRef = useRef<string | null>(null);
 
   const stopStream = useCallback(() => {
     if (eventSourceRef.current) {
@@ -63,6 +64,7 @@ export function useAgentStream(): UseAgentStreamReturn {
     // Reset streaming state
     streamingStateRef.current = createInitialStreamingState();
     processedMessageIdsRef.current.clear();
+    activeStreamingIdRef.current = null;
     setIsStreaming(true);
     setIsThinking(false);
     setThinkingContent('');
@@ -147,6 +149,9 @@ export function useAgentStream(): UseAgentStreamReturn {
         // Update or add streaming message
         const streamingMsgFromEvent = createStreamingMessage(streamingStateRef.current);
 
+        // Track the active streaming message ID for replacement later
+        activeStreamingIdRef.current = streamingMsgFromEvent.id;
+
         setMessages(prev => {
           const existingIndex = prev.findIndex(m => m.id === streamingMsgFromEvent.id);
 
@@ -210,11 +215,25 @@ export function useAgentStream(): UseAgentStreamReturn {
 
           processedMessageIdsRef.current.add(chatMessage.id);
 
-          // Get the current streaming message ID before clearing state
+          // Get the tracked streaming message ID before clearing state
+          const trackedStreamingId = activeStreamingIdRef.current;
           const currentStreamingId = streamingStateRef.current.currentMessageId;
 
           setMessages(prev => {
-            // First try to replace message with same ID as the complete message
+            // First try to replace by the actively tracked streaming message ID
+            if (trackedStreamingId) {
+              const trackedIndex = prev.findIndex(m => m.id === trackedStreamingId);
+
+              if (trackedIndex >= 0) {
+                const updated = [...prev];
+
+                updated[trackedIndex] = chatMessage;
+
+                return updated;
+              }
+            }
+
+            // Try to replace message with same ID as the complete message
             const existingIndex = prev.findIndex(m => m.id === chatMessage.id);
 
             if (existingIndex >= 0) {
@@ -225,7 +244,7 @@ export function useAgentStream(): UseAgentStreamReturn {
               return updated;
             }
 
-            // Try to match by the streaming message ID we tracked
+            // Try to match by the streaming state message ID
             if (currentStreamingId) {
               const streamingIdIndex = prev.findIndex(m => m.id === currentStreamingId);
 
@@ -249,12 +268,27 @@ export function useAgentStream(): UseAgentStreamReturn {
               return updated;
             }
 
-            // No matching message found - add as new message
-            return [...prev, chatMessage];
+            // No matching message found - only add if it has meaningful content
+            // This prevents adding empty duplicate messages when multiple assistant messages arrive
+            const hasContent = chatMessage.parts && chatMessage.parts.length > 0 &&
+              chatMessage.parts.some(p => {
+                if (p.type === 'text') return p.text && p.text.trim().length > 0;
+                if (p.type === 'tool_calls') return p.calls && p.calls.length > 0;
+
+                return false;
+              });
+
+            if (hasContent) {
+              return [...prev, chatMessage];
+            }
+
+            // Skip empty messages that couldn't find a streaming message to replace
+            return prev;
           });
 
-          // Clear streaming state
+          // Clear streaming state and tracked ID
           streamingStateRef.current = createInitialStreamingState();
+          activeStreamingIdRef.current = null;
           setIsThinking(false);
           setThinkingContent('');
         }
@@ -274,7 +308,8 @@ export function useAgentStream(): UseAgentStreamReturn {
           setContextUsage(message.usage);
         }
 
-        // Mark streaming complete
+        // Mark streaming complete and clear tracked streaming ID
+        activeStreamingIdRef.current = null;
         setIsStreaming(false);
         setIsConnected(false);
         setIsThinking(false);
@@ -323,6 +358,7 @@ export function useAgentStream(): UseAgentStreamReturn {
     setQuestionRequest(null);
     setDeniedPermissions([]);
     streamingStateRef.current = createInitialStreamingState();
+    activeStreamingIdRef.current = null;
   }, []);
 
   /**
