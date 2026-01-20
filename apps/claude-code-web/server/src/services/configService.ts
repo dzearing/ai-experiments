@@ -16,6 +16,9 @@
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
+import matter from 'gray-matter';
+import { glob } from 'glob';
+import { minimatch } from 'minimatch';
 
 import type { SessionConfig, Settings, RuleFile } from '../types/config.js';
 
@@ -195,6 +198,114 @@ export class ConfigService {
   }
 
   /**
+   * Load all rule files from .claude/rules/ directory recursively.
+   * Each rule file is parsed for YAML frontmatter to extract optional paths field.
+   *
+   * @param projectRoot - The project root directory
+   * @returns Array of RuleFile objects with path, content, and optional paths glob
+   */
+  async loadModularRules(projectRoot: string): Promise<RuleFile[]> {
+    const rulesDir = path.join(projectRoot, '.claude', 'rules');
+
+    if (!(await this.fileExists(rulesDir))) {
+      return [];
+    }
+
+    const ruleFiles: RuleFile[] = [];
+
+    try {
+      const files = await glob('**/*.md', {
+        cwd: rulesDir,
+        absolute: false,
+      });
+
+      for (const file of files) {
+        const filePath = path.join(rulesDir, file);
+
+        try {
+          const rawContent = await fs.readFile(filePath, 'utf-8');
+          const parsed = matter(rawContent);
+
+          const ruleFile: RuleFile = {
+            path: filePath,
+            content: parsed.content.trim(),
+          };
+
+          // Extract paths field from frontmatter if present
+          if (parsed.data && typeof parsed.data.paths === 'string') {
+            ruleFile.paths = parsed.data.paths;
+          }
+
+          ruleFiles.push(ruleFile);
+        } catch (error) {
+          console.warn(`[ConfigService] Failed to parse rule file ${filePath}:`, error);
+        }
+      }
+    } catch (error) {
+      console.warn(`[ConfigService] Failed to load rules from ${rulesDir}:`, error);
+    }
+
+    return ruleFiles;
+  }
+
+  /**
+   * Filter rules to those applicable for a specific file path.
+   * Rules without a paths field are unconditional and always apply.
+   * Rules with a paths field only apply if the file path matches the glob pattern.
+   *
+   * @param rules - Array of loaded rule files
+   * @param filePath - Optional file path to filter rules for (if omitted, returns unconditional rules only)
+   * @returns Array of rule content strings that apply
+   */
+  getApplicableRules(rules: RuleFile[], filePath?: string): string[] {
+    return rules
+      .filter((rule) => {
+        // If no paths field, rule always applies
+        if (!rule.paths) {
+          return true;
+        }
+
+        // If no filePath provided, only return unconditional rules
+        if (!filePath) {
+          return false;
+        }
+
+        // Check if filePath matches the glob pattern
+        return minimatch(filePath, rule.paths);
+      })
+      .map((rule) => rule.content);
+  }
+
+  /**
+   * Build the system prompt by combining CLAUDE.md content and unconditional rules.
+   *
+   * @param claudeMd - Merged CLAUDE.md content
+   * @param rules - Array of loaded rule files
+   * @returns Combined system prompt string
+   */
+  buildSystemPrompt(claudeMd: string, rules: RuleFile[]): string {
+    const parts: string[] = [];
+
+    // Add CLAUDE.md content first
+    if (claudeMd.length > 0) {
+      parts.push(claudeMd);
+    }
+
+    // Get unconditional rules (no paths field)
+    const unconditionalRules = rules.filter((rule) => !rule.paths);
+
+    if (unconditionalRules.length > 0) {
+      parts.push('## Project Rules');
+
+      for (const rule of unconditionalRules) {
+        parts.push(rule.content);
+      }
+    }
+
+    return parts.join('\n\n');
+  }
+
+  /**
    * Load full session configuration from all sources.
    *
    * @param cwd - Working directory for the session
@@ -206,10 +317,16 @@ export class ConfigService {
     const projectRoot = await this.findProjectRoot(resolvedCwd);
 
     // Load CLAUDE.md hierarchy
-    const systemPrompt = await this.loadClaudeMdHierarchy(resolvedCwd, projectRoot);
+    const claudeMd = await this.loadClaudeMdHierarchy(resolvedCwd, projectRoot);
 
     // Load settings hierarchy
     const settings = await this.loadSettingsHierarchy(projectRoot);
+
+    // Load modular rules from .claude/rules/
+    const rules = await this.loadModularRules(projectRoot);
+
+    // Build system prompt from CLAUDE.md and unconditional rules
+    const systemPrompt = this.buildSystemPrompt(claudeMd, rules);
 
     // Merge environment variables: defaults < settings.env < sessionEnv < PWD override
     const env: Record<string, string> = {
@@ -221,9 +338,6 @@ export class ConfigService {
       ...sessionEnv,
       PWD: resolvedCwd,
     };
-
-    // Rules will be loaded in Plan 02
-    const rules: RuleFile[] = [];
 
     return {
       cwd: resolvedCwd,
