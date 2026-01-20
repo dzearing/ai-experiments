@@ -4,13 +4,14 @@ import type { PermissionResponse } from '../types/index.js';
 
 /**
  * Result type returned to the SDK canUseTool callback.
- * Matches the SDK's expected CanUseToolResult type.
+ * Matches the SDK's expected PermissionResult discriminated union.
+ *
+ * For 'allow': updatedInput is optional, no message field
+ * For 'deny': message is REQUIRED
  */
-export interface PermissionResult {
-  behavior: 'allow' | 'deny';
-  message?: string;
-  updatedInput?: Record<string, unknown>;
-}
+export type PermissionResult =
+  | { behavior: 'allow'; updatedInput?: Record<string, unknown> }
+  | { behavior: 'deny'; message: string };
 
 /**
  * Represents a pending permission request waiting for user response.
@@ -45,12 +46,15 @@ export function createPermissionRequest(
   const requestId = uuidv4();
   const timestamp = Date.now();
 
+  console.log(`[PermissionService] Creating permission request ${requestId} for ${toolName}`);
+
   const promise = new Promise<PermissionResult>((resolve, reject) => {
     // Set 55s timeout (before SDK's 60s timeout)
     const timeoutId = setTimeout(() => {
       const pending = pendingPermissions.get(requestId);
 
       if (pending) {
+        console.log(`[PermissionService] Permission ${requestId} timed out after 55s`);
         pendingPermissions.delete(requestId);
         resolve({
           behavior: 'deny',
@@ -109,12 +113,19 @@ export function resolvePermission(
   // Remove from map
   pendingPermissions.delete(requestId);
 
-  // Resolve the promise with the permission result
-  pending.resolve({
-    behavior: response.behavior,
-    message: response.message,
-    updatedInput: response.updatedInput,
-  });
+  // Resolve the promise with the correct shape based on behavior
+  // SDK expects different shapes for allow vs deny
+  if (response.behavior === 'allow') {
+    pending.resolve({
+      behavior: 'allow',
+      updatedInput: response.updatedInput,
+    });
+  } else {
+    pending.resolve({
+      behavior: 'deny',
+      message: response.message || 'Permission denied by user',
+    });
+  }
 
   return { success: true };
 }
