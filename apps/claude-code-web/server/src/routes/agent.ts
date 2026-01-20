@@ -1,8 +1,10 @@
 import { Router, type Request, type Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import path from 'path';
 
 import { streamAgentQuery, registerConnection, unregisterConnection } from '../services/agentService.js';
 import { resolvePermission } from '../services/permissionService.js';
+import { configService } from '../services/configService.js';
 import type { PermissionMode, PermissionResponse, QuestionResponse } from '../types/index.js';
 
 export const router = Router();
@@ -34,10 +36,11 @@ export function setSessionMode(sessionId: string, mode: PermissionMode): void {
  */
 router.get('/stream', async (req: Request, res: Response) => {
   const connectionId = uuidv4();
-  const { prompt, sessionId, permissionMode: modeParam } = req.query as {
+  const { prompt, sessionId, permissionMode: modeParam, cwd } = req.query as {
     prompt?: string;
     sessionId?: string;
     permissionMode?: string;
+    cwd?: string;
   };
 
   // Validate required prompt parameter before starting SSE
@@ -48,6 +51,20 @@ router.get('/stream', async (req: Request, res: Response) => {
     });
 
     return;
+  }
+
+  // Validate cwd if provided - must be an absolute path
+  let workingDirectory = cwd;
+
+  if (cwd) {
+    if (!path.isAbsolute(cwd)) {
+      res.status(400).json({
+        error: 'cwd must be an absolute path',
+        code: 'INVALID_CWD',
+      });
+
+      return;
+    }
   }
 
   // Validate and parse permission mode
@@ -100,6 +117,7 @@ router.get('/stream', async (req: Request, res: Response) => {
       sessionId: sessionId || undefined,  // Only pass if client provided one
       connectionId: connectionTrackingId,  // For permission event routing
       permissionMode,
+      cwd: workingDirectory,  // Pass working directory for configuration loading
     })) {
       try {
         res.write(`data: ${JSON.stringify(message)}\n\n`);
@@ -284,4 +302,40 @@ router.post('/mode', (req: Request, res: Response) => {
   setSessionMode(sessionId, mode as PermissionMode);
 
   res.json({ success: true, mode });
+});
+
+/**
+ * Configuration debug endpoint.
+ * Returns information about the loaded configuration for a working directory.
+ */
+router.get('/config', async (req: Request, res: Response) => {
+  const { cwd } = req.query as { cwd?: string };
+
+  if (!cwd) {
+    res.status(400).json({
+      error: 'Missing required parameter: cwd',
+      code: 'MISSING_CWD',
+    });
+
+    return;
+  }
+
+  try {
+    const config = await configService.loadConfig(cwd);
+
+    res.json({
+      projectRoot: config.projectRoot,
+      cwd: config.cwd,
+      hasSystemPrompt: config.systemPrompt.length > 0,
+      systemPromptLength: config.systemPrompt.length,
+      settingsKeys: Object.keys(config.settings),
+      rulesCount: config.rules.length,
+      envKeys: Object.keys(config.env),
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error instanceof Error ? error.message : String(error),
+      code: 'CONFIG_LOAD_ERROR',
+    });
+  }
 });
