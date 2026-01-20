@@ -5,6 +5,14 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Claude Code Web</title>
+    <!-- Configure UIKit theme path before bootstrap loads -->
+    <script>
+      window.UIKitConfig = {
+        basePath: '/node_modules/@ui-kit/core/dist/themes',
+        defaultTheme: 'default',
+        defaultMode: 'auto'
+      };
+    </script>
     <script type="module">
       // Bootstrap self-initializes on import
       import '@ui-kit/core/bootstrap.js';
