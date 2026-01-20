@@ -14,6 +14,7 @@ import type {
   QuestionItem,
 } from '../types/index.js';
 import { createPermissionRequest, type PermissionResult } from './permissionService.js';
+import { configService } from './configService.js';
 
 // Attempt to import the Agent SDK
 let query: typeof import('@anthropic-ai/claude-agent-sdk').query | undefined;
@@ -47,6 +48,7 @@ export interface StreamAgentOptions {
   connectionId?: string;  // Connection tracking ID for permission SSE events
   cwd?: string;
   permissionMode?: PermissionMode;
+  env?: Record<string, string>;  // Additional environment variables
 }
 
 /**
@@ -159,11 +161,15 @@ function isValidUUID(str: string): boolean {
 export async function* streamAgentQuery(
   options: StreamAgentOptions
 ): AsyncGenerator<SDKMessage> {
-  const { prompt, sessionId, connectionId, cwd, permissionMode = 'default' } = options;
+  const { prompt, sessionId, connectionId, cwd, permissionMode = 'default', env } = options;
 
   // If SDK is available, use real implementation
   if (query) {
     try {
+      // Load configuration from the working directory
+      const workingDir = cwd || process.cwd();
+      const config = await configService.loadConfig(workingDir, env);
+
       // Only use resume if sessionId is a valid UUID (from a previous SDK session)
       // Otherwise let the SDK create a fresh session
       const resumeId = sessionId && isValidUUID(sessionId) ? sessionId : undefined;
@@ -171,12 +177,27 @@ export async function* streamAgentQuery(
       // Use connectionId for permission events (SSE routing), sessionId for SDK resume
       const permissionEventId = connectionId || sessionId;
 
-      // Build query options based on permission mode
+      // Build query options based on permission mode and configuration
       const queryOptions: Record<string, unknown> = {
         resume: resumeId,
-        cwd: cwd || process.cwd(),
+        cwd: config.cwd,
+        env: config.env,
         includePartialMessages: true,
       };
+
+      // Add system prompt from configuration if available
+      if (config.systemPrompt.length > 0) {
+        queryOptions.systemPrompt = {
+          type: 'preset' as const,
+          preset: 'claude_code' as const,
+          append: config.systemPrompt,
+        };
+      } else {
+        queryOptions.systemPrompt = {
+          type: 'preset' as const,
+          preset: 'claude_code' as const,
+        };
+      }
 
       // Handle permission modes:
       // - bypassPermissions: auto-approve everything (SDK built-in)

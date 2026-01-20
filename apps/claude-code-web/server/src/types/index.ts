@@ -2,6 +2,7 @@ export interface AgentQueryOptions {
   prompt: string;
   sessionId?: string;
   cwd?: string;
+  env?: Record<string, string>;
 }
 
 export interface HealthResponse {
