@@ -10,6 +10,24 @@ export const router = Router();
 // Track active connections for cleanup
 const activeConnections = new Map<string, { res: Response; heartbeat: NodeJS.Timeout }>();
 
+// Track session permission modes
+const sessionModes = new Map<string, PermissionMode>();
+
+/**
+ * Get the permission mode for a session.
+ * Returns 'default' if no mode has been set.
+ */
+export function getSessionMode(sessionId: string): PermissionMode {
+  return sessionModes.get(sessionId) ?? 'default';
+}
+
+/**
+ * Set the permission mode for a session.
+ */
+export function setSessionMode(sessionId: string, mode: PermissionMode): void {
+  sessionModes.set(sessionId, mode);
+}
+
 /**
  * SSE streaming endpoint for agent messages.
  * Streams real Agent SDK messages to the client via Server-Sent Events.
@@ -131,6 +149,7 @@ function cleanup(connectionId: string, sessionId?: string): void {
 
   if (sessionId) {
     unregisterConnection(sessionId);
+    sessionModes.delete(sessionId);
   }
 }
 
@@ -224,4 +243,37 @@ router.post('/question-response', (req: Request, res: Response) => {
   }
 
   res.json({ success: true });
+});
+
+/**
+ * Mode change endpoint.
+ * Called by client to change the permission mode mid-session.
+ */
+router.post('/mode', (req: Request, res: Response) => {
+  const { sessionId, mode } = req.body as { sessionId?: string; mode?: string };
+
+  if (!sessionId) {
+    res.status(400).json({
+      error: 'Missing required field: sessionId',
+      code: 'MISSING_SESSION_ID',
+    });
+
+    return;
+  }
+
+  const validModes: PermissionMode[] = ['default', 'plan', 'acceptEdits', 'bypassPermissions'];
+
+  if (!mode || !validModes.includes(mode as PermissionMode)) {
+    res.status(400).json({
+      error: 'Invalid or missing mode field',
+      code: 'INVALID_MODE',
+      validModes,
+    });
+
+    return;
+  }
+
+  setSessionMode(sessionId, mode as PermissionMode);
+
+  res.json({ success: true, mode });
 });
