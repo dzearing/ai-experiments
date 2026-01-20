@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-19)
 
 **Core value:** Everything you can do in Claude Code CLI, you can do in this web app
-**Current focus:** Phase 4 - Permissions & Modes (NEXT)
+**Current focus:** Phase 4 - Permissions & Modes (IN PROGRESS)
 
 ## Current Position
 
 Phase: 4 of 10 (Permissions & Modes)
-Plan: 0 of 3 in current phase
-Status: Ready to plan
-Last activity: 2026-01-19 - Phase 3 verified and complete
+Plan: 1 of 3 in current phase
+Status: In progress
+Last activity: 2026-01-20 - Completed 04-01-PLAN.md
 
-Progress: [█████████░] 26% (9/35 plans)
+Progress: [███████████░] 29% (10/35 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9
-- Average duration: 3.6 min
-- Total execution time: 32.3 min
+- Total plans completed: 10
+- Average duration: 3.5 min
+- Total execution time: 35.3 min
 
 **By Phase:**
 
@@ -30,9 +30,10 @@ Progress: [█████████░] 26% (9/35 plans)
 | 1-Infrastructure | 3/3 | 14.5 min | 4.8 min |
 | 2-Core Streaming | 2/4 | 6.2 min | 3.1 min |
 | 3-Essential Tools | 4/4 | 11.6 min | 2.9 min |
+| 4-Permissions & Modes | 1/3 | 3.0 min | 3.0 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-02 (4m), 03-01 (3m), 03-02 (2.7m), 03-03 (2.7m), 03-04 (3.2m)
+- Last 5 plans: 03-01 (3m), 03-02 (2.7m), 03-03 (2.7m), 03-04 (3.2m), 04-01 (3m)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -69,6 +70,9 @@ Recent decisions affecting current work:
 - Grep truncation indicator at 100+ matches
 - TreeView uses lazy loading - children fetched on expand
 - FileViewer uses modal/panel pattern with close button
+- 55s permission timeout auto-denies before SDK 60s timeout
+- canUseTool callback pattern for permission handling
+- AskUserQuestion sends question_request event (not permission_request)
 
 ### Pending Todos
 
@@ -80,6 +84,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-19T23:44:29Z
-Stopped at: Completed 03-04-PLAN.md (Phase 3 complete)
+Last session: 2026-01-20T00:29:01Z
+Stopped at: Completed 04-01-PLAN.md
 Resume file: None
