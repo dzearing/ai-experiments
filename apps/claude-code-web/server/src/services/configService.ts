@@ -329,11 +329,13 @@ export class ConfigService {
     const systemPrompt = this.buildSystemPrompt(claudeMd, rules);
 
     // Merge environment variables: defaults < settings.env < sessionEnv < PWD override
+    // IMPORTANT: Include ANTHROPIC_API_KEY for SDK authentication
     const env: Record<string, string> = {
       HOME: process.env.HOME || '',
       PATH: process.env.PATH || '',
       SHELL: process.env.SHELL || '/bin/bash',
       TERM: 'xterm-256color',
+      ...(process.env.ANTHROPIC_API_KEY ? { ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY } : {}),
       ...(settings.env || {}),
       ...sessionEnv,
       PWD: resolvedCwd,
