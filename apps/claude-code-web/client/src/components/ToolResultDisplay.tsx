@@ -18,6 +18,7 @@ import { EditResultDisplay } from './EditResultDisplay';
 import { WebSearchResultDisplay } from './WebSearchResultDisplay';
 import { WebFetchResultDisplay } from './WebFetchResultDisplay';
 import { NotebookEditDisplay } from './NotebookEditDisplay';
+import { TodoWriteDisplay, type TodoItem } from './TodoWriteDisplay';
 import styles from './ToolResultDisplay.module.css';
 
 export interface ToolResultDisplayProps {
@@ -239,6 +240,27 @@ export function ToolResultDisplay({
           isExpanded={isExpanded}
           onToggleExpand={onToggleExpand}
           onFileClick={onFileClick}
+        />
+      );
+    }
+
+    case 'TodoWrite': {
+      const rawTodos = Array.isArray(input.todos) ? input.todos : [];
+      const todos: TodoItem[] = rawTodos
+        .filter((item): item is Record<string, unknown> => item !== null && typeof item === 'object')
+        .map((item) => ({
+          content: typeof item.content === 'string' ? item.content : '',
+          status: item.status === 'pending' || item.status === 'in_progress' || item.status === 'completed'
+            ? item.status
+            : 'pending',
+          activeForm: typeof item.activeForm === 'string' ? item.activeForm : undefined,
+        }));
+
+      return (
+        <TodoWriteDisplay
+          todos={todos}
+          isExpanded={isExpanded}
+          onToggleExpand={onToggleExpand}
         />
       );
     }

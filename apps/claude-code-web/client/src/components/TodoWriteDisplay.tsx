@@ -9,7 +9,6 @@ import { useMemo } from 'react';
 
 import { ChevronDownIcon } from '@ui-kit/icons/ChevronDownIcon';
 import { CheckCircleIcon } from '@ui-kit/icons/CheckCircleIcon';
-import { SpinnerIcon } from '@ui-kit/icons/SpinnerIcon';
 import { ListTaskIcon } from '@ui-kit/icons/ListTaskIcon';
 
 import styles from './TodoWriteDisplay.module.css';
@@ -41,7 +40,7 @@ function StatusIcon({ status }: { status: TodoStatus }) {
     case 'completed':
       return <CheckCircleIcon size={14} className={styles.completedIcon} />;
     case 'in_progress':
-      return <SpinnerIcon size={14} className={styles.inProgressIcon} />;
+      return <span className={styles.inProgressIcon} aria-hidden="true" />;
     case 'pending':
     default:
       return <span className={styles.pendingIcon} aria-hidden="true" />;
