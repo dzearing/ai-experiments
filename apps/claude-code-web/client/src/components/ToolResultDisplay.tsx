@@ -12,6 +12,7 @@ import { ToolExecutionIndicator } from './ToolExecutionIndicator';
 import { FileContentResult } from './FileContentResult';
 import { FileListResult } from './FileListResult';
 import { SearchResultsDisplay } from './SearchResultsDisplay';
+import { BashResultDisplay } from './BashResultDisplay';
 import styles from './ToolResultDisplay.module.css';
 
 export interface ToolResultDisplayProps {
@@ -55,7 +56,7 @@ function DefaultToolResult({
 
 /**
  * Routes tool results to appropriate renderer based on tool name.
- * Shows ToolExecutionIndicator while tool is running.
+ * Shows ToolExecutionIndicator while tool is running (except for tools with streaming output).
  */
 export function ToolResultDisplay({
   toolName,
@@ -66,6 +67,32 @@ export function ToolResultDisplay({
   onToggleExpand,
   onFileClick,
 }: ToolResultDisplayProps): ReactNode {
+  // Bash and TaskOutput show streaming output during execution, so handle them before the generic indicator
+  if (toolName === 'Bash' || toolName === 'TaskOutput') {
+    const command = typeof input.command === 'string' ? input.command : '';
+    const description = typeof input.description === 'string' ? input.description : undefined;
+    const isBackground = typeof input.run_in_background === 'boolean' ? input.run_in_background : false;
+    const timeout = typeof input.timeout === 'number' ? input.timeout : undefined;
+
+    // For TaskOutput, show the task ID as the command
+    const displayCommand = toolName === 'TaskOutput'
+      ? `TaskOutput: ${typeof input.task_id === 'string' ? input.task_id : 'unknown'}`
+      : command;
+
+    return (
+      <BashResultDisplay
+        command={displayCommand}
+        output={output}
+        isExpanded={isExpanded}
+        onToggleExpand={onToggleExpand}
+        description={description}
+        isBackground={isBackground}
+        isExecuting={isExecuting}
+        timeout={timeout}
+      />
+    );
+  }
+
   // Show execution indicator if tool is still running
   if (isExecuting) {
     return <ToolExecutionIndicator toolName={toolName} isExecuting={true} />;
