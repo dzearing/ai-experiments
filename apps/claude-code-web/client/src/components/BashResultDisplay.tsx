@@ -7,7 +7,7 @@
 
 import { useEffect, useMemo, useRef } from 'react';
 import { ChevronDownIcon } from '@ui-kit/icons/ChevronDownIcon';
-import { TerminalIcon } from '@ui-kit/icons/TerminalIcon';
+import { CodeIcon } from '@ui-kit/icons/CodeIcon';
 
 import styles from './BashResultDisplay.module.css';
 
@@ -120,7 +120,7 @@ export function BashResultDisplay({
         aria-expanded={isExpanded}
         aria-label={`${isExpanded ? 'Collapse' : 'Expand'} bash output`}
       >
-        <TerminalIcon size={16} className={styles.terminalIcon} />
+        <CodeIcon size={16} className={styles.terminalIcon} />
 
         <span className={styles.commandText}>
           <span className={styles.commandPrompt}>$</span>
