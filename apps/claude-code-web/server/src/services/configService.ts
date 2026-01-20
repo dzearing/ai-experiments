@@ -328,14 +328,18 @@ export class ConfigService {
     // Build system prompt from CLAUDE.md and unconditional rules
     const systemPrompt = this.buildSystemPrompt(claudeMd, rules);
 
-    // Merge environment variables: defaults < settings.env < sessionEnv < PWD override
-    // IMPORTANT: Include ANTHROPIC_API_KEY for SDK authentication
+    // Start with full process.env to preserve auth context (SSO tokens, etc.)
+    // Then layer: settings.env < sessionEnv < PWD override
+    const baseEnv: Record<string, string> = {};
+
+    for (const [key, value] of Object.entries(process.env)) {
+      if (value !== undefined) {
+        baseEnv[key] = value;
+      }
+    }
+
     const env: Record<string, string> = {
-      HOME: process.env.HOME || '',
-      PATH: process.env.PATH || '',
-      SHELL: process.env.SHELL || '/bin/bash',
-      TERM: 'xterm-256color',
-      ...(process.env.ANTHROPIC_API_KEY ? { ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY } : {}),
+      ...baseEnv,
       ...(settings.env || {}),
       ...sessionEnv,
       PWD: resolvedCwd,
