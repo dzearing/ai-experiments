@@ -349,15 +349,34 @@ export function useAgentStream(): UseAgentStreamReturn {
         setIsThinking(false);
         setThinkingContent('');
 
-        // Finalize any remaining streaming messages and filter out empty ones
+        // Finalize any remaining streaming messages, mark tool calls complete, and filter empty ones
         setMessages(prev => {
           return prev
             .map(m => {
-              if (m.isStreaming) {
-                return { ...m, isStreaming: false };
+              // Mark streaming messages as complete
+              const updated = m.isStreaming ? { ...m, isStreaming: false } : m;
+
+              // Mark all tool calls as completed (result event means turn is done)
+              if (updated.parts) {
+                const updatedParts = updated.parts.map(part => {
+                  if (part.type === 'tool_calls') {
+                    return {
+                      ...part,
+                      calls: part.calls.map(call => ({
+                        ...call,
+                        completed: call.completed || true,
+                        endTime: call.endTime || Date.now(),
+                      })),
+                    };
+                  }
+
+                  return part;
+                });
+
+                return { ...updated, parts: updatedParts };
               }
 
-              return m;
+              return updated;
             })
             .filter(m => {
               // Keep messages that have meaningful content
