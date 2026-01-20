@@ -13,6 +13,11 @@ import { FileContentResult } from './FileContentResult';
 import { FileListResult } from './FileListResult';
 import { SearchResultsDisplay } from './SearchResultsDisplay';
 import { BashResultDisplay } from './BashResultDisplay';
+import { WriteResultDisplay } from './WriteResultDisplay';
+import { EditResultDisplay } from './EditResultDisplay';
+import { WebSearchResultDisplay } from './WebSearchResultDisplay';
+import { WebFetchResultDisplay } from './WebFetchResultDisplay';
+import { NotebookEditDisplay } from './NotebookEditDisplay';
 import styles from './ToolResultDisplay.module.css';
 
 export interface ToolResultDisplayProps {
@@ -134,6 +139,102 @@ export function ToolResultDisplay({
       return (
         <SearchResultsDisplay
           pattern={pattern}
+          output={output}
+          isExpanded={isExpanded}
+          onToggleExpand={onToggleExpand}
+          onFileClick={onFileClick}
+        />
+      );
+    }
+
+    case 'Write': {
+      const filePath = typeof input.file_path === 'string' ? input.file_path : '';
+      const content = typeof input.content === 'string' ? input.content : undefined;
+
+      return (
+        <WriteResultDisplay
+          filePath={filePath}
+          content={content}
+          isExpanded={isExpanded}
+          onToggleExpand={onToggleExpand}
+          onFileClick={onFileClick}
+        />
+      );
+    }
+
+    case 'Edit': {
+      const filePath = typeof input.file_path === 'string' ? input.file_path : '';
+      const oldString = typeof input.old_string === 'string' ? input.old_string : '';
+      const newString = typeof input.new_string === 'string' ? input.new_string : '';
+      const replaceAll = typeof input.replace_all === 'boolean' ? input.replace_all : false;
+
+      return (
+        <EditResultDisplay
+          filePath={filePath}
+          oldString={oldString}
+          newString={newString}
+          replaceAll={replaceAll}
+          isExpanded={isExpanded}
+          onToggleExpand={onToggleExpand}
+          onFileClick={onFileClick}
+        />
+      );
+    }
+
+    case 'WebSearch': {
+      const query = typeof input.query === 'string' ? input.query : '';
+      const allowedDomains = Array.isArray(input.allowed_domains)
+        ? (input.allowed_domains as string[])
+        : undefined;
+      const blockedDomains = Array.isArray(input.blocked_domains)
+        ? (input.blocked_domains as string[])
+        : undefined;
+
+      return (
+        <WebSearchResultDisplay
+          query={query}
+          output={output}
+          allowedDomains={allowedDomains}
+          blockedDomains={blockedDomains}
+          isExpanded={isExpanded}
+          onToggleExpand={onToggleExpand}
+        />
+      );
+    }
+
+    case 'WebFetch': {
+      const url = typeof input.url === 'string' ? input.url : '';
+      const prompt = typeof input.prompt === 'string' ? input.prompt : '';
+
+      return (
+        <WebFetchResultDisplay
+          url={url}
+          prompt={prompt}
+          output={output}
+          isExpanded={isExpanded}
+          onToggleExpand={onToggleExpand}
+        />
+      );
+    }
+
+    case 'NotebookEdit': {
+      const notebookPath = typeof input.notebook_path === 'string' ? input.notebook_path : '';
+      const cellId = typeof input.cell_id === 'string' ? input.cell_id : undefined;
+      const cellType = input.cell_type === 'code' || input.cell_type === 'markdown'
+        ? input.cell_type
+        : undefined;
+      const editMode = input.edit_mode === 'replace' || input.edit_mode === 'insert' || input.edit_mode === 'delete'
+        ? input.edit_mode
+        : undefined;
+      const newSource = typeof input.new_source === 'string' ? input.new_source : '';
+
+      return (
+        <NotebookEditDisplay
+          notebookPath={notebookPath}
+          cellId={cellId}
+          cellType={cellType}
+          editMode={editMode}
+          newSource={newSource}
           output={output}
           isExpanded={isExpanded}
           onToggleExpand={onToggleExpand}
