@@ -66,6 +66,8 @@ export function useConversation(): UseConversationReturn {
    */
   const sendMessage = useCallback((prompt: string) => {
     // Create user message
+    // Use renderMarkdown: false to preserve newlines exactly as typed
+    // (Markdown treats single newlines as spaces, which collapses multi-line input)
     const userMsg: ChatPanelMessage = {
       id: `user-${Date.now()}`,
       content: prompt,
@@ -73,7 +75,7 @@ export function useConversation(): UseConversationReturn {
       timestamp: new Date(),
       senderName: 'You',
       isOwn: true,
-      renderMarkdown: true,
+      renderMarkdown: false,
     };
 
     // Add user message to local state

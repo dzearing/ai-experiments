@@ -349,15 +349,27 @@ export function useAgentStream(): UseAgentStreamReturn {
         setIsThinking(false);
         setThinkingContent('');
 
-        // Finalize any remaining streaming message
+        // Finalize any remaining streaming messages and filter out empty ones
         setMessages(prev => {
-          return prev.map(m => {
-            if (m.isStreaming) {
-              return { ...m, isStreaming: false };
-            }
+          return prev
+            .map(m => {
+              if (m.isStreaming) {
+                return { ...m, isStreaming: false };
+              }
 
-            return m;
-          });
+              return m;
+            })
+            .filter(m => {
+              // Keep messages that have meaningful content
+              if (!m.parts || m.parts.length === 0) return false;
+
+              return m.parts.some(p => {
+                if (p.type === 'text') return p.text && p.text.trim().length > 0;
+                if (p.type === 'tool_calls') return p.calls && p.calls.length > 0;
+
+                return false;
+              });
+            });
         });
         break;
 
