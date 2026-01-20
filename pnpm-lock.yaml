@@ -95,6 +95,9 @@ importers:
       gray-matter:
         specifier: ^4.0.3
         version: 4.0.3
+      minimatch:
+        specifier: ^10.1.1
+        version: 10.1.1
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
