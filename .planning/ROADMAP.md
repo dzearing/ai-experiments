@@ -104,11 +104,11 @@ Plans:
   3. Modular rules load from .claude/rules/*.md
   4. Working directory is configurable per session
   5. Environment variables pass through to tool execution
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 05-01: CLAUDE.md and settings loading
-- [ ] 05-02: Rules and environment configuration
+- [ ] 05-01-PLAN.md — ConfigService with CLAUDE.md and settings.json hierarchy loading
+- [ ] 05-02-PLAN.md — Modular rules loading and agent service integration
 
 ### Phase 6: Extended Tools
 **Goal**: All remaining tools work (Bash, Write, Edit, Web, Notebook)
@@ -227,4 +227,4 @@ Note: Phases 5 and 8 (Configuration, Commands) can run in parallel with Phases 3
 
 ---
 *Roadmap created: 2026-01-19*
-*Last updated: 2026-01-20 - Phase 4 complete*
+*Last updated: 2026-01-20 - Phase 5 planned*
