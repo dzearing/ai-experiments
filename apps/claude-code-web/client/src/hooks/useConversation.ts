@@ -7,6 +7,7 @@ import type {
   PermissionMode,
   PermissionRequestEvent,
   QuestionRequestEvent,
+  DeniedPermission,
 } from '../types/agent';
 import { useAgentStream } from './useAgentStream';
 
@@ -34,6 +35,8 @@ export interface UseConversationReturn {
   questionRequest: QuestionRequestEvent | null;
   /** Current permission mode */
   permissionMode: PermissionMode;
+  /** Denied permissions tracked for the session */
+  deniedPermissions: DeniedPermission[];
   /** Send a new message to the assistant */
   sendMessage: (prompt: string) => void;
   /** Clear the conversation and start fresh */
@@ -42,6 +45,10 @@ export interface UseConversationReturn {
   interrupt: () => void;
   /** Change the permission mode */
   changePermissionMode: (mode: PermissionMode) => Promise<void>;
+  /** Respond to a permission request */
+  respondToPermission: (requestId: string, behavior: 'allow' | 'deny', message?: string) => Promise<void>;
+  /** Respond to a question request */
+  respondToQuestion: (requestId: string, answers: Record<string, string>) => Promise<void>;
 }
 
 /**
@@ -120,9 +127,12 @@ export function useConversation(): UseConversationReturn {
     permissionRequest: stream.permissionRequest,
     questionRequest: stream.questionRequest,
     permissionMode: stream.permissionMode,
+    deniedPermissions: stream.deniedPermissions,
     sendMessage,
     clearConversation,
     interrupt,
     changePermissionMode: stream.changePermissionMode,
+    respondToPermission: stream.respondToPermission,
+    respondToQuestion: stream.respondToQuestion,
   };
 }

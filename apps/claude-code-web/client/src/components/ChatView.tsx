@@ -4,8 +4,11 @@ import type { ChatInputSubmitData } from '@ui-kit/react-chat';
 import { ChatPanel, ChatInput, ThinkingIndicator } from '@ui-kit/react-chat';
 
 import { useConversation } from '../hooks/useConversation';
+import { AskUserDialog } from './AskUserDialog';
 import { ContextUsage } from './ContextUsage';
 import { ModeSelector } from './ModeSelector';
+import { PermissionDeniedNotice } from './PermissionDeniedNotice';
+import { PermissionDialog } from './PermissionDialog';
 import { ToolResultDisplay } from './ToolResultDisplay';
 import { WelcomeMessage } from './WelcomeMessage';
 import styles from './ChatView.module.css';
@@ -25,8 +28,11 @@ export function ChatView() {
     permissionRequest,
     questionRequest,
     permissionMode,
+    deniedPermissions,
     sendMessage,
     changePermissionMode,
+    respondToPermission,
+    respondToQuestion,
   } = useConversation();
 
   const handleSubmit = useCallback((data: ChatInputSubmitData) => {
@@ -34,6 +40,37 @@ export function ChatView() {
       sendMessage(data.content.trim());
     }
   }, [sendMessage]);
+
+  const handlePermissionApprove = useCallback(() => {
+    if (permissionRequest) {
+      respondToPermission(permissionRequest.requestId, 'allow');
+    }
+  }, [permissionRequest, respondToPermission]);
+
+  const handlePermissionDeny = useCallback(() => {
+    if (permissionRequest) {
+      respondToPermission(permissionRequest.requestId, 'deny', 'User denied this action');
+    }
+  }, [permissionRequest, respondToPermission]);
+
+  const handlePermissionAlwaysAllow = useCallback(() => {
+    // For now, just approve. Rule persistence is Phase 5.
+    if (permissionRequest) {
+      respondToPermission(permissionRequest.requestId, 'allow');
+    }
+  }, [permissionRequest, respondToPermission]);
+
+  const handleQuestionComplete = useCallback((answers: Record<string, string>) => {
+    if (questionRequest) {
+      respondToQuestion(questionRequest.requestId, answers);
+    }
+  }, [questionRequest, respondToQuestion]);
+
+  const handleQuestionDismiss = useCallback(() => {
+    if (questionRequest) {
+      respondToQuestion(questionRequest.requestId, {});
+    }
+  }, [questionRequest, respondToQuestion]);
 
   const renderToolResult = useCallback((props: {
     toolName: string;
@@ -97,6 +134,18 @@ export function ChatView() {
             {error}
           </div>
         )}
+
+        {deniedPermissions.length > 0 && (
+          <div className={styles.deniedPermissions}>
+            {deniedPermissions.map((denied, index) => (
+              <PermissionDeniedNotice
+                key={`${denied.toolName}-${denied.timestamp}-${index}`}
+                toolName={denied.toolName}
+                reason={denied.reason}
+              />
+            ))}
+          </div>
+        )}
       </main>
 
       <footer className={styles.inputArea}>
@@ -108,6 +157,22 @@ export function ChatView() {
           fullWidth={true}
         />
       </footer>
+
+      <PermissionDialog
+        open={!!permissionRequest}
+        toolName={permissionRequest?.toolName ?? ''}
+        input={permissionRequest?.input ?? {}}
+        onApprove={handlePermissionApprove}
+        onDeny={handlePermissionDeny}
+        onApproveAlways={handlePermissionAlwaysAllow}
+      />
+
+      <AskUserDialog
+        open={!!questionRequest}
+        questions={questionRequest?.questions ?? []}
+        onComplete={handleQuestionComplete}
+        onDismiss={handleQuestionDismiss}
+      />
     </div>
   );
 }
