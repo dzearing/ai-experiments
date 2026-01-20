@@ -87,12 +87,12 @@ Plans:
   3. AskUserQuestion renders as multi-select questionnaire dialog
   4. Plan mode restricts to read-only operations
   5. Mode indicator shows current mode and mode can be changed mid-session
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 04-01: Permission callback surfacing to UI
-- [ ] 04-02: Permission dialog components
-- [ ] 04-03: Execution modes and mode switching
+- [ ] 04-01-PLAN.md — Server permission infrastructure with canUseTool callback
+- [ ] 04-02-PLAN.md — Permission and AskUserQuestion dialog components
+- [ ] 04-03-PLAN.md — Mode selector and mid-session mode switching
 
 ### Phase 5: Configuration System
 **Goal**: Configuration files load from proper hierarchy
@@ -217,7 +217,7 @@ Note: Phases 5 and 8 (Configuration, Commands) can run in parallel with Phases 3
 | 1. Infrastructure Foundation | 3/3 | Complete | 2026-01-19 |
 | 2. Core Streaming | 3/3 | Complete | 2026-01-19 |
 | 3. Essential Tools | 4/4 | Complete | 2026-01-19 |
-| 4. Permissions & Modes | 0/3 | Not started | - |
+| 4. Permissions & Modes | 0/3 | Planned | - |
 | 5. Configuration System | 0/2 | Not started | - |
 | 6. Extended Tools | 0/4 | Not started | - |
 | 7. Hooks System | 0/3 | Not started | - |
@@ -227,4 +227,4 @@ Note: Phases 5 and 8 (Configuration, Commands) can run in parallel with Phases 3
 
 ---
 *Roadmap created: 2026-01-19*
-*Last updated: 2026-01-19 - Phase 3 Essential Tools complete*
+*Last updated: 2026-01-19 - Phase 4 plans created*
