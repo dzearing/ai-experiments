@@ -4,6 +4,72 @@
  */
 
 // =============================================================================
+// Permission Types
+// =============================================================================
+
+/**
+ * Permission mode for agent tool execution.
+ */
+export type PermissionMode = 'default' | 'plan' | 'acceptEdits' | 'bypassPermissions';
+
+/**
+ * Permission request event from server when tool approval is needed.
+ */
+export interface PermissionRequestEvent {
+  type: 'permission_request';
+  requestId: string;
+  toolName: string;
+  input: Record<string, unknown>;
+  timestamp: number;
+}
+
+/**
+ * Question option for AskUserQuestion.
+ */
+export interface QuestionOption {
+  label: string;
+  description?: string;
+}
+
+/**
+ * Single question in a question request.
+ */
+export interface QuestionItem {
+  question: string;
+  options: QuestionOption[];
+  multiSelect?: boolean;
+}
+
+/**
+ * Question request event from server for AskUserQuestion tool.
+ */
+export interface QuestionRequestEvent {
+  type: 'question_request';
+  requestId: string;
+  questions: QuestionItem[];
+  timestamp: number;
+}
+
+/**
+ * Mode changed event from server.
+ */
+export interface ModeChangedEvent {
+  type: 'mode_changed';
+  mode: PermissionMode;
+  timestamp: number;
+}
+
+/**
+ * Tracking for a denied permission request.
+ */
+export interface DeniedPermission {
+  toolName: string;
+  input: Record<string, unknown>;
+  reason: string;
+  timestamp: number;
+}
+
+// =============================================================================
 // Content Blocks
 // =============================================================================
 
@@ -135,7 +201,10 @@ export type SDKMessage =
   | SDKAssistantMessage
   | SDKPartialAssistantMessage
   | SDKResultMessage
-  | SDKErrorMessage;
+  | SDKErrorMessage
+  | PermissionRequestEvent
+  | QuestionRequestEvent
+  | ModeChangedEvent;
 
 // =============================================================================
 // Hook Return Types
@@ -153,7 +222,14 @@ export interface UseAgentStreamReturn {
   sessionId: string | null;
   contextUsage: UsageStats | null;
   error: string | null;
-  startStream: (prompt: string, sessionId?: string) => void;
+  permissionRequest: PermissionRequestEvent | null;
+  questionRequest: QuestionRequestEvent | null;
+  permissionMode: PermissionMode;
+  deniedPermissions: DeniedPermission[];
+  startStream: (prompt: string, sessionId?: string, permissionMode?: PermissionMode) => void;
   stopStream: () => void;
   clearMessages: () => void;
+  respondToPermission: (requestId: string, behavior: 'allow' | 'deny', message?: string) => Promise<void>;
+  respondToQuestion: (requestId: string, answers: Record<string, string>) => Promise<void>;
+  clearDeniedPermissions: () => void;
 }

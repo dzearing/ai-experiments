@@ -7,6 +7,10 @@ import type {
   SDKPartialAssistantMessage,
   UsageStats,
   UseAgentStreamReturn,
+  PermissionRequestEvent,
+  QuestionRequestEvent,
+  PermissionMode,
+  DeniedPermission,
 } from '../types/agent';
 
 import {
@@ -31,9 +35,14 @@ export function useAgentStream(): UseAgentStreamReturn {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [contextUsage, setContextUsage] = useState<UsageStats | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [permissionRequest, setPermissionRequest] = useState<PermissionRequestEvent | null>(null);
+  const [questionRequest, setQuestionRequest] = useState<QuestionRequestEvent | null>(null);
+  const [permissionMode, setPermissionMode] = useState<PermissionMode>('default');
+  const [deniedPermissions, setDeniedPermissions] = useState<DeniedPermission[]>([]);
 
   const eventSourceRef = useRef<EventSource | null>(null);
   const streamingStateRef = useRef<StreamingState>(createInitialStreamingState());
+  const processedMessageIdsRef = useRef<Set<string>>(new Set());
 
   const stopStream = useCallback(() => {
     if (eventSourceRef.current) {
@@ -46,20 +55,24 @@ export function useAgentStream(): UseAgentStreamReturn {
     setIsThinking(false);
   }, []);
 
-  const startStream = useCallback((prompt: string, existingSessionId?: string) => {
+  const startStream = useCallback((prompt: string, existingSessionId?: string, mode?: PermissionMode) => {
     // Close any existing connection
     stopStream();
 
     // Reset streaming state
     streamingStateRef.current = createInitialStreamingState();
+    processedMessageIdsRef.current.clear();
     setIsStreaming(true);
     setIsThinking(false);
     setThinkingContent('');
     setError(null);
+    setPermissionRequest(null);
+    setQuestionRequest(null);
 
-    // Build URL with optional session ID for multi-turn
+    // Build URL with optional session ID for multi-turn and permission mode
     const urlSessionId = existingSessionId || sessionId || '';
-    const url = `/api/agent/stream?prompt=${encodeURIComponent(prompt)}&sessionId=${encodeURIComponent(urlSessionId)}`;
+    const urlMode = mode || permissionMode;
+    const url = `/api/agent/stream?prompt=${encodeURIComponent(prompt)}&sessionId=${encodeURIComponent(urlSessionId)}&mode=${encodeURIComponent(urlMode)}`;
     const eventSource = new EventSource(url);
 
     eventSourceRef.current = eventSource;
@@ -91,7 +104,7 @@ export function useAgentStream(): UseAgentStreamReturn {
         setError(prev => prev || 'Connection lost');
       }
     };
-  }, [stopStream, sessionId]);
+  }, [stopStream, sessionId, permissionMode]);
 
   /**
    * Handles incoming SDK messages and updates state accordingly.
@@ -145,8 +158,18 @@ export function useAgentStream(): UseAgentStreamReturn {
           // Complete assistant message - transform and add
           const chatMessage = transformSDKMessage(message);
 
+          // Skip if we've already processed this message (prevent duplicates)
+          if (processedMessageIdsRef.current.has(chatMessage.id)) {
+            break;
+          }
+
+          processedMessageIdsRef.current.add(chatMessage.id);
+
+          // Get the current streaming message ID before clearing state
+          const currentStreamingId = streamingStateRef.current.currentMessageId;
+
           setMessages(prev => {
-            // Replace any streaming message with same ID
+            // First try to replace message with same ID as the complete message
             const existingIndex = prev.findIndex(m => m.id === chatMessage.id);
 
             if (existingIndex >= 0) {
@@ -157,6 +180,31 @@ export function useAgentStream(): UseAgentStreamReturn {
               return updated;
             }
 
+            // Try to match by the streaming message ID we tracked
+            if (currentStreamingId) {
+              const streamingIdIndex = prev.findIndex(m => m.id === currentStreamingId);
+
+              if (streamingIdIndex >= 0) {
+                const updated = [...prev];
+
+                updated[streamingIdIndex] = chatMessage;
+
+                return updated;
+              }
+            }
+
+            // Fallback: replace any streaming message (from current turn)
+            const streamingIndex = prev.findIndex(m => m.isStreaming);
+
+            if (streamingIndex >= 0) {
+              const updated = [...prev];
+
+              updated[streamingIndex] = chatMessage;
+
+              return updated;
+            }
+
+            // No matching message found - add as new message
             return [...prev, chatMessage];
           });
 
@@ -168,6 +216,14 @@ export function useAgentStream(): UseAgentStreamReturn {
         break;
 
       case 'result':
+        // IMPORTANT: Close the EventSource immediately to prevent auto-reconnect
+        // The server closes the connection after sending result, and EventSource
+        // will try to reconnect automatically, causing duplicate queries
+        if (eventSourceRef.current) {
+          eventSourceRef.current.close();
+          eventSourceRef.current = null;
+        }
+
         // Extract usage stats
         if (message.usage) {
           setContextUsage(message.usage);
@@ -175,6 +231,7 @@ export function useAgentStream(): UseAgentStreamReturn {
 
         // Mark streaming complete
         setIsStreaming(false);
+        setIsConnected(false);
         setIsThinking(false);
         setThinkingContent('');
 
@@ -195,6 +252,18 @@ export function useAgentStream(): UseAgentStreamReturn {
         setIsStreaming(false);
         setIsThinking(false);
         break;
+
+      case 'permission_request':
+        setPermissionRequest(message);
+        break;
+
+      case 'question_request':
+        setQuestionRequest(message);
+        break;
+
+      case 'mode_changed':
+        setPermissionMode(message.mode);
+        break;
     }
   }, []);
 
@@ -205,8 +274,75 @@ export function useAgentStream(): UseAgentStreamReturn {
     setIsThinking(false);
     setThinkingContent('');
     setError(null);
+    setPermissionRequest(null);
+    setQuestionRequest(null);
+    setDeniedPermissions([]);
     streamingStateRef.current = createInitialStreamingState();
   }, []);
+
+  /**
+   * Responds to a permission request from the server.
+   */
+  const respondToPermission = useCallback(async (requestId: string, behavior: 'allow' | 'deny', message?: string) => {
+    // Track denial before sending response
+    if (behavior === 'deny' && permissionRequest) {
+      setDeniedPermissions(prev => [...prev, {
+        toolName: permissionRequest.toolName,
+        input: permissionRequest.input,
+        reason: message || 'User denied this action',
+        timestamp: Date.now(),
+      }]);
+    }
+
+    await fetch('/api/agent/permission-response', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requestId, behavior, message }),
+    });
+
+    setPermissionRequest(null);
+  }, [permissionRequest]);
+
+  /**
+   * Responds to a question request from the server.
+   */
+  const respondToQuestion = useCallback(async (requestId: string, answers: Record<string, string>) => {
+    await fetch('/api/agent/question-response', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requestId, answers }),
+    });
+
+    setQuestionRequest(null);
+  }, []);
+
+  /**
+   * Clears tracked denied permissions (for session reset).
+   */
+  const clearDeniedPermissions = useCallback(() => {
+    setDeniedPermissions([]);
+  }, []);
+
+  /**
+   * Changes the permission mode for subsequent tool calls.
+   * Updates local state and notifies server if session exists.
+   */
+  const changePermissionMode = useCallback(async (newMode: PermissionMode) => {
+    setPermissionMode(newMode);
+
+    // If we have an active session, notify the server of the mode change
+    if (sessionId) {
+      try {
+        await fetch('/api/agent/mode', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId, mode: newMode }),
+        });
+      } catch (err) {
+        console.error('Failed to change permission mode:', err);
+      }
+    }
+  }, [sessionId]);
 
   return {
     messages,
@@ -217,8 +353,16 @@ export function useAgentStream(): UseAgentStreamReturn {
     sessionId,
     contextUsage,
     error,
+    permissionRequest,
+    questionRequest,
+    permissionMode,
+    deniedPermissions,
     startStream,
     stopStream,
     clearMessages,
+    respondToPermission,
+    respondToQuestion,
+    clearDeniedPermissions,
+    changePermissionMode,
   };
 }
