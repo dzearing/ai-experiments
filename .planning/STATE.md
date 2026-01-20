@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-19)
 ## Current Position
 
 Phase: 6 of 10 (Extended Tools)
-Plan: 2 of 4 in current phase
+Plan: 3 of 4 in current phase
 Status: In progress
-Last activity: 2026-01-20 - Completed 06-02-PLAN.md
+Last activity: 2026-01-20 - Completed 06-03-PLAN.md
 
-Progress: [███████████████░] 46% (16/35 plans)
+Progress: [████████████████░] 49% (17/35 plans)
 
 ## Performance Metrics
 
@@ -34,7 +34,7 @@ Progress: [███████████████░] 46% (16/35 plans)
 | 5-Configuration System | 2/2 | 8.0 min | 4.0 min |
 
 **Recent Trend:**
-- Last 5 plans: 04-03 (4m), 05-01 (4m), 05-02 (4m), 06-01 (3m), 06-02 (3m)
+- Last 5 plans: 05-01 (4m), 05-02 (4m), 06-01 (3m), 06-02 (3m), 06-03 (3m)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -90,6 +90,9 @@ Recent decisions affecting current work:
 - Config debug endpoint returns summary without exposing full content
 - CodeIcon used for Bash instead of TerminalIcon (not available in ui-kit)
 - Bash and TaskOutput share BashResultDisplay component
+- WebSearch output parsed for URLs and made clickable external links
+- Notebook code cells use Python highlighting, markdown cells use plaintext
+- SDK web content pre-processed by AI, safe to display without sanitization
 
 ### Pending Todos
 
@@ -102,5 +105,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: Completed 06-02-PLAN.md
+Stopped at: Completed 06-03-PLAN.md
 Resume file: None
