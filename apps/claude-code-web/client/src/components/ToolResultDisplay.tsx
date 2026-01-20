@@ -32,6 +32,10 @@ export interface ToolResultDisplayProps {
   isExpanded: boolean;
   /** Whether the tool is currently executing */
   isExecuting?: boolean;
+  /** Whether the tool execution resulted in an error */
+  isError?: boolean;
+  /** Error message to display when isError is true */
+  errorMessage?: string;
   /** Callback to toggle expand/collapse state */
   onToggleExpand: () => void;
   /** Callback when a file path is clicked */
@@ -70,6 +74,8 @@ export function ToolResultDisplay({
   output,
   isExpanded,
   isExecuting = false,
+  isError = false,
+  errorMessage,
   onToggleExpand,
   onFileClick,
 }: ToolResultDisplayProps): ReactNode {
@@ -95,6 +101,18 @@ export function ToolResultDisplay({
         isBackground={isBackground}
         isExecuting={isExecuting}
         timeout={timeout}
+      />
+    );
+  }
+
+  // Show error indicator if tool failed
+  if (isError) {
+    return (
+      <ToolExecutionIndicator
+        toolName={toolName}
+        isExecuting={false}
+        isError={true}
+        errorMessage={errorMessage}
       />
     );
   }
