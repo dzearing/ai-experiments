@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Essential Tools** - File and search tools with UI visualization
 - [x] **Phase 4: Permissions & Modes** - Permission dialogs and execution modes
 - [x] **Phase 5: Configuration System** - CLAUDE.md, settings, and rules loading
-- [ ] **Phase 6: Extended Tools** - Bash, web tools, notebooks, and tool polish
+- [x] **Phase 6: Extended Tools** - Bash, web tools, notebooks, and tool polish
 - [ ] **Phase 7: Hooks System** - Pre/post tool hooks and lifecycle hooks
 - [ ] **Phase 8: Commands & Skills** - Slash commands and skills system
 - [ ] **Phase 9: Subagents** - Task tool and subagent visualization
@@ -125,10 +125,10 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 06-01-PLAN.md — Write and Edit tools with diff preview
-- [ ] 06-02-PLAN.md — Bash tool with streaming output
-- [ ] 06-03-PLAN.md — Web tools and notebook editing
-- [ ] 06-04-PLAN.md — TodoWrite visualization
+- [x] 06-01-PLAN.md — Write and Edit tools with diff preview
+- [x] 06-02-PLAN.md — Bash tool with streaming output
+- [x] 06-03-PLAN.md — Web tools and notebook editing
+- [x] 06-04-PLAN.md — TodoWrite visualization
 
 ### Phase 7: Hooks System
 **Goal**: Hooks intercept and modify tool execution at all lifecycle points
@@ -219,7 +219,7 @@ Note: Phases 5 and 8 (Configuration, Commands) can run in parallel with Phases 3
 | 3. Essential Tools | 4/4 | Complete | 2026-01-19 |
 | 4. Permissions & Modes | 3/3 | Complete | 2026-01-20 |
 | 5. Configuration System | 2/2 | Complete | 2026-01-20 |
-| 6. Extended Tools | 0/4 | Planned | - |
+| 6. Extended Tools | 4/4 | Complete | 2026-01-20 |
 | 7. Hooks System | 0/3 | Not started | - |
 | 8. Commands & Skills | 0/4 | Not started | - |
 | 9. Subagents | 0/3 | Not started | - |
@@ -227,4 +227,4 @@ Note: Phases 5 and 8 (Configuration, Commands) can run in parallel with Phases 3
 
 ---
 *Roadmap created: 2026-01-19*
-*Last updated: 2026-01-20 - Phase 6 planned*
+*Last updated: 2026-01-20 - Phase 6 complete*
