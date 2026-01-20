@@ -100,9 +100,20 @@ export interface ToolUseBlock {
 }
 
 /**
+ * Tool result content block indicating a tool execution result.
+ * Sent by SDK after a tool completes execution.
+ */
+export interface ToolResultBlock {
+  type: 'tool_result';
+  tool_use_id: string;
+  content: string;
+  is_error?: boolean;
+}
+
+/**
  * Union of all content block types.
  */
-export type ContentBlock = TextBlock | ThinkingBlock | ToolUseBlock;
+export type ContentBlock = TextBlock | ThinkingBlock | ToolUseBlock | ToolResultBlock;
 
 // =============================================================================
 // Streaming Events
