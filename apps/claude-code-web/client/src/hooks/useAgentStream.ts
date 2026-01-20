@@ -238,6 +238,11 @@ export function useAgentStream(): UseAgentStreamReturn {
                     call.completed = true;
                     call.output = result.content;
                     call.endTime = Date.now();
+
+                    // Track error state - permission timeouts and tool failures
+                    if (result.is_error) {
+                      call.cancelled = true;
+                    }
                   }
                 }
               }
