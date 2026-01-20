@@ -183,6 +183,9 @@ export async function* streamAgentQuery(
         cwd: config.cwd,
         env: config.env,
         includePartialMessages: true,
+        // Load settings from user/project/local to get authentication credentials
+        // Without this, SDK runs in "isolation mode" and won't find API keys
+        settingSources: ['user', 'project', 'local'],
       };
 
       // Add system prompt from configuration if available
