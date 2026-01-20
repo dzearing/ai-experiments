@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-19)
 ## Current Position
 
 Phase: 6 of 10 (Extended Tools)
-Plan: 3 of 4 in current phase
+Plan: 4 of 4 in current phase (01, 02, 03 complete)
 Status: In progress
-Last activity: 2026-01-20 - Completed 06-03-PLAN.md
+Last activity: 2026-01-20 - Completed 06-01-PLAN.md
 
-Progress: [████████████████░] 49% (17/35 plans)
+Progress: [████████████████░] 51% (18/35 plans)
 
 ## Performance Metrics
 
@@ -93,6 +93,9 @@ Recent decisions affecting current work:
 - WebSearch output parsed for URLs and made clickable external links
 - Notebook code cells use Python highlighting, markdown cells use plaintext
 - SDK web content pre-processed by AI, safe to display without sanitization
+- diff library (createPatch) for unified diff generation in Edit tool
+- renderToolPreview returns ReactNode for rich previews in PermissionDialog
+- FileDiff showHeader=false to avoid duplicate path display in permission dialog
 
 ### Pending Todos
 
@@ -105,5 +108,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: Completed 06-03-PLAN.md
+Stopped at: Completed 06-01-PLAN.md (Write/Edit tool visualization)
 Resume file: None
