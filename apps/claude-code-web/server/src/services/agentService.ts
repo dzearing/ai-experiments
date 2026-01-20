@@ -1,4 +1,5 @@
 import { execSync } from 'child_process';
+import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import type {
@@ -7,7 +8,12 @@ import type {
   SDKAssistantMessage,
   SDKResultMessage,
   SDKErrorMessage,
+  PermissionMode,
+  PermissionRequestEvent,
+  QuestionRequestEvent,
+  QuestionItem,
 } from '../types/index.js';
+import { createPermissionRequest, type PermissionResult } from './permissionService.js';
 
 // Attempt to import the Agent SDK
 let query: typeof import('@anthropic-ai/claude-agent-sdk').query | undefined;
@@ -39,6 +45,88 @@ export interface StreamAgentOptions {
   prompt: string;
   sessionId?: string;
   cwd?: string;
+  permissionMode?: PermissionMode;
+}
+
+/**
+ * Active SSE connections by sessionId for sending permission events.
+ */
+const activeConnections = new Map<string, Response>();
+
+/**
+ * Register an SSE connection for a session.
+ * Allows permission events to be sent to the correct client.
+ */
+export function registerConnection(sessionId: string, res: Response): void {
+  activeConnections.set(sessionId, res);
+}
+
+/**
+ * Unregister an SSE connection when it closes.
+ */
+export function unregisterConnection(sessionId: string): void {
+  activeConnections.delete(sessionId);
+}
+
+/**
+ * Send an SSE event to a connected client.
+ */
+function sendSSEEvent(sessionId: string, event: PermissionRequestEvent | QuestionRequestEvent): boolean {
+  const res = activeConnections.get(sessionId);
+
+  if (!res) {
+    console.warn(`[AgentService] No connection for session ${sessionId}`);
+    return false;
+  }
+
+  try {
+    res.write(`data: ${JSON.stringify(event)}\n\n`);
+    return true;
+  } catch (error) {
+    console.error(`[AgentService] Failed to send SSE event:`, error);
+    return false;
+  }
+}
+
+/**
+ * Create a canUseTool callback that sends permission requests via SSE.
+ */
+function createCanUseToolCallback(currentSessionId: string) {
+  return async (
+    toolName: string,
+    input: Record<string, unknown>,
+    context: { signal?: AbortSignal }
+  ): Promise<PermissionResult> => {
+    // Special handling for AskUserQuestion - send as question_request
+    if (toolName === 'AskUserQuestion') {
+      const { requestId, promise } = createPermissionRequest(toolName, input, context.signal);
+      const questions = (input as { questions?: QuestionItem[] }).questions || [];
+
+      const event: QuestionRequestEvent = {
+        type: 'question_request',
+        requestId,
+        questions,
+        timestamp: Date.now(),
+      };
+
+      sendSSEEvent(currentSessionId, event);
+      return promise;
+    }
+
+    // Regular permission request
+    const { requestId, promise } = createPermissionRequest(toolName, input, context.signal);
+
+    const event: PermissionRequestEvent = {
+      type: 'permission_request',
+      requestId,
+      toolName,
+      input,
+      timestamp: Date.now(),
+    };
+
+    sendSSEEvent(currentSessionId, event);
+    return promise;
+  };
 }
 
 /**
@@ -48,19 +136,37 @@ export interface StreamAgentOptions {
 export async function* streamAgentQuery(
   options: StreamAgentOptions
 ): AsyncGenerator<SDKMessage> {
-  const { prompt, sessionId, cwd } = options;
+  const { prompt, sessionId, cwd, permissionMode = 'default' } = options;
 
   // If SDK is available, use real implementation
   if (query) {
     try {
+      // Build query options based on permission mode
+      const queryOptions: Record<string, unknown> = {
+        resume: sessionId || undefined,
+        cwd: cwd || process.cwd(),
+        includePartialMessages: true,
+      };
+
+      // Only use bypassPermissions mode or provide canUseTool callback
+      if (permissionMode === 'bypassPermissions') {
+        queryOptions.permissionMode = 'bypassPermissions';
+      } else {
+        // For non-bypass modes, use canUseTool callback
+        queryOptions.permissionMode = permissionMode;
+
+        if (sessionId) {
+          queryOptions.canUseTool = createCanUseToolCallback(sessionId);
+        } else {
+          // Without a sessionId, we cannot send SSE events, so fall back to bypass
+          console.warn('[AgentService] No sessionId provided, falling back to bypassPermissions');
+          queryOptions.permissionMode = 'bypassPermissions';
+        }
+      }
+
       const queryIterator = query({
         prompt,
-        options: {
-          resume: sessionId || undefined,
-          cwd: cwd || process.cwd(),
-          includePartialMessages: true,
-          permissionMode: 'bypassPermissions',
-        },
+        options: queryOptions,
       });
 
       for await (const message of queryIterator) {
