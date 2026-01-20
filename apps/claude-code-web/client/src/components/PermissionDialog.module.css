@@ -1,0 +1,25 @@
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing);
+}
+
+.inputPreview {
+  max-height: 300px;
+  overflow-y: auto;
+  border-radius: var(--radius-card);
+  background: var(--color-soft-background);
+}
+
+.inputPreview pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.actions {
+  display: flex;
+  flex-direction: row;
+  gap: var(--spacing-small10);
+  justify-content: flex-end;
+}
