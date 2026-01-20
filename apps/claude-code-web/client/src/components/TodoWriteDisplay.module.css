@@ -1,0 +1,159 @@
+/**
+ * TodoWriteDisplay styles
+ */
+
+.todoResult {
+  width: 100%;
+  border-radius: var(--radius-small, 4px);
+  overflow: hidden;
+  background: var(--color-inset-background, #f5f5f5);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small10, 8px);
+  width: 100%;
+  padding: var(--spacing-small10, 8px) var(--spacing, 16px);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color var(--duration-normal, 200ms);
+}
+
+.header:hover {
+  background: var(--color-body-backgroundHard10, rgba(0, 0, 0, 0.05));
+}
+
+.header:focus-visible {
+  outline: 2px solid var(--color-primary-background, #2563eb);
+  outline-offset: -2px;
+}
+
+.taskIcon {
+  flex-shrink: 0;
+  color: var(--color-body-textSoft10, rgba(0, 0, 0, 0.7));
+}
+
+.title {
+  font-size: var(--font-size-small, 13px);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-body-text, #1f2937);
+}
+
+.summary {
+  flex: 1;
+  font-size: var(--font-size-small, 13px);
+  color: var(--color-body-textSoft20, rgba(0, 0, 0, 0.5));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chevron {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-body-textSoft10, rgba(0, 0, 0, 0.7));
+  transition: transform var(--duration-normal, 200ms);
+  transform: rotate(-90deg);
+}
+
+.chevronExpanded {
+  transform: rotate(0deg);
+}
+
+.taskList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--color-body-border, rgba(0, 0, 0, 0.1));
+}
+
+.taskItem {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-small10, 8px);
+  padding: var(--spacing-small10, 8px) var(--spacing, 16px);
+  border-bottom: 1px solid var(--color-body-border, rgba(0, 0, 0, 0.1));
+}
+
+.taskItem:last-child {
+  border-bottom: none;
+}
+
+.taskCompleted {
+  background: var(--color-success-backgroundSoft10, rgba(22, 163, 74, 0.05));
+}
+
+.taskCompleted .taskContent {
+  text-decoration: line-through;
+  color: var(--color-body-textSoft20, rgba(0, 0, 0, 0.5));
+}
+
+.taskInProgress {
+  background: var(--color-info-backgroundSoft10, rgba(37, 99, 235, 0.05));
+}
+
+.pendingIcon {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  margin-top: 2px;
+  border: 2px solid var(--color-body-textSoft20, rgba(0, 0, 0, 0.4));
+  border-radius: 50%;
+  background: transparent;
+}
+
+.inProgressIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--color-info-text, #2563eb);
+  animation: spin 1s linear infinite;
+}
+
+.completedIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--color-success-text, #16a34a);
+}
+
+.taskContent {
+  flex: 1;
+  font-size: var(--font-size-small, 13px);
+  color: var(--color-body-text, #1f2937);
+  line-height: 1.4;
+}
+
+.activeForm {
+  flex-shrink: 0;
+  font-size: var(--font-size-small10, 12px);
+  color: var(--color-body-textSoft20, rgba(0, 0, 0, 0.5));
+  padding: 2px var(--spacing-small20, 4px);
+  background: var(--color-body-backgroundHard10, rgba(0, 0, 0, 0.05));
+  border-radius: var(--radius-small, 4px);
+}
+
+.emptyState {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small10, 8px);
+  padding: var(--spacing-small10, 8px) var(--spacing, 16px);
+  font-size: var(--font-size-small, 13px);
+  color: var(--color-body-textSoft20, rgba(0, 0, 0, 0.5));
+}
+
+.emptyIcon {
+  color: var(--color-body-textSoft20, rgba(0, 0, 0, 0.5));
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
