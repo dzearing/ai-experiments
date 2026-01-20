@@ -328,7 +328,7 @@ export function useAgentStream(): UseAgentStreamReturn {
         }
         break;
 
-      case 'result':
+      case 'result': {
         // IMPORTANT: Close the EventSource immediately to prevent auto-reconnect
         // The server closes the connection after sending result, and EventSource
         // will try to reconnect automatically, causing duplicate queries
@@ -341,6 +341,9 @@ export function useAgentStream(): UseAgentStreamReturn {
         if (message.usage) {
           setContextUsage(message.usage);
         }
+
+        // Check if the overall result is an error (e.g., permission timeout)
+        const isResultError = message.is_error;
 
         // Mark streaming complete and clear tracked streaming ID
         activeStreamingIdRef.current = null;
@@ -362,11 +365,24 @@ export function useAgentStream(): UseAgentStreamReturn {
                   if (part.type === 'tool_calls') {
                     return {
                       ...part,
-                      calls: part.calls.map(call => ({
-                        ...call,
-                        completed: call.completed || true,
-                        endTime: call.endTime || Date.now(),
-                      })),
+                      calls: part.calls.map(call => {
+                        // If call is already complete, preserve its state (including cancelled)
+                        if (call.completed) {
+                          return call;
+                        }
+
+                        // Mark incomplete calls as complete
+                        // If the overall result is an error, mark incomplete calls as cancelled
+                        return {
+                          ...call,
+                          completed: true,
+                          endTime: call.endTime || Date.now(),
+                          ...(isResultError && {
+                            cancelled: true,
+                            output: call.output || 'Tool execution failed or was interrupted',
+                          }),
+                        };
+                      }),
                     };
                   }
 
@@ -391,6 +407,7 @@ export function useAgentStream(): UseAgentStreamReturn {
             });
         });
         break;
+      }
 
       case 'error':
         setError(message.error);
@@ -432,12 +449,46 @@ export function useAgentStream(): UseAgentStreamReturn {
   const respondToPermission = useCallback(async (requestId: string, behavior: 'allow' | 'deny', message?: string) => {
     // Track denial before sending response
     if (behavior === 'deny' && permissionRequest) {
+      const denialReason = message || 'User denied this action';
+
       setDeniedPermissions(prev => [...prev, {
         toolName: permissionRequest.toolName,
         input: permissionRequest.input,
-        reason: message || 'User denied this action',
+        reason: denialReason,
         timestamp: Date.now(),
       }]);
+
+      // Mark the corresponding tool call as cancelled in the messages
+      setMessages(prev => prev.map(m => {
+        if (!m.parts) return m;
+
+        const updatedParts = m.parts.map(part => {
+          if (part.type === 'tool_calls') {
+            return {
+              ...part,
+              calls: part.calls.map(call => {
+                // Match by tool name and incomplete status
+                // The most recent incomplete call for this tool is the one being denied
+                if (call.name === permissionRequest.toolName && !call.completed) {
+                  return {
+                    ...call,
+                    completed: true,
+                    cancelled: true,
+                    output: denialReason,
+                    endTime: Date.now(),
+                  };
+                }
+
+                return call;
+              }),
+            };
+          }
+
+          return part;
+        });
+
+        return { ...m, parts: updatedParts };
+      }));
     }
 
     await fetch('/api/agent/permission-response', {
