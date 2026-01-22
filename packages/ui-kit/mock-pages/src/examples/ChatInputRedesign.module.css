@@ -1,0 +1,22 @@
+.floatingBarFocused {
+  animation: glowSpread 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes glowSpread {
+  0% {
+    box-shadow: 0 2px 8px -4px rgba(0, 0, 0, 0.08);
+  }
+  100% {
+    box-shadow:
+      0 0 4px 0 color-mix(in srgb, var(--focus-ring) 40%, transparent),
+      0 0 12px 0 color-mix(in srgb, var(--focus-ring) 20%, transparent),
+      0 0 24px 0 color-mix(in srgb, var(--focus-ring) 8%, transparent),
+      0 8px 32px -8px rgba(0, 0, 0, 0.12);
+  }
+}
+
+.textarea::placeholder {
+  color: var(--softer-fg-softer);
+  opacity: 0.7;
+  font-style: italic;
+}
