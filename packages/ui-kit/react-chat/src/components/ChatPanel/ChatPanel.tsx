@@ -1,5 +1,5 @@
 import { type ReactNode, useRef, memo, useCallback } from 'react';
-import { ChatMessage, type ChatMessageProps, type ChatMessageToolCall, type ChatMessagePart } from '../ChatMessage';
+import { ChatMessage, type ChatMessageToolCall, type ChatMessagePart } from '../ChatMessage';
 import { useScrollLock } from '../../hooks/useScrollLock';
 import styles from './ChatPanel.module.css';
 
@@ -68,12 +68,6 @@ export interface ChatPanelProps {
   /** Render function for custom avatar per message */
   renderAvatar?: (message: ChatPanelMessage) => ReactNode;
 
-  /** Menu items for message actions */
-  messageMenuItems?: ChatMessageProps['menuItems'];
-
-  /** Called when a menu item is selected */
-  onMessageMenuSelect?: (value: string, messageId: string) => void;
-
   /** Called when a link is clicked in a message */
   onLinkClick?: (href: string) => void;
 }
@@ -105,8 +99,6 @@ export const ChatPanel = memo(function ChatPanel({
   onScrollLockChange,
   className = '',
   renderAvatar,
-  messageMenuItems,
-  onMessageMenuSelect,
   onLinkClick,
 }: ChatPanelProps) {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -154,8 +146,6 @@ export const ChatPanel = memo(function ChatPanel({
                 toolCalls={message.toolCalls}
                 renderMarkdown={message.renderMarkdown ?? true}
                 avatar={renderAvatar ? renderAvatar(message) : message.avatar}
-                menuItems={messageMenuItems}
-                onMenuSelect={onMessageMenuSelect}
                 onLinkClick={onLinkClick}
               />
             );

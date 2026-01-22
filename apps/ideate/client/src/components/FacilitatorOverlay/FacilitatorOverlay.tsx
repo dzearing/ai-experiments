@@ -4,7 +4,7 @@ import { useNavigate } from '@ui-kit/router';
 import { Slide, Button, IconButton, Avatar } from '@ui-kit/react';
 import { CloseIcon } from '@ui-kit/icons/CloseIcon';
 import { GearIcon } from '@ui-kit/icons/GearIcon';
-import { ChatInput, VirtualizedChatPanel, ThinkingIndicator, OpenQuestionsResolver, type ChatInputSubmitData, type ChatInputRef, type TopicReference as ChatTopicReference, type VirtualizedChatPanelMessage } from '@ui-kit/react-chat';
+import { ChatLayout, VirtualizedChatPanel, OpenQuestionsResolver, type ChatInputSubmitData, type ChatInputRef, type TopicReference as ChatTopicReference, type VirtualizedChatPanelMessage, type QueuedMessage } from '@ui-kit/react-chat';
 import { AVATAR_IMAGES } from '../../constants/avatarImages';
 import { useFacilitator } from '../../contexts/FacilitatorContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -55,7 +55,7 @@ export function FacilitatorOverlay() {
   const topicReferences = getTopicReferences();
 
   const [isBackdropVisible, setIsBackdropVisible] = useState(isOpen);
-  const [queuedContent, setQueuedContent] = useState('');
+  const [queuedMessages, setQueuedMessages] = useState<QueuedMessage[]>([]);
   const [inputContent, setInputContent] = useState('');
   const [facilitatorSettings, setFacilitatorSettings] = useState<FacilitatorSettings>({
     name: 'Facilitator',
@@ -162,14 +162,14 @@ Type a message to get started!`,
     onModelChange: setModelId,
   });
 
-  // Process queued content when AI finishes thinking
+  // Process queued messages when AI finishes thinking
   useEffect(() => {
-    if (!isLoading && queuedContent && !isProcessingQueueRef.current) {
+    if (!isLoading && queuedMessages.length > 0 && !isProcessingQueueRef.current) {
       isProcessingQueueRef.current = true;
 
-      // Send the entire queued content
-      const contentToSend = queuedContent;
-      setQueuedContent('');
+      // Combine all queued messages into one
+      const contentToSend = queuedMessages.map(m => m.content).join('\n');
+      setQueuedMessages([]);
 
       // Add to context and send
       contextSendMessage(contentToSend);
@@ -179,7 +179,7 @@ Type a message to get started!`,
 
       isProcessingQueueRef.current = false;
     }
-  }, [isLoading, queuedContent, contextSendMessage, socketSendMessage, isConnected]);
+  }, [isLoading, queuedMessages, contextSendMessage, socketSendMessage, isConnected]);
 
   // Process pending message when connected (from openWithMessage)
   useEffect(() => {
@@ -269,9 +269,13 @@ Type a message to get started!`,
       // Extract Topic IDs from references
       const topicIds = topicReferences?.map(ref => ref.id) || [];
 
-      // If AI is busy, append to queued content
+      // If AI is busy, add to queued messages
       if (isLoading) {
-        setQueuedContent((prev) => prev ? `${prev}\n${content.trim()}` : content.trim());
+        setQueuedMessages(prev => [...prev, {
+          id: `queued-${Date.now()}`,
+          content: content.trim(),
+          timestamp: Date.now(),
+        }]);
         setInputContent('');
         return;
       }
@@ -294,15 +298,9 @@ Type a message to get started!`,
     setInputContent(content);
   }, []);
 
-  // Clear the queued content
-  const clearQueuedContent = useCallback(() => {
-    setQueuedContent('');
-  }, []);
-
-  // Handle editing queued content (when user presses Up at cursor position 0)
-  const handleEditQueue = useCallback((_concatenatedContent: string) => {
-    // Clear the queue - the content is already set in the input by ChatInput
-    setQueuedContent('');
+  // Remove a queued message
+  const removeQueuedMessage = useCallback((id: string) => {
+    setQueuedMessages(prev => prev.filter(m => m.id !== id));
   }, []);
 
   // Handle navigating to settings
@@ -400,57 +398,73 @@ Type a message to get started!`,
           className={styles.panel}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
-          <header className={styles.header}>
-            <div className={styles.headerLeft}>
-              <h2 className={styles.title}>{facilitatorSettings.name}</h2>
-              <span
-                className={`${styles.statusIndicator} ${getStatusClass()}`}
-                title={`Connection: ${connectionState}`}
-              />
-            </div>
-            <div className={styles.shortcutHint}>
-              <IconButton
-                icon={<GearIcon />}
-                variant="ghost"
-                size="sm"
-                onClick={handleOpenSettings}
-                aria-label="Facilitator settings"
-              />
-              <IconButton
-                icon={<CloseIcon />}
-                variant="ghost"
-                size="sm"
-                onClick={close}
-                aria-label="Close facilitator"
-              />
-            </div>
-          </header>
-
-          {/* Error banner */}
-          {error && (
-            <div className={styles.errorBanner}>
-              <span>{error}</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => window.location.reload()}
-              >
-                Retry
-              </Button>
-            </div>
-          )}
-
-          {/* Messages */}
-          <VirtualizedChatPanel
-            messages={chatMessages}
-            emptyState={emptyState}
-            renderAvatar={renderAvatar}
-            className={styles.messagesContainer}
-          />
-
-          {/* Thinking indicator */}
-          <ThinkingIndicator isActive={isLoading} showEscapeHint={isLoading && !inputContent.trim()} />
+          <ChatLayout
+            header={
+              <>
+                <header className={styles.header}>
+                  <div className={styles.headerLeft}>
+                    <h2 className={styles.title}>{facilitatorSettings.name}</h2>
+                    <span
+                      className={`${styles.statusIndicator} ${getStatusClass()}`}
+                      title={`Connection: ${connectionState}`}
+                    />
+                  </div>
+                  <div className={styles.shortcutHint}>
+                    <IconButton
+                      icon={<GearIcon />}
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleOpenSettings}
+                      aria-label="Facilitator settings"
+                    />
+                    <IconButton
+                      icon={<CloseIcon />}
+                      variant="ghost"
+                      size="sm"
+                      onClick={close}
+                      aria-label="Close facilitator"
+                    />
+                  </div>
+                </header>
+                {error && (
+                  <div className={styles.errorBanner}>
+                    <span>{error}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => window.location.reload()}
+                    >
+                      Retry
+                    </Button>
+                  </div>
+                )}
+              </>
+            }
+            isThinking={isLoading}
+            thinkingIndicatorProps={{
+              showEscapeHint: isLoading && !inputContent.trim(),
+            }}
+            queuedMessages={queuedMessages}
+            onRemoveQueuedMessage={removeQueuedMessage}
+            chatInputRef={chatInputRef}
+            chatInputProps={{
+              placeholder: isLoading ? "Type to queue message..." : "Ask the facilitator... (type / for commands, ^ for topics)",
+              onSubmit: handleSendMessage,
+              onChange: handleInputChange,
+              disabled: connectionState === 'connecting',
+              historyKey: "facilitator",
+              fullWidth: true,
+              commands,
+              onCommand: handleCommand,
+              topics: topicReferences as ChatTopicReference[],
+            }}
+          >
+            <VirtualizedChatPanel
+              messages={chatMessages}
+              emptyState={emptyState}
+              renderAvatar={renderAvatar}
+            />
+          </ChatLayout>
 
           {/* Question resolver overlay */}
           {showQuestionsResolver && openQuestions && openQuestions.length > 0 && (
@@ -463,45 +477,6 @@ Type a message to get started!`,
               />
             </div>
           )}
-
-          {/* Queued content */}
-          {queuedContent && (
-            <div className={styles.queueContainer}>
-              <div className={styles.queueHeader}>
-                <span className={styles.queueLabel}>Queued</span>
-              </div>
-              <div className={styles.queueList}>
-                <div className={styles.queuedMessage}>
-                  <span className={styles.queuedContent}>{queuedContent}</span>
-                  <IconButton
-                    icon={<CloseIcon />}
-                    variant="ghost"
-                    size="sm"
-                    onClick={clearQueuedContent}
-                    aria-label="Clear queued message"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Chat input - never disabled for loading, only for connection issues */}
-          <div className={styles.inputContainer}>
-            <ChatInput
-              ref={chatInputRef}
-              placeholder={isLoading ? "Type to queue message..." : "Ask the facilitator... (type / for commands, ^ for topics)"}
-              onSubmit={handleSendMessage}
-              onChange={handleInputChange}
-              disabled={connectionState === 'connecting'}
-              historyKey="facilitator"
-              fullWidth
-              commands={commands}
-              onCommand={handleCommand}
-              topics={topicReferences as ChatTopicReference[]}
-              queuedMessages={queuedContent ? [queuedContent] : []}
-              onEditQueue={handleEditQueue}
-            />
-          </div>
         </div>
       </Slide>
     </div>

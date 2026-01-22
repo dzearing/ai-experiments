@@ -12,7 +12,7 @@
 }
 
 .checkIcon {
-  color: var(--success-fg);
+  color: currentColor;
   animation: fadeIn var(--duration-fast) var(--ease-default);
 }
 

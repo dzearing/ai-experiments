@@ -1,0 +1,43 @@
+/* MessageToolbar - Hover toolbar that connects to message border */
+
+/* Wrapper positions the toolbar */
+.wrapper {
+  position: absolute;
+  pointer-events: none;
+}
+
+/* Both use base tokens - surface classes on parent handle remapping */
+.wrapperOwn,
+.wrapperOther {
+  --toolbar-bg: var(--base-bg);
+  --toolbar-border: var(--base-border);
+  --toolbar-fg: var(--base-fg);
+}
+
+/* Connector element - not used in new design */
+.connector {
+  display: none;
+}
+
+/* Toolbar box */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  padding-left: var(--toolbar-padding-left, var(--space-4));
+  white-space: nowrap;
+  background: var(--toolbar-bg);
+  border: 1px solid var(--toolbar-border);
+  border-bottom: none;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  pointer-events: auto;
+}
+
+/* Timestamp styling */
+.time {
+  font-size: var(--text-xs);
+  padding-right: var(--space-1);
+  color: var(--toolbar-fg);
+  user-select: none;
+}

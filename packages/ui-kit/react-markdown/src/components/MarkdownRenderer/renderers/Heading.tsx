@@ -18,6 +18,8 @@ export interface HeadingProps {
   activeDeepLink?: DeepLink | null;
   /** Callback when heading is clicked */
   onHeadingClick?: (slug: string) => void;
+  /** Show anchor symbol (default: true) */
+  showAnchor?: boolean;
 }
 
 export function Heading({
@@ -25,6 +27,7 @@ export function Heading({
   children,
   activeDeepLink,
   onHeadingClick,
+  showAnchor = true,
 }: HeadingProps) {
   // Extract text content for slug generation
   const textContent = useMemo(() => {
@@ -62,9 +65,11 @@ export function Heading({
       className={`${styles[`h${level}`]} ${isHighlighted ? styles.highlighted : ''}`}
       onClick={handleClick}
     >
-      <span className={styles.headingAnchor} aria-hidden="true">
-        #
-      </span>
+      {showAnchor && (
+        <span className={styles.headingAnchor} aria-hidden="true">
+          #
+        </span>
+      )}
       {children}
     </Tag>
   );

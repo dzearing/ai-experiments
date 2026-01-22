@@ -4,6 +4,8 @@ import { Button, Checkbox, Stack, Text, Chip } from '@ui-kit/react';
 import { ChatLayout } from './ChatLayout';
 import { VirtualizedChatPanel, type VirtualizedChatPanelMessage } from '../ChatPanel';
 import type { ChatMessagePart, ChatMessageToolCall } from '../ChatMessage';
+import { ChatGroupHeader } from '../ChatGroupHeader';
+import type { ChatParticipant } from '../../context';
 
 const meta: Meta<typeof ChatLayout> = {
   title: 'React Chat/ChatLayout',
@@ -1010,6 +1012,131 @@ export const Interactive: Story = {
   },
 };
 
+// =============================================================================
+// 1-ON-1 MODE STORIES (SubtleEmphasis design)
+// =============================================================================
+
+/** 1-on-1 mode demo showing SubtleEmphasis design for AI conversations */
+function OneOnOneModeDemo() {
+  const messages: VirtualizedChatPanelMessage[] = [
+    {
+      id: '1',
+      content: 'Hello! I need help understanding the new API.',
+      timestamp: minutesAgo(8),
+      senderName: 'You',
+      senderColor: '#10b981',
+      isOwn: true,
+    },
+    {
+      id: '2',
+      content: 'Of course! The API uses REST endpoints with JSON payloads. What specific aspect would you like to understand better?',
+      timestamp: minutesAgo(7),
+      senderName: 'Assistant',
+      senderColor: '#6366f1',
+    },
+    {
+      id: '3',
+      content: 'How do I authenticate requests?',
+      timestamp: minutesAgo(6),
+      senderName: 'You',
+      senderColor: '#10b981',
+      isOwn: true,
+    },
+    {
+      id: '4',
+      content: 'Can I also get some code examples?',
+      timestamp: minutesAgo(5),
+      senderName: 'You',
+      senderColor: '#10b981',
+      isOwn: true,
+      isConsecutive: true,
+      enableEdit: true,
+    },
+    {
+      id: '5',
+      content: `Authentication is handled via bearer tokens. Here's how it works:
+
+## Getting a Token
+
+1. Register your application in the developer portal
+2. Use client credentials flow to obtain access token
+3. Include token in Authorization header
+
+\`\`\`typescript
+const response = await fetch('/api/resource', {
+  headers: {
+    'Authorization': \`Bearer \${accessToken}\`,
+    'Content-Type': 'application/json'
+  }
+});
+\`\`\`
+
+The token expires after 1 hour, so you'll need to refresh it periodically.`,
+      timestamp: minutesAgo(4),
+      senderName: 'Assistant',
+      senderColor: '#6366f1',
+    },
+    {
+      id: '6',
+      content: 'That makes sense. What about rate limiting?',
+      timestamp: minutesAgo(2),
+      senderName: 'You',
+      senderColor: '#10b981',
+      isOwn: true,
+      enableEdit: true,
+    },
+    {
+      id: '7',
+      content: 'Rate limits are 100 requests per minute for standard tier, and 1000 for premium tier. The API returns 429 status when exceeded.',
+      timestamp: minutesAgo(1),
+      senderName: 'Assistant',
+      senderColor: '#6366f1',
+    },
+  ];
+
+  return (
+    <ChatLayout
+      mode="1on1"
+      header={<SampleHeader title="AI Assistant" status="connected" />}
+      chatInputProps={{
+        placeholder: 'Message assistant...',
+        onSubmit: () => {},
+      }}
+    >
+      <VirtualizedChatPanel messages={messages} />
+    </ChatLayout>
+  );
+}
+
+export const OneOnOneMode: Story = {
+  render: () => <OneOnOneModeDemo />,
+  parameters: {
+    docs: {
+      description: {
+        story: `
+1-on-1 mode implements the SubtleEmphasis design for AI conversations.
+
+**Visual Design:**
+- User messages: Primary background tint, visually distinct
+- Assistant messages: Transparent background
+- Full-width, left-aligned layout (no SMS-style bubbles)
+- No avatars or sender labels
+
+**Interactive Features:**
+- **Hover** over any message to see the toolbar (timestamp, copy, edit if enabled)
+- **Tab** through messages to focus them (toolbar appears on focus)
+- **Focus ring** visible on keyboard navigation
+
+**Try It:**
+1. Hover over a message to see timestamp and copy button
+2. Press Tab to navigate between messages
+3. User messages show edit button when \`enableEdit={true}\`
+        `,
+      },
+    },
+  },
+};
+
 // Empty state
 export const EmptyState: Story = {
   render: () => {
@@ -1037,6 +1164,211 @@ export const EmptyState: Story = {
     docs: {
       description: {
         story: 'ChatLayout with an empty message list showing the empty state.',
+      },
+    },
+  },
+};
+
+// =============================================================================
+// GROUP MODE STORIES
+// =============================================================================
+
+/** Sample participants for group mode */
+const SAMPLE_PARTICIPANTS: ChatParticipant[] = [
+  { id: 'user', name: 'You', initials: 'Y', color: '#10b981', isCurrentUser: true },
+  { id: 'alice', name: 'Alice Chen', initials: 'AC', color: '#6366f1' },
+  { id: 'bob', name: 'Bob Smith', initials: 'BS', color: '#f59e0b' },
+  { id: 'carol', name: 'Carol Davis', initials: 'CD', color: '#ec4899' },
+  { id: 'dan', name: 'Dan Wilson', initials: 'DW', color: '#8b5cf6' },
+];
+
+/** Group mode demo showing multi-participant chat */
+function GroupModeDemo() {
+  const participants = SAMPLE_PARTICIPANTS;
+  const otherParticipants = participants.filter(p => !p.isCurrentUser);
+
+  const messages: VirtualizedChatPanelMessage[] = [
+    {
+      id: '1',
+      content: 'Hey everyone! I wanted to discuss the new feature implementation.',
+      timestamp: minutesAgo(10),
+      senderName: 'Alice Chen',
+      senderColor: '#6366f1',
+      isOwn: false,
+    },
+    {
+      id: '2',
+      content: 'Sounds good! What did you have in mind?',
+      timestamp: minutesAgo(9),
+      senderName: 'Bob Smith',
+      senderColor: '#f59e0b',
+      isOwn: false,
+    },
+    {
+      id: '3',
+      content: 'I think we should start with the API design.',
+      timestamp: minutesAgo(8),
+      senderName: 'Alice Chen',
+      senderColor: '#6366f1',
+      isOwn: false,
+      isConsecutive: true,
+    },
+    {
+      id: '4',
+      content: 'Here are my thoughts on the implementation.',
+      timestamp: minutesAgo(7),
+      senderName: 'You',
+      senderColor: '#10b981',
+      isOwn: true,
+      enableEdit: true,
+    },
+    {
+      id: '5',
+      content: 'We could use a REST API or GraphQL. I prefer REST for simplicity.',
+      timestamp: minutesAgo(6),
+      senderName: 'You',
+      senderColor: '#10b981',
+      isOwn: true,
+      isConsecutive: true,
+    },
+    {
+      id: '6',
+      content: 'Also, we should consider caching strategies.',
+      timestamp: minutesAgo(5),
+      senderName: 'You',
+      senderColor: '#10b981',
+      isOwn: true,
+      isConsecutive: true,
+    },
+    {
+      id: '7',
+      content: 'Great points! I agree with the REST approach.',
+      timestamp: minutesAgo(4),
+      senderName: 'Carol Davis',
+      senderColor: '#ec4899',
+      isOwn: false,
+    },
+    {
+      id: '8',
+      content: 'Let me add some thoughts on the caching layer.',
+      timestamp: minutesAgo(3),
+      senderName: 'Dan Wilson',
+      senderColor: '#8b5cf6',
+      isOwn: false,
+    },
+    {
+      id: '9',
+      content: 'We should use Redis for session caching and an in-memory cache for frequently accessed data.',
+      timestamp: minutesAgo(2),
+      senderName: 'Dan Wilson',
+      senderColor: '#8b5cf6',
+      isOwn: false,
+      isConsecutive: true,
+    },
+  ];
+
+  return (
+    <ChatLayout
+      mode="group"
+      participants={participants}
+      header={
+        <ChatGroupHeader
+          participants={otherParticipants}
+        />
+      }
+      chatInputProps={{
+        placeholder: 'Message the group...',
+        onSubmit: () => {},
+      }}
+    >
+      <VirtualizedChatPanel messages={messages} />
+    </ChatLayout>
+  );
+}
+
+export const GroupMode: Story = {
+  render: () => <GroupModeDemo />,
+  parameters: {
+    docs: {
+      description: {
+        story: `
+Group mode displays messages with participant avatars, sender names, and visual distinction between the current user and others.
+
+**Visual Design:**
+- Colored avatars with initials for each participant
+- Sender name appears above message content
+- User messages: Primary background tint
+- Other participants: Transparent background
+- Consecutive messages collapse (avatar/name hidden)
+- Header shows stacked participant avatars
+
+**Interactive Features:**
+- **Hover** over any message to see the toolbar (timestamp, copy button)
+- **Tab** through messages to focus them (toolbar appears on focus)
+- **Focus ring** visible on keyboard navigation (not mouse click)
+- **Edit button** shows on user messages with \`enableEdit={true}\`
+
+**Try It:**
+1. Hover over any message to see the timestamp
+2. Click the copy button to copy message text
+3. Press Tab to navigate between messages
+4. Notice avatar/name hiding on consecutive messages from same sender
+        `,
+      },
+    },
+  },
+};
+
+/** Group mode with many participants to show overflow */
+function GroupModeOverflowDemo() {
+  const participants = SAMPLE_PARTICIPANTS;
+  const otherParticipants = participants.filter(p => !p.isCurrentUser);
+
+  const messages: VirtualizedChatPanelMessage[] = [
+    {
+      id: '1',
+      content: 'Welcome to the team chat!',
+      timestamp: minutesAgo(5),
+      senderName: 'Alice Chen',
+      senderColor: '#6366f1',
+      isOwn: false,
+    },
+    {
+      id: '2',
+      content: 'Thanks for having me!',
+      timestamp: minutesAgo(4),
+      senderName: 'You',
+      senderColor: '#10b981',
+      isOwn: true,
+    },
+  ];
+
+  return (
+    <ChatLayout
+      mode="group"
+      participants={participants}
+      header={
+        <ChatGroupHeader
+          participants={otherParticipants}
+          maxAvatars={3}
+        />
+      }
+      chatInputProps={{
+        placeholder: 'Message the group...',
+        onSubmit: () => {},
+      }}
+    >
+      <VirtualizedChatPanel messages={messages} />
+    </ChatLayout>
+  );
+}
+
+export const GroupModeWithOverflow: Story = {
+  render: () => <GroupModeOverflowDemo />,
+  parameters: {
+    docs: {
+      description: {
+        story: 'Group mode with more than 3 participants, showing the "+N others" overflow indicator in the header.',
       },
     },
   },

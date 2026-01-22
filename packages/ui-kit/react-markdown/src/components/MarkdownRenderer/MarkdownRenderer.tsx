@@ -270,6 +270,7 @@ export function MarkdownRenderer({
           level={1}
           activeDeepLink={effectiveActiveLink}
           onHeadingClick={handleHeadingClick}
+          showAnchor={enableDeepLinks}
         >
           {children}
         </HeadingComponent>
@@ -282,6 +283,7 @@ export function MarkdownRenderer({
           level={2}
           activeDeepLink={effectiveActiveLink}
           onHeadingClick={handleHeadingClick}
+          showAnchor={enableDeepLinks}
         >
           {children}
         </HeadingComponent>
@@ -294,6 +296,7 @@ export function MarkdownRenderer({
           level={3}
           activeDeepLink={effectiveActiveLink}
           onHeadingClick={handleHeadingClick}
+          showAnchor={enableDeepLinks}
         >
           {children}
         </HeadingComponent>
@@ -306,6 +309,7 @@ export function MarkdownRenderer({
           level={4}
           activeDeepLink={effectiveActiveLink}
           onHeadingClick={handleHeadingClick}
+          showAnchor={enableDeepLinks}
         >
           {children}
         </HeadingComponent>
@@ -318,6 +322,7 @@ export function MarkdownRenderer({
           level={5}
           activeDeepLink={effectiveActiveLink}
           onHeadingClick={handleHeadingClick}
+          showAnchor={enableDeepLinks}
         >
           {children}
         </HeadingComponent>
@@ -330,6 +335,7 @@ export function MarkdownRenderer({
           level={6}
           activeDeepLink={effectiveActiveLink}
           onHeadingClick={handleHeadingClick}
+          showAnchor={enableDeepLinks}
         >
           {children}
         </HeadingComponent>
@@ -467,6 +473,7 @@ export function MarkdownRenderer({
     showLineNumbers,
     collapsibleCodeBlocks,
     effectiveActiveLink,
+    enableDeepLinks,
     handleLineClick,
     handleHeadingClick,
     handleInternalLinkClick,
