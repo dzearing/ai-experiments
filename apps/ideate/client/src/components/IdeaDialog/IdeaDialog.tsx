@@ -10,7 +10,7 @@ import { PauseIcon } from '@ui-kit/icons/PauseIcon';
 import { FileIcon } from '@ui-kit/icons/FileIcon';
 import { ListIcon } from '@ui-kit/icons/ListIcon';
 import { EditIcon } from '@ui-kit/icons/EditIcon';
-import { VirtualizedChatPanel, ChatLayout, OpenQuestionsResolver, type ChatInputSubmitData, type ChatInputRef, type VirtualizedChatPanelMessage, type QueuedMessage, type TopicReference as ChatTopicReference, type ChatMessagePart } from '@ui-kit/react-chat';
+import { ChatLayout, OpenQuestionsResolver, type ChatInputSubmitData, type ChatInputRef, type ChatPanelMessage, type QueuedMessage, type TopicReference as ChatTopicReference, type ChatMessagePart } from '@ui-kit/react-chat';
 import { MarkdownCoEditor, type ViewMode, type CoAuthor } from '@ui-kit/react-markdown';
 import { ItemPickerDialog, DiskItemProvider } from '@ui-kit/react-pickers';
 import { useResource } from '@claude-flow/data-bus/react';
@@ -925,9 +925,9 @@ export function IdeaDialog({
 
   // Convert agent messages to ChatPanel format
   const agentName = phase === 'executing' ? 'Execute Agent' : phase === 'planning' ? 'Plan Agent' : 'Idea Agent';
-  const chatMessages: VirtualizedChatPanelMessage[] = useMemo(() => {
+  const chatMessages: ChatPanelMessage[] = useMemo(() => {
     return agentMessages
-      .map((msg): VirtualizedChatPanelMessage | null => {
+      .map((msg): ChatPanelMessage | null => {
         // Strip XML structured events from assistant messages (they're handled separately)
         const cleanContent = msg.role === 'assistant'
           ? stripStructuredEvents(msg.content)
@@ -995,7 +995,7 @@ export function IdeaDialog({
           toolCalls, // Fall back to tool calls for backward compatibility
         };
       })
-      .filter((msg): msg is VirtualizedChatPanelMessage => msg !== null);
+      .filter((msg): msg is ChatPanelMessage => msg !== null);
   }, [agentMessages, user?.name, agentName]);
 
   // Get suggested responses from the active agent based on current phase
@@ -1921,6 +1921,9 @@ export function IdeaDialog({
               first={
                 <div className={styles.chatPane}>
                   <ChatLayout
+                    messages={chatMessages}
+                    emptyState={chatEmptyState}
+                    onLinkClick={handleLinkClick}
                     header={
                       <div className={styles.chatHeader}>
                         <span className={styles.chatTitle}>{phase === 'executing' ? 'Execute Agent' : phase === 'planning' ? 'Plan Agent' : 'Idea Agent'}</span>
@@ -1964,14 +1967,7 @@ export function IdeaDialog({
                       onCommand: handleCommand,
                       topics: topicReferences as ChatTopicReference[],
                     }}
-                  >
-                    <VirtualizedChatPanel
-                      messages={chatMessages}
-                      emptyState={chatEmptyState}
-                      className={styles.chatPanel}
-                      onLinkClick={handleLinkClick}
-                    />
-                  </ChatLayout>
+                  />
 
                   {/* Open Questions Resolver Overlay */}
                   {showQuestionsResolver && openQuestions && openQuestions.length > 0 && (
