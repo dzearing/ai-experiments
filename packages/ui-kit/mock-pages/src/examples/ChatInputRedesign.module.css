@@ -1,19 +1,68 @@
-.floatingBarFocused {
-  animation: glowSpread 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+.floatingBar {
+  position: relative;
+  isolation: isolate;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 2px 4px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.2s ease-out, transform 0.2s ease-out;
 }
 
-@keyframes glowSpread {
+.floatingBar:focus-within {
+  border-color: transparent !important;
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.06),
+    0 8px 24px rgba(0, 0, 0, 0.08),
+    0 0 8px 0 rgba(167, 139, 250, 0.3),
+    0 0 20px 0 rgba(96, 165, 250, 0.2),
+    0 0 32px 0 rgba(244, 114, 182, 0.1);
+}
+
+.floatingBar::before {
+  content: '';
+  position: absolute;
+  inset: -2.5px;
+  border-radius: calc(var(--radius-xl) + 2.5px);
+  padding: 2.5px;
+  background: linear-gradient(
+    135deg,
+    #f472b6 0%,
+    #a78bfa 25%,
+    #60a5fa 50%,
+    #34d399 75%,
+    #fbbf24 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.15s ease-out;
+  animation: gradientRotate 3s linear infinite;
+  background-size: 200% 200%;
+}
+
+.floatingBar:focus-within::before {
+  opacity: 1;
+}
+
+@keyframes gradientRotate {
   0% {
-    box-shadow: 0 2px 8px -4px rgba(0, 0, 0, 0.08);
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
   }
   100% {
-    box-shadow:
-      0 0 4px 0 color-mix(in srgb, var(--focus-ring) 40%, transparent),
-      0 0 12px 0 color-mix(in srgb, var(--focus-ring) 20%, transparent),
-      0 0 24px 0 color-mix(in srgb, var(--focus-ring) 8%, transparent),
-      0 8px 32px -8px rgba(0, 0, 0, 0.12);
+    background-position: 0% 50%;
   }
 }
+
 
 .textarea::placeholder {
   color: var(--softer-fg-softer);

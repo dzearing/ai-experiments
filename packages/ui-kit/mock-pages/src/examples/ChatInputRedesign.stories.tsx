@@ -135,10 +135,8 @@ function MockChatInput({ variant, multiline = false, placeholder = 'Type a messa
         return {
           ...baseStyles,
           background: 'var(--soft-bg)',
-          border: isFocused ? '2px solid var(--focus-ring)' : '2px solid var(--soft-border)',
+          border: '1px solid var(--soft-border)',
           borderRadius: 'var(--radius-xl)',
-          boxShadow: '0 2px 8px -4px rgba(0, 0, 0, 0.08)',
-          transform: isFocused ? 'translateY(-1px)' : 'translateY(0)',
         };
 
       case 'inset-well':
@@ -193,7 +191,7 @@ function MockChatInput({ variant, multiline = false, placeholder = 'Type a messa
   };
 
   const buttonPadding = 'var(--space-2)';
-  const containerClass = variant === 'floating-bar' && isFocused ? styles.floatingBarFocused : undefined;
+  const containerClass = variant === 'floating-bar' ? styles.floatingBar : undefined;
 
   return (
     <div style={getVariantStyles()} className={containerClass}>
