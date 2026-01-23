@@ -38,6 +38,36 @@ export interface PlanIdeaContext {
 }
 
 /**
+ * A text content block within a message (for parts array)
+ */
+export interface PlanAgentTextBlock {
+  type: 'text';
+  text: string;
+}
+
+/**
+ * Tool call in a plan agent message
+ */
+export interface PlanAgentToolCall {
+  name: string;
+  input?: Record<string, unknown>;
+  output?: string;
+}
+
+/**
+ * A tool calls content block within a message (for parts array)
+ */
+export interface PlanAgentToolCallsBlock {
+  type: 'tool_calls';
+  calls: PlanAgentToolCall[];
+}
+
+/**
+ * Content block for preserving text/tool interleaving in messages
+ */
+export type PlanAgentContentBlock = PlanAgentTextBlock | PlanAgentToolCallsBlock;
+
+/**
  * Message in the plan agent chat
  */
 export interface PlanAgentMessage {
@@ -46,6 +76,8 @@ export interface PlanAgentMessage {
   content: string;
   timestamp: number;
   isStreaming?: boolean;
+  /** Content blocks in order - maintains text/tool interleaving */
+  parts?: PlanAgentContentBlock[];
 }
 
 /**

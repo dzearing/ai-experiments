@@ -8,6 +8,8 @@ import {
   type TextBlock,
   type ToolCallsBlock,
   migrateToPartsFormat,
+  getTextFromParts,
+  getToolCallsFromParts,
 } from './BaseChatTypes.js';
 
 // Re-export shared types for consumers
@@ -162,6 +164,14 @@ export class FacilitatorChatService {
     // Use parts if provided (new format), otherwise fall back to content/toolCalls (legacy)
     if (parts && parts.length > 0) {
       message.parts = parts;
+      // Use the passed content parameter if provided (it's the clean version without XML blocks),
+      // otherwise extract from parts as fallback for backward compatibility
+      message.content = content || getTextFromParts(parts);
+      // Extract toolCalls from parts for backward compatibility
+      const extractedToolCalls = getToolCallsFromParts(parts);
+      if (extractedToolCalls.length > 0) {
+        message.toolCalls = extractedToolCalls;
+      }
     } else {
       // Legacy format - store both content and parts for backward compatibility
       message.content = content;

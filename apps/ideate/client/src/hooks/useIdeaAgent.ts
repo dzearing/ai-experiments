@@ -49,6 +49,27 @@ export interface IdeaAgentToolCall {
 }
 
 /**
+ * A text content block within a message (for parts array)
+ */
+export interface IdeaAgentTextBlock {
+  type: 'text';
+  text: string;
+}
+
+/**
+ * A tool calls content block within a message (for parts array)
+ */
+export interface IdeaAgentToolCallsBlock {
+  type: 'tool_calls';
+  calls: IdeaAgentToolCall[];
+}
+
+/**
+ * Content block for preserving text/tool interleaving in messages
+ */
+export type IdeaAgentContentBlock = IdeaAgentTextBlock | IdeaAgentToolCallsBlock;
+
+/**
  * Message in the idea agent chat
  */
 export interface IdeaAgentMessage {
@@ -59,8 +80,10 @@ export interface IdeaAgentMessage {
   isStreaming?: boolean;
   /** Open questions associated with this message (for rehydration on dialog reopen) */
   openQuestions?: OpenQuestion[];
-  /** Tool calls made during this message */
+  /** Tool calls made during this message (legacy - use parts for proper interleaving) */
   toolCalls?: IdeaAgentToolCall[];
+  /** Content blocks in order - maintains text/tool interleaving */
+  parts?: IdeaAgentContentBlock[];
 }
 
 /**
@@ -83,7 +106,7 @@ export interface SuggestedResponse {
  * Server message types for the idea agent WebSocket protocol
  */
 interface ServerMessage {
-  type: 'text_chunk' | 'message_complete' | 'history' | 'error' | 'greeting' | 'document_edit_start' | 'document_edit_end' | 'token_usage' | 'open_questions' | 'suggested_responses' | 'agent_progress';
+  type: 'text_chunk' | 'message_complete' | 'history' | 'error' | 'greeting' | 'document_edit_start' | 'document_edit_end' | 'token_usage' | 'open_questions' | 'suggested_responses' | 'agent_progress' | 'session_status';
   /** Text content chunk (for streaming) */
   text?: string;
   /** Message ID being updated */
@@ -102,6 +125,10 @@ interface ServerMessage {
   suggestions?: SuggestedResponse[];
   /** Agent progress event */
   event?: AgentProgressEvent;
+  /** Session status (for reconnection sync) */
+  status?: 'running' | 'idle';
+  /** When the session started (for running sessions) */
+  startedAt?: string;
 }
 
 /**
@@ -706,6 +733,16 @@ export function useIdeaAgent({
                   });
                 }
               }
+            }
+            break;
+
+          case 'session_status':
+            // Session status sync on reconnect - update loading state
+            if (data.status === 'running') {
+              log.log(' Session is running, showing thinking indicator');
+              setIsLoading(true);
+            } else if (data.status === 'idle') {
+              setIsLoading(false);
             }
             break;
         }

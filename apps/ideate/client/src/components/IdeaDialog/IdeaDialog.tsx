@@ -58,6 +58,9 @@ function stripStructuredEvents(text: string | undefined): string {
     .replace(/<execution_blocked>\s*[\s\S]*?\s*<\/execution_blocked>/g, '')
     .replace(/<new_idea>\s*[\s\S]*?\s*<\/new_idea>/g, '')
     .replace(/<task_update>\s*[\s\S]*?\s*<\/task_update>/g, '')
+    .replace(/<open_questions>\s*[\s\S]*?\s*<\/open_questions>/g, '')
+    .replace(/<idea_update>\s*[\s\S]*?\s*<\/idea_update>/g, '')
+    .replace(/<suggested_responses>\s*[\s\S]*?\s*<\/suggested_responses>/g, '')
     .replace(/```xml\s*```/g, '') // Clean up empty xml code blocks
     .replace(/\n{3,}/g, '\n\n') // Collapse multiple newlines
     .trim();
@@ -440,8 +443,6 @@ export function IdeaDialog({
   const [queuedMessages, setQueuedMessages] = useState<QueuedMessage[]>([]);
   // Use ref for content to avoid re-renders on every keystroke
   const inputContentRef = useRef('');
-  // Track empty state separately (changes less frequently) for escape hint
-  const [isInputEmpty, setIsInputEmpty] = useState(true);
   const isProcessingQueueRef = useRef(false);
   const chatInputRef = useRef<ChatInputRef>(null);
 
@@ -933,41 +934,26 @@ export function IdeaDialog({
           ? stripStructuredEvents(msg.content)
           : msg.content;
 
-        // Convert server segments to client parts for proper interleaving
-        // Server segments: { type: 'text' | 'tool', text?: string, tool?: StoredToolCall }
+        // Convert server parts to client parts for proper interleaving
+        // Server parts: { type: 'text', text: string } | { type: 'tool_calls', calls: ToolCall[] }
         // Client parts: { type: 'text', text: string } | { type: 'tool_calls', calls: ChatMessageToolCall[] }
         let parts: ChatMessagePart[] | undefined;
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const msgWithSegments = msg as { segments?: Array<{ type: string; text?: string; tool?: any }> };
-
-        if (msgWithSegments.segments && msgWithSegments.segments.length > 0) {
-          // Convert segments to parts, merging consecutive tool segments
+        if (msg.parts && msg.parts.length > 0) {
+          // Convert server parts format to client parts format
           parts = [];
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          let currentToolCalls: any[] = [];
 
-          for (const segment of msgWithSegments.segments) {
-            if (segment.type === 'text' && segment.text) {
-              // If we have accumulated tool calls, push them first
-              if (currentToolCalls.length > 0) {
-                parts.push({ type: 'tool_calls', calls: currentToolCalls });
-                currentToolCalls = [];
-              }
-              // Strip XML from text segments too
-              const cleanText = msg.role === 'assistant' ? stripStructuredEvents(segment.text) : segment.text;
+          for (const part of msg.parts) {
+            if (part.type === 'text' && part.text) {
+              // Strip XML from text parts for assistant messages
+              const cleanText = msg.role === 'assistant' ? stripStructuredEvents(part.text) : part.text;
               if (cleanText) {
                 parts.push({ type: 'text', text: cleanText });
               }
-            } else if (segment.type === 'tool' && segment.tool) {
-              // Accumulate tool calls
-              currentToolCalls.push(segment.tool);
+            } else if (part.type === 'tool_calls' && part.calls && part.calls.length > 0) {
+              // Pass through tool calls
+              parts.push({ type: 'tool_calls', calls: part.calls });
             }
-          }
-
-          // Push any remaining tool calls
-          if (currentToolCalls.length > 0) {
-            parts.push({ type: 'tool_calls', calls: currentToolCalls });
           }
 
           // If parts is empty after processing, set to undefined
@@ -976,11 +962,8 @@ export function IdeaDialog({
           }
         }
 
-        // Fall back to toolCalls if no segments (backward compatibility)
-        const toolCalls = !parts && 'toolCalls' in msg ? msg.toolCalls : undefined;
-
-        // Skip empty messages after stripping (unless they have parts or tool calls)
-        if (!cleanContent && !parts?.length && !toolCalls?.length && msg.role === 'assistant') return null;
+        // Skip empty messages after stripping (unless they have parts)
+        if (!cleanContent && !parts?.length && msg.role === 'assistant') return null;
 
         return {
           id: msg.id,
@@ -990,13 +973,24 @@ export function IdeaDialog({
           senderColor: msg.role === 'user' ? undefined : '#8b5cf6',
           isOwn: msg.role === 'user',
           isStreaming: msg.isStreaming,
-          renderMarkdown: true, // Render markdown for all messages (including user's question answers)
-          parts, // Use parts for proper interleaving (takes precedence)
-          toolCalls, // Fall back to tool calls for backward compatibility
+          renderMarkdown: true,
+          parts,
         };
       })
       .filter((msg): msg is ChatPanelMessage => msg !== null);
   }, [agentMessages, user?.name, agentName]);
+
+  // Memoize thinkingIndicatorProps to prevent re-renders when typing
+  const thinkingStatusText = phase === 'executing'
+    ? executeAgent.progress.currentEvent?.displayText
+    : phase === 'planning'
+      ? planAgent.progress.currentEvent?.displayText
+      : ideaAgent.progress.currentEvent?.displayText;
+
+  const thinkingIndicatorProps = useMemo(() => ({
+    statusText: thinkingStatusText,
+    showEscapeHint: isAgentThinking,
+  }), [thinkingStatusText, isAgentThinking]);
 
   // Get suggested responses from the active agent based on current phase
   const agentSuggestedResponses = phase === 'planning'
@@ -1727,7 +1721,6 @@ export function IdeaDialog({
       // Clear input and return - the effect will send the message once connected
       chatInputRef.current?.clear();
       inputContentRef.current = '';
-      setIsInputEmpty(true);
       return;
     }
 
@@ -1741,7 +1734,6 @@ export function IdeaDialog({
       setQueuedMessages((prev) => [...prev, queuedMessage]);
       chatInputRef.current?.clear();
       inputContentRef.current = '';
-      setIsInputEmpty(true);
       return;
     }
 
@@ -1749,14 +1741,31 @@ export function IdeaDialog({
     sendAgentMessage(content.trim());
     chatInputRef.current?.clear();
     inputContentRef.current = '';
-    setIsInputEmpty(true);
   }, [sendAgentMessage, isAgentThinking, isNewIdea, currentIdea, createIdea, workspaceId, initialTopicIds, initialTitle, onIdeaCreated, documentId]);
 
-  const handleInputChange = useCallback((isEmpty: boolean, content: string) => {
+  const handleInputChange = useCallback((_isEmpty: boolean, content: string) => {
     inputContentRef.current = content;
-    // Only update state when empty status changes to minimize re-renders
-    setIsInputEmpty(prev => prev !== isEmpty ? isEmpty : prev);
   }, []);
+
+  // Memoize chatInputProps to prevent re-renders when parent state changes
+  const chatInputPlaceholder = !isConnected
+    ? "Connecting..."
+    : isAgentThinking
+      ? "Type to queue message..."
+      : "Ask the agent... (type / for commands, ^ for topics)";
+
+  const chatInputHistoryKey = `idea-agent-${idea?.id || 'new'}`;
+
+  const chatInputProps = useMemo(() => ({
+    placeholder: chatInputPlaceholder,
+    onSubmit: handleChatSubmit,
+    onChange: handleInputChange,
+    historyKey: chatInputHistoryKey,
+    fullWidth: true,
+    commands,
+    onCommand: handleCommand,
+    topics: topicReferences as ChatTopicReference[],
+  }), [chatInputPlaceholder, handleChatSubmit, handleInputChange, chatInputHistoryKey, commands, handleCommand, topicReferences]);
 
   const removeQueuedMessage = useCallback((id: string) => {
     setQueuedMessages((prev) => prev.filter((msg) => msg.id !== id));
@@ -1946,27 +1955,11 @@ export function IdeaDialog({
                       </div>
                     }
                     isThinking={isAgentThinking}
-                    thinkingIndicatorProps={{
-                      statusText: phase === 'executing'
-                        ? executeAgent.progress.currentEvent?.displayText
-                        : phase === 'planning'
-                          ? planAgent.progress.currentEvent?.displayText
-                          : ideaAgent.progress.currentEvent?.displayText,
-                      showEscapeHint: isAgentThinking && isInputEmpty,
-                    }}
+                    thinkingIndicatorProps={thinkingIndicatorProps}
                     queuedMessages={queuedMessages}
                     onRemoveQueuedMessage={removeQueuedMessage}
                     chatInputRef={chatInputRef}
-                    chatInputProps={{
-                      placeholder: !isConnected ? "Connecting..." : isAgentThinking ? "Type to queue message..." : "Ask the agent... (type / for commands, ^ for topics)",
-                      onSubmit: handleChatSubmit,
-                      onChange: handleInputChange,
-                      historyKey: `idea-agent-${idea?.id || 'new'}`,
-                      fullWidth: true,
-                      commands,
-                      onCommand: handleCommand,
-                      topics: topicReferences as ChatTopicReference[],
-                    }}
+                    chatInputProps={chatInputProps}
                   />
 
                   {/* Open Questions Resolver Overlay */}

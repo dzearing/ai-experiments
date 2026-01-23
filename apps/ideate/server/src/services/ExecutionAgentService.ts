@@ -438,7 +438,7 @@ Begin executing these tasks in order. Report progress after each task completion
         prompt,
         options: {
           systemPrompt,
-          model: 'claude-sonnet-4-5-20250929',
+          model: 'claude-opus-4-5-20251101',
           permissionMode: 'bypassPermissions',
           allowDangerouslySkipPermissions: true,
           cwd: workDir,

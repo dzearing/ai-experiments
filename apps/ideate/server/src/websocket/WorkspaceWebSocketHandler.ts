@@ -93,6 +93,27 @@ export class WorkspaceWebSocketHandler {
   // Grace period before broadcasting presence_leave (allows for StrictMode reconnects)
   private readonly LEAVE_GRACE_PERIOD_MS = 1000;
 
+  // Callback to get running agent sessions for a workspace (for rehydration on connect)
+  private getRunningSessionsCallback?: (workspaceId: string) => Array<{
+    ideaId: string;
+    status: 'idle' | 'running' | 'error';
+    userId: string;
+    startedAt?: number;
+  }>;
+
+  /**
+   * Set callback to query running agent sessions for a workspace.
+   * Called when a client subscribes to send them current agent status.
+   */
+  setGetRunningSessionsCallback(callback: (workspaceId: string) => Array<{
+    ideaId: string;
+    status: 'idle' | 'running' | 'error';
+    userId: string;
+    startedAt?: number;
+  }>): void {
+    this.getRunningSessionsCallback = callback;
+  }
+
   /** Creates a resource key from type and id */
   private getResourceKey(resourceType: ResourceType, resourceId: string): string {
     return `${resourceType}:${resourceId}`;
@@ -199,6 +220,40 @@ export class WorkspaceWebSocketHandler {
 
     // Send current presence state for this workspace
     this.sendPresenceSync(clientId, workspaceId);
+
+    // Send current agent status for all running sessions in this workspace
+    this.sendAgentStatusSync(clientId, workspaceId);
+  }
+
+  /**
+   * Send current agent status for all running sessions in a workspace to a client.
+   * This ensures clients get the correct agent status after (re)connecting.
+   */
+  private sendAgentStatusSync(clientId: string, workspaceId: string): void {
+    const client = this.clients.get(clientId);
+    if (!client || !this.getRunningSessionsCallback) return;
+
+    const runningSessions = this.getRunningSessionsCallback(workspaceId);
+
+    for (const session of runningSessions) {
+      const agentStartedAt = session.startedAt ? new Date(session.startedAt).toISOString() : undefined;
+
+      this.sendToClient(client.ws, {
+        type: 'resource_updated',
+        workspaceId,
+        resourceId: session.ideaId,
+        resourceType: 'idea',
+        data: {
+          id: session.ideaId,
+          agentStatus: session.status,
+          agentStartedAt,
+        },
+      });
+    }
+
+    if (runningSessions.length > 0) {
+      console.log(`[WorkspaceWS] Sent agent status sync to client ${clientId}: ${runningSessions.length} running sessions`);
+    }
   }
 
   private unsubscribeFromWorkspace(clientId: string, workspaceId: string): void {

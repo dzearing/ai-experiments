@@ -101,6 +101,27 @@ export interface ExecutionToolCall {
 }
 
 /**
+ * A text content block within a message (for parts array)
+ */
+export interface ExecutionTextBlock {
+  type: 'text';
+  text: string;
+}
+
+/**
+ * A tool calls content block within a message (for parts array)
+ */
+export interface ExecutionToolCallsBlock {
+  type: 'tool_calls';
+  calls: ExecutionToolCall[];
+}
+
+/**
+ * Content block for preserving text/tool interleaving in messages
+ */
+export type ExecutionContentBlock = ExecutionTextBlock | ExecutionToolCallsBlock;
+
+/**
  * Execution message (for display in chat)
  */
 export interface ExecutionMessage {
@@ -112,8 +133,10 @@ export interface ExecutionMessage {
   timestamp: number;
   isStreaming?: boolean;
   toolName?: string;
-  /** Tool calls made during this message */
+  /** Tool calls made during this message (legacy - use parts for proper interleaving) */
   toolCalls?: ExecutionToolCall[];
+  /** Content blocks in order - maintains text/tool interleaving */
+  parts?: ExecutionContentBlock[];
   event?: TaskCompleteEvent | PhaseCompleteEvent | ExecutionBlockedEvent | NewIdeaEvent | TaskUpdateEvent;
 }
 
