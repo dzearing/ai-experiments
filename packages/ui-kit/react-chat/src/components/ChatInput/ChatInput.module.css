@@ -4,32 +4,88 @@
   flex-direction: column;
   gap: var(--space-2);
   box-sizing: border-box;
-  background: var(--softer-bg);
-  border: 1px solid var(--softer-border);
-  border-radius: var(--radius-md);
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
+  border-radius: var(--radius-xl);
   padding: var(--space-2);
-  box-shadow: var(--shadow-inner, none);
+  isolation: isolate;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 2px 4px rgba(0, 0, 0, 0.04);
   transition:
     background-color var(--duration-fast) var(--ease-default),
     border-color var(--duration-fast) var(--ease-default),
-    outline-offset var(--duration-fast) var(--ease-default);
+    box-shadow 0.2s ease-out,
+    transform 0.2s ease-out;
 }
 
 .container:hover:not(.disabled) {
-  background: var(--softer-bg-hover);
+  background: var(--soft-bg-hover);
 }
 
 .container:focus-within {
-  background: var(--softer-bg-pressed);
-  border-color: var(--focus-ring);
-  outline: var(--focus-ring-width) solid var(--focus-ring);
-  outline-offset: var(--focus-ring-offset);
+  background: var(--soft-bg-pressed);
+  border-color: transparent;
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.06),
+    0 8px 24px rgba(0, 0, 0, 0.08),
+    0 0 8px 0 rgba(167, 139, 250, 0.3),
+    0 0 20px 0 rgba(96, 165, 250, 0.2),
+    0 0 32px 0 rgba(244, 114, 182, 0.1);
+}
+
+/* Gradient border for focus state */
+.container::before {
+  content: '';
+  position: absolute;
+  inset: -2.5px;
+  border-radius: calc(var(--radius-xl) + 2.5px);
+  padding: 2.5px;
+  background: linear-gradient(
+    135deg,
+    #f472b6 0%,
+    #a78bfa 25%,
+    #60a5fa 50%,
+    #34d399 75%,
+    #fbbf24 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.15s ease-out;
+  animation: gradientRotate 3s linear infinite;
+  background-size: 200% 200%;
+  pointer-events: none;
+}
+
+.container:focus-within::before {
+  opacity: 1;
+}
+
+@keyframes gradientRotate {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 /* Size variants */
 .sm {
   padding: var(--space-1-5);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
 }
 
 .md {
@@ -40,14 +96,28 @@
   padding: var(--space-3);
 }
 
+/* Adjust gradient border radius for small size */
+.sm::before {
+  border-radius: calc(var(--radius-lg) + 2.5px);
+}
+
 /* States */
 .error {
   border-color: var(--feedback-danger-border);
 }
 
+.error::before {
+  background: var(--feedback-danger-bg);
+}
+
 .error:focus-within {
-  border-color: var(--feedback-danger-border);
-  outline-color: var(--feedback-danger-border);
+  border-color: transparent;
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.06),
+    0 8px 24px rgba(0, 0, 0, 0.08),
+    0 0 8px 0 rgba(239, 68, 68, 0.3),
+    0 0 20px 0 rgba(239, 68, 68, 0.2),
+    0 0 32px 0 rgba(239, 68, 68, 0.1);
 }
 
 .disabled {
@@ -360,7 +430,7 @@
   justify-content: center;
   background: var(--primary-bg);
   opacity: 0.9;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   color: var(--primary-fg);
   font-size: var(--text-base);
   font-weight: var(--weight-medium);
@@ -375,6 +445,11 @@
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .container {
+    transition: none;
+  }
+
+  .container::before {
+    animation: none;
     transition: none;
   }
 

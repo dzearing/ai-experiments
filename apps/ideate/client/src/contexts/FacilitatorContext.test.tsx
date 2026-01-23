@@ -288,15 +288,15 @@ describe('FacilitatorContext', () => {
   });
 
   describe('keyboard shortcut', () => {
-    it('toggles overlay on Ctrl+C keypress', () => {
+    it('toggles overlay on Ctrl+. keypress', () => {
       const { result } = renderHook(() => useFacilitator(), { wrapper });
 
       expect(result.current.isOpen).toBe(false);
 
-      // Simulate Ctrl+C keypress
+      // Simulate Ctrl+. keypress
       act(() => {
         const event = new KeyboardEvent('keydown', {
-          key: 'c',
+          key: '.',
           ctrlKey: true,
           bubbles: true,
         });
@@ -308,7 +308,7 @@ describe('FacilitatorContext', () => {
       // Toggle again
       act(() => {
         const event = new KeyboardEvent('keydown', {
-          key: 'c',
+          key: '.',
           ctrlKey: true,
           bubbles: true,
         });
@@ -318,15 +318,15 @@ describe('FacilitatorContext', () => {
       expect(result.current.isOpen).toBe(false);
     });
 
-    it('toggles overlay on Cmd+C keypress (Mac)', () => {
+    it('toggles overlay on Cmd+. keypress (Mac)', () => {
       const { result } = renderHook(() => useFacilitator(), { wrapper });
 
       expect(result.current.isOpen).toBe(false);
 
-      // Simulate Cmd+C keypress (Mac)
+      // Simulate Cmd+. keypress (Mac)
       act(() => {
         const event = new KeyboardEvent('keydown', {
-          key: 'c',
+          key: '.',
           metaKey: true,
           bubbles: true,
         });

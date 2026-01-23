@@ -1,7 +1,50 @@
+/**
+ * Hook for managing the execution agent WebSocket connection.
+ *
+ * This is a wrapper around useAgentSocket that handles:
+ * - Execution flow control (start/pause/resume/cancel)
+ * - Execution state (isExecuting, isPaused, isBlocked)
+ * - Execution events (task_complete, phase_complete, blocked, new_idea, task_update)
+ * - Pending execution queue for handling race conditions
+ */
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { EXECUTION_AGENT_WS_URL } from '../config';
 import type { IdeaPlan } from '../types/idea';
-import { useAgentProgress, type AgentProgressState } from './useAgentProgress';
+import type { OpenQuestion, OpenQuestionsResult } from '@ui-kit/react-chat';
+import { useAgentSocket, type BaseServerMessage } from './useAgentSocket';
+import type { AgentProgressState } from './useAgentProgress';
+import { createLogger } from '../utils/clientLogger';
+
+// Re-export types from agentTypes for backwards compatibility
+export type {
+  ExecutionAgentMessage as ExecutionMessage,
+  AgentToolCall as ExecutionToolCall,
+  AgentTextBlock as ExecutionTextBlock,
+  AgentToolCallsBlock as ExecutionToolCallsBlock,
+  AgentContentBlock as ExecutionContentBlock,
+  TokenUsage,
+  ExecutionSessionState,
+  TaskUpdateEvent,
+  TaskCompleteEvent,
+  PhaseCompleteEvent,
+  ExecutionBlockedEvent,
+  NewIdeaEvent,
+} from './agentTypes';
+
+// Import for internal use
+import type {
+  ExecutionAgentMessage,
+  TokenUsage,
+  ExecutionSessionState,
+  TaskUpdateEvent,
+  TaskCompleteEvent,
+  PhaseCompleteEvent,
+  ExecutionBlockedEvent,
+  NewIdeaEvent,
+} from './agentTypes';
+
+const log = createLogger('ExecutionAgent');
 
 /**
  * Idea context to send to the execution agent
@@ -14,141 +57,13 @@ export interface ExecutionIdeaContext {
 }
 
 /**
- * Session state from the server
+ * Extended server message for execution-specific types
  */
-export interface ExecutionSessionState {
-  status: 'running' | 'paused' | 'blocked' | 'completed' | 'error' | 'idle';
-  phaseId?: string;
-  startedAt?: number;
-  errorMessage?: string;
-}
-
-/**
- * Task update event (add/remove/modify tasks during execution)
- */
-export interface TaskUpdateEvent {
-  action: 'add' | 'remove' | 'update';
-  taskId: string;
-  phaseId: string;
-  title?: string;
-  description?: string;
-  status?: 'pending' | 'in_progress' | 'completed' | 'blocked';
-}
-
-/**
- * Task completion event
- */
-export interface TaskCompleteEvent {
-  taskId: string;
-  phaseId: string;
-  summary?: string;
-}
-
-/**
- * Phase completion event
- */
-export interface PhaseCompleteEvent {
-  phaseId: string;
-  summary?: string;
-}
-
-/**
- * Execution blocked event
- */
-export interface ExecutionBlockedEvent {
-  taskId?: string;
-  phaseId?: string;
-  issue: string;
-  attempted?: string[];
-  needsUserInput: boolean;
-}
-
-/**
- * New idea discovered during execution
- */
-export interface NewIdeaEvent {
-  title: string;
-  summary: string;
-  tags?: string[];
-  priority?: 'high' | 'medium' | 'low';
-}
-
-/**
- * Token usage information
- */
-export interface TokenUsage {
-  inputTokens: number;
-  outputTokens: number;
-}
-
-/**
- * Tool call information for execution messages
- */
-export interface ExecutionToolCall {
-  name: string;
-  input?: Record<string, unknown>;
-  output?: string;
-  /** When the tool call started (epoch ms) */
-  startTime?: number;
-  /** When the tool call completed (epoch ms) */
-  endTime?: number;
-  /** Duration in milliseconds */
-  duration?: number;
-  /** Whether the tool execution is complete */
-  completed?: boolean;
-  /** Whether the tool execution was cancelled */
-  cancelled?: boolean;
-}
-
-/**
- * A text content block within a message (for parts array)
- */
-export interface ExecutionTextBlock {
-  type: 'text';
-  text: string;
-}
-
-/**
- * A tool calls content block within a message (for parts array)
- */
-export interface ExecutionToolCallsBlock {
-  type: 'tool_calls';
-  calls: ExecutionToolCall[];
-}
-
-/**
- * Content block for preserving text/tool interleaving in messages
- */
-export type ExecutionContentBlock = ExecutionTextBlock | ExecutionToolCallsBlock;
-
-/**
- * Execution message (for display in chat)
- */
-export interface ExecutionMessage {
-  id: string;
-  role: 'user' | 'assistant' | 'system';
-  /** Message type - defaults to 'text' if not specified */
-  type?: 'text' | 'tool_use' | 'tool_result' | 'task_complete' | 'phase_complete' | 'blocked' | 'new_idea' | 'task_update';
-  content: string;
-  timestamp: number;
-  isStreaming?: boolean;
-  toolName?: string;
-  /** Tool calls made during this message (legacy - use parts for proper interleaving) */
-  toolCalls?: ExecutionToolCall[];
-  /** Content blocks in order - maintains text/tool interleaving */
-  parts?: ExecutionContentBlock[];
-  event?: TaskCompleteEvent | PhaseCompleteEvent | ExecutionBlockedEvent | NewIdeaEvent | TaskUpdateEvent;
-}
-
-/**
- * Server message types for the execution agent WebSocket protocol
- */
-interface ServerMessage {
-  type: 'connected' | 'session_state' | 'history' | 'text_chunk' | 'task_complete' | 'phase_complete' | 'execution_blocked' | 'new_idea' | 'task_update' | 'tool_use_start' | 'tool_use_end' | 'execution_complete' | 'error' | 'token_usage';
-  /** Text content chunk (for streaming) */
-  text?: string;
-  /** Message ID being updated */
-  messageId?: string;
+interface ExecutionServerMessage extends BaseServerMessage {
+  /** Session state for reconnection */
+  session?: ExecutionSessionState;
+  /** Whether there's an active execution */
+  hasActiveExecution?: boolean;
   /** Task completion event */
   taskComplete?: TaskCompleteEvent;
   /** Phase completion event */
@@ -159,22 +74,6 @@ interface ServerMessage {
   newIdea?: NewIdeaEvent;
   /** Task update event */
   taskUpdate?: TaskUpdateEvent;
-  /** Tool name (for tool_use_start/end) */
-  toolName?: string;
-  /** Tool input (for tool_use_start) */
-  toolInput?: unknown;
-  /** Tool result (for tool_use_end) */
-  toolResult?: string;
-  /** Error message */
-  error?: string;
-  /** Token usage information */
-  usage?: TokenUsage;
-  /** Session state for reconnection */
-  session?: ExecutionSessionState;
-  /** Chat history messages */
-  messages?: ExecutionMessage[];
-  /** Whether there's an active execution */
-  hasActiveExecution?: boolean;
 }
 
 /**
@@ -214,9 +113,11 @@ export interface UseExecutionAgentOptions {
  */
 export interface UseExecutionAgentReturn {
   /** Execution messages (for display) */
-  messages: ExecutionMessage[];
+  messages: ExecutionAgentMessage[];
   /** Whether the WebSocket is connected */
   isConnected: boolean;
+  /** Whether the agent is currently responding (alias for isExecuting) */
+  isLoading: boolean;
   /** Whether execution is in progress */
   isExecuting: boolean;
   /** Whether execution is paused */
@@ -231,6 +132,14 @@ export interface UseExecutionAgentReturn {
   error: string | null;
   /** Current token usage (updated during streaming) */
   tokenUsage: TokenUsage | null;
+  /** Open questions from the agent (null if none) */
+  openQuestions: OpenQuestion[] | null;
+  /** Whether the questions resolver overlay should be shown */
+  showQuestionsResolver: boolean;
+  /** Set whether the questions resolver overlay should be shown */
+  setShowQuestionsResolver: (show: boolean) => void;
+  /** Resolve questions and send summary to agent */
+  resolveQuestions: (result: OpenQuestionsResult) => void;
   /** Agent progress state for ThinkingIndicator */
   progress: AgentProgressState;
   /** Start executing a phase */
@@ -248,7 +157,7 @@ export interface UseExecutionAgentReturn {
   /** Clear all messages */
   clearMessages: () => void;
   /** Add a local message (for system messages) */
-  addLocalMessage: (message: ExecutionMessage) => void;
+  addLocalMessage: (message: ExecutionAgentMessage) => void;
   /** Request chat history from server */
   requestHistory: (limit?: number) => void;
 }
@@ -272,25 +181,17 @@ export function useExecutionAgent({
   onError,
   enabled = true,
 }: UseExecutionAgentOptions): UseExecutionAgentReturn {
-  const [messages, setMessages] = useState<ExecutionMessage[]>([]);
-  const [isConnected, setIsConnected] = useState(false);
+  // Execution-specific state
   const [isExecuting, setIsExecuting] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const [blockedEvent, setBlockedEvent] = useState<ExecutionBlockedEvent | null>(null);
   const [sessionState, setSessionState] = useState<ExecutionSessionState | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [tokenUsage, setTokenUsage] = useState<TokenUsage | null>(null);
 
-  // Agent progress tracking for ThinkingIndicator
-  const progress = useAgentProgress();
-
-  const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const currentMessageIdRef = useRef<string | null>(null);
-  const enabledRef = useRef(enabled);
+  // Refs for execution state
   const ideaContextRef = useRef<ExecutionIdeaContext | null>(initialIdeaContext || null);
   const planRef = useRef<IdeaPlan | null>(initialPlan || null);
+
   // Track pending execution to handle race condition when startExecution is called before WS connects
   const pendingExecutionRef = useRef<{
     ideaContext: ExecutionIdeaContext;
@@ -299,11 +200,15 @@ export function useExecutionAgent({
     pauseBetweenPhases: boolean;
   } | null>(null);
 
-  // Keep refs updated
-  useEffect(() => {
-    enabledRef.current = enabled;
-  }, [enabled]);
+  // Refs for callbacks
+  const onTaskCompleteRef = useRef(onTaskComplete);
+  const onPhaseCompleteRef = useRef(onPhaseComplete);
+  const onExecutionBlockedRef = useRef(onExecutionBlocked);
+  const onNewIdeaRef = useRef(onNewIdea);
+  const onTaskUpdateRef = useRef(onTaskUpdate);
+  const onExecutionCompleteRef = useRef(onExecutionComplete);
 
+  // Keep refs updated
   useEffect(() => {
     if (initialIdeaContext) {
       ideaContextRef.current = initialIdeaContext;
@@ -316,509 +221,175 @@ export function useExecutionAgent({
     }
   }, [initialPlan]);
 
-  // Disconnect and clear state when disabled
   useEffect(() => {
-    console.log('[ExecutionAgent] Disabled effect running, enabled =', enabled, 'pendingExecution =', !!pendingExecutionRef.current);
+    onTaskCompleteRef.current = onTaskComplete;
+  }, [onTaskComplete]);
+
+  useEffect(() => {
+    onPhaseCompleteRef.current = onPhaseComplete;
+  }, [onPhaseComplete]);
+
+  useEffect(() => {
+    onExecutionBlockedRef.current = onExecutionBlocked;
+  }, [onExecutionBlocked]);
+
+  useEffect(() => {
+    onNewIdeaRef.current = onNewIdea;
+  }, [onNewIdea]);
+
+  useEffect(() => {
+    onTaskUpdateRef.current = onTaskUpdate;
+  }, [onTaskUpdate]);
+
+  useEffect(() => {
+    onExecutionCompleteRef.current = onExecutionComplete;
+  }, [onExecutionComplete]);
+
+  // Handle execution-specific message types
+  const handleCustomMessage = useCallback((type: string, data: BaseServerMessage): boolean => {
+    const execData = data as ExecutionServerMessage;
+
+    switch (type) {
+      case 'connected':
+        // Connection acknowledgment with session state
+        if (execData.session) {
+          setSessionState(execData.session);
+          setIsExecuting(execData.session.status === 'running');
+          setIsBlocked(execData.session.status === 'blocked');
+        }
+        log.log('Connected', { hasActiveExecution: execData.hasActiveExecution });
+
+        return true;
+
+      case 'session_state':
+        // Session state update
+        if (execData.session) {
+          setSessionState(execData.session);
+          setIsExecuting(execData.session.status === 'running');
+          setIsBlocked(execData.session.status === 'blocked');
+        }
+
+        return true;
+
+      case 'task_complete':
+        if (execData.taskComplete) {
+          onTaskCompleteRef.current?.(execData.taskComplete);
+        }
+
+        return true;
+
+      case 'phase_complete':
+        if (execData.phaseComplete) {
+          onPhaseCompleteRef.current?.(execData.phaseComplete);
+        }
+
+        return true;
+
+      case 'execution_blocked':
+        if (execData.executionBlocked) {
+          setIsBlocked(true);
+          setBlockedEvent(execData.executionBlocked);
+          onExecutionBlockedRef.current?.(execData.executionBlocked);
+        }
+
+        return true;
+
+      case 'new_idea':
+        if (execData.newIdea) {
+          onNewIdeaRef.current?.(execData.newIdea);
+        }
+
+        return true;
+
+      case 'task_update':
+        if (execData.taskUpdate) {
+          onTaskUpdateRef.current?.(execData.taskUpdate);
+        }
+
+        return true;
+
+      case 'execution_complete':
+        setIsExecuting(false);
+        setIsBlocked(false);
+        setBlockedEvent(null);
+        setSessionState(prev => prev ? { ...prev, status: 'completed' } : { status: 'completed' });
+        onExecutionCompleteRef.current?.();
+
+        return true;
+
+      default:
+        return false;
+    }
+  }, []);
+
+  // Handle connection - check for pending execution
+  const handleConnected = useCallback((ws: WebSocket) => {
+    // Check for pending execution and send it
+    if (pendingExecutionRef.current) {
+      const { ideaContext, plan, phaseId, pauseBetweenPhases } = pendingExecutionRef.current;
+
+      log.log('Sending pending execution', { phaseId, ideaId: ideaContext.id, pauseBetweenPhases });
+      setIsExecuting(true);
+      setIsPaused(false);
+      setIsBlocked(false);
+      setBlockedEvent(null);
+
+      ws.send(JSON.stringify({
+        type: 'start_execution',
+        idea: ideaContext,
+        plan,
+        phaseId,
+        pauseBetweenPhases,
+      }));
+
+      // Clear pending execution
+      pendingExecutionRef.current = null;
+    }
+  }, []);
+
+  // Use base hook
+  const base = useAgentSocket({
+    wsUrl: EXECUTION_AGENT_WS_URL,
+    ideaId,
+    userId,
+    userName,
+    enabled,
+    onError,
+    loggerTag: 'ExecutionAgent',
+    onCustomMessage: handleCustomMessage,
+    onConnected: handleConnected,
+    // Execution agent doesn't use ideaContext the same way
+    ideaContext: null,
+  });
+
+  // Clear execution state when disabled
+  useEffect(() => {
     if (!enabled) {
-      console.log('[ExecutionAgent] Disabled, disconnecting and clearing state');
-      setMessages([]);
-      setError(null);
+      log.log('Disabled, clearing execution state');
       setIsExecuting(false);
+      setIsPaused(false);
       setIsBlocked(false);
       setBlockedEvent(null);
       setSessionState(null);
-      setTokenUsage(null);
-      currentMessageIdRef.current = null;
       pendingExecutionRef.current = null;
-
-      // Close WebSocket connection
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
-        setIsConnected(false);
-      }
-
-      // Clear any pending reconnect
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-        reconnectTimeoutRef.current = null;
-      }
     }
   }, [enabled]);
 
-  // Add a message
-  const addMessage = useCallback((message: ExecutionMessage) => {
-    setMessages((prev) => [...prev, message]);
-  }, []);
-
-  // Type for functional updates in message fields
-  type FunctionalUpdate<T> = T | ((prev: T) => T);
-
-  // Update a message (for streaming and tool calls)
-  // Supports functional updates for content and toolCalls
-  const updateMessage = useCallback((
-    id: string,
-    updates: {
-      content?: FunctionalUpdate<string>;
-      toolCalls?: FunctionalUpdate<ExecutionToolCall[] | undefined>;
-      isStreaming?: boolean;
-    } | ((prev: string) => string)
-  ) => {
-    setMessages((prev) =>
-      prev.map((msg) => {
-        if (msg.id !== id) return msg;
-
-        // Handle legacy string function update (for content append)
-        if (typeof updates === 'function') {
-          return { ...msg, content: updates(msg.content) };
-        }
-
-        // Handle object updates with potential functional values
-        const newMsg = { ...msg };
-
-        if (updates.content !== undefined) {
-          newMsg.content = typeof updates.content === 'function'
-            ? updates.content(msg.content)
-            : updates.content;
-        }
-
-        if (updates.toolCalls !== undefined) {
-          newMsg.toolCalls = typeof updates.toolCalls === 'function'
-            ? updates.toolCalls(msg.toolCalls)
-            : updates.toolCalls;
-        }
-
-        if (updates.isStreaming !== undefined) {
-          newMsg.isStreaming = updates.isStreaming;
-        }
-
-        return newMsg;
-      })
-    );
-  }, []);
-
-  const connect = useCallback(() => {
-    console.log('[ExecutionAgent] connect() called, pendingExecution =', !!pendingExecutionRef.current);
-    // Guard: already connected or connecting
-    if (wsRef.current?.readyState === WebSocket.OPEN ||
-        wsRef.current?.readyState === WebSocket.CONNECTING) {
-      console.log('[ExecutionAgent] connect() early return: already connected/connecting');
-      return;
-    }
-    if (!userId || !ideaId) {
-      console.log('[ExecutionAgent] connect() early return: missing userId or ideaId', { userId: !!userId, ideaId: !!ideaId });
-      return;
-    }
-
-    const wsUrl = `${EXECUTION_AGENT_WS_URL}?ideaId=${encodeURIComponent(ideaId)}&userId=${encodeURIComponent(userId)}&userName=${encodeURIComponent(userName)}`;
-
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
-
-    ws.onopen = () => {
-      setIsConnected(true);
-      setError(null);
-      console.log('[ExecutionAgent] WebSocket connected, pendingExecution =', !!pendingExecutionRef.current);
-
-      // Check for pending execution and send it
-      if (pendingExecutionRef.current) {
-        const { ideaContext, plan, phaseId, pauseBetweenPhases } = pendingExecutionRef.current;
-        console.log('[ExecutionAgent] Sending pending execution for phase:', phaseId, 'ideaContext:', ideaContext.id, 'pauseBetweenPhases:', pauseBetweenPhases);
-        setIsExecuting(true);
-        setIsPaused(false);
-        setIsBlocked(false);
-        setBlockedEvent(null);
-        setTokenUsage(null);
-
-        ws.send(JSON.stringify({
-          type: 'start_execution',
-          idea: ideaContext,
-          plan,
-          phaseId,
-          pauseBetweenPhases,
-        }));
-
-        // Clear pending execution
-        pendingExecutionRef.current = null;
-      }
-    };
-
-    ws.onclose = () => {
-      setIsConnected(false);
-      setIsExecuting(false);
-      console.log('[ExecutionAgent] WebSocket disconnected');
-
-      // Only attempt to reconnect if still enabled
-      if (enabledRef.current) {
-        reconnectTimeoutRef.current = setTimeout(() => {
-          if (userId && ideaId && enabledRef.current) {
-            connect();
-          }
-        }, 3000);
-      }
-    };
-
-    ws.onerror = (event) => {
-      console.error('[ExecutionAgent] WebSocket error:', event);
-      setIsConnected(false);
-      setError('Failed to connect to execution agent service');
-      onError?.('Failed to connect to execution agent service');
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const data: ServerMessage = JSON.parse(event.data);
-
-        switch (data.type) {
-          case 'connected':
-            // Connection acknowledgment with session state
-            if (data.session) {
-              setSessionState(data.session);
-              setIsExecuting(data.session.status === 'running');
-              setIsBlocked(data.session.status === 'blocked');
-
-              // If session has an error, set the error state and add message
-              if (data.session.status === 'error' && data.session.errorMessage) {
-                setError(data.session.errorMessage);
-                // Note: Don't add error message here - it will come from history
-              }
-            }
-            console.log('[ExecutionAgent] Connected, active execution:', data.hasActiveExecution);
-
-            // Automatically request chat history on connection
-            if (ws.readyState === WebSocket.OPEN) {
-              ws.send(JSON.stringify({ type: 'get_history' }));
-            }
-            break;
-
-          case 'session_state':
-            // Session state update
-            if (data.session) {
-              setSessionState(data.session);
-              setIsExecuting(data.session.status === 'running');
-              setIsBlocked(data.session.status === 'blocked');
-            }
-            break;
-
-          case 'history':
-            // Load message history
-            if (data.messages) {
-              setMessages(data.messages);
-            }
-            break;
-
-          case 'text_chunk':
-            // Streaming text chunk
-            if (data.messageId && data.text) {
-              if (currentMessageIdRef.current !== data.messageId) {
-                currentMessageIdRef.current = data.messageId;
-                addMessage({
-                  id: data.messageId,
-                  role: 'assistant',
-                  type: 'text',
-                  content: data.text,
-                  timestamp: Date.now(),
-                  isStreaming: true,
-                });
-              } else {
-                // Check if current message has tool calls - if so, text arriving after
-                // tools should be in a new message to render below the tools
-                const textContent = data.text; // Capture for closure
-                setMessages((prev) => {
-                  const currentMsg = prev.find((m) => m.id === data.messageId);
-                  if (currentMsg?.toolCalls && currentMsg.toolCalls.length > 0) {
-                    // Text arriving after tools - create a new message
-                    const newMessageId = `${data.messageId}-cont-${Date.now()}`;
-                    currentMessageIdRef.current = newMessageId;
-                    return [
-                      ...prev.map((m) =>
-                        m.id === data.messageId ? { ...m, isStreaming: false } : m
-                      ),
-                      {
-                        id: newMessageId,
-                        role: 'assistant' as const,
-                        type: 'text' as const,
-                        content: textContent,
-                        timestamp: Date.now(),
-                        isStreaming: true,
-                      },
-                    ];
-                  }
-                  // No tools yet - append to existing message
-                  return prev.map((m) =>
-                    m.id === data.messageId ? { ...m, content: m.content + textContent } : m
-                  );
-                });
-              }
-            }
-            break;
-
-          case 'task_complete':
-            if (data.taskComplete) {
-              // Mark streaming message as complete
-              if (currentMessageIdRef.current) {
-                updateMessage(currentMessageIdRef.current, { isStreaming: false });
-                currentMessageIdRef.current = null;
-              }
-
-              // Add task complete message
-              addMessage({
-                id: `task-${data.taskComplete.taskId}-${Date.now()}`,
-                role: 'system',
-                type: 'task_complete',
-                content: `Task completed: ${data.taskComplete.summary || data.taskComplete.taskId}`,
-                timestamp: Date.now(),
-                event: data.taskComplete,
-              });
-
-              onTaskComplete?.(data.taskComplete);
-            }
-            break;
-
-          case 'phase_complete':
-            if (data.phaseComplete) {
-              // Mark streaming message as complete
-              if (currentMessageIdRef.current) {
-                updateMessage(currentMessageIdRef.current, { isStreaming: false });
-                currentMessageIdRef.current = null;
-              }
-
-              addMessage({
-                id: `phase-${data.phaseComplete.phaseId}-${Date.now()}`,
-                role: 'system',
-                type: 'phase_complete',
-                content: `Phase completed: ${data.phaseComplete.summary || data.phaseComplete.phaseId}`,
-                timestamp: Date.now(),
-                event: data.phaseComplete,
-              });
-
-              onPhaseComplete?.(data.phaseComplete);
-            }
-            break;
-
-          case 'execution_blocked':
-            if (data.executionBlocked) {
-              setIsBlocked(true);
-              setBlockedEvent(data.executionBlocked);
-
-              addMessage({
-                id: `blocked-${Date.now()}`,
-                role: 'system',
-                type: 'blocked',
-                content: data.executionBlocked.issue,
-                timestamp: Date.now(),
-                event: data.executionBlocked,
-              });
-
-              onExecutionBlocked?.(data.executionBlocked);
-            }
-            break;
-
-          case 'new_idea':
-            if (data.newIdea) {
-              addMessage({
-                id: `new-idea-${Date.now()}`,
-                role: 'system',
-                type: 'new_idea',
-                content: `New idea discovered: ${data.newIdea.title}`,
-                timestamp: Date.now(),
-                event: data.newIdea,
-              });
-
-              onNewIdea?.(data.newIdea);
-            }
-            break;
-
-          case 'task_update':
-            if (data.taskUpdate) {
-              addMessage({
-                id: `task-update-${Date.now()}`,
-                role: 'system',
-                type: 'task_update',
-                content: `Task ${data.taskUpdate.action}: ${data.taskUpdate.title || data.taskUpdate.taskId}`,
-                timestamp: Date.now(),
-                event: data.taskUpdate,
-              });
-
-              onTaskUpdate?.(data.taskUpdate);
-            }
-            break;
-
-          case 'tool_use_start':
-            // Add tool call to current message (like facilitator does)
-            if (data.toolName) {
-              // Update progress indicator
-              progress.handleProgressEvent({
-                type: 'tool_start',
-                toolName: data.toolName,
-                displayText: `Using ${data.toolName}...`,
-                timestamp: Date.now(),
-              });
-
-              const newToolCall: ExecutionToolCall = {
-                name: data.toolName,
-                input: data.toolInput as Record<string, unknown> || {},
-                startTime: Date.now(),
-              };
-
-              // Use messageId from server if available, otherwise use current message
-              const targetMessageId = data.messageId || currentMessageIdRef.current;
-
-              // If this message doesn't exist yet, create it (tool may arrive before text)
-              if (!targetMessageId || currentMessageIdRef.current !== targetMessageId) {
-                if (currentMessageIdRef.current) {
-                  updateMessage(currentMessageIdRef.current, { isStreaming: false });
-                }
-                const newMessageId = targetMessageId || `msg-${Date.now()}`;
-                currentMessageIdRef.current = newMessageId;
-                addMessage({
-                  id: newMessageId,
-                  role: 'assistant',
-                  type: 'text',
-                  content: '',
-                  timestamp: Date.now(),
-                  isStreaming: true,
-                  toolCalls: [newToolCall],
-                });
-              } else {
-                // Add to existing message's toolCalls
-                updateMessage(targetMessageId, {
-                  toolCalls: (prev) => [...(prev || []), newToolCall],
-                });
-              }
-            }
-            break;
-
-          case 'tool_use_end':
-            // Update the tool call with its output
-            // Note: Server may send name='unknown' when tool_result doesn't include name
-            {
-              // Update progress indicator
-              progress.handleProgressEvent({
-                type: 'tool_complete',
-                toolName: data.toolName || 'unknown',
-                displayText: `Completed ${data.toolName || 'tool'}`,
-                timestamp: Date.now(),
-              });
-
-              const targetMessageId = data.messageId || currentMessageIdRef.current;
-              if (targetMessageId) {
-                updateMessage(targetMessageId, {
-                  toolCalls: (prev) => {
-                    if (!prev) return prev;
-                    // If tool name is known and matches, update that tool
-                    // Otherwise, update the first pending tool (no output yet)
-                    const toolName = data.toolName;
-                    let updated = false;
-                    return prev.map((tc) => {
-                      if (updated) return tc;
-                      // Match by name if known, or match first pending if name is 'unknown'
-                      const isMatch = toolName && toolName !== 'unknown'
-                        ? tc.name === toolName && !tc.output
-                        : !tc.output;
-                      if (isMatch) {
-                        updated = true;
-                        // Use special marker for "complete with no output" - empty results shouldn't show a box
-                        return { ...tc, output: data.toolResult || '__complete__' };
-                      }
-                      return tc;
-                    });
-                  },
-                });
-              }
-            }
-            break;
-
-          case 'execution_complete':
-            // Mark streaming message as complete
-            if (currentMessageIdRef.current) {
-              updateMessage(currentMessageIdRef.current, { isStreaming: false });
-              currentMessageIdRef.current = null;
-            }
-
-            // Clear progress indicator
-            progress.clearProgress();
-
-            setIsExecuting(false);
-            setIsBlocked(false);
-            setBlockedEvent(null);
-            setSessionState(prev => prev ? { ...prev, status: 'completed' } : { status: 'completed' });
-            onExecutionComplete?.();
-            break;
-
-          case 'error':
-            if (data.error) {
-              setError(data.error);
-              setIsExecuting(false);
-
-              // Add error message to chat so it's visible in the UI
-              addMessage({
-                id: `error-${Date.now()}`,
-                role: 'system',
-                type: 'text',
-                content: `**Error:** ${data.error}`,
-                timestamp: Date.now(),
-              });
-
-              onError?.(data.error);
-            }
-            break;
-
-          case 'token_usage':
-            if (data.usage) {
-              setTokenUsage(data.usage);
-            }
-            break;
-        }
-      } catch (err) {
-        console.error('[ExecutionAgent] Failed to parse message:', err);
-      }
-    };
-  }, [ideaId, userId, userName, addMessage, updateMessage, onTaskComplete, onPhaseComplete, onExecutionBlocked, onNewIdea, onTaskUpdate, onExecutionComplete, onError, progress]);
-
-  // Connect when enabled and userId and ideaId are available
-  useEffect(() => {
-    console.log('[ExecutionAgent] Connect effect running:', { enabled, userId: !!userId, ideaId: !!ideaId, isConnected, pendingExecution: !!pendingExecutionRef.current });
-    if (enabled && userId && ideaId && !isConnected) {
-      console.log('[ExecutionAgent] Connect effect: conditions met, calling connect()');
-      connect();
-    }
-
-    return () => {
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-    };
-  }, [enabled, userId, ideaId, isConnected, connect]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
-      }
-    };
-  }, []);
-
   // Start execution
   const startExecution = useCallback((ideaContext: ExecutionIdeaContext, plan: IdeaPlan, phaseId: string, pauseBetweenPhases: boolean = false) => {
-    console.log('[ExecutionAgent] startExecution called:', { ideaId: ideaContext.id, phaseId, pauseBetweenPhases, wsReadyState: wsRef.current?.readyState });
+    log.log('startExecution called', { ideaId: ideaContext.id, phaseId, pauseBetweenPhases });
+
     // Set optimistic UI state immediately (before server responds)
     setIsExecuting(true);
     setIsPaused(false);
     setIsBlocked(false);
     setBlockedEvent(null);
-    setTokenUsage(null);
-    setError(null);
     setSessionState({ status: 'running', phaseId, startedAt: Date.now() });
+    base.setError(null);
 
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      console.log('[ExecutionAgent] WebSocket already open, sending start_execution immediately');
-      wsRef.current.send(JSON.stringify({
+    if (base.wsRef.current?.readyState === WebSocket.OPEN) {
+      log.log('Sending start_execution immediately');
+      base.wsRef.current.send(JSON.stringify({
         type: 'start_execution',
         idea: ideaContext,
         plan,
@@ -827,125 +398,91 @@ export function useExecutionAgent({
       }));
     } else {
       // WebSocket not connected yet - queue the execution to be sent when connected
-      console.log('[ExecutionAgent] Queueing execution (WebSocket not yet open, readyState:', wsRef.current?.readyState, ')');
+      log.log('Queueing execution (WebSocket not yet open)');
       pendingExecutionRef.current = { ideaContext, plan, phaseId, pauseBetweenPhases };
     }
-  }, []);
+  }, [base.wsRef, base.setError]);
 
-  // Send a message (for chat during execution)
+  // Override sendMessage to clear blocked state
   const sendMessage = useCallback((content: string) => {
     if (!content.trim()) return;
 
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      // Clear blocked state when sending a message
-      if (isBlocked) {
-        setIsBlocked(false);
-        setBlockedEvent(null);
-      }
-
-      // Add user message
-      addMessage({
-        id: `msg-user-${Date.now()}`,
-        role: 'user',
-        type: 'text',
-        content: content.trim(),
-        timestamp: Date.now(),
-      });
-
-      wsRef.current.send(JSON.stringify({
-        type: 'send_message',
-        content: content.trim(),
-      }));
-    } else {
-      setError('Not connected to execution agent service');
+    // Clear blocked state when sending a message
+    if (isBlocked) {
+      setIsBlocked(false);
+      setBlockedEvent(null);
     }
-  }, [addMessage, isBlocked]);
 
-  // Send feedback (alias for sendMessage - for backwards compatibility)
+    base.sendMessage(content);
+  }, [base.sendMessage, isBlocked]);
+
+  // Send feedback (alias for sendMessage)
   const sendFeedback = useCallback((feedback: string) => {
     sendMessage(feedback);
   }, [sendMessage]);
 
   // Request chat history from server
   const requestHistory = useCallback((limit?: number) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({
+    if (base.wsRef.current?.readyState === WebSocket.OPEN) {
+      base.wsRef.current.send(JSON.stringify({
         type: 'get_history',
         limit,
       }));
     }
-  }, []);
+  }, [base.wsRef]);
 
   // Pause execution
   const pauseExecution = useCallback(() => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
+    if (base.wsRef.current?.readyState === WebSocket.OPEN) {
       setIsPaused(true);
-      wsRef.current.send(JSON.stringify({ type: 'pause' }));
+      base.wsRef.current.send(JSON.stringify({ type: 'pause' }));
     }
-  }, []);
+  }, [base.wsRef]);
 
   // Resume execution
   const resumeExecution = useCallback(() => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
+    if (base.wsRef.current?.readyState === WebSocket.OPEN) {
       setIsPaused(false);
-      wsRef.current.send(JSON.stringify({ type: 'resume' }));
+      base.wsRef.current.send(JSON.stringify({ type: 'resume' }));
     }
-  }, []);
+  }, [base.wsRef]);
 
   // Cancel execution
   const cancelExecution = useCallback(() => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ type: 'cancel' }));
-
-      // Mark any streaming message as complete and mark pending tool calls as cancelled
-      if (currentMessageIdRef.current) {
-        updateMessage(currentMessageIdRef.current, {
-          isStreaming: false,
-          toolCalls: (prev) => prev?.map((tc) => {
-            // Mark incomplete tool calls as cancelled
-            if (!tc.completed && !tc.output) {
-              return { ...tc, cancelled: true };
-            }
-
-            return tc;
-          }),
-        });
-        currentMessageIdRef.current = null;
-      }
-
+    if (base.wsRef.current?.readyState === WebSocket.OPEN) {
+      base.wsRef.current.send(JSON.stringify({ type: 'cancel' }));
+      base.cancelRequest();
       setIsExecuting(false);
       setIsPaused(false);
       setIsBlocked(false);
       setBlockedEvent(null);
     }
-  }, [updateMessage]);
-
-  // Clear messages
-  const clearMessages = useCallback(() => {
-    setMessages([]);
-    setError(null);
-    setTokenUsage(null);
-  }, []);
+  }, [base.wsRef, base.cancelRequest]);
 
   return {
-    messages,
-    isConnected,
+    messages: base.messages,
+    isConnected: base.isConnected,
+    isLoading: isExecuting || base.isLoading,
     isExecuting,
     isPaused,
     isBlocked,
     blockedEvent,
     sessionState,
-    error,
-    tokenUsage,
-    progress,
+    error: base.error,
+    tokenUsage: base.tokenUsage,
+    openQuestions: base.openQuestions,
+    showQuestionsResolver: base.showQuestionsResolver,
+    setShowQuestionsResolver: base.setShowQuestionsResolver,
+    resolveQuestions: base.resolveQuestions,
+    progress: base.progress,
     startExecution,
     sendMessage,
     sendFeedback,
     pauseExecution,
     resumeExecution,
     cancelExecution,
-    clearMessages,
-    addLocalMessage: addMessage,
+    clearMessages: base.clearHistory,
+    addLocalMessage: base.addMessage,
     requestHistory,
   };
 }

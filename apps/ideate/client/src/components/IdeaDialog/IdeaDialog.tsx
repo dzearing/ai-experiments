@@ -846,9 +846,9 @@ export function IdeaDialog({
     refreshInterval: phase === 'executing' ? 5000 : 0, // Auto-refresh during execution
   });
 
-  // Select active agent based on phase
+  // Select active agent based on phase - all agents now have consistent APIs
   const activeAgent = phase === 'executing'
-    ? { ...executeAgent, isLoading: executeAgent.isExecuting, openQuestions: null, suggestedResponses: null, showQuestionsResolver: false, setShowQuestionsResolver: () => {}, resolveQuestions: () => {}, clearHistory: executeAgent.clearMessages, cancelRequest: executeAgent.cancelExecution }
+    ? { ...executeAgent, clearHistory: executeAgent.clearMessages, cancelRequest: executeAgent.cancelExecution }
     : phase === 'planning' ? planAgent : ideaAgent;
   const agentMessages = activeAgent.messages;
   const isConnected = activeAgent.isConnected;
@@ -861,32 +861,18 @@ export function IdeaDialog({
   const clearHistory = activeAgent.clearHistory;
   const cancelRequest = activeAgent.cancelRequest;
 
-  // Agent-specific properties that depend on phase
+  // Shared agent properties - now consistent across all agents
+  const openQuestions = activeAgent.openQuestions;
+  const showQuestionsResolver = activeAgent.showQuestionsResolver;
+  const setShowQuestionsResolver = activeAgent.setShowQuestionsResolver;
+  const resolveQuestions = activeAgent.resolveQuestions;
+
+  // Agent-specific properties that still differ by phase
   const isEditingDocument = phase === 'executing'
     ? false
     : phase === 'planning'
       ? planAgent.isEditingDocument
       : ideaAgent.isEditingDocument;
-  const openQuestions = phase === 'executing'
-    ? null
-    : phase === 'planning'
-      ? planAgent.openQuestions
-      : ideaAgent.openQuestions;
-  const showQuestionsResolver = phase === 'executing'
-    ? false
-    : phase === 'planning'
-      ? planAgent.showQuestionsResolver
-      : ideaAgent.showQuestionsResolver;
-  const setShowQuestionsResolver = phase === 'executing'
-    ? (() => {})
-    : phase === 'planning'
-      ? planAgent.setShowQuestionsResolver
-      : ideaAgent.setShowQuestionsResolver;
-  const resolveQuestions = phase === 'executing'
-    ? (() => {})
-    : phase === 'planning'
-      ? planAgent.resolveQuestions
-      : ideaAgent.resolveQuestions;
   const updateIdeaContext = ideaAgent.updateIdeaContext;
 
   // Execution-specific state
@@ -991,14 +977,6 @@ export function IdeaDialog({
     statusText: thinkingStatusText,
     showEscapeHint: isAgentThinking,
   }), [thinkingStatusText, isAgentThinking]);
-
-  // Get suggested responses from the active agent based on current phase
-  const agentSuggestedResponses = phase === 'planning'
-    ? planAgent.suggestedResponses
-    : ideaAgent.suggestedResponses;
-
-  // Use agent-provided suggestions or empty array if none
-  const footerSuggestions = agentSuggestedResponses || [];
 
   // Detect room changes and prepare for migration
   // Only migrate content when saving a NEW idea (transitioning from new-idea room to saved-idea room)
@@ -2121,20 +2099,8 @@ export function IdeaDialog({
             />
           </div>
 
-          {/* Footer - suggested responses on left, action button on right */}
+          {/* Footer - action buttons */}
           <footer className={styles.footer}>
-            <div className={styles.footerSuggestions}>
-              {footerSuggestions.map((suggestion, index) => (
-                <Button
-                  key={index}
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => sendAgentMessage(suggestion.message)}
-                >
-                  {suggestion.label}
-                </Button>
-              ))}
-            </div>
             <div className={styles.footerActions}>
               {phase === 'ideation' && (
                 <Button
