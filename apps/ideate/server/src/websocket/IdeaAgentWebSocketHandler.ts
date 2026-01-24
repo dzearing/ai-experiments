@@ -15,12 +15,14 @@ import type { WorkspaceWebSocketHandler } from './WorkspaceWebSocketHandler.js';
 import type { ResourceEventBus } from '../services/resourceEventBus/ResourceEventBus.js';
 import type { AgentProgressEvent } from '../shared/agentProgress.js';
 import type { IdeaService } from '../services/IdeaService.js';
+import { getCommandRegistry } from '../services/SlashCommandRegistry.js';
+import type { CommandContext, SlashCommandResult } from '../shared/slashCommandTypes.js';
 
 /**
  * Client message types for the idea agent WebSocket protocol
  */
 interface ClientMessage {
-  type: 'message' | 'clear_history' | 'idea_update' | 'cancel';
+  type: 'message' | 'clear_history' | 'idea_update' | 'cancel' | 'slash_command';
   content?: string;
   idea?: IdeaContext;
   /** Document room name for Yjs collaboration (client provides this) */
@@ -29,13 +31,17 @@ interface ClientMessage {
   initialGreeting?: string;
   /** Model ID to use for this message */
   modelId?: string;
+  /** For slash_command type: the command name (without leading slash) */
+  command?: string;
+  /** For slash_command type: command arguments */
+  args?: string;
 }
 
 /**
  * Server message types for the idea agent WebSocket protocol
  */
 interface ServerMessage {
-  type: 'text_chunk' | 'message_complete' | 'history' | 'error' | 'greeting' | 'document_edit_start' | 'document_edit_end' | 'token_usage' | 'open_questions' | 'suggested_responses' | 'agent_progress' | 'session_status';
+  type: 'text_chunk' | 'message_complete' | 'history' | 'error' | 'greeting' | 'document_edit_start' | 'document_edit_end' | 'token_usage' | 'open_questions' | 'suggested_responses' | 'agent_progress' | 'session_status' | 'command_result' | 'available_commands';
   /** Text content chunk (for streaming) */
   text?: string;
   /** Message ID being updated */
@@ -61,6 +67,12 @@ interface ServerMessage {
   status?: 'running' | 'idle';
   /** When the session started (for running sessions) */
   startedAt?: string;
+  /** For command_result: the command that was executed */
+  command?: string;
+  /** For command_result: the result of the command execution */
+  result?: SlashCommandResult;
+  /** For available_commands: list of available commands */
+  commands?: Array<{ name: string; description: string; argumentHint: string }>;
 }
 
 /**
@@ -237,6 +249,12 @@ export class IdeaAgentWebSocketHandler {
       });
     }
 
+    // Send available commands
+    this.send(ws, {
+      type: 'available_commands',
+      commands: getCommandRegistry().getCommands(),
+    });
+
     // Set up WebSocket handlers
     ws.on('message', (data: RawData) => {
       this.handleMessage(client, data);
@@ -314,6 +332,35 @@ export class IdeaAgentWebSocketHandler {
           const chatId = getChatId(client);
           this.ideaAgentService.abortSession(chatId);
           console.log(`[IdeaAgent] Client ${client.clientId} cancelled current operation`);
+          break;
+        }
+        case 'slash_command': {
+          const chatId = getChatId(client);
+          const commandContext: CommandContext = {
+            userId: client.userId,
+            sessionId: chatId,
+            ideaId: client.ideaId !== 'new' ? client.ideaId : undefined,
+            tokenUsage: undefined,
+            sessionInfo: undefined,
+            messageCount: 0,
+          };
+
+          const result = await getCommandRegistry().execute(
+            clientMessage.command || '',
+            clientMessage.args || '',
+            commandContext
+          );
+
+          // Handle special commands that need WebSocket handler involvement
+          if (clientMessage.command === 'clear') {
+            await this.handleClearHistory(client);
+          }
+
+          this.send(client.ws, {
+            type: 'command_result',
+            command: clientMessage.command,
+            result,
+          });
           break;
         }
         default:
