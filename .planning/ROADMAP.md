@@ -145,12 +145,12 @@ Plans:
   3. Hook matchers filter by tool name pattern
   4. SessionStart/SessionEnd hooks fire on lifecycle events
   5. Hooks can inject system messages and modify tool input
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 07-01: Hook registration and execution pipeline
-- [ ] 07-02: Tool hooks (Pre/Post)
-- [ ] 07-03: Lifecycle and permission hooks
+- [ ] 07-01-PLAN.md — Hook types and HooksService foundation
+- [ ] 07-02-PLAN.md — Tool hooks (PreToolUse/PostToolUse) with pattern matching
+- [ ] 07-03-PLAN.md — Lifecycle and permission hooks (Session, Subagent, Prompt, PreCompact)
 
 ### Phase 8: Commands & Skills
 **Goal**: Slash commands and skills system work
@@ -225,11 +225,11 @@ Note: Phases 5 and 8 (Configuration, Commands) can run in parallel with Phases 3
 | 4. Permissions & Modes | 3/3 | Complete | 2026-01-20 |
 | 5. Configuration System | 2/2 | Complete | 2026-01-20 |
 | 6. Extended Tools | 7/7 | Complete | 2026-01-19 |
-| 7. Hooks System | 0/3 | Not started | - |
+| 7. Hooks System | 0/3 | Planned | - |
 | 8. Commands & Skills | 0/4 | Not started | - |
 | 9. Subagents | 0/3 | Not started | - |
 | 10. MCP Integration | 0/6 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-19*
-*Last updated: 2026-01-19 - Phase 6 complete with gap closure*
+*Last updated: 2026-01-24 - Phase 7 planned (3 plans in 2 waves)*
