@@ -1,0 +1,104 @@
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-4);
+}
+
+.logoContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.logoIcon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-lg);
+  background: var(--primary-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logoLetter {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  color: var(--primary-fg);
+}
+
+.appName {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  color: var(--strong-fg);
+}
+
+.version {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--strong-fg-soft);
+}
+
+.description {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--strong-fg);
+  line-height: 1.5;
+}
+
+.credits {
+  font-size: var(--text-xs);
+  color: var(--strong-fg-soft);
+}
+
+.credits p {
+  margin: 0;
+}
+
+.credits p + p {
+  margin-top: var(--space-1);
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--strong-fg);
+  background: var(--stronger-bg);
+  border: 1px solid var(--strong-border);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: all var(--duration-fast) var(--ease-default);
+}
+
+.link:hover {
+  background: var(--stronger-bg-hover);
+  border-color: var(--strong-border-hover);
+}
+
+.linkIcon {
+  width: 16px;
+  height: 16px;
+}
+
+/* ==============================================
+   Reduced Motion
+   ============================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .link {
+    transition: none;
+  }
+}

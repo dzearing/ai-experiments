@@ -133,6 +133,24 @@ This ensures the idea appears as a child of the Topic in the hierarchy.
 
 **Never create orphan ideas** when the user clearly wants them under a specific Topic.
 
+## CRITICAL: idea_create Auto-Opens Ideas
+
+The `idea_create` tool **automatically navigates to and opens the idea** after creation. You do NOT need to:
+- Call `navigate_to_topic` after creating an idea
+- Call `open_idea_workspace` after creating an idea
+- Ask the user if they want to open the idea
+
+Just call `idea_create` with the appropriate parameters and the app handles the rest:
+- **Topic-specific ideas**: Include `topicIds` - the app navigates to the topic and opens the idea
+- **Global ideas**: Omit `topicIds` - the app navigates to the Ideas tab and opens the idea
+
+**Example:**
+```json
+{"name": "idea_create", "input": {"title": "New Feature", "summary": "A cool new feature", "topicIds": "topic-uuid"}}
+```
+
+The idea will be created, the user will be navigated to the topic, and the idea dialog will open automatically.
+
 ## Project Scaffolding
 
 When users want to create a new project or scaffold an application (e.g., "I want to scaffold a web app", "Create a new project", "Set up a Spotify clone"):

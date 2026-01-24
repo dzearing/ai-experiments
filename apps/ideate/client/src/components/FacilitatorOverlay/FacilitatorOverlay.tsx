@@ -4,7 +4,7 @@ import { useNavigate } from '@ui-kit/router';
 import { Slide, Button, IconButton, Avatar } from '@ui-kit/react';
 import { CloseIcon } from '@ui-kit/icons/CloseIcon';
 import { GearIcon } from '@ui-kit/icons/GearIcon';
-import { ChatLayout, VirtualizedChatPanel, OpenQuestionsResolver, type ChatInputSubmitData, type ChatInputRef, type TopicReference as ChatTopicReference, type VirtualizedChatPanelMessage, type QueuedMessage } from '@ui-kit/react-chat';
+import { ChatLayout, OpenQuestionsResolver, type ChatInputSubmitData, type ChatInputRef, type TopicReference as ChatTopicReference, type ChatPanelMessage, type QueuedMessage } from '@ui-kit/react-chat';
 import { AVATAR_IMAGES } from '../../constants/avatarImages';
 import { useFacilitator } from '../../contexts/FacilitatorContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -309,8 +309,8 @@ Type a message to get started!`,
     navigate('/settings/facilitator');
   }, [close, navigate]);
 
-  // Convert messages to VirtualizedChatPanel format
-  const chatMessages: VirtualizedChatPanelMessage[] = useMemo(() => {
+  // Convert messages to ChatPanel format
+  const chatMessages: ChatPanelMessage[] = useMemo(() => {
     return messages.map((message) => {
       const isUser = message.role === 'user';
       const isSystem = message.role === 'system';
@@ -336,7 +336,7 @@ Type a message to get started!`,
   }, [messages, user?.name, facilitatorSettings.name]);
 
   // Render avatar for bot messages
-  const renderAvatar = useCallback((message: VirtualizedChatPanelMessage) => {
+  const renderAvatar = useCallback((message: ChatPanelMessage) => {
     if (message.isOwn || message.senderName === 'System') return undefined;
 
     const botAvatarSrc = AVATAR_IMAGES[facilitatorSettings.avatar] || AVATAR_IMAGES.robot;
@@ -399,6 +399,9 @@ Type a message to get started!`,
           onClick={(e) => e.stopPropagation()}
         >
           <ChatLayout
+            messages={chatMessages}
+            emptyState={emptyState}
+            renderAvatar={renderAvatar}
             header={
               <>
                 <header className={styles.header}>
@@ -458,13 +461,7 @@ Type a message to get started!`,
               onCommand: handleCommand,
               topics: topicReferences as ChatTopicReference[],
             }}
-          >
-            <VirtualizedChatPanel
-              messages={chatMessages}
-              emptyState={emptyState}
-              renderAvatar={renderAvatar}
-            />
-          </ChatLayout>
+          />
 
           {/* Question resolver overlay */}
           {showQuestionsResolver && openQuestions && openQuestions.length > 0 && (

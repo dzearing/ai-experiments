@@ -523,7 +523,7 @@ Feel free to share any details, and I'll start building out the phases and tasks
    * Handles Implementation Plan document edits via Yjs if documentRoomName provided.
    * Uses session management for background execution support.
    * @param isAutoStart - If true, skip saving the user message (used for server-initiated auto-start)
-   * @param modelId - Optional model ID to use (defaults to claude-sonnet-4-5-20250929)
+   * @param modelId - Optional model ID to use (defaults to claude-opus-4-5-20251101)
    */
   async processMessage(
     ideaId: string,
@@ -656,7 +656,7 @@ Feel free to share any details, and I'll start building out the phases and tasks
       console.log(`[PlanAgentService] Processing message for idea ${ideaId}: "${content.slice(0, 50)}..."`);
 
       // Use the query function from @anthropic-ai/claude-agent-sdk
-      const effectiveModel = modelId || 'claude-sonnet-4-5-20250929';
+      const effectiveModel = modelId || 'claude-opus-4-5-20251101';
       console.log(`[PlanAgentService] Starting query with model ${effectiveModel}...`);
 
       // Create MCP server for topic tools so the agent can look up and modify Topics

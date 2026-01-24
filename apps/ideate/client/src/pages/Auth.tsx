@@ -4,7 +4,7 @@ import { Button, Card, Input, Spinner } from '@ui-kit/react';
 import { useAuth } from '../contexts/AuthContext';
 import styles from './Auth.module.css';
 
-function getReturnTo(search: string): string {
+function getReturnTo(search: string): string | null {
   const params = new URLSearchParams(search);
   const returnTo = params.get('returnTo');
 
@@ -13,13 +13,34 @@ function getReturnTo(search: string): string {
     return returnTo;
   }
 
-  return '/dashboard';
+  // Return null to indicate we should redirect to user's personal workspace
+  return null;
+}
+
+// Generate user ID from nickname (must match AuthContext.generateId)
+function generateUserId(nickname: string): string {
+  const normalized = nickname.toLowerCase().replace(/\s+/g, '-');
+  let hash = 0;
+
+  for (let i = 0; i < normalized.length; i++) {
+    const char = normalized.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+
+  return `user-${normalized}-${Math.abs(hash).toString(36)}`;
+}
+
+function getPersonalWorkspaceUrl(nickname: string): string {
+  const userId = generateUserId(nickname);
+
+  return `/personal-${userId}/topics`;
 }
 
 export function Auth() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn, isLoading, isAuthenticated } = useAuth();
+  const { user, signIn, isLoading, isAuthenticated } = useAuth();
   const [nickname, setNickname] = useState('');
   const [error, setError] = useState('');
 
@@ -28,10 +49,12 @@ export function Auth() {
 
   // Redirect to returnTo if already authenticated
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate(returnTo);
+    if (isAuthenticated && user) {
+      const destination = returnTo ?? getPersonalWorkspaceUrl(user.name);
+
+      navigate(destination);
     }
-  }, [isAuthenticated, navigate, returnTo]);
+  }, [isAuthenticated, user, navigate, returnTo]);
 
   if (isAuthenticated) {
     return null;
@@ -54,7 +77,9 @@ export function Auth() {
 
     try {
       await signIn(trimmed);
-      navigate(returnTo);
+      const destination = returnTo ?? getPersonalWorkspaceUrl(trimmed);
+
+      navigate(destination);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to sign in');
     }

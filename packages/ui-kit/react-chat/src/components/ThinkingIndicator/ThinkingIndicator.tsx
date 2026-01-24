@@ -1,5 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
-import { Spinner, ShimmerText } from '@ui-kit/react';
+import { useState, useEffect, useRef, memo } from 'react';
 import styles from './ThinkingIndicator.module.css';
 
 // Progress verbs that cycle randomly
@@ -42,7 +41,7 @@ export interface ThinkingIndicatorProps {
  * Shows an animated progress indicator while the AI is thinking.
  * Displays cycling progress verbs, elapsed time, and escape hint.
  */
-export function ThinkingIndicator({
+export const ThinkingIndicator = memo(function ThinkingIndicator({
   isActive,
   progressVerbs = DEFAULT_PROGRESS_VERBS,
   statusText,
@@ -120,18 +119,14 @@ export function ThinkingIndicator({
 
   return (
     <div className={containerClassName}>
-      <span className={styles.spinner}>
-        <Spinner size="sm" />
-      </span>
-      <ShimmerText isActive durationRange={[600, 1200]}>
-        <span className={styles.verb}>{displayText}</span>
-      </ShimmerText>
+      <div className={styles.rainbowSpinner} aria-hidden="true" />
+      <span className={styles.verb}>{displayText}</span>
       <span className={styles.details}>
         ({showEscapeHint && `${escapeHintText} · `}{formatTime(elapsedSeconds)})
       </span>
     </div>
   );
-}
+});
 
 ThinkingIndicator.displayName = 'ThinkingIndicator';
 

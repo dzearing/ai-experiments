@@ -4,8 +4,8 @@ import { useState, useCallback, useEffect } from 'react';
  * Available Claude models for the agents
  */
 export const AVAILABLE_MODELS = [
-  { id: 'claude-sonnet-4-5-20250929', name: 'Sonnet 4.5', shortName: 'sonnet', description: 'Fast and capable (default)' },
-  { id: 'claude-opus-4-5-20251101', name: 'Opus 4.5', shortName: 'opus', description: 'Most capable, thoughtful' },
+  { id: 'claude-opus-4-5-20251101', name: 'Opus 4.5', shortName: 'opus', description: 'Most capable, thoughtful (default)' },
+  { id: 'claude-sonnet-4-5-20250929', name: 'Sonnet 4.5', shortName: 'sonnet', description: 'Fast and capable' },
   { id: 'claude-3-5-haiku-20241022', name: 'Haiku 3.5', shortName: 'haiku', description: 'Fastest, most economical' },
 ] as const;
 
@@ -13,7 +13,7 @@ export type ModelId = typeof AVAILABLE_MODELS[number]['id'];
 export type ModelShortName = typeof AVAILABLE_MODELS[number]['shortName'];
 
 const STORAGE_KEY = 'ideate-model-preference';
-const DEFAULT_MODEL: ModelId = 'claude-sonnet-4-5-20250929';
+const DEFAULT_MODEL: ModelId = 'claude-opus-4-5-20251101';
 
 /**
  * Get the model ID from a short name or full ID

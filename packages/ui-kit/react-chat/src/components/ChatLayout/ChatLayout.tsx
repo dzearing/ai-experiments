@@ -1,13 +1,32 @@
 import { type ReactNode, type RefObject } from 'react';
 import { ChatProvider, type ChatMode, type ChatParticipant } from '../../context';
+import { ChatPanel, type ChatPanelMessage } from '../ChatPanel';
 import { ThinkingIndicator, type ThinkingIndicatorProps } from '../ThinkingIndicator';
 import { MessageQueue, type QueuedMessage } from '../MessageQueue';
 import { ChatInput, type ChatInputProps, type ChatInputRef } from '../ChatInput';
 import styles from './ChatLayout.module.css';
 
 export interface ChatLayoutProps {
-  /** The chat panel content (typically VirtualizedChatPanel) */
-  children: ReactNode;
+  /** Array of messages to display */
+  messages: ChatPanelMessage[];
+
+  /** Content to display when there are no messages */
+  emptyState?: ReactNode;
+
+  /** Render function for custom avatar per message */
+  renderAvatar?: (message: ChatPanelMessage) => ReactNode;
+
+  /** Called when a link is clicked in a message */
+  onLinkClick?: (href: string) => void;
+
+  /** Whether to auto-scroll to bottom on new messages (default: true) */
+  autoScroll?: boolean;
+
+  /** Called when scroll lock state changes */
+  onScrollLockChange?: (locked: boolean) => void;
+
+  /** Typing users for group chat indicators */
+  typingUsers?: string[];
 
   /** Header content rendered above the chat panel */
   header?: ReactNode;
@@ -43,17 +62,23 @@ export interface ChatLayoutProps {
 /**
  * ChatLayout component
  *
- * A standard layout container for chat interfaces that properly positions:
+ * A complete chat interface that renders:
  * - Header (optional)
- * - Chat panel (messages)
- * - ThinkingIndicator (centered in chat area when active)
+ * - ChatPanel (messages with auto-scroll)
+ * - ThinkingIndicator (when AI is processing)
  * - MessageQueue (queued messages above input)
  * - ChatInput (bottom)
  *
- * Use this component to ensure consistent chat UX across all chat scenarios.
+ * Use this component for consistent chat UX across all chat scenarios.
  */
 export function ChatLayout({
-  children,
+  messages,
+  emptyState,
+  renderAvatar,
+  onLinkClick,
+  autoScroll = true,
+  onScrollLockChange,
+  typingUsers,
   header,
   mode = '1on1',
   participants,
@@ -75,9 +100,16 @@ export function ChatLayout({
         {header && <div className={styles.header}>{header}</div>}
 
         <div className={styles.chatArea}>
-          <div className={styles.messagesContainer}>
-            {children}
-          </div>
+          <ChatPanel
+            messages={messages}
+            emptyState={emptyState}
+            renderAvatar={renderAvatar}
+            onLinkClick={onLinkClick}
+            autoScroll={autoScroll}
+            onScrollLockChange={onScrollLockChange}
+            typingUsers={typingUsers}
+            className={styles.messagesContainer}
+          />
         </div>
 
         {isThinking && (

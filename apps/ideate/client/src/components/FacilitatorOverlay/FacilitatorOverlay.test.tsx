@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import { FacilitatorOverlay } from './FacilitatorOverlay';
 import { FacilitatorProvider } from '../../contexts/FacilitatorContext';
+import { Router } from '@ui-kit/router';
 import type { ReactNode } from 'react';
 
 // Mock the WebSocket hook to avoid actual connections
@@ -23,9 +24,35 @@ vi.mock('../../contexts/AuthContext', () => ({
   AuthProvider: ({ children }: { children: ReactNode }) => children,
 }));
 
-// Simple wrapper with just FacilitatorProvider
+// Mock TopicsContext
+vi.mock('../../contexts/TopicsContext', () => ({
+  useTopics: () => ({
+    getTopicReferences: () => [],
+  }),
+}));
+
+// Mock useModelPreference hook
+vi.mock('../../hooks/useModelPreference', () => ({
+  useModelPreference: () => ({
+    modelId: 'claude-sonnet',
+    setModelId: vi.fn(),
+    modelInfo: { id: 'claude-sonnet', name: 'Claude Sonnet' },
+  }),
+}));
+
+// Mock useChatCommands hook
+vi.mock('../../hooks/useChatCommands', () => ({
+  useChatCommands: () => ({
+    commands: [],
+    processCommand: vi.fn(),
+  }),
+}));
+
+// Wrapper with Router and FacilitatorProvider
 const TestWrapper = ({ children }: { children: ReactNode }) => (
-  <FacilitatorProvider>{children}</FacilitatorProvider>
+  <Router>
+    <FacilitatorProvider>{children}</FacilitatorProvider>
+  </Router>
 );
 
 describe('FacilitatorOverlay', () => {
@@ -59,9 +86,9 @@ describe('FacilitatorOverlay', () => {
         </TestWrapper>
       );
 
-      // Trigger Ctrl+C to open
+      // Trigger Ctrl+. to open
       act(() => {
-        fireEvent.keyDown(window, { key: 'c', ctrlKey: true });
+        fireEvent.keyDown(window, { key: '.', ctrlKey: true });
       });
 
       await waitFor(() => {
@@ -77,7 +104,7 @@ describe('FacilitatorOverlay', () => {
       );
 
       act(() => {
-        fireEvent.keyDown(window, { key: 'c', ctrlKey: true });
+        fireEvent.keyDown(window, { key: '.', ctrlKey: true });
       });
 
       await waitFor(() => {
@@ -93,7 +120,7 @@ describe('FacilitatorOverlay', () => {
       );
 
       act(() => {
-        fireEvent.keyDown(window, { key: 'c', ctrlKey: true });
+        fireEvent.keyDown(window, { key: '.', ctrlKey: true });
       });
 
       await waitFor(() => {
@@ -109,7 +136,7 @@ describe('FacilitatorOverlay', () => {
       );
 
       act(() => {
-        fireEvent.keyDown(window, { key: 'c', ctrlKey: true });
+        fireEvent.keyDown(window, { key: '.', ctrlKey: true });
       });
 
       await waitFor(() => {
@@ -117,7 +144,7 @@ describe('FacilitatorOverlay', () => {
       });
     });
 
-    it('shows Escape shortcut hint', async () => {
+    it('shows settings and close buttons in header', async () => {
       render(
         <TestWrapper>
           <FacilitatorOverlay />
@@ -125,18 +152,18 @@ describe('FacilitatorOverlay', () => {
       );
 
       act(() => {
-        fireEvent.keyDown(window, { key: 'c', ctrlKey: true });
+        fireEvent.keyDown(window, { key: '.', ctrlKey: true });
       });
 
       await waitFor(() => {
-        expect(screen.getByText('Esc')).toBeInTheDocument();
-        expect(screen.getByText('to close')).toBeInTheDocument();
+        expect(screen.getByLabelText('Facilitator settings')).toBeInTheDocument();
+        expect(screen.getByLabelText('Close facilitator')).toBeInTheDocument();
       });
     });
   });
 
   describe('opening and closing', () => {
-    it('opens with Ctrl+`', async () => {
+    it('opens with Ctrl+.', async () => {
       render(
         <TestWrapper>
           <FacilitatorOverlay />
@@ -146,7 +173,7 @@ describe('FacilitatorOverlay', () => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
       act(() => {
-        fireEvent.keyDown(window, { key: 'c', ctrlKey: true });
+        fireEvent.keyDown(window, { key: '.', ctrlKey: true });
       });
 
       await waitFor(() => {
@@ -154,7 +181,7 @@ describe('FacilitatorOverlay', () => {
       });
     });
 
-    it('opens with Cmd+` (Mac)', async () => {
+    it('opens with Cmd+. (Mac)', async () => {
       render(
         <TestWrapper>
           <FacilitatorOverlay />
@@ -162,7 +189,7 @@ describe('FacilitatorOverlay', () => {
       );
 
       act(() => {
-        fireEvent.keyDown(window, { key: 'c', metaKey: true });
+        fireEvent.keyDown(window, { key: '.', metaKey: true });
       });
 
       await waitFor(() => {
@@ -179,7 +206,7 @@ describe('FacilitatorOverlay', () => {
 
       // Open first
       act(() => {
-        fireEvent.keyDown(window, { key: 'c', ctrlKey: true });
+        fireEvent.keyDown(window, { key: '.', ctrlKey: true });
       });
 
       await waitFor(() => {
@@ -211,7 +238,7 @@ describe('FacilitatorOverlay', () => {
 
       // Open first
       act(() => {
-        fireEvent.keyDown(window, { key: 'c', ctrlKey: true });
+        fireEvent.keyDown(window, { key: '.', ctrlKey: true });
       });
 
       await waitFor(() => {
@@ -242,16 +269,16 @@ describe('FacilitatorOverlay', () => {
 
       // Open first
       act(() => {
-        fireEvent.keyDown(window, { key: 'c', ctrlKey: true });
+        fireEvent.keyDown(window, { key: '.', ctrlKey: true });
       });
 
       await waitFor(() => {
         expect(screen.getByRole('dialog')).toBeInTheDocument();
       });
 
-      // Wait for animation content, then click on header text (inside the panel)
-      const header = await screen.findByText('Facilitator');
-      await user.click(header);
+      // Wait for animation content, then click inside the panel (on the dialog itself)
+      const dialog = screen.getByRole('dialog');
+      await user.click(dialog);
 
       // Should still be open
       expect(screen.getByRole('dialog')).toBeInTheDocument();
@@ -267,7 +294,7 @@ describe('FacilitatorOverlay', () => {
       );
 
       act(() => {
-        fireEvent.keyDown(window, { key: 'c', ctrlKey: true });
+        fireEvent.keyDown(window, { key: '.', ctrlKey: true });
       });
 
       await waitFor(() => {
@@ -283,7 +310,7 @@ describe('FacilitatorOverlay', () => {
       );
 
       act(() => {
-        fireEvent.keyDown(window, { key: 'c', ctrlKey: true });
+        fireEvent.keyDown(window, { key: '.', ctrlKey: true });
       });
 
       await waitFor(() => {
@@ -303,7 +330,7 @@ describe('FacilitatorOverlay', () => {
       );
 
       act(() => {
-        fireEvent.keyDown(window, { key: 'c', ctrlKey: true });
+        fireEvent.keyDown(window, { key: '.', ctrlKey: true });
       });
 
       await waitFor(() => {
@@ -320,7 +347,7 @@ describe('FacilitatorOverlay', () => {
       );
 
       act(() => {
-        fireEvent.keyDown(window, { key: 'c', ctrlKey: true });
+        fireEvent.keyDown(window, { key: '.', ctrlKey: true });
       });
 
       await waitFor(() => {
@@ -337,7 +364,7 @@ describe('FacilitatorOverlay', () => {
       );
 
       act(() => {
-        fireEvent.keyDown(window, { key: 'c', ctrlKey: true });
+        fireEvent.keyDown(window, { key: '.', ctrlKey: true });
       });
 
       await waitFor(() => {
@@ -359,7 +386,7 @@ describe('FacilitatorOverlay', () => {
       );
 
       act(() => {
-        fireEvent.keyDown(window, { key: 'c', ctrlKey: true });
+        fireEvent.keyDown(window, { key: '.', ctrlKey: true });
       });
 
       await waitFor(() => {

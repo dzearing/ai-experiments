@@ -8,6 +8,7 @@ import type { PlanAgentMessage, PlanAgentChatMetadata } from './PlanAgentChatSer
 import type { ExecutionAgentMessage, ExecutionAgentChatMetadata } from './ExecutionAgentChatService.js';
 import type { FacilitatorService } from './FacilitatorService.js';
 import { getImportAgentChatService } from './ImportAgentChatService.js';
+import { getTextFromParts, getToolCallsFromParts } from './BaseChatTypes.js';
 
 // Storage directories
 const FACILITATOR_DIR = path.join(homedir(), 'Ideate', 'facilitator');
@@ -396,14 +397,19 @@ export class ClaudeDiagnosticsService {
           const persistedDiag = msg.diagnostics;
           const inMemDiag = diagnosticsMap.get(msg.id);
 
+          // Extract content from parts if content is not present (new format)
+          const messageContent = msg.content ?? (msg.parts ? getTextFromParts(msg.parts) : '');
+          // Extract toolCalls from parts if toolCalls is not present (new format)
+          const messageToolCalls = msg.toolCalls ?? (msg.parts ? getToolCallsFromParts(msg.parts) : undefined);
+
           messages.push({
             id: msg.id,
             sessionId: userId,
             sessionType: 'facilitator',
             role: msg.role,
-            content: msg.content ?? '',
+            content: messageContent,
             timestamp: msg.timestamp,
-            toolCalls: msg.toolCalls,
+            toolCalls: messageToolCalls,
             // Use persisted diagnostics first, then fall back to in-memory
             diagnostics: persistedDiag
               ? {

@@ -454,6 +454,16 @@ export interface ChatMessageProps {
     isExpanded: boolean;
     onToggleExpand: () => void;
   }) => ReactNode;
+  /** Menu items to show in a dropdown when timestamp is clicked */
+  menuItems?: Array<{
+    value: string;
+    label: string;
+    icon?: ReactNode;
+    danger?: boolean;
+  }>;
+
+  /** Callback when a menu item is selected */
+  onMenuSelect?: (value: string, messageId: string) => void;
 }
 
 /**
