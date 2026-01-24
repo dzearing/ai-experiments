@@ -83,6 +83,8 @@ function ToolTimer({ startTime, isComplete, duration }: { startTime?: number; is
  * Tool call information for AI assistant messages
  */
 export interface ChatMessageToolCall {
+  /** Unique ID from SDK tool_use block for matching results */
+  id?: string;
   name: string;
   input?: Record<string, unknown>;
   output?: string;

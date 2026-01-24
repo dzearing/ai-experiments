@@ -69,6 +69,7 @@ export function transformContentBlockToPart(block: ContentBlock): ChatMessagePar
       return {
         type: 'tool_calls',
         calls: [{
+          id: block.id,
           name: block.name,
           input: block.input,
           completed: false,

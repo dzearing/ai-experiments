@@ -49,7 +49,7 @@ export function ToolExecutionIndicator({
   return (
     <div className={styles.executionIndicator}>
       <span className={styles.spinner} aria-hidden="true" />
-      <span className={styles.toolName}>Running {toolName}...</span>
+      <span className={styles.toolName}>Running {toolName}</span>
     </div>
   );
 }

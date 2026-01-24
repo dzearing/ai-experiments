@@ -22,7 +22,6 @@ import {
   createStreamingMessage,
   isThinkingDelta,
   extractToolResults,
-  extractToolUseIds,
 } from '../utils/messageTransformer';
 
 /**
@@ -217,22 +216,17 @@ export function useAgentStream(): UseAgentStreamReturn {
 
           processedMessageIdsRef.current.add(chatMessage.id);
 
-          // Extract tool results and tool_use IDs from the message content
+          // Extract tool results from the message content
           const toolResults = extractToolResults(message.message.content);
-          const toolUseIds = extractToolUseIds(message.message.content);
 
           // Mark tool calls as completed based on tool_result blocks
+          // Match by tool_use_id stored on the call
           if (toolResults.length > 0 && chatMessage.parts) {
             for (const part of chatMessage.parts) {
               if (part.type === 'tool_calls') {
-                for (let i = 0; i < part.calls.length; i++) {
-                  const call = part.calls[i];
-
-                  // Get the tool_use_id for this call by matching position
-                  const toolUseId = toolUseIds[i];
-
-                  // Find matching result by tool_use_id
-                  const result = toolResults.find(r => r.tool_use_id === toolUseId);
+                for (const call of part.calls) {
+                  // Match by the stored id on the tool call
+                  const result = toolResults.find(r => r.tool_use_id === call.id);
 
                   if (result) {
                     call.completed = true;
@@ -254,13 +248,51 @@ export function useAgentStream(): UseAgentStreamReturn {
           const currentStreamingId = streamingStateRef.current.currentMessageId;
 
           setMessages(prev => {
+            let updated = [...prev];
+
+            // If this message has tool_result blocks, also update tool calls in previous messages
+            if (toolResults.length > 0) {
+              updated = updated.map(m => {
+                if (!m.parts) return m;
+
+                let hasChanges = false;
+                const updatedParts = m.parts.map(part => {
+                  if (part.type !== 'tool_calls') return part;
+
+                  const updatedCalls = part.calls.map(call => {
+                    // Skip already completed calls
+                    if (call.completed) return call;
+
+                    // Find matching result by tool_use_id
+                    const result = toolResults.find(r => r.tool_use_id === call.id);
+
+                    if (result) {
+                      hasChanges = true;
+
+                      return {
+                        ...call,
+                        completed: true,
+                        output: result.content,
+                        endTime: Date.now(),
+                        cancelled: result.is_error || false,
+                      };
+                    }
+
+                    return call;
+                  });
+
+                  return hasChanges ? { ...part, calls: updatedCalls } : part;
+                });
+
+                return hasChanges ? { ...m, parts: updatedParts } : m;
+              });
+            }
+
             // First try to replace by the actively tracked streaming message ID
             if (trackedStreamingId) {
-              const trackedIndex = prev.findIndex(m => m.id === trackedStreamingId);
+              const trackedIndex = updated.findIndex(m => m.id === trackedStreamingId);
 
               if (trackedIndex >= 0) {
-                const updated = [...prev];
-
                 updated[trackedIndex] = chatMessage;
 
                 return updated;
@@ -268,11 +300,9 @@ export function useAgentStream(): UseAgentStreamReturn {
             }
 
             // Try to replace message with same ID as the complete message
-            const existingIndex = prev.findIndex(m => m.id === chatMessage.id);
+            const existingIndex = updated.findIndex(m => m.id === chatMessage.id);
 
             if (existingIndex >= 0) {
-              const updated = [...prev];
-
               updated[existingIndex] = chatMessage;
 
               return updated;
@@ -280,11 +310,9 @@ export function useAgentStream(): UseAgentStreamReturn {
 
             // Try to match by the streaming state message ID
             if (currentStreamingId) {
-              const streamingIdIndex = prev.findIndex(m => m.id === currentStreamingId);
+              const streamingIdIndex = updated.findIndex(m => m.id === currentStreamingId);
 
               if (streamingIdIndex >= 0) {
-                const updated = [...prev];
-
                 updated[streamingIdIndex] = chatMessage;
 
                 return updated;
@@ -292,11 +320,9 @@ export function useAgentStream(): UseAgentStreamReturn {
             }
 
             // Fallback: replace any streaming message (from current turn)
-            const streamingIndex = prev.findIndex(m => m.isStreaming);
+            const streamingIndex = updated.findIndex(m => m.isStreaming);
 
             if (streamingIndex >= 0) {
-              const updated = [...prev];
-
               updated[streamingIndex] = chatMessage;
 
               return updated;
@@ -313,11 +339,11 @@ export function useAgentStream(): UseAgentStreamReturn {
               });
 
             if (hasContent) {
-              return [...prev, chatMessage];
+              return [...updated, chatMessage];
             }
 
             // Skip empty messages that couldn't find a streaming message to replace
-            return prev;
+            return updated;
           });
 
           // Clear streaming state and tracked ID
