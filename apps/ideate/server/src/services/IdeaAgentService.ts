@@ -291,12 +291,47 @@ export class IdeaAgentService {
   }
 
   /**
+   * Get all running sessions for a workspace.
+   * Used to send current agent status when a client (re)connects.
+   */
+  getRunningSessionsForWorkspace(workspaceId: string): Array<{
+    ideaId: string;
+    status: 'idle' | 'running' | 'error';
+    userId: string;
+    startedAt?: number;
+  }> {
+    const sessions: Array<{
+      ideaId: string;
+      status: 'idle' | 'running' | 'error';
+      userId: string;
+      startedAt?: number;
+    }> = [];
+
+    // Debug: log all sessions
+    console.log(`[IdeaAgentService] getRunningSessionsForWorkspace(${workspaceId}): ${this.activeSessions.size} total sessions`);
+    this.activeSessions.forEach((session, key) => {
+      console.log(`[IdeaAgentService]   Session[${key}]: ideaId=${session.ideaId}, status=${session.status}, workspaceId=${session.workspaceId}`);
+      if (session.workspaceId === workspaceId && session.status === 'running') {
+        sessions.push({
+          ideaId: session.ideaId,
+          status: session.status,
+          userId: session.userId,
+          startedAt: session.startedAt,
+        });
+      }
+    });
+
+    console.log(`[IdeaAgentService] Found ${sessions.length} running sessions for workspace ${workspaceId}`);
+    return sessions;
+  }
+
+  /**
    * Register a client's callbacks for receiving messages.
    * Replays any queued messages from background execution.
    * If transferFromChatId is provided, transfers the session from the old chatId to the new one.
-   * @returns true if a session was transferred (caller should skip sending history/greeting)
+   * @returns Object with session transfer and running status info
    */
-  registerClient(ideaId: string, callbacks: StreamCallbacks, workspaceId?: string, transferFromChatId?: string): boolean {
+  registerClient(ideaId: string, callbacks: StreamCallbacks, workspaceId?: string, transferFromChatId?: string): { transferred: boolean; isRunning: boolean; startedAt?: number } {
     this.clientCallbacks.set(ideaId, callbacks);
 
     // Check if we need to transfer a session from a previous chatId (e.g., temp room name → real ideaId)
@@ -336,8 +371,12 @@ export class IdeaAgentService {
           this.dispatchMessage(msg, callbacks);
         }
         oldSession.queuedMessages = [];
-        // Return true to indicate session was transferred - caller should skip sending history/greeting
-        return true;
+        // Return session info - caller should skip sending history/greeting and notify if running
+        return {
+          transferred: true,
+          isRunning: oldSession.status === 'running',
+          startedAt: oldSession.startedAt,
+        };
       } else {
         console.log(`[IdeaAgentService] No session found at ${transferFromChatId} to transfer`);
       }
@@ -351,11 +390,18 @@ export class IdeaAgentService {
         session.workspaceId = workspaceId;
       }
       // Replay any queued messages
-      console.log(`[IdeaAgentService] Client connected to idea ${ideaId}, replaying ${session.queuedMessages.length} queued messages`);
+      console.log(`[IdeaAgentService] Client connected to idea ${ideaId}, replaying ${session.queuedMessages.length} queued messages, status=${session.status}`);
       for (const msg of session.queuedMessages) {
         this.dispatchMessage(msg, callbacks);
       }
       session.queuedMessages = [];
+
+      // Return running status so client can show thinking indicator
+      return {
+        transferred: false,
+        isRunning: session.status === 'running',
+        startedAt: session.startedAt,
+      };
     } else if (workspaceId) {
       // Create a session to store workspaceId even if no active session yet
       session = {
@@ -369,8 +415,8 @@ export class IdeaAgentService {
       this.activeSessions.set(ideaId, session);
     }
 
-    // No session was transferred
-    return false;
+    // No session was transferred and no running session
+    return { transferred: false, isRunning: false };
   }
 
   /**
@@ -709,7 +755,7 @@ export class IdeaAgentService {
       console.log(`[IdeaAgentService] Processing message for idea ${ideaId} (new: ${isNewIdea}): "${content.slice(0, 50)}..."`);
 
       // Use the query function from @anthropic-ai/claude-agent-sdk
-      const effectiveModel = modelId || 'claude-sonnet-4-5-20250929';
+      const effectiveModel = modelId || 'claude-opus-4-5-20251101';
       console.log(`[IdeaAgentService] Using model: ${effectiveModel}`);
 
       // Create MCP server for topic tools so the agent can look up and modify Topics

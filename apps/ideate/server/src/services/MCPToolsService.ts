@@ -430,6 +430,10 @@ export class MCPToolsService {
               type: 'string',
               description: 'New color identifier',
             },
+            properties: {
+              type: 'object',
+              description: 'Custom key-value properties to set on the Topic (replaces all existing properties). Use this to store metadata like localPath, url, etc. Pass as JSON object, e.g., {"localPath": "/path/to/folder"}',
+            },
           },
           required: ['topicId'],
         },
@@ -775,7 +779,8 @@ export class MCPToolsService {
             input.description as string | undefined,
             input.tags as string | undefined,
             input.icon as string | undefined,
-            input.color as string | undefined
+            input.color as string | undefined,
+            input.properties as Record<string, string> | undefined
           );
 
         case 'topic_delete':
@@ -1622,7 +1627,8 @@ export class MCPToolsService {
     description?: string,
     tags?: string,
     icon?: string,
-    color?: string
+    color?: string,
+    properties?: Record<string, string>
   ): Promise<ToolResult> {
     const updates: Record<string, unknown> = {};
     if (name !== undefined) updates.name = name;
@@ -1631,6 +1637,7 @@ export class MCPToolsService {
     if (tags !== undefined) updates.tags = tags.split(',').map(t => t.trim()).filter(Boolean);
     if (icon !== undefined) updates.icon = icon;
     if (color !== undefined) updates.color = color;
+    if (properties !== undefined) updates.properties = properties;
 
     const topic = await this.topicService.updateTopic(topicId, userId, updates);
 

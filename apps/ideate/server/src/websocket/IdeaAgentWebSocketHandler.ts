@@ -35,7 +35,7 @@ interface ClientMessage {
  * Server message types for the idea agent WebSocket protocol
  */
 interface ServerMessage {
-  type: 'text_chunk' | 'message_complete' | 'history' | 'error' | 'greeting' | 'document_edit_start' | 'document_edit_end' | 'token_usage' | 'open_questions' | 'suggested_responses' | 'agent_progress';
+  type: 'text_chunk' | 'message_complete' | 'history' | 'error' | 'greeting' | 'document_edit_start' | 'document_edit_end' | 'token_usage' | 'open_questions' | 'suggested_responses' | 'agent_progress' | 'session_status';
   /** Text content chunk (for streaming) */
   text?: string;
   /** Message ID being updated */
@@ -57,6 +57,10 @@ interface ServerMessage {
   suggestions?: SuggestedResponse[];
   /** Agent progress event */
   event?: AgentProgressEvent;
+  /** Session status (for reconnection sync) */
+  status?: 'running' | 'idle';
+  /** When the session started (for running sessions) */
+  startedAt?: string;
 }
 
 /**
@@ -112,6 +116,11 @@ export class IdeaAgentWebSocketHandler {
 
     // Set up callbacks to broadcast updates to clients
     if (workspaceWsHandler) {
+      // Allow workspace handler to query running sessions for rehydration
+      workspaceWsHandler.setGetRunningSessionsCallback((workspaceId) => {
+        return this.ideaAgentService.getRunningSessionsForWorkspace(workspaceId);
+      });
+
       // Broadcast agent status changes (running/idle/error)
       this.ideaAgentService.setSessionStateChangeCallback((ideaId, status, userId, workspaceId, agentStartedAt, agentFinishedAt) => {
         console.log(`[IdeaAgentWS] Received state change callback: idea=${ideaId}, status=${status}, userId=${userId}, workspaceId=${workspaceId}, startedAt=${agentStartedAt}, finishedAt=${agentFinishedAt}`);
@@ -213,8 +222,20 @@ export class IdeaAgentWebSocketHandler {
     // This enables background execution - messages are delivered to client or queued
     // If transferFromRoom is provided, the service will transfer the session from the old chatId
     const chatId = getChatId(client);
-    const sessionTransferred = this.ideaAgentService.registerClient(chatId, this.createCallbacks(client), workspaceId || undefined, transferFromRoom || undefined);
-    client.sessionTransferred = sessionTransferred;
+    const sessionResult = this.ideaAgentService.registerClient(chatId, this.createCallbacks(client), workspaceId || undefined, transferFromRoom || undefined);
+    client.sessionTransferred = sessionResult.transferred;
+
+    // If the session is currently running, immediately notify the client
+    // This ensures the thinking indicator shows when reopening the dialog
+    if (sessionResult.isRunning) {
+      console.log(`[IdeaAgent] Session is running for ${chatId}, notifying client`);
+      const startedAtISO = sessionResult.startedAt ? new Date(sessionResult.startedAt).toISOString() : undefined;
+      this.send(ws, {
+        type: 'session_status',
+        status: 'running',
+        startedAt: startedAtISO,
+      });
+    }
 
     // Set up WebSocket handlers
     ws.on('message', (data: RawData) => {

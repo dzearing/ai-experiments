@@ -423,6 +423,17 @@ export interface ChatMessageProps {
 
   /** Callback when a link is clicked in the message content */
   onLinkClick?: (href: string) => void;
+
+  /** Menu items to show in a dropdown when timestamp is clicked */
+  menuItems?: Array<{
+    value: string;
+    label: string;
+    icon?: ReactNode;
+    danger?: boolean;
+  }>;
+
+  /** Callback when a menu item is selected */
+  onMenuSelect?: (value: string, messageId: string) => void;
 }
 
 /**

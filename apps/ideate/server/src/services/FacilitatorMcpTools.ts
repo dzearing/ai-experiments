@@ -638,7 +638,7 @@ export function createFacilitatorMcpServer(toolsService: MCPToolsService, userId
       // === Idea Tools ===
       tool(
         'idea_create',
-        'Create a new idea, optionally attached to Topics. Use for project scaffolding, capturing new concepts, or follow-up work.',
+        'Create a new idea, optionally attached to Topics. Automatically opens the idea workspace after creation. Use for project scaffolding, capturing new concepts, or follow-up work.',
         {
           title: z.string().describe('Title of the idea'),
           summary: z.string().describe('Brief summary of the idea'),
@@ -654,6 +654,27 @@ export function createFacilitatorMcpServer(toolsService: MCPToolsService, userId
             workspaceId: args.workspaceId || workspaceId || `personal-${userId}`,
           };
           const result = await toolsService.executeTool('idea_create', toolArgs, userId);
+
+          // If creation succeeded, include action to open the idea workspace
+          // Client handles navigation based on whether idea has topics
+          // Note: MCPToolsService returns { success, data: { id, title, topicIds, ... } }
+          const data = result.data as { id?: string; topicIds?: string[] } | undefined;
+          if (data?.id) {
+            const topicId = data.topicIds?.[0]; // First topic if any
+            return {
+              content: [{
+                type: 'text' as const,
+                text: JSON.stringify({
+                  idea: data, // Wrap for consistency
+                  __action: 'open_idea_workspace',
+                  ideaId: data.id,
+                  topicId, // Client uses this to navigate to topic first if present
+                  closeFacilitator: true,
+                }, null, 2),
+              }],
+            };
+          }
+
           return {
             content: [{
               type: 'text' as const,

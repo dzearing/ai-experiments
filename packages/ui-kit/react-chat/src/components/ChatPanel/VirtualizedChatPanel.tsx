@@ -84,6 +84,17 @@ export interface VirtualizedChatPanelProps {
    * Default: 80
    */
   estimatedMessageHeight?: number;
+
+  /** Menu items to show in a dropdown when message timestamp is clicked */
+  messageMenuItems?: Array<{
+    value: string;
+    label: string;
+    icon?: ReactNode;
+    danger?: boolean;
+  }>;
+
+  /** Callback when a menu item is selected */
+  onMessageMenuSelect?: (value: string, messageId: string) => void;
 }
 
 /**
@@ -139,6 +150,8 @@ export const VirtualizedChatPanel = memo(function VirtualizedChatPanel({
   onLinkClick,
   overscan = 10,
   estimatedMessageHeight = 80,
+  messageMenuItems,
+  onMessageMenuSelect,
 }: VirtualizedChatPanelProps) {
   const parentRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -403,6 +416,8 @@ export const VirtualizedChatPanel = memo(function VirtualizedChatPanel({
                     renderMarkdown={message.renderMarkdown ?? true}
                     avatar={renderAvatar ? renderAvatar(message) : message.avatar}
                     onLinkClick={onLinkClick}
+                    menuItems={message.isOwn ? messageMenuItems : undefined}
+                    onMenuSelect={onMessageMenuSelect}
                   />
                 </div>
               );

@@ -18,6 +18,7 @@ import {
   mix,
   getContrastingTextColor,
   ensureContrast,
+  contrastRatio,
 } from '../colors/utils';
 import { generateSpacingTokens } from '../tokens/spacing';
 import { generateTypographyTokens } from '../tokens/typography';
@@ -794,6 +795,203 @@ function adjustTemperature(hex: string, amount: number): string {
 const COLOR_GROUPS = ['softer', 'soft', 'base', 'strong', 'stronger', 'primary', 'inverted', 'success', 'warning', 'danger', 'info'] as const;
 const COLOR_GROUP_SUFFIXES = ['bg', 'bg-hover', 'bg-pressed', 'bg-disabled', 'border', 'border-hover', 'border-pressed', 'border-disabled', 'fg', 'fg-soft', 'fg-softer', 'fg-strong', 'fg-stronger', 'fg-primary', 'fg-danger', 'fg-success', 'fg-warning', 'fg-info'] as const;
 
+// Semantic fg token suffixes that need contrast adjustment on colored surfaces
+const SEMANTIC_FG_SUFFIXES = ['fg-primary', 'fg-danger', 'fg-success', 'fg-warning', 'fg-info'] as const;
+
+// Minimum contrast ratio for UI components (WCAG AA for UI = 3:1)
+const MIN_UI_CONTRAST = 3.0;
+
+// Semantic color groups that need accessibility checking
+const SEMANTIC_COLOR_GROUPS = ['primary', 'success', 'warning', 'danger', 'info'] as const;
+
+// Surface types that are semantically colored (their base-bg is a semantic color)
+const SEMANTIC_SURFACE_TYPES = ['primary', 'success', 'warning', 'danger', 'info'] as const;
+
+/**
+ * Default semantic colors used when theme colors aren't available
+ * These are approximate values for checking color similarity
+ */
+const DEFAULT_SEMANTIC_COLORS: Record<string, string> = {
+  primary: '#2563eb', // Blue
+  success: '#22c55e', // Green
+  warning: '#eab308', // Amber/Yellow
+  danger: '#ef4444',  // Red
+  info: '#2563eb',    // Blue (same as primary)
+};
+
+/**
+ * Check if two colors are in the same hue family (within 30 degrees)
+ */
+function isSameColorFamily(color1: string, color2: string): boolean {
+  const rgb1 = hexToRgb(color1);
+  const rgb2 = hexToRgb(color2);
+  if (!rgb1 || !rgb2) return false;
+
+  const hsl1 = rgbToHsl(rgb1.r, rgb1.g, rgb1.b);
+  const hsl2 = rgbToHsl(rgb2.r, rgb2.g, rgb2.b);
+
+  // Calculate hue difference (accounting for wraparound at 360)
+  let hueDiff = Math.abs(hsl1.h - hsl2.h);
+  if (hueDiff > 180) hueDiff = 360 - hueDiff;
+
+  // Colors are in the same family if hue difference is less than 30 degrees
+  // and both have some saturation (not grayscale)
+  return hueDiff < 30 && hsl1.s > 20 && hsl2.s > 20;
+}
+
+/**
+ * Generate an accessible bg color that contrasts with the surface base-bg
+ * Uses the gravitation approach: soft → toward page bg, strong → toward inverted
+ */
+function deriveAccessibleBg(
+  originalBg: string,
+  surfaceBaseBg: string,
+  isDark: boolean,
+  direction: 'neutral' | 'lighter' | 'darker' = 'neutral'
+): string {
+  const pageBg = isDark ? '#0f0f0f' : '#fafafa';
+  const invertedBg = isDark ? '#fafafa' : '#0f0f0f';
+
+  // Determine target based on direction
+  let targetBg: string;
+  switch (direction) {
+    case 'lighter':
+      targetBg = pageBg;
+      break;
+    case 'darker':
+      targetBg = invertedBg;
+      break;
+    default:
+      // Neutral: pick whichever provides better contrast
+      const pageBgContrast = contrastRatio(pageBg, surfaceBaseBg);
+      const invertedBgContrast = contrastRatio(invertedBg, surfaceBaseBg);
+      targetBg = pageBgContrast > invertedBgContrast ? pageBg : invertedBg;
+  }
+
+  // Start with original color and mix toward target until we have sufficient contrast
+  let result = originalBg;
+  for (let mixAmount = 0.1; mixAmount <= 1.0; mixAmount += 0.1) {
+    result = mix(originalBg, targetBg, mixAmount);
+    if (contrastRatio(result, surfaceBaseBg) >= MIN_UI_CONTRAST) {
+      return result;
+    }
+  }
+
+  // If mixing didn't work, return the target directly
+  return targetBg;
+}
+
+/**
+ * Generate accessible color group overrides for a surface
+ *
+ * This function ensures ALL color group tokens are accessible on a given surface:
+ * 1. Checks each color group's bg against the surface's base-bg
+ * 2. If contrast < 3:1, derives a new accessible bg
+ * 3. Derives fg/border tokens that are accessible on the new bg
+ *
+ * @param surfaceName - The surface type being generated
+ * @param baseBg - The surface's base-bg color (resolved hex value)
+ * @param themeColors - The theme's color definitions
+ * @param isDark - Whether in dark mode
+ * @returns Record of token overrides for accessibility
+ */
+function generateAccessibleSurfaceOverrides(
+  surfaceName: string,
+  baseBg: string,
+  themeColors: Record<string, string>,
+  isDark: boolean
+): Record<string, string> {
+  const overrides: Record<string, string> = {};
+
+  // Get contrasting text color for this surface
+  const textColor = getContrastingTextColor(baseBg);
+  const needsLightText = textColor === '#ffffff';
+
+  // 1. Handle semantic color groups (primary, success, warning, danger, info)
+  // These are the button/accent colors that might conflict with the surface
+  for (const colorGroup of SEMANTIC_COLOR_GROUPS) {
+    // Get the original bg color for this group
+    const originalBg = themeColors[colorGroup] || DEFAULT_SEMANTIC_COLORS[colorGroup];
+
+    // Check if this color group conflicts with the surface
+    const currentContrast = contrastRatio(originalBg, baseBg);
+    const isSameFamily = isSameColorFamily(originalBg, baseBg);
+
+    // Need to flip if contrast is too low OR if they're in the same color family
+    // (same family = would look like the same color even if contrast is technically ok)
+    if (currentContrast < MIN_UI_CONTRAST || isSameFamily) {
+      // Determine if this is the surface's own color group (e.g., primary on primary surface)
+      const isSurfaceOwnGroup = colorGroup === surfaceName;
+
+      // Generate flipped token values
+      const flippedBg = needsLightText ? '#ffffff' : (isDark ? '#1a1a1a' : '#171717');
+      const flippedBgHover = needsLightText
+        ? (isDark ? '#f0f0f0' : '#f5f5f5')
+        : (isDark ? '#262626' : '#252525');
+      const flippedBgPressed = needsLightText
+        ? (isDark ? '#e5e5e5' : '#ebebeb')
+        : (isDark ? '#333333' : '#333333');
+      const flippedFg = needsLightText ? '#000000' : '#ffffff';
+      const flippedFgOpacity = needsLightText ? '0, 0, 0' : '255, 255, 255';
+      const flippedBorderOpacity = needsLightText ? '0, 0, 0' : '255, 255, 255';
+
+      // Override all tokens for this color group
+      overrides[`${colorGroup}-bg`] = flippedBg;
+      overrides[`${colorGroup}-bg-hover`] = flippedBgHover;
+      overrides[`${colorGroup}-bg-pressed`] = flippedBgPressed;
+      overrides[`${colorGroup}-bg-disabled`] = `rgba(${flippedFgOpacity}, 0.3)`;
+      overrides[`${colorGroup}-fg`] = flippedFg;
+      overrides[`${colorGroup}-fg-soft`] = `rgba(${flippedFgOpacity}, 0.85)`;
+      overrides[`${colorGroup}-fg-softer`] = `rgba(${flippedFgOpacity}, 0.7)`;
+      overrides[`${colorGroup}-fg-strong`] = flippedFg;
+      overrides[`${colorGroup}-fg-stronger`] = flippedFg;
+      overrides[`${colorGroup}-border`] = `rgba(${flippedBorderOpacity}, 0.15)`;
+      overrides[`${colorGroup}-border-hover`] = `rgba(${flippedBorderOpacity}, 0.2)`;
+      overrides[`${colorGroup}-border-pressed`] = `rgba(${flippedBorderOpacity}, 0.25)`;
+    }
+  }
+
+  // 2. Handle semantic fg tokens on all color groups
+  // These are the colored text/links that appear on various backgrounds
+  // e.g., --base-fg-primary (primary-colored text on base background)
+  for (const group of COLOR_GROUPS) {
+    // Skip the inverted group (has its own complete token set)
+    if (group === 'inverted') continue;
+
+    // Skip the same-named group as the surface (e.g., primary-fg-primary on primary surface
+    // is already handled by the color group override above)
+    if (group === surfaceName) continue;
+
+    // For each semantic fg token suffix
+    for (const fgSuffix of ['fg-primary', 'fg-success', 'fg-warning', 'fg-danger', 'fg-info']) {
+      const semanticColor = fgSuffix.replace('fg-', '');
+      const originalFgColor = themeColors[semanticColor] || DEFAULT_SEMANTIC_COLORS[semanticColor];
+
+      // Check if this semantic fg color conflicts with the surface
+      if (isSameColorFamily(originalFgColor, baseBg)) {
+        const token = `${group}-${fgSuffix}`;
+
+        // Use appropriate contrast color
+        if (needsLightText) {
+          if (group === 'softer' || group === 'soft') {
+            overrides[token] = `rgba(255, 255, 255, ${isDark ? 0.9 : 0.95})`;
+          } else {
+            overrides[token] = '#ffffff';
+          }
+        } else {
+          if (group === 'softer' || group === 'soft') {
+            overrides[token] = `rgba(0, 0, 0, ${isDark ? 0.9 : 0.85})`;
+          } else {
+            overrides[token] = '#000000';
+          }
+        }
+      }
+    }
+  }
+
+  return overrides;
+}
+
 // Generate short internal token names (--_a0, --_a1, ..., --_z9, --_aa, etc.)
 // These are implementation details for surface resets - not meant for direct use
 function generateTokenMap(): Map<string, string> {
@@ -889,7 +1087,15 @@ export function generateThemeCSS(
 
   // Generate nested surface classes
   lines.push('  /* Surface classes */');
-  const surfaceLines = generateSurfaceClasses(mode);
+  // Extract theme colors for accessibility checking in surfaces
+  const themeColors: Record<string, string> = {
+    primary: tokens['--primary-bg'] || '#2563eb',
+    success: tokens['--success-bg'] || '#22c55e',
+    warning: tokens['--warning-bg'] || '#eab308',
+    danger: tokens['--danger-bg'] || '#ef4444',
+    info: tokens['--info-bg'] || '#2563eb',
+  };
+  const surfaceLines = generateSurfaceClasses(mode, themeColors);
   // Indent surface class lines for nesting
   for (const line of surfaceLines) {
     if (line.trim()) {
@@ -913,7 +1119,7 @@ export function generateThemeCSS(
  *
  * Uses CSS nesting with & prefix since these are nested inside the theme qualifier.
  */
-function generateSurfaceClasses(mode: 'light' | 'dark'): string[] {
+function generateSurfaceClasses(mode: 'light' | 'dark', themeColors: Record<string, string>): string[] {
   const lines: string[] = [];
 
   lines.push('/* ================================================================');
@@ -994,6 +1200,18 @@ function generateSurfaceClasses(mode: 'light' | 'dark'): string[] {
           const derivationRule = value.slice(7); // Remove 'derive:' prefix
           resolvedOverrides[token] = evaluateSurfaceDerivation(derivationRule, resolvedOverrides, mode === 'dark');
         }
+      }
+
+      // For all surfaces with a defined base-bg, add accessibility overrides to ensure
+      // color group tokens have sufficient contrast against the surface's base-bg
+      if (resolvedOverrides['base-bg']) {
+        const accessibilityOverrides = generateAccessibleSurfaceOverrides(
+          surfaceName,
+          resolvedOverrides['base-bg'],
+          themeColors,
+          mode === 'dark'
+        );
+        Object.assign(resolvedOverrides, accessibilityOverrides);
       }
 
       lines.push(`  /* &.${surfaceName} - ${config.description} */`);

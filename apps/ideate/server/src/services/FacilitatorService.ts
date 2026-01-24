@@ -619,7 +619,7 @@ Example format:
    * Uses dispatchOrQueue to support background execution - if client disconnects,
    * messages are queued and replayed when client reconnects.
    * @param displayName - Optional display name to use instead of persona.name (from settings)
-   * @param modelId - Optional model ID to use (defaults to claude-sonnet-4-5-20250929)
+   * @param modelId - Optional model ID to use (defaults to claude-opus-4-5-20251101)
    */
   async processMessage(
     userId: string,
@@ -743,7 +743,7 @@ Example format:
     let totalOutputTokens = 0;
     let totalCostUsd = 0;
     // Use provided model or default to sonnet
-    const effectiveModel = modelId || 'claude-sonnet-4-5-20250929';
+    const effectiveModel = modelId || 'claude-opus-4-5-20251101';
     let detectedModel = effectiveModel; // Track the model used (will be updated from system init)
     console.log(`[FacilitatorService] Using model: ${effectiveModel}`);
 

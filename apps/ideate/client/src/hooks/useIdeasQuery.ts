@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API_URL } from '../config';
 import { createLogger } from '../utils/clientLogger';
@@ -77,6 +77,10 @@ export function useIdeasQuery(options: UseIdeasQueryOptions = {}): UseIdeasQuery
   // Start with isLoading=true so consumers know initial fetch hasn't completed yet
   const [isLoading, setIsLoading] = useState(!skipInitialFetch);
   const [error, setError] = useState<string | null>(null);
+
+  // Store pending updates that arrive before fetchIdeas completes
+  // This prevents race conditions where WebSocket updates are lost
+  const pendingUpdatesRef = useRef<Map<string, Partial<IdeaMetadata>>>(new Map());
 
   // Group ideas by status with rating-based sorting
   const ideasByStatus = useMemo(() => {
@@ -178,6 +182,7 @@ export function useIdeasQuery(options: UseIdeasQueryOptions = {}): UseIdeasQuery
 
       // Merge fetched data with existing ephemeral state (agentStatus, timestamps)
       // The server doesn't persist these fields, so preserve them from current state
+      // Also apply any pending updates that arrived before fetch completed
       setIdeas(prevIdeas => {
         const agentStates = new Map<string, {
           agentStatus?: IdeaMetadata['agentStatus'];
@@ -195,10 +200,25 @@ export function useIdeasQuery(options: UseIdeasQueryOptions = {}): UseIdeasQuery
           }
         });
 
+        // Log if we have pending updates to apply
+        if (pendingUpdatesRef.current.size > 0) {
+          log.log('Applying pending updates to fetched ideas', {
+            pendingCount: pendingUpdatesRef.current.size,
+            pendingIds: Array.from(pendingUpdatesRef.current.keys()),
+          });
+        }
+
         return allIdeas.map(idea => {
           const agentState = agentStates.get(idea.id);
+          const pendingUpdate = pendingUpdatesRef.current.get(idea.id);
 
-          return agentState ? { ...idea, ...agentState } : idea;
+          // Clear the pending update after applying
+          if (pendingUpdate) {
+            pendingUpdatesRef.current.delete(idea.id);
+          }
+
+          // Merge: server data + existing ephemeral state + pending updates
+          return { ...idea, ...agentState, ...pendingUpdate };
         });
       });
     } catch (err) {
@@ -235,10 +255,25 @@ export function useIdeasQuery(options: UseIdeasQueryOptions = {}): UseIdeasQuery
   }, []);
 
   // Update an idea in local state
+  // If idea doesn't exist yet (race condition), stores update for later
   const updateIdea = useCallback((ideaId: string, updates: Partial<IdeaMetadata>) => {
-    setIdeas(prev => prev.map(idea =>
-      idea.id === ideaId ? { ...idea, ...updates } : idea
-    ));
+    setIdeas(prev => {
+      const ideaExists = prev.some(idea => idea.id === ideaId);
+
+      if (!ideaExists) {
+        // Idea not loaded yet - store update for when fetchIdeas completes
+        log.log('Storing pending update for idea not yet loaded', { ideaId, updates });
+        const existing = pendingUpdatesRef.current.get(ideaId) || {};
+
+        pendingUpdatesRef.current.set(ideaId, { ...existing, ...updates });
+
+        return prev;
+      }
+
+      return prev.map(idea =>
+        idea.id === ideaId ? { ...idea, ...updates } : idea
+      );
+    });
   }, []);
 
   // Remove an idea from local state

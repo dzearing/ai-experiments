@@ -1,8 +1,15 @@
 /**
  * ThinkingIndicator styles
  *
- * Animated progress indicator with spinner and shimmer text.
+ * Animated progress indicator with rainbow spinner and shimmer text.
  */
+
+/* Register custom property for animatable arc length */
+@property --arc-end {
+  syntax: '<angle>';
+  initial-value: 240deg;
+  inherits: false;
+}
 
 .container {
   display: flex;
@@ -13,12 +20,112 @@
   color: var(--softer-fg);
 }
 
-.spinner {
-  color: var(--softer-fg-primary);
+/* Rainbow gradient ring spinner matching ChatInput focus border */
+/* Dynamic gap ensures colorblind users can perceive rotation */
+.rainbowSpinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  position: relative;
+  --arc-end: 240deg;
+  /* Dark mode: vibrant rainbow */
+  background: conic-gradient(
+    from 0deg,
+    #f472b6 0deg,
+    #a78bfa 60deg,
+    #60a5fa 120deg,
+    #34d399 180deg,
+    #fbbf24 var(--arc-end),
+    transparent var(--arc-end),
+    transparent 360deg
+  );
+  animation:
+    rainbowSpin 1s linear infinite,
+    arcPulse 2.5s ease-in-out infinite;
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2.5px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2.5px));
+}
+
+/* Light mode: muted rainbow for better contrast */
+:global([data-theme-mode="light"]) .rainbowSpinner {
+  background: conic-gradient(
+    from 0deg,
+    #db2777 0deg,
+    #7c3aed 60deg,
+    #2563eb 120deg,
+    #059669 180deg,
+    #d97706 var(--arc-end),
+    transparent var(--arc-end),
+    transparent 360deg
+  );
+}
+
+@keyframes rainbowSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes arcPulse {
+  0%, 100% {
+    --arc-end: 200deg;
+  }
+  50% {
+    --arc-end: 300deg;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .rainbowSpinner,
+  .verb {
+    animation: none;
+  }
 }
 
 .verb {
   font-weight: var(--weight-medium);
+  /* Dark mode: vibrant rainbow */
+  background: linear-gradient(
+    90deg,
+    #f472b6,
+    #a78bfa,
+    #60a5fa,
+    #34d399,
+    #fbbf24,
+    #f472b6
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: rainbowText 3s linear infinite;
+}
+
+/* Light mode: muted rainbow for better readability */
+:global([data-theme-mode="light"]) .verb {
+  background: linear-gradient(
+    90deg,
+    #db2777,
+    #7c3aed,
+    #2563eb,
+    #059669,
+    #d97706,
+    #db2777
+  );
+  background-size: 200% 100%;
+}
+
+@keyframes rainbowText {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
 }
 
 .details {

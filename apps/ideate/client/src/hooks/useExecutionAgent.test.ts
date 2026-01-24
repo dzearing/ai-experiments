@@ -7,6 +7,15 @@ vi.mock('../config', () => ({
   EXECUTION_AGENT_WS_URL: 'ws://localhost:3002/execution-agent',
 }));
 
+// Mock clientLogger to avoid setTimeout/fetch issues in tests
+vi.mock('../utils/clientLogger', () => ({
+  createLogger: () => ({
+    log: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  }),
+}));
+
 // Mock WebSocket class
 class MockWebSocket {
   static CONNECTING = 0;
@@ -174,8 +183,8 @@ describe('useExecutionAgent', () => {
         getWs()?.simulateError();
       });
 
-      expect(result.current.error).toBe('Failed to connect to execution agent service');
-      expect(onError).toHaveBeenCalledWith('Failed to connect to execution agent service');
+      expect(result.current.error).toBe('Failed to connect to agent service');
+      expect(onError).toHaveBeenCalledWith('Failed to connect to agent service');
     });
 
     it('attempts reconnect after disconnect when enabled', () => {
@@ -241,6 +250,7 @@ describe('useExecutionAgent', () => {
           idea: mockIdeaContext,
           plan: mockPlan,
           phaseId: 'phase-1',
+          pauseBetweenPhases: false,
         })
       );
       expect(result.current.isExecuting).toBe(true);
@@ -272,6 +282,7 @@ describe('useExecutionAgent', () => {
           idea: mockIdeaContext,
           plan: mockPlan,
           phaseId: 'phase-1',
+          pauseBetweenPhases: false,
         })
       );
       expect(result.current.isExecuting).toBe(true);
@@ -293,8 +304,9 @@ describe('useExecutionAgent', () => {
 
       expect(ws?.send).toHaveBeenCalledWith(
         JSON.stringify({
-          type: 'send_message',
+          type: 'message',
           content: 'Hello, agent!',
+          idea: null,
         })
       );
 
@@ -355,7 +367,7 @@ describe('useExecutionAgent', () => {
         result.current.sendMessage('Hello');
       });
 
-      expect(result.current.error).toBe('Not connected to execution agent service');
+      expect(result.current.error).toBe('Not connected to agent service');
     });
   });
 
@@ -374,8 +386,9 @@ describe('useExecutionAgent', () => {
 
       expect(ws?.send).toHaveBeenCalledWith(
         JSON.stringify({
-          type: 'send_message',
+          type: 'message',
           content: 'This is feedback',
+          idea: null,
         })
       );
     });
@@ -595,7 +608,7 @@ describe('useExecutionAgent', () => {
 
     it('handles task_complete message', () => {
       const onTaskComplete = vi.fn();
-      const { result } = renderHook(() =>
+      renderHook(() =>
         useExecutionAgent({ ...defaultOptions, onTaskComplete })
       );
       const ws = getWs();
@@ -617,14 +630,13 @@ describe('useExecutionAgent', () => {
         });
       });
 
-      expect(result.current.messages.length).toBe(1);
-      expect(result.current.messages[0].type).toBe('task_complete');
+      // Callback should be called (message creation is up to parent component)
       expect(onTaskComplete).toHaveBeenCalledWith(taskComplete);
     });
 
     it('handles phase_complete message', () => {
       const onPhaseComplete = vi.fn();
-      const { result } = renderHook(() =>
+      renderHook(() =>
         useExecutionAgent({ ...defaultOptions, onPhaseComplete })
       );
       const ws = getWs();
@@ -645,8 +657,7 @@ describe('useExecutionAgent', () => {
         });
       });
 
-      expect(result.current.messages.length).toBe(1);
-      expect(result.current.messages[0].type).toBe('phase_complete');
+      // Callback should be called (message creation is up to parent component)
       expect(onPhaseComplete).toHaveBeenCalledWith(phaseComplete);
     });
 
@@ -677,14 +688,13 @@ describe('useExecutionAgent', () => {
 
       expect(result.current.isBlocked).toBe(true);
       expect(result.current.blockedEvent).toEqual(blockedEvent);
-      expect(result.current.messages.length).toBe(1);
-      expect(result.current.messages[0].type).toBe('blocked');
+      // Callback should be called (message creation is up to parent component)
       expect(onExecutionBlocked).toHaveBeenCalledWith(blockedEvent);
     });
 
     it('handles new_idea message', () => {
       const onNewIdea = vi.fn();
-      const { result } = renderHook(() =>
+      renderHook(() =>
         useExecutionAgent({ ...defaultOptions, onNewIdea })
       );
       const ws = getWs();
@@ -707,14 +717,13 @@ describe('useExecutionAgent', () => {
         });
       });
 
-      expect(result.current.messages.length).toBe(1);
-      expect(result.current.messages[0].type).toBe('new_idea');
+      // Callback should be called (message creation is up to parent component)
       expect(onNewIdea).toHaveBeenCalledWith(newIdea);
     });
 
     it('handles task_update message', () => {
       const onTaskUpdate = vi.fn();
-      const { result } = renderHook(() =>
+      renderHook(() =>
         useExecutionAgent({ ...defaultOptions, onTaskUpdate })
       );
       const ws = getWs();
@@ -738,12 +747,11 @@ describe('useExecutionAgent', () => {
         });
       });
 
-      expect(result.current.messages.length).toBe(1);
-      expect(result.current.messages[0].type).toBe('task_update');
+      // Callback should be called (message creation is up to parent component)
       expect(onTaskUpdate).toHaveBeenCalledWith(taskUpdate);
     });
 
-    it('handles tool_use_start message', () => {
+    it('handles agent_progress tool_start event', () => {
       const { result } = renderHook(() => useExecutionAgent(defaultOptions));
       const ws = getWs();
 
@@ -751,25 +759,26 @@ describe('useExecutionAgent', () => {
         ws?.simulateOpen();
       });
 
+      // Agent progress events are used for tool tracking in the base hook
       act(() => {
         ws?.simulateMessage({
-          type: 'tool_use_start',
-          toolName: 'read_file',
-          toolInput: { path: '/test.txt' },
-          messageId: 'msg-1',
+          type: 'agent_progress',
+          event: {
+            type: 'tool_start',
+            toolName: 'read_file',
+            displayText: 'Reading file...',
+            timestamp: Date.now(),
+          },
         });
       });
 
-      // Tool use creates a message with toolCalls array
+      // Tool start creates a message with toolCalls array
       expect(result.current.messages.length).toBe(1);
-      expect(result.current.messages[0].type).toBe('text');
       expect(result.current.messages[0].toolCalls?.length).toBe(1);
       expect(result.current.messages[0].toolCalls?.[0].name).toBe('read_file');
-      expect(result.current.messages[0].toolCalls?.[0].input).toEqual({ path: '/test.txt' });
-      expect(result.current.messages[0].toolCalls?.[0].output).toBeUndefined();
     });
 
-    it('handles tool_use_end message', () => {
+    it('handles agent_progress tool_complete event', () => {
       const { result } = renderHook(() => useExecutionAgent(defaultOptions));
       const ws = getWs();
 
@@ -777,28 +786,33 @@ describe('useExecutionAgent', () => {
         ws?.simulateOpen();
       });
 
-      // First send tool_use_start to create the message with tool call
+      // First send tool_start
       act(() => {
         ws?.simulateMessage({
-          type: 'tool_use_start',
-          toolName: 'read_file',
-          messageId: 'msg-1',
+          type: 'agent_progress',
+          event: {
+            type: 'tool_start',
+            toolName: 'read_file',
+            timestamp: Date.now(),
+          },
         });
       });
 
-      // Then send tool_use_end to update the tool call's output
+      // Then send tool_complete
       act(() => {
         ws?.simulateMessage({
-          type: 'tool_use_end',
-          toolName: 'read_file',
-          toolResult: 'File contents here...',
-          messageId: 'msg-1',
+          type: 'agent_progress',
+          event: {
+            type: 'tool_complete',
+            toolName: 'read_file',
+            timestamp: Date.now(),
+          },
         });
       });
 
       expect(result.current.messages.length).toBe(1);
       expect(result.current.messages[0].toolCalls?.length).toBe(1);
-      expect(result.current.messages[0].toolCalls?.[0].output).toBe('File contents here...');
+      expect(result.current.messages[0].toolCalls?.[0].completed).toBe(true);
     });
 
     it('handles execution_complete message', () => {

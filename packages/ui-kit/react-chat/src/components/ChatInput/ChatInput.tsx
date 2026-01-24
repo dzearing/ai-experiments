@@ -15,7 +15,6 @@ import {
 } from 'react';
 import { EditorContent } from '@tiptap/react';
 import { IconButton, Spinner, Tooltip, ImagePreview } from '@ui-kit/react';
-import { SendIcon } from '@ui-kit/icons/SendIcon';
 import { BoldIcon } from '@ui-kit/icons/BoldIcon';
 import { ItalicIcon } from '@ui-kit/icons/ItalicIcon';
 import { LinkIcon } from '@ui-kit/icons/LinkIcon';
@@ -184,8 +183,9 @@ export const ChatInput = memo(forwardRef<ChatInputRef, ChatInputProps>(
       onSubmit,
       onImageUpload,
       multiline: initialMultiline = false,
-      sendButtonContent,
-      loading = false,
+      // sendButtonContent and loading are deprecated - send button removed, kept for backward compatibility
+      sendButtonContent: _sendButtonContent,
+      loading: _loading = false,
       error = false,
       fullWidth = false,
       historyKey,
@@ -213,7 +213,8 @@ export const ChatInput = memo(forwardRef<ChatInputRef, ChatInputProps>(
     const [isDragging, setIsDragging] = useState(false);
     const [historyIndex, setHistoryIndex] = useState(-1);
     const [draftContent, setDraftContent] = useState('');
-    const [isEmpty, setIsEmpty] = useState(true);
+    // Track empty state internally - used by setIsEmpty in callbacks
+    const [_isEmpty, setIsEmpty] = useState(true);
     const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
     const [selectedText, setSelectedText] = useState('');
     const [escapePressed, setEscapePressed] = useState(false);
@@ -1099,8 +1100,6 @@ export const ChatInput = memo(forwardRef<ChatInputRef, ChatInputProps>(
       .filter(Boolean)
       .join(' ');
 
-    const canSubmit = (!isEmpty || imagesInContentOrder.length > 0) && !disabled && !loading;
-
     return (
       <div
         ref={containerRef}
@@ -1336,14 +1335,6 @@ export const ChatInput = memo(forwardRef<ChatInputRef, ChatInputProps>(
                 disabled={disabled}
               />
             </Tooltip>
-
-            <IconButton
-              icon={loading ? <Spinner size="sm" /> : sendButtonContent || <SendIcon />}
-              variant="primary"
-              onClick={handleSubmit}
-              disabled={!canSubmit}
-              aria-label="Send message"
-            />
           </div>
         </div>
 
