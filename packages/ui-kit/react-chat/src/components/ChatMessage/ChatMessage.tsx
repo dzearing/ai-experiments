@@ -360,6 +360,28 @@ function shouldHideToolOutput(name: string): boolean {
 }
 
 /**
+ * Determines whether a tool has input-based expandable content.
+ * These tools should always be expandable when complete because their value
+ * is in showing content from the input (like diffs) rather than just the output.
+ */
+function hasInputBasedExpandableContent(name: string): boolean {
+  const normalizedName = normalizeMcpToolName(name);
+  const inputBasedTools = [
+    'Edit',     // Shows diff from old_string/new_string input
+    'Write',    // Shows file content preview from content input
+    'Read',     // Shows file content from the file that was read
+    'Glob',     // Shows file list results
+    'Grep',     // Shows search results
+    'Bash',     // Shows command output
+    'WebSearch', // Shows search results
+    'WebFetch', // Shows fetched content
+    'NotebookEdit', // Shows cell content
+    'TodoWrite', // Shows task list
+  ];
+  return inputBasedTools.includes(normalizedName);
+}
+
+/**
  * Extract plain text content from message parts for clipboard copy
  */
 function extractTextContent(parts: ChatMessagePart[]): string {
@@ -747,7 +769,9 @@ export const ChatMessage = memo(function ChatMessage({
                 // Ensure output is a string, treat '__complete__' as empty (no box to show)
                 const rawOutput = typeof toolCall.output === 'string' ? toolCall.output : '';
                 const outputText = rawOutput === '__complete__' ? '' : rawOutput;
-                const hasOutput = isComplete && outputText && !shouldHideToolOutput(toolCall.name);
+                // Tool is expandable if: complete AND (has output OR has input-based content) AND not hidden
+                const hasExpandableContent = outputText || hasInputBasedExpandableContent(toolCall.name);
+                const hasOutput = isComplete && hasExpandableContent && !shouldHideToolOutput(toolCall.name);
                 const toolKey = `${partIndex}-${toolIndex}`;
                 const isExpanded = expandedTools.has(toolKey);
 

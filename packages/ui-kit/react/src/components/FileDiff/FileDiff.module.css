@@ -121,23 +121,31 @@
 }
 
 .row.addition {
-  background: var(--success-bg-soft);
+  background: var(--success-bg);
 }
 
 .row.addition .codeCell {
   color: var(--success-fg);
 }
 
+.row.addition .lineNumbers {
+  color: var(--success-fg-soft);
+}
+
 .row.deletion {
-  background: var(--danger-bg-soft);
+  background: var(--danger-bg);
 }
 
 .row.deletion .codeCell {
   color: var(--danger-fg);
 }
 
+.row.deletion .lineNumbers {
+  color: var(--danger-fg-soft);
+}
+
 .row.hunk {
-  background: var(--info-bg-soft);
+  background: var(--info-bg);
 }
 
 .row.hunk .codeCell {
@@ -146,7 +154,7 @@
 }
 
 .row.hunk .lineNumbers {
-  color: var(--info-fg);
+  color: var(--info-fg-soft);
 }
 
 /* Expand/collapse buttons */

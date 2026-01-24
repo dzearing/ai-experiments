@@ -115,11 +115,16 @@ export function resolvePermission(
 
   // Resolve the promise with the correct shape based on behavior
   // SDK expects different shapes for allow vs deny
+  // IMPORTANT: For 'allow', updatedInput must be an object (empty {} if not provided)
+  // The SDK's Zod schema requires a Record type, not undefined
   if (response.behavior === 'allow') {
-    pending.resolve({
-      behavior: 'allow',
-      updatedInput: response.updatedInput,
-    });
+    const result = {
+      behavior: 'allow' as const,
+      updatedInput: response.updatedInput ?? {},
+    };
+
+    console.log('[PermissionService] Resolving allow:', JSON.stringify(result));
+    pending.resolve(result);
   } else {
     pending.resolve({
       behavior: 'deny',

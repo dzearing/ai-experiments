@@ -196,6 +196,8 @@ router.get('/connections', (_req: Request, res: Response) => {
 router.post('/permission-response', (req: Request, res: Response) => {
   const { requestId, behavior, message, updatedInput } = req.body as Partial<PermissionResponse>;
 
+  console.log('[permission-response] Received:', { requestId, behavior, message, updatedInput });
+
   if (!requestId) {
     res.status(400).json({
       error: 'Missing required field: requestId',

@@ -8,10 +8,10 @@ updated: 2026-01-20T05:20:00Z
 
 ## Current Test
 
-number: 2
-name: Edit Tool Result Display
+number: 3
+name: Edit Tool Permission Preview
 expected: |
-  When Claude uses the Edit tool, the result shows the file path, change summary, and an expandable diff with colored additions (green) and deletions (red).
+  When Edit tool requests permission, the permission dialog shows a visual diff preview of the proposed changes before you approve/deny.
 awaiting: user response
 
 ## Tests
@@ -23,7 +23,9 @@ verified: "2026-01-20 - Tool shows checkmark, file path, frozen completion time 
 
 ### 2. Edit Tool Result Display
 expected: When Claude uses the Edit tool, the result shows the file path, change summary, and an expandable diff with colored additions (green) and deletions (red).
-result: [pending]
+result: pass
+verified: "2026-01-24 - After fix: Tool shows file path link, '1 occurrence replaced' summary, expandable diff with red deletion/green addition"
+fix_required: "hasInputBasedExpandableContent() helper in ChatMessage.tsx to make Edit tool expandable even with empty output"
 
 ### 3. Edit Tool Permission Preview
 expected: When Edit tool requests permission, the permission dialog shows a visual diff preview of the proposed changes before you approve/deny.
@@ -64,11 +66,11 @@ result: [pending]
 ## Summary
 
 total: 11
-passed: 1
+passed: 2
 issues: 0
-pending: 10
+pending: 9
 skipped: 0
-note: Test 1 passed after tool completion fix. Pre-requisite fixes all working (multi-line input, no blank messages, tool completion).
+note: Tests 1-2 passed. Edit tool required fix to make it expandable (hasInputBasedExpandableContent helper).
 
 ## Gaps Resolved
 
@@ -92,3 +94,24 @@ root_cause: "SDK doesn't expose tool_result in assistant messages - they're sent
 fix: "Mark all tool calls as completed in the result event handler (result event means turn is done)"
 commit: 42d55d3
 verified: "Tested via Playwright MCP - Write tool shows checkmark with frozen time instead of spinner"
+
+### Failed tools show checkmark instead of error icon
+status: fixed
+root_cause: "Permission denials and tool failures not marking calls as cancelled; state overwritten in result handler"
+fix: "Mark tool calls as cancelled with error message when permission denied; check is_error in result handler for incomplete calls"
+commit: 6dcdc58
+verified: pending
+
+### Permission system validation error (ZodError)
+status: fixed
+root_cause: "SDK expects discriminated union: allow has optional updatedInput (no message), deny requires message"
+fix: "Updated PermissionResult type and resolvePermission to return correct shapes per behavior"
+commit: (previous - PermissionResult type fix)
+verified: pending
+
+### Edit tool not expandable after completion
+status: fixed
+root_cause: "hasOutput check required non-empty outputText, but Edit tool generates diff from input params not output"
+fix: "Added hasInputBasedExpandableContent() helper in ChatMessage.tsx that returns true for tools like Edit, Write, Read etc. Updated hasOutput calculation to use this."
+commit: pending
+verified: "2026-01-24 - Edit tool now shows expandable diff with file path, change summary, colored additions/deletions"
