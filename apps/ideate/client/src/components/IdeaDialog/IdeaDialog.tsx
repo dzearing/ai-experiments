@@ -53,14 +53,22 @@ function stripStructuredEvents(text: string | undefined): string {
   if (!text) return '';
 
   return text
+    // Execution agent events
     .replace(/<task_complete>\s*[\s\S]*?\s*<\/task_complete>/g, '')
     .replace(/<phase_complete>\s*[\s\S]*?\s*<\/phase_complete>/g, '')
     .replace(/<execution_blocked>\s*[\s\S]*?\s*<\/execution_blocked>/g, '')
     .replace(/<new_idea>\s*[\s\S]*?\s*<\/new_idea>/g, '')
     .replace(/<task_update>\s*[\s\S]*?\s*<\/task_update>/g, '')
+    // Plan agent events
+    .replace(/<plan_update>\s*[\s\S]*?\s*<\/plan_update>/g, '')
+    .replace(/<impl_plan_update>\s*[\s\S]*?\s*<\/impl_plan_update>/g, '')
+    .replace(/<impl_plan_edits>\s*[\s\S]*?\s*<\/impl_plan_edits>/g, '')
+    // Idea agent events
     .replace(/<open_questions>\s*[\s\S]*?\s*<\/open_questions>/g, '')
     .replace(/<idea_update>\s*[\s\S]*?\s*<\/idea_update>/g, '')
     .replace(/<suggested_responses>\s*[\s\S]*?\s*<\/suggested_responses>/g, '')
+    .replace(/<document_edits>\s*[\s\S]*?\s*<\/document_edits>/g, '')
+    // Cleanup
     .replace(/```xml\s*```/g, '') // Clean up empty xml code blocks
     .replace(/\n{3,}/g, '\n\n') // Collapse multiple newlines
     .trim();
@@ -948,8 +956,10 @@ export function IdeaDialog({
           }
         }
 
-        // Skip empty messages after stripping (unless they have parts)
-        if (!cleanContent && !parts?.length && msg.role === 'assistant') return null;
+        // Skip empty messages after stripping (unless they have parts or toolCalls)
+        const hasToolCalls = msg.toolCalls && msg.toolCalls.length > 0;
+
+        if (!cleanContent && !parts?.length && !hasToolCalls && msg.role === 'assistant') return null;
 
         return {
           id: msg.id,
@@ -958,9 +968,11 @@ export function IdeaDialog({
           senderName: msg.role === 'user' ? (user?.name || 'You') : agentName,
           senderColor: msg.role === 'user' ? undefined : '#8b5cf6',
           isOwn: msg.role === 'user',
-          isStreaming: msg.isStreaming,
+          // Don't show streaming dots - the ThinkingIndicator is sufficient
           renderMarkdown: true,
           parts,
+          // Pass toolCalls through for streaming messages (parts may not be populated yet)
+          toolCalls: msg.toolCalls,
         };
       })
       .filter((msg): msg is ChatPanelMessage => msg !== null);

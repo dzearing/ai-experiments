@@ -276,9 +276,9 @@ describe('FacilitatorOverlay', () => {
         expect(screen.getByRole('dialog')).toBeInTheDocument();
       });
 
-      // Wait for animation content, then click on header text (inside the panel)
-      const header = await screen.findByText('Facilitator');
-      await user.click(header);
+      // Wait for animation content, then click inside the panel (on the dialog itself)
+      const dialog = screen.getByRole('dialog');
+      await user.click(dialog);
 
       // Should still be open
       expect(screen.getByRole('dialog')).toBeInTheDocument();

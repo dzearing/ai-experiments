@@ -213,6 +213,7 @@ export function useAgentSocket({
   const enabledRef = useRef(enabled);
   const modelIdRef = useRef<ModelId | undefined>(modelId);
   const workspaceIdRef = useRef<string | undefined>(workspaceId);
+  const prevIdeaIdRef = useRef<string | null>(ideaId);
 
   // Keep refs updated
   useEffect(() => {
@@ -255,6 +256,24 @@ export function useAgentSocket({
       }
     }
   }, [enabled, log]);
+
+  // Force reconnect when ideaId changes from null to a real value
+  // This handles the case where an idea is created and we need to reconnect with the new ideaId
+  useEffect(() => {
+    const prevId = prevIdeaIdRef.current;
+    const currentId = ideaId;
+
+    // Update ref for next comparison
+    prevIdeaIdRef.current = currentId;
+
+    // If ideaId changed from null (new idea) to a real ID, force reconnect
+    if (prevId === null && currentId !== null && wsRef.current) {
+      log.log('ideaId changed from null to real ID, forcing reconnect', { prevId, currentId });
+
+      // Close the existing connection - it will auto-reconnect with new ideaId
+      wsRef.current.close();
+    }
+  }, [ideaId, log]);
 
   // Add a message
   const addMessage = useCallback((message: AgentMessage) => {
@@ -355,13 +374,17 @@ export function useAgentSocket({
         if (data.messageId && data.text) {
           if (currentMessageIdRef.current !== data.messageId) {
             currentMessageIdRef.current = data.messageId;
-            addMessage({
-              id: data.messageId,
-              role: 'assistant',
-              content: data.text,
-              timestamp: Date.now(),
-              isStreaming: true,
-            });
+            // Clear streaming on all existing messages before adding new streaming message
+            setMessages((prev) => [
+              ...prev.map((m) => m.isStreaming ? { ...m, isStreaming: false } : m),
+              {
+                id: data.messageId!,
+                role: 'assistant' as const,
+                content: data.text!,
+                timestamp: Date.now(),
+                isStreaming: true,
+              },
+            ]);
           } else {
             // Check if current message has tool calls - if so, text arriving after
             // tools should be in a new message to render below the tools
@@ -371,13 +394,12 @@ export function useAgentSocket({
 
               if (currentMsg?.toolCalls && currentMsg.toolCalls.length > 0) {
                 // Text arriving after tools - create a new message
+                // Clear streaming on ALL existing messages
                 const newMessageId = `${data.messageId}-cont-${Date.now()}`;
                 currentMessageIdRef.current = newMessageId;
 
                 return [
-                  ...prev.map((m) =>
-                    m.id === data.messageId ? { ...m, isStreaming: false } : m
-                  ),
+                  ...prev.map((m) => m.isStreaming ? { ...m, isStreaming: false } : m),
                   {
                     id: newMessageId,
                     role: 'assistant' as const,
@@ -492,16 +514,20 @@ export function useAgentSocket({
 
             if (!targetMessageId) {
               // No current message - create one for the tool
+              // Clear streaming on all existing messages before adding new streaming message
               const newMessageId = `msg-${Date.now()}`;
               currentMessageIdRef.current = newMessageId;
-              addMessage({
-                id: newMessageId,
-                role: 'assistant',
-                content: '',
-                timestamp: Date.now(),
-                isStreaming: true,
-                toolCalls: [newToolCall],
-              });
+              setMessages((prev) => [
+                ...prev.map((m) => m.isStreaming ? { ...m, isStreaming: false } : m),
+                {
+                  id: newMessageId,
+                  role: 'assistant' as const,
+                  content: '',
+                  timestamp: Date.now(),
+                  isStreaming: true,
+                  toolCalls: [newToolCall],
+                },
+              ]);
             } else {
               // Add to existing message's toolCalls
               updateMessage(targetMessageId, {

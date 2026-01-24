@@ -2,12 +2,10 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
   box-sizing: border-box;
   background: var(--soft-bg);
   border: 1px solid var(--soft-border);
   border-radius: var(--radius-xl);
-  padding: var(--space-2);
   isolation: isolate;
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0.04),
@@ -84,16 +82,15 @@
 
 /* Size variants */
 .sm {
-  padding: var(--space-1-5);
   border-radius: var(--radius-lg);
 }
 
 .md {
-  padding: var(--space-2);
+  /* default size - no overrides needed */
 }
 
 .lg {
-  padding: var(--space-3);
+  /* large size - padding handled by children */
 }
 
 /* Adjust gradient border radius for small size */
@@ -135,9 +132,21 @@
   flex-wrap: wrap;
   gap: var(--space-2);
   padding: var(--space-2);
+  margin: var(--space-2);
+  margin-bottom: 0;
   background: var(--base-bg);
   border-radius: var(--radius-sm);
   border: 1px dashed var(--base-border);
+}
+
+.sm .imageWell {
+  margin: var(--space-1-5);
+  margin-bottom: 0;
+}
+
+.lg .imageWell {
+  margin: var(--space-3);
+  margin-bottom: 0;
 }
 
 /* Image thumbnail in well - clickable to select corresponding chip */
@@ -207,8 +216,22 @@
   display: flex;
   align-items: center;
   gap: var(--space-0-5);
-  padding: var(--space-1) 0;
+  padding: var(--space-1) var(--space-2);
+  margin: var(--space-2);
+  margin-bottom: 0;
   border-bottom: 1px solid var(--base-border);
+}
+
+.sm .toolbar {
+  padding: var(--space-1) var(--space-1-5);
+  margin: var(--space-1-5);
+  margin-bottom: 0;
+}
+
+.lg .toolbar {
+  padding: var(--space-1) var(--space-3);
+  margin: var(--space-3);
+  margin-bottom: 0;
 }
 
 .toolbarDivider {
@@ -236,6 +259,8 @@
   flex: 1;
   position: relative;
   min-height: 24px;
+  display: flex;
+  flex-direction: column;
 }
 
 .placeholder {
@@ -253,6 +278,7 @@
 
 /* TipTap editor container */
 .editor {
+  flex: 1;
   min-height: 24px;
   max-height: 200px;
   overflow-y: auto;
@@ -261,6 +287,7 @@
 /* TipTap ProseMirror editor */
 .editor :global(.ProseMirror) {
   min-height: 24px;
+  padding: var(--space-2);
   background: transparent;
   border: none;
   outline: none !important;
@@ -271,6 +298,14 @@
   line-height: var(--leading-normal);
   word-break: break-word;
   white-space: pre-wrap;
+}
+
+.sm .editor :global(.ProseMirror) {
+  padding: var(--space-1-5);
+}
+
+.lg .editor :global(.ProseMirror) {
+  padding: var(--space-3);
 }
 
 .editor :global(.ProseMirror):focus {
@@ -419,6 +454,18 @@
   align-items: center;
   gap: var(--space-1);
   flex-shrink: 0;
+  padding: var(--space-2);
+  padding-left: 0;
+}
+
+.sm .actions {
+  padding: var(--space-1-5);
+  padding-left: 0;
+}
+
+.lg .actions {
+  padding: var(--space-3);
+  padding-left: 0;
 }
 
 /* Drop overlay */

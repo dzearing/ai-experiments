@@ -28,6 +28,7 @@
   border-radius: 50%;
   position: relative;
   --arc-end: 240deg;
+  /* Dark mode: vibrant rainbow */
   background: conic-gradient(
     from 0deg,
     #f472b6 0deg,
@@ -43,6 +44,20 @@
     arcPulse 2.5s ease-in-out infinite;
   -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2.5px));
   mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2.5px));
+}
+
+/* Light mode: muted rainbow for better contrast */
+:global([data-theme-mode="light"]) .rainbowSpinner {
+  background: conic-gradient(
+    from 0deg,
+    #db2777 0deg,
+    #7c3aed 60deg,
+    #2563eb 120deg,
+    #059669 180deg,
+    #d97706 var(--arc-end),
+    transparent var(--arc-end),
+    transparent 360deg
+  );
 }
 
 @keyframes rainbowSpin {
@@ -73,6 +88,7 @@
 
 .verb {
   font-weight: var(--weight-medium);
+  /* Dark mode: vibrant rainbow */
   background: linear-gradient(
     90deg,
     #f472b6,
@@ -87,6 +103,20 @@
   background-clip: text;
   color: transparent;
   animation: rainbowText 3s linear infinite;
+}
+
+/* Light mode: muted rainbow for better readability */
+:global([data-theme-mode="light"]) .verb {
+  background: linear-gradient(
+    90deg,
+    #db2777,
+    #7c3aed,
+    #2563eb,
+    #059669,
+    #d97706,
+    #db2777
+  );
+  background-size: 200% 100%;
 }
 
 @keyframes rainbowText {

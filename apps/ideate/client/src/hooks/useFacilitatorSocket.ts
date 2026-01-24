@@ -230,16 +230,13 @@ export function useFacilitatorSocket({
 
       case 'open_idea_workspace': {
         const topicId = actionData.topicId as string | undefined;
-        const recentNav = recentlyNavigatedTopicRef.current;
+        const ideaId = actionData.ideaId as string | undefined;
+        const currentPath = window.location.pathname;
 
-        // Check if we just navigated to this topic (within last 2 seconds)
-        // If so, delay the event to allow the TopicDetail component to mount
-        const needsDelay = topicId && recentNav &&
-          recentNav.topicId === topicId &&
-          Date.now() - recentNav.timestamp < 2000;
+        log.log('open_idea_workspace action received', { topicId, ideaId, currentPath, actionData });
 
         const dispatchOpenIdea = () => {
-          log.log(' Dispatching facilitator:openIdea event', { topicId, ideaId: actionData.ideaId, initialTitle: actionData.initialTitle });
+          log.log(' Dispatching facilitator:openIdea event', { topicId, ideaId, initialTitle: actionData.initialTitle });
           window.dispatchEvent(new CustomEvent('facilitator:openIdea', {
             detail: {
               ideaId: actionData.ideaId,
@@ -255,12 +252,71 @@ export function useFacilitatorSocket({
           }
         };
 
-        if (needsDelay) {
-          // Delay to allow navigation and component mounting to complete
-          log.log(' Delaying open_idea_workspace to allow navigation to complete');
-          setTimeout(dispatchOpenIdea, 300);
+        // If topic-specific idea, navigate to topic first
+        if (topicId) {
+          const currentPath = window.location.pathname;
+
+          // Check if we're already on the right topic page
+          if (currentPath.includes('/topics') && currentPath.includes(topicId)) {
+            // Already on the topic, just open the idea
+            dispatchOpenIdea();
+          } else if (currentPath.includes('/topics')) {
+            // On topics page but different topic - select it then open idea
+            log.log(' Selecting topic then opening idea', { topicId, ideaId });
+            window.dispatchEvent(new CustomEvent('facilitator:navigateToTopic', {
+              detail: { topicId }
+            }));
+            // Delay to allow topic selection, then open idea
+            setTimeout(dispatchOpenIdea, 300);
+          } else {
+            // Not on topics page - navigate there first
+            const contextWorkspaceId = navigationContextRef.current.workspaceId;
+            const urlMatch = currentPath.match(/^\/([^/]+)\/(topics|ideas|documents)/);
+            const urlWorkspaceId = urlMatch ? urlMatch[1] : null;
+            const workspaceId = contextWorkspaceId || urlWorkspaceId;
+
+            const targetUrl = workspaceId
+              ? `/${workspaceId}/topics/${topicId}`
+              : `/all/topics`;
+
+            log.log(' Navigating to topic then opening idea', { targetUrl, topicId, ideaId });
+
+            window.history.pushState(null, '', targetUrl);
+            window.dispatchEvent(new PopStateEvent('popstate'));
+
+            // Delay to allow navigation and topic selection, then open idea
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('facilitator:navigateToTopic', {
+                detail: { topicId }
+              }));
+              setTimeout(dispatchOpenIdea, 300);
+            }, 100);
+          }
         } else {
-          dispatchOpenIdea();
+          // Global idea - navigate to Ideas tab if needed, then open idea
+          const currentPath = window.location.pathname;
+
+          if (!currentPath.includes('/ideas')) {
+            const contextWorkspaceId = navigationContextRef.current.workspaceId;
+            const urlMatch = currentPath.match(/^\/([^/]+)\/(topics|ideas|documents)/);
+            const urlWorkspaceId = urlMatch ? urlMatch[1] : null;
+            const workspaceId = contextWorkspaceId || urlWorkspaceId;
+
+            const targetUrl = workspaceId
+              ? `/${workspaceId}/ideas`
+              : `/all/ideas`;
+
+            log.log(' Navigating to Ideas tab then opening idea', { targetUrl, ideaId });
+
+            window.history.pushState(null, '', targetUrl);
+            window.dispatchEvent(new PopStateEvent('popstate'));
+
+            // Delay to allow navigation, then open idea
+            setTimeout(dispatchOpenIdea, 200);
+          } else {
+            // Already on ideas page, just open it
+            dispatchOpenIdea();
+          }
         }
         break;
       }
@@ -429,13 +485,15 @@ export function useFacilitatorSocket({
               if (data.toolOutput) {
                 try {
                   const outputData = JSON.parse(data.toolOutput);
+                  log.log('Tool result parsed', { toolName: data.toolName, hasAction: !!outputData.__action, action: outputData.__action, outputData });
+
                   if (outputData.__action) {
+                    log.log('Calling handleNavigationAction', { action: outputData.__action, ideaId: outputData.ideaId, topicId: outputData.topicId });
                     handleNavigationAction(outputData);
                   }
 
                   // When topic_create succeeds, dispatch event with the created Topic data
                   // This ensures the Topic appears in the UI immediately (confirmed update from server)
-                  log.log('Tool result parsed', { toolName: data.toolName, hasTopic: !!outputData.topic, outputData });
                   if (data.toolName.includes('topic_create') && outputData.topic) {
                     log.log(' Dispatching facilitator:topicCreated event with:', outputData.topic);
                     window.dispatchEvent(new CustomEvent('facilitator:topicCreated', {
