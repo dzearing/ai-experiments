@@ -114,6 +114,15 @@ export type { ProgressProps, ProgressVariant, ProgressSize } from './components/
 export { ProgressDots } from './components/ProgressDots';
 export type { ProgressDotsProps, ProgressDotsSize } from './components/ProgressDots';
 
+export { Stepper } from './components/Stepper';
+export type {
+  StepperProps,
+  StepperOrientation,
+  StepperSize,
+  StepItem,
+  StepStatus,
+} from './components/Stepper';
+
 export { Spinner } from './components/Spinner';
 export type { SpinnerProps, SpinnerSize } from './components/Spinner';
 

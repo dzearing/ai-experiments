@@ -1,0 +1,352 @@
+/**
+ * Stepper styles
+ *
+ * Surfaces: soft (pending), primary (active/complete), danger (error)
+ * See TOKEN_GUIDE.md for token reference
+ */
+
+.root {
+  display: flex;
+  font-family: var(--font-sans);
+}
+
+/* ==============================================
+   Orientation: Horizontal
+   ============================================== */
+
+.horizontal {
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+.horizontal .step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1 1 0;
+  min-width: 0;
+  position: relative;
+}
+
+.horizontal .indicator {
+  position: relative;
+  z-index: 1;
+}
+
+.horizontal .labels {
+  margin-block-start: var(--space-2);
+  text-align: center;
+}
+
+/* Horizontal connector - appears before indicator */
+.horizontal .connector {
+  position: absolute;
+  height: 2px;
+  background: var(--soft-border);
+  inset-inline-end: 50%;
+  width: 100%;
+  transition: background var(--duration-fast) var(--ease-default);
+}
+
+/* ==============================================
+   Orientation: Vertical
+   ============================================== */
+
+.vertical {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.vertical .step {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  position: relative;
+}
+
+.vertical .step > .indicator {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+}
+
+.vertical .labels {
+  margin-inline-start: var(--space-3);
+}
+
+/* Vertical connector - positioned absolutely in the indicator column */
+.vertical .connector {
+  position: absolute;
+  width: 2px;
+  background: var(--soft-border);
+  transition: background var(--duration-fast) var(--ease-default);
+}
+
+/* ==============================================
+   Step Indicator
+   ============================================== */
+
+.indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  font-weight: var(--weight-medium);
+  flex-shrink: 0;
+  background: var(--soft-bg);
+  transition: background var(--duration-fast) var(--ease-default),
+    color var(--duration-fast) var(--ease-default),
+    border-color var(--duration-fast) var(--ease-default),
+    box-shadow var(--duration-fast) var(--ease-default);
+}
+
+/* ==============================================
+   Size Variants
+   ============================================== */
+
+/* Small */
+.sm .indicator {
+  width: 24px;
+  height: 24px;
+  font-size: var(--text-xs);
+}
+
+.sm .label {
+  font-size: var(--text-xs);
+}
+
+.sm .description {
+  font-size: var(--text-xs);
+}
+
+.sm.horizontal .connector {
+  top: 12px; /* half of indicator height */
+}
+
+.sm.vertical .step:not(:first-child) {
+  margin-block-start: var(--space-4);
+}
+
+.sm.vertical .connector {
+  inset-inline-start: 11px; /* center of 24px indicator */
+  inset-block-start: 24px; /* start at indicator bottom */
+  inset-block-end: calc(-1 * var(--space-4)); /* extend into margin below */
+}
+
+.sm.vertical .labels {
+  margin-inline-start: var(--space-2);
+}
+
+/* Medium */
+.md .indicator {
+  width: 32px;
+  height: 32px;
+  font-size: var(--text-sm);
+}
+
+.md .label {
+  font-size: var(--text-sm);
+}
+
+.md .description {
+  font-size: var(--text-xs);
+}
+
+.md.horizontal .connector {
+  top: 16px; /* half of indicator height */
+}
+
+.md.vertical .step:not(:first-child) {
+  margin-block-start: var(--space-5);
+}
+
+.md.vertical .connector {
+  inset-inline-start: 15px; /* center of 32px indicator */
+  inset-block-start: 32px; /* start at indicator bottom */
+  inset-block-end: calc(-1 * var(--space-5)); /* extend into margin below */
+}
+
+.md.vertical .labels {
+  margin-inline-start: var(--space-3);
+}
+
+/* Large */
+.lg .indicator {
+  width: 40px;
+  height: 40px;
+  font-size: var(--text-base);
+}
+
+.lg .label {
+  font-size: var(--text-base);
+}
+
+.lg .description {
+  font-size: var(--text-sm);
+}
+
+.lg.horizontal .connector {
+  top: 20px; /* half of indicator height */
+}
+
+.lg.vertical .step:not(:first-child) {
+  margin-block-start: var(--space-6);
+}
+
+.lg.vertical .connector {
+  inset-inline-start: 19px; /* center of 40px indicator */
+  inset-block-start: 40px; /* start at indicator bottom */
+  inset-block-end: calc(-1 * var(--space-6)); /* extend into margin below */
+}
+
+.lg.vertical .labels {
+  margin-inline-start: var(--space-4);
+}
+
+/* ==============================================
+   Labels
+   ============================================== */
+
+.labels {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.label {
+  color: var(--base-fg);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-tight);
+}
+
+.description {
+  color: var(--base-fg-soft);
+  line-height: var(--leading-normal);
+}
+
+/* ==============================================
+   Connector Complete State
+   ============================================== */
+
+.connectorComplete {
+  background: var(--primary-bg);
+}
+
+/* ==============================================
+   Status Variants
+   ============================================== */
+
+/* Pending */
+.pending .indicator {
+  background: var(--soft-bg);
+  color: var(--soft-fg-soft);
+  border: 2px solid var(--soft-border);
+}
+
+.pending .label {
+  color: var(--base-fg-soft);
+}
+
+/* Current */
+.current .indicator {
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+  border: 2px solid var(--primary-bg);
+  box-shadow: 0 0 0 3px var(--primary-bg-disabled);
+}
+
+.current .label {
+  color: var(--base-fg);
+}
+
+/* Complete */
+.complete .indicator {
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+  border: 2px solid var(--primary-bg);
+}
+
+.complete .label {
+  color: var(--base-fg);
+}
+
+/* Error */
+.error .indicator {
+  background: var(--danger-bg);
+  color: var(--danger-fg);
+  border: 2px solid var(--danger-bg);
+}
+
+.error .label {
+  color: var(--base-fg-danger);
+}
+
+/* ==============================================
+   Interactive States
+   ============================================== */
+
+.clickable .indicator {
+  cursor: pointer;
+}
+
+.clickable .indicator:hover {
+  transform: scale(1.05);
+}
+
+.clickable.pending .indicator:hover {
+  background: var(--soft-bg-hover);
+  border-color: var(--soft-border-hover);
+}
+
+.clickable.complete .indicator:hover,
+.clickable.current .indicator:hover {
+  background: var(--primary-bg-hover);
+  border-color: var(--primary-bg-hover);
+}
+
+.clickable .indicator:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* ==============================================
+   Disabled State
+   ============================================== */
+
+.disabled .indicator {
+  background: var(--soft-bg-disabled);
+  color: var(--soft-fg-softer);
+  border-color: var(--soft-border-disabled);
+  cursor: not-allowed;
+}
+
+.disabled .label {
+  color: var(--base-fg-softer);
+}
+
+.disabled .description {
+  color: var(--base-fg-softer);
+}
+
+.disabled.clickable .indicator:hover {
+  transform: none;
+}
+
+/* ==============================================
+   Reduced Motion
+   ============================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .indicator {
+    transition: none;
+  }
+
+  .connector {
+    transition: none;
+  }
+
+  .clickable .indicator:hover {
+    transform: none;
+  }
+}
