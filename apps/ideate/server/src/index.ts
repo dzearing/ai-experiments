@@ -30,9 +30,13 @@ import { DiscoveryService } from './services/DiscoveryService.js';
 import { DocumentService } from './services/DocumentService.js';
 import { IdeaService } from './services/IdeaService.js';
 import { ResourceEventBus } from './services/resourceEventBus/ResourceEventBus.js';
+import { registerBuiltInCommands } from './commands/index.js';
 
 // Load environment variables
 config();
+
+// Register slash commands
+registerBuiltInCommands();
 
 const PORT = process.env.PORT || 3002;
 
