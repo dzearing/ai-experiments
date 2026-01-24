@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Outlet, useNavigate, useLocation, useNavigationType } from '@ui-kit/router';
 import { Avatar, Button, IconButton, Menu, PageTransition, useHistoryIndex, useTheme } from '@ui-kit/react';
 import { GearIcon } from '@ui-kit/icons/GearIcon';
@@ -10,9 +10,11 @@ import { FileIcon } from '@ui-kit/icons/FileIcon';
 import { BoardIcon } from '@ui-kit/icons/BoardIcon';
 import { TreeIcon } from '@ui-kit/icons/TreeIcon';
 import { ChatIcon } from '@ui-kit/icons/ChatIcon';
+import { InfoIcon } from '@ui-kit/icons/InfoIcon';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSession } from '../../contexts/SessionContext';
 import { WorkspaceSwitcher } from '../WorkspaceSwitcher';
+import { AboutDialog } from '../AboutDialog';
 import { parseWorkspacePath } from '../../utils/workspacePath';
 import styles from './AppLayout.module.css';
 
@@ -27,6 +29,9 @@ export function AppLayout() {
     locationKey: location.key,
     navigationType,
   });
+
+  // AboutDialog state
+  const [isAboutDialogOpen, setIsAboutDialogOpen] = useState(false);
 
   // Parse current workspace and pivot from URL
   const { workspaceId, pivot } = useMemo(
@@ -129,10 +134,13 @@ export function AppLayout() {
           {user && (
             <Menu
               items={[
+                { value: 'about', label: 'About', icon: <InfoIcon /> },
                 { value: 'signout', label: 'Sign Out', icon: <LogoutIcon /> },
               ]}
               onSelect={(value) => {
-                if (value === 'signout') {
+                if (value === 'about') {
+                  setIsAboutDialogOpen(true);
+                } else if (value === 'signout') {
                   handleSignOut();
                 }
               }}
@@ -157,6 +165,12 @@ export function AppLayout() {
           <Outlet />
         </PageTransition>
       </main>
+
+      {/* About Dialog */}
+      <AboutDialog
+        open={isAboutDialogOpen}
+        onClose={() => setIsAboutDialogOpen(false)}
+      />
     </div>
   );
 }
