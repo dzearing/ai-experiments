@@ -155,21 +155,23 @@ Plans:
 ### Phase 8: Commands & Skills
 **Goal**: Slash commands and skills system work
 **Depends on**: Phase 5
-**Requirements**: CMD-01, CMD-02, CMD-03, CMD-04, CMD-05, CMD-06, CMD-07, UI-07, UI-08, UI-09, UI-10
+**Requirements**: CMD-01, CMD-02, CMD-03, CMD-04, CMD-05, CMD-06, CMD-07, UI-07, UI-09, UI-10
 **Success Criteria** (what must be TRUE):
   1. Built-in slash commands available (/help, /clear, etc.)
   2. Custom commands load from .claude/commands/
   3. Commands support arguments and can run bash pre-execution
   4. Command palette UI triggered by /
   5. Keyboard shortcuts match Claude Code CLI
-  6. Vim mode available for input
-**Plans**: TBD
+**Plans**: 5 plans
 
 Plans:
-- [ ] 08-01: Built-in slash commands
-- [ ] 08-02: Custom commands and skills loading
-- [ ] 08-03: Command palette UI
-- [ ] 08-04: Keyboard shortcuts and vim mode
+- [ ] 08-01-PLAN.md — Server CommandsService for command/skill discovery
+- [ ] 08-02-PLAN.md — Client useSlashCommands hook and ChatView integration
+- [ ] 08-03-PLAN.md — Argument substitution and bash pre-execution
+- [ ] 08-04-PLAN.md — Built-in commands and custom command execution
+- [ ] 08-05-PLAN.md — Keyboard shortcuts (Ctrl+L, Ctrl+C, Shift+Tab)
+
+Note: UI-08 (Vim mode) is deferred per user guidance.
 
 ### Phase 9: Subagents
 **Goal**: Task tool spawns subagents with visual tracking
@@ -226,10 +228,10 @@ Note: Phases 5 and 8 (Configuration, Commands) can run in parallel with Phases 3
 | 5. Configuration System | 2/2 | Complete | 2026-01-20 |
 | 6. Extended Tools | 7/7 | Complete | 2026-01-19 |
 | 7. Hooks System | 3/3 | Complete | 2026-01-25 |
-| 8. Commands & Skills | 0/4 | Not started | - |
+| 8. Commands & Skills | 0/5 | Planned | - |
 | 9. Subagents | 0/3 | Not started | - |
 | 10. MCP Integration | 0/6 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-19*
-*Last updated: 2026-01-25 - Phase 7 complete*
+*Last updated: 2026-01-25 - Phase 8 planned*
