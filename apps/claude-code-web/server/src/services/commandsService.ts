@@ -11,8 +11,12 @@
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
+import { exec } from 'child_process';
+import { promisify } from 'util';
 import matter from 'gray-matter';
 import { glob } from 'glob';
+
+const execAsync = promisify(exec);
 
 import type { CommandDefinition, CommandSource } from '../types/commands.js';
 
@@ -114,6 +118,52 @@ export class CommandsService {
     // If $ARGUMENTS wasn't in the content, append ARGUMENTS section
     if (!hadArgumentsPlaceholder) {
       result += `\n\nARGUMENTS: ${args.trim()}`;
+    }
+
+    return result;
+  }
+
+  /**
+   * Preprocess bash commands in content.
+   *
+   * Matches !`command` patterns and replaces them with command output.
+   * Commands are executed in the specified working directory.
+   *
+   * Security note: This method assumes caller has validated that the command
+   * definition has Bash in allowed-tools.
+   *
+   * @param content - The command content with bash patterns
+   * @param cwd - Working directory for command execution
+   * @returns Content with bash output injected
+   */
+  async preprocessBashCommands(content: string, cwd: string): Promise<string> {
+    // Match all !`command` patterns
+    const bashPattern = /!`([^`]+)`/g;
+    const matches = Array.from(content.matchAll(bashPattern));
+
+    if (matches.length === 0) {
+      return content;
+    }
+
+    let result = content;
+
+    // Process matches sequentially to maintain order
+    for (const match of matches) {
+      const fullMatch = match[0];
+      const command = match[1];
+
+      try {
+        const { stdout } = await execAsync(command, {
+          cwd,
+          timeout: 30000, // 30 second timeout for safety
+        });
+
+        result = result.replace(fullMatch, stdout.trim());
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+        result = result.replace(fullMatch, `[Error running ${command}: ${errorMessage}]`);
+      }
     }
 
     return result;
