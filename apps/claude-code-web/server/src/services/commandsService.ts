@@ -214,7 +214,8 @@ export class CommandsService {
           const rawContent = await fs.readFile(filePath, 'utf-8');
           const { data, content } = matter(rawContent);
 
-          const name = path.basename(file, '.md');
+          // Preserve directory structure as namespace prefix (e.g., "gsd/plan-phase.md" → "gsd:plan-phase")
+          const name = file.replace(/\.md$/, '').replace(/\//g, ':');
           const description = data.description || this.extractFirstParagraph(content);
 
           commands.push({
