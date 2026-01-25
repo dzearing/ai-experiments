@@ -4,7 +4,9 @@ import type { ChatInputSubmitData, ChatPanelMessage } from '@ui-kit/react-chat';
 import { ChatPanel, ChatInput, ThinkingIndicator } from '@ui-kit/react-chat';
 
 import { useConversation } from '../hooks/useConversation';
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { useSlashCommands } from '../hooks/useSlashCommands';
+import type { PermissionMode } from '../types/agent';
 import { AskUserDialog } from './AskUserDialog';
 import { ContextUsage } from './ContextUsage';
 import { ModeSelector } from './ModeSelector';
@@ -32,6 +34,7 @@ export function ChatView() {
     deniedPermissions,
     sendMessage,
     clearConversation,
+    interrupt,
     changePermissionMode,
     respondToPermission,
     respondToQuestion,
@@ -67,6 +70,23 @@ export function ChatView() {
     addSystemMessage,
     contextUsage,
     permissionMode,
+  });
+
+  // Cycle through permission modes for keyboard shortcut
+  const cycleMode = useCallback(() => {
+    const modes: PermissionMode[] = ['default', 'plan', 'acceptEdits', 'bypassPermissions'];
+    const currentIndex = modes.indexOf(permissionMode);
+    const nextIndex = (currentIndex + 1) % modes.length;
+
+    changePermissionMode(modes[nextIndex]);
+  }, [permissionMode, changePermissionMode]);
+
+  // Global keyboard shortcuts
+  useKeyboardShortcuts({
+    onClear: handleClearConversation,
+    onCancel: interrupt,
+    onCycleMode: cycleMode,
+    enabled: true,
   });
 
   // Combine conversation and system messages
