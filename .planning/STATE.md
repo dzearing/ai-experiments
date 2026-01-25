@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-19)
 
 **Core value:** Everything you can do in Claude Code CLI, you can do in this web app
-**Current focus:** Phase 7 - Hooks System (NEXT)
+**Current focus:** Phase 7 - Hooks System (IN PROGRESS)
 
 ## Current Position
 
 Phase: 7 of 10 (Hooks System)
-Plan: 0 of 3 in current phase
-Status: Ready to plan
-Last activity: 2026-01-19 - Phase 6 complete with gap closure
+Plan: 1 of 3 in current phase
+Status: In progress
+Last activity: 2026-01-25 - Completed 07-01-PLAN.md (Hook Types and Service Foundation)
 
-Progress: [█████████████████░░░] 63% (22/35 plans)
+Progress: [██████████████████░░] 66% (23/35 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 22
-- Average duration: 3.5 min
-- Total execution time: 80.3 min
+- Total plans completed: 23
+- Average duration: 3.4 min
+- Total execution time: 82.3 min
 
 **By Phase:**
 
@@ -33,9 +33,10 @@ Progress: [█████████████████░░░] 63% (22
 | 4-Permissions & Modes | 3/3 | 10.0 min | 3.3 min |
 | 5-Configuration System | 2/2 | 8.0 min | 4.0 min |
 | 6-Extended Tools | 7/7 | 27.0 min | 3.9 min |
+| 7-Hooks System | 1/3 | 2.0 min | 2.0 min |
 
 **Recent Trend:**
-- Last 5 plans: 06-03 (3m), 06-04 (3m), 06-05 (8m), 06-06 (3m), 06-07 (4m)
+- Last 5 plans: 06-04 (3m), 06-05 (8m), 06-06 (3m), 06-07 (4m), 07-01 (2m)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -101,6 +102,10 @@ Recent decisions affecting current work:
 - ChatPanelMessage: Set both content and parts fields for user messages (backward compatibility)
 - ID-based matching for tool_result to tool_use via extractToolUseIds + extractToolResults
 - Use cancelled flag to indicate tool errors (ui-kit already handles cancelled state display)
+- HooksConfig maps hook events to arrays of action entries (matcher, action, options)
+- Built-in hook actions: log, notify, block-pattern, allow, deny
+- HooksService uses minimatch for tool name glob pattern matching
+- Hooks passed to SDK via queryOptions.hooks alongside existing canUseTool
 
 ### Pending Todos
 
@@ -112,6 +117,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-19
-Stopped at: Phase 6 complete with gap closure
+Last session: 2026-01-25
+Stopped at: Completed 07-01-PLAN.md (Hook Types and Service Foundation)
 Resume file: None
