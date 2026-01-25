@@ -57,10 +57,39 @@ export function useClaudeCodeCommands(
     }
   }, [enabled, workingDir]);
 
-  // Initial discovery
+  // Initial discovery with cancellation
   useEffect(() => {
-    refresh();
-  }, [refresh]);
+    let cancelled = false;
+
+    const doRefresh = async () => {
+      if (!enabled) return;
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const commands = await discoverAllCommands(workingDir);
+
+        if (!cancelled) {
+          setDiscoveredCommands(commands);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err : new Error('Failed to discover commands'));
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    doRefresh();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled, workingDir]);
 
   // Convert to SlashCommand format
   const commands = useMemo((): SlashCommand[] => {
