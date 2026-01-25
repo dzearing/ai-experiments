@@ -335,6 +335,64 @@ export class CommandsService {
 
     return Array.from(commandMap.values());
   }
+
+  /**
+   * Check if a command has Bash in its allowed-tools.
+   * Matches: 'Bash', 'Bash*', 'Bash(*)' or patterns like 'Bash(git:*)'
+   */
+  private hasBashAllowed(allowedTools?: string[]): boolean {
+    if (!allowedTools) {
+      return false;
+    }
+
+    return allowedTools.some(
+      (tool) => tool === 'Bash' || tool.startsWith('Bash(') || tool === 'Bash*'
+    );
+  }
+
+  /**
+   * Process a command for execution.
+   *
+   * - Finds the command by name (case-insensitive)
+   * - Applies argument substitution
+   * - Executes bash pre-processing if command allows Bash
+   *
+   * @param commandName - The name of the command to execute
+   * @param args - Arguments to pass to the command
+   * @param projectRoot - Project root directory
+   * @returns Processed command content, or null if command not found
+   */
+  async processCommand(
+    commandName: string,
+    args: string,
+    projectRoot: string
+  ): Promise<{ content: string; allowedTools?: string[]; model?: string } | null> {
+    // Load all commands
+    const commands = await this.loadCommands(projectRoot);
+
+    // Find command by name (case-insensitive)
+    const command = commands.find(
+      (cmd) => cmd.name.toLowerCase() === commandName.toLowerCase()
+    );
+
+    if (!command) {
+      return null;
+    }
+
+    // Apply argument substitution
+    let processedContent = this.substituteArguments(command.content, args);
+
+    // Apply bash pre-processing if command allows Bash
+    if (this.hasBashAllowed(command.allowedTools)) {
+      processedContent = await this.preprocessBashCommands(processedContent, projectRoot);
+    }
+
+    return {
+      content: processedContent,
+      allowedTools: command.allowedTools,
+      model: command.model,
+    };
+  }
 }
 
 /**

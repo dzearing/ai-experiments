@@ -52,4 +52,53 @@ router.get('/', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/commands/execute
+ *
+ * Body params:
+ *   - command: Command name to execute (required)
+ *   - args: Arguments string (optional)
+ *   - cwd: Working directory (required) - used to find project root
+ *
+ * Returns:
+ *   - content: Processed command content
+ *   - allowedTools: Optional array of allowed tools
+ *   - model: Optional model override
+ */
+router.post('/execute', async (req, res) => {
+  const { command, args, cwd } = req.body as {
+    command?: string;
+    args?: string;
+    cwd?: string;
+  };
+
+  if (!command) {
+    res.status(400).json({ error: 'Missing required parameter: command' });
+
+    return;
+  }
+
+  if (!cwd) {
+    res.status(400).json({ error: 'Missing required parameter: cwd' });
+
+    return;
+  }
+
+  try {
+    const projectRoot = await configService.findProjectRoot(cwd);
+    const result = await commandsService.processCommand(command, args || '', projectRoot);
+
+    if (!result) {
+      res.status(404).json({ error: `Unknown command: ${command}` });
+
+      return;
+    }
+
+    res.json(result);
+  } catch (error) {
+    console.error('[CommandsRouter] Error executing command:', error);
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+  }
+});
+
 export const commandsRouter = router;
