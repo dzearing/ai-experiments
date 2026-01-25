@@ -15,6 +15,7 @@ import type {
 } from '../types/index.js';
 import { createPermissionRequest, type PermissionResult } from './permissionService.js';
 import { configService } from './configService.js';
+import { hooksService } from './hooksService.js';
 
 // Attempt to import the Agent SDK
 let query: typeof import('@anthropic-ai/claude-agent-sdk').query | undefined;
@@ -200,6 +201,13 @@ export async function* streamAgentQuery(
           type: 'preset' as const,
           preset: 'claude_code' as const,
         };
+      }
+
+      // Build hooks from configuration if present
+      if (config.settings.hooks) {
+        const sdkHooks = hooksService.createHookCallbacks(config.settings.hooks);
+
+        queryOptions.hooks = sdkHooks;
       }
 
       // Handle permission modes:
