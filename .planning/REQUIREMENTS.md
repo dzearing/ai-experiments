@@ -44,16 +44,16 @@ Requirements for full Claude Code parity. Each maps to roadmap phases.
 
 ### Hooks
 
-- [ ] **HOOK-01**: PreToolUse hooks can intercept and block tool calls
-- [ ] **HOOK-02**: PostToolUse hooks run after tool execution
-- [ ] **HOOK-03**: Hook matchers filter by tool name pattern
-- [ ] **HOOK-04**: SessionStart/SessionEnd hooks fire on lifecycle
-- [ ] **HOOK-05**: SubagentStart/SubagentStop hooks track agent spawning
-- [ ] **HOOK-06**: UserPromptSubmit hooks can validate input
-- [ ] **HOOK-07**: PermissionRequest hooks handle approval flow
-- [ ] **HOOK-08**: PreCompact hooks run before context summarization
-- [ ] **HOOK-09**: Hooks can inject system messages
-- [ ] **HOOK-10**: Hooks can modify tool input before execution
+- [x] **HOOK-01**: PreToolUse hooks can intercept and block tool calls
+- [x] **HOOK-02**: PostToolUse hooks run after tool execution
+- [x] **HOOK-03**: Hook matchers filter by tool name pattern
+- [x] **HOOK-04**: SessionStart/SessionEnd hooks fire on lifecycle
+- [x] **HOOK-05**: SubagentStart/SubagentStop hooks track agent spawning
+- [x] **HOOK-06**: UserPromptSubmit hooks can validate input
+- [x] **HOOK-07**: PermissionRequest hooks handle approval flow
+- [x] **HOOK-08**: PreCompact hooks run before context summarization
+- [x] **HOOK-09**: Hooks can inject system messages
+- [x] **HOOK-10**: Hooks can modify tool input before execution
 
 ### Commands
 
@@ -198,16 +198,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CONF-03 | Phase 5 | Complete |
 | CONF-04 | Phase 5 | Complete |
 | CONF-05 | Phase 5 | Complete |
-| HOOK-01 | Phase 7 | Pending |
-| HOOK-02 | Phase 7 | Pending |
-| HOOK-03 | Phase 7 | Pending |
-| HOOK-04 | Phase 7 | Pending |
-| HOOK-05 | Phase 7 | Pending |
-| HOOK-06 | Phase 7 | Pending |
-| HOOK-07 | Phase 7 | Pending |
-| HOOK-08 | Phase 7 | Pending |
-| HOOK-09 | Phase 7 | Pending |
-| HOOK-10 | Phase 7 | Pending |
+| HOOK-01 | Phase 7 | Complete |
+| HOOK-02 | Phase 7 | Complete |
+| HOOK-03 | Phase 7 | Complete |
+| HOOK-04 | Phase 7 | Complete |
+| HOOK-05 | Phase 7 | Complete |
+| HOOK-06 | Phase 7 | Complete |
+| HOOK-07 | Phase 7 | Complete |
+| HOOK-08 | Phase 7 | Complete |
+| HOOK-09 | Phase 7 | Complete |
+| HOOK-10 | Phase 7 | Complete |
 | CMD-01 | Phase 8 | Pending |
 | CMD-02 | Phase 8 | Pending |
 | CMD-03 | Phase 8 | Pending |
@@ -274,4 +274,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-19*
-*Last updated: 2026-01-20 - Phase 6 requirements marked Complete*
+*Last updated: 2026-01-25 - Phase 7 requirements marked Complete*

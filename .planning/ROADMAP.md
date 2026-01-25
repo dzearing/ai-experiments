@@ -18,7 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Permissions & Modes** - Permission dialogs and execution modes
 - [x] **Phase 5: Configuration System** - CLAUDE.md, settings, and rules loading
 - [x] **Phase 6: Extended Tools** - Bash, web tools, notebooks, and tool polish
-- [ ] **Phase 7: Hooks System** - Pre/post tool hooks and lifecycle hooks
+- [x] **Phase 7: Hooks System** - Pre/post tool hooks and lifecycle hooks
 - [ ] **Phase 8: Commands & Skills** - Slash commands and skills system
 - [ ] **Phase 9: Subagents** - Task tool and subagent visualization
 - [ ] **Phase 10: MCP Integration** - MCP servers and custom tool discovery
@@ -148,9 +148,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 07-01-PLAN.md — Hook types and HooksService foundation
-- [ ] 07-02-PLAN.md — Tool hooks (PreToolUse/PostToolUse) with pattern matching
-- [ ] 07-03-PLAN.md — Lifecycle and permission hooks (Session, Subagent, Prompt, PreCompact)
+- [x] 07-01-PLAN.md — Hook types and HooksService foundation
+- [x] 07-02-PLAN.md — Tool hooks (PreToolUse/PostToolUse) with pattern matching
+- [x] 07-03-PLAN.md — Lifecycle and permission hooks (Session, Subagent, Prompt, PreCompact)
 
 ### Phase 8: Commands & Skills
 **Goal**: Slash commands and skills system work
@@ -225,11 +225,11 @@ Note: Phases 5 and 8 (Configuration, Commands) can run in parallel with Phases 3
 | 4. Permissions & Modes | 3/3 | Complete | 2026-01-20 |
 | 5. Configuration System | 2/2 | Complete | 2026-01-20 |
 | 6. Extended Tools | 7/7 | Complete | 2026-01-19 |
-| 7. Hooks System | 0/3 | Planned | - |
+| 7. Hooks System | 3/3 | Complete | 2026-01-25 |
 | 8. Commands & Skills | 0/4 | Not started | - |
 | 9. Subagents | 0/3 | Not started | - |
 | 10. MCP Integration | 0/6 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-19*
-*Last updated: 2026-01-24 - Phase 7 planned (3 plans in 2 waves)*
+*Last updated: 2026-01-25 - Phase 7 complete*
