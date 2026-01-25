@@ -165,12 +165,15 @@ export function useSlashCommands({
   }, [cwd]);
 
   // Combine built-in and custom commands
+  // Filter to type === 'command' only - skills are invoked via the Skill tool, not slash commands
   const commands = useMemo(() => {
-    const customSlashCommands: SlashCommand[] = customCommands.map((cmd) => ({
-      name: cmd.name,
-      description: cmd.description,
-      usage: cmd.argumentHint ? `/${cmd.name} ${cmd.argumentHint}` : `/${cmd.name}`,
-    }));
+    const customSlashCommands: SlashCommand[] = customCommands
+      .filter((cmd) => cmd.type === 'command')
+      .map((cmd) => ({
+        name: cmd.name,
+        description: cmd.description,
+        usage: cmd.argumentHint ? `/${cmd.name} ${cmd.argumentHint}` : `/${cmd.name}`,
+      }));
 
     return [...BUILTIN_COMMANDS, ...customSlashCommands];
   }, [customCommands]);
