@@ -26,6 +26,7 @@ export function ChatView() {
     isStreaming,
     isThinking,
     thinkingContent,
+    sessionId,
     contextUsage,
     error,
     permissionRequest,
@@ -68,8 +69,10 @@ export function ChatView() {
   const { commands, handleCommand } = useSlashCommands({
     clearConversation: handleClearConversation,
     addSystemMessage,
+    sendMessage,
     contextUsage,
     permissionMode,
+    sessionId,
   });
 
   // Cycle through permission modes for keyboard shortcut
