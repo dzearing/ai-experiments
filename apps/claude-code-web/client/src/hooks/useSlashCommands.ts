@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
-import { TrashIcon } from '@ui-kit/icons/TrashIcon';
-import { HelpIcon } from '@ui-kit/icons/HelpIcon';
+import { ClockIcon } from '@ui-kit/icons/ClockIcon';
 import { GearIcon } from '@ui-kit/icons/GearIcon';
+import { HelpIcon } from '@ui-kit/icons/HelpIcon';
+import { InfoCircleIcon } from '@ui-kit/icons/InfoCircleIcon';
+import { TrashIcon } from '@ui-kit/icons/TrashIcon';
 import type { SlashCommand, SlashCommandResult } from '@ui-kit/react-chat';
 
 import type { CommandDefinition } from '../types/commands';
@@ -24,10 +26,28 @@ const BUILTIN_COMMANDS: SlashCommand[] = [
     usage: '/help',
   },
   {
-    name: 'status',
-    description: 'Show context usage and permission mode',
+    name: 'model',
+    description: 'View or change the AI model',
     icon: GearIcon({}),
+    usage: '/model [name]',
+  },
+  {
+    name: 'status',
+    description: 'Show session status and context usage',
+    icon: InfoCircleIcon({}),
     usage: '/status',
+  },
+  {
+    name: 'config',
+    description: 'Show configuration info',
+    icon: GearIcon({}),
+    usage: '/config',
+  },
+  {
+    name: 'cost',
+    description: 'Show token usage and cost estimate',
+    icon: ClockIcon({}),
+    usage: '/cost',
   },
 ];
 
@@ -41,11 +61,23 @@ export interface UseSlashCommandsOptions {
   /** Callback to add a system message to the chat */
   addSystemMessage: (content: string) => void;
 
+  /** Callback to send a user message to the conversation */
+  sendMessage?: (prompt: string) => void;
+
   /** Current context usage statistics */
-  contextUsage?: { input_tokens: number; output_tokens: number } | null;
+  contextUsage?: { input_tokens: number; output_tokens: number; cache_read_tokens?: number } | null;
 
   /** Current permission mode */
   permissionMode?: string;
+
+  /** Current session ID */
+  sessionId?: string | null;
+
+  /** Current model info */
+  modelInfo?: { id: string; name: string };
+
+  /** Current working directory */
+  cwd?: string;
 }
 
 /**
@@ -89,12 +121,19 @@ function generateHelpText(commands: SlashCommand[]): string {
 export function useSlashCommands({
   clearConversation,
   addSystemMessage,
+  sendMessage,
   contextUsage,
   permissionMode,
+  sessionId,
+  modelInfo,
+  cwd: cwdOption,
 }: UseSlashCommandsOptions): UseSlashCommandsReturn {
   const [customCommands, setCustomCommands] = useState<CommandDefinition[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Working directory for commands
+  const cwd = cwdOption || window.location.pathname || '/';
 
   // Fetch commands on mount
   useEffect(() => {
@@ -102,7 +141,6 @@ export function useSlashCommands({
       try {
         // Use configured API URL or default to localhost
         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3002';
-        const cwd = window.location.pathname || '/';
 
         const response = await fetch(`${apiUrl}/api/commands?cwd=${encodeURIComponent(cwd)}`);
 
@@ -124,7 +162,7 @@ export function useSlashCommands({
     };
 
     fetchCommands();
-  }, []);
+  }, [cwd]);
 
   // Combine built-in and custom commands
   const commands = useMemo(() => {
@@ -137,9 +175,45 @@ export function useSlashCommands({
     return [...BUILTIN_COMMANDS, ...customSlashCommands];
   }, [customCommands]);
 
+  // Execute custom command by calling server API
+  const executeCustomCommand = useCallback(
+    async (commandName: string, args: string) => {
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3002';
+
+        const response = await fetch(`${apiUrl}/api/commands/execute`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ command: commandName, args, cwd }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+
+          addSystemMessage(`Error executing command: ${errorData.error || response.statusText}`);
+
+          return;
+        }
+
+        const data = await response.json();
+
+        // Send processed content as a user message
+        if (sendMessage && data.content) {
+          sendMessage(data.content);
+        } else if (data.content) {
+          addSystemMessage(`Command output:\n\n${data.content}`);
+        }
+      } catch (err) {
+        console.error('Failed to execute custom command:', err);
+        addSystemMessage(`Failed to execute command: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      }
+    },
+    [cwd, addSystemMessage, sendMessage]
+  );
+
   // Handle command execution
   const handleCommand = useCallback(
-    (command: string, _args: string): SlashCommandResult => {
+    (command: string, args: string): SlashCommandResult => {
       switch (command) {
         case 'clear':
           clearConversation();
@@ -151,21 +225,44 @@ export function useSlashCommands({
 
           return { handled: true, clearInput: true };
 
-        case 'status': {
-          const lines = ['## Status', ''];
-
-          // Context usage
-          if (contextUsage) {
-            const { input_tokens, output_tokens } = contextUsage;
-
-            lines.push('### Context Usage');
-            lines.push(`- Input tokens: ${input_tokens.toLocaleString()}`);
-            lines.push(`- Output tokens: ${output_tokens.toLocaleString()}`);
-            lines.push('');
+        case 'model': {
+          if (args.trim()) {
+            addSystemMessage('Model switching is not yet supported. Use the settings to change models.');
+          } else if (modelInfo) {
+            addSystemMessage(`## Current Model\n\n- **ID:** ${modelInfo.id}\n- **Name:** ${modelInfo.name}`);
           } else {
-            lines.push('No context usage data available.');
+            addSystemMessage('## Current Model\n\nUsing default model (claude-sonnet-4-5-20250929)');
+          }
+
+          return { handled: true, clearInput: true };
+        }
+
+        case 'status': {
+          const lines = ['## Session Status', ''];
+
+          // Session ID
+          if (sessionId) {
+            lines.push(`**Session:** ${sessionId}`);
             lines.push('');
           }
+
+          // Context usage
+          lines.push('### Context Usage');
+
+          if (contextUsage) {
+            const { input_tokens, output_tokens, cache_read_tokens } = contextUsage;
+
+            lines.push(`- Input tokens: ${input_tokens.toLocaleString()}`);
+            lines.push(`- Output tokens: ${output_tokens.toLocaleString()}`);
+
+            if (cache_read_tokens !== undefined) {
+              lines.push(`- Cache read tokens: ${cache_read_tokens.toLocaleString()}`);
+            }
+          } else {
+            lines.push('No context usage data available.');
+          }
+
+          lines.push('');
 
           // Permission mode
           lines.push('### Permission Mode');
@@ -176,16 +273,75 @@ export function useSlashCommands({
           return { handled: true, clearInput: true };
         }
 
-        default:
+        case 'config': {
+          const lines = ['## Configuration', ''];
+
+          // Working directory
+          lines.push('### Working Directory');
+          lines.push(`\`${cwd || 'Not set'}\``);
+          lines.push('');
+
+          // Permission mode
+          lines.push('### Permission Mode');
+          lines.push(`**${permissionMode || 'default'}**`);
+          lines.push('');
+
+          // Custom commands count
+          lines.push('### Custom Commands');
+          lines.push(`${customCommands.length} command(s) loaded`);
+
+          addSystemMessage(lines.join('\n'));
+
+          return { handled: true, clearInput: true };
+        }
+
+        case 'cost': {
+          const lines = ['## Token Usage & Cost Estimate', ''];
+
+          if (contextUsage) {
+            const { input_tokens, output_tokens, cache_read_tokens } = contextUsage;
+
+            // Pricing for Claude 3.5 Sonnet (per million tokens)
+            const inputPricePerMillion = 3;
+            const outputPricePerMillion = 15;
+            const cacheReadPricePerMillion = 0.3;
+
+            const inputCost = (input_tokens / 1_000_000) * inputPricePerMillion;
+            const outputCost = (output_tokens / 1_000_000) * outputPricePerMillion;
+            const cacheReadCost = cache_read_tokens
+              ? (cache_read_tokens / 1_000_000) * cacheReadPricePerMillion
+              : 0;
+            const totalCost = inputCost + outputCost + cacheReadCost;
+
+            lines.push('### Token Breakdown');
+            lines.push(`| Type | Tokens | Cost |`);
+            lines.push(`|------|--------|------|`);
+            lines.push(`| Input | ${input_tokens.toLocaleString()} | $${inputCost.toFixed(4)} |`);
+            lines.push(`| Output | ${output_tokens.toLocaleString()} | $${outputCost.toFixed(4)} |`);
+
+            if (cache_read_tokens !== undefined) {
+              lines.push(`| Cache Read | ${cache_read_tokens.toLocaleString()} | $${cacheReadCost.toFixed(4)} |`);
+            }
+
+            lines.push(`| **Total** | | **$${totalCost.toFixed(4)}** |`);
+            lines.push('');
+            lines.push('*Prices based on Claude 3.5 Sonnet: $3/MTok input, $15/MTok output, $0.30/MTok cache read*');
+          } else {
+            lines.push('No token usage data available.');
+          }
+
+          addSystemMessage(lines.join('\n'));
+
+          return { handled: true, clearInput: true };
+        }
+
+        default: {
           // Check if it's a custom command
           const isCustomCommand = customCommands.some((cmd) => cmd.name === command);
 
           if (isCustomCommand) {
-            // Custom command execution will be implemented in Plan 04
-            addSystemMessage(
-              `Custom command **/\`${command}\`** recognized. ` +
-                `Full execution will be implemented in a future update.`
-            );
+            // Execute custom command asynchronously (fire and forget)
+            executeCustomCommand(command, args);
 
             return { handled: true, clearInput: true };
           }
@@ -194,9 +350,21 @@ export function useSlashCommands({
           addSystemMessage(`Unknown command: **/${command}**\n\nType **/help** to see available commands.`);
 
           return { handled: true, clearInput: true };
+        }
       }
     },
-    [clearConversation, addSystemMessage, commands, contextUsage, permissionMode, customCommands]
+    [
+      clearConversation,
+      addSystemMessage,
+      commands,
+      contextUsage,
+      permissionMode,
+      sessionId,
+      modelInfo,
+      cwd,
+      customCommands,
+      executeCustomCommand,
+    ]
   );
 
   return {
