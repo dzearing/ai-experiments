@@ -42,7 +42,7 @@ export interface UseSlashCommandsOptions {
   addSystemMessage: (content: string) => void;
 
   /** Current context usage statistics */
-  contextUsage?: { inputTokens: number; outputTokens: number; cacheReadTokens?: number } | null;
+  contextUsage?: { input_tokens: number; output_tokens: number } | null;
 
   /** Current permission mode */
   permissionMode?: string;
@@ -156,14 +156,11 @@ export function useSlashCommands({
 
           // Context usage
           if (contextUsage) {
-            const { inputTokens, outputTokens, cacheReadTokens } = contextUsage;
+            const { input_tokens, output_tokens } = contextUsage;
 
             lines.push('### Context Usage');
-            lines.push(`- Input tokens: ${inputTokens.toLocaleString()}`);
-            lines.push(`- Output tokens: ${outputTokens.toLocaleString()}`);
-            if (cacheReadTokens !== undefined) {
-              lines.push(`- Cache read tokens: ${cacheReadTokens.toLocaleString()}`);
-            }
+            lines.push(`- Input tokens: ${input_tokens.toLocaleString()}`);
+            lines.push(`- Output tokens: ${output_tokens.toLocaleString()}`);
             lines.push('');
           } else {
             lines.push('No context usage data available.');

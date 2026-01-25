@@ -1,9 +1,10 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
-import type { ChatInputSubmitData } from '@ui-kit/react-chat';
+import type { ChatInputSubmitData, ChatPanelMessage } from '@ui-kit/react-chat';
 import { ChatPanel, ChatInput, ThinkingIndicator } from '@ui-kit/react-chat';
 
 import { useConversation } from '../hooks/useConversation';
+import { useSlashCommands } from '../hooks/useSlashCommands';
 import { AskUserDialog } from './AskUserDialog';
 import { ContextUsage } from './ContextUsage';
 import { ModeSelector } from './ModeSelector';
@@ -19,7 +20,7 @@ import styles from './ChatView.module.css';
  */
 export function ChatView() {
   const {
-    messages,
+    messages: conversationMessages,
     isStreaming,
     isThinking,
     thinkingContent,
@@ -30,10 +31,51 @@ export function ChatView() {
     permissionMode,
     deniedPermissions,
     sendMessage,
+    clearConversation,
     changePermissionMode,
     respondToPermission,
     respondToQuestion,
   } = useConversation();
+
+  // System messages from commands (separate from conversation)
+  const [systemMessages, setSystemMessages] = useState<ChatPanelMessage[]>([]);
+
+  // Add a system message to the chat (for command output)
+  const addSystemMessage = useCallback((content: string) => {
+    const msg: ChatPanelMessage = {
+      id: `system-${Date.now()}`,
+      content,
+      parts: [{ type: 'text', text: content }],
+      timestamp: new Date(),
+      senderName: 'System',
+      isOwn: false,
+      renderMarkdown: true,
+    };
+
+    setSystemMessages((prev) => [...prev, msg]);
+  }, []);
+
+  // Handle clearing conversation (also clear system messages)
+  const handleClearConversation = useCallback(() => {
+    clearConversation();
+    setSystemMessages([]);
+  }, [clearConversation]);
+
+  // Slash commands
+  const { commands, handleCommand } = useSlashCommands({
+    clearConversation: handleClearConversation,
+    addSystemMessage,
+    contextUsage,
+    permissionMode,
+  });
+
+  // Combine conversation and system messages
+  const messages = [...conversationMessages, ...systemMessages].sort((a, b) => {
+    const timeA = a.timestamp instanceof Date ? a.timestamp.getTime() : new Date(a.timestamp).getTime();
+    const timeB = b.timestamp instanceof Date ? b.timestamp.getTime() : new Date(b.timestamp).getTime();
+
+    return timeA - timeB;
+  });
 
   const handleSubmit = useCallback((data: ChatInputSubmitData) => {
     if (data.content.trim()) {
@@ -151,6 +193,8 @@ export function ChatView() {
       <footer className={styles.inputArea}>
         <ChatInput
           onSubmit={handleSubmit}
+          commands={commands}
+          onCommand={handleCommand}
           disabled={isStreaming}
           placeholder="Message Claude..."
           autoFocus={true}
