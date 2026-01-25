@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-19)
 ## Current Position
 
 Phase: 8 of 10 (Commands & Skills)
-Plan: 0 of 4 in current phase
-Status: Ready to plan
-Last activity: 2026-01-25 - Phase 7 complete
+Plan: 1 of 4 in current phase
+Status: In progress
+Last activity: 2026-01-25 - Completed 08-01-PLAN.md
 
-Progress: [████████████████████] 71% (25/35 plans) — Phase 7 verified
+Progress: [█████████████████████] 74% (26/35 plans) — Phase 8 in progress
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 25
+- Total plans completed: 26
 - Average duration: 3.3 min
-- Total execution time: 87.3 min
+- Total execution time: 89.8 min
 
 **By Phase:**
 
@@ -34,9 +34,10 @@ Progress: [████████████████████] 71% (25
 | 5-Configuration System | 2/2 | 8.0 min | 4.0 min |
 | 6-Extended Tools | 7/7 | 27.0 min | 3.9 min |
 | 7-Hooks System | 3/3 | 7.0 min | 2.3 min |
+| 8-Commands & Skills | 1/4 | 2.5 min | 2.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 06-06 (3m), 06-07 (4m), 07-01 (2m), 07-02 (2m), 07-03 (3m)
+- Last 5 plans: 06-07 (4m), 07-01 (2m), 07-02 (2m), 07-03 (3m), 08-01 (2.5m)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -119,6 +120,8 @@ Recent decisions affecting current work:
 - PreCompact hooks fire before context summarization (HOOK-08)
 - Each hook event type has dedicated factory function
 - Hook factories accept options object with action field for configuration
+- Map-based deduplication for command scope precedence (project overrides user)
+- CommandSummary type excludes full content for API responses
 
 ### Pending Todos
 
@@ -131,5 +134,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-25
-Stopped at: Phase 7 complete and verified
+Stopped at: Completed 08-01-PLAN.md
 Resume file: None
