@@ -183,12 +183,12 @@ Note: UI-08 (Vim mode) is deferred per user guidance.
   3. Custom agent definitions load from options.agents
   4. Subagent messages display identified by parent relationship
   5. Subagent spawning shows visual animation and progress tracking
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 09-01: Task tool and subagent spawning
-- [ ] 09-02: Subagent message routing and display
-- [ ] 09-03: Subagent visualization and progress
+- [ ] 09-01-PLAN.md — Task tool and subagent SSE lifecycle events
+- [ ] 09-02-PLAN.md — Client subagent tracking and message identification
+- [ ] 09-03-PLAN.md — SubagentIndicator UI component and ChatView integration
 
 ### Phase 10: MCP Integration
 **Goal**: MCP servers connect and expose custom tools
@@ -229,9 +229,9 @@ Note: Phases 5 and 8 (Configuration, Commands) can run in parallel with Phases 3
 | 6. Extended Tools | 7/7 | Complete | 2026-01-19 |
 | 7. Hooks System | 3/3 | Complete | 2026-01-25 |
 | 8. Commands & Skills | 5/5 | Complete | 2026-01-25 |
-| 9. Subagents | 0/3 | Not started | - |
+| 9. Subagents | 0/3 | Planned | - |
 | 10. MCP Integration | 0/6 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-19*
-*Last updated: 2026-01-25 - Phase 8 complete*
+*Last updated: 2026-01-25 - Phase 9 planned*
