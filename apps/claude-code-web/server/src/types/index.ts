@@ -163,8 +163,19 @@ export interface ModeChangedEvent {
   timestamp: number;
 }
 
+// Hook Activity SSE Event
+export interface HookActivityEvent {
+  type: 'hook_activity';
+  hookEvent: string;
+  toolName?: string;
+  decision?: 'allow' | 'deny' | 'ask';
+  reason?: string;
+  timestamp: number;
+}
+
 // Union of permission-related SSE events
 export type PermissionSSEEvent =
   | PermissionRequestEvent
   | QuestionRequestEvent
-  | ModeChangedEvent;
+  | ModeChangedEvent
+  | HookActivityEvent;

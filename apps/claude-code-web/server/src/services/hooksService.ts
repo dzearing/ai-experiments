@@ -6,10 +6,14 @@
  *
  * Built-in actions:
  * - 'log': Log hook events to console
- * - 'notify': Send notification (placeholder for SSE integration)
+ * - 'notify': Send notification via callback
  * - 'block-pattern': Block tools matching a pattern
  * - 'allow': Auto-approve permission requests
  * - 'deny': Auto-deny permission requests with optional reason
+ * - 'block-dangerous': Block dangerous bash commands (PreToolUse only)
+ * - 'auto-approve-readonly': Auto-approve read-only tools (PreToolUse only)
+ * - 'inject-message': Inject system message for Claude (PreToolUse only)
+ * - 'add-context': Add context after tool execution (PostToolUse only)
  */
 
 import { minimatch } from 'minimatch';
@@ -22,8 +26,37 @@ import type {
   HookInput,
   PreToolUseHookInput,
 } from '../types/hooks.js';
+import { createPreToolUseHook } from '../hooks/preToolUseHook.js';
+import { createPostToolUseHook } from '../hooks/postToolUseHook.js';
+
+/**
+ * Notification callback shape for hook activity events.
+ */
+export interface HookNotification {
+  hookEvent: string;
+  toolName?: string;
+  decision?: string;
+  reason?: string;
+}
 
 export class HooksService {
+  private notifyCallback?: (event: HookNotification) => void;
+
+  /**
+   * Set a callback to receive hook activity notifications.
+   * Used for SSE notifications to client.
+   */
+  setNotifyCallback(callback: (event: HookNotification) => void): void {
+    this.notifyCallback = callback;
+  }
+
+  /**
+   * Clear the notification callback.
+   */
+  clearNotifyCallback(): void {
+    this.notifyCallback = undefined;
+  }
+
   /**
    * Build SDK-compatible hook callbacks from configuration.
    * Transforms settings.json hook definitions into TypeScript callbacks.
@@ -40,7 +73,7 @@ export class HooksService {
 
       hooks[hookEvent] = matchers.map(m => ({
         matcher: m.matcher,
-        hooks: [this.createCallbackForAction(m.action, m.options)]
+        hooks: [this.wrapWithNotification(this.createCallbackForAction(hookEvent, m.action, m.options), hookEvent)]
       }));
     }
 
@@ -48,122 +81,76 @@ export class HooksService {
   }
 
   /**
-   * Create a hook callback for a built-in action type.
-   * Supported actions: 'log', 'notify', 'block-pattern', 'allow', 'deny'
+   * Wrap a hook callback to send notifications.
    */
-  private createCallbackForAction(action: string, options?: Record<string, unknown>): HookCallback {
-    switch (action) {
-      case 'log':
-        return this.createLogHook();
-      case 'notify':
-        return this.createNotifyHook(options);
-      case 'block-pattern':
-        return this.createBlockPatternHook(options);
-      case 'allow':
-        return this.createAllowHook();
-      case 'deny':
-        return this.createDenyHook(options);
+  private wrapWithNotification(callback: HookCallback, hookEvent: HookEvent): HookCallback {
+    return async (input, toolUseID, options) => {
+      const result = await callback(input, toolUseID, options);
+
+      // Extract tool name if available
+      let toolName: string | undefined;
+
+      if (input.hook_event_name === 'PreToolUse' || input.hook_event_name === 'PostToolUse') {
+        toolName = (input as PreToolUseHookInput).tool_name;
+      }
+
+      // Notify if callback is registered
+      if (this.notifyCallback) {
+        this.notifyCallback({
+          hookEvent,
+          toolName,
+          decision: result.hookSpecificOutput?.permissionDecision,
+          reason: result.hookSpecificOutput?.permissionDecisionReason
+        });
+      }
+
+      return result;
+    };
+  }
+
+  /**
+   * Create a hook callback for a specific event and action.
+   */
+  private createCallbackForAction(event: HookEvent, action: string, options?: Record<string, unknown>): HookCallback {
+    switch (event) {
+      case 'PreToolUse':
+        return createPreToolUseHook({ ...options, action });
+      case 'PostToolUse':
+        return createPostToolUseHook({ ...options, action });
       default:
-        console.warn(`[HooksService] Unknown hook action: ${action}`);
-        return this.createNoOpHook();
+        // For other events, use generic handlers (implemented in 07-03)
+        return this.createGenericHook(action, options);
     }
   }
 
   /**
-   * Create a logging hook that outputs hook events to console.
+   * Generic hook implementation for events not yet specialized.
    */
-  private createLogHook(): HookCallback {
-    return async (input: HookInput) => {
-      console.log(`[Hook] ${input.hook_event_name}`, JSON.stringify(input, null, 2));
-
-      return {};
-    };
-  }
-
-  /**
-   * Create a notification hook (placeholder for SSE integration).
-   * Will be implemented in subsequent plans to send events to the client.
-   */
-  private createNotifyHook(_options?: Record<string, unknown>): HookCallback {
-    return async (input: HookInput) => {
-      // Placeholder - will send SSE notification in future plans
-      console.log(`[Hook Notify] ${input.hook_event_name}`);
-
-      return {};
-    };
-  }
-
-  /**
-   * Create a hook that blocks tools matching specified patterns.
-   * Options:
-   * - patterns: string[] - Glob patterns to block
-   * - reason: string - Denial reason message
-   */
-  private createBlockPatternHook(options?: Record<string, unknown>): HookCallback {
-    const patterns = (options?.patterns as string[]) || [];
-    const reason = (options?.reason as string) || 'Blocked by pattern';
-
-    return async (input: HookInput) => {
-      // Only applies to PreToolUse events
-      if (input.hook_event_name !== 'PreToolUse') {
-        return {};
-      }
-
-      const preInput = input as PreToolUseHookInput;
-      const toolName = preInput.tool_name;
-
-      // Check if tool matches any blocked pattern
-      for (const pattern of patterns) {
-        if (this.matchesTool(toolName, pattern)) {
-          return {
-            hookSpecificOutput: {
-              hookEventName: input.hook_event_name,
-              permissionDecision: 'deny' as const,
-              permissionDecisionReason: `${reason}: ${pattern}`
-            }
-          };
-        }
-      }
-
-      return {};
-    };
-  }
-
-  /**
-   * Create a hook that auto-approves permission requests.
-   */
-  private createAllowHook(): HookCallback {
-    return async (input: HookInput) => ({
-      hookSpecificOutput: {
-        hookEventName: input.hook_event_name,
-        permissionDecision: 'allow' as const
-      }
-    });
-  }
-
-  /**
-   * Create a hook that auto-denies permission requests.
-   * Options:
-   * - reason: string - Denial reason message
-   */
-  private createDenyHook(options?: Record<string, unknown>): HookCallback {
-    const reason = (options?.reason as string) || 'Denied by hook';
-
-    return async (input: HookInput) => ({
-      hookSpecificOutput: {
-        hookEventName: input.hook_event_name,
-        permissionDecision: 'deny' as const,
-        permissionDecisionReason: reason
-      }
-    });
-  }
-
-  /**
-   * Create a no-op hook that does nothing.
-   * Used as fallback for unknown action types.
-   */
-  private createNoOpHook(): HookCallback {
-    return async () => ({});
+  private createGenericHook(action: string, options?: Record<string, unknown>): HookCallback {
+    switch (action) {
+      case 'log':
+        return async (input: HookInput) => {
+          console.log(`[Hook] ${input.hook_event_name}`, input);
+          return {};
+        };
+      case 'allow':
+        return async (input: HookInput) => ({
+          hookSpecificOutput: {
+            hookEventName: input.hook_event_name,
+            permissionDecision: 'allow' as const
+          }
+        });
+      case 'deny':
+        return async (input: HookInput) => ({
+          hookSpecificOutput: {
+            hookEventName: input.hook_event_name,
+            permissionDecision: 'deny' as const,
+            permissionDecisionReason: (options?.reason as string) || 'Denied by hook'
+          }
+        });
+      default:
+        return async () => ({});
+    }
   }
 
   /**
