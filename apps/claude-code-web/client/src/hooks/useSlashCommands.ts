@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, createElement } from 'react';
 
 import { ClockIcon } from '@ui-kit/icons/ClockIcon';
 import { GearIcon } from '@ui-kit/icons/GearIcon';
@@ -16,37 +16,37 @@ const BUILTIN_COMMANDS: SlashCommand[] = [
   {
     name: 'clear',
     description: 'Clear conversation history',
-    icon: TrashIcon({}),
+    icon: createElement(TrashIcon),
     usage: '/clear',
   },
   {
     name: 'help',
     description: 'Show available commands',
-    icon: HelpIcon({}),
+    icon: createElement(HelpIcon),
     usage: '/help',
   },
   {
     name: 'model',
     description: 'View or change the AI model',
-    icon: GearIcon({}),
+    icon: createElement(GearIcon),
     usage: '/model [name]',
   },
   {
     name: 'status',
     description: 'Show session status and context usage',
-    icon: InfoCircleIcon({}),
+    icon: createElement(InfoCircleIcon),
     usage: '/status',
   },
   {
     name: 'config',
     description: 'Show configuration info',
-    icon: GearIcon({}),
+    icon: createElement(GearIcon),
     usage: '/config',
   },
   {
     name: 'cost',
     description: 'Show token usage and cost estimate',
-    icon: ClockIcon({}),
+    icon: createElement(ClockIcon),
     usage: '/cost',
   },
 ];
