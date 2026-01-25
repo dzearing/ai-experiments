@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-19)
 ## Current Position
 
 Phase: 8 of 10 (Commands & Skills)
-Plan: 3 of 4 in current phase
-Status: In progress
-Last activity: 2026-01-25 - Completed 08-05-PLAN.md
+Plan: 4 of 4 in current phase
+Status: Phase complete
+Last activity: 2026-01-25 - Completed 08-04-PLAN.md
 
-Progress: [██████████████████████] 80% (28/35 plans) -- Phase 8 in progress
+Progress: [██████████████████████] 83% (29/35 plans) -- Phase 8 complete
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 28
-- Average duration: 3.4 min
-- Total execution time: 98.8 min
+- Total plans completed: 29
+- Average duration: 3.5 min
+- Total execution time: 102.3 min
 
 **By Phase:**
 
@@ -34,10 +34,10 @@ Progress: [██████████████████████] 8
 | 5-Configuration System | 2/2 | 8.0 min | 4.0 min |
 | 6-Extended Tools | 7/7 | 27.0 min | 3.9 min |
 | 7-Hooks System | 3/3 | 7.0 min | 2.3 min |
-| 8-Commands & Skills | 3/4 | 11.5 min | 3.8 min |
+| 8-Commands & Skills | 4/4 | 15.0 min | 3.8 min |
 
 **Recent Trend:**
-- Last 5 plans: 07-03 (3m), 08-01 (2.5m), 08-02 (6m), 08-05 (3m)
+- Last 5 plans: 08-01 (2.5m), 08-02 (6m), 08-03 (3.5m), 08-04 (3.5m)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -124,6 +124,8 @@ Recent decisions affecting current work:
 - CommandSummary type excludes full content for API responses
 - System messages as separate state in ChatView (command output distinct from conversation)
 - Snake_case for contextUsage to match existing UsageStats type
+- Fire-and-forget pattern for custom command execution (sync result, async work)
+- ClockIcon for /cost command (no DollarIcon available in ui-kit)
 
 ### Pending Todos
 
@@ -136,5 +138,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-25
-Stopped at: Completed 08-05-PLAN.md
+Stopped at: Completed 08-04-PLAN.md (Phase 8 complete)
 Resume file: None
