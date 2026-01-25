@@ -1,10 +1,9 @@
 /**
  * PostToolUse hook implementations.
- *
- * PostToolUse hooks fire after successful tool execution and can:
- * - Log tool results for debugging/auditing
- * - Inject additional context for Claude based on results
- * - Track metrics for tool execution
+ * These hooks run after tool execution, allowing:
+ * - Logging tool results
+ * - Injecting context for Claude
+ * - Tracking metrics
  */
 
 import type { HookCallback, PostToolUseHookInput } from '../types/hooks.js';
@@ -19,7 +18,7 @@ export const logToolResult: HookCallback = async (input) => {
   console.log(`[PostToolUse] ${postInput.tool_name} completed`, {
     tool: postInput.tool_name,
     inputKeys: Object.keys(postInput.tool_input),
-    responseType: typeof postInput.tool_response
+    responseType: typeof postInput.tool_response,
   });
 
   return {};
@@ -41,8 +40,8 @@ export function createContextInjectionHook(
       return {
         hookSpecificOutput: {
           hookEventName: 'PostToolUse',
-          additionalContext: context
-        }
+          additionalContext: context,
+        },
       };
     }
 
@@ -72,7 +71,7 @@ export function createMetricsHook(
  * This is the main factory used by HooksService.
  */
 export function createPostToolUseHook(options?: Record<string, unknown>): HookCallback {
-  const action = options?.action as string || 'log';
+  const action = (options?.action as string) || 'log';
 
   switch (action) {
     case 'log':

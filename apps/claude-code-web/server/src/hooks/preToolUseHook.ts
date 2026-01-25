@@ -1,11 +1,10 @@
 /**
  * PreToolUse hook implementations.
- *
- * PreToolUse hooks fire before tool execution and can:
- * - Block dangerous operations (return deny decision)
- * - Auto-approve safe operations (return allow decision)
- * - Modify tool input before execution (return updatedInput)
- * - Inject system messages for Claude to see
+ * These hooks intercept tool calls before execution, allowing:
+ * - Blocking dangerous operations
+ * - Auto-approving safe tools
+ * - Modifying tool input
+ * - Injecting system messages
  */
 
 import type { HookCallback, PreToolUseHookInput } from '../types/hooks.js';
@@ -28,7 +27,7 @@ export const blockDangerousCommands: HookCallback = async (input) => {
     /rm\s+-fr\s+\//,
     /mkfs\./,
     /dd\s+if=.*of=\/dev/,
-    /:\s*\(\)\s*\{\s*:\s*\|\s*:\s*&\s*\}\s*;/,  // Fork bomb
+    /:\s*\(\)\s*\{\s*:\s*\|\s*:\s*&\s*\}\s*;/, // Fork bomb
   ];
 
   for (const pattern of dangerousPatterns) {
@@ -37,8 +36,8 @@ export const blockDangerousCommands: HookCallback = async (input) => {
         hookSpecificOutput: {
           hookEventName: 'PreToolUse',
           permissionDecision: 'deny',
-          permissionDecisionReason: `Blocked dangerous command matching: ${pattern.source}`
-        }
+          permissionDecisionReason: `Blocked dangerous command matching: ${pattern.source}`,
+        },
       };
     }
   }
@@ -60,8 +59,8 @@ export const autoApproveReadOnly: HookCallback = async (input) => {
       hookSpecificOutput: {
         hookEventName: 'PreToolUse',
         permissionDecision: 'allow',
-        permissionDecisionReason: 'Read-only tool auto-approved'
-      }
+        permissionDecisionReason: 'Read-only tool auto-approved',
+      },
     };
   }
 
@@ -73,7 +72,7 @@ export const autoApproveReadOnly: HookCallback = async (input) => {
  */
 export function createSystemMessageHook(message: string): HookCallback {
   return async () => ({
-    systemMessage: message
+    systemMessage: message,
   });
 }
 
@@ -94,8 +93,8 @@ export function createInputModifierHook(
       hookSpecificOutput: {
         hookEventName: 'PreToolUse',
         permissionDecision: 'allow',
-        updatedInput
-      }
+        updatedInput,
+      },
     };
   };
 }
@@ -120,8 +119,8 @@ export function createBlockPatternHook(
         hookSpecificOutput: {
           hookEventName: 'PreToolUse',
           permissionDecision: 'deny',
-          permissionDecisionReason: reason
-        }
+          permissionDecisionReason: reason,
+        },
       };
     }
 
@@ -130,11 +129,26 @@ export function createBlockPatternHook(
 }
 
 /**
+ * Log PreToolUse event.
+ */
+export const logPreToolUse: HookCallback = async (input) => {
+  if (input.hook_event_name !== 'PreToolUse') return {};
+
+  const preInput = input as PreToolUseHookInput;
+  console.log(`[PreToolUse] ${preInput.tool_name}`, {
+    tool: preInput.tool_name,
+    inputKeys: Object.keys(preInput.tool_input),
+  });
+
+  return {};
+};
+
+/**
  * Create a PreToolUse hook from configuration options.
  * This is the main factory used by HooksService.
  */
 export function createPreToolUseHook(options?: Record<string, unknown>): HookCallback {
-  const action = options?.action as string || 'log';
+  const action = (options?.action as string) || 'log';
 
   switch (action) {
     case 'block-dangerous':
@@ -142,18 +156,16 @@ export function createPreToolUseHook(options?: Record<string, unknown>): HookCal
     case 'auto-approve-readonly':
       return autoApproveReadOnly;
     case 'inject-message':
-      return createSystemMessageHook(options?.message as string || '');
+      return createSystemMessageHook((options?.message as string) || '');
     case 'block-pattern':
       return createBlockPatternHook(
-        options?.inputKey as string || 'command',
-        new RegExp(options?.pattern as string || ''),
-        options?.reason as string || 'Blocked by pattern hook'
+        (options?.inputKey as string) || 'command',
+        new RegExp((options?.pattern as string) || ''),
+        (options?.reason as string) || 'Blocked by pattern hook'
       );
+    case 'log':
+      return logPreToolUse;
     default:
-      // Default: log the tool use
-      return async (input) => {
-        console.log(`[PreToolUse] ${(input as PreToolUseHookInput).tool_name}`, input);
-        return {};
-      };
+      return logPreToolUse;
   }
 }
