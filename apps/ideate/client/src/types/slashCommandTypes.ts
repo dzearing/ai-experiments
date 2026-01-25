@@ -19,10 +19,14 @@ export interface SlashCommand {
  * Result returned by command execution
  */
 export interface SlashCommandResult {
-  /** The result content to display */
-  content: string;
+  /** The result content to display (for markdown/text formats) */
+  content?: string;
   /** Format of the content */
-  format: 'markdown' | 'text' | 'json';
+  format: 'markdown' | 'text' | 'json' | 'component';
   /** If true, show but don't persist to chat history */
   ephemeral?: boolean;
+  /** Component type to render (when format is 'component') */
+  componentType?: 'context' | string;
+  /** Structured data for component rendering (when format is 'component') */
+  data?: Record<string, unknown>;
 }

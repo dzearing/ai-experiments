@@ -14,6 +14,7 @@ import { useAgentSocket, type BaseServerMessage } from './useAgentSocket';
 import type { AgentProgressState } from './useAgentProgress';
 import type { ModelId } from './useModelPreference';
 import { createLogger } from '../utils/clientLogger';
+import type { SlashCommand } from '../types/slashCommandTypes';
 
 // Re-export types from agentTypes for backwards compatibility
 export type {
@@ -99,6 +100,10 @@ export interface UseIdeaAgentReturn {
   cancelRequest: () => void;
   /** Agent progress state */
   progress: AgentProgressState;
+  /** Available slash commands from server */
+  availableCommands: SlashCommand[];
+  /** Execute a slash command */
+  executeCommand: (command: string, args: string) => void;
 }
 
 /**
@@ -270,6 +275,8 @@ export function useIdeaAgent({
     updateIdeaContext,
     cancelRequest: base.cancelRequest,
     progress: base.progress,
+    availableCommands: base.availableCommands,
+    executeCommand: base.executeCommand,
   };
 }
 

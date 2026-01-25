@@ -4,5 +4,6 @@ export type {
   ChatMessageToolCall,
   ChatMessageTextPart,
   ChatMessageToolCallsPart,
+  ChatMessageComponentPart,
   ChatMessagePart,
 } from './ChatMessage';

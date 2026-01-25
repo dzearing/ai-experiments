@@ -600,17 +600,34 @@ export function useAgentSocket({
         break;
 
       case 'command_result':
+        setIsLoading(false); // Clear thinking indicator
         if (data.result) {
           // Add result as assistant message (unless ephemeral)
           if (!data.result.ephemeral) {
-            addMessage({
-              id: `cmd-${Date.now()}`,
-              role: 'assistant',
-              content: data.result.content,
-              timestamp: Date.now(),
-            });
+            // Handle component format - use parts array for rich rendering
+            if (data.result.format === 'component' && data.result.componentType && data.result.data) {
+              addMessage({
+                id: `cmd-${Date.now()}`,
+                role: 'assistant',
+                content: '', // Empty content since we use parts
+                timestamp: Date.now(),
+                parts: [{
+                  type: 'component',
+                  componentType: data.result.componentType,
+                  data: data.result.data,
+                }],
+              });
+            } else {
+              // Standard text/markdown format
+              addMessage({
+                id: `cmd-${Date.now()}`,
+                role: 'assistant',
+                content: data.result.content || '',
+                timestamp: Date.now(),
+              });
+            }
           }
-          log.log('Command result received', { command: data.command, ephemeral: data.result.ephemeral });
+          log.log('Command result received', { command: data.command, format: data.result.format, ephemeral: data.result.ephemeral });
         }
         break;
     }
@@ -823,6 +840,7 @@ export function useAgentSocket({
   const executeCommand = useCallback((command: string, args: string) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       log.log('Executing command', { command, args });
+      setIsLoading(true); // Show thinking indicator while waiting for response
       wsRef.current.send(JSON.stringify({
         type: 'slash_command',
         command,

@@ -269,7 +269,8 @@ export function IdeaDialog({
   const { user } = useAuth();
   const { createIdea, updateIdea, moveIdea } = useIdeas();
   const { topics, getTopicReferences, getAncestors } = useTopics();
-  const { modelId, setModelId, modelInfo } = useModelPreference();
+  // modelId is used for agent hooks; setModelId and modelInfo will be used for /model command
+  const { modelId, setModelId: _setModelId, modelInfo: _modelInfo } = useModelPreference();
 
   const isNewIdea = !idea;
 
@@ -894,28 +895,10 @@ export function IdeaDialog({
     }
   }, [phase, ideaAgent.isConnected, ideaContext, updateIdeaContext]);
 
-  // Chat commands (/clear, /help, /model)
+  // Chat commands (server-side: /clear, /help, /context)
   const { commands, handleCommand } = useChatCommands({
-    clearMessages: clearHistory,
-    addMessage: (msg) => addLocalMessage({
-      id: msg.id,
-      role: msg.role === 'assistant' ? 'assistant' : 'user',
-      content: msg.content,
-      timestamp: msg.timestamp,
-    }),
-    helpText: `## Available Commands
-
-- **/clear** - Clear all chat history
-- **/help** - Show this help message
-- **/model** - View or change the AI model
-
-## Tips
-
-- Describe your idea in the editor on the right
-- Ask the agent for feedback, suggestions, or to help refine your idea
-- The agent can see your idea's title, summary, and description`,
-    currentModelInfo: modelInfo,
-    onModelChange: setModelId,
+    availableCommands: activeAgent.availableCommands || [],
+    executeCommand: activeAgent.executeCommand || (() => {}),
   });
 
   // Convert agent messages to ChatPanel format
@@ -947,6 +930,9 @@ export function IdeaDialog({
             } else if (part.type === 'tool_calls' && part.calls && part.calls.length > 0) {
               // Pass through tool calls
               parts.push({ type: 'tool_calls', calls: part.calls });
+            } else if (part.type === 'component' && part.componentType && part.data) {
+              // Pass through component parts for custom UI rendering (e.g., /context command)
+              parts.push({ type: 'component', componentType: part.componentType, data: part.data });
             }
           }
 

@@ -13,29 +13,54 @@ const MODEL_CONTEXT_LIMITS: Record<string, number> = {
   'default': 200000,
 };
 
-const ESTIMATED_SYSTEM_OVERHEAD = 3000;
-const ESTIMATED_TOOL_OVERHEAD = 30;
+// Estimated token costs for different context components
+const ESTIMATES = {
+  systemPrompt: 2500,
+  ideaDocument: 800,
+  toolDefinition: 150,
+  autocompactBuffer: 0.20,
+};
 
-function formatTokenCount(tokens: number): string {
-  if (tokens >= 1000) {
-    return `${(tokens / 1000).toFixed(1)}k`;
-  }
-
-  return tokens.toString();
+/**
+ * Category for context usage breakdown
+ */
+interface ContextCategory {
+  name: string;
+  tokens: number;
+  percent: number;
+  type: 'used' | 'free' | 'buffer';
 }
 
-function generateProgressBar(percentage: number, width = 20): string {
-  const filled = Math.round((percentage / 100) * width);
-  const empty = width - filled;
-
-  return '\u2593'.repeat(filled) + '\u2591'.repeat(empty);
+/**
+ * Tool/MCP server info
+ */
+interface ContextTool {
+  name: string;
+  tokens: number;
 }
 
-function getUsageIndicator(percentage: number): string {
-  if (percentage < 50) return '\u{1F7E2}'; // Green
-  if (percentage < 80) return '\u{1F7E1}'; // Yellow
-
-  return '\u{1F534}'; // Red
+/**
+ * Context display data structure - matches ContextDisplayData in react-chat
+ */
+interface ContextDisplayData {
+  model: string;
+  maxTokens: number;
+  usedTokens: number;
+  usedPercent: number;
+  freeTokens: number;
+  bufferTokens: number;
+  bufferPercent: number;
+  categories: ContextCategory[];
+  session: {
+    sessionId: string;
+    model: string;
+    messageCount: number;
+    inputTokens: number;
+    outputTokens: number;
+    ideaId?: string;
+  };
+  tools?: ContextTool[];
+  mcpServers?: ContextTool[];
 }
 
 export const contextCommand: SlashCommandHandler = {
@@ -46,60 +71,132 @@ export const contextCommand: SlashCommandHandler = {
   },
 
   async execute(_args: string, context: CommandContext): Promise<SlashCommandResult> {
-    const model = context.sessionInfo?.model || 'unknown';
+    const model = context.sessionInfo?.model || 'claude-sonnet-4';
     const maxTokens = MODEL_CONTEXT_LIMITS[model] || MODEL_CONTEXT_LIMITS.default;
 
+    // Calculate token usage by category
     const inputTokens = context.tokenUsage?.inputTokens || 0;
     const outputTokens = context.tokenUsage?.outputTokens || 0;
-    const messageTokens = inputTokens + outputTokens;
 
     const toolCount = context.sessionInfo?.tools?.length || 0;
-    const systemOverhead = ESTIMATED_SYSTEM_OVERHEAD + (toolCount * ESTIMATED_TOOL_OVERHEAD);
+    const mcpServerCount = context.sessionInfo?.mcpServers?.length || 0;
 
-    const totalTokens = messageTokens + systemOverhead;
-    const usagePercent = Math.round((totalTokens / maxTokens) * 100 * 10) / 10;
+    // Estimated breakdown
+    const systemPromptTokens = ESTIMATES.systemPrompt;
+    const toolTokens = toolCount * ESTIMATES.toolDefinition;
+    const mcpTokens = mcpServerCount * ESTIMATES.toolDefinition;
+    const ideaContextTokens = context.ideaId ? ESTIMATES.ideaDocument : 0;
+    const messageTokens = inputTokens + outputTokens;
 
-    const lines: string[] = [];
+    // Total used
+    const usedTokens = systemPromptTokens + toolTokens + mcpTokens + ideaContextTokens + messageTokens;
 
-    // Header
-    lines.push('## Context Usage\n');
+    // Buffer (reserved for autocompact)
+    const bufferTokens = Math.round(maxTokens * ESTIMATES.autocompactBuffer);
 
-    const indicator = getUsageIndicator(usagePercent);
-    const bar = generateProgressBar(usagePercent);
+    // Free space
+    const freeTokens = maxTokens - usedTokens - bufferTokens;
 
-    lines.push(`${indicator} **${model}**`);
-    lines.push(`\`${bar}\` ${formatTokenCount(totalTokens)}/${formatTokenCount(maxTokens)} tokens (${usagePercent.toFixed(1)}%)\n`);
+    // Percentages
+    const usedPercent = (usedTokens / maxTokens) * 100;
+    const bufferPercent = (bufferTokens / maxTokens) * 100;
 
-    // Category breakdown
-    lines.push('### Estimated Usage by Category\n');
-    lines.push(`- **System Prompt**: ~${formatTokenCount(ESTIMATED_SYSTEM_OVERHEAD)} (${((ESTIMATED_SYSTEM_OVERHEAD / maxTokens) * 100).toFixed(1)}%)`);
+    // Build categories array
+    const categories: ContextCategory[] = [
+      {
+        name: 'System prompt',
+        tokens: systemPromptTokens,
+        percent: (systemPromptTokens / maxTokens) * 100,
+        type: 'used',
+      },
+    ];
 
     if (toolCount > 0) {
-      const toolTokens = toolCount * ESTIMATED_TOOL_OVERHEAD;
-      lines.push(`- **Tools** (${toolCount}): ~${formatTokenCount(toolTokens)} (${((toolTokens / maxTokens) * 100).toFixed(1)}%)`);
+      categories.push({
+        name: `Tools (${toolCount})`,
+        tokens: toolTokens,
+        percent: (toolTokens / maxTokens) * 100,
+        type: 'used',
+      });
     }
 
-    lines.push(`- **Messages (Input)**: ${formatTokenCount(inputTokens)} (${((inputTokens / maxTokens) * 100).toFixed(1)}%)`);
-    lines.push(`- **Messages (Output)**: ${formatTokenCount(outputTokens)} (${((outputTokens / maxTokens) * 100).toFixed(1)}%)`);
-
-    // MCP servers
-    if (context.sessionInfo?.mcpServers && context.sessionInfo.mcpServers.length > 0) {
-      lines.push(`- **MCP Servers** (${context.sessionInfo.mcpServers.length}): ~${formatTokenCount(context.sessionInfo.mcpServers.length * 50)}`);
+    if (mcpServerCount > 0) {
+      categories.push({
+        name: `MCP servers (${mcpServerCount})`,
+        tokens: mcpTokens,
+        percent: (mcpTokens / maxTokens) * 100,
+        type: 'used',
+      });
     }
 
-    // Session info
-    lines.push('\n### Session Info\n');
-    lines.push(`- **Session ID**: \`${(context.sessionId || 'unknown').slice(0, 8)}...\``);
-    lines.push(`- **Messages**: ${context.messageCount}`);
+    if (ideaContextTokens > 0) {
+      categories.push({
+        name: 'Idea context',
+        tokens: ideaContextTokens,
+        percent: (ideaContextTokens / maxTokens) * 100,
+        type: 'used',
+      });
+    }
 
-    // Remaining capacity
-    const remaining = maxTokens - totalTokens;
-    const remainingPercent = (remaining / maxTokens) * 100;
-    lines.push(`\n**Remaining capacity**: ${formatTokenCount(remaining)} tokens (${remainingPercent.toFixed(1)}%)`);
+    categories.push({
+      name: 'Messages (conversation)',
+      tokens: messageTokens,
+      percent: (messageTokens / maxTokens) * 100,
+      type: 'used',
+    });
+
+    categories.push({
+      name: 'Free space',
+      tokens: freeTokens,
+      percent: (freeTokens / maxTokens) * 100,
+      type: 'free',
+    });
+
+    categories.push({
+      name: 'Autocompact buffer',
+      tokens: bufferTokens,
+      percent: bufferPercent,
+      type: 'buffer',
+    });
+
+    // Build tools array if any
+    const tools: ContextTool[] | undefined = context.sessionInfo?.tools?.map(name => ({
+      name,
+      tokens: ESTIMATES.toolDefinition,
+    }));
+
+    // Build MCP servers array if any
+    const mcpServers: ContextTool[] | undefined = context.sessionInfo?.mcpServers?.map(name => ({
+      name,
+      tokens: ESTIMATES.toolDefinition,
+    }));
+
+    // Build the data structure
+    const data: ContextDisplayData = {
+      model,
+      maxTokens,
+      usedTokens,
+      usedPercent,
+      freeTokens,
+      bufferTokens,
+      bufferPercent,
+      categories,
+      session: {
+        sessionId: context.sessionId || 'unknown',
+        model,
+        messageCount: context.messageCount,
+        inputTokens,
+        outputTokens,
+        ideaId: context.ideaId,
+      },
+      tools,
+      mcpServers,
+    };
 
     return {
-      content: lines.join('\n'),
-      format: 'markdown',
+      format: 'component',
+      componentType: 'context',
+      data: data as unknown as Record<string, unknown>,
     };
   },
 };

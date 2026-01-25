@@ -44,7 +44,7 @@ vi.mock('../../hooks/useModelPreference', () => ({
 vi.mock('../../hooks/useChatCommands', () => ({
   useChatCommands: () => ({
     commands: [],
-    processCommand: vi.fn(),
+    handleCommand: vi.fn(() => ({ handled: true, clearInput: true })),
   }),
 }));
 

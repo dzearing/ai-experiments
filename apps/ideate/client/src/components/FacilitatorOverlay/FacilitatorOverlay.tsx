@@ -32,7 +32,7 @@ export function FacilitatorOverlay() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { getTopicReferences } = useTopics();
-  const { modelId, setModelId, modelInfo } = useModelPreference();
+  const { modelId, setModelId: _setModelId, modelInfo: _modelInfo } = useModelPreference();
   const {
     isOpen,
     messages,
@@ -132,34 +132,105 @@ export function FacilitatorOverlay() {
     modelId,
   });
 
-  // Chat commands (/clear, /help, /model)
+  // Chat commands - FacilitatorOverlay uses local handlers since it doesn't have server command support
   const { commands, handleCommand } = useChatCommands({
-    clearMessages,
-    clearServerHistory: socketClearHistory,
-    addMessage: (msg) => addMessage({
-      id: msg.id,
-      role: msg.role === 'system' ? 'assistant' : msg.role,
-      parts: [{ type: 'text', text: msg.content }],
-      timestamp: msg.timestamp,
-    }),
-    helpText: `## Available Commands
+    availableCommands: [],
+    executeCommand: () => {},
+    clientOnlyCommands: [
+      {
+        name: 'clear',
+        description: 'Clear chat history',
+        usage: '/clear',
+        handler: () => {
+          clearMessages();
+          socketClearHistory();
 
-- **/clear** - Clear all chat history
-- **/help** - Show this help message
-- **/model** - View or change the AI model
+          return { handled: true, clearInput: true };
+        },
+      },
+      {
+        name: 'context',
+        description: 'Show context window usage and session info',
+        usage: '/context',
+        handler: () => {
+          // Build context display data for the facilitator
+          const maxTokens = 200000;
+          const systemPromptTokens = 2500;
+          const messageTokens = messages.reduce((acc, m) => {
+            const textParts = m.parts?.filter(p => p.type === 'text') || [];
+            const textLength = textParts.reduce((sum, p) => sum + ((p as { text: string }).text?.length || 0), 0);
+
+            return acc + Math.ceil(textLength / 4); // Rough token estimate
+          }, 0);
+          const usedTokens = systemPromptTokens + messageTokens;
+          const bufferTokens = Math.round(maxTokens * 0.20);
+          const freeTokens = maxTokens - usedTokens - bufferTokens;
+          const usedPercent = (usedTokens / maxTokens) * 100;
+          const bufferPercent = (bufferTokens / maxTokens) * 100;
+
+          const contextData = {
+            model: modelId || 'claude-sonnet-4',
+            maxTokens,
+            usedTokens,
+            usedPercent,
+            freeTokens,
+            bufferTokens,
+            bufferPercent,
+            categories: [
+              { name: 'System prompt', tokens: systemPromptTokens, percent: (systemPromptTokens / maxTokens) * 100, type: 'used' as const },
+              { name: 'Messages (conversation)', tokens: messageTokens, percent: (messageTokens / maxTokens) * 100, type: 'used' as const },
+              { name: 'Free space', tokens: freeTokens, percent: (freeTokens / maxTokens) * 100, type: 'free' as const },
+              { name: 'Autocompact buffer', tokens: bufferTokens, percent: bufferPercent, type: 'buffer' as const },
+            ],
+            session: {
+              sessionId: user?.id || 'unknown',
+              model: modelId || 'claude-sonnet-4',
+              messageCount: messages.length,
+              inputTokens: 0,
+              outputTokens: 0,
+            },
+          };
+
+          addMessage({
+            id: `context-${Date.now()}`,
+            role: 'assistant',
+            parts: [{
+              type: 'component',
+              componentType: 'context',
+              data: contextData,
+            }],
+            timestamp: Date.now(),
+          });
+
+          return { handled: true, clearInput: true };
+        },
+      },
+      {
+        name: 'help',
+        description: 'Show available commands',
+        usage: '/help',
+        handler: () => {
+          addMessage({
+            id: `help-${Date.now()}`,
+            role: 'assistant',
+            parts: [{ type: 'text', text: `## Available Commands
+
+- **/clear** - Clear chat history
+- **/context** - Show context window usage
+- **/help** - Show this help
 
 ## Features
 
 - Ask questions about your workspaces and documents
-- Create, edit, and search documents
-- Get summaries of your content
 - Press **Ctrl+.** (or **Cmd+.** on Mac) to toggle this overlay
-- Press **Escape** to close (clears input first if not empty)
-- Press **Ctrl+C** (or **Cmd+C** on Mac) to stop the AI while it's thinking
+- Press **Escape** to close` }],
+            timestamp: Date.now(),
+          });
 
-Type a message to get started!`,
-    currentModelInfo: modelInfo,
-    onModelChange: setModelId,
+          return { handled: true, clearInput: true };
+        },
+      },
+    ],
   });
 
   // Process queued messages when AI finishes thinking

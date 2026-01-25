@@ -15,6 +15,7 @@ import { useAgentSocket, type BaseServerMessage } from './useAgentSocket';
 import type { AgentProgressEvent } from './useAgentProgress';
 import type { ModelId } from './useModelPreference';
 import { createLogger } from '../utils/clientLogger';
+import type { SlashCommand } from '../types/slashCommandTypes';
 
 // Re-export types from agentTypes for backwards compatibility
 export type {
@@ -117,6 +118,10 @@ export interface UsePlanAgentReturn {
     recentEvents: AgentProgressEvent[];
     isProcessing: boolean;
   };
+  /** Available slash commands from server */
+  availableCommands: SlashCommand[];
+  /** Execute a slash command */
+  executeCommand: (command: string, args: string) => void;
 }
 
 // Extended server message for plan-specific types
@@ -275,6 +280,8 @@ export function usePlanAgent({
       recentEvents: base.progress.recentEvents,
       isProcessing: base.progress.isProcessing,
     },
+    availableCommands: base.availableCommands,
+    executeCommand: base.executeCommand,
   };
 }
 

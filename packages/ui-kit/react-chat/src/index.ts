@@ -19,8 +19,19 @@ export type {
   ChatMessageToolCall,
   ChatMessageTextPart,
   ChatMessageToolCallsPart,
+  ChatMessageComponentPart,
   ChatMessagePart,
 } from './components/ChatMessage';
+
+// ContextDisplay component and related types
+export { ContextDisplay } from './components/ContextDisplay';
+export type {
+  ContextDisplayProps,
+  ContextDisplayData,
+  ContextCategory,
+  ContextSession,
+  ContextTool,
+} from './components/ContextDisplay';
 
 // ChatPanel component and related types
 export { ChatPanel, VirtualizedChatPanel } from './components/ChatPanel';
