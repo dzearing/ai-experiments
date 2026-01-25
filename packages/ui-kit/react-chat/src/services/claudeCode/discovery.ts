@@ -34,13 +34,18 @@ async function isFile(filePath: string): Promise<boolean> {
 
 /**
  * Scan a commands directory for .md files
+ * @param dirPath - Directory path to scan
+ * @param source - Source of the command (user, project, plugin, builtin)
+ * @param pluginName - Optional plugin name for plugin-sourced commands
+ * @param maxDepth - Maximum recursion depth to prevent symlink loops (default: 5)
  */
 async function scanCommandsDirectory(
   dirPath: string,
   source: DiscoveredCommand['source'],
-  pluginName?: string
+  pluginName?: string,
+  maxDepth: number = 5
 ): Promise<DiscoveredCommand[]> {
-  if (!(await isDirectory(dirPath))) {
+  if (maxDepth <= 0 || !(await isDirectory(dirPath))) {
     return [];
   }
 
@@ -60,7 +65,7 @@ async function scanCommandsDirectory(
       } else if (entry.isDirectory()) {
         // Check for nested commands in subdirectories
         const subDir = path.join(dirPath, entry.name);
-        const subCommands = await scanCommandsDirectory(subDir, source, pluginName);
+        const subCommands = await scanCommandsDirectory(subDir, source, pluginName, maxDepth - 1);
 
         commands.push(...subCommands);
       }
