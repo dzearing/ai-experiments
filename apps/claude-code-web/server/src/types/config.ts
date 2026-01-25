@@ -3,6 +3,8 @@
  * Mirrors Claude Code's hierarchical configuration system.
  */
 
+import type { HooksConfig } from './hooks.js';
+
 /**
  * Full configuration for a session.
  * Loaded from CLAUDE.md hierarchy, settings.json hierarchy, and .claude/rules/.
@@ -40,6 +42,9 @@ export interface Settings {
 
   /** Model preference */
   model?: string;
+
+  /** Hooks configuration for tool and session lifecycle events */
+  hooks?: HooksConfig;
 }
 
 /**
