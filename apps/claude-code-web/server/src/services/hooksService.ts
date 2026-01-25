@@ -28,6 +28,13 @@ import type {
 } from '../types/hooks.js';
 import { createPreToolUseHook } from '../hooks/preToolUseHook.js';
 import { createPostToolUseHook } from '../hooks/postToolUseHook.js';
+import { createSessionStartHook, createSessionEndHook } from '../hooks/sessionHooks.js';
+import { createSubagentStartHook, createSubagentStopHook } from '../hooks/subagentHooks.js';
+import {
+  createUserPromptSubmitHook,
+  createPermissionRequestHook,
+  createPreCompactHook,
+} from '../hooks/lifecycleHooks.js';
 
 /**
  * Notification callback shape for hook activity events.
@@ -110,15 +117,32 @@ export class HooksService {
 
   /**
    * Create a hook callback for a specific event and action.
+   * Routes to specialized factories for each hook event type.
    */
   private createCallbackForAction(event: HookEvent, action: string, options?: Record<string, unknown>): HookCallback {
+    const opts = { ...options, action };
+
     switch (event) {
       case 'PreToolUse':
-        return createPreToolUseHook({ ...options, action });
+        return createPreToolUseHook(opts);
       case 'PostToolUse':
-        return createPostToolUseHook({ ...options, action });
+        return createPostToolUseHook(opts);
+      case 'SessionStart':
+        return createSessionStartHook(opts);
+      case 'SessionEnd':
+        return createSessionEndHook(opts);
+      case 'SubagentStart':
+        return createSubagentStartHook(opts);
+      case 'SubagentStop':
+        return createSubagentStopHook(opts);
+      case 'UserPromptSubmit':
+        return createUserPromptSubmitHook(opts);
+      case 'PermissionRequest':
+        return createPermissionRequestHook(opts);
+      case 'PreCompact':
+        return createPreCompactHook(opts);
       default:
-        // For other events, use generic handlers (implemented in 07-03)
+        // For remaining events (PostToolUseFailure, Stop, Notification), use generic handlers
         return this.createGenericHook(action, options);
     }
   }
