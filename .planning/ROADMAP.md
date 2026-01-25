@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 5: Configuration System** - CLAUDE.md, settings, and rules loading
 - [x] **Phase 6: Extended Tools** - Bash, web tools, notebooks, and tool polish
 - [x] **Phase 7: Hooks System** - Pre/post tool hooks and lifecycle hooks
-- [ ] **Phase 8: Commands & Skills** - Slash commands and skills system
+- [x] **Phase 8: Commands & Skills** - Slash commands and skills system
 - [ ] **Phase 9: Subagents** - Task tool and subagent visualization
 - [ ] **Phase 10: MCP Integration** - MCP servers and custom tool discovery
 
@@ -165,11 +165,11 @@ Plans:
 **Plans**: 5 plans
 
 Plans:
-- [ ] 08-01-PLAN.md — Server CommandsService for command/skill discovery
-- [ ] 08-02-PLAN.md — Client useSlashCommands hook and ChatView integration
-- [ ] 08-03-PLAN.md — Argument substitution and bash pre-execution
-- [ ] 08-04-PLAN.md — Built-in commands and custom command execution
-- [ ] 08-05-PLAN.md — Keyboard shortcuts (Ctrl+L, Ctrl+C, Shift+Tab)
+- [x] 08-01-PLAN.md — Server CommandsService for command/skill discovery
+- [x] 08-02-PLAN.md — Client useSlashCommands hook and ChatView integration
+- [x] 08-03-PLAN.md — Argument substitution and bash pre-execution
+- [x] 08-04-PLAN.md — Built-in commands and custom command execution
+- [x] 08-05-PLAN.md — Keyboard shortcuts (Ctrl+L, Ctrl+C, Shift+Tab)
 
 Note: UI-08 (Vim mode) is deferred per user guidance.
 
@@ -228,10 +228,10 @@ Note: Phases 5 and 8 (Configuration, Commands) can run in parallel with Phases 3
 | 5. Configuration System | 2/2 | Complete | 2026-01-20 |
 | 6. Extended Tools | 7/7 | Complete | 2026-01-19 |
 | 7. Hooks System | 3/3 | Complete | 2026-01-25 |
-| 8. Commands & Skills | 0/5 | Planned | - |
+| 8. Commands & Skills | 5/5 | Complete | 2026-01-25 |
 | 9. Subagents | 0/3 | Not started | - |
 | 10. MCP Integration | 0/6 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-19*
-*Last updated: 2026-01-25 - Phase 8 planned*
+*Last updated: 2026-01-25 - Phase 8 complete*
