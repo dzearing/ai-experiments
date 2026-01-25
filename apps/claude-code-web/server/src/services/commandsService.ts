@@ -74,6 +74,52 @@ export class CommandsService {
   }
 
   /**
+   * Substitute argument placeholders in command content.
+   *
+   * - $1, $2, etc. are replaced with positional arguments
+   * - $ARGUMENTS is replaced with the full arguments string
+   * - If $ARGUMENTS wasn't in content and args is non-empty, appends "\n\nARGUMENTS: {args}"
+   *
+   * @param content - The command content with placeholders
+   * @param args - The arguments string (space-separated)
+   * @returns Content with placeholders substituted
+   */
+  substituteArguments(content: string, args: string): string {
+    if (!args || args.trim() === '') {
+      // No arguments - remove any $N placeholders, leave content otherwise unchanged
+      return content.replace(/\$\d+/g, '');
+    }
+
+    const argParts = args.trim().split(/\s+/);
+    let result = content;
+
+    // Track if $ARGUMENTS was in the original content
+    const hadArgumentsPlaceholder = content.includes('$ARGUMENTS');
+
+    // Replace positional arguments $1, $2, etc.
+    result = result.replace(/\$(\d+)/g, (_match, numStr) => {
+      const index = parseInt(numStr, 10) - 1;
+
+      if (index >= 0 && index < argParts.length) {
+        return argParts[index];
+      }
+
+      // Missing positional arg - replace with empty string
+      return '';
+    });
+
+    // Replace $ARGUMENTS with full args string
+    result = result.replace(/\$ARGUMENTS/g, args.trim());
+
+    // If $ARGUMENTS wasn't in the content, append ARGUMENTS section
+    if (!hadArgumentsPlaceholder) {
+      result += `\n\nARGUMENTS: ${args.trim()}`;
+    }
+
+    return result;
+  }
+
+  /**
    * Parse allowed-tools from frontmatter.
    * Can be a comma-separated string or an array.
    */
