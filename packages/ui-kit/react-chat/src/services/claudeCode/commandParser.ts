@@ -10,7 +10,7 @@ function parseFrontmatter(content: string): {
   frontmatter: CommandFrontmatter;
   body: string;
 } {
-  const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+  const frontmatterMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
 
   if (!frontmatterMatch) {
     return { frontmatter: {}, body: content };
@@ -39,19 +39,16 @@ function parseFrontmatter(content: string): {
  * Extract description from command content
  * Falls back to first line or paragraph if no frontmatter description
  */
-function extractDescription(content: string, frontmatter: CommandFrontmatter): string {
+function extractDescription(body: string, frontmatter: CommandFrontmatter): string {
   if (frontmatter.description) {
     return frontmatter.description;
   }
 
-  // Remove frontmatter and get first meaningful line
-  const { body } = parseFrontmatter(content);
   const firstLine = body.split('\n').find(line =>
     line.trim() && !line.startsWith('#') && !line.startsWith('!')
   );
 
   if (firstLine) {
-    // Truncate to reasonable length
     return firstLine.length > 100 ? firstLine.slice(0, 97) + '...' : firstLine;
   }
 
@@ -68,10 +65,10 @@ export async function parseCommandFile(
 ): Promise<DiscoveredCommand | null> {
   try {
     const content = await fs.readFile(filePath, 'utf-8');
-    const { frontmatter } = parseFrontmatter(content);
+    const { frontmatter, body } = parseFrontmatter(content);
 
     const fileName = path.basename(filePath, '.md');
-    const description = extractDescription(content, frontmatter);
+    const description = extractDescription(body, frontmatter);
 
     return {
       name: fileName,
@@ -101,10 +98,10 @@ export async function parseSkillDirectory(
 
   try {
     const content = await fs.readFile(skillFile, 'utf-8');
-    const { frontmatter } = parseFrontmatter(content);
+    const { frontmatter, body } = parseFrontmatter(content);
 
     const skillName = path.basename(skillDir);
-    const description = extractDescription(content, frontmatter);
+    const description = extractDescription(body, frontmatter);
 
     return {
       name: skillName,
