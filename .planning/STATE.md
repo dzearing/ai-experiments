@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-19)
 ## Current Position
 
 Phase: 8 of 10 (Commands & Skills)
-Plan: 3 of 4 in current phase
+Plan: 2 of 4 in current phase
 Status: In progress
-Last activity: 2026-01-25 - Completed 08-03-PLAN.md
+Last activity: 2026-01-25 - Completed 08-02-PLAN.md
 
-Progress: [███████████████████████] 80% (28/35 plans) -- Phase 8 in progress
+Progress: [█████████████████████] 77% (27/35 plans) -- Phase 8 in progress
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 28
+- Total plans completed: 27
 - Average duration: 3.4 min
-- Total execution time: 96.3 min
+- Total execution time: 95.8 min
 
 **By Phase:**
 
@@ -34,10 +34,10 @@ Progress: [███████████████████████
 | 5-Configuration System | 2/2 | 8.0 min | 4.0 min |
 | 6-Extended Tools | 7/7 | 27.0 min | 3.9 min |
 | 7-Hooks System | 3/3 | 7.0 min | 2.3 min |
-| 8-Commands & Skills | 3/4 | 6.0 min | 2.0 min |
+| 8-Commands & Skills | 2/4 | 8.5 min | 4.3 min |
 
 **Recent Trend:**
-- Last 5 plans: 07-02 (2m), 07-03 (3m), 08-01 (2.5m), 08-03 (3.5m)
+- Last 5 plans: 07-02 (2m), 07-03 (3m), 08-01 (2.5m), 08-02 (6m)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -122,9 +122,8 @@ Recent decisions affecting current work:
 - Hook factories accept options object with action field for configuration
 - Map-based deduplication for command scope precedence (project overrides user)
 - CommandSummary type excludes full content for API responses
-- substituteArguments removes $N placeholders when no args provided
-- 30 second timeout for bash pre-execution commands
-- hasBashAllowed checks Bash, Bash*, Bash(*) patterns for allowed-tools
+- System messages as separate state in ChatView (command output distinct from conversation)
+- Snake_case for contextUsage to match existing UsageStats type
 
 ### Pending Todos
 
@@ -137,5 +136,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-25
-Stopped at: Completed 08-03-PLAN.md
+Stopped at: Completed 08-02-PLAN.md
 Resume file: None
