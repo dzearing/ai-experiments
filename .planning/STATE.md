@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-19)
 ## Current Position
 
 Phase: 7 of 10 (Hooks System)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-01-25 - Completed 07-01-PLAN.md (Hook Types and Service Foundation)
+Last activity: 2026-01-25 - Completed 07-02-PLAN.md (Tool Use Hooks)
 
-Progress: [██████████████████░░] 66% (23/35 plans)
+Progress: [███████████████████░] 69% (24/35 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 23
-- Average duration: 3.4 min
-- Total execution time: 82.3 min
+- Total plans completed: 24
+- Average duration: 3.3 min
+- Total execution time: 84.3 min
 
 **By Phase:**
 
@@ -33,10 +33,10 @@ Progress: [██████████████████░░] 66% (23
 | 4-Permissions & Modes | 3/3 | 10.0 min | 3.3 min |
 | 5-Configuration System | 2/2 | 8.0 min | 4.0 min |
 | 6-Extended Tools | 7/7 | 27.0 min | 3.9 min |
-| 7-Hooks System | 1/3 | 2.0 min | 2.0 min |
+| 7-Hooks System | 2/3 | 4.0 min | 2.0 min |
 
 **Recent Trend:**
-- Last 5 plans: 06-04 (3m), 06-05 (8m), 06-06 (3m), 06-07 (4m), 07-01 (2m)
+- Last 5 plans: 06-05 (8m), 06-06 (3m), 06-07 (4m), 07-01 (2m), 07-02 (2m)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -106,6 +106,12 @@ Recent decisions affecting current work:
 - Built-in hook actions: log, notify, block-pattern, allow, deny
 - HooksService uses minimatch for tool name glob pattern matching
 - Hooks passed to SDK via queryOptions.hooks alongside existing canUseTool
+- PreToolUse hooks return deny with reason for blocked commands (HOOK-01)
+- PostToolUse hooks receive tool_response for logging/context injection (HOOK-02)
+- createPreToolUseHook factory supports: block-dangerous, auto-approve-readonly, inject-message, block-pattern
+- createPostToolUseHook factory supports: log, add-context
+- wrapWithNotification adds SSE notification to all hook callbacks
+- HookActivityEvent type added to PermissionSSEEvent union
 
 ### Pending Todos
 
@@ -118,5 +124,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-25
-Stopped at: Completed 07-01-PLAN.md (Hook Types and Service Foundation)
+Stopped at: Completed 07-02-PLAN.md (Tool Use Hooks)
 Resume file: None
