@@ -4,8 +4,10 @@
  * Discovery paths:
  *   - Commands: ~/.claude/commands/ and {projectRoot}/.claude/commands/
  *   - Skills: ~/.claude/skills/ and {projectRoot}/.claude/skills/
+ *   - Plugins: ~/.claude/plugins/installed_plugins.json → {installPath}/commands/ and /skills/
  *
  * Precedence: Project scope overrides user scope for same-named commands (closer wins).
+ * Plugin commands are prefixed with plugin name (e.g., "superpowers:write-plan").
  */
 
 import fs from 'fs/promises';
@@ -19,6 +21,21 @@ import { glob } from 'glob';
 const execAsync = promisify(exec);
 
 import type { CommandDefinition, CommandSource } from '../types/commands.js';
+
+/**
+ * Structure of installed_plugins.json
+ */
+interface InstalledPluginsFile {
+  version: number;
+  plugins: Record<string, Array<{
+    scope: string;
+    installPath: string;
+    version: string;
+    installedAt: string;
+    lastUpdated: string;
+    gitCommitSha?: string;
+  }>>;
+}
 
 /**
  * Service for discovering and loading slash commands and skills.
@@ -293,8 +310,157 @@ export class CommandsService {
   }
 
   /**
+   * Load installed plugins from ~/.claude/plugins/installed_plugins.json
+   * Returns array of { name, installPath } for each installed plugin.
+   */
+  private async loadInstalledPlugins(): Promise<Array<{ name: string; installPath: string }>> {
+    const pluginsFile = path.join(os.homedir(), '.claude', 'plugins', 'installed_plugins.json');
+
+    if (!(await this.fileExists(pluginsFile))) {
+      return [];
+    }
+
+    try {
+      const content = await fs.readFile(pluginsFile, 'utf-8');
+      const data = JSON.parse(content) as InstalledPluginsFile;
+
+      const plugins: Array<{ name: string; installPath: string }> = [];
+
+      for (const [pluginKey, installations] of Object.entries(data.plugins)) {
+        // pluginKey is like "superpowers@claude-plugins-official"
+        // Extract just the plugin name (before @)
+        const pluginName = pluginKey.split('@')[0];
+
+        // Use the first (most recent) installation
+        if (installations.length > 0 && installations[0].installPath) {
+          plugins.push({
+            name: pluginName,
+            installPath: installations[0].installPath,
+          });
+        }
+      }
+
+      return plugins;
+    } catch (error) {
+      console.warn('[CommandsService] Failed to load installed plugins:', error);
+
+      return [];
+    }
+  }
+
+  /**
+   * Load commands from a plugin directory with plugin name prefix.
+   */
+  private async loadPluginCommands(
+    pluginName: string,
+    pluginPath: string
+  ): Promise<CommandDefinition[]> {
+    const commandsDir = path.join(pluginPath, 'commands');
+
+    if (!(await this.fileExists(commandsDir))) {
+      return [];
+    }
+
+    const commands: CommandDefinition[] = [];
+
+    try {
+      const files = await glob('**/*.md', { cwd: commandsDir });
+
+      for (const file of files) {
+        const filePath = path.join(commandsDir, file);
+
+        try {
+          const rawContent = await fs.readFile(filePath, 'utf-8');
+          const { data, content } = matter(rawContent);
+
+          // Plugin commands get prefixed: "superpowers:write-plan"
+          const baseName = file.replace(/\.md$/, '').replace(/\//g, ':');
+          const name = `${pluginName}:${baseName}`;
+          const description = data.description || this.extractFirstParagraph(content);
+
+          commands.push({
+            name,
+            description,
+            argumentHint: data['argument-hint'],
+            model: data.model,
+            allowedTools: this.parseAllowedTools(data['allowed-tools']),
+            content: content.trim(),
+            source: 'user', // Plugins are user-scope
+            type: 'command',
+            disableModelInvocation: data['disable-model-invocation'],
+            userInvocable: data['user-invocable'] ?? true,
+          });
+        } catch (error) {
+          console.warn(`[CommandsService] Failed to parse plugin command ${filePath}:`, error);
+        }
+      }
+    } catch (error) {
+      console.warn(`[CommandsService] Failed to load plugin commands from ${commandsDir}:`, error);
+    }
+
+    return commands;
+  }
+
+  /**
+   * Load skills from a plugin directory with plugin name prefix.
+   */
+  private async loadPluginSkills(
+    pluginName: string,
+    pluginPath: string
+  ): Promise<CommandDefinition[]> {
+    const skillsDir = path.join(pluginPath, 'skills');
+
+    if (!(await this.fileExists(skillsDir))) {
+      return [];
+    }
+
+    const skills: CommandDefinition[] = [];
+
+    try {
+      // Look for */SKILL.md pattern
+      const skillFiles = await glob('*/SKILL.md', { cwd: skillsDir });
+
+      for (const skillFile of skillFiles) {
+        const filePath = path.join(skillsDir, skillFile);
+        const dirName = path.dirname(skillFile);
+
+        try {
+          const rawContent = await fs.readFile(filePath, 'utf-8');
+          const { data, content } = matter(rawContent);
+
+          // Plugin skills get prefixed: "superpowers:writing-plans"
+          // Use frontmatter name if available, otherwise directory name
+          const baseName = data.name || dirName;
+          const name = `${pluginName}:${baseName}`;
+          const description = data.description || this.extractFirstParagraph(content);
+
+          skills.push({
+            name,
+            description,
+            argumentHint: data['argument-hint'],
+            model: data.model,
+            allowedTools: this.parseAllowedTools(data['allowed-tools']),
+            content: content.trim(),
+            source: 'user', // Plugins are user-scope
+            type: 'skill',
+            disableModelInvocation: data['disable-model-invocation'],
+            userInvocable: data['user-invocable'] ?? true,
+            context: data.context === 'fork' ? 'fork' : undefined,
+          });
+        } catch (error) {
+          console.warn(`[CommandsService] Failed to parse plugin skill ${filePath}:`, error);
+        }
+      }
+    } catch (error) {
+      console.warn(`[CommandsService] Failed to load plugin skills from ${skillsDir}:`, error);
+    }
+
+    return skills;
+  }
+
+  /**
    * Load all commands and skills from filesystem.
-   * Merges user and project scopes with project taking precedence.
+   * Merges user, project, and plugin scopes with project taking precedence.
    *
    * @param projectRoot - The project root directory
    * @returns Array of command definitions (project commands override user commands)
@@ -302,7 +468,24 @@ export class CommandsService {
   async loadCommands(projectRoot: string): Promise<CommandDefinition[]> {
     const commandMap = new Map<string, CommandDefinition>();
 
-    // 1. Load from ~/.claude/commands/ (user scope - loaded first, can be overridden)
+    // 1. Load from installed plugins (lowest precedence, loaded first)
+    const plugins = await this.loadInstalledPlugins();
+
+    for (const plugin of plugins) {
+      const pluginCommands = await this.loadPluginCommands(plugin.name, plugin.installPath);
+
+      for (const cmd of pluginCommands) {
+        commandMap.set(cmd.name, cmd);
+      }
+
+      const pluginSkills = await this.loadPluginSkills(plugin.name, plugin.installPath);
+
+      for (const skill of pluginSkills) {
+        commandMap.set(skill.name, skill);
+      }
+    }
+
+    // 2. Load from ~/.claude/commands/ (user scope - can override plugins)
     const userCommandsDir = path.join(os.homedir(), '.claude', 'commands');
     const userCommands = await this.loadFromDirectory(userCommandsDir, 'user', 'command');
 
@@ -310,7 +493,7 @@ export class CommandsService {
       commandMap.set(cmd.name, cmd);
     }
 
-    // 2. Load from {projectRoot}/.claude/commands/ (project scope - overrides user)
+    // 3. Load from {projectRoot}/.claude/commands/ (project scope - overrides user)
     const projectCommandsDir = path.join(projectRoot, '.claude', 'commands');
     const projectCommands = await this.loadFromDirectory(projectCommandsDir, 'project', 'command');
 
@@ -318,7 +501,7 @@ export class CommandsService {
       commandMap.set(cmd.name, cmd);
     }
 
-    // 3. Load from ~/.claude/skills/ (user scope - loaded first, can be overridden)
+    // 4. Load from ~/.claude/skills/ (user scope - can override plugins)
     const userSkillsDir = path.join(os.homedir(), '.claude', 'skills');
     const userSkills = await this.loadSkillsFromDirectory(userSkillsDir, 'user');
 
@@ -326,7 +509,7 @@ export class CommandsService {
       commandMap.set(skill.name, skill);
     }
 
-    // 4. Load from {projectRoot}/.claude/skills/ (project scope - overrides user)
+    // 5. Load from {projectRoot}/.claude/skills/ (project scope - overrides user)
     const projectSkillsDir = path.join(projectRoot, '.claude', 'skills');
     const projectSkills = await this.loadSkillsFromDirectory(projectSkillsDir, 'project');
 
