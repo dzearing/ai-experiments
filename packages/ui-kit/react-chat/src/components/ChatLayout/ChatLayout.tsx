@@ -1,14 +1,23 @@
 import { type ReactNode, type RefObject } from 'react';
 import { ChatProvider, type ChatMode, type ChatParticipant } from '../../context';
-import { ChatPanel, type ChatPanelMessage } from '../ChatPanel';
+import { ChatPanel, type ChatPanelMessage, type ChatPanelProps } from '../ChatPanel';
 import { ThinkingIndicator, type ThinkingIndicatorProps } from '../ThinkingIndicator';
 import { MessageQueue, type QueuedMessage } from '../MessageQueue';
 import { ChatInput, type ChatInputProps, type ChatInputRef } from '../ChatInput';
 import styles from './ChatLayout.module.css';
 
 export interface ChatLayoutProps {
-  /** Array of messages to display */
-  messages: ChatPanelMessage[];
+  /**
+   * Array of messages to display in the built-in ChatPanel.
+   * Ignored if children are provided.
+   */
+  messages?: ChatPanelMessage[];
+
+  /**
+   * Custom chat panel content. When provided, replaces the built-in ChatPanel.
+   * Use this to render VirtualizedChatPanel or a custom panel component.
+   */
+  children?: ReactNode;
 
   /** Content to display when there are no messages */
   emptyState?: ReactNode;
@@ -18,6 +27,9 @@ export interface ChatLayoutProps {
 
   /** Called when a link is clicked in a message */
   onLinkClick?: (href: string) => void;
+
+  /** Custom renderer for tool results in messages */
+  renderToolResult?: ChatPanelProps['renderToolResult'];
 
   /** Whether to auto-scroll to bottom on new messages (default: true) */
   autoScroll?: boolean;
@@ -49,6 +61,12 @@ export interface ChatLayoutProps {
   /** Called when a queued message is removed */
   onRemoveQueuedMessage?: (id: string) => void;
 
+  /**
+   * Content rendered above the input area.
+   * Use for errors, permission notices, status messages, etc.
+   */
+  notices?: ReactNode;
+
   /** Props to pass to ChatInput */
   chatInputProps?: ChatInputProps;
 
@@ -73,9 +91,11 @@ export interface ChatLayoutProps {
  */
 export function ChatLayout({
   messages,
+  children,
   emptyState,
   renderAvatar,
   onLinkClick,
+  renderToolResult,
   autoScroll = true,
   onScrollLockChange,
   typingUsers,
@@ -86,6 +106,7 @@ export function ChatLayout({
   thinkingIndicatorProps,
   queuedMessages = [],
   onRemoveQueuedMessage,
+  notices,
   chatInputProps,
   chatInputRef,
   className,
@@ -100,16 +121,19 @@ export function ChatLayout({
         {header && <div className={styles.header}>{header}</div>}
 
         <div className={styles.chatArea}>
-          <ChatPanel
-            messages={messages}
-            emptyState={emptyState}
-            renderAvatar={renderAvatar}
-            onLinkClick={onLinkClick}
-            autoScroll={autoScroll}
-            onScrollLockChange={onScrollLockChange}
-            typingUsers={typingUsers}
-            className={styles.messagesContainer}
-          />
+          {children ?? (
+            <ChatPanel
+              messages={messages ?? []}
+              emptyState={emptyState}
+              renderAvatar={renderAvatar}
+              onLinkClick={onLinkClick}
+              renderToolResult={renderToolResult}
+              autoScroll={autoScroll}
+              onScrollLockChange={onScrollLockChange}
+              typingUsers={typingUsers}
+              className={styles.messagesContainer}
+            />
+          )}
         </div>
 
         {isThinking && (
@@ -127,6 +151,12 @@ export function ChatLayout({
               messages={queuedMessages}
               onRemove={onRemoveQueuedMessage}
             />
+          </div>
+        )}
+
+        {notices && (
+          <div className={styles.noticesContainer}>
+            {notices}
           </div>
         )}
 

@@ -1,0 +1,249 @@
+/**
+ * ToolGroup styles
+ *
+ * A collapsible group of tool calls with status indicators.
+ */
+
+/* ============================================
+   TOOL GROUP CONTAINER
+   ============================================ */
+.toolGroup {
+  width: 100%;
+  border: 1px solid var(--soft-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.toolGroupCollapsed {
+  /* Container for collapsed view */
+}
+
+.toolGroupExpanded {
+  /* Container for expanded view */
+}
+
+/* ============================================
+   TOOL GROUP HEADER (COLLAPSED STATE)
+   ============================================ */
+.toolGroupHeader {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-default);
+}
+
+.toolGroupHeader .toolItem {
+  flex: 1;
+  border-bottom: none;
+}
+
+/* Nested tool item header should not be interactive in collapsed state */
+.toolGroupHeader .toolItemHeader {
+  pointer-events: none;
+  cursor: inherit;
+}
+
+/* Hover on collapsed header - entire row highlights */
+.toolGroupHeader:hover {
+  background: var(--strong-bg);
+}
+
+.toolGroupHeader:hover .toolItemHeader {
+  background: transparent;
+  color: var(--strong-fg);
+}
+
+/* Chevron color on hover - Chip retains its own colors */
+.toolGroupHeader:hover .groupChevron {
+  color: var(--strong-fg);
+}
+
+.toolGroupHeader:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: calc(-1 * var(--focus-ring-width));
+}
+
+/* ============================================
+   EXPAND/COLLAPSE BUTTONS
+   ============================================ */
+.toolGroupExpandBtn,
+.toolGroupCollapseBtn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--soft-fg);
+  transition: background var(--duration-fast) var(--ease-default);
+}
+
+.toolGroupExpandBtn:hover,
+.toolGroupCollapseBtn:hover {
+  background: var(--soft-bg-hover);
+}
+
+.toolGroupCollapseBtn {
+  width: 100%;
+  justify-content: flex-start;
+  border-bottom: 1px solid var(--soft-border);
+}
+
+.groupChevron {
+  width: 16px;
+  height: 16px;
+  color: var(--soft-fg-soft);
+}
+
+/* ============================================
+   TOOL LIST (EXPANDED STATE)
+   ============================================ */
+.toolList {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ============================================
+   TOOL ITEM
+   ============================================ */
+.toolItem {
+  border-bottom: 1px solid var(--soft-border);
+}
+
+.toolItem:last-child {
+  border-bottom: none;
+}
+
+.toolItemHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-3);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--soft-fg);
+  transition: background var(--duration-fast) var(--ease-default);
+}
+
+/* Hover for individual items (in expanded list) */
+.toolItemHeader:hover {
+  background: var(--soft-bg-hover);
+}
+
+.toolItemHeader:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: calc(-1 * var(--focus-ring-width));
+}
+
+/* ============================================
+   TOOL STATUS INDICATOR
+   ============================================ */
+.toolStatus {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.toolStatus > svg {
+  width: 16px;
+  height: 16px;
+}
+
+.successIcon {
+  color: var(--soft-fg-success);
+}
+
+.errorIcon {
+  color: var(--soft-fg-danger);
+}
+
+/* ============================================
+   TOOL ICON
+   ============================================ */
+.toolIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: var(--soft-fg-soft);
+  flex-shrink: 0;
+}
+
+.toolIcon > svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ============================================
+   TOOL SUMMARY (LABEL + VALUE)
+   ============================================ */
+.toolSummary {
+  flex: 1;
+  font-size: var(--text-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toolLabel {
+  color: var(--soft-fg-soft);
+}
+
+.toolValue {
+  color: var(--soft-fg);
+  font-weight: var(--weight-bold);
+}
+
+.toolDuration {
+  color: var(--soft-fg-softer);
+  font-size: var(--text-xs);
+  margin-left: var(--space-2);
+  flex-shrink: 0;
+}
+
+/* ============================================
+   TOOL CHEVRON (EXPAND OUTPUT)
+   ============================================ */
+.toolChevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: var(--soft-fg-softer);
+  flex-shrink: 0;
+}
+
+.toolChevron > svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ============================================
+   TOOL OUTPUT
+   ============================================ */
+.toolOutput {
+  padding: var(--space-3);
+  background: var(--softer-bg);
+  border-top: 1px solid var(--soft-border);
+}
+
+.toolOutput pre {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--softer-fg);
+  white-space: pre-wrap;
+  word-break: break-word;
+}

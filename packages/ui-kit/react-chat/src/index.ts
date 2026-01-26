@@ -30,6 +30,15 @@ export type { ChatPanelProps, ChatPanelMessage, VirtualizedChatPanelProps, Virtu
 export { ThinkingIndicator } from './components/ThinkingIndicator';
 export type { ThinkingIndicatorProps } from './components/ThinkingIndicator';
 
+// ToolGroup component and related types
+export { ToolGroup } from './components/ToolGroup';
+export type {
+  ToolGroupProps,
+  ToolCall,
+  ToolStatus,
+  SummarySegment,
+} from './components/ToolGroup';
+
 // MessageQueue component and related types
 export { MessageQueue } from './components/MessageQueue';
 export type { MessageQueueProps, QueuedMessage } from './components/MessageQueue';

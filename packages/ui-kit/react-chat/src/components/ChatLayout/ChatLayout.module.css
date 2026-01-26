@@ -48,6 +48,15 @@
   padding: 0 var(--space-4);
 }
 
+/**
+ * Notices - positioned above the input for errors, permission notices, etc.
+ */
+.noticesContainer {
+  flex-shrink: 0;
+  padding: 0 var(--space-4);
+  margin-bottom: var(--space-2);
+}
+
 .inputContainer {
   flex-shrink: 0;
   padding: var(--space-1) var(--space-4) var(--space-4);

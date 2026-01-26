@@ -23,6 +23,7 @@ import {
   isThinkingDelta,
   extractToolResults,
 } from '../utils/messageTransformer';
+import { getClientId } from '../utils/clientId';
 
 /**
  * React hook for consuming SSE streams from the agent endpoint.
@@ -74,9 +75,11 @@ export function useAgentStream(): UseAgentStreamReturn {
     setQuestionRequest(null);
 
     // Build URL with optional session ID for multi-turn and permission mode
+    // Include clientId for per-window connection tracking
     const urlSessionId = existingSessionId || sessionId || '';
     const urlMode = mode || permissionMode;
-    const url = `/api/agent/stream?prompt=${encodeURIComponent(prompt)}&sessionId=${encodeURIComponent(urlSessionId)}&permissionMode=${encodeURIComponent(urlMode)}`;
+    const clientId = getClientId();
+    const url = `/api/agent/stream?prompt=${encodeURIComponent(prompt)}&sessionId=${encodeURIComponent(urlSessionId)}&clientId=${encodeURIComponent(clientId)}&permissionMode=${encodeURIComponent(urlMode)}`;
     const eventSource = new EventSource(url);
 
     eventSourceRef.current = eventSource;
@@ -150,6 +153,21 @@ export function useAgentStream(): UseAgentStreamReturn {
         // Update or add streaming message
         const streamingMsgFromEvent = createStreamingMessage(streamingStateRef.current);
 
+        // Check if streaming message has meaningful content to display
+        const hasContent = streamingMsgFromEvent.parts && streamingMsgFromEvent.parts.length > 0 &&
+          streamingMsgFromEvent.parts.some(p => {
+            if (p.type === 'text') return p.text && p.text.trim().length > 0;
+            if (p.type === 'tool_calls') return p.calls && p.calls.length > 0;
+
+            return false;
+          });
+
+        // Only track and add streaming messages that have content
+        // Empty streaming messages would just show the BusyIndicator with no text
+        if (!hasContent) {
+          return;
+        }
+
         // Track the active streaming message ID for replacement later
         activeStreamingIdRef.current = streamingMsgFromEvent.id;
 
@@ -164,7 +182,13 @@ export function useAgentStream(): UseAgentStreamReturn {
             return updated;
           }
 
-          return [...prev, streamingMsgFromEvent];
+          // Adding a new streaming message - first ensure no other messages have isStreaming
+          // This prevents multiple BusyIndicators from appearing
+          const updatedMessages = prev.map(m =>
+            m.isStreaming ? { ...m, isStreaming: false } : m
+          );
+
+          return [...updatedMessages, streamingMsgFromEvent];
         });
         break;
       }
@@ -190,6 +214,20 @@ export function useAgentStream(): UseAgentStreamReturn {
           // Update or add streaming message
           const streamingMsg = createStreamingMessage(streamingStateRef.current);
 
+          // Check if streaming message has meaningful content to display
+          const hasStreamingContent = streamingMsg.parts && streamingMsg.parts.length > 0 &&
+            streamingMsg.parts.some(p => {
+              if (p.type === 'text') return p.text && p.text.trim().length > 0;
+              if (p.type === 'tool_calls') return p.calls && p.calls.length > 0;
+
+              return false;
+            });
+
+          // Only track and add streaming messages that have content
+          if (!hasStreamingContent) {
+            return;
+          }
+
           setMessages(prev => {
             const existingIndex = prev.findIndex(m => m.id === streamingMsg.id);
 
@@ -202,8 +240,13 @@ export function useAgentStream(): UseAgentStreamReturn {
               return updated;
             }
 
-            // Add new streaming message
-            return [...prev, streamingMsg];
+            // Adding a new streaming message - first ensure no other messages have isStreaming
+            // This prevents multiple BusyIndicators from appearing
+            const updatedMessages = prev.map(m =>
+              m.isStreaming ? { ...m, isStreaming: false } : m
+            );
+
+            return [...updatedMessages, streamingMsg];
           });
         } else {
           // Complete assistant message - transform and add

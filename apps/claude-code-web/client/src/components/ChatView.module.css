@@ -1,3 +1,5 @@
+/* ChatView styles - wrapper and custom components */
+
 .chatView {
   display: flex;
   flex-direction: column;
@@ -5,6 +7,7 @@
   background: var(--color-body-background);
 }
 
+/* Header styling */
 .header {
   display: flex;
   justify-content: space-between;
@@ -12,7 +15,6 @@
   padding: var(--spacing) var(--spacing-large10);
   border-bottom: 1px solid var(--color-body-border);
   background: var(--color-panel-background);
-  flex-shrink: 0;
 }
 
 .title {
@@ -28,54 +30,19 @@
   gap: var(--spacing);
 }
 
-.chatArea {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  position: relative;
-}
-
-.chatPanel {
-  flex: 1;
-  overflow: hidden;
-}
-
-.thinkingArea {
-  padding: var(--spacing-small10) var(--spacing);
-  background: var(--color-panel-background);
-  border-top: 1px solid var(--color-body-border);
-}
-
+/* Notices styling (errors and denied permissions) */
 .error {
   padding: var(--spacing-small10) var(--spacing);
   background: var(--color-danger-backgroundSoft);
   color: var(--color-danger-text);
   font-size: var(--font-size-small);
-  border-top: 1px solid var(--color-danger-border);
+  border-radius: var(--radius-card);
 }
 
 .deniedPermissions {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-small10);
-  padding: var(--spacing-small10) var(--spacing);
-  background: var(--color-panel-background);
-  border-top: 1px solid var(--color-body-border);
   max-height: 200px;
   overflow-y: auto;
-}
-
-.inputArea {
-  padding: var(--spacing, 16px);
-  padding-bottom: var(--spacing-large10, 24px);
-  background: var(--color-panel-background);
-  border-top: 1px solid var(--color-body-border);
-  flex-shrink: 0;
-}
-
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
-  .inputArea {
-    padding-bottom: calc(var(--spacing-large10, 24px) + env(safe-area-inset-bottom));
-  }
 }

@@ -140,6 +140,43 @@ Components like `<Text>` have their own color styling. If you place them inside 
 
 ---
 
+## ⛔ CRITICAL: Layout Pattern (Use Stack, Not Margins)
+
+**Container controls layout + gap. Children don't set their own spacing.**
+
+```tsx
+// ✅ CORRECT - Stack handles layout + gap
+<Stack direction="vertical" gap="sm">
+  <Text>Title</Text>
+  <Text color="soft">Description</Text>
+  <Button>Action</Button>
+</Stack>
+
+// ❌ WRONG - Margins on children
+<Text style={{ marginBottom: 'var(--space-2)' }}>Title</Text>
+<Text style={{ marginBottom: 'var(--space-2)' }}>Description</Text>
+<Button>Action</Button>
+```
+
+**Why Stack + gap is better:**
+- Consistent spacing controlled in one place
+- No off-by-one margin issues (first/last child)
+- Works regardless of element type (inline or block - `<Text>` is inline!)
+- Easier to change spacing globally
+
+**Common pattern for section headers:**
+```tsx
+<Stack direction="vertical" gap="sm">
+  <Stack direction="vertical" gap="xs">
+    <Text size="lg" weight="semibold">Section Title</Text>
+    <Text size="sm" color="soft">Description of the section.</Text>
+  </Stack>
+  <ComponentBeingDocumented />
+</Stack>
+```
+
+---
+
 ## Core Principle: Use Components First
 
 **Before writing custom HTML/CSS, always check if a `@ui-kit/react` component exists.**
@@ -895,6 +932,7 @@ Add this to the top of your story file:
 ### ⛔ CRITICAL (Will Break If Wrong)
 - [ ] **Color groups are NOT mixed** - Every element's bg/fg/border tokens come from the SAME group
 - [ ] **No `<Text>` inside colored surfaces** - Use plain text or `color="inherit"` on non-base backgrounds
+- [ ] **Use Stack for layout** - Never use marginTop/marginBottom on children for spacing; use Stack with gap
 
 ### Required
 - [ ] All UI components use `@ui-kit/react` where available
@@ -919,6 +957,7 @@ Add this to the top of your story file:
 | **`--softer-bg` with `--base-border`** | **Use `--softer-border` (same group!)** |
 | **`<Text>` inside primary-bg div** | **Use plain text or `color="inherit"`** |
 | **Multiple `<Text>` in plain `<div>`** | **Wrap in `<Stack direction="vertical">`** |
+| **`marginBottom` on children for spacing** | **Use Stack with gap prop instead** |
 | `<div className={styles.button}>` | `<Button variant="default">` |
 | `variant="secondary"` on Chip | `variant="default"` or `variant="info"` |
 | Inline SVG icons | Import from `@ui-kit/icons` |

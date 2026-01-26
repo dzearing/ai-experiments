@@ -1,83 +1,9 @@
-import { type ReactNode, useState, useEffect, useRef, useCallback, memo } from 'react';
-import { Avatar, BusyIndicator, Spinner } from '@ui-kit/react';
-import { CheckIcon } from '@ui-kit/icons/CheckIcon';
-import { ChevronDownIcon } from '@ui-kit/icons/ChevronDownIcon';
-import { XCircleIcon } from '@ui-kit/icons/XCircleIcon';
+import { type ReactNode, useCallback, memo } from 'react';
+import { Avatar, BusyIndicator, CopyButton } from '@ui-kit/react';
 import { MarkdownRenderer } from '@ui-kit/react-markdown';
 import { useChatContext } from '../../context';
-import { MessageToolbar } from '../MessageToolbar';
+import { ToolGroup, type ToolCall, type ToolStatus } from '../ToolGroup';
 import styles from './ChatMessage.module.css';
-
-/**
- * Timer component that shows elapsed time for tool calls
- * @param startTime - When the tool started (epoch ms)
- * @param isComplete - Whether the tool has completed
- * @param duration - Pre-computed duration in ms (used for rehydrated tools)
- */
-function ToolTimer({ startTime, isComplete, duration }: { startTime?: number; isComplete: boolean; duration?: number }) {
-  const [elapsed, setElapsed] = useState(0);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const finalElapsedRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    // If duration is provided (rehydrated from storage), use it directly
-    if (duration !== undefined && isComplete) {
-      setElapsed(duration);
-      return;
-    }
-
-    // If no start time and no duration, don't show timer
-    if (!startTime) return;
-
-    // If complete and we already captured final time, keep showing it
-    if (isComplete && finalElapsedRef.current !== null) {
-      setElapsed(finalElapsedRef.current);
-      return;
-    }
-
-    // If complete, capture final elapsed time
-    if (isComplete) {
-      const finalElapsed = Date.now() - startTime;
-      finalElapsedRef.current = finalElapsed;
-      setElapsed(finalElapsed);
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-      return;
-    }
-
-    // Start timer
-    const updateElapsed = () => {
-      setElapsed(Date.now() - startTime);
-    };
-
-    // Initial update
-    updateElapsed();
-
-    // Update every 100ms
-    intervalRef.current = setInterval(updateElapsed, 100);
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [startTime, isComplete, duration]);
-
-  // Don't render if no start time and no duration
-  if (!startTime && duration === undefined) return null;
-
-  // Format as X.Xs (e.g., "0.3s", "1.2s", "15.7s")
-  const seconds = (elapsed / 1000).toFixed(1);
-
-  return (
-    <span className={isComplete ? styles.toolTimerComplete : styles.toolTimerRunning}>
-      ({seconds}s)
-    </span>
-  );
-}
 
 /**
  * Tool call information for AI assistant messages
@@ -585,12 +511,12 @@ export const ChatMessage = memo(function ChatMessage({
   renderMarkdown = true,
   isStreaming = false,
   toolCalls,
-  enableEdit = false,
-  onEdit,
+  enableEdit: _enableEdit = false,
+  onEdit: _onEdit,
   avatar,
   className = '',
   onLinkClick,
-  renderToolResult,
+  renderToolResult: _renderToolResult,
 }: ChatMessageProps) {
   // Try to read chat context (may not exist if ChatMessage used standalone)
   // chatMode will be used in Phase 2 for mode-aware rendering
@@ -606,75 +532,6 @@ export const ChatMessage = memo(function ChatMessage({
 
   // chatMode is now used for mode-conditional rendering
 
-  // Track which tool outputs are expanded (collapsed by default)
-  const [expandedTools, setExpandedTools] = useState<Set<string>>(new Set());
-  // Track hover/focus state for dynamic surface class
-  const [isActive, setIsActive] = useState(false);
-  const messageRef = useRef<HTMLDivElement>(null);
-
-  // Handle focus leaving the element
-  const handleBlur = useCallback((e: React.FocusEvent) => {
-    // Check if focus is moving outside this element
-    if (!messageRef.current?.contains(e.relatedTarget as Node)) {
-      setIsActive(false);
-    }
-  }, []);
-
-  // Handle mouse leave - only deactivate if no focus within
-  const handleMouseLeave = useCallback(() => {
-    // Check if focus is still within this element
-    if (!messageRef.current?.contains(document.activeElement)) {
-      setIsActive(false);
-    }
-  }, []);
-
-  const toggleToolExpanded = useCallback((toolKey: string) => {
-    // Find the scroll container by walking up the DOM tree
-    // Look for the virtualizedMessages container or any scrollable parent
-    let scrollContainer: HTMLElement | null = null;
-    let element = messageRef.current?.parentElement;
-    while (element) {
-      const style = window.getComputedStyle(element);
-      if (style.overflowY === 'auto' || style.overflowY === 'scroll') {
-        scrollContainer = element;
-        break;
-      }
-      element = element.parentElement;
-    }
-
-    // Capture scroll position before state change
-    const savedScrollTop = scrollContainer?.scrollTop ?? 0;
-
-    setExpandedTools(prev => {
-      const next = new Set(prev);
-      if (next.has(toolKey)) {
-        next.delete(toolKey);
-      } else {
-        next.add(toolKey);
-      }
-      return next;
-    });
-
-    // Restore scroll position after DOM updates
-    // Use multiple restoration attempts to fight against virtualizer re-measurements
-    if (scrollContainer) {
-      const restore = () => {
-        if (scrollContainer) {
-          scrollContainer.scrollTop = savedScrollTop;
-        }
-      };
-
-      // Immediate restoration
-      requestAnimationFrame(restore);
-      // Second attempt after React commits
-      requestAnimationFrame(() => requestAnimationFrame(restore));
-      // Third attempt after virtualizer measures (typical ~16-32ms)
-      setTimeout(restore, 50);
-      // Final attempt to catch any late adjustments
-      setTimeout(restore, 100);
-    }
-  }, []);
-
   // Convert legacy content/toolCalls to parts format if parts not provided
   const messageParts: ChatMessagePart[] = parts ?? [
     ...(content ? [{ type: 'text' as const, text: content }] : []),
@@ -685,11 +542,6 @@ export const ChatMessage = memo(function ChatMessage({
   const getContent = useCallback(() => {
     return extractTextContent(messageParts);
   }, [messageParts]);
-
-  // Callback when edit button is clicked
-  const handleEdit = useCallback(() => {
-    onEdit?.(id);
-  }, [onEdit, id]);
 
   // Get first text content for system messages
   const firstTextPart = messageParts.find((p): p is ChatMessageTextPart => p.type === 'text');
@@ -726,8 +578,8 @@ export const ChatMessage = memo(function ChatMessage({
     chatMode === 'group' && styles.groupMessage,
     chatMode === 'group' && isOwn && styles.groupMessageUser,
     chatMode === 'group' && !isOwn && styles.groupMessageOther,
-    // Surface classes - user always primary, assistant strong on hover/focus
-    isOwn ? 'surface primary' : (isActive && 'surface strong'),
+    // Surface classes - user uses stronger, assistant has no surface
+    isOwn && 'surface stronger',
     // Shared classes
     isConsecutive && styles.consecutive,
     isOwn && chatMode !== '1on1' && styles.highlighted, // Only apply highlighted in group mode
@@ -771,88 +623,43 @@ export const ChatMessage = memo(function ChatMessage({
         if (part.type === 'tool_calls') {
           // Ensure calls is an array (defensive against malformed data)
           const calls = Array.isArray(part.calls) ? part.calls : [];
+
+          // Convert ChatMessageToolCall[] to ToolCall[] format for ToolGroup
+          const toolGroupCalls: ToolCall[] = calls.map((toolCall, toolIndex) => {
+            const isCancelled = toolCall.cancelled ?? false;
+            const isComplete = toolCall.completed ?? !!toolCall.output;
+
+            // Determine status
+            let status: ToolStatus = 'running';
+
+            if (isCancelled) {
+              status = 'error';
+            } else if (isComplete) {
+              status = 'complete';
+            }
+
+            // Get output text (treat '__complete__' as empty)
+            const rawOutput = typeof toolCall.output === 'string' ? toolCall.output : '';
+            const outputText = rawOutput === '__complete__' ? '' : rawOutput;
+
+            // Only include output if tool should show it
+            const shouldShowOutput = isComplete &&
+              (outputText || hasInputBasedExpandableContent(toolCall.name)) &&
+              !shouldHideToolOutput(toolCall.name);
+
+            return {
+              id: toolCall.id ?? `${partIndex}-${toolIndex}`,
+              name: toolCall.name,
+              description: formatToolDescription(toolCall.name, toolCall.input),
+              status,
+              output: shouldShowOutput ? outputText : undefined,
+              duration: toolCall.duration,
+            };
+          });
+
           return (
             <div key={partIndex} className={styles.toolCalls}>
-              {calls.map((toolCall, toolIndex) => {
-                // Check for cancelled state first
-                const isCancelled = toolCall.cancelled ?? false;
-                // Use `completed` field if available, otherwise fall back to checking output
-                const isComplete = toolCall.completed ?? !!toolCall.output;
-                // Ensure output is a string, treat '__complete__' as empty (no box to show)
-                const rawOutput = typeof toolCall.output === 'string' ? toolCall.output : '';
-                const outputText = rawOutput === '__complete__' ? '' : rawOutput;
-                // Tool is expandable if: complete AND (has output OR has input-based content) AND not hidden
-                const hasExpandableContent = outputText || hasInputBasedExpandableContent(toolCall.name);
-                const hasOutput = isComplete && hasExpandableContent && !shouldHideToolOutput(toolCall.name);
-                const toolKey = `${partIndex}-${toolIndex}`;
-                const isExpanded = expandedTools.has(toolKey);
-
-                // Determine the status class
-                let statusClass = styles.toolRunning;
-
-                if (isCancelled) {
-                  statusClass = styles.toolCancelled;
-                } else if (isComplete) {
-                  statusClass = styles.toolComplete;
-                }
-
-                // Determine which icon to show
-                const renderIcon = () => {
-                  if (isCancelled) {
-                    return <XCircleIcon />;
-                  }
-                  if (isComplete) {
-                    return <CheckIcon />;
-                  }
-
-                  return <Spinner size="sm" />;
-                };
-
-                return (
-                  <div key={toolIndex} className={styles.toolCallWrapper}>
-                    <button
-                      type="button"
-                      className={`${styles.toolCall} ${statusClass} ${hasOutput ? styles.toolExpandable : ''}`}
-                      onClick={hasOutput ? () => toggleToolExpanded(toolKey) : undefined}
-                      disabled={!hasOutput}
-                    >
-                      <span className={styles.toolIcon}>
-                        {renderIcon()}
-                      </span>
-                      <span className={styles.toolDescription}>
-                        {formatToolDescription(toolCall.name, toolCall.input)}
-                      </span>
-                      <ToolTimer
-                        startTime={toolCall.startTime}
-                        isComplete={isComplete || isCancelled}
-                        duration={toolCall.duration}
-                      />
-                      {hasOutput && (
-                        <span className={`${styles.toolChevron} ${isExpanded ? styles.toolChevronExpanded : ''}`}>
-                          <ChevronDownIcon />
-                        </span>
-                      )}
-                    </button>
-                    {hasOutput && isExpanded && (
-                      <div className={styles.toolResult}>
-                        {renderToolResult ? (
-                          renderToolResult({
-                            toolName: toolCall.name,
-                            input: toolCall.input ?? {},
-                            output: outputText,
-                            isExpanded,
-                            onToggleExpand: () => toggleToolExpanded(toolKey),
-                          })
-                        ) : (
-                          <pre className={styles.toolResultContent}>
-                            {outputText}
-                          </pre>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+              <ToolGroup tools={toolGroupCalls} />
             </div>
           );
         }
@@ -873,29 +680,14 @@ export const ChatMessage = memo(function ChatMessage({
 
   return (
     <div
-      ref={messageRef}
       className={messageClasses}
       data-message-id={id}
       data-consecutive={chatMode === 'group' ? (isConsecutive ? 'true' : 'false') : undefined}
       tabIndex={0}
-      onMouseEnter={() => setIsActive(true)}
-      onMouseLeave={handleMouseLeave}
-      onFocus={() => setIsActive(true)}
-      onBlur={handleBlur}
     >
       {/* GROUP MODE: Avatar + MessageBody (name above content) */}
       {chatMode === 'group' && (
         <>
-          {/* Hover toolbar with timestamp and actions */}
-          <MessageToolbar
-            timestamp={timestamp}
-            getContent={getContent}
-            isOwn={isOwn}
-            showEdit={enableEdit}
-            onEdit={handleEdit}
-            className={styles.messageToolbar}
-          />
-
           {/* Avatar - always in DOM for layout, visibility controlled by CSS */}
           <div className={styles.groupSenderIndicator} style={senderColor ? { background: senderColor } : undefined}>
             {avatar || (
@@ -909,7 +701,25 @@ export const ChatMessage = memo(function ChatMessage({
               {senderName}
             </div>
             <div className={styles.groupContent}>
-              {renderMessageContent()}
+              {!isOwn ? (
+                /* Other participants: content + actions column on right */
+                <div className={styles.assistantContentWrapper}>
+                  <div className={styles.assistantTextContent}>
+                    {renderMessageContent()}
+                  </div>
+                  <div className={styles.assistantActionsColumn}>
+                    <CopyButton
+                      getContent={getContent}
+                      variant="ghost"
+                      size="sm"
+                      aria-label="Copy message"
+                    />
+                  </div>
+                </div>
+              ) : (
+                /* User's own messages: just content */
+                renderMessageContent()
+              )}
             </div>
           </div>
         </>
@@ -917,20 +727,27 @@ export const ChatMessage = memo(function ChatMessage({
 
       {/* 1-ON-1 MODE: Just content (no avatar/timestamp columns) */}
       {chatMode === '1on1' && (
-        <>
-          {/* Hover toolbar with timestamp and actions */}
-          <MessageToolbar
-            timestamp={timestamp}
-            getContent={getContent}
-            isOwn={isOwn}
-            showEdit={enableEdit}
-            onEdit={handleEdit}
-            className={styles.messageToolbar}
-          />
-          <div className={styles.content}>
-            {renderMessageContent()}
-          </div>
-        </>
+        <div className={styles.content}>
+          {!isOwn ? (
+            /* Assistant messages: content + actions column on right */
+            <div className={styles.assistantContentWrapper}>
+              <div className={styles.assistantTextContent}>
+                {renderMessageContent()}
+              </div>
+              <div className={styles.assistantActionsColumn}>
+                <CopyButton
+                  getContent={getContent}
+                  variant="ghost"
+                  size="sm"
+                  aria-label="Copy message"
+                />
+              </div>
+            </div>
+          ) : (
+            /* User messages: just content */
+            renderMessageContent()
+          )}
+        </div>
       )}
     </div>
   );

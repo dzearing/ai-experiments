@@ -1,7 +1,7 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
 
-import type { ChatInputSubmitData, ChatPanelMessage } from '@ui-kit/react-chat';
-import { ChatPanel, ChatInput, ThinkingIndicator } from '@ui-kit/react-chat';
+import type { ChatInputSubmitData, ChatPanelMessage, QueuedMessage } from '@ui-kit/react-chat';
+import { ChatLayout } from '@ui-kit/react-chat';
 
 import { useConversation } from '../hooks/useConversation';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
@@ -43,6 +43,12 @@ export function ChatView() {
 
   // System messages from commands (separate from conversation)
   const [systemMessages, setSystemMessages] = useState<ChatPanelMessage[]>([]);
+
+  // Message queue for messages sent while agent is busy
+  const [queuedMessages, setQueuedMessages] = useState<QueuedMessage[]>([]);
+
+  // Track previous streaming state to detect when streaming ends
+  const wasStreamingRef = useRef(false);
 
   // Add a system message to the chat (for command output)
   const addSystemMessage = useCallback((content: string) => {
@@ -101,10 +107,38 @@ export function ChatView() {
   });
 
   const handleSubmit = useCallback((data: ChatInputSubmitData) => {
-    if (data.content.trim()) {
-      sendMessage(data.content.trim());
+    const content = data.content.trim();
+
+    if (!content) return;
+
+    if (isStreaming) {
+      // Queue the message when agent is busy
+      setQueuedMessages((prev) => [
+        ...prev,
+        { id: `queued-${Date.now()}`, content },
+      ]);
+    } else {
+      sendMessage(content);
     }
-  }, [sendMessage]);
+  }, [sendMessage, isStreaming]);
+
+  // Remove a queued message
+  const handleRemoveQueuedMessage = useCallback((id: string) => {
+    setQueuedMessages((prev) => prev.filter((m) => m.id !== id));
+  }, []);
+
+  // Process queued messages when streaming ends
+  useEffect(() => {
+    if (wasStreamingRef.current && !isStreaming && queuedMessages.length > 0) {
+      // Streaming just ended and we have queued messages
+      const nextMessage = queuedMessages[0];
+
+      setQueuedMessages((prev) => prev.slice(1));
+      sendMessage(nextMessage.content);
+    }
+
+    wasStreamingRef.current = isStreaming;
+  }, [isStreaming, queuedMessages, sendMessage]);
 
   const handlePermissionApprove = useCallback(() => {
     if (permissionRequest) {
@@ -159,71 +193,75 @@ export function ChatView() {
     );
   }, []);
 
+  // Build notices content (errors + denied permissions)
+  const noticesContent = (
+    <>
+      {error && (
+        <div className={styles.error}>
+          {error}
+        </div>
+      )}
+      {deniedPermissions.length > 0 && (
+        <div className={styles.deniedPermissions}>
+          {deniedPermissions.map((denied, index) => (
+            <PermissionDeniedNotice
+              key={`${denied.toolName}-${denied.timestamp}-${index}`}
+              toolName={denied.toolName}
+              reason={denied.reason}
+            />
+          ))}
+        </div>
+      )}
+    </>
+  );
+
+  const hasNotices = error || deniedPermissions.length > 0;
+
+  // Show thinking indicator when streaming (waiting for response) or during extended thinking
+  // Once text starts streaming, the message bubble shows the text instead
+  const showThinkingIndicator = isStreaming || isThinking;
+
+  // Status text: "Deep thinking..." for extended thinking, nothing for initial wait
+  const thinkingStatusText = isThinking && thinkingContent ? 'Deep thinking...' : undefined;
+
   return (
     <div className={styles.chatView}>
-      <header className={styles.header}>
-        <h1 className={styles.title}>Claude Code Web</h1>
-        <div className={styles.headerControls}>
-          <ModeSelector
-            mode={permissionMode}
-            onChange={changePermissionMode}
-            disabled={!!permissionRequest || !!questionRequest}
-          />
-          <ContextUsage usage={contextUsage} />
-        </div>
-      </header>
-
-      <main className={styles.chatArea}>
-        <ChatPanel
-          messages={messages}
-          isLoading={isStreaming && !isThinking}
-          loadingText="Claude is responding..."
-          autoScroll={true}
-          emptyState={<WelcomeMessage />}
-          className={styles.chatPanel}
-          renderToolResult={renderToolResult}
-        />
-
-        {isThinking && (
-          <div className={styles.thinkingArea}>
-            <ThinkingIndicator
-              isActive={true}
-              statusText={thinkingContent ? 'Deep thinking...' : undefined}
-              showEscapeHint={true}
-            />
-          </div>
-        )}
-
-        {error && (
-          <div className={styles.error}>
-            {error}
-          </div>
-        )}
-
-        {deniedPermissions.length > 0 && (
-          <div className={styles.deniedPermissions}>
-            {deniedPermissions.map((denied, index) => (
-              <PermissionDeniedNotice
-                key={`${denied.toolName}-${denied.timestamp}-${index}`}
-                toolName={denied.toolName}
-                reason={denied.reason}
+      <ChatLayout
+        mode="1on1"
+        messages={messages}
+        emptyState={<WelcomeMessage />}
+        autoScroll={true}
+        renderToolResult={renderToolResult}
+        header={
+          <header className={styles.header}>
+            <h1 className={styles.title}>Claude Code Web</h1>
+            <div className={styles.headerControls}>
+              <ModeSelector
+                mode={permissionMode}
+                onChange={changePermissionMode}
+                disabled={!!permissionRequest || !!questionRequest}
               />
-            ))}
-          </div>
-        )}
-      </main>
-
-      <footer className={styles.inputArea}>
-        <ChatInput
-          onSubmit={handleSubmit}
-          commands={commands}
-          onCommand={handleCommand}
-          disabled={isStreaming}
-          placeholder="Message Claude..."
-          autoFocus={true}
-          fullWidth={true}
-        />
-      </footer>
+              <ContextUsage usage={contextUsage} />
+            </div>
+          </header>
+        }
+        isThinking={showThinkingIndicator}
+        thinkingIndicatorProps={{
+          statusText: thinkingStatusText,
+          showEscapeHint: true,
+        }}
+        queuedMessages={queuedMessages}
+        onRemoveQueuedMessage={handleRemoveQueuedMessage}
+        notices={hasNotices ? noticesContent : undefined}
+        chatInputProps={{
+          onSubmit: handleSubmit,
+          commands,
+          onCommand: handleCommand,
+          placeholder: isStreaming ? 'Type to queue message...' : 'Message Claude...',
+          autoFocus: true,
+          fullWidth: true,
+        }}
+      />
 
       <PermissionDialog
         open={!!permissionRequest}

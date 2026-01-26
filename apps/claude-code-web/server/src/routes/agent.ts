@@ -36,9 +36,10 @@ export function setSessionMode(sessionId: string, mode: PermissionMode): void {
  */
 router.get('/stream', async (req: Request, res: Response) => {
   const connectionId = uuidv4();
-  const { prompt, sessionId, permissionMode: modeParam, cwd } = req.query as {
+  const { prompt, sessionId, clientId, permissionMode: modeParam, cwd } = req.query as {
     prompt?: string;
     sessionId?: string;
+    clientId?: string;
     permissionMode?: string;
     cwd?: string;
   };
@@ -73,9 +74,10 @@ router.get('/stream', async (req: Request, res: Response) => {
     ? modeParam as PermissionMode
     : 'default';
 
-  // Connection tracking ID - use provided sessionId if valid, otherwise use connectionId
-  // This is for SSE event routing, not SDK resume
-  const connectionTrackingId = sessionId || connectionId;
+  // Connection tracking ID - use clientId for per-window SSE routing
+  // clientId is unique per browser tab/window (stored in sessionStorage)
+  // Falls back to sessionId or connectionId for backwards compatibility
+  const connectionTrackingId = clientId || sessionId || connectionId;
 
   // Set SSE headers
   res.writeHead(200, {

@@ -74,6 +74,22 @@ export const ImageChipExtension = Node.create({
     return ReactNodeViewRenderer(ImageChipNodeView);
   },
 
+  // Custom markdown serialization - output as placeholder text
+  // The actual image data is tracked separately in the images array passed to onSubmit
+  addStorage() {
+    return {
+      markdown: {
+        serialize(state: { write: (text: string) => void }, node: { attrs: { id: string; name: string } }) {
+          // Output a simple placeholder - the actual image is in the separate images array
+          state.write(`[Image: ${node.attrs.name}]`);
+        },
+        parse: {
+          // No parsing from markdown needed - images are inserted via paste/drag
+        },
+      },
+    };
+  },
+
   addCommands() {
     return {
       insertImageChip:

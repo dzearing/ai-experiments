@@ -14,8 +14,8 @@
   min-height: 0; /* Allow flex shrinking for proper overflow */
   overflow-y: auto;
   overscroll-behavior: contain; /* Prevent scroll chaining to parent */
-  padding: var(--space-4);
-  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  /* No gap - messages handle their own spacing */
 }
 
 .emptyState {
@@ -193,5 +193,5 @@
   overscroll-behavior: contain;
   overflow-anchor: none; /* Disable browser scroll anchoring - prevents scroll adjustment when tool cards expand */
   position: relative;
-  padding: var(--space-4);
+  padding: var(--space-2) var(--space-4);
 }
