@@ -14,6 +14,7 @@ import { ideasRouter, setIdeasWorkspaceHandler, setIdeasAgentHandler } from './r
 import { topicsRouter, setTopicsWorkspaceHandler } from './routes/topics.js';
 import { fsRouter } from './routes/fs.js';
 import { factsRouter } from './routes/facts.js';
+import { claudeCodeRouter } from './routes/claudeCode.js';
 import { setWorkspaceHandler as setMCPToolsWorkspaceHandler } from './services/MCPToolsService.js';
 import { createDiagnosticsRouter } from './routes/diagnostics.js';
 import { YjsCollaborationHandler } from './websocket/YjsCollaborationHandler.js';
@@ -66,6 +67,7 @@ app.use('/api/ideas', ideasRouter);
 app.use('/api/topics', topicsRouter);
 app.use('/api/fs', fsRouter);
 app.use('/api/facts', factsRouter);
+app.use('/api/claude-code', claudeCodeRouter);
 
 // Create HTTP server
 const server = createServer(app);

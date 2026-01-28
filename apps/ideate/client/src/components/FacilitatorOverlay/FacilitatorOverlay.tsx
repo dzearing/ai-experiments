@@ -11,6 +11,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTopics } from '../../contexts/TopicsContext';
 import { useFacilitatorSocket } from '../../hooks/useFacilitatorSocket';
 import { useChatCommands } from '../../hooks/useChatCommands';
+import { useClaudeCodeCommands } from '../../hooks/useClaudeCodeCommands';
 import { useModelPreference } from '../../hooks/useModelPreference';
 import { API_URL } from '../../config';
 import styles from './FacilitatorOverlay.module.css';
@@ -132,8 +133,29 @@ export function FacilitatorOverlay() {
     modelId,
   });
 
+  // Discover Claude Code plugin commands from the server
+  const {
+    commands: claudeCodeCommands,
+    handleCommand: handleClaudeCodeCommand,
+  } = useClaudeCodeCommands({
+    enabled: true,
+    onExecute: (command, content, args) => {
+      // When a Claude Code command is executed, send it to the facilitator
+      // The command content is the markdown/prompt from the plugin
+      const messageText = args
+        ? `Using /${command.pluginName ? `${command.pluginName}:` : ''}${command.name} ${args}\n\n${content}`
+        : content;
+
+      contextSendMessage(messageText);
+
+      if (isConnected) {
+        socketSendMessage(messageText);
+      }
+    },
+  });
+
   // Chat commands - FacilitatorOverlay uses local handlers since it doesn't have server command support
-  const { commands, handleCommand } = useChatCommands({
+  const { commands: builtInCommands, handleCommand: handleBuiltInCommand } = useChatCommands({
     availableCommands: [],
     executeCommand: () => {},
     clientOnlyCommands: [
@@ -210,6 +232,11 @@ export function FacilitatorOverlay() {
         description: 'Show available commands',
         usage: '/help',
         handler: () => {
+          // Build help text including Claude Code commands
+          const claudeCodeSection = claudeCodeCommands.length > 0
+            ? `\n\n## Claude Code Plugin Commands\n\n${claudeCodeCommands.map(c => `- **/${c.name}** - ${c.description}`).join('\n')}`
+            : '';
+
           addMessage({
             id: `help-${Date.now()}`,
             role: 'assistant',
@@ -217,7 +244,7 @@ export function FacilitatorOverlay() {
 
 - **/clear** - Clear chat history
 - **/context** - Show context window usage
-- **/help** - Show this help
+- **/help** - Show this help${claudeCodeSection}
 
 ## Features
 
@@ -232,6 +259,36 @@ export function FacilitatorOverlay() {
       },
     ],
   });
+
+  // Merge built-in and Claude Code commands
+  const commands = useMemo(() => {
+    return [...builtInCommands, ...claudeCodeCommands];
+  }, [builtInCommands, claudeCodeCommands]);
+
+  // Combined command handler - tries built-in first, then Claude Code
+  // Note: onCommand expects synchronous return, so we fire-and-forget async handlers
+  const handleCommand = useCallback((commandName: string, args: string) => {
+    // Try built-in commands first
+    const builtInResult = handleBuiltInCommand(commandName, args);
+
+    if (builtInResult.handled) {
+      return builtInResult;
+    }
+
+    // Check if this is a Claude Code command
+    const isClaudeCodeCmd = claudeCodeCommands.some(cmd => cmd.name === commandName);
+
+    if (isClaudeCodeCmd) {
+      // Fire-and-forget async execution
+      handleClaudeCodeCommand(commandName, args).catch(err => {
+        console.error('[FacilitatorOverlay] Claude Code command error:', err);
+      });
+
+      return { handled: true, clearInput: true };
+    }
+
+    return { handled: false };
+  }, [handleBuiltInCommand, handleClaudeCodeCommand, claudeCodeCommands]);
 
   // Process queued messages when AI finishes thinking
   useEffect(() => {

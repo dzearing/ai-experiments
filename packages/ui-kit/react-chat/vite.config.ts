@@ -16,10 +16,12 @@ export default defineConfig({
   ],
   build: {
     lib: {
-      entry: resolve(__dirname, 'src/index.ts'),
+      entry: {
+        index: resolve(__dirname, 'src/index.ts'),
+        'services/claudeCode/index': resolve(__dirname, 'src/services/claudeCode/index.ts'),
+      },
       name: 'UIKitReactChat',
       formats: ['es'],
-      fileName: 'index',
     },
     rollupOptions: {
       external: [
