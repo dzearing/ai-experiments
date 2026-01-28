@@ -1439,12 +1439,13 @@ export function IdeaDialog({
     });
   }, [isEditingDocument, phase, currentIdea, idea, parsedContent, content, workspaceId, initialTopicIds, createIdea, updateIdea, onSuccess, onIdeaCreated, documentId]);
 
-  // Debounced auto-save for UPDATES (not creation) during ideation phase
+  // Debounced auto-save for UPDATES (not creation) during ideation and planning phases
   const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    // Only auto-save updates during ideation phase when document changes
+    // Only auto-save updates during ideation or planning phase when document changes
     // Skip if no currentIdea (creation is handled by the effect above)
-    if (!isInitialized || phase !== 'ideation' || !hasDocumentChanges.current || !currentIdea?.id) return;
+    // Skip executing phase as it has different save logic
+    if (!isInitialized || phase === 'executing' || !hasDocumentChanges.current || !currentIdea?.id) return;
 
     const { title, summary, tags, description } = parsedContent;
 

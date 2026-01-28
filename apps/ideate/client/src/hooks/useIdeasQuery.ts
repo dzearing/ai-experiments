@@ -257,10 +257,17 @@ export function useIdeasQuery(options: UseIdeasQueryOptions = {}): UseIdeasQuery
   // Update an idea in local state
   // If idea doesn't exist yet (race condition), stores update for later
   const updateIdea = useCallback((ideaId: string, updates: Partial<IdeaMetadata>) => {
-    setIdeas(prev => {
-      const ideaExists = prev.some(idea => idea.id === ideaId);
+    log.log('updateIdea called', {
+      ideaId,
+      updateStatus: updates.status,
+      updateTitle: updates.title,
+      updateKeys: Object.keys(updates),
+    });
 
-      if (!ideaExists) {
+    setIdeas(prev => {
+      const existingIdea = prev.find(idea => idea.id === ideaId);
+
+      if (!existingIdea) {
         // Idea not loaded yet - store update for when fetchIdeas completes
         log.log('Storing pending update for idea not yet loaded', { ideaId, updates });
         const existing = pendingUpdatesRef.current.get(ideaId) || {};
@@ -268,6 +275,15 @@ export function useIdeasQuery(options: UseIdeasQueryOptions = {}): UseIdeasQuery
         pendingUpdatesRef.current.set(ideaId, { ...existing, ...updates });
 
         return prev;
+      }
+
+      // Log the status transition for debugging
+      if (updates.status && updates.status !== existingIdea.status) {
+        log.log('Status transition detected', {
+          ideaId,
+          fromStatus: existingIdea.status,
+          toStatus: updates.status,
+        });
       }
 
       return prev.map(idea =>

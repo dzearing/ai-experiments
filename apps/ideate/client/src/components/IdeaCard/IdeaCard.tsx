@@ -20,8 +20,6 @@ interface IdeaCardProps {
   onOpen: () => void;
 }
 
-const MAX_VISIBLE_TAGS = 3;
-
 export function IdeaCard({
   idea,
   isSelected,
@@ -32,7 +30,6 @@ export function IdeaCard({
     id,
     title: propTitle,
     summary: propSummary,
-    tags: propTags,
     source,
     status,
     execution,
@@ -74,7 +71,6 @@ export function IdeaCard({
   // Use real-time metadata if available, otherwise fall back to props
   const rawTitle = realtimeMetadata?.title ?? propTitle;
   const rawSummary = realtimeMetadata?.summary ?? propSummary;
-  const tags = realtimeMetadata?.tags ?? propTags;
 
   // Filter out placeholder title - show "New Idea" instead
   const isPlaceholderTitle = !rawTitle ||
@@ -88,11 +84,6 @@ export function IdeaCard({
     rawSummary === '_Add a brief summary of your idea..._' ||
     rawSummary.trim() === '';
   const summary = isPlaceholderSummary ? null : rawSummary;
-
-  // Filter out priority tags - only show category tags
-  const displayTags = tags.filter(t => !t.startsWith('priority:'));
-  const visibleTags = displayTags.slice(0, MAX_VISIBLE_TAGS);
-  const hiddenTagCount = displayTags.length - MAX_VISIBLE_TAGS;
 
   const isExecuting = status === 'executing';
 
@@ -234,20 +225,6 @@ export function IdeaCard({
         {/* Summary */}
         {summary && (
           <p className={styles.summary}>{summary}</p>
-        )}
-
-        {/* Tags Row - only show category tags, not priority */}
-        {visibleTags.length > 0 && (
-          <div className={styles.tags}>
-            {visibleTags.map((tag) => (
-              <Chip key={tag} variant="default" size="xs">
-                {tag}
-              </Chip>
-            ))}
-            {hiddenTagCount > 0 && (
-              <span className={styles.tagOverflow}>+{hiddenTagCount}</span>
-            )}
-          </div>
         )}
 
         {/* Time display - duration when running, relative time when idle */}

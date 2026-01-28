@@ -74,20 +74,6 @@
   line-height: var(--leading-normal);
 }
 
-/* Tags */
-.tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  align-items: center;
-}
-
-.tagOverflow {
-  font-size: 10px;
-  color: var(--base-fg-soft);
-  font-weight: var(--weight-medium);
-}
-
 /* Updated timestamp */
 .updatedAt {
   margin-top: var(--space-1);
