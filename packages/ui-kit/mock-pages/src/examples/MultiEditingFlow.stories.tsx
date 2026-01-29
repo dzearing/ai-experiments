@@ -522,12 +522,179 @@ const optionsWithVotes: MockOption[] = [
   },
 ];
 
+// Consensus options - All incorporate: dark theme, gradient accents, two-column layout, stats
+// These are NEW variations based on the synthesized team feedback
+const consensusOptionA = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; background: #09090b; color: white; }
+    .hero { min-height: 80vh; display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; padding: 4rem; align-items: center; }
+    .hero-content h1 { font-size: 3.5rem; font-weight: 800; margin-bottom: 1.5rem; line-height: 1.1; }
+    .hero-content h1 span { background: linear-gradient(90deg, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero-content p { font-size: 1.25rem; color: #71717a; margin-bottom: 2rem; }
+    .btn { display: inline-block; padding: 1rem 2rem; background: linear-gradient(90deg, #3b82f6, #8b5cf6); color: white; text-decoration: none; border-radius: 0.5rem; font-weight: 600; }
+    .hero-visual { background: #18181b; border-radius: 1rem; border: 1px solid #27272a; aspect-ratio: 4/3; }
+    .stats { display: flex; gap: 4rem; padding: 3rem 4rem; background: #111; border-top: 1px solid #222; }
+    .stat h3 { font-size: 2.5rem; font-weight: 700; background: linear-gradient(90deg, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .stat p { color: #666; margin-top: 0.25rem; }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <div class="hero-content">
+      <h1>Build <span>faster</span> with AI-powered tools</h1>
+      <p>Transform your workflow with intelligent automation. Join thousands of teams shipping 10x faster.</p>
+      <a href="#" class="btn">Get Started Free</a>
+    </div>
+    <div class="hero-visual"></div>
+  </div>
+  <div class="stats">
+    <div class="stat"><h3>10M+</h3><p>Active users</p></div>
+    <div class="stat"><h3>99.9%</h3><p>Uptime SLA</p></div>
+    <div class="stat"><h3>150+</h3><p>Countries</p></div>
+    <div class="stat"><h3>4.9★</h3><p>User rating</p></div>
+  </div>
+</body>
+</html>
+`;
+
+const consensusOptionB = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; background: #0a0a0a; color: white; }
+    nav { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 4rem; }
+    .logo { font-weight: 700; font-size: 1.25rem; background: linear-gradient(90deg, #f472b6, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; padding: 4rem; align-items: center; min-height: 70vh; }
+    .hero-content h1 { font-size: 3rem; font-weight: 700; margin-bottom: 1.5rem; line-height: 1.2; }
+    .gradient { background: linear-gradient(90deg, #f472b6, #a78bfa, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero-content p { font-size: 1.125rem; color: #888; margin-bottom: 2rem; }
+    .cta { display: flex; gap: 1rem; }
+    .btn { padding: 0.875rem 1.5rem; border-radius: 9999px; font-weight: 500; text-decoration: none; }
+    .btn-primary { background: white; color: black; }
+    .btn-secondary { border: 1px solid #333; color: white; }
+    .hero-visual { background: linear-gradient(135deg, #1a1a2e, #16213e); border-radius: 1rem; aspect-ratio: 4/3; }
+    .stats { display: flex; justify-content: center; gap: 6rem; padding: 4rem; background: #111; }
+    .stat { text-align: center; }
+    .stat h3 { font-size: 2rem; font-weight: 700; background: linear-gradient(90deg, #f472b6, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .stat p { color: #666; font-size: 0.875rem; margin-top: 0.25rem; }
+  </style>
+</head>
+<body>
+  <nav><div class="logo">Acme</div></nav>
+  <div class="hero">
+    <div class="hero-content">
+      <h1>The <span class="gradient">modern way</span> to build products</h1>
+      <p>Streamline development with our cutting-edge platform. Enterprise-grade security, infinite scale.</p>
+      <div class="cta">
+        <a href="#" class="btn btn-primary">Start Free Trial</a>
+        <a href="#" class="btn btn-secondary">Watch Demo</a>
+      </div>
+    </div>
+    <div class="hero-visual"></div>
+  </div>
+  <div class="stats">
+    <div class="stat"><h3>500K+</h3><p>Developers</p></div>
+    <div class="stat"><h3>50B+</h3><p>API requests/mo</p></div>
+    <div class="stat"><h3>99.99%</h3><p>Uptime</p></div>
+  </div>
+</body>
+</html>
+`;
+
+const consensusOptionC = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; background: #09090b; color: white; }
+    .hero { display: grid; grid-template-columns: 1fr 1fr; min-height: 85vh; }
+    .hero-content { display: flex; flex-direction: column; justify-content: center; padding: 4rem; }
+    .badge { display: inline-block; width: fit-content; padding: 0.5rem 1rem; background: linear-gradient(90deg, rgba(244,114,182,0.2), rgba(167,139,250,0.2)); border: 1px solid rgba(167,139,250,0.3); border-radius: 9999px; font-size: 0.875rem; color: #a78bfa; margin-bottom: 2rem; }
+    .hero-content h1 { font-size: 3.5rem; font-weight: 800; margin-bottom: 1.5rem; line-height: 1.1; }
+    .hero-content h1 span { background: linear-gradient(90deg, #f472b6, #a78bfa, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero-content p { font-size: 1.25rem; color: #71717a; margin-bottom: 2rem; max-width: 450px; }
+    .btn { display: inline-block; padding: 1rem 2rem; background: linear-gradient(90deg, #f472b6, #a78bfa); color: white; text-decoration: none; border-radius: 0.5rem; font-weight: 600; }
+    .hero-visual { background: linear-gradient(135deg, #18181b, #1f1f23); display: flex; align-items: center; justify-content: center; }
+    .mock-window { width: 85%; height: 75%; background: #111; border-radius: 0.75rem; border: 1px solid #333; }
+    .stats { display: flex; gap: 4rem; padding: 3rem 4rem; background: #0f0f0f; border-top: 1px solid #1a1a1a; }
+    .stat h3 { font-size: 2.25rem; font-weight: 700; background: linear-gradient(90deg, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .stat p { color: #555; margin-top: 0.25rem; }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <div class="hero-content">
+      <div class="badge">✨ Now in public beta</div>
+      <h1>Create <span>beautiful</span> experiences</h1>
+      <p>The all-in-one platform for building modern web applications with AI-powered tools.</p>
+      <a href="#" class="btn">Get Started Free</a>
+    </div>
+    <div class="hero-visual">
+      <div class="mock-window"></div>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="stat"><h3>10M+</h3><p>Active users</p></div>
+    <div class="stat"><h3>99.9%</h3><p>Uptime SLA</p></div>
+    <div class="stat"><h3>150+</h3><p>Countries</p></div>
+  </div>
+</body>
+</html>
+`;
+
+const consensusOptionD = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; background: #0c0c0c; color: white; }
+    .hero { display: grid; grid-template-columns: 1fr 1fr; min-height: 80vh; }
+    .hero-content { display: flex; flex-direction: column; justify-content: center; padding: 4rem; }
+    .hero-content h1 { font-size: 4rem; font-weight: 900; line-height: 0.95; letter-spacing: -0.03em; margin-bottom: 2rem; }
+    .hero-content h1 .line2 { background: linear-gradient(90deg, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero-content p { font-size: 1.25rem; color: #666; max-width: 400px; margin-bottom: 2.5rem; }
+    .btn { display: inline-block; padding: 1rem 2rem; background: white; color: black; text-decoration: none; font-weight: 600; }
+    .hero-visual { background: linear-gradient(180deg, #111 0%, #0c0c0c 100%); display: flex; align-items: center; justify-content: center; }
+    .app-preview { width: 90%; height: 80%; background: #161616; border: 1px solid #222; border-radius: 1rem; }
+    .stats { display: flex; gap: 3rem; padding: 3rem 4rem; background: #080808; border-top: 1px solid #1a1a1a; }
+    .stat h3 { font-size: 2rem; font-weight: 700; background: linear-gradient(90deg, #a78bfa, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .stat p { color: #555; font-size: 0.875rem; margin-top: 0.25rem; }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <div class="hero-content">
+      <h1>Ship faster.<br/><span class="line2">Scale smarter.</span></h1>
+      <p>Enterprise-grade infrastructure for teams that move fast and build things that matter.</p>
+      <a href="#" class="btn">Start Building →</a>
+    </div>
+    <div class="hero-visual">
+      <div class="app-preview"></div>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="stat"><h3>2M+</h3><p>Projects deployed</p></div>
+    <div class="stat"><h3>100ms</h3><p>Global latency</p></div>
+    <div class="stat"><h3>SOC2</h3><p>Compliant</p></div>
+  </div>
+</body>
+</html>
+`;
+
 // Options after consensus - Option C wins
 const optionsWithConsensus: MockOption[] = [
   {
     id: 'a',
     label: 'A',
-    html: landingPageOptionA2,
+    html: consensusOptionA,
     votes: [
       { odor: 'Sarah Chen', odorInitials: 'SC', odorColor: '#8b5cf6', vote: 'up' },
       { odor: 'Mike Johnson', odorInitials: 'MJ', odorColor: '#10b981', vote: 'up' },
@@ -536,7 +703,7 @@ const optionsWithConsensus: MockOption[] = [
   {
     id: 'b',
     label: 'B',
-    html: landingPageOptionB2,
+    html: consensusOptionB,
     votes: [
       { odor: 'You', odorInitials: 'ME', odorColor: '#3b82f6', vote: 'up' },
       { odor: 'Emma Wilson', odorInitials: 'EW', odorColor: '#f59e0b', vote: 'up' },
@@ -545,7 +712,7 @@ const optionsWithConsensus: MockOption[] = [
   {
     id: 'c',
     label: 'C',
-    html: landingPageOptionC2,
+    html: consensusOptionC,
     votes: [
       { odor: 'You', odorInitials: 'ME', odorColor: '#3b82f6', vote: 'up' },
       { odor: 'Sarah Chen', odorInitials: 'SC', odorColor: '#8b5cf6', vote: 'up' },
@@ -556,7 +723,7 @@ const optionsWithConsensus: MockOption[] = [
   {
     id: 'd',
     label: 'D',
-    html: landingPageOptionD2,
+    html: consensusOptionD,
     votes: [],
   },
 ];
