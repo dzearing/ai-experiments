@@ -124,6 +124,74 @@ const yjsHandler = new YjsCollaborationHandler({
         return null;
       }
 
+      // Handle implementation plan documents: impl-plan-{ideaId}
+      // Regenerate design doc from task data if the persisted doc was empty
+      if (documentId.startsWith('impl-plan-')) {
+        const ideaId = documentId.replace('impl-plan-', '');
+        const fullIdea = await ideaService.getIdeaByIdNoAuth(ideaId);
+        if (fullIdea && fullIdea.plan && fullIdea.plan.phases && fullIdea.plan.phases.length > 0) {
+          console.log(`[Yjs] Regenerating impl-plan for "${fullIdea.title}" from ${fullIdea.plan.phases.length} phases`);
+
+          // Build a basic design document from the task data
+          const parts: string[] = [];
+          parts.push(`# Design: ${fullIdea.title}`);
+          parts.push('');
+          parts.push('## Overview');
+          parts.push('');
+          parts.push(fullIdea.summary || '_No summary provided_');
+          parts.push('');
+
+          if (fullIdea.description) {
+            parts.push('## Description');
+            parts.push('');
+            parts.push(fullIdea.description);
+            parts.push('');
+          }
+
+          if (fullIdea.plan.workingDirectory) {
+            parts.push('## Project Location');
+            parts.push('');
+            parts.push(`Working Directory: \`${fullIdea.plan.workingDirectory}\``);
+            if (fullIdea.plan.repositoryUrl) {
+              parts.push(`Repository: ${fullIdea.plan.repositoryUrl}`);
+            }
+            if (fullIdea.plan.branch) {
+              parts.push(`Branch: \`${fullIdea.plan.branch}\``);
+            }
+            parts.push('');
+          }
+
+          parts.push('## Implementation Phases');
+          parts.push('');
+
+          for (const phase of fullIdea.plan.phases) {
+            parts.push(`### ${phase.title}`);
+            parts.push('');
+            if (phase.description) {
+              parts.push(phase.description);
+              parts.push('');
+            }
+
+            if (phase.tasks && phase.tasks.length > 0) {
+              parts.push('**Tasks:**');
+              for (const task of phase.tasks) {
+                const checkbox = task.completed ? '[x]' : '[ ]';
+                parts.push(`- ${checkbox} ${task.title}`);
+              }
+              parts.push('');
+            }
+          }
+
+          parts.push('---');
+          parts.push('');
+          parts.push('_This design document was auto-regenerated from existing task data._');
+
+          return parts.join('\n');
+        }
+        // No task data to regenerate from
+        return null;
+      }
+
       // Fall back to document service for regular documents
       return await documentService.getDocumentContent(documentId);
     } catch {

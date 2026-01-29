@@ -811,8 +811,18 @@ export class YjsCollaborationHandler extends EventEmitter {
       try {
         const state = await fs.readFile(room.persistPath);
         Y.applyUpdate(room.doc, new Uint8Array(state));
-        console.log(`[Yjs] Loaded persisted room "${room.name}" from ${room.persistPath}`);
-        return; // Successfully loaded, done
+
+        // Check if the loaded document has actual content
+        const yText = room.doc.getText('content');
+        const contentLength = yText.toString().length;
+
+        if (contentLength > 0) {
+          console.log(`[Yjs] Loaded persisted room "${room.name}" from ${room.persistPath} (${contentLength} chars)`);
+          return; // Successfully loaded with content, done
+        } else {
+          console.log(`[Yjs] Persisted room "${room.name}" was empty, will try getInitialContent fallback`);
+          // Don't return - fall through to try getInitialContent
+        }
       } catch (error) {
         // File doesn't exist yet, continue to try initializing from markdown
         if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {

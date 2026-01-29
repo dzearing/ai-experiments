@@ -63,6 +63,23 @@ export class PlanAgentYjsClient {
   }
 
   /**
+   * Mark the agent as actively working on a room.
+   * This prevents the room from being destroyed while the agent is writing,
+   * even if all user clients disconnect (e.g., dialog closed).
+   */
+  markAgentActive(roomName: string, userId: string): void {
+    this.yjsHandler.markAgentActive(roomName, userId);
+  }
+
+  /**
+   * Mark the agent as no longer working on a room.
+   * After calling this, the room may be destroyed if no clients are connected.
+   */
+  markAgentInactive(roomName: string): void {
+    this.yjsHandler.markAgentInactive(roomName);
+  }
+
+  /**
    * Connect to a room and get a session for editing.
    * Creates the room if it doesn't exist.
    */
