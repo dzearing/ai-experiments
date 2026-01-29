@@ -8,14 +8,12 @@
 }
 
 .messages {
-  display: flex;
-  flex-direction: column;
   flex: 1;
   min-height: 0; /* Allow flex shrinking for proper overflow */
   overflow-y: auto;
   overscroll-behavior: contain; /* Prevent scroll chaining to parent */
   padding: var(--space-2) var(--space-4);
-  /* No gap - messages handle their own spacing */
+  /* Block layout - messages stack naturally */
 }
 
 .emptyState {

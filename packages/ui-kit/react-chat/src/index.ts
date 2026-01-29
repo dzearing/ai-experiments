@@ -47,6 +47,10 @@ export type { MessageQueueProps, QueuedMessage } from './components/MessageQueue
 export { MessageToolbar } from './components/MessageToolbar';
 export type { MessageToolbarProps } from './components/MessageToolbar';
 
+// ContextBreakdown component for displaying context usage
+export { ContextBreakdown } from './components/ContextBreakdown';
+export type { ContextBreakdownProps, ContextUsageStats } from './components/ContextBreakdown';
+
 // Slash command types
 export type {
   SlashCommand,

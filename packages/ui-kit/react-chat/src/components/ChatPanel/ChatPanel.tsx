@@ -30,6 +30,10 @@ export interface ChatPanelMessage {
   avatar?: ReactNode;
   /** Whether to render content as markdown */
   renderMarkdown?: boolean;
+  /** Custom content to render instead of text/parts */
+  customContent?: ReactNode;
+  /** Whether this is a system message (full-width, uses customContent) */
+  isSystem?: boolean;
 }
 
 /**
@@ -145,6 +149,7 @@ export const ChatPanel = memo(function ChatPanel({
                 senderName={message.senderName}
                 senderColor={message.senderColor}
                 isOwn={message.isOwn}
+                isSystem={message.isSystem}
                 isConsecutive={isConsecutive}
                 isStreaming={message.isStreaming}
                 toolCalls={message.toolCalls}
@@ -152,6 +157,7 @@ export const ChatPanel = memo(function ChatPanel({
                 avatar={renderAvatar ? renderAvatar(message) : message.avatar}
                 onLinkClick={onLinkClick}
                 renderToolResult={renderToolResult}
+                customContent={message.customContent}
               />
             );
           })}

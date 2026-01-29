@@ -392,6 +392,9 @@ export interface ChatMessageProps {
 
   /** Callback when a menu item is selected */
   onMenuSelect?: (value: string, messageId: string) => void;
+
+  /** Custom content to render instead of text/parts (for special message types) */
+  customContent?: ReactNode;
 }
 
 /**
@@ -517,6 +520,7 @@ export const ChatMessage = memo(function ChatMessage({
   className = '',
   onLinkClick,
   renderToolResult: _renderToolResult,
+  customContent,
 }: ChatMessageProps) {
   // Try to read chat context (may not exist if ChatMessage used standalone)
   // chatMode will be used in Phase 2 for mode-aware rendering
@@ -552,7 +556,10 @@ export const ChatMessage = memo(function ChatMessage({
     return (
       <div className={`${styles.systemMessage} ${className}`} data-message-id={id}>
         <div className={styles.systemContent}>
-          {renderMarkdown ? (
+          {customContent ? (
+            // Render custom content (e.g., ContextBreakdown component)
+            customContent
+          ) : renderMarkdown ? (
             <MarkdownRenderer
               content={firstTextContent}
               enableDeepLinks={false}

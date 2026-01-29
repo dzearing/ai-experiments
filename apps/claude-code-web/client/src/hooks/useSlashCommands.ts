@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, createElement } from 'react';
+import { type ReactNode, useState, useEffect, useCallback, useMemo, createElement } from 'react';
 
 import { ClockIcon } from '@ui-kit/icons/ClockIcon';
 import { GearIcon } from '@ui-kit/icons/GearIcon';
@@ -6,6 +6,7 @@ import { HelpIcon } from '@ui-kit/icons/HelpIcon';
 import { InfoCircleIcon } from '@ui-kit/icons/InfoCircleIcon';
 import { TrashIcon } from '@ui-kit/icons/TrashIcon';
 import type { SlashCommand, SlashCommandResult } from '@ui-kit/react-chat';
+import { ContextBreakdown } from '@ui-kit/react-chat';
 
 import type { CommandDefinition } from '../types/commands';
 
@@ -49,6 +50,12 @@ const BUILTIN_COMMANDS: SlashCommand[] = [
     icon: createElement(ClockIcon),
     usage: '/cost',
   },
+  {
+    name: 'context',
+    description: 'Show context usage breakdown',
+    icon: createElement(InfoCircleIcon),
+    usage: '/context',
+  },
 ];
 
 /**
@@ -60,6 +67,9 @@ export interface UseSlashCommandsOptions {
 
   /** Callback to add a system message to the chat */
   addSystemMessage: (content: string) => void;
+
+  /** Callback to add a system message with custom React content */
+  addSystemContent?: (content: ReactNode) => void;
 
   /** Callback to send a user message to the conversation */
   sendMessage?: (prompt: string) => void;
@@ -121,6 +131,7 @@ function generateHelpText(commands: SlashCommand[]): string {
 export function useSlashCommands({
   clearConversation,
   addSystemMessage,
+  addSystemContent,
   sendMessage,
   contextUsage,
   permissionMode,
@@ -241,37 +252,51 @@ export function useSlashCommands({
         }
 
         case 'status': {
-          const lines = ['## Session Status', ''];
-
-          // Session ID
-          if (sessionId) {
-            lines.push(`**Session:** ${sessionId}`);
-            lines.push('');
-          }
-
-          // Context usage
-          lines.push('### Context Usage');
-
-          if (contextUsage) {
-            const { input_tokens, output_tokens, cache_read_tokens } = contextUsage;
-
-            lines.push(`- Input tokens: ${input_tokens.toLocaleString()}`);
-            lines.push(`- Output tokens: ${output_tokens.toLocaleString()}`);
-
-            if (cache_read_tokens !== undefined) {
-              lines.push(`- Cache read tokens: ${cache_read_tokens.toLocaleString()}`);
-            }
+          // Use ContextBreakdown component if addSystemContent is available
+          if (addSystemContent) {
+            addSystemContent(
+              createElement(ContextBreakdown, {
+                usage: contextUsage ? {
+                  input_tokens: contextUsage.input_tokens,
+                  output_tokens: contextUsage.output_tokens,
+                  cache_read_tokens: contextUsage.cache_read_tokens,
+                } : null,
+                sessionId,
+                permissionMode: permissionMode || 'default',
+                model: modelInfo?.name,
+                showCost: true,
+              })
+            );
           } else {
-            lines.push('No context usage data available.');
+            // Fallback to text for backwards compatibility
+            const lines = ['## Session Status', ''];
+
+            if (sessionId) {
+              lines.push(`**Session:** ${sessionId}`);
+              lines.push('');
+            }
+
+            lines.push('### Context Usage');
+
+            if (contextUsage) {
+              const { input_tokens, output_tokens, cache_read_tokens } = contextUsage;
+
+              lines.push(`- Input tokens: ${input_tokens.toLocaleString()}`);
+              lines.push(`- Output tokens: ${output_tokens.toLocaleString()}`);
+
+              if (cache_read_tokens !== undefined) {
+                lines.push(`- Cache read tokens: ${cache_read_tokens.toLocaleString()}`);
+              }
+            } else {
+              lines.push('No context usage data available.');
+            }
+
+            lines.push('');
+            lines.push('### Permission Mode');
+            lines.push(`Current mode: **${permissionMode || 'default'}**`);
+
+            addSystemMessage(lines.join('\n'));
           }
-
-          lines.push('');
-
-          // Permission mode
-          lines.push('### Permission Mode');
-          lines.push(`Current mode: **${permissionMode || 'default'}**`);
-
-          addSystemMessage(lines.join('\n'));
 
           return { handled: true, clearInput: true };
         }
@@ -294,6 +319,27 @@ export function useSlashCommands({
           lines.push(`${customCommands.length} command(s) loaded`);
 
           addSystemMessage(lines.join('\n'));
+
+          return { handled: true, clearInput: true };
+        }
+
+        case 'context': {
+          // Display context usage with ContextBreakdown component
+          if (addSystemContent) {
+            addSystemContent(
+              createElement(ContextBreakdown, {
+                usage: contextUsage ? {
+                  input_tokens: contextUsage.input_tokens,
+                  output_tokens: contextUsage.output_tokens,
+                  cache_read_tokens: contextUsage.cache_read_tokens,
+                } : null,
+                sessionId,
+                permissionMode: permissionMode || 'default',
+                model: modelInfo?.name,
+                showCost: true,
+              })
+            );
+          }
 
           return { handled: true, clearInput: true };
         }
@@ -359,6 +405,7 @@ export function useSlashCommands({
     [
       clearConversation,
       addSystemMessage,
+      addSystemContent,
       commands,
       contextUsage,
       permissionMode,

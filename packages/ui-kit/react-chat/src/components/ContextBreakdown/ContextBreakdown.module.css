@@ -1,0 +1,195 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--soft-bg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--soft-border);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--soft-fg);
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title {
+  font-weight: var(--weight-semibold);
+  color: var(--soft-fg-strong);
+}
+
+.total {
+  font-weight: var(--weight-medium);
+  color: var(--soft-fg-soft);
+}
+
+/* Progress Bar */
+.progressContainer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.progressBar {
+  flex: 1;
+  height: 8px;
+  background: var(--softer-bg);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: var(--radius-sm);
+  transition: width var(--duration-normal) var(--ease-default);
+}
+
+.progressFill.low {
+  background: var(--success-bg);
+}
+
+.progressFill.medium {
+  background: var(--warning-bg);
+}
+
+.progressFill.high {
+  background: var(--danger-bg);
+}
+
+.percentage {
+  font-weight: var(--weight-medium);
+  font-size: var(--text-xs);
+  min-width: 40px;
+  text-align: right;
+}
+
+.percentage.low {
+  color: var(--soft-fg-success);
+}
+
+.percentage.medium {
+  color: var(--soft-fg-warning);
+}
+
+.percentage.high {
+  color: var(--soft-fg-danger);
+}
+
+/* Token Breakdown */
+.breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--soft-border);
+}
+
+.breakdownRow {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--soft-fg-soft);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+.dot.input {
+  background: var(--soft-fg-primary);
+}
+
+.dot.output {
+  background: var(--info-bg);
+}
+
+.dot.cache {
+  background: var(--soft-fg-success);
+}
+
+.dot.cacheWrite {
+  background: var(--soft-fg-warning);
+}
+
+.value {
+  font-variant-numeric: tabular-nums;
+  color: var(--soft-fg);
+  text-align: right;
+}
+
+.cost {
+  font-variant-numeric: tabular-nums;
+  color: var(--soft-fg-soft);
+  font-size: var(--text-xs);
+  min-width: 60px;
+  text-align: right;
+}
+
+.totalRow {
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--soft-border);
+}
+
+.totalRow .label {
+  font-weight: var(--weight-semibold);
+  color: var(--soft-fg);
+}
+
+.totalCost {
+  font-weight: var(--weight-semibold);
+  color: var(--soft-fg);
+  font-variant-numeric: tabular-nums;
+  /* Span across value and cost columns */
+  grid-column: 2 / 4;
+  text-align: right;
+}
+
+/* Session Info */
+.sessionInfo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--soft-border);
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.infoLabel {
+  color: var(--soft-fg-soft);
+}
+
+.infoValue {
+  color: var(--soft-fg);
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+/* Empty state */
+.empty {
+  color: var(--soft-fg-soft);
+  text-align: center;
+  padding: var(--space-4);
+}

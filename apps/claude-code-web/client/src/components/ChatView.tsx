@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect, useRef } from 'react';
+import { type ReactNode, useCallback, useState, useEffect, useRef } from 'react';
 
 import type { ChatInputSubmitData, ChatPanelMessage, QueuedMessage } from '@ui-kit/react-chat';
 import { ChatLayout } from '@ui-kit/react-chat';
@@ -65,6 +65,23 @@ export function ChatView() {
     setSystemMessages((prev) => [...prev, msg]);
   }, []);
 
+  // Add a system message with custom React content (for rich components)
+  const addSystemContent = useCallback((customContent: ReactNode) => {
+    const msg: ChatPanelMessage = {
+      id: `system-${Date.now()}`,
+      content: '',
+      parts: [],
+      timestamp: new Date(),
+      senderName: 'System',
+      isOwn: false,
+      isSystem: true,
+      renderMarkdown: false,
+      customContent,
+    };
+
+    setSystemMessages((prev) => [...prev, msg]);
+  }, []);
+
   // Handle clearing conversation (also clear system messages)
   const handleClearConversation = useCallback(() => {
     clearConversation();
@@ -75,6 +92,7 @@ export function ChatView() {
   const { commands, handleCommand } = useSlashCommands({
     clearConversation: handleClearConversation,
     addSystemMessage,
+    addSystemContent,
     sendMessage,
     contextUsage,
     permissionMode,
