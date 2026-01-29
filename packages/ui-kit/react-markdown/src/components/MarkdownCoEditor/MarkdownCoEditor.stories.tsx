@@ -850,7 +850,7 @@ This demonstrates how the applyRemoteUpdate API handles concurrent edits from mu
         >
           + Add Co-author
         </button>
-        <span style={{ fontSize: '14px', color: 'var(--color-body-textSoft10)' }}>
+        <span style={{ fontSize: '14px', color: 'var(--base-fg-soft)' }}>
           Each co-author performs random edits every 5 seconds
         </span>
       </div>
@@ -861,9 +861,9 @@ This demonstrates how the applyRemoteUpdate API handles concurrent edits from mu
           flexWrap: 'wrap',
           gap: '8px',
           padding: '12px',
-          backgroundColor: 'var(--color-inset-background, #f5f5f5)',
+          backgroundColor: 'var(--softer-bg)',
           borderRadius: '8px',
-          border: '1px solid var(--color-inset-border, #e0e0e0)',
+          border: '1px solid var(--softer-border)',
         }}>
           {activeCoAuthors.map(agent => (
             <div
@@ -873,10 +873,11 @@ This demonstrates how the applyRemoteUpdate API handles concurrent edits from mu
                 alignItems: 'center',
                 gap: '8px',
                 padding: '4px 8px 4px 12px',
-                backgroundColor: 'var(--color-panel-background, white)',
+                backgroundColor: 'var(--soft-bg)',
                 borderRadius: '16px',
                 border: `2px solid ${agent.color}`,
                 fontSize: '13px',
+                color: 'var(--soft-fg)',
               }}
             >
               <span style={{
@@ -900,7 +901,7 @@ This demonstrates how the applyRemoteUpdate API handles concurrent edits from mu
                   borderRadius: '50%',
                   cursor: 'pointer',
                   fontSize: '14px',
-                  color: 'var(--color-body-textSoft20, #999)',
+                  color: 'var(--soft-fg-soft)',
                 }}
                 title={`Remove ${agent.name}`}
               >

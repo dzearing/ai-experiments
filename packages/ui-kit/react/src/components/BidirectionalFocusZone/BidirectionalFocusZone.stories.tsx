@@ -128,11 +128,12 @@ const cellStyle: React.CSSProperties = {
   alignItems: 'center',
   justifyContent: 'center',
   padding: 'var(--space-4)',
-  background: 'var(--card-bg)',
-  border: '1px solid var(--card-border)',
+  background: 'var(--soft-bg)',
+  border: '1px solid var(--soft-border)',
   borderRadius: 'var(--radius-md)',
   cursor: 'pointer',
   transition: 'all var(--duration-fast)',
+  color: 'var(--soft-fg)',
 };
 
 export const Default: Story = {
@@ -163,7 +164,7 @@ export const IconGrid: Story = {
     const icons = ['H1', 'H2', 'H3', 'B', 'I', 'U', 'S', 'Q', '{}', '<>', '[]', '//'];
     return (
       <div style={{ maxWidth: '300px' }}>
-        <p style={{ marginBottom: 'var(--space-4)', color: 'var(--body-text-soft)' }}>
+        <p style={{ marginBottom: 'var(--space-4)', color: 'var(--base-fg-soft)' }}>
           Click any icon, then use arrow keys to navigate:
         </p>
         <BidirectionalFocusZone
@@ -207,7 +208,7 @@ export const IconGrid: Story = {
 export const Toolbar: Story = {
   render: (args) => (
     <div>
-      <p style={{ marginBottom: 'var(--space-4)', color: 'var(--body-text-soft)' }}>
+      <p style={{ marginBottom: 'var(--space-4)', color: 'var(--base-fg-soft)' }}>
         A toolbar with horizontal arrow key navigation:
       </p>
       <BidirectionalFocusZone
@@ -216,15 +217,15 @@ export const Toolbar: Story = {
           display: 'flex',
           gap: 'var(--space-1)',
           padding: 'var(--space-2)',
-          background: 'var(--card-bg)',
+          background: 'var(--soft-bg)',
           borderRadius: 'var(--radius-md)',
-          border: '1px solid var(--card-border)',
+          border: '1px solid var(--soft-border)',
         }}
       >
         <Button variant="ghost" size="sm">Cut</Button>
         <Button variant="ghost" size="sm">Copy</Button>
         <Button variant="ghost" size="sm">Paste</Button>
-        <div style={{ width: '1px', background: 'var(--card-border)', margin: '0 var(--space-1)' }} />
+        <div style={{ width: '1px', background: 'var(--soft-border)', margin: '0 var(--space-1)' }} />
         <Button variant="ghost" size="sm">Undo</Button>
         <Button variant="ghost" size="sm">Redo</Button>
       </BidirectionalFocusZone>
@@ -255,7 +256,7 @@ export const CardGrid: Story = {
     ];
     return (
       <div style={{ maxWidth: '500px' }}>
-        <p style={{ marginBottom: 'var(--space-4)', color: 'var(--body-text-soft)' }}>
+        <p style={{ marginBottom: 'var(--space-4)', color: 'var(--base-fg-soft)' }}>
           Navigate cards with arrow keys:
         </p>
         <BidirectionalFocusZone
@@ -271,15 +272,15 @@ export const CardGrid: Story = {
               key={i}
               style={{
                 padding: 'var(--space-4)',
-                background: 'var(--card-bg)',
-                border: '1px solid var(--card-border)',
+                background: 'var(--soft-bg)',
+                border: '1px solid var(--soft-border)',
                 borderRadius: 'var(--radius-lg)',
                 textAlign: 'left',
                 cursor: 'pointer',
               }}
             >
               <div style={{ fontWeight: 600, marginBottom: 'var(--space-1)' }}>{card.title}</div>
-              <div style={{ fontSize: '12px', color: 'var(--body-text-soft)' }}>{card.desc}</div>
+              <div style={{ fontSize: '12px', color: 'var(--base-fg-soft)' }}>{card.desc}</div>
             </button>
           ))}
         </BidirectionalFocusZone>
@@ -306,7 +307,7 @@ export const WithFocusCallback: Story = {
 
     return (
       <Stack direction="vertical" gap="md">
-        <div style={{ color: 'var(--body-text-soft)' }}>
+        <div style={{ color: 'var(--base-fg-soft)' }}>
           Focused: {focusedIndex >= 0 ? `${items[focusedIndex]} (index ${focusedIndex})` : 'None'}
         </div>
         <BidirectionalFocusZone
@@ -323,8 +324,8 @@ export const WithFocusCallback: Story = {
               key={i}
               style={{
                 ...cellStyle,
-                background: focusedIndex === i ? 'var(--controlPrimary-bg)' : 'var(--card-bg)',
-                color: focusedIndex === i ? 'var(--controlPrimary-text)' : 'inherit',
+                background: focusedIndex === i ? 'var(--primary-bg)' : 'var(--soft-bg)',
+                color: focusedIndex === i ? 'var(--primary-fg)' : 'inherit',
               }}
             >
               {item}
@@ -349,7 +350,7 @@ export const WithFocusCallback: Story = {
 export const RTLSupport: Story = {
   render: (args) => (
     <div dir="rtl">
-      <p style={{ marginBottom: 'var(--space-4)', color: 'var(--body-text-soft)', textAlign: 'right' }}>
+      <p style={{ marginBottom: 'var(--space-4)', color: 'var(--base-fg-soft)', textAlign: 'right' }}>
         RTL mode: ArrowRight moves left, ArrowLeft moves right
       </p>
       <BidirectionalFocusZone
@@ -385,7 +386,7 @@ export const RTLSupport: Story = {
 export const NoWrap: Story = {
   render: (args) => (
     <div>
-      <p style={{ marginBottom: 'var(--space-4)', color: 'var(--body-text-soft)' }}>
+      <p style={{ marginBottom: 'var(--space-4)', color: 'var(--base-fg-soft)' }}>
         With wrap=false, focus stops at boundaries instead of wrapping around:
       </p>
       <BidirectionalFocusZone
@@ -420,7 +421,7 @@ export const NoWrap: Story = {
 export const Disabled: Story = {
   render: (args) => (
     <div>
-      <p style={{ marginBottom: 'var(--space-4)', color: 'var(--body-text-soft)' }}>
+      <p style={{ marginBottom: 'var(--space-4)', color: 'var(--base-fg-soft)' }}>
         When disabled, arrow keys perform default browser behavior:
       </p>
       <BidirectionalFocusZone
@@ -456,7 +457,7 @@ export const Disabled: Story = {
 export const DefaultFocusLast: Story = {
   render: (args) => (
     <div>
-      <p style={{ marginBottom: 'var(--space-4)', color: 'var(--body-text-soft)' }}>
+      <p style={{ marginBottom: 'var(--space-4)', color: 'var(--base-fg-soft)' }}>
         Tab into the grid - the last item receives initial focus:
       </p>
       <BidirectionalFocusZone
@@ -500,7 +501,7 @@ export const ColorPalette: Story = {
 
     return (
       <Stack direction="vertical" gap="md">
-        <div style={{ color: 'var(--body-text-soft)' }}>
+        <div style={{ color: 'var(--base-fg-soft)' }}>
           Selected: {selected ? <span style={{ color: selected }}>{selected}</span> : 'None'}
         </div>
         <BidirectionalFocusZone
@@ -519,7 +520,7 @@ export const ColorPalette: Story = {
                 width: '32px',
                 height: '32px',
                 background: color,
-                border: selected === color ? '2px solid var(--body-text)' : '2px solid transparent',
+                border: selected === color ? '2px solid var(--base-fg)' : '2px solid transparent',
                 borderRadius: 'var(--radius-sm)',
                 cursor: 'pointer',
               }}
@@ -577,7 +578,7 @@ export const VariableWidthGrid: Story = {
 
     return (
       <div style={{ maxWidth: '500px' }}>
-        <p style={{ marginBottom: 'var(--space-4)', color: 'var(--body-text-soft)' }}>
+        <p style={{ marginBottom: 'var(--space-4)', color: 'var(--base-fg-soft)' }}>
           Variable-width items with anchor-based navigation. Press Up/Down to see how focus
           maintains horizontal position across rows:
         </p>
@@ -588,7 +589,7 @@ export const VariableWidthGrid: Story = {
             flexWrap: 'wrap',
             gap: 'var(--space-2)',
             padding: 'var(--space-2)',
-            background: 'var(--panel-bg)',
+            background: 'var(--softer-bg)',
             borderRadius: 'var(--radius-lg)',
           }}
         >
@@ -598,8 +599,8 @@ export const VariableWidthGrid: Story = {
               style={{
                 minWidth: `${item.width}px`,
                 padding: 'var(--space-2) var(--space-3)',
-                background: 'var(--card-bg)',
-                border: '1px solid var(--card-border)',
+                background: 'var(--soft-bg)',
+                border: '1px solid var(--soft-border)',
                 borderRadius: 'var(--radius-md)',
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
@@ -657,7 +658,7 @@ export const MasonryGrid: Story = {
 
     return (
       <div style={{ maxWidth: '500px' }}>
-        <p style={{ marginBottom: 'var(--space-4)', color: 'var(--body-text-soft)' }}>
+        <p style={{ marginBottom: 'var(--space-4)', color: 'var(--base-fg-soft)' }}>
           True masonry layout using CSS columns. Items stack vertically to fill gaps:
         </p>
         <BidirectionalFocusZone
@@ -666,7 +667,7 @@ export const MasonryGrid: Story = {
             columnCount: 3,
             columnGap: '12px',
             padding: 'var(--space-3)',
-            background: 'var(--panel-bg)',
+            background: 'var(--softer-bg)',
             borderRadius: 'var(--radius-lg)',
           }}
         >
@@ -755,7 +756,7 @@ export const PhotoGallery: Story = {
 
     return (
       <div style={{ maxWidth: '500px' }}>
-        <p style={{ marginBottom: 'var(--space-4)', color: 'var(--body-text-soft)' }}>
+        <p style={{ marginBottom: 'var(--space-4)', color: 'var(--base-fg-soft)' }}>
           Photo gallery with mixed aspect ratios. Navigate with arrow keys:
         </p>
         <BidirectionalFocusZone
@@ -766,7 +767,7 @@ export const PhotoGallery: Story = {
             gap: 'var(--space-2)',
             alignItems: 'flex-start',
             padding: 'var(--space-3)',
-            background: 'var(--panel-bg)',
+            background: 'var(--softer-bg)',
             borderRadius: 'var(--radius-lg)',
           }}
         >

@@ -99,10 +99,11 @@ export function Segmented({
 }: SegmentedProps) {
   const [internalValue, setInternalValue] = useState(defaultValue || options[0]?.value);
   const [indicatorStyle, setIndicatorStyle] = useState<IndicatorStyle | null>(null);
-  const [isInitialRender, setIsInitialRender] = useState(true);
+  const [hasAnimated, setHasAnimated] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const segmentRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
+  const isFirstMeasurement = useRef(true);
 
   const isControlled = controlledValue !== undefined;
   const activeValue = isControlled ? controlledValue : internalValue;
@@ -119,15 +120,11 @@ export function Segmented({
       const segmentRect = activeSegment.getBoundingClientRect();
       const containerRect = container.getBoundingClientRect();
 
-      // Account for container border (clientLeft/clientTop give border width)
+      // Account for container border (clientLeft gives border width)
       const borderLeft = container.clientLeft;
-      const borderRight = container.clientLeft; // Same as left for uniform borders
 
-      // Account for RTL
-      const isRTL = getComputedStyle(container).direction === 'rtl';
-      const left = isRTL
-        ? containerRect.right - segmentRect.right - borderRight
-        : segmentRect.left - containerRect.left - borderLeft;
+      // getBoundingClientRect returns viewport coordinates which work for both LTR and RTL
+      const left = segmentRect.left - containerRect.left - borderLeft;
 
       setIndicatorStyle({
         left,
@@ -140,15 +137,19 @@ export function Segmented({
   useLayoutEffect(() => {
     updateIndicator();
 
-    // Mark initial render complete after first paint
-    if (isInitialRender) {
+    // Enable animations after first measurement is complete
+    if (isFirstMeasurement.current) {
+      isFirstMeasurement.current = false;
+      // Use double rAF to ensure paint has occurred before enabling transitions
       requestAnimationFrame(() => {
-        setIsInitialRender(false);
+        requestAnimationFrame(() => {
+          setHasAnimated(true);
+        });
       });
     }
-  }, [activeValue, options, updateIndicator, isInitialRender]);
+  }, [activeValue, options, updateIndicator]);
 
-  // Use ResizeObserver to handle container resizes
+  // Use ResizeObserver to handle container resizes and MutationObserver for direction changes
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -159,8 +160,23 @@ export function Segmented({
 
     resizeObserver.observe(container);
 
+    // Watch for direction changes on document and ancestors
+    const mutationObserver = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.attributeName === 'dir') {
+          updateIndicator();
+          break;
+        }
+      }
+    });
+
+    // Observe document element and body for dir attribute changes
+    mutationObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['dir'] });
+    mutationObserver.observe(document.body, { attributes: true, attributeFilter: ['dir'] });
+
     return () => {
       resizeObserver.disconnect();
+      mutationObserver.disconnect();
     };
   }, [updateIndicator]);
 
@@ -239,12 +255,12 @@ export function Segmented({
     .filter(Boolean)
     .join(' ');
 
-  // Indicator style with transition (skip transition on initial render)
+  // Indicator style with transition (skip transition until after initial render)
   const indicatorCSSStyle: CSSProperties | undefined = indicatorStyle
     ? {
         transform: `translateX(${indicatorStyle.left}px)`,
         width: `${indicatorStyle.width}px`,
-        transition: isInitialRender ? 'none' : undefined,
+        transition: hasAnimated ? undefined : 'none',
       }
     : undefined;
 
