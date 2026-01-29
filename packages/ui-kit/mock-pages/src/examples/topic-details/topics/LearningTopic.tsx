@@ -8,6 +8,7 @@ import {
   Heading,
   IconButton,
   Progress,
+  Stack,
   Tabs,
   Text,
 } from '@ui-kit/react';
@@ -195,10 +196,10 @@ export function LearningTopicDetail({ topic }: { topic: LearningTopic }) {
                 {topic.certificates.map((cert, i) => (
                   <div key={i} className={styles.certificateItem}>
                     <CheckCircleIcon className={styles.certificateIcon} />
-                    <div className={styles.certificateInfo}>
+                    <Stack direction="vertical" gap="none" className={styles.certificateInfo}>
                       <Text weight="medium">{cert.name}</Text>
                       <Text size="sm" color="soft">{cert.issuer} · {cert.date.toLocaleDateString()}</Text>
-                    </div>
+                    </Stack>
                   </div>
                 ))}
               </div>
@@ -218,10 +219,10 @@ export function LearningTopicDetail({ topic }: { topic: LearningTopic }) {
           <div className={styles.coursesList}>
             {topic.courses.map((course) => (
               <div key={course.id} className={styles.courseItem}>
-                <div className={styles.courseInfo}>
+                <Stack direction="vertical" gap="none" className={styles.courseInfo}>
                   <Text weight="medium">{course.title}</Text>
                   <Text size="sm" color="soft">{course.provider} · {course.duration}h</Text>
-                </div>
+                </Stack>
                 <div className={styles.courseProgress}>
                   <Progress value={course.progress} size="sm" />
                   <Text size="sm" color="soft">{course.progress}%</Text>
@@ -256,10 +257,10 @@ export function LearningTopicDetail({ topic }: { topic: LearningTopic }) {
             {topic.resources.map((resource, i) => (
               <div key={i} className={styles.resourceItem}>
                 {resource.type === 'Book' ? <FileIcon /> : resource.type === 'Website' ? <GlobeIcon /> : <FileIcon />}
-                <div className={styles.resourceInfo}>
+                <Stack direction="vertical" gap="none" className={styles.resourceInfo}>
                   <Text weight="medium">{resource.title}</Text>
                   <Text size="sm" color="soft">{resource.type}</Text>
-                </div>
+                </Stack>
                 <IconButton variant="ghost" icon={<LinkIcon />} aria-label="Open resource" />
               </div>
             ))}

@@ -7,6 +7,7 @@ import {
   Chip,
   Heading,
   IconButton,
+  Stack,
   Tabs,
   Text,
 } from '@ui-kit/react';
@@ -481,10 +482,10 @@ export function RecipeTopicDetail({ topic }: { topic: RecipeTopic }) {
                 <div className={styles.recipeChatCard}>
                   <div className={styles.recipeChatHeader}>
                     <ChatIcon className={styles.recipeChatIcon} />
-                    <div>
+                    <Stack direction="vertical" gap="none">
                       <Text weight="medium">Cooking Assistant</Text>
                       <Text size="sm" color="soft">Ask questions or let AI guide you through each step</Text>
-                    </div>
+                    </Stack>
                   </div>
                   <Button variant="primary" icon={<ChatIcon />} className={styles.recipeChatButton}>
                     Start Cooking Chat
@@ -583,7 +584,7 @@ export function RecipeTopicDetail({ topic }: { topic: RecipeTopic }) {
                 {phase.tasks.map((task, taskIndex) => (
                   <div key={task.id} className={styles.stepItem}>
                     <div className={styles.stepNumber}>{phaseIndex + 1}.{taskIndex + 1}</div>
-                    <div className={styles.stepContent}>
+                    <Stack direction="vertical" gap="none" className={styles.stepContent}>
                       <Text weight="medium">{task.title}</Text>
                       <Text size="sm" color="soft">{task.instruction}</Text>
                       {task.duration && (
@@ -591,7 +592,7 @@ export function RecipeTopicDetail({ topic }: { topic: RecipeTopic }) {
                           <ClockIcon /> {task.duration} min
                         </Text>
                       )}
-                    </div>
+                    </Stack>
                   </div>
                 ))}
               </div>

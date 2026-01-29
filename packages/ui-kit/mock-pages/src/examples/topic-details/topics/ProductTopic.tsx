@@ -7,6 +7,7 @@ import {
   Chip,
   Heading,
   IconButton,
+  Stack,
   Tabs,
   Text,
 } from '@ui-kit/react';
@@ -506,10 +507,10 @@ export function ProductTopicDetail({ topic }: { topic: ProductTopic }) {
                           {related.image && (
                             <div className={styles.relatedPreviewImage} style={{ backgroundImage: `url(${related.image})` }} />
                           )}
-                          <div className={styles.relatedPreviewInfo}>
+                          <Stack direction="vertical" gap="none" className={styles.relatedPreviewInfo}>
                             <Text size="sm" weight="medium">{related.name}</Text>
                             {related.price && <Text size="sm" color="soft">${related.price}</Text>}
-                          </div>
+                          </Stack>
                         </div>
                       ))}
                     </div>
@@ -552,10 +553,10 @@ export function ProductTopicDetail({ topic }: { topic: ProductTopic }) {
             {topic.documents.map((doc, i) => (
               <div key={i} className={styles.docItem}>
                 <FileIcon className={styles.docIcon} />
-                <div className={styles.docInfo}>
+                <Stack direction="vertical" gap="none" className={styles.docInfo}>
                   <Text weight="medium">{doc.name}</Text>
                   <Text size="sm" color="soft">{doc.type}</Text>
-                </div>
+                </Stack>
                 <IconButton variant="ghost" icon={<ChevronRightIcon />} aria-label="Open document" />
               </div>
             ))}

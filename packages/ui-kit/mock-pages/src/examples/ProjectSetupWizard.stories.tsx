@@ -538,14 +538,14 @@ export const AtTeamStep: Story = {
             onStepClick={setCurrent}
           />
         </div>
-        <div style={{ flex: 1 }}>
+        <Stack direction="vertical" gap="xs" style={{ flex: 1 }}>
           <Text size="lg" weight="semibold">
             {projectSteps[current].label}
           </Text>
-          <Text color="soft" style={{ marginTop: '0.5rem' }}>
+          <Text color="soft">
             {projectSteps[current].description}
           </Text>
-        </div>
+        </Stack>
       </div>
     );
   },
