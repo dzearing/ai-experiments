@@ -1,177 +1,123 @@
 import { useMemo, useCallback } from 'react';
-import { TrashIcon } from '@ui-kit/icons/TrashIcon';
-import { HelpIcon } from '@ui-kit/icons/HelpIcon';
-import { GearIcon } from '@ui-kit/icons/GearIcon';
-import type { SlashCommand, SlashCommandResult } from '@ui-kit/react-chat';
-import { AVAILABLE_MODELS, resolveModelId, type ModelId } from './useModelPreference';
+import type { SlashCommand as UISlashCommand, SlashCommandResult } from '@ui-kit/react-chat';
+import type { SlashCommand as ServerSlashCommand } from '../types/slashCommandTypes';
 
 /**
- * Message type for adding help/system messages
+ * Default commands shown before server sends available_commands.
+ * These are replaced when server commands arrive.
  */
-export interface ChatMessage {
-  id: string;
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  timestamp: number;
-}
+const DEFAULT_COMMANDS: UISlashCommand[] = [
+  {
+    name: 'help',
+    description: 'Show available commands',
+    usage: '/help',
+  },
+  {
+    name: 'clear',
+    description: 'Clear chat history',
+    usage: '/clear',
+  },
+  {
+    name: 'context',
+    description: 'Show context window usage',
+    usage: '/context',
+  },
+  {
+    name: 'model',
+    description: 'View current model and available options',
+    usage: '/model',
+  },
+];
 
 /**
- * Model info for display
+ * Client-only command definition
  */
-export interface ModelInfo {
-  id: string;
-  name: string;
-  shortName: string;
-  description: string;
+export interface ClientOnlyCommand extends UISlashCommand {
+  /** Handler for client-only execution */
+  handler: (args: string) => SlashCommandResult;
 }
 
 /**
  * Options for useChatCommands hook
  */
 export interface UseChatCommandsOptions {
-  /** Function to clear all messages */
-  clearMessages: () => void;
-  /** Function to clear server-side history */
-  clearServerHistory?: () => void;
-  /** Function to add a message */
-  addMessage: (message: ChatMessage) => void;
-  /** Custom help text to display */
-  helpText?: string;
-  /** Additional custom commands */
-  additionalCommands?: SlashCommand[];
-  /** Additional command handler */
-  onCustomCommand?: (command: string, args: string) => SlashCommandResult | undefined;
-  /** Current model info for /model command */
-  currentModelInfo?: ModelInfo;
-  /** Callback to change the model */
-  onModelChange?: (modelId: ModelId) => void;
+  /** Available commands from server */
+  availableCommands: ServerSlashCommand[];
+  /** Execute command via server */
+  executeCommand: (command: string, args: string) => void;
+  /** Client-only commands (rarely needed) */
+  clientOnlyCommands?: ClientOnlyCommand[];
 }
 
 /**
- * Default help text for chat interfaces
+ * Convert server SlashCommand to UI SlashCommand format
  */
-const DEFAULT_HELP_TEXT = `## Available Commands
+function convertToUICommand(serverCommand: ServerSlashCommand): UISlashCommand {
+  const usage = serverCommand.argumentHint
+    ? `/${serverCommand.name} ${serverCommand.argumentHint}`
+    : `/${serverCommand.name}`;
 
-- **/clear** - Clear all chat history
-- **/help** - Show this help message
-
-Type a message to get started!`;
+  return {
+    name: serverCommand.name,
+    description: serverCommand.description,
+    usage,
+  };
+}
 
 /**
- * Hook for common chat slash commands (clear, help, model)
- * Can be extended with additional commands per-context.
+ * Hook for chat slash commands.
+ *
+ * Commands are fetched from the server and executed server-side.
+ * This hook converts the server command format to UI format and
+ * routes all command execution through the WebSocket.
+ *
+ * Shows default commands immediately for good UX, then updates
+ * when server sends available_commands.
  */
 export function useChatCommands({
-  clearMessages,
-  clearServerHistory,
-  addMessage,
-  helpText = DEFAULT_HELP_TEXT,
-  additionalCommands = [],
-  onCustomCommand,
-  currentModelInfo,
-  onModelChange,
+  availableCommands,
+  executeCommand,
+  clientOnlyCommands = [],
 }: UseChatCommandsOptions) {
-  // Base slash commands
-  const commands: SlashCommand[] = useMemo(
-    () => [
-      {
-        name: 'clear',
-        description: 'Clear all chat history',
-        icon: <TrashIcon />,
-        usage: '/clear',
-      },
-      {
-        name: 'help',
-        description: 'Show available commands and features',
-        icon: <HelpIcon />,
-        usage: '/help',
-      },
-      ...(onModelChange ? [{
-        name: 'model',
-        description: 'View or change the AI model',
-        icon: <GearIcon />,
-        usage: '/model [name]',
-      }] : []),
-      ...additionalCommands,
-    ],
-    [additionalCommands, onModelChange]
-  );
+  // Convert server commands to UI format, fall back to defaults if none received yet
+  const commands: UISlashCommand[] = useMemo(() => {
+    // Use server commands if available, otherwise show defaults
+    const baseCommands = availableCommands.length > 0
+      ? availableCommands.map(convertToUICommand)
+      : DEFAULT_COMMANDS;
 
-  // Command handler
+    // Create a map to deduplicate by name, preferring clientOnlyCommands (they may have custom handlers)
+    const commandMap = new Map<string, UISlashCommand>();
+
+    // Add base commands first
+    for (const cmd of baseCommands) {
+      commandMap.set(cmd.name, cmd);
+    }
+
+    // Override with clientOnlyCommands (these take precedence)
+    for (const cmd of clientOnlyCommands) {
+      commandMap.set(cmd.name, cmd);
+    }
+
+    return Array.from(commandMap.values());
+  }, [availableCommands, clientOnlyCommands]);
+
+  // Command handler - routes to server or client-only handler
   const handleCommand = useCallback(
     (command: string, args: string): SlashCommandResult => {
-      switch (command) {
-        case 'clear':
-          clearMessages();
-          clearServerHistory?.();
-          return { handled: true, clearInput: true };
+      // Check for client-only commands first
+      const clientCmd = clientOnlyCommands.find(c => c.name === command);
 
-        case 'help':
-          addMessage({
-            id: `help-${Date.now()}`,
-            role: 'assistant',
-            content: helpText,
-            timestamp: Date.now(),
-          });
-          return { handled: true, clearInput: true };
-
-        case 'model':
-          if (!onModelChange) {
-            return { handled: false };
-          }
-
-          const modelArg = args.trim();
-
-          if (!modelArg) {
-            // Show current model and available options
-            const currentName = currentModelInfo?.name || 'Unknown';
-            const currentShortName = currentModelInfo?.shortName || '';
-            const modelList = AVAILABLE_MODELS.map(m => {
-              const isCurrent = m.id === currentModelInfo?.id;
-              return `- **${m.shortName}** - ${m.name}: ${m.description}${isCurrent ? ' *(current)*' : ''}`;
-            }).join('\n');
-
-            addMessage({
-              id: `model-info-${Date.now()}`,
-              role: 'assistant',
-              content: `## Current Model\n\n**${currentName}** (\`${currentShortName}\`)\n\n## Available Models\n\n${modelList}\n\nTo change, type: \`/model <name>\` (e.g., \`/model opus\`)`,
-              timestamp: Date.now(),
-            });
-            return { handled: true, clearInput: true };
-          }
-
-          // Try to change the model
-          const newModelId = resolveModelId(modelArg);
-          if (!newModelId) {
-            addMessage({
-              id: `model-error-${Date.now()}`,
-              role: 'assistant',
-              content: `Unknown model: "${modelArg}"\n\nAvailable models: ${AVAILABLE_MODELS.map(m => `\`${m.shortName}\``).join(', ')}`,
-              timestamp: Date.now(),
-            });
-            return { handled: true, clearInput: true };
-          }
-
-          onModelChange(newModelId);
-          const newModelInfo = AVAILABLE_MODELS.find(m => m.id === newModelId);
-          addMessage({
-            id: `model-changed-${Date.now()}`,
-            role: 'assistant',
-            content: `Model changed to **${newModelInfo?.name}** (\`${newModelInfo?.shortName}\`)`,
-            timestamp: Date.now(),
-          });
-          return { handled: true, clearInput: true };
-
-        default:
-          // Check for custom command handler
-          if (onCustomCommand) {
-            const result = onCustomCommand(command, args);
-            if (result) return result;
-          }
-          return { handled: false };
+      if (clientCmd?.handler) {
+        return clientCmd.handler(args);
       }
+
+      // Route to server
+      executeCommand(command, args);
+
+      return { handled: true, clearInput: true };
     },
-    [clearMessages, clearServerHistory, addMessage, helpText, onCustomCommand, currentModelInfo, onModelChange]
+    [executeCommand, clientOnlyCommands]
   );
 
   return {

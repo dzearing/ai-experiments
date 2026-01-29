@@ -11,6 +11,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTopics } from '../../contexts/TopicsContext';
 import { useFacilitatorSocket } from '../../hooks/useFacilitatorSocket';
 import { useChatCommands } from '../../hooks/useChatCommands';
+import { useClaudeCodeCommands } from '../../hooks/useClaudeCodeCommands';
 import { useModelPreference } from '../../hooks/useModelPreference';
 import { API_URL } from '../../config';
 import styles from './FacilitatorOverlay.module.css';
@@ -32,7 +33,7 @@ export function FacilitatorOverlay() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { getTopicReferences } = useTopics();
-  const { modelId, setModelId, modelInfo } = useModelPreference();
+  const { modelId, setModelId: _setModelId, modelInfo: _modelInfo } = useModelPreference();
   const {
     isOpen,
     messages,
@@ -132,35 +133,162 @@ export function FacilitatorOverlay() {
     modelId,
   });
 
-  // Chat commands (/clear, /help, /model)
-  const { commands, handleCommand } = useChatCommands({
-    clearMessages,
-    clearServerHistory: socketClearHistory,
-    addMessage: (msg) => addMessage({
-      id: msg.id,
-      role: msg.role === 'system' ? 'assistant' : msg.role,
-      parts: [{ type: 'text', text: msg.content }],
-      timestamp: msg.timestamp,
-    }),
-    helpText: `## Available Commands
+  // Discover Claude Code plugin commands from the server
+  const {
+    commands: claudeCodeCommands,
+    handleCommand: handleClaudeCodeCommand,
+  } = useClaudeCodeCommands({
+    enabled: true,
+    onExecute: (command, content, args) => {
+      // When a Claude Code command is executed, send it to the facilitator
+      // The command content is the markdown/prompt from the plugin
+      const messageText = args
+        ? `Using /${command.pluginName ? `${command.pluginName}:` : ''}${command.name} ${args}\n\n${content}`
+        : content;
 
-- **/clear** - Clear all chat history
-- **/help** - Show this help message
-- **/model** - View or change the AI model
+      contextSendMessage(messageText);
+
+      if (isConnected) {
+        socketSendMessage(messageText);
+      }
+    },
+  });
+
+  // Chat commands - FacilitatorOverlay uses local handlers since it doesn't have server command support
+  const { commands: builtInCommands, handleCommand: handleBuiltInCommand } = useChatCommands({
+    availableCommands: [],
+    executeCommand: () => {},
+    clientOnlyCommands: [
+      {
+        name: 'clear',
+        description: 'Clear chat history',
+        usage: '/clear',
+        handler: () => {
+          clearMessages();
+          socketClearHistory();
+
+          return { handled: true, clearInput: true };
+        },
+      },
+      {
+        name: 'context',
+        description: 'Show context window usage and session info',
+        usage: '/context',
+        handler: () => {
+          // Build context display data for the facilitator
+          const maxTokens = 200000;
+          const systemPromptTokens = 2500;
+          const messageTokens = messages.reduce((acc, m) => {
+            const textParts = m.parts?.filter(p => p.type === 'text') || [];
+            const textLength = textParts.reduce((sum, p) => sum + ((p as { text: string }).text?.length || 0), 0);
+
+            return acc + Math.ceil(textLength / 4); // Rough token estimate
+          }, 0);
+          const usedTokens = systemPromptTokens + messageTokens;
+          const bufferTokens = Math.round(maxTokens * 0.20);
+          const freeTokens = maxTokens - usedTokens - bufferTokens;
+          const usedPercent = (usedTokens / maxTokens) * 100;
+          const bufferPercent = (bufferTokens / maxTokens) * 100;
+
+          const contextData = {
+            model: modelId || 'claude-sonnet-4',
+            maxTokens,
+            usedTokens,
+            usedPercent,
+            freeTokens,
+            bufferTokens,
+            bufferPercent,
+            categories: [
+              { name: 'System prompt', tokens: systemPromptTokens, percent: (systemPromptTokens / maxTokens) * 100, type: 'used' as const },
+              { name: 'Messages (conversation)', tokens: messageTokens, percent: (messageTokens / maxTokens) * 100, type: 'used' as const },
+              { name: 'Free space', tokens: freeTokens, percent: (freeTokens / maxTokens) * 100, type: 'free' as const },
+              { name: 'Autocompact buffer', tokens: bufferTokens, percent: bufferPercent, type: 'buffer' as const },
+            ],
+            session: {
+              sessionId: user?.id || 'unknown',
+              model: modelId || 'claude-sonnet-4',
+              messageCount: messages.length,
+              inputTokens: 0,
+              outputTokens: 0,
+            },
+          };
+
+          addMessage({
+            id: `context-${Date.now()}`,
+            role: 'assistant',
+            parts: [{
+              type: 'component',
+              componentType: 'context',
+              data: contextData,
+            }],
+            timestamp: Date.now(),
+          });
+
+          return { handled: true, clearInput: true };
+        },
+      },
+      {
+        name: 'help',
+        description: 'Show available commands',
+        usage: '/help',
+        handler: () => {
+          // Build help text including Claude Code commands
+          const claudeCodeSection = claudeCodeCommands.length > 0
+            ? `\n\n## Claude Code Plugin Commands\n\n${claudeCodeCommands.map(c => `- **/${c.name}** - ${c.description}`).join('\n')}`
+            : '';
+
+          addMessage({
+            id: `help-${Date.now()}`,
+            role: 'assistant',
+            parts: [{ type: 'text', text: `## Available Commands
+
+- **/clear** - Clear chat history
+- **/context** - Show context window usage
+- **/help** - Show this help${claudeCodeSection}
 
 ## Features
 
 - Ask questions about your workspaces and documents
-- Create, edit, and search documents
-- Get summaries of your content
 - Press **Ctrl+.** (or **Cmd+.** on Mac) to toggle this overlay
-- Press **Escape** to close (clears input first if not empty)
-- Press **Ctrl+C** (or **Cmd+C** on Mac) to stop the AI while it's thinking
+- Press **Escape** to close` }],
+            timestamp: Date.now(),
+          });
 
-Type a message to get started!`,
-    currentModelInfo: modelInfo,
-    onModelChange: setModelId,
+          return { handled: true, clearInput: true };
+        },
+      },
+    ],
   });
+
+  // Merge built-in and Claude Code commands
+  const commands = useMemo(() => {
+    return [...builtInCommands, ...claudeCodeCommands];
+  }, [builtInCommands, claudeCodeCommands]);
+
+  // Combined command handler - tries built-in first, then Claude Code
+  // Note: onCommand expects synchronous return, so we fire-and-forget async handlers
+  const handleCommand = useCallback((commandName: string, args: string) => {
+    // Try built-in commands first
+    const builtInResult = handleBuiltInCommand(commandName, args);
+
+    if (builtInResult.handled) {
+      return builtInResult;
+    }
+
+    // Check if this is a Claude Code command
+    const isClaudeCodeCmd = claudeCodeCommands.some(cmd => cmd.name === commandName);
+
+    if (isClaudeCodeCmd) {
+      // Fire-and-forget async execution
+      handleClaudeCodeCommand(commandName, args).catch(err => {
+        console.error('[FacilitatorOverlay] Claude Code command error:', err);
+      });
+
+      return { handled: true, clearInput: true };
+    }
+
+    return { handled: false };
+  }, [handleBuiltInCommand, handleClaudeCodeCommand, claudeCodeCommands]);
 
   // Process queued messages when AI finishes thinking
   useEffect(() => {

@@ -343,6 +343,11 @@
   /* No extra spacing needed, markdown renderer handles it */
 }
 
+.componentPart {
+  /* Container for custom components like ContextDisplay */
+  margin: var(--space-2, 8px) 0;
+}
+
 .highlighted .plainText {
   color: var(--strong-fg);
 }

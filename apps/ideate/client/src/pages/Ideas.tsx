@@ -122,7 +122,13 @@ export function Ideas() {
     if (resourceType === 'idea') {
       const update = data as Partial<IdeaMetadata> & { id: string };
 
-      log.log('Idea updated via WebSocket', { id: update.id, agentStatus: update.agentStatus, keys: Object.keys(update) });
+      log.log('Idea updated via WebSocket', {
+        id: update.id,
+        status: update.status,
+        agentStatus: update.agentStatus,
+        title: update.title,
+        keys: Object.keys(update),
+      });
       updateIdea(update.id, update);
     }
   }, [updateIdea]);

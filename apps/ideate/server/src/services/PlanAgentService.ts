@@ -870,13 +870,21 @@ Feel free to share any details, and I'll start building out the phases and tasks
             callbacks.onDocumentEditStart?.();
             console.log(`[PlanAgentService] Creating/replacing Implementation Plan document in room ${documentRoomName}, content length: ${implPlanContent.length}`);
 
+            // Mark agent as active to prevent room destruction while writing
+            this.yjsClient.markAgentActive(documentRoomName, userId);
+
             await this.yjsClient.streamReplaceContent(documentRoomName, implPlanContent);
             this.yjsClient.clearCursor(documentRoomName);
+
+            // Mark agent as inactive after writing completes
+            this.yjsClient.markAgentInactive(documentRoomName);
 
             callbacks.onDocumentEditEnd?.();
             console.log(`[PlanAgentService] Implementation Plan document updated successfully`);
           } catch (error) {
             console.error('[PlanAgentService] Error updating Implementation Plan document:', error);
+            // Ensure we mark inactive even on error
+            this.yjsClient.markAgentInactive(documentRoomName);
             callbacks.onDocumentEditEnd?.();
           }
         } else {
@@ -898,16 +906,24 @@ Feel free to share any details, and I'll start building out the phases and tasks
             callbacks.onDocumentEditStart?.();
             console.log(`[PlanAgentService] Applying ${edits.length} edits to Implementation Plan in room ${documentRoomName}`);
 
+            // Mark agent as active to prevent room destruction while editing
+            this.yjsClient.markAgentActive(documentRoomName, userId);
+
             const results = await this.yjsClient.applyEdits(documentRoomName, edits);
             const failedEdits = results.filter(r => !r.success);
             if (failedEdits.length > 0) {
               console.warn('[PlanAgentService] Some edits failed:', failedEdits);
             }
 
+            // Mark agent as inactive after edits complete
+            this.yjsClient.markAgentInactive(documentRoomName);
+
             callbacks.onDocumentEditEnd?.();
             console.log(`[PlanAgentService] Edits applied: ${results.filter(r => r.success).length}/${edits.length} successful`);
           } catch (error) {
             console.error('[PlanAgentService] Error applying edits:', error);
+            // Ensure we mark inactive even on error
+            this.yjsClient.markAgentInactive(documentRoomName);
             callbacks.onDocumentEditEnd?.();
           }
         }

@@ -208,8 +208,16 @@ ideasRouter.post('/', async (req: Request, res: Response) => {
     }
 
     // Notify workspace subscribers of new idea
-    if (workspaceId && workspaceWsHandler) {
-      workspaceWsHandler.notifyResourceCreated(workspaceId, idea.id, 'idea', idea);
+    // For ideas with a workspaceId, broadcast to that workspace (which also notifies 'all' subscribers)
+    // For ideas without a workspaceId (global/personal), broadcast directly to 'all'
+    if (workspaceWsHandler) {
+      const broadcastWorkspaceId = workspaceId || 'all';
+
+      console.log('[Ideas] Broadcasting create to workspace:', broadcastWorkspaceId, {
+        ideaId: idea.id,
+        title: idea.title,
+      });
+      workspaceWsHandler.notifyResourceCreated(broadcastWorkspaceId, idea.id, 'idea', idea);
     }
 
     res.status(201).json(idea);
@@ -321,8 +329,16 @@ JSON:`;
     });
 
     // Notify workspace subscribers of new idea
-    if (workspaceId && workspaceWsHandler) {
-      workspaceWsHandler.notifyResourceCreated(workspaceId, idea.id, 'idea', idea);
+    // For ideas with a workspaceId, broadcast to that workspace (which also notifies 'all' subscribers)
+    // For ideas without a workspaceId (global/personal), broadcast directly to 'all'
+    if (workspaceWsHandler) {
+      const broadcastWorkspaceId = workspaceId || 'all';
+
+      console.log('[Ideas] Broadcasting create to workspace:', broadcastWorkspaceId, {
+        ideaId: idea.id,
+        title: idea.title,
+      });
+      workspaceWsHandler.notifyResourceCreated(broadcastWorkspaceId, idea.id, 'idea', idea);
     }
 
     res.status(201).json(idea);
@@ -359,8 +375,16 @@ ideasRouter.patch('/:id', async (req: Request, res: Response) => {
     }
 
     // Notify workspace subscribers of updated idea
-    if (idea.workspaceId && workspaceWsHandler) {
-      workspaceWsHandler.notifyResourceUpdated(idea.workspaceId, idea.id, 'idea', idea);
+    // For ideas with a workspaceId, broadcast to that workspace (which also notifies 'all' subscribers)
+    // For ideas without a workspaceId (global/personal), broadcast directly to 'all'
+    if (workspaceWsHandler) {
+      const broadcastWorkspaceId = idea.workspaceId || 'all';
+
+      console.log('[Ideas] Broadcasting update to workspace:', broadcastWorkspaceId, {
+        ideaId: idea.id,
+        title: idea.title,
+      });
+      workspaceWsHandler.notifyResourceUpdated(broadcastWorkspaceId, idea.id, 'idea', idea);
     }
 
     res.json(idea);
@@ -393,8 +417,13 @@ ideasRouter.delete('/:id', async (req: Request, res: Response) => {
     }
 
     // Notify workspace subscribers of deleted idea
-    if (workspaceId && workspaceWsHandler) {
-      workspaceWsHandler.notifyResourceDeleted(workspaceId, id, 'idea');
+    // For ideas with a workspaceId, broadcast to that workspace (which also notifies 'all' subscribers)
+    // For ideas without a workspaceId (global/personal), broadcast directly to 'all'
+    if (workspaceWsHandler) {
+      const broadcastWorkspaceId = workspaceId || 'all';
+
+      console.log('[Ideas] Broadcasting delete to workspace:', broadcastWorkspaceId, { ideaId: id });
+      workspaceWsHandler.notifyResourceDeleted(broadcastWorkspaceId, id, 'idea');
     }
 
     res.json({ success: true });
@@ -464,8 +493,17 @@ ideasRouter.patch('/:id/status', async (req: Request, res: Response) => {
     }
 
     // Notify workspace subscribers of idea status change
-    if (idea.workspaceId && workspaceWsHandler) {
-      workspaceWsHandler.notifyResourceUpdated(idea.workspaceId, idea.id, 'idea', {
+    // For ideas with a workspaceId, broadcast to that workspace (which also notifies 'all' subscribers)
+    // For ideas without a workspaceId (global/personal), broadcast directly to 'all'
+    if (workspaceWsHandler) {
+      const broadcastWorkspaceId = idea.workspaceId || 'all';
+
+      console.log('[Ideas] Broadcasting status update to workspace:', broadcastWorkspaceId, {
+        ideaId: idea.id,
+        previousStatus,
+        newStatus: idea.status,
+      });
+      workspaceWsHandler.notifyResourceUpdated(broadcastWorkspaceId, idea.id, 'idea', {
         ...idea,
         _updateType: 'status',
         _previousStatus: previousStatus,

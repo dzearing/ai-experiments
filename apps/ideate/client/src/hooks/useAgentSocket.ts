@@ -27,6 +27,7 @@ import type {
   TokenUsage,
   IdeaContext,
 } from './agentTypes';
+import type { SlashCommand, SlashCommandResult } from '../types/slashCommandTypes';
 
 /**
  * Server message types that all agents handle
@@ -59,6 +60,12 @@ export interface BaseServerMessage {
   toolName?: string;
   /** Tool input */
   toolInput?: Record<string, unknown>;
+  /** For available_commands message */
+  commands?: SlashCommand[];
+  /** For command_result message - command name */
+  command?: string;
+  /** For command_result message - result */
+  result?: SlashCommandResult;
 }
 
 /**
@@ -159,6 +166,10 @@ export interface UseAgentSocketReturn {
   currentMessageIdRef: React.MutableRefObject<string | null>;
   /** Send raw message to WebSocket */
   sendRaw: (data: Record<string, unknown>) => void;
+  /** Available slash commands from server */
+  availableCommands: SlashCommand[];
+  /** Execute a slash command */
+  executeCommand: (command: string, args: string) => void;
 }
 
 /**
@@ -201,6 +212,7 @@ export function useAgentSocket({
   const [tokenUsage, setTokenUsage] = useState<TokenUsage | null>(null);
   const [openQuestions, setOpenQuestions] = useState<OpenQuestion[] | null>(null);
   const [showQuestionsResolver, setShowQuestionsResolver] = useState(false);
+  const [availableCommands, setAvailableCommands] = useState<SlashCommand[]>([]);
 
   // Agent progress tracking
   const progress = useAgentProgress();
@@ -579,6 +591,45 @@ export function useAgentSocket({
           setIsLoading(false);
         }
         break;
+
+      case 'available_commands':
+        if (data.commands) {
+          setAvailableCommands(data.commands);
+          log.log('Received available commands', { count: data.commands.length });
+        }
+        break;
+
+      case 'command_result':
+        setIsLoading(false); // Clear thinking indicator
+        if (data.result) {
+          // Add result as assistant message (unless ephemeral)
+          if (!data.result.ephemeral) {
+            // Handle component format - use parts array for rich rendering
+            if (data.result.format === 'component' && data.result.componentType && data.result.data) {
+              addMessage({
+                id: `cmd-${Date.now()}`,
+                role: 'assistant',
+                content: '', // Empty content since we use parts
+                timestamp: Date.now(),
+                parts: [{
+                  type: 'component',
+                  componentType: data.result.componentType,
+                  data: data.result.data,
+                }],
+              });
+            } else {
+              // Standard text/markdown format
+              addMessage({
+                id: `cmd-${Date.now()}`,
+                role: 'assistant',
+                content: data.result.content || '',
+                timestamp: Date.now(),
+              });
+            }
+          }
+          log.log('Command result received', { command: data.command, format: data.result.format, ephemeral: data.result.ephemeral });
+        }
+        break;
     }
   }, [addMessage, updateMessage, onCustomMessage, onHistoryLoaded, onError, progress, log]);
 
@@ -785,6 +836,21 @@ export function useAgentSocket({
     }
   }, [isLoading, updateMessage]);
 
+  // Execute a slash command
+  const executeCommand = useCallback((command: string, args: string) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      log.log('Executing command', { command, args });
+      setIsLoading(true); // Show thinking indicator while waiting for response
+      wsRef.current.send(JSON.stringify({
+        type: 'slash_command',
+        command,
+        args,
+      }));
+    } else {
+      log.warn('Cannot execute command: WebSocket not connected');
+    }
+  }, [log]);
+
   // Resolve open questions
   const resolveQuestions = useCallback((result: OpenQuestionsResult) => {
     setShowQuestionsResolver(false);
@@ -844,6 +910,8 @@ export function useAgentSocket({
     wsRef,
     currentMessageIdRef,
     sendRaw,
+    availableCommands,
+    executeCommand,
   };
 }
 

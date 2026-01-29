@@ -19,8 +19,19 @@ export type {
   ChatMessageToolCall,
   ChatMessageTextPart,
   ChatMessageToolCallsPart,
+  ChatMessageComponentPart,
   ChatMessagePart,
 } from './components/ChatMessage';
+
+// ContextDisplay component and related types
+export { ContextDisplay } from './components/ContextDisplay';
+export type {
+  ContextDisplayProps,
+  ContextDisplayData,
+  ContextCategory,
+  ContextSession,
+  ContextTool,
+} from './components/ContextDisplay';
 
 // ChatPanel component and related types
 export { ChatPanel, VirtualizedChatPanel } from './components/ChatPanel';
@@ -64,6 +75,15 @@ export type { TopicReference } from './components/ChatInput/TopicReferencePopove
 // Hooks
 export { useMessageHistory } from './components/ChatInput/useMessageHistory';
 export { useScrollLock, type ScrollLockState, type UseScrollLockOptions, type UseScrollLockResult } from './hooks';
+export { useClaudeCodeCommands } from './hooks/useClaudeCodeCommands';
+export type { UseClaudeCodeCommandsOptions, UseClaudeCodeCommandsResult } from './hooks/useClaudeCodeCommands';
+
+// Claude Code service types (for advanced usage)
+export type {
+  DiscoveredCommand,
+  ClaudeCodeSettings,
+  PluginManifest,
+} from './services/claudeCode/types';
 
 // OpenQuestionsResolver component and related types
 export { OpenQuestionsResolver } from './components/OpenQuestionsResolver';

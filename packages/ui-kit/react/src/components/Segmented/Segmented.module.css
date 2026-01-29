@@ -263,10 +263,9 @@
    RTL Support
    ============================================== */
 
-[dir="rtl"] .indicator {
-  left: auto;
-  right: 0;
-}
+/* RTL is handled via JavaScript using getBoundingClientRect()
+   which returns viewport coordinates regardless of direction.
+   The indicator always uses left: 0 with translateX for both LTR and RTL. */
 
 /* ==============================================
    Reduced Motion

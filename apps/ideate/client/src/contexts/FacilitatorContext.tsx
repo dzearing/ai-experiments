@@ -38,9 +38,18 @@ export interface ToolCallsPart {
 }
 
 /**
- * A message part - either text or tool calls
+ * A component part within a message (for custom UI rendering)
  */
-export type MessagePart = TextPart | ToolCallsPart;
+export interface ComponentPart {
+  type: 'component';
+  componentType: 'context' | string;
+  data: Record<string, unknown>;
+}
+
+/**
+ * A message part - text, tool calls, or component
+ */
+export type MessagePart = TextPart | ToolCallsPart | ComponentPart;
 
 /**
  * A message in the facilitator chat

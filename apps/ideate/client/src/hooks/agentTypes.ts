@@ -52,9 +52,18 @@ export interface AgentToolCallsBlock {
 }
 
 /**
+ * A component content block within a message (for rendering custom UI components)
+ */
+export interface AgentComponentBlock {
+  type: 'component';
+  componentType: 'context' | string;
+  data: Record<string, unknown>;
+}
+
+/**
  * Content block for preserving text/tool interleaving in messages
  */
-export type AgentContentBlock = AgentTextBlock | AgentToolCallsBlock;
+export type AgentContentBlock = AgentTextBlock | AgentToolCallsBlock | AgentComponentBlock;
 
 /**
  * Base message interface for all agents.

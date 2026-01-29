@@ -8,6 +8,7 @@ import {
   Chip,
   Heading,
   IconButton,
+  Stack,
   Tabs,
   Text,
 } from '@ui-kit/react';
@@ -209,10 +210,10 @@ export function GitRepoTopicDetail({ topic }: { topic: GitRepoTopic }) {
             {topic.packages.map((pkg, i) => (
               <div key={i} className={styles.packageItem}>
                 <PackageIcon className={styles.packageIcon} />
-                <div className={styles.packageInfo}>
+                <Stack direction="vertical" gap="none" className={styles.packageInfo}>
                   <Text weight="medium">{pkg.name}</Text>
                   <Text size="sm" color="soft">{pkg.path}</Text>
-                </div>
+                </Stack>
                 <Chip size="sm" variant="default">v{pkg.version}</Chip>
               </div>
             ))}
@@ -257,10 +258,10 @@ export function GitRepoTopicDetail({ topic }: { topic: GitRepoTopic }) {
             {topic.contributors.map((contributor, i) => (
               <div key={i} className={styles.contributorItem}>
                 <Avatar fallback={contributor.name} size="md" />
-                <div className={styles.contributorInfo}>
+                <Stack direction="vertical" gap="none" className={styles.contributorInfo}>
                   <Text weight="medium">{contributor.name}</Text>
                   <Text size="sm" color="soft">{contributor.commits} commits</Text>
-                </div>
+                </Stack>
               </div>
             ))}
           </div>

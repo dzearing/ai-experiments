@@ -8,6 +8,7 @@ import {
   Divider,
   Heading,
   IconButton,
+  Stack,
   Tabs,
   Text,
 } from '@ui-kit/react';
@@ -273,10 +274,10 @@ export function UIDesignTopicDetail({ topic }: { topic: UIDesignTopic }) {
                     <div className={styles.componentCards}>
                       {categoryComponents.map(component => (
                         <div key={component.id} className={styles.componentCard}>
-                          <div className={styles.componentInfo}>
+                          <Stack direction="vertical" gap="none" className={styles.componentInfo}>
                             <Text weight="medium">{component.name}</Text>
                             <Text size="sm" color="soft">{component.variants} variants</Text>
-                          </div>
+                          </Stack>
                           <Chip size="sm" variant={statusColors[component.status]}>{component.status}</Chip>
                         </div>
                       ))}

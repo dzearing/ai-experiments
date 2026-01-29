@@ -11,6 +11,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./services/claudeCode": {
+      "types": "./dist/services/claudeCode/index.d.ts",
+      "import": "./dist/services/claudeCode/index.js"
     }
   },
   "files": [

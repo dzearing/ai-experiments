@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Avatar,
   AvatarGroup,
@@ -24,6 +24,7 @@ import { ChevronDownIcon } from '@ui-kit/icons/ChevronDownIcon';
 import { ChevronRightIcon } from '@ui-kit/icons/ChevronRightIcon';
 import { CloseIcon } from '@ui-kit/icons/CloseIcon';
 import { FolderIcon } from '@ui-kit/icons/FolderIcon';
+import { GripperIcon } from '@ui-kit/icons/GripperIcon';
 import { ImageIcon } from '@ui-kit/icons/ImageIcon';
 import { MaximizeIcon } from '@ui-kit/icons/MaximizeIcon';
 import { MinimizeIcon } from '@ui-kit/icons/MinimizeIcon';
@@ -125,6 +126,34 @@ interface MockOption {
 
 type ViewportSize = 'desktop' | 'tablet' | 'mobile';
 type ArtifactTab = 'plan' | 'document' | 'ui-mock';
+type AnnotationTool = 'select' | 'line' | 'arrow' | 'draw' | 'rectangle' | 'text' | 'clip';
+
+interface DrawnLine {
+  id: string;
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  color: string;
+  isArrow?: boolean;
+}
+
+interface DrawnRect {
+  id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  color: string;
+}
+
+interface DrawnText {
+  id: string;
+  x: number;
+  y: number;
+  text: string;
+  color: string;
+}
 
 // ============================================
 // MOCK DATA: Landing Page HTML Variations
@@ -1199,7 +1228,7 @@ function VoteBadge({ votes }: { votes: Vote[] }) {
             </div>
           }
         >
-          <div className={styles.voteCount}>
+          <div className={`${styles.voteCount} surface success`}>
             <ThumbsUpIcon />
             <span>{upVotes.length}</span>
             <AvatarGroup max={3} size="xs">
@@ -1221,7 +1250,7 @@ function VoteBadge({ votes }: { votes: Vote[] }) {
             </div>
           }
         >
-          <div className={`${styles.voteCount} ${styles.voteCountDown}`}>
+          <div className={`${styles.voteCount} ${styles.voteCountDown} surface danger`}>
             <ThumbsDownIcon />
             <span>{downVotes.length}</span>
           </div>
@@ -1564,8 +1593,22 @@ function MockPreviewDialog({
   const [previewWidth, setPreviewWidth] = useState<number | null>(null);
   const [theme, setTheme] = useState<ThemeMode>('dark');
   const [direction, setDirection] = useState<DirectionMode>('ltr');
+  const [activeTool, setActiveTool] = useState<AnnotationTool>('select');
+  const [annotationColor, setAnnotationColor] = useState('#ef4444');
+  const [drawnLines, setDrawnLines] = useState<DrawnLine[]>([]);
+  const [drawnRects, setDrawnRects] = useState<DrawnRect[]>([]);
+  const [drawnTexts, setDrawnTexts] = useState<DrawnText[]>([]);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [currentLine, setCurrentLine] = useState<DrawnLine | null>(null);
+  const [currentRect, setCurrentRect] = useState<DrawnRect | null>(null);
+  const [textInput, setTextInput] = useState<{ x: number; y: number } | null>(null);
+  const [toolbarPosition, setToolbarPosition] = useState({ x: 20, y: 20 });
+  const [isDraggingToolbar, setIsDraggingToolbar] = useState(false);
+  const textInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
   const isResizing = useRef(false);
+  const dragOffset = useRef({ x: 0, y: 0 });
 
   const viewportWidths: Record<ViewportSize, number> = {
     desktop: 1280,
@@ -1601,8 +1644,134 @@ function MockPreviewDialog({
     document.addEventListener('mouseup', handleMouseUp);
   };
 
+  // Toolbar drag handlers
+  const handleToolbarDragStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDraggingToolbar(true);
+    dragOffset.current = {
+      x: e.clientX - toolbarPosition.x,
+      y: e.clientY - toolbarPosition.y,
+    };
+
+    const handleDragMove = (moveEvent: MouseEvent) => {
+      setToolbarPosition({
+        x: moveEvent.clientX - dragOffset.current.x,
+        y: moveEvent.clientY - dragOffset.current.y,
+      });
+    };
+
+    const handleDragEnd = () => {
+      setIsDraggingToolbar(false);
+      document.removeEventListener('mousemove', handleDragMove);
+      document.removeEventListener('mouseup', handleDragEnd);
+    };
+
+    document.addEventListener('mousemove', handleDragMove);
+    document.addEventListener('mouseup', handleDragEnd);
+  };
+
+  // Drawing handlers
+  const handleCanvasMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    if (activeTool === 'line' || activeTool === 'arrow') {
+      setIsDrawing(true);
+      setCurrentLine({
+        id: `line-${Date.now()}`,
+        x1: x,
+        y1: y,
+        x2: x,
+        y2: y,
+        color: annotationColor,
+        isArrow: activeTool === 'arrow',
+      });
+    } else if (activeTool === 'rectangle') {
+      setIsDrawing(true);
+      setCurrentRect({
+        id: `rect-${Date.now()}`,
+        x,
+        y,
+        width: 0,
+        height: 0,
+        color: annotationColor,
+      });
+    } else if (activeTool === 'text') {
+      setTextInput({ x, y });
+      setTimeout(() => textInputRef.current?.focus(), 0);
+    }
+  }, [activeTool, annotationColor]);
+
+  const handleCanvasMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDrawing) return;
+
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    if (currentLine) {
+      setCurrentLine(prev => prev ? { ...prev, x2: x, y2: y } : null);
+    } else if (currentRect) {
+      setCurrentRect(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          width: x - prev.x,
+          height: y - prev.y,
+        };
+      });
+    }
+  }, [isDrawing, currentLine, currentRect]);
+
+  const handleCanvasMouseUp = useCallback(() => {
+    if (isDrawing) {
+      if (currentLine) {
+        setDrawnLines(prev => [...prev, currentLine]);
+      }
+      if (currentRect && (Math.abs(currentRect.width) > 5 || Math.abs(currentRect.height) > 5)) {
+        // Normalize negative width/height
+        const normalizedRect = {
+          ...currentRect,
+          x: currentRect.width < 0 ? currentRect.x + currentRect.width : currentRect.x,
+          y: currentRect.height < 0 ? currentRect.y + currentRect.height : currentRect.y,
+          width: Math.abs(currentRect.width),
+          height: Math.abs(currentRect.height),
+        };
+        setDrawnRects(prev => [...prev, normalizedRect]);
+      }
+    }
+    setIsDrawing(false);
+    setCurrentLine(null);
+    setCurrentRect(null);
+  }, [isDrawing, currentLine, currentRect]);
+
+  const handleTextSubmit = useCallback((text: string) => {
+    if (textInput && text.trim()) {
+      setDrawnTexts(prev => [...prev, {
+        id: `text-${Date.now()}`,
+        x: textInput.x,
+        y: textInput.y,
+        text: text.trim(),
+        color: annotationColor,
+      }]);
+    }
+    setTextInput(null);
+  }, [textInput, annotationColor]);
+
+  const clearAllAnnotations = useCallback(() => {
+    setDrawnLines([]);
+    setDrawnRects([]);
+    setDrawnTexts([]);
+  }, []);
+
   const effectiveWidth = previewWidth || viewportWidths[viewportSize];
   const processedHtml = injectHtmlSettings(option.html, theme, direction);
+  const colorOptions = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899'];
 
   return (
     <div className={`${styles.previewDialogOverlay} ${isMaximized ? styles.maximized : ''}`}>
@@ -1653,12 +1822,260 @@ function MockPreviewDialog({
               title={`Preview Option ${option.label}`}
               sandbox="allow-same-origin"
             />
+            {/* Annotation Canvas Overlay */}
+            <div
+              ref={canvasRef}
+              className={`${styles.annotationCanvas} ${activeTool !== 'select' ? styles.annotationCanvasActive : ''}`}
+              onMouseDown={handleCanvasMouseDown}
+              onMouseMove={handleCanvasMouseMove}
+              onMouseUp={handleCanvasMouseUp}
+              onMouseLeave={handleCanvasMouseUp}
+            >
+              <svg className={styles.annotationSvg}>
+                <defs>
+                  {/* Arrow markers for each color */}
+                  {['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899'].map(color => (
+                    <marker
+                      key={`arrow-${color}`}
+                      id={`arrowhead-${color.replace('#', '')}`}
+                      markerWidth="10"
+                      markerHeight="7"
+                      refX="9"
+                      refY="3.5"
+                      orient="auto"
+                    >
+                      <polygon points="0 0, 10 3.5, 0 7" fill={color} />
+                    </marker>
+                  ))}
+                </defs>
+                {drawnLines.map(line => (
+                  <line
+                    key={line.id}
+                    x1={line.x1}
+                    y1={line.y1}
+                    x2={line.x2}
+                    y2={line.y2}
+                    stroke={line.color}
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    markerEnd={line.isArrow ? `url(#arrowhead-${line.color.replace('#', '')})` : undefined}
+                  />
+                ))}
+                {currentLine && (
+                  <line
+                    x1={currentLine.x1}
+                    y1={currentLine.y1}
+                    x2={currentLine.x2}
+                    y2={currentLine.y2}
+                    stroke={currentLine.color}
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    markerEnd={currentLine.isArrow ? `url(#arrowhead-${currentLine.color.replace('#', '')})` : undefined}
+                  />
+                )}
+                {/* Rectangles */}
+                {drawnRects.map(rect => (
+                  <rect
+                    key={rect.id}
+                    x={rect.x}
+                    y={rect.y}
+                    width={rect.width}
+                    height={rect.height}
+                    stroke={rect.color}
+                    strokeWidth="2"
+                    fill="none"
+                    rx="2"
+                  />
+                ))}
+                {currentRect && (
+                  <rect
+                    x={currentRect.width < 0 ? currentRect.x + currentRect.width : currentRect.x}
+                    y={currentRect.height < 0 ? currentRect.y + currentRect.height : currentRect.y}
+                    width={Math.abs(currentRect.width)}
+                    height={Math.abs(currentRect.height)}
+                    stroke={currentRect.color}
+                    strokeWidth="2"
+                    fill="none"
+                    rx="2"
+                  />
+                )}
+                {/* Text annotations */}
+                {drawnTexts.map(t => (
+                  <text
+                    key={t.id}
+                    x={t.x}
+                    y={t.y}
+                    fill={t.color}
+                    fontSize="14"
+                    fontFamily="system-ui, sans-serif"
+                    fontWeight="500"
+                  >
+                    {t.text}
+                  </text>
+                ))}
+              </svg>
+              {/* Text input overlay */}
+              {textInput && (
+                <input
+                  ref={textInputRef}
+                  type="text"
+                  className={styles.textAnnotationInput}
+                  style={{ left: textInput.x, top: textInput.y - 8, color: annotationColor }}
+                  placeholder="Type text..."
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleTextSubmit((e.target as HTMLInputElement).value);
+                    } else if (e.key === 'Escape') {
+                      setTextInput(null);
+                    }
+                  }}
+                  onBlur={(e) => handleTextSubmit(e.target.value)}
+                />
+              )}
+            </div>
           </div>
           <div
             className={styles.resizeHandle}
             style={{ right: `calc(50% - ${effectiveWidth / 2}px - 8px)` }}
             onMouseDown={handleMouseDown('right')}
           />
+
+          {/* Floating Annotation Toolbar */}
+          <div
+            className={`${styles.annotationToolbar} surface raised`}
+            style={{ left: toolbarPosition.x, top: toolbarPosition.y }}
+          >
+            <div
+              className={styles.toolbarGripper}
+              onMouseDown={handleToolbarDragStart}
+            >
+              <GripperIcon />
+            </div>
+            <div className={styles.annotationDivider} />
+            <Tooltip content="Select">
+              <IconButton
+                variant={activeTool === 'select' ? 'primary' : 'ghost'}
+                size="sm"
+                aria-label="Select"
+                onClick={() => setActiveTool('select')}
+                icon={
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M3 2l10 6-4 1-1 4-5-11z" />
+                  </svg>
+                }
+              />
+            </Tooltip>
+            <Tooltip content="Line">
+              <IconButton
+                variant={activeTool === 'line' ? 'primary' : 'ghost'}
+                size="sm"
+                aria-label="Draw line"
+                onClick={() => setActiveTool('line')}
+                icon={
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <line x1="3" y1="13" x2="13" y2="3" />
+                  </svg>
+                }
+              />
+            </Tooltip>
+            <Tooltip content="Arrow">
+              <IconButton
+                variant={activeTool === 'arrow' ? 'primary' : 'ghost'}
+                size="sm"
+                aria-label="Draw arrow"
+                onClick={() => setActiveTool('arrow')}
+                icon={
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <line x1="3" y1="13" x2="13" y2="3" />
+                    <polyline points="8,3 13,3 13,8" fill="none" />
+                  </svg>
+                }
+              />
+            </Tooltip>
+            <Tooltip content="Draw">
+              <IconButton
+                variant={activeTool === 'draw' ? 'primary' : 'ghost'}
+                size="sm"
+                aria-label="Freeform draw"
+                onClick={() => setActiveTool('draw')}
+                icon={
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M2 14 C4 10, 6 12, 8 8 C10 4, 12 6, 14 2" strokeLinecap="round" />
+                  </svg>
+                }
+              />
+            </Tooltip>
+            <Tooltip content="Rectangle">
+              <IconButton
+                variant={activeTool === 'rectangle' ? 'primary' : 'ghost'}
+                size="sm"
+                aria-label="Draw rectangle"
+                onClick={() => setActiveTool('rectangle')}
+                icon={
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <rect x="2" y="4" width="12" height="8" rx="1" />
+                  </svg>
+                }
+              />
+            </Tooltip>
+            <Tooltip content="Text">
+              <IconButton
+                variant={activeTool === 'text' ? 'primary' : 'ghost'}
+                size="sm"
+                aria-label="Add text"
+                onClick={() => setActiveTool('text')}
+                icon={
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M3 3h10v2h-4v8H7V5H3V3z" />
+                  </svg>
+                }
+              />
+            </Tooltip>
+            <div className={styles.annotationDivider} />
+            <Tooltip content="Color">
+              <div className={styles.colorDropdown}>
+                <button className={styles.colorButton} aria-label="Select color">
+                  <span className={styles.colorSwatch} style={{ background: annotationColor }} />
+                </button>
+                <div className={styles.colorPopover}>
+                  {colorOptions.map(color => (
+                    <button
+                      key={color}
+                      className={`${styles.colorOption} ${color === annotationColor ? styles.colorOptionSelected : ''}`}
+                      style={{ background: color }}
+                      onClick={() => setAnnotationColor(color)}
+                      aria-label={`Select ${color}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            </Tooltip>
+            <div className={styles.annotationDivider} />
+            <Tooltip content="Clip to clipboard">
+              <IconButton
+                variant={activeTool === 'clip' ? 'primary' : 'ghost'}
+                size="sm"
+                aria-label="Clip region to clipboard"
+                onClick={() => setActiveTool('clip')}
+                icon={
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <rect x="2" y="2" width="12" height="12" rx="1" strokeDasharray="3 2" />
+                    <path d="M6 6h4v4H6z" fill="currentColor" fillOpacity="0.3" stroke="none" />
+                  </svg>
+                }
+              />
+            </Tooltip>
+            <div className={styles.annotationDivider} />
+            <Tooltip content="Clear all">
+              <IconButton
+                variant="ghost"
+                size="sm"
+                aria-label="Clear all annotations"
+                onClick={clearAllAnnotations}
+                icon={<CloseIcon />}
+              />
+            </Tooltip>
+          </div>
         </div>
         <div className={styles.previewDialogFooter}>
           <Button variant="default" onClick={onClose}>Back to options</Button>
@@ -2233,6 +2650,45 @@ function MultiplayerCollaborationComponent({
           </div>
         );
       case 'ui-mock':
+        // When consensus is reached, show only the winning option
+        if (winnerId) {
+          const winningOption = options.find(o => o.id === winnerId);
+
+          if (winningOption) {
+            return (
+              <div className={styles.mockTabContent}>
+                <div className={`${styles.winnerHeader} surface success`}>
+                  <CheckCircleIcon className={styles.winnerHeaderIcon} />
+                  <Text weight="medium">Consensus Reached - Option {winningOption.label}</Text>
+                  <IconButton
+                    variant="ghost"
+                    size="sm"
+                    icon={<CloseIcon />}
+                    aria-label="Dismiss"
+                    className={styles.winnerHeaderClose}
+                  />
+                </div>
+                <div
+                  className={styles.winnerPreview}
+                  onClick={() => setPreviewOption(winningOption)}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <iframe
+                    srcDoc={winningOption.html}
+                    className={styles.winnerPreviewIframe}
+                    title={`Winning Option ${winningOption.label}`}
+                    sandbox="allow-same-origin"
+                  />
+                  <div className={styles.winnerPreviewOverlay}>
+                    <Text size="sm" weight="medium">Click to preview</Text>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+        }
+
         return (
           <div className={styles.mockTabContent}>
             <div className={styles.votingHeader}>

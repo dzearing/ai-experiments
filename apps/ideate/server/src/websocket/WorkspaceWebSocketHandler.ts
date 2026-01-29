@@ -465,15 +465,50 @@ export class WorkspaceWebSocketHandler {
   }
 
   private broadcastToWorkspace(workspaceId: string, message: WorkspaceMessage): void {
-    const subscribers = this.workspaceSubscribers.get(workspaceId);
-    if (!subscribers) return;
+    // Track clients we've already notified to avoid duplicates
+    const notifiedClients = new Set<string>();
 
-    subscribers.forEach((clientId) => {
-      const client = this.clients.get(clientId);
-      if (client) {
-        this.sendToClient(client.ws, message);
-      }
+    // Debug: log subscriber counts
+    const subscribers = this.workspaceSubscribers.get(workspaceId);
+    const allSubscribers = this.workspaceSubscribers.get('all');
+
+    console.log(`[WorkspaceWS] Broadcasting ${message.type} to workspace ${workspaceId}:`, {
+      specificSubscribers: subscribers?.size ?? 0,
+      allSubscribers: allSubscribers?.size ?? 0,
+      resourceType: message.resourceType,
+      resourceId: message.resourceId,
     });
+
+    // Notify clients subscribed to this specific workspace
+    if (subscribers) {
+      subscribers.forEach((clientId) => {
+        const client = this.clients.get(clientId);
+
+        if (client) {
+          this.sendToClient(client.ws, message);
+          notifiedClients.add(clientId);
+          console.log(`[WorkspaceWS] Sent to specific subscriber: ${clientId}`);
+        }
+      });
+    }
+
+    // Also notify clients subscribed to 'all' (viewing all workspaces)
+    // Skip if we're already broadcasting to 'all' to avoid infinite loop
+    if (workspaceId !== 'all') {
+      if (allSubscribers) {
+        allSubscribers.forEach((clientId) => {
+          // Don't send duplicate if client is subscribed to both
+          if (!notifiedClients.has(clientId)) {
+            const client = this.clients.get(clientId);
+
+            if (client) {
+              this.sendToClient(client.ws, message);
+              console.log(`[WorkspaceWS] Sent to 'all' subscriber: ${clientId}`);
+            }
+          }
+        });
+      }
+    }
   }
 
   private sendToClient(ws: WebSocket, message: WorkspaceMessage): void {

@@ -8,6 +8,7 @@ import {
   Heading,
   IconButton,
   SplitPane,
+  Stack,
   Tabs,
   Text,
 } from '@ui-kit/react';
@@ -357,10 +358,10 @@ export function PackageTopicDetail({ topic }: { topic: PackageTopic }) {
                     {type === 'prod' ? 'Production' : type === 'peer' ? 'Peer' : 'Development'}
                   </Text>
                   {deps.map((dep, i) => (
-                    <div key={i} className={styles.dependencyItem}>
+                    <Stack key={i} direction="horizontal" justify="between" className={styles.dependencyItem}>
                       <Text>{dep.name}</Text>
                       <Text size="sm" color="soft">{dep.version}</Text>
-                    </div>
+                    </Stack>
                   ))}
                 </div>
               );
@@ -373,10 +374,10 @@ export function PackageTopicDetail({ topic }: { topic: PackageTopic }) {
             {topic.sourceFiles.map((file, i) => (
               <div key={i} className={styles.sourceFileItem}>
                 <FileIcon />
-                <div className={styles.sourceFileInfo}>
+                <Stack direction="vertical" gap="none" className={styles.sourceFileInfo}>
                   <Text weight="medium">{file.name}</Text>
                   <Text size="sm" color="soft">{file.path}</Text>
-                </div>
+                </Stack>
                 <Text size="sm" color="soft">{file.lines} lines</Text>
               </div>
             ))}

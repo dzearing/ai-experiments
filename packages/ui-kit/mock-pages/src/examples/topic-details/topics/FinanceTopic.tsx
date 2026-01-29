@@ -6,6 +6,7 @@ import {
   Button,
   Heading,
   IconButton,
+  Stack,
   Tabs,
   Text,
 } from '@ui-kit/react';
@@ -150,10 +151,10 @@ export function FinanceTopicDetail({ topic }: { topic: FinanceTopic }) {
             {topic.categories.map((cat, i) => (
               <div key={i} className={styles.categoryItem}>
                 <div className={styles.categoryColor} style={{ backgroundColor: cat.color }} />
-                <div className={styles.categoryInfo}>
+                <Stack direction="vertical" gap="none" className={styles.categoryInfo}>
                   <Text weight="medium">{cat.name}</Text>
                   <Text size="sm" color="soft">${cat.amount.toLocaleString()}</Text>
-                </div>
+                </Stack>
                 <Text weight="medium">{Math.round((cat.amount / (topic.targetAmount || 1)) * 100)}%</Text>
               </div>
             ))}
@@ -164,10 +165,10 @@ export function FinanceTopicDetail({ topic }: { topic: FinanceTopic }) {
           <div className={styles.transactionList}>
             {topic.transactions.map((tx, i) => (
               <div key={i} className={styles.transactionItem}>
-                <div className={styles.transactionInfo}>
+                <Stack direction="vertical" gap="none" className={styles.transactionInfo}>
                   <Text weight="medium">{tx.description}</Text>
                   <Text size="sm" color="soft">{tx.date.toLocaleDateString()}</Text>
-                </div>
+                </Stack>
                 <Text weight="medium" className={tx.amount > 0 ? styles.positiveAmount : styles.negativeAmount}>
                   {tx.amount > 0 ? '+' : ''}${Math.abs(tx.amount).toLocaleString()}
                 </Text>

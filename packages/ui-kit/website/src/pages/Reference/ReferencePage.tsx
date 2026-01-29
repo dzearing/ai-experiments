@@ -15,198 +15,298 @@ interface TokenCategory {
   tokens: TokenInfo[];
 }
 
-// Container role tokens
-const containerTokens: TokenCategory[] = [
+// Tonal color groups - create visual hierarchy through lightness variation
+const tonalGroupTokens: TokenCategory[] = [
   {
-    title: 'Page',
-    description: 'Main application background - the base layer',
+    title: 'Softer',
+    description: 'Darkest in light mode, recessed - input backgrounds, wells, code blocks',
     tokens: [
-      { name: '--page-bg', description: 'Main app background', derivation: 'Theme base color' },
-      { name: '--page-text', description: 'Primary text on page', derivation: 'Contrasts with page-bg' },
-      { name: '--page-text-soft', description: 'Secondary text (30% less contrast)', derivation: 'mix(text, bg, 0.3)' },
-      { name: '--page-text-softer', description: 'Tertiary text (50% less contrast)', derivation: 'mix(text, bg, 0.5)' },
-      { name: '--page-text-strong', description: 'Higher contrast text', derivation: 'mix(text, max-contrast, 0.3)' },
-      { name: '--page-text-stronger', description: 'Maximum contrast text', derivation: 'Pure black/white' },
-      { name: '--page-border', description: 'Standard borders', derivation: 'darken/lighten page-bg' },
-      { name: '--page-border-soft', description: 'Subtle borders', derivation: 'mix(border, bg, 0.4)' },
-      { name: '--page-border-strong', description: 'Higher contrast borders', derivation: 'darken/lighten border 20%' },
-      { name: '--page-border-stronger', description: 'Maximum contrast borders', derivation: 'mix(border, max-contrast, 0.5)' },
-      { name: '--page-shadow', description: 'Page-level shadows', derivation: 'Contextual shadow' },
+      { name: '--softer-bg', description: 'Background', derivation: 'Recessed background' },
+      { name: '--softer-bg-hover', description: 'Hover state', derivation: 'Slightly lighter/darker' },
+      { name: '--softer-bg-pressed', description: 'Pressed state', derivation: 'More contrast' },
+      { name: '--softer-bg-disabled', description: 'Disabled state', derivation: 'Muted' },
+      { name: '--softer-border', description: 'Default border', derivation: 'Contrasts with bg' },
+      { name: '--softer-border-hover', description: 'Hover border', derivation: 'Slightly stronger' },
+      { name: '--softer-border-pressed', description: 'Pressed border', derivation: 'Strongest' },
+      { name: '--softer-border-disabled', description: 'Disabled border', derivation: 'Muted' },
+      { name: '--softer-fg', description: 'Primary text', derivation: 'Contrasts with softer-bg' },
+      { name: '--softer-fg-soft', description: 'Secondary text', derivation: 'Less contrast' },
+      { name: '--softer-fg-softer', description: 'Tertiary text', derivation: 'Subtle' },
+      { name: '--softer-fg-strong', description: 'Emphasized text', derivation: 'More contrast' },
+      { name: '--softer-fg-stronger', description: 'Maximum emphasis', derivation: 'Pure black/white' },
+      { name: '--softer-fg-primary', description: 'Primary accent', derivation: 'Accessible on softer-bg' },
+      { name: '--softer-fg-danger', description: 'Error color', derivation: 'Accessible on softer-bg' },
+      { name: '--softer-fg-success', description: 'Success color', derivation: 'Accessible on softer-bg' },
+      { name: '--softer-fg-warning', description: 'Warning color', derivation: 'Accessible on softer-bg' },
+      { name: '--softer-fg-info', description: 'Info color', derivation: 'Accessible on softer-bg' },
     ],
   },
   {
-    title: 'Card',
-    description: 'Elevated content containers - raised from page',
+    title: 'Soft',
+    description: 'Slightly elevated - cards, panels, alternating rows',
     tokens: [
-      { name: '--card-bg', description: 'Card background', derivation: 'lighten(page-bg, 8)' },
-      { name: '--card-text', description: 'Text on cards', derivation: 'Inherits page-text' },
-      { name: '--card-text-soft', description: 'Secondary card text', derivation: 'mix(text, bg, 0.3)' },
-      { name: '--card-text-strong', description: 'Higher contrast card text', derivation: 'mix(text, max-contrast, 0.3)' },
-      { name: '--card-text-stronger', description: 'Maximum contrast card text', derivation: 'Pure black/white' },
-      { name: '--card-border', description: 'Card borders', derivation: 'Inherits page-border' },
-      { name: '--card-border-soft', description: 'Subtle card borders', derivation: 'mix(border, bg, 0.4)' },
-      { name: '--card-border-strong', description: 'Strong card borders', derivation: 'darken/lighten 20%' },
-      { name: '--card-border-stronger', description: 'Maximum contrast borders', derivation: 'mix(border, max-contrast, 0.5)' },
-      { name: '--card-shadow', description: 'Card elevation shadow', derivation: 'Box shadow with opacity' },
+      { name: '--soft-bg', description: 'Background', derivation: 'Slightly elevated' },
+      { name: '--soft-bg-hover', description: 'Hover state', derivation: 'Slightly lighter/darker' },
+      { name: '--soft-bg-pressed', description: 'Pressed state', derivation: 'More contrast' },
+      { name: '--soft-bg-disabled', description: 'Disabled state', derivation: 'Muted' },
+      { name: '--soft-border', description: 'Default border', derivation: 'Contrasts with bg' },
+      { name: '--soft-border-hover', description: 'Hover border', derivation: 'Slightly stronger' },
+      { name: '--soft-border-pressed', description: 'Pressed border', derivation: 'Strongest' },
+      { name: '--soft-border-disabled', description: 'Disabled border', derivation: 'Muted' },
+      { name: '--soft-fg', description: 'Primary text', derivation: 'Contrasts with soft-bg' },
+      { name: '--soft-fg-soft', description: 'Secondary text', derivation: 'Less contrast' },
+      { name: '--soft-fg-softer', description: 'Tertiary text', derivation: 'Subtle' },
+      { name: '--soft-fg-strong', description: 'Emphasized text', derivation: 'More contrast' },
+      { name: '--soft-fg-stronger', description: 'Maximum emphasis', derivation: 'Pure black/white' },
+      { name: '--soft-fg-primary', description: 'Primary accent', derivation: 'Accessible on soft-bg' },
+      { name: '--soft-fg-danger', description: 'Error color', derivation: 'Accessible on soft-bg' },
+      { name: '--soft-fg-success', description: 'Success color', derivation: 'Accessible on soft-bg' },
+      { name: '--soft-fg-warning', description: 'Warning color', derivation: 'Accessible on soft-bg' },
+      { name: '--soft-fg-info', description: 'Info color', derivation: 'Accessible on soft-bg' },
     ],
   },
   {
-    title: 'Overlay',
-    description: 'Modals, dialogs, sheets - higher elevation than card',
+    title: 'Base',
+    description: 'Page background - default starting point',
     tokens: [
-      { name: '--overlay-bg', description: 'Modal/dialog background', derivation: 'lighten(page-bg, 10-12)' },
-      { name: '--overlay-text', description: 'Text on overlays', derivation: 'Inherits page-text' },
-      { name: '--overlay-text-soft', description: 'Secondary overlay text', derivation: 'mix(text, bg, 0.3)' },
-      { name: '--overlay-text-strong', description: 'Higher contrast text', derivation: 'mix(text, max-contrast, 0.3)' },
-      { name: '--overlay-text-stronger', description: 'Maximum contrast text', derivation: 'Pure black/white' },
-      { name: '--overlay-border', description: 'Overlay borders', derivation: 'Inherits page-border' },
-      { name: '--overlay-border-soft', description: 'Subtle borders', derivation: 'mix(border, bg, 0.4)' },
-      { name: '--overlay-border-strong', description: 'Strong borders', derivation: 'darken/lighten 20%' },
-      { name: '--overlay-border-stronger', description: 'Maximum contrast borders', derivation: 'mix(border, max-contrast, 0.5)' },
-      { name: '--overlay-shadow', description: 'Overlay shadow', derivation: 'Multi-layer shadow' },
+      { name: '--base-bg', description: 'Page background', derivation: 'Theme base color' },
+      { name: '--base-bg-hover', description: 'Hover state', derivation: 'Slightly lighter/darker' },
+      { name: '--base-bg-pressed', description: 'Pressed state', derivation: 'More contrast' },
+      { name: '--base-bg-disabled', description: 'Disabled state', derivation: 'Muted' },
+      { name: '--base-border', description: 'Default border', derivation: 'Contrasts with bg' },
+      { name: '--base-border-hover', description: 'Hover border', derivation: 'Slightly stronger' },
+      { name: '--base-border-pressed', description: 'Pressed border', derivation: 'Strongest' },
+      { name: '--base-border-disabled', description: 'Disabled border', derivation: 'Muted' },
+      { name: '--base-fg', description: 'Primary text', derivation: 'Contrasts with base-bg' },
+      { name: '--base-fg-soft', description: 'Secondary text', derivation: 'Less contrast' },
+      { name: '--base-fg-softer', description: 'Tertiary text', derivation: 'Subtle' },
+      { name: '--base-fg-strong', description: 'Emphasized text', derivation: 'More contrast' },
+      { name: '--base-fg-stronger', description: 'Maximum emphasis', derivation: 'Pure black/white' },
+      { name: '--base-fg-primary', description: 'Primary accent', derivation: 'Accessible on base-bg' },
+      { name: '--base-fg-danger', description: 'Error color', derivation: 'Accessible on base-bg' },
+      { name: '--base-fg-success', description: 'Success color', derivation: 'Accessible on base-bg' },
+      { name: '--base-fg-warning', description: 'Warning color', derivation: 'Accessible on base-bg' },
+      { name: '--base-fg-info', description: 'Info color', derivation: 'Accessible on base-bg' },
     ],
   },
   {
-    title: 'Popout',
-    description: 'Dropdowns, menus, tooltips - highest elevation',
+    title: 'Strong',
+    description: 'Emphasized - default buttons, highlights',
     tokens: [
-      { name: '--popout-bg', description: 'Dropdown/menu background', derivation: 'lighten(page-bg, 12-16)' },
-      { name: '--popout-text', description: 'Text in popouts', derivation: 'Inherits page-text' },
-      { name: '--popout-text-soft', description: 'Secondary text', derivation: 'mix(text, bg, 0.3)' },
-      { name: '--popout-text-strong', description: 'Higher contrast text', derivation: 'mix(text, max-contrast, 0.3)' },
-      { name: '--popout-text-stronger', description: 'Maximum contrast text', derivation: 'Pure black/white' },
-      { name: '--popout-border', description: 'Popout borders', derivation: 'Inherits page-border' },
-      { name: '--popout-border-soft', description: 'Subtle borders', derivation: 'mix(border, bg, 0.4)' },
-      { name: '--popout-border-strong', description: 'Strong borders', derivation: 'darken/lighten 20%' },
-      { name: '--popout-border-stronger', description: 'Maximum contrast borders', derivation: 'mix(border, max-contrast, 0.5)' },
-      { name: '--popout-shadow', description: 'Popout shadow', derivation: 'Deep shadow' },
+      { name: '--strong-bg', description: 'Background', derivation: 'Emphasized background' },
+      { name: '--strong-bg-hover', description: 'Hover state', derivation: 'Slightly lighter/darker' },
+      { name: '--strong-bg-pressed', description: 'Pressed state', derivation: 'More contrast' },
+      { name: '--strong-bg-disabled', description: 'Disabled state', derivation: 'Muted' },
+      { name: '--strong-border', description: 'Default border', derivation: 'Contrasts with bg' },
+      { name: '--strong-border-hover', description: 'Hover border', derivation: 'Slightly stronger' },
+      { name: '--strong-border-pressed', description: 'Pressed border', derivation: 'Strongest' },
+      { name: '--strong-border-disabled', description: 'Disabled border', derivation: 'Muted' },
+      { name: '--strong-fg', description: 'Primary text', derivation: 'Contrasts with strong-bg' },
+      { name: '--strong-fg-soft', description: 'Secondary text', derivation: 'Less contrast' },
+      { name: '--strong-fg-softer', description: 'Tertiary text', derivation: 'Subtle' },
+      { name: '--strong-fg-strong', description: 'Emphasized text', derivation: 'More contrast' },
+      { name: '--strong-fg-stronger', description: 'Maximum emphasis', derivation: 'Pure black/white' },
+      { name: '--strong-fg-primary', description: 'Primary accent', derivation: 'Accessible on strong-bg' },
+      { name: '--strong-fg-danger', description: 'Error color', derivation: 'Accessible on strong-bg' },
+      { name: '--strong-fg-success', description: 'Success color', derivation: 'Accessible on strong-bg' },
+      { name: '--strong-fg-warning', description: 'Warning color', derivation: 'Accessible on strong-bg' },
+      { name: '--strong-fg-info', description: 'Info color', derivation: 'Accessible on strong-bg' },
     ],
   },
   {
-    title: 'Inset',
-    description: 'Recessed areas - input fields, wells, sunken regions',
+    title: 'Stronger',
+    description: 'Maximum emphasis - very strong emphasis without semantic color',
     tokens: [
-      { name: '--inset-bg', description: 'Default background', derivation: 'darken(page-bg, 4)' },
-      { name: '--inset-bg-hover', description: 'Hover state', derivation: 'darken(page-bg, 6) or lighten 4' },
-      { name: '--inset-bg-focus', description: 'Focus state', derivation: 'lighten(page-bg, 4-6)' },
-      { name: '--inset-text', description: 'Input text', derivation: 'Inherits page-text' },
-      { name: '--inset-text-soft', description: 'Placeholder text', derivation: 'mix(text, bg, 0.3)' },
-      { name: '--inset-border', description: 'Input border', derivation: 'Inherits page-border' },
-      { name: '--inset-border-focus', description: 'Focus border', derivation: 'theme:primary' },
-    ],
-  },
-];
-
-// Control role tokens
-const controlTokens: TokenCategory[] = [
-  {
-    title: 'Control',
-    description: 'Default interactive elements - secondary buttons, list items',
-    tokens: [
-      { name: '--control-bg', description: 'Default background', derivation: 'Neutral gray' },
-      { name: '--control-bg-hover', description: 'Hover background', derivation: 'Slightly darker/lighter' },
-      { name: '--control-bg-pressed', description: 'Active/pressed background', derivation: 'More contrast' },
-      { name: '--control-text', description: 'Control text', derivation: 'Contrasts with control-bg' },
-      { name: '--control-text-hover', description: 'Hover text', derivation: 'Often same as text' },
-      { name: '--control-text-pressed', description: 'Pressed text', derivation: 'Often same as text' },
-      { name: '--control-border', description: 'Control border', derivation: 'Subtle border' },
-      { name: '--control-border-hover', description: 'Hover border', derivation: 'Slightly stronger' },
-      { name: '--control-border-pressed', description: 'Pressed border', derivation: 'Strongest' },
-      { name: '--control-shadow', description: 'Control shadow', derivation: 'Subtle shadow' },
-    ],
-  },
-  {
-    title: 'Control Primary',
-    description: 'Primary actions - CTA buttons, selected states',
-    tokens: [
-      { name: '--controlPrimary-bg', description: 'Primary background', derivation: 'theme:primary color' },
-      { name: '--controlPrimary-bg-hover', description: 'Hover state', derivation: 'darken/lighten primary 8%' },
-      { name: '--controlPrimary-bg-pressed', description: 'Pressed state', derivation: 'darken/lighten primary 12%' },
-      { name: '--controlPrimary-text', description: 'Text on primary', derivation: 'Auto contrast (black/white)' },
-      { name: '--controlPrimary-border', description: 'Primary border', derivation: 'Usually transparent' },
-      { name: '--controlPrimary-shadow', description: 'Primary shadow', derivation: 'Optional glow' },
-    ],
-  },
-  {
-    title: 'Control Danger',
-    description: 'Destructive actions - delete buttons, dangerous operations',
-    tokens: [
-      { name: '--controlDanger-bg', description: 'Danger background', derivation: 'semantic:danger (#dc2626)' },
-      { name: '--controlDanger-bg-hover', description: 'Hover state', derivation: 'darken/lighten danger 8%' },
-      { name: '--controlDanger-bg-pressed', description: 'Pressed state', derivation: 'darken/lighten danger 12%' },
-      { name: '--controlDanger-text', description: 'Text on danger', derivation: 'Auto contrast (white)' },
-      { name: '--controlDanger-border', description: 'Danger border', derivation: 'Usually transparent' },
-      { name: '--controlDanger-shadow', description: 'Danger shadow', derivation: 'Optional' },
-    ],
-  },
-  {
-    title: 'Control Subtle',
-    description: 'Ghost/minimal buttons - tabs, toolbar actions',
-    tokens: [
-      { name: '--controlSubtle-bg', description: 'Default (transparent)', derivation: 'transparent' },
-      { name: '--controlSubtle-bg-hover', description: 'Hover background', derivation: 'rgba overlay 4-8%' },
-      { name: '--controlSubtle-bg-pressed', description: 'Pressed background', derivation: 'rgba overlay 8-12%' },
-      { name: '--controlSubtle-text', description: 'Subtle text', derivation: 'mix(page-text, bg, 0.2)' },
-      { name: '--controlSubtle-text-hover', description: 'Hover text', derivation: 'page-text' },
-      { name: '--controlSubtle-text-pressed', description: 'Pressed text', derivation: 'page-text' },
-      { name: '--controlSubtle-border', description: 'Border (transparent)', derivation: 'transparent' },
-    ],
-  },
-  {
-    title: 'Control Disabled',
-    description: 'Non-interactive state for any control',
-    tokens: [
-      { name: '--controlDisabled-bg', description: 'Disabled background', derivation: 'Muted gray' },
-      { name: '--controlDisabled-text', description: 'Disabled text', derivation: 'Low contrast gray' },
-      { name: '--controlDisabled-border', description: 'Disabled border', derivation: 'Muted border' },
+      { name: '--stronger-bg', description: 'Background', derivation: 'Maximum emphasis background' },
+      { name: '--stronger-bg-hover', description: 'Hover state', derivation: 'Slightly lighter/darker' },
+      { name: '--stronger-bg-pressed', description: 'Pressed state', derivation: 'More contrast' },
+      { name: '--stronger-bg-disabled', description: 'Disabled state', derivation: 'Muted' },
+      { name: '--stronger-border', description: 'Default border', derivation: 'Contrasts with bg' },
+      { name: '--stronger-border-hover', description: 'Hover border', derivation: 'Slightly stronger' },
+      { name: '--stronger-border-pressed', description: 'Pressed border', derivation: 'Strongest' },
+      { name: '--stronger-border-disabled', description: 'Disabled border', derivation: 'Muted' },
+      { name: '--stronger-fg', description: 'Primary text', derivation: 'Contrasts with stronger-bg' },
+      { name: '--stronger-fg-soft', description: 'Secondary text', derivation: 'Less contrast' },
+      { name: '--stronger-fg-softer', description: 'Tertiary text', derivation: 'Subtle' },
+      { name: '--stronger-fg-strong', description: 'Emphasized text', derivation: 'More contrast' },
+      { name: '--stronger-fg-stronger', description: 'Maximum emphasis', derivation: 'Pure black/white' },
+      { name: '--stronger-fg-primary', description: 'Primary accent', derivation: 'Accessible on stronger-bg' },
+      { name: '--stronger-fg-danger', description: 'Error color', derivation: 'Accessible on stronger-bg' },
+      { name: '--stronger-fg-success', description: 'Success color', derivation: 'Accessible on stronger-bg' },
+      { name: '--stronger-fg-warning', description: 'Warning color', derivation: 'Accessible on stronger-bg' },
+      { name: '--stronger-fg-info', description: 'Info color', derivation: 'Accessible on stronger-bg' },
     ],
   },
 ];
 
-// Feedback role tokens
-const feedbackTokens: TokenCategory[] = [
+// Semantic color groups - carry meaning through color
+const semanticGroupTokens: TokenCategory[] = [
+  {
+    title: 'Primary',
+    description: 'Brand color - primary buttons, selected states, active elements',
+    tokens: [
+      { name: '--primary-bg', description: 'Primary background', derivation: 'Theme primary color' },
+      { name: '--primary-bg-hover', description: 'Hover state', derivation: 'Darker/lighter primary' },
+      { name: '--primary-bg-pressed', description: 'Pressed state', derivation: 'More contrast' },
+      { name: '--primary-bg-disabled', description: 'Disabled state', derivation: 'Muted primary' },
+      { name: '--primary-border', description: 'Default border', derivation: 'Usually transparent or subtle' },
+      { name: '--primary-border-hover', description: 'Hover border', derivation: 'Slightly stronger' },
+      { name: '--primary-border-pressed', description: 'Pressed border', derivation: 'Strongest' },
+      { name: '--primary-border-disabled', description: 'Disabled border', derivation: 'Muted' },
+      { name: '--primary-fg', description: 'Text on primary', derivation: 'Auto contrast (usually white)' },
+      { name: '--primary-fg-soft', description: 'Secondary text', derivation: 'Slightly transparent' },
+      { name: '--primary-fg-softer', description: 'Tertiary text', derivation: 'More transparent' },
+      { name: '--primary-fg-strong', description: 'Emphasized text', derivation: 'Full opacity' },
+      { name: '--primary-fg-stronger', description: 'Maximum emphasis', derivation: 'Pure white/black' },
+      { name: '--primary-fg-primary', description: 'Accent on primary', derivation: 'Usually white' },
+      { name: '--primary-fg-danger', description: 'Error on primary', derivation: 'Light red' },
+      { name: '--primary-fg-success', description: 'Success on primary', derivation: 'Light green' },
+      { name: '--primary-fg-warning', description: 'Warning on primary', derivation: 'Light amber' },
+      { name: '--primary-fg-info', description: 'Info on primary', derivation: 'Light blue' },
+    ],
+  },
+  {
+    title: 'Inverted',
+    description: 'Opposite scheme - tooltips (dark in light mode, light in dark mode)',
+    tokens: [
+      { name: '--inverted-bg', description: 'Inverted background', derivation: 'Opposite of page bg' },
+      { name: '--inverted-bg-hover', description: 'Hover state', derivation: 'Slightly adjusted' },
+      { name: '--inverted-bg-pressed', description: 'Pressed state', derivation: 'More contrast' },
+      { name: '--inverted-bg-disabled', description: 'Disabled state', derivation: 'Muted' },
+      { name: '--inverted-border', description: 'Default border', derivation: 'Contrasts with inverted-bg' },
+      { name: '--inverted-border-hover', description: 'Hover border', derivation: 'Slightly stronger' },
+      { name: '--inverted-border-pressed', description: 'Pressed border', derivation: 'Strongest' },
+      { name: '--inverted-border-disabled', description: 'Disabled border', derivation: 'Muted' },
+      { name: '--inverted-fg', description: 'Text on inverted', derivation: 'Contrasts with inverted-bg' },
+      { name: '--inverted-fg-soft', description: 'Secondary text', derivation: 'Less contrast' },
+      { name: '--inverted-fg-softer', description: 'Tertiary text', derivation: 'Subtle' },
+      { name: '--inverted-fg-strong', description: 'Emphasized text', derivation: 'More contrast' },
+      { name: '--inverted-fg-stronger', description: 'Maximum emphasis', derivation: 'Pure white/black' },
+      { name: '--inverted-fg-primary', description: 'Primary on inverted', derivation: 'Accessible primary' },
+      { name: '--inverted-fg-danger', description: 'Error on inverted', derivation: 'Accessible red' },
+      { name: '--inverted-fg-success', description: 'Success on inverted', derivation: 'Accessible green' },
+      { name: '--inverted-fg-warning', description: 'Warning on inverted', derivation: 'Accessible amber' },
+      { name: '--inverted-fg-info', description: 'Info on inverted', derivation: 'Accessible blue' },
+    ],
+  },
   {
     title: 'Success',
-    description: 'Positive outcomes, confirmations, completion states',
+    description: 'Positive outcomes - success toasts, confirmations',
     tokens: [
-      { name: '--success-bg', description: 'Success background', derivation: 'mix(green, white/black, 0.85-0.9)' },
-      { name: '--success-text', description: 'Success text', derivation: 'darken/lighten green 30%' },
-      { name: '--success-text-soft', description: 'Secondary success text', derivation: 'mix(text, bg, 0.3)' },
-      { name: '--success-border', description: 'Success border', derivation: 'darken/lighten green 10-20%' },
-      { name: '--success-icon', description: 'Success icon color', derivation: 'semantic:success (#16a34a)' },
+      { name: '--success-bg', description: 'Success background', derivation: 'Green-based' },
+      { name: '--success-bg-hover', description: 'Hover state', derivation: 'Darker/lighter green' },
+      { name: '--success-bg-pressed', description: 'Pressed state', derivation: 'More contrast' },
+      { name: '--success-bg-disabled', description: 'Disabled state', derivation: 'Muted green' },
+      { name: '--success-border', description: 'Default border', derivation: 'Subtle or transparent' },
+      { name: '--success-border-hover', description: 'Hover border', derivation: 'Slightly stronger' },
+      { name: '--success-border-pressed', description: 'Pressed border', derivation: 'Strongest' },
+      { name: '--success-border-disabled', description: 'Disabled border', derivation: 'Muted' },
+      { name: '--success-fg', description: 'Text on success', derivation: 'Auto contrast' },
+      { name: '--success-fg-soft', description: 'Secondary text', derivation: 'Slightly transparent' },
+      { name: '--success-fg-softer', description: 'Tertiary text', derivation: 'More transparent' },
+      { name: '--success-fg-strong', description: 'Emphasized text', derivation: 'Full opacity' },
+      { name: '--success-fg-stronger', description: 'Maximum emphasis', derivation: 'Pure white/black' },
     ],
   },
   {
     title: 'Warning',
-    description: 'Caution states, attention needed, pending actions',
+    description: 'Caution states - warning toasts, attention needed',
     tokens: [
-      { name: '--warning-bg', description: 'Warning background', derivation: 'mix(amber, white/black, 0.85-0.9)' },
-      { name: '--warning-text', description: 'Warning text', derivation: 'darken/lighten amber 30%' },
-      { name: '--warning-text-soft', description: 'Secondary warning text', derivation: 'mix(text, bg, 0.3)' },
-      { name: '--warning-border', description: 'Warning border', derivation: 'darken/lighten amber 10-20%' },
-      { name: '--warning-icon', description: 'Warning icon color', derivation: 'semantic:warning (#f59e0b)' },
+      { name: '--warning-bg', description: 'Warning background', derivation: 'Amber-based' },
+      { name: '--warning-bg-hover', description: 'Hover state', derivation: 'Darker/lighter amber' },
+      { name: '--warning-bg-pressed', description: 'Pressed state', derivation: 'More contrast' },
+      { name: '--warning-bg-disabled', description: 'Disabled state', derivation: 'Muted amber' },
+      { name: '--warning-border', description: 'Default border', derivation: 'Subtle or transparent' },
+      { name: '--warning-border-hover', description: 'Hover border', derivation: 'Slightly stronger' },
+      { name: '--warning-border-pressed', description: 'Pressed border', derivation: 'Strongest' },
+      { name: '--warning-border-disabled', description: 'Disabled border', derivation: 'Muted' },
+      { name: '--warning-fg', description: 'Text on warning', derivation: 'Auto contrast (usually black)' },
+      { name: '--warning-fg-soft', description: 'Secondary text', derivation: 'Slightly transparent' },
+      { name: '--warning-fg-softer', description: 'Tertiary text', derivation: 'More transparent' },
+      { name: '--warning-fg-strong', description: 'Emphasized text', derivation: 'Full opacity' },
+      { name: '--warning-fg-stronger', description: 'Maximum emphasis', derivation: 'Pure black' },
     ],
   },
   {
     title: 'Danger',
-    description: 'Errors, destructive states, critical alerts',
+    description: 'Errors/destructive - error toasts, destructive alerts',
     tokens: [
-      { name: '--danger-bg', description: 'Danger background', derivation: 'mix(red, white/black, 0.85-0.9)' },
-      { name: '--danger-text', description: 'Danger text', derivation: 'darken/lighten red 30%' },
-      { name: '--danger-text-soft', description: 'Secondary danger text', derivation: 'mix(text, bg, 0.3)' },
-      { name: '--danger-border', description: 'Danger border', derivation: 'darken/lighten red 10-20%' },
-      { name: '--danger-icon', description: 'Danger icon color', derivation: 'semantic:danger (#dc2626)' },
+      { name: '--danger-bg', description: 'Danger background', derivation: 'Red-based' },
+      { name: '--danger-bg-hover', description: 'Hover state', derivation: 'Darker/lighter red' },
+      { name: '--danger-bg-pressed', description: 'Pressed state', derivation: 'More contrast' },
+      { name: '--danger-bg-disabled', description: 'Disabled state', derivation: 'Muted red' },
+      { name: '--danger-border', description: 'Default border', derivation: 'Subtle or transparent' },
+      { name: '--danger-border-hover', description: 'Hover border', derivation: 'Slightly stronger' },
+      { name: '--danger-border-pressed', description: 'Pressed border', derivation: 'Strongest' },
+      { name: '--danger-border-disabled', description: 'Disabled border', derivation: 'Muted' },
+      { name: '--danger-fg', description: 'Text on danger', derivation: 'Auto contrast (usually white)' },
+      { name: '--danger-fg-soft', description: 'Secondary text', derivation: 'Slightly transparent' },
+      { name: '--danger-fg-softer', description: 'Tertiary text', derivation: 'More transparent' },
+      { name: '--danger-fg-strong', description: 'Emphasized text', derivation: 'Full opacity' },
+      { name: '--danger-fg-stronger', description: 'Maximum emphasis', derivation: 'Pure white' },
     ],
   },
   {
     title: 'Info',
-    description: 'Informational messages, help content, neutral status',
+    description: 'Informational - info toasts, neutral status',
     tokens: [
-      { name: '--info-bg', description: 'Info background', derivation: 'mix(blue, white/black, 0.85-0.9)' },
-      { name: '--info-text', description: 'Info text', derivation: 'darken/lighten blue 30%' },
-      { name: '--info-text-soft', description: 'Secondary info text', derivation: 'mix(text, bg, 0.3)' },
-      { name: '--info-border', description: 'Info border', derivation: 'darken/lighten blue 10-20%' },
-      { name: '--info-icon', description: 'Info icon color', derivation: 'semantic:info (#0ea5e9)' },
+      { name: '--info-bg', description: 'Info background', derivation: 'Blue-based' },
+      { name: '--info-bg-hover', description: 'Hover state', derivation: 'Darker/lighter blue' },
+      { name: '--info-bg-pressed', description: 'Pressed state', derivation: 'More contrast' },
+      { name: '--info-bg-disabled', description: 'Disabled state', derivation: 'Muted blue' },
+      { name: '--info-border', description: 'Default border', derivation: 'Subtle or transparent' },
+      { name: '--info-border-hover', description: 'Hover border', derivation: 'Slightly stronger' },
+      { name: '--info-border-pressed', description: 'Pressed border', derivation: 'Strongest' },
+      { name: '--info-border-disabled', description: 'Disabled border', derivation: 'Muted' },
+      { name: '--info-fg', description: 'Text on info', derivation: 'Auto contrast (usually white)' },
+      { name: '--info-fg-soft', description: 'Secondary text', derivation: 'Slightly transparent' },
+      { name: '--info-fg-softer', description: 'Tertiary text', derivation: 'More transparent' },
+      { name: '--info-fg-strong', description: 'Emphasized text', derivation: 'Full opacity' },
+      { name: '--info-fg-stronger', description: 'Maximum emphasis', derivation: 'Pure white' },
+    ],
+  },
+];
+
+// Feedback tokens - soft tinted backgrounds for alerts/cards
+const feedbackTokens: TokenCategory[] = [
+  {
+    title: 'Feedback Success',
+    description: 'Soft tinted backgrounds for success alerts, notifications, and cards',
+    tokens: [
+      { name: '--feedback-success-bg', description: 'Soft success background', derivation: 'Light green tint' },
+      { name: '--feedback-success-bg-hover', description: 'Hover state', derivation: 'Slightly darker' },
+      { name: '--feedback-success-fg', description: 'Text on feedback bg', derivation: 'Dark green' },
+      { name: '--feedback-success-border', description: 'Border color', derivation: 'Medium green' },
+    ],
+  },
+  {
+    title: 'Feedback Warning',
+    description: 'Soft tinted backgrounds for warning alerts, notifications, and cards',
+    tokens: [
+      { name: '--feedback-warning-bg', description: 'Soft warning background', derivation: 'Light amber tint' },
+      { name: '--feedback-warning-bg-hover', description: 'Hover state', derivation: 'Slightly darker' },
+      { name: '--feedback-warning-fg', description: 'Text on feedback bg', derivation: 'Dark amber' },
+      { name: '--feedback-warning-border', description: 'Border color', derivation: 'Medium amber' },
+    ],
+  },
+  {
+    title: 'Feedback Danger',
+    description: 'Soft tinted backgrounds for error alerts, notifications, and cards',
+    tokens: [
+      { name: '--feedback-danger-bg', description: 'Soft danger background', derivation: 'Light red tint' },
+      { name: '--feedback-danger-bg-hover', description: 'Hover state', derivation: 'Slightly darker' },
+      { name: '--feedback-danger-fg', description: 'Text on feedback bg', derivation: 'Dark red' },
+      { name: '--feedback-danger-border', description: 'Border color', derivation: 'Medium red' },
+    ],
+  },
+  {
+    title: 'Feedback Info',
+    description: 'Soft tinted backgrounds for info alerts, notifications, and cards',
+    tokens: [
+      { name: '--feedback-info-bg', description: 'Soft info background', derivation: 'Light blue tint' },
+      { name: '--feedback-info-bg-hover', description: 'Hover state', derivation: 'Slightly darker' },
+      { name: '--feedback-info-fg', description: 'Text on feedback bg', derivation: 'Dark blue' },
+      { name: '--feedback-info-border', description: 'Border color', derivation: 'Medium blue' },
     ],
   },
 ];
@@ -376,6 +476,15 @@ const staticTokens: TokenCategory[] = [
 // Component tokens
 const componentTokens: TokenCategory[] = [
   {
+    title: 'Control Heights',
+    description: 'Standard heights for interactive controls',
+    tokens: [
+      { name: '--control-height-sm', description: 'Small control height', derivation: '28px' },
+      { name: '--control-height-md', description: 'Medium control height', derivation: '36px' },
+      { name: '--control-height-lg', description: 'Large control height', derivation: '44px' },
+    ],
+  },
+  {
     title: 'Button',
     description: 'Button-specific tokens',
     tokens: [
@@ -388,7 +497,6 @@ const componentTokens: TokenCategory[] = [
     title: 'Input',
     description: 'Input field tokens',
     tokens: [
-      { name: '--input-height', description: 'Input field height', derivation: '40px' },
       { name: '--input-padding-x', description: 'Horizontal padding', derivation: 'var(--space-3)' },
     ],
   },
@@ -430,6 +538,7 @@ const surfaceClasses = [
 
 function isColorValue(value: string): boolean {
   if (!value) return false;
+
   return (
     value.startsWith('#') ||
     value.startsWith('rgb') ||
@@ -538,13 +647,14 @@ export function ReferencePage() {
 
   const getAllTokenNames = useCallback(() => {
     const allCategories = [
-      ...containerTokens,
-      ...controlTokens,
+      ...tonalGroupTokens,
+      ...semanticGroupTokens,
       ...feedbackTokens,
       ...specialTokens,
       ...staticTokens,
       ...componentTokens,
     ];
+
     return allCategories.flatMap((cat) => cat.tokens.map((t) => t.name));
   }, []);
 
@@ -586,28 +696,49 @@ export function ReferencePage() {
             <p className={styles.subtitle}>
               Complete documentation of all UI-Kit design tokens. Values shown reflect the current theme.
             </p>
+            <div className={styles.goldenRule}>
+              <h3>The Golden Rule</h3>
+              <p>
+                <strong>Pick a color group for your background, use ONLY that group's tokens for text and borders.</strong>
+                {' '}Contrast is guaranteed when you stay within the same group.
+              </p>
+              <pre className={styles.codeExample}>
+{`/* ✅ CORRECT - all tokens from the same group */
+.primary-button {
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+  border: 1px solid var(--primary-border);
+}
+
+/* ❌ WRONG - mixing groups breaks contrast */
+.broken {
+  background: var(--primary-bg);
+  color: var(--base-fg);  /* May not be readable! */
+}`}
+              </pre>
+            </div>
           </div>
 
           <Section
-            id="container-tokens"
-            title="Container Tokens"
-            description="Tokens for static background regions. Each container role provides a complete set of background, text, and border tokens that ensure accessible contrast."
-            categories={containerTokens}
+            id="tonal-groups"
+            title="Tonal Color Groups"
+            description="Create visual hierarchy through lightness variation. Each group includes background, border, and foreground tokens that work together with guaranteed contrast."
+            categories={tonalGroupTokens}
             computedValues={computedValues}
           />
 
           <Section
-            id="control-tokens"
-            title="Control Tokens"
-            description="Tokens for interactive elements with hover, pressed, and other state variations. Always pair -bg and -text tokens from the same control role."
-            categories={controlTokens}
+            id="semantic-groups"
+            title="Semantic Color Groups"
+            description="Carry meaning through color. Use for primary actions, inverted contexts, and feedback states. Each group provides a complete set of tokens for building components on that background."
+            categories={semanticGroupTokens}
             computedValues={computedValues}
           />
 
           <Section
             id="feedback-tokens"
             title="Feedback Tokens"
-            description="Semantic status colors that maintain consistent meaning across themes. Use for alerts, badges, and status indicators."
+            description="Soft tinted backgrounds for alerts, notifications, and cards. These provide a lighter alternative to the full semantic backgrounds."
             categories={feedbackTokens}
             computedValues={computedValues}
           />
@@ -640,8 +771,23 @@ export function ReferencePage() {
             <h2 id="surface-classes" className={styles.sectionTitle}>Surface Classes</h2>
             <p className={styles.sectionDesc}>
               CSS classes that create distinct visual contexts. Surfaces reset and override tokens to ensure components
-              remain readable on different backgrounds. Use <code>--surface-*</code> tokens inside surface contexts.
+              remain readable on different backgrounds. Every <code>.surface</code> element resets ALL tokens to page defaults,
+              then applies overrides specific to that surface variant.
             </p>
+            <pre className={styles.codeExample}>
+{`<!-- Components inside a surface automatically get appropriate token values -->
+<div class="surface raised">
+  <button>This button works correctly</button>
+</div>
+
+<!-- Nested surfaces reset properly - no compounding issues -->
+<div class="surface sunken">
+  <p>Sunken area</p>
+  <div class="surface raised">
+    <p>Raised card inside - tokens reset</p>
+  </div>
+</div>`}
+            </pre>
             <div className={styles.surfaceGrid}>
               {surfaceClasses.map((surface) => (
                 <div key={surface.name} className={styles.surfaceCard}>

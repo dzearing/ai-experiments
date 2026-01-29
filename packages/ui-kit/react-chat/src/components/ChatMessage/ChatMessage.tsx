@@ -3,6 +3,7 @@ import { Avatar, BusyIndicator, CopyButton } from '@ui-kit/react';
 import { MarkdownRenderer } from '@ui-kit/react-markdown';
 import { useChatContext } from '../../context';
 import { ToolGroup, type ToolCall, type ToolStatus } from '../ToolGroup';
+import { ContextDisplay, type ContextDisplayData } from '../ContextDisplay';
 import styles from './ChatMessage.module.css';
 
 /**
@@ -43,9 +44,18 @@ export interface ChatMessageToolCallsPart {
 }
 
 /**
- * A message part - either text or tool calls
+ * Component part of a message - renders a custom React component
  */
-export type ChatMessagePart = ChatMessageTextPart | ChatMessageToolCallsPart;
+export interface ChatMessageComponentPart {
+  type: 'component';
+  componentType: 'context' | string;
+  data: ContextDisplayData | Record<string, unknown>;
+}
+
+/**
+ * A message part - text, tool calls, or custom component
+ */
+export type ChatMessagePart = ChatMessageTextPart | ChatMessageToolCallsPart | ChatMessageComponentPart;
 
 /**
  * Extract filename from path
@@ -669,6 +679,22 @@ export const ChatMessage = memo(function ChatMessage({
               <ToolGroup tools={toolGroupCalls} />
             </div>
           );
+        }
+
+        if (part.type === 'component') {
+          // Render custom component based on componentType
+          if (part.componentType === 'context') {
+            return (
+              <div key={partIndex} className={styles.componentPart}>
+                <ContextDisplay data={part.data as ContextDisplayData} />
+              </div>
+            );
+          }
+
+          // Unknown component type - render nothing
+          console.warn('[ChatMessage] Unknown component type:', part.componentType);
+
+          return null;
         }
 
         return null;

@@ -14,6 +14,7 @@ import { ideasRouter, setIdeasWorkspaceHandler, setIdeasAgentHandler } from './r
 import { topicsRouter, setTopicsWorkspaceHandler } from './routes/topics.js';
 import { fsRouter } from './routes/fs.js';
 import { factsRouter } from './routes/facts.js';
+import { claudeCodeRouter } from './routes/claudeCode.js';
 import { setWorkspaceHandler as setMCPToolsWorkspaceHandler } from './services/MCPToolsService.js';
 import { createDiagnosticsRouter } from './routes/diagnostics.js';
 import { YjsCollaborationHandler } from './websocket/YjsCollaborationHandler.js';
@@ -30,9 +31,13 @@ import { DiscoveryService } from './services/DiscoveryService.js';
 import { DocumentService } from './services/DocumentService.js';
 import { IdeaService } from './services/IdeaService.js';
 import { ResourceEventBus } from './services/resourceEventBus/ResourceEventBus.js';
+import { registerBuiltInCommands } from './commands/index.js';
 
 // Load environment variables
 config();
+
+// Register slash commands
+registerBuiltInCommands();
 
 const PORT = process.env.PORT || 3002;
 
@@ -62,6 +67,7 @@ app.use('/api/ideas', ideasRouter);
 app.use('/api/topics', topicsRouter);
 app.use('/api/fs', fsRouter);
 app.use('/api/facts', factsRouter);
+app.use('/api/claude-code', claudeCodeRouter);
 
 // Create HTTP server
 const server = createServer(app);
@@ -115,6 +121,74 @@ const yjsHandler = new YjsCollaborationHandler({
             return parts.join('\n');
           }
         }
+        return null;
+      }
+
+      // Handle implementation plan documents: impl-plan-{ideaId}
+      // Regenerate design doc from task data if the persisted doc was empty
+      if (documentId.startsWith('impl-plan-')) {
+        const ideaId = documentId.replace('impl-plan-', '');
+        const fullIdea = await ideaService.getIdeaByIdNoAuth(ideaId);
+        if (fullIdea && fullIdea.plan && fullIdea.plan.phases && fullIdea.plan.phases.length > 0) {
+          console.log(`[Yjs] Regenerating impl-plan for "${fullIdea.title}" from ${fullIdea.plan.phases.length} phases`);
+
+          // Build a basic design document from the task data
+          const parts: string[] = [];
+          parts.push(`# Design: ${fullIdea.title}`);
+          parts.push('');
+          parts.push('## Overview');
+          parts.push('');
+          parts.push(fullIdea.summary || '_No summary provided_');
+          parts.push('');
+
+          if (fullIdea.description) {
+            parts.push('## Description');
+            parts.push('');
+            parts.push(fullIdea.description);
+            parts.push('');
+          }
+
+          if (fullIdea.plan.workingDirectory) {
+            parts.push('## Project Location');
+            parts.push('');
+            parts.push(`Working Directory: \`${fullIdea.plan.workingDirectory}\``);
+            if (fullIdea.plan.repositoryUrl) {
+              parts.push(`Repository: ${fullIdea.plan.repositoryUrl}`);
+            }
+            if (fullIdea.plan.branch) {
+              parts.push(`Branch: \`${fullIdea.plan.branch}\``);
+            }
+            parts.push('');
+          }
+
+          parts.push('## Implementation Phases');
+          parts.push('');
+
+          for (const phase of fullIdea.plan.phases) {
+            parts.push(`### ${phase.title}`);
+            parts.push('');
+            if (phase.description) {
+              parts.push(phase.description);
+              parts.push('');
+            }
+
+            if (phase.tasks && phase.tasks.length > 0) {
+              parts.push('**Tasks:**');
+              for (const task of phase.tasks) {
+                const checkbox = task.completed ? '[x]' : '[ ]';
+                parts.push(`- ${checkbox} ${task.title}`);
+              }
+              parts.push('');
+            }
+          }
+
+          parts.push('---');
+          parts.push('');
+          parts.push('_This design document was auto-regenerated from existing task data._');
+
+          return parts.join('\n');
+        }
+        // No task data to regenerate from
         return null;
       }
 

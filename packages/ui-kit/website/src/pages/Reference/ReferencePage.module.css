@@ -35,6 +35,41 @@
   color: var(--base-fg-soft);
 }
 
+/* Golden Rule callout */
+.goldenRule {
+  background: var(--feedback-info-bg);
+  border: 1px solid var(--feedback-info-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  margin-top: var(--space-6);
+}
+
+.goldenRule h3 {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  color: var(--feedback-info-fg);
+  margin-bottom: var(--space-2);
+}
+
+.goldenRule p {
+  color: var(--feedback-info-fg);
+  margin-bottom: var(--space-4);
+}
+
+/* Code examples */
+.codeExample {
+  background: var(--softer-bg);
+  border: 1px solid var(--softer-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  overflow-x: auto;
+  white-space: pre;
+  margin: var(--space-4) 0;
+}
+
 .section {
   margin-bottom: var(--space-12);
 }

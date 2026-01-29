@@ -15,6 +15,7 @@ import type { OpenQuestion, OpenQuestionsResult } from '@ui-kit/react-chat';
 import { useAgentSocket, type BaseServerMessage } from './useAgentSocket';
 import type { AgentProgressState } from './useAgentProgress';
 import { createLogger } from '../utils/clientLogger';
+import type { SlashCommand } from '../types/slashCommandTypes';
 
 // Re-export types from agentTypes for backwards compatibility
 export type {
@@ -160,6 +161,10 @@ export interface UseExecutionAgentReturn {
   addLocalMessage: (message: ExecutionAgentMessage) => void;
   /** Request chat history from server */
   requestHistory: (limit?: number) => void;
+  /** Available slash commands from server */
+  availableCommands: SlashCommand[];
+  /** Execute a slash command */
+  executeCommand: (command: string, args: string) => void;
 }
 
 /**
@@ -484,6 +489,8 @@ export function useExecutionAgent({
     clearMessages: base.clearHistory,
     addLocalMessage: base.addMessage,
     requestHistory,
+    availableCommands: base.availableCommands,
+    executeCommand: base.executeCommand,
   };
 }
 

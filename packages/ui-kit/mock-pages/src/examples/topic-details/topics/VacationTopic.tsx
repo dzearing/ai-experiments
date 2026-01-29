@@ -8,6 +8,7 @@ import {
   Heading,
   IconButton,
   Progress,
+  Stack,
   Tabs,
   Text,
 } from '@ui-kit/react';
@@ -236,12 +237,12 @@ export function VacationTopicDetail({ topic }: { topic: VacationTopic }) {
               <Heading level={4} size={5}>Accommodations</Heading>
               {topic.accommodations?.map((hotel, i) => (
                 <div key={i} className={styles.bookingItem}>
-                  <div className={styles.bookingInfo}>
+                  <Stack direction="vertical" gap="none" className={styles.bookingInfo}>
                     <Text weight="medium">{hotel.name}</Text>
                     <Text size="sm" color="soft">
                       {hotel.checkIn.toLocaleDateString()} - {hotel.checkOut.toLocaleDateString()}
                     </Text>
-                  </div>
+                  </Stack>
                   <Chip size="sm" variant={hotel.confirmed ? 'success' : 'warning'}>
                     {hotel.confirmed ? 'Confirmed' : 'Pending'}
                   </Chip>
