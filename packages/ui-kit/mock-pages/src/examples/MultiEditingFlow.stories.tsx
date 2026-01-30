@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import {
   Avatar,
   AvatarGroup,
@@ -125,7 +125,7 @@ interface MockOption {
 }
 
 type ViewportSize = 'desktop' | 'tablet' | 'mobile';
-type ArtifactTab = 'plan' | 'document' | 'ui-mock';
+type ArtifactTab = 'plan' | 'document' | 'ui-mock' | 'figma' | 'remix';
 type AnnotationTool = 'select' | 'line' | 'arrow' | 'draw' | 'rectangle' | 'text' | 'clip';
 
 interface DrawnLine {
@@ -903,20 +903,95 @@ All four options now feature a dark color scheme with a two-column hero layout. 
 ];
 
 // ============================================
-// MOCK DATA: Multiplayer Chat Messages
+// MOCK DATA: Multiplayer Chat Messages - Figma Flow
 // ============================================
 
-const multiplayerMessagesInitial: ChatPanelMessage[] = [
-  {
-    id: 'sys-collab-1',
-    content: `Welcome to collaborative design mode. **Sarah Chen**, **Mike Johnson**, and **Emma Wilson** have joined the session.
+const figmaShareLink = 'https://www.figma.com/design/ABC123/Landing-Page-v2?node-id=0-1&t=xyz';
 
-I've generated 4 landing page options. Everyone can vote on their favorites and leave feedback. Once you reach consensus, I'll help refine the chosen direction.`,
+/** Step 1: Session starts, user shares Figma link */
+const figmaFlowMessages1_ShareLink: ChatPanelMessage[] = [
+  {
+    id: 'sys-figma-1',
+    content: `Welcome to the collaborative design session. **Sarah Chen**, **Mike Johnson**, and **Emma Wilson** have joined.
+
+What would you like to work on today?`,
+    timestamp: new Date(Date.now() - 400000),
+    senderName: 'Plan Agent',
+    senderColor: 'var(--success-fg)',
+    renderMarkdown: true,
+  },
+  {
+    id: 'user-figma-1',
+    content: `I have a landing page design in Figma I'd like the team to review and iterate on. Here's the link:
+
+${figmaShareLink}`,
+    timestamp: new Date(Date.now() - 380000),
+    senderName: 'You',
+    isOwn: true,
+  },
+];
+
+/** Step 2: Agent adds Figma tab, user asks for remix */
+const figmaFlowMessages2_FigmaAdded: ChatPanelMessage[] = [
+  ...figmaFlowMessages1_ShareLink,
+  {
+    id: 'assistant-figma-1',
+    content: `I've added the Figma design as a new tab. The team can now view **Landing Page v2** directly in this session.
+
+You can:
+- **Annotate** - Add comments directly on the design
+- **Remix** - Generate AI variations based on this design
+- **Export** - Save as component specs
+
+What would you like to do?`,
+    timestamp: new Date(Date.now() - 360000),
+    senderName: 'Plan Agent',
+    senderColor: 'var(--success-fg)',
+    renderMarkdown: true,
+  },
+  {
+    id: 'sarah-figma-1',
+    content: 'Love the overall direction! But I think we should explore some variations on the hero section.',
+    timestamp: new Date(Date.now() - 340000),
+    senderName: 'Sarah Chen',
+    senderColor: '#8b5cf6',
+  },
+  {
+    id: 'user-figma-2',
+    content: 'Good idea Sarah. Can you start a remix session on this design? Let\'s generate some variations the team can vote on.',
+    timestamp: new Date(Date.now() - 320000),
+    senderName: 'You',
+    isOwn: true,
+  },
+];
+
+/** Step 3: Remix tab appears with options */
+const figmaFlowMessages3_RemixCreated: ChatPanelMessage[] = [
+  ...figmaFlowMessages2_FigmaAdded,
+  {
+    id: 'assistant-figma-2',
+    content: `I've created a remix session based on the Figma design. I've generated **4 variations** that explore different directions while maintaining the core brand elements.
+
+**Remix variations include:**
+- **Option A** - Enhanced gradient hero with adjusted spacing
+- **Option B** - Cleaner split layout with prominent stats
+- **Option C** - Modern dark theme with gradient accents
+- **Option D** - Bold typography-first approach
+
+The team can now vote on favorites and I'll synthesize the feedback.`,
     timestamp: new Date(Date.now() - 300000),
     senderName: 'Plan Agent',
     senderColor: 'var(--success-fg)',
     renderMarkdown: true,
   },
+];
+
+// ============================================
+// MOCK DATA: Multiplayer Chat Messages - Voting Flow
+// ============================================
+
+const multiplayerMessagesInitial: ChatPanelMessage[] = [
+  ...figmaFlowMessages3_RemixCreated,
 ];
 
 const multiplayerMessagesWithVoting: ChatPanelMessage[] = [
@@ -1196,7 +1271,6 @@ function CollaboratorPresence({
             <Avatar
               fallback={collaborator.initials}
               color={collaborator.color}
-              className={collaborator.isOnline ? '' : styles.avatarOffline}
             />
           </Tooltip>
         ))}
@@ -1603,7 +1677,7 @@ function MockPreviewDialog({
   const [currentRect, setCurrentRect] = useState<DrawnRect | null>(null);
   const [textInput, setTextInput] = useState<{ x: number; y: number } | null>(null);
   const [toolbarPosition, setToolbarPosition] = useState({ x: 20, y: 20 });
-  const [isDraggingToolbar, setIsDraggingToolbar] = useState(false);
+  const [_isDraggingToolbar, setIsDraggingToolbar] = useState(false);
   const textInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -2605,6 +2679,244 @@ export const PreviewDialog_Desktop: Story = {
 // MULTIPLAYER COLLABORATION STORIES
 // ============================================
 
+/** Figma embed preview component */
+function FigmaEmbed({ figmaUrl: _figmaUrl }: { figmaUrl: string }) {
+  // In production, we would use the figmaUrl to create an embed
+  // For this demo, we show a mock preview using Option A's HTML
+
+  return (
+    <div className={styles.figmaEmbed}>
+      <div className={styles.figmaEmbedHeader}>
+        <Text size="sm" color="soft">Figma Design</Text>
+        <Button variant="ghost" size="sm">Open in Figma ↗</Button>
+      </div>
+      <div className={styles.figmaEmbedFrame}>
+        {/* In real app, this would be an iframe. Using mock preview for demo */}
+        <div className={styles.figmaEmbedMock}>
+          <iframe
+            srcDoc={landingPageOptionA}
+            className={styles.figmaEmbedIframe}
+            title="Figma Design Preview"
+            sandbox="allow-same-origin"
+          />
+          <div className={styles.figmaEmbedOverlay}>
+            <div className={styles.figmaEmbedBadge}>
+              <ImageIcon />
+              <Text size="sm" weight="medium">Landing Page v2</Text>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Figma flow collaboration component - supports Figma and Remix tabs */
+function FigmaCollaborationComponent({
+  messages,
+  collaborators: collabs,
+  activeTabOverride,
+  showFigmaTab = false,
+  showRemixTab = false,
+  options = [],
+  showVoting = false,
+  winnerId,
+  isThinking = false,
+  typingUsers = [],
+}: {
+  messages: ChatPanelMessage[];
+  collaborators: Collaborator[];
+  activeTabOverride?: ArtifactTab;
+  showFigmaTab?: boolean;
+  showRemixTab?: boolean;
+  options?: MockOption[];
+  showVoting?: boolean;
+  winnerId?: string;
+  isThinking?: boolean;
+  typingUsers?: string[];
+}) {
+  const defaultTab = showRemixTab ? 'remix' : showFigmaTab ? 'figma' : 'plan';
+  const [activeTab, setActiveTab] = useState<ArtifactTab>(activeTabOverride || defaultTab);
+  const [previewOption, setPreviewOption] = useState<MockOption | null>(null);
+  const [docViewMode, setDocViewMode] = useState<ViewMode>('preview');
+
+  const tabs: { id: ArtifactTab; label: string; icon?: React.ReactNode }[] = [
+    { id: 'plan', label: 'Plan' },
+    { id: 'document', label: 'Document' },
+  ];
+
+  if (showFigmaTab) {
+    tabs.push({ id: 'figma', label: 'Landing Page (Figma)', icon: <ImageIcon /> });
+  }
+
+  if (showRemixTab) {
+    tabs.push({ id: 'remix', label: 'Landing Page (Remix 1)', icon: <ImageIcon /> });
+  }
+
+  const renderArtifactContent = () => {
+    switch (activeTab) {
+      case 'plan':
+        return <PlanViewSidebar phases={planPhases} />;
+      case 'document':
+        return (
+          <div className={styles.docEditor}>
+            <MarkdownCoEditor
+              value={planMarkdown}
+              mode={docViewMode}
+              onModeChange={setDocViewMode}
+              fullPage
+              placeholder="Plan details..."
+            />
+          </div>
+        );
+      case 'figma':
+        return (
+          <div className={styles.mockTabContent}>
+            <FigmaEmbed figmaUrl={figmaShareLink} />
+          </div>
+        );
+      case 'remix': {
+        // When consensus is reached, show only the winning option
+        if (winnerId) {
+          const winningOption = options.find(o => o.id === winnerId);
+
+          if (winningOption) {
+            return (
+              <div className={styles.mockTabContent}>
+                <div className={`${styles.winnerHeader} surface success`}>
+                  <CheckCircleIcon className={styles.winnerHeaderIcon} />
+                  <Text weight="medium">Consensus Reached - Option {winningOption.label}</Text>
+                  <IconButton
+                    variant="ghost"
+                    size="sm"
+                    icon={<CloseIcon />}
+                    aria-label="Dismiss"
+                    className={styles.winnerHeaderClose}
+                  />
+                </div>
+                <div
+                  className={styles.winnerPreview}
+                  onClick={() => setPreviewOption(winningOption)}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <iframe
+                    srcDoc={winningOption.html}
+                    className={styles.winnerPreviewIframe}
+                    title={`Winning Option ${winningOption.label}`}
+                    sandbox="allow-same-origin"
+                  />
+                  <div className={styles.winnerPreviewOverlay}>
+                    <Text size="sm" weight="medium">Click to preview</Text>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+        }
+
+        return (
+          <div className={styles.mockTabContent}>
+            <div className={styles.votingHeader}>
+              <Text weight="medium">Vote for your favorites</Text>
+              <Chip size="sm" variant="info">{options.reduce((sum, o) => sum + (o.votes?.length || 0), 0)} votes cast</Chip>
+            </div>
+            <MockOptionsGridWithVoting
+              options={options}
+              onSelectOption={setPreviewOption}
+              showVoting={showVoting}
+              winnerId={winnerId}
+            />
+          </div>
+        );
+      }
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className={styles.overlay}>
+      <div className={styles.planningDialog}>
+        <div className={styles.planningHeader}>
+          <div className={styles.planningHeaderLeft}>
+            <Heading level={2} size={4}>Team Design Session</Heading>
+            <Chip size="sm" variant="success">Live</Chip>
+          </div>
+          <div className={styles.planningHeaderRight}>
+            <CollaboratorPresence collaborators={collabs} />
+            <IconButton variant="ghost" icon={<CloseIcon />} aria-label="Close" />
+          </div>
+        </div>
+        <div className={styles.planningBody}>
+          <SplitPane
+            orientation="horizontal"
+            defaultSize="50%"
+            collapsible
+            first={
+              <div className={styles.chatSection}>
+                <CollaborativeChatPanelWrapper
+                  messages={messages}
+                  collaborators={collabs}
+                  isThinking={isThinking}
+                  typingUsers={typingUsers}
+                  inputPlaceholder="Share your thoughts..."
+                />
+              </div>
+            }
+            second={
+              <div className={styles.artifactSection}>
+                <ArtifactTabs
+                  activeTab={activeTab}
+                  onTabChange={setActiveTab}
+                  tabs={tabs}
+                />
+                <div className={styles.artifactContent}>
+                  {renderArtifactContent()}
+                </div>
+              </div>
+            }
+          />
+        </div>
+        <div className={styles.planningFooter}>
+          <div className={styles.folderChips}>
+            <Button
+              variant="outline"
+              icon={<FolderIcon />}
+              iconAfter={<ChevronDownIcon />}
+            >
+              ~/git/.../my-project/
+            </Button>
+          </div>
+          <div className={styles.footerActions}>
+            {winnerId ? (
+              <>
+                <Button variant="default">Export Assets</Button>
+                <Button variant="primary" icon={<PlayIcon />}>Begin Implementation</Button>
+              </>
+            ) : (
+              <>
+                <Button variant="default">Save Draft</Button>
+                <Button variant="primary" disabled={!showRemixTab}>
+                  {showRemixTab ? 'Continue to Voting' : 'Waiting...'}
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {previewOption && (
+        <MockPreviewDialog
+          option={previewOption}
+          onClose={() => setPreviewOption(null)}
+          onChoose={() => setPreviewOption(null)}
+        />
+      )}
+    </div>
+  );
+}
+
 /** Multiplayer collaboration component */
 function MultiplayerCollaborationComponent({
   messages,
@@ -2789,93 +3101,144 @@ function MultiplayerCollaborationComponent({
 }
 
 /**
- * Multiplayer: Session starts, options displayed
+ * Collab 1: User shares Figma link with team
  */
-export const Collab1_SessionStart: Story = {
-  name: 'Collab 1. Session Starts',
+export const Collab1_ShareFigmaLink: Story = {
+  name: 'Collab 1. Share Figma Link',
   render: () => (
-    <MultiplayerCollaborationComponent
-      messages={multiplayerMessagesInitial}
+    <FigmaCollaborationComponent
+      messages={figmaFlowMessages1_ShareLink}
       collaborators={collaborators}
-      options={regeneratedOptions}
-      showVoting={true}
+      showFigmaTab={false}
+      showRemixTab={false}
+      activeTabOverride="plan"
+      isThinking={true}
     />
   ),
 };
 
 /**
- * Multiplayer: Team members voting
+ * Collab 2: Figma design added as tab
  */
-export const Collab2_VotingInProgress: Story = {
-  name: 'Collab 2. Voting in Progress',
+export const Collab2_FigmaTabAdded: Story = {
+  name: 'Collab 2. Figma Design Added',
   render: () => (
-    <MultiplayerCollaborationComponent
+    <FigmaCollaborationComponent
+      messages={figmaFlowMessages2_FigmaAdded}
+      collaborators={collaborators}
+      showFigmaTab={true}
+      showRemixTab={false}
+      activeTabOverride="figma"
+    />
+  ),
+};
+
+/**
+ * Collab 3: Remix session created with variations
+ */
+export const Collab3_RemixSessionCreated: Story = {
+  name: 'Collab 3. Remix Session Created',
+  render: () => (
+    <FigmaCollaborationComponent
+      messages={figmaFlowMessages3_RemixCreated}
+      collaborators={collaborators}
+      showFigmaTab={true}
+      showRemixTab={true}
+      options={regeneratedOptions}
+      showVoting={true}
+      activeTabOverride="remix"
+    />
+  ),
+};
+
+/**
+ * Collab 4: Team voting on remix options
+ */
+export const Collab4_VotingInProgress: Story = {
+  name: 'Collab 4. Voting in Progress',
+  render: () => (
+    <FigmaCollaborationComponent
       messages={multiplayerMessagesWithVoting}
       collaborators={collaborators}
+      showFigmaTab={true}
+      showRemixTab={true}
       options={optionsWithVotes}
       showVoting={true}
+      activeTabOverride="remix"
       typingUsers={['Emma Wilson']}
     />
   ),
 };
 
 /**
- * Multiplayer: Team members providing feedback
+ * Collab 5: Team members providing feedback
  */
-export const Collab3_TeamFeedback: Story = {
-  name: 'Collab 3. Team Feedback',
+export const Collab5_TeamFeedback: Story = {
+  name: 'Collab 5. Team Feedback',
   render: () => (
-    <MultiplayerCollaborationComponent
+    <FigmaCollaborationComponent
       messages={multiplayerMessagesWithFeedback}
       collaborators={collaborators}
+      showFigmaTab={true}
+      showRemixTab={true}
       options={optionsWithVotes}
       showVoting={true}
+      activeTabOverride="remix"
     />
   ),
 };
 
 /**
- * Multiplayer: Agent synthesizes feedback
+ * Collab 6: Agent synthesizes feedback
  */
-export const Collab4_AgentSynthesis: Story = {
-  name: 'Collab 4. Agent Synthesizes Feedback',
+export const Collab6_AgentSynthesis: Story = {
+  name: 'Collab 6. Agent Synthesizes Feedback',
   render: () => (
-    <MultiplayerCollaborationComponent
+    <FigmaCollaborationComponent
       messages={multiplayerMessagesSynthesis}
       collaborators={collaborators}
+      showFigmaTab={true}
+      showRemixTab={true}
       options={optionsWithVotes}
       showVoting={true}
+      activeTabOverride="remix"
       isThinking={false}
     />
   ),
 };
 
 /**
- * Multiplayer: Consensus building
+ * Collab 7: Consensus building with regenerated options
  */
-export const Collab5_ConsensusBuilding: Story = {
-  name: 'Collab 5. Consensus Building',
+export const Collab7_ConsensusBuilding: Story = {
+  name: 'Collab 7. Consensus Building',
   render: () => (
-    <MultiplayerCollaborationComponent
+    <FigmaCollaborationComponent
       messages={multiplayerMessagesConsensus}
       collaborators={collaborators}
+      showFigmaTab={true}
+      showRemixTab={true}
       options={optionsWithConsensus}
       showVoting={true}
+      activeTabOverride="remix"
     />
   ),
 };
 
 /**
- * Multiplayer: Final vote and winner
+ * Collab 8: Final vote and winner selected
  */
-export const Collab6_ConsensusReached: Story = {
-  name: 'Collab 6. Consensus Reached',
+export const Collab8_ConsensusReached: Story = {
+  name: 'Collab 8. Consensus Reached',
   render: () => (
-    <MultiplayerCollaborationComponent
+    <FigmaCollaborationComponent
       messages={multiplayerMessagesFinalVote}
       collaborators={collaborators}
+      showFigmaTab={true}
+      showRemixTab={true}
       options={optionsWithConsensus}
       showVoting={false}
+      activeTabOverride="remix"
       winnerId="c"
     />
   ),
