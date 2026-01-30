@@ -133,7 +133,7 @@ export function ChatView() {
       // Queue the message when agent is busy
       setQueuedMessages((prev) => [
         ...prev,
-        { id: `queued-${Date.now()}`, content },
+        { id: `queued-${Date.now()}`, content, timestamp: Date.now() },
       ]);
     } else {
       sendMessage(content);
