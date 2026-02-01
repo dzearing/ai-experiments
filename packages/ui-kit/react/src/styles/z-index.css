@@ -1,0 +1,42 @@
+/**
+ * Z-Index Scale
+ *
+ * Centralized z-index tokens for the component library.
+ * Use these tokens instead of arbitrary z-index values to prevent layering conflicts.
+ *
+ * Scale uses increments of 100 to allow inserting new layers if needed.
+ *
+ * Usage Guidelines:
+ * - --z-base: Default, no elevation (elements in normal flow)
+ * - --z-dropdown: Dropdown menus, select options, autocomplete lists
+ * - --z-sticky: Sticky headers, floating action buttons
+ * - --z-fixed: Fixed position navigation, persistent elements
+ * - --z-sidebar: SidePanel in overlay mode
+ * - --z-modal-backdrop: Modal/dialog/drawer backdrop overlay
+ * - --z-modal: Modal/dialog/drawer content
+ * - --z-popover: Popovers, context menus (above modals)
+ * - --z-tooltip: Tooltips (highest interactive layer)
+ * - --z-toast: Toast notifications (always visible)
+ * - --z-max: Dev tools, emergency UI only
+ *
+ * Rule: Always use these tokens. Never hardcode z-index values > 10.
+ */
+
+:root {
+  /* Base layers - within normal document flow */
+  --z-base: 0;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-fixed: 300;
+
+  /* Overlay layers - above page content */
+  --z-sidebar: 400;
+  --z-modal-backdrop: 500;
+  --z-modal: 600;
+  --z-popover: 700;
+  --z-tooltip: 800;
+  --z-toast: 900;
+
+  /* Maximum layer - critical system UI only */
+  --z-max: 9999;
+}
