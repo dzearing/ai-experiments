@@ -6,7 +6,7 @@
 - **QS-02**: Package README files reference component guide
 - **QS-03**: Each component visually audited against coworker-demo.lovable.app/design-system
 - **QS-04**: UX must be beautiful, fluent, polished — no visual glitches, misalignment, or jarring interactions
-- **QS-05**: Each component has real use cases in mock-coworker-pages mirroring Lovable prototype examples
+- **QS-05**: Each component has real use cases in mock-coworker-pages mirroring demo states from coworker-demo.lovable.app (prioritize app scenarios over /design-system pages)
 
 ---
 

@@ -144,7 +144,7 @@ Plans:
   3. SidePanel supports collapsible overlay and push modes
   4. ContentLayout provides standard page wrapper with header/content/footer slots
   5. Z-index scale prevents layering conflicts between components
-  6. mock-coworker-pages contains real use cases mirroring Lovable prototype for each layout component
+  6. mock-coworker-pages contains real use cases mirroring demo states from coworker-demo.lovable.app for each layout component
 **Plans**: TBD
 
 Plans:
@@ -163,7 +163,7 @@ Plans:
   3. EventCard renders meeting/calendar events with time and participants
   4. LinkCard shows URL previews with fetched metadata and images
   5. Cards use container queries for adaptive aspect ratios
-  6. mock-coworker-pages contains real use cases mirroring Lovable prototype for each card component
+  6. mock-coworker-pages contains real use cases mirroring demo states from coworker-demo.lovable.app for each card component
 **Plans**: TBD
 
 Plans:
@@ -183,7 +183,7 @@ Plans:
   5. AttachmentPill and AttachmentList display file attachments with metadata
   6. FeedbackButtons enable thumbs up/down responses
   7. Virtual scrolling maintains 60fps performance with 500+ messages
-  8. mock-coworker-pages contains real use cases mirroring Lovable prototype for each chat component
+  8. mock-coworker-pages contains real use cases mirroring demo states from coworker-demo.lovable.app for each chat component
 **Plans**: TBD
 
 Plans:
