@@ -25,6 +25,7 @@ import { generateTypographyTokens } from '../tokens/typography';
 import { generateRadiiTokens } from '../tokens/radii';
 import { shadowTokens, generateDarkModeShadows } from '../tokens/shadows';
 import { generateAnimationTokens } from '../tokens/animation';
+import { gradientTokens } from '../tokens/gradients';
 
 // Import theme rules - this is the single source of truth
 import themeRules from './schema/theme-rules.json';
@@ -104,7 +105,7 @@ export function generateThemeTokens(
   const animTokens = generateAnimationTokens(theme.animation);
   const shadows = isDark ? generateDarkModeShadows() : shadowTokens;
 
-  Object.assign(tokens, spacingTokens, typographyTokens, radiiTokens, animTokens, shadows);
+  Object.assign(tokens, spacingTokens, typographyTokens, radiiTokens, animTokens, shadows, gradientTokens);
 
   // Generate color group tokens from rules
   // Each group contains all fg tokens (fg, fg-soft, fg-softer, fg-strong, fg-stronger,
