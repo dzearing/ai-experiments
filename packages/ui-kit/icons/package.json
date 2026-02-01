@@ -62,6 +62,14 @@
       "types": "./dist/BoldIcon.d.ts",
       "import": "./dist/BoldIcon.js"
     },
+    "./BookmarkIcon": {
+      "types": "./dist/BookmarkIcon.d.ts",
+      "import": "./dist/BookmarkIcon.js"
+    },
+    "./BriefcaseIcon": {
+      "types": "./dist/BriefcaseIcon.d.ts",
+      "import": "./dist/BriefcaseIcon.js"
+    },
     "./CalendarIcon": {
       "types": "./dist/CalendarIcon.d.ts",
       "import": "./dist/CalendarIcon.js"
@@ -290,6 +298,14 @@
       "types": "./dist/MenuIcon.d.ts",
       "import": "./dist/MenuIcon.js"
     },
+    "./MicrophoneIcon": {
+      "types": "./dist/MicrophoneIcon.d.ts",
+      "import": "./dist/MicrophoneIcon.js"
+    },
+    "./MicrophoneOffIcon": {
+      "types": "./dist/MicrophoneOffIcon.d.ts",
+      "import": "./dist/MicrophoneOffIcon.js"
+    },
     "./MinimizeIcon": {
       "types": "./dist/MinimizeIcon.d.ts",
       "import": "./dist/MinimizeIcon.js"
@@ -321,6 +337,10 @@
     "./PauseIcon": {
       "types": "./dist/PauseIcon.d.ts",
       "import": "./dist/PauseIcon.js"
+    },
+    "./PinIcon": {
+      "types": "./dist/PinIcon.d.ts",
+      "import": "./dist/PinIcon.js"
     },
     "./PlayIcon": {
       "types": "./dist/PlayIcon.d.ts",
@@ -377,6 +397,18 @@
     "./ShareIcon": {
       "types": "./dist/ShareIcon.d.ts",
       "import": "./dist/ShareIcon.js"
+    },
+    "./ShieldIcon": {
+      "types": "./dist/ShieldIcon.d.ts",
+      "import": "./dist/ShieldIcon.js"
+    },
+    "./ShieldLockIcon": {
+      "types": "./dist/ShieldLockIcon.d.ts",
+      "import": "./dist/ShieldLockIcon.js"
+    },
+    "./SparkleIcon": {
+      "types": "./dist/SparkleIcon.d.ts",
+      "import": "./dist/SparkleIcon.js"
     },
     "./StarIcon": {
       "types": "./dist/StarIcon.d.ts",
