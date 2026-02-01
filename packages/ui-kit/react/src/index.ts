@@ -78,6 +78,13 @@ export type {
   SidePanelSize,
 } from './components/SidePanel/SidePanel';
 
+export { ContentLayout } from './components/ContentLayout/ContentLayout';
+export type {
+  ContentLayoutProps,
+  ContentLayoutMaxWidth,
+  ContentLayoutPadding,
+} from './components/ContentLayout/ContentLayout';
+
 // Overlays
 export { Modal } from './components/Modal';
 export type { ModalProps, ModalSize } from './components/Modal';
