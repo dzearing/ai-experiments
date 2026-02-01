@@ -1,0 +1,168 @@
+.titleBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 48px;
+  padding: 0 var(--space-4);
+  background: var(--soft-bg);
+  border-bottom: 1px solid var(--soft-border);
+  position: relative;
+  z-index: var(--z-sticky);
+}
+
+/* ==============================================
+   Leading section (logo + title)
+   ============================================== */
+
+.leading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+}
+
+.logo > svg,
+.logo > img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.title {
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  color: var(--base-fg);
+  white-space: nowrap;
+}
+
+/* ==============================================
+   Tabs (center navigation)
+   ============================================== */
+
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  background: transparent;
+  color: var(--base-fg-soft);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  position: relative;
+  transition:
+    color var(--duration-fast) var(--ease-default),
+    background-color var(--duration-fast) var(--ease-default);
+}
+
+.tab:hover:not(.active) {
+  color: var(--base-fg);
+  background: var(--base-bg-hover);
+}
+
+.tab:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.tab.active {
+  color: var(--base-fg);
+}
+
+/* Active tab indicator (underline) */
+.tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: var(--space-2);
+  right: var(--space-2);
+  height: 2px;
+  background: var(--primary-bg);
+  border-radius: 1px;
+}
+
+.tabIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1em;
+}
+
+.tabLabel {
+  /* Label inherits tab styles */
+}
+
+/* ==============================================
+   Trailing section (actions)
+   ============================================== */
+
+.trailing {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+/* ==============================================
+   Responsive - Hide tabs on narrow screens
+   ============================================== */
+
+@media (max-width: 640px) {
+  .tabs {
+    position: static;
+    transform: none;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .titleBar {
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+
+  .leading {
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  .title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* ==============================================
+   Reduced Motion
+   ============================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .tab {
+    transition: none;
+  }
+}
