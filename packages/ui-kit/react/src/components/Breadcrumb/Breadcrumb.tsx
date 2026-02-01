@@ -23,6 +23,8 @@ export interface BreadcrumbProps {
   separator?: ReactNode;
   /** Custom link component for routing */
   linkComponent?: React.ComponentType<AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }>;
+  /** Additional className */
+  className?: string;
 }
 
 const DefaultSeparator = () => (
@@ -35,9 +37,10 @@ export function Breadcrumb({
   items,
   separator = <DefaultSeparator />,
   linkComponent: LinkComponent,
+  className,
 }: BreadcrumbProps) {
   return (
-    <nav aria-label="Breadcrumb" className={styles.breadcrumb}>
+    <nav aria-label="Breadcrumb" className={`${styles.breadcrumb} ${className || ''}`}>
       <ol className={styles.list}>
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
