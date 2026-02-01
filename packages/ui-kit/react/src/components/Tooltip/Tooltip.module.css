@@ -15,7 +15,7 @@
   font-size: var(--text-sm);
   line-height: var(--leading-tight);
   white-space: nowrap;
-  z-index: 10000;
+  z-index: var(--z-tooltip);
   box-shadow: var(--shadow-md);
   pointer-events: none;
   border: 1px solid var(--stronger-border);
