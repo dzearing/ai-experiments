@@ -1,0 +1,8 @@
+# Build output
+dist/
+
+# Generated components (rebuild from SVGs)
+src/components/*.tsx
+
+# Dependencies
+node_modules/
