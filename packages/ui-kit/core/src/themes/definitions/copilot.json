@@ -1,0 +1,14 @@
+{
+  "id": "copilot",
+  "name": "Copilot",
+  "description": "Microsoft Copilot brand theme",
+  "colors": {
+    "primary": "#464FEB",
+    "secondary": "#47CFFA",
+    "accent": "#B47CF8",
+    "neutral": "#605e5c"
+  },
+  "accessibility": {
+    "level": "AA"
+  }
+}
