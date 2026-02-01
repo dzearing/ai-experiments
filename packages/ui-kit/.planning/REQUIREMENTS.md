@@ -100,9 +100,58 @@
 
 ## Traceability
 
-| Phase | Requirements |
-|-------|--------------|
-| TBD | TBD |
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| **Quality Standards** | | |
+| QS-01 | Phase 12 | Pending |
+| QS-02 | Phase 12 | Pending |
+| QS-03 | Phase 12 | Pending |
+| QS-04 | Phase 12 | Pending |
+| **Theme & Tokens** | | |
+| TKN-01 | Phase 7 | Pending |
+| TKN-02 | Phase 7 | Pending |
+| TKN-03 | Phase 7 | Pending |
+| TKN-04 | Phase 7 | Pending |
+| TKN-05 | Phase 7 | Pending |
+| TKN-06 | Phase 7 | Pending |
+| TKN-07 | Phase 7 | Pending |
+| TKN-08 | Phase 7 | Pending |
+| TKN-09 | Phase 7 | Pending |
+| **Chat Enhancements** | | |
+| CHT-01 | Phase 11 | Pending |
+| CHT-02 | Phase 11 | Pending |
+| CHT-03 | Phase 11 | Pending |
+| CHT-04 | Phase 11 | Pending |
+| CHT-05 | Phase 11 | Pending |
+| CHT-06 | Phase 11 | Pending |
+| CHT-07 | Phase 11 | Pending |
+| CHT-08 | Phase 11 | Pending |
+| CHT-09 | Phase 11 | Pending |
+| **Layout Components** | | |
+| LAY-01 | Phase 9 | Pending |
+| LAY-02 | Phase 9 | Pending |
+| LAY-03 | Phase 9 | Pending |
+| LAY-04 | Phase 9 | Pending |
+| **Card Components** | | |
+| CRD-01 | Phase 10 | Pending |
+| CRD-02 | Phase 10 | Pending |
+| CRD-03 | Phase 10 | Pending |
+| CRD-04 | Phase 10 | Pending |
+| **Icons** | | |
+| ICN-01 | Phase 8 | Pending |
+| ICN-02 | Phase 8 | Pending |
+| ICN-03 | Phase 8 | Pending |
+| ICN-04 | Phase 8 | Pending |
+| ICN-05 | Phase 8 | Pending |
+| ICN-06 | Phase 8 | Pending |
+| ICN-07 | Phase 8 | Pending |
+| ICN-08 | Phase 8 | Pending |
+| ICN-09 | Phase 8 | Pending |
+
+**Coverage:** 31/31 requirements mapped (100%)
+
+---
 
 *Requirements defined: 2026-02-01*
 *Total requirements: 31 (9 tokens, 9 chat, 4 layout, 4 cards, 5 icons)*
+*Traceability updated: 2026-02-01*
