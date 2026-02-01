@@ -37,6 +37,7 @@ const config: StorybookConfig = {
       '@ui-kit/core/bootstrap.js': path.resolve(__dirname, '../../core/src/runtime/bootstrap.ts'),
       '@ui-kit/core': path.resolve(__dirname, '../../core/src'),
       '@ui-kit/icons': path.resolve(__dirname, '../../icons/dist'),
+      '@ui-kit/product-icons': path.resolve(__dirname, '../../product-icons/dist'),
       '@ui-kit/react': path.resolve(__dirname, '../../react/src'),
     };
     return config;

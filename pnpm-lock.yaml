@@ -443,6 +443,9 @@ importers:
       '@ui-kit/icons':
         specifier: workspace:*
         version: link:../icons
+      '@ui-kit/product-icons':
+        specifier: workspace:*
+        version: link:../product-icons
       '@ui-kit/react':
         specifier: workspace:*
         version: link:../react
@@ -480,6 +483,55 @@ importers:
       vite:
         specifier: ^6.3.5
         version: 6.4.1(@types/node@20.19.10)(jiti@2.5.1)(lightningcss@1.30.1)(tsx@4.21.0)(yaml@2.8.1)
+
+  packages/ui-kit/mock-coworker-pages:
+    dependencies:
+      '@ui-kit/core':
+        specifier: workspace:*
+        version: link:../core
+      '@ui-kit/icons':
+        specifier: workspace:*
+        version: link:../icons
+      '@ui-kit/react':
+        specifier: workspace:*
+        version: link:../react
+      '@ui-kit/react-chat':
+        specifier: workspace:*
+        version: link:../react-chat
+      '@ui-kit/react-markdown':
+        specifier: workspace:*
+        version: link:../react-markdown
+      react:
+        specifier: ^19.1.0
+        version: 19.1.1
+      react-dom:
+        specifier: ^19.1.0
+        version: 19.1.1(react@19.1.1)
+    devDependencies:
+      '@storybook/addon-docs':
+        specifier: ^10.1.0
+        version: 10.1.11(@types/react@19.1.10)(esbuild@0.20.2)(rollup@4.46.2)(storybook@10.1.11(@testing-library/dom@10.4.1)(prettier@3.6.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(vite@5.4.19(@types/node@24.2.1)(lightningcss@1.30.1))
+      '@storybook/react':
+        specifier: ^10.1.0
+        version: 10.1.11(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(storybook@10.1.11(@testing-library/dom@10.4.1)(prettier@3.6.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.8.3)
+      '@storybook/react-vite':
+        specifier: ^10.1.0
+        version: 10.1.11(esbuild@0.20.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(rollup@4.46.2)(storybook@10.1.11(@testing-library/dom@10.4.1)(prettier@3.6.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.8.3)(vite@5.4.19(@types/node@24.2.1)(lightningcss@1.30.1))
+      '@types/react':
+        specifier: ^19.1.8
+        version: 19.1.10
+      '@types/react-dom':
+        specifier: ^19.1.6
+        version: 19.1.7(@types/react@19.1.10)
+      storybook:
+        specifier: ^10.1.0
+        version: 10.1.11(@testing-library/dom@10.4.1)(prettier@3.6.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      typescript:
+        specifier: ^5.4.0
+        version: 5.8.3
+      vite:
+        specifier: ^5.0.0
+        version: 5.4.19(@types/node@24.2.1)(lightningcss@1.30.1)
 
   packages/ui-kit/mock-pages:
     dependencies:
@@ -529,6 +581,36 @@ importers:
       vite:
         specifier: ^5.0.0
         version: 5.4.19(@types/node@24.2.1)(lightningcss@1.30.1)
+
+  packages/ui-kit/product-icons:
+    devDependencies:
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.10
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.1.10
+      esbuild:
+        specifier: ^0.20.0
+        version: 0.20.2
+      react:
+        specifier: ^19.1.0
+        version: 19.1.1
+      svgo:
+        specifier: ^3.3.2
+        version: 3.3.2
+      tsx:
+        specifier: ^4.20.3
+        version: 4.21.0
+      typescript:
+        specifier: ^5.4.0
+        version: 5.8.3
+      vite:
+        specifier: ^6.3.5
+        version: 6.4.1(@types/node@20.19.10)(jiti@2.5.1)(lightningcss@1.30.1)(tsx@4.21.0)(yaml@2.8.1)
+      vite-plugin-dts:
+        specifier: ^4.5.4
+        version: 4.5.4(@types/node@20.19.10)(rollup@4.46.2)(typescript@5.8.3)(vite@6.4.1(@types/node@20.19.10)(jiti@2.5.1)(lightningcss@1.30.1)(tsx@4.21.0)(yaml@2.8.1))
 
   packages/ui-kit/react:
     dependencies:
@@ -9064,7 +9146,7 @@ snapshots:
       '@babel/helper-globals': 7.28.0
       '@babel/parser': 7.28.0
       '@babel/template': 7.27.2
-      '@babel/types': 7.28.2
+      '@babel/types': 7.28.6
       debug: 4.4.1
     transitivePeerDependencies:
       - supports-color
@@ -12949,14 +13031,14 @@ snapshots:
   babel-plugin-jest-hoist@29.6.3:
     dependencies:
       '@babel/template': 7.27.2
-      '@babel/types': 7.28.2
+      '@babel/types': 7.28.6
       '@types/babel__core': 7.20.5
       '@types/babel__traverse': 7.28.0
 
   babel-plugin-jest-hoist@30.0.1:
     dependencies:
       '@babel/template': 7.27.2
-      '@babel/types': 7.28.2
+      '@babel/types': 7.28.6
       '@types/babel__core': 7.20.5
 
   babel-preset-current-node-syntax@1.2.0(@babel/core@7.28.0):
@@ -16955,7 +17037,7 @@ snapshots:
     dependencies:
       '@babel/core': 7.28.0
       '@babel/traverse': 7.28.0
-      '@babel/types': 7.28.2
+      '@babel/types': 7.28.6
       '@types/babel__core': 7.20.5
       '@types/babel__traverse': 7.28.0
       '@types/doctrine': 0.0.9

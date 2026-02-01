@@ -2,7 +2,7 @@
   "name": "@ui-kit/icons-stories",
   "version": "0.0.1",
   "private": true,
-  "description": "Storybook stories for @ui-kit/icons package",
+  "description": "Storybook stories for @ui-kit/icons and @ui-kit/product-icons packages",
   "type": "module",
   "scripts": {
     "dev": "storybook dev -p 6007",
@@ -14,6 +14,7 @@
   "dependencies": {
     "@ui-kit/core": "workspace:*",
     "@ui-kit/icons": "workspace:*",
+    "@ui-kit/product-icons": "workspace:*",
     "@ui-kit/react": "workspace:*"
   },
   "devDependencies": {

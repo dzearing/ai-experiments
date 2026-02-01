@@ -1,7 +1,0 @@
-<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background circle -->
-  <circle cx="12" cy="12" r="11" fill="#0891B2"/>
-  <!-- Magnifying glass symbol -->
-  <circle cx="10.5" cy="10.5" r="4" stroke="white" stroke-width="2" fill="none"/>
-  <line x1="13.5" y1="13.5" x2="17" y2="17" stroke="white" stroke-width="2" stroke-linecap="round"/>
-</svg>

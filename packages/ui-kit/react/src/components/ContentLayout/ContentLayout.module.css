@@ -1,0 +1,103 @@
+/**
+ * ContentLayout styles
+ *
+ * Provides page structure with header, content, and footer slots.
+ * Content area uses flex-grow to fill available space.
+ */
+
+/* ==============================================
+   Layout Container
+   ============================================== */
+
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  /* Establish stacking context to prevent z-index leakage */
+  isolation: isolate;
+}
+
+/* ==============================================
+   Header Section
+   ============================================== */
+
+.header {
+  flex-shrink: 0;
+}
+
+/* ==============================================
+   Content Section
+   ============================================== */
+
+.content {
+  flex: 1;
+  width: 100%;
+  margin-inline: auto;
+  box-sizing: border-box;
+}
+
+/* ==============================================
+   Footer Section
+   ============================================== */
+
+.footer {
+  flex-shrink: 0;
+}
+
+/* ==============================================
+   Max Width Variants
+   ============================================== */
+
+.maxWidth-sm {
+  max-width: 640px;
+}
+
+.maxWidth-md {
+  max-width: 768px;
+}
+
+.maxWidth-lg {
+  max-width: 1024px;
+}
+
+.maxWidth-xl {
+  max-width: 1280px;
+}
+
+.maxWidth-full {
+  max-width: 100%;
+}
+
+/* ==============================================
+   Padding Variants
+   ============================================== */
+
+.padding-none {
+  padding: 0;
+}
+
+.padding-sm {
+  padding: var(--space-2, 8px);
+}
+
+.padding-md {
+  padding: var(--space-4, 16px);
+}
+
+.padding-lg {
+  padding: var(--space-6, 24px);
+}
+
+/* ==============================================
+   Responsive Adjustments
+   ============================================== */
+
+@media (max-width: 640px) {
+  .padding-lg {
+    padding: var(--space-4, 16px);
+  }
+
+  .padding-md {
+    padding: var(--space-3, 12px);
+  }
+}

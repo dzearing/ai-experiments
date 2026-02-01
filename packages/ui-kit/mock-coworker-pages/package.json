@@ -1,0 +1,33 @@
+{
+  "name": "@ui-kit/mock-coworker-pages",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Example pages and demos showcasing AI coworker interactions and workflows",
+  "type": "module",
+  "scripts": {
+    "dev": "npx --yes kill-port 6008 && storybook dev -p 6008",
+    "build": "storybook build",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ui-kit/core": "workspace:*",
+    "@ui-kit/icons": "workspace:*",
+    "@ui-kit/react": "workspace:*",
+    "@ui-kit/react-chat": "workspace:*",
+    "@ui-kit/react-markdown": "workspace:*",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@storybook/addon-docs": "^10.1.0",
+    "@storybook/react": "^10.1.0",
+    "@storybook/react-vite": "^10.1.0",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "storybook": "^10.1.0",
+    "typescript": "^5.4.0",
+    "vite": "^5.0.0"
+  }
+}
