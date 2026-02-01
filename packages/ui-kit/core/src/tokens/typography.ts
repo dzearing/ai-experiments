@@ -11,6 +11,7 @@ export const fontFamilyTokens = {
 
 // Font sizes
 export const fontSizeTokens = {
+  // Existing scale tokens (backward compatible)
   '--text-xs': '11px',
   '--text-sm': '13px',
   '--text-base': '15px',
@@ -19,6 +20,18 @@ export const fontSizeTokens = {
   '--text-2xl': '24px',
   '--text-3xl': '30px',
   '--text-4xl': '36px',
+
+  // Extended sizes for large displays
+  '--text-5xl': '40px',      // large-title (TKN-05)
+  '--text-display': '68px',  // display (TKN-04)
+
+  // Semantic typography tokens
+  '--text-title-1': '28px',     // title-1 (TKN-06)
+  '--text-subtitle-2': '16px',  // subtitle-2 (TKN-07)
+  '--text-body-2': '14px',      // body-2 (TKN-08)
+  '--text-body-3': '12px',      // body-3 (TKN-08)
+  '--text-caption-1': '12px',   // caption-1 (TKN-09)
+  '--text-caption-2': '10px',   // caption-2 (TKN-09)
 } as const;
 
 // Font weights
@@ -72,6 +85,7 @@ export function generateTypographyTokens(options: {
 
   // Base sizes at scale 1.0 with base 15px
   const baseSizes: Record<FontSizeToken, number> = {
+    // Existing scale tokens
     '--text-xs': 11,
     '--text-sm': 13,
     '--text-base': 15,
@@ -80,6 +94,18 @@ export function generateTypographyTokens(options: {
     '--text-2xl': 24,
     '--text-3xl': 30,
     '--text-4xl': 36,
+
+    // Extended sizes for large displays
+    '--text-5xl': 40,
+    '--text-display': 68,
+
+    // Semantic typography tokens
+    '--text-title-1': 28,
+    '--text-subtitle-2': 16,
+    '--text-body-2': 14,
+    '--text-body-3': 12,
+    '--text-caption-1': 12,
+    '--text-caption-2': 10,
   };
 
   // Calculate ratio from custom base size
