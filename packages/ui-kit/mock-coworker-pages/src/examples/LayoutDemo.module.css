@@ -1,0 +1,204 @@
+/**
+ * LayoutDemo styles
+ *
+ * Styles for the integrated layout demo showing all layout components.
+ */
+
+/* ==============================================
+   App Container
+   ============================================== */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--base-bg);
+  color: var(--base-fg);
+}
+
+/* ==============================================
+   Main Area (SidePanel + Content)
+   ============================================== */
+
+.mainArea {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ==============================================
+   Logo
+   ============================================== */
+
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: var(--gradient-primary, linear-gradient(135deg, #464FEB 0%, #47CFFA 100%));
+  border-radius: 6px;
+}
+
+.logoIcon {
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* ==============================================
+   Profile Area
+   ============================================== */
+
+.profileArea {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.avatar:hover {
+  opacity: 0.9;
+}
+
+/* ==============================================
+   SidePanel Header
+   ============================================== */
+
+.sidePanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sidePanelTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--base-fg);
+}
+
+/* ==============================================
+   Header Actions
+   ============================================== */
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ==============================================
+   Demo Content
+   ============================================== */
+
+.demoContent {
+  animation: fadeIn 0.2s ease;
+}
+
+.contentCard {
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.contentTitle {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--base-fg);
+}
+
+.contentDescription {
+  margin: 0 0 24px;
+  color: var(--base-fg-soft);
+  line-height: 1.5;
+}
+
+/* ==============================================
+   Placeholder Grid
+   ============================================== */
+
+.placeholderGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.placeholderCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--base-bg);
+  border: 1px solid var(--soft-border);
+  border-radius: 8px;
+}
+
+.placeholderIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--soft-border);
+  flex-shrink: 0;
+}
+
+.placeholderText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.placeholderLine {
+  height: 12px;
+  background: var(--soft-border);
+  border-radius: 4px;
+}
+
+.placeholderLineShort {
+  height: 12px;
+  width: 60%;
+  background: var(--soft-border);
+  border-radius: 4px;
+}
+
+/* ==============================================
+   Animations
+   ============================================== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==============================================
+   Responsive
+   ============================================== */
+
+@media (max-width: 768px) {
+  .placeholderGrid {
+    grid-template-columns: 1fr;
+  }
+}
