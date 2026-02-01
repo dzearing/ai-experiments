@@ -10,6 +10,10 @@
       "types": "./dist/types.d.ts",
       "import": "./dist/types.js"
     },
+    "./createProductIcon": {
+      "types": "./dist/createProductIcon.d.ts",
+      "import": "./dist/createProductIcon.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
