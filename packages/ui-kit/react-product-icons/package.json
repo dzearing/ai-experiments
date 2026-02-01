@@ -14,6 +14,50 @@
       "types": "./dist/createProductIcon.d.ts",
       "import": "./dist/createProductIcon.js"
     },
+    "./ExcelIcon": {
+      "types": "./dist/ExcelIcon.d.ts",
+      "import": "./dist/ExcelIcon.js"
+    },
+    "./OnedriveIcon": {
+      "types": "./dist/OnedriveIcon.d.ts",
+      "import": "./dist/OnedriveIcon.js"
+    },
+    "./OutlookIcon": {
+      "types": "./dist/OutlookIcon.d.ts",
+      "import": "./dist/OutlookIcon.js"
+    },
+    "./PowerpointIcon": {
+      "types": "./dist/PowerpointIcon.d.ts",
+      "import": "./dist/PowerpointIcon.js"
+    },
+    "./SharepointIcon": {
+      "types": "./dist/SharepointIcon.d.ts",
+      "import": "./dist/SharepointIcon.js"
+    },
+    "./TeamsIcon": {
+      "types": "./dist/TeamsIcon.d.ts",
+      "import": "./dist/TeamsIcon.js"
+    },
+    "./WordIcon": {
+      "types": "./dist/WordIcon.d.ts",
+      "import": "./dist/WordIcon.js"
+    },
+    "./AnalystIcon": {
+      "types": "./dist/AnalystIcon.d.ts",
+      "import": "./dist/AnalystIcon.js"
+    },
+    "./CatchUpIcon": {
+      "types": "./dist/CatchUpIcon.d.ts",
+      "import": "./dist/CatchUpIcon.js"
+    },
+    "./PlannerIcon": {
+      "types": "./dist/PlannerIcon.d.ts",
+      "import": "./dist/PlannerIcon.js"
+    },
+    "./ResearcherIcon": {
+      "types": "./dist/ResearcherIcon.d.ts",
+      "import": "./dist/ResearcherIcon.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
