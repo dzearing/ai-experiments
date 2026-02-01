@@ -145,13 +145,13 @@ Plans:
   4. ContentLayout provides standard page wrapper with header/content/footer slots
   5. Z-index scale prevents layering conflicts between components
   6. mock-coworker-pages contains real use cases mirroring demo states from coworker-demo.lovable.app for each layout component
-**Plans**: TBD
+**Plans**: 4 plans (3 waves)
 
 Plans:
-- [ ] 09-01: Z-index scale establishment
-- [ ] 09-02: PageHeader and TitleBar components
-- [ ] 09-03: SidePanel component
-- [ ] 09-04: ContentLayout component
+- [ ] 09-01-PLAN.md — Z-index scale establishment
+- [ ] 09-02-PLAN.md — PageHeader and TitleBar components
+- [ ] 09-03-PLAN.md — SidePanel component
+- [ ] 09-04-PLAN.md — ContentLayout and mock pages integration
 
 #### Phase 10: Card Components
 **Goal**: Create specialized card variants for common entity types
