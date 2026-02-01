@@ -41,6 +41,13 @@ const config: StorybookConfig = {
   viteFinal: async (config) => {
     config.plugins = config.plugins || [];
     config.plugins.unshift(storybookPnpmFix());
+
+    // @ui-kit/icons only has subpath exports (no root "." export)
+    // Exclude from pre-bundling to prevent Vite from trying to resolve the package root
+    config.optimizeDeps = config.optimizeDeps || {};
+    config.optimizeDeps.exclude = config.optimizeDeps.exclude || [];
+    config.optimizeDeps.exclude.push('@ui-kit/icons');
+
     return config;
   },
 };
