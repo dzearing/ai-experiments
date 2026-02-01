@@ -64,6 +64,20 @@ export type { GridProps, GridGap } from './components/Grid';
 export { Form, FormField, FormActions, FormRow } from './components/Form';
 export type { FormProps, FormFieldProps, FormActionsProps, FormRowProps } from './components/Form';
 
+export { PageHeader } from './components/PageHeader/PageHeader';
+export type { PageHeaderProps } from './components/PageHeader/PageHeader';
+
+export { TitleBar } from './components/TitleBar/TitleBar';
+export type { TitleBarProps, TitleBarTab } from './components/TitleBar/TitleBar';
+
+export { SidePanel } from './components/SidePanel/SidePanel';
+export type {
+  SidePanelProps,
+  SidePanelMode,
+  SidePanelPosition,
+  SidePanelSize,
+} from './components/SidePanel/SidePanel';
+
 // Overlays
 export { Modal } from './components/Modal';
 export type { ModalProps, ModalSize } from './components/Modal';
