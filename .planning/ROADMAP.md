@@ -129,10 +129,10 @@ Plans:
 **Plans**: 4 plans (2 waves)
 
 Plans:
-- [ ] 08-01-PLAN.md — UI icons additions (SparkleIcon, MicrophoneIcon, ShieldIcon, PinIcon, BookmarkIcon, BriefcaseIcon)
-- [ ] 08-02-PLAN.md — Product icons package setup (@ui-kit/react-product-icons)
-- [ ] 08-03-PLAN.md — Microsoft product icons (Word, Excel, PowerPoint, Outlook, Teams, OneDrive, SharePoint)
-- [ ] 08-04-PLAN.md — Agent icons (Analyst, Researcher, Planner, CatchUp)
+- [x] 08-01-PLAN.md — UI icons additions (SparkleIcon, MicrophoneIcon, ShieldIcon, PinIcon, BookmarkIcon, BriefcaseIcon)
+- [x] 08-02-PLAN.md — Product icons package setup (@ui-kit/react-product-icons)
+- [x] 08-03-PLAN.md — Microsoft product icons (Word, Excel, PowerPoint, Outlook, Teams, OneDrive, SharePoint)
+- [x] 08-04-PLAN.md — Agent icons (Analyst, Researcher, Planner, CatchUp)
 
 #### Phase 9: Layout Components
 **Goal**: Deliver page structure components with centralized z-index coordination
@@ -224,7 +224,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 7 → 8 → 9 → 10 �
 | 5. Keyboard Navigation | v1.0 | 0/0 | Deferred | - |
 | 6. Stories | v1.0 | 0/0 | Deferred | - |
 | 7. Core Extensions | v2.0 | 3/3 | Complete | 2026-02-01 |
-| 8. Icons | v2.0 | 0/4 | Planned | - |
+| 8. Icons | v2.0 | 4/4 | Complete | 2026-02-01 |
 | 9. Layout Components | v2.0 | 0/4 | Not started | - |
 | 10. Card Components | v2.0 | 0/3 | Not started | - |
 | 11. Chat Enhancements | v2.0 | 0/4 | Not started | - |

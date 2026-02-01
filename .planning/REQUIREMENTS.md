@@ -140,20 +140,20 @@
 | CRD-03 | Phase 10 | Pending |
 | CRD-04 | Phase 10 | Pending |
 | **Icons** | | |
-| ICN-01 | Phase 8 | Pending |
-| ICN-02 | Phase 8 | Pending |
-| ICN-03 | Phase 8 | Pending |
-| ICN-04 | Phase 8 | Pending |
-| ICN-05 | Phase 8 | Pending |
-| ICN-06 | Phase 8 | Pending |
-| ICN-07 | Phase 8 | Pending |
-| ICN-08 | Phase 8 | Pending |
-| ICN-09 | Phase 8 | Pending |
+| ICN-01 | Phase 8 | Complete |
+| ICN-02 | Phase 8 | Complete |
+| ICN-03 | Phase 8 | Complete |
+| ICN-04 | Phase 8 | Complete |
+| ICN-05 | Phase 8 | Complete |
+| ICN-06 | Phase 8 | Complete |
+| ICN-07 | Phase 8 | Complete |
+| ICN-08 | Phase 8 | Complete |
+| ICN-09 | Phase 8 | Complete |
 
 **Coverage:** 31/31 requirements mapped (100%)
 
 ---
 
 *Requirements defined: 2026-02-01*
-*Total requirements: 31 (9 tokens, 9 chat, 4 layout, 4 cards, 5 icons)*
+*Total requirements: 31 (9 tokens, 9 chat, 4 layout, 4 cards, 9 icons)*
 *Traceability updated: 2026-02-01*
