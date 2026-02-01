@@ -6,6 +6,7 @@
 - **QS-02**: Package README files reference component guide
 - **QS-03**: Each component visually audited against coworker-demo.lovable.app/design-system
 - **QS-04**: UX must be beautiful, fluent, polished — no visual glitches, misalignment, or jarring interactions
+- **QS-05**: Each component has real use cases in mock-coworker-pages mirroring Lovable prototype examples
 
 ---
 
@@ -107,6 +108,7 @@
 | QS-02 | Phase 12 | Pending |
 | QS-03 | Phase 12 | Pending |
 | QS-04 | Phase 12 | Pending |
+| QS-05 | Phases 9-11 | Pending |
 | **Theme & Tokens** | | |
 | TKN-01 | Phase 7 | Pending |
 | TKN-02 | Phase 7 | Pending |

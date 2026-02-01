@@ -137,13 +137,14 @@ Plans:
 #### Phase 9: Layout Components
 **Goal**: Deliver page structure components with centralized z-index coordination
 **Depends on**: Phase 8
-**Requirements**: LAY-01, LAY-02, LAY-03, LAY-04
+**Requirements**: LAY-01, LAY-02, LAY-03, LAY-04, QS-05
 **Success Criteria** (what must be TRUE):
   1. PageHeader component displays title, breadcrumbs, and action slots responsively
   2. TitleBar component provides app-level navigation with Work/Web tabs
   3. SidePanel supports collapsible overlay and push modes
   4. ContentLayout provides standard page wrapper with header/content/footer slots
   5. Z-index scale prevents layering conflicts between components
+  6. mock-coworker-pages contains real use cases mirroring Lovable prototype for each layout component
 **Plans**: TBD
 
 Plans:
@@ -155,13 +156,14 @@ Plans:
 #### Phase 10: Card Components
 **Goal**: Create specialized card variants for common entity types
 **Depends on**: Phase 9
-**Requirements**: CRD-01, CRD-02, CRD-03, CRD-04
+**Requirements**: CRD-01, CRD-02, CRD-03, CRD-04, QS-05
 **Success Criteria** (what must be TRUE):
   1. FileCard displays document previews with thumbnails and metadata
   2. PersonCard shows user information with avatar and presence indicator
   3. EventCard renders meeting/calendar events with time and participants
   4. LinkCard shows URL previews with fetched metadata and images
   5. Cards use container queries for adaptive aspect ratios
+  6. mock-coworker-pages contains real use cases mirroring Lovable prototype for each card component
 **Plans**: TBD
 
 Plans:
@@ -172,7 +174,7 @@ Plans:
 #### Phase 11: Chat Enhancements
 **Goal**: Add reasoning steps, citations, attachments, and feedback to chat experience
 **Depends on**: Phase 10
-**Requirements**: CHT-01, CHT-02, CHT-03, CHT-04, CHT-05, CHT-06, CHT-07, CHT-08, CHT-09
+**Requirements**: CHT-01, CHT-02, CHT-03, CHT-04, CHT-05, CHT-06, CHT-07, CHT-08, CHT-09, QS-05
 **Success Criteria** (what must be TRUE):
   1. ReasoningSteps container displays chain-of-thought with collapsible steps
   2. ReasoningProgress shows "Thinking for X seconds" indicator during processing
@@ -181,6 +183,7 @@ Plans:
   5. AttachmentPill and AttachmentList display file attachments with metadata
   6. FeedbackButtons enable thumbs up/down responses
   7. Virtual scrolling maintains 60fps performance with 500+ messages
+  8. mock-coworker-pages contains real use cases mirroring Lovable prototype for each chat component
 **Plans**: TBD
 
 Plans:
