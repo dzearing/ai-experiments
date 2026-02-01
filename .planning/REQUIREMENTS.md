@@ -47,10 +47,10 @@
 
 ## Layout Components (@ui-kit/react)
 
-- [ ] **LAY-01**: PageHeader component with title, breadcrumbs, action slots
-- [ ] **LAY-02**: TitleBar component for app-level navigation
-- [ ] **LAY-03**: SidePanel collapsible side content panel
-- [ ] **LAY-04**: ContentLayout standard page wrapper with header/content/footer slots
+- [x] **LAY-01**: PageHeader component with title, breadcrumbs, action slots
+- [x] **LAY-02**: TitleBar component for app-level navigation
+- [x] **LAY-03**: SidePanel collapsible side content panel
+- [x] **LAY-04**: ContentLayout standard page wrapper with header/content/footer slots
 
 ---
 
@@ -130,10 +130,10 @@
 | CHT-08 | Phase 11 | Pending |
 | CHT-09 | Phase 11 | Pending |
 | **Layout Components** | | |
-| LAY-01 | Phase 9 | Pending |
-| LAY-02 | Phase 9 | Pending |
-| LAY-03 | Phase 9 | Pending |
-| LAY-04 | Phase 9 | Pending |
+| LAY-01 | Phase 9 | Complete |
+| LAY-02 | Phase 9 | Complete |
+| LAY-03 | Phase 9 | Complete |
+| LAY-04 | Phase 9 | Complete |
 | **Card Components** | | |
 | CRD-01 | Phase 10 | Pending |
 | CRD-02 | Phase 10 | Pending |

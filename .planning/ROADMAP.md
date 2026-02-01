@@ -148,10 +148,10 @@ Plans:
 **Plans**: 4 plans (3 waves)
 
 Plans:
-- [ ] 09-01-PLAN.md — Z-index scale establishment
-- [ ] 09-02-PLAN.md — PageHeader and TitleBar components
-- [ ] 09-03-PLAN.md — SidePanel component
-- [ ] 09-04-PLAN.md — ContentLayout and mock pages integration
+- [x] 09-01-PLAN.md — Z-index scale establishment
+- [x] 09-02-PLAN.md — PageHeader and TitleBar components
+- [x] 09-03-PLAN.md — SidePanel component
+- [x] 09-04-PLAN.md — ContentLayout and mock pages integration
 
 #### Phase 10: Card Components
 **Goal**: Create specialized card variants for common entity types
@@ -225,7 +225,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 7 → 8 → 9 → 10 �
 | 6. Stories | v1.0 | 0/0 | Deferred | - |
 | 7. Core Extensions | v2.0 | 3/3 | Complete | 2026-02-01 |
 | 8. Icons | v2.0 | 4/4 | Complete | 2026-02-01 |
-| 9. Layout Components | v2.0 | 0/4 | Not started | - |
+| 9. Layout Components | v2.0 | 4/4 | Complete | 2026-02-01 |
 | 10. Card Components | v2.0 | 0/3 | Not started | - |
 | 11. Chat Enhancements | v2.0 | 0/4 | Not started | - |
 | 12. Visual Audit & Polish | v2.0 | 0/4 | Not started | - |
