@@ -158,6 +158,9 @@ importers:
       '@claude-flow/data-bus':
         specifier: workspace:*
         version: link:../../../packages/data-bus
+      '@ui-kit/react-chat':
+        specifier: workspace:*
+        version: link:../../../packages/ui-kit/react-chat
       bonjour-service:
         specifier: ^1.2.1
         version: 1.3.0
