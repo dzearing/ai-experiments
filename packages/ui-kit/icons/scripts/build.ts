@@ -1,5 +1,6 @@
 import { mkdir, rm, readFile, writeFile } from 'fs/promises';
 import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
 import { generateComponents } from './generate-components';
 import { generateMetadata } from './generate-metadata';
@@ -8,7 +9,7 @@ import { generateFont } from './generate-font';
 import { log } from './utils';
 import type { IconInfo } from './utils';
 
-const ROOT_DIR = join(dirname(import.meta.url.replace('file://', '')), '..');
+const ROOT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DIST_DIR = join(ROOT_DIR, 'dist');
 
 async function build() {

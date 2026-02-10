@@ -8,8 +8,9 @@ import {
   type ProductIconInfo,
 } from './utils';
 import type { ProductIconSize } from '../src/utils/types';
+import { fileURLToPath } from 'url';
 
-const ROOT_DIR = join(dirname(import.meta.url.replace('file://', '')), '..');
+const ROOT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SVGS_DIR = join(ROOT_DIR, 'src/svgs');
 const COMPONENTS_DIR = join(ROOT_DIR, 'src/components');
 

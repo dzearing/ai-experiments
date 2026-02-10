@@ -5,8 +5,9 @@ import { generateComponents } from './generate-components';
 import { generateMetadata } from './generate-metadata';
 import { log } from './utils';
 import type { ProductIconInfo } from './utils';
+import { fileURLToPath } from 'url';
 
-const ROOT_DIR = join(dirname(import.meta.url.replace('file://', '')), '..');
+const ROOT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DIST_DIR = join(ROOT_DIR, 'dist');
 
 async function build() {

@@ -1,8 +1,9 @@
 import { mkdir, writeFile } from 'fs/promises';
 import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { getSvgFiles, readIconFile, log, colors, type IconInfo } from './utils';
 
-const ROOT_DIR = join(dirname(import.meta.url.replace('file://', '')), '..');
+const ROOT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SVGS_DIR = join(ROOT_DIR, 'src/svgs');
 const DIST_DIR = join(ROOT_DIR, 'dist');
 const FONT_DIR = join(DIST_DIR, 'font');
